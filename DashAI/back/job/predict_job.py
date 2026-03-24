@@ -25,10 +25,10 @@ log = logging.getLogger(__name__)
 def _run_prediction_pipeline(
     task: BaseTask,
     trained_model: BaseModel,
-    train_dataset: DashAIDataset,
-    loaded_dataset: DashAIDataset,
+    train_dataset: "DashAIDataset",
+    loaded_dataset: "DashAIDataset",
     model_session: ModelSession,
-) -> Tuple[DashAIDataset, Any]:
+) -> Tuple["DashAIDataset", Any]:
     """Run shared prediction steps from prepared input data to final predictions."""
     import numpy as np
 
@@ -41,7 +41,7 @@ def _run_prediction_pipeline(
 
 
 def _build_preview_rows(
-    prepared_dataset: DashAIDataset,
+    prepared_dataset: "DashAIDataset",
     input_columns: List[str],
     output_col: str,
     y_pred: Any,

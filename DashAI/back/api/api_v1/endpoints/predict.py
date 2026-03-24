@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
@@ -20,6 +20,8 @@ from DashAI.back.job.predict_job import run_manual_prediction
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session, sessionmaker
 
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,7 @@ router = APIRouter()
 async def create_prediction(
     params: PredictionCreationParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Creates a prediction for a given trained model/run.
@@ -245,7 +248,7 @@ async def delete_prediction(
 @inject
 async def preview_manual_prediction(
     request: Request,
-    component_registry: Any = Depends(lambda: di["component_registry"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Run a synchronous manual prediction and return results without persisting.
