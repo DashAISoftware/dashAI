@@ -26,6 +26,7 @@
     "parameterChangeHistory": "Parameter change history for the current session",
     "searchSessions": "Search Sessions",
     "selectGenerativeTask": "Select a generative task to start a new session",
+    "selectModel": "Select a model",
     "selectModelAndConfigureParameters": "Select a model and configure its parameters.",
     "selectSessionToViewParameters": "Select a session to view and edit its parameters.",
     "sessionDescription": "Session Description",
