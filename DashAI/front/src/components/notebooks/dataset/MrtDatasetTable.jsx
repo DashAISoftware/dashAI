@@ -83,6 +83,10 @@ export default function MrtDatasetTable({
     const saved = loadPersistedState(storageKey);
     return saved?.columnFilterFns ?? getDefaultFilterFns();
   });
+  const [showColumnFilters, setShowColumnFilters] = useState(() => {
+    const saved = loadPersistedState(storageKey);
+    return saved?.showColumnFilters ?? false;
+  });
 
   // Al cambiar de dataset, cargar el estado guardado (o defaults)
   useEffect(() => {
@@ -97,6 +101,7 @@ export default function MrtDatasetTable({
     setColumnFilters(cleanFilters);
     setSorting(saved?.sorting ?? []);
     setColumnFilterFns(saved?.columnFilterFns ?? getDefaultFilterFns());
+    setShowColumnFilters(false);
     setDensity(saved?.density ?? "compact");
     setPagination({
       pageIndex: 0,
@@ -116,6 +121,7 @@ export default function MrtDatasetTable({
           columnFilterFns,
           sorting,
           density,
+          showColumnFilters,
         }),
       );
     } catch {}
@@ -126,6 +132,7 @@ export default function MrtDatasetTable({
     columnFilterFns,
     sorting,
     density,
+    showColumnFilters,
   ]);
 
   // Cargar datos (server-side)
@@ -138,6 +145,7 @@ export default function MrtDatasetTable({
             .filter((f) => {
               const fn = columnFilterFns[f.id];
               if (fn === "empty" || fn === "notEmpty") return true;
+              if (fn !== "between" && Array.isArray(f.value)) return false;
               return f.value !== undefined && f.value !== "";
             })
             .map((f) => {
@@ -321,12 +329,14 @@ export default function MrtDatasetTable({
     onColumnFilterFnsChange: setColumnFilterFns,
     onSortingChange: setSorting,
     onDensityChange: setDensity,
+    onShowColumnFiltersChange: setShowColumnFilters,
     state: {
       pagination,
       columnFilters,
       columnFilterFns,
       sorting,
       columnOrder,
+      showColumnFilters,
       density,
       isLoading,
     },

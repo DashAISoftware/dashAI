@@ -106,11 +106,11 @@ async def filter_dataset_file(
                 if op == "equals" and val is not None:
                     table = table.filter(pc.equal(table[col], cast_value(val)))
                 elif op == "lessThan" and val is not None:
-                    table = table.filter(pc.less_than(table[col], cast_value(val)))
+                    table = table.filter(pc.less(table[col], cast_value(val)))
                 elif op == "lessThanOrEqualTo" and val is not None:
                     table = table.filter(pc.less_equal(table[col], cast_value(val)))
                 elif op == "greaterThan" and val is not None:
-                    table = table.filter(pc.greater_than(table[col], cast_value(val)))
+                    table = table.filter(pc.greater(table[col], cast_value(val)))
                 elif op == "greaterThanOrEqualTo" and val is not None:
                     table = table.filter(pc.greater_equal(table[col], cast_value(val)))
                 elif op == "contains" and val is not None:
@@ -144,14 +144,6 @@ async def filter_dataset_file(
                     else:
                         as_str = pc.utf8_lower(table[col])
                     mask = pc.match_substring_regex(as_str, f"{str(val).lower()}$")
-                    table = table.filter(mask)
-                    table = table.filter(mask)
-                elif op == "endsWith" and val is not None:
-                    if not pa.types.is_string(col_type):
-                        as_str = pc.cast(table[col], pa.string())
-                        mask = pc.match_substring_regex(as_str, f"{val}$")
-                    else:
-                        mask = pc.match_substring_regex(table[col], f"{val}$")
                     table = table.filter(mask)
                 elif op == "isEmpty":
                     if pa.types.is_string(col_type):
