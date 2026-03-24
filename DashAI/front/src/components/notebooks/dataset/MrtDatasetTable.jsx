@@ -3,7 +3,10 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { renameDatasetColumn } from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
@@ -18,26 +21,74 @@ export default function MrtDatasetTable({
   editableColumns = false,
   onEditColumn = null,
 }) {
-  const { t } = useTranslation(["common"]);
+  const { t, i18n } = useTranslation(["common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const [data, setData] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [columnOrder, setColumnOrder] = useState([]);
+  const [density, setDensity] = useState("compact");
 
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: initialPageSize,
+  const storageKey = datasetId
+    ? `mrt-state-${datasetId}`
+    : datasetPath
+      ? `mrt-state-${datasetPath}`
+      : null;
+
+  const loadPersistedState = (key) => {
+    if (!key) return null;
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const [pagination, setPagination] = useState(() => {
+    const saved = loadPersistedState(storageKey);
+    return { pageIndex: 0, pageSize: saved?.pageSize ?? initialPageSize };
   });
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState(() => {
+    const saved = loadPersistedState(storageKey);
+    return saved?.columnFilters ?? [];
+  });
+  const [sorting, setSorting] = useState(() => {
+    const saved = loadPersistedState(storageKey);
+    return saved?.sorting ?? [];
+  });
 
-  // Resetear filtros, sorting y paginación al cambiar de dataset
+  // Al cambiar de dataset, cargar el estado guardado (o defaults)
   useEffect(() => {
-    setColumnFilters([]);
-    setSorting([]);
-    setPagination({ pageIndex: 0, pageSize: initialPageSize });
+    const saved = loadPersistedState(storageKey);
+    setColumnFilters(saved?.columnFilters ?? []);
+    setSorting(saved?.sorting ?? []);
+    setDensity(saved?.density ?? "compact");
+    setPagination({
+      pageIndex: 0,
+      pageSize: saved?.pageSize ?? initialPageSize,
+    });
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Guardar estado en localStorage cuando cambia
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          pageSize: pagination.pageSize,
+          columnFilters,
+          sorting,
+          density,
+        }),
+      );
+    } catch {}
+  }, [storageKey, pagination.pageSize, columnFilters, sorting, density]);
 
   // Cargar datos (server-side)
   useEffect(() => {
@@ -127,6 +178,13 @@ export default function MrtDatasetTable({
       return [];
     }
 
+    // columnTypes puede venir como { col: "Integer" } o { col: { type: "Integer" } }
+    const getColType = (key) => {
+      const val = columnTypes[key];
+      if (!val) return null;
+      return typeof val === "string" ? val : (val.type ?? null);
+    };
+
     return columnKeys.map((key) => ({
       accessorKey: key,
       header: key,
@@ -137,7 +195,7 @@ export default function MrtDatasetTable({
           <div onDoubleClick={(e) => e.stopPropagation()}>
             <EditableColumnHeader
               columnName={key}
-              columnType={columnTypes[key]?.type}
+              columnType={getColType(key)}
               onRename={handleColumnRename}
             />
           </div>
@@ -147,7 +205,7 @@ export default function MrtDatasetTable({
               {key}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {columnTypes[key]?.type || t("common:unknown")}
+              {getColType(key) || t("common:unknown")}
             </Typography>
           </Box>
         ),
@@ -158,6 +216,9 @@ export default function MrtDatasetTable({
     columns,
     data,
     rowCount,
+    localization,
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
     enablePagination: true,
     manualPagination: true,
     manualFiltering: true,
@@ -166,11 +227,13 @@ export default function MrtDatasetTable({
     onPaginationChange: setPagination,
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
+    onDensityChange: setDensity,
     state: {
       pagination,
       columnFilters,
       sorting,
       columnOrder,
+      density,
       isLoading,
     },
   });
