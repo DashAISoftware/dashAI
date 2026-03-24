@@ -290,11 +290,12 @@ class ModelJob(BaseJob):
                         model = optimizer.get_model()
                         best_params = optimizer.get_best_params()
 
-                        updated_params = run.parameters.copy()
-                        for param_name, param_value in best_params.items():
-                            updated_params[param_name]["fixed_value"] = param_value
+                        old_parameters = run.parameters.copy()
+                        updated_parameters = factory.update_parameters(
+                            old_parameters, best_params
+                        )
 
-                        run.parameters = updated_params
+                        run.parameters = updated_parameters
                         flag_modified(run, "parameters")
                         db.commit()
 
