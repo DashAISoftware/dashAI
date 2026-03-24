@@ -55,18 +55,48 @@ export default function MrtDatasetTable({
   });
   const [columnFilters, setColumnFilters] = useState(() => {
     const saved = loadPersistedState(storageKey);
-    return saved?.columnFilters ?? [];
+    return (saved?.columnFilters ?? []).filter(
+      (f) =>
+        f.id !== undefined &&
+        !Array.isArray(f.value) &&
+        f.value !== undefined &&
+        f.value !== "",
+    );
   });
   const [sorting, setSorting] = useState(() => {
     const saved = loadPersistedState(storageKey);
     return saved?.sorting ?? [];
   });
+  const getDefaultFilterFns = () => {
+    const defaults = {};
+    Object.entries(columnTypes).forEach(([key, typeRaw]) => {
+      const type =
+        typeof typeRaw === "string" ? typeRaw : (typeRaw?.type ?? "");
+      defaults[key] = ["Integer", "Float"].includes(type)
+        ? "between"
+        : "contains";
+    });
+    return defaults;
+  };
+
+  const [columnFilterFns, setColumnFilterFns] = useState(() => {
+    const saved = loadPersistedState(storageKey);
+    return saved?.columnFilterFns ?? getDefaultFilterFns();
+  });
 
   // Al cambiar de dataset, cargar el estado guardado (o defaults)
   useEffect(() => {
     const saved = loadPersistedState(storageKey);
-    setColumnFilters(saved?.columnFilters ?? []);
+    const cleanFilters = (saved?.columnFilters ?? []).filter(
+      (f) =>
+        f.id !== undefined &&
+        !Array.isArray(f.value) &&
+        f.value !== undefined &&
+        f.value !== "",
+    );
+    setColumnFilters(cleanFilters);
     setSorting(saved?.sorting ?? []);
+    setColumnFilterFns(saved?.columnFilterFns ?? getDefaultFilterFns());
     setDensity(saved?.density ?? "compact");
     setPagination({
       pageIndex: 0,
@@ -83,12 +113,20 @@ export default function MrtDatasetTable({
         JSON.stringify({
           pageSize: pagination.pageSize,
           columnFilters,
+          columnFilterFns,
           sorting,
           density,
         }),
       );
     } catch {}
-  }, [storageKey, pagination.pageSize, columnFilters, sorting, density]);
+  }, [
+    storageKey,
+    pagination.pageSize,
+    columnFilters,
+    columnFilterFns,
+    sorting,
+    density,
+  ]);
 
   // Cargar datos (server-side)
   useEffect(() => {
@@ -96,11 +134,35 @@ export default function MrtDatasetTable({
       setIsLoading(true);
       try {
         const muiFormattedFilters = {
-          items: columnFilters.map((f) => ({
-            field: f.id,
-            value: f.value,
-            operator: "contains",
-          })),
+          items: columnFilters
+            .filter((f) => {
+              const fn = columnFilterFns[f.id];
+              if (fn === "empty" || fn === "notEmpty") return true;
+              return f.value !== undefined && f.value !== "";
+            })
+            .map((f) => {
+              const fn = columnFilterFns[f.id];
+              if (fn === "empty")
+                return { field: f.id, value: null, operator: "isEmpty" };
+              if (fn === "notEmpty")
+                return { field: f.id, value: null, operator: "isNotEmpty" };
+              const colTypeRaw = columnTypes[f.id];
+              const colType =
+                typeof colTypeRaw === "string"
+                  ? colTypeRaw
+                  : (colTypeRaw?.type ?? "");
+              const operator =
+                fn ??
+                (["Integer", "Float"].includes(colType)
+                  ? "between"
+                  : "contains");
+              // between espera [min, max]: parsear "min,max" del input de texto
+              const value =
+                operator === "between" && typeof f.value === "string"
+                  ? f.value.split(",").map((v) => v.trim() || null)
+                  : f.value;
+              return { field: f.id, value, operator };
+            }),
         };
 
         const response = await fetchPage(
@@ -185,31 +247,60 @@ export default function MrtDatasetTable({
       return typeof val === "string" ? val : (val.type ?? null);
     };
 
-    return columnKeys.map((key) => ({
-      accessorKey: key,
-      header: key,
-      Header: () =>
-        editableColumns && datasetId ? (
-          // onDoubleClick stopPropagation: evita que MRT intercepte el doble-click
-          // (que activa el rename), pero el single-click sigue llegando para ordenar
-          <div onDoubleClick={(e) => e.stopPropagation()}>
-            <EditableColumnHeader
-              columnName={key}
-              columnType={getColType(key)}
-              onRename={handleColumnRename}
-            />
-          </div>
-        ) : (
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-              {key}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {getColType(key) || t("common:unknown")}
-            </Typography>
-          </Box>
-        ),
-    }));
+    return columnKeys.map((key) => {
+      const colTypeRaw = columnTypes[key];
+      const colType =
+        typeof colTypeRaw === "string" ? colTypeRaw : (colTypeRaw?.type ?? "");
+      const filterVariant = "text";
+      return {
+        accessorKey: key,
+        header: key,
+        filterVariant,
+        filterFn: ["Integer", "Float"].includes(colType)
+          ? "between"
+          : "contains",
+        columnFilterModeOptions: ["Integer", "Float"].includes(colType)
+          ? [
+              "equals",
+              "between",
+              "lessThan",
+              "lessThanOrEqualTo",
+              "greaterThan",
+              "greaterThanOrEqualTo",
+              "empty",
+              "notEmpty",
+            ]
+          : [
+              "contains",
+              "startsWith",
+              "endsWith",
+              "equals",
+              "empty",
+              "notEmpty",
+            ],
+        Header: () =>
+          editableColumns && datasetId ? (
+            // onDoubleClick stopPropagation: evita que MRT intercepte el doble-click
+            // (que activa el rename), pero el single-click sigue llegando para ordenar
+            <div onDoubleClick={(e) => e.stopPropagation()}>
+              <EditableColumnHeader
+                columnName={key}
+                columnType={getColType(key)}
+                onRename={handleColumnRename}
+              />
+            </div>
+          ) : (
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                {key}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {getColType(key) || t("common:unknown")}
+              </Typography>
+            </Box>
+          ),
+      };
+    });
   }, [data, columnTypes, editableColumns, datasetId, handleColumnRename, t]);
 
   const table = useMaterialReactTable({
@@ -224,13 +315,16 @@ export default function MrtDatasetTable({
     manualFiltering: true,
     manualSorting: true,
     enableFilters: true,
+    enableColumnFilterModes: true,
     onPaginationChange: setPagination,
     onColumnFiltersChange: setColumnFilters,
+    onColumnFilterFnsChange: setColumnFilterFns,
     onSortingChange: setSorting,
     onDensityChange: setDensity,
     state: {
       pagination,
       columnFilters,
+      columnFilterFns,
       sorting,
       columnOrder,
       density,

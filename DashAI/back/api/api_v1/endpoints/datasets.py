@@ -103,7 +103,17 @@ async def filter_dataset_file(
                         return v
                     return v
 
-                if op == "contains" and val is not None:
+                if op == "equals" and val is not None:
+                    table = table.filter(pc.equal(table[col], cast_value(val)))
+                elif op == "lessThan" and val is not None:
+                    table = table.filter(pc.less_than(table[col], cast_value(val)))
+                elif op == "lessThanOrEqualTo" and val is not None:
+                    table = table.filter(pc.less_equal(table[col], cast_value(val)))
+                elif op == "greaterThan" and val is not None:
+                    table = table.filter(pc.greater_than(table[col], cast_value(val)))
+                elif op == "greaterThanOrEqualTo" and val is not None:
+                    table = table.filter(pc.greater_equal(table[col], cast_value(val)))
+                elif op == "contains" and val is not None:
                     # Case-insensitive contains
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
@@ -165,8 +175,23 @@ async def filter_dataset_file(
                         else [v.strip() for v in str(val).split(",")]
                     )
                     casted_values = [cast_value(v) for v in values]
-                    mask = pc.in_list(table[col], pa.array(casted_values))
+                    mask = pc.is_in(table[col], value_set=pa.array(casted_values))
                     table = table.filter(mask)
+                elif (
+                    op == "between"
+                    and val is not None
+                    and isinstance(val, list)
+                    and len(val) == 2
+                ):
+                    min_val, max_val = val
+                    if min_val not in (None, ""):
+                        table = table.filter(
+                            pc.greater_equal(table[col], cast_value(min_val))
+                        )
+                    if max_val not in (None, ""):
+                        table = table.filter(
+                            pc.less_equal(table[col], cast_value(max_val))
+                        )
 
     filtered = (
         filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
