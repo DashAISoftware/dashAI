@@ -33,8 +33,22 @@ class StableDiffusionSchema(BaseSchema):
         ),
         placeholder="stabilityai/stable-diffusion-3-medium-diffusers",
         description=MultilingualString(
-            en="The specific Stable Diffusion model version to use.",
-            es="La versión específica del modelo Stable Diffusion a usar.",
+            en=(
+                "The SD3/SD3.5 checkpoint to load. 'sd-3-medium' is the baseline "
+                "2B-parameter model. 'sd-3.5-medium' improves quality at similar "
+                "speed. 'sd-3.5-large' (8B) delivers the highest quality but needs "
+                "more VRAM. 'sd-3.5-large-turbo' is a distilled large model that "
+                "requires far fewer steps (4–8) for fast high-quality generation. "
+                "All variants target 1024×1024 px natively."
+            ),
+            es=(
+                "El checkpoint SD3/SD3.5 a cargar. 'sd-3-medium' es el modelo base "
+                "de 2B parámetros. 'sd-3.5-medium' mejora la calidad a velocidad "
+                "similar. 'sd-3.5-large' (8B) ofrece la mayor calidad pero necesita "
+                "más VRAM. 'sd-3.5-large-turbo' es un modelo large destilado que "
+                "requiere muchos menos pasos (4–8) para generación rápida de alta "
+                "calidad. Todas las variantes apuntan a 1024×1024 px de forma nativa."
+            ),
         ),
         alias=MultilingualString(en="Model name", es="Nombre del modelo"),
     )  # type: ignore
@@ -43,8 +57,19 @@ class StableDiffusionSchema(BaseSchema):
         string_field(),
         placeholder="",
         description=MultilingualString(
-            en="Hugging Face API key for private models.",
-            es="Clave API de Hugging Face para modelos privados.",
+            en=(
+                "Hugging Face read-access token required to download these gated "
+                "models. To obtain one: accept the model license on "
+                "huggingface.co/stabilityai, then go to Settings → Access Tokens "
+                "and generate a token with 'Read' scope."
+            ),
+            es=(
+                "Token de acceso de lectura de Hugging Face necesario para descargar "
+                "estos modelos protegidos. Para obtenerlo: acepte la licencia del "
+                "modelo en huggingface.co/stabilityai, luego vaya a "
+                "Configuración → Tokens de Acceso y genere un token con alcance "
+                "'Read'."
+            ),
         ),
         alias=MultilingualString(en="Hugging Face key", es="Clave Hugging Face"),
     )  # type: ignore
@@ -54,8 +79,16 @@ class StableDiffusionSchema(BaseSchema):
             string_field(),
             placeholder="",
             description=MultilingualString(
-                en="Text prompt for elements to avoid in the image.",
-                es="Prompt de texto para elementos a evitar en la imagen.",
+                en=(
+                    "Text describing what to exclude from the generated image. "
+                    "Common values: 'blurry, low quality, distorted, watermark'. "
+                    "Leave empty to skip negative conditioning."
+                ),
+                es=(
+                    "Texto que describe qué excluir de la imagen generada. "
+                    "Valores comunes: 'borroso, baja calidad, distorsionado, marca de agua'. "
+                    "Dejar vacío para omitir el condicionamiento negativo."
+                ),
             ),
             alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
         )  # type: ignore
@@ -66,12 +99,17 @@ class StableDiffusionSchema(BaseSchema):
         placeholder=15,
         description=MultilingualString(
             en=(
-                "Number of denoising steps. Higher usually leads to better quality "
-                "but slower inference."
+                "Number of denoising steps to run. More steps refine the image but "
+                "increase generation time. Typical range: 20–40 for standard models; "
+                "use only 4–8 steps with 'large-turbo'. Values above 50 rarely "
+                "improve output for SD3/SD3.5."
             ),
             es=(
-                "Número de pasos de eliminación de ruido. Más alto generalmente "
-                "lleva a mejor calidad pero inferencia más lenta."
+                "Número de pasos de eliminación de ruido a ejecutar. Más pasos "
+                "refinan la imagen pero aumentan el tiempo de generación. Rango "
+                "típico: 20–40 para modelos estándar; use solo 4–8 pasos con "
+                "'large-turbo'. Valores superiores a 50 raramente mejoran el "
+                "resultado en SD3/SD3.5."
             ),
         ),
         alias=MultilingualString(
@@ -84,12 +122,18 @@ class StableDiffusionSchema(BaseSchema):
         placeholder=3.5,
         description=MultilingualString(
             en=(
-                "How strongly the model follows the prompt. Higher = closer to "
-                "prompt, but may reduce image quality."
+                "Classifier-Free Guidance (CFG) scale. Controls how strictly the "
+                "image follows the text prompt. SD3.5 works well at 3.5–4.5. "
+                "The 'large-turbo' variant is designed for guidance_scale=1 "
+                "(no CFG). Higher values enforce the prompt but may introduce "
+                "oversaturation or artifacts."
             ),
             es=(
-                "Qué tan fuertemente el modelo sigue el prompt. Mayor = más cercano "
-                "al prompt, pero puede reducir la calidad de imagen."
+                "Escala de Classifier-Free Guidance (CFG). Controla qué tan "
+                "estrictamente la imagen sigue el prompt. SD3.5 funciona bien con "
+                "3.5–4.5. La variante 'large-turbo' está diseñada para "
+                "guidance_scale=1 (sin CFG). Valores más altos refuerzan el prompt "
+                "pero pueden introducir sobresaturación o artefactos."
             ),
         ),
         alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
@@ -99,8 +143,18 @@ class StableDiffusionSchema(BaseSchema):
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
         description=MultilingualString(
-            en="Device for generation. Use 'cuda' if GPU is available.",
-            es="Dispositivo para generación. Use 'cuda' si GPU está disponible.",
+            en=(
+                "Hardware device for inference. Select a GPU option for hardware "
+                "acceleration, which is strongly recommended for diffusion models. "
+                "Select 'CPU' on systems without a compatible GPU, but expect "
+                "significantly longer generation times."
+            ),
+            es=(
+                "Dispositivo de hardware para la inferencia. Seleccione una opción "
+                "de GPU para aceleración por hardware, muy recomendado para modelos "
+                "de difusión. Seleccione 'CPU' en sistemas sin GPU compatible, pero "
+                "espere tiempos de generación significativamente más largos."
+            ),
         ),
         alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
@@ -109,10 +163,16 @@ class StableDiffusionSchema(BaseSchema):
         int_field(),
         placeholder=-1,
         description=MultilingualString(
-            en=("Random seed for reproducibility. Use negative value for random seed."),
+            en=(
+                "Random seed for reproducible generation. A fixed positive integer "
+                "will always produce the same image for identical settings. "
+                "Use a negative value (e.g. -1) for a random seed on each run."
+            ),
             es=(
-                "Semilla aleatoria para reproducibilidad. Use valor negativo para "
-                "semilla aleatoria."
+                "Semilla aleatoria para generación reproducible. Un entero positivo "
+                "fijo siempre producirá la misma imagen con configuraciones idénticas. "
+                "Use un valor negativo (ej. -1) para una semilla aleatoria en cada "
+                "ejecución."
             ),
         ),
         alias=MultilingualString(en="Seed", es="Semilla"),
@@ -122,8 +182,16 @@ class StableDiffusionSchema(BaseSchema):
         int_field(ge=64, le=2048),
         placeholder=512,
         description=MultilingualString(
-            en="Width of the generated image. Must be a multiple of 8.",
-            es="Ancho de la imagen generada. Debe ser múltiplo de 8.",
+            en=(
+                "Width of the output image in pixels. Must be a multiple of 8. "
+                "SD3/SD3.5 models are natively trained at 1024×1024 px; using "
+                "that resolution yields the best quality."
+            ),
+            es=(
+                "Ancho de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
+                "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024×1024 px; "
+                "usar esa resolución produce la mejor calidad."
+            ),
         ),
         alias=MultilingualString(en="Width", es="Ancho"),
     )  # type: ignore
@@ -132,8 +200,16 @@ class StableDiffusionSchema(BaseSchema):
         int_field(ge=64, le=2048),
         placeholder=512,
         description=MultilingualString(
-            en="Height of the generated image. Must be a multiple of 8.",
-            es="Altura de la imagen generada. Debe ser múltiplo de 8.",
+            en=(
+                "Height of the output image in pixels. Must be a multiple of 8. "
+                "SD3/SD3.5 models are natively trained at 1024×1024 px; using "
+                "that resolution yields the best quality."
+            ),
+            es=(
+                "Altura de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
+                "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024×1024 px; "
+                "usar esa resolución produce la mejor calidad."
+            ),
         ),
         alias=MultilingualString(en="Height", es="Altura"),
     )  # type: ignore
@@ -142,8 +218,16 @@ class StableDiffusionSchema(BaseSchema):
         int_field(ge=1),
         placeholder=1,
         description=MultilingualString(
-            en="Number of images to generate per prompt.",
-            es="Número de imágenes a generar por prompt.",
+            en=(
+                "How many images to generate from a single prompt in one batch. "
+                "Increasing this value is more efficient than running multiple "
+                "sessions, but requires proportionally more GPU memory."
+            ),
+            es=(
+                "Cuántas imágenes generar desde un solo prompt en un lote. "
+                "Aumentar este valor es más eficiente que ejecutar varias sesiones, "
+                "pero requiere proporcionalmente más memoria GPU."
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt", es="Número de imágenes por prompt"

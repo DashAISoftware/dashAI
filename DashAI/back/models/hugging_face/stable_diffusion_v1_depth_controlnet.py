@@ -28,12 +28,15 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
         placeholder=15,
         description=MultilingualString(
             en=(
-                "Number of denoising steps. Higher usually leads to better quality "
-                "but slower inference."
+                "Number of denoising steps to run. More steps refine the image but "
+                "increase generation time. Typical range: 20–30 for fast results, "
+                "40–50 for higher quality. Values above 100 rarely improve output."
             ),
             es=(
-                "Número de pasos de eliminación de ruido. Más alto generalmente "
-                "lleva a mejor calidad pero inferencia más lenta."
+                "Número de pasos de eliminación de ruido a ejecutar. Más pasos "
+                "refinan la imagen pero aumentan el tiempo de generación. Rango "
+                "típico: 20–30 para resultados rápidos, 40–50 para mayor calidad. "
+                "Valores superiores a 100 raramente mejoran el resultado."
             ),
         ),
         alias=MultilingualString(
@@ -46,12 +49,19 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
         placeholder=1.0,
         description=MultilingualString(
             en=(
-                "Scale for the ControlNet conditioning. Higher values make the model "
-                "follow the controlnet more closely."
+                "Weight of the ControlNet depth conditioning relative to the base "
+                "diffusion pipeline. Valid range is 0.0–2.0. At 0.0 the depth map "
+                "has no effect; at 1.0 (default) the output closely follows the "
+                "input image structure; above 1.5 the depth constraint dominates "
+                "and may produce overly rigid results."
             ),
             es=(
-                "Escala para el condicionamiento de ControlNet. Valores más altos "
-                "hacen que el modelo siga el controlnet más de cerca."
+                "Peso del condicionamiento de profundidad ControlNet relativo al "
+                "pipeline de difusión base. Rango válido: 0.0–2.0. En 0.0 el mapa "
+                "de profundidad no tiene efecto; en 1.0 (por defecto) la salida "
+                "sigue de cerca la estructura de la imagen de entrada; por encima "
+                "de 1.5 la restricción de profundidad domina y puede producir "
+                "resultados demasiado rígidos."
             ),
         ),
         alias=MultilingualString(
@@ -64,8 +74,18 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
         description=MultilingualString(
-            en="Device for generation. Use 'cuda' if GPU is available.",
-            es="Dispositivo para generación. Use 'cuda' si GPU está disponible.",
+            en=(
+                "Hardware device for inference. Select a GPU option for hardware "
+                "acceleration, which is strongly recommended for diffusion models. "
+                "Select 'CPU' on systems without a compatible GPU, but expect "
+                "significantly longer generation times."
+            ),
+            es=(
+                "Dispositivo de hardware para la inferencia. Seleccione una opción "
+                "de GPU para aceleración por hardware, muy recomendado para modelos "
+                "de difusión. Seleccione 'CPU' en sistemas sin GPU compatible, pero "
+                "espere tiempos de generación significativamente más largos."
+            ),
         ),
         alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
