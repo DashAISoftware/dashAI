@@ -86,7 +86,8 @@ class StableDiffusionSchema(BaseSchema):
                 ),
                 es=(
                     "Texto que describe qué excluir de la imagen generada. "
-                    "Valores comunes: 'borroso, baja calidad, distorsionado, marca de agua'. "
+                    "Valores comunes: 'borroso, baja calidad, distorsionado, "
+                    "marca de agua'. "
                     "Dejar vacío para omitir el condicionamiento negativo."
                 ),
             ),

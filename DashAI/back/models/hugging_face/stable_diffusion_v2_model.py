@@ -36,13 +36,16 @@ class StableDiffusionSchema(BaseSchema):
                 "The specific Stable Diffusion 2.x checkpoint to load. "
                 "The '-base' variants are trained at 512×512 px and are faster; "
                 "the non-base variants target 768×768 px and produce sharper detail. "
-                "The '2-1' variants are fine-tuned further and generally outperform '2'."
+                "The '2-1' variants are fine-tuned further "
+                "and generally outperform '2'."
             ),
             es=(
                 "El checkpoint específico de Stable Diffusion 2.x a cargar. "
                 "Las variantes '-base' se entrenan a 512×512 px y son más rápidas; "
-                "las variantes sin '-base' apuntan a 768×768 px y producen mayor detalle. "
-                "Las variantes '2-1' están más ajustadas y generalmente superan a '2'."
+                "las variantes sin '-base' apuntan a 768×768 px "
+                "y producen mayor detalle. "
+                "Las variantes '2-1' están más ajustadas "
+                "y generalmente superan a '2'."
             ),
         ),
         alias=MultilingualString(en="Model name", es="Nombre del modelo"),
@@ -60,8 +63,9 @@ class StableDiffusionSchema(BaseSchema):
                 ),
                 es=(
                     "Texto que describe qué excluir de la imagen generada. "
-                    "Valores comunes: 'borroso, baja calidad, distorsionado, marca de agua'. "
-                    "Dejar vacío para omitir el condicionamiento negativo."
+                    "Valores comunes: 'borroso, baja calidad, distorsionado, "
+                    "marca de agua'. Dejar vacío para omitir "
+                    "el condicionamiento negativo."
                 ),
             ),
             alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
@@ -220,7 +224,8 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "Stable Diffusion 2.x is a latent diffusion model by Stability AI for "
             "high-resolution text-to-image generation. It uses a U-Net denoiser "
             "conditioned on CLIP text embeddings and a variational autoencoder (VAE) "
-            "to produce detailed images from text prompts. Supports stable-diffusion-2, "
+            "to produce detailed images from text prompts. "
+            "Supports stable-diffusion-2, "
             "stable-diffusion-2-base, stable-diffusion-2-1, and "
             "stable-diffusion-2-1-base variants. Models are available at "
             "https://huggingface.co/stabilityai."
