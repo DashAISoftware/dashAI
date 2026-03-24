@@ -1,9 +1,6 @@
-import json
 import logging
-import os
-import tempfile
 from datetime import datetime, timezone
-from urllib.parse import unquote_plus  # NOTE: plus -> space
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi.exceptions import HTTPException
@@ -12,11 +9,13 @@ from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import FileTarget, ValueTarget
 from streaming_form_data.validators import MaxSizeValidator
 
-from DashAI.back.dependencies.database.utils import find_entity_by_huey_id
-from DashAI.back.dependencies.job_queues import BaseJobQueue
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import JobError
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.job_queues import BaseJobQueue
+    from DashAI.back.dependencies.registry import ComponentRegistry
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ router = APIRouter()
 @router.get("/is_empty")
 @inject
 async def is_queue_empty(
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """
     Check if the job queue is empty.
@@ -49,11 +48,13 @@ async def get_job_changes(
         default="1970-01-01 00:00:00.000000",
         description="UTC ISO8601 or 'YYYY-MM-DD HH:MM:SS[.ffffff]'",
     ),
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """
     Get jobs that have changed since the given timestamp (UTC).
     """
+    from urllib.parse import unquote_plus
+
     try:
         since_decoded = unquote_plus(since)
 
@@ -91,7 +92,7 @@ async def get_job_changes(
 @inject
 async def get_job_status(
     task_id: str,
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Get status of a specific job."""
     try:
@@ -107,7 +108,7 @@ async def get_job_status(
 @inject
 async def get_job(
     job_id: str,
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Return the selected job from the job queue."""
     try:
@@ -122,7 +123,7 @@ async def get_job(
 @router.get("/")
 @inject
 async def get_jobs(
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """
     Get all jobs from the queue.
@@ -140,11 +141,13 @@ async def get_jobs(
 @router.get("/{job_id}/details")
 @inject
 async def get_job_details(
-    job_id: str, job_queue: BaseJobQueue = Depends(lambda: di["job_queue"])
+    job_id: str, job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"])
 ):
     """
     Get detailed information about a job, including its associated entity.
     """
+    from DashAI.back.dependencies.database.utils import find_entity_by_huey_id
+
     try:
         entity_info = find_entity_by_huey_id(job_id)
         if not entity_info:
@@ -167,10 +170,14 @@ async def get_job_details(
 @inject
 async def enqueue_job(
     request: Request,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Create a runner job and put it in the job queue."""
+    import json
+    import os
+    import tempfile
+
     try:
         logger.debug("Starting job enqueue process")
         MAX_FILE_SIZE = 4 * 1024**3  # 4GB
@@ -266,7 +273,7 @@ async def enqueue_job(
 @router.delete("/all")
 @inject
 async def cancel_all_jobs(
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Delete all jobs from the job queue."""
     try:
@@ -285,7 +292,7 @@ async def cancel_all_jobs(
 @inject
 async def cancel_job(
     job_id: str,
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Delete the job with id job_id from the job queue."""
     try:

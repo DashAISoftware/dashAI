@@ -1,12 +1,3 @@
-from typing import Tuple, Union
-
-import numpy as np
-import pandas as pd
-import plotly
-import plotly.graph_objs as go
-import shap
-from datasets import DatasetDict
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
@@ -15,9 +6,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
 from DashAI.back.types.categorical import Categorical
 
 
@@ -154,7 +144,7 @@ class KernelShap(BaseLocalExplainer):
 
     def _sample_background_data(
         self,
-        background_data: np.array,
+        background_data,
         background_fraction: float,
         sampling_method: str = "shuffle",
         categorical_features: bool = False,
@@ -186,6 +176,9 @@ class KernelShap(BaseLocalExplainer):
             explainer.
         """
 
+        # Lazy import of shap to avoid heavy imports at module load time
+        import shap
+
         samplers = {"shuffle": shap.sample, "kmeans": shap.kmeans}
 
         n_background_samples = int(background_fraction * background_data.shape[0])
@@ -199,10 +192,10 @@ class KernelShap(BaseLocalExplainer):
 
     def fit(
         self,
-        background_dataset: Tuple[DatasetDict, DatasetDict],
-        sample_background_data: str = "false",
-        background_fraction: Union[float, None] = None,
-        sampling_method: Union[str, None] = None,
+        background_dataset,
+        sample_background_data="false",
+        background_fraction=None,
+        sampling_method=None,
     ):
         """Method to train the KernelShap explainer.
 
@@ -254,6 +247,9 @@ class KernelShap(BaseLocalExplainer):
             )
 
         # TODO: consider the case where the predictor is not a Sklearn model
+        # Lazy import of shap
+        import shap
+
         self.explainer = shap.KernelExplainer(
             model=self.model.predict,
             data=background_data,
@@ -270,7 +266,7 @@ class KernelShap(BaseLocalExplainer):
 
     def explain_instance(
         self,
-        instances: DatasetDict,
+        instances,
     ):
         """Method for explaining the model prediciton of an instance using the Kernel
         Shap method.
@@ -285,6 +281,7 @@ class KernelShap(BaseLocalExplainer):
         dict
             dictionary with the shap values for each instance.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         dataset_dashai = to_dashai_dataset(instances)
 
@@ -298,6 +295,9 @@ class KernelShap(BaseLocalExplainer):
         predictions = self.model.predict(x_pred=dataset_dashai)
 
         # TODO: evaluate args nsamples y l1_reg
+        # Lazy import numpy
+        import numpy as np
+
         shap_values = self.explainer.shap_values(X=X)
 
         # shap_values has size (n_instances, n_features, n_classes)
@@ -321,7 +321,7 @@ class KernelShap(BaseLocalExplainer):
         return explanation
 
     def _create_plot(
-        self, data: pd.DataFrame, base_value: float, y_pred_pbb: float, y_pred_name: str
+        self, data, base_value: float, y_pred_pbb: float, y_pred_name: str
     ):
         """Helper method to create the explanation plot using plotly.
 
@@ -341,6 +341,11 @@ class KernelShap(BaseLocalExplainer):
             JSON containing the information of the explanation plot
             to be rendered.
         """
+        # Lazy imports
+        import numpy as np
+        import plotly
+        import plotly.graph_objs as go
+
         x = data["shap_values"].to_numpy()
         y = data["label"].to_numpy()
         measure = np.repeat("relative", len(y))
@@ -426,6 +431,10 @@ class KernelShap(BaseLocalExplainer):
         target_names = metadata["target_names"]
 
         # Normaliza feature_names a 1D
+        # Lazy import heavy libs
+        import numpy as np
+        import pandas as pd
+
         feats = np.asarray(feature_names, dtype=str).reshape(-1)
 
         plots = []
@@ -449,6 +458,7 @@ class KernelShap(BaseLocalExplainer):
 
             # 2) Intenta extraer del objeto shap.Explanation si aplica
             try:
+                # Lazy import of shap Explanation type only if available
                 from shap._explanation import Explanation
 
                 if isinstance(sv, Explanation):

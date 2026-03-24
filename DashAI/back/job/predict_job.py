@@ -1,26 +1,22 @@
 import logging
-import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-import numpy as np
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
-from kink import inject
+from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    load_dataset,
-    save_dataset,
-    to_dashai_dataset,
-)
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -29,11 +25,13 @@ log = logging.getLogger(__name__)
 def _run_prediction_pipeline(
     task: BaseTask,
     trained_model: BaseModel,
-    train_dataset: DashAIDataset,
-    loaded_dataset: DashAIDataset,
+    train_dataset: "DashAIDataset",
+    loaded_dataset: "DashAIDataset",
     model_session: ModelSession,
-) -> Tuple[DashAIDataset, Any]:
+) -> Tuple["DashAIDataset", Any]:
     """Run shared prediction steps from prepared input data to final predictions."""
+    import numpy as np
+
     prepared_dataset = loaded_dataset.select_columns(model_session.input_columns)
     y_pred_proba = np.array(trained_model.predict(prepared_dataset))
     y_pred = task.process_predictions(
@@ -43,7 +41,7 @@ def _run_prediction_pipeline(
 
 
 def _build_preview_rows(
-    prepared_dataset: DashAIDataset,
+    prepared_dataset: "DashAIDataset",
     input_columns: List[str],
     output_col: str,
     y_pred: Any,
@@ -67,7 +65,7 @@ def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
     component_registry: Any,
-    session_factory: sessionmaker,
+    session_factory: "sessionmaker",
 ) -> Tuple[List[str], List[List]]:
     """Execute a manual prediction synchronously without persisting results.
 
@@ -94,6 +92,7 @@ def run_manual_prediction(
         On missing run, model session, or prediction failure.
     """
     with session_factory() as db:
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
         from DashAI.back.dependencies.database.models import Run
 
         run = db.get(Run, run_id)
@@ -156,7 +155,7 @@ def run_manual_prediction(
             ) from e
 
         try:
-            train_dataset: DashAIDataset = load_dataset(
+            train_dataset: "DashAIDataset" = load_dataset(
                 str(Path(f"{dataset_trained.file_path}/dataset/"))
             )
         except Exception as e:
@@ -167,7 +166,7 @@ def run_manual_prediction(
 
         try:
             dataset_trained_path = str(Path(f"{dataset_trained.file_path}/dataset/"))
-            loaded_dataset: DashAIDataset = task.process_manual_input(
+            loaded_dataset: "DashAIDataset" = task.process_manual_input(
                 manual_input_data, dataset_trained_path
             )
             prepared_dataset, y_pred = _run_prediction_pipeline(
@@ -202,7 +201,7 @@ class PredictJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         prediction_id = self.kwargs.get("prediction_id")
@@ -220,7 +219,7 @@ class PredictJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the prediction job as error."""
         prediction_id = self.kwargs.get("prediction_id")
@@ -243,8 +242,6 @@ class PredictJob(BaseJob):
         dataset_id = self.kwargs.get("dataset_id")
 
         if prediction_id:
-            from kink import di
-
             session_factory = di["session_factory"]
 
             try:
@@ -262,7 +259,14 @@ class PredictJob(BaseJob):
     def run(
         self,
     ) -> List[Any]:
-        from kink import di
+        import uuid
+        from pathlib import Path
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            save_dataset,
+            to_dashai_dataset,
+        )
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
@@ -379,7 +383,7 @@ class PredictJob(BaseJob):
             # Load Dataset and make Predictions
             try:
                 # Load training dataset for type info and label processing
-                train_dataset: DashAIDataset = load_dataset(
+                train_dataset: "DashAIDataset" = load_dataset(
                     str(Path(f"{dataset_trained.file_path}/dataset/"))
                 )
             except Exception as e:
@@ -392,7 +396,7 @@ class PredictJob(BaseJob):
             try:
                 # Load or create prediction dataset
                 if dataset_id:
-                    loaded_dataset: DashAIDataset = load_dataset(
+                    loaded_dataset: "DashAIDataset" = load_dataset(
                         str(Path(f"{dataset.file_path}/dataset/"))
                     )
                 else:

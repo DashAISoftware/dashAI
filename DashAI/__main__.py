@@ -19,6 +19,21 @@ from typing_extensions import Annotated
 
 from DashAI.back.core.enums.logging_levels import LoggingLevel
 
+print()
+print("  ╔═══════════════════════════════════════════════════════╗")
+print("  ║                                                       ║")
+print("  ║   ██████╗   █████╗  ███████╗ ██╗  ██╗  █████╗  ██╗    ║")
+print("  ║   ██╔══██╗ ██╔══██╗ ██╔════╝ ██║  ██║ ██╔══██╗ ██║    ║")
+print("  ║   ██║  ██║ ███████║ ███████╗ ███████║ ███████║ ██║    ║")
+print("  ║   ██║  ██║ ██╔══██║ ╚════██║ ██╔══██║ ██╔══██║ ██║    ║")
+print("  ║   ██████╔╝ ██║  ██║ ███████║ ██║  ██║ ██║  ██║ ██║    ║")
+print("  ║   ╚═════╝  ╚═╝  ╚═╝ ╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝    ║")
+print("  ║                                                       ║")
+print("  ║   Loading application, please wait...                 ║")
+print("  ║                                                       ║")
+print("  ╚═══════════════════════════════════════════════════════╝")
+print()
+
 
 def open_browser() -> None:
     _wait_for_backend_server(timeout=120)

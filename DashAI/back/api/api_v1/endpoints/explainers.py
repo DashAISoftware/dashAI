@@ -1,12 +1,10 @@
 import logging
-import os
-import pickle
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.explainers_params import (
     GlobalExplainerParams,
@@ -14,7 +12,6 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     ValidateDatasetParams,
 )
 from DashAI.back.core.enums.status import ExplainerStatus
-from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import (
     Dataset,
     GlobalExplainer,
@@ -22,7 +19,9 @@ from DashAI.back.dependencies.database.models import (
     ModelSession,
     Run,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ router = APIRouter()
 @inject
 async def get_global_explainers(
     run_id: int = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the global explainers in the database.
 
@@ -82,8 +81,7 @@ async def get_global_explainers(
 @inject
 async def get_global_explanation(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the global explanation associated with id explainer_id.
 
@@ -106,6 +104,8 @@ async def get_global_explanation(
         If there is no global explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             global_explainer = db.scalars(
@@ -143,8 +143,7 @@ async def get_global_explanation(
 @inject
 async def get_global_explanation_plot(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the global explanation plot associated with id explainer_id.
 
@@ -167,6 +166,8 @@ async def get_global_explanation_plot(
         If there is no global explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             global_explainer = db.scalars(
@@ -204,7 +205,7 @@ async def get_global_explanation_plot(
 @inject
 async def upload_global_explainer(
     params: GlobalExplainerParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Endpoint to create a global explainer
 
@@ -265,7 +266,7 @@ async def upload_global_explainer(
 @inject
 async def delete_global_explainer(
     explainer_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the global explainer with id explanation_id from the database and its
     associated explanation file.
@@ -283,6 +284,8 @@ async def delete_global_explainer(
     HTTPException
         If the global explanation with id explanation_id is not registered in the DB.
     """
+    import os
+
     with session_factory() as db:
         try:
             global_explainer = db.get(GlobalExplainer, explainer_id)
@@ -313,7 +316,7 @@ async def delete_global_explainer(
 @inject
 async def get_local_explainers(
     run_id: int = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the local explainers in the database.
 
@@ -361,8 +364,7 @@ async def get_local_explainers(
 @inject
 async def get_local_explanation(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the local explanation associated with id explainer_id.
 
@@ -385,6 +387,8 @@ async def get_local_explanation(
         If there is no local explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             local_explainer = db.scalars(
@@ -422,8 +426,7 @@ async def get_local_explanation(
 @inject
 async def get_local_explanation_plot(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the local explanation plot associated with id explainer_id.
 
@@ -446,6 +449,8 @@ async def get_local_explanation_plot(
         If there is no local explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             local_explainer = db.scalars(
@@ -483,7 +488,7 @@ async def get_local_explanation_plot(
 @inject
 async def upload_local_explainer(
     params: LocalExplainerParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Endpoint to create a local explainer
 
@@ -551,7 +556,7 @@ async def upload_local_explainer(
 @inject
 async def delete_local_explainer(
     explainer_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Deletes the local explainer with id explanation_id from the database and its
     associated explanation file.
@@ -569,6 +574,8 @@ async def delete_local_explainer(
     HTTPException
         If the local explanation with id explanation_id is not registered in the DB.
     """
+    import os
+
     with session_factory() as db:
         try:
             local_explainer = db.get(LocalExplainer, explainer_id)
@@ -613,9 +620,10 @@ async def update_explainer() -> None:
 @inject
 async def validate_dataset(
     params: ValidateDatasetParams,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
+    from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
+
     with session_factory() as db:
         try:
             run: Run = db.get(Run, params.run_id)

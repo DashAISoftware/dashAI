@@ -1,5 +1,4 @@
-import numpy as np
-import pyarrow as pa
+from typing import TYPE_CHECKING
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
@@ -7,10 +6,6 @@ from DashAI.back.converters.category.basic_preprocessing import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Text
@@ -28,6 +23,9 @@ NULL_VALUES = {
     "nil",
     ".",
 }
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class NanRemoverSchema(BaseSchema):
@@ -70,7 +68,7 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         self.columns = []
         self.column_types = {}
 
-    def fit(self, x: DashAIDataset, y: DashAIDataset = None) -> "NanRemover":
+    def fit(self, x: "DashAIDataset", y: "DashAIDataset" = None) -> "NanRemover":
         """
         Fit the NaN remover.
 
@@ -83,6 +81,8 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
 
     def _is_null_value(self, value) -> bool:
         """Check if a value should be treated as null."""
+        import numpy as np
+
         if value is None:
             return True
         if isinstance(value, float) and np.isnan(value):
@@ -90,11 +90,17 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         value_str = str(value).lower().strip()
         return value_str in NULL_VALUES
 
-    def transform(self, x: DashAIDataset, y: DashAIDataset = None) -> DashAIDataset:
+    def transform(
+        self, x: "DashAIDataset", y: "DashAIDataset" = None
+    ) -> "DashAIDataset":
         """
         Remove the nan rows from the columns selected in the scope.
         Also handles string representations of null values like "None", "nan", etc.
         """
+        import numpy as np
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         missing = [col for col in self.columns if col not in x.column_names]
         if missing:
             raise ValueError(
@@ -141,6 +147,8 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         This converter removes rows with NaN, doesn't change column types.
         Return the original type if available.
         """
+        import pyarrow as pa
+
         if column_name and column_name in self.column_types:
             return self.column_types[column_name]
         return Text(arrow_type=pa.string())

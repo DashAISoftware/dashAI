@@ -1,11 +1,10 @@
 import logging
 from datetime import datetime
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
@@ -16,9 +15,12 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSessionParameterHistory,
     ProcessData,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models import BaseGenerativeModel
-from DashAI.back.tasks import BaseGenerativeTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -27,10 +29,13 @@ log = logging.getLogger(__name__)
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_generative_session(
     params: GenerativeSessionParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Create a new generative session and log the initial parameters in the history."""
+    from DashAI.back.models.base_generative_model import BaseGenerativeModel
+    from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+
     with session_factory() as db:
         try:
             # Check if the model is registered
@@ -116,7 +121,7 @@ async def upload_generative_session(
 @router.get("/{session_id}", status_code=status.HTTP_200_OK)
 async def get_generative_session(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a generative session by its ID.
 
@@ -159,7 +164,7 @@ async def get_generative_session(
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get all generative sessions ordered by creation date.
 
@@ -215,7 +220,7 @@ async def get_all_generative_sessions(
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_generative_session(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete a generative session by its ID.
 
@@ -295,7 +300,7 @@ async def update_generative_session(
     session_id: int,
     name: Union[str, None] = None,
     description: Union[str, None] = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the generative session associated with the provided ID.
 
@@ -390,7 +395,7 @@ async def update_generative_session(
 async def update_generative_session_params(
     session_id: int,
     new_params: dict,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the parameters of a generative session and log the change.
 
@@ -451,7 +456,7 @@ async def update_generative_session_params(
 @router.get("/{session_id}/parameters-history", status_code=status.HTTP_200_OK)
 async def get_generative_session_parameters_history(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Get all parameter history entries for a generative session.
@@ -513,7 +518,7 @@ async def get_generative_session_parameters_history(
 @router.get("/parameters-history/{session_id}", status_code=status.HTTP_200_OK)
 async def get_parameter_history_entry(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Get history entry for a generative session by its ID.

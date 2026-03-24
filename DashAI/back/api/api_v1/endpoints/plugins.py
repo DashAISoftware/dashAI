@@ -1,11 +1,10 @@
 import logging
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.plugin_params import (
     PluginParams,
@@ -13,21 +12,14 @@ from DashAI.back.api.api_v1.schemas.plugin_params import (
 )
 from DashAI.back.core.enums.status import PluginStatus
 from DashAI.back.dependencies.database.models import Plugin, Tag
-from DashAI.back.dependencies.database.utils import (
-    add_plugin_to_db,
-    upgrade_plugin_info_in_db,
-)
-from DashAI.back.dependencies.job_queues import BaseJobQueue
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.sync_components_job import SyncComponentsJob
-from DashAI.back.plugins.utils import (
-    get_plugin_by_name_from_pypi,
-    get_plugins_from_pypi,
-    install_plugin,
-    register_plugin_components,
-    uninstall_plugin,
-    unregister_plugin_components,
-)
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.job_queues import BaseJobQueue
+    from DashAI.back.dependencies.registry import ComponentRegistry
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -38,7 +30,7 @@ router = APIRouter()
 @router.get("/")
 @inject
 async def get_plugins(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     tags: Optional[List[str]] = Query(None),
     plugin_status: Optional[str] = Query(None),
 ):
@@ -85,7 +77,7 @@ async def get_plugins(
 @inject
 async def get_plugin(
     plugin_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve the plugin associated with the provided ID.
 
@@ -135,6 +127,8 @@ async def upload_plugin(params: List[PluginParams]):
     List[Plugin]
         A list with the created plugins.
     """
+    from DashAI.back.dependencies.database.utils import add_plugin_to_db
+
     try:
         plugins = [add_plugin_to_db(param) for param in params]
         return plugins
@@ -158,6 +152,9 @@ async def refresh_plugins_record():
     List[Plugin]
         A list with the created plugins.
     """
+    from DashAI.back.dependencies.database.utils import add_plugin_to_db
+    from DashAI.back.plugins.utils import get_plugins_from_pypi
+
     plugins_params = [
         PluginParams.model_validate(raw_plugin)
         for raw_plugin in get_plugins_from_pypi()
@@ -177,7 +174,7 @@ async def refresh_plugins_record():
 @inject
 async def delete_plugin(
     plugin_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the plugin associated with the provided ID from the database.
 
@@ -223,9 +220,9 @@ async def delete_plugin(
 async def update_plugin(
     plugin_id: int,
     params: PluginUpdateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Updates the status of a plugin with the provided ID.
 
@@ -246,6 +243,13 @@ async def update_plugin(
     Plugin
         The updated plugin.
     """
+    from DashAI.back.plugins.utils import (
+        install_plugin,
+        register_plugin_components,
+        uninstall_plugin,
+        unregister_plugin_components,
+    )
+
     with session_factory() as db:
         try:
             plugin = db.get(Plugin, plugin_id)
@@ -299,9 +303,9 @@ async def update_plugin(
 @inject
 async def upgrade_plugin(
     plugin_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """
     Upgrade the plugin version prvided in pyPI.
@@ -321,6 +325,15 @@ async def upgrade_plugin(
     Plugin
         The updated plugin.
     """
+    from DashAI.back.dependencies.database.utils import upgrade_plugin_info_in_db
+    from DashAI.back.plugins.utils import (
+        get_plugin_by_name_from_pypi,
+        install_plugin,
+        register_plugin_components,
+        uninstall_plugin,
+        unregister_plugin_components,
+    )
+
     with session_factory() as db:
         try:
             plugin = db.get(Plugin, plugin_id)
