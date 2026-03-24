@@ -19,8 +19,7 @@ import {
 } from "@mui/icons-material";
 import ExplainersCard from "../explainers/ExplanainersCard";
 import PredictionCard from "./PredictionCard";
-import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
-import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import InlineExplainerCreator from "../explainers/InlineExplainerCreator";
 import DatasetPredictionPanel from "./DatasetPredictionPanel";
 import ManualPredictionPanel from "./ManualPredictionPanel";
 import LiveMetricsChart from "./LiveMetricsChart";
@@ -29,6 +28,8 @@ import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
 import { checkHowManyOptimazers } from "../../utils/schema";
 import { useTranslation } from "react-i18next";
+import TimestampWrapper from "../shared/TimestampWrapper";
+import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
 export default function RunResults({
   run,
@@ -48,15 +49,15 @@ export default function RunResults({
     return saved ? JSON.parse(saved) : 0;
   });
 
-  const [globalDialogOpen, setGlobalDialogOpen] = useState(false);
-  const [localDialogOpen, setLocalDialogOpen] = useState(false);
+  const [globalCreatorOpen, setGlobalCreatorOpen] = useState(false);
+  const [localCreatorOpen, setLocalCreatorOpen] = useState(false);
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const [showManualPanel, setShowManualPanel] = useState(false);
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
   const isRunning = run.status === 1 || run.status === 2;
-  const { t } = useTranslation("models");
+  const { t } = useTranslation(["models", "common"]);
 
   const runId = run.id;
   const fetchOperations = useCallback(async () => {
@@ -221,7 +222,7 @@ export default function RunResults({
         {activeTab === 1 && isFinished && (
           <Box sx={{ py: 2, width: "100%" }}>
             <Grid container spacing={2} alignItems="stretch">
-              <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
@@ -252,15 +253,33 @@ export default function RunResults({
                     </Box>
                   </Box>
                   <Stack spacing={2}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={() => setGlobalDialogOpen(true)}
-                      fullWidth
-                    >
-                      {t("models:button.createGlobalExplainer")}
-                    </Button>
+                    <Box sx={{ width: "100%" }}>
+                      <TimestampWrapper
+                        eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => setGlobalCreatorOpen((prev) => !prev)}
+                          fullWidth
+                        >
+                          {globalCreatorOpen
+                            ? t("common:cancel")
+                            : t("models:button.createGlobalExplainer")}
+                        </Button>
+                      </TimestampWrapper>
+                    </Box>
+                    <InlineExplainerCreator
+                      open={globalCreatorOpen}
+                      scope="global"
+                      explainerConfig={{
+                        runId: run.id,
+                        taskName: session?.task_name,
+                      }}
+                      onCreated={handleExplainerCreated}
+                      onCancel={() => setGlobalCreatorOpen(false)}
+                    />
                     {globalExplainers.length === 0 ? (
                       <Typography
                         variant="body2"
@@ -285,7 +304,7 @@ export default function RunResults({
                 </Box>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
@@ -316,15 +335,33 @@ export default function RunResults({
                     </Box>
                   </Box>
                   <Stack spacing={2}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={() => setLocalDialogOpen(true)}
-                      fullWidth
-                    >
-                      {t("models:button.createLocalExplainer")}
-                    </Button>
+                    <Box sx={{ width: "100%" }}>
+                      <TimestampWrapper
+                        eventName={TIMESTAMP_KEYS.explainer.configureLocal}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => setLocalCreatorOpen((prev) => !prev)}
+                          fullWidth
+                        >
+                          {localCreatorOpen
+                            ? t("common:cancel")
+                            : t("models:button.createLocalExplainer")}
+                        </Button>
+                      </TimestampWrapper>
+                    </Box>
+                    <InlineExplainerCreator
+                      open={localCreatorOpen}
+                      scope="local"
+                      explainerConfig={{
+                        runId: run.id,
+                        taskName: session?.task_name,
+                      }}
+                      onCreated={handleExplainerCreated}
+                      onCancel={() => setLocalCreatorOpen(false)}
+                    />
                     {localExplainers.length === 0 ? (
                       <Typography
                         variant="body2"
@@ -355,7 +392,7 @@ export default function RunResults({
         {activeTab === 2 && isFinished && (
           <Box sx={{ py: 2 }}>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
@@ -444,7 +481,7 @@ export default function RunResults({
                 </Box>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
@@ -542,27 +579,6 @@ export default function RunResults({
           </Box>
         )}
       </Collapse>
-
-      <NewGlobalExplainerModal
-        open={globalDialogOpen}
-        setOpen={setGlobalDialogOpen}
-        explainerConfig={{
-          runId: run.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={handleExplainerCreated}
-      />
-
-      <NewLocalExplainerModal
-        open={localDialogOpen}
-        setOpen={setLocalDialogOpen}
-        explainerConfig={{
-          runId: run.id,
-          sessionId: session?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={handleExplainerCreated}
-      />
     </Box>
   );
 }
