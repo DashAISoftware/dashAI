@@ -105,15 +105,36 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
     diffusion xl 1.0 as pipeline."""
 
     SCHEMA = StableDiffusionXLV1ControlNetSchema
+    COLOR: str = "#e65100"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL V1 ControlNet",
         es="Stable Diffusion XL V1 ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
-        en="ControlNet with depth preprocessing and Stable Diffusion XL pipeline.",
+        en=(
+            "Combines ControlNet depth conditioning with the Stable Diffusion XL 1.0 "
+            "pipeline for structure-aware image generation. Takes an input image and "
+            "a text prompt: a depth map is extracted using Intel's DPT-Hybrid-MiDaS "
+            "model, then used as a spatial condition to guide image synthesis. Uses "
+            "diffusers/controlnet-depth-sdxl-1.0-small "
+            "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
+            "madebyollin/sdxl-vae-fp16-fix "
+            "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix), and "
+            "stabilityai/stable-diffusion-xl-base-1.0 "
+            "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
+        ),
         es=(
-            "ControlNet con preprocesamiento de profundidad y pipeline de "
-            "Stable Diffusion XL."
+            "Combina el condicionamiento de profundidad de ControlNet con el pipeline "
+            "de Stable Diffusion XL 1.0 para generación de imágenes con conciencia "
+            "de estructura. Recibe una imagen de entrada y un prompt de texto: se "
+            "extrae un mapa de profundidad usando el modelo DPT-Hybrid-MiDaS de Intel "
+            "y se usa como condición espacial para guiar la síntesis. Utiliza "
+            "diffusers/controlnet-depth-sdxl-1.0-small "
+            "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
+            "madebyollin/sdxl-vae-fp16-fix "
+            "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) y "
+            "stabilityai/stable-diffusion-xl-base-1.0 "
+            "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
         ),
     )
 

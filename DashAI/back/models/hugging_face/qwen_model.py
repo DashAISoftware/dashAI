@@ -118,13 +118,31 @@ class QwenModel(TextToTextGenerationTaskModel):
     """Qwen model for text generation using llama.cpp library."""
 
     SCHEMA = QwenSchema
+    COLOR: str = "#2e7d32"
     DISPLAY_NAME: str = MultilingualString(
         en="Qwen Model",
         es="Modelo Qwen",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Qwen model for text generation using llama.cpp library.",
-        es="Modelo Qwen para generación de texto usando la librería llama.cpp.",
+        en=(
+            "Qwen 2.5 is an instruction-tuned large language model by Alibaba Cloud, "
+            "loaded in GGUF format for efficient CPU and GPU inference via the "
+            "llama.cpp library. It supports multi-turn conversation, reasoning, "
+            "coding, and general text generation. Available in 0.5B and 1.5B "
+            "parameter sizes. Models are available at "
+            "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF and "
+            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF."
+        ),
+        es=(
+            "Qwen 2.5 es un modelo de lenguaje grande ajustado para instrucciones "
+            "por Alibaba Cloud, cargado en formato GGUF para inferencia eficiente en "
+            "CPU y GPU mediante la librería llama.cpp. Soporta conversación "
+            "multi-turno, razonamiento, programación y generación de texto en "
+            "general. Disponible en tamaños de 0.5B y 1.5B parámetros. Los modelos "
+            "están disponibles en "
+            "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF y "
+            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF."
+        ),
     )
 
     def __init__(self, **kwargs):

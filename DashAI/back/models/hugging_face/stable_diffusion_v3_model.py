@@ -155,13 +155,31 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
     """Wrapper model for all Stable Diffusion 3.x models from stability.ai."""
 
     SCHEMA = StableDiffusionSchema
+    COLOR: str = "#6a1b9a"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion V3",
         es="Stable Diffusion V3",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Stable Diffusion 3.x models for text-to-image generation.",
-        es="Modelos Stable Diffusion 3.x para generación de texto a imagen.",
+        en=(
+            "Stable Diffusion 3 and 3.5 are next-generation text-to-image models by "
+            "Stability AI using a Multimodal Diffusion Transformer (MMDiT) "
+            "architecture, offering improved prompt adherence, typography, and image "
+            "quality over previous versions. Supports SD3 Medium, SD3.5 Medium, "
+            "SD3.5 Large, and SD3.5 Large Turbo variants. A Hugging Face API key is "
+            "required to access these gated models. Models are available at "
+            "https://huggingface.co/stabilityai."
+        ),
+        es=(
+            "Stable Diffusion 3 y 3.5 son modelos de texto a imagen de nueva "
+            "generación de Stability AI que utilizan una arquitectura Multimodal "
+            "Diffusion Transformer (MMDiT), ofreciendo mayor fidelidad al prompt, "
+            "tipografía y calidad de imagen respecto a versiones anteriores. Soporta "
+            "las variantes SD3 Medium, SD3.5 Medium, SD3.5 Large y SD3.5 Large "
+            "Turbo. Se requiere una clave API de Hugging Face para acceder a estos "
+            "modelos protegidos. Los modelos están disponibles en "
+            "https://huggingface.co/stabilityai."
+        ),
     )
 
     def __init__(self, **kwargs):

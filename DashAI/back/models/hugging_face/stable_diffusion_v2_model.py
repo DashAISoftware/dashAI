@@ -144,13 +144,30 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     """Wrapper model for all Stable Diffusion 2.x models from stability.ai."""
 
     SCHEMA = StableDiffusionSchema
+    COLOR: str = "#1565c0"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion V2",
         es="Stable Diffusion V2",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Stable Diffusion 2.x models for text-to-image generation.",
-        es="Modelos Stable Diffusion 2.x para generación de texto a imagen.",
+        en=(
+            "Stable Diffusion 2.x is a latent diffusion model by Stability AI for "
+            "high-resolution text-to-image generation. It uses a U-Net denoiser "
+            "conditioned on CLIP text embeddings and a variational autoencoder (VAE) "
+            "to produce detailed images from text prompts. Supports stable-diffusion-2, "
+            "stable-diffusion-2-base, stable-diffusion-2-1, and "
+            "stable-diffusion-2-1-base variants. Models are available at "
+            "https://huggingface.co/stabilityai."
+        ),
+        es=(
+            "Stable Diffusion 2.x es un modelo de difusión latente de Stability AI "
+            "para generación de imágenes de alta resolución a partir de texto. Utiliza "
+            "un denoiser U-Net condicionado en embeddings de texto CLIP y un "
+            "autoencoder variacional (VAE) para producir imágenes detalladas. Soporta "
+            "las variantes stable-diffusion-2, stable-diffusion-2-base, "
+            "stable-diffusion-2-1 y stable-diffusion-2-1-base. Los modelos están "
+            "disponibles en https://huggingface.co/stabilityai."
+        ),
     )
 
     def __init__(self, **kwargs):
