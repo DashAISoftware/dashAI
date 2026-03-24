@@ -92,6 +92,7 @@ def run_manual_prediction(
         On missing run, model session, or prediction failure.
     """
     with session_factory() as db:
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
         from DashAI.back.dependencies.database.models import Run
 
         run = db.get(Run, run_id)
@@ -154,7 +155,7 @@ def run_manual_prediction(
             ) from e
 
         try:
-            train_dataset: DashAIDataset = load_dataset(
+            train_dataset: "DashAIDataset" = load_dataset(
                 str(Path(f"{dataset_trained.file_path}/dataset/"))
             )
         except Exception as e:
@@ -165,7 +166,7 @@ def run_manual_prediction(
 
         try:
             dataset_trained_path = str(Path(f"{dataset_trained.file_path}/dataset/"))
-            loaded_dataset: DashAIDataset = task.process_manual_input(
+            loaded_dataset: "DashAIDataset" = task.process_manual_input(
                 manual_input_data, dataset_trained_path
             )
             prepared_dataset, y_pred = _run_prediction_pipeline(
@@ -260,8 +261,6 @@ class PredictJob(BaseJob):
     ) -> List[Any]:
         import uuid
         from pathlib import Path
-
-        import numpy as np
 
         from DashAI.back.dataloaders.classes.dashai_dataset import (
             load_dataset,

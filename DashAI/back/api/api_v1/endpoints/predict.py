@@ -264,6 +264,8 @@ async def preview_manual_prediction(
     dict
         ``{"columns": [...], "rows": [[...], ...]}``
     """
+    import re
+
     from starlette.datastructures import UploadFile
 
     form = await request.form()
