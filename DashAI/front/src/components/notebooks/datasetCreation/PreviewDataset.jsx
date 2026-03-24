@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
  * @param {function} onPreviewError - Callback function to notify parent of preview errors
  * @param {function} onTypesChanged - Callback to notify parent when column types change
  * @param {function} onColumnRename - Callback to notify parent when columns are renamed (oldName, newName)
+ * @param {function} onPreviewLoaded - Callback to notify parent when preview is loaded
  */
 function PreviewDataset({
   datasetData,
@@ -22,6 +23,7 @@ function PreviewDataset({
   onPreviewError,
   onTypesChanged,
   onColumnRename,
+  onPreviewLoaded,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -41,6 +43,12 @@ function PreviewDataset({
       onPreviewError(!!error);
     }
   }, [error, onPreviewError]);
+
+  useEffect(() => {
+    if (onPreviewLoaded && !loading && !error) {
+      onPreviewLoaded();
+    }
+  }, [loading, error, onPreviewLoaded]);
 
   useEffect(() => {
     const loadPreview = async () => {

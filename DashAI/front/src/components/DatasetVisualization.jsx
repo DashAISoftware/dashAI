@@ -43,7 +43,6 @@ export default function DatasetVisualization({
   onNewItem,
   newItemButtonText = "New Item",
   tourContextType = null,
-  fetchDatasets = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -81,11 +80,22 @@ export default function DatasetVisualization({
   };
 
   useEffect(() => {
-    if (!dataset) return;
-    setTab(0);
+    if (!dataset || dataset.status !== 3) {
+      setDatasetInfo(null);
+      return;
+    }
+
+    const fetchDatasetInfo = async () => {
+      try {
+        const info = await getDatasetInfo(Number(dataset.id));
+        setDatasetInfo(info);
+      } catch (error) {
+        setDatasetInfo(null);
+      }
+    };
 
     fetchDatasetInfo();
-  }, [dataset, fetchDatasets]);
+  }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {

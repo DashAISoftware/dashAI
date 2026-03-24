@@ -106,7 +106,7 @@ function RunCard({
       }
     };
     fetchOperationsCount();
-  }, [run, explainerRefreshTrigger]);
+  }, [run.id, explainerRefreshTrigger]);
 
   const hasOptimizableParams = useMemo(() => {
     return Object.values(editedParameters).some(

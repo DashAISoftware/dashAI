@@ -18,11 +18,11 @@ import { useTranslation } from "react-i18next";
 function OptimizeNumberInput({
   name,
   label,
-  value,
+  value = {},
   onChange,
-  description,
-  error,
-  placeholder,
+  description = "",
+  error = undefined,
+  placeholder = {},
 }) {
   const { t } = useTranslation("configurableObject");
 
@@ -201,13 +201,6 @@ OptimizeNumberInput.propTypes = {
     upper_bound: PropTypes.number,
   }),
   error: PropTypes.string,
-};
-
-OptimizeNumberInput.defaultProps = {
-  value: {},
-  placeholder: {},
-  error: undefined,
-  description: "",
 };
 
 export default OptimizeNumberInput;

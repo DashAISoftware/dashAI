@@ -8,7 +8,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { getDatasets } from "../../../api/datasets";
 import { useSnackbar } from "notistack";
 
-function DataSelectorNode({ onClose, onSave, savedConfig }) {
+function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [datasetId, setDatasetId] = useState(savedConfig ? savedConfig.id : "");
   const [openModal, setOpenModal] = useState(false);
   const [datasets, setDatasets] = useState([]);
@@ -134,10 +134,6 @@ DataSelectorNode.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   savedConfig: PropTypes.object,
-};
-
-DataSelectorNode.defaultProps = {
-  savedConfig: null,
 };
 
 export default DataSelectorNode;

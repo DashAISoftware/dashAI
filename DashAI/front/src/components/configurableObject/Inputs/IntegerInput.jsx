@@ -11,7 +11,14 @@ import InputWithDebounce from "../../shared/InputWithDebounce";
  * @param {string} description text to put in a tooltip that helps the user to understand the parameter
  *
  */
-function IntegerInput({ name, label, value, onChange, description, error }) {
+function IntegerInput({
+  name,
+  label,
+  value = null,
+  onChange,
+  description,
+  error = undefined,
+}) {
   const handleChange = (inputValue) => {
     const newValue = inputValue === "" ? null : parseInt(inputValue);
     onChange(newValue);
@@ -40,10 +47,6 @@ IntegerInput.propTypes = {
   onChange: PropTypes.func.isRequired,
   description: PropTypes.string.isRequired,
   error: PropTypes.string,
-};
-IntegerInput.defaultProps = {
-  value: null,
-  error: undefined,
 };
 
 export default IntegerInput;
