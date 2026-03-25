@@ -59,14 +59,14 @@ class QwenSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Maximum number of new tokens the model will generate per response. "
-                "Roughly 1 token ≈ 0.75 English words. Set to 100–200 for short "
-                "answers, 500–1000 for detailed explanations or code. Must not "
+                "Roughly 1 token ≈ 0.75 English words. Set to 100-200 for short "
+                "answers, 500-1000 for detailed explanations or code. Must not "
                 "exceed the context window minus the prompt length."
             ),
             es=(
                 "Número máximo de tokens nuevos que el modelo generará por respuesta. "
-                "Aproximadamente 1 token ≈ 0.75 palabras en español. Use 100–200 "
-                "para respuestas cortas, 500–1000 para explicaciones detalladas o "
+                "Aproximadamente 1 token ≈ 0.75 palabras en español. Use 100-200 "
+                "para respuestas cortas, 500-1000 para explicaciones detalladas o "
                 "código. No debe superar la ventana de contexto menos la longitud "
                 "del prompt."
             ),
@@ -79,14 +79,14 @@ class QwenSchema(BaseSchema):
         placeholder=0.7,
         description=MultilingualString(
             en=(
-                "Sampling temperature controlling output randomness (range 0.0–1.0). "
+                "Sampling temperature controlling output randomness (range 0.0-1.0). "
                 "At 0.0 the model always picks the most likely token (greedy, fully "
                 "deterministic). Around 0.7 is a good balance for conversational "
                 "tasks. At 1.0 outputs are maximally varied and unpredictable."
             ),
             es=(
                 "Temperatura de muestreo que controla la aleatoriedad de la salida "
-                "(rango 0.0–1.0). En 0.0 el modelo siempre elige el token más "
+                "(rango 0.0-1.0). En 0.0 el modelo siempre elige el token más "
                 "probable (greedy, totalmente determinista). Alrededor de 0.7 es "
                 "un buen equilibrio para tareas conversacionales. En 1.0 las "
                 "salidas son máximamente variadas e impredecibles."
@@ -101,15 +101,15 @@ class QwenSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Penalizes tokens that have already appeared in the output based on "
-                "how often they occur (range 0.0–2.0). At 0.0 there is no penalty "
-                "and the model may repeat itself. Values around 0.1–0.3 gently "
+                "how often they occur (range 0.0-2.0). At 0.0 there is no penalty "
+                "and the model may repeat itself. Values around 0.1-0.3 gently "
                 "discourage repetition. High values (1.5+) strongly prevent reuse "
                 "of any word, which may produce less coherent text."
             ),
             es=(
                 "Penaliza los tokens que ya aparecieron en la salida según su "
-                "frecuencia (rango 0.0–2.0). En 0.0 no hay penalización y el modelo "
-                "puede repetirse. Valores en torno a 0.1–0.3 desincentivan "
+                "frecuencia (rango 0.0-2.0). En 0.0 no hay penalización y el modelo "
+                "puede repetirse. Valores en torno a 0.1-0.3 desincentivan "
                 "suavemente la repetición. Valores altos (1.5+) previenen "
                 "fuertemente la reutilización de palabras, lo que puede producir "
                 "texto menos coherente."

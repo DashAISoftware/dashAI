@@ -38,16 +38,16 @@ class StableDiffusionSchema(BaseSchema):
                 "2B-parameter model. 'sd-3.5-medium' improves quality at similar "
                 "speed. 'sd-3.5-large' (8B) delivers the highest quality but needs "
                 "more VRAM. 'sd-3.5-large-turbo' is a distilled large model that "
-                "requires far fewer steps (4–8) for fast high-quality generation. "
-                "All variants target 1024×1024 px natively."
+                "requires far fewer steps (4-8) for fast high-quality generation. "
+                "All variants target 1024x1024 px natively."
             ),
             es=(
                 "El checkpoint SD3/SD3.5 a cargar. 'sd-3-medium' es el modelo base "
                 "de 2B parámetros. 'sd-3.5-medium' mejora la calidad a velocidad "
                 "similar. 'sd-3.5-large' (8B) ofrece la mayor calidad pero necesita "
                 "más VRAM. 'sd-3.5-large-turbo' es un modelo large destilado que "
-                "requiere muchos menos pasos (4–8) para generación rápida de alta "
-                "calidad. Todas las variantes apuntan a 1024×1024 px de forma nativa."
+                "requiere muchos menos pasos (4-8) para generación rápida de alta "
+                "calidad. Todas las variantes apuntan a 1024x1024 px de forma nativa."
             ),
         ),
         alias=MultilingualString(en="Model name", es="Nombre del modelo"),
@@ -101,14 +101,14 @@ class StableDiffusionSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Number of denoising steps to run. More steps refine the image but "
-                "increase generation time. Typical range: 20–40 for standard models; "
-                "use only 4–8 steps with 'large-turbo'. Values above 50 rarely "
+                "increase generation time. Typical range: 20-40 for standard models; "
+                "use only 4-8 steps with 'large-turbo'. Values above 50 rarely "
                 "improve output for SD3/SD3.5."
             ),
             es=(
                 "Número de pasos de eliminación de ruido a ejecutar. Más pasos "
                 "refinan la imagen pero aumentan el tiempo de generación. Rango "
-                "típico: 20–40 para modelos estándar; use solo 4–8 pasos con "
+                "típico: 20-40 para modelos estándar; use solo 4-8 pasos con "
                 "'large-turbo'. Valores superiores a 50 raramente mejoran el "
                 "resultado en SD3/SD3.5."
             ),
@@ -124,7 +124,7 @@ class StableDiffusionSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Classifier-Free Guidance (CFG) scale. Controls how strictly the "
-                "image follows the text prompt. SD3.5 works well at 3.5–4.5. "
+                "image follows the text prompt. SD3.5 works well at 3.5-4.5. "
                 "The 'large-turbo' variant is designed for guidance_scale=1 "
                 "(no CFG). Higher values enforce the prompt but may introduce "
                 "oversaturation or artifacts."
@@ -132,7 +132,7 @@ class StableDiffusionSchema(BaseSchema):
             es=(
                 "Escala de Classifier-Free Guidance (CFG). Controla qué tan "
                 "estrictamente la imagen sigue el prompt. SD3.5 funciona bien con "
-                "3.5–4.5. La variante 'large-turbo' está diseñada para "
+                "3.5-4.5. La variante 'large-turbo' está diseñada para "
                 "guidance_scale=1 (sin CFG). Valores más altos refuerzan el prompt "
                 "pero pueden introducir sobresaturación o artefactos."
             ),
@@ -185,12 +185,12 @@ class StableDiffusionSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Width of the output image in pixels. Must be a multiple of 8. "
-                "SD3/SD3.5 models are natively trained at 1024×1024 px; using "
+                "SD3/SD3.5 models are natively trained at 1024x1024 px; using "
                 "that resolution yields the best quality."
             ),
             es=(
                 "Ancho de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
-                "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024×1024 px; "
+                "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024x1024 px; "
                 "usar esa resolución produce la mejor calidad."
             ),
         ),
@@ -203,12 +203,12 @@ class StableDiffusionSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Height of the output image in pixels. Must be a multiple of 8. "
-                "SD3/SD3.5 models are natively trained at 1024×1024 px; using "
+                "SD3/SD3.5 models are natively trained at 1024x1024 px; using "
                 "that resolution yields the best quality."
             ),
             es=(
                 "Altura de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
-                "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024×1024 px; "
+                "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024x1024 px; "
                 "usar esa resolución produce la mejor calidad."
             ),
         ),
