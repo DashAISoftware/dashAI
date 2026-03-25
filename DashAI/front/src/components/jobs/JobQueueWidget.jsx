@@ -244,11 +244,12 @@ const JobQueueWidget = () => {
           onMouseLeave={() => setIsHovered(false)}
           sx={{
             position: "fixed",
-            bottom: (theme) => theme.spacing(3),
-            right: (theme) => theme.spacing(3),
+            bottom: { xs: 16, sm: (theme) => theme.spacing(3) },
+            right: { xs: 16, sm: (theme) => theme.spacing(3) },
             zIndex: 1000,
-            width: 320,
-            maxHeight: "80vh",
+            width: { xs: "calc(100vw - 32px)", sm: 320 },
+            maxWidth: 320,
+            maxHeight: { xs: "60vh", sm: "80vh" },
             display: "flex",
             flexDirection: "column",
             boxShadow: (theme) => theme.shadows[6],
@@ -330,7 +331,7 @@ const JobQueueWidget = () => {
             >
               <Box
                 sx={{
-                  maxHeight: 280,
+                  maxHeight: { xs: 180, sm: 280 },
                   overflowY: "auto",
                 }}
               >
