@@ -1,11 +1,14 @@
 import contextlib
+import hashlib
 import io
 import json
 import logging
 import os
 import shutil
 import tempfile
+import time
 import zipfile
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -41,39 +44,82 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# Server-side filtering and pagination
-@router.get("/filter/")
-async def filter_dataset_file(
+# ---------------------------------------------------------------------------
+# Cache for filtered + sorted PyArrow tables
+# ---------------------------------------------------------------------------
+_CACHE_MAX_SIZE = 20
+_CACHE_TTL_SECONDS = 300  # 5 minutes
+
+
+class _FilteredTableCache:
+    """LRU cache for filtered/sorted PyArrow tables with TTL eviction."""
+
+    def __init__(self, max_size: int = _CACHE_MAX_SIZE, ttl: int = _CACHE_TTL_SECONDS):
+        self._store: OrderedDict[str, tuple[float, pa.Table, int]] = OrderedDict()
+        self._max_size = max_size
+        self._ttl = ttl
+
+    @staticmethod
+    def _make_key(path: str, filter_model: str | None, sort_model: str | None) -> str:
+        raw = f"{path}|{filter_model or ''}|{sort_model or ''}"
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    def get(self, path: str, filter_model: str | None, sort_model: str | None):
+        key = self._make_key(path, filter_model, sort_model)
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        ts, table, total = entry
+        if time.time() - ts > self._ttl:
+            del self._store[key]
+            return None
+        self._store.move_to_end(key)
+        return table, total
+
+    def put(
+        self,
+        path: str,
+        filter_model: str | None,
+        sort_model: str | None,
+        table: pa.Table,
+        total: int,
+    ):
+        key = self._make_key(path, filter_model, sort_model)
+        self._store[key] = (time.time(), table, total)
+        self._store.move_to_end(key)
+        while len(self._store) > self._max_size:
+            self._store.popitem(last=False)
+
+    def invalidate(self):
+        """Invalidate all cache entries on dataset mutation."""
+        self._store.clear()
+
+
+_filtered_table_cache = _FilteredTableCache()
+
+
+def _load_and_filter_table(
     path: str,
-    page: int = 0,
-    page_size: int = 10,
-    filter_model: str = Query(None, alias="filterModel"),
-    sort_model: str = Query(None, alias="sortModel"),
-):
-    """
-    Fetch filtered and paginated dataset rows based on the provided
-    filterModel from the frontend.
+    filter_model: str | None,
+    sort_model: str | None,
+) -> tuple[pa.Table, int, bool]:
+    """Load arrow file, apply filters and sorting.
+
+    Returns (table, total, was_filtered).
     """
     arrow_file_path = f"{path}/dataset/data.arrow"
-    rows = []
-    table = None
     with pa.memory_map(arrow_file_path, "r") as source:
         reader = ipc.RecordBatchFileReader(source)
         batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
         table = pa.Table.from_batches(batches)
 
-    # Parse filter_model if present
     filter_dict = None
     if filter_model:
-        logger.info(f"[FILTER DEBUG] filter_model param: {filter_model}")
         try:
             filter_dict = json.loads(filter_model)
-            logger.info(f"[FILTER DEBUG] filter_dict parsed: {filter_dict}")
-        except Exception as e:
-            logger.error(f"[FILTER DEBUG] Error parsing filter_model: {e}")
+        except Exception:
             filter_dict = None
 
-    # Apply filters if filter_model and items are provided
     if filter_dict and "items" in filter_dict:
         for item in filter_dict["items"]:
             col = item.get("field") or item.get("columnField")
@@ -114,7 +160,6 @@ async def filter_dataset_file(
                 elif op == "greaterThanOrEqualTo" and val is not None:
                     table = table.filter(pc.greater_equal(table[col], cast_value(val)))
                 elif op == "contains" and val is not None:
-                    # Case-insensitive contains
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -122,7 +167,6 @@ async def filter_dataset_file(
                     mask = pc.match_substring(as_str, str(val).lower())
                     table = table.filter(mask)
                 elif op == "doesNotContain" and val is not None:
-                    # Case-insensitive doesNotContain
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -130,7 +174,6 @@ async def filter_dataset_file(
                     mask = pc.invert(pc.match_substring(as_str, str(val).lower()))
                     table = table.filter(mask)
                 elif op == "startsWith" and val is not None:
-                    # Case-insensitive startsWith
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -138,7 +181,6 @@ async def filter_dataset_file(
                     mask = pc.match_substring_regex(as_str, f"^{str(val).lower()}")
                     table = table.filter(mask)
                 elif op == "endsWith" and val is not None:
-                    # Case-insensitive endsWith
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -189,7 +231,6 @@ async def filter_dataset_file(
         filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
     )
 
-    # Apply sorting before pagination
     if sort_model:
         try:
             sort_list = json.loads(sort_model)
@@ -203,21 +244,47 @@ async def filter_dataset_file(
         except Exception as e:
             logger.error(f"[SORT DEBUG] Error parsing sort_model: {e}")
 
+    if filtered:
+        total = table.num_rows
+    else:
+        try:
+            total = get_dataset_info(f"{path}/dataset")["total_rows"]
+        except Exception:
+            total = table.num_rows
+
+    return table, total, bool(filtered)
+
+
+# Server-side filtering and pagination
+@router.get("/filter/")
+async def filter_dataset_file(
+    path: str,
+    page: int = 0,
+    page_size: int = 10,
+    filter_model: str = Query(None, alias="filterModel"),
+    sort_model: str = Query(None, alias="sortModel"),
+):
+    """
+    Fetch filtered and paginated dataset rows based on the provided
+    filterModel from the frontend. Uses an in-memory cache so that
+    pagination over the same filter+sort combination avoids re-reading
+    and re-filtering the Arrow file.
+    """
+    cached = _filtered_table_cache.get(path, filter_model, sort_model)
+    if cached is not None:
+        table, total = cached
+    else:
+        table, total, _ = _load_and_filter_table(path, filter_model, sort_model)
+        _filtered_table_cache.put(path, filter_model, sort_model, table, total)
+
     start = page * page_size
     paged_table = table.slice(start, page_size)
     rows = [
         {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
         for i in range(paged_table.num_rows)
     ]
-    if filtered:
-        total_for_pagination = table.num_rows
-    else:
-        try:
-            total_for_pagination = get_dataset_info(f"{path}/dataset")["total_rows"]
-        except Exception:
-            total_for_pagination = table.num_rows
 
-    return JSONResponse(content={"rows": rows, "total": total_for_pagination})
+    return JSONResponse(content={"rows": rows, "total": total})
 
 
 @router.post("/", response_model=schemas.Dataset, status_code=status.HTTP_201_CREATED)
@@ -792,6 +859,8 @@ async def delete_dataset(
                 detail="Internal database error",
             ) from e
 
+    _filtered_table_cache.invalidate()
+
     try:
         shutil.rmtree(dataset.file_path, ignore_errors=True)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -985,6 +1054,8 @@ async def rename_dataset_column(
                 writer = ipc.new_file(sink, renamed_table.schema)
                 writer.write_table(renamed_table)
                 writer.close()
+
+            _filtered_table_cache.invalidate()
 
             splits_path = f"{dataset_path}/splits.json"
             if os.path.exists(splits_path):
