@@ -56,7 +56,7 @@ export default function SelectModelMenu() {
       setRelatedComponents(components);
       setPage(1);
       setSelectedModel((prev) =>
-        prev ? components.find((c) => c.name === prev.name) ?? prev : null,
+        prev ? (components.find((c) => c.name === prev.name) ?? prev) : null,
       );
     });
   }, [selectedTaskName, t]);
