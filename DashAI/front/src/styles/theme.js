@@ -40,8 +40,8 @@ const getTheme = (mode, language) => ({
       mode === "dark"
         ? {
             primary: "#f2ede2",
-            secondary: "rgba(232,228,217,0.45)",
-            disabled: "rgba(232,228,217,0.15)",
+            secondary: "rgba(232,228,217,0.75)",
+            disabled: "rgba(232,228,217,0.45)",
           }
         : {
             primary: "#111111",
