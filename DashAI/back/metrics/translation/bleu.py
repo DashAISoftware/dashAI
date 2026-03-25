@@ -1,11 +1,12 @@
 """BLEU (bilingual evaluation understudy) metric implementation for DashAI."""
 
-import evaluate
-import numpy as np
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.base_metric import prepare_to_metric
 from DashAI.back.metrics.translation_metric import TranslationMetric
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Bleu(TranslationMetric):
@@ -27,7 +28,7 @@ class Bleu(TranslationMetric):
     )
 
     @staticmethod
-    def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):
+    def score(source_sentences: "DashAIDataset", target_sentences):
         """Calculate the BLEU score between source and target sentences.
 
         Parameters
@@ -42,6 +43,8 @@ class Bleu(TranslationMetric):
         float
             The calculated BLEU score ranging between 0 and 1.
         """
+        import evaluate
+
         metric = evaluate.load("bleu")
         source_sentences, target_sentences = prepare_to_metric(
             source_sentences, target_sentences, "Bleu"

@@ -7,7 +7,12 @@ import { useSnackbar } from "notistack";
 import { validateNode } from "../../../api/pipeline";
 import { useParams } from "react-router-dom";
 
-function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
+function RetrieveModelNode({
+  onClose,
+  onSave,
+  savedConfig = null,
+  prevNodes = [],
+}) {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
   const datasetId = datasetNode?.id ?? null;
   const [pipelines, setPipelines] = useState([]);
@@ -137,11 +142,6 @@ RetrieveModelNode.propTypes = {
   onSave: PropTypes.func.isRequired,
   savedConfig: PropTypes.object,
   prevNodes: PropTypes.arrayOf(PropTypes.object),
-};
-
-RetrieveModelNode.defaultProps = {
-  savedConfig: null,
-  prevNodes: [],
 };
 
 export default RetrieveModelNode;

@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.preprocessing import MaxAbsScaler as MaxAbsScalerOperation
 
 from DashAI.back.converters.category.scaling_and_normalization import (
@@ -39,4 +38,6 @@ class MaxAbsScaler(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for scaled data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())

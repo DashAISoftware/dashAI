@@ -17,7 +17,13 @@ import FormSchemaFieldWithOptimizers from "../../components/shared/FormSchemaFie
 import FormSchemaFieldWithParent from "../../components/shared/FormSchemaFieldWithParent";
 import { getModelFromSubform } from "../../utils/schema";
 
-function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
+function ParamsSettings({
+  open,
+  modelSchema = null,
+  values = {},
+  onChange,
+  onClose,
+}) {
   if (!modelSchema) return null;
 
   const [localValues, setLocalValues] = React.useState(values || {});
@@ -195,11 +201,6 @@ ParamsSettings.propTypes = {
   values: PropTypes.object,
   onChange: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
-};
-
-ParamsSettings.defaultProps = {
-  modelSchema: null,
-  values: {},
 };
 
 export default ParamsSettings;

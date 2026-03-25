@@ -20,7 +20,12 @@ import { useTranslation } from "react-i18next";
  * @param {function} setSelectedItem function to change the value of the selected item
  * @param {bool} disabled true to disable the item selection, false to enable it
  */
-function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
+function ItemSelector({
+  itemsList,
+  selectedItem = undefined,
+  setSelectedItem,
+  disabled = false,
+}) {
   const [itemsToShow, setItemsToShow] = useState(itemsList.map(() => true));
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -135,11 +140,6 @@ ItemSelector.propTypes = {
   }),
   setSelectedItem: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
-};
-
-ItemSelector.defaultProps = {
-  selectedItem: undefined,
-  disabled: false,
 };
 
 export default ItemSelector;

@@ -31,6 +31,7 @@ function Results({ id, minimalist = false, loading, data, dataType }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        overflow: "auto",
         flexDirection: "column",
         flex: 1,
       };

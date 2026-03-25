@@ -8,7 +8,7 @@ import { checkIfHaveOptimazers } from "../../../utils/schema";
 /**
  * Component that renders multiple tabs to visualize the results of a specific run.
  */
-function ResultsDetails({ run, onClose, handleRun }) {
+function ResultsDetails({ run = undefined, onClose, handleRun }) {
   if (!run) {
     onClose();
     return null;
@@ -39,10 +39,6 @@ function ResultsDetails({ run, onClose, handleRun }) {
 
 ResultsDetails.propTypes = {
   run: PropTypes.object,
-};
-
-ResultsDetails.defaultProps = {
-  run: undefined,
 };
 
 export default ResultsDetails;

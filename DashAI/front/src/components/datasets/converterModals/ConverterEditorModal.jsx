@@ -13,9 +13,9 @@ import TooltipedCellItem from "../../shared/TooltipedCellItem";
  * @param {Object} props.paramsInitialValues - Initial values of the parameters
  */
 const ConverterEditorModal = ({
-  converterToConfigure,
+  converterToConfigure = "",
   updateParameters,
-  paramsInitialValues,
+  paramsInitialValues = {},
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -61,11 +61,6 @@ ConverterEditorModal.propTypes = {
       PropTypes.array,
     ]),
   ),
-};
-
-ConverterEditorModal.defaultProps = {
-  converterToConfigure: "",
-  paramsInitialValues: {},
 };
 
 export default ConverterEditorModal;
