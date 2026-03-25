@@ -10,6 +10,37 @@
   "label": {
     "advanced": "Advanced",
     "getStarted": "Getting Started",
-    "welcomeDashboardAI": "Welcome to DashAI!"
+    "welcomeDashboardAI": "Welcome to DashAI!",
+    "welcomeSubtitle": "Select a module to get started",
+    "resources": "Resources",
+    "community": "Community"
+  },
+  "link": {
+    "documentation": "Documentation",
+    "tutorials": "Tutorials",
+    "github": "GitHub",
+    "website": "Website",
+    "forum": "DashAI Forum",
+    "discord": "Discord",
+    "twitter": "Twitter / X"
+  },
+  "tag": {
+    "beginner": "Get Started",
+    "advanced": "Advanced"
+  },
+  "chip": {
+    "csv": "CSV",
+    "joins": "joins",
+    "recipes": "recipes",
+    "eda": "EDA",
+    "classification": "classification",
+    "regression": "regression",
+    "clustering": "clustering",
+    "inference": "inference",
+    "synthesis": "synthesis",
+    "shapStories": "SHAP stories",
+    "injection": "injection",
+    "extensions": "extensions",
+    "custom": "custom"
   }
 }
