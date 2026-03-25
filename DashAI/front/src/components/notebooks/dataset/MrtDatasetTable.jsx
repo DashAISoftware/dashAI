@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -29,13 +29,14 @@ export default function MrtDatasetTable({
     : MRT_Localization_EN;
 
   const CLIENT_SIDE_THRESHOLD = 2000;
+  const initialized = useRef(false);
 
   const [data, setData] = useState([]);
   const [rowCount, setRowCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [columnOrder, setColumnOrder] = useState([]);
   const [density, setDensity] = useState("compact");
-  const [allFilteredData, setAllFilteredData] = useState(null); // null = server-side mode
+  const [allFilteredData, setAllFilteredData] = useState(null);
 
   const storageKey = datasetId
     ? `mrt-state-${datasetId}`
@@ -96,6 +97,8 @@ export default function MrtDatasetTable({
   });
 
   useEffect(() => {
+    initialized.current = false;
+
     setData([]);
     setRowCount(0);
     setAllFilteredData(null);
@@ -119,7 +122,9 @@ export default function MrtDatasetTable({
       pageIndex: 0,
       pageSize: prefs?.pageSize ?? initialPageSize,
     });
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+
+    initialized.current = true;
+  }, deps);
 
   useEffect(() => {
     setColumnFilterFns((prev) => {
@@ -132,7 +137,7 @@ export default function MrtDatasetTable({
       }
       return merged;
     });
-  }, [columnTypes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [columnTypes]);
 
   useEffect(() => {
     if (!prefsKey) return;
@@ -168,7 +173,16 @@ export default function MrtDatasetTable({
         .filter((f) => {
           const fn = columnFilterFns[f.id];
           if (fn === "empty" || fn === "notEmpty") return true;
-          if (fn !== "between" && Array.isArray(f.value)) return false;
+          // Skip between filters where both values are null/empty
+          if (
+            (fn === "between" || Array.isArray(f.value)) &&
+            Array.isArray(f.value)
+          ) {
+            return f.value.some(
+              (v) => v !== null && v !== undefined && v !== "",
+            );
+          }
+          if (Array.isArray(f.value)) return false;
           return f.value !== undefined && f.value !== "";
         })
         .map((f) => {
@@ -195,75 +209,22 @@ export default function MrtDatasetTable({
     [columnFilters, columnFilterFns, columnTypes],
   );
 
-  // Fetch data when filters or sorting change — decide server-side vs client-side
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const muiFormattedFilters = buildFilterModel();
+    setAllFilteredData(null);
+  }, [columnFilters, sorting]);
 
-        // First, fetch page 0 to discover total row count
-        const response = await fetchPage(
-          0,
-          pagination.pageSize,
-          muiFormattedFilters,
-          sorting,
-        );
-
-        const total = response?.total ?? 0;
-        const firstPageRows = response?.rows ?? [];
-
-        if (total > 0 && total <= CLIENT_SIDE_THRESHOLD) {
-          // Fetch ALL filtered rows at once for client-side pagination
-          let allRows = firstPageRows;
-          if (total > pagination.pageSize) {
-            const fullResponse = await fetchPage(
-              0,
-              total,
-              muiFormattedFilters,
-              sorting,
-            );
-            allRows = fullResponse?.rows ?? firstPageRows;
-          }
-          setAllFilteredData(allRows);
-          setRowCount(total);
-          // Slice locally for the current page
-          const start = pagination.pageIndex * pagination.pageSize;
-          setData(allRows.slice(start, start + pagination.pageSize));
-          if (allRows.length > 0) {
-            setColumnOrder(Object.keys(allRows[0]).filter((k) => k !== "id"));
-          }
-        } else {
-          // Large dataset — stay in server-side mode
-          setAllFilteredData(null);
-          setData(firstPageRows);
-          setRowCount(total);
-          if (firstPageRows.length > 0) {
-            setColumnOrder(
-              Object.keys(firstPageRows[0]).filter((k) => k !== "id"),
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error loading data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [columnFilters, sorting, pagination.pageSize, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Handle page changes — use local data if available, otherwise fetch from server
   useEffect(() => {
+    if (!initialized.current) return;
+
     if (allFilteredData) {
       const start = pagination.pageIndex * pagination.pageSize;
       setData(allFilteredData.slice(start, start + pagination.pageSize));
       return;
     }
 
-    // Server-side pagination: fetch the requested page
-    const loadPage = async () => {
+    let cancelled = false;
+
+    const loadData = async () => {
       setIsLoading(true);
       try {
         const muiFormattedFilters = buildFilterModel();
@@ -273,18 +234,57 @@ export default function MrtDatasetTable({
           muiFormattedFilters,
           sorting,
         );
+        if (cancelled) return;
+
+        const total = response?.total ?? 0;
         const rows = response?.rows ?? [];
-        setData(rows);
-        setRowCount(response?.total ?? 0);
+
+        if (
+          total > 0 &&
+          total <= CLIENT_SIDE_THRESHOLD &&
+          total > pagination.pageSize
+        ) {
+          const fullResponse = await fetchPage(
+            0,
+            total,
+            muiFormattedFilters,
+            sorting,
+          );
+          if (cancelled) return;
+
+          const allRows = fullResponse?.rows ?? rows;
+          setAllFilteredData(allRows);
+          setRowCount(total);
+          const start = pagination.pageIndex * pagination.pageSize;
+          setData(allRows.slice(start, start + pagination.pageSize));
+          if (allRows.length > 0) {
+            setColumnOrder(Object.keys(allRows[0]).filter((k) => k !== "id"));
+          }
+        } else {
+          setAllFilteredData(null);
+          setData(rows);
+          setRowCount(total);
+          if (rows.length > 0) {
+            setColumnOrder(Object.keys(rows[0]).filter((k) => k !== "id"));
+          }
+        }
       } catch (error) {
-        console.error("Error loading page:", error);
+        if (!cancelled) {
+          console.error("Error loading data:", error);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadPage();
-  }, [pagination.pageIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pagination.pageIndex, pagination.pageSize, columnFilters, sorting]);
 
   const handleColumnRename = useCallback(
     async (oldName, newName) => {
