@@ -1,8 +1,5 @@
 from typing import Any, List, Optional
 
-import torch
-from diffusers import DiffusionPipeline
-
 from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
@@ -243,6 +240,9 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
 
     def __init__(self, **kwargs):
         """Initialize the model."""
+        import torch
+        from diffusers import DiffusionPipeline
+
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
@@ -277,6 +277,8 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             Generated output images in a list
 
         """
+        import torch
+
         generator = None
         if self.seed is not None and self.seed > 0:
             generator = torch.Generator(device=self.device).manual_seed(self.seed)

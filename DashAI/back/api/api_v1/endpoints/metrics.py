@@ -1,14 +1,15 @@
-import asyncio
-import json
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from kink import di, inject
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import Metric, Run
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -21,8 +22,11 @@ router = APIRouter()
 async def live_metrics_websocket(
     websocket: WebSocket,
     run_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
+    import asyncio
+    import json
+
     await websocket.accept()
 
     last_timestamp = None

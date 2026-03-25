@@ -7,7 +7,7 @@ streaming_form_data
 alembic
 kink
 numpy
-pandas
+pandas<3.0.0
 joblib
 pydantic
 pydantic-settings

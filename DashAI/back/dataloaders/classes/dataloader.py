@@ -1,18 +1,17 @@
 """DashAI base class for dataloaders."""
 
 import logging
-import os
-import zipfile
 from abc import abstractmethod
-from typing import Any, Dict, Final
-
-import pandas as pd
-from datasets.download.download_manager import DownloadManager
+from typing import TYPE_CHECKING, Any, Dict, Final
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from pandas import DataFrame
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseDataLoader(ConfigObject):
@@ -27,7 +26,7 @@ class BaseDataLoader(ConfigObject):
         temp_path: str,
         params: Dict[str, Any],
         n_sample: int | None = False,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load data abstract method.
 
         Parameters
@@ -54,7 +53,7 @@ class BaseDataLoader(ConfigObject):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 10,
-    ) -> pd.DataFrame:
+    ) -> "DataFrame":
         """
         Load a preview of the dataset using streaming.
 
@@ -72,8 +71,8 @@ class BaseDataLoader(ConfigObject):
 
         Returns
         -------
-        pd.DataFrame
-            A DataFrame with the preview data.
+        DataFrame
+            A pandas DataFrame with the preview data.
         """
         raise NotImplementedError(
             "load_preview must be implemented by specific dataloader"
@@ -93,6 +92,8 @@ class BaseDataLoader(ConfigObject):
             type_path (str): Type of the path.
 
         """
+        from datasets.download.download_manager import DownloadManager
+
         if file_path.startswith("http"):
             file_path = DownloadManager.download_and_extract(file_path, temp_path)
             return (file_path, "dir")
@@ -116,6 +117,9 @@ class BaseDataLoader(ConfigObject):
         -------
             str: Path of the files extracted.
         """
+        import os
+        import zipfile
+
         files_path = os.path.join(temp_path, "files")
         os.makedirs(files_path, exist_ok=True)
         with zipfile.ZipFile(file_path, "r") as zip_ref:

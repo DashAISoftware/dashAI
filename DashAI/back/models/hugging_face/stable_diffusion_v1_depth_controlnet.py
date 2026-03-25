@@ -1,15 +1,5 @@
 from typing import Any, List, Tuple
 
-import numpy as np
-import torch
-from diffusers import (
-    AutoencoderKL,
-    ControlNetModel,
-    StableDiffusionXLControlNetPipeline,
-)
-from PIL import Image
-from transformers import DPTForDepthEstimation, DPTImageProcessor
-
 from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
@@ -92,6 +82,11 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
 
 
 def get_depth_map(image, device):
+    import numpy as np
+    import torch
+    from PIL import Image
+    from transformers import DPTForDepthEstimation, DPTImageProcessor
+
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
     ).to(device)
@@ -158,6 +153,13 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
 
     def __init__(self, **kwargs: Any):
         """Initialize the generative model."""
+        import torch
+        from diffusers import (
+            AutoencoderKL,
+            ControlNetModel,
+            StableDiffusionXLControlNetPipeline,
+        )
+
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
@@ -190,12 +192,12 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
 
         self.pipe.enable_model_cpu_offload()
 
-    def generate(self, input: Tuple[Image.Image, str]) -> List[Any]:
+    def generate(self, input: Tuple[Any, str]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters
         ----------
-        input : Tuple[Image.Image, str]
+        input : Tuple[Any, str]
             Input data to be generated
 
         Returns

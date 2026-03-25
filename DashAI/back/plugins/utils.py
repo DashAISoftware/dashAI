@@ -1,12 +1,14 @@
 import json
 import subprocess
 import sys
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import requests
 
 from DashAI.back.core.enums.plugin_tags import PluginTag
-from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points
@@ -250,7 +252,7 @@ def install_plugin(plugin_name: str) -> List[type]:
 
 
 def register_plugin_components(
-    plugins: List[type], component_registry: ComponentRegistry
+    plugins: List[type], component_registry: "ComponentRegistry"
 ):
     """
     Register the plugins in the component registry
@@ -292,7 +294,7 @@ def uninstall_plugin(
 
 def unregister_plugin_components(
     plugins: List[type],
-    component_registry: ComponentRegistry,
+    component_registry: "ComponentRegistry",
 ) -> List[type]:
     """
     Remove from component registry uninstalled plugins

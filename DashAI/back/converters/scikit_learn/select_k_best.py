@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.feature_selection import SelectKBest as SelectKBestOperation
 
 from DashAI.back.converters.category.feature_selection import FeatureSelectionConverter
@@ -41,6 +40,8 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())
 
     def __init__(self, **kwargs):

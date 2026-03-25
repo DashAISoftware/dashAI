@@ -1,17 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from typing import Union
-
-import numpy as np
-import pandas as pd
-import pyarrow as pa
+from typing import TYPE_CHECKING, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -41,7 +36,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         raise NotImplementedError
 
     def fit(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> BaseConverter:
         """
         Fit the sklearn transformer to the data.
@@ -93,8 +88,8 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         return self
 
     def transform(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
-    ) -> DashAIDataset:
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
+    ) -> "DashAIDataset":
         """
         Transform the data using the fitted sklearn transformer.
 
@@ -110,6 +105,12 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         DashAIDataset
             The transformed dataset with proper DashAI types.
         """
+        import numpy as np
+        import pandas as pd
+        import pyarrow as pa
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
 
         sklearn_cls = next(

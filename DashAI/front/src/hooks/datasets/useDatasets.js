@@ -61,8 +61,10 @@ export function useDatasets({ t }) {
 
   useEffect(() => {
     const unsubscribe = subscribeJobs((jobs) => {
-      const hasActiveJobs = Array.isArray(jobs) && jobs.length > 0;
-      if (hasActiveJobs) {
+      const datasetJobs = Array.isArray(jobs)
+        ? jobs.filter((job) => job.task_type === "DatasetJob")
+        : [];
+      if (datasetJobs.length > 0) {
         fetchDatasets();
       }
     });

@@ -1,13 +1,4 @@
-from typing import Dict, List, Tuple, Union
-
-import numpy as np
-import pandas as pd
-import plotly
-import plotly.express as px
-from datasets import DatasetDict
-from sklearn.inspection import permutation_importance
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, make_scorer
-from sklearn.preprocessing import LabelEncoder
+from typing import Dict, List, Union
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -18,7 +9,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
 
 
 class PermutationFeatureImportanceSchema(BaseSchema):
@@ -126,6 +117,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     ):
         super().__init__(model)
 
+        # Lazy import metrics only during initialization
+        from sklearn.metrics import accuracy_score, balanced_accuracy_score
+
         metrics = {
             "accuracy": accuracy_score,
             "balanced_accuracy": balanced_accuracy_score,
@@ -175,12 +169,15 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
     def _calculate_grouped_importance(
         self,
-        x_data: pd.DataFrame,
-        y: pd.DataFrame,
+        x_data,
+        y,
         feature_groups: Dict[str, List[int]],
         max_samples: int,
-    ) -> Dict[str, Dict[str, np.ndarray]]:
+    ):
         """Calculate permutation importance for grouped features."""
+        # Lazy imports
+        import numpy as np
+
         rng = np.random.RandomState(self.random_state)
 
         n_samples = min(max_samples, len(x_data))
@@ -237,8 +234,15 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         return results
 
-    def explain(self, dataset: Tuple[DatasetDict, DatasetDict]):
+    def explain(self, dataset):
         """Method for calculating the importance of features in the model."""
+        # Lazy imports
+        import numpy as np
+        import pandas as pd
+        from sklearn.inspection import permutation_importance
+        from sklearn.metrics import make_scorer
+        from sklearn.preprocessing import LabelEncoder
+
         x, y = dataset
 
         x_test = x["test"]
@@ -299,8 +303,12 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 "importances_std": np.round(pfi["importances_std"], 3).tolist(),
             }
 
-    def _create_plot(self, data: pd.DataFrame, n_features: int):
+    def _create_plot(self, data, n_features: int):
         """Helper method to create the explanation plot using plotly."""
+        # Lazy imports
+        import plotly
+        import plotly.express as px
+
         fig = px.bar(
             data.iloc[-n_features:],
             x=data.iloc[-n_features:]["importances_mean"],
@@ -352,6 +360,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     def plot(self, explanation: dict) -> List[dict]:
         """Method to create the explanation plot."""
         n_features = 10
+        # Lazy import
+        import pandas as pd
+
         data = pd.DataFrame.from_dict(explanation)
         data = data.sort_values(by=["importances_mean"], ascending=True)
 

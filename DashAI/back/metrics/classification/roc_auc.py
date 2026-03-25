@@ -1,13 +1,14 @@
 """DashAI RoC AUC classification metric implementation."""
 
-import numpy as np
-from sklearn.metrics import roc_auc_score
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
 )
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ROCAUC(ClassificationMetric):
@@ -22,7 +23,7 @@ class ROCAUC(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
+        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
     ) -> float:
         """Calculate RoC AUC score between true labels and predicted labels.
 
@@ -47,6 +48,8 @@ class ROCAUC(ClassificationMetric):
         # Use the provided multiclass parameter or determine it using is_multiclass
         if multiclass is None:
             multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        from sklearn.metrics import roc_auc_score
 
         if multiclass:
             return roc_auc_score(true_labels, probs_pred_labels, multi_class="ovr")
