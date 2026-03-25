@@ -98,7 +98,6 @@ export default function MrtDatasetTableInfScroll({
     return saved?.showColumnFilters ?? false;
   });
 
-  // Al cambiar de dataset, resetear al estado guardado
   useEffect(() => {
     const saved = loadPersistedState(storageKey);
     const cleanFilters = (saved?.columnFilters ?? []).filter(
@@ -115,7 +114,6 @@ export default function MrtDatasetTableInfScroll({
     setDensity(saved?.density ?? "compact");
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Guardar estado en localStorage cuando cambia
   useEffect(() => {
     if (!storageKey) return;
     try {
@@ -172,7 +170,6 @@ export default function MrtDatasetTableInfScroll({
     [columnFilters, columnFilterFns, columnTypes],
   );
 
-  // Resetear datos al cambiar filtros, sorting o deps
   useEffect(() => {
     setAllData([]);
     setCurrentPage(0);
@@ -182,7 +179,6 @@ export default function MrtDatasetTableInfScroll({
     }
   }, [columnFilters, sorting, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cargar datos (infinite scroll, server-side)
   useEffect(() => {
     const isReset = currentPage === 0;
     const load = async () => {
@@ -227,7 +223,6 @@ export default function MrtDatasetTableInfScroll({
     [isFetching, isLoading, totalFetched, rowCount],
   );
 
-  // Verificar al montar si el contenedor ya está scrolleado al fondo
   useEffect(() => {
     fetchMoreOnBottomReached(tableContainerRef.current);
   }, [fetchMoreOnBottomReached]); // eslint-disable-line react-hooks/exhaustive-deps

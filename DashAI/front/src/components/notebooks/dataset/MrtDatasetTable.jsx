@@ -95,9 +95,7 @@ export default function MrtDatasetTable({
     return prefs?.showColumnFilters ?? false;
   });
 
-  // Al cambiar de dataset, limpiar datos inmediatamente y cargar estado guardado
   useEffect(() => {
-    // Limpiar inmediatamente para que la UI no quede pegada con datos viejos
     setData([]);
     setRowCount(0);
     setAllFilteredData(null);
@@ -123,11 +121,9 @@ export default function MrtDatasetTable({
     });
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Recomputar columnFilterFns defaults cuando cambian los columnTypes
   useEffect(() => {
     setColumnFilterFns((prev) => {
       const defaults = getDefaultFilterFns();
-      // Merge: mantener las que el usuario ya eligió, agregar defaults para nuevas
       const merged = { ...defaults };
       for (const key of Object.keys(prev)) {
         if (key in merged && prev[key] !== undefined) {
@@ -138,7 +134,6 @@ export default function MrtDatasetTable({
     });
   }, [columnTypes]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Guardar preferencias de UI en localStorage (persiste entre reinicios)
   useEffect(() => {
     if (!prefsKey) return;
     try {
@@ -153,7 +148,6 @@ export default function MrtDatasetTable({
     } catch {}
   }, [prefsKey, pagination.pageSize, density, showColumnFilters]);
 
-  // Guardar filtros y sorting en sessionStorage (persiste en la sesión del tab)
   useEffect(() => {
     if (!sessionKey) return;
     try {
@@ -300,12 +294,10 @@ export default function MrtDatasetTable({
       const result = await renameDatasetColumn(datasetId, oldName, newName);
       onEditColumn && (await onEditColumn(result));
 
-      // Actualizar el orden de columnas preservando la posición del rename
       setColumnOrder((prev) =>
         prev.map((col) => (col === oldName ? newName : col)),
       );
 
-      // Refrescar datos para reflejar el nuevo nombre de columna
       const muiFormattedFilters = {
         items: columnFilters.map((f) => ({
           field: f.id,
@@ -338,7 +330,6 @@ export default function MrtDatasetTable({
       return [];
     }
 
-    // columnTypes puede venir como { col: "Integer" } o { col: { type: "Integer" } }
     const getColType = (key) => {
       const val = columnTypes[key];
       if (!val) return null;
@@ -378,8 +369,6 @@ export default function MrtDatasetTable({
             ],
         Header: () =>
           editableColumns && datasetId ? (
-            // onDoubleClick stopPropagation: evita que MRT intercepte el doble-click
-            // (que activa el rename), pero el single-click sigue llegando para ordenar
             <div onDoubleClick={(e) => e.stopPropagation()}>
               <EditableColumnHeader
                 columnName={key}

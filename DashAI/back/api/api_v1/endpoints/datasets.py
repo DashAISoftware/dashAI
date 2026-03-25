@@ -242,7 +242,7 @@ def _load_and_filter_table(
             if sort_keys:
                 table = table.sort_by(sort_keys)
         except Exception as e:
-            logger.error(f"[SORT DEBUG] Error parsing sort_model: {e}")
+            logger.error("Error parsing sort_model: %s", e)
 
     if filtered:
         total = table.num_rows
