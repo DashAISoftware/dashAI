@@ -34,22 +34,25 @@ function ResponsiveAppBar() {
 
   const isActive = (path) =>
     location.pathname === path ||
-    (path !== "/app" && location.pathname.startsWith(path));
+    location.pathname.startsWith(path + "/");
 
   const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
 
-  const iconBtnSx = {
-    width: 28,
-    height: 28,
-    borderRadius: "4px",
-    border: `1px solid ${theme.palette.divider}`,
-    color: theme.palette.text.secondary,
-    "&:hover": {
-      background: theme.palette.ui.hover,
-      color: theme.palette.text.primary,
-    },
-  };
+  const iconBtnSx = React.useMemo(
+    () => ({
+      width: 28,
+      height: 28,
+      borderRadius: "4px",
+      border: `1px solid ${theme.palette.divider}`,
+      color: theme.palette.text.secondary,
+      "&:hover": {
+        background: theme.palette.ui.hover,
+        color: theme.palette.text.primary,
+      },
+    }),
+    [theme]
+  );
 
   return (
     <AppBar
@@ -114,7 +117,7 @@ function ResponsiveAppBar() {
 
         {/* Mobile hamburger */}
         <Box sx={{ flexGrow: 1, display: { xs: "flex", sm: "none" } }}>
-          <IconButton size="large" onClick={handleOpenNavMenu} color="inherit">
+          <IconButton size="large" onClick={handleOpenNavMenu} color="inherit" aria-label="open navigation menu">
             <MenuIcon />
           </IconButton>
           <Menu
