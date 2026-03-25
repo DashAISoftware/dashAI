@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -6,9 +6,6 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
-import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
@@ -29,139 +26,212 @@ function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
 
   const pages = [
-    { name: t("common:datasets"), to: "/app/data", disabled: false },
-    { name: t("common:models"), to: "/app/models", disabled: false },
-    { name: t("common:generative"), to: "/app/generative", disabled: false },
-    { name: t("common:plugins"), to: "/app/plugins/browse", disabled: false },
+    { name: t("common:datasets"), to: "/app/data" },
+    { name: t("common:models"), to: "/app/models" },
+    { name: t("common:generative"), to: "/app/generative" },
+    { name: t("common:plugins"), to: "/app/plugins/browse" },
   ];
 
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
+  const isActive = (path) =>
+    location.pathname === path ||
+    (path !== "/app" && location.pathname.startsWith(path));
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
+  const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
+  const handleCloseNavMenu = () => setAnchorElNav(null);
+
+  const iconBtnSx = {
+    width: 28,
+    height: 28,
+    borderRadius: "4px",
+    border: `1px solid ${theme.palette.divider}`,
+    color: theme.palette.text.secondary,
+    "&:hover": {
+      background: theme.palette.ui.hover,
+      color: theme.palette.text.primary,
+    },
   };
 
   return (
     <AppBar
       position="sticky"
       enableColorOnDark
-      sx={{ background: theme.palette.background.box }}
+      elevation={0}
+      sx={{
+        background: theme.palette.background.box,
+        backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        "& .MuiToolbar-root": { minHeight: 52 },
+      }}
     >
-      <Container maxWidth="xl">
-        <Toolbar>
-          <Avatar
-            alt="DashAI Logo"
-            src="/images/logo.png"
-            variant="square"
-            sx={{ width: 120, p: 0, mr: 3, my: 1, mt: 2 }}
-          />
-
-          {/* Render on xs screens */}
-          <Box sx={{ flexGrow: 1, display: { xs: "flex", sm: "none" } }}>
-            <IconButton
-              size="large"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "left",
-              }}
-              autoFocus
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "left",
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: "block", md: "none" },
-                backgroundColor: theme.palette.background,
-              }}
-            >
-              {pages.map((page) => (
-                <MenuItem
-                  key={page.name}
-                  onClick={handleCloseNavMenu}
-                  component={RouterLink}
-                  to={page.to}
-                  selected={page.to === location.pathname}
-                >
-                  <Typography color="text.primary" textAlign="center">
-                    {page.name}
-                  </Typography>
-                </MenuItem>
-              ))}
-            </Menu>
+      <Toolbar sx={{ px: 3, minHeight: 52, gap: 0 }}>
+        {/* Logo */}
+        <Box
+          component={RouterLink}
+          to="/app"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            textDecoration: "none",
+            mr: 2,
+            flexShrink: 0,
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              color: theme.palette.text.primary,
+              lineHeight: 1,
+            }}
+          >
+            <Box component="span" sx={{ color: theme.palette.primary.main }}>
+              Dash
+            </Box>
+            AI
+          </Typography>
+          <Box
+            sx={{
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontSize: "8px",
+              fontWeight: 500,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: theme.palette.primary.main,
+              border: `1px solid ${theme.palette.accent.amberBorder}`,
+              background: theme.palette.accent.amberDim,
+              borderRadius: "2px",
+              px: "7px",
+              py: "2px",
+              lineHeight: 1.4,
+            }}
+          >
+            Workbench
           </Box>
+        </Box>
 
-          {/* Render on sm to xl screens */}
-          <Box sx={{ flexGrow: 1, display: { xs: "none", sm: "flex" } }}>
-            <IconButton
-              aria-label="delete"
-              component={RouterLink}
-              to="/app"
-              disableRipple
-              sx={{ mr: 2 }}
-            >
-              <HomeIcon />
-            </IconButton>
+        {/* Mobile hamburger */}
+        <Box sx={{ flexGrow: 1, display: { xs: "flex", sm: "none" } }}>
+          <IconButton size="large" onClick={handleOpenNavMenu} color="inherit">
+            <MenuIcon />
+          </IconButton>
+          <Menu
+            id="menu-appbar"
+            anchorEl={anchorElNav}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            keepMounted
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+            open={Boolean(anchorElNav)}
+            onClose={handleCloseNavMenu}
+            sx={{ display: { xs: "block", md: "none" } }}
+          >
             {pages.map((page) => (
-              <Button
-                component={RouterLink}
-                to={page.to}
+              <MenuItem
                 key={page.name}
                 onClick={handleCloseNavMenu}
+                component={RouterLink}
+                to={page.to}
+                selected={isActive(page.to)}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: '"IBM Plex Mono", monospace',
+                    fontSize: "10px",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  {page.name}
+                </Typography>
+              </MenuItem>
+            ))}
+          </Menu>
+        </Box>
+
+        {/* Desktop nav tabs */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: { xs: "none", sm: "flex" },
+            alignItems: "stretch",
+            height: 52,
+          }}
+        >
+          <IconButton
+            component={RouterLink}
+            to="/app"
+            disableRipple
+            sx={{ ...iconBtnSx, mr: 1, alignSelf: "center" }}
+            aria-label="home"
+          >
+            <HomeIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+
+          {pages.map((page) => {
+            const active = isActive(page.to);
+            return (
+              <Box
+                key={page.name}
+                component={RouterLink}
+                to={page.to}
                 sx={{
-                  my: 2,
-                  display: "block",
-                  color:
-                    page.to === location.pathname
-                      ? theme.palette.primary.main
-                      : theme.palette.text.primary,
+                  display: "flex",
+                  alignItems: "center",
+                  px: "18px",
+                  height: "100%",
+                  textDecoration: "none",
+                  fontFamily: '"IBM Plex Mono", monospace',
+                  fontSize: "10px",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: active
+                    ? theme.palette.primary.main
+                    : theme.palette.text.secondary,
+                  background: active
+                    ? theme.palette.accent.amberGlow
+                    : "transparent",
+                  borderBottom: active
+                    ? `2px solid ${theme.palette.primary.main}`
+                    : "2px solid transparent",
+                  borderRight: `1px solid ${theme.palette.divider}`,
+                  transition: "color 0.15s, background 0.15s",
+                  "&:first-of-type": {
+                    borderLeft: `1px solid ${theme.palette.divider}`,
+                  },
+                  "&:hover": {
+                    color: theme.palette.text.primary,
+                    background: theme.palette.ui.hover,
+                  },
                 }}
-                size="large"
-                disabled={page.disabled}
-                disableRipple
               >
                 {page.name}
-              </Button>
-            ))}
-          </Box>
+              </Box>
+            );
+          })}
+        </Box>
+
+        {/* Right controls */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <LanguageSelector />
           <HardwareMonitorButton />
-
-          {/* Theme Toggle Button */}
-          <Box sx={{ flexGrow: 0 }}>
-            <IconButton
-              onClick={colorMode.toggleColorMode}
-              aria-label="toggle theme"
-              sx={{
-                ml: 1,
-                color:
-                  theme.palette.mode === "dark"
-                    ? "inherit"
-                    : theme.palette.text.primary,
-              }}
-            >
-              {theme.palette.mode === "dark" ? (
-                <Brightness7Icon />
-              ) : (
-                <Brightness4Icon />
-              )}
-            </IconButton>
-          </Box>
-        </Toolbar>
-      </Container>
+          <IconButton
+            onClick={colorMode.toggleColorMode}
+            aria-label="toggle theme"
+            sx={iconBtnSx}
+          >
+            {theme.palette.mode === "dark" ? (
+              <Brightness7Icon sx={{ fontSize: 16 }} />
+            ) : (
+              <Brightness4Icon sx={{ fontSize: 16 }} />
+            )}
+          </IconButton>
+        </Box>
+      </Toolbar>
     </AppBar>
   );
 }
+
 export default ResponsiveAppBar;
