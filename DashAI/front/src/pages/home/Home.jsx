@@ -1,98 +1,308 @@
 import React from "react";
-import { Grid, Typography } from "@mui/material";
 import {
   FileUpload as FileUploadIcon,
   Science as ScienceIcon,
   Extension as ExtensionIcon,
-  Insights as InsightsIcon,
-  Merge as MergeIcon,
-  Timeline as TimelineIcon,
   AutoAwesome as AutoAwesomeIcon,
+  DescriptionOutlined as DocsIcon,
+  SchoolOutlined as TutorialsIcon,
+  GitHub as GitHubIcon,
+  LanguageOutlined as WebsiteIcon,
+  ForumOutlined as ForumIcon,
+  ChatBubbleOutlineOutlined as DiscordIcon,
+  AlternateEmailOutlined as TwitterIcon,
+  OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import HomeButton from "../../components/HomeButton";
-import CustomLayout from "../../components/custom/CustomLayout";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
-import { useTranslation } from "react-i18next";
+
+// Fill in real URLs before shipping
+const SIDEBAR_LINKS = {
+  resources: [
+    { key: "documentation", href: "#", Icon: DocsIcon },
+    { key: "tutorials", href: "#", Icon: TutorialsIcon },
+    { key: "github", href: "#", Icon: GitHubIcon },
+    { key: "website", href: "#", Icon: WebsiteIcon },
+  ],
+  community: [
+    { key: "forum", href: "#", Icon: ForumIcon },
+    { key: "discord", href: "#", Icon: DiscordIcon },
+    { key: "twitter", href: "#", Icon: TwitterIcon },
+  ],
+};
+
+function SidebarSection({ label, links, t, theme }) {
+  return (
+    <Box sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}>
+      <Typography
+        sx={{
+          fontFamily: '"IBM Plex Mono", monospace',
+          fontSize: "8.5px",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: theme.palette.text.disabled,
+          px: "20px",
+          py: "10px",
+          pb: "6px",
+          display: "block",
+        }}
+      >
+        {label}
+      </Typography>
+      {links.map(({ key, href, Icon }) => (
+        <Box
+          key={key}
+          component="a"
+          href={href}
+          target={href !== "#" ? "_blank" : undefined}
+          rel="noopener noreferrer"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            px: "20px",
+            py: "8px",
+            borderLeft: "2px solid transparent",
+            textDecoration: "none",
+            color: theme.palette.text.secondary,
+            fontSize: "12.5px",
+            fontWeight: 400,
+            transition: "background 0.15s, color 0.15s, border-color 0.15s",
+            "&:hover": {
+              background: theme.palette.ui.hover,
+              color: theme.palette.text.primary,
+              borderLeftColor: theme.palette.accent.amberBorder,
+            },
+            "&:hover .ext-icon": { opacity: 1 },
+          }}
+        >
+          <Icon sx={{ fontSize: 13, opacity: 0.6, flexShrink: 0 }} />
+          <Box component="span" sx={{ flexGrow: 1 }}>
+            {t(`home:link.${key}`)}
+          </Box>
+          <OpenInNewIcon
+            className="ext-icon"
+            sx={{
+              fontSize: 11,
+              color: theme.palette.text.disabled,
+              opacity: 0,
+              transition: "opacity 0.15s",
+              flexShrink: 0,
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
+  );
+}
 
 function Home() {
   const { t } = useTranslation(["home", "common"]);
+  const theme = useTheme();
+
+  const modules = [
+    {
+      title: t("common:datasets"),
+      description: t("home:description.datasets"),
+      to: "/app/data",
+      Icon: FileUploadIcon,
+      accent: theme.palette.accent.amber,
+      accentDim: theme.palette.accent.amberDim,
+      accentBorder: theme.palette.accent.amberBorder,
+      accentGlow: theme.palette.accent.amberGlow,
+      tag: t("home:tag.beginner"),
+      chips: [
+        t("home:chip.csv"),
+        t("home:chip.joins"),
+        t("home:chip.recipes"),
+        t("home:chip.eda"),
+      ],
+      tourAttr: "datasets-button",
+    },
+    {
+      title: t("common:models"),
+      description: t("home:description.models"),
+      to: "/app/models",
+      Icon: ScienceIcon,
+      accent: theme.palette.accent.teal,
+      accentDim: theme.palette.accent.tealDim,
+      accentBorder: theme.palette.accent.tealBorder,
+      accentGlow: theme.palette.accent.tealGlow,
+      tag: t("home:tag.beginner"),
+      chips: [
+        t("home:chip.classification"),
+        t("home:chip.regression"),
+        t("home:chip.clustering"),
+      ],
+      tourAttr: "models-button",
+    },
+    {
+      title: t("common:generative"),
+      description: t("home:description.generative"),
+      to: "/app/generative",
+      Icon: AutoAwesomeIcon,
+      accent: theme.palette.accent.purple,
+      accentDim: theme.palette.accent.purpleDim,
+      accentBorder: theme.palette.accent.purpleBorder,
+      accentGlow: theme.palette.accent.purpleGlow,
+      tag: t("home:tag.advanced"),
+      chips: [
+        t("home:chip.inference"),
+        t("home:chip.synthesis"),
+        t("home:chip.shapStories"),
+      ],
+      tourAttr: null,
+    },
+    {
+      title: t("common:plugins"),
+      description: t("home:description.plugins"),
+      to: "/app/plugins/browse",
+      Icon: ExtensionIcon,
+      accent: theme.palette.accent.coral,
+      accentDim: theme.palette.accent.coralDim,
+      accentBorder: theme.palette.accent.coralBorder,
+      accentGlow: theme.palette.accent.coralGlow,
+      tag: t("home:tag.advanced"),
+      chips: [
+        t("home:chip.injection"),
+        t("home:chip.extensions"),
+        t("home:chip.custom"),
+      ],
+      tourAttr: null,
+    },
+  ];
 
   return (
     <TourProvider tourKey={TOUR_KEYS.HOME}>
-      <CustomLayout>
-        {/* Title */}
-        <Typography
-          variant="h3"
-          component="h1"
-          color="text.primary"
-          sx={{ mb: 6 }}
+      <Box
+        sx={{
+          display: "flex",
+          height: "calc(100vh - 52px)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Sidebar */}
+        <Box
+          component="aside"
+          sx={{
+            width: 220,
+            flexShrink: 0,
+            borderRight: `1px solid ${theme.palette.divider}`,
+            background: theme.palette.background.box,
+            flexDirection: "column",
+            overflow: "hidden",
+            display: { xs: "none", sm: "flex" },
+          }}
         >
-          {t("home:label.welcomeDashboardAI")}
-        </Typography>
-        <Typography variant="h5" component="h2" color="text.primary">
-          {t("home:label.getStarted")}
-        </Typography>
-        <Grid
-          container
-          direction="row"
-          justifyContent="flex-start"
-          alignItems="center"
-          sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
-        >
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="datasets-button">
-            <HomeButton
-              title={t("common:datasets")}
-              description={t("home:description.datasets")}
-              to="/app/data"
-              Icon={FileUploadIcon}
-            />
-          </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="models-button">
-            <HomeButton
-              title={t("common:models")}
-              description={t("home:description.models")}
-              to="/app/models"
-              Icon={ScienceIcon}
-            />
-          </Grid>
-        </Grid>
-        <Typography
-          variant="h5"
-          component="h2"
-          color="text.primary"
-          sx={{ mt: 6 }}
-        >
-          {t("home:label.advanced")}
-        </Typography>
-        <Grid
-          container
-          direction="row"
-          justifyContent="flex-start"
-          alignItems="center"
-          sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
-        >
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
-            <HomeButton
-              title={t("common:generative")}
-              description={t("home:description.generative")}
-              to="/app/generative"
-              Icon={AutoAwesomeIcon}
-            />
-          </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
-            <HomeButton
-              title={t("common:plugins")}
-              description={t("home:description.plugins")}
-              to="/app/plugins/browse"
-              Icon={ExtensionIcon}
-            />
-          </Grid>
-        </Grid>
+          <SidebarSection
+            label={t("home:label.resources")}
+            links={SIDEBAR_LINKS.resources}
+            t={t}
+            theme={theme}
+          />
+          <SidebarSection
+            label={t("home:label.community")}
+            links={SIDEBAR_LINKS.community}
+            t={t}
+            theme={theme}
+          />
+          {/* Version string pinned to bottom */}
+          <Box sx={{ mt: "auto", px: "20px", py: "16px", borderTop: `1px solid ${theme.palette.divider}` }}>
+            <Typography
+              sx={{
+                fontFamily: '"IBM Plex Mono", monospace',
+                fontSize: "9px",
+                color: theme.palette.text.disabled,
+                letterSpacing: "0.04em",
+                lineHeight: 1.9,
+              }}
+            >
+              v0.2.1-beta · MIT License
+            </Typography>
+          </Box>
+        </Box>
 
-        <TourButton tourKey={TOUR_KEYS.HOME} />
-      </CustomLayout>
+        {/* Main content */}
+        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          {/* Page header */}
+          <Box
+            sx={{
+              px: "28px",
+              py: "20px",
+              pb: "18px",
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              background:
+                theme.palette.mode === "dark"
+                  ? "rgba(12,12,10,0.7)"
+                  : theme.palette.background.box,
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: '"IBM Plex Sans", sans-serif',
+                fontSize: "18px",
+                fontWeight: 600,
+                color: theme.palette.text.primary,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {t("home:label.welcomeDashboardAI")}
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: '"IBM Plex Mono", monospace',
+                fontSize: "10px",
+                color: theme.palette.text.disabled,
+                mt: "3px",
+                letterSpacing: "0.06em",
+              }}
+            >
+              {t("home:label.welcomeSubtitle")}
+            </Typography>
+          </Box>
+
+          {/* 2x2 module card grid */}
+          <Box
+            sx={{
+              flex: 1,
+              p: "24px 28px",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gridTemplateRows: "1fr 1fr",
+              gap: "14px",
+              minHeight: 0,
+            }}
+          >
+            {modules.map((mod) => (
+              <Box
+                key={mod.to}
+                data-tour={mod.tourAttr || undefined}
+                sx={{ minHeight: 0 }}
+              >
+                <HomeButton
+                  title={mod.title}
+                  description={mod.description}
+                  to={mod.to}
+                  Icon={mod.Icon}
+                  accent={mod.accent}
+                  accentDim={mod.accentDim}
+                  accentBorder={mod.accentBorder}
+                  accentGlow={mod.accentGlow}
+                  tag={mod.tag}
+                  chips={mod.chips}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+      <TourButton tourKey={TOUR_KEYS.HOME} />
     </TourProvider>
   );
 }

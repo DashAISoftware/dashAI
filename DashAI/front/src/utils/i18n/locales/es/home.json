@@ -1,11 +1,11 @@
 {
   "description": {
-    "datasets": "Crea y gestiona los datasets registrados en la aplicación.",
-    "explainers": "Explora y comprende el proceso de toma de decisiones detrás de tus modelos.",
-    "generative": "Interactúa con modelos de IA para inferencia y genera nuevo contenido.",
-    "models": "Configura tareas, entrena y compara modelos en sesiones organizadas.",
-    "pipelines": "Crea y gestiona pipelines.",
-    "plugins": "Explora y gestiona plugins para extender la funcionalidad de DashAI."
+    "datasets": "Sube, transforma y versiona tus datos de entrenamiento en un solo lugar.",
+    "explainers": "Explora y comprende el proceso de toma de decisiones detrás de tu IA.",
+    "generative": "Interactúa con IA para ejecutar inferencias y sintetizar nuevo contenido.",
+    "models": "Configura tareas, entrena y compara clasificadores en sesiones organizadas.",
+    "pipelines": "Crea y gestiona tuberías de procesamiento de extremo a extremo.",
+    "plugins": "Explora e instala extensiones para ampliar las capacidades de DashAI."
   },
   "label": {
     "advanced": "Avanzado",
