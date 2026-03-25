@@ -10,7 +10,7 @@ def create_session_1(client: TestClient):
         "task_name": "TextToImageGenerationTask",
         "parameters": {
             "num_inference_steps": 1,
-            "model_name": "stabilityai/stable-diffusion-2",
+            "model_name": "sd2-community/stable-diffusion-2",
             "guidance_scale": 6.0,
             "device": "CPU",
             "negative_prompt": "",
