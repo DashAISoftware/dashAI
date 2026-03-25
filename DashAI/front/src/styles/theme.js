@@ -134,7 +134,7 @@ const getTheme = (mode, language) => ({
             panelDark: "#0f0f0d",
             panelMedium: "#111110",
             panelLight: "#161614",
-            scrollbar: "rgba(239,159,39,0.22)",
+            scrollbar: "rgba(239,159,39,0.25)",
             scrollbarHover: "rgba(239,159,39,0.40)",
             hover: "rgba(239,159,39,0.03)",
             divider: "rgba(239,159,39,0.10)",
