@@ -1,6 +1,4 @@
-import numpy as np
-import torch
-import torch.nn as nn
+from typing import TYPE_CHECKING
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
@@ -13,9 +11,13 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.regression_model import RegressionModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
+
+if TYPE_CHECKING:
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class MLPRegressorSchema(BaseSchema):
@@ -176,25 +178,6 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
 
-class MLP(nn.Module):
-    def __init__(self, input_dim, hidden_size, activation_name):
-        super().__init__()
-        activations = {
-            "relu": nn.ReLU(),
-            "tanh": nn.Tanh(),
-            "sigmoid": nn.Sigmoid(),
-            "identity": nn.Identity(),
-        }
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, hidden_size),
-            activations.get(activation_name, nn.ReLU()),
-            nn.Linear(hidden_size, 1),
-        )
-
-    def forward(self, x):
-        return self.model(x)
-
-
 class MLPRegression(RegressionModel):
     SCHEMA = MLPRegressorSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -209,6 +192,28 @@ class MLPRegression(RegressionModel):
     ICON: str = "Psychology"
 
     def __init__(self, **kwargs) -> None:
+        import torch.nn as nn
+
+        class MLP(nn.Module):
+            def __init__(self, input_dim, hidden_size, activation_name):
+                super().__init__()
+                activations = {
+                    "relu": nn.ReLU(),
+                    "tanh": nn.Tanh(),
+                    "sigmoid": nn.Sigmoid(),
+                    "identity": nn.Identity(),
+                }
+                self.model = nn.Sequential(
+                    nn.Linear(input_dim, hidden_size),
+                    activations.get(activation_name, nn.ReLU()),
+                    nn.Linear(hidden_size, 1),
+                )
+
+            def forward(self, x):
+                return self.model(x)
+
+        self.mlp = MLP
+
         self.params = kwargs
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}"
@@ -219,11 +224,13 @@ class MLPRegression(RegressionModel):
 
     def train(
         self,
-        x_train: DashAIDataset,
-        y_train: DashAIDataset,
-        x_validation: DashAIDataset = None,
-        y_validation: DashAIDataset = None,
+        x_train: "DashAIDataset",
+        y_train: "DashAIDataset",
+        x_validation: "DashAIDataset" = None,
+        y_validation: "DashAIDataset" = None,
     ) -> "MLPRegression":
+        import torch
+
         # 1. Prepare Data
         x_values = self.prepare_dataset(x_train, is_fit=True).to_pandas().values
         y_values = self.prepare_output(y_train, is_fit=True).to_pandas().values
@@ -234,7 +241,7 @@ class MLPRegression(RegressionModel):
         )
 
         # 2. Init Model & Optimizer
-        self.model = MLP(
+        self.model = self.mlp(
             input_dim=X_tensor.shape[1],
             hidden_size=self.params.get("hidden_size", 100),
             activation_name=self.params.get("activation", "relu"),
@@ -243,7 +250,7 @@ class MLPRegression(RegressionModel):
         optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.params.get("learning_rate", 0.001)
         )
-        criterion = nn.MSELoss()
+        criterion = torch.nn.MSELoss()
 
         # 3. Training Loop using Epochs
         total_epochs = self.params.get("epochs", 3)
@@ -331,7 +338,9 @@ class MLPRegression(RegressionModel):
 
         return self
 
-    def predict(self, x: DashAIDataset) -> np.ndarray:
+    def predict(self, x: "DashAIDataset") -> "ndarray":
+        import torch
+
         self.model.eval()
         x_proc = self.prepare_dataset(x, is_fit=False).to_pandas().values
         x_tensor = torch.tensor(x_proc, dtype=torch.float32).to(self.device)
@@ -339,6 +348,8 @@ class MLPRegression(RegressionModel):
             return self.model(x_tensor).cpu().numpy().flatten()
 
     def save(self, filename: str) -> None:
+        import torch
+
         torch.save(
             {
                 "state": self.model.state_dict(),
@@ -350,11 +361,13 @@ class MLPRegression(RegressionModel):
 
     @staticmethod
     def load(filename: str) -> "MLPRegression":
+        import torch
+
         data = torch.load(filename)
         instance = MLPRegression(**data["params"])
 
         # Rebuild the model architecture using saved input_dim
-        instance.model = MLP(
+        instance.model = instance.mlp(
             input_dim=data["input_dim"],
             hidden_size=instance.params.get("hidden_size", 5),
             activation_name=instance.params.get("activation", "relu"),

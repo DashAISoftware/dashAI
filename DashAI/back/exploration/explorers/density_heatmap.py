@@ -1,18 +1,15 @@
-import os
-import pathlib
-
-import plotly.express as px
-from beartype.typing import Any, Dict
-from plotly.graph_objs import Figure
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import int_field, none_type, schema_field
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class DensityHeatmapSchema(BaseExplorerSchema):
@@ -70,7 +67,9 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         self.nbinsy = kwargs.get("nbinsy")
         super().__init__(**kwargs)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
@@ -92,11 +91,14 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Figure,
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
         return path.as_posix()

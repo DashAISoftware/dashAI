@@ -1,13 +1,16 @@
 """DashAI Translation Task."""
 
-from typing import List, Union
-
-from datasets import DatasetDict
+from typing import TYPE_CHECKING, List, Union
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.value_types import Text
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TranslationTask(BaseTask):
@@ -38,10 +41,10 @@ class TranslationTask(BaseTask):
 
     def prepare_for_task(
         self,
-        dataset: Union[DatasetDict, DashAIDataset],
+        dataset: Union["DatasetDict", "DashAIDataset"],
         input_columns: List[str],
         output_columns: List[str],
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Convert the dataset to DashAIDataset and check the columns types
 
         A copy of the dataset is created.
@@ -61,7 +64,9 @@ class TranslationTask(BaseTask):
         )
         return dashai_dataset
 
-    def process_predictions(self, dataset, predictions, output_column):
+    def process_predictions(
+        self, dataset: "DashAIDataset", predictions: "ndarray", output_column: str
+    ):
         """Process the predictions
 
         Parameters
@@ -79,7 +84,7 @@ class TranslationTask(BaseTask):
         """
         return predictions
 
-    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
         """Get the number of unique labels in the output column.
 
         Parameters

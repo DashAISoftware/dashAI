@@ -1,9 +1,4 @@
-import asyncio
-import contextlib
 import logging
-import platform
-import shutil
-import subprocess
 
 import psutil
 from fastapi import APIRouter, WebSocket
@@ -18,6 +13,10 @@ _HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 
 def _get_gpu_info() -> list[dict]:
     """Collect GPU info from NVIDIA (via pynvml) and AMD (via rocm-smi)."""
+    import platform
+    import shutil
+    import subprocess
+
     gpus = []
 
     # NVIDIA GPUs via pynvml
@@ -52,9 +51,11 @@ def _get_gpu_info() -> list[dict]:
                     "temperature": temp,
                     "memory_used": mem_info.used,
                     "memory_total": mem_info.total,
-                    "memory_percent": round(mem_info.used / mem_info.total * 100, 1)
-                    if mem_info.total > 0
-                    else 0,
+                    "memory_percent": (
+                        round(mem_info.used / mem_info.total * 100, 1)
+                        if mem_info.total > 0
+                        else 0
+                    ),
                 }
             )
         pynvml.nvmlShutdown()
@@ -207,6 +208,9 @@ async def get_hardware_stats():
 @router.websocket("/ws")
 async def hardware_stats_websocket(websocket: WebSocket):
     """Stream hardware stats over WebSocket at ~1s intervals."""
+    import asyncio
+    import contextlib
+
     await websocket.accept()
 
     # Prime psutil's cpu_percent (first call returns 0.0)

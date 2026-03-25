@@ -194,6 +194,7 @@ export default function SessionBar({ onToggle }) {
           title={t("common:generative")}
           Icon={FolderIcon}
           initialOpenGroups={openSections}
+          getItemDescription={(session) => session.model_name}
         />
       </Box>
 

@@ -1,23 +1,23 @@
 import logging
-import os
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
-import pyarrow as pa
-import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     ColumnsValidationParams,
     ModelSessionParams,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
-from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.tasks.base_task import BaseTask
+
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ router = APIRouter()
 @router.get("/")
 @inject
 async def get_model_sessions(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve a list of the stored model sessions in the database.
 
@@ -60,7 +60,7 @@ async def get_model_sessions(
 @inject
 async def get_model_session(
     model_session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve the model session associated with the provided ID.
 
@@ -98,10 +98,17 @@ async def get_model_session(
 @inject
 async def validate_columns(
     params: ColumnsValidationParams,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Validate if dataset columns are compatible with a task."""
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, params.dataset_id)
@@ -146,7 +153,7 @@ async def validate_columns(
             detail=f"Task {params.task_name} not found in the registry.",
         )
 
-    task: BaseTask = component_registry[params.task_name]["class"]()
+    task: "BaseTask" = component_registry[params.task_name]["class"]()
     validation_response = {}
 
     try:
@@ -166,7 +173,7 @@ async def validate_columns(
 @inject
 async def create_model_session(
     params: ModelSessionParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Create a new model session.
 
@@ -188,6 +195,11 @@ async def create_model_session(
     HTTPException
         If the dataset with id dataset_id is not registered in the DB.
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, params.dataset_id)
@@ -236,7 +248,7 @@ async def create_model_session(
 @inject
 async def delete_model_session(
     model_session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the model session associated with the provided ID from the database.
 
@@ -278,7 +290,7 @@ async def update_model_session(
     dataset_id: Union[int, None] = None,
     task_name: Union[str, None] = None,
     name: Union[str, None] = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the model session associated with the provided ID.
 

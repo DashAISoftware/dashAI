@@ -1,20 +1,13 @@
 import json
 import logging
-import os
-import re
-import shutil
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy.orm import Session, sessionmaker
-from starlette.datastructures import UploadFile
 
-from DashAI.back.api.api_v1.schemas import prediction_params
-from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
 from DashAI.back.dependencies.database.models import (
     Dataset,
     ModelSession,
@@ -23,8 +16,14 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.predict_job import run_manual_prediction
 
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session, sessionmaker
+
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 
 router = APIRouter()
 
@@ -32,8 +31,9 @@ router = APIRouter()
 @router.post("/")
 @inject
 async def create_prediction(
-    params: prediction_params.PredictionCreationParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    params: PredictionCreationParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Creates a prediction for a given trained model/run.
@@ -44,6 +44,9 @@ async def create_prediction(
         The ID of the trained model/run.
     dataset_id : int | None
         The ID of the dataset to use for prediction (optional).
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
@@ -78,7 +81,7 @@ async def create_prediction(
 async def get_all_predictions(
     run_id: int = Query(None, description="The ID of the trained model/run"),
     prediction_id: int = Query(None, description="The ID of the prediction"),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Fetches all predictions, optionally filtered by run_id.
@@ -87,8 +90,11 @@ async def get_all_predictions(
     ----------
     run_id : int, optional
         The ID of the trained model/run to filter predictions.
-    session_factory : sessionmaker
-        SQLAlchemy session factory injected automatically.
+    prediction_id : int, optional
+        The ID of the prediction to fetch.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
@@ -124,7 +130,7 @@ async def get_all_predictions(
 @router.get("/filter_datasets")
 async def filter_datasets_endpoint(
     run_id: int = Query(..., description="The ID of the trained model/run"),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Filter datasets that match the column specifications of the train dataset.
@@ -133,12 +139,19 @@ async def filter_datasets_endpoint(
     ----------
     run_id : int
         The ID of the trained model/run.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     List[Dataset]
         List of datasets that match the column specifications of the train dataset.
     """
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     try:
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
@@ -181,8 +194,7 @@ async def filter_datasets_endpoint(
 @inject
 async def delete_prediction(
     prediction_id: str,
-    config: dict = Depends(lambda: di["config"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Deletes a prediction file based on the provided predict_name.
@@ -191,6 +203,9 @@ async def delete_prediction(
     ----------
     prediction_id : str
         The ID of the prediction file to delete.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Raises
     ------
@@ -198,6 +213,8 @@ async def delete_prediction(
         If the file cannot be found or deleted.
     """
     logger.debug("Deleting prediction file with ID %s", prediction_id)
+    import os
+    import shutil
 
     with session_factory() as db:
         prediction: Prediction | None = db.get(Prediction, int(prediction_id))
@@ -230,8 +247,8 @@ async def delete_prediction(
 @inject
 async def preview_manual_prediction(
     request: Request,
-    component_registry: Any = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Run a synchronous manual prediction and return results without persisting.
 
@@ -247,6 +264,10 @@ async def preview_manual_prediction(
     dict
         ``{"columns": [...], "rows": [[...], ...]}``
     """
+    import re
+
+    from starlette.datastructures import UploadFile
+
     form = await request.form()
 
     run_id = form.get("run_id")

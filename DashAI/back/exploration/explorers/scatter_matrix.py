@@ -1,10 +1,4 @@
-import os
-import pathlib
-
-import plotly.express as px
-import plotly.io as pio
-from beartype.typing import Any, Dict, List
-from plotly.graph_objs import Figure
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from DashAI.back.core.schema_fields import (
     int_field,
@@ -14,12 +8,14 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ScatterMatrixSchema(BaseExplorerSchema):
@@ -90,8 +86,8 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         super().__init__(**kwargs)
 
     def prepare_dataset(
-        self, loaded_dataset: DashAIDataset, columns: List[Dict[str, Any]]
-    ) -> DashAIDataset:
+        self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
+    ) -> "DashAIDataset":
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -121,7 +117,9 @@ class ScatterMatrixExplorer(RelationshipExplorer):
 
         return super().prepare_dataset(loaded_dataset, columns)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         dimensions = [col["columnName"] for col in explorer_info.columns]
 
@@ -145,11 +143,14 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Figure,
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
         return path.as_posix()
@@ -157,6 +158,8 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        import plotly.io as pio
+
         resultType = "plotly_json"
         config = {}
 

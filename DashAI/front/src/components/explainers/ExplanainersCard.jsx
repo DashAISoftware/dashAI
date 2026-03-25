@@ -36,17 +36,15 @@ export default function ExplainersCard({
   compact = false,
 }) {
   const [open, setOpen] = useState(false);
+  const expandedStorageKey = `explainer-${scope}-${explainer.id}-expanded`;
   const [expanded, setExpanded] = useState(() => {
-    const saved = localStorage.getItem(`explainer-${explainer.id}-expanded`);
+    const saved = localStorage.getItem(expandedStorageKey);
     return saved !== null ? JSON.parse(saved) : true;
   });
 
   useEffect(() => {
-    localStorage.setItem(
-      `explainer-${explainer.id}-expanded`,
-      JSON.stringify(expanded),
-    );
-  }, [expanded, explainer.id]);
+    localStorage.setItem(expandedStorageKey, JSON.stringify(expanded));
+  }, [expanded, expandedStorageKey]);
   const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
 
