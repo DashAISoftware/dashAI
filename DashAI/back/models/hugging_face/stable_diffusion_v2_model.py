@@ -21,13 +21,13 @@ class StableDiffusionSchema(BaseSchema):
     model_name: schema_field(
         enum_field(
             enum=[
-                "stabilityai/stable-diffusion-2",
-                "stabilityai/stable-diffusion-2-base",
-                "stabilityai/stable-diffusion-2-1",
-                "stabilityai/stable-diffusion-2-1-base",
+                "sd2-community/stable-diffusion-2",
+                "sd2-community/stable-diffusion-2-base",
+                "sd2-community/stable-diffusion-2-1",
+                "sd2-community/stable-diffusion-2-1-base",
             ]
         ),
-        placeholder="stabilityai/stable-diffusion-2",
+        placeholder="sd2-community/stable-diffusion-2",
         description=MultilingualString(
             en=(
                 "The specific Stable Diffusion 2.x checkpoint to load. "
@@ -224,8 +224,10 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "to produce detailed images from text prompts. "
             "Supports stable-diffusion-2, "
             "stable-diffusion-2-base, stable-diffusion-2-1, and "
-            "stable-diffusion-2-1-base variants. Models are available at "
-            "https://huggingface.co/stabilityai."
+            "stable-diffusion-2-1-base variants. Models are served from the "
+            "sd2-community organization (https://huggingface.co/sd2-community), "
+            "a community mirror of the original Stability AI weights which have been "
+            "deprecated and removed from https://huggingface.co/stabilityai."
         ),
         es=(
             "Stable Diffusion 2.x es un modelo de difusión latente de Stability AI "
@@ -233,8 +235,11 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "un denoiser U-Net condicionado en embeddings de texto CLIP y un "
             "autoencoder variacional (VAE) para producir imágenes detalladas. Soporta "
             "las variantes stable-diffusion-2, stable-diffusion-2-base, "
-            "stable-diffusion-2-1 y stable-diffusion-2-1-base. Los modelos están "
-            "disponibles en https://huggingface.co/stabilityai."
+            "stable-diffusion-2-1 y stable-diffusion-2-1-base. Los modelos se sirven "
+            "desde la organización sd2-community "
+            "(https://huggingface.co/sd2-community), un espejo comunitario de los "
+            "pesos originales de Stability AI que han sido deprecados y eliminados de "
+            "https://huggingface.co/stabilityai."
         ),
     )
 
@@ -248,7 +253,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get("model_name", "stabilityai/stable-diffusion-2")
+        self.model_name = kwargs.get("model_name", "sd2-community/stable-diffusion-2")
 
         self.model = DiffusionPipeline.from_pretrained(
             self.model_name,
