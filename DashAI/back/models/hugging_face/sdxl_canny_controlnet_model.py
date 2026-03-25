@@ -1,14 +1,4 @@
-from typing import Any, List, Tuple
-
-import cv2
-import numpy as np
-import torch
-from diffusers import (
-    AutoencoderKL,
-    ControlNetModel,
-    StableDiffusionXLControlNetPipeline,
-)
-from PIL import Image
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -20,6 +10,9 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 
 class SDXLCannyControlNetSchema(BaseSchema):
@@ -125,8 +118,12 @@ class SDXLCannyControlNetSchema(BaseSchema):
 
 
 def get_canny_image(
-    image: Image.Image, low_threshold: int, high_threshold: int
-) -> Image.Image:
+    image: "Image.Image", low_threshold: int, high_threshold: int
+) -> "Image.Image":
+    import cv2
+    import numpy as np
+    from PIL import Image
+
     image_array = np.array(image)
     edges = cv2.Canny(image_array, low_threshold, high_threshold)
     edges_rgb = np.stack([edges] * 3, axis=-1)
@@ -173,6 +170,13 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
+        import torch
+        from diffusers import (
+            AutoencoderKL,
+            ControlNetModel,
+            StableDiffusionXLControlNetPipeline,
+        )
+
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
@@ -203,7 +207,7 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
 
         self.pipe.enable_model_cpu_offload()
 
-    def generate(self, input: Tuple[Image.Image, str]) -> List[Any]:
+    def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters

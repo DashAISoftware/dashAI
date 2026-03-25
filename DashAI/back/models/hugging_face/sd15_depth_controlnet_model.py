@@ -1,10 +1,4 @@
-from typing import Any, List, Tuple
-
-import numpy as np
-import torch
-from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
-from PIL import Image
-from transformers import DPTForDepthEstimation, DPTImageProcessor
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -16,6 +10,9 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 
 class SD15DepthControlNetSchema(BaseSchema):
@@ -97,6 +94,11 @@ class SD15DepthControlNetSchema(BaseSchema):
 
 
 def get_depth_map_sd15(image, device):
+    import numpy as np
+    import torch
+    from PIL import Image
+    from transformers import DPTForDepthEstimation, DPTImageProcessor
+
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
     ).to(device)
@@ -157,6 +159,9 @@ class SD15DepthControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
+        import torch
+        from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
+
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
@@ -180,7 +185,7 @@ class SD15DepthControlNetModel(BaseControlNetModel):
 
         self.pipe.enable_model_cpu_offload()
 
-    def generate(self, input: Tuple[Image.Image, str]) -> List[Any]:
+    def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters

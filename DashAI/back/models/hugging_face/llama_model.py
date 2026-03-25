@@ -1,10 +1,5 @@
 from typing import List
 
-try:
-    from llama_cpp import Llama
-except ImportError:
-    Llama = None
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -204,11 +199,13 @@ class LlamaModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
-        if Llama is None:
+        try:
+            from llama_cpp import Llama
+        except ImportError as e:
             raise RuntimeError(
                 "llama-cpp-python is not installed. "
-                "Please install it to use LlamaModel."
-            )
+                "Please install it to use this model."
+            ) from e
 
         kwargs = self.validate_and_transform(kwargs)
         self.model_name = kwargs.get(

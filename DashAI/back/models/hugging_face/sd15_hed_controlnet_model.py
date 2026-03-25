@@ -1,13 +1,4 @@
-from typing import Any, List, Tuple
-
-import torch
-from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
-from PIL import Image
-
-try:
-    from controlnet_aux import HEDdetector
-except ImportError:
-    HEDdetector = None
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -19,6 +10,9 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 
 class SD15HEDControlNetSchema(BaseSchema):
@@ -136,11 +130,13 @@ class SD15HEDControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
-        if HEDdetector is None:
-            raise RuntimeError(
-                "controlnet_aux is not installed. "
-                "Please install it with: pip install controlnet_aux"
-            )
+        try:
+            from controlnet_aux import HEDdetector
+        except ImportError as e:
+            raise RuntimeError("controlnet_aux is not installed. ") from e
+
+        import torch
+        from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
 
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
@@ -167,7 +163,7 @@ class SD15HEDControlNetModel(BaseControlNetModel):
 
         self.pipe.enable_model_cpu_offload()
 
-    def generate(self, input: Tuple[Image.Image, str]) -> List[Any]:
+    def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters
