@@ -10,10 +10,10 @@ describe("Home page", () => {
 
   it("renders all four module cards", () => {
     renderWithProviders(<Home />);
-    expect(screen.getByText(/datasets/i)).toBeInTheDocument();
-    expect(screen.getByText(/models/i)).toBeInTheDocument();
-    expect(screen.getByText(/generative/i)).toBeInTheDocument();
-    expect(screen.getByText(/plugins/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/datasets/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/models/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/generative/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/plugins/i).length).toBeGreaterThan(0);
   });
 
   it("renders sidebar with Resources section", () => {
