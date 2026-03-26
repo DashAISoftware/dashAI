@@ -16,6 +16,7 @@ import { ColorModeContext } from "../contexts/ThemeContext";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
+import NavbarTourButton from "./tour/NavbarTourButton";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -224,6 +225,7 @@ function ResponsiveAppBar() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <LanguageSelector />
           <HardwareMonitorButton />
+          <NavbarTourButton />
           <IconButton
             onClick={colorMode.toggleColorMode}
             aria-label="toggle theme"

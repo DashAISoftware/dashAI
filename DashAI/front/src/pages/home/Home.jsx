@@ -19,7 +19,6 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import HomeButton from "../../components/HomeButton";
 import { TourProvider } from "../../components/tour/TourProvider";
-import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 
 // Fill in real URLs before shipping
@@ -318,7 +317,6 @@ function Home() {
           </Box>
         </Box>
       </Box>
-      <TourButton tourKey={TOUR_KEYS.HOME} />
     </TourProvider>
   );
 }

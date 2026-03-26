@@ -8,7 +8,6 @@ import { useLocation } from "react-router-dom";
 import { getModelSessions as getModelSessionsRequest } from "../../api/modelSession";
 import { getDatasets } from "../../api/datasets";
 import { TourProvider } from "../../components/tour/TourProvider";
-import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { useTranslation } from "react-i18next";
 
@@ -93,7 +92,6 @@ function ExperimentsPage() {
         />
       </CustomLayout>
 
-      <TourButton tourKey={TOUR_KEYS.EXPERIMENTS} />
     </TourProvider>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
@@ -9,15 +10,22 @@ import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
-import { TourButton } from "../../components/tour/TourButton";
-import { TOUR_KEYS } from "../../constants/tours";
+import { useTourContext } from "../../components/tour/TourProvider";
 import { useGenerative } from "../../components/generative/GenerativeContext";
 import { useTranslation } from "react-i18next";
 
 export default function GenerativeContent() {
   const threePanelLayout = useThreePanelLayout();
   const { stepIndex, selectedSessionId } = useGenerative();
+  const { setDisabled } = useTourContext() ?? {};
   const { t } = useTranslation(["generative"]);
+
+  useEffect(() => {
+    setDisabled?.(
+      stepIndex !== 0 || !!selectedSessionId,
+      t("generative:label.tourDisabledMessage"),
+    );
+  }, [stepIndex, selectedSessionId, setDisabled, t]);
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -37,11 +45,6 @@ export default function GenerativeContent() {
 
         <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
           <ParamsBar onToggle={threePanelLayout.handleToggleRight} />
-          <TourButton
-            tourKey={TOUR_KEYS.GENERATIVE}
-            disabled={stepIndex !== 0 || selectedSessionId}
-            disabledMessage={t("generative:label.tourDisabledMessage")}
-          />
         </RightPanel>
       </ModuleContainer>
     </ThreePanelLayoutContext.Provider>
