@@ -12,7 +12,11 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { getDatasetInfo, getDatasetFileFiltered } from "../api/datasets";
+import {
+  getDatasetInfo,
+  getDatasetFile,
+  getDatasetFileFiltered,
+} from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
@@ -99,13 +103,19 @@ export default function DatasetVisualization({
         dataset && !(dataset.status === 3 || dataset.status === 4);
       if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
-        const data = await getDatasetFileFiltered(
-          dataset.file_path,
-          page,
-          pageSize,
-          filterModel,
-          sortModel,
-        );
+        const hasFilters =
+          filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+
+        const data = hasFilters
+          ? await getDatasetFileFiltered(
+              dataset.file_path,
+              page,
+              pageSize,
+              filterModel,
+              sortModel,
+            )
+          : await getDatasetFile(dataset.file_path, page, pageSize);
+
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
         return { rows: [], total: 0 };
