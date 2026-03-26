@@ -18,6 +18,6 @@ export function renderWithProviders(ui, { route = "/" } = {}) {
           <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
         </I18nextProvider>
       </ThemeProvider>
-    </ColorModeContext.Provider>
+    </ColorModeContext.Provider>,
   );
 }

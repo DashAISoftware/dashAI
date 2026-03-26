@@ -39,7 +39,9 @@ const SIDEBAR_LINKS = {
 
 function SidebarSection({ label, links, t, theme }) {
   return (
-    <Box sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}>
+    <Box
+      sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
+    >
       <Typography
         sx={{
           fontFamily: '"IBM Plex Mono", monospace',
@@ -213,7 +215,14 @@ function Home() {
             theme={theme}
           />
           {/* Version string pinned to bottom */}
-          <Box sx={{ mt: "auto", px: "20px", py: "16px", borderTop: `1px solid ${theme.palette.divider}` }}>
+          <Box
+            sx={{
+              mt: "auto",
+              px: "20px",
+              py: "16px",
+              borderTop: `1px solid ${theme.palette.divider}`,
+            }}
+          >
             <Typography
               sx={{
                 fontFamily: '"IBM Plex Mono", monospace',
@@ -229,7 +238,14 @@ function Home() {
         </Box>
 
         {/* Main content */}
-        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* Page header */}
           <Box
             sx={{

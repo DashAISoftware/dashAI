@@ -33,8 +33,7 @@ function ResponsiveAppBar() {
   ];
 
   const isActive = (path) =>
-    location.pathname === path ||
-    location.pathname.startsWith(path + "/");
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
@@ -51,7 +50,7 @@ function ResponsiveAppBar() {
         color: theme.palette.text.primary,
       },
     }),
-    [theme]
+    [theme],
   );
 
   return (
@@ -117,7 +116,12 @@ function ResponsiveAppBar() {
 
         {/* Mobile hamburger */}
         <Box sx={{ flexGrow: 1, display: { xs: "flex", sm: "none" } }}>
-          <IconButton size="large" onClick={handleOpenNavMenu} color="inherit" aria-label="open navigation menu">
+          <IconButton
+            size="large"
+            onClick={handleOpenNavMenu}
+            color="inherit"
+            aria-label="open navigation menu"
+          >
             <MenuIcon />
           </IconButton>
           <Menu

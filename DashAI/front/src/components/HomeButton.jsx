@@ -5,7 +5,18 @@ import Typography from "@mui/material/Typography";
 import { Link as RouterLink } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 
-function HomeButton({ title, description, to, Icon, accent, accentDim, accentBorder, accentGlow, tag, chips }) {
+function HomeButton({
+  title,
+  description,
+  to,
+  Icon,
+  accent,
+  accentDim,
+  accentBorder,
+  accentGlow,
+  tag,
+  chips,
+}) {
   const theme = useTheme();
 
   return (
@@ -51,7 +62,14 @@ function HomeButton({ title, description, to, Icon, accent, accentDim, accentBor
       }}
     >
       {/* Header: icon + tag */}
-      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "14px" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          mb: "14px",
+        }}
+      >
         <Box
           sx={{
             width: 38,

@@ -10,7 +10,7 @@ describe("TourButton", () => {
     renderWithProviders(
       <TourProvider tourKey={TOUR_KEYS.HOME}>
         <TourButton tourKey={TOUR_KEYS.HOME} />
-      </TourProvider>
+      </TourProvider>,
     );
   });
 
@@ -18,7 +18,7 @@ describe("TourButton", () => {
     renderWithProviders(
       <TourProvider tourKey={TOUR_KEYS.HOME}>
         <TourButton tourKey={TOUR_KEYS.HOME} />
-      </TourProvider>
+      </TourProvider>,
     );
     expect(screen.getByRole("button")).toBeInTheDocument();
   });

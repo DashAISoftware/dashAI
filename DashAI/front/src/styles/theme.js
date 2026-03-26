@@ -18,10 +18,7 @@ const getTheme = (mode, language) => ({
       contrastText: "#ffffff",
     },
 
-    divider:
-      mode === "dark"
-        ? "rgba(239,159,39,0.10)"
-        : "rgba(0,0,0,0.10)",
+    divider: mode === "dark" ? "rgba(239,159,39,0.10)" : "rgba(0,0,0,0.10)",
 
     background:
       mode === "dark"
@@ -175,17 +172,13 @@ const getTheme = (mode, language) => ({
           -webkit-border-radius: 10px;
           border-radius: 10px;
           background: ${
-            mode === "dark"
-              ? "rgba(239,159,39,0.25)"
-              : "rgba(0,0,0,0.3)"
+            mode === "dark" ? "rgba(239,159,39,0.25)" : "rgba(0,0,0,0.3)"
           };
           -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
         ::-webkit-scrollbar-thumb:window-inactive {
           background: ${
-            mode === "dark"
-              ? "rgba(239,159,39,0.12)"
-              : "rgba(0,0,0,0.2)"
+            mode === "dark" ? "rgba(239,159,39,0.12)" : "rgba(0,0,0,0.2)"
           };
         }
       `,
