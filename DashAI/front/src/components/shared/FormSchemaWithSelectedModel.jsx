@@ -21,7 +21,7 @@ function FormSchemaWithSelectedModel({
   onCancel,
   saveButtonText,
   hideButtons,
-  onValuesChange,
+  onValuesChange = () => {},
 }) {
   const {
     formValues,
