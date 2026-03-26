@@ -63,7 +63,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           "resetScale2d",
         ],
     toImageButtonOptions: {
-      format: "png",
+      format: "svg",
       filename: "dashai-plot",
       height: 800,
       width: 1200,
@@ -94,6 +94,8 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
 
   const plotLayout = {
     ...plotData.layout,
+    paper_bgcolor: plotData.layout?.paper_bgcolor || "white",
+    plot_bgcolor: plotData.layout?.plot_bgcolor || "white",
     margin: minimalist
       ? {
           l: 40,
@@ -167,6 +169,8 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
               data={plotData.data}
               layout={{
                 ...plotData.layout,
+                paper_bgcolor: plotData.layout?.paper_bgcolor || "white",
+                plot_bgcolor: plotData.layout?.plot_bgcolor || "white",
                 autosize: true,
                 margin: {
                   l: 80,
