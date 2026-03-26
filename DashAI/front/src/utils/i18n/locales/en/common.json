@@ -142,7 +142,7 @@
   "value": "Value",
   "vertical": "Vertical",
   "viewDetails": "View Details",
-  "renameColumn": "Rename column",
+  "renameColumn": "Double-click to rename column",
   "columnNameEmpty": "Column name cannot be empty",
   "columnNameInvalid": "Column name can only contain letters, numbers and underscores",
   "columnNameCannotBeEmpty": "Column name cannot be empty",
