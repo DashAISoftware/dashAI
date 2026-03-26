@@ -14,11 +14,11 @@ import SplitDatasetRows from "./SplitDatasetRows";
 import {
   getDatasetInfo as getDatasetInfoRequest,
   getDatasetTypes as getDatasetTypesRequest,
-} from "../../api/datasets";
-import { getComponents as getComponentsRequest } from "../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../api/modelSession";
+} from "../../../api/datasets";
+import { getComponents as getComponentsRequest } from "../../../api/component";
+import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
-import { getColorByColumnType } from "../../utils";
+import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
 /**

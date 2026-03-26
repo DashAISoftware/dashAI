@@ -1,5 +1,8 @@
 from typing import Any, List, Optional
 
+import torch
+from diffusers import StableDiffusionXLPipeline
+
 from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
@@ -15,34 +18,31 @@ from DashAI.back.models.text_to_image_generation_model import (
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
-class StableDiffusionSchema(BaseSchema):
-    """Schema for Stable Diffusion V2 image generation."""
+class StableDiffusionXLSchema(BaseSchema):
+    """Schema for Stable Diffusion XL image generation."""
 
     model_name: schema_field(
         enum_field(
             enum=[
-                "sd2-community/stable-diffusion-2",
-                "sd2-community/stable-diffusion-2-base",
-                "sd2-community/stable-diffusion-2-1",
-                "sd2-community/stable-diffusion-2-1-base",
+                "stabilityai/stable-diffusion-xl-base-1.0",
+                "SG161222/RealVisXL_V4.0",
             ]
         ),
-        placeholder="sd2-community/stable-diffusion-2",
+        placeholder="stabilityai/stable-diffusion-xl-base-1.0",
         description=MultilingualString(
             en=(
-                "The specific Stable Diffusion 2.x checkpoint to load. "
-                "The '-base' variants are trained at 512x512 px and are faster; "
-                "the non-base variants target 768x768 px and produce sharper detail. "
-                "The '2-1' variants are fine-tuned further "
-                "and generally outperform '2'."
+                "The Stable Diffusion XL checkpoint to load. "
+                "'stable-diffusion-xl-base-1.0' is the official base model trained "
+                "at 1024x1024 px for high-quality photorealistic generation. "
+                "'RealVisXL_V4.0' is a popular community fine-tune of SDXL "
+                "optimized for realistic portraits and photography."
             ),
             es=(
-                "El checkpoint específico de Stable Diffusion 2.x a cargar. "
-                "Las variantes '-base' se entrenan a 512x512 px y son más rápidas; "
-                "las variantes sin '-base' apuntan a 768x768 px "
-                "y producen mayor detalle. "
-                "Las variantes '2-1' están más ajustadas "
-                "y generalmente superan a '2'."
+                "El checkpoint Stable Diffusion XL a cargar. "
+                "'stable-diffusion-xl-base-1.0' es el modelo base oficial entrenado "
+                "a 1024x1024 px para generación fotorrealista de alta calidad. "
+                "'RealVisXL_V4.0' es un popular fine-tune comunitario de SDXL "
+                "optimizado para retratos realistas y fotografía."
             ),
         ),
         alias=MultilingualString(en="Model name", es="Nombre del modelo"),
@@ -61,8 +61,8 @@ class StableDiffusionSchema(BaseSchema):
                 es=(
                     "Texto que describe qué excluir de la imagen generada. "
                     "Valores comunes: 'borroso, baja calidad, distorsionado, "
-                    "marca de agua'. Dejar vacío para omitir "
-                    "el condicionamiento negativo."
+                    "marca de agua'. "
+                    "Dejar vacío para omitir el condicionamiento negativo."
                 ),
             ),
             alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
@@ -71,18 +71,18 @@ class StableDiffusionSchema(BaseSchema):
 
     num_inference_steps: schema_field(
         int_field(ge=1),
-        placeholder=15,
+        placeholder=25,
         description=MultilingualString(
             en=(
                 "Number of denoising steps to run. More steps refine the image but "
-                "increase generation time. Typical range: 15-30 for fast results, "
-                "40-50 for higher quality. Values above 100 rarely improve output."
+                "increase generation time. Typical range: 20-30 for fast results, "
+                "40-50 for higher quality. SDXL achieves good results with 25-40 steps."
             ),
             es=(
                 "Número de pasos de eliminación de ruido a ejecutar. Más pasos refinan "
-                "la imagen pero aumentan el tiempo de generación. Rango típico: 15-30 "
-                "para resultados rápidos, 40-50 para mayor calidad. Valores superiores "
-                "a 100 raramente mejoran el resultado."
+                "la imagen pero aumentan el tiempo de generación. Rango típico: 20-30 "
+                "para resultados rápidos, 40-50 para mayor calidad. SDXL logra buenos "
+                "resultados con 25-40 pasos."
             ),
         ),
         alias=MultilingualString(
@@ -92,20 +92,22 @@ class StableDiffusionSchema(BaseSchema):
 
     guidance_scale: schema_field(
         float_field(ge=0.0),
-        placeholder=3.5,
+        placeholder=7.0,
         description=MultilingualString(
             en=(
                 "Classifier-Free Guidance (CFG) scale. Controls how strictly the "
                 "image follows the text prompt. Low values (1-4) allow creative "
                 "freedom; medium values (5-9) balance quality and adherence; "
-                "high values (10+) enforce the prompt but may produce artifacts."
+                "high values (10+) enforce the prompt but may produce artifacts. "
+                "SDXL works well with values between 5-9."
             ),
             es=(
                 "Escala de Classifier-Free Guidance (CFG). Controla qué tan "
-                "estrictamente la imagen sigue el prompt de texto. Valores bajos "
-                "(1-4) permiten libertad creativa; valores medios (5-9) equilibran "
-                "calidad y adherencia; valores altos (10+) refuerzan el prompt pero "
-                "pueden producir artefactos."
+                "estrictamente la imagen sigue el prompt. Valores bajos (1-4) permiten "
+                "libertad creativa; valores medios (5-9) equilibran calidad y "
+                "adherencia; valores altos (10+) refuerzan el prompt pero pueden "
+                "producir artefactos. "
+                "SDXL funciona bien con valores entre 5-9."
             ),
         ),
         alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
@@ -117,15 +119,14 @@ class StableDiffusionSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Hardware device for inference. Select a GPU option for hardware "
-                "acceleration, which is strongly recommended for diffusion models. "
-                "Select 'CPU' on systems without a compatible GPU, but expect "
-                "significantly longer generation times."
+                "acceleration, strongly recommended for SDXL. CPU inference is very "
+                "slow for this large model; expect 10-30 minutes per image on CPU."
             ),
             es=(
-                "Dispositivo de hardware para la inferencia. Seleccione una opción "
-                "de GPU para aceleración por hardware, muy recomendado para modelos "
-                "de difusión. Seleccione 'CPU' en sistemas sin GPU compatible, pero "
-                "espere tiempos de generación significativamente más largos."
+                "Dispositivo de hardware para la inferencia. Seleccione GPU para "
+                "aceleración por hardware, muy recomendado para SDXL. La inferencia "
+                "en CPU es muy lenta para este modelo grande; espere 10-30 minutos "
+                "por imagen en CPU."
             ),
         ),
         alias=MultilingualString(en="Device", es="Dispositivo"),
@@ -143,8 +144,8 @@ class StableDiffusionSchema(BaseSchema):
             es=(
                 "Semilla aleatoria para generación reproducible. Un entero positivo "
                 "fijo siempre producirá la misma imagen con configuraciones idénticas. "
-                "Use un valor negativo (ej. -1) para una semilla aleatoria en cada "
-                "ejecución."
+                "Use un valor negativo (ej. -1) para una semilla aleatoria en "
+                "cada ejecución."
             ),
         ),
         alias=MultilingualString(en="Seed", es="Semilla"),
@@ -152,17 +153,17 @@ class StableDiffusionSchema(BaseSchema):
 
     width: schema_field(
         int_field(ge=64, le=2048),
-        placeholder=512,
+        placeholder=1024,
         description=MultilingualString(
             en=(
                 "Width of the output image in pixels. Must be a multiple of 8. "
-                "Native resolution is 512 for '-base' variants and 768 for others. "
-                "Using the native resolution produces the best quality results."
+                "SDXL's native resolution is 1024x1024 px. Using non-native "
+                "resolutions may reduce quality."
             ),
             es=(
                 "Ancho de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
-                "La resolución nativa es 512 para variantes '-base' y 768 para las "
-                "demás. Usar la resolución nativa produce los mejores resultados."
+                "La resolución nativa de SDXL es 1024x1024 px. Usar resoluciones no "
+                "nativas puede reducir la calidad."
             ),
         ),
         alias=MultilingualString(en="Width", es="Ancho"),
@@ -170,17 +171,15 @@ class StableDiffusionSchema(BaseSchema):
 
     height: schema_field(
         int_field(ge=64, le=2048),
-        placeholder=512,
+        placeholder=1024,
         description=MultilingualString(
             en=(
                 "Height of the output image in pixels. Must be a multiple of 8. "
-                "Native resolution is 512 for '-base' variants and 768 for others. "
-                "Using the native resolution produces the best quality results."
+                "SDXL's native resolution is 1024x1024 px."
             ),
             es=(
                 "Altura de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
-                "La resolución nativa es 512 para variantes '-base' y 768 para las "
-                "demás. Usar la resolución nativa produce los mejores resultados."
+                "La resolución nativa de SDXL es 1024x1024 px."
             ),
         ),
         alias=MultilingualString(en="Height", es="Altura"),
@@ -207,57 +206,55 @@ class StableDiffusionSchema(BaseSchema):
     )  # type: ignore
 
 
-class StableDiffusionV2Model(TextToImageGenerationTaskModel):
-    """Wrapper model for all Stable Diffusion 2.x models from stability.ai."""
+class StableDiffusionXLModel(TextToImageGenerationTaskModel):
+    """Wrapper for Stable Diffusion XL models from Stability AI."""
 
-    SCHEMA = StableDiffusionSchema
-    COLOR: str = "#1565c0"
+    SCHEMA = StableDiffusionXLSchema
+    COLOR: str = "#0d47a1"
     DISPLAY_NAME: str = MultilingualString(
-        en="Stable Diffusion V2",
-        es="Stable Diffusion V2",
+        en="Stable Diffusion XL",
+        es="Stable Diffusion XL",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Stable Diffusion 2.x is a latent diffusion model by Stability AI for "
-            "high-resolution text-to-image generation. It uses a U-Net denoiser "
-            "conditioned on CLIP text embeddings and a variational autoencoder (VAE) "
-            "to produce detailed images from text prompts. "
-            "Supports stable-diffusion-2, "
-            "stable-diffusion-2-base, stable-diffusion-2-1, and "
-            "stable-diffusion-2-1-base variants. Models are served from the "
-            "sd2-community organization (https://huggingface.co/sd2-community), "
-            "a community mirror of the original Stability AI weights which have been "
-            "deprecated and removed from https://huggingface.co/stabilityai."
+            "Stable Diffusion XL (SDXL) is a latent diffusion model by Stability AI "
+            "for high-resolution text-to-image generation at 1024x1024 px. It features "
+            "a larger U-Net backbone and a second text encoder (OpenCLIP ViT-bigG) "
+            "that significantly improves image quality, text rendering, and "
+            "compositional accuracy compared to earlier SD versions. Also includes "
+            "RealVisXL V4.0, a community fine-tune optimized for photorealistic "
+            "portraits and photography. Base model at "
+            "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0."
         ),
         es=(
-            "Stable Diffusion 2.x es un modelo de difusión latente de Stability AI "
-            "para generación de imágenes de alta resolución a partir de texto. Utiliza "
-            "un denoiser U-Net condicionado en embeddings de texto CLIP y un "
-            "autoencoder variacional (VAE) para producir imágenes detalladas. Soporta "
-            "las variantes stable-diffusion-2, stable-diffusion-2-base, "
-            "stable-diffusion-2-1 y stable-diffusion-2-1-base. Los modelos se sirven "
-            "desde la organización sd2-community "
-            "(https://huggingface.co/sd2-community), un espejo comunitario de los "
-            "pesos originales de Stability AI que han sido deprecados y eliminados de "
-            "https://huggingface.co/stabilityai."
+            "Stable Diffusion XL (SDXL) es un modelo de difusión latente de "
+            "Stability AI para generación de imágenes de alta resolución a "
+            "1024x1024 px. Presenta una arquitectura U-Net más grande y un segundo "
+            "codificador de texto (OpenCLIP ViT-bigG) que mejora significativamente "
+            "la calidad de imagen, el renderizado de texto y la precisión "
+            "composicional respecto a versiones anteriores de SD. También incluye "
+            "RealVisXL V4.0, un fine-tune comunitario optimizado para retratos "
+            "fotorrealistas y fotografía. Modelo base en "
+            "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0."
         ),
     )
 
     def __init__(self, **kwargs):
         """Initialize the model."""
-        import torch
-        from diffusers import DiffusionPipeline
-
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get("model_name", "sd2-community/stable-diffusion-2")
+        self.model_name = kwargs.get(
+            "model_name", "stabilityai/stable-diffusion-xl-base-1.0"
+        )
 
-        self.model = DiffusionPipeline.from_pretrained(
+        self.model = StableDiffusionXLPipeline.from_pretrained(
             self.model_name,
-            torch_dtype=torch.float32,
+            torch_dtype=torch.float16 if use_gpu else torch.float32,
+            use_safetensors=True,
+            variant="fp16" if use_gpu else None,
         ).to(self.device)
 
         self.negative_prompt = kwargs.get("negative_prompt")
@@ -269,26 +266,22 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
 
     def generate(self, input: str) -> List[Any]:
-        """Generate output from a generative model.
+        """Generate images from a text prompt.
 
         Parameters
         ----------
         input : str
-            Input data to be generated
+            Text prompt to generate an image from.
 
         Returns
         -------
         List[Any]
-            Generated output images in a list
-
+            Generated output images in a list.
         """
-        import torch
-
         generator = None
         if self.seed is not None and self.seed > 0:
             generator = torch.Generator(device=self.device).manual_seed(self.seed)
 
-        # Base parameters for all models
         params = {
             "prompt": input,
             "negative_prompt": self.negative_prompt,
@@ -300,7 +293,5 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "num_images_per_prompt": self.num_images_per_prompt,
         }
 
-        # Generate images
         output = self.model(**params)
-
         return output.images

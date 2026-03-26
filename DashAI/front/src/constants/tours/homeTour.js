@@ -18,7 +18,7 @@ export const homeTourSteps = [
   {
     target: '[data-tour="models-button"]',
     content: (
-      <Trans i18nKey={"homeTour:experimentsIntro"}>
+      <Trans i18nKey={"homeTour:modelsIntro"}>
         <div>
           <h3></h3>
           <p></p>

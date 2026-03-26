@@ -55,8 +55,11 @@ export default function SelectModelMenu() {
     getRelatedComponents(selectedTaskName).then((components) => {
       setRelatedComponents(components);
       setPage(1);
+      setSelectedModel((prev) =>
+        prev ? (components.find((c) => c.name === prev.name) ?? prev) : null,
+      );
     });
-  }, [selectedTaskName]);
+  }, [selectedTaskName, t]);
 
   useEffect(() => {
     if (!selectedModel?.schema?.properties) return;

@@ -17,7 +17,7 @@ import {
   Add as AddIcon,
   TrendingUp as TrendingUpIcon,
 } from "@mui/icons-material";
-import ExplainersCard from "../explainers/ExplanainersCard";
+import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
 import InlineExplainerCreator from "../explainers/InlineExplainerCreator";
 import DatasetPredictionPanel from "./DatasetPredictionPanel";

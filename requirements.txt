@@ -25,7 +25,8 @@ typer
 rich
 torch
 torchvision
-transformers==4.50.0
+transformers
+controlnet_aux
 sacrebleu
 sentencepiece
 optuna

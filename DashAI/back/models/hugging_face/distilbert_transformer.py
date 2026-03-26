@@ -17,6 +17,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.text_classification_model import TextClassificationModel
+from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 from DashAI.back.types.categorical import Categorical
 
 if TYPE_CHECKING:
@@ -59,8 +60,8 @@ class DistilBertTransformerSchema(BaseSchema):
         alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
     )  # type: ignore
     device: schema_field(
-        enum_field(enum=["gpu", "cpu"]),
-        placeholder="gpu",
+        enum_field(enum=GPU_OR_CPU),
+        placeholder=GPU_OR_CPU_PLACEHOLDER,
         description=MultilingualString(
             en=(
                 "Hardware on which the training is run. If available, GPU is "
@@ -226,7 +227,7 @@ class DistilBertTransformer(TextClassificationModel):
             "weight_decay": kwargs.get("weight_decay", 0.01),
         }
         self.batch_size = kwargs.get("batch_size", 16)
-        self.device = kwargs.get("device", "gpu")
+        self.device = kwargs.get("device")
 
         if model is not None:
             self.model = model
@@ -290,14 +291,14 @@ class DistilBertTransformer(TextClassificationModel):
         # Get number of epochs from training args
         num_epochs = self.training_args_params.get("num_train_epochs", 2)
 
-        can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
+        can_use_fp16 = torch.cuda.is_available() and self.device.lower() == "gpu"
         training_args_obj = TrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
             save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
             eval_strategy="no",
-            use_cpu=self.device != "gpu",
+            use_cpu=self.device.lower() != "gpu",
             fp16=can_use_fp16,
             **self.training_args_params,
         )
@@ -403,7 +404,7 @@ class DistilBertTransformer(TextClassificationModel):
             The prepared dataset ready to be converted to
             an accepted format in the model.
         """
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
+        from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
             apply_categorical_label_encoder,
             categorical_label_encoder,
         )
