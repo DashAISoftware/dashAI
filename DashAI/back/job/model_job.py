@@ -1,30 +1,23 @@
-import gc
-import json
 import logging
-import os
-import pickle
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.attributes import flag_modified
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    load_dataset,
-    prepare_for_model_session,
-    select_columns,
-    split_dataset,
-)
 from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.metrics import BaseMetric
-from DashAI.back.models import BaseModel
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.optimizers import BaseOptimizer
-from DashAI.back.tasks import BaseTask
+from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -35,7 +28,7 @@ class ModelJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         run_id: int = self.kwargs["run_id"]
@@ -55,7 +48,7 @@ class ModelJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as error."""
         run_id: int = self.kwargs.get("run_id")
@@ -97,7 +90,19 @@ class ModelJob(BaseJob):
     def run(
         self,
     ) -> None:
+        import gc
+        import json
+        import os
+        import pickle
+
         from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            prepare_for_model_session,
+            select_columns,
+            split_dataset,
+        )
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
@@ -124,7 +129,7 @@ class ModelJob(BaseJob):
                     )
 
                 try:
-                    loaded_dataset: DashAIDataset = load_dataset(
+                    loaded_dataset: "DashAIDataset" = load_dataset(
                         f"{dataset.file_path}/dataset"
                     )
                 except Exception as e:
@@ -285,11 +290,12 @@ class ModelJob(BaseJob):
                         model = optimizer.get_model()
                         best_params = optimizer.get_best_params()
 
-                        updated_params = run.parameters.copy()
-                        for param_name, param_value in best_params.items():
-                            updated_params[param_name]["fixed_value"] = param_value
+                        old_parameters = run.parameters.copy()
+                        updated_parameters = factory.update_parameters(
+                            old_parameters, best_params
+                        )
 
-                        run.parameters = updated_params
+                        run.parameters = updated_parameters
                         flag_modified(run, "parameters")
                         db.commit()
 

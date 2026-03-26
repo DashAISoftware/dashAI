@@ -1,4 +1,4 @@
-from beartype.typing import Final
+from typing import Final
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.exploration.base_explorer import BaseExplorer

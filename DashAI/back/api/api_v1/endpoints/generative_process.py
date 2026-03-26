@@ -1,12 +1,10 @@
 import logging
-import os
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from kink import di
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 from starlette.datastructures import UploadFile
 from typing_extensions import Annotated
 
@@ -15,8 +13,12 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     ProcessData,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.tasks import BaseGenerativeTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -26,7 +28,7 @@ log = logging.getLogger(__name__)
 async def upload_generative_process(
     request: Request,
     session_id: Annotated[int, Form(...)],
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Create a new generative session.
@@ -76,7 +78,7 @@ async def upload_generative_process(
                     detail=f"Session with ID {session_id} does not exist.",
                 )
 
-            task: BaseGenerativeTask = di["component_registry"][session.task_name][
+            task: "BaseGenerativeTask" = di["component_registry"][session.task_name][
                 "class"
             ]()
 
@@ -120,8 +122,8 @@ async def upload_generative_process(
 @router.get("/{process_id}", status_code=status.HTTP_200_OK, response_model=None)
 async def get_generative_process(
     process_id: str,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get a generative process by its session ID.
 
@@ -155,9 +157,9 @@ async def get_generative_process(
                 GenerativeSession, process[0].session_id
             )
 
-            task: BaseGenerativeTask = component_registry[generative_session.task_name][
-                "class"
-            ]()
+            task: "BaseGenerativeTask" = component_registry[
+                generative_session.task_name
+            ]["class"]()
 
             process = [p.__dict__ for p in process]
 
@@ -184,7 +186,7 @@ async def get_generative_process(
 )
 async def delete_generative_process(
     process_id: str,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete a generative process by its ID.
 
@@ -232,8 +234,8 @@ async def delete_generative_process(
 )
 async def get_generative_process_by_session_id(
     session_id: str,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get a generative process by its session ID.
 
@@ -263,9 +265,9 @@ async def get_generative_process_by_session_id(
                 GenerativeSession, session_id
             )
 
-            task: BaseGenerativeTask = component_registry[generative_session.task_name][
-                "class"
-            ]()
+            task: "BaseGenerativeTask" = component_registry[
+                generative_session.task_name
+            ]["class"]()
 
             process = [p.__dict__ for p in process]
 
@@ -305,6 +307,8 @@ async def get_generative_image(
     FileResponse
         The image file to be served to the client.
     """
+
+    import os
 
     image_path = os.path.join(config["IMAGES_PATH"], filename)
 

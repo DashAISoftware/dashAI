@@ -114,10 +114,7 @@ const OverviewTab = ({
           <Grid container spacing={2}>
             {typeCounts.map(([type, count]) => (
               <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
+                size={{ xs: 12, sm: 6, md: 4 }}
                 key={type}
                 sx={{ width: "150px" }}
               >

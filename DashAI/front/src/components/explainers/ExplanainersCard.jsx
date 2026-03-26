@@ -36,17 +36,15 @@ export default function ExplainersCard({
   compact = false,
 }) {
   const [open, setOpen] = useState(false);
+  const expandedStorageKey = `explainer-${scope}-${explainer.id}-expanded`;
   const [expanded, setExpanded] = useState(() => {
-    const saved = localStorage.getItem(`explainer-${explainer.id}-expanded`);
+    const saved = localStorage.getItem(expandedStorageKey);
     return saved !== null ? JSON.parse(saved) : true;
   });
 
   useEffect(() => {
-    localStorage.setItem(
-      `explainer-${explainer.id}-expanded`,
-      JSON.stringify(expanded),
-    );
-  }, [expanded, explainer.id]);
+    localStorage.setItem(expandedStorageKey, JSON.stringify(expanded));
+  }, [expanded, expandedStorageKey]);
   const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
 
@@ -96,7 +94,7 @@ export default function ExplainersCard({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Grid item sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
+              <Grid sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
                 <Typography
                   variant="subtitle2"
                   fontWeight="medium"
@@ -120,7 +118,7 @@ export default function ExplainersCard({
                   </Typography>
                 </Typography>
               </Grid>
-              <Grid item>
+              <Grid>
                 <IconButton
                   size="small"
                   aria-label="delete"
@@ -133,7 +131,7 @@ export default function ExplainersCard({
             </Grid>
 
             {/* Expandable plot section */}
-            <Grid item sx={{ width: "100%" }}>
+            <Grid sx={{ width: "100%" }}>
               <Button
                 size="small"
                 onClick={() => setExpanded(!expanded)}

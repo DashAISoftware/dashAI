@@ -18,7 +18,6 @@ export const getJobChanges = async (
   server_now: string;
   queue_empty: boolean;
   recently_completed: boolean;
-  all_jobs: any[];
 }> => {
   const response = await api.get<any>("/v1/job/changes", {
     params: { since },

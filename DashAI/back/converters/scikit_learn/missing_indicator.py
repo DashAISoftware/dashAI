@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.impute import MissingIndicator as MissingIndicatorOperation
 
 from DashAI.back.converters.category.basic_preprocessing import (
@@ -35,4 +34,6 @@ class MissingIndicator(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Integer64 as the output type for binary indicators."""
+        import pyarrow as pa
+
         return Integer(arrow_type=pa.int64())

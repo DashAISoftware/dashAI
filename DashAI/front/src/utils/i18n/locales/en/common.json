@@ -148,5 +148,14 @@
   "columnNameCannotBeEmpty": "Column name cannot be empty",
   "columnNameInvalidCharacters": "Column name can only contain letters, numbers and underscores",
   "columnNameAlreadyExists": "A column with this name already exists",
-  "errorRenamingColumn": "Error renaming column"
+  "errorRenamingColumn": "Error renaming column",
+  "hardwareMonitor": {
+    "title": "Hardware Monitor",
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "ram": "RAM",
+    "overall": "Overall",
+    "utilization": "Utilization",
+    "connecting": "Connecting to hardware monitor..."
+  }
 }

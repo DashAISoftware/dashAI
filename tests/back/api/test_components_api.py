@@ -4,10 +4,10 @@ import pytest
 from datasets import ClassLabel, Image, Value
 from fastapi.testclient import TestClient
 
-from DashAI.back.dataloaders import BaseDataLoader
+from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks.base_task import BaseTask
 
 # -------------------------------------------------------------------------------------
 # Fixtures

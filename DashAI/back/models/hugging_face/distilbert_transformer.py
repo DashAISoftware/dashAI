@@ -2,19 +2,9 @@
 
 import shutil
 from pathlib import Path
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
-import torch
 from sklearn.exceptions import NotFittedError
-from torch.utils.data import DataLoader
-from transformers import (
-    AutoConfig,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    DataCollatorWithPadding,
-    Trainer,
-    TrainingArguments,
-)
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -25,14 +15,14 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    apply_categorical_label_encoder,
-    categorical_label_encoder,
-)
 from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.types.categorical import Categorical
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class DistilBertTransformerSchema(BaseSchema):
@@ -215,6 +205,8 @@ class DistilBertTransformer(TextClassificationModel):
 
         kwargs = self.validate_and_transform(kwargs)
 
+        from transformers import AutoTokenizer
+
         self.model_name = "distilbert-base-uncased"
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -243,6 +235,8 @@ class DistilBertTransformer(TextClassificationModel):
                 if self.num_labels > 1:
                     self.model.config.problem_type = "single_label_classification"
         else:
+            from transformers import AutoConfig, AutoModelForSequenceClassification
+
             model_config = AutoConfig.from_pretrained(self.model_name)
             if self.num_labels is not None:
                 model_config.num_labels = self.num_labels
@@ -257,6 +251,15 @@ class DistilBertTransformer(TextClassificationModel):
         self.encodings = {}  # Store encodings for categorical columns
 
     def train(self, x_train, y_train, x_validation, y_validation):
+        import torch
+        from transformers import (
+            AutoConfig,
+            AutoModelForSequenceClassification,
+            DataCollatorWithPadding,
+            Trainer,
+            TrainingArguments,
+        )
+
         output_column_name = y_train.column_names[0]
 
         if self.num_labels is None:
@@ -332,7 +335,7 @@ class DistilBertTransformer(TextClassificationModel):
         )
         return self
 
-    def predict(self, x_pred: DashAIDataset):
+    def predict(self, x_pred: "DashAIDataset"):
         """Predict with the fine-tuned model.
 
         Parameters
@@ -354,6 +357,10 @@ class DistilBertTransformer(TextClassificationModel):
 
         pred_dataset = self.prepare_dataset(x_pred)
 
+        import numpy as np
+        from torch.utils.data import DataLoader
+        from transformers import DataCollatorWithPadding
+
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
         text_columns = [col for col in x_pred.column_names if col != "label"]
         if len(text_columns) != 1:
@@ -374,13 +381,13 @@ class DistilBertTransformer(TextClassificationModel):
 
             outputs = self.model(**inputs)
             probs = outputs.logits.softmax(dim=-1)
-            probabilities.extend(probs.detach().cpu().numpy())
+            probabilities.append(probs.detach().cpu().numpy())
 
-        return probabilities
+        return np.vstack(probabilities)
 
     def prepare_dataset(
-        self, dataset: DashAIDataset, is_fit: bool = False
-    ) -> DashAIDataset:
+        self, dataset: "DashAIDataset", is_fit: bool = False
+    ) -> "DashAIDataset":
         """Apply the model transformations to the dataset.
 
         Parameters
@@ -396,6 +403,11 @@ class DistilBertTransformer(TextClassificationModel):
             The prepared dataset ready to be converted to
             an accepted format in the model.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            apply_categorical_label_encoder,
+            categorical_label_encoder,
+        )
+
         has_categorical = any(
             isinstance(col_type, Categorical) for col_type in dataset.types.values()
         )
@@ -410,7 +422,7 @@ class DistilBertTransformer(TextClassificationModel):
         else:
             return self.tokenize_data(dataset)
 
-    def tokenize_data(self, dataset: DashAIDataset) -> DashAIDataset:
+    def tokenize_data(self, dataset: "DashAIDataset") -> "DashAIDataset":
         """Tokenize the input data.
 
         Parameters
@@ -438,7 +450,9 @@ class DistilBertTransformer(TextClassificationModel):
             batched=True,
         )
 
-    def save(self, filename: Union[str, Path]) -> None:
+    def save(self, filename: Union[str, "Path"]) -> None:
+        from transformers import AutoConfig
+
         self.model.save_pretrained(filename)
         config = AutoConfig.from_pretrained(filename)
         config.custom_params = {
@@ -454,7 +468,9 @@ class DistilBertTransformer(TextClassificationModel):
         config.save_pretrained(filename)
 
     @classmethod
-    def load(cls, filename: Union[str, Path]) -> Any:
+    def load(cls, filename: Union[str, "Path"]) -> Any:
+        from transformers import AutoConfig, AutoModelForSequenceClassification
+
         config = AutoConfig.from_pretrained(filename)
         custom_params = getattr(config, "custom_params", {})
 
@@ -470,6 +486,10 @@ class DistilBertTransformer(TextClassificationModel):
             learning_rate=custom_params.get("learning_rate"),
             device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
+            log_train_every_n_epochs=None,
+            log_train_every_n_steps=None,
+            log_validation_every_n_epochs=None,
+            log_validation_every_n_steps=None,
         )
         loaded_model.fitted = custom_params.get("fitted")
 

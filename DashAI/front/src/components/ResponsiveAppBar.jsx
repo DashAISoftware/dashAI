@@ -18,6 +18,7 @@ import LanguageSelector from "./LanguageSelector";
 import { ColorModeContext } from "../contexts/ThemeContext";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
+import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -30,12 +31,6 @@ function ResponsiveAppBar() {
   const pages = [
     { name: t("common:datasets"), to: "/app/data", disabled: false },
     { name: t("common:models"), to: "/app/models", disabled: false },
-    { name: t("common:experiments"), to: "/app/experiments", disabled: false },
-    {
-      name: t("common:explainability"),
-      to: "/app/explainers",
-      disabled: false,
-    },
     { name: t("common:generative"), to: "/app/generative", disabled: false },
     { name: t("common:plugins"), to: "/app/plugins/browse", disabled: false },
   ];
@@ -142,6 +137,7 @@ function ResponsiveAppBar() {
             ))}
           </Box>
           <LanguageSelector />
+          <HardwareMonitorButton />
 
           {/* Theme Toggle Button */}
           <Box sx={{ flexGrow: 0 }}>

@@ -1,14 +1,10 @@
 import json
 import re
-from typing import Any, Dict, Union
-
-import pandas as pd
-import pyarrow as pa
-from pyarrow.lib import Schema
+from typing import Any, Dict
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import (  # Boolean,
+from DashAI.back.types.value_types import (
     Binary,
     DashAIValue,
     Date,
@@ -21,42 +17,48 @@ from DashAI.back.types.value_types import (  # Boolean,
     Timestamp,
 )
 
-dtype_arrow_map = {
-    "int8": pa.int8(),
-    "int16": pa.int16(),
-    "int32": pa.int32(),
-    "int64": pa.int64(),
-    "uint8": pa.uint8(),
-    "uint16": pa.uint16(),
-    "uint32": pa.uint32(),
-    "uint64": pa.uint64(),
-    "float16": pa.float16(),
-    "float32": pa.float32(),
-    "float64": pa.float64(),
-    "string": pa.string(),
-    "large_string": pa.large_string(),
-    "bool": pa.bool_(),
-    "time32(s)": pa.time32("s"),
-    "time32(ms)": pa.time32("ms"),
-    "time64(us)": pa.time64("us"),
-    "time64(ns)": pa.time64("ns"),
-    "timestamp(s)": pa.timestamp("s"),
-    "timestamp(ms)": pa.timestamp("ms"),
-    "timestamp(us)": pa.timestamp("us"),
-    "timestamp(ns)": pa.timestamp("ns"),
-    "duration(s)": pa.duration("s"),
-    "duration(ms)": pa.duration("ms"),
-    "duration(us)": pa.duration("us"),
-    "duration(ns)": pa.duration("ns"),
-    "date32": pa.date32(),
-    "date64": pa.date64(),
-    "decimal128(8, 0)": pa.decimal128(8, 0),
-    "decimal128(16, 0)": pa.decimal128(16, 0),
-    "decimal256(38, 0)": pa.decimal256(38, 0),
-    "decimal256(38, 10)": pa.decimal256(38, 10),
-    "binary": pa.binary(),
-    "large_binary": pa.large_binary(),
-}
+
+def _get_dtype_arrow_map() -> Dict[str, Any]:
+    """Create dtype to pyarrow DataType mapping lazily."""
+    import pyarrow as pa  # local import
+
+    return {
+        "int8": pa.int8(),
+        "int16": pa.int16(),
+        "int32": pa.int32(),
+        "int64": pa.int64(),
+        "uint8": pa.uint8(),
+        "uint16": pa.uint16(),
+        "uint32": pa.uint32(),
+        "uint64": pa.uint64(),
+        "float16": pa.float16(),
+        "float32": pa.float32(),
+        "float64": pa.float64(),
+        "string": pa.string(),
+        "large_string": pa.large_string(),
+        "bool": pa.bool_(),
+        "time32(s)": pa.time32("s"),
+        "time32(ms)": pa.time32("ms"),
+        "time64(us)": pa.time64("us"),
+        "time64(ns)": pa.time64("ns"),
+        "timestamp(s)": pa.timestamp("s"),
+        "timestamp(ms)": pa.timestamp("ms"),
+        "timestamp(us)": pa.timestamp("us"),
+        "timestamp(ns)": pa.timestamp("ns"),
+        "duration(s)": pa.duration("s"),
+        "duration(ms)": pa.duration("ms"),
+        "duration(us)": pa.duration("us"),
+        "duration(ns)": pa.duration("ns"),
+        "date32": pa.date32(),
+        "date64": pa.date64(),
+        "decimal128(8, 0)": pa.decimal128(8, 0),
+        "decimal128(16, 0)": pa.decimal128(16, 0),
+        "decimal256(38, 0)": pa.decimal256(38, 0),
+        "decimal256(38, 10)": pa.decimal256(38, 10),
+        "binary": pa.binary(),
+        "large_binary": pa.large_binary(),
+    }
+
 
 PTYPE_TO_DASHAI = {
     "integer": {"type": "Integer", "dtype": "int64"},
@@ -90,6 +92,8 @@ value_types = [
 
 def arrow_to_dashai_types(arrow_type, format: str = None) -> DashAIValue:
     """Convert an Arrow type to a DashAI value."""
+    import pyarrow as pa  # local import
+
     if format is not None:
         if arrow_type == "Date":
             return Date(arrow_type=pa.string(), format=format)
@@ -139,14 +143,12 @@ def arrow_to_dashai_schema(arrow_tbl):
     return schema
 
 
-def to_arrow_types(dashai_type) -> pa.DataType:
-    """Convert a DashAI type to an Arrow type."""
-    return dtype_arrow_map.get(dashai_type)
+def to_arrow_types(dashai_type) -> Any:
+    """Convert a DashAI type to an Arrow type lazily."""
+    return _get_dtype_arrow_map().get(dashai_type)
 
 
-def save_types_in_arrow_metadata(
-    pa_table: pa.Table, datatypes: Dict[str, Dict]
-) -> pa.Table:
+def save_types_in_arrow_metadata(pa_table: Any, datatypes: Dict[str, Dict]) -> Any:
     """
     Save DashAI types in Arrow metadata.
     This doesn't modify the Arrow schema, but adds metadata to the table.
@@ -177,7 +179,7 @@ def save_types_in_arrow_metadata(
 
 
 def get_types_from_arrow_metadata(
-    pa_table: Union[pa.Table, Schema],
+    pa_table: Any,
 ) -> Dict[str, DashAIDataType]:
     """
     Get DashAI types from Arrow metadata.
@@ -197,6 +199,7 @@ def get_types_from_arrow_metadata(
     ValueError
         If the metadata does not contain DashAI types.
     """
+    from pyarrow.lib import Schema
 
     if isinstance(pa_table, Schema):
         metadata = pa_table.metadata or {}
@@ -220,7 +223,8 @@ def get_types_from_arrow_metadata(
             # Future implementation for images, modify as needed
             else:
                 dtype = info.get("dtype")
-                dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
+                dtype_map = _get_dtype_arrow_map()
+                dashai_types[column] = arrow_to_dashai_types(dtype_map[dtype])
     except KeyError as e:
         # If the key is not found, we can log it or handle it as needed
         print(f"KeyError: dtype {e} not found in dtype_arrow_map")
@@ -232,7 +236,7 @@ def get_types_from_arrow_metadata(
 # Both Date and Time conversion functions are in the case
 # if DashAI decides to use pyarrow dates and times instead of strings.
 # Both should be modified accordingly to function properly.
-def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Array:
+def pyarrow_date_conversion(column: Any, format: str = "%Y-%m-%d") -> Any:
     """
     Convert a PyArrow array of date strings to a PyArrow date32 array.
 
@@ -248,6 +252,9 @@ def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Ar
         A PyArrow array of date32 values.
     """
 
+    import pandas as pd  # local import
+    import pyarrow as pa  # local import
+
     str_dates = column.to_pylist()
 
     try:
@@ -261,7 +268,7 @@ def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Ar
     return pa.array(parsed_dates, type=pa.date32())
 
 
-def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Array:
+def pyarrow_time_conversion(column: Any, format: str = "%H:%M:%S") -> Any:
     """
     Convert a PyArrow array of time strings to a PyArrow time64 array.
 
@@ -277,6 +284,9 @@ def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Ar
     pa.Array
         A PyArrow array of time32 values.
     """
+
+    import pandas as pd  # local import
+    import pyarrow as pa  # local import
 
     str_times = column.to_pylist()
 
@@ -328,10 +338,12 @@ def is_image_path(value: Any) -> bool:
 # This function should be improved to detect complex situations
 # Like "1.234,56" or "1,234.56"
 # So it doesn't overwrite already good floats
-def comma_float_to_float(array: pa.Array) -> pa.Array:
+def comma_float_to_float(array: Any) -> Any:
     """Convert a PyArrow array of float strings with commas to a PyArrow float64 array."""  # noqa: E501
     # Remove commas and convert to float
     try:
+        import pyarrow as pa  # local import
+
         if pa.types.is_floating(array.type):
             return array
         else:

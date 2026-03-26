@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-import pyarrow as pa
-
 from DashAI.back.types.dashai_value import DashAIValue
 
 
@@ -23,7 +21,9 @@ class Integer(DashAIValue):
     unsigned: bool = False
     dtype: str = "int64"
 
-    def __init__(self, arrow_type: pa.DataType):
+    def __init__(self, arrow_type: object):
+        import pyarrow as pa  # local import
+
         if not pa.types.is_integer(arrow_type):
             raise ValueError(f"Arrow type {arrow_type} is not an integer type.")
         if pa.types.is_unsigned_integer(arrow_type):
@@ -51,7 +51,9 @@ class Float(DashAIValue):
     size: int = 64
     dtype: str = "float64"
 
-    def __init__(self, arrow_type: pa.DataType):
+    def __init__(self, arrow_type: object):
+        import pyarrow as pa  # local import
+
         if not pa.types.is_floating(arrow_type):
             raise ValueError(f"Arrow type {arrow_type} is not a float type.")
         if pa.types.is_float16(arrow_type):
@@ -85,7 +87,9 @@ class Text(DashAIValue):
     large: bool = False
     dtype: str = "string"
 
-    def __init__(self, arrow_type: pa.DataType):
+    def __init__(self, arrow_type: object):
+        import pyarrow as pa  # local import
+
         if not (pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type)):
             raise ValueError(f"Arrow type {arrow_type} is not a string type.")
         self.dtype = str(arrow_type)
@@ -114,7 +118,7 @@ class Time(DashAIValue):
     format: str = "HH:mm:ss"
     dtype: str = "string"
 
-    def __init__(self, arrow_type: pa.DataType, format: Optional[str]):
+    def __init__(self, arrow_type: object, format: Optional[str]):
         self.format = format if format else "HH:mm:ss"
         self.dtype = str(arrow_type)
 
@@ -137,7 +141,7 @@ class Timestamp(DashAIValue):
     format: str = "YYYY-MM-DD HH:mm:ss"
     dtype: str = "string"
 
-    def __init__(self, arrow_type: pa.DataType, format: Optional[str] = None):
+    def __init__(self, arrow_type: object, format: Optional[str] = None):
         self.format = format if format else "YYYY-MM-DD HH:mm:ss"
         self.dtype = str(arrow_type)
 
@@ -158,7 +162,9 @@ class Duration(DashAIValue):
     unit: str = "ms"
     dtype: str = "duration(ms)"
 
-    def __init__(self, arrow_type: pa.DataType):
+    def __init__(self, arrow_type: object):
+        import pyarrow as pa  # local import
+
         if not pa.types.is_duration(arrow_type):
             raise ValueError(f"Arrow type {arrow_type} is not a duration type.")
         self.dtype = str(arrow_type)
@@ -189,7 +195,9 @@ class Decimal(DashAIValue):
     scale: int = 0
     dtype: str = "decimal128(8, 0)"
 
-    def __init__(self, arrow_type: pa.DataType):
+    def __init__(self, arrow_type: object):
+        import pyarrow as pa  # local import
+
         if not pa.types.is_decimal(arrow_type):
             raise ValueError(f"Arrow type {arrow_type} is not a decimal type.")
         self.dtype = str(arrow_type)
@@ -224,7 +232,7 @@ class Date(DashAIValue):
     format: str = "YYYY-MM-DD"
     dtype: str = "string"
 
-    def __init__(self, arrow_type: pa.DataType, format: Optional[str]):
+    def __init__(self, arrow_type: object, format: Optional[str]):
         self.format = format if format else "YYYY-MM-DD"
         self.dtype = str(arrow_type)
 
@@ -245,7 +253,9 @@ class Binary(DashAIValue):
 
     dtype: str = "binary"
 
-    def __init__(self, arrow_type: pa.DataType):
+    def __init__(self, arrow_type: object):
+        import pyarrow as pa  # local import
+
         if not (pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type)):
             raise ValueError(f"Arrow type {arrow_type} is not a binary type.")
         self.dtype = str(arrow_type)

@@ -1,44 +1,32 @@
-import contextlib
 import hashlib
-import io
-import json
 import logging
-import os
-import shutil
-import tempfile
 import time
 import zipfile
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
-import numpy as np
 import pyarrow as pa
-import pyarrow.compute as pc
-import pyarrow.csv as csv
-import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.schemas import datasets_params as schemas
-from DashAI.back.core.enums.status import DatasetStatus
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    get_columns_spec,
-    get_dataset_info,
+from DashAI.back.api.api_v1.schemas.datasets_params import Dataset as DatasetSchema
+from DashAI.back.api.api_v1.schemas.datasets_params import (
+    DatasetCreateParams,
+    DatasetRenameColumnParams,
+    DatasetUpdateParams,
 )
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
-from DashAI.back.types.inf.type_inference import infer_types
-from DashAI.back.types.type_validation import validate_multiple_type_changes
-from DashAI.back.types.utils import (
-    arrow_to_dashai_schema,
-    get_types_from_arrow_metadata,
-    save_types_in_arrow_metadata,
-)
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm.session import sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -107,6 +95,15 @@ def _load_and_filter_table(
 
     Returns (table, total, was_filtered).
     """
+
+    import json
+
+    import pyarrow as pa
+    import pyarrow.compute as pc
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+
     arrow_file_path = f"{path}/dataset/data.arrow"
     with pa.memory_map(arrow_file_path, "r") as source:
         reader = ipc.RecordBatchFileReader(source)
@@ -287,11 +284,11 @@ async def filter_dataset_file(
     return JSONResponse(content={"rows": rows, "total": total})
 
 
-@router.post("/", response_model=schemas.Dataset, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=DatasetSchema, status_code=status.HTTP_201_CREATED)
 @inject
 async def create_dataset(
-    params: schemas.DatasetCreateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    params: DatasetCreateParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Create a new dataset entry in the database with NOT_STARTED status.
 
@@ -299,7 +296,7 @@ async def create_dataset(
     ----------
     params : DatasetCreateParams
         A schema containing the dataset creation parameters.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -346,13 +343,13 @@ async def create_dataset(
 @router.get("/")
 @inject
 async def get_datasets(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve a list of the stored datasets in the database.
 
     Parameters
     ----------
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
 
@@ -383,7 +380,7 @@ async def get_datasets(
 @inject
 async def get_dataset(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve the dataset associated with the provided ID.
 
@@ -425,7 +422,7 @@ async def get_dataset(
 @inject
 async def get_sample(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return a sample of 10 rows from the dataset with id dataset_id from the
     database.
@@ -437,12 +434,22 @@ async def get_sample(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     Dict
         A Dict with a sample of 10 rows
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -505,6 +512,11 @@ async def get_sample_by_file(
     Dict
         A Dict with a sample of 10 rows
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
     try:
         if not path:
             raise HTTPException(
@@ -556,6 +568,8 @@ async def get_info_by_file(
     JSON
         JSON with the specified dataset id.
     """
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+
     try:
         info = get_dataset_info(f"{path}/dataset")
     except exc.SQLAlchemyError as e:
@@ -571,7 +585,7 @@ async def get_info_by_file(
 @inject
 async def get_info(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return the dataset with id dataset_id from the database.
 
@@ -579,12 +593,18 @@ async def get_info(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     JSON
         JSON with the specified dataset id.
     """
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -614,7 +634,7 @@ async def get_info(
 @inject
 async def get_model_sessions_exist(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a boolean indicating if there are model sessions associated with the dataset.
 
@@ -622,12 +642,17 @@ async def get_model_sessions_exist(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     bool
         True if there are model sessions associated with the dataset, False otherwise.
     """
+    from DashAI.back.core.enums.status import DatasetStatus
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -665,7 +690,7 @@ async def get_model_sessions_exist(
 @inject
 async def get_types(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return the dataset with id dataset_id from the database.
 
@@ -673,12 +698,18 @@ async def get_types(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     Dict
         Dict containing column names and types.
     """
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -724,6 +755,8 @@ async def get_types_by_file_path(
     Dict
         Dict containing column names and types.
     """
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     try:
         if not path:
             raise HTTPException(
@@ -749,7 +782,7 @@ async def get_types_by_file_path(
 @inject
 async def copy_dataset(
     dataset: Dict[str, int],
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Copy an existing dataset to create a new one.
@@ -758,12 +791,22 @@ async def copy_dataset(
     ----------
     dataset_id : int
         ID of the dataset to copy.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+    config : Dict[str, Any]
+        A dictionary containing the application configuration, including the path
+        where datasets are stored.
 
     Returns
     -------
     Dataset
         The newly created dataset.
     """
+    import shutil
+
+    from DashAI.back.core.enums.status import DatasetStatus
+
     dataset_id = dataset["dataset_id"]
     logger.debug(f"Copying dataset with ID {dataset_id}.")
 
@@ -823,7 +866,7 @@ async def copy_dataset(
 @inject
 async def delete_dataset(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the dataset associated with the provided ID from the database.
 
@@ -862,6 +905,8 @@ async def delete_dataset(
     _filtered_table_cache.invalidate()
 
     try:
+        import shutil
+
         shutil.rmtree(dataset.file_path, ignore_errors=True)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -877,9 +922,8 @@ async def delete_dataset(
 @inject
 async def update_dataset(
     dataset_id: int,
-    params: schemas.DatasetUpdateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: Dict[str, Any] = Depends(lambda: di["config"]),
+    params: DatasetUpdateParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Updates the name of a dataset with the provided ID.
 
@@ -951,8 +995,8 @@ async def update_dataset(
 @inject
 async def rename_dataset_column(
     dataset_id: int,
-    params: schemas.DatasetRenameColumnParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    params: DatasetRenameColumnParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Rename a column in a dataset.
 
@@ -964,12 +1008,22 @@ async def rename_dataset_column(
         Parameters containing old_name and new_name for the column.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     Dict
         A dictionary with a success message and updated column types.
     """
+    import json
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     with session_factory() as db:
         dataset = db.get(Dataset, dataset_id)
         if dataset is None:
@@ -1010,8 +1064,13 @@ async def rename_dataset_column(
         dataset_path = f"{dataset.file_path}/dataset"
         arrow_file_path = f"{dataset_path}/data.arrow"
         try:
+            from DashAI.back.types.utils import (
+                get_types_from_arrow_metadata,
+                save_types_in_arrow_metadata,
+            )
+
             with pa.OSFile(arrow_file_path, "rb") as source:
-                reader = pa.ipc.open_file(source)
+                reader = ipc.open_file(source)
                 table = reader.read_all()
             if old_name not in table.schema.names:
                 raise HTTPException(
@@ -1168,6 +1227,10 @@ async def get_dataset_file(
     JSONResponse
         A JSON response containing the dataset rows and total row count.
     """
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
     arrow_file_path = f"{path}/dataset/data.arrow"
     rows = []
@@ -1230,6 +1293,12 @@ async def export_dataset_as_csv(
     StreamingResponse
         A streaming response with the complete dataset in CSV format.
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.csv as csv
+    import pyarrow.ipc as ipc
+
     try:
         arrow_file_path = f"{path}/dataset/data.arrow"
 
@@ -1241,6 +1310,8 @@ async def export_dataset_as_csv(
 
         # Read the complete Arrow file
         with pa.memory_map(arrow_file_path, "r") as source:
+            import io
+
             reader = ipc.RecordBatchFileReader(source)
 
             # Read all batches and combine them into a single table
@@ -1289,7 +1360,7 @@ async def export_dataset_as_csv(
 @inject
 async def export_dataset_csv_by_id(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Export the entire dataset as a CSV file by dataset ID.
 
@@ -1306,6 +1377,14 @@ async def export_dataset_csv_by_id(
     StreamingResponse
         A streaming response that provides the CSV file content.
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.csv as csv
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+
     logger.debug("Exporting dataset with id %s to CSV", dataset_id)
     with session_factory() as db:
         try:
@@ -1333,6 +1412,8 @@ async def export_dataset_csv_by_id(
 
             # Read the complete Arrow file
             with pa.memory_map(arrow_file_path, "r") as source:
+                import io
+
                 reader = ipc.RecordBatchFileReader(source)
 
                 # Read all batches and combine them into a single table
@@ -1382,7 +1463,7 @@ async def export_dataset_csv_by_id(
 async def preview_with_types(
     file: UploadFile = File(...),
     params: str = Form(None),
-    component_registry: Dict = Depends(lambda: di["component_registry"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Load preview AND infer types in a single call.
@@ -1393,18 +1474,31 @@ async def preview_with_types(
         The file uploaded by the user.
     params : str
         JSON string with parameters for the dataloader.
-    component_registry : Dict
-        Registry of available dataloaders.
+    component_registry: ComponentRegistry
+        Registry that provides metadata and class references for the
+        components available in DashAI.
 
     Returns
     -------
-    Dict
+    dict
         A dictionary containing:
         - sample: First 10 rows of the dataset
         - schema: Column types from Arrow
         - inferred_types: Detailed type inference (DashAI types)
         - preview_row_count: Number of rows used for inference
     """
+    import contextlib
+    import json
+    import os
+    import shutil
+    import tempfile
+
+    import numpy as np
+    import pyarrow as pa
+
+    from DashAI.back.types.inf.type_inference import infer_types
+    from DashAI.back.types.utils import arrow_to_dashai_schema
+
     try:
         parsed_params = json.loads(params) if params else {}
 
@@ -1559,11 +1653,17 @@ async def validate_type_changes(
     file: UploadFile = File(...),
     type_changes: str = Form(...),
     params: str = Form(None),
-    component_registry: Dict = Depends(lambda: di["component_registry"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Validate proposed type changes for dataset columns.
     """
+    import json
+    import os
+    import tempfile
+
+    from DashAI.back.types.type_validation import validate_multiple_type_changes
+
     try:
         parsed_params = json.loads(params) if params else {}
         parsed_type_changes = json.loads(type_changes)

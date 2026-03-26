@@ -1,14 +1,17 @@
-import numpy as np
-import pandas as pd
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
+
+if TYPE_CHECKING:
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class SklearnLikeRegressor(SklearnLikeModel):
     """Class for handling sklearn-like regressor models."""
 
-    def predict(self, x_pred: DashAIDataset) -> np.ndarray:
+    def predict(self, x_pred: "DashAIDataset") -> "ndarray":
         """Make a prediction with the model.
 
         Parameters
@@ -21,6 +24,8 @@ class SklearnLikeRegressor(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
+        import pandas as pd
+
         if isinstance(x_pred, DashAIDataset):
             try:
                 x_prepared = self.prepare_dataset(x_pred, is_fit=False)

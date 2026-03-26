@@ -69,7 +69,7 @@ async function pollJobs() {
     state.lastCursor = changeData.cursor;
     state.lastFetchTime = new Date();
 
-    const jobsToProcess = changeData.all_jobs || [];
+    const jobsToProcess = changeData.jobs || [];
 
     const activeJobsExist = hasActiveJobs(jobsToProcess);
     for (const subscriber of state.subscribers) {

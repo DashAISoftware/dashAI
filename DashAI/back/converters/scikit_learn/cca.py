@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.cross_decomposition import CCA as CCAOPERATION
 
 from DashAI.back.converters.category.advanced_preprocessing import (
@@ -72,4 +71,6 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())
