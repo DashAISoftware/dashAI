@@ -38,43 +38,29 @@ export default function MrtDatasetTable({
   const [density, setDensity] = useState("compact");
   const [allFilteredData, setAllFilteredData] = useState(null);
 
-  const storageKey = datasetId
-    ? `mrt-state-${datasetId}`
+  const sessionKey = datasetId
+    ? `mrt-filters-${datasetId}`
     : datasetPath
-      ? `mrt-state-${datasetPath}`
+      ? `mrt-filters-${datasetPath}`
       : null;
 
-  const loadFromStorage = (storage, key) => {
-    if (!key) return null;
+  const loadSessionFilters = () => {
+    if (!sessionKey) return null;
     try {
-      const saved = storage.getItem(key);
+      const saved = sessionStorage.getItem(sessionKey);
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   };
 
-  const prefsKey = storageKey ? `${storageKey}-prefs` : null;
-  const sessionKey = storageKey ? `${storageKey}-session` : null;
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize,
+  });
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [sorting, setSorting] = useState([]);
 
-  const [pagination, setPagination] = useState(() => {
-    const prefs = loadFromStorage(localStorage, prefsKey);
-    return { pageIndex: 0, pageSize: prefs?.pageSize ?? initialPageSize };
-  });
-  const [columnFilters, setColumnFilters] = useState(() => {
-    const session = loadFromStorage(sessionStorage, sessionKey);
-    return (session?.columnFilters ?? []).filter(
-      (f) =>
-        f.id !== undefined &&
-        !Array.isArray(f.value) &&
-        f.value !== undefined &&
-        f.value !== "",
-    );
-  });
-  const [sorting, setSorting] = useState(() => {
-    const session = loadFromStorage(sessionStorage, sessionKey);
-    return session?.sorting ?? [];
-  });
   const getDefaultFilterFns = () => {
     const defaults = {};
     Object.entries(columnTypes).forEach(([key, typeRaw]) => {
@@ -87,14 +73,8 @@ export default function MrtDatasetTable({
     return defaults;
   };
 
-  const [columnFilterFns, setColumnFilterFns] = useState(() => {
-    const session = loadFromStorage(sessionStorage, sessionKey);
-    return session?.columnFilterFns ?? getDefaultFilterFns();
-  });
-  const [showColumnFilters, setShowColumnFilters] = useState(() => {
-    const prefs = loadFromStorage(localStorage, prefsKey);
-    return prefs?.showColumnFilters ?? false;
-  });
+  const [columnFilterFns, setColumnFilterFns] = useState(getDefaultFilterFns);
+  const [showColumnFilters, setShowColumnFilters] = useState(false);
 
   useEffect(() => {
     initialized.current = false;
@@ -103,9 +83,10 @@ export default function MrtDatasetTable({
     setRowCount(0);
     setAllFilteredData(null);
     setIsLoading(true);
+    setShowColumnFilters(false);
+    setDensity("compact");
 
-    const prefs = loadFromStorage(localStorage, prefsKey);
-    const session = loadFromStorage(sessionStorage, sessionKey);
+    const session = loadSessionFilters();
     const cleanFilters = (session?.columnFilters ?? []).filter(
       (f) =>
         f.id !== undefined &&
@@ -116,12 +97,7 @@ export default function MrtDatasetTable({
     setColumnFilters(cleanFilters);
     setSorting(session?.sorting ?? []);
     setColumnFilterFns(session?.columnFilterFns ?? getDefaultFilterFns());
-    setShowColumnFilters(prefs?.showColumnFilters ?? false);
-    setDensity(prefs?.density ?? "compact");
-    setPagination({
-      pageIndex: 0,
-      pageSize: prefs?.pageSize ?? initialPageSize,
-    });
+    setPagination({ pageIndex: 0, pageSize: initialPageSize });
 
     initialized.current = true;
   }, deps);
@@ -140,29 +116,11 @@ export default function MrtDatasetTable({
   }, [columnTypes]);
 
   useEffect(() => {
-    if (!prefsKey) return;
-    try {
-      localStorage.setItem(
-        prefsKey,
-        JSON.stringify({
-          pageSize: pagination.pageSize,
-          density,
-          showColumnFilters,
-        }),
-      );
-    } catch {}
-  }, [prefsKey, pagination.pageSize, density, showColumnFilters]);
-
-  useEffect(() => {
     if (!sessionKey) return;
     try {
       sessionStorage.setItem(
         sessionKey,
-        JSON.stringify({
-          columnFilters,
-          columnFilterFns,
-          sorting,
-        }),
+        JSON.stringify({ columnFilters, columnFilterFns, sorting }),
       );
     } catch {}
   }, [sessionKey, columnFilters, columnFilterFns, sorting]);
