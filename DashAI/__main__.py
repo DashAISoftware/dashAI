@@ -101,9 +101,85 @@ def _wait_for_backend_server(host="127.0.0.1", port=8000, timeout=15):
 
 
 def _start_webview(local_path: pathlib.Path, logger: logging.Logger) -> None:
+    import base64
+
     import webview
 
-    window = webview.create_window("DashAI", "http://127.0.0.1:8000", hidden=True)
+    class DownloadApi:
+        """Exposed to JavaScript via window.pywebview.api for native file saving."""
+
+        def save_file(self, filename: str, data_b64: str) -> bool:
+            try:
+                result = window.create_file_dialog(
+                    webview.SAVE_DIALOG,
+                    save_filename=filename,
+                )
+                if result:
+                    filepath = result if isinstance(result, str) else result[0]
+                    with open(filepath, "wb") as f:
+                        f.write(base64.b64decode(data_b64))
+                    logger.info(f"File saved: {filepath}")
+                    return True
+            except Exception:
+                logger.exception("Failed to save file")
+            return False
+
+    api = DownloadApi()
+    window = webview.create_window(
+        "DashAI", "http://127.0.0.1:8000", hidden=True, js_api=api
+    )
+
+    _DOWNLOAD_INTERCEPT_JS = """
+    (function() {
+        if (window.__dashaiDownloadHandler) return;
+        window.__dashaiDownloadHandler = true;
+
+        function handleDownload(url, filename) {
+            fetch(url)
+                .then(function(r) { return r.blob(); })
+                .then(function(blob) {
+                    var reader = new FileReader();
+                    reader.onload = function() {
+                        var b64 = reader.result.split(',')[1];
+                        window.pywebview.api.save_file(filename, b64);
+                    };
+                    reader.readAsDataURL(blob);
+                })
+                .catch(function(err) {
+                    console.error('DashAI download intercept failed:', err);
+                });
+        }
+
+        // Intercept programmatic .click() on <a download>
+        var origClick = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function() {
+            if (this.hasAttribute('download')) {
+                handleDownload(this.href, this.download || 'download');
+                return;
+            }
+            return origClick.call(this);
+        };
+
+        // Intercept user clicks on <a download> (e.g. tour sample dataset link)
+        document.addEventListener('click', function(e) {
+            var link = e.target.closest('a[download]');
+            if (link) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload(link.href, link.download || 'download');
+            }
+        }, true);
+    })();
+    """
+
+    def _inject_download_handler():
+        try:
+            window.evaluate_js(_DOWNLOAD_INTERCEPT_JS)
+            logger.info("Download intercept JS injected.")
+        except Exception:
+            logger.exception("Failed to inject download handler JS")
+
+    window.events.loaded += _inject_download_handler
 
     def load_logic():
         if _wait_for_backend_server(timeout=120):
