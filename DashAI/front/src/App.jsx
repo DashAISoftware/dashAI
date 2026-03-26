@@ -26,16 +26,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/app" element={<Home />} />
           <Route path="/app/data/" element={<DatasetsPage />} />
-          <Route path="/app/experiments" element={<ExperimentsPage />} />
           <Route path="/app/models" element={<ModelsPage />} />
-          <Route path="/app/explainers">
-            <Route index element={<ExplainersPage />} />
-            <Route path="runs/:id" element={<ExplainersDashboard />} />
-            <Route
-              path="explainer/:scope/:runId/:id"
-              element={<ExplainerData />}
-            />
-          </Route>
           <Route path="/app/generative" element={<Generative />} />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
           <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
