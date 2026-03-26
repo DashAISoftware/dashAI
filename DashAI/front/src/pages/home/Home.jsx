@@ -184,7 +184,8 @@ function Home() {
       <Box
         sx={{
           display: "flex",
-          height: "calc(100vh - 52px)",
+          height: "calc(100dvh - 53px)",
+          minHeight: 0,
           overflow: "hidden",
         }}
       >
@@ -286,7 +287,7 @@ function Home() {
           <Box
             sx={{
               flex: 1,
-              p: "24px 28px",
+              p: "14px",
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gridTemplateRows: "1fr 1fr",
@@ -298,7 +299,7 @@ function Home() {
               <Box
                 key={mod.to}
                 data-tour={mod.tourAttr || undefined}
-                sx={{ minHeight: 0 }}
+                sx={{ minHeight: 0, height: "100%" }}
               >
                 <HomeButton
                   title={mod.title}

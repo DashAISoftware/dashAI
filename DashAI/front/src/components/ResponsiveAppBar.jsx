@@ -60,13 +60,18 @@ function ResponsiveAppBar() {
       enableColorOnDark
       elevation={0}
       sx={{
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "clip",
         background: theme.palette.background.box,
         backdropFilter: "blur(8px)",
         borderBottom: `1px solid ${theme.palette.divider}`,
         "& .MuiToolbar-root": { minHeight: 52 },
       }}
     >
-      <Toolbar sx={{ px: 3, minHeight: 52, gap: 0 }}>
+      <Toolbar
+        sx={{ px: { xs: 1, sm: 2, md: 3 }, minHeight: 52, gap: 0, minWidth: 0 }}
+      >
         {/* Logo */}
         <Box
           component={RouterLink}
@@ -76,7 +81,7 @@ function ResponsiveAppBar() {
             alignItems: "center",
             gap: 1,
             textDecoration: "none",
-            mr: 2,
+            mr: { xs: 1, sm: 2 },
             flexShrink: 0,
           }}
         >
@@ -97,6 +102,7 @@ function ResponsiveAppBar() {
           </Typography>
           <Box
             sx={{
+              display: { xs: "none", sm: "block" },
               fontFamily: '"IBM Plex Mono", monospace',
               fontSize: "8px",
               fontWeight: 500,
@@ -116,12 +122,25 @@ function ResponsiveAppBar() {
         </Box>
 
         {/* Mobile hamburger */}
-        <Box sx={{ flexGrow: 1, display: { xs: "flex", sm: "none" } }}>
+        <Box
+          sx={{ flexGrow: 1, minWidth: 0, display: { xs: "flex", md: "none" } }}
+        >
           <IconButton
             size="large"
             onClick={handleOpenNavMenu}
             color="inherit"
             aria-label="open navigation menu"
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: "4px",
+              border: `1px solid ${theme.palette.divider}`,
+              color: theme.palette.text.secondary,
+              "&:hover": {
+                background: theme.palette.ui.hover,
+                color: theme.palette.text.primary,
+              },
+            }}
           >
             <MenuIcon />
           </IconButton>
@@ -163,9 +182,11 @@ function ResponsiveAppBar() {
         <Box
           sx={{
             flexGrow: 1,
-            display: { xs: "none", sm: "flex" },
+            minWidth: 0,
+            display: { xs: "none", md: "flex" },
             alignItems: "stretch",
             height: 52,
+            overflow: "hidden",
           }}
         >
           <IconButton
@@ -222,7 +243,14 @@ function ResponsiveAppBar() {
         </Box>
 
         {/* Right controls */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 0.5, sm: 1 },
+            flexShrink: 0,
+          }}
+        >
           <LanguageSelector />
           <HardwareMonitorButton />
           <NavbarTourButton />
