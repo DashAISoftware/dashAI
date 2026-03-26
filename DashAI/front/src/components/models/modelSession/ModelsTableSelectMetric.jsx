@@ -1,6 +1,6 @@
 import { MenuItem, TextField } from "@mui/material";
 import React, { useState } from "react";
-import useMetricsByTask from "../../hooks/useMetricByTask";
+import useMetricsByTask from "../../../hooks/useMetricByTask";
 
 function ModelsTableSelectMetric({
   taskName,

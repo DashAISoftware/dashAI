@@ -30,7 +30,7 @@ import FormSchemaDialog from "../../../components/shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../../../components/shared/FormSchemaWithSelectedModel";
 import { updateRunParameters } from "../../../api/run";
 import { useSnackbar } from "notistack";
-import OptimizationTableSelectOptimizer from "../../../components/experiments/OptimizationTableSelectOptimizer";
+import OptimizationTableSelectOptimizer from "../../../components/models/modelSession/OptimizationTableSelectOptimizer";
 import { getColorByStatus } from "../../../utils";
 import LiveMetricsChart from "./LiveMetricsChart";
 import { useTranslation } from "react-i18next";
