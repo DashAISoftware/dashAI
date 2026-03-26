@@ -1,7 +1,5 @@
 """DashAI implementation of DistilBERT model for english classification."""
 
-import shutil
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
 from sklearn.exceptions import NotFittedError
@@ -15,7 +13,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 from DashAI.back.types.categorical import Categorical
@@ -252,6 +249,8 @@ class DistilBertTransformer(TextClassificationModel):
         self.encodings = {}  # Store encodings for categorical columns
 
     def train(self, x_train, y_train, x_validation, y_validation):
+        import shutil
+
         import torch
         from transformers import (
             AutoConfig,
@@ -260,6 +259,8 @@ class DistilBertTransformer(TextClassificationModel):
             Trainer,
             TrainingArguments,
         )
+
+        from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 
         output_column_name = y_train.column_names[0]
 
