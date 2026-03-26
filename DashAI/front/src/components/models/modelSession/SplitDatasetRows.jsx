@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { parseRangeToIndex } from "../../utils/parseRange";
+import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
   Grid,
   TextField,
@@ -10,7 +10,7 @@ import {
   RadioGroup,
   FormHelperText,
 } from "@mui/material";
-import BooleanInput from "../configurableObject/Inputs/BooleanInput";
+import BooleanInput from "../../configurableObject/Inputs/BooleanInput";
 import { useTranslation } from "react-i18next";
 
 function SplitDatasetRows({

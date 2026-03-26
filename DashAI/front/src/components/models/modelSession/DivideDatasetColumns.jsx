@@ -9,7 +9,7 @@ import {
   Chip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { getColorByColumnType } from "../../utils";
+import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 
 function DivideDatasetColumns({

@@ -1,7 +1,7 @@
 import { MenuItem, TextField } from "@mui/material";
 import React, { useState } from "react";
-import useOptimizersByTask from "../../hooks/useOptimizersByTask";
-import useSchemaWithCallback from "../../hooks/useSchemaWithCallback";
+import useOptimizersByTask from "../../../hooks/useOptimizersByTask";
+import useSchemaWithCallback from "../../../hooks/useSchemaWithCallback";
 
 function OptimizationTableSelectOptimizer({
   taskName,

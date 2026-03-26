@@ -73,7 +73,7 @@ function Home() {
           alignItems="center"
           sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
         >
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="generative-button">
             <HomeButton
               title={t("common:generative")}
               description={t("home:description.generative")}
@@ -81,7 +81,7 @@ function Home() {
               Icon={AutoAwesomeIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="plugins-button">
             <HomeButton
               title={t("common:plugins")}
               description={t("home:description.plugins")}
