@@ -28,8 +28,13 @@ export default function MrtDatasetTable({
     ? MRT_Localization_ES
     : MRT_Localization_EN;
 
+  // Only load all data client-side if:
+  // 1. Filters/sorting are active AND
+  // 2. Dataset is small enough (<=2000 rows)
+  // Otherwise, use server-side filtering for performance
   const CLIENT_SIDE_THRESHOLD = 2000;
   const initialized = useRef(false);
+  const isLoadingFullDataRef = useRef(false);
 
   const [data, setData] = useState([]);
   const [rowCount, setRowCount] = useState(0);
@@ -37,6 +42,7 @@ export default function MrtDatasetTable({
   const [columnOrder, setColumnOrder] = useState([]);
   const [density, setDensity] = useState("compact");
   const [allFilteredData, setAllFilteredData] = useState(null);
+  const [totalRowCount, setTotalRowCount] = useState(0); // Track actual total without filters
 
   const sessionKey = datasetId
     ? `mrt-filters-${datasetId}`
@@ -78,9 +84,11 @@ export default function MrtDatasetTable({
 
   useEffect(() => {
     initialized.current = false;
+    isLoadingFullDataRef.current = false;
 
     setData([]);
     setRowCount(0);
+    setTotalRowCount(0);
     setAllFilteredData(null);
     setIsLoading(true);
     setShowColumnFilters(false);
@@ -167,16 +175,26 @@ export default function MrtDatasetTable({
     [columnFilters, columnFilterFns, columnTypes],
   );
 
+  // Clear cached data when filters/sorting change
+  // Reset lazy-load flag to allow re-fetching full data if needed
   useEffect(() => {
-    setAllFilteredData(null);
+    if (allFilteredData) {
+      setAllFilteredData(null);
+      isLoadingFullDataRef.current = false;
+    }
   }, [columnFilters, sorting]);
 
+  // Main data loading effect with lazy-load strategy:
+  // 1st load: only fetch current page (fast, like develop)
+  // If filters active and dataset small: lazy-load all data for client-side filtering
   useEffect(() => {
     if (!initialized.current) return;
 
+    // If we have cached filtered data, use it for pagination
     if (allFilteredData) {
       const start = pagination.pageIndex * pagination.pageSize;
       setData(allFilteredData.slice(start, start + pagination.pageSize));
+      setIsLoading(false);
       return;
     }
 
@@ -186,6 +204,11 @@ export default function MrtDatasetTable({
       setIsLoading(true);
       try {
         const muiFormattedFilters = buildFilterModel();
+        const hasActiveFilters = columnFilters.length > 0;
+        const hasSorting = sorting.length > 0;
+
+        // FAST PATH: First load OR server-side filtering
+        // Only fetch the page we need
         const response = await fetchPage(
           pagination.pageIndex,
           pagination.pageSize,
@@ -197,11 +220,29 @@ export default function MrtDatasetTable({
         const total = response?.total ?? 0;
         const rows = response?.rows ?? [];
 
+        // Track total for lazy-load decision
+        setTotalRowCount(total);
+        setData(rows);
+        setRowCount(total);
+
+        if (rows.length > 0) {
+          setColumnOrder(Object.keys(rows[0]).filter((k) => k !== "id"));
+        }
+
+        // LAZY-LOAD: Only fetch all data if:
+        // 1. User has active filters AND
+        // 2. Dataset is small enough for client-side filtering AND
+        // 3. We haven't already loaded it
         if (
+          (hasActiveFilters || hasSorting) &&
           total > 0 &&
           total <= CLIENT_SIDE_THRESHOLD &&
-          total > pagination.pageSize
+          total > pagination.pageSize &&
+          !isLoadingFullDataRef.current
         ) {
+          isLoadingFullDataRef.current = true;
+          setIsLoading(true);
+
           const fullResponse = await fetchPage(
             0,
             total,
@@ -215,16 +256,6 @@ export default function MrtDatasetTable({
           setRowCount(total);
           const start = pagination.pageIndex * pagination.pageSize;
           setData(allRows.slice(start, start + pagination.pageSize));
-          if (allRows.length > 0) {
-            setColumnOrder(Object.keys(allRows[0]).filter((k) => k !== "id"));
-          }
-        } else {
-          setAllFilteredData(null);
-          setData(rows);
-          setRowCount(total);
-          if (rows.length > 0) {
-            setColumnOrder(Object.keys(rows[0]).filter((k) => k !== "id"));
-          }
         }
       } catch (error) {
         if (!cancelled) {
