@@ -19,13 +19,13 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Number of denoising steps to run. More steps refine the image but "
-                "increase generation time. Typical range: 20–30 for fast results, "
-                "40–50 for higher quality. Values above 100 rarely improve output."
+                "increase generation time. Typical range: 20-30 for fast results, "
+                "40-50 for higher quality. Values above 100 rarely improve output."
             ),
             es=(
                 "Número de pasos de eliminación de ruido a ejecutar. Más pasos "
                 "refinan la imagen pero aumentan el tiempo de generación. Rango "
-                "típico: 20–30 para resultados rápidos, 40–50 para mayor calidad. "
+                "típico: 20-30 para resultados rápidos, 40-50 para mayor calidad. "
                 "Valores superiores a 100 raramente mejoran el resultado."
             ),
         ),
@@ -40,14 +40,14 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Weight of the ControlNet depth conditioning relative to the base "
-                "diffusion pipeline. Valid range is 0.0–2.0. At 0.0 the depth map "
+                "diffusion pipeline. Valid range is 0.0-2.0. At 0.0 the depth map "
                 "has no effect; at 1.0 (default) the output closely follows the "
                 "input image structure; above 1.5 the depth constraint dominates "
                 "and may produce overly rigid results."
             ),
             es=(
                 "Peso del condicionamiento de profundidad ControlNet relativo al "
-                "pipeline de difusión base. Rango válido: 0.0–2.0. En 0.0 el mapa "
+                "pipeline de difusión base. Rango válido: 0.0-2.0. En 0.0 el mapa "
                 "de profundidad no tiene efecto; en 1.0 (por defecto) la salida "
                 "sigue de cerca la estructura de la imagen de entrada; por encima "
                 "de 1.5 la restricción de profundidad domina y puede producir "
@@ -85,14 +85,12 @@ def get_depth_map(image, device):
     import numpy as np
     import torch
     from PIL import Image
-    from transformers import DPTFeatureExtractor, DPTForDepthEstimation
+    from transformers import DPTForDepthEstimation, DPTImageProcessor
 
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
     ).to(device)
-    feature_extractor = DPTFeatureExtractor.from_pretrained(
-        "Intel/dpt-hybrid-midas", device=device
-    )
+    feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-hybrid-midas")
 
     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
 

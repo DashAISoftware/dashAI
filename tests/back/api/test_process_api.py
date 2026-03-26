@@ -17,7 +17,7 @@ def session(client: TestClient):
             "width": 256,
             "height": 256,
             "num_images_per_prompt": 1,
-            "model_name": "stabilityai/stable-diffusion-2",
+            "model_name": "sd2-community/stable-diffusion-2",
         },
         "name": "process_test_session",
         "description": None,
