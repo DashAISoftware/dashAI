@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  DialogContentText,
   Grid,
   Typography,
   useTheme,
@@ -26,6 +25,7 @@ import { useTranslation } from "react-i18next";
  * @param {function} onPreviewError callback to notify parent of preview errors
  * @param {function} onTypesChanged callback to notify parent when column types change
  * @param {function} onColumnRename callback to notify parent when columns are renamed
+ * @param {function} onPreviewLoaded callback to notify parent when preview is loaded
  */
 const EMPTY_FORM_VALUES = {};
 
@@ -37,6 +37,7 @@ function Upload({
   onPreviewError,
   onTypesChanged,
   onColumnRename,
+  onPreviewLoaded,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -334,6 +335,7 @@ function Upload({
                 onPreviewError={onPreviewError}
                 onTypesChanged={onTypesChanged}
                 onColumnRename={onColumnRename}
+                onPreviewLoaded={onPreviewLoaded}
               />
             </Box>
           );
@@ -361,7 +363,7 @@ function Upload({
     >
       {/* state text */}
       <Grid sx={{ textAlign: "center" }}>
-        <DialogContentText sx={{ color: theme.palette.text.primary }}>
+        <Box sx={{ color: theme.palette.text.primary }}>
           {datasetState === EMPTY && t("datasets:label.uploadYourDataset")}
           {datasetState === LOADING && t("datasets:label.datasetLoading")}
           {datasetState === LOADED && t("datasets:label.datasetPreview")}
@@ -370,7 +372,7 @@ function Upload({
               {t("datasets:label.ifYourDatasetHaveSplits")}
             </Typography>
           )}
-        </DialogContentText>
+        </Box>
       </Grid>
 
       {/* Drag and drop */}
@@ -428,7 +430,7 @@ Upload.propTypes = {
   initialFile: PropTypes.object,
   formSubmitRef: PropTypes.object,
   formValues: PropTypes.object,
-  selectedDataloader: PropTypes.string,
+  selectedDataloader: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
 };

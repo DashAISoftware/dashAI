@@ -3,6 +3,7 @@
     "downloadResults": "Download Prediction Results",
     "hideResults": "Hide Results",
     "runPrediction": "Run Prediction",
+    "saveResults": "Save Results",
     "showResults": "Show Results"
   },
   "error": {
@@ -11,6 +12,8 @@
     "errorDownloading": "Error downloading prediction",
     "fetchingDatasets": "Error fetching datasets for prediction.",
     "loadingPredictionData": "Error loading prediction data",
+    "noRowsToPredict": "Add at least one row before predicting",
+    "previewFailed": "Could not generate prediction preview",
     "loadingPreviousPredictions": "Error fetching previous predictions.",
     "predictionFailed": "Prediction failed: {{error}}",
     "submittingPredictionJob": "Error submitting prediction job.",
@@ -46,6 +49,7 @@
     "predictions": "Predictions",
     "predictionStillRunning": "Prediction is still running",
     "predictionStillRunningResults": "The prediction is still running. Results will be available once it is finished.",
+    "previewResults": "Preview Results",
     "previousPredictions": "Previous Predictions",
     "provideManualInput": "Enter data manually for prediction. Fill in the fields below and submit when ready.",
     "resultsPreview": "Preview of first 100 rows. Download CSV for complete results.",

@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
 from DashAI.back.converters.category.basic_preprocessing import (
@@ -88,4 +87,6 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for imputed data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())

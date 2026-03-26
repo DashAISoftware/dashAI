@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Final, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, Type, Union
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.static.icons import Icon
 from DashAI.back.types.dashai_data_type import DashAIDataType
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseConverterSchema(BaseSchema):
@@ -92,7 +94,7 @@ class BaseConverter(ConfigObject, ABC):
 
     @abstractmethod
     def fit(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> Type[BaseConverter]:
         """Fit the converter.
         This method should allow to validate the converter's parameters.
@@ -113,8 +115,8 @@ class BaseConverter(ConfigObject, ABC):
 
     @abstractmethod
     def transform(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
-    ) -> DashAIDataset:
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
+    ) -> "DashAIDataset":
         """Transform the dataset.
 
         Parameters

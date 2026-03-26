@@ -145,5 +145,14 @@
   "columnNameCannotBeEmpty": "El nombre de la columna no puede estar vacío",
   "columnNameInvalidCharacters": "El nombre de la columna solo puede contener letras, números y guiones bajos",
   "columnNameAlreadyExists": "Ya existe una columna con este nombre",
-  "errorRenamingColumn": "Error al renombrar la columna"
+  "errorRenamingColumn": "Error al renombrar la columna",
+  "hardwareMonitor": {
+    "title": "Monitor de Hardware",
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "ram": "RAM",
+    "overall": "General",
+    "utilization": "Utilización",
+    "connecting": "Conectando al monitor de hardware..."
+  }
 }

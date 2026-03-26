@@ -22,7 +22,13 @@ import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import { validateNode } from "../../../api/pipeline";
 
-const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
+const Train = ({
+  open,
+  onClose,
+  onSave,
+  savedConfig = null,
+  prevNodes = [],
+}) => {
   const [inputColumns, setInputColumns] = useState(
     savedConfig?.input_columns || "",
   );
@@ -493,11 +499,6 @@ Train.propTypes = {
   onSave: PropTypes.func.isRequired,
   savedConfig: PropTypes.object,
   prevNodes: PropTypes.arrayOf(PropTypes.object),
-};
-
-Train.defaultProps = {
-  savedConfig: null,
-  prevNodes: [],
 };
 
 export default Train;

@@ -1,25 +1,17 @@
-import gc
-import json
 import logging
-import os
-import shutil
-import uuid
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from kink import inject
+from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    load_dataset,
-    save_dataset,
-    transform_dataset_with_schema,
-)
 from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.types.inf.type_inference import infer_types
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +35,7 @@ class DatasetJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the dataset as delivered."""
         dataset_id: int = self.kwargs["dataset_id"]
@@ -64,7 +56,7 @@ class DatasetJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the job status as error."""
         dataset_id: int = self.kwargs["dataset_id"]
@@ -98,7 +90,19 @@ class DatasetJob(BaseJob):
     def run(
         self,
     ) -> None:
-        from kink import di
+        import gc
+        import json
+        import os
+        import shutil
+        import uuid
+        from pathlib import Path
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            save_dataset,
+            transform_dataset_with_schema,
+        )
+        from DashAI.back.types.inf.type_inference import infer_types
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]

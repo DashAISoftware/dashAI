@@ -139,9 +139,4 @@ ItemSelector.propTypes = {
   disabled: PropTypes.bool,
 };
 
-ItemSelector.defaultProps = {
-  selectedItem: undefined,
-  disabled: false,
-};
-
 export default ItemSelector;

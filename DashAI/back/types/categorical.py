@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Union
-
-import pyarrow as pa
+from typing import TYPE_CHECKING, Union
 
 from DashAI.back.types.dashai_data_type import DashAIDataType
+
+if TYPE_CHECKING:
+    from pyarrow import Array
 
 
 @dataclass
@@ -25,11 +26,13 @@ class Categorical(DashAIDataType):
 
     def __init__(
         self,
-        values: Union[pa.Array, list],
+        values: Union["Array", list],
         encoding: dict = None,
         converted: bool = False,
         dtype: str = None,
     ):
+        import pyarrow as pa
+
         # Convert pa.Array to list if needed
         if isinstance(values, pa.Array):
             values = values.to_pylist()

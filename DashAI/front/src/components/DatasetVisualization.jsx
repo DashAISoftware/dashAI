@@ -80,6 +80,7 @@ export default function DatasetVisualization({
   };
 
   useEffect(() => {
+    setTab(0);
     if (!dataset || dataset.status !== 3) {
       setDatasetInfo(null);
       return;

@@ -109,9 +109,10 @@ export default function DatasetAutocomplete({
             />
           )}
           renderOption={(props, option) => {
+            const { key, ...rootProps } = props;
             const info = infosById[option.id];
             return (
-              <Box component="li" {...props}>
+              <Box component="li" key={key} {...rootProps}>
                 <Box
                   sx={{
                     display: "flex",

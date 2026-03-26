@@ -1,6 +1,15 @@
 import * as Yup from "yup";
 
-type SchemaProperty = {
+/**
+ * Strips trailing "Task" and "Generation" suffixes from a task name
+ * to produce a human-readable base used for auto-naming sessions.
+ */
+export function formatTaskNameForSession(taskName: string): string {
+  if (!taskName) return "";
+  return taskName.replace(/Task$/, "").replace(/Generation$/, "");
+}
+
+export type SchemaProperty = {
   type: string | string[];
   title?: string;
   nullable?: boolean;

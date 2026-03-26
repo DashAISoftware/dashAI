@@ -23,6 +23,7 @@ export default function ConfigureAndUploadDatasetStep({
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
   const [columnTypes, setColumnTypes] = useState(null);
   const [columnRenames, setColumnRenames] = useState({});
@@ -126,6 +127,11 @@ export default function ConfigureAndUploadDatasetStep({
 
   const handleFileUpload = (file, url) => {
     setDatasetFileToUpload({ file, url });
+    setPreviewLoaded(false);
+  };
+
+  const handlePreviewLoaded = () => {
+    setPreviewLoaded(true);
   };
 
   const handleTypesChanged = useCallback((types) => {
@@ -153,13 +159,20 @@ export default function ConfigureAndUploadDatasetStep({
       datasetFileToUpload &&
       datasetFileToUpload.file !== null &&
       !previewError &&
+      previewLoaded &&
       isFormValid()
     ) {
       setUploadEnabled(true);
     } else {
       setUploadEnabled(false);
     }
-  }, [datasetFileToUpload, previewError, formHasErrors, formValues]);
+  }, [
+    datasetFileToUpload,
+    previewError,
+    previewLoaded,
+    formHasErrors,
+    formValues,
+  ]);
 
   return (
     <Grid sx={{ width: "100%", height: "100%" }}>
@@ -184,6 +197,7 @@ export default function ConfigureAndUploadDatasetStep({
           selectedDataloader={selectedDataloader}
           onPreviewError={handlePreviewError}
           onTypesChanged={handleTypesChanged}
+          onPreviewLoaded={handlePreviewLoaded}
         />
       </Grid>
 

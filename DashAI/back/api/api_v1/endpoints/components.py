@@ -1,10 +1,8 @@
 """Component API module."""
 
-import io
 import logging
-from typing import Any, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
-import requests
 from fastapi import APIRouter, Depends, Header, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
@@ -12,7 +10,9 @@ from kink import di, inject
 from typing_extensions import Annotated
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dependencies.registry import ComponentRegistry
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.registry import ComponentRegistry
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ async def get_components(
     related_component: Union[str, None] = None,
     component_parent: Union[str, None] = None,
     has_related_of_type: Union[str, None] = None,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> List[Dict[str, Any]]:
     """Retrieve components from the register according to the provided parameters.
 
@@ -126,8 +126,9 @@ async def get_components(
         If specified, the function returns only components that have at least one
         related component of the specified type (e.g., "Model"). This is useful for
         filtering tasks that have associated models, by default None.
-    component_registry : ComponentRegistry
-        The current app component registry provided by dependency injection.
+    component_registry: ComponentRegistry
+        Registry that provides metadata and class references for the
+        components available in DashAI.
 
     Returns
     -------
@@ -240,7 +241,7 @@ async def get_components(
 def get_component_by_id(
     id: str,
     accept_language: str | None = Header(default=None),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
     """Return a specific component using its id (the id is the component class name).
 
@@ -251,8 +252,9 @@ def get_component_by_id(
     accept_language : str | None
         The 'Accept-Language' header from the request to localize multilingual
         strings in the component schema, by default None.
-    component_registry : ComponentRegistry
-        The current app component registry provided by dependency injection.
+    component_registry: ComponentRegistry
+        Registry that provides metadata and class references for the
+        components available in DashAI.
 
     Returns
     -------
@@ -317,7 +319,7 @@ async def update_component() -> None:
 @router.get("/image/{component_name}/", status_code=status.HTTP_200_OK)
 async def get_component_image(
     component_name: str,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ) -> StreamingResponse:
     """Return the image of a specific component.
@@ -326,14 +328,19 @@ async def get_component_image(
     ----------
     component_name : str
         The name of the component to retrieve the image for.
-    component_registry : ComponentRegistry
-        The current app component registry provided by dependency injection.
+    component_registry: ComponentRegistry
+        Registry that provides metadata and class references for the
+        components available in DashAI.
 
     Returns
     -------
     StreamingResponse
         The image of the component.
     """
+    import io
+
+    import requests
+
     if component_name not in component_registry:
         raise HTTPException(
             status_code=404,

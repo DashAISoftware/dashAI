@@ -11,7 +11,10 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_dataset,
     split_indexes,
 )
-from DashAI.back.explainability import PartialDependence, PermutationFeatureImportance
+from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
+from DashAI.back.explainability.explainers.permutation_feature_importance import (
+    PermutationFeatureImportance,
+)
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,

@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Final, List, Tuple
-
-from datasets import DatasetDict
+from typing import TYPE_CHECKING, Final, List, Tuple
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.models.base_model import BaseModel
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
 
 
 class BaseGlobalExplainer(ConfigObject, ABC):
@@ -16,7 +17,7 @@ class BaseGlobalExplainer(ConfigObject, ABC):
         self.model = model
 
     @abstractmethod
-    def explain(self, dataset: Tuple[DatasetDict, DatasetDict]) -> dict:
+    def explain(self, dataset: Tuple["DatasetDict", "DatasetDict"]) -> dict:
         raise NotImplementedError
 
     @abstractmethod

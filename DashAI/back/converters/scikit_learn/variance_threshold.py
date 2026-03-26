@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.feature_selection import VarianceThreshold as VarianceThresholdOperation
 
 from DashAI.back.converters.category.dimensionality_reduction import (
@@ -40,6 +39,8 @@ class VarianceThreshold(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())
 
     IMAGE_PREVIEW = "variance_threshold.png"

@@ -99,7 +99,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
-  const [seed, setSeed] = useState();
+  const [seed, setSeed] = useState(42);
 
   const defaultParitionsIndex = {
     train: [],
@@ -437,7 +437,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               {Object.entries(datasetInfo.nan)
                 .filter(([_, count]) => count > 0)
                 .map(([col, count]) => (
-                  <Grid item xs={12} key={col}>
+                  <Grid size={{ xs: 12 }} key={col}>
                     - {col}: {count} {t("experiments:label.missingValues")}
                   </Grid>
                 ))}

@@ -8,8 +8,8 @@ const DataExplorationNode = ({
   open,
   onClose,
   onSave,
-  savedConfig,
-  prevNodes,
+  savedConfig = null,
+  prevNodes = [],
 }) => {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
   const datasetId = datasetNode?.id ?? null;
@@ -57,11 +57,6 @@ DataExplorationNode.propTypes = {
   onSave: PropTypes.func.isRequired,
   savedConfig: PropTypes.object,
   prevNodes: PropTypes.arrayOf(PropTypes.object),
-};
-
-DataExplorationNode.defaultProps = {
-  savedConfig: null,
-  prevNodes: [],
 };
 
 export default DataExplorationNode;

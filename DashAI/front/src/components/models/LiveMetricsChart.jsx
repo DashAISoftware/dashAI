@@ -75,11 +75,22 @@ function LiveMetricsChart({ run }) {
       socketRef.current.close();
     }
 
-    const apiUrl =
-      process.env.REACT_APP_API_URL || `${window.location.origin}/api`;
+    // When a new training starts, clear all previous metrics
+    const isStarting = run.status === 1 || run.status === 2;
+    if (isStarting) {
+      setData({});
+      setSelectedMetrics([]);
+      selectedMetricsPerSplit.current = {
+        TRAIN: null,
+        VALIDATION: null,
+        TEST: null,
+      };
+    }
+
+    const apiUrl = process.env.REACT_APP_API_URL || `${window.location.origin}`;
     let wsUrl;
     try {
-      wsUrl = new URL(`/v1/metrics/ws/${run.id}`, apiUrl);
+      wsUrl = new URL(`/api/v1/metrics/ws/${run.id}`, apiUrl);
     } catch (e) {
       console.error("Invalid WebSocket base URL:", apiUrl, e);
       return;
@@ -123,6 +134,11 @@ function LiveMetricsChart({ run }) {
     ws.onclose = () => {
       if (run.test_metrics) {
         setData((prev) => {
+          // Skip if TEST data already exists to avoid duplicate re-render
+          if (prev.TEST && Object.keys(prev.TEST).length > 0) {
+            return prev;
+          }
+
           const next = structuredClone(prev);
 
           const formattedTestMetrics = {};
@@ -160,7 +176,7 @@ function LiveMetricsChart({ run }) {
         console.log("WebSocket already closed");
       }
     };
-  }, [run.id, run.test_metrics]);
+  }, [run.id, run.status]);
 
   useEffect(() => {
     if (!run.model_session_id) return;
@@ -248,8 +264,13 @@ function LiveMetricsChart({ run }) {
     else setLevel(null);
   }, [split, hasEpochData, hasStepData, hasTrialData, level]);
 
+  const filteredMetricKeys = useMemo(
+    () => Object.keys(filteredMetrics).sort().join(","),
+    [filteredMetrics],
+  );
+
   useEffect(() => {
-    const metricNames = Object.keys(filteredMetrics);
+    const metricNames = filteredMetricKeys ? filteredMetricKeys.split(",") : [];
 
     if (metricNames.length === 0) {
       setSelectedMetrics([]);
@@ -266,7 +287,7 @@ function LiveMetricsChart({ run }) {
     } else {
       setSelectedMetrics(metricNames);
     }
-  }, [split, level, filteredMetrics]);
+  }, [split, level, filteredMetricKeys]);
 
   const handleMetricChange = (e) => {
     const newSelection = e.target.value;

@@ -9,7 +9,11 @@ import graphsMaking from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
 
-function ResultsGraphs({ runs, selectedSplit: splitProp, onSplitChange }) {
+function ResultsGraphs({
+  runs,
+  selectedSplit: splitProp = undefined,
+  onSplitChange = undefined,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { t } = useTranslation(["models"]);
@@ -152,11 +156,6 @@ ResultsGraphs.propTypes = {
   runs: PropTypes.array.isRequired,
   selectedSplit: PropTypes.string,
   onSplitChange: PropTypes.func,
-};
-
-ResultsGraphs.defaultProps = {
-  selectedSplit: undefined,
-  onSplitChange: undefined,
 };
 
 export default ResultsGraphs;

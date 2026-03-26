@@ -48,6 +48,7 @@ import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
+import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
 
 const EMPTY_ARRAY = [];
@@ -145,7 +146,7 @@ function RunCard({
       }
     };
     fetchOperationsCount();
-  }, [run, explainerRefreshTrigger]);
+  }, [run.id, explainerRefreshTrigger]);
 
   const hasOptimizableParams = useMemo(() => {
     return Object.values(editedParameters).some(
@@ -678,13 +679,7 @@ function RunCard({
                             ([key, value]) => (
                               <TableRow key={key}>
                                 <TableCell>{key}</TableCell>
-                                <TableCell>
-                                  {typeof value === "object" && value !== null
-                                    ? value.fixed_value !== undefined
-                                      ? String(value.fixed_value)
-                                      : JSON.stringify(value)
-                                    : String(value)}
-                                </TableCell>
+                                <TableCell>{renderParamValue(value)}</TableCell>
                               </TableRow>
                             ),
                           )}

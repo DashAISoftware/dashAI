@@ -42,8 +42,4 @@ ResultsDetails.propTypes = {
   run: PropTypes.object,
 };
 
-ResultsDetails.defaultProps = {
-  run: undefined,
-};
-
 export default ResultsDetails;

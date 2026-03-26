@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.feature_selection import SelectFpr as SelectFprOperation
 
 from DashAI.back.converters.category.feature_selection import FeatureSelectionConverter
@@ -42,4 +41,6 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())

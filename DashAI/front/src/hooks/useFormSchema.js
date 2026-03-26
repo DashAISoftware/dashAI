@@ -60,12 +60,11 @@ function useFormSchema({
     }
   }, [formik.errors, setError]);
 
-  // Notify parent component when form values change
   useEffect(() => {
-    if (onValuesChange && formik.values) {
-      onValuesChange(formik.values);
+    if (onValuesChange) {
+      onValuesChange();
     }
-  }, [formik.values, onValuesChange]);
+  }, [formik.values]);
 
   const formProps = {
     formik,
