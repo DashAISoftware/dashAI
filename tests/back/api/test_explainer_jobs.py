@@ -15,9 +15,9 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
-from DashAI.back.job import ExplainerJob
-from DashAI.back.models import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.job.explainer_job import ExplainerJob
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks.base_task import BaseTask
 
 input_columns = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 output_columns = ["Species"]

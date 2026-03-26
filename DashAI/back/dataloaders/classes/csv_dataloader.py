@@ -2,11 +2,7 @@
 
 import shutil
 from itertools import islice
-from typing import Any, Dict
-
-import pandas as pd
-from beartype import beartype
-from datasets import Dataset, IterableDatasetDict, load_dataset
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -18,11 +14,10 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class CSVDataloaderSchema(BaseSchema):
@@ -186,11 +181,11 @@ class CSVDataloaderSchema(BaseSchema):
         None,
         description=MultilingualString(
             en=(
-                "Number of lines to skip at the beginning of the file. "
+                "Number of data rows to skip after reading the header. "
                 "Leave empty to skip none."
             ),
             es=(
-                "Número de líneas a omitir al inicio del archivo. "
+                "Número de filas de datos a omitir después de leer el encabezado. "
                 "Deje vacío para no omitir ninguna."
             ),
         ),
@@ -237,7 +232,7 @@ class CSVDataLoader(BaseDataLoader):
     def _check_params(
         self,
         params: Dict[str, Any],
-    ) -> None:
+    ) -> Dict[str, Any]:
         if "separator" not in params:
             raise ValueError(
                 "Error trying to load the CSV dataset: "
@@ -270,14 +265,22 @@ class CSVDataLoader(BaseDataLoader):
             if param in params and params[param] is not None:
                 clean_params[param] = params[param]
 
-        int_params = ["skiprows", "nrows"]
-        for param in int_params:
-            if param in params and params[param] is not None:
-                if not isinstance(params[param], int):
-                    raise TypeError(
-                        f"Param {param} should be an integer, got {type(params[param])}"
-                    )
-                clean_params[param] = params[param]
+        if params.get("nrows") is not None:
+            if not isinstance(params["nrows"], int):
+                raise TypeError(
+                    f"Param nrows should be an integer, got {type(params['nrows'])}"
+                )
+            if params["nrows"] < 0:
+                raise ValueError("Param nrows should be greater than or equal to 0")
+
+        if params.get("skiprows") is not None:
+            if not isinstance(params["skiprows"], int):
+                raise TypeError(
+                    "Param skiprows should be an integer, "
+                    f"got {type(params['skiprows'])}"
+                )
+            if params["skiprows"] < 0:
+                raise ValueError("Param skiprows should be greater than or equal to 0")
 
         if "encoding" in params and params["encoding"]:
             valid_encodings = ["utf-8", "latin1", "cp1252", "iso-8859-1"]
@@ -287,14 +290,13 @@ class CSVDataLoader(BaseDataLoader):
 
         return clean_params
 
-    @beartype
     def load_data(
         self,
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
         n_sample: int | None = None,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load the uploaded CSV files into a DatasetDict.
 
         Parameters
@@ -315,7 +317,13 @@ class CSVDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
+        from datasets import Dataset, IterableDatasetDict, load_dataset
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         clean_params = self._check_params(params)
+        data_skiprows = params.get("skiprows") or 0
+        data_nrows = params.get("nrows")
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
             dataset = load_dataset(
@@ -335,7 +343,28 @@ class CSVDataLoader(BaseDataLoader):
         if n_sample:
             if type(dataset) is IterableDatasetDict:
                 dataset = dataset["train"]
-            dataset = Dataset.from_list(list(dataset.take(n_sample)))
+            if data_skiprows > 0:
+                dataset = dataset.skip(data_skiprows)
+            rows_iterator = iter(dataset)
+            if data_nrows is not None:
+                rows_iterator = islice(rows_iterator, data_nrows)
+            rows_iterator = islice(rows_iterator, n_sample)
+            dataset = Dataset.from_list(list(rows_iterator))
+        elif data_skiprows > 0:
+            train_dataset = dataset["train"]
+            end = (
+                min(train_dataset.num_rows, data_skiprows + data_nrows)
+                if data_nrows is not None
+                else train_dataset.num_rows
+            )
+            if data_skiprows >= end:
+                dataset["train"] = Dataset.from_dict(train_dataset[0:0])
+            else:
+                dataset["train"] = Dataset.from_dict(train_dataset[data_skiprows:end])
+        elif data_nrows is not None:
+            train_dataset = dataset["train"]
+            end = min(train_dataset.num_rows, data_nrows)
+            dataset["train"] = Dataset.from_dict(train_dataset[0:end])
         return to_dashai_dataset(dataset)
 
     def load_preview(
@@ -343,7 +372,7 @@ class CSVDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 100,
-    ) -> pd.DataFrame:
+    ):
         """
         Load a preview of the CSV dataset using streaming.
 
@@ -361,7 +390,12 @@ class CSVDataLoader(BaseDataLoader):
         pd.DataFrame
             A DataFrame containing the preview rows.
         """
+        import pandas as pd
+        from datasets import load_dataset
+
         clean_params = self._check_params(params)
+        data_skiprows = params.get("skiprows") or 0
+        data_nrows = params.get("nrows")
 
         dataset_stream = load_dataset(
             "csv",
@@ -370,8 +404,13 @@ class CSVDataLoader(BaseDataLoader):
             split="train",
             **clean_params,
         )
+        if data_skiprows > 0:
+            dataset_stream = dataset_stream.skip(data_skiprows)
 
-        sample_rows = list(islice(dataset_stream, n_rows))
+        preview_limit = data_nrows if data_nrows is not None else n_rows
+        preview_limit = min(preview_limit, n_rows)
+
+        sample_rows = list(islice(dataset_stream, preview_limit))
 
         df_preview = pd.DataFrame(sample_rows)
 

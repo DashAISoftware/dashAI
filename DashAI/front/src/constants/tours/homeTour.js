@@ -18,7 +18,7 @@ export const homeTourSteps = [
   {
     target: '[data-tour="models-button"]',
     content: (
-      <Trans i18nKey={"homeTour:experimentsIntro"}>
+      <Trans i18nKey={"homeTour:modelsIntro"}>
         <div>
           <h3></h3>
           <p></p>
@@ -28,26 +28,24 @@ export const homeTourSteps = [
     placement: "bottom",
   },
   {
-    target: '[data-tour="explainability-button"]',
+    target: '[data-tour="generative-button"]',
     content: (
-      <Trans i18nKey={"homeTour:explainabilityIntro"}>
+      <Trans i18nKey={"homeTour:generativeIntro"}>
         <div>
           <h3></h3>
           <p></p>
-          <div style={{ marginTop: "10px" }}></div>
         </div>
       </Trans>
     ),
     placement: "bottom",
   },
   {
-    target: '[data-tour="pipelines-button"]',
+    target: '[data-tour="plugins-button"]',
     content: (
-      <Trans i18nKey={"homeTour:pipelinesIntro"}>
+      <Trans i18nKey={"homeTour:pluginsIntro"}>
         <div>
           <h3></h3>
           <p></p>
-          <div style={{ marginTop: "10px" }}></div>
         </div>
       </Trans>
     ),

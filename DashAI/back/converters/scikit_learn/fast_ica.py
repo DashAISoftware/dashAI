@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.decomposition import FastICA as FastICAOperation
 
 from DashAI.back.api.utils import (
@@ -161,4 +160,6 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())

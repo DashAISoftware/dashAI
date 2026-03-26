@@ -18,12 +18,12 @@ import { getFullDefaultValues } from "../../api/values";
  */
 function ParameterForm({
   parameterSchema,
-  initialValues,
-  extraOptions,
-  submitButton,
-  onFormSubmit,
-  getValues,
-  formSubmitRef,
+  initialValues = null,
+  extraOptions = null,
+  submitButton = false,
+  onFormSubmit = () => {},
+  getValues = null,
+  formSubmitRef = null,
 }) {
   const [defaultValues, setDefaultValues] = useState(initialValues);
   const [loading, setLoading] = useState(initialValues === null);
@@ -99,13 +99,5 @@ ParameterForm.propTypes = {
     PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   ),
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
-};
-ParameterForm.defaultProps = {
-  initialValues: null,
-  onFormSubmit: () => {},
-  extraOptions: null,
-  submitButton: false,
-  getValues: null,
-  formSubmitRef: null,
 };
 export default ParameterForm;

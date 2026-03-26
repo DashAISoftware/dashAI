@@ -15,12 +15,14 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.model_job import ModelJob
-from DashAI.back.models import RandomForestClassifier
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
-from DashAI.back.optimizers import OptunaOptimizer
+from DashAI.back.models.scikit_learn.random_forest_classifier import (
+    RandomForestClassifier,
+)
+from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata
 from DashAI.back.types.value_types import Text

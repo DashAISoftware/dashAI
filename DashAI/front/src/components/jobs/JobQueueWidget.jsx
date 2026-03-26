@@ -363,7 +363,7 @@ const JobQueueWidget = () => {
                     {jobsToShow.map((job) => (
                       <ListItem
                         key={job.id}
-                        button
+                        component="button"
                         divider
                         onClick={() => handleJobClick(job)}
                         sx={{

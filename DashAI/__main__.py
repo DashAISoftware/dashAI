@@ -11,6 +11,7 @@ import signal
 import subprocess
 import sys
 import threading
+import warnings
 import webbrowser
 from contextlib import suppress
 
@@ -18,6 +19,49 @@ import typer
 from typing_extensions import Annotated
 
 from DashAI.back.core.enums.logging_levels import LoggingLevel
+
+# Suppress noisy third-party startup warnings
+warnings.filterwarnings(
+    "ignore",
+    message=".*mediapipe.*",
+    category=UserWarning,
+    module="controlnet_aux",
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Importing from timm.models.layers.*",
+    category=FutureWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Importing from timm.models.registry.*",
+    category=FutureWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Overwriting tiny_vit.*",
+    category=UserWarning,
+    module="controlnet_aux",
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*found in sys.modules after import.*",
+    category=RuntimeWarning,
+)
+print()
+print("  ╔═══════════════════════════════════════════════════════╗")
+print("  ║                                                       ║")
+print("  ║   ██████╗   █████╗  ███████╗ ██╗  ██╗  █████╗  ██╗    ║")
+print("  ║   ██╔══██╗ ██╔══██╗ ██╔════╝ ██║  ██║ ██╔══██╗ ██║    ║")
+print("  ║   ██║  ██║ ███████║ ███████╗ ███████║ ███████║ ██║    ║")
+print("  ║   ██║  ██║ ██╔══██║ ╚════██║ ██╔══██║ ██╔══██║ ██║    ║")
+print("  ║   ██████╔╝ ██║  ██║ ███████║ ██║  ██║ ██║  ██║ ██║    ║")
+print("  ║   ╚═════╝  ╚═╝  ╚═╝ ╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝    ║")
+print("  ║                                                       ║")
+print("  ║   Loading application, please wait...                 ║")
+print("  ║                                                       ║")
+print("  ╚═══════════════════════════════════════════════════════╝")
+print()
 
 
 def open_browser() -> None:

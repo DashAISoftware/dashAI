@@ -1,6 +1,4 @@
-from typing import List, Union
-
-import pyarrow as pa
+from typing import TYPE_CHECKING, List, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
@@ -9,9 +7,11 @@ from DashAI.back.converters.category.basic_preprocessing import (
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer, Text
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class CharacterReplacerSchema(BaseSchema):
@@ -78,7 +78,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         self._target_columns: List[str] = []
 
     def fit(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "CharacterReplacer":
         """
         Validates that the scoped columns (provided in x) are of string type.
@@ -103,12 +103,14 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         return self
 
     def transform(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
-    ) -> DashAIDataset:
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
+    ) -> "DashAIDataset":
         """
         Replaces or removes characters in the target string columns of the dataset x.
         If all values in a column become numeric after replacement, converts to int.
         """
+        import pyarrow as pa
+
         if not self._target_columns:
             # if no target columns were set, return the dataset unchanged
             return x
@@ -174,4 +176,6 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         to int. Since this is determined dynamically during transform, we
         return Text as default.
         """
+        import pyarrow as pa
+
         return Text(arrow_type=pa.string())

@@ -1,12 +1,9 @@
-import json
 import logging
-import os
 from typing import Any, Dict
 
-import numpy as np
 from fastapi import HTTPException
+from kink import di, inject
 
-from DashAI.back.config import DefaultSettings
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 
@@ -31,11 +28,18 @@ class Prediction(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Prediction executed successfully.")
 
+    @inject
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        import json
+        import os
+
+        import numpy as np
+
         loaded_dataset = context["dataset"]
         model = context["model_class"]
         model_path = context["model_path"]
         trained_model: BaseModel = model.load(model_path)
+        config = di["config"]
 
         try:
             prepared_dataset = loaded_dataset.select_columns(context["input_columns"])
@@ -58,8 +62,7 @@ class Prediction(BaseJob):
             ) from e
 
         try:
-            settings = DefaultSettings()
-            sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+            sqlite_local = config["LOCAL_PATH"]
             path = os.path.join(sqlite_local, "pipelines", "predictions")
             os.makedirs(path, exist_ok=True)
             existing_ids = []

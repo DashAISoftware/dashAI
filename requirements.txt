@@ -7,7 +7,7 @@ streaming_form_data
 alembic
 kink
 numpy
-pandas
+pandas<3.0.0
 joblib
 pydantic
 pydantic-settings
@@ -25,7 +25,8 @@ typer
 rich
 torch
 torchvision
-transformers==4.50.0
+transformers
+controlnet_aux
 sacrebleu
 sentencepiece
 optuna

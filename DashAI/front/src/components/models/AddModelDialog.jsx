@@ -18,13 +18,14 @@ import { Close as CloseIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
-import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSelectOptimizer";
-import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
+import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSelectOptimizer";
+import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
+import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
  * Dialog for adding a new model run to a session
@@ -80,13 +81,7 @@ function AddModelDialog({
   }, [open, selectedModel, existingRuns, hasUserTouchedName]);
 
   const hasOptimizableParams = useMemo(() => {
-    return Object.values(modelParameters).some(
-      (value) =>
-        value &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        value.optimize === true,
-    );
+    return checkIfHaveOptimazers(modelParameters);
   }, [modelParameters]);
 
   const steps = hasOptimizableParams
@@ -350,7 +345,7 @@ function AddModelDialog({
                   <FormSchemaWithSelectedModel
                     modelToConfigure={selectedModel}
                     initialValues={modelParameters}
-                    onFormSubmit={handleModelParametersChange}
+                    onFormSubmit={() => {}}
                     onValuesChange={handleModelParametersChange}
                     onCancel={() => {}}
                     hideButtons

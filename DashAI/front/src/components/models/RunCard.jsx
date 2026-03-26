@@ -37,11 +37,12 @@ import { getRunStatus } from "../../utils/runStatus";
 import RunResults from "./RunResults";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
-import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSelectOptimizer";
-import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
+import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSelectOptimizer";
+import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
+import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -106,7 +107,7 @@ function RunCard({
       }
     };
     fetchOperationsCount();
-  }, [run, explainerRefreshTrigger]);
+  }, [run.id, explainerRefreshTrigger]);
 
   const hasOptimizableParams = useMemo(() => {
     return Object.values(editedParameters).some(
@@ -638,13 +639,7 @@ function RunCard({
                             ([key, value]) => (
                               <TableRow key={key}>
                                 <TableCell>{key}</TableCell>
-                                <TableCell>
-                                  {typeof value === "object" && value !== null
-                                    ? value.fixed_value !== undefined
-                                      ? String(value.fixed_value)
-                                      : JSON.stringify(value)
-                                    : String(value)}
-                                </TableCell>
+                                <TableCell>{renderParamValue(value)}</TableCell>
                               </TableRow>
                             ),
                           )}

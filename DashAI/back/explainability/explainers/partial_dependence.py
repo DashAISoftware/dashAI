@@ -1,11 +1,4 @@
-from typing import List, Tuple
-
-import numpy as np
-import pandas as pd
-import plotly
-import plotly.express as px
-from datasets import DatasetDict
-from sklearn.inspection import partial_dependence
+from typing import List
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -15,7 +8,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
 from DashAI.back.types.categorical import Categorical
 
 
@@ -129,7 +122,7 @@ class PartialDependence(BaseGlobalExplainer):
         self.grid_resolution = grid_resolution
         self.explanation = None
 
-    def explain(self, dataset: Tuple[DatasetDict, DatasetDict]):
+    def explain(self, dataset):
         """Method to generate the explanation
 
         Parameters
@@ -142,6 +135,10 @@ class PartialDependence(BaseGlobalExplainer):
         dict
             Dictionary with metadata and the partial dependence of each feature
         """
+        # Lazy imports
+        import numpy as np
+        from sklearn.inspection import partial_dependence
+
         x, y = dataset
 
         x_test = x["test"].to_pandas()
@@ -184,7 +181,7 @@ class PartialDependence(BaseGlobalExplainer):
 
         return explanation
 
-    def _create_plot(self, data: List[pd.DataFrame]) -> List[dict]:
+    def _create_plot(self, data: List[object]) -> List[dict]:
         """Helper method to create the explanation plot using plotly.
 
         Parameters
@@ -197,6 +194,10 @@ class PartialDependence(BaseGlobalExplainer):
             list of JSON containing the information of the explanation plot
             to be rendered.
         """
+        # Lazy imports
+        import plotly
+        import plotly.express as px
+
         fig = px.line(
             data[0],
             x=data[0]["grid_values"],
@@ -265,6 +266,9 @@ class PartialDependence(BaseGlobalExplainer):
             list of JSONs containing the information of the explanation plot
             to be rendered.
         """
+        # Lazy import
+        import pandas as pd
+
         explanation = explanation.copy()
         metadata = explanation.pop("metadata")
         target_names = metadata["target_names"]

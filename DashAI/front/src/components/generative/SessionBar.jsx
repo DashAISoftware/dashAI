@@ -32,9 +32,6 @@ export default function SessionBar({ onToggle }) {
   const [openSections, setOpenSections] = useState({});
   const { t } = useTranslation(["generative", "common"]);
 
-  console.log(tasks);
-  console.log(sessions);
-
   // Create a map of task_name to display_name for quick lookup
   const taskDisplayNameMap =
     tasks?.reduce((map, task) => {
@@ -197,6 +194,7 @@ export default function SessionBar({ onToggle }) {
           title={t("common:generative")}
           Icon={FolderIcon}
           initialOpenGroups={openSections}
+          getItemDescription={(session) => session.model_name}
         />
       </Box>
 

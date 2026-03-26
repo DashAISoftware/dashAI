@@ -23,9 +23,9 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
-import FormSchemaDialog from "../../shared/FormSchemaDialog";
-import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
-import { getComponents } from "../../../api/component";
+import FormSchemaDialog from "../../../shared/FormSchemaDialog";
+import FormSchemaWithSelectedModel from "../../../shared/FormSchemaWithSelectedModel";
+import { getComponents } from "../../../../api/component";
 import { useTranslation } from "react-i18next";
 
 export default function RunInfoModal({
@@ -129,7 +129,7 @@ export default function RunInfoModal({
         {/* Run Details Section */}
         <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={6} md={3}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary">
                 {t("experiments:label.modelName")}
               </Typography>
@@ -137,7 +137,7 @@ export default function RunInfoModal({
                 {run.model_name}
               </Typography>
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary">
                 {t("experiments:label.startTime")}
               </Typography>
@@ -145,7 +145,7 @@ export default function RunInfoModal({
                 {new Date(run.start_time).toLocaleString()}
               </Typography>
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary">
                 {t("experiments:label.endTime")}
               </Typography>
@@ -153,7 +153,7 @@ export default function RunInfoModal({
                 {new Date(run.end_time).toLocaleString()}
               </Typography>
             </Grid>
-            <Grid item xs={6} md={3}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary">
                 {t("experiments:label.duration")}
               </Typography>
@@ -209,7 +209,7 @@ export default function RunInfoModal({
         </Typography>
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Button
                 variant="contained"
                 startIcon={<EditIcon />}
@@ -220,7 +220,7 @@ export default function RunInfoModal({
                 {t("experiments:button.editParameters")}
               </Button>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>
                   {t("experiments:label.metricToOptimize")}
@@ -243,7 +243,7 @@ export default function RunInfoModal({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ display: "flex", gap: 1 }}>
                 <FormControl fullWidth>
                   <InputLabel>{t("experiments:label.optimizer")}</InputLabel>
@@ -294,7 +294,7 @@ export default function RunInfoModal({
               <Grid container spacing={1}>
                 {Object.entries(run.optimizer_parameters).map(
                   ([key, value]) => (
-                    <Grid item xs={6} md={4} key={key}>
+                    <Grid size={{ xs: 6, md: 4 }} key={key}>
                       <Typography variant="caption" color="text.secondary">
                         {key}:
                       </Typography>

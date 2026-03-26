@@ -9,7 +9,7 @@ export const copyDataset = async (formData: object): Promise<object> => {
 };
 
 export const getDatasets = async (): Promise<IDataset[]> => {
-  const response = await api.get<IDataset[]>(datasetEndpoint);
+  const response = await api.get<IDataset[]>(`${datasetEndpoint}/`);
   return response.data;
 };
 

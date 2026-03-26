@@ -1,14 +1,16 @@
 """Base Model abstract class."""
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Final, final
+from typing import TYPE_CHECKING, Any, Dict, Final, final
 
 from kink import di
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Metric
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseModel(ConfigObject, metaclass=ABCMeta):
@@ -58,10 +60,10 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     @abstractmethod
     def train(
         self,
-        x_train: DashAIDataset,
-        y_train: DashAIDataset,
-        x_validation: DashAIDataset = None,
-        y_validation: DashAIDataset = None,
+        x_train: "DashAIDataset",
+        y_train: "DashAIDataset",
+        x_validation: "DashAIDataset" = None,
+        y_validation: "DashAIDataset" = None,
     ) -> "BaseModel":
         """Train the model with the provided data.
 
@@ -188,8 +190,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         split: SplitEnum = SplitEnum.VALIDATION,
         level: LevelEnum = LevelEnum.LAST,
         log_index: int = None,
-        x_data: DashAIDataset = None,
-        y_data: DashAIDataset = None,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
     ):
         """
         Calculate and save metrics for a given data split and level.
@@ -245,8 +247,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         )
 
     def prepare_dataset(
-        self, dataset: DashAIDataset, is_fit: bool = False
-    ) -> DashAIDataset:
+        self, dataset: "DashAIDataset", is_fit: bool = False
+    ) -> "DashAIDataset":
         """Hook for model-specific preprocessing of input features.
 
         Override in subclasses needing
@@ -268,8 +270,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         return dataset
 
     def prepare_output(
-        self, dataset: DashAIDataset, is_fit: bool = False
-    ) -> DashAIDataset:
+        self, dataset: "DashAIDataset", is_fit: bool = False
+    ) -> "DashAIDataset":
         """Hook for model-specific preprocessing of output targets.
 
         Parameters

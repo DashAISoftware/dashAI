@@ -3,13 +3,23 @@ import {
   TextField,
   FormControlLabel,
   Switch,
-  Box,
+  Divider,
   Typography,
   useTheme,
 } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 import { useTranslation } from "react-i18next";
+
+const SectionLabel = ({ children }) => (
+  <Typography
+    variant="overline"
+    color="text.secondary"
+    sx={{ lineHeight: 1.5, display: "block" }}
+  >
+    {children}
+  </Typography>
+);
 
 export default function YAxisForm({
   data,
@@ -23,6 +33,11 @@ export default function YAxisForm({
 
   return (
     <>
+      {/* Title */}
+      <SectionLabel>
+        {t("datasets:label.axisTitle", { axis: "Y" })}
+      </SectionLabel>
+
       <TextField
         label={t("datasets:label.axisTitle", { axis: "Y" })}
         variant="filled"
@@ -46,11 +61,12 @@ export default function YAxisForm({
             ...layout.yaxis?.title,
             font: {
               ...layout.yaxis?.title?.font,
-              size: parseInt(e.target.value),
+              size: parseInt(e.target.value, 10) || 14,
             },
           })
         }
         fullWidth
+        slotProps={{ htmlInput: { min: 8, max: 72 } }}
       />
 
       <DebouncedColorPicker
@@ -68,15 +84,22 @@ export default function YAxisForm({
         label={t("datasets:label.axisTitleStandoff", { axis: "Y" })}
         variant="filled"
         type="number"
-        value={layout.yaxis?.title?.standoff || 15}
+        value={layout.yaxis?.title?.standoff ?? 15}
         onChange={(e) =>
           handleAxisChange("yaxis", "title", {
             ...layout.yaxis?.title,
-            standoff: parseInt(e.target.value),
+            standoff: parseInt(e.target.value, 10) || 0,
           })
         }
         fullWidth
+        slotProps={{ htmlInput: { min: 0 } }}
       />
+
+      <Divider />
+
+      {/* Ticks */}
+      <SectionLabel>{t("datasets:label.ticks", "Ticks")}</SectionLabel>
+
       <DebouncedColorPicker
         label={t("datasets:label.axisTickFontColor", { axis: "Y" })}
         value={layout.yaxis?.tickfont?.color || theme.palette.text.secondary}
@@ -89,49 +112,44 @@ export default function YAxisForm({
       />
 
       <TextField
-        label={t("datasets:label.axisTickLabel", { axis: "Y" })}
+        label={t("datasets:label.axisTickAngle", { axis: "Y" })}
         variant="filled"
         type="number"
-        value={layout.yaxis?.tickangle || 0}
+        value={layout.yaxis?.tickangle ?? 0}
         onChange={(e) =>
-          handleAxisChange("yaxis", "tickangle", parseInt(e.target.value))
+          handleAxisChange(
+            "yaxis",
+            "tickangle",
+            parseInt(e.target.value, 10) || 0,
+          )
         }
         fullWidth
+        slotProps={{ htmlInput: { min: -360, max: 360 } }}
       />
 
-      <DebouncedColorPicker
-        label={t("datasets:label.axisLineColor", { axis: "Y" })}
-        value={layout.yaxis?.linecolor || theme.palette.text.primary}
-        onChange={(color) => handleAxisChange("yaxis", "linecolor", color)}
-      />
+      {tickvalsArray.length > 0 && (
+        <TextField
+          label={t("datasets:label.tickLabels", "Tick Labels")}
+          variant="filled"
+          multiline
+          minRows={3}
+          maxRows={8}
+          value={data[0].y.join("\n")}
+          onChange={(e) => {
+            handleTraceChange(0, "y", e.target.value.split("\n"));
+          }}
+          helperText={t(
+            "datasets:label.tickLabelsHelper",
+            "One label per line",
+          )}
+          fullWidth
+        />
+      )}
 
-      <TextField
-        label={t("datasets:label.axisLineWidth", { axis: "Y" })}
-        variant="filled"
-        type="number"
-        value={layout.yaxis?.linewidth || 1}
-        onChange={(e) =>
-          handleAxisChange("yaxis", "linewidth", parseInt(e.target.value))
-        }
-        fullWidth
-      />
+      <Divider />
 
-      <DebouncedColorPicker
-        label={t("datasets:label.axisGridColor", { axis: "Y" })}
-        value={layout.yaxis?.gridcolor || theme.palette.ui.divider}
-        onChange={(color) => handleAxisChange("yaxis", "gridcolor", color)}
-      />
-
-      <TextField
-        label={t("datasets:label.axisGridWidth", { axis: "Y" })}
-        variant="filled"
-        type="number"
-        value={layout.yaxis?.gridwidth || 1}
-        onChange={(e) =>
-          handleAxisChange("yaxis", "gridwidth", parseInt(e.target.value))
-        }
-        fullWidth
-      />
+      {/* Grid */}
+      <SectionLabel>{t("datasets:label.grid", "Grid")}</SectionLabel>
 
       <FormControlLabel
         control={
@@ -146,6 +164,28 @@ export default function YAxisForm({
         label={t("datasets:label.showGrid", { axis: "Y" })}
       />
 
+      <DebouncedColorPicker
+        label={t("datasets:label.axisGridColor", { axis: "Y" })}
+        value={layout.yaxis?.gridcolor || theme.palette.ui.divider}
+        onChange={(color) => handleAxisChange("yaxis", "gridcolor", color)}
+      />
+
+      <TextField
+        label={t("datasets:label.axisGridWidth", { axis: "Y" })}
+        variant="filled"
+        type="number"
+        value={layout.yaxis?.gridwidth ?? 1}
+        onChange={(e) =>
+          handleAxisChange(
+            "yaxis",
+            "gridwidth",
+            parseInt(e.target.value, 10) || 1,
+          )
+        }
+        fullWidth
+        slotProps={{ htmlInput: { min: 1, max: 10 } }}
+      />
+
       <FormControlLabel
         control={
           <Switch
@@ -158,31 +198,33 @@ export default function YAxisForm({
         }
         label={t("datasets:label.showZeroLine", { axis: "Y" })}
       />
-      {/* Y Axis Tick Labels */}
-      {tickvalsArray.length > 0 &&
-        tickvalsArray.map((tick, idx) => {
-          const rawTicktext = data[0].y[idx];
 
-          return (
-            <Box key={idx}>
-              {/* Label input */}
-              <TextField
-                label={t("datasets:label.axisTickLabel", { axis: "Y", tick })}
-                variant="filled"
-                value={rawTicktext}
-                onChange={(e) => {
-                  const newTicktext = e.target.value;
-                  const newY = [...data[0].y];
-                  newY[idx] = newTicktext;
+      <Divider />
 
-                  handleTraceChange(0, `y`, newY);
-                }}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-            </Box>
-          );
-        })}
+      {/* Line */}
+      <SectionLabel>{t("datasets:label.axisLine", "Axis Line")}</SectionLabel>
+
+      <DebouncedColorPicker
+        label={t("datasets:label.axisLineColor", { axis: "Y" })}
+        value={layout.yaxis?.linecolor || theme.palette.text.primary}
+        onChange={(color) => handleAxisChange("yaxis", "linecolor", color)}
+      />
+
+      <TextField
+        label={t("datasets:label.axisLineWidth", { axis: "Y" })}
+        variant="filled"
+        type="number"
+        value={layout.yaxis?.linewidth ?? 1}
+        onChange={(e) =>
+          handleAxisChange(
+            "yaxis",
+            "linewidth",
+            parseInt(e.target.value, 10) || 1,
+          )
+        }
+        fullWidth
+        slotProps={{ htmlInput: { min: 1, max: 10 } }}
+      />
     </>
   );
 }

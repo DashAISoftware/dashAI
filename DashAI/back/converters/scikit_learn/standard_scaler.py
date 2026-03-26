@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.preprocessing import StandardScaler as StandardScalerOperation
 
 from DashAI.back.converters.category.scaling_and_normalization import (
@@ -68,6 +67,8 @@ class StandardScaler(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for standardized data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())
 
     IMAGE_PREVIEW = "standard_scaler.png"
