@@ -56,7 +56,32 @@ export default function ExplorerDetailsModal({
     startTransition(() => setFormReady(true));
   }, []);
 
-  // Early returns must come after all hooks
+  // All hooks must be declared before any early returns
+  const handleSaveChangesLayout = useCallback(async () => {
+    const current = localDataRef.current;
+    try {
+      await updateExplorerResults(explorer?.id, current);
+      setData(current);
+      enqueueSnackbar(
+        t("datasets:message.explorerResultsUpdatedSuccessfully"),
+        { variant: "success" },
+      );
+    } catch (error) {
+      console.error("Failed to update explorer results:", error);
+      enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
+        variant: "error",
+      });
+    }
+  }, [explorer?.id, setData, enqueueSnackbar, t]);
+
+  const handleSetData = useCallback((newData) => {
+    setLocalData((prev) => ({ ...prev, data: newData }));
+  }, []);
+
+  const handleSetLayout = useCallback((newLayout) => {
+    setLocalData((prev) => ({ ...prev, layout: newLayout }));
+  }, []);
+
   if (!explorer) return null;
   if (!data) return null;
 
@@ -70,31 +95,6 @@ export default function ExplorerDetailsModal({
   const handleTabChange = (_, newValue) => {
     startTransition(() => setCurrentTab(newValue));
   };
-
-  const handleSaveChangesLayout = useCallback(async () => {
-    const current = localDataRef.current;
-    try {
-      await updateExplorerResults(explorer.id, current);
-      setData(current);
-      enqueueSnackbar(
-        t("datasets:message.explorerResultsUpdatedSuccessfully"),
-        { variant: "success" },
-      );
-    } catch (error) {
-      console.error("Failed to update explorer results:", error);
-      enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
-        variant: "error",
-      });
-    }
-  }, [explorer.id, setData, enqueueSnackbar, t]);
-
-  const handleSetData = useCallback((newData) => {
-    setLocalData((prev) => ({ ...prev, data: newData }));
-  }, []);
-
-  const handleSetLayout = useCallback((newLayout) => {
-    setLocalData((prev) => ({ ...prev, layout: newLayout }));
-  }, []);
 
   return (
     <Dialog

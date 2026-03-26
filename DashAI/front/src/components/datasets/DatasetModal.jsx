@@ -353,7 +353,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             </Button>
             <Button
               onClick={handleNextButton}
-              autoFocus
               variant="contained"
               color="primary"
               disabled={!nextEnabled}

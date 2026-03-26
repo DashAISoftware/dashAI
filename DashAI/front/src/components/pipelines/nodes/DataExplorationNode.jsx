@@ -4,12 +4,14 @@ import { useSnackbar } from "notistack";
 import { ExplorationsProvider } from "../../../components/explorations/context";
 import ConfigureExplorersModal from "./ExplorationModal";
 
+const EMPTY_ARRAY = [];
+
 const DataExplorationNode = ({
   open,
   onClose,
   onSave,
   savedConfig = null,
-  prevNodes = [],
+  prevNodes = EMPTY_ARRAY,
 }) => {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
   const datasetId = datasetNode?.id ?? null;

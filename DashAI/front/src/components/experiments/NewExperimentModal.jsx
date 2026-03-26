@@ -397,7 +397,6 @@ export default function NewExperimentModal({
                           : undefined
               }
               onClick={handleNextButton}
-              autoFocus
               variant="contained"
               color="primary"
               disabled={!nextEnabled}

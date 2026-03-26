@@ -15,14 +15,16 @@ import { useTranslation } from "react-i18next";
  * It merges the real user data (props.value) with placeholder defaults,
  * ensuring that next time we open the dialog, we see updated data rather than the old placeholder.
  */
+const EMPTY_OBJECT = {};
+
 function OptimizeNumberInput({
   name,
   label,
-  value = {},
+  value = EMPTY_OBJECT,
   onChange,
   description = "",
   error = undefined,
-  placeholder = {},
+  placeholder = EMPTY_OBJECT,
 }) {
   const { t } = useTranslation("configurableObject");
 

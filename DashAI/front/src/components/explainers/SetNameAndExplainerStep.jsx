@@ -8,13 +8,15 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 function SetNameAndExplainerStep({
   newExpl,
   setNewExpl,
   setNextEnabled,
   scope,
   taskName,
-  existingExplainers = [],
+  existingExplainers = EMPTY_ARRAY,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);

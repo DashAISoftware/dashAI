@@ -168,7 +168,7 @@ export default function ExplainersCard({
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>{t("common:cancel")}</Button>
-            <Button onClick={handleConfirmDelete} color="error" autoFocus>
+            <Button onClick={handleConfirmDelete} color="error">
               {t("common:delete")}
             </Button>
           </DialogActions>
@@ -230,7 +230,7 @@ export default function ExplainersCard({
               </DialogContent>
               <DialogActions>
                 <Button onClick={handleClose}>{t("common:cancel")}</Button>
-                <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                <Button onClick={handleConfirmDelete} color="error">
                   {t("common:delete")}
                 </Button>
               </DialogActions>

@@ -4,10 +4,12 @@ import InputWithDebounce from "../../shared/InputWithDebounce";
 import { FormControl } from "@mui/material";
 import FormInputWrapper from "./FormInputWrapper";
 
+const EMPTY_ARRAY = [];
+
 function ArrayInput({
   name,
   label,
-  value = [],
+  value = EMPTY_ARRAY,
   onChange,
   error = undefined,
   description,

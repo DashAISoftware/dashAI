@@ -358,7 +358,6 @@ export default function NewGlobalExplainerModal({
           >
             <LoadingButton
               onClick={handleNextButton}
-              autoFocus
               variant="contained"
               color="primary"
               disabled={!nextEnabled}

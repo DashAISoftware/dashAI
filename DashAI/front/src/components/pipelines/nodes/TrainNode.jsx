@@ -22,12 +22,14 @@ import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import { validateNode } from "../../../api/pipeline";
 
+const EMPTY_ARRAY = [];
+
 const Train = ({
   open,
   onClose,
   onSave,
   savedConfig = null,
-  prevNodes = [],
+  prevNodes = EMPTY_ARRAY,
 }) => {
   const [inputColumns, setInputColumns] = useState(
     savedConfig?.input_columns || "",

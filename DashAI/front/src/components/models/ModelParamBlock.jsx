@@ -34,7 +34,7 @@ function unwrapToLeafModel(value) {
   return value;
 }
 
-export function renderParamValue(value) {
+function renderParamValue(value) {
   if (typeof value !== "object" || value === null) {
     return String(value);
   }
@@ -56,6 +56,10 @@ export function renderParamValue(value) {
     );
   }
   return JSON.stringify(value);
+}
+
+export function ParamValue({ value }) {
+  return <>{renderParamValue(value)}</>;
 }
 
 function ModelParamBlock({ component, params }) {
@@ -91,7 +95,7 @@ function ModelParamBlock({ component, params }) {
                   {k}
                 </TableCell>
                 <TableCell sx={{ borderBottom: "none", py: 0.5 }}>
-                  {renderParamValue(v)}
+                  <ParamValue value={v} />
                 </TableCell>
               </TableRow>
             ))}

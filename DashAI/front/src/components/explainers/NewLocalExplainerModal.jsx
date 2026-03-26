@@ -371,7 +371,6 @@ export default function NewLocalExplainerModal({
           >
             <LoadingButton
               onClick={handleNextButton}
-              autoFocus
               variant="contained"
               color="primary"
               disabled={!nextEnabled}

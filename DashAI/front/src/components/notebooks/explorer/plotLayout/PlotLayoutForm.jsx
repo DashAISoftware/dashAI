@@ -34,8 +34,7 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
   const [localLayout, setLocalLayout] = useState(() => structuredClone(layout));
   const [localData, setLocalData] = useState(() => structuredClone(data));
 
-  if (!layout) return null;
-
+  // All hooks must be declared before any early returns
   const handleTraceChange = useCallback(
     (index, path, value) => {
       const newData = [...data];
@@ -89,6 +88,8 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
     [layout, setLayout],
   );
 
+  if (!layout) return null;
+
   const accordionSx = {
     bgcolor: theme.palette.ui.panelMedium,
     color: "text.primary",
@@ -137,7 +138,10 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
         {/* Trace Settings */}
         {Array.isArray(data) &&
           data.map((trace, index) => (
-            <Accordion key={index} sx={accordionSx}>
+            <Accordion
+              key={trace.uid ?? `${trace.type}-${index}`}
+              sx={accordionSx}
+            >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="subtitle1" fontWeight="bold">
                   {t("datasets:label.traceIdx", {

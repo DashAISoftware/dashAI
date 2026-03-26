@@ -7,11 +7,13 @@ import { useSnackbar } from "notistack";
 import { validateNode } from "../../../api/pipeline";
 import { useParams } from "react-router-dom";
 
+const EMPTY_ARRAY = [];
+
 function RetrieveModelNode({
   onClose,
   onSave,
   savedConfig = null,
-  prevNodes = [],
+  prevNodes = EMPTY_ARRAY,
 }) {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
   const datasetId = datasetNode?.id ?? null;
