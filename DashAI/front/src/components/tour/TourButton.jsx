@@ -31,7 +31,7 @@ export const TourButton = ({
           },
           transition: "all 0.2s ease-in-out",
           boxShadow: 2,
-          zIndex: 9000,
+          zIndex: 1101,
           opacity: disabled ? 0.6 : 1,
           cursor: disabled ? "not-allowed" : "pointer",
           pointerEvents: "auto",
