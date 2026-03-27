@@ -29,6 +29,7 @@ import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
@@ -46,6 +47,7 @@ export default function DatasetVisualization({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
+  const { setDatasetInfo: setSharedDatasetInfo } = useDatasetsAndNotebooks();
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
@@ -80,8 +82,11 @@ export default function DatasetVisualization({
   };
 
   useEffect(() => {
+    setTab(0);
+
     if (!dataset || dataset.status !== 3) {
       setDatasetInfo(null);
+      setSharedDatasetInfo(null);
       return;
     }
 
@@ -89,12 +94,16 @@ export default function DatasetVisualization({
       try {
         const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
+        setSharedDatasetInfo(info);
       } catch (error) {
         setDatasetInfo(null);
+        setSharedDatasetInfo(null);
       }
     };
 
     fetchDatasetInfo();
+
+    return () => setSharedDatasetInfo(null);
   }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
