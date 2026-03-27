@@ -6,7 +6,7 @@ from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class TextToTextGenerationTask(BaseGenerativeTask):
-    """Base class for image generation tasks.
+    """Base class for text-to-text generation tasks.
 
     Here you can change the methods provided by class Task.
     """

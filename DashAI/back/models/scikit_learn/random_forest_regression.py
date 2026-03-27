@@ -252,7 +252,7 @@ class RandomForestRegressionSchema(BaseSchema):
 class RandomForestRegression(
     RegressionModel, SklearnLikeRegressor, _RandomForestRegressor
 ):
-    """Scikit-learn's Ridge Regression wrapper for DashAI."""
+    """Scikit-learn's Random Forest Regression wrapper for DashAI."""
 
     SCHEMA = RandomForestRegressionSchema
     DISPLAY_NAME: str = MultilingualString(

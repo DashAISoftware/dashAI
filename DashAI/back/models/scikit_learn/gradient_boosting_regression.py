@@ -334,7 +334,7 @@ class GradientBoostingRSchema(BaseSchema):
 
 
 class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
-    """Scikit-learn's Ridge Regression wrapper for DashAI."""
+    """Scikit-learn's Gradient Boosting Regression wrapper for DashAI."""
 
     SCHEMA = GradientBoostingRSchema
     DISPLAY_NAME: str = MultilingualString(

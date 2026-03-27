@@ -141,7 +141,9 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
 class HistGradientBoostingClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _HistGradientBoostingClassifier
 ):
-    """Scikit-learn's HistGradientBoostingRegressor wrapper for DashAI."""
+    """
+    Scikit-learn's Histogram-based Gradient Boosting Classifier wrapper for DashAI.
+    """
 
     SCHEMA = HistGradientBoostingClassifierSchema
     DISPLAY_NAME: str = MultilingualString(
