@@ -83,13 +83,13 @@ function HomeButton({
             flexShrink: 0,
           }}
         >
-          <Icon sx={{ fontSize: 17 }} />
+          <Icon sx={{ fontSize: 25 }} />
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Box
             sx={{
               fontFamily: '"IBM Plex Mono", monospace',
-              fontSize: "8.5px",
+              fontSize: "12.5px",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               px: "8px",
@@ -110,7 +110,7 @@ function HomeButton({
       <Typography
         sx={{
           fontFamily: '"IBM Plex Sans", sans-serif',
-          fontSize: "15px",
+          fontSize: "19px",
           fontWeight: 600,
           color: theme.palette.text.primary,
           letterSpacing: "-0.01em",
@@ -124,7 +124,7 @@ function HomeButton({
       <Typography
         sx={{
           fontFamily: '"IBM Plex Sans", sans-serif',
-          fontSize: "12px",
+          fontSize: "16px",
           fontWeight: 300,
           color: theme.palette.text.secondary,
           lineHeight: 1.65,
@@ -151,7 +151,7 @@ function HomeButton({
               key={chip}
               sx={{
                 fontFamily: '"IBM Plex Mono", monospace',
-                fontSize: "8.5px",
+                fontSize: "12.5px",
                 letterSpacing: "0.06em",
                 border: `1px solid ${theme.palette.divider}`,
                 color: theme.palette.text.disabled,
@@ -169,7 +169,7 @@ function HomeButton({
           className="card-arrow"
           sx={{
             fontFamily: '"IBM Plex Mono", monospace',
-            fontSize: "14px",
+            fontSize: "18px",
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,

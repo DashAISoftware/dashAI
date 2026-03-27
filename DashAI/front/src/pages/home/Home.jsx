@@ -287,12 +287,13 @@ function Home() {
           {/* 2x2 module card grid */}
           <Box
             sx={{
-              flex: 1,
               p: "14px",
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gridTemplateRows: "1fr 1fr",
               gap: "14px",
+              height: "70%",
+              width: "80%",
               minHeight: 0,
             }}
           >
