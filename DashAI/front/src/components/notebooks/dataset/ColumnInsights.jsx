@@ -126,9 +126,8 @@ export default function ColumnInsights({ numericStats, textStats }) {
                 sx={{
                   p: 1.5,
                   borderRadius: 1.5,
-                  border: `1px solid ${palette.dark}30`,
-                  borderLeft: `3px solid ${palette.main}`,
-                  bgcolor: theme.palette.ui.box,
+                  bgcolor: `${palette.main}15`,
+                  border: `1px solid ${palette.main}30`,
                 }}
               >
                 <Box
@@ -153,9 +152,9 @@ export default function ColumnInsights({ numericStats, textStats }) {
                       height: 20,
                       fontSize: "0.7rem",
                       fontWeight: "bold",
-                      bgcolor: `${palette.main}20`,
+                      bgcolor: `${palette.main}25`,
                       color: palette.main,
-                      border: `1px solid ${palette.main}40`,
+                      border: `1px solid ${palette.main}50`,
                     }}
                   />
                 </Box>
