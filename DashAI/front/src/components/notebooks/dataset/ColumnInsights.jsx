@@ -1,16 +1,23 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
+
+// Tab indices matching DatasetVisualization tab order
+const TAB_NUMERIC = 1;
+const TAB_TEXT = 3;
 
 /**
  * Collects all column-level observations from dataset info and displays them
- * in the right panel sidebar.
+ * in the right panel sidebar. Cards are clickable and navigate to the
+ * corresponding column card in the appropriate tab.
  */
 export default function ColumnInsights({ numericStats, textStats }) {
   const theme = useTheme();
   const { t } = useTranslation(["datasets"]);
+  const { setDatasetTab } = useDatasetsAndNotebooks();
 
   const insights = useMemo(() => {
     const items = [];
@@ -21,6 +28,7 @@ export default function ColumnInsights({ numericStats, textStats }) {
         if (stats.skew > 1) {
           items.push({
             column,
+            tab: TAB_NUMERIC,
             tag: t("datasets:label.insightTagDistribution"),
             color: "warning",
             message: t("datasets:label.insightSkewed", {
@@ -37,6 +45,7 @@ export default function ColumnInsights({ numericStats, textStats }) {
         if (stats.unique_ratio && stats.unique_ratio * 100 <= 30) {
           items.push({
             column,
+            tab: TAB_TEXT,
             tag: t("datasets:label.insightTagTypeSuggestion"),
             color: "warning",
             message: t("datasets:label.insightLowUniqueness", {
@@ -49,6 +58,28 @@ export default function ColumnInsights({ numericStats, textStats }) {
 
     return items;
   }, [numericStats, textStats, t]);
+
+  const handleClick = useCallback(
+    (insight) => {
+      setDatasetTab(insight.tab);
+      // Wait for the tab content to render, then scroll to the card
+      setTimeout(() => {
+        const card = document.querySelector(
+          `[data-column-card="${insight.column}"]`,
+        );
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Brief highlight effect
+          card.style.transition = "box-shadow 0.3s";
+          card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+          setTimeout(() => {
+            card.style.boxShadow = "";
+          }, 2000);
+        }
+      }, 100);
+    },
+    [setDatasetTab, theme],
+  );
 
   if (insights.length === 0) return null;
 
@@ -100,11 +131,18 @@ export default function ColumnInsights({ numericStats, textStats }) {
           return (
             <Box
               key={`${insight.column}-${insight.tag}-${index}`}
+              onClick={() => handleClick(insight)}
               sx={{
                 p: 1.5,
                 borderRadius: 1.5,
                 bgcolor: `${palette.main}15`,
                 border: `1px solid ${palette.main}30`,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                "&:hover": {
+                  bgcolor: `${palette.main}25`,
+                  transform: "translateX(-2px)",
+                },
               }}
             >
               <Box

@@ -49,6 +49,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
 
   const [rightBarContent, setRightBarContent] = useState(null);
   const [datasetInfo, setDatasetInfo] = useState(null);
+  const [datasetTab, setDatasetTab] = useState(0);
 
   useEffect(() => {
     fetchDatasets();
@@ -85,6 +86,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     setRightBarContent,
     datasetInfo,
     setDatasetInfo,
+    datasetTab,
+    setDatasetTab,
   };
 
   return (

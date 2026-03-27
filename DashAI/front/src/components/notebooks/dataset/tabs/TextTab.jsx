@@ -58,7 +58,7 @@ export const TextTab = ({ textStats }) => {
           : null;
 
         return (
-          <Card key={column} sx={{ borderRadius: 2 }}>
+          <Card key={column} data-column-card={column} sx={{ borderRadius: 2 }}>
             <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
               {/* Title */}
               <Box display="flex" alignItems="center" mb={2}>

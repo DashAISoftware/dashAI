@@ -47,10 +47,13 @@ export default function DatasetVisualization({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
-  const { setDatasetInfo: setSharedDatasetInfo } = useDatasetsAndNotebooks();
+  const {
+    setDatasetInfo: setSharedDatasetInfo,
+    datasetTab: tab,
+    setDatasetTab: setTab,
+  } = useDatasetsAndNotebooks();
 
   const [datasetInfo, setDatasetInfo] = useState(null);
-  const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
 
   useEffect(() => {
