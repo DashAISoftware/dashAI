@@ -14,6 +14,7 @@ more. This document describes how DashAI works internally.
 - [Components](#components)
 - [Component Registry](#component-registry)
 - [Configurable Object](#configurable-object)
+- [Semantic Types](#semantic-types)
 - [Database](#database)
 - [Job Queue](#job-queue)
 - [Job](#job)
@@ -257,6 +258,32 @@ class BagOfWordsSchema(BaseSchema):
 The frontend renders component fields as a searchable dropdown populated from the
 registry. When the component is instantiated, `validate_and_transform()` resolves the
 selected component name into a live instance.
+
+---
+
+## Semantic Types
+
+Every column in a DashAI dataset has a **semantic type** — a classification that goes beyond raw storage formats (e.g. `int32`, `string`) to express the ML-meaningful nature of the data: is this a continuous measurement, a discrete label, free-form text, or a date?
+
+### Type hierarchy
+
+```
+DashAIDataType
+├── DashAIValue   →  Integer, Float, Text, Date, Time, Timestamp, Duration, Decimal, Binary
+└── Categorical   →  discrete labels with a str ↔ int encoding map
+```
+
+### Role in the system
+
+| Where | How semantic types are used |
+|-------|-----------------------------|
+| **Dataset loading** | `infer_types()` assigns a type to every column via probabilistic inference (ptype) or a heuristic fallback. Types are persisted to Apache Arrow table metadata. |
+| **Task validation** | Each task declares `inputs_types` and `outputs_types`. `validate_dataset_for_task()` rejects columns that do not match. For example, `TabularClassificationTask` requires a `Categorical` output. |
+| **Converters** | Each converter implements `get_output_type()` to declare its output type, enabling type-safe pipeline chaining (e.g. `OneHotEncoder`: `Categorical` → `Integer`). |
+| **Label encoding** | `Categorical` output columns are automatically integer-encoded before training and decoded back to string labels after prediction using the type's built-in `str2int` / `int2str` maps. |
+| **Column-type edits** | `validate_type_change()` guards manual type changes in the UI, rejecting unsafe conversions (e.g. high-cardinality text promoted to `Categorical`). |
+
+For the full type catalogue, inference logic, and conversion rules, see [Deep Dive → Semantic Types](./semantic-types).
 
 ---
 

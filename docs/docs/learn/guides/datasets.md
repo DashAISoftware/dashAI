@@ -16,6 +16,18 @@ The Datasets module is the entry point for all data in DashAI. From here you can
 - **Conversion** — Apply data converters (normalization, encoding, etc.)
 - **Management** — Rename, delete, and inspect individual datasets
 
+## Column Types
+
+When a dataset is uploaded, DashAI automatically assigns a **semantic type** to each column — `Integer`, `Float`, `Text`, `Categorical`, `Date`, and others. These types determine:
+
+- Which columns are valid inputs or outputs for each task (e.g., classification requires a `Categorical` output column).
+- Which converters can be applied to a column.
+- How label encoding is handled automatically before training.
+
+Type inference runs automatically using the **ptype** probabilistic model, with a heuristic fallback for simple cases. You can review and change column types manually in the dataset view before creating an experiment.
+
+See [Deep Dive → Semantic Types](/deep-dive/semantic-types) for the full type catalogue, inference logic, and conversion rules.
+
 ## Supported Formats
 
 | Format | Extension | Notes |

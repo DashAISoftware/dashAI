@@ -54,6 +54,7 @@ const sidebars = {
 
   deepDiveSidebar: [
     "deep-dive/architecture",
+    "deep-dive/semantic-types",
     "deep-dive/papers",
     "deep-dive/replicability",
   ],
