@@ -61,20 +61,20 @@ The main FastAPI application is created in `back/app.py`. It mounts a single
 `APIRouter` defined in `back/api/api_v1/api.py`, which aggregates individual routers
 for each resource:
 
-| Router file            | Resource              | Purpose                                             |
-| ---------------------- | --------------------- | --------------------------------------------------- |
-| `components.py`        | `/component`          | List and filter registered components               |
-| `datasets.py`          | `/dataset`            | Upload, list, and validate datasets                 |
-| `model_sessions.py`    | `/model-session`      | CRUD for model training sessions                    |
-| `runs.py`              | `/run`                | CRUD for training runs, metrics, optimization plots |
-| `jobs.py`              | `/job`                | Enqueue jobs and query job status                    |
-| `explorers.py`         | `/explorer`           | Launch and retrieve data explorations               |
-| `explainers.py`        | `/explainer`          | Launch model explanations                           |
-| `converters.py`        | `/converter`          | Apply data transformations                          |
-| `predict.py`           | `/predict`            | Run predictions on new data                         |
-| `pipelines.py`         | `/pipeline`           | Orchestrate complex workflows                       |
-| `generative_session.py`| `/generative-session` | Generative model sessions                           |
-| `generative_process.py`| `/generative-process` | Generative process execution and results            |
+| Router file             | Resource              | Purpose                                             |
+| ----------------------- | --------------------- | --------------------------------------------------- |
+| `components.py`         | `/component`          | List and filter registered components               |
+| `datasets.py`           | `/dataset`            | Upload, list, and validate datasets                 |
+| `model_sessions.py`     | `/model-session`      | CRUD for model training sessions                    |
+| `runs.py`               | `/run`                | CRUD for training runs, metrics, optimization plots |
+| `jobs.py`               | `/job`                | Enqueue jobs and query job status                   |
+| `explorers.py`          | `/explorer`           | Launch and retrieve data explorations               |
+| `explainers.py`         | `/explainer`          | Launch model explanations                           |
+| `converters.py`         | `/converter`          | Apply data transformations                          |
+| `predict.py`            | `/predict`            | Run predictions on new data                         |
+| `plugins.py`            | `/plugin`             | Manage plugins                                      |
+| `generative_session.py` | `/generative-session` | Generative model sessions                           |
+| `generative_process.py` | `/generative-process` | Generative process execution and results            |
 
 ### Dependency injection in endpoints
 
@@ -111,19 +111,19 @@ optimizers, and jobs — is a component.
 
 Each component class declares a `TYPE` class attribute that determines its category:
 
-| TYPE          | Base class        | Purpose                                   | Examples                                     |
-| ------------- | ----------------- | ----------------------------------------- | -------------------------------------------- |
-| `Model`            | `BaseModel`            | Train and predict                         | SVC, RandomForest, DistilBertTransformer     |
-| `GenerativeModel`  | `BaseGenerativeModel`  | Generate outputs from prompts/inputs      | QwenModel, StableDiffusionV2Model            |
-| `Task`             | `BaseTask`             | Define ML task semantics                  | TextClassification, Regression, Translation  |
-| `GenerativeTask`   | `BaseGenerativeTask`   | Define generative task semantics          | TextToTextGenerationTask, TextToImageGenerationTask, ControlNetTask |
-| `Metric`           | `BaseMetric`           | Evaluate model performance                | Accuracy, F1, RMSE, MAE                      |
-| `Explorer`         | `BaseExplorer`         | Visualize and analyze data                | ScatterPlotExplorer, HistogramPlotExplorer   |
-| `Explainer`        | `BaseExplainer`        | Interpret model predictions               | KernelShap, PermutationFeatureImportance     |
-| `Converter`        | `BaseConverter`        | Transform features                        | StandardScaler, OneHotEncoder, PCA, SMOTE    |
-| `DataLoader`       | `BaseDataLoader`       | Load datasets from files                  | CSVDataLoader, ExcelDataLoader               |
-| `Optimizer`        | `BaseOptimizer`        | Hyperparameter optimization               | Optuna-based optimizers                      |
-| `Job`              | `BaseJob`              | Background task execution                 | ModelJob, ExplorerJob, PredictJob            |
+| TYPE              | Base class            | Purpose                              | Examples                                                            |
+| ----------------- | --------------------- | ------------------------------------ | ------------------------------------------------------------------- |
+| `Model`           | `BaseModel`           | Train and predict                    | SVC, RandomForest, DistilBertTransformer                            |
+| `GenerativeModel` | `BaseGenerativeModel` | Generate outputs from prompts/inputs | QwenModel, StableDiffusionV2Model                                   |
+| `Task`            | `BaseTask`            | Define ML task semantics             | TextClassification, Regression, Translation                         |
+| `GenerativeTask`  | `BaseGenerativeTask`  | Define generative task semantics     | TextToTextGenerationTask, TextToImageGenerationTask, ControlNetTask |
+| `Metric`          | `BaseMetric`          | Evaluate model performance           | Accuracy, F1, RMSE, MAE                                             |
+| `Explorer`        | `BaseExplorer`        | Visualize and analyze data           | ScatterPlotExplorer, HistogramPlotExplorer                          |
+| `Explainer`       | `BaseExplainer`       | Interpret model predictions          | KernelShap, PermutationFeatureImportance                            |
+| `Converter`       | `BaseConverter`       | Transform features                   | StandardScaler, OneHotEncoder, PCA, SMOTE                           |
+| `DataLoader`      | `BaseDataLoader`      | Load datasets from files             | CSVDataLoader, ExcelDataLoader                                      |
+| `Optimizer`       | `BaseOptimizer`       | Hyperparameter optimization          | Optuna-based optimizers                                             |
+| `Job`             | `BaseJob`             | Background task execution            | ModelJob, ExplorerJob, PredictJob                                   |
 
 ### Component metadata
 
@@ -170,12 +170,12 @@ Each registered component is stored as a dictionary:
 
 ### Lookup methods
 
-| Method                                          | Description                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| `registry[name]`                                | Direct lookup by component name                              |
-| `get_components_by_types(select, ignore)`        | Filter components by type (e.g., only Models)                |
-| `get_child_components(parent_name)`              | Get all components that inherit from a given parent          |
-| `get_related_components(component_id)`           | Get compatible components via `COMPATIBLE_COMPONENTS`        |
+| Method                                    | Description                                           |
+| ----------------------------------------- | ----------------------------------------------------- |
+| `registry[name]`                          | Direct lookup by component name                       |
+| `get_components_by_types(select, ignore)` | Filter components by type (e.g., only Models)         |
+| `get_child_components(parent_name)`       | Get all components that inherit from a given parent   |
+| `get_related_components(component_id)`    | Get compatible components via `COMPATIBLE_COMPONENTS` |
 
 ### Initialization
 
@@ -267,21 +267,24 @@ DashAI uses **SQLite** as its database (stored at `~/.DashAI/db.sqlite`) with
 
 ### Key tables
 
-| Table              | Purpose                                                |
-| ------------------ | ------------------------------------------------------ |
-| `Dataset`          | Uploaded datasets (name, file path, status, timestamps)|
-| `ModelSession`     | Training session config (dataset, task, columns, splits, selected metrics) |
-| `Run`              | Individual training run (model name, parameters, optimizer, status, plot paths) |
-| `Metric`           | Metric values per run, split, and level                |
-| `Prediction`       | Prediction results (run, dataset, results path)        |
-| `GenerativeSession`| Generative model session (task, model name, parameters, name, description) |
-| `GenerativeProcess`| Individual execution within a generative session (status, results path) |
-| `ProcessData`      | Input/output data for a generative process (data, data_type, is_input) |
-| `Notebook`         | Working dataset session — a mutable copy of an original dataset on which Explorers and Converters can be applied. Changes can be reverted, and the result can be saved as a new Dataset for model training. |
-| `Explorer`         | Exploration records (type, columns, parameters, results path) |
-| `Plugin`           | Installed plugins                                      |
-| `GlobalExplainer`  | Global model explanations                              |
-| `LocalExplainer`   | Local (per-instance) model explanations                |
+| Table                               | Purpose                                                                                                                                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Dataset`                           | Uploaded dataset — name, Arrow file path, loading status, and timestamps.                                                                                                                                                       |
+| `ModelSession`                      | Experiment configuration — dataset, task name, input/output columns, train/validation/test split ratios, and selected metrics per split.                                                                                        |
+| `Run`                               | Individual training execution within a ModelSession — model name, parameters, optimizer config, goal metric, run artifacts, execution status and timing, and paths to optimization plots (history, slice, contour, importance). |
+| `Metric`                            | Single metric measurement — name, value, split (`TRAIN`/`VALIDATION`/`TEST`), level (`LAST`/`STEP`/`BATCH`/`TRIAL`), and step index. Linked to a Run.                                                                           |
+| `Prediction`                        | Prediction job — links a trained Run to an input Dataset, tracks execution status and timing, and stores the path to output results.                                                                                            |
+| `GenerativeSession`                 | Generative model session — task type, model name, current parameters, and a human-readable name and description. Owns a history of parameter snapshots and all associated GenerativeProcess records.                            |
+| `GenerativeProcess`                 | Single invocation of a GenerativeSession — tracks execution status and timing. Linked to ProcessData records that hold the input and output payloads.                                                                           |
+| `ProcessData`                       | Input or output payload for a GenerativeProcess — serialized data value, data type (text, image, etc.), and an `is_input` flag to distinguish inputs from outputs.                                                              |
+| `GenerativeSessionParameterHistory` | Immutable snapshot of a GenerativeSession's parameters captured at each change, providing a full audit trail of parameter evolution over time.                                                                                  |
+| `Notebook`                          | Working dataset session — a mutable copy of a source Dataset on which Explorers and Converters can be applied. Changes can be reverted; the result can be saved as a new Dataset for model training.                            |
+| `Explorer`                          | Visualization record within a Notebook — explorer type, selected columns, parameters, path to saved results, and execution status.                                                                                              |
+| `Converter`                         | Single converter step applied to a Notebook's mutable dataset — converter type, parameters, execution status, and timing. Multiple records form an ordered transformation pipeline on the Notebook.                             |
+| `Plugin`                            | Installed plugin — name, author, installed and latest versions, status, summary, and full description. Owns Tag records for classification.                                                                                     |
+| `Tag`                               | Classification tag for a Plugin (e.g., `Model`, `Task`, `Metric`), used for filtering and discovery.                                                                                                                            |
+| `GlobalExplainer`                   | Global model explanation — explainer type, linked Run, parameters, paths to explanation data and plot, and execution status. Covers the model as a whole.                                                                       |
+| `LocalExplainer`                    | Local (per-instance) explanation — explainer type, linked Run and Dataset, parameters, fit parameters, scope, result paths, and execution status.                                                                               |
 
 ### Important enums
 
@@ -308,12 +311,12 @@ The **Job Queue** handles asynchronous execution of long-running tasks. DashAI u
 
 ### Architecture
 
-| Layer             | Implementation                                                  |
-| ----------------- | --------------------------------------------------------------- |
-| Abstract base     | `BaseJobQueue` (`back/dependencies/job_queues/base_job_queue.py`) |
-| Concrete impl.    | `HueyJobQueue` (`back/dependencies/job_queues/huey_job_queue.py`) |
-| Storage           | SQLite at `~/.DashAI/job_queue.db` (separate from main DB)      |
-| Serialization     | `dill` (handles complex Python objects like lambdas)             |
+| Layer          | Implementation                                                    |
+| -------------- | ----------------------------------------------------------------- |
+| Abstract base  | `BaseJobQueue` (`back/dependencies/job_queues/base_job_queue.py`) |
+| Concrete impl. | `HueyJobQueue` (`back/dependencies/job_queues/huey_job_queue.py`) |
+| Storage        | SQLite at `~/.DashAI/job_queue.db` (separate from main DB)        |
+| Serialization  | `dill` (handles complex Python objects like lambdas)              |
 
 ### How the queue works
 
@@ -323,24 +326,24 @@ The **Job Queue** handles asynchronous execution of long-running tasks. DashAI u
    `job.run()`.
 3. Job lifecycle is tracked via Huey signals and a `task_copy` table:
 
-   | Signal              | Status update   |
-   | ------------------- | --------------- |
-   | `SIGNAL_ENQUEUED`   | `not_started`   |
-   | `SIGNAL_EXECUTING`  | `started`       |
-   | `SIGNAL_COMPLETE`   | `finished`      |
-   | `SIGNAL_ERROR`      | `error`         |
+   | Signal             | Status update |
+   | ------------------ | ------------- |
+   | `SIGNAL_ENQUEUED`  | `not_started` |
+   | `SIGNAL_EXECUTING` | `started`     |
+   | `SIGNAL_COMPLETE`  | `finished`    |
+   | `SIGNAL_ERROR`     | `error`       |
 
 4. The frontend polls `GET /api/v1/job/status/{job_id}` to track progress.
 
 ### Key methods
 
-| Method                | Description                           |
-| --------------------- | ------------------------------------- |
-| `put(job)`            | Enqueue a job, returns job ID         |
-| `get(job_id)`         | Get job status and metadata           |
-| `peek()`              | View the next job without dequeuing   |
-| `is_empty()`          | Check if the queue has pending jobs   |
-| `async_get(job_id)`   | Async version of get                  |
+| Method              | Description                         |
+| ------------------- | ----------------------------------- |
+| `put(job)`          | Enqueue a job, returns job ID       |
+| `get(job_id)`       | Get job status and metadata         |
+| `peek()`            | View the next job without dequeuing |
+| `is_empty()`        | Check if the queue has pending jobs |
+| `async_get(job_id)` | Async version of get                |
 
 The SQLite backend uses Write-Ahead Logging (WAL) mode for safe concurrent access
 between the API process and the Huey consumer.
@@ -373,16 +376,15 @@ class BaseJob(metaclass=ABCMeta):
 
 ### Job types
 
-| Job class            | Purpose                                              |
-| -------------------- | ---------------------------------------------------- |
-| `ModelJob`           | Train a model and compute metrics                    |
-| `ExplorerJob`        | Execute a data exploration/visualization             |
-| `ExplainerJob`       | Generate model explanations (SHAP, etc.)             |
-| `PredictJob`         | Run predictions on new data                          |
-| `ConverterJob`       | Apply data transformations to a Notebook dataset     |
-| `PipelineJob`        | Orchestrate multi-step workflows                     |
-| `GenerativeJob`      | Handle generative model interactions                 |
-| `DatasetJob`         | Load and process datasets                            |
+| Job class       | Purpose                                          |
+| --------------- | ------------------------------------------------ |
+| `ModelJob`      | Train a model and compute metrics                |
+| `ExplorerJob`   | Execute a data exploration/visualization         |
+| `ExplainerJob`  | Generate model explanations (SHAP, etc.)         |
+| `PredictJob`    | Run predictions on new data                      |
+| `ConverterJob`  | Apply data transformations to a Notebook dataset |
+| `GenerativeJob` | Handle generative model interactions             |
+| `DatasetJob`    | Load and process datasets                        |
 
 Each job type manages its own database status transitions and error handling. When a job
 fails, it records the error message in the database and updates the relevant entity's
