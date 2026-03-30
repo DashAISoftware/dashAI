@@ -45,7 +45,7 @@ export function HeaderBox({ title, value, IconComponent, iconColor, bgColor }) {
       </Typography>
       <Tooltip title={value} arrow placement="top-start">
         <Typography
-          variant="h4"
+          variant="h5"
           sx={{
             textOverflow: "ellipsis",
             overflow: "hidden",
