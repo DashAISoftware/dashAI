@@ -12,12 +12,19 @@ import { ExplorersAndConvertersProvider } from "../../components/notebooks/conte
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetsContent() {
+  const { t } = useTranslation();
   const threePanelLayout = useThreePanelLayout();
 
-  const { notebooks, selectedNotebookId, rightBarContent } =
-    useDatasetsAndNotebooks();
+  const {
+    notebooks,
+    selectedNotebookId,
+    selectedDatasetId,
+    rightBarContent,
+    step,
+  } = useDatasetsAndNotebooks();
 
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -47,29 +54,64 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
+                <TourButton
+                  tourKey={TOUR_KEYS.NOTEBOOK}
+                  disabled={step !== 0}
+                  disabledMessage={t("datasets:label.tourDisabledMessage")}
+                />
+              </>
+            </TourProvider>
+          ) : selectedDatasetId ? (
+            <TourProvider tourKey={TOUR_KEYS.DATASET_VIEW}>
+              <>
+                <CenterPanel>
+                  <DatasetsCenterContent />
+                </CenterPanel>
+                <RightPanel toggleButtonTop="50%">
+                  {rightBarContent ? (
+                    rightBarContent
+                  ) : (
+                    <RightBar
+                      notebook={null}
+                      onToggle={threePanelLayout.handleToggleRight}
+                    />
+                  )}
+                </RightPanel>
+                <TourButton
+                  tourKey={TOUR_KEYS.DATASET_VIEW}
+                  disabled={step !== 0}
+                  disabledMessage={t(
+                    "datasets:label.tourDisabledMessageNotebook",
+                  )}
+                />
               </>
             </TourProvider>
           ) : (
-            <>
-              <CenterPanel>
-                <DatasetsCenterContent />
-              </CenterPanel>
-              <RightPanel toggleButtonTop="50%">
-                {rightBarContent ? (
-                  rightBarContent
-                ) : (
-                  <RightBar
-                    notebook={null}
-                    onToggle={threePanelLayout.handleToggleRight}
-                  />
-                )}
-              </RightPanel>
-            </>
+            <TourProvider tourKey={TOUR_KEYS.DATASETS}>
+              <>
+                <CenterPanel>
+                  <DatasetsCenterContent />
+                </CenterPanel>
+                <RightPanel toggleButtonTop="50%">
+                  {rightBarContent ? (
+                    rightBarContent
+                  ) : (
+                    <RightBar
+                      notebook={null}
+                      onToggle={threePanelLayout.handleToggleRight}
+                    />
+                  )}
+                </RightPanel>
+                <TourButton
+                  tourKey={TOUR_KEYS.DATASETS}
+                  disabled={step !== 0}
+                  disabledMessage={t("datasets:label.tourDisabledMessage")}
+                />
+              </>
+            </TourProvider>
           )}
         </ExplorersAndConvertersProvider>
       </ModuleContainer>
-      {!selectedNotebookId && <TourButton tourKey={TOUR_KEYS.DATASETS} />}
     </ThreePanelLayoutContext.Provider>
   );
 }

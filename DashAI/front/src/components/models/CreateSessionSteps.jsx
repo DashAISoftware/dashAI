@@ -5,7 +5,7 @@ import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
-import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
+import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";

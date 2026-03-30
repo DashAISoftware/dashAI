@@ -77,7 +77,7 @@ def sample_model():
         num_train_epochs=2,
         batch_size=16,
         learning_rate=5e-5,
-        device="cpu",
+        device="CPU",
         weight_decay=0.01,
         log_train_every_n_epochs=None,
         log_train_every_n_steps=None,

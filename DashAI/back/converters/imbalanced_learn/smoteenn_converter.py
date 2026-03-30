@@ -1,5 +1,4 @@
 from imblearn.combine import SMOTEENN
-from imblearn.over_sampling import SMOTE
 
 from DashAI.back.converters.category.sampling import SamplingConverter
 from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapper
@@ -61,6 +60,8 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     IMAGE_PREVIEW = "smoteenn.png"
 
     def __init__(self, **kwargs):
+        from imblearn.over_sampling import SMOTE
+
         self.smote = SMOTE(
             sampling_strategy=kwargs.get("sampling_strategy", "auto"),
             random_state=kwargs.get("random_state"),

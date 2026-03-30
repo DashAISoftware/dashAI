@@ -1,7 +1,4 @@
-import React, { useEffect } from "react";
-import { getRunById } from "../../api/run";
-import { getModelSessionById } from "../../api/modelSession";
-import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
+import React from "react";
 
 import { Box } from "@mui/system";
 import ManualInputForm from "./ManualInputForm";

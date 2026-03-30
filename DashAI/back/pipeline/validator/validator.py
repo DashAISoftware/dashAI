@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
@@ -24,6 +23,8 @@ class BaseNodeValidator(ABC):
 
 class DataSelectorValidator(BaseNodeValidator):
     def validate(self) -> Dict[str, str]:
+        import os
+
         dataset_name = self.data.get("datasetName")
         dataset_path = self.data.get("datasetPath")
 

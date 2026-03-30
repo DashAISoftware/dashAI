@@ -1,17 +1,37 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
 import { Grid, CircularProgress, Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../utils/schema";
+import { applyThemeToLayout } from "../../utils/plotlyTheme";
 
 function HyperparameterPlots({ run }) {
+  const theme = useTheme();
   const [historicalPlot, setHistoricalPlot] = useState(null);
   const [slicePlot, setSlicePlot] = useState(null);
   const [contourPlot, setContourPlot] = useState(null);
   const [importancePlot, setImportancePlot] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const themedHistoricalLayout = useMemo(
+    () => applyThemeToLayout(historicalPlot?.layout, theme),
+    [historicalPlot, theme],
+  );
+  const themedSliceLayout = useMemo(
+    () => applyThemeToLayout(slicePlot?.layout, theme),
+    [slicePlot, theme],
+  );
+  const themedContourLayout = useMemo(
+    () => applyThemeToLayout(contourPlot?.layout, theme),
+    [contourPlot, theme],
+  );
+  const themedImportanceLayout = useMemo(
+    () => applyThemeToLayout(importancePlot?.layout, theme),
+    [importancePlot, theme],
+  );
 
   const parsePlot = (plot) => {
     return JSON.parse(plot);
@@ -151,11 +171,15 @@ function HyperparameterPlots({ run }) {
     <Box sx={{ p: 2 }}>
       <Grid container spacing={2} direction="column">
         {historicalPlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`historical-${run.id}`}
               data={historicalPlot.data}
-              layout={historicalPlot.layout}
+              layout={{
+                ...themedHistoricalLayout,
+                width: undefined,
+                height: 380,
+              }}
               config={{ responsive: true, displayModeBar: true }}
               style={{ width: "100%", height: "380px" }}
             />
@@ -163,11 +187,11 @@ function HyperparameterPlots({ run }) {
         )}
 
         {slicePlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`slice-${run.id}`}
               data={slicePlot.data}
-              layout={slicePlot.layout}
+              layout={{ ...themedSliceLayout, width: undefined, height: 380 }}
               config={{ responsive: true, displayModeBar: true }}
               style={{ width: "100%", height: "380px" }}
             />
@@ -175,11 +199,11 @@ function HyperparameterPlots({ run }) {
         )}
 
         {optimizables >= 2 && contourPlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`contour-${run.id}`}
               data={contourPlot.data}
-              layout={contourPlot.layout}
+              layout={{ ...themedContourLayout, width: undefined, height: 380 }}
               config={{ responsive: true, displayModeBar: true }}
               style={{ width: "100%", height: "380px" }}
             />
@@ -187,11 +211,15 @@ function HyperparameterPlots({ run }) {
         )}
 
         {optimizables >= 2 && importancePlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`importance-${run.id}`}
               data={importancePlot.data}
-              layout={importancePlot.layout}
+              layout={{
+                ...themedImportanceLayout,
+                width: undefined,
+                height: 380,
+              }}
               config={{ responsive: true, displayModeBar: true }}
               style={{ width: "100%", height: "380px" }}
             />

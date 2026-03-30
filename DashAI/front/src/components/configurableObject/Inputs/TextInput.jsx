@@ -14,9 +14,9 @@ import FormInputWrapper from "./FormInputWrapper";
 function TextInput({
   name,
   label,
-  value,
+  value = "",
   onChange,
-  error,
+  error = undefined,
   description,
   ...props
 }) {
@@ -43,10 +43,6 @@ TextInput.propTypes = {
   onChange: PropTypes.func.isRequired,
   description: PropTypes.string.isRequired,
   error: PropTypes.string,
-};
-TextInput.defaultProps = {
-  value: "",
-  error: undefined,
 };
 
 export default TextInput;

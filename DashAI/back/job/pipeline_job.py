@@ -1,13 +1,16 @@
 import asyncio
 import logging
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from kink import di
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dependencies.database.models import Pipeline
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
 
 log = logging.getLogger(__name__)
 
@@ -40,11 +43,12 @@ class PipelineJob(BaseJob):
 
     def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+        component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> None:
-        """Execute the pipeline synchronously, awaiting async node runs internally."""
-        session_factory: sessionmaker = di["session_factory"]
-        pipeline_id: int | None = self.kwargs.get("id")
+        db: "Session" = self.kwargs["db"]
+        id: int = self.kwargs.get("id", None)
+        pipeline: Pipeline = db.get(Pipeline, id)
+        steps: List[Dict[str, Any]] = self.kwargs.get("steps", []) or pipeline.steps
 
         if not pipeline_id:
             raise JobError("No id provided to execute the pipeline.")

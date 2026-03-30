@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
-import { Box, Slider, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
-import { useTranslation } from "react-i18next";
+const MIN_WIDTH = 300;
+const MIN_HEIGHT_MINIMALIST = 200;
+const MIN_HEIGHT_NORMAL = 500;
 
 function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const [expanded, setExpanded] = useState(false);
-  const [height, setHeight] = useState(minimalist ? 220 : 500);
-  const { t } = useTranslation(["datasets"]);
 
   // Parse JSON if data is a string
   const parsedData = typeof data === "string" ? JSON.parse(data) : data;
@@ -22,9 +22,11 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           title: "",
         },
       }
-    : { ...parsedData, layout: { ...parsedData.layout, height: height } };
+    : {
+        ...parsedData,
+        layout: { ...parsedData.layout, height: MIN_HEIGHT_NORMAL },
+      };
 
-  // Función para manejar el botón de pantalla completa personalizado
   const toggleFullscreen = () => {
     setExpanded(!expanded);
   };
@@ -32,6 +34,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const plotConfig = {
     responsive: true,
     displaylogo: false,
+    displayModeBar: true,
     modeBarButtonsToRemove: minimalist
       ? [
           "sendDataToCloud",
@@ -60,7 +63,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           "resetScale2d",
         ],
     toImageButtonOptions: {
-      format: "png",
+      format: "svg",
       filename: "dashai-plot",
       height: 800,
       width: 1200,
@@ -68,7 +71,6 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
     },
   };
 
-  // Configuración específica para el modo de pantalla completa
   const fullscreenConfig = {
     ...plotConfig,
     scrollZoom: true,
@@ -90,102 +92,65 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
     ],
   };
 
+  const plotLayout = {
+    ...plotData.layout,
+    paper_bgcolor: plotData.layout?.paper_bgcolor || "white",
+    plot_bgcolor: plotData.layout?.plot_bgcolor || "white",
+    margin: minimalist
+      ? {
+          l: 40,
+          r: 20,
+          t: 30,
+          b: 40,
+          ...plotData.layout?.margin,
+        }
+      : {
+          l: 60,
+          r: 30,
+          t: 50,
+          b: 60,
+          ...plotData.layout?.margin,
+        },
+    autosize: true,
+    font: {
+      size: minimalist ? 10 : 12,
+      ...plotData.layout?.font,
+    },
+    title: {
+      ...plotData.layout?.title,
+      font: {
+        size: minimalist ? 12 : 16,
+        ...plotData.layout?.title?.font,
+      },
+    },
+  };
+
   return (
     <React.Fragment>
       <Box
         sx={{
           position: "relative",
           width: "100%",
+          minWidth: MIN_WIDTH,
+          minHeight: minimalist ? MIN_HEIGHT_MINIMALIST : MIN_HEIGHT_NORMAL,
           height: minimalist ? "100%" : "auto",
+          overflow: "hidden",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
-        {/* Height control - solo para vista normal y no minimalist */}
-        {!expanded && !minimalist && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: 25,
-              left: 10,
-              zIndex: 1,
-              width: 150,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                mr: 1,
-                color: "rgba(0,0,0,0.6)",
-                bgcolor: "rgba(255,255,255,0.9)",
-                px: 1,
-                borderRadius: 1,
-                border: "1px solid rgba(0,0,0,0.1)",
-              }}
-            >
-              {t("datasets:label.height")}
-            </Typography>
-            <Slider
-              value={height}
-              onChange={(e, val) => setHeight(val)}
-              min={300}
-              max={1000}
-              step={50}
-              size="small"
-              sx={{
-                width: 80,
-                "& .MuiSlider-rail": {
-                  bgcolor: "rgba(0,0,0,0.2)",
-                },
-                "& .MuiSlider-track": {
-                  bgcolor: "primary.main",
-                },
-                "& .MuiSlider-thumb": {
-                  bgcolor: "primary.main",
-                  border: "2px solid white",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                },
-              }}
-            />
-          </Box>
-        )}
-
-        {/* Plot principal o Dialog en pantalla completa */}
         {!expanded ? (
           <Plot
             id="plotly-graph"
             data={plotData.data}
-            layout={{
-              ...plotData.layout,
-              margin: minimalist
-                ? {
-                    l: 40,
-                    r: 20,
-                    t: 30,
-                    b: 40,
-                    ...plotData.layout?.margin,
-                  }
-                : {
-                    l: 60,
-                    r: 30,
-                    t: 50,
-                    b: 60,
-                    ...plotData.layout?.margin,
-                  },
-              autosize: true,
-              font: {
-                size: minimalist ? 10 : 12,
-                ...plotData.layout?.font,
-              },
-              title: {
-                ...plotData.layout?.title,
-                font: {
-                  size: minimalist ? 12 : 16,
-                  ...plotData.layout?.title?.font,
-                },
-              },
+            layout={plotLayout}
+            style={{
+              width: "100%",
+              // Explicit floor so Plotly never renders at 0 height
+              minHeight: minimalist ? MIN_HEIGHT_MINIMALIST : MIN_HEIGHT_NORMAL,
+              height: minimalist ? "100%" : MIN_HEIGHT_NORMAL,
             }}
-            style={{ width: "100%", height: "100%" }}
             config={plotConfig}
             useResizeHandler={true}
           />
@@ -204,6 +169,8 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
               data={plotData.data}
               layout={{
                 ...plotData.layout,
+                paper_bgcolor: plotData.layout?.paper_bgcolor || "white",
+                plot_bgcolor: plotData.layout?.plot_bgcolor || "white",
                 autosize: true,
                 margin: {
                   l: 80,

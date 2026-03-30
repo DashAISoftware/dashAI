@@ -24,6 +24,7 @@ deps = [
     "protobuf",
     "pyyaml",
     "scipy",
+    "sacrebleu",
 ]
 
 datas = []

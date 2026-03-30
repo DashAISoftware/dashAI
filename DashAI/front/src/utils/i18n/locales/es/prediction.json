@@ -3,6 +3,7 @@
     "downloadResults": "Descargar Resultados de Predicción",
     "hideResults": "Ocultar Resultados",
     "runPrediction": "Ejecutar Predicción",
+    "saveResults": "Guardar Resultados",
     "showResults": "Mostrar Resultados"
   },
   "error": {
@@ -11,6 +12,8 @@
     "errorDownloading": "Error al descargar predicción",
     "fetchingDatasets": "Error al obtener datasets para predicción.",
     "loadingPredictionData": "Error al cargar datos de predicción",
+    "noRowsToPredict": "Agrega al menos una fila antes de predecir",
+    "previewFailed": "No se pudo generar la vista previa de la predicción",
     "loadingPreviousPredictions": "Error al obtener predicciones anteriores.",
     "predictionFailed": "La predicción falló: {{error}}",
     "submittingPredictionJob": "Error al enviar el trabajo de predicción.",
@@ -46,6 +49,7 @@
     "predictions": "Predicciones",
     "predictionStillRunning": "La predicción aún se está ejecutando",
     "predictionStillRunningResults": "La predicción aún se está ejecutando. Los resultados estarán disponibles una vez que finalice.",
+    "previewResults": "Vista Previa de Resultados",
     "previousPredictions": "Predicciones Anteriores",
     "provideManualInput": "Ingrese datos manualmente para la predicción. Complete los campos a continuación y envíe cuando esté listo.",
     "resultsPreview": "Vista previa de las primeras 100 filas. Descargue el CSV para obtener resultados completos.",

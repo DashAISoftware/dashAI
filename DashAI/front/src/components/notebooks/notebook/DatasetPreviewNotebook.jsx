@@ -186,12 +186,6 @@ export default function DatasetPreviewNotebook({
 
   const handleAddDatasetFromNotebook = async (name, notebookId) => {
     try {
-      console.log(
-        "Creating dataset from notebook:",
-        notebookId,
-        "with name:",
-        name,
-      );
       const dataset = await createDataset(name);
 
       enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
@@ -306,6 +300,7 @@ export default function DatasetPreviewNotebook({
               autoHeight={true}
               disableColumnSelector
               disableDensitySelector
+              slots={{ toolbar: null }}
               sx={{
                 "& .MuiTablePagination-select": {
                   display: "none",

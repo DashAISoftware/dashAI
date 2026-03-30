@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.preprocessing import PolynomialFeatures as PolynomialFeaturesOperation
 
 from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
@@ -94,4 +93,6 @@ class PolynomialFeatures(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for polynomial features."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())

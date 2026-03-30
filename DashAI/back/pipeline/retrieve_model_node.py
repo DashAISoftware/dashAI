@@ -1,11 +1,12 @@
 import logging
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
-from kink import di
+from kink import di, inject
 
-from DashAI.back.dataloaders.classes.dashai_dataset import get_column_names_from_indexes
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 log = logging.getLogger(__name__)
 
@@ -38,17 +39,16 @@ class RetrieveModel(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("RetrieveModel executed successfully.")
 
-    def set_status_as_error(self) -> None:
-        log.error("RetrieveModel encountered an error.")
-
-    def get_job_name(self) -> str:
-        return f"RetrieveModel: {self.model}"
-
+    @inject
     async def run(
         self,
         context: Dict[str, Any],
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+        component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> Dict[str, Any]:
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            get_column_names_from_indexes,
+        )
+
         try:
             context["model_name"] = self.model
             context["model_path"] = self.model_path

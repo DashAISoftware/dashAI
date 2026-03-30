@@ -1,13 +1,9 @@
-import json
 import logging
-import os
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session, sessionmaker
 
 from DashAI.back.api.api_v1.schemas.pipelines_params import (
     DatasetFilterParams,
@@ -16,14 +12,16 @@ from DashAI.back.api.api_v1.schemas.pipelines_params import (
     ValidateNodeParams,
     ValidatePipelineParams,
 )
-from DashAI.back.config import DefaultSettings
-from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Pipeline
-from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.pipeline.validator.nodes_definitions import NODES
 from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
 from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session, sessionmaker
+
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+    from DashAI.back.exploration.base_explorer import BaseExplorer
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -32,13 +30,13 @@ router = APIRouter()
 @router.get("/")
 @inject
 async def get_pipelines(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve all pipelines.
 
     Parameters
     ----------
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
 
@@ -82,6 +80,7 @@ async def get_nodes() -> List[Dict[str, Any]]:
 @inject
 async def pipeline_predict_summary(
     pred_name: str = Query(...),
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
 ) -> Dict[str, Any]:
     """Retrieve prediction summary statistics.
 
@@ -103,8 +102,10 @@ async def pipeline_predict_summary(
         404: Prediction file not found.
         500: Internal server error.
     """
-    settings = DefaultSettings()
-    sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+    import json
+    import os
+
+    sqlite_local = os.path.expanduser(config["LOCAL_PATH"])
     path = os.path.join(sqlite_local, "pipelines", "predictions", pred_name)
     summary = {}
 
@@ -185,7 +186,7 @@ async def pipeline_predict_summary(
 @inject
 async def get_pipeline(
     pipeline_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve a specific pipeline by ID.
 
@@ -193,7 +194,7 @@ async def get_pipeline(
     ----------
     pipeline_id : int
         ID of the pipeline to retrieve.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
 
@@ -230,8 +231,8 @@ async def get_pipeline(
 @inject
 async def get_pipeline_dataexploration_results(
     pipeline_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get results for all Data Exploration steps of a pipeline.
 
@@ -239,7 +240,7 @@ async def get_pipeline_dataexploration_results(
     ----------
     pipeline_id : int
         ID of the pipeline to retrieve exploration results from.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
     component_registry : ComponentRegistry
         Registry containing available exploration components.
@@ -320,7 +321,7 @@ async def get_pipeline_dataexploration_results(
 @inject
 async def create_pipeline(
     params: PipelineCreateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Create a new pipeline.
 
@@ -328,7 +329,7 @@ async def create_pipeline(
     ----------
     params : PipelineCreateParams
         Parameters containing pipeline name, steps, and edges.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -385,7 +386,7 @@ async def create_pipeline(
 async def update_pipeline(
     pipeline_id: int,
     params: PipelineUpdateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update a specific pipeline.
 
@@ -395,7 +396,7 @@ async def update_pipeline(
         ID of the pipeline to update.
     params : PipelineUpdateParams
         Parameters containing updated pipeline name, steps, and edges.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -457,7 +458,7 @@ async def update_pipeline(
 @inject
 async def delete_pipeline(
     pipeline_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete a specific pipeline.
 
@@ -465,7 +466,7 @@ async def delete_pipeline(
     ----------
     pipeline_id : int
         ID of the pipeline to delete.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -504,7 +505,7 @@ async def delete_pipeline(
 @inject
 async def validate_node(
     params: ValidateNodeParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Validate a single node configuration.
 
@@ -512,7 +513,7 @@ async def validate_node(
     ----------
     params : ValidateNodeParams
         Parameters containing node type and configuration.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -561,7 +562,7 @@ async def validate_pipeline(
 @router.post("/filter_models")
 async def filter_models_endpoint(
     params: DatasetFilterParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Filter pipelines to find compatible models for a given dataset.
 
@@ -569,7 +570,7 @@ async def filter_models_endpoint(
     ----------
     params : DatasetFilterParams
         Parameters containing dataset ID and optional pipeline ID to exclude.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -583,6 +584,10 @@ async def filter_models_endpoint(
         404: Dataset not found.
         500: Error filtering pipelines.
     """
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     try:
         with session_factory() as db:
             base_dataset = db.get(Dataset, params.dataset_id)

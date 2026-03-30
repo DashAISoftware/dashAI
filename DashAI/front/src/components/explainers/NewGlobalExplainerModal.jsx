@@ -22,7 +22,10 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { startJobPolling } from "../../utils/jobPoller";
 
-import { createGlobalExplainer as createGlobalExplainerRequest } from "../../api/explainer";
+import {
+  createGlobalExplainer as createGlobalExplainerRequest,
+  getExplainers,
+} from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
@@ -33,6 +36,17 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+import { generateSequentialName } from "../../utils/nameGenerator";
+
+const getNextExplainerName = (existingExplainers = []) => {
+  const { defaultName } = generateSequentialName({
+    base: "Explainer_global",
+    items: existingExplainers,
+    getName: (explainer) => explainer?.name,
+  });
+
+  return defaultName;
+};
 
 /**
  * This component renders a modal that takes the user through the process of creating a new explainer.
@@ -78,6 +92,8 @@ export default function NewGlobalExplainerModal({
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newGlobalExpl, setNewGlobalExpl] = useState(defaultNewGlobalExpl);
   const [existingGlobalExplainers, setExistingGlobalExplainers] = useState([]);
+  const [existingGlobalExplainersLoaded, setExistingGlobalExplainersLoaded] =
+    useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -92,14 +108,33 @@ export default function NewGlobalExplainerModal({
     } catch (error) {
       console.error("Error loading existing explainers:", error);
       setExistingGlobalExplainers([]);
+    } finally {
+      setExistingGlobalExplainersLoaded(true);
     }
   };
 
   useEffect(() => {
     if (open) {
+      setExistingGlobalExplainersLoaded(false);
       loadExistingExplainers();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !existingGlobalExplainersLoaded || newGlobalExpl.name.trim()) {
+      return;
+    }
+
+    setNewGlobalExpl((prev) => ({
+      ...prev,
+      name: getNextExplainerName(existingGlobalExplainers),
+    }));
+  }, [
+    open,
+    existingGlobalExplainersLoaded,
+    existingGlobalExplainers,
+    newGlobalExpl.name,
+  ]);
 
   const enqueueGlobalExplainerJob = async (explainerId) => {
     try {

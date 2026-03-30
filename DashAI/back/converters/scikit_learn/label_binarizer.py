@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.preprocessing import LabelBinarizer as LabelBinarizerOperation
 
 from DashAI.back.converters.category.encoding import EncodingConverter
@@ -44,4 +43,6 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Integer64 as the output type for binarized labels."""
+        import pyarrow as pa
+
         return Integer(arrow_type=pa.int64())

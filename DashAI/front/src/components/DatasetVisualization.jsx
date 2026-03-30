@@ -13,8 +13,8 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import {
-  getDatasetFile,
   getDatasetInfo,
+  getDatasetFile,
   getDatasetFileFiltered,
 } from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
@@ -43,7 +43,6 @@ export default function DatasetVisualization({
   onNewItem,
   newItemButtonText = "New Item",
   tourContextType = null,
-  fetchDatasets = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -53,17 +52,40 @@ export default function DatasetVisualization({
   const tourContext = useTourContext();
 
   useEffect(() => {
-    if (!dataset) return;
+    if (sessionStorage.getItem("startDatasetViewTour") === "true") {
+      sessionStorage.removeItem("startDatasetViewTour");
+      // Esperar más tiempo para que termine todo el ajuste de scroll
+      setTimeout(() => {
+        if (tourContext && typeof tourContext.startTour === "function") {
+          tourContext.startTour();
+        }
+      }, 1500);
+    }
+  }, [tourContext]);
 
-    setTab(0);
+  const fetchDatasetInfo = async () => {
+    const isProcessing = !(dataset.status === 3 || dataset.status === 4);
+    if (isProcessing && fetchDatasets) {
+      setTimeout(() => {
+        fetchDatasets();
+      }, 1000);
+      return;
+    }
+    try {
+      const info = await getDatasetInfo(Number(dataset.id));
+      setDatasetInfo(info);
+    } catch (error) {
+      setDatasetInfo(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!dataset || dataset.status !== 3) {
+      setDatasetInfo(null);
+      return;
+    }
+
     const fetchDatasetInfo = async () => {
-      const isProcessing = !(dataset.status === 3 || dataset.status === 4);
-      if (isProcessing && fetchDatasets) {
-        setTimeout(() => {
-          fetchDatasets();
-        }, 1000);
-        return;
-      }
       try {
         const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
@@ -71,30 +93,29 @@ export default function DatasetVisualization({
         setDatasetInfo(null);
       }
     };
+
     fetchDatasetInfo();
-  }, [dataset, fetchDatasets]);
+  }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize, filterModel) => {
+    async (page, pageSize, filterModel, sortModel) => {
       const isProcessing =
         dataset && !(dataset.status === 3 || dataset.status === 4);
       if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
         const hasFilters =
-          filterModel &&
-          Array.isArray(filterModel.items) &&
-          filterModel.items.length > 0;
-        let data;
-        if (hasFilters) {
-          data = await getDatasetFileFiltered(
-            dataset.file_path,
-            page,
-            pageSize,
-            filterModel,
-          );
-        } else {
-          data = await getDatasetFile(dataset.file_path, page, pageSize);
-        }
+          filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+
+        const data = hasFilters
+          ? await getDatasetFileFiltered(
+              dataset.file_path,
+              page,
+              pageSize,
+              filterModel,
+              sortModel,
+            )
+          : await getDatasetFile(dataset.file_path, page, pageSize);
+
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
         return { rows: [], total: 0 };
@@ -106,6 +127,10 @@ export default function DatasetVisualization({
       dataset && dataset.id,
     ],
   );
+
+  const updateDatasetInfo = () => {
+    fetchDatasetInfo();
+  };
 
   if (!dataset) {
     return (
@@ -367,6 +392,7 @@ export default function DatasetVisualization({
                 dtypes={datasetInfo?.general_info?.dtypes}
                 nan={datasetInfo?.nan}
                 total_rows={datasetInfo?.total_rows}
+                onEditColumnName={updateDatasetInfo}
                 fetchDatasetPage={fetchDatasetPage}
               />
             )}

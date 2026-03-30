@@ -1,15 +1,13 @@
 from abc import ABCMeta
-from typing import Type, Union
-
-import numpy as np
-import pandas as pd
-import pyarrow as pa
+from typing import TYPE_CHECKING, Type, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.job.base_job import JobError
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.utils import save_types_in_arrow_metadata
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -20,7 +18,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.fitted = False
-        self._resampled_table: Union[pa.Table, None] = None
+        self._resampled_table = None
         self.original_X_column_names_: list = []
         self.original_target_column_name_: str = ""
 
@@ -39,11 +37,15 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             "Types are handled in the transform method."
         )
 
-    def fit(self, x: DashAIDataset, y: DashAIDataset) -> Type[BaseConverter]:
+    def fit(self, x: "DashAIDataset", y: "DashAIDataset") -> Type[BaseConverter]:
         """
         Fit the sampler using imbalanced-learn's fit_resample and store the combined
         result.
         """
+        import numpy as np
+        import pandas as pd
+        import pyarrow as pa
+
         if y is None or len(y) == 0:
             raise ValueError(
                 "Imbalanced-learn samplers require a non-empty target dataset (y)."
@@ -118,9 +120,11 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         return self
 
     def transform(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
-    ) -> DashAIDataset:
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
+    ) -> "DashAIDataset":
         """Return the stored resampled dataset (X and y combined)."""
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         if not self.fitted:
             raise RuntimeError(f"{self.__class__.__name__} has not been fitted yet.")
         if self._resampled_table is None:

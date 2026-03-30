@@ -1542,6 +1542,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.28.6":
+  version: 7.29.2
+  resolution: "@babel/runtime@npm:7.29.2"
+  checksum: d5548d1165de8995f8afc93a5694b8625409be16cd1f2250ac13e331335858ddac3cb9fd278e6c43956a130101a2203f09417938a1a96f9fb70f02b4b4172e1d
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.27.1, @babel/template@npm:^7.27.2, @babel/template@npm:^7.3.3":
   version: 7.27.2
   resolution: "@babel/template@npm:7.27.2"
@@ -3037,6 +3044,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/types@npm:^7.4.12":
+  version: 7.4.12
+  resolution: "@mui/types@npm:7.4.12"
+  dependencies:
+    "@babel/runtime": ^7.28.6
+  peerDependencies:
+    "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: f3217cc0a7beaf7f5e6557e5a55c8597d7a7bfc42f69472ac0fe2de6aeee6e7d85828f05a09ccc31de1261e713cf4203f597cd6b839e269829b534df2109ad98
+  languageName: node
+  linkType: hard
+
 "@mui/types@npm:^7.4.5, @mui/types@npm:^7.4.7":
   version: 7.4.7
   resolution: "@mui/types@npm:7.4.7"
@@ -3071,6 +3092,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/utils@npm:^7.3.5":
+  version: 7.3.9
+  resolution: "@mui/utils@npm:7.3.9"
+  dependencies:
+    "@babel/runtime": ^7.28.6
+    "@mui/types": ^7.4.12
+    "@types/prop-types": ^15.7.15
+    clsx: ^2.1.1
+    prop-types: ^15.8.1
+    react-is: ^19.2.3
+  peerDependencies:
+    "@types/react": ^17.0.0 || ^18.0.0 || ^19.0.0
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 13d4271081800f73131a43adc8b2e7144a7045e6d92f12265d61929fd319e822ce71a0947962583b98fe83ba8a393417d82e3bbe57cba5d3ba0df1e88a7377c9
+  languageName: node
+  linkType: hard
+
 "@mui/x-data-grid@npm:^7":
   version: 7.29.9
   resolution: "@mui/x-data-grid@npm:7.29.9"
@@ -3098,6 +3139,54 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/x-date-pickers@npm:^8.27.2":
+  version: 8.27.2
+  resolution: "@mui/x-date-pickers@npm:8.27.2"
+  dependencies:
+    "@babel/runtime": ^7.28.4
+    "@mui/utils": ^7.3.5
+    "@mui/x-internals": 8.26.0
+    "@types/react-transition-group": ^4.4.12
+    clsx: ^2.1.1
+    prop-types: ^15.8.1
+    react-transition-group: ^4.4.5
+  peerDependencies:
+    "@emotion/react": ^11.9.0
+    "@emotion/styled": ^11.8.1
+    "@mui/material": ^5.15.14 || ^6.0.0 || ^7.0.0
+    "@mui/system": ^5.15.14 || ^6.0.0 || ^7.0.0
+    date-fns: ^2.25.0 || ^3.2.0 || ^4.0.0
+    date-fns-jalali: ^2.13.0-0 || ^3.2.0-0 || ^4.0.0-0
+    dayjs: ^1.10.7
+    luxon: ^3.0.2
+    moment: ^2.29.4
+    moment-hijri: ^2.1.2 || ^3.0.0
+    moment-jalaali: ^0.7.4 || ^0.8.0 || ^0.9.0 || ^0.10.0
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@emotion/react":
+      optional: true
+    "@emotion/styled":
+      optional: true
+    date-fns:
+      optional: true
+    date-fns-jalali:
+      optional: true
+    dayjs:
+      optional: true
+    luxon:
+      optional: true
+    moment:
+      optional: true
+    moment-hijri:
+      optional: true
+    moment-jalaali:
+      optional: true
+  checksum: 083e1f9dfff68046f10c7dd55548e0ed118276b2d25cf4555bc86fa2a345df7bf15094e5b5098f40722d51b132c863ff0bfa9373711423b0dab0d82ce1098298
+  languageName: node
+  linkType: hard
+
 "@mui/x-internals@npm:7.29.0":
   version: 7.29.0
   resolution: "@mui/x-internals@npm:7.29.0"
@@ -3107,6 +3196,20 @@ __metadata:
   peerDependencies:
     react: ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 3e246226bddc03bafe2be7128ea22f9c4a44a5e94bc44f67e630e1c2288f601be3514dec034ab1f2b3bef6937715671cbcc65818338b218f50b89b34d9948290
+  languageName: node
+  linkType: hard
+
+"@mui/x-internals@npm:8.26.0":
+  version: 8.26.0
+  resolution: "@mui/x-internals@npm:8.26.0"
+  dependencies:
+    "@babel/runtime": ^7.28.4
+    "@mui/utils": ^7.3.5
+    reselect: ^5.1.1
+    use-sync-external-store: ^1.6.0
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 153b84993c6365f51748be041c5fda27942bae9bec2e9324c64055d1df1a46c387dc703544e1b006a4d59c34aa9b9227b65a07ef37e4e0ae9dd73b3e7af5b4d1
   languageName: node
   linkType: hard
 
@@ -3967,6 +4070,72 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/match-sorter-utils@npm:8.19.4":
+  version: 8.19.4
+  resolution: "@tanstack/match-sorter-utils@npm:8.19.4"
+  dependencies:
+    remove-accents: 0.5.0
+  checksum: 7ec302d75be1f65a3e91dd30b567e47e56c13577937276ef3a3ac7c8560a0b9f6dcaca44dd877189375ce9e7401d250895265adb0741ec867eda4e47d0f07dc0
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-table@npm:8.20.6":
+  version: 8.20.6
+  resolution: "@tanstack/react-table@npm:8.20.6"
+  dependencies:
+    "@tanstack/table-core": 8.20.5
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 709f7216cf31af65abe10121e92233c0d9f04b9167769a0997052200cdbc35af525cbf1879d456f27c6df70399a14d006d117b06c5db665d9c486038efc2f4b1
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-table@npm:^8.21.3":
+  version: 8.21.3
+  resolution: "@tanstack/react-table@npm:8.21.3"
+  dependencies:
+    "@tanstack/table-core": 8.21.3
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 1452e7bd1dd0febbfc37e656c61c2c426dc243136333a8688bfadfccfec233e87c9bbe83011d742b0e86ae52c9b3d436bdc5618be4ac675ab921f52317317780
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-virtual@npm:3.11.2":
+  version: 3.11.2
+  resolution: "@tanstack/react-virtual@npm:3.11.2"
+  dependencies:
+    "@tanstack/virtual-core": 3.11.2
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: a1136da0ec4c2ecbd4f996d8b84f228f0b8d851b15806e01049a160ad1d9b2eef0e0a491035fe017c6f84a0e125334f69ea23b32c180df23614ea4a8eeb7490c
+  languageName: node
+  linkType: hard
+
+"@tanstack/table-core@npm:8.20.5":
+  version: 8.20.5
+  resolution: "@tanstack/table-core@npm:8.20.5"
+  checksum: f8b175f11eb9ee1e029bb5e91c1038527714382de4bd14750377f43c25e69b687b21bfb181ee07131637d3432618964a4b7a898608fc8411ca50da1e7e8ed4c5
+  languageName: node
+  linkType: hard
+
+"@tanstack/table-core@npm:8.21.3":
+  version: 8.21.3
+  resolution: "@tanstack/table-core@npm:8.21.3"
+  checksum: ce260ab981f334ba999240cf68ae942a524a28980f6853275da90d1864a8b56fa59b952bfd2266570f36ae11f66476d1c96dacc640ba5fd9d6d4e2a78cf05187
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.11.2":
+  version: 3.11.2
+  resolution: "@tanstack/virtual-core@npm:3.11.2"
+  checksum: b5c91662461e3edd1cba0efbaa89e1d061c8bb605bb78d1e87e2a687335c740a731c96a81798b05491df4882ff2fbd27b312f5e7440e4f9d553a81fb2283156a
+  languageName: node
+  linkType: hard
+
 "@testing-library/dom@npm:^8.5.0":
   version: 8.20.1
   resolution: "@testing-library/dom@npm:8.20.1"
@@ -4763,6 +4932,13 @@ __metadata:
   version: 2.7.3
   resolution: "@types/prettier@npm:2.7.3"
   checksum: 705384209cea6d1433ff6c187c80dcc0b95d99d5c5ce21a46a9a58060c527973506822e428789d842761e0280d25e3359300f017fbe77b9755bc772ab3dc2f83
+  languageName: node
+  linkType: hard
+
+"@types/prismjs@npm:^1.0.0":
+  version: 1.26.6
+  resolution: "@types/prismjs@npm:1.26.6"
+  checksum: b61abb7370d55b549ab67d1dfab479f1f27539cebe02f051db67f0ad90f5de34df6b9fcaf340dd2f3e0217bba15d3e31c642832560ecf1779397d6950ee69478
   languageName: node
   linkType: hard
 
@@ -7817,7 +7993,9 @@ __metadata:
     "@mui/system": ^7
     "@mui/utils": ^7
     "@mui/x-data-grid": ^7
+    "@mui/x-date-pickers": ^8.27.2
     "@stylistic/eslint-plugin-js": ^1.7.2
+    "@tanstack/react-table": ^8.21.3
     "@testing-library/jest-dom": ^5.16.4
     "@testing-library/react": ^13.3.0
     "@testing-library/user-event": ^13.5.0
@@ -7838,6 +8016,7 @@ __metadata:
     jest-watch-typeahead: ^0.6.5
     json-server: ^0.17.3
     jszip: ^3.10.1
+    material-react-table: ^3.2.1
     notistack: ^3.0.1
     plotly.js: ^3.0.3
     prettier: ^2.8.7
@@ -7851,6 +8030,7 @@ __metadata:
     react-plotly.js: ^2.6.0
     react-router-dom: ^6.4.1
     react-scripts: 5.0.1
+    react-syntax-highlighter: ^16.1.1
     react-uuid: ^1.0.3
     react-virtualized-auto-sizer: ^1.0.26
     react-virtuoso: ^4.14.0
@@ -9691,6 +9871,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fault@npm:^1.0.0":
+  version: 1.0.4
+  resolution: "fault@npm:1.0.4"
+  dependencies:
+    format: ^0.2.0
+  checksum: 5ac610d8b09424e0f2fa8cf913064372f2ee7140a203a79957f73ed557c0e79b1a3d096064d7f40bde8132a69204c1fe25ec23634c05c6da2da2039cff26c4e7
+  languageName: node
+  linkType: hard
+
 "faye-websocket@npm:^0.11.3":
   version: 0.11.4
   resolution: "faye-websocket@npm:0.11.4"
@@ -9985,6 +10174,13 @@ __metadata:
     hasown: ^2.0.2
     mime-types: ^2.1.12
   checksum: 9b7788836df9fa5a6999e0c02515b001946b2a868cfe53f026c69e2c537a2ff9fbfb8e9d2b678744628f3dc7a2d6e14e4e45dfaf68aa6239727f0bdb8ce0abf2
+  languageName: node
+  linkType: hard
+
+"format@npm:^0.2.0":
+  version: 0.2.2
+  resolution: "format@npm:0.2.2"
+  checksum: 646a60e1336250d802509cf24fb801e43bd4a70a07510c816fa133aa42cdbc9c21e66e9cc0801bb183c5b031c9d68be62e7fbb6877756e52357850f92aa28799
   languageName: node
   linkType: hard
 
@@ -10744,6 +10940,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"hast-util-parse-selector@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "hast-util-parse-selector@npm:4.0.0"
+  dependencies:
+    "@types/hast": ^3.0.0
+  checksum: 76087670d3b0b50b23a6cb70bca53a6176d6608307ccdbb3ed18b650b82e7c3513bfc40348f1389dc0c5ae872b9a768851f4335f44654abd7deafd6974c52402
+  languageName: node
+  linkType: hard
+
 "hast-util-to-jsx-runtime@npm:^2.0.0":
   version: 2.3.6
   resolution: "hast-util-to-jsx-runtime@npm:2.3.6"
@@ -10776,12 +10981,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"hastscript@npm:^9.0.0":
+  version: 9.0.1
+  resolution: "hastscript@npm:9.0.1"
+  dependencies:
+    "@types/hast": ^3.0.0
+    comma-separated-tokens: ^2.0.0
+    hast-util-parse-selector: ^4.0.0
+    property-information: ^7.0.0
+    space-separated-tokens: ^2.0.0
+  checksum: 2bbb9a3c2dc43c9dec7f6599ef45e5eefb1c2a5f75d33d005dc432e92bf9d7cfb6c0d927f15a7592bb48601d2b582ea2e4b1131a716ac3f7b618a07d88f9a5d7
+  languageName: node
+  linkType: hard
+
 "he@npm:^1.2.0":
   version: 1.2.0
   resolution: "he@npm:1.2.0"
   bin:
     he: bin/he
   checksum: 3d4d6babccccd79c5c5a3f929a68af33360d6445587d628087f39a965079d84f18ce9c3d3f917ee1e3978916fc833bb8b29377c3b403f919426f91bc6965e7a7
+  languageName: node
+  linkType: hard
+
+"highlight-words@npm:2.0.0":
+  version: 2.0.0
+  resolution: "highlight-words@npm:2.0.0"
+  checksum: ba01ae0a6b5df72fce81c6e0a19969350050aa4d742da97ccec21b6beed26b795e598d2e583a9d0adc99e16cc8fc847b770b978a4ad11186fd6897b4cc41a534
+  languageName: node
+  linkType: hard
+
+"highlight.js@npm:^10.4.1, highlight.js@npm:~10.7.0":
+  version: 10.7.3
+  resolution: "highlight.js@npm:10.7.3"
+  checksum: defeafcd546b535d710d8efb8e650af9e3b369ef53e28c3dc7893eacfe263200bba4c5fcf43524ae66d5c0c296b1af0870523ceae3e3104d24b7abf6374a4fea
+  languageName: node
+  linkType: hard
+
+"highlightjs-vue@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "highlightjs-vue@npm:1.0.0"
+  checksum: 895f2dd22c93a441aca7df8d21f18c00697537675af18832e50810a071715f79e45eda677e6244855f325234c6a06f7bd76f8f20bd602040fc350c80ac7725e4
   languageName: node
   linkType: hard
 
@@ -13170,6 +13409,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lowlight@npm:^1.17.0":
+  version: 1.20.0
+  resolution: "lowlight@npm:1.20.0"
+  dependencies:
+    fault: ^1.0.0
+    highlight.js: ~10.7.0
+  checksum: 14a1815d6bae202ddee313fc60f06d46e5235c02fa483a77950b401d85b4c1e12290145ccd17a716b07f9328bd5864aa2d402b6a819ff3be7c833d9748ff8ba7
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
   version: 10.4.3
   resolution: "lru-cache@npm:10.4.3"
@@ -13297,6 +13546,26 @@ __metadata:
     tinyqueue: ^3.0.0
     vt-pbf: ^3.1.3
   checksum: 0a0dc285b74d518dd0e4bbdd9ac8b93448a12c40d0b46c04b2a191f7cc1bc2419a1ee7bdb36c00f0732269e4bd3de19bd1b81dee5f2070601fe9be343988ba69
+  languageName: node
+  linkType: hard
+
+"material-react-table@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "material-react-table@npm:3.2.1"
+  dependencies:
+    "@tanstack/match-sorter-utils": 8.19.4
+    "@tanstack/react-table": 8.20.6
+    "@tanstack/react-virtual": 3.11.2
+    highlight-words: 2.0.0
+  peerDependencies:
+    "@emotion/react": ">=11.13"
+    "@emotion/styled": ">=11.13"
+    "@mui/icons-material": ">=6"
+    "@mui/material": ">=6"
+    "@mui/x-date-pickers": ">=7.15"
+    react: ">=18.0"
+    react-dom: ">=18.0"
+  checksum: 9f68a12751d5169f4a504e9e0ee653b4b057d83c8aab5b768b8245a371f07456eb071923e2beeca19e661e2e6c163dd209e3efc5adcbf0e5edfd0e11ef0519b5
   languageName: node
   linkType: hard
 
@@ -15989,6 +16258,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prismjs@npm:^1.30.0":
+  version: 1.30.0
+  resolution: "prismjs@npm:1.30.0"
+  checksum: a68eddd4c5f1c506badb5434b0b28a7cc2479ed1df91bc4218e6833c7971ef40c50ec481ea49749ac964256acb78d8b66a6bd11554938e8998e46c18b5f9a580
+  languageName: node
+  linkType: hard
+
 "probe-image-size@npm:^7.2.3":
   version: 7.2.3
   resolution: "probe-image-size@npm:7.2.3"
@@ -16337,6 +16613,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-is@npm:^19.2.3":
+  version: 19.2.4
+  resolution: "react-is@npm:19.2.4"
+  checksum: 646d4f0f11b50131f3f7ac5b50d12b79de35be20fa84bce33fd3fc91557589e388562cb6203b5237098fd983cd1cdf12c5fb952b7f9903ac014de9a5a6cc7e28
+  languageName: node
+  linkType: hard
+
 "react-joyride@npm:^2.9.3":
   version: 2.9.3
   resolution: "react-joyride@npm:2.9.3"
@@ -16507,6 +16790,22 @@ __metadata:
   bin:
     react-scripts: bin/react-scripts.js
   checksum: 92afa2f245c7092ccc97d5609dc7a2130616262e34da7f15072d9442e2d2e1d4909a91022abd1faac1336eb17c5525a10d9bd43e1ae374c7ec941ca20addca68
+  languageName: node
+  linkType: hard
+
+"react-syntax-highlighter@npm:^16.1.1":
+  version: 16.1.1
+  resolution: "react-syntax-highlighter@npm:16.1.1"
+  dependencies:
+    "@babel/runtime": ^7.28.4
+    highlight.js: ^10.4.1
+    highlightjs-vue: ^1.0.0
+    lowlight: ^1.17.0
+    prismjs: ^1.30.0
+    refractor: ^5.0.0
+  peerDependencies:
+    react: ">= 0.14.0"
+  checksum: dd444d15b636708a54a83697e1f2ac172691ca31f98eff13824f660f8370f48d04297222ab29112aee8f5477349bb925a39ff3514fa87a03de3f92a14e7083be
   languageName: node
   linkType: hard
 
@@ -16735,6 +17034,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"refractor@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "refractor@npm:5.0.0"
+  dependencies:
+    "@types/hast": ^3.0.0
+    "@types/prismjs": ^1.0.0
+    hastscript: ^9.0.0
+    parse-entities: ^4.0.0
+  checksum: 7581a1f7f45a5ed0d40fd4092a829fde3d085a9b0ef995c0018ecd7ef04ae9e2d4b9537e4037b848e8b596db9236f577ad155b46de60f2d0e1c80bd6b6a99728
+  languageName: node
+  linkType: hard
+
 "regenerate-unicode-properties@npm:^10.2.2":
   version: 10.2.2
   resolution: "regenerate-unicode-properties@npm:10.2.2"
@@ -16927,6 +17238,13 @@ __metadata:
     unified: ^11.0.0
     vfile: ^6.0.0
   checksum: 6eab55cb3464ec01d8e002cc9fe02ae57f48162899693fd53b5ba553ac8699dae7b55fce9df7131a5981313b19b495d6fbfa98a9d6bd243e7485591364d9b5b3
+  languageName: node
+  linkType: hard
+
+"remove-accents@npm:0.5.0":
+  version: 0.5.0
+  resolution: "remove-accents@npm:0.5.0"
+  checksum: 7045b37015acb03df406d21f9cbe93c3fcf2034189f5d2e33b1dace9c7d6bdcd839929905ced21a5d76c58553557e1a42651930728702312a5774179d5b9147b
   languageName: node
   linkType: hard
 
