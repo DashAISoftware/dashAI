@@ -17,6 +17,7 @@ more. This document describes how DashAI works internally.
 - [Database](#database)
 - [Job Queue](#job-queue)
 - [Job](#job)
+- [Notebook](#notebook)
 - [Workflow Examples](#workflow-examples)
   - [Training a Model](#training-a-model)
   - [Creating a Plot for a Dataset](#creating-a-plot-for-a-dataset)
@@ -71,7 +72,6 @@ for each resource:
 | `explainers.py`        | `/explainer`          | Launch model explanations                           |
 | `converters.py`        | `/converter`          | Apply data transformations                          |
 | `predict.py`           | `/predict`            | Run predictions on new data                         |
-| `plugins.py`           | `/plugin`             | Manage plugins                                      |
 | `pipelines.py`         | `/pipeline`           | Orchestrate complex workflows                       |
 | `generative_session.py`| `/generative-session` | Generative model sessions                           |
 | `generative_process.py`| `/generative-process` | Generative process execution and results            |
@@ -116,6 +116,7 @@ Each component class declares a `TYPE` class attribute that determines its categ
 | `Model`            | `BaseModel`            | Train and predict                         | SVC, RandomForest, DistilBertTransformer     |
 | `GenerativeModel`  | `BaseGenerativeModel`  | Generate outputs from prompts/inputs      | QwenModel, StableDiffusionV2Model            |
 | `Task`             | `BaseTask`             | Define ML task semantics                  | TextClassification, Regression, Translation  |
+| `GenerativeTask`   | `BaseGenerativeTask`   | Define generative task semantics          | TextToTextGenerationTask, TextToImageGenerationTask, ControlNetTask |
 | `Metric`           | `BaseMetric`           | Evaluate model performance                | Accuracy, F1, RMSE, MAE                      |
 | `Explorer`         | `BaseExplorer`         | Visualize and analyze data                | ScatterPlotExplorer, HistogramPlotExplorer   |
 | `Explainer`        | `BaseExplainer`        | Interpret model predictions               | KernelShap, PermutationFeatureImportance     |
@@ -195,10 +196,32 @@ user-supplied parameters. The mechanism is built on top of Pydantic and JSON Sch
    model. Each field in the model represents a configurable parameter:
 
    ```python
-   class SVCSchema(BaseSchema):
-       C: float = Field(default=1.0, description="Regularization parameter")
-       kernel: str = Field(default="rbf", description="Kernel type")
+   class LogisticRegressionSchema(BaseSchema):
+       penalty: schema_field(
+           none_type(enum_field(enum=["l1", "l2", "elasticnet"])),
+           placeholder="l2",
+           description=MultilingualString(
+               en="Type of regularization penalty.",
+               es="Tipo de penalización de regularización.",
+           ),
+           alias=MultilingualString(en="Penalty", es="Penalización"),
+       )  # type: ignore
+       C: schema_field(
+           optimizer_float_field(gt=0.0),
+           placeholder={"optimize": False, "fixed_value": 1.0,
+                        "lower_bound": 0.01, "upper_bound": 100.0},
+           description=MultilingualString(
+               en="Inverse of regularization strength.",
+               es="Inverso de la fuerza de regularización.",
+           ),
+           alias=MultilingualString(en="C", es="C"),
+       )  # type: ignore
    ```
+
+   Each field uses `schema_field()` with a type validator (e.g. `optimizer_float_field`,
+   `enum_field`), a placeholder default, a bilingual description, and an alias for the UI
+   label. The frontend uses the generated JSON Schema to render form controls; the
+   optimizer uses type metadata to define search bounds.
 
 2. **Schema generation** — `get_schema()` converts the Pydantic model into a JSON
    Schema dictionary. The frontend uses this schema to dynamically render configuration
@@ -217,15 +240,23 @@ parameters that reference other components. For example, a model might accept a
 converter as a parameter:
 
 ```python
-class MyModelSchema(BaseSchema):
-    preprocessor: ComponentType = component_field(
-        component_type="Converter",
-        description="Optional data preprocessor",
-    )
+class BagOfWordsSchema(BaseSchema):
+    tabular_classifier: schema_field(
+        component_field(component_type="TabularClassificationModel"),
+        placeholder=None,
+        description=MultilingualString(
+            en="Tabular classifier used as the underlying model.",
+            es="Clasificador tabular usado como modelo subyacente.",
+        ),
+        alias=MultilingualString(
+            en="Tabular classifier", es="Clasificador tabular"
+        ),
+    )  # type: ignore
 ```
 
-The frontend renders this as a dropdown populated from the registry, and the backend
-instantiates the selected converter when the model is created.
+The frontend renders component fields as a searchable dropdown populated from the
+registry. When the component is instantiated, `validate_and_transform()` resolves the
+selected component name into a live instance.
 
 ---
 
@@ -243,7 +274,10 @@ DashAI uses **SQLite** as its database (stored at `~/.DashAI/db.sqlite`) with
 | `Run`              | Individual training run (model name, parameters, optimizer, status, plot paths) |
 | `Metric`           | Metric values per run, split, and level                |
 | `Prediction`       | Prediction results (run, dataset, results path)        |
-| `Notebook`         | Exploration notebooks (dataset, file path, status)     |
+| `GenerativeSession`| Generative model session (task, model name, parameters, name, description) |
+| `GenerativeProcess`| Individual execution within a generative session (status, results path) |
+| `ProcessData`      | Input/output data for a generative process (data, data_type, is_input) |
+| `Notebook`         | Working dataset session — a mutable copy of an original dataset on which Explorers and Converters can be applied. Changes can be reverted, and the result can be saved as a new Dataset for model training. |
 | `Explorer`         | Exploration records (type, columns, parameters, results path) |
 | `Plugin`           | Installed plugins                                      |
 | `GlobalExplainer`  | Global model explanations                              |
@@ -345,7 +379,7 @@ class BaseJob(metaclass=ABCMeta):
 | `ExplorerJob`        | Execute a data exploration/visualization             |
 | `ExplainerJob`       | Generate model explanations (SHAP, etc.)             |
 | `PredictJob`         | Run predictions on new data                          |
-| `ConverterListJob`   | Apply a sequence of data transformations             |
+| `ConverterJob`       | Apply data transformations to a Notebook dataset     |
 | `PipelineJob`        | Orchestrate multi-step workflows                     |
 | `GenerativeJob`      | Handle generative model interactions                 |
 | `DatasetJob`         | Load and process datasets                            |
@@ -353,6 +387,42 @@ class BaseJob(metaclass=ABCMeta):
 Each job type manages its own database status transitions and error handling. When a job
 fails, it records the error message in the database and updates the relevant entity's
 status to `ERROR`.
+
+---
+
+## Notebook
+
+A **Notebook** is a working session that lets users interact with a dataset without
+modifying the original data.
+
+### What is a Notebook?
+
+When a Notebook is created from a dataset, DashAI makes a **mutable copy** of the
+original dataset. The source `Dataset` record is never modified. Within a Notebook,
+users can:
+
+- Run **Explorers** (scatter plots, histograms, box plots) to visualize the data.
+- Apply **Converters** (StandardScaler, PCA, SMOTE, etc.) to transform the dataset copy.
+- **Revert** any converter to restore an earlier state.
+- **Save** the modified dataset as a new `Dataset` record available for model training.
+
+### Database representation
+
+A Notebook is stored in the `Notebook` table, linked to the source `Dataset`. Each
+Explorer or Converter applied within the Notebook creates an `Explorer` or `Converter`
+record. Converters are applied sequentially via a `ConverterJob`.
+
+### Lifecycle
+
+```
+Original Dataset ──(copy)──► Notebook Dataset
+                                    │
+                       Apply Explorers   (read-only visualizations)
+                       Apply Converters  (in-place on mutable copy)
+                       Revert Converters (restore earlier state)
+                                    │
+                            Save ──► New Dataset (available for training)
+```
 
 ---
 
