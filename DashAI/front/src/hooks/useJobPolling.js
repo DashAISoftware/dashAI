@@ -8,6 +8,19 @@ import {
   stopJobPolling as _stopJobPolling,
 } from "../utils/jobPoller";
 
+function mergeJobsById(previousJobs, changedJobs) {
+  const byId = new Map(previousJobs.map((job) => [job.id, job]));
+
+  changedJobs.forEach((job) => {
+    const prev = byId.get(job.id) || {};
+    byId.set(job.id, { ...prev, ...job });
+  });
+
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.last_update) - new Date(a.last_update),
+  );
+}
+
 /**
  * Hook to subscribe to all job updates
  * @param {function} callback - Function called with updated jobs
@@ -76,7 +89,11 @@ export function useJobManager() {
     getJobs()
       .then((data) => {
         if (Array.isArray(data)) {
-          setJobs(data);
+          setJobs(
+            [...data].sort(
+              (a, b) => new Date(b.last_update) - new Date(a.last_update),
+            ),
+          );
         }
         setLoading(false);
       })
@@ -88,7 +105,8 @@ export function useJobManager() {
 
     const unsubscribe = subscribeJobs((updatedJobs) => {
       if (Array.isArray(updatedJobs)) {
-        setJobs(updatedJobs);
+        // `updatedJobs` is incremental (changes since cursor), so merge it.
+        setJobs((previousJobs) => mergeJobsById(previousJobs, updatedJobs));
         setLoading(false);
       }
     });
