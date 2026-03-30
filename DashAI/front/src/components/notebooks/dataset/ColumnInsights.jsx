@@ -14,10 +14,15 @@ const TAB_TEXT = 3;
  * in the right panel sidebar. Cards are clickable and navigate to the
  * corresponding column card in the appropriate tab.
  */
-export default function ColumnInsights({ numericStats, textStats }) {
+export default function ColumnInsights({
+  numericStats,
+  textStats,
+  onNavigateTab,
+}) {
   const theme = useTheme();
   const { t } = useTranslation(["datasets"]);
-  const { setDatasetTab } = useDatasetsAndNotebooks();
+  const context = useDatasetsAndNotebooks();
+  const setDatasetTab = onNavigateTab ?? context?.setDatasetTab ?? (() => {});
 
   const insights = useMemo(() => {
     const items = [];
