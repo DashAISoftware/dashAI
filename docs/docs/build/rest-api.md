@@ -24,6 +24,7 @@ DashAI exposes a RESTful API at `/api/v1`. All endpoints return JSON. The API is
 | `plugins.py` | `/api/v1/plugin` | Manage installed plugins |
 | `pipelines.py` | `/api/v1/pipeline` | Orchestrate complex workflows |
 | `generative_session.py` | `/api/v1/generative-session` | Generative model sessions |
+| `generative_process.py` | `/api/v1/generative-process` | Generative process execution and results |
 
 ## Key Endpoints
 
@@ -96,6 +97,24 @@ POST   /api/v1/predict/
 GET    /api/v1/predict/{prediction_id}
 DELETE /api/v1/predict/{prediction_id}
 ```
+
+### Generative Sessions and Processes
+
+```http
+GET    /api/v1/generative-session/
+POST   /api/v1/generative-session/
+GET    /api/v1/generative-session/{session_id}
+PATCH  /api/v1/generative-session/{session_id}
+DELETE /api/v1/generative-session/{session_id}
+
+POST   /api/v1/generative-process/
+GET    /api/v1/generative-process/{process_id}
+GET    /api/v1/generative-process/{process_id}/results
+```
+
+A **GenerativeSession** stores the model and parameters for a generative workflow
+(text-to-text, text-to-image, ControlNet, etc.). Each invocation creates a
+**GenerativeProcess** record that tracks status and stores input/output data.
 
 ## Dependency Injection
 
