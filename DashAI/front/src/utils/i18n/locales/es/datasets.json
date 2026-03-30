@@ -161,7 +161,7 @@
     "inferredConfiguration": "Configuración de Inferencia de Tipo",
     "insightConstantColumn": "Esta columna tiene un solo valor único. No aporta información para el análisis.",
     "insightHighCardinality": "Esta columna categórica tiene más de 100 valores únicos. Considera agrupar o codificar.",
-    "insightEmptyMessage": "No se detectaron problemas. Las observaciones por columna aparecerán aquí cuando se encuentren posibles hallazgos sobre la calidad de los datos.",
+    "insightEmptyMessage": "No se detectaron problemas. Las observaciones por columna aparecerán aquí cuando se encuentren posibles observaciones de los datos.",
     "insightHighNanRatio": "{{value}}% de los valores están ausentes en esta columna. Considera imputación o eliminación.",
     "insightLowUniqueness": "Baja unicidad ({{value}}%). Puede ser una variable categórica mal clasificada como texto.",
     "insightOutliers": "{{count}} valor(es) atípico(s) potencial(es) detectado(s) (método IQR).",
