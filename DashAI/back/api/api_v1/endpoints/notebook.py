@@ -214,7 +214,7 @@ def get_notebook_explorer_list(
 
 @router.get("/{notebook_id}/converters")
 @inject
-async def get_notebook_converter_list(
+async def get_notebook_converter(
     notebook_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
@@ -239,11 +239,11 @@ async def get_notebook_converter_list(
     """
     with session_factory() as db:
         try:
-            converter_list = (
+            converter = (
                 db.query(Converter).filter(Converter.notebook_id == notebook_id).all()
             )
 
-            return converter_list
+            return converter
         except Exception as e:
             log.error(
                 f"Error retrieving converter list for notebook {notebook_id}: {e}"

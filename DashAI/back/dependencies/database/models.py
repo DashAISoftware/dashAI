@@ -535,7 +535,7 @@ class Pipeline(Base):
 
 
 class Converter(Base):
-    __tablename__ = "converter_list"
+    __tablename__ = "converter"
     """
     Table to store a list of converters applied to a dataset.
     """

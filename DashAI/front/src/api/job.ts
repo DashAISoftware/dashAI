@@ -180,7 +180,7 @@ export const enqueueConverterJob = async (
   const data = {
     job_type: "ConverterJob",
     kwargs: {
-      converter_list_id: converterId,
+      converter_id: converterId,
     },
     stop_when_queue_empties: true,
   };

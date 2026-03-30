@@ -265,16 +265,14 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "last_modified": local_explainer.last_modified,
             }
 
-        converter_list = (
-            db.query(Converter).filter(Converter.huey_id == huey_id).first()
-        )
-        if converter_list:
+        converter = db.query(Converter).filter(Converter.huey_id == huey_id).first()
+        if converter:
             return {
                 "entity_type": "converter",
-                "entity_id": converter_list.id,
-                "entity_name": converter_list.name,
-                "created_at": converter_list.created,
-                "last_modified": converter_list.last_modified,
+                "entity_id": converter.id,
+                "entity_name": converter.name,
+                "created_at": converter.created,
+                "last_modified": converter.last_modified,
             }
 
         return None

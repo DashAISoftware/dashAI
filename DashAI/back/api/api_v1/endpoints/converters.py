@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
-async def post_notebook_converter_list(
+async def post_notebook_converter(
     params: schemas.ConverterParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
@@ -59,17 +59,17 @@ async def post_notebook_converter_list(
             converter_name = params.converter
             converter_parameters = params.parameters.serialize()
 
-            converter_list = Converter(
+            converter = Converter(
                 notebook_id=params.notebook_id,
                 converter=converter_name,
                 parameters=converter_parameters,
             )
 
-            db.add(converter_list)
+            db.add(converter)
             db.commit()
-            db.refresh(converter_list)
+            db.refresh(converter)
 
-            return converter_list
+            return converter
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -79,17 +79,17 @@ async def post_notebook_converter_list(
             ) from e
 
 
-@router.get("/{converter_list_id}")
+@router.get("/{converter_id}")
 @inject
-async def get_converter_list(
-    converter_list_id: int,
+async def get_converter(
+    converter_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a converter list from the database.
 
     Parameters
     ----------
-    converter_list_id : int
+    converter_id : int
         ID of the converter list.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
@@ -109,14 +109,14 @@ async def get_converter_list(
 
     with session_factory() as db:
         try:
-            converter_list = db.get(Converter, converter_list_id)
-            if not converter_list:
+            converter = db.get(Converter, converter_id)
+            if not converter:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Converter list not found",
                 )
 
-            return converter_list
+            return converter
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -157,13 +157,13 @@ async def get_converters_by_notebook(
 
     with session_factory() as db:
         try:
-            converter_lists = (
+            converters = (
                 db.query(Converter)
                 .filter(Converter.notebook_id == notebook_id)
                 .filter(Converter.status == ConverterStatus.FINISHED)
                 .all()
             )
-            return converter_lists
+            return converters
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -173,10 +173,10 @@ async def get_converters_by_notebook(
             ) from e
 
 
-@router.delete("/{converter_list_id}")
+@router.delete("/{converter_id}")
 @inject
-async def delete_converter_list(
-    converter_list_id: int,
+async def delete_converter(
+    converter_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
@@ -188,19 +188,19 @@ async def delete_converter_list(
 
     with session_factory() as db:
         try:
-            converter_list = db.get(Converter, converter_list_id)
-            if not converter_list:
+            converter = db.get(Converter, converter_id)
+            if not converter:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Converter list not found",
                 )
-            notebook = converter_list.notebook
+            notebook = converter.notebook
 
             previous_converters = (
                 db.query(Converter)
                 .filter(
-                    Converter.notebook_id == converter_list.notebook_id,
-                    Converter.created < converter_list.created,
+                    Converter.notebook_id == converter.notebook_id,
+                    Converter.created < converter.created,
                 )
                 .all()
             )
@@ -208,8 +208,8 @@ async def delete_converter_list(
             next_converters = (
                 db.query(Converter)
                 .filter(
-                    Converter.notebook_id == converter_list.notebook_id,
-                    Converter.created >= converter_list.created,
+                    Converter.notebook_id == converter.notebook_id,
+                    Converter.created >= converter.created,
                 )
                 .all()
             )
@@ -217,8 +217,8 @@ async def delete_converter_list(
             next_explorers = (
                 db.query(Explorer)
                 .filter(
-                    Explorer.notebook_id == converter_list.notebook_id,
-                    Explorer.created >= converter_list.created,
+                    Explorer.notebook_id == converter.notebook_id,
+                    Explorer.created >= converter.created,
                 )
                 .all()
             )
@@ -234,7 +234,7 @@ async def delete_converter_list(
             job_ids = []
             for converter in previous_converters:
                 # Crear instancia de ConverterJob y encolarlo directamente
-                job = ConverterJob(converter_list_id=converter.id)
+                job = ConverterJob(converter_id=converter.id)
                 job_queue.put(job)
                 if hasattr(job, "id"):
                     job_ids.append(job.id)
@@ -248,7 +248,7 @@ async def delete_converter_list(
                 db.delete(explorer)
 
             # Delete the current converter
-            db.delete(converter_list)
+            db.delete(converter)
             db.commit()
 
             last_job_id = job_ids[-1] if job_ids else None
