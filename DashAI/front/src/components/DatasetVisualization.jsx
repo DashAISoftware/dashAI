@@ -306,8 +306,6 @@ export default function DatasetVisualization({
               totalRows={datasetInfo?.total_rows}
               totalColumns={datasetInfo?.total_columns}
               fileSize={datasetInfo?.general_info?.memory_usage_mb}
-              duplicateRows={datasetInfo?.general_info?.duplicate_rows}
-              missingValues={datasetInfo?.nan}
             />
             {/* Data Quality Alerts */}
             <Box>
