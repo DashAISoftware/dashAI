@@ -69,7 +69,7 @@ const OverviewTab = ({
       </Card>
       {/* Missing Values Overview — only shown when there are missing values */}
       {missingData.some((data) => data.missing > 0) && (
-        <Card>
+        <Card data-section="missing-values-overview">
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             <Typography variant="h6" gutterBottom>
               {t("datasets:label.missingValuesOverview")}
