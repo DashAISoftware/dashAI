@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Paper,
-  Alert,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   ResponsiveContainer,
@@ -20,6 +12,7 @@ import {
 } from "recharts";
 import MrtDatasetTable from "../MrtDatasetTable";
 import { useTranslation } from "react-i18next";
+import { getColorByColumnType } from "../../../../utils";
 
 const OverviewTab = ({
   dataset,
@@ -52,9 +45,35 @@ const OverviewTab = ({
       {/* Data View */}
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
-          <Typography variant="h6" gutterBottom>
-            {t("datasets:label.datasetPreview")}
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              mb: 1,
+            }}
+          >
+            <Typography variant="h6">
+              {t("datasets:label.datasetPreview")}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {typeCounts.map(([type, count]) => (
+                <Chip
+                  key={type}
+                  label={`${count} ${type}`}
+                  size="small"
+                  sx={{
+                    backgroundColor: getColorByColumnType(type, theme),
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    height: "22px",
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
           <MrtDatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
@@ -100,41 +119,6 @@ const OverviewTab = ({
           </CardContent>
         </Card>
       )}
-
-      {/* Column Types Distribution */}
-      <Card>
-        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
-          <Typography variant="h6" gutterBottom>
-            {t("datasets:label.columnTypesDistribution")}
-          </Typography>
-          <Grid container spacing={2}>
-            {typeCounts.map(([type, count]) => (
-              <Grid
-                size={{ xs: 12, sm: 6, md: 4 }}
-                key={type}
-                sx={{ width: "150px" }}
-              >
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: 2,
-                    textAlign: "center",
-                    bgcolor: theme.palette.ui.disabled,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography variant="h4" fontWeight="bold">
-                    {count}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {type}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </CardContent>
-      </Card>
     </Box>
   );
 };
