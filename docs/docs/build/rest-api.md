@@ -10,21 +10,20 @@ DashAI exposes a RESTful API at `/api/v1`. All endpoints return JSON. The API is
 
 ## Router Structure
 
-| Router file | Resource prefix | Purpose |
-|-------------|----------------|---------|
-| `components.py` | `/api/v1/component` | List and filter registered components |
-| `datasets.py` | `/api/v1/dataset` | Upload, list, and validate datasets |
-| `model_sessions.py` | `/api/v1/model-session` | CRUD for model training sessions |
-| `runs.py` | `/api/v1/run` | CRUD for training runs, metrics, optimization plots |
-| `jobs.py` | `/api/v1/job` | Enqueue jobs and query job status |
-| `explorers.py` | `/api/v1/explorer` | Launch and retrieve data explorations |
-| `explainers.py` | `/api/v1/explainer` | Launch model explanations |
-| `converters.py` | `/api/v1/converter` | Apply data transformations |
-| `predict.py` | `/api/v1/predict` | Run predictions on new data |
-| `plugins.py` | `/api/v1/plugin` | Manage installed plugins |
-| `pipelines.py` | `/api/v1/pipeline` | Orchestrate complex workflows |
-| `generative_session.py` | `/api/v1/generative-session` | Generative model sessions |
-| `generative_process.py` | `/api/v1/generative-process` | Generative process execution and results |
+| Router file             | Resource prefix              | Purpose                                             |
+| ----------------------- | ---------------------------- | --------------------------------------------------- |
+| `components.py`         | `/api/v1/component`          | List and filter registered components               |
+| `datasets.py`           | `/api/v1/dataset`            | Upload, list, and validate datasets                 |
+| `model_sessions.py`     | `/api/v1/model-session`      | CRUD for model training sessions                    |
+| `runs.py`               | `/api/v1/run`                | CRUD for training runs, metrics, optimization plots |
+| `jobs.py`               | `/api/v1/job`                | Enqueue jobs and query job status                   |
+| `explorers.py`          | `/api/v1/explorer`           | Launch and retrieve data explorations               |
+| `explainers.py`         | `/api/v1/explainer`          | Launch model explanations                           |
+| `converters.py`         | `/api/v1/converter`          | Apply data transformations                          |
+| `predict.py`            | `/api/v1/predict`            | Run predictions on new data                         |
+| `plugins.py`            | `/api/v1/plugin`             | Manage installed plugins                            |
+| `generative_session.py` | `/api/v1/generative-session` | Generative model sessions                           |
+| `generative_process.py` | `/api/v1/generative-process` | Generative process execution and results            |
 
 ## Key Endpoints
 
