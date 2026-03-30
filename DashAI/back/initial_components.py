@@ -117,8 +117,11 @@ from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.pipeline import (
     DataExploration,
     DataSelector,
+    MetricsEval,
     Prediction,
     RetrieveModel,
+    SplitData,
+    TaskAndModel,
     Train,
 )
 from DashAI.back.plugins.utils import get_available_plugins
@@ -279,6 +282,9 @@ def get_initial_components():
         Train,
         RetrieveModel,
         Prediction,
+        SplitData,
+        TaskAndModel,
+        MetricsEval,
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,

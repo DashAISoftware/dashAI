@@ -363,6 +363,9 @@ async def create_pipeline(
                 exploration=None,
                 train=None,
                 prediction=None,
+                split_data=None,
+                task_and_model=None,
+                metrics_result=None,
             )
             db.add(new_pipeline)
             db.commit()
@@ -425,6 +428,9 @@ async def update_pipeline(
             pipeline.exploration = None
             pipeline.train = None
             pipeline.prediction = None
+            pipeline.split_data = None
+            pipeline.task_and_model = None
+            pipeline.metrics_result = None
 
             steps_dict = [
                 step.model_dump() if hasattr(step, "model_dump") else step
