@@ -33,8 +33,11 @@ function PipelineResults({ pipelineId, onClose }) {
     const hasExpl =
       data.exploration && data.exploration !== "No exploration data";
     const hasTr = data.train && Object.keys(data.train).length > 0;
+    const hasAtomized =
+      (data.task_and_model && Object.keys(data.task_and_model).length > 0) ||
+      (data.metrics_result && Object.keys(data.metrics_result).length > 0);
     const hasPred = data.prediction && data.prediction !== "No prediction data";
-    return hasExpl || hasTr || hasPred;
+    return hasExpl || hasTr || hasAtomized || hasPred;
   }, []);
 
   useEffect(() => {
@@ -95,17 +98,29 @@ function PipelineResults({ pipelineId, onClose }) {
   const hasExploration =
     results.exploration && results.exploration !== "No exploration data";
   const hasTrain = results.train && Object.keys(results.train).length > 0;
+  // Atomized nodes: task_and_model + metrics_result
+  const hasAtomizedTrain =
+    (results.task_and_model &&
+      Object.keys(results.task_and_model).length > 0) ||
+    (results.metrics_result &&
+      Object.keys(results.metrics_result).length > 0);
   const hasPrediction =
     results.prediction && results.prediction !== "No prediction data";
 
-  const paramData = {
-    parameters:
-      results.train && results.train.parameters
-        ? results.train.parameters
-        : null,
-  };
+  // Derive unified values from whichever format is available
+  const trainModelName = hasTrain
+    ? results.train.info
+    : results.task_and_model?.model ?? "-";
+  const trainParameters = hasTrain
+    ? results.train.parameters
+    : results.task_and_model?.parameters ?? null;
+  const trainMetrics = hasTrain
+    ? results.train.metrics
+    : results.metrics_result?.results ?? null;
 
-  if (!hasExploration && !hasTrain && !hasPrediction) {
+  const paramData = { parameters: trainParameters };
+
+  if (!hasExploration && !hasTrain && !hasAtomizedTrain && !hasPrediction) {
     return (
       <Box sx={{ p: 2 }}>
         {onClose && (
@@ -148,7 +163,7 @@ function PipelineResults({ pipelineId, onClose }) {
         </Accordion>
       )}
 
-      {hasTrain && (
+      {(hasTrain || hasAtomizedTrain) && (
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography variant="h6">Train</Typography>
@@ -171,7 +186,7 @@ function PipelineResults({ pipelineId, onClose }) {
                     <Box>
                       <Typography variant="subtitle1">Model Name</Typography>
                       <Typography variant="p" sx={{ color: "gray" }}>
-                        {results.train.info ?? "-"}
+                        {trainModelName}
                       </Typography>
                     </Box>
                   )}
@@ -183,13 +198,13 @@ function PipelineResults({ pipelineId, onClose }) {
                   {trainTab === 2 && (
                     <Box>
                       <PipelineResultsMetrics
-                        metricsData={results.train.metrics}
+                        metricsData={trainMetrics}
                       />
                     </Box>
                   )}
                   {trainTab === 3 && (
                     <Box>
-                      <PipelineResultsGraphs metrics={results.train.metrics} />
+                      <PipelineResultsGraphs metrics={trainMetrics} />
                     </Box>
                   )}
                 </Box>
