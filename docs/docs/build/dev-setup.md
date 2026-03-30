@@ -8,7 +8,7 @@ sidebar_position: 2
 
 ## Prerequisites
 
-- Python 3.10 or greater
+- Python 3.10 to 3.13
 - Node.js (LTS) and Yarn 3.5.0
 - Git
 
@@ -32,6 +32,7 @@ conda activate dashai
 Install the package in editable mode with development dependencies:
 
 ```bash
+pip install -r requirements.txt
 pip install -e .
 pip install -r requirements-dev.txt
 pre-commit install
@@ -99,16 +100,22 @@ DashAI/
 │   ├── __main__.py         # CLI entry point (Typer)
 │   ├── back/               # FastAPI backend
 │   │   ├── app.py          # Application factory
-│   │   ├── api/            # Routers and schemas
-│   │   ├── models/         # ML model components
-│   │   ├── tasks/          # Task components
-│   │   ├── metrics/        # Metric components
-│   │   ├── explorers/      # Explorer components (in back/exploration/)
+│   │   ├── container.py    # Kink DI container
+│   │   ├── initial_components.py  # Startup component registration
+│   │   ├── api/            # Routers and request/response schemas
 │   │   ├── converters/     # Converter components
+│   │   ├── dataloaders/    # DataLoader components
+│   │   ├── dependencies/   # Registry, database engine, job queue
 │   │   ├── explainability/ # Explainer components
+│   │   ├── exploration/    # Explorer components
 │   │   ├── job/            # Job implementations
-│   │   ├── dependencies/   # Registry, database, job queue
-│   │   └── container.py    # Kink DI container
+│   │   ├── metrics/        # Metric components
+│   │   ├── models/         # ML model components
+│   │   ├── optimizers/     # Hyperparameter optimizer components
+│   │   ├── pipeline/       # Pipeline orchestration
+│   │   ├── plugins/        # Plugin loading system
+│   │   ├── tasks/          # Task components
+│   │   └── types/          # Shared type definitions
 │   └── front/              # React frontend
 │       └── src/
 │           ├── api/        # HTTP client
