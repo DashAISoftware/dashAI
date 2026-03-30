@@ -79,8 +79,10 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         self.fitted = False
         self.encodings = {}  # Store encodings for categorical columns
 
-    def train(self, x_train, y_train, x_validation, y_validation):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         import shutil
+        import tempfile
+        from pathlib import Path
 
         import torch
         from transformers import (
@@ -112,18 +114,28 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
             "label", y_train_prepared[output_column_name]
         )
 
-        x_validation_prepared = self.prepare_dataset(x_validation)
-        y_validation_prepared = self.prepare_dataset(y_validation)
-        validation_dataset = x_validation_prepared.add_column(
-            "label", y_validation_prepared[output_column_name]
-        )
+        has_validation_data = x_validation is not None and y_validation is not None
+        validation_dataset = None
+        if has_validation_data:
+            x_validation_prepared = self.prepare_dataset(x_validation)
+            y_validation_prepared = self.prepare_dataset(y_validation)
+            validation_dataset = x_validation_prepared.add_column(
+                "label", y_validation_prepared[output_column_name]
+            )
 
         num_epochs = self.training_args_params.get("num_train_epochs", 2)
         use_gpu = self.device.lower() == "gpu"
         can_use_fp16 = torch.cuda.is_available() and use_gpu
 
+        base_output_dir = Path(self.TEMP_CHECKPOINT_DIR)
+        base_output_dir.mkdir(parents=True, exist_ok=True)
+        run_output_dir = tempfile.mkdtemp(
+            prefix=f"{self.__class__.__name__.lower()}_",
+            dir=str(base_output_dir),
+        )
+
         training_args_obj = TrainingArguments(
-            output_dir=self.TEMP_CHECKPOINT_DIR,
+            output_dir=run_output_dir,
             save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
@@ -144,8 +156,12 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
             total_epochs=num_epochs,
             log_training_every_n_epochs=self.log_train_every_n_epochs,
             log_training_every_n_steps=self.log_train_every_n_steps,
-            log_val_every_n_epochs=self.log_validation_every_n_epochs,
-            log_val_every_n_steps=self.log_validation_every_n_steps,
+            log_val_every_n_epochs=(
+                self.log_validation_every_n_epochs if has_validation_data else None
+            ),
+            log_val_every_n_steps=(
+                self.log_validation_every_n_steps if has_validation_data else None
+            ),
         )
 
         trainer = Trainer(
@@ -158,9 +174,11 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         )
 
         self.fitted = True
-        trainer.train()
+        try:
+            trainer.train()
+        finally:
+            shutil.rmtree(run_output_dir, ignore_errors=True)
 
-        shutil.rmtree(self.TEMP_CHECKPOINT_DIR, ignore_errors=True)
         return self
 
     def predict(self, x_pred: "DashAIDataset"):

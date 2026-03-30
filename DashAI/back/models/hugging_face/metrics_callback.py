@@ -10,9 +10,9 @@ class MetricsCallback(TrainerCallback):
         model_instance,
         x_train,
         y_train,
-        x_val,
-        y_val,
         total_epochs,
+        x_val=None,
+        y_val=None,
         log_training_every_n_epochs=1,
         log_training_every_n_steps=50,
         log_val_every_n_epochs=1,
@@ -21,8 +21,8 @@ class MetricsCallback(TrainerCallback):
         self.model_instance = model_instance
         self.x_train = to_dashai_dataset(x_train)
         self.y_train = to_dashai_dataset(y_train)
-        self.x_val = to_dashai_dataset(x_val)
-        self.y_val = to_dashai_dataset(y_val)
+        self.x_val = to_dashai_dataset(x_val) if x_val is not None else None
+        self.y_val = to_dashai_dataset(y_val) if y_val is not None else None
         self.log_training_every_n_epochs = log_training_every_n_epochs
         self.log_training_every_n_steps = log_training_every_n_steps
         self.log_val_every_n_epochs = log_val_every_n_epochs
@@ -52,6 +52,8 @@ class MetricsCallback(TrainerCallback):
 
             if (
                 self.log_val_every_n_epochs
+                and self.x_val is not None
+                and self.y_val is not None
                 and current_epoch % self.log_val_every_n_epochs == 0
             ):
                 self.model_instance.calculate_metrics(
@@ -79,6 +81,8 @@ class MetricsCallback(TrainerCallback):
 
         if (
             self.log_val_every_n_steps
+            and self.x_val is not None
+            and self.y_val is not None
             and self.current_step % self.log_val_every_n_steps == 0
         ):
             self.model_instance.calculate_metrics(

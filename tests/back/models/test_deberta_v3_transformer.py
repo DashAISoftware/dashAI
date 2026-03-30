@@ -34,7 +34,7 @@ def splited_dataset_fixture():
 
     datasetdict = to_dashai_dataset(datasetdict)
 
-    datasetdict.types = datasetdict.types = {
+    datasetdict.types = {
         "text": Text(arrow_type=pa.string()),
         "class": Categorical(values=["0", "1"]),
     }
