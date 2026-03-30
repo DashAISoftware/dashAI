@@ -112,7 +112,6 @@ DashAI/
 │   │   ├── metrics/        # Metric components
 │   │   ├── models/         # ML model components
 │   │   ├── optimizers/     # Hyperparameter optimizer components
-│   │   ├── pipeline/       # Pipeline orchestration
 │   │   ├── plugins/        # Plugin loading system
 │   │   ├── tasks/          # Task components
 │   │   └── types/          # Shared type definitions
