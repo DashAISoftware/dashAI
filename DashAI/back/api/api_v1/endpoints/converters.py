@@ -20,7 +20,7 @@ router = APIRouter()
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def post_notebook_converter_list(
-    params: schemas.ConverterListParams,
+    params: schemas.ConverterParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Save a list of converters to apply to the notebook.
@@ -45,7 +45,7 @@ async def post_notebook_converter_list(
     HTTPException
         If the notebook is not found or if there is an internal database error.
     """
-    from DashAI.back.dependencies.database.models import ConverterList, Notebook
+    from DashAI.back.dependencies.database.models import Converter, Notebook
 
     with session_factory() as db:
         try:
@@ -59,7 +59,7 @@ async def post_notebook_converter_list(
             converter_name = params.converter
             converter_parameters = params.parameters.serialize()
 
-            converter_list = ConverterList(
+            converter_list = Converter(
                 notebook_id=params.notebook_id,
                 converter=converter_name,
                 parameters=converter_parameters,
@@ -97,7 +97,7 @@ async def get_converter_list(
 
     Returns
     -------
-    ConverterList
+    Converter
         The converter list.
 
     Raises
@@ -105,11 +105,11 @@ async def get_converter_list(
     HTTPException
         If the converter list is not found or if there is an internal database error.
     """
-    from DashAI.back.dependencies.database.models import ConverterList
+    from DashAI.back.dependencies.database.models import Converter
 
     with session_factory() as db:
         try:
-            converter_list = db.get(ConverterList, converter_list_id)
+            converter_list = db.get(Converter, converter_list_id)
             if not converter_list:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -144,7 +144,7 @@ async def get_converters_by_notebook(
 
     Returns
     -------
-    List[ConverterList]
+    List[Converter]
         A list of converter lists.
 
     Raises
@@ -152,15 +152,15 @@ async def get_converters_by_notebook(
     HTTPException
         If there is an internal database error.
     """
-    from DashAI.back.core.enums.status import ConverterListStatus
-    from DashAI.back.dependencies.database.models import ConverterList
+    from DashAI.back.core.enums.status import ConverterStatus
+    from DashAI.back.dependencies.database.models import Converter
 
     with session_factory() as db:
         try:
             converter_lists = (
-                db.query(ConverterList)
-                .filter(ConverterList.notebook_id == notebook_id)
-                .filter(ConverterList.status == ConverterListStatus.FINISHED)
+                db.query(Converter)
+                .filter(Converter.notebook_id == notebook_id)
+                .filter(Converter.status == ConverterStatus.FINISHED)
                 .all()
             )
             return converter_lists
@@ -183,12 +183,12 @@ async def delete_converter_list(
     """Delete a converter list from the database."""
     import shutil
 
-    from DashAI.back.dependencies.database.models import ConverterList, Explorer
-    from DashAI.back.job.converter_job import ConverterListJob
+    from DashAI.back.dependencies.database.models import Converter, Explorer
+    from DashAI.back.job.converter_job import ConverterJob
 
     with session_factory() as db:
         try:
-            converter_list = db.get(ConverterList, converter_list_id)
+            converter_list = db.get(Converter, converter_list_id)
             if not converter_list:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -197,19 +197,19 @@ async def delete_converter_list(
             notebook = converter_list.notebook
 
             previous_converters = (
-                db.query(ConverterList)
+                db.query(Converter)
                 .filter(
-                    ConverterList.notebook_id == converter_list.notebook_id,
-                    ConverterList.created < converter_list.created,
+                    Converter.notebook_id == converter_list.notebook_id,
+                    Converter.created < converter_list.created,
                 )
                 .all()
             )
 
             next_converters = (
-                db.query(ConverterList)
+                db.query(Converter)
                 .filter(
-                    ConverterList.notebook_id == converter_list.notebook_id,
-                    ConverterList.created >= converter_list.created,
+                    Converter.notebook_id == converter_list.notebook_id,
+                    Converter.created >= converter_list.created,
                 )
                 .all()
             )
@@ -233,8 +233,8 @@ async def delete_converter_list(
             # Enqueue all previous converters
             job_ids = []
             for converter in previous_converters:
-                # Crear instancia de ConverterListJob y encolarlo directamente
-                job = ConverterListJob(converter_list_id=converter.id)
+                # Crear instancia de ConverterJob y encolarlo directamente
+                job = ConverterJob(converter_list_id=converter.id)
                 job_queue.put(job)
                 if hasattr(job, "id"):
                     job_ids.append(job.id)

@@ -12,7 +12,7 @@ from DashAI.back.api.api_v1.schemas.notebook_params import (
     NotebookUpdateParams,
 )
 from DashAI.back.dependencies.database.models import (
-    ConverterList,
+    Converter,
     Dataset,
     Explorer,
     Notebook,
@@ -229,7 +229,7 @@ async def get_notebook_converter_list(
 
     Returns
     -------
-    ConverterList
+    Converter
         The converter list associated with the notebook.
 
     Raises
@@ -240,9 +240,7 @@ async def get_notebook_converter_list(
     with session_factory() as db:
         try:
             converter_list = (
-                db.query(ConverterList)
-                .filter(ConverterList.notebook_id == notebook_id)
-                .all()
+                db.query(Converter).filter(Converter.notebook_id == notebook_id).all()
             )
 
             return converter_list

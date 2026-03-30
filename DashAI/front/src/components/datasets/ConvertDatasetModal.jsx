@@ -21,11 +21,8 @@ import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";
 import { useSnackbar } from "notistack";
 import { enqueueConverterJob as enqueueConverterJobRequest } from "../../api/job";
-import {
-  saveConverterList,
-  getDatasetConverterList,
-} from "../../api/converter";
-import { ConverterListStatus } from "../../types/converter";
+import { saveConverter, getDatasetConverter } from "../../api/converter";
+import { ConverterStatus } from "../../types/converter";
 import { getModelSessionsExist } from "../../api/datasets";
 import CopyDatasetModal from "./converterModals/CopyDatasetModal";
 import ConverterClassColumnModal from "./converterModals/ConverterClassColumnModal";
@@ -43,17 +40,17 @@ function ConvertDatasetModal({ datasetId }) {
   const [convertersToApply, setConvertersToApply] = useState([]);
   const [openCopyModal, setOpenCopyModal] = useState(false);
   const [datasetIdToModify, setDatasetIdToModify] = useState(datasetId);
-  const [converterListId, setConverterListId] = useState(null);
-  const [converterListStatus, setConverterListStatus] = useState(null);
+  const [converterId, setConverterId] = useState(null);
+  const [converterStatus, setConverterStatus] = useState(null);
   const [running, setRunning] = useState(false);
 
   const handleCloseContent = () => {
     setOpen(false);
   };
 
-  const enqueueConverterJob = async (converterListId) => {
+  const enqueueConverterJob = async (converterId) => {
     try {
-      await enqueueConverterJobRequest(converterListId, targetColumnIndex);
+      await enqueueConverterJobRequest(converterId, targetColumnIndex);
       enqueueSnackbar("Converter job successfully created.", {
         variant: "success",
       });
@@ -69,10 +66,10 @@ function ConvertDatasetModal({ datasetId }) {
     }
   };
 
-  const saveAndEnqueueConverterList = async (id) => {
+  const saveAndEnqueueConverter = async (id) => {
     try {
       // Save the list of converters to apply
-      const flattenConverterList = convertersToApply.reduce(
+      const flattenConverter = convertersToApply.reduce(
         (acc, { name, params, scope }, index) => {
           acc[name] = {
             params: params,
@@ -85,13 +82,13 @@ function ConvertDatasetModal({ datasetId }) {
         {},
       );
 
-      const response = await saveConverterList(id, flattenConverterList);
+      const response = await saveConverter(id, flattenConverter);
 
-      const converterListId = response.id;
-      setConverterListId(converterListId);
+      const converterId = response.id;
+      setConverterId(converterId);
 
       // Enqueue the converter job using the id of the saved list
-      await enqueueConverterJob(converterListId);
+      await enqueueConverterJob(converterId);
 
       setRunning(true);
       enqueueSnackbar("Running converter jobs.", {
@@ -118,7 +115,7 @@ function ConvertDatasetModal({ datasetId }) {
       if (hasExperiments) {
         setOpenCopyModal(true);
       } else {
-        await saveAndEnqueueConverterList(datasetIdToModify);
+        await saveAndEnqueueConverter(datasetIdToModify);
       }
     } catch (error) {
       enqueueSnackbar(
@@ -130,18 +127,18 @@ function ConvertDatasetModal({ datasetId }) {
     }
   };
 
-  const getConverterListStatus = async () => {
+  const getConverterStatus = async () => {
     try {
-      const convertersFromDB = await getDatasetConverterList(converterListId);
-      setConverterListStatus(convertersFromDB.status);
+      const convertersFromDB = await getDatasetConverter(converterId);
+      setConverterStatus(convertersFromDB.status);
 
       // Set running to false if status is ERROR or FINISHED
-      if (convertersFromDB.status === ConverterListStatus.ERROR) {
+      if (convertersFromDB.status === ConverterStatus.ERROR) {
         setRunning(false);
         enqueueSnackbar("Converter job failed", {
           variant: "error",
         });
-      } else if (convertersFromDB.status === ConverterListStatus.FINISHED) {
+      } else if (convertersFromDB.status === ConverterStatus.FINISHED) {
         setRunning(false);
         enqueueSnackbar("Dataset successfully modified.", {
           variant: "success",
@@ -164,7 +161,7 @@ function ConvertDatasetModal({ datasetId }) {
       enqueueSnackbar(errorMessage, {
         variant: "error",
       });
-      console.error("Error in getConverterListStatus:", error);
+      console.error("Error in getConverterStatus:", error);
     }
   };
 
@@ -172,7 +169,7 @@ function ConvertDatasetModal({ datasetId }) {
   useEffect(() => {
     if (running) {
       const interval = setInterval(() => {
-        getConverterListStatus();
+        getConverterStatus();
       }, 5000);
       return () => clearInterval(interval);
     }
@@ -292,7 +289,7 @@ function ConvertDatasetModal({ datasetId }) {
         updateDatasetId={setDatasetIdToModify}
         open={openCopyModal}
         setOpen={setOpenCopyModal}
-        modifyDataset={saveAndEnqueueConverterList}
+        modifyDataset={saveAndEnqueueConverter}
       />
     </React.Fragment>
   );

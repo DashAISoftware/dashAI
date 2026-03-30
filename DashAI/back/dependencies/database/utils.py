@@ -197,7 +197,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
     from kink import di
 
     from DashAI.back.dependencies.database.models import (
-        ConverterList,
+        Converter,
         Dataset,
         Explorer,
         GlobalExplainer,
@@ -266,7 +266,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
             }
 
         converter_list = (
-            db.query(ConverterList).filter(ConverterList.huey_id == huey_id).first()
+            db.query(Converter).filter(Converter.huey_id == huey_id).first()
         )
         if converter_list:
             return {

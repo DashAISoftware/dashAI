@@ -95,7 +95,7 @@ from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
-from DashAI.back.job.converter_job import ConverterListJob
+from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
@@ -297,7 +297,7 @@ def get_initial_components():
         ModelJob,
         ExplorerJob,
         PredictJob,
-        ConverterListJob,
+        ConverterJob,
         DatasetJob,
         GenerativeJob,
         PipelineJob,

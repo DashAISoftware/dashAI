@@ -5,7 +5,7 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
-from DashAI.back.dependencies.database.models import ConverterList
+from DashAI.back.dependencies.database.models import Converter
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -94,8 +94,8 @@ def _rebuild_dataset_with_transformed_columns(
     return modified_dataset
 
 
-class ConverterListJob(BaseJob):
-    """ConverterListJob class to modify a dataset by applying a
+class ConverterJob(BaseJob):
+    """ConverterJob class to modify a dataset by applying a
     sequence of converters."""
 
     @inject
@@ -106,7 +106,7 @@ class ConverterListJob(BaseJob):
         converter_list_id = self.kwargs["converter_list_id"]
 
         with session_factory() as db:
-            converter_list = db.get(ConverterList, converter_list_id)
+            converter_list = db.get(Converter, converter_list_id)
             if converter_list is None:
                 raise JobError(
                     f"Converter list with id {converter_list_id} does not exist in DB."
@@ -131,7 +131,7 @@ class ConverterListJob(BaseJob):
             return
 
         with session_factory() as db:
-            converter_list = db.get(ConverterList, converter_list_id)
+            converter_list = db.get(Converter, converter_list_id)
             if converter_list is None:
                 return
 
@@ -154,7 +154,7 @@ class ConverterListJob(BaseJob):
 
         try:
             with session_factory() as db:
-                converter_list = db.get(ConverterList, converter_list_id)
+                converter_list = db.get(Converter, converter_list_id)
                 if not converter_list:
                     return f"Converter Job #{converter_list_id}"
                 converter_name = converter_list.converter
@@ -210,7 +210,7 @@ class ConverterListJob(BaseJob):
                 if converter_list_id is None:
                     raise JobError("Converter list ID is required")
 
-                converter_list: ConverterList = db.get(ConverterList, converter_list_id)
+                converter_list: Converter = db.get(Converter, converter_list_id)
                 if not converter_list:
                     raise JobError(
                         f"Converter list with id {converter_list_id} not found"
