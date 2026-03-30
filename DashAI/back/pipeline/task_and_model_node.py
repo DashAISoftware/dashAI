@@ -197,9 +197,7 @@ class TaskAndModel(BaseJob):
             # `train/<pipeline_id>`. This node now expects that location to be
             # a directory, so replace legacy file with a directory.
             if os.path.isfile(path):
-                log.warning(
-                    "Replacing legacy model file path with directory: %s", path
-                )
+                log.warning("Replacing legacy model file path with directory: %s", path)
                 os.remove(path)
 
             os.makedirs(path, exist_ok=True)

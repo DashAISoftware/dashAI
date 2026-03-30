@@ -94,8 +94,7 @@ NODES: List[NodeDefinition] = [
         predecessors=["TaskAndModel"],
         successors=["Prediction"],
         description=(
-            "Evaluates the trained model using the selected metrics"
-            "on each data split."
+            "Evaluates the trained model using the selected metricson each data split."
         ),
         input="Trained model and split data",
         output="Evaluation results",
