@@ -26,7 +26,13 @@ import { useSnackbar } from "notistack";
  * Receives from SplitData (via prevNodes):
  *   input_columns, output_columns, splits, id (dataset id), file_path
  */
-const TaskAndModelNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
+const TaskAndModelNode = ({
+  open,
+  onClose,
+  onSave,
+  savedConfig,
+  prevNodes,
+}) => {
   const [task, setTask] = useState(savedConfig?.task || "");
   const [model, setModel] = useState(savedConfig?.model || "");
   const [openSettings, setOpenSettings] = useState(false);
@@ -58,10 +64,9 @@ const TaskAndModelNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => 
     if (!datasetId) {
       setInfoLoading(false);
       if (!hasWarnedRef.current) {
-        enqueueSnackbar(
-          "Missing dataset – connect a SplitData node first.",
-          { variant: "warning" },
-        );
+        enqueueSnackbar("Missing dataset – connect a SplitData node first.", {
+          variant: "warning",
+        });
         hasWarnedRef.current = true;
       }
       return;
@@ -157,8 +162,14 @@ const TaskAndModelNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => 
         );
       } else {
         try {
-          const parsedInput = parseRangeToIndex(String(inputColumnsRaw), maxValue);
-          const parsedOutput = parseRangeToIndex(String(outputColumnsRaw), maxValue);
+          const parsedInput = parseRangeToIndex(
+            String(inputColumnsRaw),
+            maxValue,
+          );
+          const parsedOutput = parseRangeToIndex(
+            String(outputColumnsRaw),
+            maxValue,
+          );
           inputColumnNames = parsedInput.map(
             (idx) => columnNames[idx - 1] || `Column_${idx}`,
           );
@@ -183,9 +194,17 @@ const TaskAndModelNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => 
             if (validation.dataset_status === "valid") {
               return { name: taskObj.name, valid: true };
             }
-            return { name: taskObj.name, valid: false, error: validation.error };
+            return {
+              name: taskObj.name,
+              valid: false,
+              error: validation.error,
+            };
           } catch (error) {
-            return { name: taskObj.name, valid: false, error: "Request failed" };
+            return {
+              name: taskObj.name,
+              valid: false,
+              error: "Request failed",
+            };
           }
         }),
       );
@@ -200,7 +219,13 @@ const TaskAndModelNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => 
     };
 
     validateAvailableTasks();
-  }, [availableTasks, inputColumnsRaw, outputColumnsRaw, datasetId, datasetInfo]);
+  }, [
+    availableTasks,
+    inputColumnsRaw,
+    outputColumnsRaw,
+    datasetId,
+    datasetInfo,
+  ]);
 
   // ---------- Save ----------
   const handleSave = async () => {

@@ -1,6 +1,6 @@
+import logging
 from typing import List, Union
 
-import logging
 from datasets import DatasetDict
 
 from DashAI.back.core.utils import MultilingualString
@@ -78,7 +78,9 @@ class TabularClassificationTask(ClassificationTask):
                 if isinstance(col_type, Text):
                     # Get unique values using dataset API
                     unique_values = [
-                        value for value in dashai_dataset.unique(col) if value is not None
+                        value
+                        for value in dashai_dataset.unique(col)
+                        if value is not None
                     ]
                     log.info(
                         f"Converting Text column '{col}' to Categorical with "
@@ -91,6 +93,4 @@ class TabularClassificationTask(ClassificationTask):
 
         # Now call parent's prepare_for_task for validation
         # This will validate that all input columns are now of allowed types
-        return super().prepare_for_task(
-            dashai_dataset, input_columns, output_columns
-        )
+        return super().prepare_for_task(dashai_dataset, input_columns, output_columns)

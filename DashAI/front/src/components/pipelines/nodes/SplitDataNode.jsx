@@ -78,9 +78,12 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
     if (!datasetId) {
       setInfoLoading(false);
       if (!hasWarnedRef.current) {
-        enqueueSnackbar("Missing dataset – connect a DataSelector node first.", {
-          variant: "warning",
-        });
+        enqueueSnackbar(
+          "Missing dataset – connect a DataSelector node first.",
+          {
+            variant: "warning",
+          },
+        );
         hasWarnedRef.current = true;
       }
       return;
@@ -206,9 +209,7 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             onChange={(e) => setInputColumns(e.target.value)}
             margin="normal"
             error={inputError}
-            helperText={
-              inputError ? inputErrorMessage : 'e.g. 1-4 or 1,3,5'
-            }
+            helperText={inputError ? inputErrorMessage : "e.g. 1-4 or 1,3,5"}
           />
         </Grid>
 
@@ -220,9 +221,7 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             onChange={(e) => setOutputColumns(e.target.value)}
             margin="normal"
             error={outputError}
-            helperText={
-              outputError ? outputErrorMessage : 'e.g. 5 or 5-6'
-            }
+            helperText={outputError ? outputErrorMessage : "e.g. 5 or 5-6"}
           />
         </Grid>
 

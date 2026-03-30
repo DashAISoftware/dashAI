@@ -81,8 +81,8 @@ const MetricsEvalNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
           </Typography>
           {!task && (
             <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-              ⚠️ Connect a Task &amp; Model node first so compatible metrics
-              can be listed.
+              ⚠️ Connect a Task &amp; Model node first so compatible metrics can
+              be listed.
             </Typography>
           )}
         </Grid>

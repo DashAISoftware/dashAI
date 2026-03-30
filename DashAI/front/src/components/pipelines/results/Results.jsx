@@ -102,21 +102,20 @@ function PipelineResults({ pipelineId, onClose }) {
   const hasAtomizedTrain =
     (results.task_and_model &&
       Object.keys(results.task_and_model).length > 0) ||
-    (results.metrics_result &&
-      Object.keys(results.metrics_result).length > 0);
+    (results.metrics_result && Object.keys(results.metrics_result).length > 0);
   const hasPrediction =
     results.prediction && results.prediction !== "No prediction data";
 
   // Derive unified values from whichever format is available
   const trainModelName = hasTrain
     ? results.train.info
-    : results.task_and_model?.model ?? "-";
+    : (results.task_and_model?.model ?? "-");
   const trainParameters = hasTrain
     ? results.train.parameters
-    : results.task_and_model?.parameters ?? null;
+    : (results.task_and_model?.parameters ?? null);
   const trainMetrics = hasTrain
     ? results.train.metrics
-    : results.metrics_result?.results ?? null;
+    : (results.metrics_result?.results ?? null);
 
   const paramData = { parameters: trainParameters };
 
@@ -197,9 +196,7 @@ function PipelineResults({ pipelineId, onClose }) {
                   )}
                   {trainTab === 2 && (
                     <Box>
-                      <PipelineResultsMetrics
-                        metricsData={trainMetrics}
-                      />
+                      <PipelineResultsMetrics metricsData={trainMetrics} />
                     </Box>
                   )}
                   {trainTab === 3 && (
