@@ -135,6 +135,15 @@ class PipelineJob(BaseJob):
         elif node_type == "Train":
             context["train"] = output.get("train")
             pipeline.train = context["train"]
+        elif node_type == "SplitData":
+            context["split_data"] = output.get("split_data")
+            pipeline.split_data = context["split_data"]
+        elif node_type == "TaskAndModel":
+            context["task_and_model"] = output.get("task_and_model")
+            pipeline.task_and_model = context["task_and_model"]
+        elif node_type == "MetricsEval":
+            context["metrics_result"] = output.get("metrics_result")
+            pipeline.metrics_result = context["metrics_result"]
         elif node_type == "RetrieveModel":
             context["retrieve"] = output.get("retrieve")
         elif node_type == "Prediction":

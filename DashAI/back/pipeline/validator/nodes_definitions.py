@@ -27,7 +27,7 @@ NODES: List[NodeDefinition] = [
         source=True,
         target=False,
         predecessors=[],
-        successors=["DataExploration", "Train"],
+        successors=["DataExploration", "Train", "SplitData"],
         description=(
             "Loads a dataset stored in the system to be used in the pipeline."
         ),
@@ -48,6 +48,57 @@ NODES: List[NodeDefinition] = [
             "into its structure and content."
         ),
         input="Dataset object",
+        configType="custom",
+    ),
+    NodeDefinition(
+        type="SplitData",
+        name="Split Data",
+        icon="CallSplitIcon",
+        requiresConfiguration=True,
+        source=True,
+        target=True,
+        predecessors=["DataSelector"],
+        successors=["TaskAndModel"],
+        description=(
+            "Configures the partition of the dataset into "
+            "train / validation / test splits."
+        ),
+        input="Dataset object",
+        output="Split dataset subsets",
+        configType="custom",
+    ),
+    NodeDefinition(
+        type="TaskAndModel",
+        name="Task & Model",
+        icon="ModelTrainingIcon",
+        requiresConfiguration=True,
+        source=True,
+        target=True,
+        predecessors=["SplitData"],
+        successors=["MetricsEval", "Prediction"],
+        description=(
+            "Selects the ML task and model, configures hyper-parameters, "
+            "and trains the model on the split data."
+        ),
+        input="Split dataset subsets",
+        output="Trained model object",
+        configType="custom",
+    ),
+    NodeDefinition(
+        type="MetricsEval",
+        name="Metrics",
+        icon="AssessmentIcon",
+        requiresConfiguration=True,
+        source=True,
+        target=True,
+        predecessors=["TaskAndModel"],
+        successors=["Prediction"],
+        description=(
+            "Evaluates the trained model using the selected metrics "
+            "on each data split."
+        ),
+        input="Trained model and split data",
+        output="Evaluation results",
         configType="custom",
     ),
     NodeDefinition(
@@ -74,7 +125,7 @@ NODES: List[NodeDefinition] = [
         requiresConfiguration=False,
         source=False,
         target=True,
-        predecessors=["Train", "RetrieveModel"],
+        predecessors=["Train", "RetrieveModel", "TaskAndModel", "MetricsEval"],
         successors=[],
         description="Generates predictions using a trained model.",
         input="Trained model and dataset object",

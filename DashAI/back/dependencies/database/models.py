@@ -533,6 +533,97 @@ class Pipeline(Base):
     train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
 
+    # New JSON columns for atomized Train sub-node results
+    split_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    task_and_model: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    metrics_result: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+
+    # Relationships to new node tables
+    split_data_nodes: Mapped[List["SplitDataNode"]] = relationship(
+        "SplitDataNode", cascade="all, delete-orphan", back_populates="pipeline"
+    )
+    task_and_model_nodes: Mapped[List["TaskAndModelNode"]] = relationship(
+        "TaskAndModelNode", cascade="all, delete-orphan", back_populates="pipeline"
+    )
+    metrics_nodes: Mapped[List["MetricsNode"]] = relationship(
+        "MetricsNode", cascade="all, delete-orphan", back_populates="pipeline"
+    )
+
+
+class SplitDataNode(Base):
+    __tablename__ = "split_data_node"
+    """
+    Table to store configuration and results for the Split Data step
+    of a pipeline. Configures how the dataset is partitioned into
+    train / validation / test splits.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline.id", ondelete="CASCADE"), nullable=False
+    )
+    input_columns: Mapped[List[int]] = mapped_column(JSON, nullable=False)
+    output_columns: Mapped[List[int]] = mapped_column(JSON, nullable=False)
+    splits: Mapped[Dict[str, float]] = mapped_column(JSON, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    # Relationships
+    pipeline: Mapped["Pipeline"] = relationship(
+        "Pipeline", back_populates="split_data_nodes"
+    )
+
+
+class TaskAndModelNode(Base):
+    __tablename__ = "task_and_model_node"
+    """
+    Table to store configuration and results for the Task & Model step
+    of a pipeline.  Selects the ML task and model, stores training
+    parameters, and keeps a reference to the persisted model artifact.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline.id", ondelete="CASCADE"), nullable=False
+    )
+    task_name: Mapped[str] = mapped_column(String, nullable=False)
+    model_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    model_path: Mapped[str] = mapped_column(String, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    # Relationships
+    pipeline: Mapped["Pipeline"] = relationship(
+        "Pipeline", back_populates="task_and_model_nodes"
+    )
+
+
+class MetricsNode(Base):
+    __tablename__ = "metrics_node"
+    """
+    Table to store configuration and results for the Metrics step
+    of a pipeline.  Holds the list of metric names to compute and,
+    after execution, the evaluation results.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline.id", ondelete="CASCADE"), nullable=False
+    )
+    metric_names: Mapped[List[str]] = mapped_column(JSON, nullable=False)
+    results: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    # Relationships
+    pipeline: Mapped["Pipeline"] = relationship(
+        "Pipeline", back_populates="metrics_nodes"
+    )
+
 
 class ConverterList(Base):
     __tablename__ = "converter_list"
