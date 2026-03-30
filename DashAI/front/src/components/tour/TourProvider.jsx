@@ -42,7 +42,8 @@ export const TourProvider = ({
   const tourData = tours[tourKey];
 
   const [disabled, setDisabledState] = useState(disabledProp);
-  const [disabledMessage, setDisabledMessageState] = useState(disabledMessageProp);
+  const [disabledMessage, setDisabledMessageState] =
+    useState(disabledMessageProp);
 
   // Exposed via context so child components can update the navbar button's disabled state
   const setDisabled = useCallback((d, msg) => {
