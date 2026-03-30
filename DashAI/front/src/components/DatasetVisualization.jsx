@@ -30,6 +30,7 @@ import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
+import { useModels } from "./models/ModelsContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
@@ -47,11 +48,17 @@ export default function DatasetVisualization({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
-  const {
-    setDatasetInfo: setSharedDatasetInfo,
-    datasetTab: tab,
-    setDatasetTab: setTab,
-  } = useDatasetsAndNotebooks();
+  const datasetsContext = useDatasetsAndNotebooks();
+  const modelsContext = useModels();
+  const setSharedDatasetInfo =
+    datasetsContext?.setDatasetInfo ??
+    modelsContext?.setDatasetInfo ??
+    (() => {});
+  const tab = datasetsContext?.datasetTab ?? modelsContext?.datasetTab ?? 0;
+  const setTab =
+    datasetsContext?.setDatasetTab ??
+    modelsContext?.setDatasetTab ??
+    (() => {});
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const tourContext = useTourContext();
