@@ -154,6 +154,7 @@ export default function ColumnInsights({ numericStats, textStats }) {
                   sx={{
                     display: "flex",
                     alignItems: "center",
+                    flexWrap: "wrap",
                     gap: 1,
                     mb: 0.5,
                   }}
