@@ -90,9 +90,24 @@ const OverviewTab = ({
       {missingData.some((data) => data.missing > 0) && (
         <Card data-section="missing-values-overview">
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
-            <Typography variant="h6" gutterBottom>
-              {t("datasets:label.missingValuesOverview")}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
+            >
+              <Typography variant="h6">
+                {t("datasets:label.missingValuesOverview")}
+              </Typography>
+              <Chip
+                label={`Total: ${Object.values(nan).reduce((sum, v) => sum + v, 0)}`}
+                size="small"
+                variant="outlined"
+                sx={{ fontWeight: "bold" }}
+              />
+            </Box>
             <Box sx={{ width: "100%", height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={missingData}>
