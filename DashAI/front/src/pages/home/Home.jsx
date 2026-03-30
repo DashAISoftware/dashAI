@@ -43,7 +43,6 @@ function SidebarSection({ label, links, t, theme }) {
     >
       <Typography
         sx={{
-          fontFamily: '"IBM Plex Mono", monospace',
           fontSize: "8.5px",
           letterSpacing: "0.2em",
           textTransform: "uppercase",
@@ -225,7 +224,6 @@ function Home() {
           >
             <Typography
               sx={{
-                fontFamily: '"IBM Plex Mono", monospace',
                 fontSize: "9px",
                 color: theme.palette.text.disabled,
                 letterSpacing: "0.04em",
@@ -261,7 +259,6 @@ function Home() {
           >
             <Typography
               sx={{
-                fontFamily: '"IBM Plex Sans", sans-serif',
                 fontSize: "18px",
                 fontWeight: 600,
                 color: theme.palette.text.primary,
@@ -272,7 +269,6 @@ function Home() {
             </Typography>
             <Typography
               sx={{
-                fontFamily: '"IBM Plex Mono", monospace',
                 fontSize: "10px",
                 color: theme.palette.text.disabled,
                 mt: "3px",

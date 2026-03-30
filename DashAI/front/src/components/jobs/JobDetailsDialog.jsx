@@ -56,12 +56,12 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
             displayJob.status === "finished"
               ? "success"
               : displayJob.status === "error"
-                ? "error"
-                : displayJob.status === "started"
-                  ? "primary"
-                  : displayJob.status === "deleted"
-                    ? "warning"
-                    : "default"
+              ? "error"
+              : displayJob.status === "started"
+              ? "primary"
+              : displayJob.status === "deleted"
+              ? "warning"
+              : "default"
           }
           size="small"
           sx={{ ml: 1 }}
@@ -204,7 +204,6 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                           ? theme.palette.grey[900]
                           : theme.palette.grey[100],
                       p: 2,
-                      fontFamily: "monospace",
                       fontSize: "0.875rem",
                       overflow: "auto",
                       maxHeight: "200px",

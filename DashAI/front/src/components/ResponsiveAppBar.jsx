@@ -87,7 +87,6 @@ function ResponsiveAppBar() {
         >
           <Typography
             sx={{
-              fontFamily: '"IBM Plex Mono", monospace',
               fontSize: 16,
               fontWeight: 600,
               letterSpacing: "0.02em",
@@ -103,7 +102,6 @@ function ResponsiveAppBar() {
           <Box
             sx={{
               display: { xs: "none", sm: "block" },
-              fontFamily: '"IBM Plex Mono", monospace',
               fontSize: "8px",
               fontWeight: 500,
               letterSpacing: "0.14em",
@@ -164,7 +162,6 @@ function ResponsiveAppBar() {
               >
                 <Typography
                   sx={{
-                    fontFamily: '"IBM Plex Mono", monospace',
                     fontSize: "10px",
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
@@ -212,7 +209,6 @@ function ResponsiveAppBar() {
                   px: "18px",
                   height: "100%",
                   textDecoration: "none",
-                  fontFamily: '"IBM Plex Mono", monospace',
                   fontSize: "10px",
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
