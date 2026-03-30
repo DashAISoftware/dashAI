@@ -312,6 +312,7 @@ export default function DatasetVisualization({
             {/* Data Quality Alerts */}
             <Box>
               <QualityAlerts
+                key={dataset?.id}
                 qualityInfo={datasetInfo?.quality_info}
                 generalInfo={datasetInfo?.general_info}
                 missingValues={datasetInfo?.nan}

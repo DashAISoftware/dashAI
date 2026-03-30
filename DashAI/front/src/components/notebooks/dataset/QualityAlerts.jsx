@@ -1,63 +1,141 @@
-import React from "react";
-import { Alert } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
+import React, { useMemo } from "react";
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Alert,
+  Typography,
+  Box,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { useTranslation } from "react-i18next";
 
 export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   if (!qualityInfo) return null;
   const { t } = useTranslation(["datasets"]);
 
-  const alerts = [];
+  const { warnings, successes } = useMemo(() => {
+    const w = [];
+    const s = [];
 
-  // Duplicate rows
-  if (generalInfo?.duplicate_rows > 0) {
-    alerts.push(
-      <Alert severity="warning" sx={{ mb: 1 }} key="duplicates">
-        {t("datasets:label.foundDuplicateRows", {
+    // Duplicate rows
+    if (generalInfo?.duplicate_rows > 0) {
+      w.push({
+        key: "duplicates",
+        severity: "warning",
+        message: t("datasets:label.foundDuplicateRows", {
           count: generalInfo.duplicate_rows,
-        })}
-      </Alert>,
-    );
-  }
+        }),
+      });
+    } else {
+      s.push({
+        key: "no-duplicates",
+        message: t("datasets:label.noDuplicateRows"),
+      });
+    }
 
-  // Missing values
-  if (Object.values(missingValues).some((value) => value > 0)) {
-    alerts.push(
-      <Alert severity="warning" sx={{ mb: 1 }} key="nan">
-        {t("datasets:label.missingValuesDetected", {
+    // Missing values
+    if (Object.values(missingValues).some((value) => value > 0)) {
+      w.push({
+        key: "nan",
+        severity: "warning",
+        message: t("datasets:label.missingValuesDetected", {
           columns: Object.entries(missingValues)
             .filter(([_, value]) => value > 0)
             .map(([key, _]) => key)
             .join(", "),
-        })}
-      </Alert>,
-    );
-  }
+        }),
+      });
+    } else {
+      s.push({
+        key: "no-missing",
+        message: t("datasets:label.noMissingValues"),
+      });
+    }
 
-  // High cardinality columns
-  if (qualityInfo.high_cardinality_columns?.length > 0) {
-    alerts.push(
-      <Alert severity="info" sx={{ mb: 1 }} key="cardinality">
-        {t("datasets:label.highCardinalityDetected", {
+    // High cardinality columns
+    if (qualityInfo.high_cardinality_columns?.length > 0) {
+      w.push({
+        key: "cardinality",
+        severity: "info",
+        message: t("datasets:label.highCardinalityDetected", {
           columns: qualityInfo.high_cardinality_columns.join(", "),
-        })}
-      </Alert>,
-    );
-  }
+        }),
+      });
+    }
 
-  // No issues
-  if (alerts.length === 0) {
-    alerts.push(
-      <Alert
-        severity="success"
-        sx={{ mb: 1 }}
-        key="quality"
-        icon={<CheckIcon />}
+    return { warnings: w, successes: s };
+  }, [qualityInfo, generalInfo, missingValues, t]);
+
+  const hasIssues = warnings.length > 0;
+
+  return (
+    <Accordion
+      defaultExpanded={false}
+      disableGutters
+      sx={{
+        boxShadow: "none",
+        border: (theme) =>
+          `1px solid ${hasIssues ? theme.palette.warning.main : theme.palette.success.main}40`,
+        borderRadius: "8px !important",
+        bgcolor: (theme) =>
+          hasIssues
+            ? `${theme.palette.warning.main}08`
+            : `${theme.palette.success.main}08`,
+        "&::before": { display: "none" },
+        "&.Mui-expanded": { margin: 0 },
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        sx={{
+          minHeight: 48,
+          "&.Mui-expanded": { minHeight: 48 },
+          "& .MuiAccordionSummary-content": { my: 1 },
+        }}
       >
-        {t("datasets:label.noDataQualityIssuesDetected")}
-      </Alert>,
-    );
-  }
-
-  return <>{alerts}</>;
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {hasIssues ? (
+            <WarningAmberIcon color="warning" fontSize="small" />
+          ) : (
+            <CheckCircleOutlineIcon color="success" fontSize="small" />
+          )}
+          <Typography variant="subtitle2" fontWeight="bold">
+            {t("datasets:label.dataQualitySummary")}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: (theme) =>
+                hasIssues
+                  ? theme.palette.warning.main
+                  : theme.palette.success.main,
+              fontWeight: "bold",
+            }}
+          >
+            —{" "}
+            {hasIssues
+              ? t("datasets:label.qualityIssuesFound", {
+                  count: warnings.length,
+                })
+              : t("datasets:label.noDataQualityIssuesDetected")}
+          </Typography>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ pt: 0, pb: 1.5 }}>
+        {warnings.map((item) => (
+          <Alert severity={item.severity} sx={{ mb: 1 }} key={item.key}>
+            {item.message}
+          </Alert>
+        ))}
+        {successes.map((item) => (
+          <Alert severity="success" sx={{ mb: 1 }} key={item.key}>
+            {item.message}
+          </Alert>
+        ))}
+      </AccordionDetails>
+    </Accordion>
+  );
 };
