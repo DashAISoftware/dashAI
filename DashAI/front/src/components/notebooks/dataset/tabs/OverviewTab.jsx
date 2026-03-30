@@ -67,13 +67,13 @@ const OverviewTab = ({
           />
         </CardContent>
       </Card>
-      {/* Missing Values Overview */}
-      <Card>
-        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
-          <Typography variant="h6" gutterBottom>
-            {t("datasets:label.missingValuesOverview")}
-          </Typography>
-          {missingData.some((data) => data.missing > 0) ? (
+      {/* Missing Values Overview — only shown when there are missing values */}
+      {missingData.some((data) => data.missing > 0) && (
+        <Card>
+          <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
+            <Typography variant="h6" gutterBottom>
+              {t("datasets:label.missingValuesOverview")}
+            </Typography>
             <Box sx={{ width: "100%", height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={missingData}>
@@ -97,13 +97,9 @@ const OverviewTab = ({
                 </BarChart>
               </ResponsiveContainer>
             </Box>
-          ) : (
-            <Alert severity="success">
-              {t("datasets:label.noMissingValues")}
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Column Types Distribution */}
       <Card>
