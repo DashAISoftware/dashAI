@@ -13,6 +13,12 @@ After reviewing this entire guide, you can check out this page that teaches you 
 
 [Uploading a Plugin](./upload)
 
+:::important Naming convention
+Your plugin package **must** use the `dashai-` prefix (e.g. `dashai-my-model`) for
+DashAI to automatically discover it when installed. More community plugins:
+[pypi.org/search/?q=dashai](https://pypi.org/search/?q=dashai).
+:::
+
 ## What Do I Need to Create a Plugin?
 
 To create a plugin you need to have the python classes of the software available. These can be available in 2 ways:
@@ -54,7 +60,9 @@ class MyTabularClassificationModel(TabularClassificationModel):
 
    Look at examples of other plugins in the software. Both in the python files and the configuration file.
 
-   [Plugin Overview](./overview)
+   The [Plugin Overview](./overview) page walks through a complete working plugin
+   (`dashai-phi-model-package`). More examples:
+   [pypi.org/search/?q=dashai](https://pypi.org/search/?q=dashai).
 
 2. **Test the plugin**
 
