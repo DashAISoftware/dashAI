@@ -17,6 +17,12 @@ import { useTourRegistry } from "../../contexts/TourRegistryContext";
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
 
+const NOOP_REGISTRY = {
+  register: () => null,
+  unregister: () => {},
+  update: () => {},
+};
+
 export const TourProvider = ({
   tourKey,
   children,
@@ -24,7 +30,7 @@ export const TourProvider = ({
   disabledMessage: disabledMessageProp = "Tour not available",
 }) => {
   const { t } = useTranslation(["common"]);
-  const registry = useTourRegistry();
+  const registry = useTourRegistry() ?? NOOP_REGISTRY;
   const regIdRef = useRef(null);
 
   const {
@@ -72,7 +78,7 @@ export const TourProvider = ({
         regIdRef.current = null;
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keep registry entry in sync when disabled/message state changes
   useEffect(() => {

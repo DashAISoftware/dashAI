@@ -4,9 +4,14 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTheme } from "@mui/material/styles";
 import { useTourRegistry } from "../../contexts/TourRegistryContext";
 
+const NOOP_REGISTRY = {
+  getActive: () => null,
+  subscribe: () => () => {},
+};
+
 export default function NavbarTourButton() {
   const theme = useTheme();
-  const registry = useTourRegistry();
+  const registry = useTourRegistry() ?? NOOP_REGISTRY;
   const [active, setActive] = useState(() => registry.getActive());
 
   useEffect(() => {
