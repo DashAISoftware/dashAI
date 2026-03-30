@@ -1,17 +1,13 @@
 """Tests for docs/scripts/generate_components.py."""
-import sys
-import textwrap
-from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
-import pytest
+import sys
+from pathlib import Path
 
 # Add docs/scripts to path so we can import the generator
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "scripts"))
 
-# --- helpers that don't require importing the full DashAI stack ---
 
+# Helpers that don't require importing the full DashAI stack
 class FakeMultilingualString:
     def __init__(self, en, es=None):
         self.en = en
@@ -23,36 +19,34 @@ class FakeMultilingualString:
         return self.en
 
 
-# ------------------------------------------------------------------ #
-# _extract_text: handles MultilingualString, str, None               #
-# ------------------------------------------------------------------ #
-
+# Test _extract_text: handles MultilingualString, str, None
 def test_extract_text_from_multilingual_string():
     from generate_components import _extract_text
+
     ms = FakeMultilingualString(en="English text", es="Texto en español")
     assert _extract_text(ms) == "English text"
 
 
 def test_extract_text_from_plain_string():
     from generate_components import _extract_text
+
     assert _extract_text("plain string") == "plain string"
 
 
 def test_extract_text_from_none_returns_empty():
     from generate_components import _extract_text
+
     assert _extract_text(None) == ""
 
 
 def test_extract_text_from_missing_attr_returns_fallback():
     from generate_components import _extract_text
+
     sentinel = object()  # has no .get, not a str
     assert _extract_text(sentinel, fallback="fallback") == "fallback"
 
 
-# ------------------------------------------------------------------ #
-# _get_display_name: cls.DISPLAY_NAME or cls.__name__                #
-# ------------------------------------------------------------------ #
-
+# Test _get_display_name: cls.DISPLAY_NAME or cls.__name__
 def test_get_display_name_from_attribute():
     from generate_components import _get_display_name
 
@@ -71,10 +65,7 @@ def test_get_display_name_falls_back_to_class_name():
     assert _get_display_name(FakeCls) == "FakeCls"
 
 
-# ------------------------------------------------------------------ #
-# _get_description: cls.DESCRIPTION or cls.__doc__                   #
-# ------------------------------------------------------------------ #
-
+# Test _get_description: cls.DESCRIPTION or cls.__doc__
 def test_get_description_from_attribute():
     from generate_components import _get_description
 
@@ -89,7 +80,6 @@ def test_get_description_falls_back_to_docstring():
 
     class FakeCls:
         """Docstring description."""
-        pass
 
     assert _get_description(FakeCls) == "Docstring description."
 
@@ -112,17 +102,13 @@ def test_get_description_strips_multiline_docstring():
 
         Second paragraph.
         """
-        pass
 
     result = _get_description(FakeCls)
     assert result.startswith("First line")
     assert "\n    " not in result  # no raw indentation preserved
 
 
-# ------------------------------------------------------------------ #
-# _get_short_description: SHORT_DESCRIPTION > DESCRIPTION            #
-# ------------------------------------------------------------------ #
-
+# Test _get_short_description: SHORT_DESCRIPTION > DESCRIPTION
 def test_get_short_description_prefers_short():
     from generate_components import _get_short_description
 
@@ -154,7 +140,6 @@ def test_get_short_description_handles_multilingual():
 # ------------------------------------------------------------------ #
 # _get_compatible_components                                          #
 # ------------------------------------------------------------------ #
-
 def test_get_compatible_components_returns_list():
     from generate_components import _get_compatible_components
 
@@ -176,7 +161,6 @@ def test_get_compatible_components_returns_empty_list_when_missing():
 # ------------------------------------------------------------------ #
 # _get_schema_params: JSON Schema -> list of param dicts             #
 # ------------------------------------------------------------------ #
-
 def test_get_schema_params_parses_properties():
     from generate_components import _get_schema_params
 
@@ -185,8 +169,16 @@ def test_get_schema_params_parses_properties():
         def get_schema(cls):
             return {
                 "properties": {
-                    "C": {"type": "number", "default": 1.0, "description": "Regularization"},
-                    "kernel": {"type": "string", "default": "rbf", "description": "Kernel type"},
+                    "C": {
+                        "type": "number",
+                        "default": 1.0,
+                        "description": "Regularization",
+                    },
+                    "kernel": {
+                        "type": "string",
+                        "default": "rbf",
+                        "description": "Kernel type",
+                    },
                 }
             }
 
@@ -229,10 +221,7 @@ def test_get_schema_params_returns_empty_when_method_missing():
     assert _get_schema_params(FakeCls) == []
 
 
-# ------------------------------------------------------------------ #
-# _get_methods: public methods from MRO, excluding object            #
-# ------------------------------------------------------------------ #
-
+# Test _get_methods: public methods from MRO, excluding object
 def test_get_methods_includes_own_methods():
     from generate_components import _get_methods
 
@@ -263,6 +252,7 @@ def test_get_methods_excludes_dunder_methods():
     class MyClass:
         def __init__(self):
             pass
+
         def public_method(self):
             pass
 
@@ -278,6 +268,7 @@ def test_get_methods_excludes_private_methods():
     class MyClass:
         def _private(self):
             pass
+
         def public(self):
             pass
 
@@ -293,12 +284,10 @@ def test_get_methods_annotates_inherited_source_class():
     class Base:
         def base_method(self):
             """Base method."""
-            pass
 
     class Child(Base):
         def child_method(self):
             """Child method."""
-            pass
 
     methods = _get_methods(Child)
     by_name = {m["name"]: m for m in methods}
@@ -318,10 +307,7 @@ def test_get_methods_excludes_object_methods():
     assert "__class__" not in names
 
 
-# ------------------------------------------------------------------ #
-# _render_component_mdx: produces valid MDX string                   #
-# ------------------------------------------------------------------ #
-
+# Test _render_component_mdx: produces valid MDX string
 def test_render_component_mdx_contains_title():
     from generate_components import _render_component_mdx
 
@@ -330,7 +316,14 @@ def test_render_component_mdx_contains_title():
         "type": "Converter",
         "display_name": "Standard Scaler",
         "description": "Standardize features.",
-        "params": [{"name": "with_mean", "type": "boolean", "default": "true", "description": "Center data"}],
+        "params": [
+            {
+                "name": "with_mean",
+                "type": "boolean",
+                "default": "true",
+                "description": "Center data",
+            }
+        ],
         "methods": [],
         "compatible": ["TabularClassificationTask"],
     }
@@ -349,7 +342,12 @@ def test_render_component_mdx_contains_params_table():
         "display_name": "SVC",
         "description": "Support vector classifier.",
         "params": [
-            {"name": "C", "type": "number", "default": "1.0", "description": "Regularization"},
+            {
+                "name": "C",
+                "type": "number",
+                "default": "1.0",
+                "description": "Regularization",
+            },
         ],
         "methods": [],
         "compatible": [],
@@ -393,16 +391,21 @@ def test_render_component_mdx_contains_compatible_section():
     assert "TextClassificationTask" in mdx
 
 
-# ------------------------------------------------------------------ #
-# _render_index_mdx: produces valid index MDX string                 #
-# ------------------------------------------------------------------ #
-
+# Test _render_index_mdx: produces valid index MDX string
 def test_render_index_mdx_lists_all_components():
     from generate_components import _render_index_mdx
 
     components = [
-        {"class_name": "SVC", "display_name": "SVC", "short_description": "Support vector classifier."},
-        {"class_name": "DecisionTree", "display_name": "Decision Tree", "short_description": "Tree-based classifier."},
+        {
+            "class_name": "SVC",
+            "display_name": "SVC",
+            "short_description": "Support vector classifier.",
+        },
+        {
+            "class_name": "DecisionTree",
+            "display_name": "Decision Tree",
+            "short_description": "Tree-based classifier.",
+        },
     ]
     mdx = _render_index_mdx("Model", components)
     assert "SVC" in mdx
@@ -410,15 +413,13 @@ def test_render_index_mdx_lists_all_components():
     assert "Support vector classifier." in mdx
 
 
-# ------------------------------------------------------------------ #
-# _is_pipeline_node: excludes DashAI.back.pipeline classes           #
-# ------------------------------------------------------------------ #
-
+# Test _is_pipeline_node: excludes DashAI.back.pipeline classes
 def test_is_pipeline_node_returns_true_for_pipeline_module():
     from generate_components import _is_pipeline_node
 
     class FakeCls:
         pass
+
     FakeCls.__module__ = "DashAI.back.pipeline.something"
 
     assert _is_pipeline_node(FakeCls) is True
@@ -429,15 +430,13 @@ def test_is_pipeline_node_returns_false_for_other_module():
 
     class FakeCls:
         pass
+
     FakeCls.__module__ = "DashAI.back.models.svc"
 
     assert _is_pipeline_node(FakeCls) is False
 
 
-# ------------------------------------------------------------------ #
-# _format_default: reads 'placeholder' key before 'default'          #
-# ------------------------------------------------------------------ #
-
+# Test _format_default: reads 'placeholder' key before 'default'
 def test_format_default_reads_placeholder_key():
     from generate_components import _format_default
 
@@ -459,10 +458,7 @@ def test_format_default_returns_dash_when_neither():
     assert _format_default(prop) == "—"
 
 
-# ------------------------------------------------------------------ #
-# _escape_table_cell: escapes all MDX-sensitive characters           #
-# ------------------------------------------------------------------ #
-
+# Test _escape_table_cell: escapes all MDX-sensitive characters
 def test_escape_table_cell_escapes_pipe():
     from generate_components import _escape_table_cell
 
