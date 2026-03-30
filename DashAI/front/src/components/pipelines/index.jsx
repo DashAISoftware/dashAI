@@ -12,6 +12,9 @@ export { default as DataSelectorNode } from "./nodes/DataSelectorNode";
 export { default as DataExplorationNode } from "./nodes/DataExplorationNode";
 export { default as TrainNode } from "./nodes/TrainNode";
 export { default as RetrieveModelNode } from "./nodes/RetrieveModelNode";
+export { default as SplitDataNode } from "./nodes/SplitDataNode";
+export { default as TaskAndModelNode } from "./nodes/TaskAndModelNode";
+export { default as MetricsEvalNode } from "./nodes/MetricsEvalNode";
 export { default as ParamsSettings } from "./ParamsSettings";
 export { default as ExplorationModal } from "./nodes/ExplorationModal";
 

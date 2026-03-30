@@ -5,6 +5,9 @@ import InsertChartIcon from "@mui/icons-material/InsertChart";
 import SettingsIcon from "@mui/icons-material/Settings";
 import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
 import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
+import CallSplitIcon from "@mui/icons-material/CallSplit";
+import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import { useState } from "react";
@@ -15,6 +18,9 @@ const iconMap = {
   SettingsIcon: SettingsIcon,
   EmojiObjectsIcon: EmojiObjectsIcon,
   ManageHistoryIcon: ManageHistoryIcon,
+  CallSplitIcon: CallSplitIcon,
+  ModelTrainingIcon: ModelTrainingIcon,
+  AssessmentIcon: AssessmentIcon,
 };
 
 const CustomNode = ({ data, isConnectable }) => {

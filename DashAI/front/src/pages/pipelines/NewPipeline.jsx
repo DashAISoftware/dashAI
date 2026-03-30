@@ -191,7 +191,13 @@ function NewPipeline() {
                           ? "Select Train Parameters"
                           : selectedNode?.type === "Exploration"
                             ? "Exploration Configuration"
-                            : `Configure ${selectedNode?.type || "Node"}`}
+                            : selectedNode?.type === "SplitData"
+                              ? "Configure Data Splits"
+                              : selectedNode?.type === "TaskAndModel"
+                                ? "Select Task & Model"
+                                : selectedNode?.type === "MetricsEval"
+                                  ? "Select Metrics"
+                                  : `Configure ${selectedNode?.type || "Node"}`}
                       </Typography>
                       <IconButton
                         onClick={handleCloseDialog}
