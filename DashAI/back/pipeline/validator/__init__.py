@@ -1,5 +1,13 @@
 from .pipeline_validator import PipelineValidator
-from .validator import DataSelectorValidator, DataExplorationValidator, TrainValidator, RetrieveModelValidator
+from .validator import (
+    DataExplorationValidator,
+    DataSelectorValidator,
+    MetricsEvalValidator,
+    RetrieveModelValidator,
+    SplitDataValidator,
+    TaskAndModelValidator,
+    TrainValidator,
+)
 
 __all__ = [
     "PipelineValidator",
@@ -7,4 +15,7 @@ __all__ = [
     "DataExplorationValidator",
     "TrainValidator",
     "RetrieveModelValidator",
+    "SplitDataValidator",
+    "TaskAndModelValidator",
+    "MetricsEvalValidator",
 ]

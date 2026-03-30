@@ -110,9 +110,71 @@ class RetrieveModelValidator(BaseNodeValidator):
         return {"status": "ok"}
 
 
+class SplitDataValidator(BaseNodeValidator):
+    """Validator for the SplitData node configuration."""
+
+    def validate(self) -> Dict[str, str]:
+        input_cols = self.data.get("input_columns")
+        output_cols = self.data.get("output_columns")
+        splits = self.data.get("splits", {})
+
+        if not input_cols or not output_cols:
+            return {
+                "status": "error",
+                "message": "Input and output columns are required",
+            }
+
+        train, val, test = (
+            splits.get("train", 0),
+            splits.get("validation", 0),
+            splits.get("test", 0),
+        )
+        if round(train + val + test, 5) != 1.0:
+            return {
+                "status": "error",
+                "message": "Train, validation, and test splits must sum to 1",
+            }
+
+        return {"status": "ok"}
+
+
+class TaskAndModelValidator(BaseNodeValidator):
+    """Validator for the TaskAndModel node configuration."""
+
+    def validate(self) -> Dict[str, str]:
+        task = self.data.get("task")
+        model = self.data.get("model")
+
+        if task is None:
+            return {"status": "error", "message": "Task is required"}
+
+        if model is None:
+            return {"status": "error", "message": "Model is required"}
+
+        return {"status": "ok"}
+
+
+class MetricsEvalValidator(BaseNodeValidator):
+    """Validator for the MetricsEval node configuration."""
+
+    def validate(self) -> Dict[str, str]:
+        metrics = self.data.get("metrics")
+
+        if not metrics:
+            return {
+                "status": "error",
+                "message": "At least one metric must be selected",
+            }
+
+        return {"status": "ok"}
+
+
 VALIDATOR_MAP = {
     "DataSelector": DataSelectorValidator,
     "DataExploration": DataExplorationValidator,
     "Train": TrainValidator,
     "RetrieveModel": RetrieveModelValidator,
+    "SplitData": SplitDataValidator,
+    "TaskAndModel": TaskAndModelValidator,
+    "MetricsEval": MetricsEvalValidator,
 }
