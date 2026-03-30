@@ -136,7 +136,7 @@ def test_get_tabular_class_task_metadata():
     metadata = tabular_class_task.get_metadata()
 
     assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
+    assert metadata["inputs_types"] == ["Float", "Integer", "Categorical", "Text"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
     assert metadata["outputs_cardinality"] == 1
