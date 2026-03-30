@@ -23,11 +23,19 @@ const sidebars = {
       label: "Tutorials",
       items: [
         "learn/tutorials/upload-dataset",
-        "learn/tutorials/train-model",
-        "learn/tutorials/predict",
-        "learn/tutorials/converter",
-        "learn/tutorials/explorer",
+        "learn/tutorials/notebook",
         "learn/tutorials/generative",
+        {
+          type: "category",
+          label: "Models",
+          items: [
+            "learn/tutorials/Models/overview",
+            "learn/tutorials/Models/train",
+            "learn/tutorials/Models/predictions",
+            "learn/tutorials/Models/explainability",
+            "learn/tutorials/Models/comparison",
+          ],
+        },
       ],
     },
     {
@@ -38,16 +46,6 @@ const sidebars = {
         "learn/guides/models",
         "learn/guides/generative",
         "learn/guides/plugins",
-      ],
-    },
-    {
-      type: "category",
-      label: "Complete Flows",
-      items: [
-        "learn/flows/tabular-classification",
-        "learn/flows/eda-model-decision",
-        "learn/flows/text-classification",
-        "learn/flows/generative-process",
       ],
     },
   ],
