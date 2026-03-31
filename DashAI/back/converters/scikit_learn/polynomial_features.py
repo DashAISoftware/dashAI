@@ -15,6 +15,8 @@ from DashAI.back.types.value_types import Float
 
 
 class PolynomialFeaturesSchema(BaseSchema):
+    """Schema for PolynomialFeatures hyperparameters."""
+
     degree: schema_field(
         int_field(ge=1),
         2,
