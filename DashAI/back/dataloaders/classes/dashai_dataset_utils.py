@@ -1,13 +1,11 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
+from sklearn.preprocessing import OneHotEncoder
+
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import to_arrow_types
 from DashAI.back.types.value_types import Float, Text
-
-if TYPE_CHECKING:
-    from sklearn.preprocessing import OneHotEncoder
-
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 # Data Transformations
 
