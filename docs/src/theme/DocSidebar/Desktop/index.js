@@ -1,7 +1,7 @@
-import React from 'react';
-import clsx from 'clsx';
-import {useThemeConfig} from '@docusaurus/theme-common';
-import Content from '@theme/DocSidebar/Desktop/Content';
+import React from "react";
+import clsx from "clsx";
+import { useThemeConfig } from "@docusaurus/theme-common";
+import Content from "@theme/DocSidebar/Desktop/Content";
 
 function HamburgerIcon() {
   return (
@@ -23,10 +23,15 @@ function HamburgerIcon() {
   );
 }
 
-export default function DocSidebarDesktop({path, sidebar, onCollapse, isHidden}) {
+export default function DocSidebarDesktop({
+  path,
+  sidebar,
+  onCollapse,
+  isHidden,
+}) {
   const {
     docs: {
-      sidebar: {hideable},
+      sidebar: { hideable },
     },
   } = useThemeConfig();
 

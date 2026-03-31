@@ -1,19 +1,17 @@
-import React from 'react';
-import {ErrorCauseBoundary, useThemeConfig} from '@docusaurus/theme-common';
-import {
-  splitNavbarItems,
-} from '@docusaurus/theme-common/internal';
-import NavbarItem from '@theme/NavbarItem';
-import NavbarColorModeToggle from '@theme/Navbar/ColorModeToggle';
-import SearchBar from '@theme/SearchBar';
-import NavbarLogo from '@theme/Navbar/Logo';
-import NavbarSearch from '@theme/Navbar/Search';
+import React from "react";
+import { ErrorCauseBoundary, useThemeConfig } from "@docusaurus/theme-common";
+import { splitNavbarItems } from "@docusaurus/theme-common/internal";
+import NavbarItem from "@theme/NavbarItem";
+import NavbarColorModeToggle from "@theme/Navbar/ColorModeToggle";
+import SearchBar from "@theme/SearchBar";
+import NavbarLogo from "@theme/Navbar/Logo";
+import NavbarSearch from "@theme/Navbar/Search";
 
 function useNavbarItems() {
   return useThemeConfig().navbar.items;
 }
 
-function NavbarItems({items}) {
+function NavbarItems({ items }) {
   return (
     <>
       {items.map((item, i) => (
@@ -24,9 +22,10 @@ function NavbarItems({items}) {
               `A theme navbar item failed to render.
 Please double-check the following navbar item (themeConfig.navbar.items) of your Docusaurus config:
 ${JSON.stringify(item, null, 2)}`,
-              {cause: error},
+              { cause: error },
             )
-          }>
+          }
+        >
           <NavbarItem {...item} />
         </ErrorCauseBoundary>
       ))}
@@ -34,7 +33,7 @@ ${JSON.stringify(item, null, 2)}`,
   );
 }
 
-function NavbarContentLayout({left, right}) {
+function NavbarContentLayout({ left, right }) {
   return (
     <div className="navbar__inner">
       <div className="navbar__items">{left}</div>
@@ -46,7 +45,7 @@ function NavbarContentLayout({left, right}) {
 export default function NavbarContent() {
   const items = useNavbarItems();
   const [leftItems, rightItems] = splitNavbarItems(items);
-  const searchBarItem = items.find((item) => item.type === 'search');
+  const searchBarItem = items.find((item) => item.type === "search");
 
   return (
     <NavbarContentLayout

@@ -225,7 +225,7 @@ def _parse_numpy_docstring(docstring: str) -> dict:
                 if dline.strip() == "":
                     k += 1
                     continue
-                if dline.startswith(" ") or dline.startswith("\t"):
+                if dline.startswith((" ", "\t")):
                     desc_parts.append(dline.strip())
                     k += 1
                 else:
@@ -256,7 +256,7 @@ def _parse_numpy_docstring(docstring: str) -> dict:
                 if dline.strip() == "":
                     k += 1
                     continue
-                if dline.startswith(" ") or dline.startswith("\t"):
+                if dline.startswith((" ", "\t")):
                     desc_parts.append(dline.strip())
                     k += 1
                 else:
@@ -286,20 +286,22 @@ def _get_methods(cls) -> list:
     """
     collected = {}  # name -> method dict (child wins over parent)
 
+    root_module = getattr(cls, "__module__", "")
+
     # Walk MRO in reverse so child definitions overwrite parent ones
     for klass in reversed(cls.__mro__):
         if klass is object:
             continue
-        # Only include classes defined in DashAI, skip library classes
-        if not getattr(klass, "__module__", "").startswith("DashAI"):
+        # Include methods defined on DashAI classes and on classes from the
+        # same module as the target class (useful for local/testing classes).
+        klass_module = getattr(klass, "__module__", "")
+        if not (klass_module.startswith("DashAI") or klass_module == root_module):
             continue
         for name, obj in vars(klass).items():
             if name.startswith("_"):
                 continue
             # Resolve classmethods and staticmethods
-            if isinstance(obj, classmethod):
-                func = obj.__func__
-            elif isinstance(obj, staticmethod):
+            if isinstance(obj, (classmethod, staticmethod)):
                 func = obj.__func__
             elif inspect.isfunction(obj):
                 func = obj
@@ -331,7 +333,7 @@ def _get_methods(cls) -> list:
     # Split into own vs inherited
     own = []
     inherited = []
-    for name, info in collected.items():
+    for _name, info in collected.items():
         if info["defined_on"] == cls.__name__:
             own.append(info)
         else:
@@ -367,9 +369,10 @@ def _render_method_section(method) -> str:
         lines.append("| Name | Type | Description |")
         lines.append("|------|------|-------------|")
         for p in method["parameters"]:
-            lines.append(
-                f"| {_escape_table_cell(p['name'])} | {_escape_table_cell(p['type'])} | {_escape_table_cell(p['desc'])} |"
-            )
+            name = _escape_table_cell(p["name"])
+            ptype = _escape_table_cell(p["type"])
+            desc = _escape_table_cell(p["desc"])
+            lines.append(f"| {name} | {ptype} | {desc} |")
         lines.append("")
 
     if method["returns"]:
@@ -421,9 +424,11 @@ def _render_component_mdx(info) -> str:
         lines.append("| Name | Type | Default | Description |")
         lines.append("|------|------|---------|-------------|")
         for p in params:
-            lines.append(
-                f"| {_escape_table_cell(p['name'])} | {_escape_table_cell(p['type'])} | {_escape_table_cell(p['default'])} | {_escape_table_cell(p['description'])} |"
-            )
+            name = _escape_table_cell(p["name"])
+            ptype = _escape_table_cell(p["type"])
+            default = _escape_table_cell(p["default"])
+            description = _escape_table_cell(p["description"])
+            lines.append(f"| {name} | {ptype} | {default} | {description} |")
         lines.append("")
 
     if methods:
@@ -599,9 +604,8 @@ def generate_all(output_dir=None):
         index_mdx = _render_index_mdx(component_type, index_entries)
         (type_dir / "index.mdx").write_text(index_mdx, encoding="utf-8")
 
-        print(
-            f"  {component_type}: {len(cls_list)} components -> {type_dir.relative_to(out_dir.parent.parent)}"
-        )
+        rel_type_dir = type_dir.relative_to(out_dir.parent.parent)
+        print(f"  {component_type}: {len(cls_list)} components -> {rel_type_dir}")
 
     print(f"\nTotal: {total} component pages written to {out_dir}")
 
