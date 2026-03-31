@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class SD15HEDControlNetSchema(BaseSchema):
+    """Schema for SD15HEDControlNetModel hyperparameters."""
+
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=20,
@@ -130,6 +132,37 @@ class SD15HEDControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
+        """Initialize the SD 1.5 HED ControlNet model and pipeline.
+
+        Loads the HED soft-edge detector from ``lllyasviel/Annotators``, then
+        loads ``lllyasviel/sd-controlnet-hed`` as the ControlNet backbone and
+        ``runwayml/stable-diffusion-v1-5`` as the base diffusion pipeline, both
+        moved to the requested device. CPU offloading is enabled automatically
+        via ``pipe.enable_model_cpu_offload()`` to reduce VRAM pressure.
+
+        Requires the ``controlnet_aux`` package
+        (``pip install controlnet_aux``).
+
+        Parameters
+        ----------
+        **kwargs : Any
+            Keyword arguments validated against :class:`SD15HEDControlNetSchema`.
+            Recognised keys are:
+
+            device : str
+                Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            num_inference_steps : int
+                Number of denoising steps during generation.
+            controlnet_conditioning_scale : float
+                Strength of the HED soft-edge conditioning signal (0.0-2.0).
+            guidance_scale : float
+                Classifier-Free Guidance scale controlling prompt adherence.
+
+        Raises
+        ------
+        RuntimeError
+            If ``controlnet_aux`` is not installed.
+        """
         try:
             from controlnet_aux import HEDdetector
         except ImportError as e:

@@ -13,6 +13,8 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class StableDiffusionXLV1ControlNetSchema(BaseSchema):
+    """Schema for StableDiffusionXLV1ControlNet hyperparameters."""
+
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,
@@ -82,6 +84,26 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
 
 
 def get_depth_map(image, device):
+    """Convert an input image to a normalised depth map for SDXL ControlNet.
+
+    Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
+    bilinearly interpolates the result to 1024x1024 and normalises values to
+    the [0, 1] range before returning a three-channel PIL image.
+
+    Parameters
+    ----------
+    image : PIL.Image.Image
+        The source image to estimate depth from.
+    device : str
+        Torch device string (e.g. ``"cpu"`` or ``"cuda:0"``) on which the
+        depth estimator will run.
+
+    Returns
+    -------
+    PIL.Image.Image
+        A 1024x1024 RGB image where each channel encodes the normalised depth
+        value, ready to be used as a ControlNet conditioning signal.
+    """
     import numpy as np
     import torch
     from PIL import Image
@@ -152,7 +174,28 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
-        """Initialize the generative model."""
+        """Initialize the SDXL V1 Depth ControlNet model and pipeline.
+
+        Loads ``diffusers/controlnet-depth-sdxl-1.0-small`` as the ControlNet
+        backbone, ``madebyollin/sdxl-vae-fp16-fix`` as the VAE, and
+        ``stabilityai/stable-diffusion-xl-base-1.0`` as the base diffusion
+        pipeline, all moved to the requested device. CPU offloading is enabled
+        automatically via ``pipe.enable_model_cpu_offload()`` to reduce VRAM
+        pressure.
+
+        Parameters
+        ----------
+        **kwargs : Any
+            Keyword arguments validated against
+            :class:`StableDiffusionXLV1ControlNetSchema`. Recognised keys are:
+
+            device : str
+                Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            num_inference_steps : int
+                Number of denoising steps during generation.
+            controlnet_conditioning_scale : float
+                Strength of the depth-map conditioning signal (0.0-2.0).
+        """
         import torch
         from diffusers import (
             AutoencoderKL,

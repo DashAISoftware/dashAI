@@ -277,6 +277,24 @@ class OpusMtEnESTransformer(TranslationModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "OpusMtEnESTransformer":
+        """Fine-tune the opus-mt-en-es model on English-Spanish translation data.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Input English text features for training.
+        y_train : DashAIDataset
+            Target Spanish translation labels for training.
+        x_validation : DashAIDataset, optional
+            Input English text features for validation. Defaults to None.
+        y_validation : DashAIDataset, optional
+            Target Spanish translation labels for validation. Defaults to None.
+
+        Returns
+        -------
+        OpusMtEnESTransformer
+            The fine-tuned model instance.
+        """
         from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 
         dataset = self.tokenize_data(x_train, y_train)
@@ -382,6 +400,17 @@ class OpusMtEnESTransformer(TranslationModel):
             print(f"Couldn't apply transformations to the dataset for the model: {e}")
 
     def save(self, filename: Union[str, "Path"]) -> None:
+        """Store the fine-tuned model and its configuration to disk.
+
+        Saves the model weights via ``save_pretrained`` and embeds the
+        hyperparameters (epochs, batch size, learning rate, etc.) into the
+        Hugging Face config so they can be restored by :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path where the model files will be written.
+        """
         self.model.save_pretrained(filename)
         from transformers import AutoConfig
 
@@ -400,6 +429,23 @@ class OpusMtEnESTransformer(TranslationModel):
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]):
+        """Restore an OpusMtEnESTransformer instance from disk.
+
+        Reads the Hugging Face config to recover the custom hyperparameters
+        saved by :meth:`save`, then reconstructs the seq2seq model and wraps
+        it in a new :class:`OpusMtEnESTransformer` instance.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path from which the model files will be read.
+
+        Returns
+        -------
+        OpusMtEnESTransformer
+            The restored model instance with ``fitted`` set to the persisted
+            value.
+        """
         from transformers import AutoConfig, AutoModelForSeq2SeqLM
 
         model = AutoModelForSeq2SeqLM.from_pretrained(filename)

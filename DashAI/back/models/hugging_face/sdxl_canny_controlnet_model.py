@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class SDXLCannyControlNetSchema(BaseSchema):
+    """Schema for SDXLCannyControlNetModel hyperparameters."""
+
     canny_low_threshold: schema_field(
         int_field(ge=0, le=255),
         placeholder=100,
@@ -120,6 +122,29 @@ class SDXLCannyControlNetSchema(BaseSchema):
 def get_canny_image(
     image: "Image.Image", low_threshold: int, high_threshold: int
 ) -> "Image.Image":
+    """Apply Canny edge detection to an image and return a three-channel edge map.
+
+    Converts the image to a NumPy array, runs OpenCV's Canny detector with the
+    supplied thresholds, then stacks the single-channel result into an RGB image
+    suitable for use as a ControlNet conditioning signal.
+
+    Parameters
+    ----------
+    image : PIL.Image.Image
+        The source image to extract edges from.
+    low_threshold : int
+        Lower hysteresis threshold for the Canny algorithm (0-255). Gradient
+        magnitudes below this value are discarded.
+    high_threshold : int
+        Upper hysteresis threshold for the Canny algorithm (0-255). Gradient
+        magnitudes above this value are retained as strong edges.
+
+    Returns
+    -------
+    PIL.Image.Image
+        An RGB image of the same spatial dimensions as ``image`` where each
+        channel contains the binary Canny edge map (0 or 255).
+    """
     import cv2
     import numpy as np
     from PIL import Image
@@ -170,6 +195,34 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
+        """Initialize the SDXL Canny ControlNet model and pipeline.
+
+        Loads ``diffusers/controlnet-canny-sdxl-1.0`` as the ControlNet
+        backbone, ``madebyollin/sdxl-vae-fp16-fix`` as the VAE, and
+        ``stabilityai/stable-diffusion-xl-base-1.0`` as the base diffusion
+        pipeline, all moved to the requested device. CPU offloading is enabled
+        automatically via ``pipe.enable_model_cpu_offload()`` to reduce VRAM
+        pressure.
+
+        Requires ``opencv-python`` (``pip install opencv-python``).
+
+        Parameters
+        ----------
+        **kwargs : Any
+            Keyword arguments validated against :class:`SDXLCannyControlNetSchema`.
+            Recognised keys are:
+
+            device : str
+                Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            num_inference_steps : int
+                Number of denoising steps during generation.
+            controlnet_conditioning_scale : float
+                Strength of the Canny edge conditioning signal (0.0-2.0).
+            canny_low_threshold : int
+                Lower Canny hysteresis threshold (0-255).
+            canny_high_threshold : int
+                Upper Canny hysteresis threshold (0-255).
+        """
         import torch
         from diffusers import (
             AutoencoderKL,

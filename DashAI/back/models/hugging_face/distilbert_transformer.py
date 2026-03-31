@@ -249,6 +249,24 @@ class DistilBertTransformer(TextClassificationModel):
         self.encodings = {}  # Store encodings for categorical columns
 
     def train(self, x_train, y_train, x_validation, y_validation):
+        """Fine-tune the DistilBERT model on the provided classification data.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Input text features for training.
+        y_train : DashAIDataset
+            Target labels for training.
+        x_validation : DashAIDataset
+            Input text features for validation.
+        y_validation : DashAIDataset
+            Target labels for validation.
+
+        Returns
+        -------
+        DistilBertTransformer
+            The fine-tuned model instance.
+        """
         import shutil
 
         import torch
@@ -453,6 +471,17 @@ class DistilBertTransformer(TextClassificationModel):
         )
 
     def save(self, filename: Union[str, "Path"]) -> None:
+        """Store the fine-tuned model and its configuration to disk.
+
+        Saves the model weights via ``save_pretrained`` and embeds the
+        hyperparameters (epochs, batch size, learning rate, etc.) into the
+        Hugging Face config so they can be restored by :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path where the model files will be written.
+        """
         from transformers import AutoConfig
 
         self.model.save_pretrained(filename)
@@ -471,6 +500,23 @@ class DistilBertTransformer(TextClassificationModel):
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]) -> Any:
+        """Restore a DistilBertTransformer instance from disk.
+
+        Reads the Hugging Face config to recover the custom hyperparameters
+        saved by :meth:`save`, then reconstructs the model and wraps it in a
+        new :class:`DistilBertTransformer` instance.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path from which the model files will be read.
+
+        Returns
+        -------
+        DistilBertTransformer
+            The restored model instance with ``fitted`` set to the persisted
+            value.
+        """
         from transformers import AutoConfig, AutoModelForSequenceClassification
 
         config = AutoConfig.from_pretrained(filename)

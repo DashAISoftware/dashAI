@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class SD15DepthControlNetSchema(BaseSchema):
+    """Schema for SD15DepthControlNetModel hyperparameters."""
+
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=20,
@@ -94,6 +96,26 @@ class SD15DepthControlNetSchema(BaseSchema):
 
 
 def get_depth_map_sd15(image, device):
+    """Convert an input image to a normalised depth map for SD 1.5 ControlNet.
+
+    Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
+    bilinearly interpolates the result to 512x512 and normalises values to the
+    [0, 1] range before returning a three-channel PIL image.
+
+    Parameters
+    ----------
+    image : PIL.Image.Image
+        The source image to estimate depth from.
+    device : str
+        Torch device string (e.g. ``"cpu"`` or ``"cuda:0"``) on which the
+        depth estimator will run.
+
+    Returns
+    -------
+    PIL.Image.Image
+        A 512x512 RGB image where each channel encodes the normalised depth
+        value, ready to be used as a ControlNet conditioning signal.
+    """
     import numpy as np
     import torch
     from PIL import Image
@@ -159,6 +181,28 @@ class SD15DepthControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
+        """Initialize the SD 1.5 Depth ControlNet model and pipeline.
+
+        Loads ``lllyasviel/sd-controlnet-depth`` as the ControlNet backbone and
+        ``runwayml/stable-diffusion-v1-5`` as the base diffusion pipeline, both
+        moved to the requested device. CPU offloading is enabled automatically
+        via ``pipe.enable_model_cpu_offload()`` to reduce VRAM pressure.
+
+        Parameters
+        ----------
+        **kwargs : Any
+            Keyword arguments validated against :class:`SD15DepthControlNetSchema`.
+            Recognised keys are:
+
+            device : str
+                Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            num_inference_steps : int
+                Number of denoising steps during generation.
+            controlnet_conditioning_scale : float
+                Strength of the depth-map conditioning signal (0.0-2.0).
+            guidance_scale : float
+                Classifier-Free Guidance scale controlling prompt adherence.
+        """
         import torch
         from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
 
