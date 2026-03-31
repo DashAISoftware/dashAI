@@ -74,11 +74,17 @@ const OverviewTab = ({
             {t("datasets:label.missingValuesOverview")}
           </Typography>
           {missingData.some((data) => data.missing > 0) ? (
-            <Box sx={{ width: "100%", height: 300 }}>
+            <Box sx={{ width: "100%", height: 450 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={missingData}>
+                <BarChart data={missingData} margin={{ bottom: 120 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="column" />
+                  <XAxis
+                    dataKey="column"
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
+                  />
                   <YAxis />
                   <Tooltip
                     contentStyle={{
