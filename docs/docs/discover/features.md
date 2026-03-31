@@ -8,22 +8,22 @@ sidebar_position: 2
 
 ## Dataset Management
 
-Upload and manage datasets in multiple formats — CSV, Excel, JSON, and zipped image sets. Each dataset shows a summary of rows, columns, data types, and distributions. From the dataset view you can directly launch EDA explorations and apply data converters.
+Upload and manage datasets in multiple formats — CSV, Excel, and JSON. Each dataset shows a summary of rows, columns, data types, and distributions. From the dataset view you can directly launch EDA explorations and apply data converters.
 
-**Supported formats:** `.csv`, `.xlsx` / `.xls`, `.json`, `.zip` (images)
+**Supported formats:** `.csv`, `.xlsx` / `.xls`, `.json`
 
 ## Data Exploration (EDA)
 
 Analyze your data visually with built-in explorers before committing to a model. Available explorers include:
 
-| Explorer | Purpose |
-|----------|---------|
-| BoxPlotExplorer | Distribution of values per column |
+| Explorer                  | Purpose                                                    |
+| ------------------------- | ---------------------------------------------------------- |
+| BoxPlotExplorer           | Distribution of values per column                          |
 | CorrelationMatrixExplorer | Correlation between variables (Pearson, Kendall, Spearman) |
-| DescribeExplorer | Descriptive statistics (mean, median, std dev, etc.) |
-| ScatterPlotExplorer | Visual relationship between pairs of variables |
-| HistogramPlotExplorer | Frequency distributions |
-| WordcloudExplorer | Word frequency for text columns |
+| DescribeExplorer          | Descriptive statistics (mean, median, std dev, etc.)       |
+| ScatterPlotExplorer       | Visual relationship between pairs of variables             |
+| HistogramPlotExplorer     | Frequency distributions                                    |
+| WordcloudExplorer         | Word frequency for text columns                            |
 
 ## Model Training
 

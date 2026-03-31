@@ -3,18 +3,10 @@ const sidebars = {
   discoverSidebar: [
     "discover/overview",
     "discover/features",
-    "discover/installation",
     "discover/use-cases",
-    {
-      type: "category",
-      label: "Getting Started",
-      items: [
-        "discover/getting-started/workbench",
-        "discover/getting-started/concepts",
-        "discover/getting-started/interface-tour",
-        "discover/getting-started/first-experiment",
-      ],
-    },
+    "discover/workbench",
+    "discover/concepts",
+    "discover/interface-tour",
   ],
 
   learnSidebar: [

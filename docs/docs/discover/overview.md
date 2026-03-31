@@ -8,7 +8,7 @@ sidebar_position: 1
 
 DashAI is an innovative open-source platform that empowers users to explore a wide range of Machine Learning (ML) algorithms through an interactive graphical interface — no programming required.
 
-The platform unifies interaction with ML models across different application domains, including tabular data analysis, computer vision, and natural language processing. DashAI aims to democratize ML adoption, making it more accessible for organizations and educational institutions.
+The platform unifies interaction with ML models across different application domains, including tabular data analysis and natural language processing. DashAI aims to democratize ML adoption, making it more accessible for organizations and educational institutions.
 
 ## Key Capabilities
 
