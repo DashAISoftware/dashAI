@@ -635,7 +635,7 @@ async def get_info(
 async def get_temporal_info(
     dataset_id: int,
     timestamp_column: str,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get temporal information about a dataset for forecasting tasks.
 

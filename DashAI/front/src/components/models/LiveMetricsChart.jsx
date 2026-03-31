@@ -193,15 +193,6 @@ export function LiveMetricsChart({ run }) {
     );
   }, [data, split, level, availableMetrics]);
 
-  const filteredMetrics = Object.fromEntries(
-    Object.entries(metrics).filter(
-      ([name, metricValues]) =>
-        allowed.includes(name) &&
-        Array.isArray(metricValues) &&
-        metricValues.some((point) => isFiniteMetricValue(point?.value)),
-    ),
-  );
-
   const chartData = useMemo(() => {
     if (Object.keys(filteredMetrics).length === 0) return [];
 
