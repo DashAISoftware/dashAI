@@ -99,6 +99,27 @@ class DescribeExplorer(PreviewInspectionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize DescribeExplorer with percentile and dtype filter parameters.
+
+        Converts the comma-separated ``percentiles`` string to a list of floats
+        in the range [0, 1], and normalizes ``include`` and ``exclude`` dtype
+        values to the list format expected by ``pandas.DataFrame.describe``.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments matching ``DescribeExplorerSchema`` fields:
+            percentiles (str | None): Comma-separated integers 0–100 (e.g.
+            ``"25, 50, 75"``). Converted to floats (e.g. ``[0.25, 0.5,
+            0.75]``). Pass an empty string or ``None`` to use pandas
+            defaults.
+            include (str | None): Dtype selection string (``"all"``,
+            ``"number"``, ``"object"``, ``"category"``, or
+            ``"datetime"``). ``"all"`` is passed through; other values
+            are wrapped in a list.
+            exclude (str | None): Dtype to exclude, wrapped in a list when
+            provided.
+        """
         # transform percentiles to list of floats for describe (e.g., [0.25, 0.5, 0.75])
         if kwargs.get("percentiles"):
             percentiles = kwargs["percentiles"].strip().split(",")
@@ -141,6 +162,26 @@ class DescribeExplorer(PreviewInspectionExplorer):
     def launch_exploration(
         self, dataset: "DashAIDataset", __explorer_info__: Explorer
     ) -> Any:
+        """Compute a statistical summary of the dataset using pandas describe.
+
+        Calls ``pandas.DataFrame.describe`` on the full dataset converted to a
+        pandas DataFrame, applying the percentile and dtype filter settings
+        configured on this instance.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to summarize.
+        __explorer_info__ : Explorer
+            The explorer database record (unused).
+
+        Returns
+        -------
+        Any
+            A ``pandas.DataFrame`` containing descriptive statistics (count,
+            mean, std, min, percentiles, max for numeric columns; count,
+            unique, top, freq for object columns).
+        """
         return dataset.to_pandas().describe(
             percentiles=self.percentiles, include=self.include, exclude=self.exclude
         )
@@ -152,6 +193,26 @@ class DescribeExplorer(PreviewInspectionExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the descriptive statistics DataFrame to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename
+            generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The ``pandas.DataFrame`` returned by
+            ``launch_exploration``.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -164,6 +225,30 @@ class DescribeExplorer(PreviewInspectionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved statistical summary for the frontend.
+
+        Reads the JSON file written by ``save_notebook``, transposes the
+        DataFrame so that statistics are keys, and converts it to a nested
+        dictionary.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by
+            ``save_notebook``.
+        options : Dict[str, Any]
+            Rendering options from the frontend.
+            Supports ``"orientation"`` (str, default ``"dict"``), which is
+            forwarded to ``pandas.DataFrame.to_dict``.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (nested dict of
+            the transposed describe output in the requested orientation),
+            ``"type"`` (``"tabular"``), and ``"config"`` (dict containing
+            ``{"orient": <orientation>}``).
+        """
         from pathlib import Path
 
         import numpy as np
