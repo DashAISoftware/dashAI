@@ -17,7 +17,13 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 
 
 class LinearRegressionSchema(BaseSchema):
-    """Linear regression model with optional intercept."""
+    """Schema that configures the Ordinary Least-Squares Linear Regression model.
+
+    Linear Regression fits a linear model by minimising the residual sum of squares
+    between observed targets and predicted values. It is used for tabular regression
+    tasks. The underlying implementation is
+    ``sklearn.linear_model.LinearRegression``.
+    """
 
     fit_intercept: schema_field(
         bool_field(),
@@ -78,8 +84,21 @@ class LinearRegressionSchema(BaseSchema):
 class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression):
     """Ordinary least-squares linear regression model.
 
-    Fits a linear model by minimising the sum of squared residuals between
-    predictions and targets. Wraps scikit-learn's ``LinearRegression``.
+    Linear Regression models the relationship between one or more input features and
+    a continuous target by fitting a linear equation ``y = Xw + b``. The coefficients
+    ``w`` and intercept ``b`` are estimated by minimising the residual sum of squares
+    ``||y - Xw||^2``, which has a closed-form solution via the normal equations or
+    can be computed via singular value decomposition.
+
+    This model has no regularisation, so it can overfit when the number of features
+    is large or predictors are highly collinear (consider ``RidgeRegression`` in those
+    cases). Key hyperparameters are ``fit_intercept``, ``positive`` (constraint to
+    non-negative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
+    scikit-learn's ``LinearRegression``.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
     """
 
     SCHEMA = LinearRegressionSchema

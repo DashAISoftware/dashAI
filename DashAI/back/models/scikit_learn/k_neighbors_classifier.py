@@ -17,8 +17,12 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class KNeighborsClassifierSchema(BaseSchema):
-    """KNN is a supervised classification method that determines the probability of
-    an element belonging to a certain class by considering its k closest neighbors.
+    """Schema that configures the K-Nearest Neighbors Classifier.
+
+    K-Nearest Neighbors (KNN) is a non-parametric supervised classification method
+    that assigns a class to each sample by majority vote of its ``k`` closest
+    training points in the feature space. It is used for tabular classification tasks.
+    The underlying implementation is ``sklearn.neighbors.KNeighborsClassifier``.
     """
 
     n_neighbors: schema_field(
@@ -65,8 +69,23 @@ class KNeighborsClassifier(
 ):
     """K-nearest neighbours classifier that predicts the majority class among neighbours.
 
-    Classifies each sample by majority vote of its ``k`` closest training points.
-    Wraps scikit-learn's ``KNeighborsClassifier``.
+    KNN is a lazy, instance-based learning algorithm: no explicit model is fitted
+    during training. At prediction time the algorithm finds the ``k`` nearest training
+    points (by Euclidean or another distance metric) and returns the majority class.
+    When ``weights="distance"`` closer neighbours have a proportionally larger
+    influence on the prediction.
+
+    Key hyperparameters are ``n_neighbors`` (the number of neighbours ``k``),
+    ``weights`` (uniform or distance-weighted voting), and ``algorithm`` (data
+    structure used for neighbour lookup: ball tree, kd-tree, or brute force). The
+    implementation wraps scikit-learn's ``KNeighborsClassifier``.
+
+    References
+    ----------
+    .. [1] Cover, T. & Hart, P. (1967). "Nearest neighbor pattern classification."
+           IEEE Transactions on Information Theory, 13(1), 21-27.
+           https://doi.org/10.1109/TIT.1967.1053964
+    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
     """
 
     SCHEMA = KNeighborsClassifierSchema

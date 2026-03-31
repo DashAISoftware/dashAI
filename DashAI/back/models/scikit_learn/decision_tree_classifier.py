@@ -17,8 +17,12 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class DecisionTreeClassifierSchema(BaseSchema):
-    """Decision Trees are a set of are a non-parametric supervised learning method that
-    learns simple decision rules (structured as a tree) inferred from the data features.
+    """Schema that configures the Decision Tree Classifier.
+
+    Decision Trees are a non-parametric supervised classification method that
+    recursively partitions the feature space by learning axis-aligned decision rules
+    inferred from training data. The tree structure is built using the CART algorithm.
+    The underlying implementation is ``sklearn.tree.DecisionTreeClassifier``.
     """
 
     criterion: schema_field(
@@ -118,8 +122,21 @@ class DecisionTreeClassifier(
 ):
     """Decision tree classifier that learns axis-aligned decision rules from data.
 
-    Builds a binary tree by recursively splitting the feature space to maximise
-    a purity criterion. Wraps scikit-learn's ``DecisionTreeClassifier``.
+    A decision tree recursively partitions the feature space into rectangular regions
+    by choosing splits that maximise a purity criterion (Gini impurity, entropy, or
+    log-loss). At prediction time the tree routes each sample to a leaf node whose
+    majority class is returned as the prediction.
+
+    The tree complexity is primarily controlled by ``max_depth``, ``min_samples_split``,
+    ``min_samples_leaf``, and ``max_features``. Shallow trees are more interpretable
+    but may underfit; very deep trees tend to overfit. The implementation wraps
+    scikit-learn's ``DecisionTreeClassifier``, which uses the CART algorithm.
+
+    References
+    ----------
+    .. [1] Breiman, L., Friedman, J., Olshen, R., & Stone, C. (1984).
+           "Classification and Regression Trees." Wadsworth.
+    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
     """
 
     SCHEMA = DecisionTreeClassifierSchema

@@ -19,7 +19,14 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 
 
 class RidgeRegressionSchema(BaseSchema):
-    """Ridge regression is a linear model that includes L2 regularization."""
+    """Schema that configures the Ridge Regression model.
+
+    Ridge Regression is a linear regression method that adds an L2 (squared-norm)
+    penalty on the coefficients to the ordinary least-squares objective, shrinking
+    coefficients towards zero to reduce overfitting and handle collinearity. It is
+    used for tabular regression tasks. The underlying implementation is
+    ``sklearn.linear_model.Ridge``.
+    """
 
     alpha: schema_field(
         optimizer_int_field(ge=1),
@@ -149,8 +156,23 @@ class RidgeRegressionSchema(BaseSchema):
 class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
     """Ridge regression with L2 regularisation to reduce coefficient magnitude.
 
-    Adds a squared-norm penalty to the least-squares objective to prevent
-    overfitting. Wraps scikit-learn's ``Ridge``.
+    Ridge Regression minimises the penalised least-squares objective
+    ``||y - Xw||^2 + alpha * ||w||^2``, where ``alpha`` is the regularisation
+    strength. The L2 penalty shrinks all coefficients towards zero but does not
+    set any of them exactly to zero, making Ridge suitable for situations where
+    many predictors contribute small effects or when features are highly collinear.
+
+    The solver (``svd``, ``cholesky``, ``lsqr``, ``sparse_cg``, ``sag``,
+    ``saga``, or ``auto``) is selected based on data characteristics. Key
+    hyperparameters are ``alpha``, ``fit_intercept``, ``solver``, and ``tol``.
+    The implementation wraps scikit-learn's ``Ridge``.
+
+    References
+    ----------
+    .. [1] Hoerl, A.E. & Kennard, R.W. (1970). "Ridge Regression: Biased
+           Estimation for Nonorthogonal Problems." Technometrics, 12(1), 55-67.
+           https://doi.org/10.1080/00401706.1970.10488634
+    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html
     """
 
     SCHEMA = RidgeRegressionSchema

@@ -21,7 +21,13 @@ if TYPE_CHECKING:
 
 
 class MLPRegressorSchema(BaseSchema):
-    """PyTorch MLP Regressor Schema."""
+    """Schema that configures the Multi-layer Perceptron (MLP) Regressor.
+
+    The MLP Regressor is a fully-connected feedforward neural network with a single
+    hidden layer, trained with backpropagation using the Adam optimiser and mean
+    squared error loss. It is used for tabular regression tasks. The underlying
+    implementation uses PyTorch (``torch.nn``).
+    """
 
     hidden_size: schema_field(
         optimizer_int_field(ge=1),
@@ -181,8 +187,25 @@ class MLPRegressorSchema(BaseSchema):
 class MLPRegression(RegressionModel):
     """Single hidden-layer MLP regressor implemented in PyTorch.
 
-    Trains a fully-connected neural network with one hidden layer and a configurable
-    activation function. Supports per-epoch and per-step metric logging to DashAI.
+    A Multi-layer Perceptron (MLP) is a feedforward neural network composed of an
+    input layer, one hidden layer of configurable width, and a single linear output
+    neuron. The hidden layer uses a configurable activation function (ReLU, tanh,
+    sigmoid, or identity). The network is trained by minimising the mean squared
+    error using the Adam optimiser and mini-batch gradient descent via
+    backpropagation.
+
+    Key hyperparameters include ``hidden_size`` (number of neurons in the hidden
+    layer), ``activation``, ``learning_rate``, ``epochs``, ``batch_size``, and
+    ``device`` (CPU or GPU). The model also supports per-epoch and per-step metric
+    logging. The implementation uses PyTorch (``torch.nn``).
+
+    References
+    ----------
+    .. [1] Rumelhart, D.E., Hinton, G.E., & Williams, R.J. (1986).
+           "Learning representations by back-propagating errors."
+           Nature, 323(6088), 533-536. https://doi.org/10.1038/323533a0
+    .. [2] Kingma, D.P. & Ba, J. (2015). "Adam: A Method for Stochastic
+           Optimization." ICLR 2015. https://arxiv.org/abs/1412.6980
     """
 
     SCHEMA = MLPRegressorSchema
