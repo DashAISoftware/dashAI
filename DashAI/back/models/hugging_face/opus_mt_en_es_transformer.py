@@ -190,7 +190,20 @@ class OpusMtEnESTransformer(TranslationModel):
         """Initialize the transformer.
 
         This process includes the instantiation of the pre-trained model and the
-        associated tokenizer.
+        associated tokenizer. When ``model`` is ``None`` the Helsinki-NLP
+        ``opus-mt-en-es`` checkpoint is downloaded from HuggingFace; when a
+        model object is supplied the tokenizer is reused without re-downloading.
+
+        Parameters
+        ----------
+        model : transformers.PreTrainedModel or None, optional
+            An already-loaded HuggingFace translation model to reuse. If
+            ``None``, the pre-trained ``Helsinki-NLP/opus-mt-en-es`` checkpoint
+            is downloaded and initialised. Default ``None``.
+        **kwargs : dict
+            Additional hyperparameters forwarded to ``validate_and_transform``
+            and used to configure training arguments (e.g. ``batch_size``,
+            ``epochs``, ``learning_rate``).
         """
         kwargs = self.validate_and_transform(kwargs)
         from transformers import AutoTokenizer

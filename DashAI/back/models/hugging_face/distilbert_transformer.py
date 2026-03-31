@@ -196,7 +196,20 @@ class DistilBertTransformer(TextClassificationModel):
         """Initialize the transformer model.
 
         The process includes the instantiation of the pre-trained model and the
-        associated tokenizer.
+        associated tokenizer. When ``model`` is ``None`` a fresh pre-trained
+        DistilBERT checkpoint is loaded from HuggingFace; when a model object
+        is supplied the tokenizer is reused without re-downloading weights.
+
+        Parameters
+        ----------
+        model : transformers.PreTrainedModel or None, optional
+            An already-loaded HuggingFace model to reuse. If ``None``, the
+            pre-trained ``distilbert-base-uncased`` checkpoint is downloaded
+            and initialised. Default ``None``.
+        **kwargs : dict
+            Additional hyperparameters forwarded to ``validate_and_transform``
+            and used to configure training arguments (e.g. ``num_labels``,
+            ``batch_size``, ``epochs``).
         """
 
         self.num_labels = kwargs.pop("num_labels", None)

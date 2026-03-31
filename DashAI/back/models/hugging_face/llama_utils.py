@@ -95,6 +95,18 @@ def is_gpu_available_for_llama_cpp() -> bool:
 
 
 def __is_gpu_available_for_llama_cpp_v03() -> bool:
+    """Check GPU availability using the llama.cpp v0.3 shared-library API.
+
+    Loads the ``llama`` shared library from the llama_cpp package directory and
+    calls ``llama_supports_gpu_offload`` to determine whether the build was
+    compiled with GPU support.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``llama_supports_gpu_offload()`` returns a truthy value,
+        ``False`` otherwise.
+    """
     lib = llama_cpp.llama_cpp.load_shared_library(
         "llama", Path(os.path.dirname(llama_cpp.__file__)) / "lib"
     )
@@ -102,5 +114,17 @@ def __is_gpu_available_for_llama_cpp_v03() -> bool:
 
 
 def __is_gpu_available_for_llama_cpp_v02() -> bool:
+    """Check GPU availability using the llama.cpp v0.2 shared-library API.
+
+    Loads the ``llama`` shared library via the legacy ``_load_shared_library``
+    helper and inspects it for the ``ggml_init_cublas`` symbol, which is only
+    present in CUDA-enabled builds.
+
+    Returns
+    -------
+    bool
+        ``True`` if the ``ggml_init_cublas`` attribute is found in the loaded
+        library, ``False`` otherwise.
+    """
     lib = llama_cpp.llama_cpp._load_shared_library("llama")
     return hasattr(lib, "ggml_init_cublas")

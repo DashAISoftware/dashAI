@@ -253,7 +253,13 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         return self.classifier.predict(tokenized_dataset)
 
     def save(self, filename: Union[str, "Path"]) -> None:
-        """Save the model in the specified path."""
+        """Serialise the model to disk using joblib.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Destination file path where the model will be written.
+        """
         # Lazy import of joblib
         import joblib
 
@@ -261,7 +267,18 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
 
     @staticmethod
     def load(filename: Union[str, "Path"]) -> None:
-        """Load the model of the specified path."""
+        """Deserialise a model from disk using joblib.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Path to the file previously written by :meth:`save`.
+
+        Returns
+        -------
+        BagOfWordsTextClassificationModel
+            The loaded model instance.
+        """
         # Lazy import of joblib
         import joblib
 

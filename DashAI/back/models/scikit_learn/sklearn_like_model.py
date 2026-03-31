@@ -39,14 +39,31 @@ class SklearnLikeModel(BaseModel):
         self.output_encodings = {}
 
     def save(self, filename: str) -> None:
-        """Save the model in the specified path."""
+        """Serialise the model to disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Destination file path where the model will be written.
+        """
         import joblib
 
         joblib.dump(self, filename)
 
     @staticmethod
     def load(filename: str) -> None:
-        """Load the model of the specified path."""
+        """Deserialise a model from disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file previously written by :meth:`save`.
+
+        Returns
+        -------
+        SklearnLikeModel
+            The loaded model instance.
+        """
         import joblib
 
         model = joblib.load(filename)

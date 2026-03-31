@@ -63,7 +63,24 @@ def filter_by_parent(parent_class_name):
 
 
 def get_model_params_from_task(task_name):
-    """Return a dictionary with a list of the available models for the task."""
+    """Return a dictionary listing the available models for a given task name.
+
+    Derives the expected model base-class name by stripping the ``"Task"``
+    suffix and appending ``"Model"``, then delegates to ``filter_by_parent``
+    to find all registered subclasses.
+
+    Parameters
+    ----------
+    task_name : str
+        Name of the task class (e.g. ``"TabularClassificationTask"``).
+
+    Returns
+    -------
+    dict
+        ``{"models": [<name>, ...]}`` on success, or
+        ``{"error": "<model_class_name> not found"}`` if the derived class
+        name is not registered.
+    """
     model_class_name = f"{task_name[:-4]}Model"
     try:
         dict = filter_by_parent(model_class_name)
