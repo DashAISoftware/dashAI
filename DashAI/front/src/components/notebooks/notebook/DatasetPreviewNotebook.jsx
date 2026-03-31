@@ -26,13 +26,14 @@ import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
+const EMPTY_ARRAY = [];
+
 export default function DatasetPreviewNotebook({
   notebook,
-  existingDatasets = [],
+  existingDatasets = EMPTY_ARRAY,
   onAccordionChange,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
-
   const { enqueueSnackbar } = useSnackbar();
 
   const {
@@ -49,22 +50,8 @@ export default function DatasetPreviewNotebook({
   } = useDatasetsAndNotebooks();
 
   const theme = useTheme();
-  if (!notebook) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress color="primary" />
-        <Typography>{t("common:loading")}...</Typography>
-      </Box>
-    );
-  }
-
+  
+  // Initialize ALL hooks FIRST (before any conditional returns)
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
@@ -73,7 +60,7 @@ export default function DatasetPreviewNotebook({
   const tourContext = useTourContext();
 
   const getDatasetName = () => {
-    if (!notebook.dataset_id || !existingDatasets.length) {
+    if (!notebook?.dataset_id || !existingDatasets.length) {
       return "Dataset";
     }
     const dataset = existingDatasets.find((d) => d.id === notebook.dataset_id);
@@ -82,6 +69,7 @@ export default function DatasetPreviewNotebook({
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
+      if (!notebook) return { rows: [], total: 0 };
       const data = await getDatasetFile(notebook.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
@@ -89,6 +77,8 @@ export default function DatasetPreviewNotebook({
   );
 
   useEffect(() => {
+    if (!notebook) return; // Guard inside useEffect
+    
     let intervalId;
 
     const fetchConverters = async () => {
@@ -211,6 +201,23 @@ export default function DatasetPreviewNotebook({
       console.error("Failed to create dataset from notebook:", error);
     }
   };
+
+  // Guard clause AFTER all hooks
+  if (!notebook) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>

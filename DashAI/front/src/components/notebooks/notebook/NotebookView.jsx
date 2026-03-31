@@ -54,30 +54,7 @@ export default function NotebookView({ notebook }) {
   const { t } = useTranslation(["datasets", "common"]);
   const tourContext = useTourContext();
 
-  useEffect(() => {
-    if (sessionStorage.getItem("startNotebookTour") === "true") {
-      sessionStorage.removeItem("startNotebookTour");
-      setTimeout(() => {
-        if (tourContext && typeof tourContext.startTour === "function") {
-          tourContext.startTour();
-        } else if (tourContext && typeof tourContext.run === "undefined") {
-          tourContext.run = true;
-        }
-      }, 1000);
-    }
-  }, [tourContext]);
-
-  if (!notebook) {
-    return (
-      <Box
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <CircularProgress color="primary" />
-        <Typography>{t("common:loading")}</Typography>
-      </Box>
-    );
-  }
-
+  // Initialize ALL hooks FIRST (before any conditional returns)
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
@@ -92,6 +69,7 @@ export default function NotebookView({ notebook }) {
   const listBoxRef = useRef(null);
 
   const fetchExplorersAndConverters = useCallback(async () => {
+    if (!notebook) return; // Guard inside callback
     try {
       const [explorersData, convertersData] = await Promise.all([
         getExplorersByNotebookId(notebook.id),
@@ -112,7 +90,7 @@ export default function NotebookView({ notebook }) {
     } catch (error) {
       console.error("Failed to fetch explorers and converters:", error);
     }
-  }, [notebook.id, setExplorersAndConverters]);
+  }, [notebook?.id, setExplorersAndConverters]);
 
   const getItemsToDelete = useCallback(
     (converterToDelete) => {
@@ -235,6 +213,33 @@ export default function NotebookView({ notebook }) {
   useEffect(() => {
     setListSize(explorersAndConverters.length);
   }, [explorersAndConverters]);
+
+  // Tour useEffect
+  useEffect(() => {
+    if (!notebook) return; // Guard inside useEffect
+    if (sessionStorage.getItem("startNotebookTour") === "true") {
+      sessionStorage.removeItem("startNotebookTour");
+      setTimeout(() => {
+        if (tourContext && typeof tourContext.startTour === "function") {
+          tourContext.startTour();
+        } else if (tourContext && typeof tourContext.run === "undefined") {
+          tourContext.run = true;
+        }
+      }, 1000);
+    }
+  }, [tourContext, notebook]);
+
+  // Guard clause AFTER all hooks
+  if (!notebook) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box

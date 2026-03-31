@@ -30,8 +30,8 @@ export default function ConfigureToolModal({
   FormSection,
 }) {
   const theme = useTheme();
-  if (!tool) return null;
-
+  
+  // Initialize all hooks FIRST (before any conditional returns)
   const [activeTab, setActiveTab] = useState(0);
   const [step, setStep] = useState(0);
   const containerRef = useRef(null);
@@ -81,6 +81,9 @@ export default function ConfigureToolModal({
     },
     [notebook.file_path],
   );
+
+  // Guard clause AFTER all hooks
+  if (!tool) return null;
 
   const steps =
     Object.values(tool.schema.properties).length > 0

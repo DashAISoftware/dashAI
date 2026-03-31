@@ -57,12 +57,6 @@ export const TourProvider = ({
     if (msg !== undefined) setDisabledMessageState(msg);
   }, []);
 
-  // Sync if disabled/disabledMessage props change from parent
-  useEffect(() => {
-    setDisabledState(disabledProp);
-    setDisabledMessageState(disabledMessageProp);
-  }, [disabledProp, disabledMessageProp]);
-
   // Register with app-level registry on mount, unregister on unmount
   useEffect(() => {
     if (!tourData) return;

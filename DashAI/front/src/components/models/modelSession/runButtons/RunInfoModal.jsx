@@ -28,6 +28,30 @@ import FormSchemaWithSelectedModel from "../../../shared/FormSchemaWithSelectedM
 import { getComponents } from "../../../../api/component";
 import { useTranslation } from "react-i18next";
 
+// Metrics Section Component
+const MetricsSection = ({ title, metrics }) => (
+  <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
+    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+      {title}
+    </Typography>
+    <Divider sx={{ mb: 2 }} />
+    {metrics &&
+      Object.entries(metrics).map(([key, value]) => (
+        <Box
+          key={key}
+          sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            {key}:
+          </Typography>
+          <Typography variant="body2" fontWeight="medium">
+            {typeof value === "number" ? value.toFixed(4) : value}
+          </Typography>
+        </Box>
+      ))}
+  </Paper>
+);
+
 export default function RunInfoModal({
   experiment,
   run,
@@ -37,13 +61,17 @@ export default function RunInfoModal({
   onEditParameters,
   onOptimize,
 }) {
-  if (!run || !experiment) return null;
-  const [localRun, setLocalRun] = useState(structuredClone(run));
+  // Initialize all hooks FIRST (before any conditional returns)
+  const [localRun, setLocalRun] = useState(() => 
+    run ? structuredClone(run) : null
+  );
   const [metrics, setMetrics] = useState([]);
   const [optimizers, setOptimizers] = useState([]);
   const { t } = useTranslation(["experiments", "common"]);
 
   useEffect(() => {
+    if (!experiment) return; // Guard inside useEffect
+    
     const fetchMetricsAndOptimizers = async () => {
       try {
         const components = await getComponents({
@@ -61,7 +89,7 @@ export default function RunInfoModal({
       }
     };
     fetchMetricsAndOptimizers();
-  }, []);
+  }, [experiment?.task_name]); // Update dependency array
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -77,28 +105,8 @@ export default function RunInfoModal({
     }
   };
 
-  const MetricsSection = ({ title, metrics }) => (
-    <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
-      <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-        {title}
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
-      {metrics &&
-        Object.entries(metrics).map(([key, value]) => (
-          <Box
-            key={key}
-            sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {key}:
-            </Typography>
-            <Typography variant="body2" fontWeight="medium">
-              {typeof value === "number" ? value.toFixed(4) : value}
-            </Typography>
-          </Box>
-        ))}
-    </Paper>
-  );
+  // Guard clause AFTER all hooks
+  if (!run || !experiment) return null;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
