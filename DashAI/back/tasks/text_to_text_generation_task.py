@@ -6,9 +6,17 @@ from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class TextToTextGenerationTask(BaseGenerativeTask):
-    """Base class for image generation tasks.
+    """Task for open-ended text generation using large language models.
 
-    Here you can change the methods provided by class Task.
+    Text-to-text generation takes a natural-language prompt (user message) and
+    produces a natural-language response. The task maintains a conversation
+    history (``USE_HISTORY = True``) so that multi-turn chat interactions are
+    supported out of the box. Input and output are both plain strings, formatted
+    as OpenAI-style chat messages (``role``/``content`` dicts) before being
+    passed to the underlying LLM.
+
+    Compatible models include all DashAI LLM wrappers (Llama, Mistral, Mixtral,
+    Qwen, SmolLM) which implement the ``generate`` method.
     """
 
     metadata: dict = {

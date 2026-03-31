@@ -11,7 +11,15 @@ if TYPE_CHECKING:
 
 
 class ClassificationTask(BaseTask):
-    """Base class for classification tasks."""
+    """Abstract base task for all classification problems in DashAI.
+
+    Classification tasks map input features to a finite set of discrete class
+    labels. This base class defines the compatible metric components (accuracy,
+    precision, recall, F1, etc.) and the output-type constraint (all output
+    columns must carry the ``Categorical`` type). Concrete subclasses specialise
+    the input/output type metadata and may override ``prepare_for_task`` to add
+    task-specific validation.
+    """
 
     COMPATIBLE_COMPONENTS = [
         "Accuracy",

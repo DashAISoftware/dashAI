@@ -10,9 +10,13 @@ from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class TextToImageGenerationTask(BaseGenerativeTask):
-    """Base class for image generation tasks.
+    """Task for generating images from natural-language text prompts.
 
-    Here you can change the methods provided by class Task.
+    Text-to-image generation uses a diffusion model conditioned on a text
+    description to synthesise novel images. The task accepts a single string
+    prompt as input and produces one or more PIL ``Image`` objects as output.
+    The output images are saved as files and their paths are returned for the
+    frontend to display.
     """
 
     metadata: dict = {
