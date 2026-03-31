@@ -25,7 +25,7 @@ class ExplorerStatus(Enum):
     ERROR = 4
 
 
-class ConverterListStatus(Enum):
+class ConverterStatus(Enum):
     NOT_STARTED = 0
     DELIVERED = 1
     STARTED = 2

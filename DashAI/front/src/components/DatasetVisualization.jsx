@@ -13,8 +13,8 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import {
-  getDatasetFile,
   getDatasetInfo,
+  getDatasetFile,
   getDatasetFileFiltered,
 } from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
@@ -29,6 +29,8 @@ import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
+import { useModels } from "./models/ModelsContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
@@ -46,9 +48,19 @@ export default function DatasetVisualization({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
+  const datasetsContext = useDatasetsAndNotebooks();
+  const modelsContext = useModels();
+  const setSharedDatasetInfo =
+    datasetsContext?.setDatasetInfo ??
+    modelsContext?.setDatasetInfo ??
+    (() => {});
+  const tab = datasetsContext?.datasetTab ?? modelsContext?.datasetTab ?? 0;
+  const setTab =
+    datasetsContext?.setDatasetTab ??
+    modelsContext?.setDatasetTab ??
+    (() => {});
 
   const [datasetInfo, setDatasetInfo] = useState(null);
-  const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
 
   useEffect(() => {
@@ -80,8 +92,11 @@ export default function DatasetVisualization({
   };
 
   useEffect(() => {
+    setTab(0);
+
     if (!dataset || dataset.status !== 3) {
       setDatasetInfo(null);
+      setSharedDatasetInfo(null);
       return;
     }
 
@@ -89,35 +104,37 @@ export default function DatasetVisualization({
       try {
         const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
+        setSharedDatasetInfo(info);
       } catch (error) {
         setDatasetInfo(null);
+        setSharedDatasetInfo(null);
       }
     };
 
     fetchDatasetInfo();
+
+    return () => setSharedDatasetInfo(null);
   }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize, filterModel) => {
+    async (page, pageSize, filterModel, sortModel) => {
       const isProcessing =
         dataset && !(dataset.status === 3 || dataset.status === 4);
       if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
         const hasFilters =
-          filterModel &&
-          Array.isArray(filterModel.items) &&
-          filterModel.items.length > 0;
-        let data;
-        if (hasFilters) {
-          data = await getDatasetFileFiltered(
-            dataset.file_path,
-            page,
-            pageSize,
-            filterModel,
-          );
-        } else {
-          data = await getDatasetFile(dataset.file_path, page, pageSize);
-        }
+          filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+
+        const data = hasFilters
+          ? await getDatasetFileFiltered(
+              dataset.file_path,
+              page,
+              pageSize,
+              filterModel,
+              sortModel,
+            )
+          : await getDatasetFile(dataset.file_path, page, pageSize);
+
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
         return { rows: [], total: 0 };
@@ -296,12 +313,11 @@ export default function DatasetVisualization({
               totalRows={datasetInfo?.total_rows}
               totalColumns={datasetInfo?.total_columns}
               fileSize={datasetInfo?.general_info?.memory_usage_mb}
-              duplicateRows={datasetInfo?.general_info?.duplicate_rows}
-              missingValues={datasetInfo?.nan}
             />
             {/* Data Quality Alerts */}
             <Box>
               <QualityAlerts
+                key={dataset?.id}
                 qualityInfo={datasetInfo?.quality_info}
                 generalInfo={datasetInfo?.general_info}
                 missingValues={datasetInfo?.nan}

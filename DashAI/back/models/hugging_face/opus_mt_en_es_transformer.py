@@ -15,7 +15,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.translation_model import TranslationModel
 from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 
@@ -278,6 +277,8 @@ class OpusMtEnESTransformer(TranslationModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "OpusMtEnESTransformer":
+        from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
+
         dataset = self.tokenize_data(x_train, y_train)
         dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
 
