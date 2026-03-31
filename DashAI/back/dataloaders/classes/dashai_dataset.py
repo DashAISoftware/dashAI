@@ -76,6 +76,7 @@ class DashAIDataset(Dataset):
 
     @types.setter
     def types(self, value):
+        """Set the column type mapping for this dataset."""
         self._types = value
 
     @beartype
@@ -885,6 +886,22 @@ def check_split_values(
     test_size: float,
     val_size: float,
 ) -> None:
+    """Validate that each split proportion is in the open interval (0, 1).
+
+    Parameters
+    ----------
+    train_size : float
+        Proportion of samples assigned to the training split.
+    test_size : float
+        Proportion of samples assigned to the test split.
+    val_size : float
+        Proportion of samples assigned to the validation split.
+
+    Raises
+    ------
+    ValueError
+        If any of the proportions is less than 0 or greater than 1.
+    """
     if train_size < 0 or train_size > 1:
         raise ValueError(
             "train_size should be in the (0, 1) range "
