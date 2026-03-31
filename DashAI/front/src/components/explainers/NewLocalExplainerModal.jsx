@@ -117,12 +117,10 @@ export default function NewLocalExplainerModal({
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      setExistingLocalExplainersLoaded(false);
-      loadExistingExplainers();
-    }
-  }, [open]);
+  const handleDialogEnter = () => {
+    setExistingLocalExplainersLoaded(false);
+    loadExistingExplainers();
+  };
 
   useEffect(() => {
     if (!open || !existingLocalExplainersLoaded || newLocalExpl.name.trim()) {
@@ -254,6 +252,7 @@ export default function NewLocalExplainerModal({
       aria-labelledby="new-local-explainer-dialog-title"
       aria-describedby="new-local-explainer-dialog-description"
       scroll="paper"
+      TransitionProps={{ onEnter: handleDialogEnter }}
       slotProps={{
         paper: {
           sx: { minHeight: "80vh" },

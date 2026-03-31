@@ -113,12 +113,10 @@ export default function NewGlobalExplainerModal({
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      setExistingGlobalExplainersLoaded(false);
-      loadExistingExplainers();
-    }
-  }, [open]);
+  const handleDialogEnter = () => {
+    setExistingGlobalExplainersLoaded(false);
+    loadExistingExplainers();
+  };
 
   useEffect(() => {
     if (!open || !existingGlobalExplainersLoaded || newGlobalExpl.name.trim()) {
@@ -248,6 +246,7 @@ export default function NewGlobalExplainerModal({
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
+      TransitionProps={{ onEnter: handleDialogEnter }}
       slotProps={{
         paper: {
           sx: { minHeight: "80vh" },
