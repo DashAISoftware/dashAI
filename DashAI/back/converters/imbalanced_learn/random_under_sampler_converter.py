@@ -16,7 +16,12 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class RUSchema(BaseSchema):
-    """Schema for RandomUnderSamplerConverter hyperparameters."""
+    """Schema for configuring the RandomUnderSamplerConverter.
+
+    Wraps ``imblearn.under_sampling.RandomUnderSampler`` and exposes the
+    sampling strategy and random seed as schema fields validated before
+    being forwarded to the underlying imbalanced-learn estimator.
+    """
 
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
@@ -42,11 +47,28 @@ class RUSchema(BaseSchema):
 class RandomUnderSamplerConverter(
     SamplingConverter, ImbalancedLearnWrapper, RandomUnderSampler
 ):
-    """Balances class distribution by randomly removing majority-class samples.
+    """Balance class distribution by randomly discarding majority-class samples.
 
-    Reduces the number of rows in the dataset so that the majority class is
-    down-sampled to the target ratio. Wraps imbalanced-learn's
-    ``RandomUnderSampler``.
+    Under-sampling addresses class imbalance by reducing the size of one or
+    more over-represented classes rather than synthesising new minority-class
+    examples. ``RandomUnderSampler`` achieves this by drawing a random subset
+    of the majority class without replacement until the desired
+    ``sampling_strategy`` ratio is reached.
+
+    The ``sampling_strategy`` parameter controls the resulting ratio between
+    the minority and majority class after resampling. When set to ``"auto"``,
+    the majority class is down-sampled until it matches the size of the next
+    largest class. A float value specifies the desired minority-to-majority
+    ratio directly.
+
+    Input column types are preserved in the output. Type determination is
+    delegated to the ``transform`` method of the parent wrapper.
+
+    Wraps ``imblearn.under_sampling.RandomUnderSampler``.
+
+    References
+    ----------
+    [1] https://imbalanced-learn.org/stable/references/generated/imblearn.under_sampling.RandomUnderSampler.html
     """
 
     SCHEMA = RUSchema

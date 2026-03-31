@@ -16,7 +16,12 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class SMOTEENNSchema(BaseSchema):
-    """Schema for SMOTEENNConverter hyperparameters."""
+    """Schema for SMOTEENNConverter hyperparameters.
+
+    Configures the two-stage SMOTE-ENN hybrid: first the SMOTE oversampling pass
+    (``sampling_strategy``, ``k_neighbors``, ``random_state``), then the ENN
+    cleaning pass. Both passes share the same ``random_state``.
+    """
 
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
@@ -50,8 +55,27 @@ class SMOTEENNSchema(BaseSchema):
 class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     """Hybrid sampler combining SMOTE oversampling with Edited Nearest Neighbours cleaning.
 
-    First over-samples the minority class using SMOTE, then applies ENN to remove
-    noisy samples from both classes. Wraps imbalanced-learn's ``SMOTEENN``.
+    SMOTE-ENN is a two-stage resampling strategy for imbalanced classification:
+
+    1. **Over-sampling** — SMOTE generates synthetic minority-class examples by
+       interpolating between each minority sample and its k-nearest minority
+       neighbours, increasing the minority class size.
+    2. **Cleaning** — Edited Nearest Neighbours (ENN) removes any sample (from
+       either class) whose class label disagrees with the majority vote of its
+       nearest neighbours, reducing class overlap and borderline noise.
+
+    The combined effect is a more balanced and cleaner decision boundary than either
+    technique alone. All schema parameters are forwarded to imbalanced-learn's
+    ``SMOTEENN`` and its internal ``SMOTE`` sub-estimator.
+
+    References
+    ----------
+    .. [1] Chawla, N.V. et al. (2002). "SMOTE: Synthetic Minority Over-sampling
+           Technique." JAIR, 16, 321-357. https://arxiv.org/abs/1106.1813
+    .. [2] Batista, G.E.A.P.A. et al. (2004). "A study of the behaviour of several
+           methods for balancing machine learning training data." ACM SIGKDD
+           Explorations, 6(1), 20-29.
+    .. [3] https://imbalanced-learn.org/stable/references/generated/imblearn.combine.SMOTEENN.html
     """
 
     SCHEMA = SMOTEENNSchema
