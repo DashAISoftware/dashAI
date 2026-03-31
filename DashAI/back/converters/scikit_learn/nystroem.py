@@ -97,7 +97,14 @@ class NystroemSchema(BaseSchema):
 
 
 class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperation):
-    """Scikit-learn's Nystroem wrapper for DashAI."""
+    """Approximate a kernel feature map using a random subset of training data.
+
+    Generates an explicit feature map approximation of a kernel (e.g. RBF, polynomial)
+    by sampling a subset of the training data as landmark points. Enables scalable
+    kernel methods by pairing with a linear model.
+
+    Wraps scikit-learn's ``Nystroem``.
+    """
 
     SCHEMA = NystroemSchema
     DESCRIPTION = MultilingualString(
@@ -118,6 +125,14 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
     IMAGE_PREVIEW = "nystroem.png"
 
     def __init__(self, **kwargs):
+        """Initialize the Nystroem converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         self.kernel_params = kwargs.pop("kernel_params", None)
         if self.kernel_params is not None:
             self.kernel_params = parse_string_to_dict(self.kernel_params)
@@ -131,7 +146,19 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

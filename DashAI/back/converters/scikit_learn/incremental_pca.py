@@ -65,7 +65,14 @@ class IncrementalPCASchema(BaseSchema):
 class IncrementalPCA(
     DimensionalityReductionConverter, SklearnWrapper, IncrementalPCAOperation
 ):
-    """Scikit-learn's IncrementalPCA wrapper for DashAI."""
+    """Reduce dimensionality using PCA computed in mini-batches.
+
+    Processes data in successive batches instead of requiring the entire dataset
+    in memory at once. Suitable for datasets too large to fit in RAM. The final
+    components approximate those of standard PCA.
+
+    Wraps scikit-learn's ``IncrementalPCA``.
+    """
 
     SCHEMA = IncrementalPCASchema
     DESCRIPTION = MultilingualString(

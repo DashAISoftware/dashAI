@@ -142,7 +142,14 @@ class PCASchema(BaseSchema):
 
 
 class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
-    """Scikit-learn's PCA wrapper for DashAI."""
+    """Reduce dimensionality using Principal Component Analysis.
+
+    Projects the input feature space into a lower-dimensional subspace that
+    captures the directions of maximum variance. Each output component is a
+    linear combination of the original features, ordered by explained variance.
+
+    Wraps scikit-learn's ``PCA``.
+    """
 
     SCHEMA = PCASchema
     DESCRIPTION = MultilingualString(
@@ -169,6 +176,18 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     metadata = {}
 
     def __init__(self, **kwargs):
+        """Initialize the PCA converter.
+
+        Handles the ``"RandomState"`` sentinel for ``random_state`` by converting
+        it to a new ``numpy.RandomState`` instance at initialization time.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching ``PCASchema`` fields.
+            If ``random_state`` is ``"RandomState"``, a fresh ``numpy.RandomState``
+            instance is created automatically.
+        """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
@@ -177,7 +196,19 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for PCA components."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
