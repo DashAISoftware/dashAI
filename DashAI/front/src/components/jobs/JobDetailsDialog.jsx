@@ -17,33 +17,34 @@ import { getJobDetails } from "../../api/job";
 import { formatDate } from "../../utils";
 
 const JobDetailsDialog = ({ job, open, onClose }) => {
-  const [jobDetails, setJobDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [state, setState] = useState({
+    jobDetails: null,
+    loading: false,
+  });
 
   useEffect(() => {
     if (job && job.id && open) {
-      setLoading(true);
+      setState({ jobDetails: job, loading: true });
 
       const fetchDetails = async () => {
         try {
           const data = await getJobDetails(job.id);
-          setJobDetails({ ...job, ...data });
+          setState({ jobDetails: { ...job, ...data }, loading: false });
         } catch (error) {
           console.error("Error fetching job details:", error);
-          setJobDetails(job);
-        } finally {
-          setLoading(false);
+          setState({ jobDetails: job, loading: false });
         }
       };
 
       fetchDetails();
     } else {
-      setJobDetails(job);
+      setState({ jobDetails: job, loading: false });
     }
   }, [job?.id, open]);
 
   if (!job) return null;
 
+  const { jobDetails, loading } = state;
   const displayJob = jobDetails || job;
 
   return (
