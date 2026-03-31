@@ -26,6 +26,43 @@ import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 import { ChevronRight } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+import ColumnInsights from "./dataset/ColumnInsights";
+
+function RightBarDatasetView() {
+  const { t } = useTranslation(["datasets"]);
+  const { datasetInfo } = useDatasetsAndNotebooks();
+
+  if (!datasetInfo) {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 2,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", textAlign: "center" }}
+        >
+          {t("datasets:label.selectNotebookToAccessAnalysisTools")}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+      <ColumnInsights
+        numericStats={datasetInfo?.numeric_stats}
+        textStats={datasetInfo?.text_stats}
+      />
+    </Box>
+  );
+}
 
 export default function RightBar({ notebook, onToggle }) {
   const theme = useTheme();
@@ -470,22 +507,7 @@ export default function RightBar({ notebook, onToggle }) {
             </Box>
           </>
         ) : (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
-            >
-              {t("datasets:label.selectNotebookToAccessAnalysisTools")}
-            </Typography>
-          </Box>
+          <RightBarDatasetView />
         )}
       </Box>
     </SideBar>

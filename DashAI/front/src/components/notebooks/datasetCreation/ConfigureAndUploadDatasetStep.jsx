@@ -9,6 +9,7 @@ import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -31,6 +32,7 @@ export default function ConfigureAndUploadDatasetStep({
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
+  const theme = useTheme();
 
   useEffect(() => {
     if (onPreviewError) {
@@ -183,8 +185,8 @@ export default function ConfigureAndUploadDatasetStep({
         spacing={2}
         sx={{
           width: "100%",
-          backgroundColor: "#212121",
-          padding: 4,
+          backgroundColor: theme.palette.background.box,
+          padding: 2,
           borderRadius: 2,
         }}
       >

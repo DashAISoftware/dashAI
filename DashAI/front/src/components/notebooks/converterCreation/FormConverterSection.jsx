@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-import { saveConverterList } from "../../../api/converter";
+import { saveConverter } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
 import ParameterStepConverter from "./ParameterStepConverter";
@@ -39,7 +39,7 @@ export default function FormConverterSection({
       },
     };
 
-    saveConverterList(data)
+    saveConverter(data)
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
