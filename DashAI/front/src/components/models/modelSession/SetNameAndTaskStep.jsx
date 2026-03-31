@@ -24,13 +24,11 @@ function SetNameAndTaskStep({
 
   const [loading, setLoading] = useState(false);
   const [nModifications, setNModifications] = useState(0);
-  const [expNameOk, setExpNameOk] = useState(true);
   const [expNameError, setExpNameError] = useState(false);
   const tourContext = useTourContext();
   const { t } = useTranslation(["experiments", "common"]);
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
-  const [taskNameOk, setTaskNameOk] = useState(false);
 
   const getTasks = async () => {
     setLoading(true);
@@ -63,30 +61,28 @@ function SetNameAndTaskStep({
 
   const handleNameInputChange = (event) => {
     const inputValue = event.target.value;
+    const nextModifications = nModifications + 1;
     setNewExp({ ...newExp, name: inputValue });
-    setNModifications((prev) => prev + 1);
+    setNModifications(nextModifications);
 
     const isEmpty = !inputValue.trim();
     const isTooShort =
       inputValue.trim().length > 0 && inputValue.trim().length < 4;
+    const nameExists = existingExperiments.some(
+      (experiment) =>
+        experiment.name &&
+        experiment.name.toLowerCase() === inputValue.trim().toLowerCase(),
+    );
 
-    setNModifications((nMods) => {
-      if (nMods >= 4) {
-      if (isTooShort) {
-        setExpNameError(true);
-        setExpNameOk(false);
-      } else if (isEmpty) {
-        setExpNameError(false);
-        setExpNameOk(false);
-      } else {
-        setExpNameError(false);
-        setExpNameOk(true);
-      }
+    if (nextModifications >= 4) {
+      setExpNameError(isTooShort);
     } else {
-      setExpNameOk(!isEmpty);
+      setExpNameError(false);
     }
-      return nMods; // Return current value since we already incremented above
-    });
+
+    setNextEnabled(
+      Boolean(selectedTask?.name) && !isEmpty && !isTooShort && !nameExists,
+    );
   };
 
   const getNameError = () => {
@@ -118,7 +114,6 @@ function SetNameAndTaskStep({
   };
 
   const nameError = getNameError();
-
   useEffect(() => {
     if (selectedTask && "name" in selectedTask) {
       setNewExp({
@@ -126,7 +121,7 @@ function SetNameAndTaskStep({
         task_name: selectedTask.name,
         runs: [],
       });
-      setTaskNameOk(true);
+      setNextEnabled(Boolean(selectedTask.name) && !getNameError());
 
       if (tourContext && tourContext.run) {
         if (selectedTask.name === "TabularClassificationTask") {
@@ -144,24 +139,16 @@ function SetNameAndTaskStep({
         ...prev,
         name: "Exp actividad 2",
       }));
-      setExpNameOk(true);
+      setNextEnabled(Boolean(selectedTask?.name) && !getNameError());
     } else if (defaultExperimentName && !newExp?.name) {
       setNewExp((prev) => ({ ...prev, name: defaultExperimentName }));
-      setExpNameOk(true);
+      setNextEnabled(Boolean(selectedTask?.name) && !getNameError());
     }
   }, [defaultExperimentName]);
 
   useEffect(() => {
     getTasks();
   }, []);
-
-  useEffect(() => {
-    if (expNameOk && taskNameOk) {
-      setNextEnabled(true);
-    } else {
-      setNextEnabled(false);
-    }
-  }, [expNameOk, taskNameOk]);
 
   return (
     <Grid
