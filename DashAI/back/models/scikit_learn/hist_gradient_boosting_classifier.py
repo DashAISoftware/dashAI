@@ -141,7 +141,12 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
 class HistGradientBoostingClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _HistGradientBoostingClassifier
 ):
-    """Scikit-learn's HistGradientBoostingRegressor wrapper for DashAI."""
+    """Histogram-based gradient boosting classifier for large datasets.
+
+    Uses histogram binning to speed up tree construction, making it more efficient
+    than standard gradient boosting for large datasets. Wraps scikit-learn's
+    ``HistGradientBoostingClassifier``.
+    """
 
     SCHEMA = HistGradientBoostingClassifierSchema
     DISPLAY_NAME: str = MultilingualString(

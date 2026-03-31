@@ -86,7 +86,11 @@ class LogisticRegressionSchema(BaseSchema):
 class LogisticRegression(
     TabularClassificationModel, SklearnLikeClassifier, _LogisticRegression
 ):
-    """Scikit-learn's Logistic Regression wrapper for DashAI."""
+    """Logistic regression classifier with L1, L2, or Elastic-Net regularisation.
+
+    Fits a linear decision boundary using a logistic function and supports
+    multiclass problems via one-vs-rest. Wraps scikit-learn's ``LogisticRegression``.
+    """
 
     SCHEMA = LogisticRegressionSchema
     DISPLAY_NAME: str = MultilingualString(

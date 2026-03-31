@@ -147,7 +147,11 @@ class RidgeRegressionSchema(BaseSchema):
 
 
 class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
-    """Scikit-learn's Ridge regression wrapper for DashAI."""
+    """Ridge regression with L2 regularisation to reduce coefficient magnitude.
+
+    Adds a squared-norm penalty to the least-squares objective to prevent
+    overfitting. Wraps scikit-learn's ``Ridge``.
+    """
 
     SCHEMA = RidgeRegressionSchema
     DISPLAY_NAME: str = MultilingualString(

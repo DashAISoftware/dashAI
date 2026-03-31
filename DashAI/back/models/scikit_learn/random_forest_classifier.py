@@ -141,7 +141,11 @@ class RandomForestClassifierSchema(BaseSchema):
 class RandomForestClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _RandomForestClassifier
 ):
-    """Scikit-learn's Random Forest classifier wrapper for DashAI."""
+    """Random forest classifier that aggregates predictions from many decision trees.
+
+    Reduces overfitting and variance by building trees on bootstrap samples and
+    random feature subsets. Wraps scikit-learn's ``RandomForestClassifier``.
+    """
 
     SCHEMA = RandomForestClassifierSchema
     DISPLAY_NAME: str = MultilingualString(

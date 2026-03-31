@@ -116,7 +116,11 @@ class DecisionTreeClassifierSchema(BaseSchema):
 class DecisionTreeClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _DecisionTreeClassifier
 ):
-    """Scikit-learn's Decision Tree Classifier wrapper for DashAI."""
+    """Decision tree classifier that learns axis-aligned decision rules from data.
+
+    Builds a binary tree by recursively splitting the feature space to maximise
+    a purity criterion. Wraps scikit-learn's ``DecisionTreeClassifier``.
+    """
 
     SCHEMA = DecisionTreeClassifierSchema
     DISPLAY_NAME: str = MultilingualString(

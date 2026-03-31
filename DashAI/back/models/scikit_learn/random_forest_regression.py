@@ -252,7 +252,11 @@ class RandomForestRegressionSchema(BaseSchema):
 class RandomForestRegression(
     RegressionModel, SklearnLikeRegressor, _RandomForestRegressor
 ):
-    """Scikit-learn's Ridge Regression wrapper for DashAI."""
+    """Random forest regressor that averages predictions from multiple decision trees.
+
+    Reduces overfitting and variance compared to a single tree by combining the output
+    of many randomized trees. Wraps scikit-learn's ``RandomForestRegressor``.
+    """
 
     SCHEMA = RandomForestRegressionSchema
     DISPLAY_NAME: str = MultilingualString(

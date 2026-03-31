@@ -76,7 +76,11 @@ class LinearRegressionSchema(BaseSchema):
 
 
 class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression):
-    """Scikit-learn's Linear Regression wrapper for DashAI."""
+    """Ordinary least-squares linear regression model.
+
+    Fits a linear model by minimising the sum of squared residuals between
+    predictions and targets. Wraps scikit-learn's ``LinearRegression``.
+    """
 
     SCHEMA = LinearRegressionSchema
     DISPLAY_NAME: str = MultilingualString(

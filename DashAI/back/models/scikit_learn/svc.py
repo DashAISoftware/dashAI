@@ -154,7 +154,11 @@ class SVCSchema(BaseSchema):
 
 
 class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
-    """Scikit-learn's Support Vector Machine (SVM) classifier wrapper for DashAI."""
+    """Support vector machine classifier that maximises the margin between classes.
+
+    Finds the optimal separating hyperplane in a kernel-transformed feature space.
+    Wraps scikit-learn's ``SVC``.
+    """
 
     SCHEMA = SVCSchema
     DISPLAY_NAME: str = MultilingualString(

@@ -334,7 +334,11 @@ class GradientBoostingRSchema(BaseSchema):
 
 
 class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
-    """Scikit-learn's Ridge Regression wrapper for DashAI."""
+    """Gradient boosting regressor that builds an ensemble of decision trees sequentially.
+
+    Each tree corrects the residual errors of the previous ones to produce a strong
+    regression model. Wraps scikit-learn's ``GradientBoostingRegressor``.
+    """
 
     SCHEMA = GradientBoostingRSchema
     DISPLAY_NAME: str = MultilingualString(

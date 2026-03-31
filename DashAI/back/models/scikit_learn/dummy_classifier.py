@@ -25,7 +25,11 @@ class DummyClassifierSchema(BaseSchema):
 class DummyClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _DummyClassifier
 ):
-    """Scikit-learn's DummyClassifier wrapper for DashAI."""
+    """Baseline classifier that makes predictions ignoring the input features.
+
+    Useful as a sanity-check baseline to compare against more complex models.
+    Wraps scikit-learn's ``DummyClassifier``.
+    """
 
     SCHEMA = DummyClassifierSchema
     DISPLAY_NAME: str = MultilingualString(

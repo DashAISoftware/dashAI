@@ -179,6 +179,12 @@ class MLPRegressorSchema(BaseSchema):
 
 
 class MLPRegression(RegressionModel):
+    """Single hidden-layer MLP regressor implemented in PyTorch.
+
+    Trains a fully-connected neural network with one hidden layer and a configurable
+    activation function. Supports per-epoch and per-step metric logging to DashAI.
+    """
+
     SCHEMA = MLPRegressorSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Multi-layer Perceptron (MLP) Regression",
@@ -192,9 +198,20 @@ class MLPRegression(RegressionModel):
     ICON: str = "Psychology"
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the MLP regressor and set up the inner PyTorch module class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Configuration keyword arguments matching ``MLPRegressorSchema`` fields,
+            including ``hidden_size``, ``activation``, ``learning_rate``, ``epochs``,
+            ``batch_size``, and ``device``.
+        """
         import torch.nn as nn
 
         class MLP(nn.Module):
+            """Single hidden-layer MLP module."""
+
             def __init__(self, input_dim, hidden_size, activation_name):
                 super().__init__()
                 activations = {
@@ -229,6 +246,24 @@ class MLPRegression(RegressionModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "MLPRegression":
+        """Train the MLP regressor using Adam optimiser and MSE loss.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            The input features for training.
+        y_train : DashAIDataset
+            The regression targets for training.
+        x_validation : DashAIDataset, optional
+            Input features for validation metric logging. Defaults to None.
+        y_validation : DashAIDataset, optional
+            Target values for validation metric logging. Defaults to None.
+
+        Returns
+        -------
+        MLPRegression
+            The trained model instance (self).
+        """
         import torch
 
         # 1. Prepare Data
@@ -339,6 +374,18 @@ class MLPRegression(RegressionModel):
         return self
 
     def predict(self, x: "DashAIDataset") -> "ndarray":
+        """Generate regression predictions for the input dataset.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The input features to predict on.
+
+        Returns
+        -------
+        ndarray
+            Predicted continuous values as a 1-D NumPy array.
+        """
         import torch
 
         self.model.eval()
@@ -348,6 +395,13 @@ class MLPRegression(RegressionModel):
             return self.model(x_tensor).cpu().numpy().flatten()
 
     def save(self, filename: str) -> None:
+        """Save the trained model weights and configuration to disk.
+
+        Parameters
+        ----------
+        filename : str
+            Path where the model checkpoint will be saved.
+        """
         import torch
 
         torch.save(
@@ -361,6 +415,18 @@ class MLPRegression(RegressionModel):
 
     @staticmethod
     def load(filename: str) -> "MLPRegression":
+        """Restore an ``MLPRegression`` instance from a saved checkpoint.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the checkpoint file saved by ``save``.
+
+        Returns
+        -------
+        MLPRegression
+            The restored model instance with loaded weights.
+        """
         import torch
 
         data = torch.load(filename)

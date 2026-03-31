@@ -63,7 +63,11 @@ class KNeighborsClassifierSchema(BaseSchema):
 class KNeighborsClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _KNeighborsClassifier
 ):
-    """Scikit-learn's K-Nearest Neighbors (KNN) classifier wrapper for DashAI."""
+    """K-nearest neighbours classifier that predicts the majority class among neighbours.
+
+    Classifies each sample by majority vote of its ``k`` closest training points.
+    Wraps scikit-learn's ``KNeighborsClassifier``.
+    """
 
     SCHEMA = KNeighborsClassifierSchema
     DISPLAY_NAME: str = MultilingualString(

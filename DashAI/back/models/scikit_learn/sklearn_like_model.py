@@ -55,6 +55,27 @@ class SklearnLikeModel(BaseModel):
     # --- Methods for process the data for sklearn models ---
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
+        """Train the sklearn model on the provided dataset.
+
+        Applies ``prepare_dataset`` and ``prepare_output`` to encode categorical
+        features and targets before delegating to the scikit-learn ``fit`` method.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            The input features for training.
+        y_train : DashAIDataset
+            The target labels for training.
+        x_validation : DashAIDataset, optional
+            Validation input features (unused in sklearn models). Defaults to None.
+        y_validation : DashAIDataset, optional
+            Validation target labels (unused in sklearn models). Defaults to None.
+
+        Returns
+        -------
+        BaseModel
+            The fitted scikit-learn estimator (self).
+        """
         x_processed = self.prepare_dataset(x_train, is_fit=True).to_pandas()
         y_processed = self.prepare_output(y_train, is_fit=True).to_pandas()
         return super().fit(x_processed, y_processed)

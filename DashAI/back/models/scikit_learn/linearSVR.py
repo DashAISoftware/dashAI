@@ -195,8 +195,10 @@ class LinearSVRSchema(BaseSchema):
 
 
 class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
-    """Scikit-learn's Linear Support Vector Regression (LinearSVR)
-    wrapper for DashAI.
+    """Support vector regression with a linear kernel for large datasets.
+
+    Fits a linear regression model by minimising the epsilon-insensitive loss.
+    Wraps scikit-learn's ``LinearSVR``.
     """
 
     SCHEMA = LinearSVRSchema
