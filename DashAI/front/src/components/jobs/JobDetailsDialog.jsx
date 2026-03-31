@@ -23,23 +23,33 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
   });
 
   useEffect(() => {
-    if (job && job.id && open) {
-      setState({ jobDetails: job, loading: true });
+    if (!job || !job.id || !open) {
+      setState({ jobDetails: null, loading: false });
+      return;
+    }
 
-      const fetchDetails = async () => {
-        try {
-          const data = await getJobDetails(job.id);
+    let alive = true;
+    setState({ jobDetails: job, loading: true });
+
+    const fetchDetails = async () => {
+      try {
+        const data = await getJobDetails(job.id);
+        if (alive) {
           setState({ jobDetails: { ...job, ...data }, loading: false });
-        } catch (error) {
-          console.error("Error fetching job details:", error);
+        }
+      } catch (error) {
+        console.error("Error fetching job details:", error);
+        if (alive) {
           setState({ jobDetails: job, loading: false });
         }
-      };
+      }
+    };
 
-      fetchDetails();
-    } else {
-      setState({ jobDetails: job, loading: false });
-    }
+    fetchDetails();
+
+    return () => {
+      alive = false;
+    };
   }, [job?.id, open]);
 
   if (!job) return null;
