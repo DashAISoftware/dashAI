@@ -228,7 +228,24 @@ class ExcelDataLoader(BaseDataLoader):
     )
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare parameters for pandas.read_excel."""
+        """Convert schema parameters into a dict suitable for ``pandas.read_excel``.
+
+        Maps DashAI schema keys to their pandas equivalents and normalises
+        comma-separated string fields (``names``, ``na_values``,
+        ``true_values``, ``false_values``) into Python lists.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Raw parameter dictionary from the schema (``sheet``, ``header``,
+            ``usecols``, ``skiprows``, ``nrows``, ``names``, ``na_values``,
+            ``keep_default_na``, ``true_values``, ``false_values``).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Keyword-argument dict ready to be unpacked into ``pd.read_excel``.
+        """
         pandas_params = {}
 
         if "sheet" in params and params["sheet"] is not None:

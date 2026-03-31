@@ -22,18 +22,25 @@ log = logging.getLogger(__name__)
 
 
 def get_arrow_table(ds: Dataset) -> object:
-    """
-    Retrieve the underlying PyArrow table from a Hugging Face Dataset.
-    This function abstracts away the need to access private attributes.
+    """Retrieve the underlying PyArrow table from a HuggingFace Dataset.
 
-    Parameters:
-        ds (Dataset): A Hugging Face Dataset.
+    Abstracts away version-dependent private attribute access by trying
+    ``arrow_table`` first and then ``data.table``.
 
-    Returns:
-        object: The underlying PyArrow table.
+    Parameters
+    ----------
+    ds : Dataset
+        A HuggingFace ``Dataset`` or ``DashAIDataset`` instance.
 
-    Raises:
-        ValueError: If the arrow table cannot be retrieved.
+    Returns
+    -------
+    object
+        The underlying PyArrow ``Table``.
+
+    Raises
+    ------
+    ValueError
+        If neither ``arrow_table`` nor ``data.table`` is available on ``ds``.
     """
     if hasattr(ds, "arrow_table"):
         return ds.arrow_table
@@ -76,7 +83,13 @@ class DashAIDataset(Dataset):
 
     @types.setter
     def types(self, value):
-        """Set the column type mapping for this dataset."""
+        """Set the column type mapping for this dataset.
+
+        Parameters
+        ----------
+        value : dict of {str: DashAIDataType}
+            New mapping from column name to DashAI data type.
+        """
         self._types = value
 
     @beartype
@@ -548,23 +561,27 @@ class DashAIDataset(Dataset):
 
     @beartype
     def get_split(self, split_name: str) -> "DashAIDataset":
-        """
-        Returns a new DashAIDataset corresponding to the specified split.
-        This method uses the metadata 'split_indices' stored in the original
-        DashAIDataset to obtain the list of indices for the desired split, then
-        it creates a new dataset containing only those rows.
+        """Return a new dataset containing only the rows of the requested split.
 
-        Parameters:
-            split_name (str): The name of the split to extract (e.g., "train",
-            "test", "validation").
+        Uses the ``"split_indices"`` metadata stored in :attr:`splits` to
+        select the correct rows.
 
-        Returns:
-            DashAIDataset: A new DashAIDataset instance containing only the
-            rows of the specified split.
+        Parameters
+        ----------
+        split_name : str
+            Name of the split to extract (e.g. ``"train"``, ``"test"``,
+            ``"validation"``).
 
-        Raises:
-            ValueError: If the specified split is not found in the splits
-            of the dataset.
+        Returns
+        -------
+        DashAIDataset
+            A new ``DashAIDataset`` containing only the rows of
+            ``split_name``.
+
+        Raises
+        ------
+        ValueError
+            If ``split_name`` is not found in :attr:`splits`.
         """
         splits = self.splits.get("split_indices", {})
         if split_name not in splits:
@@ -580,17 +597,18 @@ class DashAIDataset(Dataset):
 
     @beartype
     def select_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
-        """
-        Selects specific columns from the dataset and returns a new DashAIDataset
-        containing only those columns.
+        """Return a new dataset with only the specified columns.
 
-        Parameters:
-            column_names (Union[str, List[str]]): The name or list of names of the
-            columns to select.
+        Parameters
+        ----------
+        column_names : str or list of str
+            Name(s) of the column(s) to keep.
 
-        Returns:
-            DashAIDataset: A new DashAIDataset instance containing only the
-            specified columns.
+        Returns
+        -------
+        DashAIDataset
+            A new ``DashAIDataset`` containing only the requested columns,
+            with the corresponding types from the original dataset.
         """
         if isinstance(column_names, str):
             column_names = [column_names]
@@ -628,17 +646,22 @@ class DashAIDataset(Dataset):
 
 @beartype
 def merge_splits_with_metadata(dataset_dict: object) -> DashAIDataset:
-    """
-    Merges the splits from a DatasetDict into a single DashAIDataset and records
-    the original indices for each split in the metadata.
+    """Merge all splits of a DatasetDict into a single DashAIDataset.
 
-    Parameters:
-        dataset_dict (DatasetDict): A Hugging Face DatasetDict containing
-        multiple splits.
+    Concatenates the splits in sorted key order and records the row-index
+    range for each split in the ``splits`` metadata so they can later be
+    recovered with :meth:`DashAIDataset.get_split`.
 
-    Returns:
-        DashAIDataset: A unified dataset with merged data and metadata containing the
-        original split indices.
+    Parameters
+    ----------
+    dataset_dict : DatasetDict
+        A HuggingFace ``DatasetDict`` containing one or more named splits.
+
+    Returns
+    -------
+    DashAIDataset
+        A unified ``DashAIDataset`` whose :attr:`splits` metadata maps each
+        split name to its original row indices.
     """
 
     from datasets import concatenate_datasets  # local import
@@ -773,15 +796,22 @@ def transform_dataset_with_schema(
 def save_dataset(
     dataset: DashAIDataset, path: Union[str, os.PathLike], schema=None
 ) -> None:
-    """
-    Saves a DashAIDataset in a custom format using two files in the specified directory:
-      - "data.arrow": contains the dataset's PyArrow table.
-      - "splits.json": contains the dataset's splits indices.
+    """Save a DashAIDataset to disk in DashAI's two-file format.
 
-    Parameters:
-        dataset (DashAIDataset): The dataset to save.
-        path (Union[str, os.PathLike]): The directory path where the files
-        will be saved.
+    Creates the directory at ``path`` if needed, then writes:
+
+    * ``data.arrow`` — the PyArrow IPC file containing the table.
+    * ``splits.json`` — JSON file with split indices and row counts.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        The dataset to persist.
+    path : str or os.PathLike
+        Directory path where the two output files will be written.
+    schema : object or None, optional
+        If provided, the dataset is transformed with ``transform_dataset_with_schema``
+        before saving. Default ``None``.
     """
 
     os.makedirs(path, exist_ok=True)
@@ -814,18 +844,22 @@ def save_dataset(
 
 @beartype
 def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
-    """
-    Loads a DashAIDataset previously saved with save_dataset.
+    """Load a DashAIDataset previously saved with :func:`save_dataset`.
 
-    It expects the directory at 'path' to contain:
-        - "data.arrow": the saved PyArrow table.
-        - "splits.json": the saved split indices.
+    Expects the directory at ``dataset_path`` to contain:
 
-    Parameters:
-        path (Union[str, os.PathLike]): The directory path where the dataset was saved.
+    * ``data.arrow`` — the PyArrow IPC file.
+    * ``splits.json`` — JSON file with split indices (optional).
 
-    Returns:
-        DashAIDataset: The loaded dataset with data and metadata.
+    Parameters
+    ----------
+    dataset_path : str or os.PathLike
+        Directory path where the dataset files are stored.
+
+    Returns
+    -------
+    DashAIDataset
+        The restored dataset with data and split metadata.
     """
 
     import json
@@ -1122,19 +1156,24 @@ def to_dashai_dataset(
     dataset: object,
     types: Optional[Dict[str, DashAIDataType]] = None,
 ) -> DashAIDataset:
-    """
-    Converts various data formats into a unified DashAIDataset.
+    """Convert various dataset formats into a unified ``DashAIDataset``.
 
-    Parameters:
-        dataset: The original dataset which can be one of:
-            - DatasetDict: A Hugging Face DatasetDict
-            - Dataset: A Hugging Face Dataset
-            - DashAIDataset: Already a DashAIDataset (will be returned as is)
-            - pd.DataFrame: A pandas DataFrame
-        types: Optional dictionary of column types to preserve.
+    Accepts ``DashAIDataset`` (pass-through), HuggingFace ``Dataset``,
+    HuggingFace ``DatasetDict`` (merged via
+    :func:`merge_splits_with_metadata`), and ``pandas.DataFrame``.
 
-    Returns:
-        DashAIDataset: A unified dataset containing all data.
+    Parameters
+    ----------
+    dataset : DashAIDataset, Dataset, DatasetDict, or pd.DataFrame
+        The source dataset to convert.
+    types : dict of {str: DashAIDataType} or None, optional
+        Column-type mapping to embed in the Arrow metadata. If ``None``,
+        types are inferred from the Arrow schema. Default ``None``.
+
+    Returns
+    -------
+    DashAIDataset
+        A unified ``DashAIDataset`` containing all rows from ``dataset``.
     """
 
     if isinstance(dataset, DashAIDataset):
@@ -1415,18 +1454,28 @@ def get_dataset_info(dataset_path: str) -> object:
 def update_dataset_splits(
     dataset: DashAIDataset, new_splits: object, is_random: bool
 ) -> DashAIDataset:
-    """Update the metadata splits of a DashAIDataset. The splits could be random by
-    giving numbers between 0 and 1 in new_splits parameters and setting the is_random
-    parameter to True, or the could be manually selected by giving lists of indices
-    to new_splits parameter and setting the is_random parameter to False.
+    """Update the split configuration of a DashAIDataset in-place.
 
-    Args:
-        dataset (DashAIDataset: Dataset to update splits
-        new_splits (object): Object with the new train, test and validation config
-        is_random (bool): If the new splits are random by percentage
+    Supports two modes: random proportional splits (floats summing to 1.0)
+    and manual index-based splits (lists of row indices).
 
-    Returns:
-        DashAIDataset: New DashAIDataset with the new splits configuration.
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Dataset whose :attr:`splits` metadata will be updated.
+    new_splits : object
+        Mapping with keys ``"train"``, ``"test"``, ``"validation"``. Values
+        are floats (proportions, when ``is_random=True``) or lists of int
+        (explicit row indices, when ``is_random=False``).
+    is_random : bool
+        If ``True``, ``new_splits`` values are fractional proportions and
+        rows are assigned randomly. If ``False``, ``new_splits`` values are
+        explicit index lists.
+
+    Returns
+    -------
+    DashAIDataset
+        The same ``dataset`` object with an updated ``splits`` dict.
     """
     n = dataset.num_rows
     if is_random:
@@ -1453,7 +1502,30 @@ def update_dataset_splits(
 def prepare_for_model_session(
     dataset: DashAIDataset, splits: dict, output_columns: List[str]
 ) -> object:
-    """Prepare the dataset for a model session by updating the splits configuration"""
+    """Prepare a dataset for a model training or prediction session.
+
+    Applies the requested split configuration (manual, predefined, or random),
+    separates features from targets, and encodes categorical output columns
+    as integer indices.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        The unified dataset to split and preprocess.
+    splits : dict
+        Split configuration with at least a ``"splitType"`` key
+        (``"manual"``, ``"predefined"``, or ``"random"``). For manual/
+        predefined splits the dict must also contain ``"train"``, ``"test"``,
+        and ``"validation"`` index lists; for random splits it must contain
+        float proportions summing to 1.0.
+    output_columns : list of str
+        Names of the columns to use as model targets.
+
+    Returns
+    -------
+    object
+        A prepared dataset object (structure depends on internal helpers).
+    """
     from contextlib import suppress
 
     splitType = splits.get("splitType")

@@ -121,7 +121,22 @@ def apply_categorical_label_encoder(
 def vectorize_text(
     dataset: "DashAIDataset",
 ) -> "DashAIDataset":
-    """Convert text columns from the DashAIDataset to vectorized columns."""
+    """Tokenise all ``Text``-typed columns by splitting on whitespace.
+
+    Each text column is replaced by a ``list<string>`` column where every
+    entry is a list of space-delimited tokens. Non-text columns are preserved
+    unchanged.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Input dataset whose text columns will be tokenised.
+
+    Returns
+    -------
+    DashAIDataset
+        A new dataset with text columns replaced by token-list columns.
+    """
     import pyarrow as pa
 
     from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
