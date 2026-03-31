@@ -18,24 +18,43 @@ export default function InputWithDebounce({
   value,
   ...rest
 }) {
-  const [inputValue, setInputValue] = useState(value);
+  const { onFocus: onFocusProp, onBlur: onBlurProp, ...restProps } = rest;
+  const [inputValue, setInputValue] = useState(value ?? "");
+  const [isEditing, setIsEditing] = useState(false);
   const debouncedValue = useDebounce(inputValue, delay);
 
   const handleChange = (event) => {
     setInputValue(event.target.value);
   };
 
+  const handleFocus = (event) => {
+    setInputValue(value ?? "");
+    setIsEditing(true);
+    onFocusProp?.(event);
+  };
+
+  const handleBlur = (event) => {
+    setIsEditing(false);
+    onBlurProp?.(event);
+  };
+
   useEffect(() => {
     if (debouncedValue !== value) {
       onChange(debouncedValue);
     }
-  }, [debouncedValue]);
+  }, [debouncedValue, onChange, value]);
 
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+  const displayValue = isEditing ? inputValue : value ?? inputValue ?? "";
 
-  return <Input value={inputValue} onChange={handleChange} {...rest} />;
+  return (
+    <Input
+      value={displayValue}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      {...restProps}
+    />
+  );
 }
 
 InputWithDebounce.propTypes = {

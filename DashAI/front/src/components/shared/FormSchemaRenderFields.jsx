@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import FormSchemaField from "./FormSchemaField";
 import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
@@ -17,7 +17,7 @@ function FormSchemaRenderFields({
   errorsMessage,
   spacing = 2,
 }) {
-  if (!modelSchema) return null;
+  const safeSchema = modelSchema ?? {};
 
   // Handler to update formik values and trigger schema update
   const handleChange = useCallback(
@@ -35,8 +35,8 @@ function FormSchemaRenderFields({
   const renderFields = useCallback(() => {
     const fields = [];
 
-    for (const key in modelSchema) {
-      const fieldSchema = modelSchema[key];
+    for (const key in safeSchema) {
+      const fieldSchema = safeSchema[key];
       const objName = key;
       const value = formik?.values?.[objName];
       const error = formik?.errors?.[objName];
@@ -97,14 +97,11 @@ function FormSchemaRenderFields({
                   const subValue = value?.[subField];
                   const subError = error?.[subField];
 
-                  const subFieldObj = useMemo(
-                    () => ({
-                      value: subValue,
-                      error: subError,
-                      onChange: handleChange(objName, subField),
-                    }),
-                    [subValue, subError, objName, subField, handleChange],
-                  );
+                  const subFieldObj = {
+                    value: subValue,
+                    error: subError,
+                    onChange: handleChange(objName, subField),
+                  };
 
                   return (
                     <FormSchemaField
@@ -133,13 +130,15 @@ function FormSchemaRenderFields({
 
     return fields;
   }, [
-    modelSchema,
+    safeSchema,
     formik.values,
     formik.errors,
     handleChange,
     setError,
     errorsMessage,
   ]);
+
+  if (!modelSchema) return null;
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }

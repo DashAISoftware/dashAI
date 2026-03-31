@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
  */
 
 function FormSchemaParameterContainer({ children, showBorder = true }) {
+  const { t } = useTranslation(["common"]);
   if (!showBorder) {
     return (
       <Box
@@ -23,8 +24,6 @@ function FormSchemaParameterContainer({ children, showBorder = true }) {
       </Box>
     );
   }
-
-  const { t } = useTranslation(["common"]);
 
   return (
     <BoxWithTitle title={t("common:parameters")}>

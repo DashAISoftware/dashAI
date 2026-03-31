@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Box, TextField } from "@mui/material";
 
 export default function DebouncedColorPicker({
@@ -8,6 +8,7 @@ export default function DebouncedColorPicker({
   delay = 300,
 }) {
   const [localValue, setLocalValue] = useState(value || "#000000");
+  const [isEditing, setIsEditing] = useState(false);
   const timeoutRef = useRef(null);
 
   // Helper to expand 3-digit hex to 6-digit
@@ -78,9 +79,18 @@ export default function DebouncedColorPicker({
     return color || "#000000";
   };
 
-  useEffect(() => {
+  const displayValue = isEditing
+    ? localValue
+    : value ?? localValue ?? "#000000";
+
+  const handleFocus = () => {
     setLocalValue(value || "#000000");
-  }, [value]);
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+  };
 
   const handleColorChange = (e) => {
     const newHexValue = e.target.value;
@@ -90,12 +100,12 @@ export default function DebouncedColorPicker({
 
     timeoutRef.current = setTimeout(() => {
       // If original value was RGB, convert back to RGB
-      if (isRgbFormat(value)) {
-        onChange(hexToRgb(newHexValue));
-      } else {
-        onChange(newHexValue);
-      }
-    }, delay);
+    if (isRgbFormat(value)) {
+      onChange(hexToRgb(newHexValue));
+    } else {
+      onChange(newHexValue);
+    }
+  }, delay);
   };
 
   const handleTextChange = (e) => {
@@ -129,18 +139,22 @@ export default function DebouncedColorPicker({
         label={label}
         variant="filled"
         type="color"
-        value={getColorInputValue(localValue)}
+        value={getColorInputValue(displayValue)}
         onChange={handleColorChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         sx={{ flex: 1 }}
         InputLabelProps={{ shrink: true }}
       />
       <TextField
         variant="filled"
-        value={getTextInputValue(localValue)}
+        value={getTextInputValue(displayValue)}
         onChange={handleTextChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         placeholder="#000000 or rgb(0,0,0)"
         sx={{ width: "140px" }}
-        helperText={isRgbFormat(localValue) ? "RGB" : "HEX"}
+        helperText={isRgbFormat(displayValue) ? "RGB" : "HEX"}
       />
     </Box>
   );

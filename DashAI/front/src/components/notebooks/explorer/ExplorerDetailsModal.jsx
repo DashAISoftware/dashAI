@@ -52,14 +52,11 @@ export default function ExplorerDetailsModal({
   // Always-current ref so handleSaveChangesLayout doesn't need localData in deps
   const localDataRef = useRef(localData);
   localDataRef.current = localData;
+  const explorerId = explorer?.id;
 
   useEffect(() => {
     startTransition(() => setFormReady(true));
   }, []);
-
-  // Early returns must come after all hooks
-  if (!explorer) return null;
-  if (!data) return null;
 
   const tabs = [
     { label: t("common:info"), value: 0, icon: <InfoOutlined /> },
@@ -73,9 +70,10 @@ export default function ExplorerDetailsModal({
   };
 
   const handleSaveChangesLayout = useCallback(async () => {
+    if (!explorerId) return;
     const current = localDataRef.current;
     try {
-      await updateExplorerResults(explorer.id, current);
+      await updateExplorerResults(explorerId, current);
       setData(current);
       enqueueSnackbar(
         t("datasets:message.explorerResultsUpdatedSuccessfully"),
@@ -87,7 +85,7 @@ export default function ExplorerDetailsModal({
         variant: "error",
       });
     }
-  }, [explorer.id, setData, enqueueSnackbar, t]);
+  }, [explorerId, setData, enqueueSnackbar, t]);
 
   const handleSetData = useCallback((newData) => {
     setLocalData((prev) => ({ ...prev, data: newData }));
@@ -96,6 +94,10 @@ export default function ExplorerDetailsModal({
   const handleSetLayout = useCallback((newLayout) => {
     setLocalData((prev) => ({ ...prev, layout: newLayout }));
   }, []);
+
+  // Early returns must come after all hooks
+  if (!explorer) return null;
+  if (!data) return null;
 
   return (
     <Dialog

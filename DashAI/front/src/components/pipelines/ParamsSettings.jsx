@@ -24,13 +24,13 @@ function ParamsSettings({
   onChange,
   onClose,
 }) {
-  if (!modelSchema) return null;
-
   const [localValues, setLocalValues] = React.useState(values || {});
 
   React.useEffect(() => {
     setLocalValues(values || {});
   }, [values]);
+
+  if (!modelSchema) return null;
 
   const handleFieldChange = (fieldName, fieldValue) => {
     setLocalValues((prev) => {

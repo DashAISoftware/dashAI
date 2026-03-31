@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Alert, AlertTitle } from "@mui/material";
 import { useSnackbar } from "notistack";
 import graphsMaking from "../../../pages/results/constants/graphsMaking";
@@ -13,10 +13,6 @@ function PipelineResultsGraphs({ metrics }) {
   const [selectedParameters, setSelectedParameters] = useState([]);
   const [showCustomMetrics, setShowCustomMetrics] = useState(false);
   const [selectedGeneralMetric, setSelectedGeneralMetric] = useState("test");
-  const [concatenatedMetrics, setConcatenatedMetrics] = useState([]);
-  const [tabularMetrics, setTabularMetrics] = useState([]);
-  const [chartData, setChartData] = useState({});
-  const [filteredDataProcess, setFilteredDataProcess] = useState([]);
 
   const handleChangeChart = (chartType) => {
     setSelectedChart(chartType);
@@ -34,110 +30,147 @@ function PipelineResultsGraphs({ metrics }) {
     setSelectedParameters([]);
   };
 
-  useEffect(() => {
-    const processData = () => {
-      try {
-        const phases = Object.keys(metrics);
-        const metricNames = Object.keys(metrics[phases[0]]);
-        const tabularMetrics = [];
+  const {
+    concatenatedMetrics,
+    tabularMetrics,
+    chartData,
+    filteredDataProcess,
+    chartError,
+  } = useMemo(() => {
+    if (!metrics || Object.keys(metrics).length === 0) {
+      return {
+        concatenatedMetrics: [],
+        tabularMetrics: [],
+        chartData: {},
+        filteredDataProcess: [],
+        chartError: null,
+      };
+    }
 
-        phases.forEach((phase) => {
-          metricNames.forEach((metric) => {
-            tabularMetrics.push(`${phase} ${metric}`);
-          });
-        });
-
-        const concatenatedMetrics = Array.from(
-          new Set(phases.concat(metricNames)),
-        );
-        setConcatenatedMetrics(concatenatedMetrics);
-        setTabularMetrics(tabularMetrics);
-
-        let parameterIndex = [];
-        let generalParameters = [];
-
-        if (showCustomMetrics) {
-          parameterIndex = selectedParameters.map((param) =>
-            tabularMetrics.indexOf(param),
-          );
-        } else {
-          const criteria = {};
-          concatenatedMetrics.forEach((item) => {
-            criteria[item] = item;
-          });
-
-          tabularMetrics.forEach((metric, index) => {
-            Object.entries(criteria).forEach(([metricName, substring]) => {
-              if (
-                selectedGeneralMetric === metricName &&
-                metric.includes(substring)
-              ) {
-                parameterIndex.push(index);
-                generalParameters.push(metric);
-              }
-            });
-          });
-        }
-
-        const syntheticRun = {
-          status: 3,
-          train_metrics: metrics.train,
-          validation_metrics: metrics.validation,
-          test_metrics: metrics.test,
+    try {
+      const phases = Object.keys(metrics);
+      if (phases.length === 0) {
+        return {
+          concatenatedMetrics: [],
+          tabularMetrics: [],
+          chartData: {},
+          filteredDataProcess: [],
+          chartError: null,
         };
+      }
+      const metricNames = Object.keys(metrics[phases[0]] ?? {});
+      const tabularMetrics = [];
 
-        const newFilteredData = [syntheticRun];
-        setFilteredDataProcess(newFilteredData);
+      phases.forEach((phase) => {
+        metricNames.forEach((metric) => {
+          tabularMetrics.push(`${phase} ${metric}`);
+        });
+      });
 
-        const graphsToView = {};
-        let pieCounter = 0;
+      const concatenatedMetrics = Array.from(
+        new Set(phases.concat(metricNames)),
+      );
 
-        const numericValues = [];
-        ["train", "validation", "test"].forEach((split) => {
-          metricNames.forEach((metric) => {
-            numericValues.push(metrics[split][metric]);
-          });
+      let parameterIndex = [];
+      let generalParameters = [];
+
+      if (showCustomMetrics) {
+        parameterIndex = selectedParameters.map((param) =>
+          tabularMetrics.indexOf(param),
+        );
+      } else {
+        const criteria = {};
+        concatenatedMetrics.forEach((item) => {
+          criteria[item] = item;
         });
 
-        const relevantNumericValues = parameterIndex.map(
-          (index) => numericValues[index],
-        );
+        tabularMetrics.forEach((metric, index) => {
+          Object.entries(criteria).forEach(([metricName, substring]) => {
+            if (
+              selectedGeneralMetric === metricName &&
+              metric.includes(substring)
+            ) {
+              parameterIndex.push(index);
+              generalParameters.push(metric);
+            }
+          });
+        });
+      }
 
-        graphsMaking(
-          graphsToView,
-          syntheticRun,
-          relevantNumericValues,
-          showCustomMetrics,
-          selectedParameters,
-          generalParameters,
-          pieCounter,
-        );
+      const syntheticRun = {
+        status: 3,
+        train_metrics: metrics.train,
+        validation_metrics: metrics.validation,
+        test_metrics: metrics.test,
+      };
 
-        const { generalLayout, pieLayout } = layoutMaking(
-          selectedChart,
-          graphsToView,
-        );
+      const graphsToView = {};
+      const numericValues = [];
+      ["train", "validation", "test"].forEach((split) => {
+        metricNames.forEach((metric) => {
+          numericValues.push(metrics[split][metric]);
+        });
+      });
 
-        const graphsToViewKeys = Object.keys(graphsToView);
-        const radarValues = graphsToView[graphsToViewKeys[0]];
-        const barValues = graphsToView[graphsToViewKeys[1]];
-        const pieValues = graphsToView[graphsToViewKeys[2]];
+      const relevantNumericValues = parameterIndex.map(
+        (index) => numericValues[index],
+      );
 
-        setChartData({
+      graphsMaking(
+        graphsToView,
+        syntheticRun,
+        relevantNumericValues,
+        showCustomMetrics,
+        selectedParameters,
+        generalParameters,
+        0,
+      );
+
+      const { generalLayout, pieLayout } = layoutMaking(
+        selectedChart,
+        graphsToView,
+      );
+
+      const graphsToViewKeys = Object.keys(graphsToView);
+      const radarValues = graphsToView[graphsToViewKeys[0]];
+      const barValues = graphsToView[graphsToViewKeys[1]];
+      const pieValues = graphsToView[graphsToViewKeys[2]];
+
+      return {
+        concatenatedMetrics,
+        tabularMetrics,
+        chartData: {
           generalLayout,
           pieLayout,
           radarValues,
           barValues,
           pieValues,
-        });
-      } catch (err) {
-        enqueueSnackbar("Error processing metrics", { variant: "error" });
-        console.error(err);
-      }
-    };
+        },
+        filteredDataProcess: [syntheticRun],
+        chartError: null,
+      };
+    } catch (err) {
+      return {
+        concatenatedMetrics: [],
+        tabularMetrics: [],
+        chartData: {},
+        filteredDataProcess: [],
+        chartError: err,
+      };
+    }
+  }, [
+    metrics,
+    selectedParameters,
+    selectedChart,
+    showCustomMetrics,
+    selectedGeneralMetric,
+  ]);
 
-    processData();
-  }, [metrics, selectedParameters, selectedChart]);
+  useEffect(() => {
+    if (!chartError) return;
+    enqueueSnackbar("Error processing metrics", { variant: "error" });
+    console.error(chartError);
+  }, [chartError, enqueueSnackbar]);
 
   return (
     <>

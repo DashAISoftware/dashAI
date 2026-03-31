@@ -9,22 +9,24 @@ import { checkIfHaveOptimazers } from "../../../utils/schema";
  * Component that renders multiple tabs to visualize the results of a specific run.
  */
 function ResultsDetails({ run = undefined, onClose, handleRun }) {
-  if (!run) {
-    onClose();
-    return null;
-  }
   const [currentTab, setCurrentTab] = useState(0);
-  const optimizers = checkIfHaveOptimazers(run.parameters);
+  const optimizers = run ? checkIfHaveOptimazers(run.parameters) : false;
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
   };
 
   useEffect(() => {
+    if (!run) return;
     if (!optimizers) {
       setCurrentTab(0);
     }
-  }, [run.id]);
+  }, [run?.id, optimizers]);
+
+  if (!run) {
+    onClose();
+    return null;
+  }
 
   return (
     <ResultsDetailsLayout

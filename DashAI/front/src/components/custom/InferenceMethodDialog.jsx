@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -27,9 +27,6 @@ function InferenceMethodDialog({
   const [selectedMethods, setSelectedMethods] = useState(defaultSelected);
   const { t } = useTranslation(["custom", "common"]);
 
-  useEffect(() => {
-    setSelectedMethods(defaultSelected);
-  }, [defaultSelected]);
 
   const handleCheckboxChange = (method) => {
     setSelectedMethods((prev) => {
@@ -47,7 +44,15 @@ function InferenceMethodDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      TransitionProps={{
+        onEnter: () => setSelectedMethods(defaultSelected),
+      }}
+    >
       <DialogTitle>{t("custom:inferenceMethods")}</DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" gutterBottom>

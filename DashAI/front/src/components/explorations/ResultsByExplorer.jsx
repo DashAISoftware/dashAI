@@ -38,7 +38,7 @@ function ResultsByExplorer({
     getExplorerTypes();
   }, [explorers]);
 
-  const [rows, setRows] = useState([]);
+  const rows = explorers ?? [];
   const [showExplorerDetails, setShowExplorerDetails] = useState(false);
 
   const handleShowExplorerDetails = (params) => {
@@ -54,10 +54,6 @@ function ResultsByExplorer({
       exploration_id: prev.exploration_id,
     }));
   };
-
-  useEffect(() => {
-    setRows(explorers);
-  }, [explorers]);
 
   const columns = useMemo(() => {
     return [

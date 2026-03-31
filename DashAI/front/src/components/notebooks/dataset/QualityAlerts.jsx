@@ -4,8 +4,8 @@ import CheckIcon from "@mui/icons-material/Check";
 import { useTranslation } from "react-i18next";
 
 export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
-  if (!qualityInfo) return null;
   const { t } = useTranslation(["datasets"]);
+  if (!qualityInfo) return null;
 
   const alerts = [];
 

@@ -62,9 +62,9 @@ function useFormSchema({
 
   useEffect(() => {
     if (onValuesChange) {
-      onValuesChange();
+      onValuesChange(formik.values);
     }
-  }, [formik.values]);
+  }, [formik.values, onValuesChange]);
 
   const formProps = {
     formik,

@@ -29,28 +29,14 @@ const Train = ({
   savedConfig = null,
   prevNodes = [],
 }) => {
-  const [inputColumns, setInputColumns] = useState(
-    savedConfig?.input_columns || "",
-  );
-  const [outputColumns, setOutputColumns] = useState(
-    savedConfig?.output_columns || "",
-  );
-  const [splits, setSplits] = useState(
-    savedConfig?.splits || {
-      train: 60,
-      validation: 20,
-      test: 20,
-      shuffle: true,
-      stratify: false,
-      splitType: "random",
-    },
-  );
-  const [task, setTask] = useState(savedConfig?.task || "");
-  const [model, setModel] = useState(savedConfig?.model || "");
-  const [metrics, setMetrics] = useState(savedConfig?.metrics || []);
+  const [inputColumns, setInputColumns] = useState(null);
+  const [outputColumns, setOutputColumns] = useState(null);
+  const [splits, setSplits] = useState(null);
+  const [task, setTask] = useState(null);
+  const [model, setModel] = useState(null);
+  const [metrics, setMetrics] = useState(null);
   const [openSettings, setOpenSettings] = useState(false);
-  const [modelParams, setModelParams] = useState(savedConfig?.parameters || {});
-  const [initialized, setInitialized] = useState(false);
+  const [modelParams, setModelParams] = useState(null);
   const [availableTasks, setAvailableTasks] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState([]);
@@ -66,17 +52,39 @@ const Train = ({
   const [outputErrorMessage, setOutputErrorMessage] = useState("");
   const [validationStatus, setValidationStatus] = useState("");
 
+  const totalColumns = datasetInfo?.total_columns;
+  const defaultInputColumns =
+    savedConfig?.input_columns?.join(",") ||
+    (totalColumns ? `1-${totalColumns - 1}` : "");
+  const defaultOutputColumns =
+    savedConfig?.output_columns?.join(",") || (totalColumns ? `${totalColumns}` : "");
+  const defaultSplits =
+    savedConfig?.splits || {
+      train: 0.6,
+      validation: 0.2,
+      test: 0.2,
+      shuffle: true,
+      stratify: false,
+      splitType: "random",
+    };
+  const resolvedInputColumns = inputColumns ?? defaultInputColumns;
+  const resolvedOutputColumns = outputColumns ?? defaultOutputColumns;
+  const resolvedSplits = splits ?? defaultSplits;
+  const resolvedTask = task ?? savedConfig?.task ?? "";
+  const resolvedModel = model ?? savedConfig?.model ?? "";
+  const resolvedMetrics = metrics ?? savedConfig?.metrics ?? [];
+
   useEffect(() => {
     const fetchComponents = async () => {
       try {
         const tasks = await getComponentsRequest({ selectTypes: ["Task"] });
         const models = await getComponentsRequest({
           selectTypes: ["Model"],
-          relatedComponent: task,
+          relatedComponent: resolvedTask,
         });
         const metrics = await getComponentsRequest({
           selectTypes: ["Metric"],
-          relatedComponent: task,
+          relatedComponent: resolvedTask,
         });
 
         setAvailableTasks(tasks);
@@ -88,57 +96,21 @@ const Train = ({
     };
 
     fetchComponents();
-  }, [task]);
+  }, [resolvedTask]);
 
   const { defaultValues, modelSchema, yupSchema, loading } = useSchema({
-    modelName: model,
+    modelName: resolvedModel,
   });
 
-  useEffect(() => {
-    const total = datasetInfo?.total_columns;
-    setInputColumns(
-      savedConfig?.input_columns?.join(",") || (total ? `1-${total - 1}` : ""),
-    );
-    setOutputColumns(
-      savedConfig?.output_columns?.join(",") || (total ? `${total}` : ""),
-    );
-    setSplits(
-      savedConfig?.splits || {
-        train: 0.6,
-        validation: 0.2,
-        test: 0.2,
-        shuffle: true,
-        stratify: false,
-        splitType: "random",
-      },
-    );
-    setTask(savedConfig?.task || "");
-    setModel(savedConfig?.model || "");
-    setMetrics(savedConfig?.metrics || []);
-    setModelParams(savedConfig?.parameters || {});
-  }, [savedConfig, datasetInfo]);
-
-  useEffect(() => {
-    setInitialized(false);
-  }, [model]);
-
-  useEffect(() => {
-    if (loading || initialized) return;
-
-    if (
-      savedConfig?.model === model &&
-      savedConfig?.parameters &&
-      Object.keys(savedConfig.parameters).length > 0
-    ) {
-      setModelParams(savedConfig.parameters);
-    } else if (defaultValues && Object.keys(defaultValues).length > 0) {
-      setModelParams(defaultValues);
-    } else {
-      setModelParams({});
-    }
-
-    setInitialized(true);
-  }, [loading, model, defaultValues, savedConfig, initialized]);
+  const defaultModelParams =
+    savedConfig?.model === resolvedModel &&
+    savedConfig?.parameters &&
+    Object.keys(savedConfig.parameters).length > 0
+      ? savedConfig.parameters
+      : defaultValues && Object.keys(defaultValues).length > 0
+        ? defaultValues
+        : {};
+  const resolvedModelParams = modelParams ?? defaultModelParams;
 
   const handleChange = (newValues) => {
     setModelParams(newValues);
@@ -146,27 +118,27 @@ const Train = ({
 
   const handleSave = async () => {
     const maxValue = datasetInfo?.total_columns;
-    const parsedInput = inputColumns
-      ? parseRangeToIndex(inputColumns, maxValue)
+    const parsedInput = resolvedInputColumns
+      ? parseRangeToIndex(resolvedInputColumns, maxValue)
       : [];
-    const parsedOutput = outputColumns
-      ? parseRangeToIndex(outputColumns, maxValue)
+    const parsedOutput = resolvedOutputColumns
+      ? parseRangeToIndex(resolvedOutputColumns, maxValue)
       : [];
     const payload = {
       input_columns: parsedInput,
       output_columns: parsedOutput,
       splits: {
-        train: splits.train,
-        validation: splits.validation,
-        test: splits.test,
-        shuffle: splits.shuffle,
-        stratify: splits.stratify,
-        splitType: splits.splitType,
+        train: resolvedSplits.train,
+        validation: resolvedSplits.validation,
+        test: resolvedSplits.test,
+        shuffle: resolvedSplits.shuffle,
+        stratify: resolvedSplits.stratify,
+        splitType: resolvedSplits.splitType,
       },
-      task: task,
-      model: model,
-      metrics: metrics,
-      parameters: modelParams,
+      task: resolvedTask,
+      model: resolvedModel,
+      metrics: resolvedMetrics,
+      parameters: resolvedModelParams,
     };
 
     try {
@@ -232,7 +204,9 @@ const Train = ({
       let parseError = false;
 
       try {
-        input = inputColumns ? parseRangeToIndex(inputColumns, maxValue) : [];
+        input = resolvedInputColumns
+          ? parseRangeToIndex(resolvedInputColumns, maxValue)
+          : [];
         setInputError(false);
         setInputErrorMessage("");
       } catch (err) {
@@ -242,8 +216,8 @@ const Train = ({
       }
 
       try {
-        output = outputColumns
-          ? parseRangeToIndex(outputColumns, maxValue)
+        output = resolvedOutputColumns
+          ? parseRangeToIndex(resolvedOutputColumns, maxValue)
           : [];
         setOutputError(false);
         setOutputErrorMessage("");
@@ -280,7 +254,13 @@ const Train = ({
     };
 
     validateAvailableTasks();
-  }, [availableTasks, inputColumns, outputColumns, datasetId, datasetInfo]);
+  }, [
+    availableTasks,
+    resolvedInputColumns,
+    resolvedOutputColumns,
+    datasetId,
+    datasetInfo,
+  ]);
 
   return (
     <>
@@ -294,7 +274,7 @@ const Train = ({
             <TextField
               label="Input Columns"
               fullWidth
-              value={inputColumns}
+              value={resolvedInputColumns}
               onChange={(e) => setInputColumns(e.target.value)}
               margin="normal"
               error={inputError}
@@ -303,7 +283,7 @@ const Train = ({
             <TextField
               label="Output Columns"
               fullWidth
-              value={outputColumns}
+              value={resolvedOutputColumns}
               onChange={(e) => setOutputColumns(e.target.value)}
               margin="normal"
               error={outputError}
@@ -314,9 +294,9 @@ const Train = ({
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={splits.shuffle}
+                    checked={resolvedSplits.shuffle}
                     onChange={(e) =>
-                      setSplits({ ...splits, shuffle: e.target.checked })
+                      setSplits({ ...resolvedSplits, shuffle: e.target.checked })
                     }
                   />
                 }
@@ -326,9 +306,12 @@ const Train = ({
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={splits.stratify}
+                    checked={resolvedSplits.stratify}
                     onChange={(e) =>
-                      setSplits({ ...splits, stratify: e.target.checked })
+                      setSplits({
+                        ...resolvedSplits,
+                        stratify: e.target.checked,
+                      })
                     }
                   />
                 }
@@ -342,9 +325,12 @@ const Train = ({
               label="Training"
               type="number"
               fullWidth
-              value={splits.train}
+              value={resolvedSplits.train}
               onChange={(e) =>
-                setSplits({ ...splits, train: parseFloat(e.target.value, 10) })
+                setSplits({
+                  ...resolvedSplits,
+                  train: parseFloat(e.target.value, 10),
+                })
               }
               margin="normal"
             />
@@ -352,10 +338,10 @@ const Train = ({
               label="Validation"
               type="number"
               fullWidth
-              value={splits.validation}
+              value={resolvedSplits.validation}
               onChange={(e) =>
                 setSplits({
-                  ...splits,
+                  ...resolvedSplits,
                   validation: parseFloat(e.target.value, 10),
                 })
               }
@@ -365,9 +351,12 @@ const Train = ({
               label="Testing"
               type="number"
               fullWidth
-              value={splits.test}
+              value={resolvedSplits.test}
               onChange={(e) =>
-                setSplits({ ...splits, test: parseFloat(e.target.value, 10) })
+                setSplits({
+                  ...resolvedSplits,
+                  test: parseFloat(e.target.value, 10),
+                })
               }
               margin="normal"
             />
@@ -382,7 +371,7 @@ const Train = ({
               label="Task"
               select
               fullWidth
-              value={task}
+              value={resolvedTask}
               onChange={(e) => {
                 setTask(e.target.value);
                 setModel("");
@@ -410,12 +399,13 @@ const Train = ({
                   label="Model"
                   select
                   fullWidth
-                  value={model}
-                  onChange={(e) => {
-                    setModel(e.target.value);
-                  }}
-                  margin="normal"
-                  disabled={!task}
+              value={resolvedModel}
+              onChange={(e) => {
+                setModel(e.target.value);
+                setModelParams(null);
+              }}
+              margin="normal"
+              disabled={!resolvedTask}
                 >
                   {availableModels.map((model) => (
                     <MenuItem key={model.name} value={model.name}>
@@ -446,10 +436,10 @@ const Train = ({
               label="Metrics"
               select
               fullWidth
-              value={metrics}
+              value={resolvedMetrics}
               onChange={(e) => setMetrics(e.target.value)}
               margin="normal"
-              disabled={!task}
+              disabled={!resolvedTask}
               slotProps={{
                 select: { multiple: true },
               }}
@@ -471,12 +461,15 @@ const Train = ({
             onClick={handleSave}
             disabled={
               loading ||
-              inputColumns.length === 0 ||
-              outputColumns.length === 0 ||
-              splits.train + splits.validation + splits.test !== 1 ||
-              !task ||
-              !model ||
-              metrics.length === 0
+              resolvedInputColumns.length === 0 ||
+              resolvedOutputColumns.length === 0 ||
+              resolvedSplits.train +
+                resolvedSplits.validation +
+                resolvedSplits.test !==
+                1 ||
+              !resolvedTask ||
+              !resolvedModel ||
+              resolvedMetrics.length === 0
             }
           >
             Save
@@ -487,7 +480,7 @@ const Train = ({
       <ParamsSettings
         open={openSettings}
         modelSchema={modelSchema}
-        values={modelParams}
+        values={resolvedModelParams}
         onChange={handleChange}
         onClose={() => setOpenSettings(false)}
       />

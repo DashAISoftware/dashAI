@@ -19,14 +19,7 @@ function ResultsGraphs({
   const { t } = useTranslation(["models"]);
 
   const [selectedChart, setSelectedChart] = useState("bar");
-  // Internal split state — used only when no controlled prop is provided
-  const [internalSplit, setInternalSplit] = useState("test");
-  const [selectedMetrics, setSelectedMetrics] = useState([]);
-  const [chartData, setChartData] = useState({});
-
-  // Controlled or uncontrolled split
-  const selectedSplit = splitProp ?? internalSplit;
-  const handleChangeSplit = onSplitChange ?? setInternalSplit;
+  const [excludedMetricsBySplit, setExcludedMetricsBySplit] = useState({});
 
   const finishedRuns = useMemo(
     () => runs.filter((r) => r.status === 3),
@@ -52,23 +45,27 @@ function ResultsGraphs({
     };
   }, [finishedRuns]);
 
-  // Auto-select a split only when running in uncontrolled mode
-  useEffect(() => {
-    if (splitProp !== undefined) return;
-    if (availableMetrics.test.length > 0) setInternalSplit("test");
-    else if (availableMetrics.validation.length > 0)
-      setInternalSplit("validation");
-    else if (availableMetrics.train.length > 0) setInternalSplit("train");
-  }, [availableMetrics, splitProp]);
+  const defaultSplit = useMemo(() => {
+    if (availableMetrics.test.length > 0) return "test";
+    if (availableMetrics.validation.length > 0) return "validation";
+    if (availableMetrics.train.length > 0) return "train";
+    return "test";
+  }, [availableMetrics]);
 
-  useEffect(() => {
-    setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
-  }, [selectedSplit, availableMetrics]);
+  // Controlled or uncontrolled split
+  const selectedSplit = splitProp ?? defaultSplit;
 
-  useEffect(() => {
+  const selectedMetrics = useMemo(() => {
+    const available = availableMetrics[selectedSplit] ?? [];
+    const excluded = excludedMetricsBySplit[selectedSplit] ?? [];
+    if (excluded.length === 0) return available;
+    const excludedSet = new Set(excluded);
+    return available.filter((metric) => !excludedSet.has(metric));
+  }, [availableMetrics, excludedMetricsBySplit, selectedSplit]);
+
+  const { chartData, chartError } = useMemo(() => {
     if (finishedRuns.length === 0 || selectedMetrics.length === 0) {
-      setChartData({});
-      return;
+      return { chartData: {}, chartError: null };
     }
 
     try {
@@ -91,12 +88,9 @@ function ResultsGraphs({
         graphsToView,
         theme,
       );
-      setChartData({ generalLayout, ...graphsToView });
+      return { chartData: { generalLayout, ...graphsToView }, chartError: null };
     } catch (error) {
-      enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
-        variant: "error",
-      });
-      console.error(error);
+      return { chartData: {}, chartError: error };
     }
   }, [
     finishedRuns,
@@ -104,24 +98,35 @@ function ResultsGraphs({
     selectedMetrics,
     selectedChart,
     theme,
-    enqueueSnackbar,
-    t,
   ]);
+
+  useEffect(() => {
+    if (!chartError) return;
+    enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
+      variant: "error",
+    });
+    console.error(chartError);
+  }, [chartError, enqueueSnackbar, t]);
 
   const handleChangeChart = (chartType) => setSelectedChart(chartType);
   const handleToggleMetric = (metric) => {
-    const canonicalOrder = availableMetrics[selectedSplit] ?? [];
-    setSelectedMetrics((prev) => {
-      if (prev.includes(metric)) {
-        return prev.filter((m) => m !== metric);
+    setExcludedMetricsBySplit((prev) => {
+      const currentExcluded = new Set(prev[selectedSplit] ?? []);
+      if (currentExcluded.has(metric)) {
+        currentExcluded.delete(metric);
+      } else {
+        currentExcluded.add(metric);
       }
-      const next = new Set([...prev, metric]);
-      return canonicalOrder.filter((m) => next.has(m));
+      return { ...prev, [selectedSplit]: Array.from(currentExcluded) };
     });
   };
   const handleSelectAll = () =>
-    setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
-  const handleClearAll = () => setSelectedMetrics([]);
+    setExcludedMetricsBySplit((prev) => ({ ...prev, [selectedSplit]: [] }));
+  const handleClearAll = () =>
+    setExcludedMetricsBySplit((prev) => ({
+      ...prev,
+      [selectedSplit]: availableMetrics[selectedSplit] ?? [],
+    }));
 
   if (finishedRuns.length === 0) {
     return (

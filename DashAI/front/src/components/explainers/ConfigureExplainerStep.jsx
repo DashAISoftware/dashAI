@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback } from "react";
 import {
   DialogContentText,
   Grid,
@@ -10,7 +10,6 @@ import PropTypes from "prop-types";
 
 import FormSchema from "../shared/FormSchema";
 import FormSchemaLayout from "../shared/FormSchemaLayout";
-import useSchema from "../../hooks/useSchema";
 import { useTranslation } from "react-i18next";
 
 function ConfigureExplainerStep({
@@ -20,12 +19,13 @@ function ConfigureExplainerStep({
   formSubmitRef,
   scope,
 }) {
-  const { defaultValues } = useSchema({ modelName: newExpl.explainer_name });
-  const [error, setError] = useState(false);
   const { t } = useTranslation(["explainers"]);
-
-  const isParamsEmpty =
-    !newExpl.parameters || Object.keys(newExpl.parameters).length === 0;
+  const handleErrorChange = useCallback(
+    (hasError) => {
+      setNextEnabled(!hasError);
+    },
+    [setNextEnabled],
+  );
 
   function filterFitParameters(explainer) {
     const prefix = "fit_parameter_";
@@ -54,26 +54,6 @@ function ConfigureExplainerStep({
       setNewExpl((_) => ({ ...newExpl, parameters: values }));
     }
   };
-
-  useEffect(() => {
-    if (isParamsEmpty && Boolean(defaultValues)) {
-      if (scope === "Local") {
-        const { parameters, fitParameters } =
-          filterFitParameters(defaultValues);
-        setNewExpl((_) => ({
-          ...newExpl,
-          parameters: parameters,
-          fit_parameters: fitParameters,
-        }));
-      } else {
-        setNewExpl((_) => ({ ...newExpl, parameters: defaultValues }));
-      }
-    }
-  }, [isParamsEmpty, defaultValues]);
-
-  useEffect(() => {
-    setNextEnabled(!error);
-  }, [error]);
 
   return (
     <Grid
@@ -106,7 +86,10 @@ function ConfigureExplainerStep({
                 onFormSubmit={(values) => {
                   handleUpdateParameters(values);
                 }}
-                setError={setError}
+                onValuesChange={(values) => {
+                  handleUpdateParameters(values);
+                }}
+                setError={handleErrorChange}
                 formSubmitRef={formSubmitRef}
               />
             </FormSchemaLayout>

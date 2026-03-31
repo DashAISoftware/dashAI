@@ -8,7 +8,7 @@ import {
   getProcessesBySessionId,
   deleteProcessById,
 } from "../../api/process";
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
@@ -31,8 +31,7 @@ export default function GenerativeChat() {
   } = useGenerative();
 
   const [history, setHistory] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [messagesWithHistory, setMessagesWithHistory] = useState([]);
+  const [messagesByTask, setMessagesByTask] = useState({});
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -40,6 +39,17 @@ export default function GenerativeChat() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
   const tourContext = useTourContext();
+  const messages = messagesByTask[taskName] ?? [];
+  const updateMessages = useCallback(
+    (updater) => {
+      setMessagesByTask((prev) => {
+        const current = prev[taskName] ?? [];
+        const next = typeof updater === "function" ? updater(current) : updater;
+        return { ...prev, [taskName]: next };
+      });
+    },
+    [taskName],
+  );
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -57,7 +67,7 @@ export default function GenerativeChat() {
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
       setIsLoadingMessage(false);
-      setMessages(response);
+      updateMessages(response);
     });
   };
 
@@ -72,7 +82,7 @@ export default function GenerativeChat() {
 
     postProcess(sessionId, input).then((response) => {
       // Add the new message to the chat
-      setMessages((prevMessages) => [...prevMessages, response]);
+      updateMessages((prevMessages) => [...prevMessages, response]);
 
       // Enqueue the generative process job
       enqueueGenerativeProcessJob(response.id).then(() => {
@@ -94,11 +104,7 @@ export default function GenerativeChat() {
     getMessages();
     getSessionInfo();
     getHistory();
-  }, [sessionId, paramsVersion]);
-
-  useEffect(() => {
-    setMessages([]);
-  }, [taskName]);
+  }, [sessionId, paramsVersion, updateMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -141,11 +147,11 @@ export default function GenerativeChat() {
             );
 
             deleteProcessById(process.id).then(() => {
-              setMessages((prev) => prev.filter((m) => m.id !== process.id));
+              updateMessages((prev) => prev.filter((m) => m.id !== process.id));
             });
           } else {
             // Update progress or final result
-            setMessages((prev) =>
+            updateMessages((prev) =>
               prev.map((m) => (m.id === process.id ? process : m)),
             );
           }
@@ -154,47 +160,43 @@ export default function GenerativeChat() {
     }, POLL_INTERVAL);
 
     return () => clearInterval(intervalId); // cleanup
-  }, [messages]);
+  }, [messages, updateMessages, enqueueSnackbar, t]);
 
-  useEffect(() => {
-    let messagesObject = messages.map((process) => {
-      return {
-        type: "message",
-        timestamp: process.created,
-        id: process.id,
-        input: process.input,
-        output: process.output,
-        status: process.status,
-        end_time: process.end_time,
-      };
-    });
+  const messagesWithHistory = useMemo(() => {
+    const messagesObject = messages.map((process) => ({
+      type: "message",
+      timestamp: process.created,
+      id: process.id,
+      input: process.input,
+      output: process.output,
+      status: process.status,
+      end_time: process.end_time,
+    }));
 
-    let historyObject = history.map((entry) => {
-      return {
-        type: "history",
-        timestamp: entry.timestamp,
-        id: entry.id,
-        changedMessage: entry.changes.map((change) => (
-          <span
-            key={change.parameter}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {change.parameter}: {change.oldValue}{" "}
-            <ArrowRightAltIcon fontSize="small" /> {change.newValue}{" "}
-          </span>
-        )),
-      };
-    });
+    const historyObject = history.map((entry) => ({
+      type: "history",
+      timestamp: entry.timestamp,
+      id: entry.id,
+      changedMessage: entry.changes.map((change) => (
+        <span
+          key={change.parameter}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {change.parameter}: {change.oldValue}{" "}
+          <ArrowRightAltIcon fontSize="small" /> {change.newValue}{" "}
+        </span>
+      )),
+    }));
 
-    let combinedMessages = [...messagesObject, ...historyObject];
+    const combinedMessages = [...messagesObject, ...historyObject];
     combinedMessages.sort(
       (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
     );
-    setMessagesWithHistory(combinedMessages);
+    return combinedMessages;
   }, [messages, history]);
 
   return (
