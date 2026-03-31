@@ -12,6 +12,8 @@ from DashAI.back.types.value_types import Float
 
 
 class VarianceThresholdSchema(BaseSchema):
+    """Schema for Variance Threshold hyperparameters."""
+
     threshold: schema_field(
         float_field(ge=0.0),
         0.0,

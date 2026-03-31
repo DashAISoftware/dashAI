@@ -81,6 +81,21 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     IMAGE_PREVIEW = "tokenizer.png"
 
     def __init__(self, **kwargs):
+        """Initialise the tokenizer converter and extract schema parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace tokenizer model ID.
+                Default ``"bert-base-uncased"``.
+            device : str, optional
+                Torch device string. Default ``"cpu"``.
+            max_length : int, optional
+                Maximum token sequence length. Default ``512``.
+            batch_size : int, optional
+                Number of examples per inference batch. Default ``32``.
+        """
         super().__init__(**kwargs)
         self.model_name = kwargs.get("model_name", "bert-base-uncased")
         self.device = kwargs.get("device", "cpu")

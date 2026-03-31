@@ -11,6 +11,8 @@ from DashAI.back.types.value_types import Integer
 
 
 class MissingIndicatorSchema(BaseSchema):
+    """Schema for Missing Indicator hyperparameters."""
+
     pass
 
 

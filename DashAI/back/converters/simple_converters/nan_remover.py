@@ -65,6 +65,10 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     }
 
     def __init__(self):
+        """Initialise the NaN remover and set up state.
+
+        The columns and types to process are populated during :meth:`fit`.
+        """
         super().__init__()
         self.columns = []
         self.column_types = {}

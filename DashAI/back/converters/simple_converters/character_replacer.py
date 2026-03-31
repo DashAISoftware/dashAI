@@ -72,6 +72,21 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     }
 
     def __init__(self, char_to_replace: str, replacement_char: str):
+        """Initialise the character replacer with the target and replacement characters.
+
+        Parameters
+        ----------
+        char_to_replace : str
+            The character to search for in text columns.  Must be non-empty.
+        replacement_char : str or None
+            The character to substitute in.  ``None`` or non-string values are
+            normalised to an empty string (effectively deleting the character).
+
+        Raises
+        ------
+        ValueError
+            If ``char_to_replace`` is empty or not a string.
+        """
         super().__init__()
         if not isinstance(char_to_replace, str) or not char_to_replace:
             raise ValueError("'char_to_replace' must be a non-empty string.")

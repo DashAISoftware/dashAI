@@ -15,6 +15,8 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectKBestSchema(BaseSchema):
+    """Schema for Select KBest hyperparameters."""
+
     k: schema_field(
         union_type(enum_field(["all"]), int_field(ge=1)),
         10,

@@ -38,6 +38,10 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "column_remover.png"
 
     def __init__(self):
+        """Initialise the column remover and set up state.
+
+        The column names to be removed are populated during :meth:`fit`.
+        """
         super().__init__()
         self.columns = []
 

@@ -26,6 +26,8 @@ from DashAI.back.types.value_types import Float
 
 
 class FastICASchema(BaseSchema):
+    """Schema for Fast ICA hyperparameters."""
+
     n_components: schema_field(
         none_type(int_field(ge=1)),
         None,

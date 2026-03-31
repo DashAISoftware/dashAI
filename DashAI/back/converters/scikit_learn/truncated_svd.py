@@ -20,6 +20,8 @@ from DashAI.back.types.value_types import Float
 
 
 class TruncatedSVDSchema(BaseSchema):
+    """Schema for Truncated SVD hyperparameters."""
+
     n_components: schema_field(
         int_field(gt=0),
         2,

@@ -19,6 +19,8 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class OrdinalEncoderSchema(BaseSchema):
+    """Schema for Ordinal Encoder hyperparameters."""
+
     categories: schema_field(
         string_field(),
         "auto",

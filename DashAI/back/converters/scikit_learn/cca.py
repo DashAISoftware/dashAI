@@ -17,6 +17,8 @@ from DashAI.back.types.value_types import Float
 
 
 class CCASchema(BaseSchema):
+    """Schema for CCA hyperparameters."""
+
     n_components: schema_field(
         int_field(ge=1),
         2,

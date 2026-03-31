@@ -21,6 +21,8 @@ from DashAI.back.types.value_types import Float
 
 
 class SimpleImputerSchema(BaseSchema):
+    """Schema for Simple Imputer hyperparameters."""
+
     strategy: schema_field(
         enum_field(
             [

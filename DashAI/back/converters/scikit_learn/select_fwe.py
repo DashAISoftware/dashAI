@@ -10,6 +10,8 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectFweSchema(BaseSchema):
+    """Schema for Select Fwe hyperparameters."""
+
     alpha: schema_field(
         float_field(ge=0.0, le=1.0),
         0.05,

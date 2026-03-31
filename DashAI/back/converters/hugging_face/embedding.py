@@ -94,6 +94,25 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     IMAGE_PREVIEW = "embedding.png"
 
     def __init__(self, **kwargs):
+        """Initialise the embedding converter and extract schema parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace model ID for the sentence-transformer.
+                Default ``"sentence-transformers/all-MiniLM-L6-v2"``.
+            pooling_strategy : str, optional
+                How to aggregate token embeddings into a sentence vector.
+                Default ``"mean"``.
+            device : str, optional
+                Torch device string (e.g. ``"cpu"`` or ``"cuda:0"``).
+                Default ``"cpu"``.
+            max_length : int, optional
+                Maximum token sequence length. Default ``512``.
+            batch_size : int, optional
+                Number of examples per inference batch. Default ``32``.
+        """
         super().__init__(**kwargs)
         self.pooling_strategy = kwargs.get("pooling_strategy", "mean")
         self.model_name = kwargs.get(

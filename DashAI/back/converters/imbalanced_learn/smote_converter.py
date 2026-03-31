@@ -67,6 +67,13 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
     IMAGE_PREVIEW = "smote.png"
 
     def __init__(self, **kwargs):
+        """Initialise by forwarding kwargs to the imbalanced-learn wrapper.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments forwarded to :class:`ImbalancedLearnWrapper`.
+        """
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

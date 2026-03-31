@@ -21,6 +21,8 @@ from DashAI.back.types.value_types import Float
 
 
 class NystroemSchema(BaseSchema):
+    """Schema for Nystroem hyperparameters."""
+
     kernel: schema_field(
         none_type(string_field()),
         "rbf",

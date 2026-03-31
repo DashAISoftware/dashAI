@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class LabelEncoderSchema(BaseSchema):
+    """Schema for Label Encoder hyperparameters."""
+
     pass
 
 

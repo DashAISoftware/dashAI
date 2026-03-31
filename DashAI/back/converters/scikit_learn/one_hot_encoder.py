@@ -19,6 +19,8 @@ from DashAI.back.types.value_types import Integer
 
 
 class OneHotEncoderSchema(BaseSchema):
+    """Schema for One Hot Encoder hyperparameters."""
+
     categories: schema_field(
         string_field(),
         "auto",

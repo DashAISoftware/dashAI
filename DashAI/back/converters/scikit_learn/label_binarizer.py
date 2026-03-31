@@ -10,6 +10,8 @@ from DashAI.back.types.value_types import Integer
 
 
 class LabelBinarizerSchema(BaseSchema):
+    """Schema for Label Binarizer hyperparameters."""
+
     neg_label: schema_field(
         int_field(),
         0,

@@ -77,6 +77,20 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
     IMAGE_PREVIEW = "rbf_sampler.png"
 
     def __init__(self, **kwargs):
+        """Initialise the RBF sampler, resolving the ``"RandomState"`` sentinel.
+
+        If ``random_state`` is the string ``"RandomState"``, a fresh
+        ``numpy.random.RandomState`` instance is created in its place before
+        being forwarded to sklearn's ``RBFSampler``.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            random_state : int, ``"RandomState"``, or None, optional
+                Seed for reproducibility.  The special string ``"RandomState"``
+                generates a fresh random state. Default ``None``.
+            Additional keys are forwarded to ``sklearn.kernel_approximation.RBFSampler``.
+        """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":
             self.random_state = create_random_state()

@@ -12,6 +12,13 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
     """Abstract base wrapper for HuggingFace transformers."""
 
     def __init__(self, **kwargs):
+        """Initialise the HuggingFace wrapper base class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments forwarded to :class:`BaseConverter`.
+        """
         super().__init__()
 
     @abstractmethod

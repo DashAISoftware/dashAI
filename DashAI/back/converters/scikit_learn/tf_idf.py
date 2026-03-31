@@ -91,6 +91,22 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the TF-IDF converter and configure the vectorizer.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            max_features : int, optional
+                Maximum vocabulary size. Default ``1000``.
+            lowercase : bool, optional
+                Convert all text to lowercase before tokenizing. Default ``True``.
+            stop_words : str or list, optional
+                Stop-word list to remove. Default ``"english"``.
+            lower_bound_ngrams : int, optional
+                Minimum n-gram size. Default ``1``.
+            upper_bound_ngrams : int, optional
+                Maximum n-gram size. Default ``1``.
+        """
         super().__init__()
         from sklearn.feature_extraction.text import TfidfVectorizer
 

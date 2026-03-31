@@ -12,6 +12,8 @@ from DashAI.back.types.value_types import Float
 
 
 class MaxAbsScalerSchema(BaseSchema):
+    """Schema for Max Abs Scaler hyperparameters."""
+
     use_copy: schema_field(
         bool_field(),
         True,

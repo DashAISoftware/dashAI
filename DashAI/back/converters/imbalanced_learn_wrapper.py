@@ -24,6 +24,13 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     SUPERVISED = True
 
     def __init__(self, **kwargs):
+        """Initialise the imbalanced-learn wrapper and reset internal state.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments forwarded to :class:`BaseConverter`.
+        """
         super().__init__(**kwargs)
         self.fitted = False
         self._resampled_table = None

@@ -15,6 +15,8 @@ from DashAI.back.core.utils import MultilingualString
 
 
 class IncrementalPCASchema(BaseSchema):
+    """Schema for Incremental PCA hyperparameters."""
+
     n_components: schema_field(
         none_type(int_field(ge=1)),
         2,

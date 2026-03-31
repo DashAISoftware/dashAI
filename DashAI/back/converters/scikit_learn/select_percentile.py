@@ -10,6 +10,8 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectPercentileSchema(BaseSchema):
+    """Schema for Select Percentile hyperparameters."""
+
     percentile: schema_field(
         int_field(ge=1, le=100),
         10,

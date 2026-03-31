@@ -21,6 +21,8 @@ from DashAI.back.types.value_types import Float
 
 
 class PCASchema(BaseSchema):
+    """Schema for PCA hyperparameters."""
+
     n_components: schema_field(
         none_type(
             union_type(

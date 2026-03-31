@@ -12,6 +12,8 @@ from DashAI.back.types.value_types import Float
 
 
 class NormalizerSchema(BaseSchema):
+    """Schema for Normalizer hyperparameters."""
+
     norm: schema_field(
         enum_field(["l1", "l2", "max"]),
         "l2",

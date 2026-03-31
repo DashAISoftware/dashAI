@@ -12,6 +12,8 @@ from DashAI.back.types.value_types import Float
 
 
 class MinMaxScalerSchema(BaseSchema):
+    """Schema for Min Max Scaler hyperparameters."""
+
     min_range: schema_field(
         float_field(ge=0),
         0,

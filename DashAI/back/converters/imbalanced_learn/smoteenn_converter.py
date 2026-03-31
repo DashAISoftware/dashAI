@@ -68,6 +68,23 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     IMAGE_PREVIEW = "smoteenn.png"
 
     def __init__(self, **kwargs):
+        """Initialise SMOTE-ENN with a SMOTE sub-instance and combined kwargs.
+
+        A ``SMOTE`` instance is constructed first (to configure over-sampling),
+        then passed as an argument to the underlying ``SMOTEENN`` estimator via
+        the parent wrapper.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            sampling_strategy : str or float or dict, optional
+                Resampling strategy. Default ``"auto"``.
+            random_state : int or None, optional
+                Seed for the random number generator. Default ``None``.
+            k_neighbors : int or None, optional
+                Number of nearest neighbours for SMOTE. Default ``None``
+                (uses the SMOTE default of 5).
+        """
         from imblearn.over_sampling import SMOTE
 
         self.smote = SMOTE(

@@ -19,6 +19,8 @@ from DashAI.back.types.value_types import Float
 
 
 class GenericUnivariateSelectSchema(BaseSchema):
+    """Schema for Generic Univariate Select hyperparameters."""
+
     mode: schema_field(
         enum_field(["percentile", "k_best", "fpr", "fdr", "fwe"]),
         "percentile",
