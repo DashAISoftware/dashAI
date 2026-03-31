@@ -307,6 +307,7 @@ export default function DatasetPreviewNotebook({
               autoHeight={true}
               disableColumnSelector
               disableDensitySelector
+              slots={{ toolbar: null }}
               sx={{
                 "& .MuiTablePagination-select": {
                   display: "none",

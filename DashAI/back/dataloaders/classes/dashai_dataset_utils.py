@@ -1,14 +1,13 @@
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-from sklearn.preprocessing import OneHotEncoder
-
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, modify_table
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import to_arrow_types
 from DashAI.back.types.value_types import Float, Text
+
+if TYPE_CHECKING:
+    from sklearn.preprocessing import OneHotEncoder
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 # Data Transformations
 
@@ -16,8 +15,8 @@ from DashAI.back.types.value_types import Float, Text
 
 
 def categorical_label_encoder(
-    dataset: DashAIDataset,
-) -> Tuple[DashAIDataset, Dict[str, Dict[str, int]]]:
+    dataset: "DashAIDataset",
+) -> Tuple["DashAIDataset", Dict[str, Dict[str, int]]]:
     """Convert categorical columns from the DashAIDataset to label encoded integers.
 
     Parameters
@@ -35,6 +34,10 @@ def categorical_label_encoder(
         A dictionary containing the encodings for each categorical column,
         where keys are column names and values.
     """
+    import pyarrow as pa
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
+
     new_columns = {}
     table = dataset.arrow_table
     encodings = {}
@@ -60,8 +63,8 @@ def categorical_label_encoder(
 # This function is used to apply the encodings stored in the model
 # to the categorical columns in the dataset.
 def apply_categorical_label_encoder(
-    dataset: DashAIDataset, encodings: Dict[str, Dict[str, int]]
-) -> DashAIDataset:
+    dataset: "DashAIDataset", encodings: Dict[str, Dict[str, int]]
+) -> "DashAIDataset":
     """Apply Model stored encodings to the categorical columns in the dataset.
 
     Parameters
@@ -81,6 +84,9 @@ def apply_categorical_label_encoder(
         label encoded integers using the provided encodings.
 
     """
+    import pyarrow as pa
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
 
     table = dataset.arrow_table
     new_columns = {}
@@ -113,9 +119,13 @@ def apply_categorical_label_encoder(
 
 
 def vectorize_text(
-    dataset: DashAIDataset,
-) -> DashAIDataset:
+    dataset: "DashAIDataset",
+) -> "DashAIDataset":
     """Convert text columns from the DashAIDataset to vectorized columns."""
+    import pyarrow as pa
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
+
     new_columns = {}
     table = dataset.arrow_table
     for col, _type in dataset.types.items():
@@ -138,9 +148,9 @@ def vectorize_text(
 
 
 def categorical_one_hot_encoder(
-    dataset: DashAIDataset,
-    encoder: Optional[OneHotEncoder] = None,
-) -> Tuple[DashAIDataset, OneHotEncoder, List[str]]:
+    dataset: "DashAIDataset",
+    encoder: Optional["OneHotEncoder"] = None,
+) -> Tuple["DashAIDataset", "OneHotEncoder", List[str]]:
     """Convert categorical columns from the DashAIDataset to one-hot encoded columns.
 
     Parameters
@@ -159,6 +169,10 @@ def categorical_one_hot_encoder(
     List[str]
         List of original categorical column names that were encoded.
     """
+    import numpy as np
+    import pandas as pd
+    import pyarrow as pa
+
     types = dataset.types
 
     categorical_cols = [
@@ -204,10 +218,10 @@ def categorical_one_hot_encoder(
 
 
 def apply_categorical_one_hot_encoder(
-    dataset: DashAIDataset,
-    encoder: OneHotEncoder,
+    dataset: "DashAIDataset",
+    encoder: "OneHotEncoder",
     categorical_cols: List[str],
-) -> DashAIDataset:
+) -> "DashAIDataset":
     """Apply a pre-fitted OneHotEncoder to categorical columns in the dataset.
 
     Parameters
@@ -224,6 +238,9 @@ def apply_categorical_one_hot_encoder(
     DashAIDataset
         A new DashAIDataset with categorical columns replaced by one-hot columns.
     """
+    import pandas as pd
+    import pyarrow as pa
+
     if encoder is None or not categorical_cols:
         return dataset
 

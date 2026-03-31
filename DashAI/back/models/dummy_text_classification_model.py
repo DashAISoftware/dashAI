@@ -1,7 +1,5 @@
 from typing import Any
 
-from datasets import Dataset
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.text_classification_model import TextClassificationModel
 
@@ -40,6 +38,8 @@ class DummyTextClassifier(TextClassificationModel):
 
     def predict(self, x_pred: DashAIDataset) -> DashAIDataset:
         """Predict labels for the input dataset."""
+        from datasets import Dataset
+
         if not self.is_trained:
             raise RuntimeError("The model must be trained before making predictions.")
 

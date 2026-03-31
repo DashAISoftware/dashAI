@@ -247,6 +247,7 @@ export default function ConfigureToolModal({
               datasetPath={notebook.file_path}
               containerHeight={topHeight - 48}
               autoHeight={false}
+              slots={{ toolbar: null }}
             />
           )}
         </Box>
