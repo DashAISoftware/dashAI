@@ -182,6 +182,38 @@ class SmolLMModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
+        """Download and initialise a SmolLM2 Instruct GGUF model via llama.cpp.
+
+        The model weights are fetched from HuggingFace Hub using
+        ``Llama.from_pretrained`` and kept in memory for repeated calls to
+        ``generate``. The GGUF filename is resolved from ``SMOLLM_FILENAME_MAP``
+        (Q4_K_M for 1.7B, Q8_0 for 360M).
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace repo ID for the GGUF checkpoint.
+                Defaults to ``"HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF"``.
+            max_tokens : int, optional
+                Maximum number of new tokens to generate per call. Default 100.
+            temperature : float, optional
+                Sampling temperature in [0.0, 1.0]. Default 0.7.
+            frequency_penalty : float, optional
+                Token-frequency penalty in [0.0, 2.0]. Default 0.1.
+            context_window : int, optional
+                Total token budget (prompt + response) for a single forward
+                pass. Default 512.
+            device : str, optional
+                Target device from ``LLAMA_DEVICE_ENUM``. Any value whose
+                index is >= 0 enables full GPU offload (``n_gpu_layers=-1``);
+                ``"CPU"`` runs fully in RAM.
+
+        Raises
+        ------
+        RuntimeError
+            If ``llama-cpp-python`` is not installed.
+        """
         try:
             from llama_cpp import Llama
         except ImportError as e:
@@ -212,6 +244,21 @@ class SmolLMModel(TextToTextGenerationTaskModel):
         )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        """Generate a reply for the given chat prompt.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format. Each dict must contain
+            at least ``"role"`` (``"system"``, ``"user"``, or ``"assistant"``)
+            and ``"content"`` (the message text).
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the model's reply text, extracted
+            from ``choices[0]["message"]["content"]``.
+        """
         output = self.model.create_chat_completion(
             messages=prompt,
             max_tokens=self.max_tokens,
