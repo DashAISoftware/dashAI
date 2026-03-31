@@ -26,7 +26,13 @@ class MaxAbsScalerSchema(BaseSchema):
 class MaxAbsScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, MaxAbsScalerOperation
 ):
-    """Scikit-learn's MaxAbsScaler wrapper for DashAI."""
+    """Scale each feature by its maximum absolute value to the range [-1, 1].
+
+    This scaler does not shift or center the data, so it preserves sparsity
+    in sparse matrices. Suitable for data already centered at zero.
+
+    Wraps scikit-learn's ``MaxAbsScaler``.
+    """
 
     SCHEMA = MaxAbsScalerSchema
     DESCRIPTION = MultilingualString(
@@ -37,7 +43,19 @@ class MaxAbsScaler(
     IMAGE_PREVIEW = "max_abs_scaler.png"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for scaled data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

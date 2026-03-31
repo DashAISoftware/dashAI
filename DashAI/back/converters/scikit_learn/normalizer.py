@@ -32,7 +32,15 @@ class NormalizerSchema(BaseSchema):
 
 
 class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOperation):
-    """Scikit-learn's Normalizer wrapper for DashAI."""
+    """Normalize each sample (row) to unit norm.
+
+    Unlike column-wise scalers, this transformer operates row-wise: each
+    data point is scaled independently so that its norm (L1, L2, or max)
+    equals 1. Useful for text classification or clustering algorithms that
+    use the dot product or cosine similarity between samples.
+
+    Wraps scikit-learn's ``Normalizer``.
+    """
 
     SCHEMA = NormalizerSchema
     DESCRIPTION = MultilingualString(
@@ -43,7 +51,19 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
     IMAGE_PREVIEW = "normalizer.png"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for normalized data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

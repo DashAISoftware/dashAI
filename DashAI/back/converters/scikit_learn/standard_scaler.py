@@ -48,7 +48,15 @@ class StandardScalerSchema(BaseSchema):
 class StandardScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, StandardScalerOperation
 ):
-    """Scikit-learn's Standard Scaler wrapper for DashAI."""
+    """Standardize features by removing the mean and scaling to unit variance.
+
+    Each feature column is transformed to have zero mean and unit standard
+    deviation (z-score normalization). This is the most common preprocessing
+    step for models sensitive to feature magnitude, such as SVMs, logistic
+    regression, and neural networks.
+
+    Wraps scikit-learn's ``StandardScaler``.
+    """
 
     SCHEMA = StandardScalerSchema
     DESCRIPTION = MultilingualString(
@@ -66,7 +74,19 @@ class StandardScaler(
     }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for standardized data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

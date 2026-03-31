@@ -81,7 +81,14 @@ class OneHotEncoderSchema(BaseSchema):
 
 
 class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
-    """Scikit-learn's OneHotEncoder wrapper for DashAI."""
+    """Encode categorical columns into binary indicator columns.
+
+    Each unique category value in the input column becomes a new binary
+    column (0 or 1). The number of output columns equals the total number
+    of unique values across all encoded columns.
+
+    Wraps scikit-learn's ``OneHotEncoder``.
+    """
 
     SCHEMA = OneHotEncoderSchema
     DESCRIPTION = MultilingualString(
@@ -95,6 +102,18 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     IMAGE_PREVIEW = "one_hot_encoder.png"
 
     def __init__(self, **kwargs):
+        """Initialize the OneHotEncoder converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. String representations of ``categories`` and
+            ``drop`` are parsed into lists when they are not sentinel values;
+            ``dtype`` strings are cast to NumPy types; ``sparse_output`` is
+            forced to ``False`` for pandas compatibility. Remaining kwargs
+            are forwarded to the underlying scikit-learn class.
+        """
         self.categories = kwargs.pop("categories", "auto")
         if self.categories != "auto":
             self.categories = [parse_string_to_list(self.categories)]
@@ -116,7 +135,20 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Integer64 as the output type for one-hot encoded data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type backed by ``pyarrow.int64()``,
+            representing the binary indicator values (0 or 1).
+        """
         import pyarrow as pa
 
         return Integer(arrow_type=pa.int64())

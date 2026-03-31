@@ -16,7 +16,14 @@ class LabelEncoderSchema(BaseSchema):
 
 
 class LabelEncoder(EncodingConverter, SklearnWrapper):
-    """Scikit-learn's LabelEncoder wrapper for DashAI that supports multiple columns."""
+    """Encode target labels as integer codes between 0 and n_classes − 1.
+
+    Designed for encoding a single target column. Each unique label is
+    assigned a unique integer. Useful for transforming string class labels
+    before passing them to a classifier.
+
+    Wraps scikit-learn's ``LabelEncoder``.
+    """
 
     SCHEMA = LabelEncoderSchema
     DESCRIPTION = MultilingualString(
@@ -37,15 +44,38 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     }
 
     def __init__(self, **kwargs):
+        """Initialize the LabelEncoder converter.
+
+        Initializes the per-column encoder registry (``self.encoders``) and the
+        list of fitted columns (``self.fitted_columns``). Note that ``kwargs``
+        are not forwarded to the underlying scikit-learn class.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Not forwarded to the parent class.
+        """
         super().__init__()
         self.encoders = {}
         self.fitted_columns = []
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Returns Categorical type with the proper encoding for label encoded data.
-        If the encoder has been fitted and has classes_, use them to create
-        a proper categorical type.
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The column name to look up in the fitted
+            encoders. When provided and the encoder has been fitted, the
+            returned type reflects the actual fitted classes. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Categorical type derived from the encoder's fitted
+            classes. Returns a placeholder ``Categorical`` if the encoder has
+            not been fitted for the given column.
         """
         import pyarrow as pa
 

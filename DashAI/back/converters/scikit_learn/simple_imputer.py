@@ -75,7 +75,14 @@ class SimpleImputerSchema(BaseSchema):
 class SimpleImputer(
     BasicPreprocessingConverter, SklearnWrapper, SimpleImputerOperation
 ):
-    """SciKit-Learn's SimpleImputer wrapper for DashAI."""
+    """Fill missing values using a simple per-column strategy.
+
+    Supports four strategies: ``mean``, ``median``, ``most_frequent``, and
+    ``constant``. Each column is imputed independently. Output columns are
+    always typed as ``Float64`` regardless of the input column type.
+
+    Wraps scikit-learn's ``SimpleImputer``.
+    """
 
     SCHEMA = SimpleImputerSchema
     DESCRIPTION = MultilingualString(
@@ -96,10 +103,30 @@ class SimpleImputer(
     IMAGE_PREVIEW = "simple_imputer.png"
 
     def __init__(self, **kwargs):
+        """Initialize the SimpleImputer converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for imputed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

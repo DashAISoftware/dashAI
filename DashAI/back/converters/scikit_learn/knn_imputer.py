@@ -69,7 +69,14 @@ class KNNImputerSchema(BaseSchema):
 
 
 class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperation):
-    """Scikit-learn's KNNImputer wrapper for DashAI."""
+    """Fill missing values using the K nearest neighbors of each sample.
+
+    For each sample with missing values, the imputed value is derived from the
+    K nearest complete neighbors (by Euclidean distance). Preserves local data
+    structure better than simple strategies.
+
+    Wraps scikit-learn's ``KNNImputer``.
+    """
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = MultilingualString(
@@ -83,10 +90,30 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     IMAGE_PREVIEW = "knn_imputer.png"
 
     def __init__(self, **kwargs):
+        """Initialize the KNNImputer converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for imputed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

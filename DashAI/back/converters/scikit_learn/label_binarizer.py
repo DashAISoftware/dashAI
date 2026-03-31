@@ -29,7 +29,14 @@ class LabelBinarizerSchema(BaseSchema):
 
 
 class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation):
-    """Scikit-learn's LabelBinarizer wrapper for DashAI."""
+    """Binarize labels into a one-vs-all binary matrix.
+
+    Transforms a single-column target into a binary matrix where each
+    column represents one class. For binary classification the output is
+    a single column; for multiclass it is a matrix with one column per class.
+
+    Wraps scikit-learn's ``LabelBinarizer``.
+    """
 
     SCHEMA = LabelBinarizerSchema
     DESCRIPTION = MultilingualString(
@@ -42,7 +49,20 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
     IMAGE_PREVIEW = "label_binarizer.png"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Integer64 as the output type for binarized labels."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type backed by ``pyarrow.int64()``,
+            representing the binary (0/1) or one-vs-all matrix values.
+        """
         import pyarrow as pa
 
         return Integer(arrow_type=pa.int64())

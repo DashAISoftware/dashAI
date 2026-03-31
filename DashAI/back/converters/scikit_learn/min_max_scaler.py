@@ -50,7 +50,14 @@ class MinMaxScalerSchema(BaseSchema):
 class MinMaxScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, MinMaxScalerOperation
 ):
-    """Scikit-learn's MinMaxScaler wrapper for DashAI."""
+    """Scale features to a fixed range, by default [0, 1].
+
+    Each feature is shifted and scaled so that it falls within the configured
+    range. Unlike ``StandardScaler``, this scaler is sensitive to outliers
+    because it uses the minimum and maximum of each feature.
+
+    Wraps scikit-learn's ``MinMaxScaler``.
+    """
 
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = MultilingualString(
@@ -66,13 +73,36 @@ class MinMaxScaler(
     }
 
     def __init__(self, **kwargs):
+        """Initialize the MinMaxScaler converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. ``min_range`` and ``max_range`` are extracted and
+            combined into the ``feature_range`` tuple expected by
+            scikit-learn; remaining kwargs are forwarded to the underlying
+            scikit-learn class.
+        """
         self.min_range = kwargs.pop("min_range", 0)
         self.max_range = kwargs.pop("max_range", 1)
         kwargs["feature_range"] = (self.min_range, self.max_range)
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for scaled data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
