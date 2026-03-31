@@ -1,36 +1,48 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Typography, CardContent, Card } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {
-  BarChart,
-  Bar,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import Plot from "react-plotly.js";
 import { useTranslation } from "react-i18next";
 
 const CorrelationsTab = ({ correlations }) => {
   const { t } = useTranslation(["datasets"]);
-
   const theme = useTheme();
-  const corrData = [];
-  Object.entries(correlations).forEach(([col1, corrs]) => {
-    Object.entries(corrs).forEach(([col2, value]) => {
-      if (col1 < col2) {
-        // Avoid duplicates
-        corrData.push({
-          pair: `${col1} - ${col2}`,
-          correlation: value,
-        });
-      }
-    });
-  });
 
-  corrData.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
+  const { columns, zValues, strongCorrelations, leftMargin } = useMemo(() => {
+    const cols = Object.keys(correlations);
+
+    // Build symmetric matrix
+    const z = cols.map((col1) =>
+      cols.map((col2) => {
+        if (col1 === col2) return 1;
+        return correlations[col1]?.[col2] ?? correlations[col2]?.[col1] ?? 0;
+      }),
+    );
+
+    // Extract strong correlations (|r| > 0.5, no self-correlations)
+    const strong = [];
+    cols.forEach((col1, i) => {
+      cols.forEach((col2, j) => {
+        if (i < j && Math.abs(z[i][j]) > 0.5) {
+          strong.push({
+            pair: `${col1} - ${col2}`,
+            correlation: z[i][j],
+          });
+        }
+      });
+    });
+    strong.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
+
+    const maxLabelLen = Math.max(...cols.map((c) => c.length), 0);
+    const leftMargin = Math.min(maxLabelLen * 7 + 20, 300);
+
+    return {
+      columns: cols,
+      zValues: z,
+      strongCorrelations: strong,
+      leftMargin,
+    };
+  }, [correlations]);
 
   return (
     <Card>
@@ -40,37 +52,57 @@ const CorrelationsTab = ({ correlations }) => {
         </Typography>
 
         <Box mb={4}>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={corrData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="pair" angle={-45} textAnchor="end" height={100} />
-              <YAxis domain={[-1, 1]} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  borderRadius: 4,
+          <Plot
+            data={[
+              {
+                z: zValues,
+                x: columns,
+                y: columns,
+                type: "heatmap",
+                colorscale: [
+                  [0, theme.palette.error.main],
+                  [0.5, theme.palette.background.paper],
+                  [1, theme.palette.success.main],
+                ],
+                zmin: -1,
+                zmax: 1,
+                text: zValues.map((row) => row.map((val) => val.toFixed(3))),
+                texttemplate: "%{text}",
+                textfont: {
                   color: theme.palette.text.primary,
-                }}
-                labelStyle={{ color: theme.palette.text.primary }}
-              />
-              <Bar
-                dataKey="correlation"
-                name={t("datasets:label.correlation")}
-                fill={theme.palette.info.main}
-              >
-                {corrData.map((entry, index) => (
-                  <Cell
-                    key={index}
-                    fill={
-                      entry.correlation > 0
-                        ? theme.palette.success.main
-                        : theme.palette.error.main
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                  size: 11,
+                },
+                hovertemplate: "%{x} — %{y}<br>r = %{z:.3f}<extra></extra>",
+                showscale: true,
+                colorbar: {
+                  title: {
+                    text: "r",
+                    font: { color: theme.palette.text.primary },
+                  },
+                  tickfont: { color: theme.palette.text.secondary },
+                },
+              },
+            ]}
+            layout={{
+              autosize: true,
+              height: Math.max(400, columns.length * 40 + 150),
+              margin: { l: leftMargin, r: 40, t: 20, b: 120 },
+              paper_bgcolor: "rgba(0,0,0,0)",
+              plot_bgcolor: "rgba(0,0,0,0)",
+              xaxis: {
+                tickangle: -45,
+                tickfont: { color: theme.palette.text.secondary, size: 11 },
+                side: "bottom",
+              },
+              yaxis: {
+                tickfont: { color: theme.palette.text.secondary, size: 11 },
+                autorange: "reversed",
+              },
+            }}
+            config={{ displayModeBar: false, responsive: true }}
+            useResizeHandler
+            style={{ width: "100%" }}
+          />
         </Box>
 
         <Box>
@@ -78,36 +110,33 @@ const CorrelationsTab = ({ correlations }) => {
             {t("datasets:label.strongCorrelations")} (|r| &gt; 0.5)
           </Typography>
           <Box display="flex" flexDirection="column" gap={1}>
-            {corrData
-              .filter((d) => Math.abs(d.correlation) > 0.5)
-              .map((d, idx) => (
-                <Box
-                  key={idx}
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  p={2}
+            {strongCorrelations.map((d, idx) => (
+              <Box
+                key={idx}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                p={2}
+                sx={{
+                  backgroundColor: theme.palette.ui.panelMedium,
+                  borderRadius: 2,
+                }}
+              >
+                <Typography variant="body2" fontWeight={500}>
+                  {d.pair}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight="bold"
                   sx={{
-                    backgroundColor: theme.palette.ui.panelMedium,
-                    borderRadius: 2,
+                    color: d.correlation > 0 ? "success.main" : "error.main",
                   }}
                 >
-                  <Typography variant="body2" fontWeight={500}>
-                    {d.pair}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    sx={{
-                      color: d.correlation > 0 ? "success.main" : "error.main",
-                    }}
-                  >
-                    {d.correlation.toFixed(3)}
-                  </Typography>
-                </Box>
-              ))}
-            {corrData.filter((d) => Math.abs(d.correlation) > 0.5).length ===
-              0 && (
+                  {d.correlation.toFixed(3)}
+                </Typography>
+              </Box>
+            ))}
+            {strongCorrelations.length === 0 && (
               <Box p={2}>
                 <Typography
                   variant="body2"
