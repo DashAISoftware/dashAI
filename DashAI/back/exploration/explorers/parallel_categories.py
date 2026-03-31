@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class ParallelCategoriesSchema(BaseExplorerSchema):
+    """Schema for ParallelCategoriesExplorer hyperparameters.
+
+    Configures the optional colour dimension used to differentiate flows in the
+    parallel categories diagram. All other columns are selected via the base
+    schema's column-selection mechanism.
+    """
+
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -31,9 +38,17 @@ class ParallelCategoriesSchema(BaseExplorerSchema):
 
 
 class ParallelCategoriesExplorer(MultidimensionalExplorer):
-    """
-    Parallel Categories Explorer is a class that generates a parallel categories plot
-    for a given dataset.
+    """Visualise categorical data flows across multiple dimensions simultaneously.
+
+    A parallel categories diagram represents each row of the dataset as a ribbon
+    flowing through a series of vertical axes, one per selected column. The width
+    of each ribbon is proportional to the number of samples that share that
+    combination of categories. An optional colour axis further segments the flows
+    by a continuous or categorical variable, making patterns of co-occurrence and
+    class distribution immediately visible.
+
+    Best suited for exploring relationships between three or more categorical
+    columns, such as demographic cross-tabulations or multi-label feature analysis.
     """
 
     DISPLAY_NAME = MultilingualString(

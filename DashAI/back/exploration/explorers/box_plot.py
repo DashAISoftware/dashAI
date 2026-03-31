@@ -13,6 +13,16 @@ if TYPE_CHECKING:
 
 
 class BoxPlotSchema(BaseExplorerSchema):
+    """Schema for BoxPlotExplorer configuration.
+
+    Configures the orientation and point-visibility options of the box plot.
+    The ``horizontal`` flag flips the plot axis so that the value axis runs
+    left-to-right instead of bottom-to-top, which can be useful when column
+    names are long.  The ``points`` option controls whether individual data
+    points are drawn on top of each box, letting users inspect the raw
+    distribution alongside the summary statistics.
+    """
+
     horizontal: schema_field(
         bool_field(),
         False,
@@ -48,9 +58,21 @@ class BoxPlotSchema(BaseExplorerSchema):
 
 
 class BoxPlotExplorer(DistributionExplorer):
-    """
-    BoxPlotExplorer is an explorer that returns a box plot
-    of selected columns of a dataset.
+    """Explorer that produces an interactive box plot for one or two numeric columns.
+
+    A box plot summarises a numeric distribution through five key statistics: the
+    lower quartile (Q1), median (Q2), upper quartile (Q3), and the lower and upper
+    whiskers that extend to the most extreme non-outlier values.  Points lying
+    beyond the whiskers are drawn individually as outliers.
+
+    When a single column is selected the explorer renders one box for the whole
+    column.  When two columns are provided the second column is treated as a
+    grouping variable, producing one box per distinct category, which makes it
+    easy to compare how the distribution of the numeric column varies across groups.
+
+    Use this explorer to quickly spot skewness, spread, and outliers in numeric
+    data, or to compare distributions across categorical groups (e.g. comparing
+    a target variable across different classes).
     """
 
     DISPLAY_NAME = MultilingualString(en="Box Plot", es="Diagrama de Caja")

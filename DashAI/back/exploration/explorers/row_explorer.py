@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 
 
 class RowExplorerSchema(BaseExplorerSchema):
+    """Schema for RowExplorer hyperparameters.
+
+    Configures how many rows are sampled (``row_ammount``), whether to take
+    them from the head or tail of the dataset (``from_top``), and whether to
+    shuffle before sampling (``shuffle``).
+    """
+
     row_ammount: schema_field(
         t=int_field(gt=0),
         placeholder=50,
@@ -50,10 +57,14 @@ class RowExplorerSchema(BaseExplorerSchema):
 
 
 class RowExplorer(PreviewInspectionExplorer):
-    """
-    RowExplorer is an explorer that takes a number of rows from the dataset to
-    display them on tabular format. It can take the rows from the top or the
-    bottom of the dataset and shuffle them if needed.
+    """Display a tabular sample of dataset rows for direct data inspection.
+
+    Returns up to ``row_ammount`` rows from the dataset rendered as a table.
+    Rows can be taken from the head or tail of the dataset, and optionally
+    shuffled before sampling to obtain a random preview. This is typically the
+    first exploration step after loading a dataset, allowing users to verify
+    column types, spot obvious data quality issues, and understand the raw
+    data format before applying transformations.
     """
 
     DISPLAY_NAME = MultilingualString(en="Show Rows", es="Mostrar Filas")

@@ -20,6 +20,18 @@ if TYPE_CHECKING:
 
 
 class DescribeExplorerSchema(BaseExplorerSchema):
+    """Schema for DescribeExplorer configuration.
+
+    Controls which statistics are computed and which columns are included.
+    ``percentiles`` accepts a comma-separated list of integers between 0 and 100
+    (e.g. ``"25, 50, 75"``); these are converted to fractional quantiles and
+    inserted as additional rows in the output table alongside the fixed statistics.
+    ``include`` restricts the summary to a particular dtype group (``"all"``,
+    ``"number"``, ``"object"``, ``"category"``, or ``"datetime"``), while
+    ``exclude`` removes a dtype group from consideration, mirroring the
+    behaviour of ``pandas.DataFrame.describe``.
+    """
+
     percentiles: schema_field(
         none_type(string_field()),
         "25, 50, 75",
@@ -56,14 +68,24 @@ class DescribeExplorerSchema(BaseExplorerSchema):
 
 
 class DescribeExplorer(PreviewInspectionExplorer):
-    """
-    DescribeExplorer is an explorer that uses the pandas describe method to
-    describe the dataset. It returns a tabular representation of the dataset
-    with the count, mean, std, min, 25%, 50%, 75%, and max values for numeric
-    columns and count, unique, top, and freq values for object columns.
+    """Explorer that generates a statistical summary table using pandas describe.
 
-    The user can specify the percentiles to include in the exploration and the
-    data types to include or exclude.
+    For numeric columns the output includes: ``count`` (number of non-missing
+    values), ``mean``, ``std`` (standard deviation), ``min``, the requested
+    percentile rows (defaulting to 25 %, 50 %, and 75 %), and ``max``.  For
+    object and categorical columns it reports ``count``, ``unique`` (number of
+    distinct values), ``top`` (most frequent value), and ``freq`` (frequency of
+    the most common value).
+
+    This explorer is a fast first step when exploring a new dataset: it
+    immediately surfaces the central tendency, spread, and range of each column,
+    flags potential data quality issues (e.g. unexpectedly low counts indicating
+    missing values), and helps decide which transformations or visualisations to
+    apply next.
+
+    Users can customise which percentiles appear in the output and restrict or
+    expand the dtype groups that are summarised via the ``include`` and
+    ``exclude`` parameters.
     """
 
     DISPLAY_NAME = MultilingualString(

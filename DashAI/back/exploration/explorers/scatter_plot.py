@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class ScatterPlotSchema(BaseExplorerSchema):
+    """Schema for ScatterPlotExplorer hyperparameters.
+
+    Configures the two axis columns plus optional visual channels: ``color_group``
+    for categorical colour encoding, ``simbol_group`` for marker-shape encoding,
+    and ``point_size`` for size-encoding by a third numeric variable.
+    """
+
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -55,9 +62,16 @@ class ScatterPlotSchema(BaseExplorerSchema):
 
 
 class ScatterPlotExplorer(RelationshipExplorer):
-    """
-    ScatterPlotExplorer is an explorer that returns a scatter plot
-    of selected columns of a dataset.
+    """Display a two-dimensional scatter plot to explore relationships between columns.
+
+    Renders each dataset row as a point in a 2-D plane defined by two selected
+    numeric columns. Additional visual channels (colour, marker symbol, point size)
+    can be mapped to further columns to reveal clustering, class separation, or a
+    third quantitative dimension without requiring a higher-dimensional plot.
+
+    A scatter plot is the primary tool for detecting linear and non-linear
+    correlations between two variables and for spotting outliers, heteroscedasticity,
+    or discrete groupings in the joint distribution.
     """
 
     DISPLAY_NAME = MultilingualString(en="Scatter Plot", es="Gráfico de Dispersión")

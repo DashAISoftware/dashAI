@@ -37,6 +37,23 @@ class HistNorm(Enum):
 
 
 class HistogramPlotSchema(BaseExplorerSchema):
+    """Schema for HistogramPlotExplorer configuration.
+
+    Controls the bin count, the aggregation function applied within each bin,
+    the normalisation of bar heights, and optional grouping columns.
+
+    ``nbins`` sets the number of equally-spaced bins; leaving it as ``None``
+    lets Plotly choose automatically.  ``histfunc`` determines what is plotted
+    per bin: ``"count"`` (default) counts observations, while ``"sum"``,
+    ``"avg"``, ``"min"``, and ``"max"`` aggregate a numeric value within each
+    bin.  ``histnorm`` rescales the y-axis: ``""`` shows raw counts;
+    ``"percent"`` and ``"probability"`` normalise to 100 and 1 respectively;
+    ``"density"`` and ``"probability density"`` divide by the bin width so that
+    the area under the histogram integrates to the total count or 1.
+    ``color_group`` and ``pattern_group`` split bars by the values of an
+    additional column, producing grouped or stacked histograms.
+    """
+
     nbins: schema_field(
         none_type(int_field(ge=1)),
         None,
@@ -91,9 +108,25 @@ class HistogramPlotSchema(BaseExplorerSchema):
 
 
 class HistogramPlotExplorer(DistributionExplorer):
-    """
-    HistogramPlotExplorer is an explorer that returns a density heatmap
-    of a selected column of a dataset.
+    """Explorer that renders an interactive histogram for a single column.
+
+    A histogram divides the value range of the selected column into adjacent
+    bins and represents the number (or aggregated value) of observations falling
+    into each bin as a bar height.  It is the most direct way to visualise the
+    frequency distribution of a numeric variable: the overall shape reveals
+    whether the data are roughly symmetric, skewed, bimodal, or uniform, while
+    the spread of the bars indicates the range and variability of the values.
+
+    Normalisation options allow the y-axis to be expressed as raw counts,
+    percentages, probabilities, or probability densities, making it easy to
+    compare distributions with different sample sizes on the same scale.  The
+    optional colour and pattern grouping parameters produce stacked or
+    side-by-side histograms that compare frequency distributions across
+    categorical subgroups.
+
+    Use this explorer as a first step in univariate data exploration or to
+    verify the distributional assumptions of a model (e.g. checking normality
+    of residuals).
     """
 
     DISPLAY_NAME = MultilingualString(

@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 
 
 class WordcloudSchema(BaseExplorerSchema):
+    """Schema for WordcloudExplorer hyperparameters.
+
+    Configures the vocabulary size cap (``max_words``) and the background colour
+    of the word cloud image. All text columns to concatenate are selected via
+    the base schema's column-selection mechanism.
+    """
+
     max_words: schema_field(
         t=int_field(gt=0),
         placeholder=200,
@@ -48,9 +55,17 @@ class WordcloudSchema(BaseExplorerSchema):
 
 
 class WordcloudExplorer(DistributionExplorer):
-    """
-    WordcloudExplorer is an explorer that generates a wordcloud
-    from the concatenated strings of all selected columns in the dataset.
+    """Visualise word frequency in text columns as a word cloud.
+
+    Concatenates the values of all selected text columns across every row of the
+    dataset and produces a word cloud image where each word is rendered at a
+    size proportional to its term frequency. Stop words are not removed
+    automatically; pre-processing should be applied via converters before
+    running this explorer if stop-word filtering is desired.
+
+    Word clouds are a quick way to identify the most common terms in a text
+    corpus, detect vocabulary overlap between classes, and communicate the
+    dominant topics in a dataset to non-technical audiences.
     """
 
     DISPLAY_NAME = MultilingualString(en="Word Cloud", es="Nube de Palabras")

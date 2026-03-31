@@ -25,6 +25,21 @@ class Method(Enum):
 
 
 class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
+    """Schema for CorrelationMatrixExplorer configuration.
+
+    Controls the statistical method used to compute pairwise correlations, the
+    minimum number of complete observations required per column pair, and
+    whether the result is displayed as a heatmap or returned as a raw table.
+
+    The ``method`` field selects between three estimators: ``"pearson"``
+    measures linear association and assumes approximately normal distributions;
+    ``"spearman"`` measures monotonic association using rank-transformed data
+    and is more robust to non-linear relationships and outliers; ``"kendall"``
+    uses concordance/discordance counts and is preferred for small samples or
+    heavily tied data.  Use ``"numeric_only"`` to exclude non-numeric columns
+    from the calculation automatically.
+    """
+
     method: schema_field(
         enum_field([e.value for e in Method]),
         Method.pearson.value,
@@ -80,11 +95,23 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
 
 
 class CorrelationMatrixExplorer(StatisticalExplorer):
-    """
-    CorrelationMatrixExplorer is an explorer that returns a correlation matrix
-    of a dataset.
+    """Explorer that computes and visualises pairwise correlation coefficients.
 
-    Its result is a heatmap by default, but can also be returned as a tabular result.
+    A correlation matrix contains one coefficient for every pair of selected
+    columns.  Each coefficient ranges from -1 to +1: values near +1 indicate a
+    strong positive relationship, values near -1 indicate a strong negative
+    relationship, and values near 0 indicate little or no linear (or monotonic)
+    association.
+
+    By default the result is rendered as an annotated heatmap where warm colours
+    represent high positive correlation and cool colours represent high negative
+    correlation, making it easy to scan for strongly related feature pairs at a
+    glance.  Setting ``plot=False`` returns the raw correlation DataFrame instead,
+    which is useful for downstream numerical analysis.
+
+    Use this explorer to detect multicollinearity between features before
+    modelling, to identify the features most correlated with a target variable,
+    or to understand the overall dependency structure of a dataset.
     """
 
     DISPLAY_NAME = MultilingualString(

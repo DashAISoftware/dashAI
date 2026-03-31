@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class ScatterMatrixSchema(BaseExplorerSchema):
+    """Schema for ScatterMatrixExplorer hyperparameters.
+
+    Configures the optional colour-group and symbol-group columns used to
+    differentiate sample clusters in the pairwise scatter matrix. All numeric
+    columns to display on the axes are selected via the base schema.
+    """
+
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -46,9 +53,17 @@ class ScatterMatrixSchema(BaseExplorerSchema):
 
 
 class ScatterMatrixExplorer(RelationshipExplorer):
-    """
-    ScatterMatrixExplorer is an explorer that returns a scatter matrix plot
-    of selected columns of a dataset.
+    """Display pairwise scatter plots for all selected numeric columns.
+
+    Generates a grid of scatter plots (also known as a SPLOM — Scatter PLOt
+    Matrix) where each cell shows the relationship between one pair of numeric
+    columns. The diagonal cells can optionally show the distribution of a single
+    variable. Colour and symbol encodings can be mapped to a grouping column to
+    reveal class separation or cluster structure across all feature pairs at once.
+
+    This explorer is the standard first step for discovering linear and non-linear
+    pairwise correlations in tabular datasets before applying feature selection or
+    dimensionality reduction.
     """
 
     DISPLAY_NAME = MultilingualString(

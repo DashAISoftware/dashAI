@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class ParallelCordinatesSchema(BaseExplorerSchema):
+    """Schema for ParallelCordinatesExplorer hyperparameters.
+
+    Configures the optional colour dimension used to colour-code lines in the
+    parallel coordinates plot. All numeric columns to be displayed are selected
+    via the base schema's column-selection mechanism.
+    """
+
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -31,9 +38,17 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
 
 
 class ParallelCordinatesExplorer(MultidimensionalExplorer):
-    """
-    Parallel Cordinates Explorer is a class that generates a parallel cordinates plot
-    for a given dataset.
+    """Visualise multi-dimensional numeric data as a parallel coordinates plot.
+
+    Each row in the dataset is drawn as a polyline that passes through a series
+    of parallel vertical axes, one per selected numeric column. The position of
+    each line segment on an axis encodes the value of the corresponding feature
+    for that sample. Lines can be coloured by a separate column to reveal class
+    separation or clustering structure across all dimensions simultaneously.
+
+    Parallel coordinates are particularly effective for identifying correlated
+    features, detecting outliers, and exploring high-dimensional datasets where
+    a scatter matrix would become too large to interpret.
     """
 
     DISPLAY_NAME = MultilingualString(

@@ -27,6 +27,21 @@ class ECDFNorm(Enum):
 
 
 class ECDFPlotSchema(BaseExplorerSchema):
+    """Schema for ECDFPlotExplorer configuration.
+
+    Controls grouping, faceting, and the normalisation of the y-axis.
+    ``color_column`` splits the ECDF into separate colour-coded traces for each
+    distinct value of the chosen column, making it easy to compare distributions
+    across groups on the same axes.  ``facet_col`` and ``facet_row`` create a
+    grid of sub-plots, one per category, for column-wise and row-wise faceting
+    respectively.
+
+    ``ecdf_norm`` sets how the y-axis is scaled: ``"probability"`` maps the
+    y-axis to [0, 1] and is the most common choice for comparing shapes across
+    groups; ``"percent"`` scales it to [0, 100]; ``"none"`` shows the raw
+    cumulative count.
+    """
+
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -66,10 +81,23 @@ class ECDFPlotSchema(BaseExplorerSchema):
 
 
 class ECDFPlotExplorer(DistributionExplorer):
-    """
-    ECDFPlotExplorer is an explorer that creates an Empirical Cumulative
-    Distribution Plot. It shows the proportion or count of observations
-    falling below each unique value in the dataset.
+    """Explorer that creates an Empirical Cumulative Distribution Function (ECDF) plot.
+
+    The ECDF is a non-parametric, step-function estimate of the cumulative
+    distribution of a numeric variable.  For each unique observed value x, the
+    y-coordinate gives the proportion (or count, depending on normalisation) of
+    data points that are less than or equal to x.  Because it uses the actual
+    data without binning, the ECDF preserves every observation and does not
+    require a choice of bandwidth or bin width.
+
+    The plot reveals the full shape of a distribution: a steep rise in a region
+    indicates many observations concentrated there, while a flat segment
+    indicates few observations.  Comparing ECDFs for two groups on the same axes
+    immediately shows differences in median, spread, and tail behaviour.
+
+    Use this explorer when you need a precise, assumption-free view of a
+    distribution, or to compare distributions across subgroups without the
+    distortion that binning can introduce in histograms.
     """
 
     DISPLAY_NAME = MultilingualString(

@@ -13,6 +13,16 @@ if TYPE_CHECKING:
 
 
 class DensityHeatmapSchema(BaseExplorerSchema):
+    """Schema for DensityHeatmapExplorer configuration.
+
+    Controls the binning resolution of the 2-D density grid.  ``nbinsx`` sets
+    the number of bins along the x-axis and ``nbinsy`` sets the number along the
+    y-axis.  Leaving either value as ``None`` lets Plotly choose an automatic
+    bin count based on the data range.  Increasing the bin count reveals finer
+    detail in the joint distribution at the cost of sparser (noisier) bins when
+    data are limited; decreasing it gives a smoother but coarser picture.
+    """
+
     nbinsx: schema_field(
         none_type(int_field(ge=1)),
         None,
@@ -34,9 +44,23 @@ class DensityHeatmapSchema(BaseExplorerSchema):
 
 
 class DensityHeatmapExplorer(RelationshipExplorer):
-    """
-    DensityHeatmapExplorer is an explorer that returns a density heatmap
-    of selected columns of a dataset.
+    """Explorer that visualises the joint distribution of two columns as a 2-D heatmap.
+
+    The explorer partitions the value range of each selected column into a
+    regular grid of rectangular bins and colours each cell according to the count
+    of data points that fall inside it.  Darker or warmer colours (depending on
+    the colour scale) indicate regions of higher data density, making it easy to
+    identify modes, concentration areas, and gaps in the joint distribution of
+    the two variables.
+
+    This visualisation is especially useful when there are too many data points
+    for a scatter plot to remain legible.  It provides a non-parametric estimate
+    of the joint density and reveals whether the relationship between the two
+    columns is concentrated around a single peak, multimodal, or approximately
+    uniform.
+
+    Exactly two columns must be selected: the first maps to the x-axis and the
+    second to the y-axis.
     """
 
     DISPLAY_NAME = MultilingualString(

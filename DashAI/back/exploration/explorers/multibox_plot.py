@@ -21,6 +21,18 @@ if TYPE_CHECKING:
 
 
 class MultiColumnBoxPlotSchema(BaseExplorerSchema):
+    """Schema for MultiColumnBoxPlotExplorer configuration.
+
+    Configures the layout and optional grouping axis for the multi-column box
+    plot.  ``horizontal`` flips all boxes so that the value axis runs
+    left-to-right, which is convenient when column names are long.  ``points``
+    controls whether individual data points are overlaid on each box (``"all"``
+    shows every point, ``"outliers"`` shows only outliers, and ``"False"``
+    hides all points).  ``opposite_axis`` specifies a column whose distinct
+    values are used as a shared grouping axis for all selected columns,
+    producing grouped boxes within each column trace.
+    """
+
     horizontal: schema_field(
         bool_field(),
         False,
@@ -65,11 +77,25 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
 
 
 class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
-    """
-    MultiColumnBoxPlotExplorer is an explorer that returns a figure with a box plot
-    of multiple columns of a dataset in a single axis.
+    """Explorer that renders one box plot trace per selected column on a shared figure.
 
-    The other axis is selected through the opposite_axis parameter.
+    While the single-column BoxPlotExplorer is suited to examining one variable
+    at a time, this explorer places multiple box plot traces side by side in the
+    same figure, making it straightforward to compare the distributional
+    properties — median, spread, and outliers — of several numeric columns
+    simultaneously.
+
+    Each box trace summarises its column through the five-number summary (Q1,
+    median, Q3, lower whisker, upper whisker) and optionally overlays individual
+    data points.  When an ``opposite_axis`` column is provided, every trace is
+    additionally split by the distinct categories of that column, producing
+    grouped boxes that reveal how the distribution of each numeric column varies
+    across groups.
+
+    Use this explorer when you need a compact, side-by-side comparison of
+    multiple numeric features, for example to detect scale differences between
+    model input features or to contrast the spread of several metrics across
+    experimental conditions.
     """
 
     DISPLAY_NAME = MultilingualString(

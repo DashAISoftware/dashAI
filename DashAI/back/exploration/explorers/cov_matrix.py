@@ -13,6 +13,18 @@ if TYPE_CHECKING:
 
 
 class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
+    """Schema for CovarianceMatrixExplorer configuration.
+
+    Provides fine-grained control over the covariance calculation.
+    ``min_periods`` sets the minimum number of non-missing observations that
+    must be present for a column pair to receive a valid result rather than
+    NaN.  ``delta_degree_of_freedom`` (ddof) adjusts the denominator of the
+    estimator: ddof=1 gives the unbiased sample covariance, while ddof=0 gives
+    the population covariance.  ``numeric_only`` restricts the calculation to
+    numeric columns, and ``plot`` controls whether the result is displayed as
+    an annotated heatmap or returned as a raw table.
+    """
+
     min_periods: schema_field(
         int_field(gt=0),
         1,
@@ -72,10 +84,24 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
 
 
 class CovarianceMatrixExplorer(StatisticalExplorer):
-    """
-    CovarianceExplorer is an explorer that returns the covariance matrix of the dataset.
+    """Explorer that computes and visualises the pairwise covariance matrix.
 
-    Its result is a heatmap by default, but can also be returned as a tabular result.
+    Unlike the correlation matrix, covariance values are not normalised to the
+    [-1, 1] range, so they retain the original units of the features.  A large
+    positive covariance between two columns means they tend to increase together,
+    while a large negative covariance means they move in opposite directions.  The
+    magnitude of each value depends on the scale and variance of the columns
+    involved, making covariance useful for understanding the absolute spread and
+    co-movement of features rather than just the direction of their relationship.
+
+    By default the result is rendered as an annotated heatmap for quick visual
+    inspection.  Setting ``plot=False`` returns the raw covariance DataFrame,
+    which is appropriate for tasks such as constructing a regularised precision
+    matrix or performing principal component analysis manually.
+
+    Use this explorer when you need to understand the scale-sensitive relationships
+    between features, or as a precursor to techniques that depend on the covariance
+    structure of the data (e.g. PCA or Linear Discriminant Analysis).
     """
 
     DISPLAY_NAME = MultilingualString(
