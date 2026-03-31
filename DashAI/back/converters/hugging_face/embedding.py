@@ -125,7 +125,19 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.tokenizer = None
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float32 as the output type for embeddings."""
+        """Return ``Float32`` as the output type for all embedding columns.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the output column. Not used — all embedding columns
+            receive the same ``Float32`` type. Default ``None``.
+
+        Returns
+        -------
+        Float
+            A DashAI ``Float`` type backed by ``pyarrow.float32()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float32())
@@ -139,7 +151,23 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.model.eval()
 
     def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
-        """Process a batch of text into embeddings."""
+        """Encode a batch of text columns into dense embedding vectors.
+
+        Each text column is passed through the transformer encoder; the
+        mean of the last hidden states is used as the sentence embedding.
+        Resulting float32 vectors are stored as separate ``Float`` columns.
+
+        Parameters
+        ----------
+        batch : DashAIDataset
+            A slice of the full dataset. Each column must contain string values.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each original text column is replaced by its
+            dense embedding vector column(s).
+        """
         import torch
         from datasets import Dataset, concatenate_datasets
 

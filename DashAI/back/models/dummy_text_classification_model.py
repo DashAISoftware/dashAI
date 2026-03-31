@@ -43,7 +43,19 @@ class DummyTextClassifier(TextClassificationModel):
         return dataset
 
     def fit(self, x_train: DashAIDataset, y_train: DashAIDataset) -> None:
-        """Fit the dummy model."""
+        """Fit the dummy classifier by computing its prediction strategy.
+
+        For the ``"most_frequent"`` strategy, determines the majority class
+        label from ``y_train`` and stores it for use in :meth:`predict`.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Training features. Not used by the dummy classifier.
+        y_train : DashAIDataset
+            Training labels. The first column is used to find the majority
+            class when ``strategy="most_frequent"``.
+        """
         if self.strategy == "most_frequent":
             column_name = y_train.column_names[0]
             labels = y_train[column_name]
@@ -51,7 +63,27 @@ class DummyTextClassifier(TextClassificationModel):
         self.is_trained = True
 
     def predict(self, x_pred: DashAIDataset) -> DashAIDataset:
-        """Predict labels for the input dataset."""
+        """Predict labels for every row in the input dataset.
+
+        Parameters
+        ----------
+        x_pred : DashAIDataset
+            Input features. The number of rows determines the number of
+            predictions returned.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with a single column ``"predictions"`` containing one
+            predicted label per row.
+
+        Raises
+        ------
+        RuntimeError
+            If :meth:`fit` has not been called yet.
+        ValueError
+            If the configured ``strategy`` is unknown.
+        """
         from datasets import Dataset
 
         if not self.is_trained:
