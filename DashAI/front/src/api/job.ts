@@ -215,23 +215,3 @@ export const deleteAllJobs = async (): Promise<{ deleted: number }> => {
   const response = await api.delete<{ deleted: number }>("/v1/job/all");
   return response.data;
 };
-
-export const enqueuePipelineJob = async (
-  pipelineId: number,
-): Promise<object> => {
-  const data = {
-    job_type: "PipelineJob",
-    kwargs: { id: pipelineId },
-  };
-
-  const formData = new FormData();
-  formData.append("job_type", data.job_type);
-  formData.append("kwargs", JSON.stringify(data.kwargs));
-
-  const response = await api.post<object>("/v1/job/", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
-};

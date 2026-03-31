@@ -1,7 +1,7 @@
 import logging
 import pathlib
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import List
 
 from sqlalchemy import (
     JSON,
@@ -518,20 +518,6 @@ class GenerativeSession(Base):
     processes: Mapped[List["GenerativeProcess"]] = relationship(
         "GenerativeProcess", cascade="all, delete-orphan", back_populates="session"
     )
-
-
-class Pipeline(Base):
-    __tablename__ = "pipeline"
-    """
-    Table to store all the information about a pipeline.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
 
 
 class ConverterList(Base):

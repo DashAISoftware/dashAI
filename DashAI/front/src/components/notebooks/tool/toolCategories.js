@@ -20,7 +20,7 @@ export const PREFERRED_ORDER = [
   "Feature Selection",
   "Polynomial & Kernel Methods",
   "Resampling & Class Balancing",
-  "Pipelines & Meta-Converters",
+  "Meta-Converters",
   "Advanced / Specialized",
   "Other",
 ];

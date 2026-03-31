@@ -55,6 +55,5 @@ export const TOUR_KEYS = {
   MODELS_SESSION: "modelsSession",
   PREDICTIONS: "predictions",
   EXPLAINABILITY: "explainability",
-  PIPELINES: "pipelines",
   GENERATIVE: "generative",
 };

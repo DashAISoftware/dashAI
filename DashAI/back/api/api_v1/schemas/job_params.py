@@ -14,6 +14,5 @@ class JobParams(BaseModel):
         "ExplorerJob",
         "ConverterListJob",
         "GenerativeJob",
-        "PipelineJob",
     ]
     kwargs: dict

@@ -4,7 +4,6 @@
     "explainers": "Explore and understand the decision-making process behind your models.",
     "generative": "Interact with AI models to inference and generate new content.",
     "models": "Configure tasks, train and compare models in organized sessions.",
-    "pipelines": "Create and manage pipelines.",
     "plugins": "Browse and manage plugins to extend DashAI's functionality."
   },
   "label": {
