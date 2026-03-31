@@ -290,10 +290,10 @@ class PredictJob(BaseJob):
 
     def _validate_forecasting_dataset(
         self,
-        dataset: DashAIDataset,
+        dataset: "DashAIDataset",
         model_session,
         trained_model: Any,
-        train_dataset: DashAIDataset = None,
+        train_dataset: "DashAIDataset" = None,
     ) -> str:
         """Validate dataset for forecasting prediction.
 
