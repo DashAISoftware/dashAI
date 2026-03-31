@@ -9,7 +9,18 @@ if TYPE_CHECKING:
 
 
 class BaseGlobalExplainer(ConfigObject, ABC):
-    """Base class for global explainers."""
+    """Abstract base class for global model explainability methods.
+
+    Global explainers analyse the behaviour of a trained model across an entire
+    dataset, producing explanations that describe which features are most
+    influential *on average* (as opposed to local explainers, which explain a
+    single prediction). Typical outputs include feature-importance rankings,
+    partial dependence curves, or aggregate attribution scores.
+
+    All concrete global explainers must implement :meth:`explain` (compute the
+    explanation from a dataset) and :meth:`plot` (serialise the explanation as
+    Plotly figures for the frontend).
+    """
 
     TYPE: Final[str] = "GlobalExplainer"
 

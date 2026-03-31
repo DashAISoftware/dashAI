@@ -12,9 +12,12 @@ from DashAI.back.types.categorical import Categorical
 
 
 class KernelShapSchema(BaseSchema):
-    """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
-    values to explain the output of machine learning model by attributing
-    contributions of each feature to the model's prediction.
+    """Schema for KernelShap explainer hyperparameters.
+
+    Configures the link function that connects SHAP feature-attribution values to
+    the model output scale (``"identity"`` for regression/probability outputs,
+    ``"logit"`` for log-odds interpretation), and the background-data fraction
+    used to estimate the expected model output.
     """
 
     link: schema_field(
@@ -102,9 +105,24 @@ class KernelShapSchema(BaseSchema):
 
 
 class KernelShap(BaseLocalExplainer):
-    """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
-    values to explain the output of machine learning model by attributing
-    contributions of each feature to the model's prediction.
+    """Model-agnostic local explainer that estimates SHAP values via a weighted linear model.
+
+    Kernel SHAP (SHapley Additive exPlanations) unifies LIME and classic Shapley
+    values from cooperative game theory. For each instance to explain, it fits a
+    weighted linear model over a sampled coalition of feature subsets, where the
+    sample weights are derived from the Shapley kernel. The resulting coefficients
+    are the SHAP values — each one represents the marginal contribution of a feature
+    to the model's prediction relative to a background (reference) distribution.
+
+    Because it treats the model as a black box (querying only ``predict_proba``),
+    Kernel SHAP works with any classifier. The trade-off is higher computational
+    cost compared to model-specific SHAP implementations (Tree SHAP, Deep SHAP).
+
+    References
+    ----------
+    .. [1] Lundberg, S.M. & Lee, S.I. (2017). "A Unified Approach to Interpreting
+           Model Predictions." NeurIPS 30. https://arxiv.org/abs/1705.07874
+    .. [2] https://shap.readthedocs.io/en/latest/generated/shap.KernelExplainer.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]

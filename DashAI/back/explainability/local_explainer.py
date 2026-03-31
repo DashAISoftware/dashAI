@@ -9,7 +9,18 @@ if TYPE_CHECKING:
 
 
 class BaseLocalExplainer(ConfigObject, ABC):
-    """Base class for local explainers."""
+    """Abstract base class for instance-level (local) model explainability methods.
+
+    Local explainers explain individual predictions: given a single input example,
+    they attribute the model's output to specific feature values for that instance.
+    Unlike global explainers (which average over the full dataset), local
+    explanations can reveal why the model made a particular decision for a
+    specific sample and can differ substantially from sample to sample.
+
+    Concrete implementations must provide :meth:`fit` (prepare background data or
+    internal state), :meth:`explain_instance` (compute per-instance attributions),
+    and :meth:`plot` (serialise explanations as Plotly figures).
+    """
 
     TYPE: Final[str] = "LocalExplainer"
 

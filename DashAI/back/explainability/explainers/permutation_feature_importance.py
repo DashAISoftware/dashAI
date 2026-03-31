@@ -13,11 +13,13 @@ from DashAI.back.models.base_model import BaseModel
 
 
 class PermutationFeatureImportanceSchema(BaseSchema):
-    """
-    Permutation Feature Importance is an explanation method to assess the
-    importance of each feature in a model by evaluating how much the model's
-    performance decreases when the values of a specific feature are randomly
-    shuffled.
+    """Schema for PermutationFeatureImportance explainer hyperparameters.
+
+    Configures the scoring metric (``"accuracy"`` or ``"balanced_accuracy"``),
+    the number of permutation repeats per feature (``n_repeats``), the random
+    seed (``random_state``), and the fraction of test samples to use per repeat
+    (``max_samples_fraction``). More repeats reduce variance in importance
+    estimates at the cost of additional model evaluations.
     """
 
     scoring: schema_field(
@@ -83,9 +85,27 @@ class PermutationFeatureImportanceSchema(BaseSchema):
 
 
 class PermutationFeatureImportance(BaseGlobalExplainer):
-    """Permutation Feature Importance is a explanation method to asses the importance
-    of each feature in a model by evaluating how much the model's performance
-    decreases when the values of a specific feature are randomly shuffled.
+    """Global explainer that ranks features by the drop in model performance when permuted.
+
+    Permutation Feature Importance (PFI) measures the importance of a feature by
+    randomly shuffling its values across the test set and recording the resulting
+    decrease in a scoring metric. A large decrease indicates that the model relies
+    heavily on that feature; a small (or zero) decrease indicates the feature
+    contributes little. The process is repeated ``n_repeats`` times to produce a
+    mean importance and standard deviation, which quantify both rank order and
+    uncertainty.
+
+    Unlike impurity-based importance (from decision trees), PFI is computed on
+    held-out data and is therefore not biased towards high-cardinality features.
+    It is model-agnostic and captures interaction effects, but assumes that
+    permuting a feature does not violate important correlations in the data.
+
+    References
+    ----------
+    .. [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
+    .. [2] Fisher, A. et al. (2019). "All Models are Wrong, but Many are Useful."
+           JMLR, 20(177), 1-81. https://arxiv.org/abs/1801.01489
+    .. [3] https://scikit-learn.org/stable/modules/permutation_importance.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
