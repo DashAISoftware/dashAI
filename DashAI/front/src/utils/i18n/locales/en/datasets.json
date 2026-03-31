@@ -139,6 +139,7 @@
     "explorationType": "Exploration Type",
     "explore": "Explore",
     "explorer": "Explorer",
+    "exportMetrics": "Export metrics as JSON",
     "fileSizeMB": "File Size (MB)",
     "firstLastStopsAtExtremes": "Color stops must include positions 0 at the start and 1 at the end.",
     "fontFamily": "Font Family",

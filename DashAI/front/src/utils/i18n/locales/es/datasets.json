@@ -141,6 +141,7 @@
     "explorationType": "Tipo de Exploración",
     "explore": "Explorar",
     "explorer": "Explorador",
+    "exportMetrics": "Exportar métricas como JSON",
     "fileSizeMB": "Tamaño del Archivo (MB)",
     "firstLastStopsAtExtremes": "Los puntos de color deben incluir posiciones 0 al inicio y 1 al final.",
     "fontFamily": "Familia de Fuente",
