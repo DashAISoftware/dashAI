@@ -15,7 +15,7 @@ export const NumericTab = ({ numericStats }) => {
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(numericStats).map(([column, stats]) => (
-        <Card key={column} sx={{ borderRadius: 2 }}>
+        <Card key={column} data-column-card={column} sx={{ borderRadius: 2 }}>
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Title */}
             <Box display="flex" alignItems="center" mb={2}>
