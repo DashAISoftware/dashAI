@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class TokenizerSchema(BaseSchema):
+    """Schema for TokenizerConverter hyperparameters."""
+
     model_name: schema_field(
         enum_field(
             [

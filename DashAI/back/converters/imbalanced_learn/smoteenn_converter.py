@@ -16,6 +16,8 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class SMOTEENNSchema(BaseSchema):
+    """Schema for SMOTEENNConverter hyperparameters."""
+
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
         "auto",
@@ -46,6 +48,12 @@ class SMOTEENNSchema(BaseSchema):
 
 
 class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
+    """Hybrid sampler combining SMOTE oversampling with Edited Nearest Neighbours cleaning.
+
+    First over-samples the minority class using SMOTE, then applies ENN to remove
+    noisy samples from both classes. Wraps imbalanced-learn's ``SMOTEENN``.
+    """
+
     SCHEMA = SMOTEENNSchema
     DESCRIPTION = MultilingualString(
         en=("SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."),
@@ -75,9 +83,12 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
         )
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        SMOTEENN preserves input column types.
-        Type handling is done in ImbalancedLearnWrapper.transform().
+        """Not implemented; type preservation is handled in ``transform``.
+
+        Raises
+        ------
+        NotImplementedError
+            Always, because type determination is delegated to ``transform``.
         """
         raise NotImplementedError(
             "SMOTEENN preserves input types. Types are handled in the transform method."

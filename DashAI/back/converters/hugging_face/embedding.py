@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
 
 class EmbeddingSchema(BaseSchema):
+    """Schema for Embedding converter hyperparameters."""
+
     model_name: schema_field(
         enum_field(
             [

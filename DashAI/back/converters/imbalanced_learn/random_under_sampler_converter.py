@@ -16,6 +16,8 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class RUSchema(BaseSchema):
+    """Schema for RandomUnderSamplerConverter hyperparameters."""
+
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
         "auto",
@@ -40,6 +42,13 @@ class RUSchema(BaseSchema):
 class RandomUnderSamplerConverter(
     SamplingConverter, ImbalancedLearnWrapper, RandomUnderSampler
 ):
+    """Balances class distribution by randomly removing majority-class samples.
+
+    Reduces the number of rows in the dataset so that the majority class is
+    down-sampled to the target ratio. Wraps imbalanced-learn's
+    ``RandomUnderSampler``.
+    """
+
     SCHEMA = RUSchema
     DESCRIPTION = MultilingualString(
         en="Randomly remove samples from the majority class to balance the dataset.",
@@ -54,9 +63,12 @@ class RandomUnderSamplerConverter(
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        RandomUnderSampler preserves input column types.
-        Type handling is done in ImbalancedLearnWrapper.transform().
+        """Not implemented; type preservation is handled in ``transform``.
+
+        Raises
+        ------
+        NotImplementedError
+            Always, because type determination is delegated to ``transform``.
         """
         raise NotImplementedError(
             "RandomUnderSampler preserves input types. "

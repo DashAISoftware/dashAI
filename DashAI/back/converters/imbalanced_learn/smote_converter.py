@@ -16,6 +16,8 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class SMOTESchema(BaseSchema):
+    """Schema for SMOTEConverter hyperparameters."""
+
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
         "auto",
@@ -48,6 +50,12 @@ class SMOTESchema(BaseSchema):
 
 
 class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
+    """Balances class distribution by generating synthetic minority-class samples.
+
+    Creates new samples by interpolating between existing minority-class examples
+    and their k-nearest neighbours. Wraps imbalanced-learn's ``SMOTE``.
+    """
+
     SCHEMA = SMOTESchema
     DESCRIPTION = MultilingualString(
         en="SMOTE: Synthetic Minority Over-sampling Technique.",
@@ -62,9 +70,12 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        SMOTE preserves input column types.
-        Type handling is done in ImbalancedLearnWrapper.transform().
+        """Not implemented; type preservation is handled in ``transform``.
+
+        Raises
+        ------
+        NotImplementedError
+            Always, because type determination is delegated to ``transform``.
         """
         raise NotImplementedError(
             "SMOTE preserves input types. Types are handled in the transform method."
