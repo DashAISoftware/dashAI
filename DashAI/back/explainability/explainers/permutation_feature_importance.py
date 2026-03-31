@@ -170,7 +170,24 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         self.max_samples_fraction = max_samples_fraction
 
     def _get_feature_groups(self, columns: List[str]) -> Dict[str, List[int]]:
-        """Group one-hot encoded columns back to their original feature."""
+        """Map logical feature names to their column indices, grouping OHE columns.
+
+        When the underlying model has a ``one_hot_encoder`` attribute, all
+        one-hot-encoded dummy columns that originated from the same categorical
+        feature are collected into a single group so that permutation importance
+        is computed jointly. Non-encoded columns get a single-element group.
+
+        Parameters
+        ----------
+        columns : list of str
+            Ordered list of column names in the input feature matrix.
+
+        Returns
+        -------
+        dict of {str: list of int}
+            Mapping from logical feature name to the list of column indices
+            that belong to that feature.
+        """
         feature_groups = {}
 
         if (
@@ -213,7 +230,31 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         feature_groups: Dict[str, List[int]],
         max_samples: int,
     ):
-        """Calculate permutation importance for grouped features."""
+        """Compute permutation importance for grouped (possibly OHE) features.
+
+        Randomly subsamples up to ``max_samples`` rows, then for each feature
+        group permutes all columns in the group simultaneously across
+        ``self.n_repeats`` trials, measuring the drop in the configured
+        scoring metric to estimate importance.
+
+        Parameters
+        ----------
+        x_data : pandas.DataFrame
+            Full feature matrix.
+        y : pandas.DataFrame
+            Target column aligned with ``x_data``.
+        feature_groups : dict of {str: list of int}
+            Mapping from logical feature name to column indices, as returned
+            by :meth:`_get_feature_groups`.
+        max_samples : int
+            Maximum number of rows to use for the importance calculation.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys ``"features"``, ``"importances_mean"``, and
+            ``"importances_std"``, each a list of length ``len(feature_groups)``.
+        """
         # Lazy imports
         import numpy as np
 
@@ -304,7 +345,26 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         return results
 
     def explain(self, dataset):
-        """Method for calculating the importance of features in the model."""
+        """Compute permutation feature importance for the fitted model.
+
+        Extracts the test split from ``dataset``, optionally encodes the
+        target column, groups one-hot-encoded columns, and computes importance
+        scores by permuting each feature group and measuring the resulting
+        drop in the configured scoring metric.
+
+        Parameters
+        ----------
+        dataset : tuple of (DatasetDict, DatasetDict)
+            A ``(x, y)`` pair where each element is a DatasetDict with at
+            least a ``"test"`` split.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys ``"features"`` (list of str),
+            ``"importances_mean"`` (list of float, rounded to 3 dp), and
+            ``"importances_std"`` (list of float, rounded to 3 dp).
+        """
         # Lazy imports
         import numpy as np
         import pandas as pd
@@ -392,7 +452,23 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             }
 
     def _create_plot(self, data, n_features: int):
-        """Helper method to create the explanation plot using plotly."""
+        """Build a Plotly horizontal bar chart of feature importances.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            DataFrame with columns ``"features"``, ``"importances_mean"``, and
+            ``"importances_std"``, sorted ascending by importance.
+        n_features : int
+            Number of top features (last rows of ``data``) to display in the
+            default view. A dropdown menu lets users cycle through all counts.
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the Plotly figure serialised to
+            JSON via ``plotly.io.to_json``.
+        """
         # Lazy imports
         import plotly
         import plotly.express as px
@@ -446,7 +522,20 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         return [plotly.io.to_json(fig)]
 
     def plot(self, explanation: dict) -> List[dict]:
-        """Method to create the explanation plot."""
+        """Create a Plotly bar chart from a feature importance explanation dict.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain`: must contain ``"features"``,
+            ``"importances_mean"``, and ``"importances_std"`` lists.
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the Plotly figure serialised to
+            JSON (passed through :meth:`_create_plot`).
+        """
         n_features = 10
         # Lazy import
         import pandas as pd
