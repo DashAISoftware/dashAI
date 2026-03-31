@@ -11,12 +11,14 @@ import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 import { useTourContext } from "../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 function SetNameAndTaskStep({
   newExp,
   setNewExp,
   setNextEnabled,
   defaultExperimentName,
-  existingExperiments = [],
+  existingExperiments = EMPTY_ARRAY,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -62,13 +64,14 @@ function SetNameAndTaskStep({
   const handleNameInputChange = (event) => {
     const inputValue = event.target.value;
     setNewExp({ ...newExp, name: inputValue });
-    setNModifications(nModifications + 1);
+    setNModifications((prev) => prev + 1);
 
     const isEmpty = !inputValue.trim();
     const isTooShort =
       inputValue.trim().length > 0 && inputValue.trim().length < 4;
 
-    if (nModifications + 1 >= 4) {
+    setNModifications((nMods) => {
+      if (nMods >= 4) {
       if (isTooShort) {
         setExpNameError(true);
         setExpNameOk(false);
@@ -82,6 +85,8 @@ function SetNameAndTaskStep({
     } else {
       setExpNameOk(!isEmpty);
     }
+      return nMods; // Return current value since we already incremented above
+    });
   };
 
   const getNameError = () => {

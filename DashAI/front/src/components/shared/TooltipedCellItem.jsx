@@ -4,6 +4,8 @@ import PropTypes from "prop-types";
 import { Tooltip } from "@mui/material";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 
+const EMPTY_OBJECT = {};
+
 /**
  * Component that wraps a GridActionsCellItem with a Tooltip.
  * @param {object} props the props of the component.
@@ -16,7 +18,7 @@ function TooltipedCellItem({
   icon,
   tooltip,
   label,
-  tooltipProps = {},
+  tooltipProps = EMPTY_OBJECT,
   ...props
 }) {
   return (

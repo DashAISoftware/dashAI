@@ -26,7 +26,7 @@ export default function ManualInputForm({
   setManualInputData,
 }) {
   const theme = useTheme();
-  const [rows, setRows] = useState(createInitialRows());
+  const [rows, setRows] = useState(() => createInitialRows());
   const { t } = useTranslation(["prediction"]);
 
   function createInitialRows() {

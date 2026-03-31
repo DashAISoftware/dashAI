@@ -1,12 +1,14 @@
 import { Box, Typography, Button, useTheme } from "@mui/material";
 
+const EMPTY_ARRAY = [];
+
 export default function OptionBox({
   optionName,
   description,
   onClick,
   Icon = null,
   tag = null,
-  chips = [],
+  chips = EMPTY_ARRAY,
   dataTour,
   ...otherProps
 }) {

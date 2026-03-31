@@ -205,7 +205,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
 
   const handleNextButton = () => {
     if (activeStep === 0) {
-      setActiveStep(activeStep + 1);
+      setActiveStep((prev) => prev + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
       handlePreviewDataset();
@@ -219,7 +219,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     if (activeStep === 0) {
       handleCloseDialog();
     } else {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 

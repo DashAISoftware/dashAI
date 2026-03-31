@@ -4,17 +4,19 @@ import InputWithDebounce from "../../shared/InputWithDebounce";
 import { FormControl } from "@mui/material";
 import FormInputWrapper from "./FormInputWrapper";
 
+const EMPTY_ARRAY = [];
+
 function ArrayInput({
   name,
   label,
-  value = [],
+  value = EMPTY_ARRAY,
   onChange,
   error = undefined,
   description,
   itemType,
   ...props
 }) {
-  const [inputValue, setInputValue] = useState(value.join(","));
+  const [inputValue, setInputValue] = useState(() => value.join(","));
 
   const convertValue = (val) => {
     switch (itemType) {

@@ -35,7 +35,7 @@ function ExplorationRunner({
 
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState(explorers);
-  const [rowSelectionModel, setRowSelectionModel] = useState(
+  const [rowSelectionModel, setRowSelectionModel] = useState(() =>
     explorers.map((explorer) => explorer.id),
   ); // Select all explorers by default
 

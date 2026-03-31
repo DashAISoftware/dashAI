@@ -19,13 +19,13 @@ function PluginsDetailsTab({ tabs }) {
       <TabContext value={value}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={value} onChange={handleTabChange} aria-label="tabs">
-            {tabs.map(({ label, to }, i) => (
-              <Tab key={i} label={label} value={i.toString()} />
+            {tabs.map(({ label, to }) => (
+              <Tab key={to ?? label} label={label} value={to ?? label} />
             ))}
           </Tabs>
         </Box>
-        {tabs.map(({ label, component }, i) => (
-          <TabPanel key={i} value={i.toString()} sx={{ p: 0 }}>
+        {tabs.map(({ label, component, to }) => (
+          <TabPanel key={to ?? label} value={to ?? label} sx={{ p: 0 }}>
             {component}
           </TabPanel>
         ))}

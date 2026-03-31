@@ -26,7 +26,7 @@ function ItemSelector({
   setSelectedItem,
   disabled = false,
 }) {
-  const [itemsToShow, setItemsToShow] = useState(itemsList.map(() => true));
+  const [itemsToShow, setItemsToShow] = useState(() => itemsList.map(() => true));
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const { t } = useTranslation("common");

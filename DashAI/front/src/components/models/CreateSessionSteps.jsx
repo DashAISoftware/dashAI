@@ -12,12 +12,14 @@ import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 function CreateSessionSteps({
   backHome,
   selectedTask,
   datasets,
   handleSessionCreated,
-  existingSessions = [],
+  existingSessions = EMPTY_ARRAY,
   preselectedDatasetId = null,
 }) {
   const [activeStep, setActiveStep] = useState(0);
@@ -176,7 +178,7 @@ function CreateSessionSteps({
     if (activeStep === 0) {
       backHome();
     } else {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 

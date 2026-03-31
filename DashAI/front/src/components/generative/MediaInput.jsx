@@ -78,12 +78,12 @@ export function MediaInput({
       {/* Image previews */}
       {previews.length > 0 && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {previews.map((preview, index) => (
-            <Box key={index} sx={{ position: "relative" }}>
+          {previews.map((preview) => (
+            <Box key={preview} sx={{ position: "relative" }}>
               <Box
                 component="img"
                 src={preview || "/placeholder.svg"}
-                alt={`Preview ${index}`}
+                alt="Preview"
                 sx={{
                   height: 80,
                   width: 80,

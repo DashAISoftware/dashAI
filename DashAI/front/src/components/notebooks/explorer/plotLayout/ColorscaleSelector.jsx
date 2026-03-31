@@ -234,9 +234,9 @@ export default function ColorscaleSelector({ value, onChange }) {
               )}
 
             <Stack spacing={2}>
-              {localArray.map((item, i) => (
+              {localArray.map((item) => (
                 <Card
-                  key={i}
+                  key={`${item[0]}-${item[1]}`}
                   variant="outlined"
                   sx={{
                     background: alpha(theme.palette.background.paper, 0.4),

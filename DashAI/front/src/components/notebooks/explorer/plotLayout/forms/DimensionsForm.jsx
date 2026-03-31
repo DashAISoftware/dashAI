@@ -10,7 +10,7 @@ export default function DimensionsForm({ data, handleTraceChange }) {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {data[0].dimensions.map((dim, idx) => (
         <Box
-          key={idx}
+          key={dim.label || `dimension-${idx}`}
           sx={{
             p: 2,
             border: `1px solid ${

@@ -45,19 +45,21 @@ import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 /**
  * Card component displaying a model run with actions and details
  */
 function RunCard({
   run,
-  models = [],
+  models = EMPTY_ARRAY,
   session,
   onTrain,
   onDelete,
   onOperationsRefresh,
   explainerRefreshTrigger,
   isLastRun = false,
-  existingRuns = [],
+  existingRuns = EMPTY_ARRAY,
   onRefresh,
 }) {
   const theme = useTheme();

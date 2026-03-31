@@ -27,6 +27,8 @@ import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 
+const EMPTY_ARRAY = [];
+
 /**
  * Dialog for adding a new model run to a session
  * Step 1: Configure model name and parameters
@@ -37,7 +39,7 @@ function AddModelDialog({
   onClose,
   session,
   preselectedModel,
-  existingRuns = [],
+  existingRuns = EMPTY_ARRAY,
   onRunCreated,
 }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -195,7 +197,7 @@ function AddModelDialog({
 
   const handleBack = () => {
     if (activeStep > 0) {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 

@@ -68,12 +68,12 @@ export default function SelectOptionMenu({
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-          {filteredOptions.map((option, index) => {
+          {filteredOptions.map((option) => {
             const { name, display_name, description, Icon, ...otherProps } =
               option;
 
             return (
-              <Grid size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
+              <Grid size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }} key={name}>
                 <OptionBox
                   optionName={display_name}
                   description={description}

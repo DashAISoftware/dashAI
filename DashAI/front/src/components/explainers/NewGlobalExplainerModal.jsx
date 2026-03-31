@@ -223,13 +223,13 @@ export default function NewGlobalExplainerModal({
     if (activeStep === 0) {
       handleCloseDialog();
     } else {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 
   const handleNextButton = async () => {
     if (activeStep < steps.length - 1) {
-      setActiveStep(activeStep + 1);
+      setActiveStep((prev) => prev + 1);
       setNextEnabled(false);
     } else {
       await uploadNewGlobalExplainer();

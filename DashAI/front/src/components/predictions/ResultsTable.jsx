@@ -21,7 +21,7 @@ const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 function ResultsTable({ selectedPrediction }) {
   const theme = useTheme();
-  const [loadingExecution, setLoadingExecution] = useState(
+  const [loadingExecution, setLoadingExecution] = useState(() =>
     RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
   );
   const { t } = useTranslation(["prediction"]);

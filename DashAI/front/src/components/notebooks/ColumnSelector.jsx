@@ -5,6 +5,9 @@ import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
+
 /**
  * Generic column selection component that can be reused across the application
  *
@@ -30,9 +33,9 @@ import { Trans, useTranslation } from "react-i18next";
  */
 function ColumnSelector({
   file_path,
-  inputCardinality = {},
-  allowedDtypes = [],
-  restrictedDtypes = [],
+  inputCardinality = EMPTY_OBJECT,
+  allowedDtypes = EMPTY_ARRAY,
+  restrictedDtypes = EMPTY_ARRAY,
   onSelectionChange = () => {},
   onValidationChange = () => {},
 }) {

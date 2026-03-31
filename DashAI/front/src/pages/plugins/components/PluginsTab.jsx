@@ -28,19 +28,19 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
       <TabContext value={tabValue}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={tabValue} onChange={handleTabChange} aria-label="tabs">
-            {tabs.map(({ label, to }, i) => (
+            {tabs.map(({ label, to }) => (
               <Tab
                 component={Link}
-                key={i}
+                key={to}
                 label={label}
-                value={i.toString()}
+                value={to}
                 to={to}
               />
             ))}
           </Tabs>
         </Box>
-        {tabs.map(({ label, plugins }, i) => (
-          <TabPanel key={i} value={i.toString()} sx={{ p: 0 }}>
+        {tabs.map(({ label, plugins, to }) => (
+          <TabPanel key={to} value={to} sx={{ p: 0 }}>
             <Grid
               container
               alignItems={"center"}

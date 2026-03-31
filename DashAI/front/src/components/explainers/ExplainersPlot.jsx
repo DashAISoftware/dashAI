@@ -83,8 +83,11 @@ export default function ExplainersPlot({ explainer, scope }) {
             label="class"
             autoWidth
           >
-            {explainersPlots.map((_, i) => (
-              <MenuItem key={i} value={i}>
+            {explainersPlots.map((plot, i) => (
+              <MenuItem
+                key={plot?.layout?.title?.text ?? `instance-${i}`}
+                value={i}
+              >
                 {t("explainers:label.instanceNumber", { number: i + 1 })}
               </MenuItem>
             ))}

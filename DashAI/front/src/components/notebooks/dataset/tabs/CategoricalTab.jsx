@@ -120,7 +120,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       >
                         {stats.top_5.map((entry, index) => (
                           <Cell
-                            key={index}
+                            key={entry.value ?? entry.name ?? index}
                             fill={
                               [
                                 theme.palette.secondary.main,

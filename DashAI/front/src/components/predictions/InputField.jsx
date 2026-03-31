@@ -71,8 +71,8 @@ function InputField({
           <MenuItem value="" disabled sx={{ fontSize: "0.875rem" }}>
             {t("prediction:label.selectCategory")}
           </MenuItem>
-          {categories.map((cat, idx) => (
-            <MenuItem key={idx} value={cat} sx={{ fontSize: "0.875rem" }}>
+          {categories.map((cat) => (
+            <MenuItem key={cat} value={cat} sx={{ fontSize: "0.875rem" }}>
               {cat}
             </MenuItem>
           ))}

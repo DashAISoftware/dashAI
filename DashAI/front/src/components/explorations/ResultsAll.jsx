@@ -17,7 +17,7 @@ function ResultsAll({ updateFlag = false, setUpdateFlag = () => {} }) {
   const { explorationData } = useExplorationsContext();
   const { explorers } = explorationData;
 
-  const [filteredExplorers] = useState(
+  const [filteredExplorers] = useState(() =>
     explorers.filter((explorer) => explorer.status === ExplorerStatus.FINISHED),
   );
 
