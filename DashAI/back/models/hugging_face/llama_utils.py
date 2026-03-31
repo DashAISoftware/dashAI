@@ -66,6 +66,17 @@ def get_llama_gpu_devices_formatted() -> list[str]:
 
 
 def is_gpu_available_for_llama_cpp() -> bool:
+    """Check whether the installed llama-cpp-python was compiled with GPU support.
+
+    Dispatches to a version-specific helper based on the ``llama_cpp`` package
+    version, because the internal API changed between 0.2.x and 0.3.x.
+
+    Returns
+    -------
+    bool
+        ``True`` if GPU offloading is available; ``False`` if ``llama-cpp-python``
+        is not installed or if the check raises an unexpected exception.
+    """
     if llama_cpp is None:
         return False
 

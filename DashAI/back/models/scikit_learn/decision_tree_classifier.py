@@ -135,4 +135,12 @@ class DecisionTreeClassifier(
     ICON: str = "AccountTree"
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)

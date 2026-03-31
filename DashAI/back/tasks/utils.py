@@ -66,6 +66,19 @@ class FileMetadata:
 
 
 def _extract_text_metadata(data: bytes) -> dict:
+    """Try to decode text bytes and return encoding and line count.
+
+    Parameters
+    ----------
+    data : bytes
+        Raw file content.
+
+    Returns
+    -------
+    dict
+        Dictionary with ``encoding`` (str) and ``line_count`` (int) keys,
+        or an empty dict if decoding fails for all tried encodings.
+    """
     result: dict = {}
     for enc in ("utf-8", "utf-16", "latin-1"):
         try:
@@ -79,6 +92,20 @@ def _extract_text_metadata(data: bytes) -> dict:
 
 
 def _extract_csv_metadata(data: bytes) -> dict:
+    """Parse CSV bytes and return encoding, column names, and row/column counts.
+
+    Parameters
+    ----------
+    data : bytes
+        Raw CSV file content.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys ``encoding``, ``columns``, ``column_count``, and
+        ``row_count``.  Returns a partial dict (possibly with only ``encoding``)
+        if CSV parsing fails.
+    """
     result: dict = {}
     for enc in ("utf-8", "utf-16", "latin-1"):
         try:
@@ -103,6 +130,20 @@ def _extract_csv_metadata(data: bytes) -> dict:
 
 
 def _extract_json_metadata(data: bytes) -> dict:
+    """Parse JSON bytes and return encoding, column names, and row/column counts.
+
+    Parameters
+    ----------
+    data : bytes
+        Raw JSON file content.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys ``encoding``, and optionally ``columns``,
+        ``column_count``, and ``row_count`` depending on whether the top-level
+        JSON value is a list or object.
+    """
     result: dict = {}
     for enc in ("utf-8", "utf-16", "latin-1"):
         try:
@@ -130,6 +171,20 @@ def _extract_json_metadata(data: bytes) -> dict:
 
 
 def _extract_image_metadata(data: bytes) -> dict:
+    """Read image bytes and return width, height, and colour mode.
+
+    Parameters
+    ----------
+    data : bytes
+        Raw image file content.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys ``width`` (int), ``height`` (int), and
+        ``color_mode`` (str).  Returns an empty dict if PIL is not available
+        or the bytes cannot be decoded as an image.
+    """
     result: dict = {}
     try:
         from PIL import Image  # noqa: PLC0415
@@ -145,6 +200,20 @@ def _extract_image_metadata(data: bytes) -> dict:
 
 
 def _extract_archive_metadata(data: bytes) -> dict:
+    """Inspect ZIP archive bytes and return file count and filenames.
+
+    Parameters
+    ----------
+    data : bytes
+        Raw archive file content.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys ``archive_file_count`` (int) and
+        ``archive_filenames`` (list of str, up to 50 entries).  Returns an
+        empty dict if the bytes are not a valid ZIP archive.
+    """
     result: dict = {}
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as zf:

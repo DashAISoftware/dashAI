@@ -213,6 +213,19 @@ class MLPRegression(RegressionModel):
             """Single hidden-layer MLP module."""
 
             def __init__(self, input_dim, hidden_size, activation_name):
+                """Build the sequential MLP architecture.
+
+                Parameters
+                ----------
+                input_dim : int
+                    Number of input features.
+                hidden_size : int
+                    Number of units in the single hidden layer.
+                activation_name : str
+                    Activation function name: one of ``"relu"``, ``"tanh"``,
+                    ``"sigmoid"``, or ``"identity"``.  Defaults to ReLU if the
+                    name is not recognised.
+                """
                 super().__init__()
                 activations = {
                     "relu": nn.ReLU(),
@@ -227,6 +240,18 @@ class MLPRegression(RegressionModel):
                 )
 
             def forward(self, x):
+                """Run a forward pass through the network.
+
+                Parameters
+                ----------
+                x : torch.Tensor
+                    Input tensor of shape ``(batch_size, input_dim)``.
+
+                Returns
+                -------
+                torch.Tensor
+                    Output tensor of shape ``(batch_size, 1)``.
+                """
                 return self.model(x)
 
         self.mlp = MLP

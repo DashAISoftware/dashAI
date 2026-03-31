@@ -158,6 +158,20 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         """
 
         def _vectorize(example) -> dict:
+            """Vectorize a single dataset example using the fitted CountVectorizer.
+
+            Parameters
+            ----------
+            example : dict
+                A single dataset row.  Must contain the key ``input_column``
+                whose value is the raw text string to transform.
+
+            Returns
+            -------
+            dict
+                A flat dictionary mapping ``input_column + str(idx)`` to the
+                corresponding token count for each vocabulary index ``idx``.
+            """
             # Lazy import of numpy
             import numpy as np
 

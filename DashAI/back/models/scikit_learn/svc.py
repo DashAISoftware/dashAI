@@ -194,5 +194,13 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         kwargs["probability"] = True
         super().__init__(**kwargs)

@@ -7,6 +7,17 @@ from DashAI.back.models.classes import base_path
 
 
 def introspect_classes():
+    """Discover and return all classes defined in the current package.
+
+    Iterates over every module under the ``DashAI.back.models.classes`` package,
+    imports each one, and collects all class objects, de-duplicating by class name.
+
+    Returns
+    -------
+    dict
+        A mapping of class name (``str``) to class object for every class found
+        in the package's modules.
+    """
     classes_dict = {}
     # iterate through the modules in the current package
     package_dir = Path(__file__).resolve().parent
@@ -25,6 +36,20 @@ def introspect_classes():
 
 
 def filter_by_parent(parent_class_name):
+    """Return all classes that are strict subclasses of the named parent class.
+
+    Parameters
+    ----------
+    parent_class_name : str
+        Name of the parent class to filter by.  Must be present in the dict
+        returned by :func:`introspect_classes`.
+
+    Returns
+    -------
+    dict
+        A mapping of class name to class object for every class that is a
+        subclass of the named parent (excluding the parent itself).
+    """
     class_dict = introspect_classes()
     parent_class = class_dict[parent_class_name]
     filtered_dict = {}
