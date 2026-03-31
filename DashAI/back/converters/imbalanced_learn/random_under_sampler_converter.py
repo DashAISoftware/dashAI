@@ -94,6 +94,15 @@ class RandomUnderSamplerConverter(
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Not implemented; type preservation is handled in ``transform``.
 
+        RandomUnderSampler only removes rows; it does not change column types.
+        Types from the input dataset are copied directly in ``transform``.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the column whose output type is queried. Ignored because
+            this method always raises. Default ``None``.
+
         Raises
         ------
         NotImplementedError

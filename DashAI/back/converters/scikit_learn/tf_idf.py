@@ -154,7 +154,20 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.fitted = False
 
     def fit(self, x: "DashAIDataset", y=None) -> "TFIDFConverter":
-        """Fit TfidfVectorizer to the input text."""
+        """Fit TfidfVectorizer on the first text column of the dataset.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. Only the first column is used for fitting.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        TFIDFConverter
+            The fitted converter instance (``self``).
+        """
         X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
         self.vectorizer.fit(texts)
@@ -162,7 +175,25 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         return self
 
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
-        """Transform text into TF-IDF weighted columns."""
+        """Transform text into TF-IDF weighted token columns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. The first column is vectorised.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each token becomes a numeric TF-IDF weight column.
+
+        Raises
+        ------
+        RuntimeError
+            If :meth:`fit` has not been called yet.
+        """
         import pandas as pd
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset

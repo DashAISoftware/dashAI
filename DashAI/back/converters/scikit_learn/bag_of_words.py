@@ -143,7 +143,20 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.fitted = False
 
     def fit(self, x: "DashAIDataset", y=None) -> "BagOfWordsConverter":
-        """Fit CountVectorizer to the input text."""
+        """Fit CountVectorizer on the first text column of the dataset.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. Only the first column is used for fitting.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        BagOfWordsConverter
+            The fitted converter instance (``self``).
+        """
         X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
         self.vectorizer.fit(texts)
@@ -151,7 +164,25 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         return self
 
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
-        """Transform text into Bag-of-Words frequency columns."""
+        """Transform text into Bag-of-Words token-frequency columns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. The first column is vectorised.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each token becomes a numeric frequency column.
+
+        Raises
+        ------
+        RuntimeError
+            If :meth:`fit` has not been called yet.
+        """
         import pandas as pd
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset

@@ -125,7 +125,19 @@ class PolynomialFeatures(
     IMAGE_PREVIEW = "polynomial_features.png"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for polynomial features."""
+        """Return ``Float64`` as the output type for all polynomial feature columns.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the output column. Not used — all columns receive the
+            same ``Float64`` type. Default ``None``.
+
+        Returns
+        -------
+        Float
+            A DashAI ``Float`` type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

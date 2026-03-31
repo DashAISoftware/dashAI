@@ -159,7 +159,19 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             return x
 
         def try_convert_to_int(value):
-            """Try to convert a value to integer, return original if not possible."""
+            """Try to convert a value to integer, return the original if not possible.
+
+            Parameters
+            ----------
+            value : object
+                The value to convert.
+
+            Returns
+            -------
+            int or object
+                ``int(value)`` on success, or the original ``value`` unchanged
+                if a ``ValueError`` or ``TypeError`` is raised.
+            """
             try:
                 return int(value)
             except (ValueError, TypeError):
@@ -168,7 +180,19 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         new_types = x.types.copy()
 
         def replace_function(batch):
-            """Apply character replacement to each column in a HuggingFace batch."""
+            """Apply character replacement to each column in a HuggingFace batch.
+
+            Parameters
+            ----------
+            batch : dict of {str: list}
+                A HuggingFace ``Dataset.map`` batch dict mapping column names
+                to lists of values.
+
+            Returns
+            -------
+            dict of {str: list}
+                Processed batch with characters replaced in targeted columns.
+            """
             processed_batch = {}
             for column_name, values in batch.items():
                 if column_name in self._target_columns:

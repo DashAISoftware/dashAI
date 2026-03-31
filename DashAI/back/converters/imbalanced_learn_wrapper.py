@@ -53,6 +53,12 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         Imbalanced-learn samplers do not change column types — types from the
         input dataset are copied directly in ``transform``.
 
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the column whose output type is queried. Ignored because
+            this method always raises. Default ``None``.
+
         Raises
         ------
         NotImplementedError

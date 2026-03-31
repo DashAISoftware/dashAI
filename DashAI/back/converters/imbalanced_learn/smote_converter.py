@@ -98,6 +98,15 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Not implemented; type preservation is handled in ``transform``.
 
+        SMOTE preserves the types of all input columns; type assignment is
+        performed directly in ``transform`` rather than here.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the column whose output type is queried. Ignored because
+            this method always raises. Default ``None``.
+
         Raises
         ------
         NotImplementedError

@@ -93,7 +93,21 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         return self
 
     def _is_null_value(self, value) -> bool:
-        """Check if a value should be treated as null."""
+        """Check whether a value should be treated as null.
+
+        Returns ``True`` for Python ``None``, ``float('nan')``, or any string
+        representation found in the ``NULL_VALUES`` sentinel set.
+
+        Parameters
+        ----------
+        value : object
+            The value to test.
+
+        Returns
+        -------
+        bool
+            ``True`` if ``value`` is considered null, ``False`` otherwise.
+        """
         import numpy as np
 
         if value is None:

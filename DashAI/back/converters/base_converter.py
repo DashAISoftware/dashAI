@@ -47,12 +47,18 @@ class BaseConverter(ConfigObject, ABC):
     def get_metadata(cls) -> Dict[str, Any]:
         """Get metadata for the converter, used by the DashAI frontend.
 
+        Parameters
+        ----------
+        cls : type
+            The converter class (injected automatically by Python for
+            classmethods).
+
         Returns
         -------
         Dict[str, Any]
-            Dictionary containing display name, short
-            description, image preview path, category, icon, color,
-            and whether the converter is supervised.
+            Dictionary containing display name, short description, image
+            preview path, category, icon, color, and whether the converter
+            is supervised.
         """
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["display_name"] = cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__

@@ -107,7 +107,23 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         return Categorical(values=pa.array(["0", "1"]))
 
     def fit(self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None):
-        """Fit label encoders to each column in the dataset."""
+        """Fit a LabelEncoder for each eligible column in the dataset.
+
+        Only columns with string, object, or category dtype (or a matching
+        DashAI type) are processed. NaN values are masked out before fitting.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset whose categorical/string columns will be encoded.
+        y : DashAIDataset or None, optional
+            Ignored. Present for API compatibility. Default ``None``.
+
+        Returns
+        -------
+        LabelEncoderConverter
+            The fitted converter instance (``self``).
+        """
         from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
 
         x_pandas = x.to_pandas()
@@ -135,7 +151,20 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """Transform columns preserving NaN values."""
+        """Apply fitted label encoders to each eligible column, preserving NaN.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. Columns not seen during ``fit`` are left unchanged.
+        y : DashAIDataset or None, optional
+            Ignored. Present for API compatibility. Default ``None``.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with categorical/string columns replaced by integer codes.
+        """
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         x_pandas = x.to_pandas().copy()
