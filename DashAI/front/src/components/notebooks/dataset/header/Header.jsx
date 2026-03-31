@@ -7,13 +7,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import { HeaderBox } from "./HeaderBox";
 import { useTranslation } from "react-i18next";
 
-export default function Header({
-  totalRows,
-  totalColumns,
-  fileSize,
-  duplicateRows,
-  missingValues,
-}) {
+export default function Header({ totalRows, totalColumns, fileSize }) {
   const { t } = useTranslation(["common", "datasets"]);
 
   return (
@@ -58,20 +52,6 @@ export default function Header({
           IconComponent={DescriptionIcon}
           iconColor="rgb(180, 120, 200)"
           bgColor="rgba(180, 120, 200, 0.15)"
-        />
-        <HeaderBox
-          title={t("datasets:label.duplicatedRows")}
-          value={duplicateRows ?? "N/A"}
-          IconComponent={InfoIcon}
-          iconColor="rgb(255, 180, 100)"
-          bgColor="rgba(255, 180, 100, 0.15)"
-        />
-        <HeaderBox
-          title={t("datasets:label.missingValues")}
-          value={Object.values(missingValues).reduce((a, b) => a + b, 0)}
-          IconComponent={InfoIcon}
-          iconColor="rgb(255, 120, 120)"
-          bgColor="rgba(255, 120, 120, 0.15)"
         />
       </Box>
     </Box>

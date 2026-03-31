@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
+import ColumnInsights from "../notebooks/dataset/ColumnInsights";
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
@@ -35,6 +36,8 @@ export default function ModelsRightBar({ onToggle }) {
     configOpen,
     selectedModel,
     closeConfig,
+    datasetInfo,
+    setDatasetTab,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -142,22 +145,32 @@ export default function ModelsRightBar({ onToggle }) {
 
         {/* Content */}
         {!session ? (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
+          datasetInfo ? (
+            <Box sx={{ flex: 1, overflowY: "auto" }}>
+              <ColumnInsights
+                numericStats={datasetInfo?.numeric_stats}
+                textStats={datasetInfo?.text_stats}
+                onNavigateTab={setDatasetTab}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 2,
+              }}
             >
-              {t("models:label.selectSessionToViewModels")}
-            </Typography>
-          </Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", textAlign: "center" }}
+              >
+                {t("models:label.selectSessionToViewModels")}
+              </Typography>
+            </Box>
+          )
         ) : (
           <>
             {/* Search Box */}

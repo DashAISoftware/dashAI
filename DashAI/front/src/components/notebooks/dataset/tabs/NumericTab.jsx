@@ -20,6 +20,7 @@ export const NumericTab = ({ numericStats }) => {
           key={column}
           filename={`numeric_${column}`}
           exportData={{ column, ...stats }}
+          data-column-card={column}
           sx={{ borderRadius: 2 }}
         >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
@@ -65,8 +66,10 @@ export const NumericTab = ({ numericStats }) => {
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
                   variant="subtitle2"
-                  color="text.secondary"
+                  fontWeight="bold"
+                  color="text.primary"
                   gutterBottom
+                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
                 >
                   {t("datasets:label.distributionMetrics")}
                 </Typography>
@@ -98,8 +101,10 @@ export const NumericTab = ({ numericStats }) => {
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
                   variant="subtitle2"
-                  color="text.secondary"
+                  fontWeight="bold"
+                  color="text.primary"
                   gutterBottom
+                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
                 >
                   {t("datasets:label.shapeIndicators")}
                 </Typography>

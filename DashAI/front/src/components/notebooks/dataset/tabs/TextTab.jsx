@@ -62,6 +62,7 @@ export const TextTab = ({ textStats }) => {
             key={column}
             filename={`text_${column}`}
             exportData={{ column, ...stats }}
+            data-column-card={column}
             sx={{ borderRadius: 2 }}
           >
             <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
@@ -139,8 +140,10 @@ export const TextTab = ({ textStats }) => {
                 <Box flex="1 1 300px" minWidth="250px">
                   <Typography
                     variant="subtitle2"
-                    color="text.secondary"
+                    fontWeight="bold"
+                    color="text.primary"
                     gutterBottom
+                    sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
                   >
                     {t("datasets:label.lengthMetrics")}
                   </Typography>
