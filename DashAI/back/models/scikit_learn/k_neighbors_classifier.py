@@ -67,7 +67,8 @@ class KNeighborsClassifierSchema(BaseSchema):
 class KNeighborsClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _KNeighborsClassifier
 ):
-    """K-nearest neighbours classifier that predicts the majority class among neighbours.
+    """K-nearest neighbours classifier that predicts
+    the majority class among neighbours.
 
     KNN is a lazy, instance-based learning algorithm: no explicit model is fitted
     during training. At prediction time the algorithm finds the ``k`` nearest training

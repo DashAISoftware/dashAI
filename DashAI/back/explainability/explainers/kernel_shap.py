@@ -105,7 +105,8 @@ class KernelShapSchema(BaseSchema):
 
 
 class KernelShap(BaseLocalExplainer):
-    """Model-agnostic local explainer that estimates SHAP values via a weighted linear model.
+    """Model-agnostic local explainer that estimates SHAP values
+    via a weighted linear model.
 
     Kernel SHAP (SHapley Additive exPlanations) unifies LIME and classic Shapley
     values from cooperative game theory. For each instance to explain, it fits a

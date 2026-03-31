@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
-    """Abstract wrapper that adapts imbalanced-learn samplers to the DashAI converter API.
+    """Abstract wrapper that adapts imbalanced-learn samplers
+    to the DashAI converter API.
 
     Implements ``fit`` and ``transform`` by calling ``fit_resample`` from the underlying
     imbalanced-learn sampler, then wrapping the resampled data back into a
@@ -183,7 +184,8 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         x : DashAIDataset
             The original feature dataset (used only for type information).
         y : DashAIDataset, optional
-            The original target dataset (used only for type information). Defaults to None.
+            The original target dataset (used only for type information).
+            Defaults to None.
 
         Returns
         -------

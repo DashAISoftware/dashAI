@@ -250,7 +250,8 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
-        """Save the multi-column box plot figure to disk (JSON content, ``.pickle`` extension).
+        """Save the multi-column box plot figure to disk
+        (JSON content, ``.pickle`` extension).
 
         Notes
         -----

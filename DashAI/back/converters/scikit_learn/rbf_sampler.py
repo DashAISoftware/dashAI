@@ -116,7 +116,8 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
             random_state : int, ``"RandomState"``, or None, optional
                 Seed for reproducibility.  The special string ``"RandomState"``
                 generates a fresh random state. Default ``None``.
-            Additional keys are forwarded to ``sklearn.kernel_approximation.RBFSampler``.
+            Additional keys are forwarded to
+            ``sklearn.kernel_approximation.RBFSampler``.
         """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":

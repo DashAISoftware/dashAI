@@ -20,8 +20,6 @@ class MissingIndicatorSchema(BaseSchema):
     component interface.
     """
 
-    pass
-
 
 class MissingIndicator(
     BasicPreprocessingConverter, SklearnWrapper, MissingIndicatorOperation

@@ -67,7 +67,8 @@ class PartialDependenceSchema(BaseSchema):
 
 
 class PartialDependence(BaseGlobalExplainer):
-    """Global explainer that shows how the model's average prediction changes with each feature.
+    """Global explainer that shows how the model's average prediction
+    changes with each feature.
 
     A Partial Dependence Plot (PDP) marginalises the model output over the
     distribution of all other features, leaving a curve (or surface) that

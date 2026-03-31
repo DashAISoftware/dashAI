@@ -70,7 +70,8 @@ class SkewedChi2SamplerSchema(BaseSchema):
 class SkewedChi2Sampler(
     PolynomialKernelConverter, SklearnWrapper, SkewedChi2SamplerOperation
 ):
-    """Approximate the skewed chi-squared kernel feature map via random Fourier features.
+    """Approximate the skewed chi-squared kernel feature map
+    via random Fourier features.
 
     The skewed chi-squared kernel is well-suited for histogram-based features
     (e.g. visual bag-of-words, colour histograms) and is defined as:
@@ -114,7 +115,8 @@ class SkewedChi2Sampler(
     IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
 
     def __init__(self, **kwargs):
-        """Initialise the skewed chi-squared sampler, resolving the ``"RandomState"`` sentinel.
+        """Initialise the skewed chi-squared sampler,
+        resolving the ``"RandomState"`` sentinel.
 
         If ``random_state`` is the string ``"RandomState"``, a fresh
         ``numpy.random.RandomState`` instance is created in its place before
@@ -126,7 +128,8 @@ class SkewedChi2Sampler(
             random_state : int, ``"RandomState"``, or None, optional
                 Seed for reproducibility.  The special string ``"RandomState"``
                 generates a fresh random state. Default ``None``.
-            Additional keys are forwarded to ``sklearn.kernel_approximation.SkewedChi2Sampler``.
+            Additional keys are forwarded to
+            ``sklearn.kernel_approximation.SkewedChi2Sampler``.
         """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":

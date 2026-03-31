@@ -53,7 +53,8 @@ class SMOTEENNSchema(BaseSchema):
 
 
 class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
-    """Hybrid sampler combining SMOTE oversampling with Edited Nearest Neighbours cleaning.
+    """Hybrid sampler combining SMOTE oversampling
+    with Edited Nearest Neighbours cleaning.
 
     SMOTE-ENN is a two-stage resampling strategy for imbalanced classification:
 

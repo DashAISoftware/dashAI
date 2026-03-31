@@ -85,7 +85,8 @@ class PermutationFeatureImportanceSchema(BaseSchema):
 
 
 class PermutationFeatureImportance(BaseGlobalExplainer):
-    """Global explainer that ranks features by the drop in model performance when permuted.
+    """Global explainer that ranks features by the drop
+    in model performance when permuted.
 
     Permutation Feature Importance (PFI) measures the importance of a feature by
     randomly shuffling its values across the test set and recording the resulting

@@ -19,8 +19,6 @@ class LabelEncoderSchema(BaseSchema):
     the DashAI component registration pattern.
     """
 
-    pass
-
 
 class LabelEncoder(EncodingConverter, SklearnWrapper):
     """Encode categorical labels as contiguous integer codes in [0, n_classes - 1].

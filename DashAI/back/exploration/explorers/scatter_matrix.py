@@ -114,7 +114,8 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
-        """Extend column selection to include optional color and symbol grouping columns.
+        """Extend column selection to include optional color
+        and symbol grouping columns.
 
         Parameters
         ----------

@@ -340,7 +340,8 @@ class GradientBoostingRSchema(BaseSchema):
 
 
 class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
-    """Gradient boosting regressor that builds an ensemble of decision trees sequentially.
+    """Gradient boosting regressor that builds
+    an ensemble of decision trees sequentially.
 
     Gradient Boosting builds an additive model in a forward stage-wise fashion. At
     each stage a shallow decision tree is fitted to the negative gradient of the

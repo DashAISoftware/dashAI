@@ -189,7 +189,8 @@ class BaseExplorer(ConfigObject, ABC):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
-        """Prepare the dataset by selecting only the columns needed for this exploration.
+        """Prepare the dataset by selecting only the columns
+        needed for this exploration.
 
         Override this method in subclasses that need to load additional columns
         beyond those explicitly selected (e.g. a color-grouping column).

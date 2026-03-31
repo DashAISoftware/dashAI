@@ -6,7 +6,8 @@ from DashAI.back.static.icons import Icon
 
 
 class MultidimensionalExplorer(BaseExplorer):
-    """Base class for explorers that visualize data across many dimensions simultaneously.
+    """Base class for explorers that visualize data
+    across many dimensions simultaneously.
 
     Multidimensional explorers generate visualizations such as parallel
     categories plots that allow comparison of multiple categorical variables

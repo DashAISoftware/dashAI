@@ -94,7 +94,8 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
         return x.remove_columns(self.columns)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Return a placeholder type (this converter removes columns, not transforms them).
+        """Return a placeholder type
+        (this converter removes columns, not transforms them).
 
         Parameters
         ----------
