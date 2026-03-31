@@ -61,12 +61,36 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the ParallelCategoriesExplorer with an optional color column.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            color_column (str or int, optional): Column name or index used
+            to color each line. Defaults to None.
+        """
         self.color_column: Union[str, int, None] = kwargs.get("color_column")
         super().__init__(**kwargs)
 
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend column selection to include the optional color column.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset.
+        columns : List[Dict[str, Any]]
+            Explicitly selected column descriptors.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset containing the selected columns plus the
+            optional color column.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -85,6 +109,25 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly parallel categories plot for the selected columns.
+
+        Each line represents a flow between category values across multiple
+        categorical axes, making it easy to visualize co-occurrence patterns
+        in high-dimensional categorical data.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The prepared dataset with at least two columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive parallel categories figure.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -109,6 +152,24 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the parallel categories figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -121,6 +182,22 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved parallel categories plot for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         import plotly.io as pio
 
         resultType = "plotly_json"

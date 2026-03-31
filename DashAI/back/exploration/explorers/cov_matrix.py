@@ -103,6 +103,22 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize CovarianceMatrixExplorer with covariance parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments matching
+            ``CovarianceMatrixExplorerSchema`` fields:
+            delta_degree_of_freedom (int): Delta degrees of freedom (ddof)
+            used in the covariance calculation.
+            min_periods (int): Minimum observations required per column
+            pair to produce a valid result.
+            numeric_only (bool): Whether to restrict the calculation to
+            numeric columns only.
+            plot (bool): Whether to render the result as a Plotly heatmap.
+            When ``False`` the raw covariance DataFrame is returned.
+        """
         self.ddof = kwargs.get("delta_degree_of_freedom")
         self.min_periods = kwargs.get("min_periods")
         self.numeric_only = kwargs.get("numeric_only")
@@ -112,6 +128,28 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
     def launch_exploration(
         self, dataset: "DashAIDataset", explorer_info: Explorer
     ) -> Any:
+        """Compute a covariance matrix and optionally render it as a Plotly heatmap.
+
+        Converts the dataset to a pandas DataFrame, computes pairwise column
+        covariances, and — when ``self.plot`` is ``True`` — wraps the result
+        in a Plotly ``imshow`` heatmap figure.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset whose columns will be used
+            for covariance computation.
+        explorer_info : Explorer
+            The explorer database record used for
+            the plot title and column count.
+
+        Returns
+        -------
+        Any
+            A ``plotly.graph_objs.Figure`` heatmap when ``self.plot`` is
+            ``True``, or a ``pandas.DataFrame`` containing the covariance
+            matrix when ``self.plot`` is ``False``.
+        """
         import plotly.express as px
 
         result = dataset.to_pandas().cov(
@@ -139,6 +177,30 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the covariance result to a JSON file on disk.
+
+        When ``self.plot`` is ``True``, writes the Plotly figure as JSON using
+        ``Figure.write_json``; otherwise writes the covariance DataFrame using
+        ``DataFrame.to_json``.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename
+            generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The result returned by ``launch_exploration`` — either
+            a ``plotly.graph_objs.Figure`` or a ``pandas.DataFrame``.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -159,6 +221,30 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved covariance result for the frontend.
+
+        When ``self.plot`` is ``True``, reads the raw Plotly JSON string from
+        disk. Otherwise reads the JSON file as a pandas DataFrame and converts
+        it to a nested dictionary.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by
+            ``save_notebook``.
+        options : Dict[str, Any]
+            Rendering options from the frontend
+            (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (Plotly JSON string
+            when plotting, or nested dict of the covariance matrix
+            otherwise), ``"type"`` (``"plotly_json"`` when plotting, or
+            ``"tabular"`` otherwise), and ``"config"`` (empty dict when
+            plotting, or ``{"orient": "dict"}`` otherwise).
+        """
         from pathlib import Path
 
         import numpy as np
