@@ -24,7 +24,13 @@ class SelectFdrSchema(BaseSchema):
 
 
 class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
-    """SciKit-Learn's SelectFdr wrapper for DashAI."""
+    """Select features based on an estimated False Discovery Rate threshold.
+
+    Controls the expected proportion of falsely rejected null hypotheses among
+    the selected features. Supervised: requires ``y`` at fit time.
+
+    Wraps scikit-learn's ``SelectFDR``.
+    """
 
     SCHEMA = SelectFdrSchema
     DESCRIPTION = MultilingualString(
@@ -40,10 +46,30 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     metadata = {}
 
     def __init__(self, **kwargs):
+        """Initialize the SelectFdr converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for selected features."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

@@ -71,7 +71,14 @@ class PolynomialFeaturesSchema(BaseSchema):
 class PolynomialFeatures(
     PolynomialKernelConverter, SklearnWrapper, PolynomialFeaturesOperation
 ):
-    """Scikit-learn's PolynomialFeatures wrapper for DashAI."""
+    """Generate polynomial and interaction features up to a specified degree.
+
+    For each input feature, new columns are added for all polynomial combinations
+    up to ``degree``. This enables linear models to learn nonlinear relationships
+    in the original feature space without requiring kernel methods.
+
+    Wraps scikit-learn's ``PolynomialFeatures``.
+    """
 
     SCHEMA = PolynomialFeaturesSchema
     DESCRIPTION = MultilingualString(

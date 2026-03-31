@@ -28,7 +28,14 @@ class VarianceThresholdSchema(BaseSchema):
 class VarianceThreshold(
     DimensionalityReductionConverter, SklearnWrapper, VarianceThresholdOperation
 ):
-    """Scikit-learn's VarianceThreshold wrapper for DashAI."""
+    """Remove features whose variance falls below a threshold.
+
+    Features with low variance carry little information and can be removed
+    without supervised labels. A threshold of 0.0 removes features that are
+    constant across all samples. Unsupervised.
+
+    Wraps scikit-learn's ``VarianceThreshold``.
+    """
 
     SCHEMA = VarianceThresholdSchema
     DESCRIPTION = MultilingualString(
@@ -38,7 +45,19 @@ class VarianceThreshold(
     DISPLAY_NAME = MultilingualString(en="Variance Threshold", es="Umbral de Varianza")
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for selected features."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

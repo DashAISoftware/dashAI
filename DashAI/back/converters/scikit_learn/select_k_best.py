@@ -26,7 +26,15 @@ class SelectKBestSchema(BaseSchema):
 
 
 class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperation):
-    """SciKit-Learn's SelectKBest wrapper for DashAI."""
+    """Select the K highest-scoring features using a univariate statistical test.
+
+    Each feature is scored independently against the target using a statistical
+    function (e.g. ``f_classif``, ``chi2``, ``mutual_info_classif``). The K
+    features with the highest scores are retained. Supervised: requires ``y``
+    at fit time.
+
+    Wraps scikit-learn's ``SelectKBest``.
+    """
 
     SCHEMA = SelectKBestSchema
     DESCRIPTION = MultilingualString(
@@ -39,12 +47,36 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     metadata = {}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for selected features."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
 
     def __init__(self, **kwargs):
+        """Initialize the SelectKBest converter.
+
+        Patches ``_get_tags`` to advertise ``requires_y=True`` so that the
+        pipeline passes the target array at fit time, then delegates to the
+        parent initializer.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         if callable(self._get_tags):
             original_get_tags = self._get_tags
             self._get_tags = lambda *a, **k: {

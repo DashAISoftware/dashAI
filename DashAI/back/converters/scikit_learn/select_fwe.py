@@ -24,7 +24,13 @@ class SelectFweSchema(BaseSchema):
 
 
 class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
-    """Scikit-learn's SelectFwe wrapper for DashAI."""
+    """Select features while controlling the Family-Wise Error rate.
+
+    Uses a Bonferroni correction to control the probability of any false
+    positives among selected features. Supervised: requires ``y`` at fit time.
+
+    Wraps scikit-learn's ``SelectFWE``.
+    """
 
     SCHEMA = SelectFweSchema
     DESCRIPTION = MultilingualString(
@@ -40,10 +46,30 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     metadata = {}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for selected features."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
 
     def __init__(self, **kwargs):
+        """Initialize the SelectFwe converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         super().__init__(**kwargs)
