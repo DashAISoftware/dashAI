@@ -19,7 +19,12 @@ from DashAI.back.models.utils import (
 
 
 class MistralSchema(BaseSchema):
-    """Schema for Mistral model."""
+    """Schema for MistralModel hyperparameters.
+
+    Configures the checkpoint variant, generation length, sampling temperature,
+    frequency penalty, context window, and target device for Mistral Instruct
+    models loaded via ``llama-cpp-python`` in GGUF format.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -145,7 +150,23 @@ class MistralSchema(BaseSchema):
 
 
 class MistralModel(TextToTextGenerationTaskModel):
-    """Mistral model for text generation using llama.cpp library."""
+    """Mistral Instruct model for open-ended text generation via llama.cpp.
+
+    Mistral is a 7B-parameter transformer language model developed by Mistral AI,
+    designed to deliver high performance with efficient inference. It uses grouped-
+    query attention (GQA) for faster decoding and sliding-window attention (SWA) to
+    handle long contexts efficiently. The 12B Mistral-Nemo variant, developed jointly
+    with NVIDIA, extends the context window to 128 K tokens and improves multilingual
+    capability.
+
+    Models are loaded as GGUF quantized checkpoints via ``llama-cpp-python``,
+    allowing CPU and GPU inference without requiring a full PyTorch stack.
+
+    References
+    ----------
+    .. [1] Jiang et al. (2023) "Mistral 7B" https://arxiv.org/abs/2310.06825
+    .. [2] https://huggingface.co/mistralai
+    """
 
     SCHEMA = MistralSchema
     COLOR: str = "#ff6f00"

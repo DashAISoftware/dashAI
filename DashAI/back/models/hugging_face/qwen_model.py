@@ -19,7 +19,13 @@ from DashAI.back.models.utils import (
 
 
 class QwenSchema(BaseSchema):
-    """Schema for Qwen model."""
+    """Schema for QwenModel hyperparameters.
+
+    Configures the Qwen 2.5 Instruct checkpoint variant (0.5B or 1.5B), generation
+    length, sampling temperature, frequency penalty, context window, and target
+    device. The GGUF filename is selected automatically using a Q8_0 quantization
+    pattern; no manual filename override is exposed.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -159,7 +165,22 @@ class QwenSchema(BaseSchema):
 
 
 class QwenModel(TextToTextGenerationTaskModel):
-    """Qwen model for text generation using llama.cpp library."""
+    """Qwen 2.5 Instruct model for efficient text generation via llama.cpp.
+
+    Qwen 2.5 is a series of dense transformer language models from Alibaba Cloud,
+    spanning 0.5B to 72B parameters. The DashAI integration exposes the 0.5B and
+    1.5B Instruct variants, which run comfortably on CPU. Both are trained on 18
+    trillion tokens with improved coding, mathematics, and multilingual capability
+    over Qwen 2.
+
+    Models are loaded as GGUF Q8_0 quantized checkpoints via ``llama-cpp-python``;
+    the quantization file is selected automatically from the HuggingFace repo.
+
+    References
+    ----------
+    .. [1] Qwen Team (2024). "Qwen2.5 Technical Report." https://arxiv.org/abs/2412.15115
+    .. [2] https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
+    """
 
     SCHEMA = QwenSchema
     COLOR: str = "#2e7d32"

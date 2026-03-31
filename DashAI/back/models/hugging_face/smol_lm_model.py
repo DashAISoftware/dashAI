@@ -24,7 +24,13 @@ SMOLLM_FILENAME_MAP = {
 
 
 class SmolLMSchema(BaseSchema):
-    """Schema for SmolLM2 model."""
+    """Schema for SmolLM2 model hyperparameters.
+
+    Configures the SmolLM2 Instruct checkpoint variant (360M or 1.7B), generation
+    length, sampling temperature, frequency penalty, context window, and target
+    device. The GGUF filename is resolved automatically from ``SMOLLM_FILENAME_MAP``:
+    Q4_K_M quantization for 1.7B and Q8_0 quantization for 360M.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -152,7 +158,32 @@ class SmolLMSchema(BaseSchema):
 
 
 class SmolLMModel(TextToTextGenerationTaskModel):
-    """SmolLM2 model for lightweight text generation using llama.cpp library."""
+    """SmolLM2 Instruct model for on-device text generation via llama.cpp.
+
+    SmolLM2 is a family of compact, instruction-tuned language models developed by
+    Hugging Face TB, designed for efficient on-device and edge deployment. Unlike
+    larger language models, SmolLM2 achieves competitive benchmark results at very
+    small parameter counts by training on high-quality synthetic datasets including
+    cosmopedia-v2, FineWeb-Edu, and StackEdu.
+
+    The DashAI integration exposes the 360M and 1.7B Instruct variants. The 360M
+    model requires under 300 MB of RAM and runs comfortably on modest CPU hardware;
+    the 1.7B model delivers higher-quality responses while remaining deployable
+    without a GPU.
+
+    Models are loaded as GGUF quantized checkpoints via ``llama-cpp-python``. The
+    quantization level is variant-dependent: Q8_0 for 360M (higher fidelity at small
+    size) and Q4_K_M for 1.7B (balanced quality/size trade-off). The filename is
+    resolved automatically from ``SMOLLM_FILENAME_MAP``.
+
+    References
+    ----------
+    .. [1] Allal, L.B. et al. (2024). "SmolLM2 — with great data, comes great
+           performance." Hugging Face Blog.
+           https://huggingface.co/blog/smollm2
+    .. [2] https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF
+    .. [3] https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF
+    """
 
     SCHEMA = SmolLMSchema
     COLOR: str = "#00695c"

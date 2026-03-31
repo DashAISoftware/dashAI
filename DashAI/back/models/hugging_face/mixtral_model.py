@@ -19,7 +19,13 @@ from DashAI.back.models.utils import (
 
 
 class MixtralSchema(BaseSchema):
-    """Schema for Mixtral model."""
+    """Schema for MixtralModel hyperparameters.
+
+    Configures the checkpoint variant (with optional GGUF filename override),
+    generation length, sampling temperature, frequency penalty, context window,
+    and target device for Mixtral Sparse-MoE models loaded via
+    ``llama-cpp-python``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -181,7 +187,22 @@ class MixtralSchema(BaseSchema):
 
 
 class MixtralModel(TextToTextGenerationTaskModel):
-    """Mixtral Sparse Mixture-of-Experts model for text generation using llama.cpp."""
+    """Mixtral Sparse Mixture-of-Experts (SMoE) model for text generation via llama.cpp.
+
+    Mixtral 8x7B is a transformer language model with 8 expert feed-forward
+    networks per layer; only 2 experts are activated per token, giving it the
+    computational cost of a 12B-parameter dense model while retaining capacity
+    equivalent to a 47B model. It matches or surpasses Llama 2 70B and GPT-3.5
+    on most benchmarks.
+
+    Models are loaded as GGUF quantized checkpoints via ``llama-cpp-python``.
+    The Q4_K_M quantization requires approximately 26 GB of RAM.
+
+    References
+    ----------
+    .. [1] Jiang et al. (2024) "Mixtral of Experts" https://arxiv.org/abs/2401.04088
+    .. [2] https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
+    """
 
     SCHEMA = MixtralSchema
     COLOR: str = "#4a148c"
