@@ -22,12 +22,12 @@ import { useTranslation } from "react-i18next";
  */
 function MainForm({
   parameterSchema,
-  defaultValues,
-  extraOptions,
-  submitButton,
-  onFormSubmit,
-  getValues,
-  formSubmitRef,
+  defaultValues = { emptyDefaultValues: true },
+  extraOptions = null,
+  submitButton = false,
+  onFormSubmit = () => {},
+  getValues = null,
+  formSubmitRef = null,
 }) {
   // manages and submits the values of the parameters in the form
   const formik = useFormik({
@@ -96,15 +96,6 @@ MainForm.propTypes = {
     PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   ),
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
-};
-
-MainForm.defaultProps = {
-  defaultValues: { emptyDefaultValues: true },
-  onFormSubmit: () => {},
-  extraOptions: null,
-  submitButton: false,
-  getValues: null,
-  formSubmitRef: null,
 };
 
 export default MainForm;

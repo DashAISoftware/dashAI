@@ -1,13 +1,14 @@
 """DashAI F1 clasification metric implementation."""
 
-import numpy as np
-from sklearn.metrics import f1_score
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
 )
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class F1(ClassificationMetric):
@@ -25,7 +26,7 @@ class F1(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
+        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
     ) -> float:
         """Calculate f1 score between true labels and predicted labels.
 
@@ -50,6 +51,8 @@ class F1(ClassificationMetric):
         # Use the provided multiclass parameter or determine it using is_multiclass
         if multiclass is None:
             multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        from sklearn.metrics import f1_score
 
         if multiclass:
             return f1_score(true_labels, pred_labels, average="macro")

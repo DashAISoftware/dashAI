@@ -30,7 +30,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
 
 
 class ForecastUncertaintySchema(BaseSchema):

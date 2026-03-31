@@ -1,7 +1,11 @@
-import numpy as np
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.base_metric import BaseMetric
+
+if TYPE_CHECKING:
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TranslationMetric(BaseMetric):
@@ -11,9 +15,9 @@ class TranslationMetric(BaseMetric):
 
 
 def prepare_to_metric(
-    y: DashAIDataset,
-    y_pred: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
+    y: "DashAIDataset",
+    y_pred: "ndarray",
+) -> tuple["ndarray", "ndarray"]:
     """Prepare data for metric calculation.
 
     Parameters
@@ -33,6 +37,7 @@ def prepare_to_metric(
     ValueError
         If the lengths of true and predicted labels do not match.
     """
+    import numpy as np
 
     column_name = y.column_names[0]
     true = np.array(y[column_name])

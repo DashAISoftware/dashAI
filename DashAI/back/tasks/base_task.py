@@ -1,17 +1,14 @@
 from abc import abstractmethod
-from typing import Any, Dict, Final, List, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Union
 
-import numpy as np
-import pandas as pd
-from datasets import DatasetDict
 from starlette.datastructures import UploadFile
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    get_columns_spec,
-    to_dashai_dataset,
-)
 from DashAI.back.tasks.utils import get_bytes_with_type_filetype
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseTask:
@@ -50,7 +47,7 @@ class BaseTask:
 
     def validate_dataset_for_task(
         self,
-        dataset: DashAIDataset,
+        dataset: "DashAIDataset",
         dataset_name: str,
         input_columns: List[str],
         output_columns: List[str],
@@ -105,10 +102,10 @@ class BaseTask:
 
     def prepare_for_task(
         self,
-        dataset: Union[DatasetDict, DashAIDataset],
+        dataset: Union["DatasetDict", "DashAIDataset"],
         input_columns: List[str],
         output_columns: List[str],
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """
         Default preparation shared by every task.
 
@@ -116,6 +113,8 @@ class BaseTask:
         - Validates types against task metadata.
         - Returns dataset ready for the taks.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         dashai_dataset = to_dashai_dataset(dataset)
         self.validate_dataset_for_task(
             dashai_dataset,
@@ -126,7 +125,7 @@ class BaseTask:
         return dashai_dataset
 
     @abstractmethod
-    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
         """Get the number of unique labels in the output column.
 
         Parameters
@@ -175,6 +174,8 @@ class BaseTask:
         TypeError
             If value doesn't match expected type
         """
+        import numpy as np
+
         col_type = column_spec.get("type")
         dtype = column_spec.get("dtype")
 
@@ -283,7 +284,7 @@ class BaseTask:
 
     def process_manual_input(
         self, manual_input: List[dict], dataset_path: str
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Process manual input data into a DashAIDataset with type validation.
 
         Parameters
@@ -305,7 +306,11 @@ class BaseTask:
         TypeError
             If input types don't match expected types
         """
+        from pandas import DataFrame
+
         from DashAI.back.dataloaders.classes.dashai_dataset import (
+            get_columns_spec,
+            to_dashai_dataset,
             transform_dataset_with_schema,
         )
 
@@ -351,7 +356,7 @@ class BaseTask:
             mapped_inputs.append(row)
 
         # Convert to DataFrame first
-        mapped_inputs_df = pd.DataFrame(mapped_inputs)
+        mapped_inputs_df = DataFrame(mapped_inputs)
 
         # Convert to DashAIDataset and apply schema transformation
         # This ensures categorical encoding is applied

@@ -16,7 +16,7 @@ import pandas as pd
 from datasets import DatasetDict
 
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
 
 
 class ForecastingLocalExplainer(BaseLocalExplainer):

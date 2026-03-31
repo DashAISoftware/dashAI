@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.kernel_approximation import (
     AdditiveChi2Sampler as AdditiveChi2SamplerOperation,
 )
@@ -57,4 +56,6 @@ class AdditiveChi2Sampler(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())

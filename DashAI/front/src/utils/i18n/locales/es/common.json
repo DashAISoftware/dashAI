@@ -42,6 +42,9 @@
   "explainers": "Explicadores",
   "export": "Exportar",
   "exportAsCSV": "Exportar como CSV",
+  "exportFiltered": "Exportar filtrado",
+  "exportFilteredTooltip": "Exportar solo las filas filtradas como CSV",
+  "exportAllTooltip": "Exportar todas las filas como CSV",
   "finish": "Finalizar",
   "finished": "Finalizado",
   "from": "Desde",
@@ -139,11 +142,20 @@
   "value": "Valor",
   "vertical": "Vertical",
   "viewDetails": "Ver Detalles",
-  "renameColumn": "Renombrar columna",
+  "renameColumn": "Doble-click para renombrar columna",
   "columnNameEmpty": "El nombre de la columna no puede estar vacío",
   "columnNameInvalid": "El nombre de la columna solo puede contener letras, números y guiones bajos",
   "columnNameCannotBeEmpty": "El nombre de la columna no puede estar vacío",
   "columnNameInvalidCharacters": "El nombre de la columna solo puede contener letras, números y guiones bajos",
   "columnNameAlreadyExists": "Ya existe una columna con este nombre",
-  "errorRenamingColumn": "Error al renombrar la columna"
+  "errorRenamingColumn": "Error al renombrar la columna",
+  "hardwareMonitor": {
+    "title": "Monitor de Hardware",
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "ram": "RAM",
+    "overall": "General",
+    "utilization": "Utilización",
+    "connecting": "Conectando al monitor de hardware..."
+  }
 }

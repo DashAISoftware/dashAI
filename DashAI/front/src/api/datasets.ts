@@ -9,7 +9,7 @@ export const copyDataset = async (formData: object): Promise<object> => {
 };
 
 export const getDatasets = async (): Promise<IDataset[]> => {
-  const response = await api.get<IDataset[]>(datasetEndpoint);
+  const response = await api.get<IDataset[]>(`${datasetEndpoint}/`);
   return response.data;
 };
 
@@ -191,6 +191,7 @@ export const getDatasetFileFiltered = async (
   page = 0,
   pageSize = 5,
   filterModel?: object,
+  sortModel?: object[],
 ) => {
   const response = await api.get(`${datasetEndpoint}/filter/`, {
     params: {
@@ -198,6 +199,10 @@ export const getDatasetFileFiltered = async (
       page,
       page_size: pageSize,
       filterModel: filterModel ? JSON.stringify(filterModel) : undefined,
+      sortModel:
+        sortModel && sortModel.length > 0
+          ? JSON.stringify(sortModel)
+          : undefined,
     },
   });
   return response.data;

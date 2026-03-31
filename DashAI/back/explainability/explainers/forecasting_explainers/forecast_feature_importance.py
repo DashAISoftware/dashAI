@@ -33,7 +33,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.explainability.explainers.forecasting_explainers.forecasting_global_explainer import (  # noqa: E501
     ForecastingGlobalExplainer,
 )
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
 
 
 class ForecastFeatureImportanceSchema(BaseSchema):

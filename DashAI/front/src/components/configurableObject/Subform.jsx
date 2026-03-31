@@ -15,11 +15,11 @@ import { getValidationSchema } from "../../utils/paramFormValidation";
  * @param {object} defaultValues default values of the parameters of the configurable object
  */
 function Subform({
-  name,
+  name = "undefined",
   parameterSchema,
   setFieldValue,
   choice,
-  defaultValues,
+  defaultValues = { emptyDefaultValues: true },
 }) {
   // adds "choice", the selected configurable object to render as a subform, to the values of the form
   const newDefaultValues = { ...defaultValues, choice };
@@ -56,10 +56,6 @@ Subform.propTypes = {
       PropTypes.object,
     ]),
   ),
-};
-Subform.defaultProps = {
-  name: "undefined",
-  defaultValues: { emptyDefaultValues: true },
 };
 
 export default Subform;

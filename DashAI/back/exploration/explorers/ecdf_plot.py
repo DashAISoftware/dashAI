@@ -1,11 +1,5 @@
-import enum
-import os
-import pathlib
-
-import plotly.express as px
-import plotly.io as pio
-from beartype.typing import Any, Dict, List, Union
-from plotly.graph_objs import Figure
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -16,15 +10,17 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-class ECDFNorm(enum.Enum):
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class ECDFNorm(Enum):
     NONE = "none"
     PERCENT = "percent"
     PROBABILITY = "probability"
@@ -107,8 +103,8 @@ class ECDFPlotExplorer(DistributionExplorer):
         super().__init__(**kwargs)
 
     def prepare_dataset(
-        self, loaded_dataset: DashAIDataset, columns: List[Dict[str, Any]]
-    ) -> DashAIDataset:
+        self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
+    ) -> "DashAIDataset":
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -150,7 +146,9 @@ class ECDFPlotExplorer(DistributionExplorer):
 
         return super().prepare_dataset(loaded_dataset, columns)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
@@ -179,11 +177,14 @@ class ECDFPlotExplorer(DistributionExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Figure,
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
         return path.as_posix()
@@ -191,6 +192,8 @@ class ECDFPlotExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        import plotly.io as pio
+
         resultType = "plotly_json"
         config = {}
 

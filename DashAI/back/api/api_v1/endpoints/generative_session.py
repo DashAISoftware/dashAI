@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
@@ -15,9 +15,12 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSessionParameterHistory,
     ProcessData,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models import BaseGenerativeModel
-from DashAI.back.tasks import BaseGenerativeTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -26,10 +29,13 @@ log = logging.getLogger(__name__)
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_generative_session(
     params: GenerativeSessionParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Create a new generative session and log the initial parameters in the history."""
+    from DashAI.back.models.base_generative_model import BaseGenerativeModel
+    from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+
     with session_factory() as db:
         try:
             # Check if the model is registered
@@ -115,7 +121,7 @@ async def upload_generative_session(
 @router.get("/{session_id}", status_code=status.HTTP_200_OK)
 async def get_generative_session(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a generative session by its ID.
 
@@ -158,7 +164,7 @@ async def get_generative_session(
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get all generative sessions ordered by creation date.
 
@@ -214,7 +220,7 @@ async def get_all_generative_sessions(
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_generative_session(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete a generative session by its ID.
 
@@ -289,11 +295,107 @@ async def delete_generative_session(
             db.close()
 
 
+@router.patch("/{session_id}", status_code=status.HTTP_200_OK)
+async def update_generative_session(
+    session_id: int,
+    name: Union[str, None] = None,
+    description: Union[str, None] = None,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Update the generative session associated with the provided ID.
+
+    Parameters
+    ----------
+    session_id : int
+        ID of the generative session to update.
+    name : Union[str, None], optional
+        New name for the session.
+    description : Union[str, None], optional
+        New description for the session.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing the updated generative session record.
+
+    Raises
+    ------
+    HTTPException
+        If the session does not exist, name is invalid, or name already exists.
+    """
+    with session_factory() as db:
+        try:
+            session = db.get(GenerativeSession, session_id)
+            if session is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Generative session not found",
+                )
+
+            # Validate name if provided
+            if name is not None:
+                if not name or not name.strip():
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Name cannot be empty",
+                    )
+
+                new_name = name.strip()
+
+                # Check if name is different from current name
+                if new_name != session.name:
+                    # Check if name already exists
+                    exists = db.execute(
+                        select(GenerativeSession.id).where(
+                            GenerativeSession.name == new_name,
+                            GenerativeSession.id != session_id,
+                        )
+                    ).scalar()
+                    if exists:
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail="Generative session name already exists",
+                        )
+                    setattr(session, "name", new_name)
+
+            if description is not None:
+                setattr(session, "description", description)
+
+            if name is not None or description is not None:
+                session.last_modified = datetime.now()
+                db.commit()
+                db.refresh(session)
+                return session
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_304_NOT_MODIFIED,
+                    detail="Record not modified",
+                )
+        except HTTPException:
+            raise
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Generative session name already exists",
+            ) from e
+        except exc.SQLAlchemyError as e:
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
 @router.put("/{session_id}/parameters", status_code=status.HTTP_200_OK)
 async def update_generative_session_params(
     session_id: int,
     new_params: dict,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the parameters of a generative session and log the change.
 
@@ -354,7 +456,7 @@ async def update_generative_session_params(
 @router.get("/{session_id}/parameters-history", status_code=status.HTTP_200_OK)
 async def get_generative_session_parameters_history(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Get all parameter history entries for a generative session.
@@ -416,7 +518,7 @@ async def get_generative_session_parameters_history(
 @router.get("/parameters-history/{session_id}", status_code=status.HTTP_200_OK)
 async def get_parameter_history_entry(
     session_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Get history entry for a generative session by its ID.

@@ -1,6 +1,5 @@
 import { Box, Divider, IconButton, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ChatBubble } from "./ChatBubble";
@@ -18,11 +17,19 @@ import InfoSessionModal from "./InfoSessionModal";
 import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
-import { getRunStatus } from "../../utils/runStatus";
 import { Trans, useTranslation } from "react-i18next";
+import { useGenerative } from "./GenerativeContext";
+import { useTourContext } from "../tour/TourProvider";
 
-export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
+export default function GenerativeChat() {
   const theme = useTheme();
+
+  const {
+    selectedSessionId: sessionId,
+    selectedTaskName: taskName,
+    paramsVersion,
+  } = useGenerative();
+
   const [history, setHistory] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
@@ -32,6 +39,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
+  const tourContext = useTourContext();
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -72,6 +80,13 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           setIsLoadingMessage(false);
         });
       });
+
+      // End tour if on final step
+      if (tourContext?.run && tourContext?.stepIndex === 8) {
+        setTimeout(() => {
+          tourContext.stopTour();
+        }, 100);
+      }
     });
   };
 
@@ -197,14 +212,13 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       <Box
         sx={{
           width: "100%",
-          height: "30px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
           alignItems: "center",
           borderRadius: 1,
           opacity: 0.5,
-          mb: 1,
+          mb: 0.8,
         }}
       >
         <Box

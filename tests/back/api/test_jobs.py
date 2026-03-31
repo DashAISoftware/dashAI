@@ -10,10 +10,10 @@ from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.model_job import ModelJob
-from DashAI.back.metrics import BaseMetric
-from DashAI.back.models import BaseModel
-from DashAI.back.optimizers import OptunaOptimizer
-from DashAI.back.tasks import BaseTask
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
+from DashAI.back.tasks.base_task import BaseTask
 
 
 class DummyTask(BaseTask):

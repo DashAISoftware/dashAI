@@ -39,6 +39,17 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+import { generateSequentialName } from "../../utils/nameGenerator";
+
+const getNextExplainerName = (existingExplainers = []) => {
+  const { defaultName } = generateSequentialName({
+    base: "Explainer_global",
+    items: existingExplainers,
+    getName: (explainer) => explainer?.name,
+  });
+
+  return defaultName;
+};
 
 /**
  * This component renders a modal that takes the user through the process of creating a new explainer.
@@ -87,6 +98,8 @@ export default function NewGlobalExplainerModal({
   const [temporalInfo, setTemporalInfo] = useState(null);
   const [temporalInfoLoading, setTemporalInfoLoading] = useState(false);
   const [modelName, setModelName] = useState(null);
+  const [existingGlobalExplainersLoaded, setExistingGlobalExplainersLoaded] =
+    useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -103,6 +116,8 @@ export default function NewGlobalExplainerModal({
     } catch (error) {
       console.error("Error loading existing explainers:", error);
       setExistingGlobalExplainers([]);
+    } finally {
+      setExistingGlobalExplainersLoaded(true);
     }
   };
 
@@ -143,12 +158,29 @@ export default function NewGlobalExplainerModal({
 
   useEffect(() => {
     if (open) {
+      setExistingGlobalExplainersLoaded(false);
       loadExistingExplainers();
       if (isForecastingTask) {
         fetchTemporalInfo();
       }
     }
   }, [open, isForecastingTask]);
+
+  useEffect(() => {
+    if (!open || !existingGlobalExplainersLoaded || newGlobalExpl.name.trim()) {
+      return;
+    }
+
+    setNewGlobalExpl((prev) => ({
+      ...prev,
+      name: getNextExplainerName(existingGlobalExplainers),
+    }));
+  }, [
+    open,
+    existingGlobalExplainersLoaded,
+    existingGlobalExplainers,
+    newGlobalExpl.name,
+  ]);
 
   const enqueueGlobalExplainerJob = async (explainerId) => {
     try {

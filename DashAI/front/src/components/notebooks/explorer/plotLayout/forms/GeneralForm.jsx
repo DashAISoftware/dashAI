@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, TextField } from "@mui/material";
+import { Box, TextField, Divider, Typography } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 import { useTranslation } from "react-i18next";
@@ -19,11 +19,24 @@ const FONT_LIST = [
   "Times New Roman",
 ];
 
+const SectionLabel = ({ children }) => (
+  <Typography
+    variant="overline"
+    color="text.secondary"
+    sx={{ lineHeight: 1.5, display: "block" }}
+  >
+    {children}
+  </Typography>
+);
+
 export default function GeneralForm({ layout, handleChange }) {
   const { t } = useTranslation(["datasets"]);
 
   return (
     <>
+      {/* Title */}
+      <SectionLabel>{t("datasets:label.title", "Title")}</SectionLabel>
+
       <TextField
         label={t("datasets:label.title")}
         variant="filled"
@@ -34,19 +47,43 @@ export default function GeneralForm({ layout, handleChange }) {
         fullWidth
       />
 
-      <TextField
-        label={t("datasets:label.titleFontSize")}
-        variant="filled"
-        type="number"
-        value={layout.title?.font?.size || 16}
-        onChange={(e) =>
-          handleChange("title", {
-            ...layout.title,
-            font: { ...layout.title?.font, size: parseInt(e.target.value) },
-          })
-        }
-        fullWidth
-      />
+      <Box sx={{ display: "flex", gap: 2 }}>
+        <TextField
+          label={t("datasets:label.titleFontSize")}
+          variant="filled"
+          type="number"
+          value={layout.title?.font?.size || 16}
+          onChange={(e) =>
+            handleChange("title", {
+              ...layout.title,
+              font: {
+                ...layout.title?.font,
+                size: parseInt(e.target.value, 10) || 16,
+              },
+            })
+          }
+          fullWidth
+          slotProps={{ htmlInput: { min: 8, max: 72 } }}
+        />
+
+        <TextField
+          select
+          label={t("datasets:label.fontFamily")}
+          variant="filled"
+          value={layout.font?.family || "Arial"}
+          onChange={(e) =>
+            handleChange("font", { ...layout.font, family: e.target.value })
+          }
+          slotProps={{ select: { native: true } }}
+          fullWidth
+        >
+          {FONT_LIST.map((font) => (
+            <option key={font} value={font}>
+              {font}
+            </option>
+          ))}
+        </TextField>
+      </Box>
 
       <DebouncedColorPicker
         label={t("datasets:label.titleColor")}
@@ -59,23 +96,10 @@ export default function GeneralForm({ layout, handleChange }) {
         }
       />
 
-      <TextField
-        select
-        label={t("datasets:label.fontFamily")}
-        variant="filled"
-        value={layout.font?.family || "Arial"}
-        onChange={(e) =>
-          handleChange("font", { ...layout.font, family: e.target.value })
-        }
-        slotProps={{ select: { native: true } }}
-        fullWidth
-      >
-        {FONT_LIST.map((font) => (
-          <option key={font} value={font}>
-            {font}
-          </option>
-        ))}
-      </TextField>
+      <Divider />
+
+      {/* Colors */}
+      <SectionLabel>{t("datasets:label.colors")}</SectionLabel>
 
       <DebouncedColorPicker
         label={t("datasets:label.backgroundColor")}
@@ -89,32 +113,39 @@ export default function GeneralForm({ layout, handleChange }) {
         onChange={(color) => handleChange("plot_bgcolor", color)}
       />
 
+      <Divider />
+
+      {/* Margins */}
+      <SectionLabel>{t("datasets:label.margins")}</SectionLabel>
+
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
           label={t("datasets:label.marginLeft")}
           variant="filled"
           type="number"
-          value={layout.margin?.l || 80}
+          value={layout.margin?.l ?? 80}
           onChange={(e) =>
             handleChange("margin", {
               ...layout.margin,
-              l: parseInt(e.target.value),
+              l: parseInt(e.target.value, 10) || 0,
             })
           }
           fullWidth
+          slotProps={{ htmlInput: { min: 0 } }}
         />
         <TextField
           label={t("datasets:label.marginRight")}
           variant="filled"
           type="number"
-          value={layout.margin?.r || 80}
+          value={layout.margin?.r ?? 80}
           onChange={(e) =>
             handleChange("margin", {
               ...layout.margin,
-              r: parseInt(e.target.value),
+              r: parseInt(e.target.value, 10) || 0,
             })
           }
           fullWidth
+          slotProps={{ htmlInput: { min: 0 } }}
         />
       </Box>
 
@@ -123,27 +154,29 @@ export default function GeneralForm({ layout, handleChange }) {
           label={t("datasets:label.marginTop")}
           variant="filled"
           type="number"
-          value={layout.margin?.t || 100}
+          value={layout.margin?.t ?? 100}
           onChange={(e) =>
             handleChange("margin", {
               ...layout.margin,
-              t: parseInt(e.target.value),
+              t: parseInt(e.target.value, 10) || 0,
             })
           }
           fullWidth
+          slotProps={{ htmlInput: { min: 0 } }}
         />
         <TextField
           label={t("datasets:label.marginBottom")}
           variant="filled"
           type="number"
-          value={layout.margin?.b || 80}
+          value={layout.margin?.b ?? 80}
           onChange={(e) =>
             handleChange("margin", {
               ...layout.margin,
-              b: parseInt(e.target.value),
+              b: parseInt(e.target.value, 10) || 0,
             })
           }
           fullWidth
+          slotProps={{ htmlInput: { min: 0 } }}
         />
       </Box>
     </>

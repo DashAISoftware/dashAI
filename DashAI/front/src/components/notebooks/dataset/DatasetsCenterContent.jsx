@@ -83,7 +83,6 @@ export default function DatasetsCenterContent() {
         onNewItem={handleNewNotebookFromDataset}
         newItemButtonText={t("datasets:button.newNotebook")}
         tourContextType="datasets"
-        fetchDatasets={fetchDatasets}
       />
     );
   }

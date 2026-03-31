@@ -1,88 +1,116 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
-  Radio,
-  RadioGroup,
-  FormControlLabel,
   Box,
+  Button,
   Checkbox,
+  FormControlLabel,
+  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 function ResultsGraphsParameters({
-  showCustomMetrics,
-  tabularMetrics,
-  selectedParameters,
-  handleToggleParameter,
-  selectedGeneralMetric,
-  setSelectedGeneralMetric,
-  setSelectedParameters,
-  concatenatedMetrics,
+  currentMetrics,
+  selectedMetrics,
+  handleToggleMetric,
+  handleSelectAll,
+  handleClearAll,
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(["models", "common"]);
+
   return (
     <Box
-      bgcolor={theme.palette.ui.panelLight}
-      p={2}
-      mr={1}
       display="flex"
       flexDirection="column"
-      alignItems="flex-start"
-      width="250px"
       sx={{
-        "& .MuiCheckbox-root": {
-          padding: "3px 0",
-        },
-        "& .MuiTypography-root": {
-          padding: "3px 0",
-        },
+        width: 200,
+        minWidth: 160,
+        flexShrink: 0,
+        bgcolor: theme.palette.ui.panelLight,
+        borderRight: `1px solid ${theme.palette.ui.border}`,
       }}
     >
-      {showCustomMetrics ? (
-        tabularMetrics.map((param) => (
-          <FormControlLabel
-            key={param}
-            control={
-              <Checkbox
-                checked={selectedParameters.includes(param)}
-                onChange={() => handleToggleParameter(param)}
-              />
-            }
-            label={param}
-          />
-        ))
-      ) : (
-        <RadioGroup
-          value={selectedGeneralMetric}
-          onChange={(event) => {
-            const selectedMetric = event.target.value;
-            setSelectedGeneralMetric(selectedMetric);
-            setSelectedParameters([selectedMetric]);
-          }}
+      {/* ── Metric checkboxes ── */}
+      <Box sx={{ p: 1.5, flex: 1, overflowY: "auto" }}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={0.5}
         >
-          {concatenatedMetrics.map((param) => (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ fontWeight: 600, letterSpacing: 0.5 }}
+          >
+            {t("common:metrics", "Metrics")}
+          </Typography>
+
+          <Box>
+            <Button
+              size="small"
+              onClick={handleSelectAll}
+              disabled={currentMetrics.length === 0}
+              sx={{
+                minWidth: 0,
+                px: 0.75,
+                py: 0,
+                fontSize: "0.65rem",
+                lineHeight: 1.5,
+              }}
+            >
+              {t("common:all", "All")}
+            </Button>
+            <Button
+              size="small"
+              onClick={handleClearAll}
+              disabled={selectedMetrics.length === 0}
+              sx={{
+                minWidth: 0,
+                px: 0.75,
+                py: 0,
+                fontSize: "0.65rem",
+                lineHeight: 1.5,
+              }}
+            >
+              {t("common:none", "None")}
+            </Button>
+          </Box>
+        </Box>
+
+        {currentMetrics.length === 0 ? (
+          <Typography variant="caption" color="text.disabled">
+            {t("models:label.noMetricsAvailableForThisView")}
+          </Typography>
+        ) : (
+          currentMetrics.map((metric) => (
             <FormControlLabel
-              key={param}
-              value={param}
-              control={<Radio checked={selectedGeneralMetric === param} />}
-              label={param}
+              key={metric}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={selectedMetrics.includes(metric)}
+                  onChange={() => handleToggleMetric(metric)}
+                />
+              }
+              label={<Typography variant="body2">{metric}</Typography>}
+              sx={{ display: "flex", m: 0, py: 0.25 }}
             />
-          ))}
-        </RadioGroup>
-      )}
+          ))
+        )}
+      </Box>
     </Box>
   );
 }
 
 ResultsGraphsParameters.propTypes = {
-  showCustomMetrics: PropTypes.bool.isRequired,
-  tabularMetrics: PropTypes.array.isRequired,
-  selectedParameters: PropTypes.array.isRequired,
-  handleToggleParameter: PropTypes.func.isRequired,
-  selectedGeneralMetric: PropTypes.string.isRequired,
-  setSelectedGeneralMetric: PropTypes.func.isRequired,
-  setSelectedParameters: PropTypes.func.isRequired,
-  concatenatedMetrics: PropTypes.array.isRequired,
+  currentMetrics: PropTypes.array.isRequired,
+  selectedMetrics: PropTypes.array.isRequired,
+  handleToggleMetric: PropTypes.func.isRequired,
+  handleSelectAll: PropTypes.func.isRequired,
+  handleClearAll: PropTypes.func.isRequired,
 };
 
 export default ResultsGraphsParameters;

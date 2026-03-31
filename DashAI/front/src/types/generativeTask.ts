@@ -11,4 +11,5 @@ export interface IGenerativeTask {
   };
   description: string;
   display_name: string;
+  color: string | null;
 }

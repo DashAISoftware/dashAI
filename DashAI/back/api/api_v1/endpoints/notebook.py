@@ -1,15 +1,16 @@
 import logging
-import os
-import shutil
-import uuid
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session, sessionmaker
 
-from DashAI.back.api.api_v1.schemas import notebook_params as schemas
+from DashAI.back.api.api_v1.schemas.notebook_params import Notebook as NotebookSchema
+from DashAI.back.api.api_v1.schemas.notebook_params import (
+    NotebookCreate,
+    NotebookUpdateParams,
+)
 from DashAI.back.dependencies.database.models import (
     ConverterList,
     Dataset,
@@ -17,17 +18,20 @@ from DashAI.back.dependencies.database.models import (
     Notebook,
 )
 
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session, sessionmaker
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.Notebook, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=NotebookSchema, status_code=status.HTTP_201_CREATED)
 @inject
 def create_notebook(
-    params: schemas.NotebookCreate,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    params: NotebookCreate,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     config: dict = Depends(lambda: di["config"]),
 ):
     """Create a new notebook entry in the database.
@@ -50,7 +54,12 @@ def create_notebook(
     HTTPException
         If there is an error creating the notebook, returns a 500 Internal Server Error.
     """
-    db: Session
+    import os
+    import shutil
+    import uuid
+
+    db: "Session"
+
     with session_factory() as db:
         try:
             dataset_id = params.dataset_id
@@ -88,10 +97,10 @@ def create_notebook(
             ) from e
 
 
-@router.get("/", response_model=list[schemas.Notebook])
+@router.get("/", response_model=list[NotebookSchema])
 @inject
 def get_notebooks(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get all notebooks from the database.
 
@@ -125,11 +134,11 @@ def get_notebooks(
     return notebooks
 
 
-@router.get("/{notebook_id}", response_model=schemas.Notebook)
+@router.get("/{notebook_id}", response_model=NotebookSchema)
 @inject
 def get_notebook(
     notebook_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a notebook by its ID.
 
@@ -169,7 +178,7 @@ def get_notebook_explorer_list(
     notebook_id: int,
     skip: int = 0,
     limit: int = 0,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get all explorers associated with a notebook.
 
@@ -207,7 +216,7 @@ def get_notebook_explorer_list(
 @inject
 async def get_notebook_converter_list(
     notebook_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get all converters associated with a notebook.
 
@@ -251,7 +260,7 @@ async def get_notebook_converter_list(
 @inject
 async def delete_notebook(
     notebook_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the notebook associated with the provided ID from the database.
 
@@ -273,6 +282,8 @@ async def delete_notebook(
         If the notebook is not registered in the DB.
     """
     log.debug("Deleting notebook with id %s", notebook_id)
+    import shutil
+
     with session_factory() as db:
         try:
             notebook = db.get(Notebook, notebook_id)
@@ -310,8 +321,8 @@ async def delete_notebook(
 @inject
 async def update_notebook(
     notebook_id: int,
-    params: schemas.NotebookUpdateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    params: NotebookUpdateParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Updates the name of a notebook with the provided ID.
 

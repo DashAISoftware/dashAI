@@ -123,7 +123,7 @@ export default function ConverterBox({
                   "&:hover": { bgcolor: "error.dark" },
                 }}
               >
-                <Delete sx={{ fontSize: 16 }} />
+                <Delete sx={{ fontSize: 16, color: "white" }} />
               </IconButton>
             )}
           </Box>

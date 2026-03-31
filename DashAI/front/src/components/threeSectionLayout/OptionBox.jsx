@@ -12,6 +12,7 @@ export default function OptionBox({
   description,
   onClick,
   Icon = null,
+  dataTour,
   ...otherProps
 }) {
   const theme = useTheme();
@@ -19,7 +20,7 @@ export default function OptionBox({
 
   return (
     <Button
-      data-tour="models-task-selection"
+      data-tour={dataTour}
       onClick={onClick}
       sx={{
         p: 0,
@@ -67,7 +68,7 @@ export default function OptionBox({
             {optionName}
           </Typography>
           <Typography
-            variant="caption"
+            variant="body2"
             component="p"
             sx={{ color: "text.secondary" }}
           >

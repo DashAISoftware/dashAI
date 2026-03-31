@@ -47,7 +47,7 @@ function HomeButton({ title, description, to, Icon }) {
                 </Typography>
                 <Typography
                   sx={{ mb: 2 }}
-                  variant="caption"
+                  variant="body1"
                   component="p"
                   color="text.secondary"
                 >
@@ -79,7 +79,7 @@ function HomeButton({ title, description, to, Icon }) {
                 {title}
               </Typography>
               <Typography
-                variant="caption"
+                variant="body1"
                 component="p"
                 align="center"
                 color="text.secondary"

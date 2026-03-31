@@ -502,7 +502,7 @@ class GenerativeSession(Base):
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
     # metadata
-    name: Mapped[str] = mapped_column(String)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
 
     # Relationship with GenerativeSessionParameterHistory

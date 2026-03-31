@@ -1,208 +1,157 @@
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Alert, AlertTitle } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 import graphsMaking from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
-import { useTranslation } from "react-i18next";
-import { getNumericMetrics } from "../../../utils/metricUtils";
 
-function ResultsGraphs({ runs }) {
+function ResultsGraphs({
+  runs,
+  selectedSplit: splitProp = undefined,
+  onSplitChange = undefined,
+}) {
   const { enqueueSnackbar } = useSnackbar();
-  const [selectedChart, setSelectedChart] = useState("radar");
-  const [selectedParameters, setSelectedParameters] = useState([]);
-  const [showCustomMetrics, setShowCustomMetrics] = useState(false);
-  const [selectedGeneralMetric, setSelectedGeneralMetric] = useState("test");
-
-  const [concatenatedMetrics, setConcatenatedMetrics] = useState([]);
-  const [tabularMetrics, setTabularMetrics] = useState([]);
-  const [chartData, setChartData] = useState({});
-  const [filteredDataProcess, setFilteredDataProcess] = useState([]);
+  const theme = useTheme();
   const { t } = useTranslation(["models"]);
 
-  const handleChangeChart = (chartType) => {
-    setSelectedChart(chartType);
-  };
+  const [selectedChart, setSelectedChart] = useState("bar");
+  // Internal split state — used only when no controlled prop is provided
+  const [internalSplit, setInternalSplit] = useState("test");
+  const [selectedMetrics, setSelectedMetrics] = useState([]);
+  const [chartData, setChartData] = useState({});
 
-  const handleToggleParameter = (parameter) => {
-    setSelectedParameters((prev) =>
-      prev.includes(parameter)
-        ? prev.filter((p) => p !== parameter)
-        : [...prev, parameter],
-    );
-  };
+  // Controlled or uncontrolled split
+  const selectedSplit = splitProp ?? internalSplit;
+  const handleChangeSplit = onSplitChange ?? setInternalSplit;
 
-  const handleToggleMetrics = () => {
-    setShowCustomMetrics((prev) => !prev);
-    setSelectedParameters([]);
-  };
+  const finishedRuns = useMemo(
+    () => runs.filter((r) => r.status === 3),
+    [runs],
+  );
+
+  const availableMetrics = useMemo(() => {
+    const sets = { train: new Set(), validation: new Set(), test: new Set() };
+    finishedRuns.forEach((run) => {
+      if (run.train_metrics)
+        Object.keys(run.train_metrics).forEach((m) => sets.train.add(m));
+      if (run.validation_metrics)
+        Object.keys(run.validation_metrics).forEach((m) =>
+          sets.validation.add(m),
+        );
+      if (run.test_metrics)
+        Object.keys(run.test_metrics).forEach((m) => sets.test.add(m));
+    });
+    return {
+      train: Array.from(sets.train),
+      validation: Array.from(sets.validation),
+      test: Array.from(sets.test),
+    };
+  }, [finishedRuns]);
+
+  // Auto-select a split only when running in uncontrolled mode
+  useEffect(() => {
+    if (splitProp !== undefined) return;
+    if (availableMetrics.test.length > 0) setInternalSplit("test");
+    else if (availableMetrics.validation.length > 0)
+      setInternalSplit("validation");
+    else if (availableMetrics.train.length > 0) setInternalSplit("train");
+  }, [availableMetrics, splitProp]);
 
   useEffect(() => {
-    if (!runs) return;
+    setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
+  }, [selectedSplit, availableMetrics]);
 
-    const processData = async () => {
-      try {
-        // Only take finished runs
-        const finished = runs.filter((item) => item.status === 3); // Finished
-        setFilteredDataProcess(finished);
+  useEffect(() => {
+    if (finishedRuns.length === 0 || selectedMetrics.length === 0) {
+      setChartData({});
+      return;
+    }
 
-        if (finished.length === 0) return;
+    try {
+      const metricsKey = `${selectedSplit}_metrics`;
+      const graphsToView = {};
 
-        const graphsToView = {};
-        let parameterIndex = [];
-        const generalParameters = [];
-        let pieCounter = 0;
-
-        // Extract metrics
-        const extractedMetrics = finished.map((item) => {
-          const metrics = {};
-          Object.keys(item).forEach((key) => {
-            if (key.includes("metrics")) {
-              const numericMetrics = getNumericMetrics(item[key]);
-              if (Object.keys(numericMetrics).length > 0) {
-                metrics[key] = numericMetrics;
-              }
-            }
-          });
-          return metrics;
+      finishedRuns.forEach((run, idx) => {
+        const metricsObj = run[metricsKey] ?? {};
+        const values = selectedMetrics.map((m) => {
+          const v = metricsObj[m];
+          if (v === undefined || v === null) return null;
+          if (Array.isArray(v)) return v[v.length - 1]?.value ?? null;
+          return typeof v === "number" ? v : null;
         });
+        graphsMaking(graphsToView, run, selectedMetrics, values, idx, theme);
+      });
 
-        const firstMetricsWithValues = extractedMetrics.find(
-          (metricGroup) => Object.keys(metricGroup).length > 0,
-        );
+      const { generalLayout } = layoutMaking(
+        selectedChart,
+        graphsToView,
+        theme,
+      );
+      setChartData({ generalLayout, ...graphsToView });
+    } catch (error) {
+      enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
+        variant: "error",
+      });
+      console.error(error);
+    }
+  }, [
+    finishedRuns,
+    selectedSplit,
+    selectedMetrics,
+    selectedChart,
+    theme,
+    enqueueSnackbar,
+    t,
+  ]);
 
-        if (firstMetricsWithValues) {
-          const metricsOrder = Object.keys(firstMetricsWithValues);
-          const metricsValuesOrder = Object.keys(
-            firstMetricsWithValues[metricsOrder[0]],
-          );
-
-          const concatenated = metricsOrder
-            .map((m) => m.split("_")[0])
-            .concat(metricsValuesOrder);
-
-          setConcatenatedMetrics(concatenated);
-
-          // Build table metrics
-          const tableMetrics = [];
-          metricsOrder.forEach((metricType) => {
-            metricsValuesOrder.forEach((metric) => {
-              tableMetrics.push(`${metricType.split("_")[0]} ${metric}`);
-            });
-          });
-          setTabularMetrics(tableMetrics);
-
-          // Pick indices of selected parameters
-          if (showCustomMetrics) {
-            parameterIndex = selectedParameters.map((p) =>
-              tableMetrics.indexOf(p),
-            );
-          } else if (selectedGeneralMetric.length > 0) {
-            const criteria = {};
-            concatenated.forEach((item) => (criteria[item] = item));
-
-            tableMetrics.forEach((metric, index) => {
-              Object.entries(criteria).forEach(([metName, substring]) => {
-                if (
-                  selectedGeneralMetric === metName &&
-                  metric.includes(substring)
-                ) {
-                  parameterIndex.push(index);
-                  generalParameters.push(metric);
-                }
-              });
-            });
-          }
-
-          // Build values for each run
-          finished.forEach((item) => {
-            const numericValues = [];
-
-            metricsOrder.forEach((metricType) => {
-              const values = item[metricType];
-              metricsValuesOrder.forEach((metric) => {
-                numericValues.push(values[metric]);
-              });
-            });
-
-            const relevantValues = parameterIndex.map(
-              (index) => numericValues[index],
-            );
-
-            graphsMaking(
-              graphsToView,
-              item,
-              relevantValues,
-              showCustomMetrics,
-              selectedParameters,
-              generalParameters,
-              pieCounter,
-            );
-
-            pieCounter += 1;
-          });
-
-          // Generate layouts
-          const { generalLayout, pieLayout } = layoutMaking(
-            selectedChart,
-            graphsToView,
-          );
-
-          const keys = Object.keys(graphsToView);
-          const radarValues = graphsToView[keys[0]];
-          const barValues = graphsToView[keys[1]];
-          const pieValues = graphsToView[keys[2]];
-
-          setChartData({
-            generalLayout,
-            pieLayout,
-            radarValues,
-            barValues,
-            pieValues,
-          });
-        }
-      } catch (error) {
-        enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
-          variant: "error",
-        });
-        console.error(error);
+  const handleChangeChart = (chartType) => setSelectedChart(chartType);
+  const handleToggleMetric = (metric) => {
+    const canonicalOrder = availableMetrics[selectedSplit] ?? [];
+    setSelectedMetrics((prev) => {
+      if (prev.includes(metric)) {
+        return prev.filter((m) => m !== metric);
       }
-    };
+      const next = new Set([...prev, metric]);
+      return canonicalOrder.filter((m) => next.has(m));
+    });
+  };
+  const handleSelectAll = () =>
+    setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
+  const handleClearAll = () => setSelectedMetrics([]);
 
-    processData();
-  }, [runs, selectedParameters, selectedChart, showCustomMetrics]);
+  if (finishedRuns.length === 0) {
+    return (
+      <Alert severity="warning" sx={{ mb: 2 }}>
+        <AlertTitle>No information from the experiments</AlertTitle>
+        There are no completed experiments or all have an error status.
+      </Alert>
+    );
+  }
+
+  const currentMetrics = availableMetrics[selectedSplit] ?? [];
 
   return (
-    <>
-      {filteredDataProcess.length === 0 ? (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          <AlertTitle>No information from the experiments</AlertTitle>
-          There are no completed experiments or all have an error status.
-        </Alert>
-      ) : (
-        <ResultsGraphsLayout
-          selectedChart={selectedChart}
-          handleChangeChart={handleChangeChart}
-          showCustomMetrics={showCustomMetrics}
-          handleToggleMetrics={handleToggleMetrics}
-          tabularMetrics={tabularMetrics}
-          selectedParameters={selectedParameters}
-          handleToggleParameter={handleToggleParameter}
-          selectedGeneralMetric={selectedGeneralMetric}
-          setSelectedGeneralMetric={setSelectedGeneralMetric}
-          setSelectedParameters={setSelectedParameters}
-          concatenatedMetrics={concatenatedMetrics}
-          chartData={chartData}
-        />
-      )}
-    </>
+    <ResultsGraphsLayout
+      selectedChart={selectedChart}
+      handleChangeChart={handleChangeChart}
+      currentMetrics={currentMetrics}
+      selectedMetrics={selectedMetrics}
+      handleToggleMetric={handleToggleMetric}
+      handleSelectAll={handleSelectAll}
+      handleClearAll={handleClearAll}
+      chartData={chartData}
+    />
   );
 }
 
 ResultsGraphs.propTypes = {
   runs: PropTypes.array.isRequired,
+  selectedSplit: PropTypes.string,
+  onSplitChange: PropTypes.func,
 };
 
 export default ResultsGraphs;

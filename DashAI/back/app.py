@@ -4,7 +4,6 @@ import logging
 import pathlib
 from typing import Literal, Union
 
-import datasets
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -64,7 +63,6 @@ def create_app(
     )
 
     logging.getLogger(__package__).setLevel(level=config["LOGGING_LEVEL"])
-    datasets.logging.set_verbosity(int(config["LOGGING_LEVEL"]))
 
     logger.debug("App parameters: %s.", str(config))
     logger.debug("Logging level set to %s.", config["LOGGING_LEVEL"])

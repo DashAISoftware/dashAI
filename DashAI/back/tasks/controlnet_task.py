@@ -1,5 +1,3 @@
-import os
-import uuid
 from typing import Any, List, Tuple, Union
 
 from PIL import Image
@@ -53,7 +51,6 @@ class ControlNetTask(BaseGenerativeTask):
         str
             Input with the new types
         """
-
         # Read the image from the path and ensure image is first, text second
         image = None
         text = None
@@ -87,6 +84,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[Tuple[str, str]]
             Image path and prompt
         """
+        import uuid
 
         path = kwargs.get("images_path")
         if not path.exists():
@@ -131,6 +129,8 @@ class ControlNetTask(BaseGenerativeTask):
         List[Tuple[str, str]]
             Processed output data as a list of tuples containing the data and its type
         """
+        import uuid
+
         save_dir = kwargs.get("images_path")
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
@@ -167,6 +167,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[ProcessData]
             Processed output data, a list of ProcessData objects
         """
+        import os
 
         for op in output:
             op.data = os.path.basename(op.data)
@@ -190,6 +191,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[ProcessData]
             Processed input data, a list of ProcessData objects
         """
+        import os
 
         for ip in input:
             if ip.data_type == "Image":

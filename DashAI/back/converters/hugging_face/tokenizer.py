@@ -1,5 +1,4 @@
-from datasets import Dataset, concatenate_datasets
-from transformers import AutoTokenizer
+from typing import TYPE_CHECKING
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -8,7 +7,9 @@ from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TokenizerSchema(BaseSchema):
@@ -87,12 +88,18 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     def _load_model(self):
         """Load tokenizer only."""
+        from transformers import AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
+    def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
         """
         Tokenize a batch of text columns and store each input_id in a separate column.
         """
+        from datasets import Dataset, concatenate_datasets
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         all_column_tokens = []
 
         for column in batch.column_names:

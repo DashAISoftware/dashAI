@@ -1,11 +1,4 @@
-from pathlib import Path
-from typing import Optional, Union
-
-import joblib
-import numpy as np
-import pyarrow as pa
-from datasets import Dataset
-from sklearn.feature_extraction.text import CountVectorizer
+from typing import TYPE_CHECKING, Optional, Union
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -14,13 +7,14 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BagOfWordsTextClassificationModelSchema(BaseSchema):
@@ -128,6 +122,9 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
             - ngram_max_n: Maximum n-gram value.
         """
 
+        # Lazy import of CountVectorizer
+        from sklearn.feature_extraction.text import CountVectorizer
+
         self.classifier = kwargs["tabular_classifier"]
         self.vectorizer = CountVectorizer(
             ngram_range=(kwargs["ngram_min_n"], kwargs["ngram_max_n"])
@@ -161,6 +158,9 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         """
 
         def _vectorize(example) -> dict:
+            # Lazy import of numpy
+            import numpy as np
+
             vectorized_sentence = self.vectorizer.transform(
                 [example[input_column]]
             ).toarray()
@@ -173,39 +173,51 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
 
     def train(
         self,
-        x: Dataset,
-        y: Dataset,
-        x_validation: Dataset = None,
-        y_validation: Dataset = None,
+        x,
+        y,
+        x_validation=None,
+        y_validation=None,
     ):
         input_column = x.column_names[0]
         self.vectorizer.fit(x[input_column])
         tokenizer_func = self.get_vectorizer(input_column)
         tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
+        # Lazy import of converter
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         self.classifier.train(tokenized_dataset, y)
 
-    def predict(self, x: Dataset):
+    def predict(self, x):
         input_column = x.column_names[0]
 
         tokenizer_func = self.get_vectorizer(input_column)
         tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
+        # Lazy import of converter
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         return self.classifier.predict(tokenized_dataset)
 
-    def save(self, filename: Union[str, Path]) -> None:
+    def save(self, filename: Union[str, "Path"]) -> None:
         """Save the model in the specified path."""
+        # Lazy import of joblib
+        import joblib
+
         joblib.dump(self, filename)
 
     @staticmethod
-    def load(filename: Union[str, Path]) -> None:
+    def load(filename: Union[str, "Path"]) -> None:
         """Load the model of the specified path."""
+        # Lazy import of joblib
+        import joblib
+
         model = joblib.load(filename)
         return model
 
-    def prepare_dataset(self, dataset: DashAIDataset, is_fit=False):
+    def prepare_dataset(self, dataset: "DashAIDataset", is_fit=False):
         """Apply the model transformations to the dataset.
 
         Parameters
@@ -238,6 +250,11 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
 
             tokenizer_func = self.get_vectorizer(input_column)
             dataset = dataset.map(tokenizer_func, remove_columns=input_column)
+            # Lazy import converters and pyarrow
+            import pyarrow as pa
+
+            from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
             dataset = to_dashai_dataset(dataset)
 
             dataset.types = {

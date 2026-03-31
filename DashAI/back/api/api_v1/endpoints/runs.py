@@ -1,14 +1,10 @@
 import logging
-import os
-import pickle
-import shutil
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
 from DashAI.back.core.enums.metrics import LevelEnum
@@ -21,6 +17,9 @@ from DashAI.back.dependencies.database.models import (
     Run,
     RunStatus,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -75,7 +74,7 @@ def get_metrics_for_run(db, run_id: int):
 @inject
 async def get_runs(
     model_session_id: Union[int, None] = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve a list of the stored model session runs in the database.
 
@@ -139,7 +138,7 @@ async def get_runs(
 @inject
 async def get_run_by_id(
     run_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve the run associated with the provided ID.
 
@@ -189,8 +188,10 @@ async def get_run_by_id(
 async def get_hyperparameter_optimization_plot(
     run_id: int,
     plot_type: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
+    import pickle
+
     with session_factory() as db:
         try:
             run_model = db.scalars(select(Run).where(Run.id == run_id)).all()
@@ -233,7 +234,7 @@ async def get_hyperparameter_optimization_plot(
 @inject
 async def upload_run(
     params: RunParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Create a new run.
 
@@ -294,7 +295,7 @@ async def upload_run(
 @inject
 async def delete_run(
     run_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the run associated with the provided ID from the database.
 
@@ -317,6 +318,8 @@ async def delete_run(
     HTTPException
         If the run was trained but the run_path does not exists.
     """
+    import os
+
     with session_factory() as db:
         try:
             run = db.get(Run, run_id)
@@ -388,7 +391,7 @@ async def delete_run(
 async def update_run(
     run_id: int,
     params: UpdateRunParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Updates the run with the provided ID.
 
@@ -477,7 +480,7 @@ async def update_run(
 @inject
 async def reset_run_by_id(
     run_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     with session_factory() as db:
         try:
@@ -502,7 +505,7 @@ async def reset_run_by_id(
 @inject
 async def get_run_operations_count(
     run_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get the count of operations (explainers and predictions) for a run.
 
@@ -565,7 +568,7 @@ async def get_run_operations_count(
 @inject
 async def delete_run_operations(
     run_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete all operations (explainers and predictions) associated with a run.
 
@@ -573,6 +576,9 @@ async def delete_run_operations(
     ----------
     run_id : int
         ID of the run whose operations should be deleted.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
@@ -584,6 +590,8 @@ async def delete_run_operations(
     HTTPException
         If the run is not found or there's a database error.
     """
+    import os
+
     with session_factory() as db:
         try:
             run = db.get(Run, run_id)
@@ -676,6 +684,8 @@ def reset_run(run):
     run : Run
         The run object to reset.
     """
+    import os
+
     setattr(run, "status", RunStatus.NOT_STARTED)
     setattr(run, "train_metrics", None)
     setattr(run, "validation_metrics", None)
@@ -720,6 +730,9 @@ def remove_path(path):
     ValueError
         Raised if the path is not a file, directory, or symbolic link.
     """
+    import os
+    import shutil
+
     if os.path.isfile(path) or os.path.islink(path):
         os.remove(path)
     elif os.path.isdir(path):

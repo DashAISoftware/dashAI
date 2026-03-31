@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormSchemaStore } from "../../contexts/schema";
 import FormSchemaBreadScrumbs from "./FormSchemaBreadScrumbs";
 import FormSchema from "./FormSchema";
@@ -21,7 +21,7 @@ function FormSchemaWithSelectedModel({
   onCancel,
   saveButtonText,
   hideButtons,
-  onValuesChange,
+  onValuesChange = () => {},
 }) {
   const {
     formValues,
@@ -46,7 +46,7 @@ function FormSchemaWithSelectedModel({
     }
 
     return initialValues ?? valuesByProperties;
-  }, [selectedModel, propertyData.params]);
+  }, [propertyData.params]);
 
   useEffect(() => {
     if (propertyData.model) {
@@ -76,7 +76,7 @@ function FormSchemaWithSelectedModel({
         setError={setErrorForm}
         saveButtonText={saveButtonText}
         hideButtons={hideButtons}
-        onValuesChange={onValuesChange}
+        onValuesChange={() => onValuesChange(formValues)}
         onCancel={() => {
           if (properties.length > 0) {
             removeLastProperty();

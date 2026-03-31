@@ -1,5 +1,3 @@
-import optuna
-
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -89,7 +87,7 @@ class OptunaOptimizer(BaseOptimizer):
 
     def __init__(self, n_trials=None, sampler=None, pruner=None):
         self.n_trials = n_trials
-        self.sampler = getattr(optuna.samplers, sampler)
+        self.sampler = sampler
         self.pruner = pruner
 
     def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
@@ -106,13 +104,17 @@ class OptunaOptimizer(BaseOptimizer):
         -------
             None
         """
+        import optuna
+
+        sampler = getattr(optuna.samplers, self.sampler)
+
         self.model = model
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
         direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(
-            direction=direction, sampler=self.sampler(), pruner=self.pruner
+            direction=direction, sampler=sampler(), pruner=self.pruner
         )
 
         self.metric = metric["class"]
@@ -159,6 +161,8 @@ class OptunaOptimizer(BaseOptimizer):
         return self.model
 
     def get_trials_values(self):
+        import optuna
+
         trials = []
         for trial in self.study.trials:
             if trial.state == optuna.trial.TrialState.COMPLETE:

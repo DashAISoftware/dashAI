@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
-
-from beartype.typing import Any, Dict, Final, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.static.icons import Icon
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseExplorerSchema(BaseSchema):
@@ -167,8 +169,8 @@ class BaseExplorer(ConfigObject, ABC):
         return True
 
     def prepare_dataset(
-        self, loaded_dataset: DashAIDataset, columns: List[Dict[str, Any]]
-    ) -> DashAIDataset:
+        self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
+    ) -> "DashAIDataset":
         """
         Prepare the dataset for the exploration.
 
@@ -201,7 +203,7 @@ class BaseExplorer(ConfigObject, ABC):
 
     @abstractmethod
     def launch_exploration(
-        self, dataset: DashAIDataset, explorer_info: Explorer
+        self, dataset: "DashAIDataset", explorer_info: Explorer
     ) -> Any:
         raise NotImplementedError
 
@@ -210,7 +212,7 @@ class BaseExplorer(ConfigObject, ABC):
         self,
         notebook_info: Notebook,
         explorer_info: Explorer,
-        save_path: Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
         raise NotImplementedError

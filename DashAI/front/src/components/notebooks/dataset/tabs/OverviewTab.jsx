@@ -18,7 +18,7 @@ import {
   Tooltip,
   Bar,
 } from "recharts";
-import DatasetTable from "../DatasetTable";
+import MrtDatasetTable from "../MrtDatasetTable";
 import { useTranslation } from "react-i18next";
 
 const OverviewTab = ({
@@ -27,6 +27,7 @@ const OverviewTab = ({
   nan,
   total_rows,
   fetchDatasetPage,
+  onEditColumnName,
 }) => {
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -54,13 +55,15 @@ const OverviewTab = ({
           <Typography variant="h6" gutterBottom>
             {t("datasets:label.datasetPreview")}
           </Typography>
-          <DatasetTable
+          <MrtDatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
             initialPageSize={10}
             datasetPath={dataset.file_path}
             datasetId={dataset.id}
+            onEditColumn={onEditColumnName}
             editableColumns={true}
+            columnTypes={dtypes}
           />
         </CardContent>
       </Card>
@@ -111,10 +114,7 @@ const OverviewTab = ({
           <Grid container spacing={2}>
             {typeCounts.map(([type, count]) => (
               <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
+                size={{ xs: 12, sm: 6, md: 4 }}
                 key={type}
                 sx={{ width: "150px" }}
               >

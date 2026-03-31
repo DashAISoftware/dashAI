@@ -1,18 +1,17 @@
 import logging
-import shutil
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import converter_params as schemas
-from DashAI.back.core.enums.status import ConverterListStatus
-from DashAI.back.dependencies.database.models import ConverterList, Explorer, Notebook
-from DashAI.back.dependencies.job_queues import BaseJobQueue
-from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.job.converter_job import ConverterListJob
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm.session import sessionmaker
+
+    from DashAI.back.dependencies.job_queues import BaseJobQueue
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -22,7 +21,7 @@ router = APIRouter()
 @inject
 async def post_notebook_converter_list(
     params: schemas.ConverterListParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Save a list of converters to apply to the notebook.
 
@@ -46,6 +45,8 @@ async def post_notebook_converter_list(
     HTTPException
         If the notebook is not found or if there is an internal database error.
     """
+    from DashAI.back.dependencies.database.models import ConverterList, Notebook
+
     with session_factory() as db:
         try:
             notebook = db.get(Notebook, params.notebook_id)
@@ -82,7 +83,7 @@ async def post_notebook_converter_list(
 @inject
 async def get_converter_list(
     converter_list_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a converter list from the database.
 
@@ -104,6 +105,8 @@ async def get_converter_list(
     HTTPException
         If the converter list is not found or if there is an internal database error.
     """
+    from DashAI.back.dependencies.database.models import ConverterList
+
     with session_factory() as db:
         try:
             converter_list = db.get(ConverterList, converter_list_id)
@@ -127,7 +130,7 @@ async def get_converter_list(
 @inject
 async def get_converters_by_notebook(
     notebook_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get a list of finished converters from the database by notebook ID.
 
@@ -149,6 +152,9 @@ async def get_converters_by_notebook(
     HTTPException
         If there is an internal database error.
     """
+    from DashAI.back.core.enums.status import ConverterListStatus
+    from DashAI.back.dependencies.database.models import ConverterList
+
     with session_factory() as db:
         try:
             converter_lists = (
@@ -171,12 +177,15 @@ async def get_converters_by_notebook(
 @inject
 async def delete_converter_list(
     converter_list_id: int,
-    request: Request,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Delete a converter list from the database."""
+    import shutil
+
+    from DashAI.back.dependencies.database.models import ConverterList, Explorer
+    from DashAI.back.job.converter_job import ConverterListJob
+
     with session_factory() as db:
         try:
             converter_list = db.get(ConverterList, converter_list_id)

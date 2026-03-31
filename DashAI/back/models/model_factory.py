@@ -201,6 +201,51 @@ class ModelFactory:
 
         return fixed_val, local_refs
 
+    def update_parameters(
+        self,
+        old_parameters: dict,
+        new_params: dict,
+    ) -> dict:
+        """
+        Update the old parameters of the model with new parameter
+        values found during optimization.
+
+        Parameters
+        ----------
+        old_parameters : dict
+            A dictionary of the current parameters of the model,
+            which may include nested DashAI components
+            and optimizable parameters.
+
+        new_params : dict
+            A dictionary of new parameter values to update in the model,
+            where keys correspond to parameter names and
+            values are the new fixed values.
+
+        Returns
+        -------
+            updated_parameters (dict): A dictionary with the updated parameters
+            in the same format as old_parameters.
+
+        """
+
+        def recursive_update(params, param_name, new_value):
+            for key, val in params.items():
+                if isinstance(val, dict):
+                    if key == param_name and "fixed_value" in val:
+                        val["fixed_value"] = new_value
+                        return True  # Stop searching after updating
+                    if recursive_update(val, param_name, new_value):
+                        return True
+            return False
+
+        updated_parameters = old_parameters.copy()
+        for param_name, new_value in new_params.items():
+            # Recursively search for the parameter in the old parameters dict
+            recursive_update(updated_parameters, param_name, new_value)
+
+        return updated_parameters
+
     def evaluate(self, x, y, metrics):
         """
         Computes metrics only if the model is fitted.

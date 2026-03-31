@@ -19,7 +19,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 import {
   formatScalarMetricsForChart,
@@ -27,6 +28,7 @@ import {
 } from "../../utils/metricUtils";
 
 export function LiveMetricsChart({ run }) {
+  const { t } = useTranslation("models");
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");
   const [data, setData] = useState({});
@@ -68,11 +70,32 @@ export function LiveMetricsChart({ run }) {
       socketRef.current.close();
     }
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = window.location.host;
-    const ws = new WebSocket(
-      `${protocol}//${host}/api/v1/metrics/ws/${run.id}`,
-    );
+    // When a new training starts, clear all previous metrics
+    const isStarting = run.status === 1 || run.status === 2;
+    if (isStarting) {
+      setData({});
+      setSelectedMetrics([]);
+      selectedMetricsPerSplit.current = {
+        TRAIN: null,
+        VALIDATION: null,
+        TEST: null,
+      };
+    }
+
+    const apiUrl = process.env.REACT_APP_API_URL || `${window.location.origin}`;
+    let wsUrl;
+    try {
+      wsUrl = new URL(`/api/v1/metrics/ws/${run.id}`, apiUrl);
+    } catch (e) {
+      console.error("Invalid WebSocket base URL:", apiUrl, e);
+      return;
+    }
+    if (wsUrl.protocol === "http:") {
+      wsUrl.protocol = "ws:";
+    } else if (wsUrl.protocol === "https:") {
+      wsUrl.protocol = "wss:";
+    }
+    const ws = new WebSocket(wsUrl.toString());
 
     ws.onmessage = (event) => {
       const incoming = JSON.parse(event.data);
@@ -106,6 +129,11 @@ export function LiveMetricsChart({ run }) {
     ws.onclose = () => {
       if (run.test_metrics) {
         setData((prev) => {
+          // Skip if TEST data already exists to avoid duplicate re-render
+          if (prev.TEST && Object.keys(prev.TEST).length > 0) {
+            return prev;
+          }
+
           const next = structuredClone(prev);
 
           const formattedTestMetrics = formatScalarMetricsForChart(
@@ -135,7 +163,7 @@ export function LiveMetricsChart({ run }) {
         console.log("WebSocket already closed");
       }
     };
-  }, [run.id, run.test_metrics]);
+  }, [run.id, run.status]);
 
   useEffect(() => {
     if (!run.model_session_id) return;
@@ -157,8 +185,13 @@ export function LiveMetricsChart({ run }) {
     };
   }, [run.model_session_id]);
 
-  const metrics = data[split]?.[level] ?? {};
-  const allowed = availableMetrics[split] ?? [];
+  const filteredMetrics = useMemo(() => {
+    const metrics = data[split]?.[level] ?? {};
+    const allowedMetrics = availableMetrics[split] ?? [];
+    return Object.fromEntries(
+      Object.entries(metrics).filter(([name]) => allowedMetrics.includes(name)),
+    );
+  }, [data, split, level, availableMetrics]);
 
   const filteredMetrics = Object.fromEntries(
     Object.entries(metrics).filter(
@@ -169,13 +202,12 @@ export function LiveMetricsChart({ run }) {
     ),
   );
 
-  const chartData = (() => {
+  const chartData = useMemo(() => {
     if (Object.keys(filteredMetrics).length === 0) return [];
 
     const allSteps = new Set();
     for (const metricName in filteredMetrics) {
       const metricData = filteredMetrics[metricName];
-
       if (Array.isArray(metricData)) {
         metricData.forEach((point) => {
           allSteps.add(point.step);
@@ -187,10 +219,8 @@ export function LiveMetricsChart({ run }) {
 
     return sortedSteps.map((step) => {
       const point = { x: step };
-
       for (const metricName in filteredMetrics) {
         const metricData = filteredMetrics[metricName];
-
         if (Array.isArray(metricData)) {
           const dataPoint = metricData.find((p) => p.step === step);
           point[metricName] = dataPoint?.value ?? null;
@@ -198,10 +228,9 @@ export function LiveMetricsChart({ run }) {
           point[metricName] = null;
         }
       }
-
       return point;
     });
-  })();
+  }, [filteredMetrics]);
 
   const hasTrialData =
     data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
@@ -209,6 +238,11 @@ export function LiveMetricsChart({ run }) {
     data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
   const hasEpochData =
     data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
+
+  const levelLabel = useMemo(() => {
+    if (!level) return "";
+    return t(`models:label.${level.toLowerCase()}`);
+  }, [level, t]);
 
   useEffect(() => {
     const currentLevelHasData =
@@ -226,8 +260,13 @@ export function LiveMetricsChart({ run }) {
     else setLevel(null);
   }, [split, hasEpochData, hasStepData, hasTrialData, level]);
 
+  const filteredMetricKeys = useMemo(
+    () => Object.keys(filteredMetrics).sort().join(","),
+    [filteredMetrics],
+  );
+
   useEffect(() => {
-    const metricNames = Object.keys(filteredMetrics);
+    const metricNames = filteredMetricKeys ? filteredMetricKeys.split(",") : [];
 
     if (metricNames.length === 0) {
       setSelectedMetrics([]);
@@ -244,7 +283,7 @@ export function LiveMetricsChart({ run }) {
     } else {
       setSelectedMetrics(metricNames);
     }
-  }, [split, level, filteredMetrics]);
+  }, [split, level, filteredMetricKeys]);
 
   const handleMetricChange = (e) => {
     const newSelection = e.target.value;
@@ -264,7 +303,7 @@ export function LiveMetricsChart({ run }) {
           sx={{ minWidth: 250 }}
           disabled={Object.keys(filteredMetrics).length === 0}
         >
-          <InputLabel>Metrics</InputLabel>
+          <InputLabel>{t("models:label.metrics")}</InputLabel>
           <Select
             multiple
             value={selectedMetrics}
@@ -282,9 +321,9 @@ export function LiveMetricsChart({ run }) {
       </Box>
 
       <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
-        <Tab label="Train" value="TRAIN" />
-        <Tab label="Validation" value="VALIDATION" />
-        <Tab label="Test" value="TEST" />
+        <Tab label={t("models:label.train")} value="TRAIN" />
+        <Tab label={t("models:label.validation")} value="VALIDATION" />
+        <Tab label={t("models:label.test")} value="TEST" />
       </Tabs>
 
       {chartData.length === 0 || selectedMetrics.length === 0 ? (
@@ -296,7 +335,7 @@ export function LiveMetricsChart({ run }) {
           border="1px dashed grey"
         >
           <Typography color="textSecondary">
-            No metrics available for this view
+            {t("models:label.noMetricsAvailableForThisView")}
           </Typography>
         </Box>
       ) : (
@@ -304,7 +343,11 @@ export function LiveMetricsChart({ run }) {
           <LineChart data={chartData}>
             <XAxis
               dataKey="x"
-              label={{ value: level, position: "insideBottom", offset: -5 }}
+              label={{
+                value: levelLabel,
+                position: "insideBottom",
+                offset: -5,
+              }}
             />
             <YAxis />
             <Tooltip />
@@ -332,21 +375,21 @@ export function LiveMetricsChart({ run }) {
             onClick={() => handleLevelChange("TRIAL")}
             disabled={!hasTrialData}
           >
-            Trial
+            {t("models:label.trial")}
           </Button>
           <Button
             variant={level === "STEP" ? "contained" : "outlined"}
             onClick={() => handleLevelChange("STEP")}
             disabled={!hasStepData}
           >
-            Step
+            {t("models:label.step")}
           </Button>
           <Button
             variant={level === "EPOCH" ? "contained" : "outlined"}
             onClick={() => handleLevelChange("EPOCH")}
             disabled={!hasEpochData}
           >
-            Epoch
+            {t("models:label.epoch")}
           </Button>
         </ButtonGroup>
       </Box>

@@ -38,6 +38,17 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+import { generateSequentialName } from "../../utils/nameGenerator";
+
+const getNextExplainerName = (existingExplainers = []) => {
+  const { defaultName } = generateSequentialName({
+    base: "Explainer_local",
+    items: existingExplainers,
+    getName: (explainer) => explainer?.name,
+  });
+
+  return defaultName;
+};
 
 /**
  * This component renders a modal that takes the user through the process of creating a new experiment.
@@ -89,6 +100,8 @@ export default function NewLocalExplainerModal({
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newLocalExpl, setNewLocalExpl] = useState(defaultNewLocalExpl);
   const [existingLocalExplainers, setExistingLocalExplainers] = useState([]);
+  const [existingLocalExplainersLoaded, setExistingLocalExplainersLoaded] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [temporalInfo, setTemporalInfo] = useState(null);
   const [temporalInfoLoading, setTemporalInfoLoading] = useState(false);
@@ -107,6 +120,8 @@ export default function NewLocalExplainerModal({
     } catch (error) {
       console.error("Error loading existing explainers:", error);
       setExistingLocalExplainers([]);
+    } finally {
+      setExistingLocalExplainersLoaded(true);
     }
   };
 
@@ -147,12 +162,29 @@ export default function NewLocalExplainerModal({
 
   useEffect(() => {
     if (open) {
+      setExistingLocalExplainersLoaded(false);
       loadExistingExplainers();
       if (isForecastingTask) {
         fetchTemporalInfo();
       }
     }
   }, [open, isForecastingTask]);
+
+  useEffect(() => {
+    if (!open || !existingLocalExplainersLoaded || newLocalExpl.name.trim()) {
+      return;
+    }
+
+    setNewLocalExpl((prev) => ({
+      ...prev,
+      name: getNextExplainerName(existingLocalExplainers),
+    }));
+  }, [
+    open,
+    existingLocalExplainersLoaded,
+    existingLocalExplainers,
+    newLocalExpl.name,
+  ]);
 
   const enqueueLocalExplainerJob = async (explainerId) => {
     try {

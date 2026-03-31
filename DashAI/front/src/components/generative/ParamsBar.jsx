@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import { useEffect, useState, useRef } from "react";
+import { Box, Typography, Button, IconButton, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
@@ -14,12 +14,16 @@ import {
 import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
+import { ChevronRight } from "@mui/icons-material";
+import { useGenerative } from "./GenerativeContext";
+import { useTourContext } from "../tour/TourProvider";
 
-export default function ParamsBar({
-  selectedSessionId,
-  onParamsUpdate,
-  taskName,
-}) {
+export default function ParamsBar({ onToggle }) {
+  const {
+    selectedSessionId,
+    selectedTaskName: taskName,
+    setParamsVersion,
+  } = useGenerative();
   const [parameters, setParameters] = useState({});
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [history, setHistory] = useState([]);
@@ -27,6 +31,8 @@ export default function ParamsBar({
   const [selectedModel, setSelectedModel] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
   const { t } = useTranslation(["generative", "common"]);
+  const tourContext = useTourContext();
+  const hasAdvancedTourRef = useRef(false);
 
   const getHistory = () => {
     getHistoryBySessionId(selectedSessionId).then((response) => {
@@ -64,6 +70,10 @@ export default function ParamsBar({
     }
   }, [selectedModel]);
 
+  const onParamsUpdate = () => {
+    setParamsVersion((prev) => prev + 1);
+  };
+
   const handleUpdateParameters = async (updatedParams) => {
     try {
       const updatedSession = await updateGenerativeSessionParams(
@@ -72,6 +82,26 @@ export default function ParamsBar({
       );
       setParameters(updatedSession.parameters);
       onParamsUpdate(updatedSession.parameters);
+
+      // Advance tour to chat input if tour is running
+      if (
+        tourContext?.run &&
+        tourContext?.stepIndex === 7 &&
+        !hasAdvancedTourRef.current
+      ) {
+        hasAdvancedTourRef.current = true;
+        const waitForElement = () => {
+          const element = document.querySelector('[data-tour="chat-input"]');
+          if (element) {
+            setTimeout(() => {
+              tourContext.nextStep();
+            }, 100);
+          } else {
+            setTimeout(waitForElement, 100);
+          }
+        };
+        setTimeout(waitForElement, 100);
+      }
     } catch (error) {
       console.error("Failed to update session parameters:", error);
     }
@@ -104,14 +134,20 @@ export default function ParamsBar({
         <Box
           sx={{
             p: 2,
-            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            height: 64,
+            justifyContent: "flex-start",
+            height: 70,
           }}
         >
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            sx={{ color: "text.secondary" }}
+          >
+            <ChevronRight />
+          </IconButton>
           <Typography variant="h6">{t("common:modelParameters")}</Typography>
 
           {/* Parameter History Modal */}
@@ -135,6 +171,8 @@ export default function ParamsBar({
             </IconButton>
           )}
         </Box>
+        {/* Divider */}
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
         {selectedSessionId ? (
           <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
             <form onSubmit={formik.handleSubmit}>

@@ -1,10 +1,11 @@
 """Base Metric abstract class."""
 
-from typing import Any, Dict, Final, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, Tuple, Union
 
-import numpy as np
+if TYPE_CHECKING:
+    from numpy import ndarray
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseMetric:
@@ -49,7 +50,7 @@ METRICS_MAP = {
 
 
 def validate_inputs(
-    true: Union[np.ndarray, list], pred: Union[np.ndarray, list], metric_category: str
+    true: Union["ndarray", list], pred: Union["ndarray", list], metric_category: str
 ) -> None:
     """Validate inputs.
 
@@ -80,10 +81,10 @@ def validate_inputs(
 
 
 def prepare_to_metric(
-    y: DashAIDataset,
-    pre_pred: Union[np.ndarray, list],
+    y: "DashAIDataset",
+    pre_pred: Union["ndarray", list],
     metric_type: str,
-) -> Tuple[np.ndarray, Union[np.ndarray, list]]:
+) -> Tuple["ndarray", Union["ndarray", list]]:
     """Prepare true and prediced labels to be used later in metrics.
 
     Parameters
@@ -102,6 +103,7 @@ def prepare_to_metric(
     Tuple[np.ndarray, np.ndarray]
         A tuple with the true and predicted labels in numpy format.
     """
+    import numpy as np
 
     column_name = y.column_names[0]
     _pred = None

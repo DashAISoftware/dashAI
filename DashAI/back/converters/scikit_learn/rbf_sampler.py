@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.kernel_approximation import RBFSampler as RBFSamplerOperation
 
 from DashAI.back.api.utils import create_random_state
@@ -80,4 +79,6 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())
