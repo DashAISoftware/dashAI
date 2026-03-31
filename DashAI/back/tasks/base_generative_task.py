@@ -34,11 +34,22 @@ class BaseGenerativeTask:
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """Get metadata values for the current task
+        """Return serialisable metadata for the current generative task.
 
-        Returns:
-            Dict[str, Any]: Dictionary with the metadata containing the input and output
-             types/cardinality.
+        Converts the ``inputs_types`` and ``outputs_types`` entries from class
+        objects to their string names so the result can be JSON-serialised by
+        the DashAI frontend.
+
+        Parameters
+        ----------
+        cls : type
+            The task class (injected automatically by Python for classmethods).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
+            ``"inputs_cardinality"``, and ``"outputs_cardinality"``.
         """
         metadata = cls.metadata
 

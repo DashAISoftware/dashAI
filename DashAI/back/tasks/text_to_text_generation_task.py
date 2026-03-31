@@ -114,10 +114,21 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         output: List[Any],
         **kwargs: Any,
     ) -> List[Tuple[str, str]]:
-        """Process the output of a generative model.
+        """Convert raw model output to a storable (text, type) pair.
 
-        file_name (Str): Indicates the name of the file.
-        path (Str): Indicates the path where the output will be stored.
+        Parameters
+        ----------
+        output : list of Any
+            Raw output from the generative model. The first element is cast
+            to ``str`` and returned.
+        **kwargs : dict
+            Additional keyword arguments (e.g. ``file_name``, ``path``).
+            Currently unused; present for interface compatibility.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            A single-element list containing ``(str(output[0]), "str")``.
         """
 
         return [(str(output[0]), "str")]

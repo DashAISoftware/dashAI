@@ -12,7 +12,23 @@ log = logging.getLogger(__name__)
 
 
 def get_bytes_with_type_filetype(data: bytes) -> tuple[bytes, str]:
-    """Uses filetype library for lightweight detection."""
+    """Detect the content type of a raw bytes buffer using the filetype library.
+
+    Attempts lightweight magic-byte detection first; falls back to UTF-8
+    decoding for plain-text content.
+
+    Parameters
+    ----------
+    data : bytes
+        Raw bytes to classify.
+
+    Returns
+    -------
+    tuple of (bytes, str)
+        The original ``data`` bytes paired with a content-type string: one of
+        ``"image"``, ``"audio"``, ``"video"``, ``"pdf"``, ``"zip"``,
+        ``"text"``, or ``"unknown"``.
+    """
     kind = filetype.guess(data)
 
     if kind is None:

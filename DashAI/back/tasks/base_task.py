@@ -41,11 +41,22 @@ class BaseTask:
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """Get metadata values for the current task
+        """Return serialisable metadata for the current task.
 
-        Returns:
-            Dict[str, Any]: Dictionary with the metadata containing the input and output
-             types/cardinality.
+        Converts the ``inputs_types`` and ``outputs_types`` entries from class
+        objects to their string names so the result can be JSON-serialised by
+        the DashAI frontend.
+
+        Parameters
+        ----------
+        cls : type
+            The task class (injected automatically by Python for classmethods).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
+            ``"inputs_cardinality"``, and ``"outputs_cardinality"``.
         """
         metadata = cls.metadata
 
@@ -124,12 +135,34 @@ class BaseTask:
         input_columns: List[str],
         output_columns: List[str],
     ) -> "DashAIDataset":
-        """
-        Default preparation shared by every task.
+        """Prepare and validate a dataset for this task.
 
-        - Ensures DashAIDataset instance.
-        - Validates types against task metadata.
-        - Returns dataset ready for the taks.
+        Ensures the dataset is a ``DashAIDataset`` instance, then validates
+        that the selected input and output columns match the types and
+        cardinality declared in :attr:`metadata`.
+
+        Parameters
+        ----------
+        dataset : DatasetDict or DashAIDataset
+            The dataset to prepare. If a ``DatasetDict`` is supplied it is
+            converted to ``DashAIDataset`` automatically.
+        input_columns : list of str
+            Names of columns to use as model inputs.
+        output_columns : list of str
+            Names of columns to use as model outputs/targets.
+
+        Returns
+        -------
+        DashAIDataset
+            The validated dataset, ready to be passed to a model.
+
+        Raises
+        ------
+        TypeError
+            If any input or output column has a type not allowed by this task.
+        ValueError
+            If the number of input or output columns violates the task's
+            cardinality constraints.
         """
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
