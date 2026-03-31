@@ -57,18 +57,26 @@ class BaseExplorer(ConfigObject, ABC):
     metadata: Dict[str, Any] = {}
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the explorer, storing any extra kwargs for later use.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments as defined in the
+            explorer's SCHEMA.
+        """
         self.kwargs = kwargs
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """
-        Get metadata values for the current explorer.
+        """Get metadata for the explorer, used by the DashAI frontend.
 
         Returns
         -------
         Dict[str, Any]
-            Dictionary with the metadata containing valid dtypes and cardinality for
-            the explorer columns.
+            Dictionary containing display name, description,
+            image preview path, category, icon, color, allowed dtypes,
+            restricted dtypes, and input cardinality constraints.
         """
         metadata = cls.metadata
         metadata["display_name"] = (
@@ -93,18 +101,24 @@ class BaseExplorer(ConfigObject, ABC):
 
     @classmethod
     def validate_parameters(cls, params: Dict[str, Any]) -> bool:
-        """
-        Validates the parameters of the explorer.
+        """Validate explorer parameters against the explorer's schema.
 
         Parameters
         ----------
         params : Dict[str, Any]
-            The parameters to validate.
+            The configuration parameters to validate.
 
         Returns
         -------
-        bool
-            True if the parameters are valid, False otherwise.
+        BaseExplorerSchema
+            The validated and parsed schema instance.
+            Subclasses that override this method may return a bool to
+            indicate pass/fail without returning the model instance.
+
+        Raises
+        ------
+        ValidationError
+            If any parameter fails schema validation.
         """
         return cls.SCHEMA.model_validate(params)
 
@@ -112,21 +126,25 @@ class BaseExplorer(ConfigObject, ABC):
     def validate_columns(
         cls, explorer_info: Explorer, column_spec: Dict[str, Dict[str, str]]
     ) -> bool:
-        """
-        Validates the columns of the explorer and dataset against the explorer metadata.
+        """Validate that the selected columns satisfy the explorer's constraints.
+
+        Checks column count against `input_cardinality` and column data types
+        against `allowed_dtypes` / `restricted_dtypes` in the explorer metadata.
 
         Parameters
         ----------
         explorer_info : Explorer
-            The explorer information.
-
+            The database record for the explorer
+            instance, including the selected columns.
         column_spec : Dict[str, Dict[str, str]]
-            The columns to validate.
+            A mapping from column name
+            to a dict with at least a ``"type"`` key describing the column's
+            data type.
 
         Returns
         -------
         bool
-            True if the columns are valid, False otherwise.
+            True if all column constraints are satisfied, False otherwise.
         """
         metadata = cls.get_metadata()
         selected_columns = explorer_info.columns
@@ -171,30 +189,24 @@ class BaseExplorer(ConfigObject, ABC):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
-        """
-        Prepare the dataset for the exploration.
+        """Prepare the dataset by selecting only the columns needed for this exploration.
+
+        Override this method in subclasses that need to load additional columns
+        beyond those explicitly selected (e.g. a color-grouping column).
 
         Parameters
         ----------
-        dataset : DatasetDict
-            The dataset to prepare.
-
-        columns : list[Dict[str, Any]]
-            The columns to select from the dataset, each column is a dictionary
-            with the following keys:
-
-            [Required]
-            - columnName: The name of the column.
-
-            [Optional]
-            - id: The id or index of the column.
-            - valueType: The type of the column.
-            - dataType: The data type of the column.
+        loaded_dataset : DashAIDataset
+            The full dataset loaded from storage.
+        columns : List[Dict[str, Any]]
+            List of column descriptor dicts, each
+            containing at least ``"columnName"``. Optional keys: ``"id"``,
+            ``"valueType"``, ``"dataType"``.
 
         Returns
         -------
         DashAIDataset
-            The prepared dataset.
+            Dataset restricted to the requested columns.
         """
         # Select the columns
         columnNames = list({col["columnName"] for col in columns})
@@ -205,6 +217,22 @@ class BaseExplorer(ConfigObject, ABC):
     def launch_exploration(
         self, dataset: "DashAIDataset", explorer_info: Explorer
     ) -> Any:
+        """Run the exploration and return the raw result.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The prepared dataset (output of
+            `prepare_dataset`).
+        explorer_info : Explorer
+            The database record for this explorer
+            instance, including name, columns, and parameters.
+
+        Returns
+        -------
+        Any
+            The exploration result (e.g. a Plotly figure, a DataFrame).
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -215,10 +243,45 @@ class BaseExplorer(ConfigObject, ABC):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Persist the exploration result to disk.
+
+        Parameters
+        ----------
+        notebook_info : Notebook
+            The notebook database record.
+        explorer_info : Explorer
+            The explorer database record.
+        save_path : Path
+            The directory where the result should be saved.
+        result : Any
+            The raw result returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved result file as a POSIX string.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load a previously saved exploration result and return it for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Optional rendering or filtering options
+            passed from the frontend.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dict with keys ``"data"`` (serialized result),
+            ``"type"`` (result type string, e.g. ``"plotly_json"``), and
+            ``"config"`` (frontend rendering config).
+        """
         raise NotImplementedError
