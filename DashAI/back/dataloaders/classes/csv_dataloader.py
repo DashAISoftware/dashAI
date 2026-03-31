@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 
 class CSVDataloaderSchema(BaseSchema):
+    """Schema for CSVDataloader hyperparameters."""
+
     name: schema_field(
         string_field(),
         "",
@@ -233,6 +235,29 @@ class CSVDataLoader(BaseDataLoader):
         self,
         params: Dict[str, Any],
     ) -> Dict[str, Any]:
+        """Validate and normalise CSV dataloader parameters before loading.
+
+        Converts human-readable separator names (``"blank space"``, ``"tab"``)
+        to their Python equivalents and copies recognised keys into a clean
+        parameter dictionary suitable for ``pandas.read_csv``.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Raw parameter dictionary.  Must contain ``"separator"`` (str).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Normalised parameter dict with pandas-compatible keys.
+
+        Raises
+        ------
+        ValueError
+            If ``"separator"`` is not present in ``params``.
+        TypeError
+            If ``separator`` is not a string after name resolution.
+        """
         if "separator" not in params:
             raise ValueError(
                 "Error trying to load the CSV dataset: "

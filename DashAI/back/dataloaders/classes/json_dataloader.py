@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
 
 class JSONDataloaderSchema(BaseSchema):
+    """Schema for JSONDataloader hyperparameters."""
+
     name: schema_field(
         string_field(),
         "",
@@ -82,6 +84,20 @@ class JSONDataLoader(BaseDataLoader):
     )
 
     def _check_params(self, params: Dict[str, Any]) -> None:
+        """Validate JSON dataloader parameters before loading.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Parameter dictionary that must contain ``data_key`` (str or None).
+
+        Raises
+        ------
+        ValueError
+            If ``data_key`` is not present in ``params``.
+        TypeError
+            If ``data_key`` is not a string or ``None``.
+        """
         if "data_key" not in params:
             raise ValueError(
                 "Error trying to load the JSON dataset: "

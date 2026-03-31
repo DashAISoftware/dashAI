@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class ExcelDataloaderSchema(BaseSchema):
+    """Schema for Excel Dataloader hyperparameters."""
+
     name: schema_field(
         string_field(),
         "",
