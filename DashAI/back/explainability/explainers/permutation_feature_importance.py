@@ -115,6 +115,25 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         random_state: Union[int, None] = None,
         max_samples_fraction: float = 0.5,
     ):
+        """Initialise the Permutation Feature Importance explainer.
+
+        Parameters
+        ----------
+        model : BaseModel
+            The trained DashAI model to be explained.
+        scoring : str or List[str] or None, optional
+            Name of the metric used to evaluate performance changes.  Must be
+            one of ``"accuracy"`` or ``"balanced_accuracy"``.
+        n_repeats : int, optional
+            Number of times each feature is permuted.  Higher values give more
+            stable estimates but increase computation time.  Default is ``5``.
+        random_state : int or None, optional
+            Seed for the random number generator controlling permutations.
+            Pass an integer for reproducible results.  Default is ``None``.
+        max_samples_fraction : float, optional
+            Fraction of the test set to sample at each repetition, in the
+            range ``[0.0, 1.0]``.  Default is ``0.5``.
+        """
         super().__init__(model)
 
         # Lazy import metrics only during initialization
@@ -192,10 +211,40 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         sklearn_model = self.model
 
         def get_predictions(data):
+            """Obtain predicted class probabilities for the given data.
+
+            Parameters
+            ----------
+            data : pandas.DataFrame
+                Input features as a DataFrame with the original column names.
+
+            Returns
+            -------
+            numpy.ndarray
+                Array of shape ``(n_samples, n_classes)`` with predicted
+                probabilities for each class.
+            """
             # Keep as DataFrame to preserve column names
             return sklearn_model.predict_proba(data)
 
         def calc_score(y_true, y_pred_probas):
+            """Compute the scoring metric from probability predictions.
+
+            Converts probability predictions to hard class labels via
+            ``argmax`` before passing them to the configured scoring function.
+
+            Parameters
+            ----------
+            y_true : array-like of shape (n_samples,)
+                True class labels.
+            y_pred_probas : numpy.ndarray of shape (n_samples, n_classes)
+                Predicted class probabilities.
+
+            Returns
+            -------
+            float
+                Scalar score produced by the configured scoring function.
+            """
             y_pred = np.argmax(y_pred_probas, axis=1)
             return self.scoring(y_true, y_pred)
 
@@ -285,6 +334,25 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         else:
 
             def patched_metric(y_true, y_pred_probas):
+                """Wrap the scoring function to accept probability predictions.
+
+                Converts probability predictions to hard class labels via
+                ``argmax`` so that the configured scoring function (which
+                expects class labels) can be used with scikit-learn's
+                ``make_scorer`` / ``permutation_importance`` interface.
+
+                Parameters
+                ----------
+                y_true : array-like of shape (n_samples,)
+                    True class labels.
+                y_pred_probas : numpy.ndarray of shape (n_samples, n_classes)
+                    Predicted class probabilities output by the model.
+
+                Returns
+                -------
+                float
+                    Scalar score produced by the configured scoring function.
+                """
                 return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))
 
             pfi = permutation_importance(

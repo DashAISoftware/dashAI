@@ -25,7 +25,21 @@ class DummyTextClassifier(TextClassificationModel):
         self.is_trained = False
 
     def tokenize_data(self, dataset: DashAIDataset) -> DashAIDataset:
-        """Tokenize data."""
+        """Tokenize the input dataset.
+
+        This dummy implementation is a no-op that returns the dataset unchanged.
+        It exists solely to satisfy the ``TextClassificationModel`` interface.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to tokenize.
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset, unmodified.
+        """
         return dataset
 
     def fit(self, x_train: DashAIDataset, y_train: DashAIDataset) -> None:
@@ -51,15 +65,62 @@ class DummyTextClassifier(TextClassificationModel):
         return Dataset.from_dict({"predictions": predictions})
 
     def save(self, filename: str) -> None:
+        """Persist the model state to a plain-text file.
+
+        Writes the prediction strategy and the most-frequent label to
+        ``filename``, one value per line, so the model can be restored later
+        with :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file where the model state will be written.
+        """
         with open(filename, "w") as f:
             f.write(f"{self.strategy}\n")
             f.write(f"{self.most_frequent_label}\n")
 
     def load(self, filename: str) -> Any:
+        """Restore the model state from a plain-text file.
+
+        Reads the prediction strategy and the most-frequent label from
+        ``filename`` (as written by :meth:`save`) and marks the model as
+        trained.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file from which the model state will be read.
+
+        Returns
+        -------
+        Any
+            ``None``.  The model state is updated in-place; the return value
+            is not used by the base-class interface.
+        """
         with open(filename, "r") as f:
             self.strategy = f.readline().strip()
             self.most_frequent_label = f.readline().strip()
         self.is_trained = True
 
     def prepare_dataset(self, dataset, is_fit=False):
+        """Prepare the dataset for training or inference.
+
+        This dummy implementation is a no-op that returns the dataset
+        unchanged.  It exists to satisfy the ``TextClassificationModel``
+        interface without applying any transformations.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to prepare.
+        is_fit : bool, optional
+            If ``True``, the preparation is for fitting (training).  Ignored
+            by this implementation.  Default is ``False``.
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset, unmodified.
+        """
         return dataset

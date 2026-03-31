@@ -178,6 +178,25 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         x_validation=None,
         y_validation=None,
     ):
+        """Fit the bag-of-words vectorizer and the underlying tabular classifier.
+
+        The text column is first vectorized with the fitted ``CountVectorizer``
+        to produce a token-count matrix, which is then passed to the wrapped
+        tabular classifier for training.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset containing the raw text column.
+        y : DashAIDataset
+            Target dataset containing the class labels.
+        x_validation : DashAIDataset or None, optional
+            Validation inputs.  Not used by the default tabular classifiers
+            but accepted for interface compatibility.
+        y_validation : DashAIDataset or None, optional
+            Validation targets.  Not used by the default tabular classifiers
+            but accepted for interface compatibility.
+        """
         input_column = x.column_names[0]
         self.vectorizer.fit(x[input_column])
         tokenizer_func = self.get_vectorizer(input_column)
@@ -190,6 +209,24 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         self.classifier.train(tokenized_dataset, y)
 
     def predict(self, x):
+        """Generate class-probability predictions for the input text dataset.
+
+        The raw text column is transformed using the already-fitted
+        ``CountVectorizer``, and the resulting token-count matrix is forwarded
+        to the wrapped tabular classifier's ``predict`` method.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset containing the raw text column.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape ``(n_samples, n_classes)`` with predicted
+            probabilities for each class, as returned by the wrapped
+            tabular classifier.
+        """
         input_column = x.column_names[0]
 
         tokenizer_func = self.get_vectorizer(input_column)
@@ -268,4 +305,25 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
             print(f"Couldn't apply transformations to the dataset for the model: {e}")
 
     def prepare_output(self, dataset, is_fit=False):
+        """Prepare output targets by delegating to the wrapped classifier.
+
+        Passes the output dataset directly to the underlying tabular
+        classifier's ``prepare_output`` method, which applies label encoding
+        as required by the classifier.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The output dataset containing the target labels to be prepared.
+        is_fit : bool, optional
+            If ``True``, fit the label encoder on the dataset before
+            transforming.  If ``False``, apply existing encodings.
+            Default is ``False``.
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared output dataset with categorical labels encoded as
+            integers.
+        """
         return self.classifier.prepare_output(dataset, is_fit)
