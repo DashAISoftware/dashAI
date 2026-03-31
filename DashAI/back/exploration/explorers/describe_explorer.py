@@ -166,6 +166,31 @@ class DescribeExplorer(PreviewInspectionExplorer):
 
     @classmethod
     def validate_parameters(cls, params: Dict[str, Any]) -> bool:
+        """Validate explorer parameters against the schema and business rules.
+
+        Checks that ``params`` passes Pydantic schema validation and that any
+        provided percentiles are integers in the range [0, 100].
+
+        Parameters
+        ----------
+        cls : type
+            The explorer class (injected automatically by Python for
+            classmethods).
+        params : Dict[str, Any]
+            Parameter dictionary to validate (must match
+            ``DescribeExplorerSchema``).
+
+        Returns
+        -------
+        bool
+            ``True`` if all validations pass, ``False`` if any percentile
+            value is outside [0, 100] or cannot be parsed as an integer.
+
+        Raises
+        ------
+        ValidationError
+            If ``params`` does not conform to the Pydantic schema.
+        """
         # Validate schema
         cls.SCHEMA.model_validate(params)
 
