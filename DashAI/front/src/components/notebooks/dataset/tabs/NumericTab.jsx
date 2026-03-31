@@ -1,11 +1,12 @@
 import React from "react";
-import { Box, Typography, Card, CardContent, Alert } from "@mui/material";
+import { Box, Typography, CardContent, Alert } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
 import Plot from "react-plotly.js";
 import { StatBox } from "../StatBox";
 import { MetricRow } from "../MetricRow";
+import ExportableCard from "../ExportableCard";
 import { Trans, useTranslation } from "react-i18next";
 
 export const NumericTab = ({ numericStats }) => {
@@ -15,7 +16,12 @@ export const NumericTab = ({ numericStats }) => {
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(numericStats).map(([column, stats]) => (
-        <Card key={column} sx={{ borderRadius: 2 }}>
+        <ExportableCard
+          key={column}
+          filename={`numeric_${column}`}
+          exportData={{ column, ...stats }}
+          sx={{ borderRadius: 2 }}
+        >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Title */}
             <Box display="flex" alignItems="center" mb={2}>
@@ -184,7 +190,7 @@ export const NumericTab = ({ numericStats }) => {
               </Alert>
             )}
           </CardContent>
-        </Card>
+        </ExportableCard>
       ))}
     </Box>
   );

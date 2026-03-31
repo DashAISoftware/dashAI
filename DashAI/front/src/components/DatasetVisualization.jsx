@@ -9,12 +9,10 @@ import {
   Divider,
   Tabs,
   Tab,
-  IconButton,
   Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import {
   getDatasetInfo,
   getDatasetFile,
@@ -52,34 +50,6 @@ export default function DatasetVisualization({
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
-
-  const handleExportMetrics = useCallback(() => {
-    if (!datasetInfo) return;
-    const exportData = {
-      dataset: {
-        name: dataset.name,
-        id: dataset.id,
-        exported_at: new Date().toISOString(),
-      },
-      general_info: datasetInfo.general_info,
-      quality_info: datasetInfo.quality_info,
-      numeric_stats: datasetInfo.numeric_stats,
-      text_stats: datasetInfo.text_stats,
-      correlations: datasetInfo.correlations,
-      nan: datasetInfo.nan,
-      total_rows: datasetInfo.total_rows,
-      total_columns: datasetInfo.total_columns,
-    };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${dataset.name}_metrics.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [datasetInfo, dataset?.name, dataset?.id]);
 
   useEffect(() => {
     if (sessionStorage.getItem("startDatasetViewTour") === "true") {
@@ -197,15 +167,6 @@ export default function DatasetVisualization({
                 <Typography variant="h4">{dataset.name}</Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Tooltip title={t("datasets:label.exportMetrics")} arrow>
-                  <IconButton
-                    size="small"
-                    onClick={handleExportMetrics}
-                    sx={{ color: "text.secondary" }}
-                  >
-                    <FileDownloadOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
                 <Tooltip
                   title={t("datasets:label.dataQualityScoreTooltip")}
                   arrow

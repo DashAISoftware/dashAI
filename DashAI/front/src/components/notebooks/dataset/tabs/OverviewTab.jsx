@@ -19,6 +19,7 @@ import {
   Bar,
 } from "recharts";
 import MrtDatasetTable from "../MrtDatasetTable";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 const OverviewTab = ({
@@ -68,7 +69,10 @@ const OverviewTab = ({
         </CardContent>
       </Card>
       {/* Missing Values Overview */}
-      <Card>
+      <ExportableCard
+        filename="missing_values_overview"
+        exportData={missingData}
+      >
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
             {t("datasets:label.missingValuesOverview")}
@@ -103,7 +107,7 @@ const OverviewTab = ({
             </Alert>
           )}
         </CardContent>
-      </Card>
+      </ExportableCard>
 
       {/* Column Types Distribution */}
       <Card>

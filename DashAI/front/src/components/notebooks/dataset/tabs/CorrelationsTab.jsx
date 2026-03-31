@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, CardContent, Card } from "@mui/material";
+import { Box, Typography, CardContent } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   BarChart,
@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 const CorrelationsTab = ({ correlations }) => {
@@ -33,7 +34,7 @@ const CorrelationsTab = ({ correlations }) => {
   corrData.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
 
   return (
-    <Card>
+    <ExportableCard filename="correlations" exportData={corrData}>
       <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
         <Typography variant="h6" fontWeight="bold" mb={3}>
           {t("datasets:label.correlationAnalysis")}
@@ -121,7 +122,7 @@ const CorrelationsTab = ({ correlations }) => {
           </Box>
         </Box>
       </CardContent>
-    </Card>
+    </ExportableCard>
   );
 };
 
