@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class CharacterReplacerSchema(BaseSchema):
+    """Schema for CharacterReplacer hyperparameters."""
+
     char_to_replace: schema_field(
         string_field(),
         "",  # default: empty string
@@ -40,9 +42,12 @@ class CharacterReplacerSchema(BaseSchema):
 
 
 class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
-    """
-    Converter that replaces specified characters or substrings in string columns.
-    If 'replacement_char' is an empty string, 'char_to_replace' will be removed.
+    """Replace or remove a character or substring in all selected text columns.
+
+    Scans each value in the configured string columns and substitutes every
+    occurrence of ``char_to_replace`` with ``replacement_char``. If the
+    replacement produces a column of pure integers, the column type is promoted
+    to ``Integer``.
     """
 
     SCHEMA = CharacterReplacerSchema
@@ -80,8 +85,19 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     def fit(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "CharacterReplacer":
-        """
-        Validates that the scoped columns (provided in x) are of string type.
+        """Identify which columns in ``x`` are of Text type.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The dataset whose columns will be inspected.
+        y : DashAIDataset, optional
+            Ignored. Defaults to None.
+
+        Returns
+        -------
+        CharacterReplacer
+            The fitted converter instance (self).
         """
         self._target_columns = []
         if not x.column_names:
@@ -105,9 +121,21 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """
-        Replaces or removes characters in the target string columns of the dataset x.
-        If all values in a column become numeric after replacement, converts to int.
+        """Apply the character replacement to the fitted text columns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The dataset to transform.
+        y : DashAIDataset, optional
+            Ignored. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataset
+            A new dataset with ``char_to_replace`` substituted in all text columns.
+            If replacement yields only integer-like values, the column type is
+            promoted to ``Integer``.
         """
         import pyarrow as pa
 
@@ -125,6 +153,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         new_types = x.types.copy()
 
         def replace_function(batch):
+            """Apply character replacement to each column in a HuggingFace batch."""
             processed_batch = {}
             for column_name, values in batch.items():
                 if column_name in self._target_columns:
@@ -167,14 +196,30 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         )
 
     def changes_row_count(self) -> bool:
-        """This converter does not change the number of rows."""
+        """Return ``False`` because this converter never adds or removes rows.
+
+        Returns
+        -------
+        bool
+            Always ``False``.
+        """
         return False
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Returns Text or Integer depending on whether values can be converted
-        to int. Since this is determined dynamically during transform, we
-        return Text as default.
+        """Return the default output type for a transformed column.
+
+        The actual type may be ``Integer`` if all values become numeric during
+        ``transform``, but the static default is ``Text``.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Text type backed by ``pyarrow.string()``.
         """
         import pyarrow as pa
 

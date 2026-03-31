@@ -18,6 +18,8 @@ from DashAI.back.types.value_types import Float
 
 
 class RBFSamplerSchema(BaseSchema):
+    """Schema for RBFSampler hyperparameters."""
+
     gamma: schema_field(
         union_type(enum_field(["scale"]), float_field(gt=0)),
         "scale",
@@ -53,7 +55,12 @@ class RBFSamplerSchema(BaseSchema):
 
 
 class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation):
-    """Scikit-learn's RBFSampler wrapper for DashAI."""
+    """Approximate the RBF kernel feature map using random Fourier features.
+
+    Uses Monte Carlo approximation of the RBF kernel's Fourier transform to map
+    features into a lower-dimensional space where a linear model approximates an
+    RBF kernel SVM. Wraps scikit-learn's ``RBFSampler``.
+    """
 
     SCHEMA = RBFSamplerSchema
     DESCRIPTION = MultilingualString(
@@ -78,7 +85,18 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

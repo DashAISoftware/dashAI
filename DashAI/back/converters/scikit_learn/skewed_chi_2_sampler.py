@@ -18,6 +18,8 @@ from DashAI.back.types.value_types import Float
 
 
 class SkewedChi2SamplerSchema(BaseSchema):
+    """Schema for SkewedChi2Sampler hyperparameters."""
+
     skewedness: schema_field(
         float_field(gt=0),
         1.0,
@@ -62,7 +64,12 @@ class SkewedChi2SamplerSchema(BaseSchema):
 class SkewedChi2Sampler(
     PolynomialKernelConverter, SklearnWrapper, SkewedChi2SamplerOperation
 ):
-    """Scikit-learn's SkewedChi2Sampler wrapper for DashAI."""
+    """Approximate the skewed chi-squared kernel using random Fourier features.
+
+    Uses Monte Carlo approximation of the skewed chi-squared kernel's Fourier
+    transform to enable efficient linear classification. Wraps scikit-learn's
+    ``SkewedChi2Sampler``.
+    """
 
     SCHEMA = SkewedChi2SamplerSchema
     DESCRIPTION = MultilingualString(
@@ -87,7 +94,18 @@ class SkewedChi2Sampler(
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
