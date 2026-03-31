@@ -51,7 +51,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newDataset, setNewDataset] = useState(defaultNewDataset);
   const [uploaded, setUploaded] = useState(false);
-  const [requestError, setRequestError] = useState(false);
   const [columnsSpec, setColumnsSpec] = useState({});
   const [previewData, setPreviewData] = useState({});
   const [loading, setLoading] = useState(false);
@@ -77,7 +76,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       handleCloseDialog();
     } catch (error) {
       console.error(error);
-      setRequestError(true);
+      setActiveStep(1);
+      setNextEnabled(false);
       enqueueSnackbar("Error when trying to upload the dataset.");
     } finally {
       setUploaded(true);
@@ -109,9 +109,9 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       enqueueSnackbar(
         "Error while trying to obtain preview of the uploaded file",
       );
-      setRequestError(true);
-      setPreviewData(null);
+      setActiveStep(1);
       setNextEnabled(false);
+      setPreviewData(null);
     }
   };
 
@@ -223,13 +223,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     }
   };
 
-  useEffect(() => {
-    if (requestError) {
-      setActiveStep(1);
-      setNextEnabled(false);
-      setRequestError(false);
-    }
-  }, [requestError]);
   return (
     <Dialog
       open={open}
