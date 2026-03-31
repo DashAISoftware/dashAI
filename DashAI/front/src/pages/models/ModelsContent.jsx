@@ -51,7 +51,6 @@ export default function ModelsContent() {
       );
       if (sessionToOpen) {
         setSelectedSessionId(sessionToOpen.id);
-        setSelectedSession(sessionToOpen);
         setStep(2);
         window.history.replaceState({}, document.title);
       }
