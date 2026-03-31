@@ -19,7 +19,14 @@ from DashAI.back.types.value_types import Integer
 
 
 class OneHotEncoderSchema(BaseSchema):
-    """Schema for One Hot Encoder hyperparameters."""
+    """Schema for OneHotEncoder hyperparameters.
+
+    Configures the category handling, output dtype, unknown-value strategy,
+    infrequent-category grouping, and feature-name combining behaviour for
+    sklearn's ``OneHotEncoder``. The ``categories`` field accepts ``"auto"``
+    or an explicit list string; ``drop`` controls whether one indicator column
+    per feature is dropped to avoid multicollinearity.
+    """
 
     categories: schema_field(
         string_field(),
@@ -83,13 +90,29 @@ class OneHotEncoderSchema(BaseSchema):
 
 
 class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
-    """Encode categorical columns into binary indicator columns.
+    """Encode categorical columns as binary indicator (one-hot) vectors.
 
-    Each unique category value in the input column becomes a new binary
-    column (0 or 1). The number of output columns equals the total number
-    of unique values across all encoded columns.
+    For each input feature column every unique category value becomes a
+    separate binary output column. Given a feature with ``k`` categories the
+    encoding produces ``k`` columns (or ``k - 1`` when ``drop`` is set) where
+    exactly one column is 1 and the rest are 0:
 
-    Wraps scikit-learn's ``OneHotEncoder``.
+    * **Nominal categories without order** — one-hot encoding treats all
+      categories as equidistant, which is appropriate for unordered labels
+      such as city names or product types.
+    * **Avoiding the dummy-variable trap** — the ``drop`` parameter can
+      remove one indicator column per feature so that the resulting matrix
+      has full rank, which is required by unregularized linear models.
+    * **Infrequent categories** — ``min_frequency`` and ``max_categories``
+      can group rare values into a single ``infrequent_categories`` bin,
+      reducing dimensionality.
+
+    The total number of output columns equals the sum of unique category
+    counts across all encoded input columns (minus dropped columns).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
     """
 
     SCHEMA = OneHotEncoderSchema

@@ -10,7 +10,11 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectFdrSchema(BaseSchema):
-    """Schema for Select Fdr hyperparameters."""
+    """Configuration schema for the SelectFdr converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.feature_selection.SelectFdr``.
+    """
 
     alpha: schema_field(
         float_field(ge=0.0, le=1.0),
@@ -26,12 +30,34 @@ class SelectFdrSchema(BaseSchema):
 
 
 class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
-    """Select features based on an estimated False Discovery Rate threshold.
+    """Select features by controlling the expected False Discovery Rate (FDR).
 
-    Controls the expected proportion of falsely rejected null hypotheses among
-    the selected features. Supervised: requires ``y`` at fit time.
+    SelectFdr applies the Benjamini-Hochberg procedure to the p-values produced
+    by a univariate scoring function, retaining only those features whose
+    (adjusted) p-value is at most ``alpha``. The FDR criterion bounds the
+    expected proportion of selected features that are actually uninformative,
+    offering a less conservative rejection policy than Family-Wise Error control
+    while still providing statistical guarantees.
 
-    Wraps scikit-learn's ``SelectFDR``.
+    This filter is well suited to high-dimensional settings (e.g. genomics,
+    metabolomics) where many features are tested simultaneously and a small
+    fraction of false positives among the selected set is acceptable in
+    exchange for higher sensitivity.
+
+    Key properties:
+
+    - Supervised: requires the target array ``y`` at fit time.
+    - ``alpha`` is the target FDR level in [0, 1]; typical values are 0.05
+      or 0.10.
+    - Less conservative than FWE (Bonferroni) correction: retains more features
+      at the same nominal ``alpha`` when the number of tests is large.
+    - The number of retained features is data-driven and not fixed in advance.
+
+    Wraps scikit-learn's ``SelectFdr``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFdr.html
     """
 
     SCHEMA = SelectFdrSchema

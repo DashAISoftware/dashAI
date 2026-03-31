@@ -21,7 +21,11 @@ from DashAI.back.types.value_types import Float
 
 
 class NystroemSchema(BaseSchema):
-    """Schema for Nystroem hyperparameters."""
+    """Configuration schema for the Nystroem converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.kernel_approximation.Nystroem``.
+    """
 
     kernel: schema_field(
         none_type(string_field()),
@@ -99,13 +103,40 @@ class NystroemSchema(BaseSchema):
 
 
 class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperation):
-    """Approximate a kernel feature map using a random subset of training data.
+    """Approximate a kernel feature map using the Nystroem method.
 
-    Generates an explicit feature map approximation of a kernel (e.g. RBF, polynomial)
-    by sampling a subset of the training data as landmark points. Enables scalable
-    kernel methods by pairing with a linear model.
+    The Nystroem method constructs an explicit low-dimensional feature map
+    phi(x) that approximates an arbitrary kernel k(x, x') = <phi(x), phi(x')>,
+    enabling the use of kernel methods with linear-complexity training algorithms.
+    It works by sub-sampling ``n_components`` landmark points from the training
+    data, evaluating the kernel between all training samples and these landmarks,
+    and then normalising the resulting matrix using the Cholesky factor of the
+    kernel matrix evaluated on the landmarks alone.
+
+    The approximation quality improves with ``n_components``: as
+    n_components → n_samples the approximation becomes exact. In practice a
+    small number of landmarks (e.g. a few hundred) is often sufficient.
+    Combining Nystroem with a linear model (e.g. SGDClassifier) provides a
+    scalable alternative to kernel SVMs for large datasets.
+
+    Key properties:
+
+    - Supports any kernel available in scikit-learn (RBF, polynomial, sigmoid,
+      chi2, linear, etc.) as well as callable kernels via ``kernel_params``.
+    - Unsupervised: no labels required at fit time.
+    - Output dimensionality equals ``n_components``, which is independent of
+      the number of input features.
+    - The ``gamma``, ``coef0``, and ``degree`` parameters are passed directly
+      to the chosen kernel function.
 
     Wraps scikit-learn's ``Nystroem``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.Nystroem.html
+    [2] Williams, C. K. I. & Seeger, M. (2001). "Using the Nyström method to
+        speed up kernel machines." Advances in Neural Information Processing
+        Systems 13 (NIPS 2000), 682-688.
     """
 
     SCHEMA = NystroemSchema

@@ -15,7 +15,11 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectKBestSchema(BaseSchema):
-    """Schema for Select KBest hyperparameters."""
+    """Configuration schema for the SelectKBest converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.feature_selection.SelectKBest``.
+    """
 
     k: schema_field(
         union_type(enum_field(["all"]), int_field(ge=1)),
@@ -30,12 +34,31 @@ class SelectKBestSchema(BaseSchema):
 class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperation):
     """Select the K highest-scoring features using a univariate statistical test.
 
-    Each feature is scored independently against the target using a statistical
-    function (e.g. ``f_classif``, ``chi2``, ``mutual_info_classif``). The K
-    features with the highest scores are retained. Supervised: requires ``y``
-    at fit time.
+    SelectKBest evaluates each input feature independently against the target
+    variable using a scoring function (e.g. ``f_classif`` for ANOVA F-statistic,
+    ``chi2`` for chi-squared, or ``mutual_info_classif`` for mutual information),
+    then retains the ``k`` features with the highest scores, discarding the rest.
+
+    This filter method is computationally cheap and can substantially reduce
+    dimensionality before feeding data to a more expensive estimator. It is
+    particularly useful as a first-pass feature selection step in classification
+    and regression pipelines.
+
+    Key properties:
+
+    - Supervised: requires the target array ``y`` at fit time.
+    - Setting ``k='all'`` is a no-op that passes every feature through;
+      useful for pipeline grid searches where ``k`` is a tuned parameter.
+    - Feature ranking is based solely on univariate statistics; it does not
+      account for feature interactions.
+    - The choice of scoring function should match the problem type
+      (classification vs. regression) and the scale of the features.
 
     Wraps scikit-learn's ``SelectKBest``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html
     """
 
     SCHEMA = SelectKBestSchema

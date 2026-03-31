@@ -18,7 +18,13 @@ from DashAI.back.types.value_types import Float
 
 
 class RBFSamplerSchema(BaseSchema):
-    """Schema for RBFSampler hyperparameters."""
+    """Schema for configuring the RBFSampler converter.
+
+    Wraps ``sklearn.kernel_approximation.RBFSampler`` and exposes the RBF
+    bandwidth parameter ``gamma``, the number of random Fourier features
+    ``n_components``, and the random seed as schema fields validated before
+    being forwarded to the underlying scikit-learn estimator.
+    """
 
     gamma: schema_field(
         union_type(enum_field(["scale"]), float_field(gt=0)),
@@ -55,11 +61,32 @@ class RBFSamplerSchema(BaseSchema):
 
 
 class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation):
-    """Approximate the RBF kernel feature map using random Fourier features.
+    """Approximate the RBF (Gaussian) kernel feature map via random Fourier features.
 
-    Uses Monte Carlo approximation of the RBF kernel's Fourier transform to map
-    features into a lower-dimensional space where a linear model approximates an
-    RBF kernel SVM. Wraps scikit-learn's ``RBFSampler``.
+    The Radial Basis Function (RBF) kernel is one of the most widely used
+    kernels in kernel-based learning methods such as SVMs. Computing it
+    directly scales quadratically with the number of training samples.
+
+    This converter implements the random Fourier feature approximation of
+    Rahimi & Recht (2007) [2]: random weights are sampled from the Fourier
+    transform of the RBF kernel (a Gaussian distribution), and the input
+    features are mapped to ``n_components`` sinusoidal features. A linear
+    model trained on the resulting representation approximates a kernel
+    machine at a fraction of the cost.
+
+    The ``gamma`` parameter controls the bandwidth of the RBF kernel:
+    ``K(x, y) = exp(-gamma * ||x - y||²)``. When set to ``"scale"``, it is
+    computed from the training data as ``1 / (n_features * X.var())``.
+
+    Output columns are typed as ``Float64`` in DashAI.
+
+    Wraps ``sklearn.kernel_approximation.RBFSampler``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.RBFSampler.html
+    [2] Rahimi, A. & Recht, B. (2007). Random Features for Large-Scale Kernel
+        Machines. Advances in Neural Information Processing Systems, 20.
     """
 
     SCHEMA = RBFSamplerSchema

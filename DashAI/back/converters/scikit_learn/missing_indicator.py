@@ -11,7 +11,14 @@ from DashAI.back.types.value_types import Integer
 
 
 class MissingIndicatorSchema(BaseSchema):
-    """Schema for Missing Indicator hyperparameters."""
+    """Schema for configuring the MissingIndicator converter.
+
+    Wraps ``sklearn.impute.MissingIndicator``. The current configuration uses
+    default scikit-learn settings (all features with missing values are
+    indicated, NaN is treated as the missing marker). No additional schema
+    fields are exposed; the class is kept as a stub to satisfy the DashAI
+    component interface.
+    """
 
     pass
 
@@ -19,13 +26,24 @@ class MissingIndicatorSchema(BaseSchema):
 class MissingIndicator(
     BasicPreprocessingConverter, SklearnWrapper, MissingIndicatorOperation
 ):
-    """Add binary indicator columns flagging which values were originally missing.
+    """Add binary indicator columns that flag which values were originally missing.
 
-    For each feature with missing values, a new column is added containing 1
-    where the original value was NaN and 0 otherwise. Commonly used alongside
-    an imputer to preserve missingness information.
+    For each feature that contains at least one NaN in the training data, a
+    new binary column is appended to the output. The indicator column contains
+    1 where the original value was missing and 0 otherwise.
 
-    Wraps scikit-learn's ``MissingIndicator``.
+    This converter is typically stacked onto an imputer (via the imputer's
+    ``add_indicator=True`` option, or explicitly in a pipeline) so that the
+    model can distinguish between "value was imputed" and "value was genuinely
+    observed". Preserving missingness patterns can improve downstream model
+    accuracy when data is not missing completely at random (MCAR). Output
+    columns are typed as ``Integer`` (``int64``) in DashAI.
+
+    Wraps ``sklearn.impute.MissingIndicator``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.MissingIndicator.html
     """
 
     SCHEMA = MissingIndicatorSchema

@@ -12,7 +12,13 @@ from DashAI.back.types.value_types import Float
 
 
 class MinMaxScalerSchema(BaseSchema):
-    """Schema for Min Max Scaler hyperparameters."""
+    """Schema for MinMaxScaler hyperparameters.
+
+    Configures the target feature range, clipping behaviour, and copy semantics
+    for sklearn's ``MinMaxScaler``. The ``min_range`` and ``max_range`` fields
+    are combined into the ``feature_range`` tuple passed to the underlying
+    scikit-learn class.
+    """
 
     min_range: schema_field(
         float_field(ge=0),
@@ -52,13 +58,25 @@ class MinMaxScalerSchema(BaseSchema):
 class MinMaxScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, MinMaxScalerOperation
 ):
-    """Scale features to a fixed range, by default [0, 1].
+    """Scale each feature to a fixed range, by default [0, 1].
 
-    Each feature is shifted and scaled so that it falls within the configured
-    range. Unlike ``StandardScaler``, this scaler is sensitive to outliers
-    because it uses the minimum and maximum of each feature.
+    For each feature column the transformation is::
 
-    Wraps scikit-learn's ``MinMaxScaler``.
+        x_scaled = (x - x_min) / (x_max - x_min) * (max - min) + min
+
+    where ``x_min`` and ``x_max`` are the per-feature minimum and maximum
+    observed during fitting, and ``min``/``max`` are the bounds of the
+    configured ``feature_range``.
+
+    Unlike ``StandardScaler``, this scaler is sensitive to outliers because
+    the range is anchored to the observed extremes. It is appropriate when
+    the downstream model requires bounded inputs (e.g. neural networks with
+    sigmoid activations, k-nearest neighbours, or image pixel values that
+    must lie in [0, 1]).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html
     """
 
     SCHEMA = MinMaxScalerSchema

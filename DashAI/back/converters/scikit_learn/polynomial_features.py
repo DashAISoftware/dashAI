@@ -15,7 +15,13 @@ from DashAI.back.types.value_types import Float
 
 
 class PolynomialFeaturesSchema(BaseSchema):
-    """Schema for PolynomialFeatures hyperparameters."""
+    """Schema for configuring the PolynomialFeatures converter.
+
+    Wraps ``sklearn.preprocessing.PolynomialFeatures`` and exposes the
+    polynomial degree, interaction-only flag, bias column inclusion, and
+    output array memory order as schema fields validated before being
+    forwarded to the underlying scikit-learn estimator.
+    """
 
     degree: schema_field(
         int_field(ge=1),
@@ -75,11 +81,29 @@ class PolynomialFeatures(
 ):
     """Generate polynomial and interaction features up to a specified degree.
 
-    For each input feature, new columns are added for all polynomial combinations
-    up to ``degree``. This enables linear models to learn nonlinear relationships
-    in the original feature space without requiring kernel methods.
+    Given *d* input features, this converter produces all monomials of the
+    form ``x_1^p_1 * x_2^p_2 * … * x_d^p_d`` where ``p_1 + … + p_d <= degree``
+    (and each ``p_i >= 0``). For example, with two input features ``[a, b]``
+    and ``degree=2``, the output is ``[1, a, b, a², ab, b²]``.
 
-    Wraps scikit-learn's ``PolynomialFeatures``.
+    When ``interaction_only=True`` only cross-terms are retained (no squared
+    or higher pure-power terms), which is useful when features are already on
+    a meaningful scale and self-interactions are not informative.
+
+    Setting ``include_bias=True`` (the default) prepends a column of ones,
+    acting as an intercept term for linear models that lack an explicit bias.
+
+    The ``order`` parameter controls whether the dense output array is stored
+    in C (row-major) or Fortran (column-major) order. ``"F"`` order can speed
+    up the transformation itself but may slow downstream estimators.
+
+    Output columns are typed as ``Float64`` in DashAI.
+
+    Wraps ``sklearn.preprocessing.PolynomialFeatures``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
     """
 
     SCHEMA = PolynomialFeaturesSchema

@@ -12,7 +12,13 @@ from DashAI.back.types.value_types import Float
 
 
 class MaxAbsScalerSchema(BaseSchema):
-    """Schema for Max Abs Scaler hyperparameters."""
+    """Schema for MaxAbsScaler hyperparameters.
+
+    Configures the copy semantics for sklearn's ``MaxAbsScaler``. Because
+    ``MaxAbsScaler`` has no configurable scaling range (it always maps to
+    [-1, 1] by dividing by the per-feature maximum absolute value), the only
+    tuneable option is whether to copy the data before transforming.
+    """
 
     use_copy: schema_field(
         bool_field(),
@@ -30,10 +36,22 @@ class MaxAbsScaler(
 ):
     """Scale each feature by its maximum absolute value to the range [-1, 1].
 
-    This scaler does not shift or center the data, so it preserves sparsity
-    in sparse matrices. Suitable for data already centered at zero.
+    For each feature column the transformation is::
 
-    Wraps scikit-learn's ``MaxAbsScaler``.
+        x_scaled = x / max(|x|)
+
+    where ``max(|x|)`` is the largest absolute value observed in that column
+    during fitting. The result always lies in [-1, 1].
+
+    Because this scaler neither centers nor shifts the data, it preserves any
+    existing zero entries, making it the preferred choice for sparse matrices
+    (e.g. TF-IDF or count-vectorized text). It is also appropriate when the
+    data is already known to be centered at zero and only the scale needs to
+    be adjusted.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
     """
 
     SCHEMA = MaxAbsScalerSchema

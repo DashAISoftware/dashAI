@@ -12,7 +12,14 @@ from DashAI.back.types.value_types import Float
 
 
 class VarianceThresholdSchema(BaseSchema):
-    """Schema for Variance Threshold hyperparameters."""
+    """Schema for VarianceThreshold hyperparameters.
+
+    Configures the variance cutoff used to remove low-information features
+    for sklearn's ``VarianceThreshold``. Features whose variance across the
+    training set falls strictly below ``threshold`` are dropped. Setting
+    ``threshold`` to 0.0 (the default) removes only features that are
+    constant across all samples.
+    """
 
     threshold: schema_field(
         float_field(ge=0.0),
@@ -30,13 +37,31 @@ class VarianceThresholdSchema(BaseSchema):
 class VarianceThreshold(
     DimensionalityReductionConverter, SklearnWrapper, VarianceThresholdOperation
 ):
-    """Remove features whose variance falls below a threshold.
+    """Remove features whose variance across the training set is below a threshold.
 
-    Features with low variance carry little information and can be removed
-    without supervised labels. A threshold of 0.0 removes features that are
-    constant across all samples. Unsupervised.
+    For each feature column the sample variance is computed during fitting::
 
-    Wraps scikit-learn's ``VarianceThreshold``.
+        Var(x) = E[x^2] - (E[x])^2
+
+    Feature columns for which ``Var(x) < threshold`` are removed. Because
+    the criterion is purely based on the marginal variance of each feature,
+    this selector requires no class labels and runs in O(n * p) time.
+
+    Common use cases include:
+
+    * **Constant-feature removal** — with the default ``threshold=0.0`` any
+      feature that takes the same value in every training sample is dropped.
+    * **Near-constant-feature removal** — for binary features, a threshold
+      of ``p * (1 - p)`` drops features that are ``True`` in fewer than a
+      fraction ``p`` of samples (e.g. ``threshold=0.8 * 0.2 = 0.16``
+      removes features that are ``True`` in less than 20 % of samples).
+    * **Pre-filtering before expensive selectors** — quickly reducing
+      dimensionality before applying supervised selection methods such as
+      ``SelectKBest`` or ``RFECV``.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.VarianceThreshold.html
     """
 
     SCHEMA = VarianceThresholdSchema

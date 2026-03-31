@@ -19,7 +19,14 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class OrdinalEncoderSchema(BaseSchema):
-    """Schema for Ordinal Encoder hyperparameters."""
+    """Schema for OrdinalEncoder hyperparameters.
+
+    Configures the category ordering, output dtype, unknown-value handling,
+    and infrequent-category grouping for sklearn's ``OrdinalEncoder``. The
+    ``handle_unknown`` field determines whether an unseen category at
+    transform time raises an error or is replaced by a sentinel value
+    specified in ``unknown_value``.
+    """
 
     categories: schema_field(
         string_field(),
@@ -80,14 +87,29 @@ class OrdinalEncoderSchema(BaseSchema):
 
 
 class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation):
-    """Encode categorical columns as integer ordinal codes.
+    """Encode categorical feature columns as integer ordinal codes.
 
-    Each unique category value in the input column is mapped to an integer
-    (0, 1, 2, …). Unlike ``OneHotEncoder``, this preserves an implicit
-    ordinal relationship between values. Use when the categories have a
-    meaningful order.
+    For each input feature column every unique category value is mapped to a
+    contiguous integer starting at 0. Given categories ``["cold", "warm",
+    "hot"]`` sorted alphabetically the default mapping would be
+    ``cold -> 0``, ``hot -> 1``, ``warm -> 2``; a custom category list can
+    be supplied to impose a domain-specific order.
 
-    Wraps scikit-learn's ``OrdinalEncoder``.
+    Unlike ``OneHotEncoder``, ordinal encoding produces a single output
+    column per input column and implicitly encodes a numerical order between
+    the categories. This makes it appropriate when:
+
+    * The categories have a meaningful rank (e.g. education level, severity
+      score, shirt size).
+    * The downstream model can exploit ordinal structure (e.g. tree-based
+      models such as gradient-boosted trees or random forests).
+
+    For unordered nominal categories, ``OneHotEncoder`` is typically
+    preferred because ordinal codes introduce a spurious ordering.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OrdinalEncoder.html
     """
 
     SCHEMA = OrdinalEncoderSchema

@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class BagOfWordsConverterSchema(BaseSchema):
-    """Schema for BagOfWordsConverter hyperparameters."""
+    """Schema for configuring the BagOfWordsConverter.
+
+    Wraps ``sklearn.feature_extraction.text.CountVectorizer`` and exposes
+    vocabulary size, casing, stop-word removal, and n-gram range as schema
+    fields validated before being forwarded to the underlying scikit-learn
+    estimator.
+    """
 
     max_features: schema_field(
         int_field(gt=0),
@@ -67,9 +73,28 @@ class BagOfWordsConverterSchema(BaseSchema):
 
 
 class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
-    """
-    Converts text into a Bag-of-Words representation with one column per token
-    (frequency per token).
+    """Convert raw text documents into a matrix of token occurrence counts.
+
+    The Bag-of-Words (BoW) model represents each document as a fixed-length
+    vector of word counts, discarding word order and grammar. During ``fit``
+    a vocabulary of up to ``max_features`` terms is built from the training
+    corpus. During ``transform`` each document is mapped to that vocabulary,
+    producing one integer-valued column per token.
+
+    Optional preprocessing steps include lower-casing, stop-word removal, and
+    n-gram extraction (unigrams, bigrams, …). The result is a sparse integer
+    matrix converted to a DashAI dataset with one column per vocabulary term.
+
+    Internally wraps ``sklearn.feature_extraction.text.CountVectorizer``.
+
+    The BoW representation is one of the foundational techniques in information
+    retrieval described in Salton & McGill (1983) [2].
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
+    [2] Salton, G. & McGill, M. J. (1983). Introduction to Modern Information
+        Retrieval. McGraw-Hill.
     """
 
     SCHEMA = BagOfWordsConverterSchema

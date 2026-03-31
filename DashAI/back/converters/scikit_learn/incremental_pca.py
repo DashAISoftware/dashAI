@@ -15,7 +15,11 @@ from DashAI.back.core.utils import MultilingualString
 
 
 class IncrementalPCASchema(BaseSchema):
-    """Schema for Incremental PCA hyperparameters."""
+    """Configuration schema for the IncrementalPCA converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.IncrementalPCA``.
+    """
 
     n_components: schema_field(
         none_type(int_field(ge=1)),
@@ -67,13 +71,32 @@ class IncrementalPCASchema(BaseSchema):
 class IncrementalPCA(
     DimensionalityReductionConverter, SklearnWrapper, IncrementalPCAOperation
 ):
-    """Reduce dimensionality using PCA computed in mini-batches.
+    """Reduce dimensionality using PCA computed incrementally over mini-batches.
 
-    Processes data in successive batches instead of requiring the entire dataset
-    in memory at once. Suitable for datasets too large to fit in RAM. The final
-    components approximate those of standard PCA.
+    IncrementalPCA (IPCA) implements an online variant of PCA that processes
+    data one batch at a time and updates the component estimates after each
+    batch using a singular value merging strategy. This allows the algorithm
+    to fit datasets that are too large to hold in memory simultaneously, while
+    still converging to results that closely approximate full-batch PCA.
+
+    The algorithm maintains a running estimate of the mean and the principal
+    components, merging each new batch with the accumulated SVD from previous
+    batches. When ``batch_size`` is ``None``, it defaults to ``5 * n_features``.
+
+    Key properties:
+
+    - Constant memory footprint regardless of dataset size.
+    - Supports the ``partial_fit`` API for true out-of-core usage.
+    - The ``whiten`` option rescales components to unit variance, which can
+      improve downstream estimators that assume spherical features.
+    - Produces output numerically close to full-batch PCA when the batch size
+      is reasonably large relative to the number of components.
 
     Wraps scikit-learn's ``IncrementalPCA``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html
     """
 
     SCHEMA = IncrementalPCASchema

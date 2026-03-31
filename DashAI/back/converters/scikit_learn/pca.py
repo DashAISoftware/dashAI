@@ -21,7 +21,11 @@ from DashAI.back.types.value_types import Float
 
 
 class PCASchema(BaseSchema):
-    """Schema for PCA hyperparameters."""
+    """Configuration schema for the PCA converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.PCA``.
+    """
 
     n_components: schema_field(
         none_type(
@@ -144,13 +148,41 @@ class PCASchema(BaseSchema):
 
 
 class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
-    """Reduce dimensionality using Principal Component Analysis.
+    """Reduce dimensionality using Principal Component Analysis (PCA).
 
-    Projects the input feature space into a lower-dimensional subspace that
-    captures the directions of maximum variance. Each output component is a
-    linear combination of the original features, ordered by explained variance.
+    PCA finds a set of orthogonal axes (principal components) that successively
+    capture the greatest amount of variance in the data. Given a centered data
+    matrix X of shape (n_samples, n_features), the method computes the
+    eigen-decomposition of the covariance matrix X^T X / (n-1), retaining only
+    the top ``n_components`` eigenvectors. The data are then projected onto this
+    lower-dimensional subspace.
+
+    PCA is well suited for preprocessing high-dimensional continuous data before
+    applying machine learning models, for visualisation of multivariate datasets,
+    and for noise reduction. The ``whiten`` option rescales each component to
+    unit variance, which can improve the performance of downstream estimators that
+    assume spherical features (e.g. RBF-kernel SVMs).
+
+    Key properties:
+
+    - Linear, unsupervised transformation.
+    - Components are ordered by descending explained variance.
+    - Setting ``n_components`` to a float in (0, 1) automatically selects the
+      number of components needed to explain that fraction of total variance.
+    - ``n_components='mle'`` uses Minka's MLE to estimate the intrinsic
+      dimensionality of the data.
+    - Supports full, randomized, and ARPACK solvers for scalability.
 
     Wraps scikit-learn's ``PCA``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    [2] Pearson, K. (1901). "On lines and planes of closest fit to systems of
+        points in space." Philosophical Magazine, 2(11), 559-572.
+    [3] Hotelling, H. (1933). "Analysis of a complex of statistical variables
+        into principal components." Journal of Educational Psychology, 24(6),
+        417-441.
     """
 
     SCHEMA = PCASchema

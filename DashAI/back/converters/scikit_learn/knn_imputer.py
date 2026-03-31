@@ -17,7 +17,13 @@ from DashAI.back.types.value_types import Float
 
 
 class KNNImputerSchema(BaseSchema):
-    """Schema for KNNImputer hyperparameters."""
+    """Schema for configuring the KNNImputer converter.
+
+    Wraps ``sklearn.impute.KNNImputer`` and exposes the number of neighbours,
+    distance weighting, distance metric, copy behaviour, indicator stacking,
+    and empty-feature handling as schema fields validated before being
+    forwarded to the underlying scikit-learn estimator.
+    """
 
     n_neighbors: schema_field(
         int_field(ge=1),
@@ -71,13 +77,26 @@ class KNNImputerSchema(BaseSchema):
 
 
 class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperation):
-    """Fill missing values using the K nearest neighbors of each sample.
+    """Fill missing values by averaging over the K nearest complete neighbours.
 
-    For each sample with missing values, the imputed value is derived from the
-    K nearest complete neighbors (by Euclidean distance). Preserves local data
-    structure better than simple strategies.
+    For each sample that contains missing entries, the ``n_neighbors`` nearest
+    complete samples (those without any missing value in the imputed feature)
+    are located using the ``nan_euclidean`` distance, which handles partially
+    observed vectors by ignoring the missing dimensions during distance
+    computation. The imputed value is then either the uniform mean or the
+    distance-weighted mean of those neighbours, depending on the ``weights``
+    parameter.
 
-    Wraps scikit-learn's ``KNNImputer``.
+    Unlike ``SimpleImputer``, which computes a single global statistic per
+    column, KNN imputation is instance-based and preserves the local
+    correlation structure of the data. All output columns are typed as
+    ``Float64`` in DashAI.
+
+    Wraps ``sklearn.impute.KNNImputer``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.KNNImputer.html
     """
 
     SCHEMA = KNNImputerSchema

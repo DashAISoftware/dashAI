@@ -18,7 +18,13 @@ from DashAI.back.types.value_types import Float
 
 
 class SkewedChi2SamplerSchema(BaseSchema):
-    """Schema for SkewedChi2Sampler hyperparameters."""
+    """Schema for configuring the SkewedChi2Sampler converter.
+
+    Wraps ``sklearn.kernel_approximation.SkewedChi2Sampler`` and exposes the
+    kernel skewedness parameter, the number of random Fourier components, and
+    the random seed as schema fields validated before being forwarded to the
+    underlying scikit-learn estimator.
+    """
 
     skewedness: schema_field(
         float_field(gt=0),
@@ -64,11 +70,33 @@ class SkewedChi2SamplerSchema(BaseSchema):
 class SkewedChi2Sampler(
     PolynomialKernelConverter, SklearnWrapper, SkewedChi2SamplerOperation
 ):
-    """Approximate the skewed chi-squared kernel using random Fourier features.
+    """Approximate the skewed chi-squared kernel feature map via random Fourier features.
 
-    Uses Monte Carlo approximation of the skewed chi-squared kernel's Fourier
-    transform to enable efficient linear classification. Wraps scikit-learn's
-    ``SkewedChi2Sampler``.
+    The skewed chi-squared kernel is well-suited for histogram-based features
+    (e.g. visual bag-of-words, colour histograms) and is defined as:
+
+        K(x, y) = prod_j  2 * sqrt(x_j + c) * sqrt(y_j + c) /
+                            (x_j + y_j + 2c)
+
+    where *c* is the ``skewedness`` parameter. A ``skewedness`` value of 0
+    recovers the ordinary chi-squared kernel; larger values reduce the
+    sensitivity to small feature values.
+
+    This converter maps inputs to a ``n_components``-dimensional random Fourier
+    feature space in which a dot product approximates the above kernel,
+    following the approach of Rahimi & Recht (2007) [2]. Training a linear
+    classifier on the resulting features approximates an SVM with the skewed
+    chi-squared kernel.
+
+    Output columns are typed as ``Float64`` in DashAI.
+
+    Wraps ``sklearn.kernel_approximation.SkewedChi2Sampler``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.SkewedChi2Sampler.html
+    [2] Rahimi, A. & Recht, B. (2007). Random Features for Large-Scale Kernel
+        Machines. Advances in Neural Information Processing Systems, 20.
     """
 
     SCHEMA = SkewedChi2SamplerSchema

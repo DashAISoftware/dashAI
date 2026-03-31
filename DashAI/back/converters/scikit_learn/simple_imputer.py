@@ -21,7 +21,13 @@ from DashAI.back.types.value_types import Float
 
 
 class SimpleImputerSchema(BaseSchema):
-    """Schema for Simple Imputer hyperparameters."""
+    """Schema for configuring the SimpleImputer converter.
+
+    Wraps ``sklearn.impute.SimpleImputer`` and exposes strategy selection,
+    fill value, copy behaviour, indicator stacking, and empty-feature
+    handling as schema fields validated before being forwarded to the
+    underlying scikit-learn estimator.
+    """
 
     strategy: schema_field(
         enum_field(
@@ -77,13 +83,28 @@ class SimpleImputerSchema(BaseSchema):
 class SimpleImputer(
     BasicPreprocessingConverter, SklearnWrapper, SimpleImputerOperation
 ):
-    """Fill missing values using a simple per-column strategy.
+    """Fill missing values using a simple univariate per-column strategy.
 
-    Supports four strategies: ``mean``, ``median``, ``most_frequent``, and
-    ``constant``. Each column is imputed independently. Output columns are
-    always typed as ``Float64`` regardless of the input column type.
+    Each feature is imputed independently using one of four strategies:
 
-    Wraps scikit-learn's ``SimpleImputer``.
+    * ``"mean"`` — replace missing values with the column mean (numeric only).
+    * ``"median"`` — replace with the column median (numeric only).
+    * ``"most_frequent"`` — replace with the most common value (works with
+      strings and numeric data).
+    * ``"constant"`` — replace with a fixed ``fill_value`` supplied by the
+      user.
+
+    Columns with all-missing values are handled according to the
+    ``keep_empty_features`` flag. When ``add_indicator=True``, a
+    ``MissingIndicator`` binary matrix is stacked onto the output. All
+    output columns are typed as ``Float64`` in DashAI regardless of the
+    original column type.
+
+    Wraps ``sklearn.impute.SimpleImputer``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
     """
 
     SCHEMA = SimpleImputerSchema

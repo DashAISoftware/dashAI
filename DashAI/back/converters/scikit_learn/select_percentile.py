@@ -10,7 +10,11 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectPercentileSchema(BaseSchema):
-    """Schema for Select Percentile hyperparameters."""
+    """Configuration schema for the SelectPercentile converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.feature_selection.SelectPercentile``.
+    """
 
     percentile: schema_field(
         int_field(ge=1, le=100),
@@ -27,10 +31,32 @@ class SelectPercentile(
 ):
     """Select the top percentile of features by a univariate statistical test.
 
-    Like ``SelectKBest`` but retains a percentage of features rather than a
-    fixed count. Supervised: requires ``y`` at fit time.
+    SelectPercentile applies the same univariate scoring approach as
+    ``SelectKBest`` but expresses the number of features to retain as a
+    percentage of all available features rather than as an absolute count.
+    Each feature is scored independently against the target using a chosen
+    statistical function, and the top ``percentile`` percent are kept.
+
+    This makes the selector robust to datasets with varying numbers of input
+    features, since the number of retained features scales automatically with
+    the input dimensionality. It is particularly convenient for grid search
+    experiments where the feature set size may change across cross-validation
+    folds or preprocessing stages.
+
+    Key properties:
+
+    - Supervised: requires the target array ``y`` at fit time.
+    - ``percentile`` is an integer in [1, 100]; setting it to 100 passes all
+      features through unchanged.
+    - Uses the same family of scoring functions as ``SelectKBest``
+      (``f_classif``, ``chi2``, ``mutual_info_classif``, etc.).
+    - Feature ranking is univariate and does not capture interactions.
 
     Wraps scikit-learn's ``SelectPercentile``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectPercentile.html
     """
 
     SCHEMA = SelectPercentileSchema

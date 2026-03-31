@@ -10,7 +10,11 @@ from DashAI.back.types.value_types import Float
 
 
 class SelectFweSchema(BaseSchema):
-    """Schema for Select Fwe hyperparameters."""
+    """Configuration schema for the SelectFwe converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.feature_selection.SelectFwe``.
+    """
 
     alpha: schema_field(
         float_field(ge=0.0, le=1.0),
@@ -26,12 +30,36 @@ class SelectFweSchema(BaseSchema):
 
 
 class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
-    """Select features while controlling the Family-Wise Error rate.
+    """Select features while controlling the Family-Wise Error Rate (FWE).
 
-    Uses a Bonferroni correction to control the probability of any false
-    positives among selected features. Supervised: requires ``y`` at fit time.
+    SelectFwe applies the Bonferroni correction to the p-values produced by a
+    univariate scoring function: a feature is retained only if its raw p-value
+    is at most ``alpha / n_features``. This guarantees that the probability of
+    making even one false positive among all selected features is bounded by
+    ``alpha``, providing the strongest multiple-testing guarantee of the three
+    p-value-based filter selectors (FPR, FDR, FWE).
 
-    Wraps scikit-learn's ``SelectFWE``.
+    FWE control is most appropriate when any single false positive is costly,
+    for example in confirmatory studies, safety-critical applications, or
+    settings where downstream analysis of each selected feature is expensive.
+    Because the correction grows more conservative as the number of features
+    increases, it may discard many truly informative features in very
+    high-dimensional problems; in such cases FDR control may be preferable.
+
+    Key properties:
+
+    - Supervised: requires the target array ``y`` at fit time.
+    - ``alpha`` is the family-wise significance level in [0, 1]; typical values
+      are 0.05 or 0.01.
+    - Most conservative of the three p-value-based filters at the same
+      ``alpha``; tends to retain fewer features than FDR or FPR.
+    - The number of retained features is data-driven and not fixed in advance.
+
+    Wraps scikit-learn's ``SelectFwe``.
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFwe.html
     """
 
     SCHEMA = SelectFweSchema

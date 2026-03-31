@@ -12,7 +12,12 @@ from DashAI.back.types.value_types import Float
 
 
 class NormalizerSchema(BaseSchema):
-    """Schema for Normalizer hyperparameters."""
+    """Schema for Normalizer hyperparameters.
+
+    Configures the norm used for row-wise unit-norm scaling and the copy
+    semantics for sklearn's ``Normalizer``. The ``norm`` field selects between
+    the L1, L2, and max norms applied to each individual sample.
+    """
 
     norm: schema_field(
         enum_field(["l1", "l2", "max"]),
@@ -34,14 +39,31 @@ class NormalizerSchema(BaseSchema):
 
 
 class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOperation):
-    """Normalize each sample (row) to unit norm.
+    """Normalize each sample (row) independently to unit norm.
 
-    Unlike column-wise scalers, this transformer operates row-wise: each
-    data point is scaled independently so that its norm (L1, L2, or max)
-    equals 1. Useful for text classification or clustering algorithms that
-    use the dot product or cosine similarity between samples.
+    Unlike column-wise scalers such as ``StandardScaler`` or
+    ``MinMaxScaler``, this transformer operates along the sample axis.
+    For each row vector ``x`` the transformation is::
 
-    Wraps scikit-learn's ``Normalizer``.
+        x_normalized = x / ||x||_p
+
+    where ``p`` is chosen by the ``norm`` parameter:
+
+    * ``"l2"`` (default) — Euclidean norm; the dot product of any two
+      normalized samples equals the cosine of the angle between them.
+    * ``"l1"`` — Manhattan norm; useful when the direction of the feature
+      vector matters more than relative magnitudes.
+    * ``"max"`` — divides by the largest absolute element; guarantees the
+      output lies in [-1, 1].
+
+    Row-wise normalization is particularly effective for text classification
+    and clustering algorithms that rely on the dot product or cosine
+    similarity (e.g. k-means on TF-IDF vectors, linear SVMs on bag-of-words
+    features).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.Normalizer.html
     """
 
     SCHEMA = NormalizerSchema

@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class TFIDFConverterSchema(BaseSchema):
-    """Schema for TFIDFConverter hyperparameters."""
+    """Schema for configuring the TFIDFConverter.
+
+    Wraps ``sklearn.feature_extraction.text.TfidfVectorizer`` and exposes
+    vocabulary size, casing, stop-word removal, and n-gram range as schema
+    fields validated before being forwarded to the underlying scikit-learn
+    estimator.
+    """
 
     max_features: schema_field(
         int_field(gt=0),
@@ -71,9 +77,35 @@ class TFIDFConverterSchema(BaseSchema):
 
 
 class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
-    """
-    Converts text into TF-IDF representation with one column per token
-    (TF-IDF weight per token).
+    """Convert raw text documents into a matrix of TF-IDF weighted features.
+
+    TF-IDF (Term Frequency – Inverse Document Frequency) re-weights raw token
+    counts so that terms that appear frequently in a specific document but
+    rarely across the whole corpus receive a higher score, while common
+    stop-like terms are down-weighted. Each document is represented as a
+    floating-point vector of TF-IDF scores, one dimension per vocabulary term.
+
+    The TF-IDF score for term *t* in document *d* is:
+
+        tfidf(t, d) = tf(t, d) × log((1 + n) / (1 + df(t))) + 1
+
+    where *n* is the total number of documents and *df(t)* is the number of
+    documents containing *t* (scikit-learn's ``smooth_idf=True`` default).
+
+    Optional preprocessing steps include lower-casing, stop-word removal, and
+    n-gram extraction. The result is a floating-point DashAI dataset with one
+    column per vocabulary term.
+
+    Internally wraps ``sklearn.feature_extraction.text.TfidfVectorizer``.
+
+    The TF-IDF weighting scheme was introduced as a core technique in
+    information retrieval by Salton & McGill (1983) [2].
+
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html
+    [2] Salton, G. & McGill, M. J. (1983). Introduction to Modern Information
+        Retrieval. McGraw-Hill.
     """
 
     SCHEMA = TFIDFConverterSchema

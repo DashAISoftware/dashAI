@@ -10,7 +10,13 @@ from DashAI.back.types.value_types import Integer
 
 
 class LabelBinarizerSchema(BaseSchema):
-    """Schema for Label Binarizer hyperparameters."""
+    """Schema for LabelBinarizer hyperparameters.
+
+    Configures the integer values used to represent the negative and positive
+    classes in the binary indicator matrix produced by sklearn's
+    ``LabelBinarizer``. Both ``neg_label`` and ``pos_label`` must be integers,
+    and ``pos_label`` must be strictly greater than ``neg_label``.
+    """
 
     neg_label: schema_field(
         int_field(),
@@ -31,13 +37,26 @@ class LabelBinarizerSchema(BaseSchema):
 
 
 class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation):
-    """Binarize labels into a one-vs-all binary matrix.
+    """Binarize a label column into a one-vs-all binary indicator matrix.
 
-    Transforms a single-column target into a binary matrix where each
-    column represents one class. For binary classification the output is
-    a single column; for multiclass it is a matrix with one column per class.
+    Given a flat array of class labels, this converter produces a 2-D
+    integer matrix in which each column corresponds to one class. For a
+    sample belonging to class ``k``, column ``k`` is set to ``pos_label``
+    and all other columns are set to ``neg_label``:
 
-    Wraps scikit-learn's ``LabelBinarizer``.
+    * **Binary classification** — the output is a single column (shape
+      ``(n_samples, 1)``) because one column is sufficient to encode two
+      classes.
+    * **Multiclass classification** — the output has one column per class
+      (shape ``(n_samples, n_classes)``).
+
+    Label binarization is required by classifiers that natively expect a
+    binary indicator matrix for their targets (e.g. multi-label SVMs), and
+    is useful for computing one-vs-all metrics directly on the raw output.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelBinarizer.html
     """
 
     SCHEMA = LabelBinarizerSchema

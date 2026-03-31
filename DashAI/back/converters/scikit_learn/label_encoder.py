@@ -12,19 +12,34 @@ if TYPE_CHECKING:
 
 
 class LabelEncoderSchema(BaseSchema):
-    """Schema for Label Encoder hyperparameters."""
+    """Schema for LabelEncoder hyperparameters.
+
+    Placeholder schema for sklearn's ``LabelEncoder``. The encoder has no
+    user-configurable hyperparameters; the schema is kept for consistency with
+    the DashAI component registration pattern.
+    """
 
     pass
 
 
 class LabelEncoder(EncodingConverter, SklearnWrapper):
-    """Encode target labels as integer codes between 0 and n_classes − 1.
+    """Encode categorical labels as contiguous integer codes in [0, n_classes - 1].
 
-    Designed for encoding a single target column. Each unique label is
-    assigned a unique integer. Useful for transforming string class labels
-    before passing them to a classifier.
+    Each unique label value is mapped to a unique integer in ascending order
+    of the sorted class list. For example, given classes ``["cat", "dog",
+    "fish"]`` the mapping is ``cat -> 0``, ``dog -> 1``, ``fish -> 2``.
 
-    Wraps scikit-learn's ``LabelEncoder``.
+    Unlike ``OrdinalEncoder`` (which operates on feature columns),
+    ``LabelEncoder`` is designed for target label columns. It is typically
+    applied to the output column before training classifiers that require
+    numeric class indices (e.g. gradient-boosted trees, support vector
+    machines, or any model that indexes a class-weight array). The DashAI
+    implementation extends the sklearn behaviour to support multiple columns
+    and to preserve ``NaN`` values during transformation.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
     """
 
     SCHEMA = LabelEncoderSchema
