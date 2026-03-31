@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class ExcelDataloaderSchema(BaseSchema):
-    """Schema for Excel Dataloader hyperparameters."""
+    """Schema for ExcelDataLoader hyperparameters.
+
+    Configures the sheet selector, header row, columns to import,
+    row-skipping and row-count limit, and the dataset split ratios.
+    The sheet can be specified as a name string or a zero-based index;
+    leaving the sheet field empty selects the first sheet.
+    """
 
     name: schema_field(
         string_field(),
@@ -192,7 +198,16 @@ class ExcelDataloaderSchema(BaseSchema):
 
 
 class ExcelDataLoader(BaseDataLoader):
-    """Data loader for tabular data in Excel files."""
+    """Data loader that ingests tabular data from Excel workbooks into DashAI datasets.
+
+    Reads ``.xlsx`` / ``.xls`` files, optionally selecting a specific sheet,
+    samples rows, and splits the result into train/validation/test
+    ``DashAIDataset`` splits. Delegates to ``pandas.read_excel`` after
+    normalising the schema parameters (sheet name/index, header row, column
+    selection, row limits).
+
+    Handles multi-file uploads by concatenating all workbooks before splitting.
+    """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ExcelDataloaderSchema

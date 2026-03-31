@@ -21,7 +21,14 @@ if TYPE_CHECKING:
 
 
 class CSVDataloaderSchema(BaseSchema):
-    """Schema for CSVDataloader hyperparameters."""
+    """Schema for CSVDataLoader hyperparameters.
+
+    Configures the field separator, header row index, columns to import,
+    row-skipping and sampling parameters, and the dataset split ratios.
+    The separator can be specified as an exact character or as the aliases
+    ``"blank space"`` or ``"tab"`` which are normalised before passing to
+    ``pandas.read_csv``.
+    """
 
     name: schema_field(
         string_field(),
@@ -209,7 +216,18 @@ class CSVDataloaderSchema(BaseSchema):
 
 
 class CSVDataLoader(BaseDataLoader):
-    """Data loader for tabular data in CSV files."""
+    """Data loader that ingests tabular data from CSV files into DashAI datasets.
+
+    Reads one or more CSV files, optionally samples rows, and splits the result
+    into train/validation/test ``DashAIDataset`` splits according to the ratios
+    specified in the schema. The separator is normalised from human-readable
+    aliases (``"blank space"``, ``"tab"``) to Python character literals before
+    delegating to ``pandas.read_csv``.
+
+    Handles multi-file uploads by concatenating all CSVs before splitting,
+    and supports header detection, column selection, and row skipping via the
+    ``CSVDataloaderSchema`` parameters.
+    """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = CSVDataloaderSchema

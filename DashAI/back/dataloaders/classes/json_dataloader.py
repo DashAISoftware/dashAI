@@ -12,7 +12,12 @@ if TYPE_CHECKING:
 
 
 class JSONDataloaderSchema(BaseSchema):
-    """Schema for JSONDataloader hyperparameters."""
+    """Schema for JSONDataLoader hyperparameters.
+
+    Configures the ``data_key`` (optional top-level JSON key whose value is
+    the list of records) and the dataset split ratios. When ``data_key`` is
+    ``None``, the entire JSON value is interpreted as the record list.
+    """
 
     name: schema_field(
         string_field(),
@@ -56,7 +61,16 @@ class JSONDataloaderSchema(BaseSchema):
 
 
 class JSONDataLoader(BaseDataLoader):
-    """Data loader for tabular data in JSON files."""
+    """Data loader that ingests record-oriented JSON files into DashAI datasets.
+
+    Parses JSON files containing an array of record objects (one object per
+    row) and converts them to ``DashAIDataset`` train/validation/test splits.
+    An optional ``data_key`` parameter allows the records to be nested under a
+    top-level key (e.g. ``{"data": [{...}, ...]}``) rather than at the root.
+
+    Multi-file uploads are concatenated before splitting, and the split ratios
+    are validated before loading to provide early failure feedback.
+    """
 
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
