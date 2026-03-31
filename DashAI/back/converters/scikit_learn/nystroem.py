@@ -106,7 +106,7 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
     """Approximate a kernel feature map using the Nystroem method.
 
     The Nystroem method constructs an explicit low-dimensional feature map
-    phi(x) that approximates an arbitrary kernel k(x, x') = <phi(x), phi(x')>,
+    `phi(x)` that approximates an arbitrary kernel `k(x, x') = <phi(x), phi(x')>`,
     enabling the use of kernel methods with linear-complexity training algorithms.
     It works by sub-sampling ``n_components`` landmark points from the training
     data, evaluating the kernel between all training samples and these landmarks,

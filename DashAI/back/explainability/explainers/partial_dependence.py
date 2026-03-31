@@ -73,11 +73,11 @@ class PartialDependence(BaseGlobalExplainer):
     A Partial Dependence Plot (PDP) marginalises the model output over the
     distribution of all other features, leaving a curve (or surface) that
     shows the average effect of the target feature in isolation. For a feature
-    ``x_j``, the partial dependence is:
+    `x_j`, the partial dependence is:
 
-    .. code-block:: text
-
-        f̄(x_j) = E_{x_{-j}} [ f(x_j, x_{-j}) ] ≈ (1/n) Σ_i f(x_j, x_{-j,i})
+    ```
+    f̄(x_j) = E_(x_-j) [ f(x_j, x_-j) ] ≈ (1/n) Σ_i f(x_j, x_-j,i)
+    ```
 
     PDPs assume feature independence; when features are correlated, the
     marginalisation extrapolates into regions with low data density. Individual
@@ -135,9 +135,9 @@ class PartialDependence(BaseGlobalExplainer):
             feature. Defaults to 100.
         """
 
-        assert upper_percentile > lower_percentile, (
-            "upper_percentile value must be greater than lower_percentile"
-        )
+        assert (
+            upper_percentile > lower_percentile
+        ), "upper_percentile value must be greater than lower_percentile"
 
         super().__init__(model)
 
