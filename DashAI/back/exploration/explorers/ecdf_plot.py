@@ -96,6 +96,22 @@ class ECDFPlotExplorer(DistributionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the ECDFPlotExplorer with coloring, faceting, and normalization.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            color_column (str or int, optional): Column name or zero-based index
+            used to split the ECDF into color-coded traces. Defaults to None.
+            facet_col (str or int, optional): Column name or zero-based index used
+            to create column-wise subplot facets. Defaults to None.
+            facet_row (str or int, optional): Column name or zero-based index used
+            to create row-wise subplot facets. Defaults to None.
+            ecdf_norm (str, optional): Y-axis normalization. One of ``"none"``
+            (cumulative count), ``"percent"``, or ``"probability"``.
+            Defaults to ``"probability"``.
+        """
         self.color_column: Union[str, int, None] = kwargs.get("color_column")
         self.facet_col: Union[str, int, None] = kwargs.get("facet_col")
         self.facet_row: Union[str, int, None] = kwargs.get("facet_row")
@@ -105,6 +121,27 @@ class ECDFPlotExplorer(DistributionExplorer):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend the column list to include color and facet grouping columns.
+
+        If ``color_column``, ``facet_col``, or ``facet_row`` was given as an
+        integer index, each is resolved to the corresponding column name. Resolved
+        columns are appended to ``columns`` when not already present, so the base
+        class loads them alongside the primary selected columns.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset being explored.
+        columns : List[Dict[str, Any]]
+            List of column descriptors already
+            selected by the user.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset slice containing all required columns, as
+            returned by the parent ``prepare_dataset`` implementation.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -147,6 +184,26 @@ class ECDFPlotExplorer(DistributionExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly empirical cumulative distribution function (ECDF) plot.
+
+        With one column, the ECDF is plotted for that column. With multiple columns,
+        each column is rendered as a separate ECDF trace. Optional color coding,
+        column facets, and row facets are applied when configured.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset containing the selected numeric columns
+            and any grouping or faceting columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive ECDF figure.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -180,6 +237,24 @@ class ECDFPlotExplorer(DistributionExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the ECDF figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -192,6 +267,22 @@ class ECDFPlotExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved ECDF plot for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         import plotly.io as pio
 
         resultType = "plotly_json"

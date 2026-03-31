@@ -75,11 +75,43 @@ class WordcloudExplorer(DistributionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize WordcloudExplorer with word cloud rendering parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments matching ``WordcloudSchema`` fields:
+            max_words (int): Maximum number of words to display in the
+            word cloud. Defaults to ``200``.
+            background_color (str | None): Background color of the
+            rendered image. When ``None`` the background is
+            transparent (RGBA mode). Defaults to ``None``.
+        """
         self.max_words = kwargs.get("max_words", 200)
         self.background_color = kwargs.get("background_color")
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a word cloud image from the selected text columns.
+
+        Concatenates all values from the selected columns into a single string,
+        removes common stop words, and renders a ``WordCloud`` image with the
+        configured parameters.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset containing the text columns.
+        explorer_info : Explorer
+            The explorer database record used to
+            determine which columns to concatenate.
+
+        Returns
+        -------
+        Any
+            A ``PIL.Image.Image`` of the rendered word cloud (PNG-compatible,
+            RGBA when ``background_color`` is ``None``, RGB otherwise).
+        """
         from wordcloud import STOPWORDS, WordCloud
 
         _df = dataset.to_pandas()
@@ -107,6 +139,27 @@ class WordcloudExplorer(DistributionExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the word cloud PIL image to a PNG file on disk.
+
+        Parameters
+        ----------
+        __exploration_info__ : Notebook
+            The notebook database record
+            (unused).
+        explorer_info : Explorer
+            The explorer record used for filename
+            generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The ``PIL.Image.Image`` returned by
+            ``launch_exploration``.
+
+        Returns
+        -------
+        str
+            The path of the saved PNG file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -119,6 +172,27 @@ class WordcloudExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved word cloud image for the frontend.
+
+        Reads the PNG file written by ``save_notebook`` and encodes it as a
+        base64 string for transmission to the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the PNG file saved by
+            ``save_notebook``.
+        options : Dict[str, Any]
+            Rendering options from the frontend
+            (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (base64-encoded
+            UTF-8 string of the PNG image), ``"type"``
+            (``"image_base64"``), and ``"config"`` (empty dict).
+        """
         import base64
 
         resultType = "image_base64"

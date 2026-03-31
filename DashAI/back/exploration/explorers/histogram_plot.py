@@ -117,6 +117,25 @@ class HistogramPlotExplorer(DistributionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the HistogramPlotExplorer with binning and grouping options.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            nbins (int, optional): Number of bins to use. If None, Plotly
+            chooses automatically. Defaults to None.
+            histfunc (str, optional): Aggregation function applied to each bin.
+            One of ``"count"``, ``"sum"``, ``"avg"``, ``"min"``, or
+            ``"max"``. Defaults to ``"count"``.
+            histnorm (str, optional): Normalization method. One of ``""``
+            (counts), ``"percent"``, ``"probability"``, ``"density"``,
+            or ``"probability density"``. Defaults to ``""`` (counts).
+            color_group (str or int, optional): Column name or zero-based index
+            used to color-group histogram bars. Defaults to None.
+            pattern_group (str or int, optional): Column name or zero-based
+            index used to pattern-group histogram bars. Defaults to None.
+        """
         self.nbins: Union[int, None] = kwargs.get("nbins")
         self.histfunc: HistFunc = HistFunc(kwargs.get("histfunc"))
         self.histnorm: HistNorm = HistNorm(kwargs.get("histnorm"))
@@ -127,6 +146,27 @@ class HistogramPlotExplorer(DistributionExplorer):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend the column list to include color and pattern grouping columns.
+
+        If ``color_group`` or ``pattern_group`` was given as an integer index,
+        each is resolved to the corresponding column name. Resolved columns are
+        appended to ``columns`` when not already present, so the base class loads
+        them alongside the primary selected column.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset being explored.
+        columns : List[Dict[str, Any]]
+            List of column descriptors already
+            selected by the user.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset slice containing all required columns, as
+            returned by the parent ``prepare_dataset`` implementation.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -157,6 +197,26 @@ class HistogramPlotExplorer(DistributionExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly histogram for the selected column.
+
+        The histogram is configured with the binning function, normalization,
+        optional color grouping, and optional pattern grouping set during
+        initialization. Exactly one primary column is supported.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset containing the selected column and any
+            grouping columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive histogram figure.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -185,6 +245,24 @@ class HistogramPlotExplorer(DistributionExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the histogram figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -197,6 +275,22 @@ class HistogramPlotExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved histogram for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         import plotly.io as pio
 
         resultType = "plotly_json"

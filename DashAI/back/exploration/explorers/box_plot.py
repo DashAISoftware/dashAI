@@ -76,6 +76,18 @@ class BoxPlotExplorer(DistributionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the BoxPlotExplorer with orientation and point visibility options.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            horizontal (bool, optional): If True, render a horizontal box
+            plot. Defaults to False.
+            points (str, optional): Which data points to overlay on the
+            box. One of ``"all"``, ``"outliers"``, or ``"False"``
+            (no points). Defaults to ``"outliers"``.
+        """
         self.horizontal = kwargs.get("horizontal", False)
 
         if kwargs.get("points") == "False":
@@ -85,6 +97,30 @@ class BoxPlotExplorer(DistributionExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly box plot for one or two selected numeric columns.
+
+        With one column, displays a single box. With two columns, the second
+        column is used as a grouping axis. Orientation is controlled by the
+        ``horizontal`` parameter.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset containing the selected numeric columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive box plot figure.
+
+        Raises
+        ------
+        ValueError
+            If more than two columns are selected.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -121,6 +157,24 @@ class BoxPlotExplorer(DistributionExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the box plot figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -133,6 +187,22 @@ class BoxPlotExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved box plot for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         from plotly.io import read_json
 
         resultType = "plotly_json"
