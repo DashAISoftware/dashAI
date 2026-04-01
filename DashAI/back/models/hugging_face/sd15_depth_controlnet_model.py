@@ -16,7 +16,13 @@ if TYPE_CHECKING:
 
 
 class SD15DepthControlNetSchema(BaseSchema):
-    """Schema for SD15DepthControlNetModel hyperparameters."""
+    """Configuration schema for SD 1.5 Depth ControlNet image generation.
+
+    Configures the denoising schedule (``num_inference_steps``), depth-map
+    conditioning strength (``controlnet_conditioning_scale``), prompt adherence
+    (``guidance_scale``), and hardware target (``device``) for
+    ``SD15DepthControlNetModel``.
+    """
 
     num_inference_steps: schema_field(
         int_field(ge=1),
@@ -149,7 +155,21 @@ def get_depth_map_sd15(image, device):
 
 
 class SD15DepthControlNetModel(BaseControlNetModel):
-    """ControlNet with depth preprocessing and Stable Diffusion 1.5 as pipeline."""
+    """Depth-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
+
+    Takes an input image and a text prompt. A depth map is estimated from the
+    image using Intel's DPT-Hybrid-MiDaS model, then fed as a spatial
+    conditioning signal into the ``lllyasviel/sd-controlnet-depth`` ControlNet
+    backbone together with the ``runwayml/stable-diffusion-v1-5`` diffusion
+    pipeline. The result is a 512 × 512 image that respects both the text
+    description and the 3-D structure of the original scene.
+
+    References
+    ----------
+    .. [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
+           Diffusion Models", ICCV 2023. https://arxiv.org/abs/2302.05543
+    .. [2] https://huggingface.co/lllyasviel/sd-controlnet-depth
+    """
 
     SCHEMA = SD15DepthControlNetSchema
     COLOR: str = "#4e342e"

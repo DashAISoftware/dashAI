@@ -16,7 +16,13 @@ if TYPE_CHECKING:
 
 
 class SD15HEDControlNetSchema(BaseSchema):
-    """Schema for SD15HEDControlNetModel hyperparameters."""
+    """Configuration schema for SD 1.5 HED ControlNet image generation.
+
+    Configures the denoising schedule (``num_inference_steps``), soft-edge
+    conditioning strength (``controlnet_conditioning_scale``), prompt adherence
+    (``guidance_scale``), and hardware target (``device``) for
+    ``SD15HEDControlNetModel``.
+    """
 
     num_inference_steps: schema_field(
         int_field(ge=1),
@@ -94,7 +100,25 @@ class SD15HEDControlNetSchema(BaseSchema):
 
 
 class SD15HEDControlNetModel(BaseControlNetModel):
-    """ControlNet with HED soft-edge preprocessing and Stable Diffusion 1.5 pipeline."""
+    """HED soft-edge-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
+
+    Takes an input image and a text prompt. Soft edge maps are extracted from
+    the image using the Holistically-nested Edge Detection (HED) detector from
+    ``lllyasviel/Annotators``, then fed as spatial conditioning into the
+    ``lllyasviel/sd-controlnet-hed`` ControlNet backbone together with the
+    ``runwayml/stable-diffusion-v1-5`` diffusion pipeline. HED produces
+    sketch-like contours that preserve structural outlines while allowing more
+    creative variation than hard-edge Canny maps, making this model well-suited
+    for artistic reinterpretation of existing images.
+
+    Requires the ``controlnet_aux`` package (``pip install controlnet_aux``).
+
+    References
+    ----------
+    .. [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
+           Diffusion Models", ICCV 2023. https://arxiv.org/abs/2302.05543
+    .. [2] https://huggingface.co/lllyasviel/sd-controlnet-hed
+    """
 
     SCHEMA = SD15HEDControlNetSchema
     COLOR: str = "#006064"

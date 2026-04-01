@@ -16,7 +16,14 @@ if TYPE_CHECKING:
 
 
 class SDXLCannyControlNetSchema(BaseSchema):
-    """Schema for SDXLCannyControlNetModel hyperparameters."""
+    """Configuration schema for SDXL Canny ControlNet image generation.
+
+    Configures Canny edge detection thresholds (``canny_low_threshold``,
+    ``canny_high_threshold``), the denoising schedule
+    (``num_inference_steps``), edge conditioning strength
+    (``controlnet_conditioning_scale``), and hardware target (``device``) for
+    ``SDXLCannyControlNetModel``.
+    """
 
     canny_low_threshold: schema_field(
         int_field(ge=0, le=255),
@@ -156,7 +163,24 @@ def get_canny_image(
 
 
 class SDXLCannyControlNetModel(BaseControlNetModel):
-    """ControlNet with Canny edge preprocessing and Stable Diffusion XL 1.0 pipeline."""
+    """Canny-edge-conditioned ControlNet pipeline built on Stable Diffusion XL 1.0.
+
+    Takes an input image and a text prompt. Canny edge maps are extracted using
+    OpenCV with configurable hysteresis thresholds, then fed as spatial
+    conditioning into the ``diffusers/controlnet-canny-sdxl-1.0`` ControlNet
+    backbone together with the ``stabilityai/stable-diffusion-xl-base-1.0``
+    diffusion pipeline and the ``madebyollin/sdxl-vae-fp16-fix`` VAE. The result
+    is a high-resolution image (up to 1024 × 1024 px) that closely follows the
+    structural edges of the original while adhering to the text prompt.
+
+    Requires ``opencv-python`` (``pip install opencv-python``).
+
+    References
+    ----------
+    .. [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
+           Diffusion Models", ICCV 2023. https://arxiv.org/abs/2302.05543
+    .. [2] https://huggingface.co/diffusers/controlnet-canny-sdxl-1.0
+    """
 
     SCHEMA = SDXLCannyControlNetSchema
     COLOR: str = "#1a237e"
