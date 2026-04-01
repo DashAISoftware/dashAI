@@ -1,4 +1,10 @@
-"""DashAI implementation of ModernBERT for text classification."""
+"""DashAI implementation of ModernBERT for text classification.
+
+This module exposes a DashAI wrapper for the
+``answerdotai/ModernBERT-base`` sequence classification backbone. It builds on
+the shared Hugging Face text classification base class to provide consistent
+training, prediction, and persistence behavior across transformer models.
+"""
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.hugging_face.base_text_classification_transformer import (
@@ -10,11 +16,26 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class ModernBertTransformerSchema(DistilBertTransformerSchema):
-    """ModernBERT transformer for efficient long-context text classification."""
+    """Schema for ModernBERT text classification hyperparameters.
+
+    Inherits all fields from :class:`DistilBertTransformerSchema`, including
+    training controls, optimization settings and optional logging frequencies,
+    so ModernBERT can be configured with the same interface as other DashAI
+    Hugging Face classifiers.
+    """
 
 
 class ModernBertTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained ModernBERT model for text classification tasks."""
+    """Pre-trained ModernBERT transformer for text classification.
+
+    ModernBERT is designed for strong efficiency and long-context processing.
+    This DashAI wrapper uses ``answerdotai/ModernBERT-base`` and increases the
+    tokenizer context window through ``MAX_TOKEN_LENGTH = 8192``.
+
+    References
+    ----------
+    [1] https://huggingface.co/answerdotai/ModernBERT-base
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="ModernBERT Transformer",
