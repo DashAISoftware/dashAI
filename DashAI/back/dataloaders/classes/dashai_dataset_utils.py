@@ -187,6 +187,9 @@ def categorical_one_hot_encoder(
     import numpy as np
     import pandas as pd
     import pyarrow as pa
+    from sklearn.preprocessing import OneHotEncoder
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
     types = dataset.types
 
@@ -300,4 +303,5 @@ def apply_categorical_one_hot_encoder(
 # Date Transformations
 
 
+# Image Transformations
 # Image Transformations

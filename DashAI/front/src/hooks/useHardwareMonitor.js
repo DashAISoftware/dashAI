@@ -5,11 +5,43 @@ export function useHardwareMonitor(enabled) {
   const [connected, setConnected] = useState(false);
   const wsRef = useRef(null);
   const reconnectTimeout = useRef(null);
+  const enabledRef = useRef(enabled);
+
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeout.current) {
+      clearTimeout(reconnectTimeout.current);
+      reconnectTimeout.current = null;
+    }
+  }, []);
+
+  const closeSocket = useCallback(() => {
+    if (!wsRef.current) {
+      return;
+    }
+
+    // Remove handlers to avoid reconnect scheduling from intentional closes.
+    wsRef.current.onopen = null;
+    wsRef.current.onmessage = null;
+    wsRef.current.onclose = null;
+    wsRef.current.onerror = null;
+    wsRef.current.close();
+    wsRef.current = null;
+  }, []);
 
   const connect = useCallback(() => {
-    if (wsRef.current) {
-      wsRef.current.close();
+    if (!enabledRef.current) {
+      return;
     }
+
+    if (
+      wsRef.current &&
+      (wsRef.current.readyState === WebSocket.OPEN ||
+        wsRef.current.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
+
+    clearReconnectTimeout();
 
     const apiUrl = process.env.REACT_APP_API_URL || `${window.location.origin}`;
     let wsUrl;
@@ -27,6 +59,7 @@ export function useHardwareMonitor(enabled) {
     }
 
     const ws = new WebSocket(wsUrl.toString());
+    wsRef.current = ws;
 
     ws.onopen = () => {
       setConnected(true);
@@ -43,8 +76,11 @@ export function useHardwareMonitor(enabled) {
 
     ws.onclose = () => {
       setConnected(false);
-      wsRef.current = null;
-      if (enabled) {
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+      }
+      if (enabledRef.current) {
+        clearReconnectTimeout();
         reconnectTimeout.current = setTimeout(connect, 3000);
       }
     };
@@ -52,25 +88,27 @@ export function useHardwareMonitor(enabled) {
     ws.onerror = (error) => {
       console.error("Hardware WebSocket error:", error);
     };
-
-    wsRef.current = ws;
-  }, [enabled]);
+  }, [clearReconnectTimeout]);
 
   useEffect(() => {
+    enabledRef.current = enabled;
+
     if (enabled) {
       connect();
+    } else {
+      setConnected(false);
+      clearReconnectTimeout();
+      closeSocket();
     }
+  }, [enabled, connect, clearReconnectTimeout, closeSocket]);
 
+  useEffect(() => {
     return () => {
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      enabledRef.current = false;
+      clearReconnectTimeout();
+      closeSocket();
     };
-  }, [enabled, connect]);
+  }, [clearReconnectTimeout, closeSocket]);
 
   return { stats, connected };
 }

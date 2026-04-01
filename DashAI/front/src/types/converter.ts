@@ -6,7 +6,7 @@ export interface IConverter {
   converters: Object;
 }
 
-export enum ConverterListStatus {
+export enum ConverterStatus {
   NOT_STARTED,
   DELIVERED,
   STARTED,
