@@ -9,7 +9,17 @@ if TYPE_CHECKING:
 
 
 class ClassificationMetric(BaseMetric):
-    """Class for metrics associated to classification models."""
+    """Base class for all classification evaluation metrics.
+
+    Subclasses implement :meth:`score` to evaluate the quality of a
+    classifier's probability predictions against ground-truth labels.
+    By default classification metrics are maximised (``MAXIMIZE = True``).
+
+    Compatible with DashAI tabular, image, and text classification tasks.
+    The helper :meth:`is_multiclass` inspects the true-label array to
+    automatically select binary vs. multiclass scoring strategies in
+    concrete metric implementations.
+    """
 
     MAXIMIZE: bool = True
 

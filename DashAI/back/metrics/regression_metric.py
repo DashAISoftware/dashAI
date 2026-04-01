@@ -9,7 +9,17 @@ if TYPE_CHECKING:
 
 
 class RegressionMetric(BaseMetric):
-    """Class for metrics associated with regression models."""
+    """Base class for all regression evaluation metrics.
+
+    Subclasses implement :meth:`score` to quantify the difference between
+    continuous predicted values and ground-truth targets. By default
+    regression metrics are minimised (``MAXIMIZE = False``) because smaller
+    error values indicate better performance.
+
+    Compatible with DashAI regression tasks. The helper ``prepare_to_metric``
+    in this module converts ``DashAIDataset`` targets and raw numpy predictions
+    to flat numpy arrays before passing them to sklearn metric functions.
+    """
 
     MAXIMIZE: bool = False
     COMPATIBLE_COMPONENTS = ["RegressionTask"]
