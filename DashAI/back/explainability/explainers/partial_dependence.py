@@ -136,9 +136,9 @@ class PartialDependence(BaseGlobalExplainer):
             feature. Defaults to 100.
         """
 
-        assert (
-            upper_percentile > lower_percentile
-        ), "upper_percentile value must be greater than lower_percentile"
+        assert upper_percentile > lower_percentile, (
+            "upper_percentile value must be greater than lower_percentile"
+        )
 
         super().__init__(model)
 

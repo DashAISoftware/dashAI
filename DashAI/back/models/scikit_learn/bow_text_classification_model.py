@@ -77,7 +77,9 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
 
 
 class BagOfWordsTextClassificationModel(TextClassificationModel):
-    """Text classification meta-model that combines a bag-of-words vectorizer with a DashAI tabular classifier.
+    """
+    Text classification meta-model that combines a bag-of-words vectorizer
+    with a DashAI tabular classifier.
 
     The model converts raw text into a token-count matrix using scikit-learn's
     ``CountVectorizer`` with a configurable n-gram range, then passes the

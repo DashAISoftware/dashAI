@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 
 
 class LogLoss(ClassificationMetric):
-    """Negative log-likelihood of true labels under the predicted probability distribution.
+    """
+    Negative log-likelihood of true labels under the predicted probability distribution.
 
     Log Loss (cross-entropy loss) penalises confident wrong predictions much
     more heavily than uncertain ones. Unlike accuracy or F1, it evaluates the
