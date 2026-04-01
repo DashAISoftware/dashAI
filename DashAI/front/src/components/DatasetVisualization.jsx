@@ -321,6 +321,7 @@ export default function DatasetVisualization({
                 qualityInfo={datasetInfo?.quality_info}
                 generalInfo={datasetInfo?.general_info}
                 missingValues={datasetInfo?.nan}
+                onNavigateTab={setTab}
               />
             </Box>
             {/* Tabs */}
