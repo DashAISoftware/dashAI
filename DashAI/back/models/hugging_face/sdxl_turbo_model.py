@@ -175,7 +175,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     trained with Adversarial Diffusion Distillation (ADD) by Stability AI.
     ADD transfers knowledge from a large teacher model into a student that
     can produce photorealistic 512 px images in as few as one denoising step,
-    up to 30× faster than standard SDXL.
+    up to 30x faster than standard SDXL.
 
     Because ADD bakes guidance directly into the model weights, classifier-free
     guidance is disabled (``guidance_scale=0`` is enforced internally) and

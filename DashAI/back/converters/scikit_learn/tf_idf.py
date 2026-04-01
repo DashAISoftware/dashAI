@@ -79,7 +79,7 @@ class TFIDFConverterSchema(BaseSchema):
 class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     """Convert raw text documents into a matrix of TF-IDF weighted features.
 
-    TF-IDF (Term Frequency – Inverse Document Frequency) re-weights raw token
+    TF-IDF (Term Frequency - Inverse Document Frequency) re-weights raw token
     counts so that terms that appear frequently in a specific document but
     rarely across the whole corpus receive a higher score, while common
     stop-like terms are down-weighted. Each document is represented as a
@@ -87,7 +87,7 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     The TF-IDF score for term *t* in document *d* is:
 
-        tfidf(t, d) = tf(t, d) × log((1 + n) / (1 + df(t))) + 1
+        tfidf(t, d) = tf(t, d) x log((1 + n) / (1 + df(t))) + 1
 
     where *n* is the total number of documents and *df(t)* is the number of
     documents containing *t* (scikit-learn's ``smooth_idf=True`` default).

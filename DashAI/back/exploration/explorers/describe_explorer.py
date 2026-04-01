@@ -131,7 +131,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
         ----------
         **kwargs
             Keyword arguments matching ``DescribeExplorerSchema`` fields:
-            percentiles (str | None): Comma-separated integers 0–100 (e.g.
+            percentiles (str | None): Comma-separated integers 0-100 (e.g.
             ``"25, 50, 75"``). Converted to floats (e.g. ``[0.25, 0.5,
             0.75]``). Pass an empty string or ``None`` to use pandas
             defaults.

@@ -217,7 +217,7 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
     Wraps Stable Diffusion XL (SDXL) checkpoints. SDXL scales the standard
     SD architecture with a larger U-Net backbone and a two-text-encoder
     conditioning stack (OpenCLIP-ViT/G + CLIP-ViT/L), enabling significantly
-    better prompt following and photorealism at 1024 × 1024 px compared to
+    better prompt following and photorealism at 1024 x 1024 px compared to
     SD 1.x/2.x.
 
     Two checkpoints are supported: the official

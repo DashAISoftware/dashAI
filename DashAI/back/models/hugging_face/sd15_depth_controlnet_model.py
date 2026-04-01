@@ -161,7 +161,7 @@ class SD15DepthControlNetModel(BaseControlNetModel):
     image using Intel's DPT-Hybrid-MiDaS model, then fed as a spatial
     conditioning signal into the ``lllyasviel/sd-controlnet-depth`` ControlNet
     backbone together with the ``runwayml/stable-diffusion-v1-5`` diffusion
-    pipeline. The result is a 512 × 512 image that respects both the text
+    pipeline. The result is a 512 x 512 image that respects both the text
     description and the 3-D structure of the original scene.
 
     References

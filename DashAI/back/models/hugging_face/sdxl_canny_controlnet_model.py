@@ -170,7 +170,7 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
     conditioning into the ``diffusers/controlnet-canny-sdxl-1.0`` ControlNet
     backbone together with the ``stabilityai/stable-diffusion-xl-base-1.0``
     diffusion pipeline and the ``madebyollin/sdxl-vae-fp16-fix`` VAE. The result
-    is a high-resolution image (up to 1024 × 1024 px) that closely follows the
+    is a high-resolution image (up to 1024 x 1024 px) that closely follows the
     structural edges of the original while adhering to the text prompt.
 
     Requires ``opencv-python`` (``pip install opencv-python``).

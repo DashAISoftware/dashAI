@@ -251,7 +251,7 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
 
     Four variants are supported: SD3 Medium (2B), SD3.5 Medium (2B, improved),
     SD3.5 Large (8B, best quality), and SD3.5 Large Turbo (distilled, 4-8
-    steps). All produce images natively at 1024 × 1024 px. Access to these
+    steps). All produce images natively at 1024 x 1024 px. Access to these
     gated models requires a HuggingFace API key.
 
     References
