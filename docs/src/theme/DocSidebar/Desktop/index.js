@@ -1,5 +1,4 @@
-import React from "react";
-import clsx from "clsx";
+import React, { useEffect } from "react";
 import { useThemeConfig } from "@docusaurus/theme-common";
 import Content from "@theme/DocSidebar/Desktop/Content";
 
@@ -23,6 +22,30 @@ function HamburgerIcon() {
   );
 }
 
+function getSectionFromPath(pathname) {
+  if (!pathname) {
+    return undefined;
+  }
+
+  if (pathname.startsWith("/discover/")) {
+    return "discover";
+  }
+
+  if (pathname.startsWith("/learn/")) {
+    return "learn";
+  }
+
+  if (pathname.startsWith("/deep-dive/")) {
+    return "deep-dive";
+  }
+
+  if (pathname.startsWith("/build/") || pathname.startsWith("/components/")) {
+    return "build";
+  }
+
+  return undefined;
+}
+
 export default function DocSidebarDesktop({
   path,
   sidebar,
@@ -39,8 +62,29 @@ export default function DocSidebarDesktop({
     return null;
   }
 
+  const section = getSectionFromPath(path);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    const root = document.documentElement;
+    if (section) {
+      root.setAttribute("data-section", section);
+    } else {
+      root.removeAttribute("data-section");
+    }
+
+    return () => {
+      if (root.getAttribute("data-section") === section) {
+        root.removeAttribute("data-section");
+      }
+    };
+  }, [section]);
+
   return (
-    <div className="dashai-sidebar-desktop">
+    <div className="dashai-sidebar-desktop" data-section={section}>
       {/* Navbar-height header row — matches the top bar visually */}
       {hideable && (
         <div className="dashai-sidebar-header-row">

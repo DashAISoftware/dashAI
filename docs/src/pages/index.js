@@ -78,6 +78,7 @@ export default function Home() {
                   {sec.label}
                 </span>
               </div>
+              <div className="dashai-landing-card__title">{sec.title}</div>
               <div className="dashai-landing-card__desc">{sec.desc}</div>
             </Link>
           ))}
