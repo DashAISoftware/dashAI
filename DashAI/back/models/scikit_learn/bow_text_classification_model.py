@@ -18,9 +18,11 @@ if TYPE_CHECKING:
 
 
 class BagOfWordsTextClassificationModelSchema(BaseSchema):
-    """
-    NumericalWrapperForText is a metamodel that allows text classification using
-    tabular classifiers and a tokenizer.
+    """Configuration schema for the Bag-of-Words text classification meta-model.
+
+    Configures the underlying tabular classifier (``tabular_classifier``) and
+    the n-gram range for the ``CountVectorizer`` (``ngram_min_n``,
+    ``ngram_max_n``) used by ``BagOfWordsTextClassificationModel``.
     """
 
     tabular_classifier: schema_field(
@@ -109,17 +111,22 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
     SCHEMA = BagOfWordsTextClassificationModelSchema
 
     def __init__(self, **kwargs) -> None:
-        """
-        Initialize the BagOfWordsTextClassificationModel.
+        """Initialise the Bag-of-Words text classification meta-model.
+
+        Creates a ``CountVectorizer`` with the configured n-gram range and
+        stores the pre-instantiated tabular classifier that will be trained on
+        the resulting token-count matrix.
 
         Parameters
         ----------
-        kwargs : dict
-            A dictionary containing the parameters for the model, including:
-            - tabular_classifier:
-            The tabular classification model from DashAI to be used.
-            - ngram_min_n: Minimum n-gram value.
-            - ngram_max_n: Maximum n-gram value.
+        **kwargs : dict
+            tabular_classifier : TabularClassificationModel
+                An already-instantiated DashAI tabular classifier to use as
+                the underlying prediction model.
+            ngram_min_n : int
+                Minimum n-gram size for the ``CountVectorizer`` (≥ 1).
+            ngram_max_n : int
+                Maximum n-gram size for the ``CountVectorizer`` (≥ 1).
         """
 
         # Lazy import of CountVectorizer
