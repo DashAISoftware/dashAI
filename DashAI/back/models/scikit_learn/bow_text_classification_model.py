@@ -77,22 +77,23 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
 
 
 class BagOfWordsTextClassificationModel(TextClassificationModel):
-    """Text classification meta-model.
+    """Text classification meta-model that combines a bag-of-words vectorizer with a DashAI tabular classifier.
 
-    The metamodel has two main components:
+    The model converts raw text into a token-count matrix using scikit-learn's
+    ``CountVectorizer`` with a configurable n-gram range, then passes the
+    resulting sparse feature matrix to any DashAI ``TabularClassificationModel``
+    for training and prediction. This decouples text featurisation from the
+    choice of classifier, allowing any registered DashAI tabular model (tree-based,
+    SVM, linear, etc.) to be applied to text classification without modification.
 
-    - Tabular classification model: the underlying model that processes the data and
-        provides the prediction.
-    - Vectorizer: a BagOfWords that vectorizes the text into a sparse matrix to give
-        the correct input to the underlying model.
+    During training the vectorizer is fitted on the input text column and the
+    resulting token-count matrix is forwarded to the wrapped classifier's
+    ``train`` method. During inference the already-fitted vectorizer transforms
+    the text before calling the classifier's ``predict`` method.
 
-    The tabular_model and vectorizer are created in the __init__ method and stored in
-    the model.
-
-    To train the tabular_model the vectorizer is fitted and used to transform the
-    train dataset.
-
-    To predict with the tabular_model the vectorizer is used to transform the dataset.
+    References
+    ----------
+    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
     """
 
     DISPLAY_NAME: str = MultilingualString(
