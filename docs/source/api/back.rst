@@ -100,7 +100,7 @@ Jobs
    DashAI.back.job.ModelJob
    DashAI.back.job.PredictJob
    DashAI.back.job.ExplorerJob
-   DashAI.back.job.ConverterListJob
+   DashAI.back.job.ConverterJob
 
 Explainers
 ==========
