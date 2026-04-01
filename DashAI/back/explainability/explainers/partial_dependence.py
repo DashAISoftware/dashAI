@@ -75,9 +75,10 @@ class PartialDependence(BaseGlobalExplainer):
     shows the average effect of the target feature in isolation. For a feature
     `x_j`, the partial dependence is:
 
-    ```
-    f̄(x_j) = E_(x_-j) [ f(x_j, x_-j) ] ≈ (1/n) Σ_i f(x_j, x_-j,i)
-    ```
+    ::
+
+        f̄(x_j) = E_(x_-j) [ f(x_j, x_-j) ] ≈ (1/n) Σ_i f(x_j, x_-j,i)
+
 
     PDPs assume feature independence; when features are correlated, the
     marginalisation extrapolates into regions with low data density. Individual
