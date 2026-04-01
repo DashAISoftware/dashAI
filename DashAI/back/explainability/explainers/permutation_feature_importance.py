@@ -103,10 +103,10 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
     References
     ----------
-    .. [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
-    .. [2] Fisher, A. et al. (2019). "All Models are Wrong, but Many are Useful."
+    - [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
+    - [2] Fisher, A. et al. (2019). "All Models are Wrong, but Many are Useful."
            JMLR, 20(177), 1-81. https://arxiv.org/abs/1801.01489
-    .. [3] https://scikit-learn.org/stable/modules/permutation_importance.html
+    - [3] https://scikit-learn.org/stable/modules/permutation_importance.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]

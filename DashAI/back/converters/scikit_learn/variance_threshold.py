@@ -61,7 +61,7 @@ class VarianceThreshold(
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.VarianceThreshold.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.VarianceThreshold.html
     """
 
     SCHEMA = VarianceThresholdSchema

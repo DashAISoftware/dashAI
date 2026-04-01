@@ -169,10 +169,10 @@ class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
 
     References
     ----------
-    .. [1] Hoerl, A.E. & Kennard, R.W. (1970). "Ridge Regression: Biased
+    - [1] Hoerl, A.E. & Kennard, R.W. (1970). "Ridge Regression: Biased
            Estimation for Nonorthogonal Problems." Technometrics, 12(1), 55-67.
            https://doi.org/10.1080/00401706.1970.10488634
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html
     """
 
     SCHEMA = RidgeRegressionSchema

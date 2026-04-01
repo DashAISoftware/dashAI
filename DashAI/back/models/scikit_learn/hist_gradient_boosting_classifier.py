@@ -160,10 +160,10 @@ class HistGradientBoostingClassifier(
 
     References
     ----------
-    .. [1] Ke, G. et al. (2017). "LightGBM: A Highly Efficient Gradient Boosting
+    - [1] Ke, G. et al. (2017). "LightGBM: A Highly Efficient Gradient Boosting
            Decision Tree." Advances in Neural Information Processing Systems 30.
            https://proceedings.neurips.cc/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html
     """
 
     SCHEMA = HistGradientBoostingClassifierSchema

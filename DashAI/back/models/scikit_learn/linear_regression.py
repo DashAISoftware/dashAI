@@ -98,7 +98,7 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
     """
 
     SCHEMA = LinearRegressionSchema

@@ -75,7 +75,7 @@ class StandardScaler(
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
     """
 
     SCHEMA = StandardScalerSchema

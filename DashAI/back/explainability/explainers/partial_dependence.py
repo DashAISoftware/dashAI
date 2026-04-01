@@ -87,9 +87,9 @@ class PartialDependence(BaseGlobalExplainer):
 
     References
     ----------
-    .. [1] Friedman, J.H. (2001). "Greedy function approximation: A gradient
+    - [1] Friedman, J.H. (2001). "Greedy function approximation: A gradient
            boosting machine." Annals of Statistics, 29(5), 1189-1232.
-    .. [2] https://scikit-learn.org/stable/modules/partial_dependence.html
+    - [2] https://scikit-learn.org/stable/modules/partial_dependence.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]

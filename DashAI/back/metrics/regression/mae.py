@@ -25,7 +25,7 @@ class MAE(RegressionMetric):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html
     """
 
     DESCRIPTION: str = (

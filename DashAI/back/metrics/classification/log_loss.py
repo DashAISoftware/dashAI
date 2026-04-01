@@ -35,7 +35,7 @@ class LogLoss(ClassificationMetric):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.log_loss.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.log_loss.html
     """
 
     DESCRIPTION: str = (

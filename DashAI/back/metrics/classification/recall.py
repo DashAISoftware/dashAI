@@ -30,7 +30,7 @@ class Recall(ClassificationMetric):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
     """
 
     DESCRIPTION: str = (

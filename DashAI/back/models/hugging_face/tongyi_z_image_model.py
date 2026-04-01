@@ -206,7 +206,7 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
 
     References
     ----------
-    .. [1] https://huggingface.co/Tongyi-MAI/Z-Image
+    - [1] https://huggingface.co/Tongyi-MAI/Z-Image
     """
 
     SCHEMA = TongyiZImageSchema

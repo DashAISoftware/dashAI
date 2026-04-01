@@ -37,7 +37,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
     """
 
     SCHEMA = LabelEncoderSchema

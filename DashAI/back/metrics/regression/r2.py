@@ -28,7 +28,7 @@ class R2(RegressionMetric):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html
     """
 
     MAXIMIZE: bool = True

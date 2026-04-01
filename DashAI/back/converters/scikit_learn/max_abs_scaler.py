@@ -51,7 +51,7 @@ class MaxAbsScaler(
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
     """
 
     SCHEMA = MaxAbsScalerSchema

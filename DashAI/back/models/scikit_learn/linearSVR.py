@@ -217,11 +217,11 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
 
     References
     ----------
-    .. [1] Fan, R.-E., Chang, K.-W., Hsieh, C.-J., Wang, X.-R., & Lin, C.-J.
+    - [1] Fan, R.-E., Chang, K.-W., Hsieh, C.-J., Wang, X.-R., & Lin, C.-J.
            (2008). "LIBLINEAR: A library for large linear classification."
            Journal of Machine Learning Research, 9, 1871-1874.
            https://www.jmlr.org/papers/v9/fan08a.html
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html
     """
 
     SCHEMA = LinearSVRSchema

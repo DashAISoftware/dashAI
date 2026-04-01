@@ -178,8 +178,8 @@ class QwenModel(TextToTextGenerationTaskModel):
 
     References
     ----------
-    .. [1] Qwen Team (2024). "Qwen2.5 Technical Report." https://arxiv.org/abs/2412.15115
-    .. [2] https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
+    - [1] Qwen Team (2024). "Qwen2.5 Technical Report." https://arxiv.org/abs/2412.15115
+    - [2] https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
     """
 
     SCHEMA = QwenSchema

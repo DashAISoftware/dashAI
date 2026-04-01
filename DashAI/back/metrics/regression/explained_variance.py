@@ -27,7 +27,7 @@ class ExplainedVariance(RegressionMetric):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html
     """
 
     DESCRIPTION: str = (

@@ -173,9 +173,9 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
 
     References
     ----------
-    .. [1] Cortes, C. & Vapnik, V. (1995). "Support-vector networks."
+    - [1] Cortes, C. & Vapnik, V. (1995). "Support-vector networks."
            Machine Learning, 20(3), 273-297. https://doi.org/10.1007/BF00994018
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
     """
 
     SCHEMA = SVCSchema

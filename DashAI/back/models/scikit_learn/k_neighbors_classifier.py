@@ -83,10 +83,10 @@ class KNeighborsClassifier(
 
     References
     ----------
-    .. [1] Cover, T. & Hart, P. (1967). "Nearest neighbor pattern classification."
+    - [1] Cover, T. & Hart, P. (1967). "Nearest neighbor pattern classification."
            IEEE Transactions on Information Theory, 13(1), 21-27.
            https://doi.org/10.1109/TIT.1967.1053964
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
     """
 
     SCHEMA = KNeighborsClassifierSchema

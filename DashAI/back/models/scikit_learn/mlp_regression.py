@@ -201,10 +201,10 @@ class MLPRegression(RegressionModel):
 
     References
     ----------
-    .. [1] Rumelhart, D.E., Hinton, G.E., & Williams, R.J. (1986).
+    - [1] Rumelhart, D.E., Hinton, G.E., & Williams, R.J. (1986).
            "Learning representations by back-propagating errors."
            Nature, 323(6088), 533-536. https://doi.org/10.1038/323533a0
-    .. [2] Kingma, D.P. & Ba, J. (2015). "Adam: A Method for Stochastic
+    - [2] Kingma, D.P. & Ba, J. (2015). "Adam: A Method for Stochastic
            Optimization." ICLR 2015. https://arxiv.org/abs/1412.6980
     """
 

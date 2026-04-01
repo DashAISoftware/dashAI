@@ -71,12 +71,12 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
 
     References
     ----------
-    .. [1] Chawla, N.V. et al. (2002). "SMOTE: Synthetic Minority Over-sampling
+    - [1] Chawla, N.V. et al. (2002). "SMOTE: Synthetic Minority Over-sampling
            Technique." JAIR, 16, 321-357. https://arxiv.org/abs/1106.1813
-    .. [2] Batista, G.E.A.P.A. et al. (2004). "A study of the behaviour of several
+    - [2] Batista, G.E.A.P.A. et al. (2004). "A study of the behaviour of several
            methods for balancing machine learning training data." ACM SIGKDD
            Explorations, 6(1), 20-29.
-    .. [3] https://imbalanced-learn.org/stable/references/generated/imblearn.combine.SMOTEENN.html
+    - [3] https://imbalanced-learn.org/stable/references/generated/imblearn.combine.SMOTEENN.html
     """
 
     SCHEMA = SMOTEENNSchema

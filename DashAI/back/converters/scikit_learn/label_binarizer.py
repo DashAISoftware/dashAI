@@ -56,7 +56,7 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelBinarizer.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelBinarizer.html
     """
 
     SCHEMA = LabelBinarizerSchema

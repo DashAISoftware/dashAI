@@ -237,9 +237,9 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
 
     References
     ----------
-    .. [1] Rombach et al., "High-Resolution Image Synthesis with Latent
+    - [1] Rombach et al., "High-Resolution Image Synthesis with Latent
            Diffusion Models", CVPR 2022. https://arxiv.org/abs/2112.10752
-    .. [2] https://huggingface.co/sd2-community
+    - [2] https://huggingface.co/sd2-community
     """
 
     SCHEMA = StableDiffusionSchema

@@ -216,10 +216,10 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
 
     References
     ----------
-    .. [1] Chen et al., "PixArt-Sigma: Weak-to-Strong Training of Diffusion
+    - [1] Chen et al., "PixArt-Sigma: Weak-to-Strong Training of Diffusion
            Transformer for 4K Text-to-Image Generation", 2024.
            https://arxiv.org/abs/2403.04692
-    .. [2] https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS
+    - [2] https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS
     """
 
     SCHEMA = PixArtSigmaSchema

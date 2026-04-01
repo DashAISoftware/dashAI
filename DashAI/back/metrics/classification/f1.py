@@ -31,9 +31,9 @@ class F1(ClassificationMetric):
 
     References
     ----------
-    .. [1] Van Rijsbergen, C.J. (1979). *Information Retrieval* (2nd ed.).
+    - [1] Van Rijsbergen, C.J. (1979). *Information Retrieval* (2nd ed.).
            Butterworth-Heinemann.
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
     """
 
     DESCRIPTION: str = (

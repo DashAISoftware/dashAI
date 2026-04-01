@@ -166,9 +166,9 @@ class SD15DepthControlNetModel(BaseControlNetModel):
 
     References
     ----------
-    .. [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
+    - [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
            Diffusion Models", ICCV 2023. https://arxiv.org/abs/2302.05543
-    .. [2] https://huggingface.co/lllyasviel/sd-controlnet-depth
+    - [2] https://huggingface.co/lllyasviel/sd-controlnet-depth
     """
 
     SCHEMA = SD15DepthControlNetSchema

@@ -32,9 +32,9 @@ class CohenKappa(ClassificationMetric):
 
     References
     ----------
-    .. [1] Cohen, J. (1960). "A coefficient of agreement for nominal scales."
+    - [1] Cohen, J. (1960). "A coefficient of agreement for nominal scales."
            Educational and Psychological Measurement, 20(1), 37–46.
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html
     """
 
     DESCRIPTION: str = (

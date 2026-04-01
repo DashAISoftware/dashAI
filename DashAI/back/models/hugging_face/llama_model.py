@@ -188,8 +188,8 @@ class LlamaModel(TextToTextGenerationTaskModel):
 
     References
     ----------
-    .. [1] Meta AI, "Llama 3", 2024. https://ai.meta.com/blog/meta-llama-3/
-    .. [2] https://huggingface.co/bartowski
+    - [1] Meta AI, "Llama 3", 2024. https://ai.meta.com/blog/meta-llama-3/
+    - [2] https://huggingface.co/bartowski
     """
 
     SCHEMA = LlamaSchema

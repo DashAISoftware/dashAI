@@ -274,9 +274,9 @@ class RandomForestRegression(
 
     References
     ----------
-    .. [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
+    - [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
            https://doi.org/10.1023/A:1010933404324
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
     """
 
     SCHEMA = RandomForestRegressionSchema

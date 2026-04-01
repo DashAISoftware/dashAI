@@ -63,7 +63,7 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.Normalizer.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.Normalizer.html
     """
 
     SCHEMA = NormalizerSchema

@@ -26,7 +26,7 @@ class MSE(RegressionMetric):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html
     """
 
     DESCRIPTION: str = (

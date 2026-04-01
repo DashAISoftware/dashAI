@@ -227,9 +227,9 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
 
     References
     ----------
-    .. [1] Podell et al., "SDXL: Improving Latent Diffusion Models for
+    - [1] Podell et al., "SDXL: Improving Latent Diffusion Models for
            High-Resolution Image Synthesis", 2023. https://arxiv.org/abs/2307.01952
-    .. [2] https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
+    - [2] https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
     """
 
     SCHEMA = StableDiffusionXLSchema

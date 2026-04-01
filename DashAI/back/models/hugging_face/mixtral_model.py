@@ -200,8 +200,8 @@ class MixtralModel(TextToTextGenerationTaskModel):
 
     References
     ----------
-    .. [1] Jiang et al. (2024) "Mixtral of Experts" https://arxiv.org/abs/2401.04088
-    .. [2] https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
+    - [1] Jiang et al. (2024) "Mixtral of Experts" https://arxiv.org/abs/2401.04088
+    - [2] https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
     """
 
     SCHEMA = MixtralSchema

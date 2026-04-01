@@ -69,10 +69,10 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
 
     References
     ----------
-    .. [1] Chawla, N.V. et al. (2002). "SMOTE: Synthetic Minority Over-sampling
+    - [1] Chawla, N.V. et al. (2002). "SMOTE: Synthetic Minority Over-sampling
            Technique." Journal of Artificial Intelligence Research, 16, 321-357.
            https://arxiv.org/abs/1106.1813
-    .. [2] https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html
+    - [2] https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html
     """
 
     SCHEMA = SMOTESchema

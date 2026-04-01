@@ -256,10 +256,10 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
 
     References
     ----------
-    .. [1] Esser et al., "Scaling Rectified Flow Transformers for
+    - [1] Esser et al., "Scaling Rectified Flow Transformers for
            High-Resolution Image Synthesis", 2024.
            https://arxiv.org/abs/2403.03206
-    .. [2] https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers
+    - [2] https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers
     """
 
     SCHEMA = StableDiffusionSchema

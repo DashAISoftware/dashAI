@@ -32,9 +32,9 @@ class ROCAUC(ClassificationMetric):
 
     References
     ----------
-    .. [1] Fawcett, T. (2006). "An introduction to ROC analysis."
+    - [1] Fawcett, T. (2006). "An introduction to ROC analysis."
            Pattern Recognition Letters, 27(8), 861–874.
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
     """
 
     DESCRIPTION: str = (

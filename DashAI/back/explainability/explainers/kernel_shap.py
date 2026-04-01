@@ -121,9 +121,9 @@ class KernelShap(BaseLocalExplainer):
 
     References
     ----------
-    .. [1] Lundberg, S.M. & Lee, S.I. (2017). "A Unified Approach to Interpreting
+    - [1] Lundberg, S.M. & Lee, S.I. (2017). "A Unified Approach to Interpreting
            Model Predictions." NeurIPS 30. https://arxiv.org/abs/1705.07874
-    .. [2] https://shap.readthedocs.io/en/latest/generated/shap.KernelExplainer.html
+    - [2] https://shap.readthedocs.io/en/latest/generated/shap.KernelExplainer.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]

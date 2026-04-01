@@ -112,7 +112,7 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
     """
 
     SCHEMA = OneHotEncoderSchema

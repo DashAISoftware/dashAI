@@ -357,10 +357,10 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
 
     References
     ----------
-    .. [1] Friedman, J.H. (2001). "Greedy function approximation: a gradient
+    - [1] Friedman, J.H. (2001). "Greedy function approximation: a gradient
            boosting machine." Annals of Statistics, 29(5), 1189-1232.
            https://doi.org/10.1214/aos/1013203451
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
     """
 
     SCHEMA = GradientBoostingRSchema

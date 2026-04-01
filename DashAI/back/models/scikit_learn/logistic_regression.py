@@ -104,9 +104,9 @@ class LogisticRegression(
 
     References
     ----------
-    .. [1] Cox, D.R. (1958). "The regression analysis of binary sequences."
+    - [1] Cox, D.R. (1958). "The regression analysis of binary sequences."
            Journal of the Royal Statistical Society, Series B, 20(2), 215-242.
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
     """
 
     SCHEMA = LogisticRegressionSchema

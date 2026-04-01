@@ -111,9 +111,9 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
 
     References
     ----------
-    .. [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
+    - [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
            Diffusion Models", ICCV 2023. https://arxiv.org/abs/2302.05543
-    .. [2] https://huggingface.co/lllyasviel/sd-controlnet-openpose
+    - [2] https://huggingface.co/lllyasviel/sd-controlnet-openpose
     """
 
     SCHEMA = SD15OpenPoseControlNetSchema

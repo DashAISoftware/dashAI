@@ -164,8 +164,8 @@ class MistralModel(TextToTextGenerationTaskModel):
 
     References
     ----------
-    .. [1] Jiang et al. (2023) "Mistral 7B" https://arxiv.org/abs/2310.06825
-    .. [2] https://huggingface.co/mistralai
+    - [1] Jiang et al. (2023) "Mistral 7B" https://arxiv.org/abs/2310.06825
+    - [2] https://huggingface.co/mistralai
     """
 
     SCHEMA = MistralSchema

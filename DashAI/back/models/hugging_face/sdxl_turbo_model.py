@@ -186,9 +186,9 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
 
     References
     ----------
-    .. [1] Sauer et al., "Adversarial Diffusion Distillation", 2023.
+    - [1] Sauer et al., "Adversarial Diffusion Distillation", 2023.
            https://arxiv.org/abs/2311.17042
-    .. [2] https://huggingface.co/stabilityai/sdxl-turbo
+    - [2] https://huggingface.co/stabilityai/sdxl-turbo
     """
 
     SCHEMA = SDXLTurboSchema

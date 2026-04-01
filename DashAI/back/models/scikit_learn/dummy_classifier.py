@@ -44,7 +44,7 @@ class DummyClassifier(
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
     """
 
     SCHEMA = DummyClassifierSchema

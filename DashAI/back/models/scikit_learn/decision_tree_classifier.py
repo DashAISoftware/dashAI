@@ -134,9 +134,9 @@ class DecisionTreeClassifier(
 
     References
     ----------
-    .. [1] Breiman, L., Friedman, J., Olshen, R., & Stone, C. (1984).
+    - [1] Breiman, L., Friedman, J., Olshen, R., & Stone, C. (1984).
            "Classification and Regression Trees." Wadsworth.
-    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
     """
 
     SCHEMA = DecisionTreeClassifierSchema

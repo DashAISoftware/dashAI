@@ -76,7 +76,7 @@ class MinMaxScaler(
 
     References
     ----------
-    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html
     """
 
     SCHEMA = MinMaxScalerSchema
