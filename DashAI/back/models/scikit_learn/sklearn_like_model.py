@@ -24,7 +24,14 @@ class CategoricalEncodingStrategy(str, Enum):
 
 
 class SklearnLikeModel(BaseModel):
-    """Abstract class to define the way to save sklearn like models."""
+    """Abstract base class for scikit-learn-compatible DashAI models.
+
+    Provides ``save`` / ``load`` via joblib, categorical encoding helpers
+    (label or one-hot), and the ``prepare_dataset`` / ``prepare_output``
+    pipeline expected by the DashAI training loop. Concrete subclasses
+    (classifiers and regressors) inherit this mixin and supply ``train`` and
+    ``predict`` implementations backed by scikit-learn estimators.
+    """
 
     CATEGORICAL_ENCODING: CategoricalEncodingStrategy = (
         CategoricalEncodingStrategy.LABEL

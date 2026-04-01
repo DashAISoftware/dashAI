@@ -13,7 +13,13 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class StableDiffusionXLV1ControlNetSchema(BaseSchema):
-    """Schema for StableDiffusionXLV1ControlNet hyperparameters."""
+    """Configuration schema for the SDXL V1 Depth ControlNet pipeline.
+
+    Configures the denoising schedule (``num_inference_steps``), depth-map
+    conditioning strength (``controlnet_conditioning_scale``), prompt adherence
+    (``guidance_scale``), and hardware target (``device``) for
+    ``StableDiffusionXLV1ControlNet``.
+    """
 
     num_inference_steps: schema_field(
         int_field(ge=1),

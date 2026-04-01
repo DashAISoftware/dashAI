@@ -233,7 +233,12 @@ class MLPRegression(RegressionModel):
         import torch.nn as nn
 
         class MLP(nn.Module):
-            """Single hidden-layer MLP module."""
+            """Single hidden-layer feedforward network built as a ``nn.Sequential``.
+
+            Used internally by ``MLPRegression`` to create a configurable
+            MLP with one hidden layer, the chosen activation function, and a
+            linear output layer.
+            """
 
             def __init__(self, input_dim, hidden_size, activation_name):
                 """Build the sequential MLP architecture.

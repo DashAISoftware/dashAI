@@ -25,7 +25,13 @@ LLAMA_FILENAME_MAP = {
 
 
 class LlamaSchema(BaseSchema):
-    """Schema for Llama model."""
+    """Configuration schema for Meta Llama 3.x text generation.
+
+    Configures the GGUF checkpoint variant (``model_name``), generation
+    behaviour (``max_tokens``, ``temperature``, ``frequency_penalty``),
+    context length (``context_window``), device target (``device``), and
+    system prompt (``system_prompt``) for ``LlamaModel``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -170,7 +176,21 @@ class LlamaSchema(BaseSchema):
 
 
 class LlamaModel(TextToTextGenerationTaskModel):
-    """Meta Llama 3.x model for text generation using llama.cpp library."""
+    """Meta Llama 3.x instruction-tuned model for text generation via llama.cpp.
+
+    Wraps the Meta Llama 3.x family of open-weight instruction-tuned LLMs
+    loaded in Q4_K_M GGUF format using the ``llama-cpp-python`` library.
+    GGUF quantization enables efficient CPU and GPU inference without requiring
+    full-precision weights, making the models practical on consumer hardware.
+
+    Three sizes are available via bartowski's community quantizations:
+    1B (fastest, CPU-friendly), 3B (balanced), and 8B (highest quality).
+
+    References
+    ----------
+    .. [1] Meta AI, "Llama 3", 2024. https://ai.meta.com/blog/meta-llama-3/
+    .. [2] https://huggingface.co/bartowski
+    """
 
     SCHEMA = LlamaSchema
     COLOR: str = "#1a237e"
