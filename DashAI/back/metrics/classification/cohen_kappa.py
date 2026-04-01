@@ -12,7 +12,30 @@ if TYPE_CHECKING:
 
 
 class CohenKappa(ClassificationMetric):
-    """Cohen Kappa score to classification tasks."""
+    """Agreement between classifier predictions and true labels beyond chance.
+
+    Cohen's Kappa (κ) measures the extent to which two raters (here, the model
+    and ground truth) agree on class assignments, correcting for the probability
+    of agreement occurring by chance. Unlike raw accuracy, Kappa accounts for
+    class imbalance and is particularly useful when evaluating classifiers on
+    unbalanced datasets.
+
+    .. math::
+
+        \\kappa = \\frac{p_o - p_e}{1 - p_e}
+
+    where :math:`p_o` is the observed agreement (accuracy) and :math:`p_e` is
+    the expected agreement by chance.
+
+    Range: (−∞, 1]. Interpretation: < 0 worse than chance; 0.21–0.40 fair;
+    0.41–0.60 moderate; 0.61–0.80 substantial; 0.81–1.0 almost perfect.
+
+    References
+    ----------
+    .. [1] Cohen, J. (1960). "A coefficient of agreement for nominal scales."
+           Educational and Psychological Measurement, 20(1), 37–46.
+    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html
+    """
 
     DESCRIPTION: str = (
         "Cohen Kappa score measures the agreement between two raters "

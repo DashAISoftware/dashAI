@@ -12,7 +12,30 @@ if TYPE_CHECKING:
 
 
 class ROCAUC(ClassificationMetric):
-    """RoC AUC score to classification tasks."""
+    """Area under the Receiver Operating Characteristic curve.
+
+    ROC AUC measures the classifier's ability to distinguish between classes
+    across all possible decision thresholds. The ROC curve plots the true
+    positive rate (recall) against the false positive rate, and the AUC
+    summarises the entire curve in a single scalar. A value of 0.5 indicates
+    no discriminative ability (random classifier); 1.0 is a perfect classifier.
+
+    For binary tasks, the probability of the positive class (column index 1)
+    is used. For multiclass tasks, a one-vs-rest (OvR) averaging strategy is
+    applied so that each class is treated as a binary problem in turn.
+
+    Unlike accuracy-based metrics, ROC AUC uses the raw probability outputs
+    from the model rather than hard class predictions, making it sensitive to
+    model calibration.
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    .. [1] Fawcett, T. (2006). "An introduction to ROC analysis."
+           Pattern Recognition Letters, 27(8), 861–874.
+    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
+    """
 
     DESCRIPTION: str = (
         "The Receiver Operating Characteristic Area Under the Curve (RoC AUC) "

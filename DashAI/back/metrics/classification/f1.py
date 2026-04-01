@@ -12,7 +12,29 @@ if TYPE_CHECKING:
 
 
 class F1(ClassificationMetric):
-    """F1 score to classification tasks."""
+    """Harmonic mean of precision and recall.
+
+    The F1 score balances precision (how many predicted positives are
+    actually positive) and recall (how many actual positives were found).
+    It is the preferred metric for imbalanced classification tasks where
+    both false positives and false negatives carry equal cost.
+
+    For binary tasks the standard F1 is used. For multiclass tasks, macro
+    averaging (unweighted mean over all classes) is applied so that minority
+    classes are not drowned out by majority classes.
+
+    .. math::
+
+        F_1 = 2 \\cdot \\frac{\\text{Precision} \\times \\text{Recall}}{\\text{Precision} + \\text{Recall}}
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    .. [1] Van Rijsbergen, C.J. (1979). *Information Retrieval* (2nd ed.).
+           Butterworth-Heinemann.
+    .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+    """
 
     DESCRIPTION: str = (
         "Harmonic mean of precision and recall, "

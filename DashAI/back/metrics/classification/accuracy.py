@@ -12,7 +12,24 @@ if TYPE_CHECKING:
 
 
 class Accuracy(ClassificationMetric):
-    """Accuracy metric to classification tasks."""
+    """Fraction of correctly classified samples over all predictions.
+
+    Accuracy is the simplest classification metric: the number of correct
+    predictions divided by the total number of samples. It is well-suited
+    for balanced datasets but can be misleading when class distributions are
+    skewed — a model that always predicts the majority class would still
+    score high without learning anything useful.
+
+    .. math::
+
+        \\text{Accuracy} = \\frac{\\text{correct predictions}}{\\text{total samples}}
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html
+    """
 
     DESCRIPTION: str = (
         "Proportion of correct predictions over all samples, "

@@ -12,7 +12,31 @@ if TYPE_CHECKING:
 
 
 class LogLoss(ClassificationMetric):
-    """Log Loss score for classification tasks."""
+    """Negative log-likelihood of true labels under the predicted probability distribution.
+
+    Log Loss (cross-entropy loss) penalises confident wrong predictions much
+    more heavily than uncertain ones. Unlike accuracy or F1, it evaluates the
+    full probability output of the classifier rather than just the argmax
+    label, rewarding well-calibrated models.
+
+    Lower values indicate better performance (``MAXIMIZE = False``). A perfect
+    classifier achieves log loss of 0; a random classifier on a binary problem
+    achieves approximately ln(2) ≈ 0.693.
+
+    .. math::
+
+        \\text{Log Loss} = -\\frac{1}{N} \\sum_{i=1}^{N} \\sum_{c=1}^{C}
+        y_{ic} \\log(p_{ic})
+
+    where :math:`y_{ic}` is 1 if sample :math:`i` belongs to class :math:`c`
+    and :math:`p_{ic}` is the predicted probability.
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.log_loss.html
+    """
 
     DESCRIPTION: str = (
         "Log Loss, also known as Logistic Loss or Cross-Entropy Loss, "
