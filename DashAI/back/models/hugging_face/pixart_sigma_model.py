@@ -16,7 +16,15 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class PixArtSigmaSchema(BaseSchema):
-    """Schema for PixArt-Sigma image generation."""
+    """Configuration schema for PixArt-Sigma text-to-image generation.
+
+    Configures the checkpoint variant (``model_name``), prompt conditioning
+    (``negative_prompt``), denoising schedule (``num_inference_steps``),
+    classifier-free guidance strength (``guidance_scale``), output dimensions
+    (``width``, ``height``), reproducibility (``seed``), hardware target
+    (``device``), and batch size (``num_images_per_prompt``) for
+    ``PixArtSigmaModel``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -194,7 +202,25 @@ class PixArtSigmaSchema(BaseSchema):
 
 
 class PixArtSigmaModel(TextToImageGenerationTaskModel):
-    """PixArt-Sigma diffusion transformer model for text-to-image generation."""
+    """Diffusion Transformer model for high-efficiency text-to-image generation.
+
+    Wraps the PixArt-Sigma pipeline, which replaces the U-Net backbone used
+    in Stable Diffusion with a scalable Diffusion Transformer (DiT)
+    architecture. Text conditioning is provided by a T5-XXL encoder,
+    enabling richer semantic understanding than CLIP-based models.
+
+    PixArt-Sigma achieves state-of-the-art image quality with 14-25 denoising
+    steps (compared to 20-50 for comparable U-Net models) and supports
+    flexible multi-scale resolutions up to 2048 px. Two checkpoint sizes are
+    available: 512 px (lighter) and 1024 px (best quality).
+
+    References
+    ----------
+    .. [1] Chen et al., "PixArt-Sigma: Weak-to-Strong Training of Diffusion
+           Transformer for 4K Text-to-Image Generation", 2024.
+           https://arxiv.org/abs/2403.04692
+    .. [2] https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS
+    """
 
     SCHEMA = PixArtSigmaSchema
     COLOR: str = "#6a1b9a"
@@ -231,7 +257,43 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
-        """Initialize the model."""
+        """Download and initialise the PixArt-Sigma pipeline.
+
+        Downloads the selected checkpoint from HuggingFace Hub via
+        ``PixArtSigmaPipeline.from_pretrained`` and moves the pipeline to
+        the requested device.  When a GPU is available, weights are loaded
+        in ``float16`` to halve memory consumption; CPU inference uses
+        ``float32``.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace model ID.  Must be one of the two
+                ``PixArt-alpha`` checkpoints defined in
+                ``PixArtSigmaSchema``.
+                Defaults to ``"PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"``.
+            negative_prompt : str or None, optional
+                Text describing content to suppress in the output image.
+            num_inference_steps : int
+                Number of denoising steps.  14-25 is sufficient for this
+                model due to its efficient DiT architecture.
+            guidance_scale : float
+                Classifier-Free Guidance (CFG) scale.  PixArt-Sigma performs
+                best with values in the 3.5-5.5 range.
+            device : str
+                Target device string from ``DEVICE_ENUM``.  Mapped to a
+                ``cuda:<index>`` string or ``"cpu"`` via ``DEVICE_TO_IDX``.
+            seed : int
+                Fixed seed for reproducible outputs.  Values ≤ 0 disable
+                seeding.
+            width : int
+                Output image width in pixels (multiple of 8).
+            height : int
+                Output image height in pixels (multiple of 8).
+            num_images_per_prompt : int
+                Number of images to generate per prompt call.
+        """
         import torch
         from diffusers import PixArtSigmaPipeline
 

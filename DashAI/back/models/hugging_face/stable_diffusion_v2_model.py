@@ -16,7 +16,15 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class StableDiffusionSchema(BaseSchema):
-    """Schema for Stable Diffusion V2 image generation."""
+    """Configuration schema for Stable Diffusion V2 text-to-image generation.
+
+    Configures the checkpoint variant (``model_name``), prompt conditioning
+    (``negative_prompt``), denoising schedule (``num_inference_steps``),
+    classifier-free guidance strength (``guidance_scale``), output dimensions
+    (``width``, ``height``), reproducibility (``seed``), hardware target
+    (``device``), and batch size (``num_images_per_prompt``) for
+    ``StableDiffusionV2Model``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -208,7 +216,31 @@ class StableDiffusionSchema(BaseSchema):
 
 
 class StableDiffusionV2Model(TextToImageGenerationTaskModel):
-    """Wrapper model for all Stable Diffusion 2.x models from stability.ai."""
+    """Latent diffusion model for high-resolution text-to-image generation.
+
+    Wraps the Stable Diffusion 2.x family of checkpoints released by
+    Stability AI. The pipeline uses a U-Net denoiser conditioned on OpenCLIP
+    text embeddings (ViT-H/14) and a variational autoencoder (VAE) to
+    iteratively denoise a latent representation into a high-resolution image.
+
+    Four checkpoints are supported:
+
+    * ``stable-diffusion-2`` / ``stable-diffusion-2-1`` — trained at 768 px,
+      produce sharper detail; '2-1' is further fine-tuned and generally
+      outperforms '2'.
+    * ``stable-diffusion-2-base`` / ``stable-diffusion-2-1-base`` — trained at
+      512 px, faster and lower memory; best for rapid prototyping.
+
+    Models are served from the ``sd2-community`` HuggingFace organisation,
+    a community mirror of the original Stability AI weights (deprecated at
+    ``stabilityai``).
+
+    References
+    ----------
+    .. [1] Rombach et al., "High-Resolution Image Synthesis with Latent
+           Diffusion Models", CVPR 2022. https://arxiv.org/abs/2112.10752
+    .. [2] https://huggingface.co/sd2-community
+    """
 
     SCHEMA = StableDiffusionSchema
     COLOR: str = "#1565c0"
@@ -244,7 +276,40 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
-        """Initialize the model."""
+        """Download and initialise the Stable Diffusion V2 pipeline.
+
+        Downloads the selected checkpoint from HuggingFace Hub via
+        ``DiffusionPipeline.from_pretrained`` and moves the pipeline to the
+        requested device.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace model ID to load.  Must be one of the four
+                ``sd2-community`` checkpoints defined in ``StableDiffusionSchema``.
+                Defaults to ``"sd2-community/stable-diffusion-2"``.
+            negative_prompt : str or None, optional
+                Text describing content to suppress in the output image.
+            num_inference_steps : int
+                Number of denoising steps.  Higher values improve quality at
+                the cost of generation time.
+            guidance_scale : float
+                Classifier-Free Guidance (CFG) scale controlling prompt
+                adherence.
+            device : str
+                Target device string from ``DEVICE_ENUM``.  Mapped to a
+                ``cuda:<index>`` string or ``"cpu"`` via ``DEVICE_TO_IDX``.
+            seed : int
+                Fixed seed for reproducible outputs.  Values ≤ 0 disable
+                seeding.
+            width : int
+                Output image width in pixels (multiple of 8).
+            height : int
+                Output image height in pixels (multiple of 8).
+            num_images_per_prompt : int
+                Number of images to generate per prompt call.
+        """
         import torch
         from diffusers import DiffusionPipeline
 
