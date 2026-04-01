@@ -6,6 +6,8 @@ from DashAI.back.metrics.base_metric import prepare_to_metric
 from DashAI.back.metrics.translation_metric import TranslationMetric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -28,7 +30,10 @@ class Bleu(TranslationMetric):
     )
 
     @staticmethod
-    def score(source_sentences: "DashAIDataset", target_sentences):
+    def score(
+        source_sentences: "DashAIDataset",
+        target_sentences: "np.ndarray",
+    ) -> float:
         """Calculate the BLEU score between source and target sentences.
 
         Parameters
