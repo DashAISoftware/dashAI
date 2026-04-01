@@ -17,9 +17,9 @@ class MSE(RegressionMetric):
     score. It is the most widely used regression loss and is the basis for
     ordinary least-squares regression and RMSE.
 
-    .. math::
+    ::
 
-        \\text{MSE}(y, \\hat{y}) = \\frac{1}{N} \\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2
+        MSE(y, ŷ) = (1/N) · Σᵢ (yᵢ − ŷᵢ)²
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``). Units are the
     square of the target variable's unit (use RMSE for the original unit).

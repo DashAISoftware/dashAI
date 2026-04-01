@@ -17,9 +17,9 @@ class MAE(RegressionMetric):
     to outliers. Its value is expressed in the same unit as the target
     variable, which aids interpretability.
 
-    .. math::
+    ::
 
-        \\text{MAE}(y, \\hat{y}) = \\frac{1}{N} \\sum_{i=1}^{N} |y_i - \\hat{y}_i|
+        MAE(y, ŷ) = (1/N) · Σᵢ |yᵢ − ŷᵢ|
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 

@@ -20,12 +20,12 @@ class CohenKappa(ClassificationMetric):
     class imbalance and is particularly useful when evaluating classifiers on
     unbalanced datasets.
 
-    .. math::
+    ::
 
-        \\kappa = \\frac{p_o - p_e}{1 - p_e}
+        κ = (p_o − p_e) / (1 − p_e)
 
-    where :math:`p_o` is the observed agreement (accuracy) and :math:`p_e` is
-    the expected agreement by chance.
+    where p_o is the observed agreement (accuracy) and p_e is the expected
+    agreement by chance.
 
     Range: (−∞, 1]. Interpretation: < 0 worse than chance; 0.21–0.40 fair;
     0.41–0.60 moderate; 0.61–0.80 substantial; 0.81–1.0 almost perfect.

@@ -18,9 +18,9 @@ class RMSE(RegressionMetric):
     applications. RMSE is equivalent to the Euclidean distance between the
     prediction vector and the true value vector, normalised by sample count.
 
-    .. math::
+    ::
 
-        \\text{RMSE}(y, \\hat{y}) = \\sqrt{\\frac{1}{N} \\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2}
+        RMSE(y, ŷ) = sqrt( (1/N) · Σᵢ (yᵢ − ŷᵢ)² )
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 

@@ -20,9 +20,9 @@ class R2(RegressionMetric):
     R² is scale-invariant (unlike MAE/MSE), making it easy to compare models
     trained on targets with different units or magnitudes.
 
-    .. math::
+    ::
 
-        R^2(y, \\hat{y}) = 1 - \\frac{\\sum_{i}(y_i - \\hat{y}_i)^2}{\\sum_{i}(y_i - \\bar{y})^2}
+        R²(y, ŷ) = 1 − Σᵢ(yᵢ − ŷᵢ)² / Σᵢ(yᵢ − ȳ)²
 
     Range: (−∞, 1], higher is better (``MAXIMIZE = True``).
 

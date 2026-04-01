@@ -23,9 +23,9 @@ class Precision(ClassificationMetric):
     For binary tasks the standard binary precision is used. For multiclass
     tasks, macro averaging (unweighted mean over all classes) is applied.
 
-    .. math::
+    ::
 
-        \\text{Precision} = \\frac{TP}{TP + FP}
+        Precision = TP / (TP + FP)
 
     Range: [0, 1], higher is better (``MAXIMIZE = True``).
 

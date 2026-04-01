@@ -22,9 +22,9 @@ class Recall(ClassificationMetric):
     For binary tasks the standard binary recall is used. For multiclass tasks,
     macro averaging (unweighted mean over all classes) is applied.
 
-    .. math::
+    ::
 
-        \\text{Recall} = \\frac{TP}{TP + FN}
+        Recall = TP / (TP + FN)
 
     Range: [0, 1], higher is better (``MAXIMIZE = True``).
 

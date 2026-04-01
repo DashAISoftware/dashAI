@@ -23,13 +23,12 @@ class LogLoss(ClassificationMetric):
     classifier achieves log loss of 0; a random classifier on a binary problem
     achieves approximately ln(2) ≈ 0.693.
 
-    .. math::
+    ::
 
-        \\text{Log Loss} = -\\frac{1}{N} \\sum_{i=1}^{N} \\sum_{c=1}^{C}
-        y_{ic} \\log(p_{ic})
+        Log Loss = -(1/N) · Σᵢ Σ_c yᵢ_c · log(pᵢ_c)
 
-    where :math:`y_{ic}` is 1 if sample :math:`i` belongs to class :math:`c`
-    and :math:`p_{ic}` is the predicted probability.
+    where yᵢ_c is 1 if sample i belongs to class c and pᵢ_c is the
+    predicted probability.
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 

@@ -23,9 +23,9 @@ class HammingDistance(ClassificationMetric):
     A lower Hamming distance indicates better performance. ``MAXIMIZE = False``
     so the DashAI framework treats smaller values as improvements.
 
-    .. math::
+    ::
 
-        \\text{Hamming Loss} = \\frac{1}{N} \\sum_{i=1}^{N} \\mathbb{1}[\\hat{y}_i \\neq y_i]
+        Hamming Loss = (1/N) · Σᵢ 𝟙[ŷᵢ ≠ yᵢ]
 
     Range: [0, 1], lower is better (``MAXIMIZE = False``).
 

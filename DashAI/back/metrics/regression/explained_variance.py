@@ -17,9 +17,9 @@ class ExplainedVariance(RegressionMetric):
     (constant offset) in the predictions — a model with a fixed offset can
     achieve a high Explained Variance score while having a lower R².
 
-    .. math::
+    ::
 
-        \\text{EV}(y, \\hat{y}) = 1 - \\frac{\\text{Var}(y - \\hat{y})}{\\text{Var}(y)}
+        EV(y, ŷ) = 1 − Var(y − ŷ) / Var(y)
 
     Range: (−∞, 1]. A score of 1.0 means the model explains all variance;
     0.0 means it performs no better than predicting the mean; negative values

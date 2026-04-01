@@ -20,9 +20,9 @@ class Accuracy(ClassificationMetric):
     skewed — a model that always predicts the majority class would still
     score high without learning anything useful.
 
-    .. math::
+    ::
 
-        \\text{Accuracy} = \\frac{\\text{correct predictions}}{\\text{total samples}}
+        Accuracy = correct predictions / total samples
 
     Range: [0, 1], higher is better (``MAXIMIZE = True``).
 

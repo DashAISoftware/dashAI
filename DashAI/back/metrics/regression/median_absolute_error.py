@@ -17,9 +17,9 @@ class MedianAbsoluteError(RegressionMetric):
     than MAE, MSE, or RMSE, making it the preferred metric when the target
     distribution has heavy tails or occasional extreme measurements.
 
-    .. math::
+    ::
 
-        \\text{MedAE}(y, \\hat{y}) = \\text{median}(|y_1 - \\hat{y}_1|, \\ldots, |y_N - \\hat{y}_N|)
+        MedAE(y, ŷ) = median( |y₁ − ŷ₁|, …, |yₙ − ŷₙ| )
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 

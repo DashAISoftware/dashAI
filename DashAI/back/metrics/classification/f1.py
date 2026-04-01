@@ -23,9 +23,9 @@ class F1(ClassificationMetric):
     averaging (unweighted mean over all classes) is applied so that minority
     classes are not drowned out by majority classes.
 
-    .. math::
+    ::
 
-        F_1 = 2 \\cdot \\frac{\\text{Precision} \\times \\text{Recall}}{\\text{Precision} + \\text{Recall}}
+        F1 = 2 · (Precision × Recall) / (Precision + Recall)
 
     Range: [0, 1], higher is better (``MAXIMIZE = True``).
 
