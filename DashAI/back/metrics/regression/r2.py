@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -22,9 +24,9 @@ class R2(RegressionMetric):
 
     ::
 
-        R²(y, ŷ) = 1 − Σᵢ(yᵢ − ŷᵢ)² / Σᵢ(yᵢ − ȳ)²
+        R²(y, ŷ) = 1 - Σᵢ(yᵢ - ŷᵢ)² / Σᵢ(yᵢ - ȳ)²
 
-    Range: (−∞, 1], higher is better (``MAXIMIZE = True``).
+    Range: (-∞, 1], higher is better (``MAXIMIZE = True``).
 
     References
     ----------
@@ -40,7 +42,10 @@ class R2(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", pred_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        pred_values: "np.ndarray",
+    ) -> float:
         """Calculate the R2 score between true values and predicted values.
 
         Parameters

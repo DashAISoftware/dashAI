@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -19,7 +21,7 @@ class MedianAbsoluteError(RegressionMetric):
 
     ::
 
-        MedAE(y, ŷ) = median( |y₁ − ŷ₁|, …, |yₙ − ŷₙ| )
+        MedAE(y, ŷ) = median( |y₁ - ŷ₁|, …, |yₙ - ŷₙ| )
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 
@@ -38,7 +40,10 @@ class MedianAbsoluteError(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", predicted_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        predicted_values: "np.ndarray",
+    ) -> float:
         """Calculate the Median Absolute Error between true values and predicted values.
 
         Parameters

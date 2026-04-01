@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -19,7 +21,7 @@ class MAE(RegressionMetric):
 
     ::
 
-        MAE(y, ŷ) = (1/N) · Σᵢ |yᵢ − ŷᵢ|
+        MAE(y, ŷ) = (1/N) · Σᵢ |yᵢ - ŷᵢ|
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 
@@ -34,7 +36,10 @@ class MAE(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", pred_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        pred_values: "np.ndarray",
+    ) -> float:
         """Calculate the MAE between true values and predicted values.
 
         Parameters

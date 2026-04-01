@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -20,7 +22,7 @@ class RMSE(RegressionMetric):
 
     ::
 
-        RMSE(y, ŷ) = sqrt( (1/N) · Σᵢ (yᵢ − ŷᵢ)² )
+        RMSE(y, ŷ) = sqrt( (1/N) · Σᵢ (yᵢ - ŷᵢ)² )
 
     Range: [0, +∞), lower is better (``MAXIMIZE = False``).
 
@@ -35,7 +37,10 @@ class RMSE(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", predicted_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        predicted_values: "np.ndarray",
+    ) -> float:
         """Calculate the RMSE between true values and predicted values.
 
         Parameters
