@@ -19,7 +19,7 @@ class Ter(TranslationMetric):
 
     References
     ----------
-    [1] https://huggingface.co/spaces/evaluate-metric/ter
+    - [1] https://huggingface.co/spaces/evaluate-metric/ter
     """
 
     MAXIMIZE: bool = False

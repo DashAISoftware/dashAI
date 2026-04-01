@@ -19,7 +19,7 @@ class Bleu(TranslationMetric):
 
     References
     ----------
-    [1] https://en.wikipedia.org/wiki/BLEU
+    - [1] https://en.wikipedia.org/wiki/BLEU
     """
 
     MAXIMIZE: bool = True

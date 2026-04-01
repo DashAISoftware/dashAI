@@ -133,8 +133,8 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.Nystroem.html
-    [2] Williams, C. K. I. & Seeger, M. (2001). "Using the Nyström method to
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.Nystroem.html
+    - [2] Williams, C. K. I. & Seeger, M. (2001). "Using the Nyström method to
         speed up kernel machines." Advances in Neural Information Processing
         Systems 13 (NIPS 2000), 682-688.
     """

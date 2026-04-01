@@ -54,7 +54,7 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFpr.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFpr.html
     """
 
     SCHEMA = SelectFprSchema

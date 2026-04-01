@@ -96,7 +96,7 @@ class IncrementalPCA(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html
     """
 
     SCHEMA = IncrementalPCASchema

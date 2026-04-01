@@ -177,10 +177,10 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-    [2] Pearson, K. (1901). "On lines and planes of closest fit to systems of
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    - [2] Pearson, K. (1901). "On lines and planes of closest fit to systems of
         points in space." Philosophical Magazine, 2(11), 559-572.
-    [3] Hotelling, H. (1933). "Analysis of a complex of statistical variables
+    - [3] Hotelling, H. (1933). "Analysis of a complex of statistical variables
         into principal components." Journal of Educational Psychology, 24(6),
         417-441.
     """

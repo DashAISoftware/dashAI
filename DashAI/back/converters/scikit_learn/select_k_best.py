@@ -58,7 +58,7 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html
     """
 
     SCHEMA = SelectKBestSchema

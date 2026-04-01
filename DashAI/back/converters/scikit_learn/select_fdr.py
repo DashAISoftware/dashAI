@@ -57,7 +57,7 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFdr.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFdr.html
     """
 
     SCHEMA = SelectFdrSchema

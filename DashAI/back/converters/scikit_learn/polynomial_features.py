@@ -103,7 +103,7 @@ class PolynomialFeatures(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
     """
 
     SCHEMA = PolynomialFeaturesSchema

@@ -59,7 +59,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFwe.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFwe.html
     """
 
     SCHEMA = SelectFweSchema

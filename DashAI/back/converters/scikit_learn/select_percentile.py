@@ -56,7 +56,7 @@ class SelectPercentile(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectPercentile.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectPercentile.html
     """
 
     SCHEMA = SelectPercentileSchema

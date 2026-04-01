@@ -161,8 +161,8 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html
-    [2] Hyvärinen, A. & Oja, E. (2000). "Independent Component Analysis:
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html
+    - [2] Hyvärinen, A. & Oja, E. (2000). "Independent Component Analysis:
         Algorithms and Applications." Neural Networks, 13(4-5), 411-430.
     """
 

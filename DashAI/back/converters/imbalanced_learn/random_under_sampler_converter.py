@@ -68,7 +68,7 @@ class RandomUnderSamplerConverter(
 
     References
     ----------
-    [1] https://imbalanced-learn.org/stable/references/generated/imblearn.under_sampling.RandomUnderSampler.html
+    - [1]https://imbalanced-learn.org/stable/references/generated/imblearn.under_sampling.RandomUnderSampler.html
     """
 
     SCHEMA = RUSchema

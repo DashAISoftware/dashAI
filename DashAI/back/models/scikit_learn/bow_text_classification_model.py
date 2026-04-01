@@ -95,7 +95,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
     """
 
     DISPLAY_NAME: str = MultilingualString(

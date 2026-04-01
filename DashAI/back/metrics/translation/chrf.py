@@ -19,8 +19,8 @@ class Chrf(TranslationMetric):
 
     References
     ----------
-    [1] https://en.wikipedia.org/wiki/CHRF
-    [2] https://lightning.ai/docs/torchmetrics/stable/text/chrf_score.html
+    - [1] https://en.wikipedia.org/wiki/CHRF
+    - [2] https://lightning.ai/docs/torchmetrics/stable/text/chrf_score.html
     """
 
     MAXIMIZE: bool = True

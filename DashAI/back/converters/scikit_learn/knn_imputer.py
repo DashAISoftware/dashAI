@@ -96,7 +96,7 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.KNNImputer.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.KNNImputer.html
     """
 
     SCHEMA = KNNImputerSchema

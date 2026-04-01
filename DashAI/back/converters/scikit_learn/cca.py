@@ -94,8 +94,8 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.cross_decomposition.CCA.html
-    [2] Hotelling, H. (1936). "Relations between two sets of variates."
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.cross_decomposition.CCA.html
+    - [2] Hotelling, H. (1936). "Relations between two sets of variates."
         Biometrika, 28(3/4), 321-377.
     """
 

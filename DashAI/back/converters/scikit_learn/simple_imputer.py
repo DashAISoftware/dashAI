@@ -104,7 +104,7 @@ class SimpleImputer(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
     """
 
     SCHEMA = SimpleImputerSchema

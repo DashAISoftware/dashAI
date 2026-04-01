@@ -34,7 +34,7 @@ class ModernBertTransformer(HuggingFaceTextClassificationTransformer):
 
     References
     ----------
-    [1] https://huggingface.co/answerdotai/ModernBERT-base
+    - [1] https://huggingface.co/answerdotai/ModernBERT-base
     """
 
     DISPLAY_NAME: str = MultilingualString(

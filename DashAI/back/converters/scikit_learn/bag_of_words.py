@@ -92,8 +92,8 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
-    [2] Salton, G. & McGill, M. J. (1983). Introduction to Modern Information
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
+    - [2] Salton, G. & McGill, M. J. (1983). Introduction to Modern Information
         Retrieval. McGraw-Hill.
     """
 

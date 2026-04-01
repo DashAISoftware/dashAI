@@ -39,8 +39,8 @@ class DebertaV3Transformer(HuggingFaceTextClassificationTransformer):
 
     References
     ----------
-    [1] https://huggingface.co/microsoft/deberta-v3-base
-    [2] https://huggingface.co/docs/transformers/model_doc/deberta-v2
+    - [1] https://huggingface.co/microsoft/deberta-v3-base
+    - [2] https://huggingface.co/docs/transformers/model_doc/deberta-v2
     """
 
     DISPLAY_NAME: str = MultilingualString(

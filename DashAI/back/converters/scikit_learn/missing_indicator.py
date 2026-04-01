@@ -41,7 +41,7 @@ class MissingIndicator(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.MissingIndicator.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.MissingIndicator.html
     """
 
     SCHEMA = MissingIndicatorSchema

@@ -95,8 +95,8 @@ class SkewedChi2Sampler(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.SkewedChi2Sampler.html
-    [2] Rahimi, A. & Recht, B. (2007). Random Features for Large-Scale Kernel
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.SkewedChi2Sampler.html
+    - [2] Rahimi, A. & Recht, B. (2007). Random Features for Large-Scale Kernel
         Machines. Advances in Neural Information Processing Systems, 20.
     """
 

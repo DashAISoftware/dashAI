@@ -121,7 +121,7 @@ class TruncatedSVD(
 
     References
     ----------
-    [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
     SCHEMA = TruncatedSVDSchema
