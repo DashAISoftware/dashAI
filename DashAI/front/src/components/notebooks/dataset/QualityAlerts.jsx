@@ -18,8 +18,7 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets"]);
   const { setDatasetTab } = useDatasetsAndNotebooks();
-
-  if (!qualityInfo) return null;
+  console.log(qualityInfo);
 
   const handleNavigate = useCallback(
     (section) => {
@@ -38,8 +37,6 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
     },
     [setDatasetTab, theme],
   );
-
-  if (!qualityInfo) return null;
 
   const { warnings, successes } = useMemo(() => {
     const w = [];
