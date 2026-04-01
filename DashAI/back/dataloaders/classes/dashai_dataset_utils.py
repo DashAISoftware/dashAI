@@ -1,11 +1,13 @@
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
-from sklearn.preprocessing import OneHotEncoder
-
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import to_arrow_types
 from DashAI.back.types.value_types import Float, Text
+
+if TYPE_CHECKING:
+    from sklearn.preprocessing import OneHotEncoder
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 # Data Transformations
 
@@ -170,6 +172,9 @@ def categorical_one_hot_encoder(
     import numpy as np
     import pandas as pd
     import pyarrow as pa
+    from sklearn.preprocessing import OneHotEncoder
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
     types = dataset.types
 
@@ -283,4 +288,5 @@ def apply_categorical_one_hot_encoder(
 # Date Transformations
 
 
+# Image Transformations
 # Image Transformations
