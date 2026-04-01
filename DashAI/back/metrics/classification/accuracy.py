@@ -8,6 +8,8 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -37,7 +39,10 @@ class Accuracy(ClassificationMetric):
     )
 
     @staticmethod
-    def score(true_labels: "DashAIDataset", probs_pred_labels) -> float:
+    def score(
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+    ) -> float:
         """Calculate the accuracy between true labels and predicted labels.
 
         Parameters

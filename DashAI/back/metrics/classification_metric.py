@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Tuple
 from DashAI.back.metrics.base_metric import BaseMetric
 
 if TYPE_CHECKING:
-    from numpy import ndarray
+    import numpy as np
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -30,7 +30,7 @@ class ClassificationMetric(BaseMetric):
     ]
 
     @staticmethod
-    def is_multiclass(true_labels: "ndarray") -> bool:
+    def is_multiclass(true_labels: "np.ndarray") -> bool:
         """
         Determine if the classification problem is multiclass (more than 2 classes).
 
@@ -53,15 +53,15 @@ class ClassificationMetric(BaseMetric):
         return len(unique_labels) > 2
 
 
-def validate_inputs(true_labels: "ndarray", pred_labels: "ndarray") -> None:
+def validate_inputs(true_labels: "np.ndarray", pred_labels: "np.ndarray") -> None:
     """Validate inputs.
 
     Parameters
     ----------
-    true_labels : ndarray
+    true_labels : np.ndarray
         True labels.
-    pred_labels : list
-        Predict labels by the model.
+    pred_labels : np.ndarray
+        Predicted labels by the model.
     """
     if len(true_labels) != len(pred_labels):
         raise ValueError(
@@ -73,8 +73,8 @@ def validate_inputs(true_labels: "ndarray", pred_labels: "ndarray") -> None:
 
 def prepare_to_metric(
     y: "DashAIDataset",
-    probs_pred_labels: "ndarray",
-) -> Tuple["ndarray", "ndarray"]:
+    probs_pred_labels: "np.ndarray",
+) -> Tuple["np.ndarray", "np.ndarray"]:
     """Prepare true and prediced labels to be used later in metrics.
 
     Parameters

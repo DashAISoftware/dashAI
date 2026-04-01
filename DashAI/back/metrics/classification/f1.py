@@ -1,6 +1,6 @@
 """DashAI F1 clasification metric implementation."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -8,6 +8,8 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -25,7 +27,7 @@ class F1(ClassificationMetric):
 
     ::
 
-        F1 = 2 · (Precision × Recall) / (Precision + Recall)
+        F1 = 2 · (Precision x Recall) / (Precision + Recall)
 
     Range: [0, 1], higher is better (``MAXIMIZE = True``).
 
@@ -43,7 +45,9 @@ class F1(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate f1 score between true labels and predicted labels.
 

@@ -1,6 +1,6 @@
 """DashAI log loss implementation."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -8,6 +8,8 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -49,7 +51,9 @@ class LogLoss(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate Log Loss score between true labels and predicted labels.
 
