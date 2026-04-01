@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.base_metric import BaseMetric
 
 if TYPE_CHECKING:
-    from numpy import ndarray
+    import numpy as np
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -27,8 +27,8 @@ class RegressionMetric(BaseMetric):
 
 def prepare_to_metric(
     y: "DashAIDataset",
-    y_pred: "ndarray",
-) -> tuple["ndarray", "ndarray"]:
+    y_pred: "np.ndarray",
+) -> tuple["np.ndarray", "np.ndarray"]:
     """
     Prepare true and predicted values for metric calculation.
 

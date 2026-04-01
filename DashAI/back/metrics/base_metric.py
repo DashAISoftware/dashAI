@@ -33,7 +33,7 @@ class BaseMetric:
     metadata: Dict[str, Any] = {}
 
     @classmethod
-    def get_metadata(cls) -> Dict[str, Any]:
+    def get_metadata(cls: "BaseMetric") -> Dict[str, Any]:
         """
         Get metadata values for the current metric.
 
