@@ -9,7 +9,24 @@ if TYPE_CHECKING:
 
 
 class MAE(RegressionMetric):
-    """Mean Absolute Error metric for regression tasks."""
+    """Average of absolute differences between predicted and true values.
+
+    Mean Absolute Error (MAE) is the simplest regression error metric: it
+    computes the mean of the absolute residuals. Unlike MSE or RMSE, MAE
+    treats all errors equally regardless of magnitude, making it more robust
+    to outliers. Its value is expressed in the same unit as the target
+    variable, which aids interpretability.
+
+    .. math::
+
+        \\text{MAE}(y, \\hat{y}) = \\frac{1}{N} \\sum_{i=1}^{N} |y_i - \\hat{y}_i|
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html
+    """
 
     DESCRIPTION: str = (
         "Average of absolute differences between predicted and actual values, "

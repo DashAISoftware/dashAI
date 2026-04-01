@@ -9,7 +9,24 @@ if TYPE_CHECKING:
 
 
 class MedianAbsoluteError(RegressionMetric):
-    """Median Absolute Error metric for regression tasks."""
+    """Median of absolute differences between predicted and true values.
+
+    Median Absolute Error (MedAE) is a robust regression metric that uses the
+    median rather than the mean of the absolute residuals. Because the median
+    is insensitive to extreme values, MedAE is far less affected by outliers
+    than MAE, MSE, or RMSE, making it the preferred metric when the target
+    distribution has heavy tails or occasional extreme measurements.
+
+    .. math::
+
+        \\text{MedAE}(y, \\hat{y}) = \\text{median}(|y_1 - \\hat{y}_1|, \\ldots, |y_N - \\hat{y}_N|)
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.median_absolute_error.html
+    """
 
     DESCRIPTION: str = (
         "Median Absolute Error (MedAE) measures the median "

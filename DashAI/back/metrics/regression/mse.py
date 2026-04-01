@@ -9,7 +9,25 @@ if TYPE_CHECKING:
 
 
 class MSE(RegressionMetric):
-    """Mean Squared Error metric for regression tasks."""
+    """Average of squared differences between predicted and true values.
+
+    Mean Squared Error (MSE) squares each residual before averaging, which
+    penalises large errors much more heavily than small ones. This makes MSE
+    sensitive to outliers: a single large prediction error can dominate the
+    score. It is the most widely used regression loss and is the basis for
+    ordinary least-squares regression and RMSE.
+
+    .. math::
+
+        \\text{MSE}(y, \\hat{y}) = \\frac{1}{N} \\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``). Units are the
+    square of the target variable's unit (use RMSE for the original unit).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html
+    """
 
     DESCRIPTION: str = (
         "Mean Squared Error (MSE) measures the average "

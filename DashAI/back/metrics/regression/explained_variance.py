@@ -9,7 +9,26 @@ if TYPE_CHECKING:
 
 
 class ExplainedVariance(RegressionMetric):
-    """Explained Variance metric for regression tasks."""
+    """Proportion of the target variance explained by the regression model.
+
+    The Explained Variance Score quantifies how much of the variability in
+    the dependent variable is captured by the model's predictions. It is
+    closely related to R², but does not penalise for a systematic bias
+    (constant offset) in the predictions — a model with a fixed offset can
+    achieve a high Explained Variance score while having a lower R².
+
+    .. math::
+
+        \\text{EV}(y, \\hat{y}) = 1 - \\frac{\\text{Var}(y - \\hat{y})}{\\text{Var}(y)}
+
+    Range: (−∞, 1]. A score of 1.0 means the model explains all variance;
+    0.0 means it performs no better than predicting the mean; negative values
+    indicate that the model performs worse than the mean predictor.
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html
+    """
 
     DESCRIPTION: str = (
         "Explained Variance measures the proportion of the variance in the "

@@ -9,7 +9,25 @@ if TYPE_CHECKING:
 
 
 class RMSE(RegressionMetric):
-    """Root Mean Squared Error metric for regression tasks."""
+    """Square root of the mean squared error between predicted and true values.
+
+    Root Mean Squared Error (RMSE) is the square root of MSE, bringing the
+    metric back to the same unit as the target variable. Like MSE, it
+    penalises large errors more heavily than MAE, but its interpretability
+    advantage over MSE makes it the standard regression error metric in most
+    applications. RMSE is equivalent to the Euclidean distance between the
+    prediction vector and the true value vector, normalised by sample count.
+
+    .. math::
+
+        \\text{RMSE}(y, \\hat{y}) = \\sqrt{\\frac{1}{N} \\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2}
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    .. [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.root_mean_squared_error.html
+    """
 
     DESCRIPTION: str = (
         "Square root of the average of squared differences between "
