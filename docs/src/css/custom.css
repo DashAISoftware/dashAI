@@ -1,42 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
 
-/* ── Light theme (JSX LIGHT tokens) ── */
+/* ── Light theme ── */
 :root {
-  --ifm-color-primary: #b86e00;
-  --ifm-color-primary-dark: #8f5200;
-  --ifm-color-primary-darker: #7b4600;
-  --ifm-color-primary-darkest: #5f3400;
-  --ifm-color-primary-light: #d98200;
-  --ifm-color-primary-lighter: #ef9f27;
-  --ifm-color-primary-lightest: #f5b94a;
+  /* DashAI gold as primary */
+  --ifm-color-primary: #b8891c;
+  --ifm-color-primary-dark: #9c7215;
+  --ifm-color-primary-darker: #856010;
+  --ifm-color-primary-darkest: #634708;
+  --ifm-color-primary-light: #d4a033;
+  --ifm-color-primary-lighter: #dfb558;
+  --ifm-color-primary-lightest: #ebcc82;
 
   --ifm-code-font-size: 87.5%;
   --ifm-font-family-base: 'IBM Plex Sans', system-ui, sans-serif;
-  --ifm-heading-font-family: 'IBM Plex Sans', system-ui, sans-serif;
-  --ifm-font-family-monospace: 'JetBrains Mono', 'Courier New', monospace;
+  --ifm-heading-font-family: 'Playfair Display', Georgia, serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', 'Courier New', monospace;
   --ifm-font-size-base: 17.5px;
   --ifm-line-height-base: 1.75;
 
   --ifm-navbar-height: 56px;
   --ifm-navbar-background-color: rgba(255, 255, 255, 0.92);
 
-  /* JSX LIGHT surface tokens */
+  /* Surface tokens */
   --dashai-bg-base: #f5f5f5;
   --dashai-bg-surface: #ffffff;
   --dashai-bg-elevated: #fafafa;
   --dashai-bg-code: #fafafa;
   --dashai-border: rgba(0, 0, 0, 0.1);
   --dashai-border-hover: rgba(0, 0, 0, 0.16);
-  --dashai-border-active: #b86e00;
+  --dashai-border-active: #b8891c;
   --dashai-text-primary: #111111;
   --dashai-text-secondary: rgba(17, 17, 17, 0.5);
   --dashai-text-muted: rgba(17, 17, 17, 0.5);
   --dashai-text-dim: rgba(17, 17, 17, 0.3);
-  --dashai-accent: #b86e00;
-  --dashai-accent-light: #d98200;
-  --dashai-accent-glow: rgba(239, 159, 39, 0.04);
-  --dashai-accent-border: rgba(239, 159, 39, 0.22);
-  --dashai-accent-text: #b86e00;
+
+  /* DashAI gold as accent */
+  --dashai-accent: #b8891c;
+  --dashai-accent-light: #d4a033;
+  --dashai-accent-glow: rgba(212, 160, 51, 0.06);
+  --dashai-accent-border: rgba(212, 160, 51, 0.22);
+  --dashai-accent-text: #b8891c;
   --dashai-scroll-thumb: #bdbdbd;
   --dashai-scroll-thumb-hover: #9e9e9e;
   --dashai-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
@@ -48,85 +51,129 @@
   --dashai-error: #d32f2f;
   --dashai-info: #2196f3;
 
-  /* 4 macro-section colors (light) */
-  --dashai-discover: #1d9e75;
-  --dashai-discover-bg: rgba(29, 158, 117, 0.1);
-  --dashai-discover-border: rgba(29, 158, 117, 0.22);
-  --dashai-learn: #ef9f27;
-  --dashai-learn-bg: rgba(239, 159, 39, 0.12);
-  --dashai-learn-border: rgba(239, 159, 39, 0.22);
-  --dashai-deep-dive: #9b7de8;
-  --dashai-deep-dive-bg: rgba(155, 125, 232, 0.1);
-  --dashai-deep-dive-border: rgba(155, 125, 232, 0.22);
-  --dashai-build: #d85a30;
-  --dashai-build-bg: rgba(216, 90, 48, 0.1);
-  --dashai-build-border: rgba(216, 90, 48, 0.22);
+  /* 4 macro-section colors mapped to DashAI semantic palette (light) */
+  /* Blue  = exploration / understanding  → Discover + Deep Dive          */
+  /* Gold  = action / configuration       → Learn                         */
+  /* Lime  = output / results / build     → Build                         */
+  --dashai-discover: #4a7ad4;
+  --dashai-discover-bg: rgba(91, 141, 239, 0.08);
+  --dashai-discover-border: rgba(91, 141, 239, 0.22);
+  --dashai-learn: #b8891c;
+  --dashai-learn-bg: rgba(212, 160, 51, 0.10);
+  --dashai-learn-border: rgba(212, 160, 51, 0.22);
+  --dashai-deep-dive: #4a7ad4;
+  --dashai-deep-dive-bg: rgba(91, 141, 239, 0.08);
+  --dashai-deep-dive-border: rgba(91, 141, 239, 0.22);
+  --dashai-build: #6ea832;
+  --dashai-build-bg: rgba(168, 224, 95, 0.12);
+  --dashai-build-border: rgba(168, 224, 95, 0.28);
   --dashai-section-accent: var(--dashai-learn);
   --dashai-section-bg: var(--dashai-learn-bg);
   --dashai-section-border: var(--dashai-learn-border);
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.07);
+
+  /* DashAI semantic palette */
+  --dashai-blue: #5b8def;
+  --dashai-blue-dim: rgba(91, 141, 239, 0.08);
+  --dashai-blue-border: rgba(91, 141, 239, 0.22);
+  --dashai-gold: #d4a033;
+  --dashai-gold-dim: rgba(212, 160, 51, 0.10);
+  --dashai-gold-border: rgba(212, 160, 51, 0.22);
+  --dashai-lime: #a8e05f;
+  --dashai-lime-dim: rgba(168, 224, 95, 0.08);
+  --dashai-lime-border: rgba(168, 224, 95, 0.22);
 }
 
-/* ── Dark theme (JSX DARK tokens) ── */
+/* ── Dark theme — DashAI Dusk palette ── */
 [data-theme='dark'] {
-  --ifm-color-primary: #ef9f27;
-  --ifm-color-primary-dark: #c47d0e;
-  --ifm-color-primary-darker: #a96a0b;
-  --ifm-color-primary-darkest: #8f5200;
-  --ifm-color-primary-light: #f5b94a;
-  --ifm-color-primary-lighter: #f7c872;
-  --ifm-color-primary-lightest: #f9d99f;
+  /* DashAI gold as primary */
+  --ifm-color-primary: #d4a033;
+  --ifm-color-primary-dark: #b8891c;
+  --ifm-color-primary-darker: #9c7215;
+  --ifm-color-primary-darkest: #7a560e;
+  --ifm-color-primary-light: #dfb558;
+  --ifm-color-primary-lighter: #e8c67a;
+  --ifm-color-primary-lightest: #f0d99f;
 
-  --ifm-navbar-background-color: rgba(17, 17, 16, 0.92);
-  --ifm-background-color: #0c0c0a;
-  --ifm-background-surface-color: #111110;
+  /* DashAI dark backgrounds */
+  --ifm-navbar-background-color: rgba(26, 25, 24, 0.94);
+  --ifm-background-color: #1a1918;
+  --ifm-background-surface-color: #211f1e;
 
-  --dashai-bg-base: #0c0c0a;
-  --dashai-bg-surface: #111110;
-  --dashai-bg-elevated: #0f0f0d;
-  --dashai-bg-code: #0f0f0d;
-  --dashai-border: rgba(239, 159, 39, 0.1);
-  --dashai-border-hover: rgba(239, 159, 39, 0.18);
-  --dashai-border-active: #ef9f27;
-  --dashai-text-primary: #f2ede2;
-  --dashai-text-secondary: rgba(232, 228, 217, 0.75);
-  --dashai-text-muted: rgba(232, 228, 217, 0.75);
-  --dashai-text-dim: rgba(232, 228, 217, 0.45);
-  --dashai-accent: #ef9f27;
-  --dashai-accent-light: #f5b94a;
-  --dashai-accent-glow: rgba(239, 159, 39, 0.04);
-  --dashai-accent-border: rgba(239, 159, 39, 0.22);
-  --dashai-accent-text: #f5b94a;
-  --dashai-scroll-thumb: rgba(239, 159, 39, 0.25);
-  --dashai-scroll-thumb-hover: rgba(239, 159, 39, 0.4);
-  --dashai-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  --dashai-code-border: #333333;
-  --dashai-code-header: #212121;
+  --dashai-bg-base: #1a1918;
+  --dashai-bg-surface: #211f1e;
+  --dashai-bg-elevated: #282624;
+  --dashai-bg-code: #211f1e;
 
-  --dashai-success: #43a047;
-  --dashai-warning: #f1ae61;
+  /* DashAI border / text */
+  --dashai-border: rgba(240, 235, 224, 0.06);
+  --dashai-border-hover: rgba(240, 235, 224, 0.12);
+  --dashai-border-active: #d4a033;
+  --dashai-text-primary: #f0ebe0;
+  --dashai-text-secondary: rgba(240, 235, 224, 0.65);
+  --dashai-text-muted: rgba(240, 235, 224, 0.5);
+  --dashai-text-dim: rgba(240, 235, 224, 0.15);
+
+  /* DashAI gold as accent */
+  --dashai-accent: #d4a033;
+  --dashai-accent-light: #dfb558;
+  --dashai-accent-glow: rgba(212, 160, 51, 0.06);
+  --dashai-accent-border: rgba(212, 160, 51, 0.22);
+  --dashai-accent-text: #dfb558;
+  --dashai-scroll-thumb: rgba(240, 235, 224, 0.15);
+  --dashai-scroll-thumb-hover: rgba(240, 235, 224, 0.28);
+  --dashai-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --dashai-code-border: rgba(240, 235, 224, 0.08);
+  --dashai-code-header: #282624;
+
+  --dashai-success: #a8e05f;
+  --dashai-warning: #dfb558;
   --dashai-error: #ff8383;
-  --dashai-info: #3e68ff;
+  --dashai-info: #5b8def;
 
-  /* 4 macro-section colors (dark) */
-  --dashai-discover: #1d9e75;
-  --dashai-discover-bg: rgba(29, 158, 117, 0.1);
-  --dashai-discover-border: rgba(29, 158, 117, 0.22);
-  --dashai-learn: #ef9f27;
-  --dashai-learn-bg: rgba(239, 159, 39, 0.12);
-  --dashai-learn-border: rgba(239, 159, 39, 0.22);
-  --dashai-deep-dive: #9b7de8;
-  --dashai-deep-dive-bg: rgba(155, 125, 232, 0.1);
-  --dashai-deep-dive-border: rgba(155, 125, 232, 0.22);
-  --dashai-build: #d85a30;
-  --dashai-build-bg: rgba(216, 90, 48, 0.1);
-  --dashai-build-border: rgba(216, 90, 48, 0.22);
+  /* 4 macro-section colors (dark) — DashAI semantic mapping */
+  --dashai-discover: #5b8def;
+  --dashai-discover-bg: rgba(91, 141, 239, 0.07);
+  --dashai-discover-border: rgba(91, 141, 239, 0.2);
+  --dashai-learn: #d4a033;
+  --dashai-learn-bg: rgba(212, 160, 51, 0.10);
+  --dashai-learn-border: rgba(212, 160, 51, 0.18);
+  --dashai-deep-dive: #5b8def;
+  --dashai-deep-dive-bg: rgba(91, 141, 239, 0.07);
+  --dashai-deep-dive-border: rgba(91, 141, 239, 0.2);
+  --dashai-build: #a8e05f;
+  --dashai-build-bg: rgba(168, 224, 95, 0.07);
+  --dashai-build-border: rgba(168, 224, 95, 0.2);
   --dashai-section-accent: var(--dashai-learn);
   --dashai-section-bg: var(--dashai-learn-bg);
   --dashai-section-border: var(--dashai-learn-border);
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  /* DashAI semantic palette */
+  --dashai-blue: #5b8def;
+  --dashai-blue-dim: rgba(91, 141, 239, 0.08);
+  --dashai-blue-border: rgba(91, 141, 239, 0.22);
+  --dashai-gold: #d4a033;
+  --dashai-gold-dim: rgba(212, 160, 51, 0.10);
+  --dashai-gold-border: rgba(212, 160, 51, 0.22);
+  --dashai-lime: #a8e05f;
+  --dashai-lime-dim: rgba(168, 224, 95, 0.08);
+  --dashai-lime-border: rgba(168, 224, 95, 0.22);
+}
+
+/* DashAI light mode semantic vars — slightly darkened for readability on white */
+:root {
+  --dashai-blue: #4a7ad4;
+  --dashai-blue-dim: rgba(74, 122, 212, 0.08);
+  --dashai-blue-border: rgba(74, 122, 212, 0.22);
+  --dashai-gold: #b8891c;
+  --dashai-gold-dim: rgba(184, 137, 28, 0.10);
+  --dashai-gold-border: rgba(184, 137, 28, 0.22);
+  --dashai-lime: #6ea832;
+  --dashai-lime-dim: rgba(110, 168, 50, 0.10);
+  --dashai-lime-border: rgba(110, 168, 50, 0.25);
 }
 
 /* ── Base typography ── */
@@ -145,9 +192,9 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--dashai-text-primary);
 }
 
-h1 { font-size: 1.857rem; font-weight: 700; } /* ~26px at 14px base */
-h2 { font-size: 1.43rem;  font-weight: 600; }
-h3 { font-size: 1.143rem; font-weight: 600; }
+h1 { font-size: 1.857rem; font-weight: 900; line-height: 1.08; }
+h2 { font-size: 1.43rem;  font-weight: 700; line-height: 1.15; }
+h3 { font-size: 1.143rem; font-weight: 700; line-height: 1.2; }
 
 p, li, td {
   color: var(--dashai-text-secondary);
@@ -1248,4 +1295,138 @@ tbody tr:hover {
   .dashai-landing-hero__title { font-size: 1.62rem; }
   .dashai-landing-hero__subtitle { font-size: 0.9rem; }
   article               { padding: 24px 20px; }
+}
+
+/* ── Component API pages ── */
+
+/* Type badge — pill above the class name */
+.sk-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: var(--dashai-gold-dim);
+  color: var(--dashai-gold);
+  border: 1px solid var(--dashai-gold-border);
+  margin-bottom: 14px;
+  vertical-align: middle;
+  font-family: var(--ifm-font-family-base);
+}
+
+/* Per-type badge tints — gold=action/config, blue=data/explore, lime=output/results */
+.sk-badge--task           { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
+.sk-badge--model          { background: var(--dashai-gold-dim);  color: var(--dashai-gold);  border-color: var(--dashai-gold-border); }
+.sk-badge--generativemodel{ background: var(--dashai-lime-dim);  color: var(--dashai-lime);  border-color: var(--dashai-lime-border); }
+.sk-badge--dataloader     { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
+.sk-badge--metric         { background: var(--dashai-lime-dim);  color: var(--dashai-lime);  border-color: var(--dashai-lime-border); }
+.sk-badge--optimizer      { background: var(--dashai-gold-dim);  color: var(--dashai-gold);  border-color: var(--dashai-gold-border); }
+.sk-badge--explorer       { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
+.sk-badge--globalexplainer{ background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
+.sk-badge--localexplainer { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
+.sk-badge--converter      { background: var(--dashai-gold-dim);  color: var(--dashai-gold);  border-color: var(--dashai-gold-border); }
+.sk-badge--job            { background: var(--dashai-bg-elevated); color: var(--dashai-text-muted); border-color: var(--dashai-border); }
+.sk-badge--generativetask { background: var(--dashai-lime-dim);  color: var(--dashai-lime);  border-color: var(--dashai-lime-border); }
+
+/* Class signature block — shows the full dotted module path */
+.sk-sig {
+  background: var(--dashai-bg-elevated);
+  border: 1px solid var(--dashai-border);
+  border-left: 3px solid var(--dashai-gold);
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.875rem;
+  margin-bottom: 24px;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.sk-sig__module {
+  color: var(--dashai-text-muted);
+}
+
+.sk-sig__name {
+  color: var(--dashai-gold);
+}
+
+/* Parameter definition list */
+.sk-params {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.sk-params dt {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.875rem;
+  padding: 14px 0 3px;
+  border-top: 1px solid var(--dashai-border);
+  color: var(--dashai-blue) !important;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.sk-params dt:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.sk-params dd {
+  margin: 0;
+  padding: 4px 0 14px 18px;
+  color: var(--dashai-text-secondary);
+  font-size: 0.875rem;
+  border-left: 2px solid var(--dashai-border);
+  line-height: 1.65;
+}
+
+/* Method sections */
+.sk-method {
+  border-top: 1px solid var(--dashai-border);
+  padding: 20px 0 4px;
+  margin-top: 4px;
+}
+
+.sk-method:first-of-type {
+  border-top: none;
+}
+
+/* Method title */
+.sk-method > p:first-of-type strong code {
+  font-weight: 700;
+  color: var(--dashai-text-primary);
+  background: transparent;
+  border-color: var(--dashai-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sk-method__name {
+  color: var(--dashai-lime);
+}
+
+.sk-method__sig {
+  color: var(--dashai-text-muted);
+}
+
+/* Indent everything below the method title */
+.sk-method > p:first-of-type ~ p,
+.sk-method > p:first-of-type ~ dl {
+  padding-left: 18px;
+}
+
+/* Tighten the param list inside method sections */
+.sk-params--method dt,
+.sk-params--returns dt {
+  font-size: 0.8125rem;
+  padding-top: 8px;
+}
+
+.sk-params--method dd,
+.sk-params--returns dd {
+  font-size: 0.8125rem;
+  padding-bottom: 7px;
 }
