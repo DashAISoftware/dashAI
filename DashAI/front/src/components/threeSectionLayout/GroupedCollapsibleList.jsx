@@ -95,13 +95,26 @@ export default function GroupedCollapsibleList({
       >
         {Icon && (
           <Icon
-            sx={{ color: theme.palette.accent.cyan, mr: 1, fontSize: 20 }}
+            sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 20 }}
           />
         )}
-        <Typography color="text.primary">{title}</Typography>
+        <Typography
+          sx={{
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flex: 1,
+          }}
+          title={title}
+          color="text.primary"
+        >
+          {title}
+        </Typography>
         <Box
           sx={{
-            ml: 1,
+            mr: 1,
             bgcolor: theme.palette.ui.scrollbar,
             color: theme.palette.text.primary,
             borderRadius: "50%",
@@ -152,11 +165,11 @@ export default function GroupedCollapsibleList({
             >
               {openGroups[groupName] ? (
                 <KeyboardArrowDownIcon
-                  sx={{ fontSize: 20, color: theme.palette.accent.cyan }}
+                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
                 />
               ) : (
                 <KeyboardArrowRightIcon
-                  sx={{ fontSize: 20, color: theme.palette.accent.cyan }}
+                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
                 />
               )}
               <Typography
