@@ -28,6 +28,32 @@ export const homeTourSteps = [
     placement: "bottom",
   },
   {
+    target: '[data-tour="generative-button"]',
+    content: (
+      <Trans i18nKey={"homeTour:generativeIntro"}>
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "top",
+  },
+  {
+    target: '[data-tour="plugins-button"]',
+    content: (
+      <Trans i18nKey={"homeTour:pluginsIntro"}>
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "top",
+  },
+  {
     target: '[data-tour="datasets-button"]',
     content: (
       <Trans i18nKey="homeTour:readyToStart">

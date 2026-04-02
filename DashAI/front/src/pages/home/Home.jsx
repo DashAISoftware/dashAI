@@ -168,7 +168,7 @@ function Home() {
         t("home:chip.synthesis"),
         t("home:chip.shapStories"),
       ],
-      tourAttr: null,
+      tourAttr: "generative-button",
     },
     {
       title: t("common:plugins"),
@@ -185,7 +185,7 @@ function Home() {
         t("home:chip.extensions"),
         t("home:chip.custom"),
       ],
-      tourAttr: null,
+      tourAttr: "plugins-button",
     },
   ];
 
