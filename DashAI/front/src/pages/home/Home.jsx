@@ -21,13 +21,24 @@ import HomeButton from "../../components/HomeButton";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TOUR_KEYS } from "../../constants/tours";
 
-// Fill in real URLs before shipping
 const SIDEBAR_LINKS = {
   resources: [
-    { key: "documentation", href: "#", Icon: DocsIcon },
-    { key: "tutorials", href: "#", Icon: TutorialsIcon },
-    { key: "github", href: "#", Icon: GitHubIcon },
-    { key: "website", href: "#", Icon: WebsiteIcon },
+    {
+      key: "documentation",
+      href: "https://docs.dash-ai.com/",
+      Icon: DocsIcon,
+    },
+    {
+      key: "tutorials",
+      href: "https://docs.dash-ai.com/tutorials/upload_dataset.html",
+      Icon: TutorialsIcon,
+    },
+    {
+      key: "github",
+      href: "https://github.com/DashAISoftware/DashAI",
+      Icon: GitHubIcon,
+    },
+    { key: "website", href: "https://www.dash-ai.com", Icon: WebsiteIcon },
   ],
   community: [
     { key: "forum", href: "#", Icon: ForumIcon },
