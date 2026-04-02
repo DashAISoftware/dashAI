@@ -69,6 +69,7 @@ Each column header has a dropdown showing the inferred type. Click it to change 
 | `Categorical` | Discrete values representing groups or labels (e.g., gender, education level, home ownership status) |
 | `Float`       | Continuous numbers with decimals (e.g., income, price, ratio)                                        |
 | `Integer`     | Whole numbers without decimals (e.g., age, count, years of experience)                               |
+| `Text`        | Free-form natural language content (e.g., comments, descriptions, reviews)                           |
 
 Reviewing and correcting column types at this stage ensures the platform interprets
 your data correctly in every subsequent step.
