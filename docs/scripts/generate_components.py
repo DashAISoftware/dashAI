@@ -24,12 +24,15 @@ def _escape_table_cell(text: str) -> str:
 
 
 def _escape_mdx_text(text: str) -> str:
-    """Escape ``<`` and ``>`` in plain MDX prose (outside of table cells).
+    """Escape characters that MDX 2 / JSX would otherwise mis-parse.
 
-    Curly braces in prose text are less common; we only escape angle brackets
-    here because MDX/JSX will try to parse ``<word>`` as a JSX element.
+    Docusaurus uses MDX 2, which parses ``{``/``}`` as JSX expressions and
+    ``<``/``>`` as JSX tags *everywhere* in the document — including inside
+    HTML elements like ``<dd>``.  We replace all four with HTML entities so
+    the rendered output is correct while the MDX source remains valid.
     """
     s = str(text)
+    s = s.replace("{", "&#123;").replace("}", "&#125;")
     s = s.replace("<", "&lt;").replace(">", "&gt;")
     return s
 
@@ -67,21 +70,8 @@ def _get_display_name(cls) -> str:
 
 
 def _get_description(cls) -> str:
-    """Return the component's description, falling back to the docstring."""
-    raw = getattr(cls, "DESCRIPTION", None)
-    desc = _extract_text(raw)
-    if desc:
-        return desc
+    """Return the component's docstring."""
     return (inspect.getdoc(cls) or "").strip()
-
-
-def _get_short_description(cls) -> str:
-    """Return the component's short description, falling back to description."""
-    raw = getattr(cls, "SHORT_DESCRIPTION", None)
-    short = _extract_text(raw)
-    if short:
-        return short
-    return _get_description(cls)
 
 
 def _get_compatible_components(cls) -> list:
@@ -137,6 +127,17 @@ def _get_schema_params(cls) -> list:
         return params
     except Exception:
         return []
+
+
+def _get_module_path(cls) -> str:
+    """Return the dotted package path of the class (drops the file-level module name).
+
+    E.g. 'DashAI.back.models.hugging_face.distilbert_transformer'
+         → 'DashAI.back.models.hugging_face'
+    """
+    module = getattr(cls, "__module__", "")
+    parts = module.rsplit(".", 1)
+    return parts[0] if len(parts) > 1 else module
 
 
 def _is_pipeline_node(cls) -> bool:
@@ -350,47 +351,102 @@ def _get_methods(cls) -> list:
 # ---------------------------------------------------------------------------
 
 
+def _render_param_dl(
+    params: list,
+    key_name: str = "name",
+    key_type: str = "type",
+    key_desc: str = "description",
+    key_default: str | None = None,
+    class_name: str = "sk-params",
+) -> str:
+    """Render a list of parameter dicts as an HTML definition list (sklearn style)."""
+    class_attr = f' className="{class_name}"' if class_name else ""
+    parts = [f"<dl{class_attr}>"]
+    for p in params:
+        name = p.get(key_name, "")
+        ptype = p.get(key_type, "")
+        desc = p.get(key_desc, "")
+        default = p.get(key_default, "—") if key_default else "—"
+
+        type_str = f" : <em>{_escape_mdx_text(ptype)}</em>" if ptype else ""
+        default_str = (
+            f", default=<code>{_escape_mdx_text(default)}</code>"
+            if default != "—"
+            else ""
+        )
+        parts.append(
+            f"<dt><strong>{_escape_mdx_text(name)}</strong>{type_str}{default_str}</dt>"
+        )
+        parts.append(f"<dd>{_escape_mdx_text(desc)}</dd>")
+        parts.append("")
+    parts.append("</dl>")
+    return "\n".join(parts)
+
+
+def _method_anchor(name: str) -> str:
+    """Return a lowercase slug anchor id for a method name."""
+    return name.lower()
+
+
 def _render_method_section(method) -> str:
-    """Render one method as an MDX section."""
-    lines = []
+    """Render one method as a sklearn-style section."""
+    name = method["name"]
+    sig = method["signature"]
     defined_on = method["defined_on"]
+    summary = _escape_mdx_text(method["summary"]) if method["summary"] else ""
+
+    lines = []
+    lines.append('<div className="sk-method">')
+    lines.append(f'<span id="{_method_anchor(name)}"></span>')
+    lines.append("")
     lines.append(
-        f" `{method['name']}{method['signature']}` "
-        f"<small>defined on `{defined_on}`</small>"
+        f"<p><strong><code>"
+        f'<span className="sk-method__name">{name}</span>'
+        f'<span className="sk-method__sig">{_escape_mdx_text(sig)}</span>'
+        f"</code></strong></p>"
     )
     lines.append("")
-    if method["summary"]:
-        lines.append(_escape_mdx_text(method["summary"]))
+    lines.append(f"<small>Defined on <code>{defined_on}</code></small>")
+    lines.append("")
+    if summary:
+        lines.append(summary)
         lines.append("")
 
     if method["parameters"]:
         lines.append("**Parameters**")
         lines.append("")
-        lines.append("| Name | Type | Description |")
-        lines.append("|------|------|-------------|")
-        for p in method["parameters"]:
-            name = _escape_table_cell(p["name"])
-            ptype = _escape_table_cell(p["type"])
-            desc = _escape_table_cell(p["desc"])
-            lines.append(f"| {name} | {ptype} | {desc} |")
+        lines.append(
+            _render_param_dl(
+                method["parameters"],
+                key_name="name",
+                key_type="type",
+                key_desc="desc",
+                class_name="sk-params sk-params--method",
+            )
+        )
         lines.append("")
 
     if method["returns"]:
         lines.append("**Returns**")
         lines.append("")
-        lines.append("| Type | Description |")
-        lines.append("|------|-------------|")
+        ret_dl = ['<dl className="sk-params sk-params--returns">']
         for r in method["returns"]:
-            lines.append(
-                f"| {_escape_table_cell(r['type'])} | {_escape_table_cell(r['desc'])} |"
-            )
+            rtype = _escape_mdx_text(r["type"]) if r["type"] else ""
+            desc = _escape_mdx_text(r["desc"])
+            ret_dl.append(f"<dt><em>{rtype}</em></dt>")
+            ret_dl.append(f"<dd>{desc}</dd>")
+            ret_dl.append("")
+        ret_dl.append("</dl>")
+        lines.append("\n".join(ret_dl))
         lines.append("")
 
+    lines.append("</div>")
+    lines.append("")
     return "\n".join(lines)
 
 
 def _render_component_mdx(info) -> str:
-    """Render a component info dict as an MDX string."""
+    """Render a component info dict as an MDX string (sklearn-style)."""
     class_name = info["class_name"]
     display_name = info["display_name"]
     component_type = info["type"]
@@ -398,50 +454,83 @@ def _render_component_mdx(info) -> str:
     params = info["params"]
     methods = info["methods"]
     compatible = info["compatible"]
+    class_lookup = info.get("class_lookup", {})
 
     lines = []
+    # --- Frontmatter ---
+    title = class_name.replace('"', '\\"')
+    sidebar = (display_name or class_name).replace('"', '\\"')
     lines.append("---")
-    title = info["class_name"].replace('"', '\\"')
-    sidebar = (info["display_name"] or info["class_name"]).replace('"', '\\"')
     lines.append(f'title: "{title}"')
     lines.append(f'sidebar_label: "{sidebar}"')
     lines.append("---")
     lines.append("")
+
+    # --- Class header ---
     lines.append(f"# {class_name}")
     lines.append("")
-    lines.append(f"**Type:** {component_type}  ")
-    lines.append(f"**Display name:** {display_name}")
+
+    # Type badge
+    type_key = component_type.lower()
+    lines.append(
+        f'<span className="sk-badge sk-badge--{type_key}">{component_type}</span>'
+    )
     lines.append("")
 
-    lines.append("## Description")
-    lines.append("")
-    lines.append(description if description else "_No description available._")
+    # Class signature block (sklearn-style: shows full dotted path)
+    module_path = info.get("module_path", "")
+    if module_path:
+        lines.append('<div className="sk-sig">')
+        lines.append(
+            f'  <span className="sk-sig__module">{module_path}.</span>'
+            f'<strong className="sk-sig__name">{class_name}</strong>'
+        )
+        lines.append("</div>")
+        lines.append("")
+
+    lines.append("---")
     lines.append("")
 
+    # --- Description ---
+    desc_text = (
+        _escape_mdx_text(description) if description else "*No description available.*"
+    )
+    lines.append(desc_text)
+    lines.append("")
+
+    # --- Parameters ---
     if params:
         lines.append("## Parameters")
         lines.append("")
-        lines.append("| Name | Type | Default | Description |")
-        lines.append("|------|------|---------|-------------|")
-        for p in params:
-            name = _escape_table_cell(p["name"])
-            ptype = _escape_table_cell(p["type"])
-            default = _escape_table_cell(p["default"])
-            description = _escape_table_cell(p["description"])
-            lines.append(f"| {name} | {ptype} | {default} | {description} |")
+        lines.append(
+            _render_param_dl(
+                params,
+                key_name="name",
+                key_type="type",
+                key_desc="description",
+                key_default="default",
+            )
+        )
         lines.append("")
 
+    # --- Methods detail sections ---
     if methods:
         lines.append("## Methods")
         lines.append("")
         for method in methods:
             lines.append(_render_method_section(method))
 
+    # --- Compatible with ---
     if compatible:
         lines.append("## Compatible with")
         lines.append("")
         for comp in compatible:
-            lines.append(f"- {comp}")
+            comp_type = class_lookup.get(comp)
+            if comp_type:
+                comp_dir = _type_to_dir(comp_type)
+                lines.append(f"- [`{comp}`](../{comp_dir}/{comp})")
+            else:
+                lines.append(f"- `{comp}`")
         lines.append("")
 
     return "\n".join(lines)
@@ -455,7 +544,7 @@ def _render_index_mdx(type_label: str, components: list) -> str:
     type_label : str
         Singular type name, e.g. "Model" or "Converter".
     components : list
-        List of dicts with keys: class_name, display_name, short_description.
+        List of dicts with keys: class_name, display_name, description.
     """
     plural = type_label + "s"
     sorted_components = sorted(components, key=lambda c: c["class_name"])
@@ -473,8 +562,14 @@ def _render_index_mdx(type_label: str, components: list) -> str:
     lines.append("| Name | Description |")
     lines.append("|------|-------------|")
     for comp in sorted_components:
-        short = _escape_table_cell(comp["short_description"])
-        lines.append(f"| [{comp['class_name']}](./{comp['class_name']}) | {short} |")
+        raw_desc = comp["description"]
+        # Use first sentence (up to first period or 120 chars) as index summary
+        first_sentence = raw_desc.split(".")[0].strip() if raw_desc else ""
+        if first_sentence and not first_sentence.endswith("."):
+            first_sentence += "."
+        short = _escape_table_cell(first_sentence or "_No description available._")
+        name_cell = f"[**{comp['class_name']}**](./{comp['class_name']})"
+        lines.append(f"| {name_cell} | {short} |")
     lines.append("")
 
     return "\n".join(lines)
@@ -558,6 +653,11 @@ def generate_all(output_dir=None):
         t = getattr(cls, "TYPE", "Unknown")
         type_groups.setdefault(t, []).append(cls)
 
+    # Build a class_name -> component_type lookup for cross-linking
+    class_lookup: dict[str, str] = {
+        cls.__name__: getattr(cls, "TYPE", "Unknown") for cls in components
+    }
+
     total = 0
     for component_type, cls_list in sorted(type_groups.items()):
         type_key = component_type.lower()
@@ -573,7 +673,6 @@ def generate_all(output_dir=None):
         for cls in cls_list:
             display_name = _get_display_name(cls)
             description = _get_description(cls)
-            short_description = _get_short_description(cls)
             params = _get_schema_params(cls)
             methods = _get_methods(cls)
             compatible = _get_compatible_components(cls)
@@ -583,9 +682,11 @@ def generate_all(output_dir=None):
                 "type": component_type,
                 "display_name": display_name,
                 "description": description,
+                "module_path": _get_module_path(cls),
                 "params": params,
                 "methods": methods,
                 "compatible": compatible,
+                "class_lookup": class_lookup,
             }
 
             mdx = _render_component_mdx(info)
@@ -596,7 +697,7 @@ def generate_all(output_dir=None):
                 {
                     "class_name": cls.__name__,
                     "display_name": display_name,
-                    "short_description": short_description,
+                    "description": description,
                 }
             )
 
