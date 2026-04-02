@@ -5,7 +5,7 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
-import Footer from "./Footer";
+import Footer from "../threeSectionLayout/Footer";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
