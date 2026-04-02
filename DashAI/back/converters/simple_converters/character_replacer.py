@@ -111,6 +111,8 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         """
         import pyarrow as pa
 
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         if not self._target_columns:
             # if no target columns were set, return the dataset unchanged
             return x

@@ -54,17 +54,17 @@ class MixtralSchema(BaseSchema):
     filename: schema_field(
         enum_field(
             enum=[
-                "mixtral-8x7b-instruct-v0.1.Q2_K.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q3_K_M.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q4_0.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q5_0.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q5_K_M.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q6_K.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q8_0.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q2_K.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q3_K_M.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q4_0.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q4_K_M.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q5_0.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q5_K_M.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q6_K.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q8_0.gguf",
             ]
         ),
-        placeholder="mixtral-8x7b-instruct-v0.1.Q2_K.gguf",
+        placeholder="Mixtral-8x7B-Instruct-v0.1.Q2_K.gguf",
         description=MultilingualString(
             en=(
                 "The specific GGUF file to load for the Mixtral model. The different "
