@@ -2,12 +2,14 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from kink import di
+from kink import di, inject
 
 from DashAI.back.dependencies.database.models import Pipeline
 from DashAI.back.job.base_job import BaseJob, JobError
 
 if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
     from sqlalchemy.orm import Session
 
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -31,7 +33,7 @@ class PipelineJob(BaseJob):
             return "Pipeline"
 
         try:
-            session_factory: sessionmaker = di["session_factory"]
+            session_factory: "sessionmaker" = di["session_factory"]
             with session_factory() as db:
                 pipeline: Pipeline | None = db.get(Pipeline, pipeline_id)
                 if pipeline and getattr(pipeline, "name", None):
@@ -41,15 +43,13 @@ class PipelineJob(BaseJob):
 
         return f"Pipeline ({pipeline_id})"
 
+    @inject
     def run(
         self,
+        session_factory: "sessionmaker" = lambda di: di["session_factory"],
         component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> None:
-        db: "Session" = self.kwargs["db"]
-        id: int = self.kwargs.get("id", None)
-        pipeline: Pipeline = db.get(Pipeline, id)
-        steps: List[Dict[str, Any]] = self.kwargs.get("steps", []) or pipeline.steps
-
+        pipeline_id: int | None = self.kwargs.get("id")
         if not pipeline_id:
             raise JobError("No id provided to execute the pipeline.")
 
@@ -80,7 +80,7 @@ class PipelineJob(BaseJob):
                     )
 
                     try:
-                        node_class = component_registry(di)[node_type]["class"]
+                        node_class = component_registry[node_type]["class"]
                     except KeyError as e:
                         error_msg = f"Component type {node_type} not found in registry"
                         raise JobError(

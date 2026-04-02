@@ -1,5 +1,10 @@
+import contextlib
 import hashlib
+import json
 import logging
+import os
+import shutil
+import tempfile
 import time
 import zipfile
 from collections import OrderedDict
@@ -21,6 +26,8 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
     DatasetUpdateParams,
 )
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.types.inf.type_inference import infer_types
+from DashAI.back.types.utils import arrow_to_dashai_schema
 
 if TYPE_CHECKING:
     from sqlalchemy.orm.session import sessionmaker
@@ -1676,6 +1683,12 @@ async def load_preview(
         - inferred_types: Detailed type inference (DashAI types)
         - preview_row_count: Number of rows used for inference
     """
+    import contextlib
+    import os
+    import shutil
+    import tempfile
+    from DashAI.back.types.utils import arrow_to_dashai_schema
+
     try:
         parsed_params = json.loads(params) if params else {}
 
@@ -1835,6 +1848,9 @@ async def infer_datatypes(
     Dict
         A dictionary containing inferred types for each column.
     """
+    import os
+    import tempfile
+
     try:
         parsed_params = json.loads(params) if params else {}
 

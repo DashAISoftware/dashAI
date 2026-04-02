@@ -194,8 +194,11 @@ from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 # Pipeline nodes
 from DashAI.back.pipeline.data_selector_node import DataSelector
 from DashAI.back.pipeline.exploration_node import DataExploration
+from DashAI.back.pipeline.metrics_node import MetricsEval
 from DashAI.back.pipeline.prediction_node import Prediction
 from DashAI.back.pipeline.retrieve_model_node import RetrieveModel
+from DashAI.back.pipeline.split_data_node import SplitData
+from DashAI.back.pipeline.task_and_model_node import TaskAndModel
 from DashAI.back.pipeline.train_node import Train
 
 # Plugins
