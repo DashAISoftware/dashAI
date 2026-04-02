@@ -28,6 +28,12 @@ class Prediction(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Prediction executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("Prediction encountered an error.")
+
+    def get_job_name(self) -> str:
+        return "Prediction"
+
     @inject
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         import json

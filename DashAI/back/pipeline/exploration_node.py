@@ -44,6 +44,12 @@ class DataExploration(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("DataExploration executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("DataExploration encountered an error.")
+
+    def get_job_name(self) -> str:
+        return "DataExploration"
+
     @inject
     async def run(
         self,
@@ -74,9 +80,9 @@ class DataExploration(BaseJob):
                     explorer_id = option.get("id", str(idx))
                     name = option.get("name", "")
 
-                    explorer_component_class: Type[BaseExplorer] = component_registry(
-                        di
-                    )[exploration_type]["class"]
+                    explorer_component_class: Type[BaseExplorer] = component_registry[
+                        exploration_type
+                    ]["class"]
                     explorer_instance = explorer_component_class(**parameters)
                     assert isinstance(explorer_instance, BaseExplorer)
 

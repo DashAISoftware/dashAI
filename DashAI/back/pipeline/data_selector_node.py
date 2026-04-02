@@ -34,6 +34,12 @@ class DataSelector(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("DataSelector executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("DataSelector encountered an error.")
+
+    def get_job_name(self) -> str:
+        return "DataSelector"
+
     @inject
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         from pathlib import Path

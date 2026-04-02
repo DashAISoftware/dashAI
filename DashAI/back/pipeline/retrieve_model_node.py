@@ -39,6 +39,12 @@ class RetrieveModel(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("RetrieveModel executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("RetrieveModel encountered an error.")
+
+    def get_job_name(self) -> str:
+        return f"RetrieveModel: {self.model}"
+
     @inject
     async def run(
         self,
@@ -60,7 +66,7 @@ class RetrieveModel(BaseJob):
             )
             context["input_columns"] = input_columns_names
 
-            model_class = component_registry(di)[self.model]["class"]
+            model_class = component_registry[self.model]["class"]
             context["model_class"] = model_class
 
             return {

@@ -70,6 +70,12 @@ class Train(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Train executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("Train encountered an error.")
+
+    def get_job_name(self) -> str:
+        return f"Train: {self.model}"
+
     @inject
     async def run(
         self,
@@ -90,7 +96,7 @@ class Train(BaseJob):
         context["model_name"] = self.model
         pipeline_id = context["pipeline_id"]
         dataset = context["dataset"]
-        task: BaseTask = component_registry(di)[self.task]["class"]
+        task: BaseTask = component_registry[self.task]["class"]
         task_instance = task()
 
         input_columns_names = get_column_names_from_indexes(dataset, self.input_columns)
@@ -101,7 +107,7 @@ class Train(BaseJob):
 
         all_metrics = {
             component_dict["name"]: component_dict
-            for component_dict in component_registry(di).get_components_by_types(
+            for component_dict in component_registry.get_components_by_types(
                 select="Metric"
             )
         }
@@ -148,7 +154,7 @@ class Train(BaseJob):
             ) from e
 
         try:
-            model_class = component_registry(di)[self.model]["class"]
+            model_class = component_registry[self.model]["class"]
             context["model_class"] = model_class
         except Exception as e:
             log.exception(e)
