@@ -4,9 +4,7 @@ import {
   FileUpload as FileUploadIcon,
   Science as ScienceIcon,
   Extension as ExtensionIcon,
-  Insights as InsightsIcon,
   Merge as MergeIcon,
-  Timeline as TimelineIcon,
   AutoAwesome as AutoAwesomeIcon,
 } from "@mui/icons-material";
 import HomeButton from "../../components/HomeButton";
@@ -55,6 +53,14 @@ function Home() {
               description={t("home:description.models")}
               to="/app/models"
               Icon={ScienceIcon}
+            />
+          </Grid>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="pipelines-button">
+            <HomeButton
+              title={t("common:pipelines")}
+              description={t("home:description.pipelines")}
+              to="/app/pipelines"
+              Icon={MergeIcon}
             />
           </Grid>
         </Grid>
