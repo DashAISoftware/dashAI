@@ -21,7 +21,7 @@ The top bar is always visible and provides access to all main modules:
 | **GENERATIVE** | Interact with text and image generation models                       |
 | **PLUGINS**    | Install and manage plugins                                           |
 
-The globe icon (🌐) switches the interface language. The gear icon (⚙️) opens platform settings. The question mark icon (?) opens contextual help.
+The **language dropdown** (next to the globe icon) switches the interface language (between english and spanish). The **hardware monitor** button displays system resource usage. The **tutorials** button opens guided walkthroughs. The **theme** button toggles between light and dark mode.
 
 ---
 
@@ -67,6 +67,14 @@ When a session is open:
 - **Model Comparison panel** — table of all models with their metrics; toggle between TRAINING, VALIDATION, and TEST splits; switch between TABLE and CHARTS views
 - **Model cards** — one per model, expandable, each with EDIT, TRAIN/RE-TRAIN buttons, a status badge, and four inner tabs: LIVE METRICS, EXPLAINABILITY, PREDICTIONS, HYPERPARAMETERS
 
+### Generative — Chat View
+
+When a generative session is open, the main area shows a chat interface:
+
+- **Chat history** — a scrollable conversation log showing your messages and the model's responses
+- **Message input** — text field at the bottom to type your prompt; press Enter or click the send button to submit
+- **Model responses** — displayed inline in the conversation, with support for formatted text
+
 ---
 
 ## Right Panel
@@ -79,7 +87,7 @@ The right panel is context-sensitive and appears alongside the main area.
 
 **In Models:** The Available Models panel lists all models compatible with the current session's task. Hover for a description. Click to open the Add Model modal.
 
-**In Generative:** Lists available generative models. Hover for a description.
+**In Generative:** Shows the hyperparameters of the selected model, allowing you to modify them directly before or between interactions.
 
 ---
 
@@ -111,10 +119,10 @@ Long-running operations — training, exploration, prediction generation — all
 
 Status badges appear on model cards and explorer/converter results throughout the interface:
 
-| Badge             | Meaning                                           |
-| ----------------- | ------------------------------------------------- |
-| **Not Started**   | The operation has been configured but not yet run |
-| **Finalizado**    | The operation completed successfully              |
-| **Error**         | The operation failed — check parameters or data   |
-| **Processing...** | The operation is currently running                |
-| **Delivered**     | The result is available and displayed             |
+| Badge           | Meaning                                           |
+| --------------- | ------------------------------------------------- |
+| **Not Started** | The operation has been configured but not yet run |
+| **Finished**    | The operation completed successfully              |
+| **Error**       | The operation failed — check parameters or data   |
+| **Started**     | The operation is currently running                |
+| **Delivered**   | The operation has been queued                     |
