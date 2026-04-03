@@ -57,6 +57,7 @@ class DataExploration(BaseJob):
         component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> Dict[str, Any]:
         try:
+            import inspect
             import os
             from pathlib import Path
 
@@ -115,12 +116,39 @@ class DataExploration(BaseJob):
                         prepared_dataset, explorer_info
                     )
 
-                    save_path = explorer_instance.save_notebook(
-                        __notebook_info__=None,
-                        explorer_info=explorer_info,
-                        save_path=base_path,
-                        result=result,
+                    save_notebook_sig = inspect.signature(
+                        explorer_instance.save_notebook
                     )
+                    save_notebook_params = set(save_notebook_sig.parameters)
+
+                    notebook_info_arg_name = None
+                    for candidate in (
+                        "__notebook_info__",
+                        "__exploration_info__",
+                        "notebook_info",
+                    ):
+                        if candidate in save_notebook_params:
+                            notebook_info_arg_name = candidate
+                            break
+
+                    save_notebook_kwargs = {
+                        "explorer_info": explorer_info,
+                        "save_path": base_path,
+                        "result": result,
+                    }
+                    if notebook_info_arg_name is not None:
+                        save_notebook_kwargs[notebook_info_arg_name] = None
+                        save_path = explorer_instance.save_notebook(
+                            **save_notebook_kwargs
+                        )
+                    else:
+                        # Fallback to positional first arg for legacy implementations.
+                        save_path = explorer_instance.save_notebook(
+                            None,
+                            explorer_info=explorer_info,
+                            save_path=base_path,
+                            result=result,
+                        )
 
                     results[str(explorer_id)] = {
                         "exploration_type": exploration_type,
