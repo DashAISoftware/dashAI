@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from kink import di, inject
+from kink import inject
 
 from DashAI.back.job.base_job import BaseJob, JobError
 

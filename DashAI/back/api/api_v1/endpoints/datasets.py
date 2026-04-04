@@ -450,7 +450,6 @@ async def get_sample(
     Dict
         A Dict with a sample of 10 rows
     """
-    import os
 
     import pyarrow as pa
     import pyarrow.ipc as ipc
@@ -519,7 +518,6 @@ async def get_sample_by_file(
     Dict
         A Dict with a sample of 10 rows
     """
-    import os
 
     import pyarrow as pa
     import pyarrow.ipc as ipc
@@ -810,7 +808,6 @@ async def copy_dataset(
     Dataset
         The newly created dataset.
     """
-    import shutil
 
     from DashAI.back.core.enums.status import DatasetStatus
 
@@ -1023,7 +1020,6 @@ async def rename_dataset_column(
         A dictionary with a success message and updated column types.
     """
     import json
-    import os
 
     import pyarrow as pa
     import pyarrow.ipc as ipc
@@ -1300,7 +1296,6 @@ async def export_dataset_as_csv(
     StreamingResponse
         A streaming response with the complete dataset in CSV format.
     """
-    import os
 
     import pyarrow as pa
     import pyarrow.csv as csv
@@ -1384,7 +1379,6 @@ async def export_dataset_csv_by_id(
     StreamingResponse
         A streaming response that provides the CSV file content.
     """
-    import os
 
     import pyarrow as pa
     import pyarrow.csv as csv
@@ -1494,17 +1488,14 @@ async def preview_with_types(
         - inferred_types: Detailed type inference (DashAI types)
         - preview_row_count: Number of rows used for inference
     """
-    import contextlib
     import json
     import os
     import shutil
-    import tempfile
 
     import numpy as np
     import pyarrow as pa
 
     from DashAI.back.types.inf.type_inference import infer_types
-    from DashAI.back.types.utils import arrow_to_dashai_schema
 
     try:
         parsed_params = json.loads(params) if params else {}
@@ -1683,11 +1674,8 @@ async def load_preview(
         - inferred_types: Detailed type inference (DashAI types)
         - preview_row_count: Number of rows used for inference
     """
-    import contextlib
     import os
     import shutil
-    import tempfile
-    from DashAI.back.types.utils import arrow_to_dashai_schema
 
     try:
         parsed_params = json.loads(params) if params else {}
@@ -1848,8 +1836,6 @@ async def infer_datatypes(
     Dict
         A dictionary containing inferred types for each column.
     """
-    import os
-    import tempfile
 
     try:
         parsed_params = json.loads(params) if params else {}
@@ -1928,8 +1914,6 @@ async def validate_type_changes(
     Validate proposed type changes for dataset columns.
     """
     import json
-    import os
-    import tempfile
 
     from DashAI.back.types.type_validation import validate_multiple_type_changes
 

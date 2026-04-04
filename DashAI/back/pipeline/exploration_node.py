@@ -1,10 +1,9 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Type
 
-from kink import di, inject
+from kink import inject
 
 from DashAI.back.config import DefaultSettings
-from DashAI.back.dependencies.database.models import Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
 
