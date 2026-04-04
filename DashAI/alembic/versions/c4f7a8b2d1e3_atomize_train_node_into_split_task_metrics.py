@@ -52,8 +52,8 @@ def upgrade() -> None:
             sa.Column("input_columns", sa.JSON(), nullable=False),
             sa.Column("output_columns", sa.JSON(), nullable=False),
             sa.Column("splits", sa.JSON(), nullable=False),
-            sa.Column("created", sa.DateTime(), nullable=True),
-            sa.Column("last_modified", sa.DateTime(), nullable=True),
+            sa.Column("created", sa.DateTime(), nullable=False),
+            sa.Column("last_modified", sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(["pipeline_id"], ["pipeline.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
         )
@@ -67,8 +67,8 @@ def upgrade() -> None:
             sa.Column("model_name", sa.String(), nullable=False),
             sa.Column("parameters", sa.JSON(), nullable=True),
             sa.Column("model_path", sa.String(), nullable=True),
-            sa.Column("created", sa.DateTime(), nullable=True),
-            sa.Column("last_modified", sa.DateTime(), nullable=True),
+            sa.Column("created", sa.DateTime(), nullable=False),
+            sa.Column("last_modified", sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(["pipeline_id"], ["pipeline.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
         )
@@ -80,8 +80,8 @@ def upgrade() -> None:
             sa.Column("pipeline_id", sa.Integer(), nullable=False),
             sa.Column("metric_names", sa.JSON(), nullable=False),
             sa.Column("results", sa.JSON(), nullable=True),
-            sa.Column("created", sa.DateTime(), nullable=True),
-            sa.Column("last_modified", sa.DateTime(), nullable=True),
+            sa.Column("created", sa.DateTime(), nullable=False),
+            sa.Column("last_modified", sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(["pipeline_id"], ["pipeline.id"], ondelete="CASCADE"),
             sa.PrimaryKeyConstraint("id"),
         )
