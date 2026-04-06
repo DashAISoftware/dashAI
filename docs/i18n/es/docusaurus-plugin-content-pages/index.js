@@ -60,8 +60,9 @@ export default function Home() {
           </div>
         </div>
         <div className="dashai-info">
-          <strong>ℹ Info:</strong> DashAI v0.3.0 — código abierto bajo MIT. Las páginas de referencia de componentes se generan
-          automáticamente desde el código fuente en cada compilación.
+          <strong>ℹ Info:</strong> DashAI v0.3.0 — código abierto bajo MIT. Las
+          páginas de referencia de componentes se generan automáticamente desde
+          el código fuente en cada compilación.
         </div>
         <div className="dashai-section-title">Explora la documentación</div>
         <div className="dashai-cards">
