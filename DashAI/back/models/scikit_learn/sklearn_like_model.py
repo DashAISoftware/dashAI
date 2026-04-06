@@ -24,7 +24,14 @@ class CategoricalEncodingStrategy(str, Enum):
 
 
 class SklearnLikeModel(BaseModel):
-    """Abstract class to define the way to save sklearn like models."""
+    """Abstract base class for scikit-learn-compatible DashAI models.
+
+    Provides ``save`` / ``load`` via joblib, categorical encoding helpers
+    (label or one-hot), and the ``prepare_dataset`` / ``prepare_output``
+    pipeline expected by the DashAI training loop. Concrete subclasses
+    (classifiers and regressors) inherit this mixin and supply ``train`` and
+    ``predict`` implementations backed by scikit-learn estimators.
+    """
 
     CATEGORICAL_ENCODING: CategoricalEncodingStrategy = (
         CategoricalEncodingStrategy.LABEL
@@ -39,14 +46,31 @@ class SklearnLikeModel(BaseModel):
         self.output_encodings = {}
 
     def save(self, filename: str) -> None:
-        """Save the model in the specified path."""
+        """Serialise the model to disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Destination file path where the model will be written.
+        """
         import joblib
 
         joblib.dump(self, filename)
 
     @staticmethod
     def load(filename: str) -> None:
-        """Load the model of the specified path."""
+        """Deserialise a model from disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file previously written by :meth:`save`.
+
+        Returns
+        -------
+        SklearnLikeModel
+            The loaded model instance.
+        """
         import joblib
 
         model = joblib.load(filename)
@@ -55,6 +79,27 @@ class SklearnLikeModel(BaseModel):
     # --- Methods for process the data for sklearn models ---
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
+        """Train the sklearn model on the provided dataset.
+
+        Applies ``prepare_dataset`` and ``prepare_output`` to encode categorical
+        features and targets before delegating to the scikit-learn ``fit`` method.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            The input features for training.
+        y_train : DashAIDataset
+            The target labels for training.
+        x_validation : DashAIDataset, optional
+            Validation input features (unused in sklearn models). Defaults to None.
+        y_validation : DashAIDataset, optional
+            Validation target labels (unused in sklearn models). Defaults to None.
+
+        Returns
+        -------
+        BaseModel
+            The fitted scikit-learn estimator (self).
+        """
         x_processed = self.prepare_dataset(x_train, is_fit=True).to_pandas()
         y_processed = self.prepare_output(y_train, is_fit=True).to_pandas()
         return super().fit(x_processed, y_processed)

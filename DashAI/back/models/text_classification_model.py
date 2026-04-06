@@ -5,23 +5,37 @@ from DashAI.back.models.base_model import BaseModel
 
 
 class TextClassificationModel(BaseModel):
-    """Class for models associated to TextClassificationTask."""
+    """Base class for models that perform text classification tasks.
+
+    Concrete text classification models must extend this class and implement
+    ``save``, ``load``, and ``train``. Compatible with ``TextClassificationTask``.
+    """
 
     COMPATIBLE_COMPONENTS = ["TextClassificationTask"]
 
     @abstractmethod
     def save(self, filename: str) -> None:
-        """Store an instance of a model.
+        """Store the model to disk.
 
-        filename (Str): Indicates where to store the model,
-        if filename is None, this method returns a bytes array with the model.
+        Parameters
+        ----------
+        filename : str
+            Path where the model will be saved.
         """
         raise NotImplementedError
 
     @abstractmethod
     def load(self, filename: str) -> Any:
-        """Restores an instance of a model.
+        """Restore a model instance from disk.
 
-        filename (Str): Indicates where the model was stored.
+        Parameters
+        ----------
+        filename : str
+            Path where the model was previously saved.
+
+        Returns
+        -------
+        Any
+            The restored model instance.
         """
         raise NotImplementedError

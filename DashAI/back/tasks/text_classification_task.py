@@ -12,7 +12,14 @@ if TYPE_CHECKING:
 
 
 class TextClassificationTask(ClassificationTask):
-    """Base class for Text Classification Task."""
+    """Task for classifying raw text sequences into discrete categories.
+
+    Text classification maps a single text input column (type ``Text``) to a
+    single categorical output column. It is the DashAI task type for NLP
+    applications such as sentiment analysis, spam detection, topic labelling,
+    and intent recognition. Models compatible with this task accept tokenised
+    or raw text and produce per-class probability distributions.
+    """
 
     metadata: dict = {
         "inputs_types": [Text],

@@ -12,6 +12,14 @@ from DashAI.back.types.value_types import Float
 
 
 class MaxAbsScalerSchema(BaseSchema):
+    """Schema for MaxAbsScaler hyperparameters.
+
+    Configures the copy semantics for sklearn's ``MaxAbsScaler``. Because
+    ``MaxAbsScaler`` has no configurable scaling range (it always maps to
+    [-1, 1] by dividing by the per-feature maximum absolute value), the only
+    tuneable option is whether to copy the data before transforming.
+    """
+
     use_copy: schema_field(
         bool_field(),
         True,
@@ -26,7 +34,25 @@ class MaxAbsScalerSchema(BaseSchema):
 class MaxAbsScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, MaxAbsScalerOperation
 ):
-    """Scikit-learn's MaxAbsScaler wrapper for DashAI."""
+    """Scale each feature by its maximum absolute value to the range [-1, 1].
+
+    For each feature column the transformation is::
+
+        x_scaled = x / max(|x|)
+
+    where ``max(|x|)`` is the largest absolute value observed in that column
+    during fitting. The result always lies in [-1, 1].
+
+    Because this scaler neither centers nor shifts the data, it preserves any
+    existing zero entries, making it the preferred choice for sparse matrices
+    (e.g. TF-IDF or count-vectorized text). It is also appropriate when the
+    data is already known to be centered at zero and only the scale needs to
+    be adjusted.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
+    """
 
     SCHEMA = MaxAbsScalerSchema
     DESCRIPTION = MultilingualString(
@@ -37,7 +63,19 @@ class MaxAbsScaler(
     IMAGE_PREVIEW = "max_abs_scaler.png"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for scaled data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

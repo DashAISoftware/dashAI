@@ -9,9 +9,12 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class RandomForestClassifierSchema(BaseSchema):
-    """Random Forest (RF) is an ensemble machine learning algorithm that achieves
-    enhanced performance by combining multiple decision trees and aggregating their
-    outputs.
+    """Schema that configures the Random Forest Classifier.
+
+    Random Forest is an ensemble classification algorithm that builds multiple
+    decision trees on bootstrap samples of the training data, using a random subset
+    of features at each split, and aggregates their predictions by majority vote.
+    The underlying implementation is ``sklearn.ensemble.RandomForestClassifier``.
     """
 
     n_estimators: schema_field(
@@ -141,7 +144,25 @@ class RandomForestClassifierSchema(BaseSchema):
 class RandomForestClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _RandomForestClassifier
 ):
-    """Scikit-learn's Random Forest classifier wrapper for DashAI."""
+    """Random forest classifier that aggregates predictions from many decision trees.
+
+    Random Forest is a bagging ensemble that fits ``n_estimators`` decision trees,
+    each on a bootstrap sample of the training data. At each split only a random
+    subset of features is evaluated, which decorrelates the trees and reduces
+    variance. The final class prediction is determined by majority vote across all
+    trees.
+
+    Key hyperparameters include ``n_estimators`` (number of trees), ``max_depth``
+    (maximum tree depth), ``min_samples_split``, ``min_samples_leaf``,
+    ``max_leaf_nodes``, and ``random_state``. The implementation wraps
+    scikit-learn's ``RandomForestClassifier``.
+
+    References
+    ----------
+    - [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
+           https://doi.org/10.1023/A:1010933404324
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html
+    """
 
     SCHEMA = RandomForestClassifierSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -159,4 +180,12 @@ class RandomForestClassifier(
     ICON: str = "Forest"
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)
