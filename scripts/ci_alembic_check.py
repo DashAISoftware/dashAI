@@ -2,10 +2,9 @@
 import os
 import sys
 
-from sqlalchemy import create_engine
-
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
+from sqlalchemy import create_engine
 
 try:
     from DashAI.back.dependencies.database.models import Base
