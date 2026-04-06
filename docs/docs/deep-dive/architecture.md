@@ -237,8 +237,8 @@ user-supplied parameters. The mechanism is built on top of Pydantic and JSON Sch
 ### Component fields
 
 The `component_field()` utility (`back/core/schema_fields/component_field.py`) creates
-parameters that reference other components. For example, a model might accept a
-converter as a parameter:
+parameters that reference other components. For example, a model might accept another
+model as a parameter:
 
 ```python
 class BagOfWordsSchema(BaseSchema):
@@ -275,13 +275,13 @@ DashAIDataType
 
 ### Role in the system
 
-| Where | How semantic types are used |
-|-------|-----------------------------|
-| **Dataset loading** | `infer_types()` assigns a type to every column via probabilistic inference (ptype) or a heuristic fallback. Types are persisted to Apache Arrow table metadata. |
-| **Task validation** | Each task declares `inputs_types` and `outputs_types`. `validate_dataset_for_task()` rejects columns that do not match. For example, `TabularClassificationTask` requires a `Categorical` output. |
-| **Converters** | Each converter implements `get_output_type()` to declare its output type, enabling type-safe pipeline chaining (e.g. `OneHotEncoder`: `Categorical` → `Integer`). |
-| **Label encoding** | `Categorical` output columns are automatically integer-encoded before training and decoded back to string labels after prediction using the type's built-in `str2int` / `int2str` maps. |
-| **Column-type edits** | `validate_type_change()` guards manual type changes in the UI, rejecting unsafe conversions (e.g. high-cardinality text promoted to `Categorical`). |
+| Where                 | How semantic types are used                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dataset loading**   | `infer_types()` assigns a type to every column via probabilistic inference (ptype) or a heuristic fallback. Types are persisted to Apache Arrow table metadata.                                   |
+| **Task validation**   | Each task declares `inputs_types` and `outputs_types`. `validate_dataset_for_task()` rejects columns that do not match. For example, `TabularClassificationTask` requires a `Categorical` output. |
+| **Converters**        | Each converter implements `get_output_type()` to declare its output type, enabling type-safe pipeline chaining (e.g. `OneHotEncoder`: `Categorical` → `Integer`).                                 |
+| **Label encoding**    | `Categorical` output columns are automatically integer-encoded before training and decoded back to string labels after prediction using the type's built-in `str2int` / `int2str` maps.           |
+| **Column-type edits** | `validate_type_change()` guards manual type changes in the UI, rejecting unsafe conversions (e.g. high-cardinality text promoted to `Categorical`).                                               |
 
 For the full type catalogue, inference logic, and conversion rules, see [Deep Dive → Semantic Types](./semantic-types).
 
