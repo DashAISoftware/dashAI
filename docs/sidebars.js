@@ -66,7 +66,6 @@ const sidebars = {
   ],
 
   buildSidebar: [
-    "build/rest-api",
     "build/dev-setup",
     "build/migrations",
     "build/testing",
