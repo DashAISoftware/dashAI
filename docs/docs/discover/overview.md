@@ -20,6 +20,6 @@ The platform unifies interaction with ML models across different application dom
 
 ## Open Source
 
-DashAI is hosted on [GitHub](https://github.com/DashAISoftware/DashAI) under the Apache 2.0 license. Contributions from the community are welcome — whether adding new ML components, improving the interface, or extending documentation.
+DashAI is hosted on [GitHub](https://github.com/DashAISoftware/DashAI) under the MIT license. Contributions from the community are welcome — whether adding new ML components, improving the interface, or extending documentation.
 
 Sponsored by CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.
