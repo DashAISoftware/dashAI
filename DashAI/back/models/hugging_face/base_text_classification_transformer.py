@@ -267,8 +267,13 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         """Persist transformer weights and custom training params."""
         from transformers import AutoConfig
 
-        self.model.save_pretrained(filename)
-        config = AutoConfig.from_pretrained(filename)
+        save_dir = Path(filename)
+        if save_dir.exists() and save_dir.is_file():
+            save_dir.unlink()
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        self.model.save_pretrained(save_dir)
+        config = AutoConfig.from_pretrained(save_dir)
         config.custom_params = {
             "num_train_epochs": self.training_args_params.get("num_train_epochs"),
             "batch_size": self.batch_size,
@@ -278,7 +283,7 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
             "num_labels": self.num_labels,
             "fitted": self.fitted,
         }
-        config.save_pretrained(filename)
+        config.save_pretrained(save_dir)
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]) -> Any:

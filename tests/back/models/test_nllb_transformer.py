@@ -1,19 +1,30 @@
 from pathlib import Path
 
+import pytest
 import torch
 
-from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
-    OpusMtEnESTransformer,
-)
+from DashAI.back.models.hugging_face.nllb_transformer import NllbTransformer
 
 
-class DummyTokenizer:
+class DummyNllbTokenizer:
+    def __init__(self):
+        self.lang_code_to_id = {"spa_Latn": 100, "eng_Latn": 200}
+        self.src_lang = "spa_Latn"
+
     def __call__(self, text, truncation=True, padding="max_length", max_length=512):
-        del text, truncation, padding, max_length
-        return {"input_ids": [1, 2, 3], "attention_mask": [1, 1, 1]}
+        del truncation, padding
+        n_tokens = min(max_length, max(1, len(str(text).split())))
+        return {
+            "input_ids": [1] * n_tokens + [0] * (max_length - n_tokens),
+            "attention_mask": [1] * n_tokens + [0] * (max_length - n_tokens),
+        }
+
+    def decode(self, token_ids, skip_special_tokens=True):
+        del token_ids, skip_special_tokens
+        return "translated text"
 
 
-class DummySeq2SeqModel:
+class DummyNllbModel:
     def __init__(self):
         self.device = torch.device("cpu")
 
@@ -43,12 +54,12 @@ def _patch_transformers(monkeypatch):
     monkeypatch.setattr(
         AutoTokenizer,
         "from_pretrained",
-        staticmethod(lambda *args, **kwargs: DummyTokenizer()),
+        staticmethod(lambda *args, **kwargs: DummyNllbTokenizer()),
     )
     monkeypatch.setattr(
         AutoModelForSeq2SeqLM,
         "from_pretrained",
-        staticmethod(lambda *args, **kwargs: DummySeq2SeqModel()),
+        staticmethod(lambda *args, **kwargs: DummyNllbModel()),
     )
     monkeypatch.setattr(
         AutoConfig,
@@ -60,12 +71,14 @@ def _patch_transformers(monkeypatch):
 def test_model_initialization(monkeypatch):
     _patch_transformers(monkeypatch)
 
-    model = OpusMtEnESTransformer(
+    model = NllbTransformer(
         num_train_epochs=1,
         batch_size=2,
         learning_rate=2e-5,
         device="CPU",
         weight_decay=0.01,
+        source_language="spa_Latn",
+        target_language="eng_Latn",
         log_train_every_n_epochs=None,
         log_train_every_n_steps=None,
         log_validation_every_n_epochs=None,
@@ -74,19 +87,42 @@ def test_model_initialization(monkeypatch):
 
     assert model.model is not None
     assert model.tokenizer is not None
-    assert model.model_name == "Helsinki-NLP/opus-mt-en-es"
+    assert model.model_name == "facebook/nllb-200-distilled-600M"
+    assert model.source_language == "spa_Latn"
+    assert model.target_language == "eng_Latn"
     assert model.fitted is False
+
+
+def test_invalid_language_code_raises(monkeypatch):
+    _patch_transformers(monkeypatch)
+
+    with pytest.raises(ValueError, match="Unsupported source_language"):
+        NllbTransformer(
+            num_train_epochs=1,
+            batch_size=2,
+            learning_rate=2e-5,
+            device="CPU",
+            weight_decay=0.01,
+            source_language="invalid_lang",
+            target_language="eng_Latn",
+            log_train_every_n_epochs=None,
+            log_train_every_n_steps=None,
+            log_validation_every_n_epochs=None,
+            log_validation_every_n_steps=None,
+        )
 
 
 def test_save_replaces_file_path_with_directory(monkeypatch, tmp_path):
     _patch_transformers(monkeypatch)
 
-    model = OpusMtEnESTransformer(
+    model = NllbTransformer(
         num_train_epochs=1,
         batch_size=2,
         learning_rate=2e-5,
         device="CPU",
         weight_decay=0.01,
+        source_language="spa_Latn",
+        target_language="eng_Latn",
         log_train_every_n_epochs=None,
         log_train_every_n_steps=None,
         log_validation_every_n_epochs=None,
