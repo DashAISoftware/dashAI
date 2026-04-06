@@ -738,14 +738,14 @@ def transform_dataset_with_schema(
         pa_type = to_arrow_types(dtype)
         if _type == "Categorical":
             base_col = table.column(column_name)
-            # Use categories from schema
-            categories = info.get("categories", [])
             converted = info.get("converted", False)
 
-            # If no categories in schema, infer from data
-            if not categories:
-                col_list = base_col.to_pylist()
-                categories = sorted({v for v in col_list if v is not None})
+            # Always infer categories from actual data to ensure all values are
+            # included. Type inference (ptype) excludes anomalous values from
+            # its suggested categories, which causes KeyErrors during training
+            # when those "anomalous" values appear in the data.
+            col_list = base_col.to_pylist()
+            categories = sorted({v for v in col_list if v is not None})
 
             dashai_types[column_name] = Categorical(
                 values=categories, converted=converted, dtype=dtype
