@@ -12,13 +12,14 @@ if TYPE_CHECKING:
 
 
 class TextClassificationTask(ClassificationTask):
-    """Task for classifying raw text sequences into discrete categories.
+    """Task for classifying a single text column into discrete categories.
 
-    Text classification maps a single text input column (type ``Text``) to a
-    single categorical output column. It is the DashAI task type for NLP
-    applications such as sentiment analysis, spam detection, topic labelling,
-    and intent recognition. Models compatible with this task accept tokenised
-    or raw text and produce per-class probability distributions.
+    Text classification takes one input column of type ``Text`` and maps it to
+    one categorical output column. The task covers any NLP scenario where a
+    raw or pre-processed text sequence must be assigned to one of a fixed set
+    of labels, such as sentiment analysis, spam detection, topic labelling, and
+    intent recognition. Compatible models consume the text directly and output
+    a predicted class label for each sample.
     """
 
     metadata: dict = {
@@ -29,19 +30,30 @@ class TextClassificationTask(ClassificationTask):
     }
 
     DESCRIPTION: str = MultilingualString(
-        en="""
-    Text classification is an essential Natural Language Processing (NLP) task that
-    involves automatically assigning pre-defined categories or labels to text documents
-    based on their content. It serves as the foundation for applications like sentiment
-    analysis, spam filtering, topic classification, and document categorization.
-    """,
-        es="""
-    La clasificación de texto es una tarea esencial del Procesamiento de Lenguaje
-    Natural (PLN) que implica asignar automáticamente categorías o etiquetas
-    predefinidas a documentos de texto según su contenido. Sirve como base para
-    aplicaciones como el análisis de sentimientos, el filtrado de spam,
-    la clasificación de temas y la categorización de documentos.
-    """,
+        en=(
+            "Text classification is a Natural Language Processing (NLP) task "
+            "that assigns a predefined category or label to a text sequence "
+            "based on its content. "
+            "It requires exactly one text input column and one categorical "
+            "output column. "
+            "Typical use cases include sentiment analysis, spam detection, "
+            "topic labelling, intent recognition, and language identification. "
+            "Models compatible with this task process raw or tokenised text "
+            "and predict the most likely class label for each input sample."
+        ),
+        es=(
+            "La clasificación de texto es una tarea de Procesamiento de "
+            "Lenguaje Natural (PLN) que asigna una categoría o etiqueta "
+            "predefinida a una secuencia de texto según su contenido. "
+            "Requiere exactamente una columna de entrada de tipo texto y una "
+            "columna de salida categórica. "
+            "Los casos de uso más comunes incluyen análisis de sentimientos, "
+            "detección de spam, clasificación de temas, reconocimiento de "
+            "intenciones e identificación de idioma. "
+            "Los modelos compatibles con esta tarea procesan texto sin "
+            "procesar o tokenizado y predicen la etiqueta de clase más "
+            "probable para cada muestra de entrada."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Text Classification", es="Clasificación de Texto"
