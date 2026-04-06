@@ -32,27 +32,19 @@ class TextClassificationTask(ClassificationTask):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Text classification is a Natural Language Processing (NLP) task "
-            "that assigns a predefined category or label to a text sequence "
-            "based on its content. "
-            "It requires exactly one text input column and one categorical "
-            "output column. "
-            "Typical use cases include sentiment analysis, spam detection, "
-            "topic labelling, intent recognition, and language identification. "
-            "Models compatible with this task process raw or tokenised text "
-            "and predict the most likely class label for each input sample."
+            "that assigns a predefined label to a text input. "
+            "It requires one text input column and one categorical output column. "
+            "Common use cases include sentiment analysis, spam detection, "
+            "and intent recognition."
         ),
         es=(
             "La clasificación de texto es una tarea de Procesamiento de "
-            "Lenguaje Natural (PLN) que asigna una categoría o etiqueta "
-            "predefinida a una secuencia de texto según su contenido. "
-            "Requiere exactamente una columna de entrada de tipo texto y una "
-            "columna de salida categórica. "
+            "Lenguaje Natural (PLN) que asigna una etiqueta predefinida a una "
+            "entrada de texto. "
+            "Requiere una columna de entrada de tipo texto y una columna de "
+            "salida categórica. "
             "Los casos de uso más comunes incluyen análisis de sentimientos, "
-            "detección de spam, clasificación de temas, reconocimiento de "
-            "intenciones e identificación de idioma. "
-            "Los modelos compatibles con esta tarea procesan texto sin "
-            "procesar o tokenizado y predicen la etiqueta de clase más "
-            "probable para cada muestra de entrada."
+            "detección de spam y reconocimiento de intenciones."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(
