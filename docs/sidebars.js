@@ -13,6 +13,7 @@ const sidebars = {
     {
       type: "category",
       label: "Tutorials",
+      collapsed: false,
       items: [
         "learn/tutorials/upload-dataset",
         "learn/tutorials/notebook",
@@ -20,6 +21,7 @@ const sidebars = {
         {
           type: "category",
           label: "Models",
+          collapsed: false,
           items: [
             "learn/tutorials/Models/overview",
             "learn/tutorials/Models/train",
@@ -33,6 +35,7 @@ const sidebars = {
     {
       type: "category",
       label: "Module Guides",
+      collapsed: false,
       items: [
         "learn/guides/datasets",
         "learn/guides/models",
@@ -43,8 +46,21 @@ const sidebars = {
   ],
 
   deepDiveSidebar: [
-    "deep-dive/architecture",
-    "deep-dive/semantic-types",
+    {
+      type: "category",
+      label: "System Design",
+      collapsed: false,
+      items: [
+        "deep-dive/architecture",
+        "deep-dive/api",
+        "deep-dive/components",
+        "deep-dive/database",
+        "deep-dive/job-system",
+        "deep-dive/notebook",
+        "deep-dive/workflow-examples",
+        "deep-dive/semantic-types",
+      ],
+    },
     "deep-dive/papers",
     "deep-dive/replicability",
   ],
@@ -58,6 +74,7 @@ const sidebars = {
     {
       type: "category",
       label: "Plugin Development",
+      collapsed: false,
       items: [
         "build/plugin-development/overview",
         "build/plugin-development/structure",
