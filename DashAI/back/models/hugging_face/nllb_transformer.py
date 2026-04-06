@@ -69,6 +69,21 @@ class NllbTransformer(TranslationModel):
     COLOR: str = "#5E35B1"
     ICON: str = "Translate"
 
+    def _resolve_language_token_id(self, language_code: str, field_name: str) -> int:
+        """Resolve NLLB language code to token id across tokenizer variants."""
+        lang_code_to_id = getattr(self.tokenizer, "lang_code_to_id", None)
+        if isinstance(lang_code_to_id, dict) and language_code in lang_code_to_id:
+            return lang_code_to_id[language_code]
+
+        convert_tokens_to_ids = getattr(self.tokenizer, "convert_tokens_to_ids", None)
+        if callable(convert_tokens_to_ids):
+            token_id = convert_tokens_to_ids(language_code)
+            unk_token_id = getattr(self.tokenizer, "unk_token_id", None)
+            if token_id not in {None, -1, unk_token_id}:
+                return token_id
+
+        raise ValueError(f"Unsupported {field_name} '{language_code}'.")
+
     def __init__(self, model=None, **kwargs):
         """Initialize the NLLB tokenizer and model."""
         kwargs = self.validate_and_transform(kwargs)
@@ -81,15 +96,17 @@ class NllbTransformer(TranslationModel):
         self.source_language = kwargs.get("source_language", "spa_Latn")
         self.target_language = kwargs.get("target_language", "eng_Latn")
 
-        lang_code_to_id = getattr(self.tokenizer, "lang_code_to_id", None)
-        if not isinstance(lang_code_to_id, dict) or not lang_code_to_id:
-            raise ValueError("NLLB tokenizer does not expose supported language codes.")
-        if self.source_language not in lang_code_to_id:
-            raise ValueError(f"Unsupported source_language '{self.source_language}'.")
-        if self.target_language not in lang_code_to_id:
-            raise ValueError(f"Unsupported target_language '{self.target_language}'.")
+        self.source_language_token_id = self._resolve_language_token_id(
+            self.source_language,
+            "source_language",
+        )
+        self.target_language_token_id = self._resolve_language_token_id(
+            self.target_language,
+            "target_language",
+        )
 
-        self.tokenizer.src_lang = self.source_language
+        if hasattr(self.tokenizer, "src_lang"):
+            self.tokenizer.src_lang = self.source_language
 
         self.training_args = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
@@ -123,7 +140,8 @@ class NllbTransformer(TranslationModel):
         """Tokenize input and optional output datasets for NLLB."""
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-        self.tokenizer.src_lang = self.source_language
+        if hasattr(self.tokenizer, "src_lang"):
+            self.tokenizer.src_lang = self.source_language
 
         is_y = bool(y)
         if not y:
@@ -235,7 +253,7 @@ class NllbTransformer(TranslationModel):
         dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
 
         translations = []
-        target_bos = self.tokenizer.lang_code_to_id[self.target_language]
+        target_bos = self.target_language_token_id
 
         for example in dataset:
             inputs = {
