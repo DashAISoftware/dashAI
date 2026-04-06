@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class TokenizerSchema(BaseSchema):
+    """Schema for TokenizerConverter hyperparameters."""
+
     model_name: schema_field(
         enum_field(
             [
@@ -79,6 +81,21 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     IMAGE_PREVIEW = "tokenizer.png"
 
     def __init__(self, **kwargs):
+        """Initialise the tokenizer converter and extract schema parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace tokenizer model ID.
+                Default ``"bert-base-uncased"``.
+            device : str, optional
+                Torch device string. Default ``"cpu"``.
+            max_length : int, optional
+                Maximum token sequence length. Default ``512``.
+            batch_size : int, optional
+                Number of examples per inference batch. Default ``32``.
+        """
         super().__init__(**kwargs)
         self.model_name = kwargs.get("model_name", "bert-base-uncased")
         self.device = kwargs.get("device", "cpu")
@@ -93,8 +110,22 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
     def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
-        """
-        Tokenize a batch of text columns and store each input_id in a separate column.
+        """Tokenise a batch of text columns and store token IDs as integer columns.
+
+        Each text column is tokenised with the loaded HuggingFace tokenizer.
+        The resulting token-id sequence for each column is stored as a new
+        ``Integer``-typed column whose name matches the source column.
+
+        Parameters
+        ----------
+        batch : DashAIDataset
+            A slice of the full dataset. Each column must contain string values.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each original text column is replaced by its
+            token-ID list column.
         """
         from datasets import Dataset, concatenate_datasets
 

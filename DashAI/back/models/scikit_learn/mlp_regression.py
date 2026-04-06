@@ -21,7 +21,13 @@ if TYPE_CHECKING:
 
 
 class MLPRegressorSchema(BaseSchema):
-    """PyTorch MLP Regressor Schema."""
+    """Schema that configures the Multi-layer Perceptron (MLP) Regressor.
+
+    The MLP Regressor is a fully-connected feedforward neural network with a single
+    hidden layer, trained with backpropagation using the Adam optimiser and mean
+    squared error loss. It is used for tabular regression tasks. The underlying
+    implementation uses PyTorch (``torch.nn``).
+    """
 
     hidden_size: schema_field(
         optimizer_int_field(ge=1),
@@ -179,6 +185,29 @@ class MLPRegressorSchema(BaseSchema):
 
 
 class MLPRegression(RegressionModel):
+    """Single hidden-layer MLP regressor implemented in PyTorch.
+
+    A Multi-layer Perceptron (MLP) is a feedforward neural network composed of an
+    input layer, one hidden layer of configurable width, and a single linear output
+    neuron. The hidden layer uses a configurable activation function (ReLU, tanh,
+    sigmoid, or identity). The network is trained by minimising the mean squared
+    error using the Adam optimiser and mini-batch gradient descent via
+    backpropagation.
+
+    Key hyperparameters include ``hidden_size`` (number of neurons in the hidden
+    layer), ``activation``, ``learning_rate``, ``epochs``, ``batch_size``, and
+    ``device`` (CPU or GPU). The model also supports per-epoch and per-step metric
+    logging. The implementation uses PyTorch (``torch.nn``).
+
+    References
+    ----------
+    - [1] Rumelhart, D.E., Hinton, G.E., & Williams, R.J. (1986).
+           "Learning representations by back-propagating errors."
+           Nature, 323(6088), 533-536. https://doi.org/10.1038/323533a0
+    - [2] Kingma, D.P. & Ba, J. (2015). "Adam: A Method for Stochastic
+           Optimization." ICLR 2015. https://arxiv.org/abs/1412.6980
+    """
+
     SCHEMA = MLPRegressorSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Multi-layer Perceptron (MLP) Regression",
@@ -192,10 +221,39 @@ class MLPRegression(RegressionModel):
     ICON: str = "Psychology"
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the MLP regressor and set up the inner PyTorch module class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Configuration keyword arguments matching ``MLPRegressorSchema`` fields,
+            including ``hidden_size``, ``activation``, ``learning_rate``, ``epochs``,
+            ``batch_size``, and ``device``.
+        """
         import torch.nn as nn
 
         class MLP(nn.Module):
+            """Single hidden-layer feedforward network built as a ``nn.Sequential``.
+
+            Used internally by ``MLPRegression`` to create a configurable
+            MLP with one hidden layer, the chosen activation function, and a
+            linear output layer.
+            """
+
             def __init__(self, input_dim, hidden_size, activation_name):
+                """Build the sequential MLP architecture.
+
+                Parameters
+                ----------
+                input_dim : int
+                    Number of input features.
+                hidden_size : int
+                    Number of units in the single hidden layer.
+                activation_name : str
+                    Activation function name: one of ``"relu"``, ``"tanh"``,
+                    ``"sigmoid"``, or ``"identity"``.  Defaults to ReLU if the
+                    name is not recognised.
+                """
                 super().__init__()
                 activations = {
                     "relu": nn.ReLU(),
@@ -210,6 +268,18 @@ class MLPRegression(RegressionModel):
                 )
 
             def forward(self, x):
+                """Run a forward pass through the network.
+
+                Parameters
+                ----------
+                x : torch.Tensor
+                    Input tensor of shape ``(batch_size, input_dim)``.
+
+                Returns
+                -------
+                torch.Tensor
+                    Output tensor of shape ``(batch_size, 1)``.
+                """
                 return self.model(x)
 
         self.mlp = MLP
@@ -229,6 +299,24 @@ class MLPRegression(RegressionModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "MLPRegression":
+        """Train the MLP regressor using Adam optimiser and MSE loss.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            The input features for training.
+        y_train : DashAIDataset
+            The regression targets for training.
+        x_validation : DashAIDataset, optional
+            Input features for validation metric logging. Defaults to None.
+        y_validation : DashAIDataset, optional
+            Target values for validation metric logging. Defaults to None.
+
+        Returns
+        -------
+        MLPRegression
+            The trained model instance (self).
+        """
         import torch
 
         # 1. Prepare Data
@@ -339,6 +427,18 @@ class MLPRegression(RegressionModel):
         return self
 
     def predict(self, x: "DashAIDataset") -> "ndarray":
+        """Generate regression predictions for the input dataset.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The input features to predict on.
+
+        Returns
+        -------
+        ndarray
+            Predicted continuous values as a 1-D NumPy array.
+        """
         import torch
 
         self.model.eval()
@@ -348,6 +448,13 @@ class MLPRegression(RegressionModel):
             return self.model(x_tensor).cpu().numpy().flatten()
 
     def save(self, filename: str) -> None:
+        """Save the trained model weights and configuration to disk.
+
+        Parameters
+        ----------
+        filename : str
+            Path where the model checkpoint will be saved.
+        """
         import torch
 
         torch.save(
@@ -361,6 +468,18 @@ class MLPRegression(RegressionModel):
 
     @staticmethod
     def load(filename: str) -> "MLPRegression":
+        """Restore an ``MLPRegression`` instance from a saved checkpoint.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the checkpoint file saved by ``save``.
+
+        Returns
+        -------
+        MLPRegression
+            The restored model instance with loaded weights.
+        """
         import torch
 
         data = torch.load(filename)

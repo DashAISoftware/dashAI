@@ -11,7 +11,15 @@ if TYPE_CHECKING:
 
 
 class ClassificationTask(BaseTask):
-    """Base class for classification tasks."""
+    """Abstract base task for all classification problems in DashAI.
+
+    Classification tasks map input features to a finite set of discrete class
+    labels. This base class defines the compatible metric components (accuracy,
+    precision, recall, F1, etc.) and the output-type constraint (all output
+    columns must carry the ``Categorical`` type). Concrete subclasses specialise
+    the input/output type metadata and may override ``prepare_for_task`` to add
+    task-specific validation.
+    """
 
     COMPATIBLE_COMPONENTS = [
         "Accuracy",
@@ -71,6 +79,29 @@ class ClassificationTask(BaseTask):
         input_columns: List[str],
         output_columns: List[str],
     ) -> "DashAIDataset":
+        """Prepare a dataset for a classification task.
+
+        Delegates to the base class for type validation and conversion, then
+        verifies that every output column carries a ``Categorical`` type, which
+        is required for classification targets.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to prepare.  Can be a plain ``DatasetDict`` or an
+            already-converted ``DashAIDataset``.
+        input_columns : List[str]
+            Names of the columns to be used as model inputs.
+        output_columns : List[str]
+            Names of the columns to be used as classification targets.  Each
+            must have a ``Categorical`` type.
+
+        Returns
+        -------
+        DashAIDataset
+            The validated and type-checked dataset, ready for training or
+            inference.
+        """
         dashai_dataset = super().prepare_for_task(
             dataset, input_columns, output_columns
         )

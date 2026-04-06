@@ -3,21 +3,31 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.base_metric import BaseMetric
 
 if TYPE_CHECKING:
-    from numpy import ndarray
+    import numpy as np
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TranslationMetric(BaseMetric):
-    """Class for metrics associated to translation models."""
+    """Base class for all machine-translation evaluation metrics.
+
+    Subclasses implement :meth:`score` to measure the similarity between
+    model-generated translations and reference translations. Translation
+    metrics operate on lists of strings rather than numeric arrays.
+
+    Compatible with DashAI translation tasks. The helper ``prepare_to_metric``
+    in this module extracts the reference strings from a ``DashAIDataset``
+    and pairs them with the predicted translation strings before passing them
+    to the underlying metric library (e.g. ``evaluate``, ``torchmetrics``).
+    """
 
     COMPATIBLE_COMPONENTS = ["TranslationTask"]
 
 
 def prepare_to_metric(
     y: "DashAIDataset",
-    y_pred: "ndarray",
-) -> tuple["ndarray", "ndarray"]:
+    y_pred: "np.ndarray",
+) -> tuple["np.ndarray", "np.ndarray"]:
     """Prepare data for metric calculation.
 
     Parameters

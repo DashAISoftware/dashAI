@@ -18,6 +18,14 @@ from DashAI.back.types.value_types import Float
 
 
 class RBFSamplerSchema(BaseSchema):
+    """Schema for configuring the RBFSampler converter.
+
+    Wraps ``sklearn.kernel_approximation.RBFSampler`` and exposes the RBF
+    bandwidth parameter ``gamma``, the number of random Fourier features
+    ``n_components``, and the random seed as schema fields validated before
+    being forwarded to the underlying scikit-learn estimator.
+    """
+
     gamma: schema_field(
         union_type(enum_field(["scale"]), float_field(gt=0)),
         "scale",
@@ -53,7 +61,33 @@ class RBFSamplerSchema(BaseSchema):
 
 
 class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation):
-    """Scikit-learn's RBFSampler wrapper for DashAI."""
+    """Approximate the RBF (Gaussian) kernel feature map via random Fourier features.
+
+    The Radial Basis Function (RBF) kernel is one of the most widely used
+    kernels in kernel-based learning methods such as SVMs. Computing it
+    directly scales quadratically with the number of training samples.
+
+    This converter implements the random Fourier feature approximation of
+    Rahimi & Recht (2007) [2]: random weights are sampled from the Fourier
+    transform of the RBF kernel (a Gaussian distribution), and the input
+    features are mapped to ``n_components`` sinusoidal features. A linear
+    model trained on the resulting representation approximates a kernel
+    machine at a fraction of the cost.
+
+    The ``gamma`` parameter controls the bandwidth of the RBF kernel:
+    ``K(x, y) = exp(-gamma * ||x - y||²)``. When set to ``"scale"``, it is
+    computed from the training data as ``1 / (n_features * X.var())``.
+
+    Output columns are typed as ``Float64`` in DashAI.
+
+    Wraps ``sklearn.kernel_approximation.RBFSampler``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.RBFSampler.html
+    - [2] Rahimi, A. & Recht, B. (2007). Random Features for Large-Scale Kernel
+        Machines. Advances in Neural Information Processing Systems, 20.
+    """
 
     SCHEMA = RBFSamplerSchema
     DESCRIPTION = MultilingualString(
@@ -70,6 +104,21 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
     IMAGE_PREVIEW = "rbf_sampler.png"
 
     def __init__(self, **kwargs):
+        """Initialise the RBF sampler, resolving the ``"RandomState"`` sentinel.
+
+        If ``random_state`` is the string ``"RandomState"``, a fresh
+        ``numpy.random.RandomState`` instance is created in its place before
+        being forwarded to sklearn's ``RBFSampler``.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            random_state : int, ``"RandomState"``, or None, optional
+                Seed for reproducibility.  The special string ``"RandomState"``
+                generates a fresh random state. Default ``None``.
+            Additional keys are forwarded to
+            ``sklearn.kernel_approximation.RBFSampler``.
+        """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
@@ -78,7 +127,18 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

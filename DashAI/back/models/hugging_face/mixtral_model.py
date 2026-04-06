@@ -19,7 +19,13 @@ from DashAI.back.models.utils import (
 
 
 class MixtralSchema(BaseSchema):
-    """Schema for Mixtral model."""
+    """Schema for MixtralModel hyperparameters.
+
+    Configures the checkpoint variant (with optional GGUF filename override),
+    generation length, sampling temperature, frequency penalty, context window,
+    and target device for Mixtral Sparse-MoE models loaded via
+    ``llama-cpp-python``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -54,17 +60,17 @@ class MixtralSchema(BaseSchema):
     filename: schema_field(
         enum_field(
             enum=[
-                "mixtral-8x7b-instruct-v0.1.Q2_K.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q3_K_M.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q4_0.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q5_0.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q5_K_M.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q6_K.gguf",
-                "mixtral-8x7b-instruct-v0.1.Q8_0.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q2_K.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q3_K_M.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q4_0.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q4_K_M.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q5_0.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q5_K_M.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q6_K.gguf",
+                "Mixtral-8x7B-Instruct-v0.1.Q8_0.gguf",
             ]
         ),
-        placeholder="mixtral-8x7b-instruct-v0.1.Q2_K.gguf",
+        placeholder="Mixtral-8x7B-Instruct-v0.1.Q2_K.gguf",
         description=MultilingualString(
             en=(
                 "The specific GGUF file to load for the Mixtral model. The different "
@@ -181,7 +187,22 @@ class MixtralSchema(BaseSchema):
 
 
 class MixtralModel(TextToTextGenerationTaskModel):
-    """Mixtral Sparse Mixture-of-Experts model for text generation using llama.cpp."""
+    """Mixtral Sparse Mixture-of-Experts (SMoE) model for text generation via llama.cpp.
+
+    Mixtral 8x7B is a transformer language model with 8 expert feed-forward
+    networks per layer; only 2 experts are activated per token, giving it the
+    computational cost of a 12B-parameter dense model while retaining capacity
+    equivalent to a 47B model. It matches or surpasses Llama 2 70B and GPT-3.5
+    on most benchmarks.
+
+    Models are loaded as GGUF quantized checkpoints via ``llama-cpp-python``.
+    The Q4_K_M quantization requires approximately 26 GB of RAM.
+
+    References
+    ----------
+    - [1] Jiang et al. (2024) "Mixtral of Experts" https://arxiv.org/abs/2401.04088
+    - [2] https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1
+    """
 
     SCHEMA = MixtralSchema
     COLOR: str = "#4a148c"
@@ -216,6 +237,43 @@ class MixtralModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
+        """Download and initialise a Mixtral 8x7B Instruct GGUF model via llama.cpp.
+
+        The model weights are fetched from HuggingFace Hub using
+        ``Llama.from_pretrained`` and kept in memory for repeated calls to
+        ``generate``.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace repo ID for the GGUF checkpoint.
+                Defaults to
+                ``"mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF"``.
+            filename : str, optional
+                Specific GGUF quantization file to load (e.g.
+                ``"mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"``). Defaults to
+                the Q2_K variant. Higher quantizations use more RAM but
+                produce better output quality.
+            max_tokens : int, optional
+                Maximum number of new tokens to generate per call. Default 100.
+            temperature : float, optional
+                Sampling temperature in [0.0, 1.0]. Default 0.7.
+            frequency_penalty : float, optional
+                Token-frequency penalty in [0.0, 2.0]. Default 0.1.
+            context_window : int, optional
+                Total token budget (prompt + response) for a single forward
+                pass. Default 512.
+            device : str, optional
+                Target device from ``LLAMA_DEVICE_ENUM``. Any value whose
+                index is >= 0 enables full GPU offload (``n_gpu_layers=-1``);
+                ``"CPU"`` runs fully in RAM.
+
+        Raises
+        ------
+        RuntimeError
+            If ``llama-cpp-python`` is not installed.
+        """
         try:
             from llama_cpp import Llama
         except ImportError as e:
@@ -246,6 +304,21 @@ class MixtralModel(TextToTextGenerationTaskModel):
         )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        """Generate a reply for the given chat prompt.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format. Each dict must contain
+            at least ``"role"`` (``"system"``, ``"user"``, or ``"assistant"``)
+            and ``"content"`` (the message text).
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the model's reply text, extracted
+            from ``choices[0]["message"]["content"]``.
+        """
         output = self.model.create_chat_completion(
             messages=prompt,
             max_tokens=self.max_tokens,

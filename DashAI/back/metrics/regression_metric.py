@@ -3,13 +3,23 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.base_metric import BaseMetric
 
 if TYPE_CHECKING:
-    from numpy import ndarray
+    import numpy as np
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RegressionMetric(BaseMetric):
-    """Class for metrics associated with regression models."""
+    """Base class for all regression evaluation metrics.
+
+    Subclasses implement :meth:`score` to quantify the difference between
+    continuous predicted values and ground-truth targets. By default
+    regression metrics are minimised (``MAXIMIZE = False``) because smaller
+    error values indicate better performance.
+
+    Compatible with DashAI regression tasks. The helper ``prepare_to_metric``
+    in this module converts ``DashAIDataset`` targets and raw numpy predictions
+    to flat numpy arrays before passing them to sklearn metric functions.
+    """
 
     MAXIMIZE: bool = False
     COMPATIBLE_COMPONENTS = ["RegressionTask"]
@@ -17,8 +27,8 @@ class RegressionMetric(BaseMetric):
 
 def prepare_to_metric(
     y: "DashAIDataset",
-    y_pred: "ndarray",
-) -> tuple["ndarray", "ndarray"]:
+    y_pred: "np.ndarray",
+) -> tuple["np.ndarray", "np.ndarray"]:
     """
     Prepare true and predicted values for metric calculation.
 

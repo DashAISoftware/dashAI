@@ -16,10 +16,13 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class HistGradientBoostingClassifierSchema(BaseSchema):
-    """A gradient boosting classifier is a machine learning algorithm that combines
-    multiple weak prediction models (typically decision trees) to create a strong
-    predictive model by training the models sequentially, in which each new model is
-    focused on correcting the errors made by the previous ones.
+    """Schema that configures the Histogram-based Gradient Boosting Classifier.
+
+    Histogram-based Gradient Boosting is a fast sequential ensemble classification
+    method that bins continuous features into histograms before building each tree,
+    greatly reducing the computational cost on large datasets. It is inspired by
+    LightGBM and natively handles missing values. The underlying implementation is
+    ``sklearn.ensemble.HistGradientBoostingClassifier``.
     """
 
     learning_rate: schema_field(
@@ -141,7 +144,27 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
 class HistGradientBoostingClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _HistGradientBoostingClassifier
 ):
-    """Scikit-learn's HistGradientBoostingRegressor wrapper for DashAI."""
+    """Histogram-based gradient boosting classifier for large datasets.
+
+    This classifier is a gradient boosting variant that discretises features into
+    integer-valued bins (histograms) before tree construction. The histogram
+    representation reduces both the number of candidate split points and the memory
+    footprint, allowing efficient training on datasets with tens of thousands of
+    samples or more. The algorithm natively supports missing values and categorical
+    features. It is inspired by the LightGBM algorithm.
+
+    Key hyperparameters include ``learning_rate``, ``max_iter`` (number of boosting
+    stages), ``max_depth``, ``max_leaf_nodes``, ``min_samples_leaf``, and
+    ``l2_regularization``. The implementation wraps scikit-learn's
+    ``HistGradientBoostingClassifier``.
+
+    References
+    ----------
+    - [1] Ke, G. et al. (2017). "LightGBM: A Highly Efficient Gradient Boosting
+           Decision Tree." Advances in Neural Information Processing Systems 30.
+           https://proceedings.neurips.cc/paper/2017/hash/6449f44a102fde848669bdd9eb6b76fa-Abstract.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html
+    """
 
     SCHEMA = HistGradientBoostingClassifierSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -156,4 +179,12 @@ class HistGradientBoostingClassifier(
     ICON: str = "RocketLaunch"
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)

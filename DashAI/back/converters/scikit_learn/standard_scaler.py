@@ -12,6 +12,14 @@ from DashAI.back.types.value_types import Float
 
 
 class StandardScalerSchema(BaseSchema):
+    """Schema for StandardScaler hyperparameters.
+
+    Configures the mean-centering, variance-scaling, and copy semantics for
+    sklearn's ``StandardScaler``. The ``with_mean`` and ``with_std`` flags
+    allow independent control over whether the mean is subtracted and whether
+    the result is divided by the standard deviation.
+    """
+
     use_copy: schema_field(
         bool_field(),
         True,
@@ -48,7 +56,27 @@ class StandardScalerSchema(BaseSchema):
 class StandardScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, StandardScalerOperation
 ):
-    """Scikit-learn's Standard Scaler wrapper for DashAI."""
+    """Standardize features by removing the mean and scaling to unit variance.
+
+    For each feature column the transformation (z-score normalization) is::
+
+        x_scaled = (x - mean) / std
+
+    where ``mean`` and ``std`` are estimated from the training data. The
+    result has zero mean and unit standard deviation. Centering and scaling
+    can be disabled independently via ``with_mean`` and ``with_std``.
+
+    Standardization is the most common preprocessing step for algorithms that
+    assume normally distributed or zero-mean inputs, including SVMs, logistic
+    regression, linear regression with regularization, principal component
+    analysis, and most neural networks. Unlike ``MinMaxScaler``, it is robust
+    to differences in feature range but not to extreme outliers (because the
+    standard deviation is influenced by them).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+    """
 
     SCHEMA = StandardScalerSchema
     DESCRIPTION = MultilingualString(
@@ -66,7 +94,19 @@ class StandardScaler(
     }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for standardized data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

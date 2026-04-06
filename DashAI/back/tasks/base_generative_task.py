@@ -12,15 +12,44 @@ class BaseGenerativeTask:
     @property
     @abstractmethod
     def schema(self) -> Dict[str, Any]:
+        """Return the schema of components compatible with this generative task.
+
+        Concrete subclasses must implement this property to return a mapping
+        that describes which models and other components are compatible with
+        the task.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dictionary whose keys are component category names and whose
+            values are lists or mappings of the compatible component classes
+            or identifiers.
+
+        Raises
+        ------
+        NotImplementedError
+            If the subclass does not provide an implementation.
+        """
         raise NotImplementedError
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """Get metadata values for the current task
+        """Return serialisable metadata for the current generative task.
 
-        Returns:
-            Dict[str, Any]: Dictionary with the metadata containing the input and output
-             types/cardinality.
+        Converts the ``inputs_types`` and ``outputs_types`` entries from class
+        objects to their string names so the result can be JSON-serialised by
+        the DashAI frontend.
+
+        Parameters
+        ----------
+        cls : type
+            The task class (injected automatically by Python for classmethods).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
+            ``"inputs_cardinality"``, and ``"outputs_cardinality"``.
         """
         metadata = cls.metadata
 

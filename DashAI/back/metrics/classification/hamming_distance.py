@@ -1,6 +1,6 @@
 """DashAI Hamming Distance implementation."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -8,11 +8,35 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class HammingDistance(ClassificationMetric):
-    """Hamming Distance to classification tasks."""
+    """Fraction of labels that are incorrectly predicted (Hamming loss).
+
+    The Hamming distance (or Hamming loss) is the fraction of the total
+    predictions that are wrong. For single-label classification it equals
+    ``1 - accuracy``; for multi-label classification it counts per-label
+    mismatches independently, making it especially useful when each sample
+    can belong to multiple classes simultaneously.
+
+    A lower Hamming distance indicates better performance. ``MAXIMIZE = False``
+    so the DashAI framework treats smaller values as improvements.
+
+    ::
+
+        Hamming Loss = (1/N) · Σᵢ 𝟙[ŷᵢ ≠ yᵢ]
+
+    Range: [0, 1], lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    - [1] Hamming, R.W. (1950). "Error detecting and error correcting codes."
+           Bell System Technical Journal, 29(2), 147-160.
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.hamming_loss.html
+    """
 
     MAXIMIZE: bool = False
     DESCRIPTION: str = (
@@ -23,7 +47,9 @@ class HammingDistance(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate Hamming Distance between true labels and predicted labels.
 

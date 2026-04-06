@@ -19,7 +19,12 @@ from DashAI.back.models.utils import (
 
 
 class MistralSchema(BaseSchema):
-    """Schema for Mistral model."""
+    """Schema for MistralModel hyperparameters.
+
+    Configures the checkpoint variant, generation length, sampling temperature,
+    frequency penalty, context window, and target device for Mistral Instruct
+    models loaded via ``llama-cpp-python`` in GGUF format.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -145,7 +150,23 @@ class MistralSchema(BaseSchema):
 
 
 class MistralModel(TextToTextGenerationTaskModel):
-    """Mistral model for text generation using llama.cpp library."""
+    """Mistral Instruct model for open-ended text generation via llama.cpp.
+
+    Mistral is a 7B-parameter transformer language model developed by Mistral AI,
+    designed to deliver high performance with efficient inference. It uses grouped-
+    query attention (GQA) for faster decoding and sliding-window attention (SWA) to
+    handle long contexts efficiently. The 12B Mistral-Nemo variant, developed jointly
+    with NVIDIA, extends the context window to 128 K tokens and improves multilingual
+    capability.
+
+    Models are loaded as GGUF quantized checkpoints via ``llama-cpp-python``,
+    allowing CPU and GPU inference without requiring a full PyTorch stack.
+
+    References
+    ----------
+    - [1] Jiang et al. (2023) "Mistral 7B" https://arxiv.org/abs/2310.06825
+    - [2] https://huggingface.co/mistralai
+    """
 
     SCHEMA = MistralSchema
     COLOR: str = "#ff6f00"
@@ -176,6 +197,37 @@ class MistralModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
+        """Download and initialise a Mistral Instruct GGUF model via llama.cpp.
+
+        The model weights are fetched from HuggingFace Hub using
+        ``Llama.from_pretrained`` and kept in memory for repeated calls to
+        ``generate``.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace repo ID for the GGUF checkpoint.
+                Defaults to ``"bartowski/Mistral-7B-Instruct-v0.3-GGUF"``.
+            max_tokens : int, optional
+                Maximum number of new tokens to generate per call. Default 100.
+            temperature : float, optional
+                Sampling temperature in [0.0, 1.0]. Default 0.7.
+            frequency_penalty : float, optional
+                Token-frequency penalty in [0.0, 2.0]. Default 0.1.
+            context_window : int, optional
+                Total token budget (prompt + response) for a single forward
+                pass. Default 512.
+            device : str, optional
+                Target device from ``LLAMA_DEVICE_ENUM``. Any value whose
+                index is >= 0 enables full GPU offload (``n_gpu_layers=-1``);
+                ``"CPU"`` runs fully in RAM.
+
+        Raises
+        ------
+        RuntimeError
+            If ``llama-cpp-python`` is not installed.
+        """
         try:
             from llama_cpp import Llama
         except ImportError as e:
@@ -206,6 +258,21 @@ class MistralModel(TextToTextGenerationTaskModel):
         )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        """Generate a reply for the given chat prompt.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format. Each dict must contain
+            at least ``"role"`` (``"system"``, ``"user"``, or ``"assistant"``)
+            and ``"content"`` (the message text).
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the model's reply text, extracted
+            from ``choices[0]["message"]["content"]``.
+        """
         output = self.model.create_chat_completion(
             messages=prompt,
             max_tokens=self.max_tokens,
