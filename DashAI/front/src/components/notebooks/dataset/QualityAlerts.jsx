@@ -14,10 +14,16 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
-export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
+export const QualityAlerts = ({
+  qualityInfo,
+  generalInfo,
+  missingValues,
+  onNavigateTab,
+}) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets"]);
-  const { setDatasetTab } = useDatasetsAndNotebooks();
+  const context = useDatasetsAndNotebooks();
+  const setDatasetTab = onNavigateTab ?? context?.setDatasetTab ?? (() => {});
 
   const handleNavigate = useCallback(
     (section) => {
