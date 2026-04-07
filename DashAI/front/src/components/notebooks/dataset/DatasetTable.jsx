@@ -1,358 +1,500 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  useGridApiContext,
-} from "@mui/x-data-grid";
-import { Box, Button, Menu, MenuItem, Typography } from "@mui/material";
-import { Download } from "@mui/icons-material";
-import { LinearProgress } from "@mui/material";
-import {
-  exportDatasetCsvByPath,
-  getDatasetTypesByFilePath,
-  renameDatasetColumn,
-} from "../../../api/datasets";
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import { renameDatasetColumn } from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
 
-/**
- * Props:
- * - fetchPage: async (page, pageSize, filterModel) => { rows: Array<object>, total: number }
- * - initialPageSize?: number (default 5)
- * - columns?: GridColDef[] (optional)
- * - deps?: any[] (optional)
- * - autoHeight?: boolean (default true)
- * - pageSizeOptions?: number[] (default [5, 10, 25])
- * - datasetPath?: string (optional) - Path to dataset for CSV export
- * - datasetId?: number (optional) - Dataset ID for column renaming
- * - editableColumns?: boolean (default false) - Enable column name editing
- */
 export default function DatasetTable({
   fetchPage,
   initialPageSize = 5,
-  columns: columnsProp,
   deps = [],
-  autoHeight = true,
-  pageSizeOptions = [5, 10, 25],
   datasetPath,
   datasetId,
+  columnTypes = {},
   editableColumns = false,
   onEditColumn = null,
-  density = "compact",
-  ...props
+  showExportButton = true,
+  baseBackgroundColor,
+  enableTopToolbar = true,
 }) {
-  const [rows, setRows] = useState([]);
-  const [rowCount, setRowCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [columnTypes, setColumnTypes] = useState({});
-  const gridRef = useRef(null);
-  const { t } = useTranslation(["common"]);
+  const { t, i18n } = useTranslation(["common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
+  // Only load all data client-side if:
+  // 1. Filters/sorting are active AND
+  // 2. Dataset is small enough (<=2000 rows)
+  // Otherwise, use server-side filtering for performance
+  const CLIENT_SIDE_THRESHOLD = 2000;
+  const initialized = useRef(false);
+  const isLoadingFullDataRef = useRef(false);
+
+  const [data, setData] = useState([]);
+  const [rowCount, setRowCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [columnOrder, setColumnOrder] = useState([]);
+  const [density, setDensity] = useState("compact");
+  const [allFilteredData, setAllFilteredData] = useState(null);
+  const [totalRowCount, setTotalRowCount] = useState(0); // Track actual total without filters
+
+  const sessionKey = datasetId
+    ? `mrt-filters-${datasetId}`
+    : datasetPath
+      ? `mrt-filters-${datasetPath}`
+      : null;
+
+  const loadSessionFilters = () => {
+    if (!sessionKey) return null;
+    try {
+      const saved = sessionStorage.getItem(sessionKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
     pageSize: initialPageSize,
   });
-  const [filterModel, setFilterModel] = useState({ items: [] });
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [sorting, setSorting] = useState([]);
 
-  useEffect(() => {
-    if (!datasetPath) return;
-    const fetchColumnTypes = async () => {
-      try {
-        const types = await getDatasetTypesByFilePath(datasetPath);
-        setColumnTypes(types);
-      } catch (e) {}
-    };
-
-    fetchColumnTypes();
-  }, [datasetPath, ...deps]);
-
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        setLoading(true);
-        const { page, pageSize } = paginationModel;
-        const data = await fetchPage(page, pageSize, filterModel);
-        if (!alive) return;
-
-        const withIds = (data?.rows ?? []).map((r, i) => ({
-          id: page * pageSize + i,
-          ...r,
-        }));
-
-        setRows(withIds);
-        setRowCount(data?.total ?? withIds.length);
-      } catch (e) {
-        setRows([]);
-        setRowCount(0);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
-    load();
-    return () => {
-      alive = false;
-    };
-  }, [fetchPage, paginationModel, filterModel, ...deps]);
-  const handleFilterModelChange = useCallback((model) => {
-    setFilterModel((prev) => {
-      setPaginationModel((m) => ({ ...m, page: 0 }));
-      if (!model || !model.items || model.items.length === 0) {
-        return { items: [] };
-      }
-      return model;
+  const getDefaultFilterFns = () => {
+    const defaults = {};
+    Object.entries(columnTypes).forEach(([key, typeRaw]) => {
+      const type =
+        typeof typeRaw === "string" ? typeRaw : (typeRaw?.type ?? "");
+      defaults[key] = ["Integer", "Float"].includes(type)
+        ? "between"
+        : "contains";
     });
-  }, []);
+    return defaults;
+  };
+
+  const [columnFilterFns, setColumnFilterFns] = useState(getDefaultFilterFns);
+  const [showColumnFilters, setShowColumnFilters] = useState(false);
 
   useEffect(() => {
-    setPaginationModel((m) => ({ ...m, page: 0 }));
+    initialized.current = false;
+    isLoadingFullDataRef.current = false;
+
+    setData([]);
+    setRowCount(0);
+    setTotalRowCount(0);
+    setAllFilteredData(null);
+    setIsLoading(true);
+    setShowColumnFilters(false);
+    setDensity("compact");
+
+    const session = loadSessionFilters();
+    const cleanFilters = (session?.columnFilters ?? []).filter(
+      (f) =>
+        f.id !== undefined &&
+        !Array.isArray(f.value) &&
+        f.value !== undefined &&
+        f.value !== "",
+    );
+    setColumnFilters(cleanFilters);
+    setSorting(session?.sorting ?? []);
+    setColumnFilterFns(session?.columnFilterFns ?? getDefaultFilterFns());
+    setPagination({ pageIndex: 0, pageSize: initialPageSize });
+
+    initialized.current = true;
   }, deps);
+
+  useEffect(() => {
+    setColumnFilterFns((prev) => {
+      const defaults = getDefaultFilterFns();
+      const merged = { ...defaults };
+      for (const key of Object.keys(prev)) {
+        if (key in merged && prev[key] !== undefined) {
+          merged[key] = prev[key];
+        }
+      }
+      return merged;
+    });
+  }, [columnTypes]);
+
+  useEffect(() => {
+    if (!sessionKey) return;
+    try {
+      sessionStorage.setItem(
+        sessionKey,
+        JSON.stringify({ columnFilters, columnFilterFns, sorting }),
+      );
+    } catch {}
+  }, [sessionKey, columnFilters, columnFilterFns, sorting]);
+
+  const buildFilterModel = useCallback(
+    () => ({
+      items: columnFilters
+        .filter((f) => {
+          const fn = columnFilterFns[f.id];
+          if (fn === "empty" || fn === "notEmpty") return true;
+          // Skip between filters where both values are null/empty
+          if (
+            (fn === "between" || Array.isArray(f.value)) &&
+            Array.isArray(f.value)
+          ) {
+            return f.value.some(
+              (v) => v !== null && v !== undefined && v !== "",
+            );
+          }
+          if (Array.isArray(f.value)) return false;
+          return f.value !== undefined && f.value !== "";
+        })
+        .map((f) => {
+          const fn = columnFilterFns[f.id];
+          if (fn === "empty")
+            return { field: f.id, value: null, operator: "isEmpty" };
+          if (fn === "notEmpty")
+            return { field: f.id, value: null, operator: "isNotEmpty" };
+          const colTypeRaw = columnTypes[f.id];
+          const colType =
+            typeof colTypeRaw === "string"
+              ? colTypeRaw
+              : (colTypeRaw?.type ?? "");
+          const operator =
+            fn ??
+            (["Integer", "Float"].includes(colType) ? "between" : "contains");
+          const value =
+            operator === "between" && typeof f.value === "string"
+              ? f.value.split(",").map((v) => v.trim() || null)
+              : f.value;
+          return { field: f.id, value, operator };
+        }),
+    }),
+    [columnFilters, columnFilterFns, columnTypes],
+  );
+
+  // Clear cached data when filters/sorting change
+  // Reset lazy-load flag to allow re-fetching full data if needed
+  useEffect(() => {
+    if (allFilteredData) {
+      setAllFilteredData(null);
+      isLoadingFullDataRef.current = false;
+    }
+  }, [columnFilters, sorting]);
+
+  // Main data loading effect with lazy-load strategy:
+  // 1st load: only fetch current page (fast, like develop)
+  // If filters active and dataset small: lazy-load all data for client-side filtering
+  useEffect(() => {
+    if (!initialized.current) return;
+
+    // If we have cached filtered data, use it for pagination
+    if (allFilteredData) {
+      const start = pagination.pageIndex * pagination.pageSize;
+      setData(allFilteredData.slice(start, start + pagination.pageSize));
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const muiFormattedFilters = buildFilterModel();
+        const hasActiveFilters = columnFilters.length > 0;
+        const hasSorting = sorting.length > 0;
+
+        // FAST PATH: First load OR server-side filtering
+        // Only fetch the page we need
+        const response = await fetchPage(
+          pagination.pageIndex,
+          pagination.pageSize,
+          muiFormattedFilters,
+          sorting,
+        );
+        if (cancelled) return;
+
+        const total = response?.total ?? 0;
+        const rows = response?.rows ?? [];
+
+        // Track total for lazy-load decision
+        setTotalRowCount(total);
+        setData(rows);
+        setRowCount(total);
+
+        if (rows.length > 0) {
+          setColumnOrder(Object.keys(rows[0]).filter((k) => k !== "id"));
+        }
+
+        // LAZY-LOAD: Only fetch all data if:
+        // 1. User has active filters AND
+        // 2. Dataset is small enough for client-side filtering AND
+        // 3. We haven't already loaded it
+        if (
+          (hasActiveFilters || hasSorting) &&
+          total > 0 &&
+          total <= CLIENT_SIDE_THRESHOLD &&
+          total > pagination.pageSize &&
+          !isLoadingFullDataRef.current
+        ) {
+          isLoadingFullDataRef.current = true;
+          setIsLoading(true);
+
+          const fullResponse = await fetchPage(
+            0,
+            total,
+            muiFormattedFilters,
+            sorting,
+          );
+          if (cancelled) return;
+
+          const allRows = fullResponse?.rows ?? rows;
+          setAllFilteredData(allRows);
+          setRowCount(total);
+          const start = pagination.pageIndex * pagination.pageSize;
+          setData(allRows.slice(start, start + pagination.pageSize));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error loading data:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pagination.pageIndex, pagination.pageSize, columnFilters, sorting]);
 
   const handleColumnRename = useCallback(
     async (oldName, newName) => {
       if (!datasetId) {
         throw new Error("Dataset ID is required for renaming columns");
       }
+      const result = await renameDatasetColumn(datasetId, oldName, newName);
+      onEditColumn && (await onEditColumn(result));
 
-      try {
-        const result = await renameDatasetColumn(datasetId, oldName, newName);
-        onEditColumn && (await onEditColumn(result));
+      setColumnOrder((prev) =>
+        prev.map((col) => (col === oldName ? newName : col)),
+      );
 
-        const { page, pageSize } = paginationModel;
-        const data = await fetchPage(page, pageSize, filterModel);
-        const withIds = (data?.rows ?? []).map((r, i) => ({
-          id: page * pageSize + i,
-          ...r,
-        }));
+      const muiFormattedFilters = {
+        items: columnFilters.map((f) => ({
+          field: f.id,
+          value: f.value,
+          operator: "contains",
+        })),
+      };
+      const response = await fetchPage(
+        pagination.pageIndex,
+        pagination.pageSize,
+        muiFormattedFilters,
+      );
+      const rows = response?.rows ?? [];
+      setData(rows);
+      setRowCount(response?.total ?? 0);
 
-        setColumnTypes((prevTypes) => {
-          const newTypes = { ...prevTypes };
-          if (newTypes[oldName]) {
-            newTypes[newName] = newTypes[oldName];
-            delete newTypes[oldName];
-          }
-          return newTypes;
-        });
-
-        setRows(withIds);
-        setRowCount(data?.total ?? withIds.length);
-
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return result;
     },
-    [datasetId, paginationModel, filterModel, fetchPage],
+    [datasetId, onEditColumn, columnFilters, pagination, fetchPage],
   );
 
   const columns = useMemo(() => {
-    if (columnsProp?.length) return columnsProp;
-    const first = rows[0];
-    if (!first) return [];
-    return Object.keys(first)
-      .filter((k) => k !== "id")
-      .map((field) => ({
-        field,
-        headerName: field,
-        type:
-          columnTypes[field] &&
-          ["int", "integer", "float", "double", "number"].includes(
-            String(columnTypes[field].type).toLowerCase(),
-          )
-            ? "number"
-            : columnTypes[field] &&
-                ["bool", "boolean"].includes(
-                  String(columnTypes[field].type).toLowerCase(),
-                )
-              ? "boolean"
-              : columnTypes[field] &&
-                  ["date", "datetime", "timestamp"].includes(
-                    String(columnTypes[field].type).toLowerCase(),
-                  )
-                ? "date"
-                : "string",
-        minWidth: 120,
-        width: Math.max(120, field.length * 8 + 40),
-        sortable: !editableColumns,
-        disableColumnMenu: editableColumns,
-        renderHeader: () =>
-          editableColumns && datasetId ? (
-            <EditableColumnHeader
-              columnName={field}
-              columnType={columnTypes[field]?.type}
-              onRename={handleColumnRename}
-            />
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                textAlign: "center",
-                width: "100%",
-              }}
-            >
-              <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
-                {field}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                style={{ fontSize: "0.7rem" }}
-              >
-                {columnTypes[field]?.type || t("common:unknown")}
-              </Typography>
-            </div>
-          ),
-      }));
-  }, [
-    rows,
-    columnsProp,
-    columnTypes,
-    editableColumns,
-    datasetId,
-    handleColumnRename,
-    t,
-  ]);
+    let columnKeys = [];
 
-  // Custom CSV Export Button
-  function CsvExportButton() {
-    const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
-
-    const handleClick = (event) => {
-      setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
-
-    const handleExportCsv = async () => {
-      try {
-        if (datasetPath) {
-          // Use our custom endpoint
-          const blob = await exportDatasetCsvByPath(datasetPath);
-
-          // Create temporary URL and download
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-
-          // Extract dataset name from path
-          const datasetName = datasetPath.split("/").pop() || "dataset";
-          link.download = `${datasetName}.csv`;
-
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        } else {
-          // Fallback to original DataGrid method
-          const apiRef = useGridApiContext();
-          apiRef.current.exportDataAsCsv({
-            fileName: "dataset-export",
-            delimiter: ",",
-            utf8WithBom: true,
-          });
-        }
-      } catch (error) {
-        console.error("Error exporting CSV:", error);
-        // Fallback to original method in case of error
-        const apiRef = useGridApiContext();
-        apiRef.current.exportDataAsCsv({
-          fileName: "dataset-export",
-          delimiter: ",",
-          utf8WithBom: true,
-        });
-      } finally {
-        handleClose();
-      }
-    };
-
-    return (
-      <>
-        <Button
-          size="small"
-          startIcon={<Download />}
-          onClick={handleClick}
-          aria-controls={open ? "export-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-        >
-          {t("common:export")}
-        </Button>
-        <Menu
-          id="export-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          slotProps={{
-            list: {
-              "aria-labelledby": "export-button",
-            },
-          }}
-        >
-          <MenuItem onClick={handleExportCsv}>
-            <Download sx={{ mr: 1, fontSize: 16 }} />
-            {t("common:exportAsCSV")}
-          </MenuItem>
-        </Menu>
-      </>
-    );
-  }
-
-  // Custom toolbar with CSV-only export
-  function CustomToolbar() {
-    return (
-      <GridToolbarContainer>
-        <GridToolbarColumnsButton />
-        <GridToolbarFilterButton />
-        <GridToolbarDensitySelector />
-        <CsvExportButton />
-      </GridToolbarContainer>
-    );
-  }
-
-  // DEBUG: Log filterModel changes to see what is sent to the backend
-  useEffect(() => {
-    if (filterModel && filterModel.items && filterModel.items.length > 0) {
-      //
+    if (data.length > 0) {
+      columnKeys = Object.keys(data[0]).filter((key) => key !== "id");
+    } else if (Object.keys(columnTypes).length > 0) {
+      columnKeys = Object.keys(columnTypes);
+    } else {
+      return [];
     }
-  }, [filterModel]);
+
+    const getColType = (key) => {
+      const val = columnTypes[key];
+      if (!val) return null;
+      return typeof val === "string" ? val : (val.type ?? null);
+    };
+
+    return columnKeys.map((key) => {
+      const colTypeRaw = columnTypes[key];
+      const colType =
+        typeof colTypeRaw === "string" ? colTypeRaw : (colTypeRaw?.type ?? "");
+      const filterVariant = "text";
+      return {
+        accessorKey: key,
+        header: key,
+        filterVariant,
+        filterFn: ["Integer", "Float"].includes(colType)
+          ? "between"
+          : "contains",
+        columnFilterModeOptions: ["Integer", "Float"].includes(colType)
+          ? [
+              "equals",
+              "between",
+              "lessThan",
+              "lessThanOrEqualTo",
+              "greaterThan",
+              "greaterThanOrEqualTo",
+              "empty",
+              "notEmpty",
+            ]
+          : [
+              "contains",
+              "startsWith",
+              "endsWith",
+              "equals",
+              "empty",
+              "notEmpty",
+            ],
+        Header: () =>
+          editableColumns && datasetId ? (
+            <div onDoubleClick={(e) => e.stopPropagation()}>
+              <EditableColumnHeader
+                columnName={key}
+                columnType={getColType(key)}
+                onRename={handleColumnRename}
+              />
+            </div>
+          ) : (
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                {key}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {getColType(key) || t("common:unknown")}
+              </Typography>
+            </Box>
+          ),
+      };
+    });
+  }, [data, columnTypes, editableColumns, datasetId, handleColumnRename, t]);
+
+  const handleExportFilteredRows = useCallback(async () => {
+    if (rowCount === 0) return;
+    try {
+      let rows;
+      if (allFilteredData) {
+        rows = allFilteredData;
+      } else {
+        const muiFormattedFilters = buildFilterModel();
+        const response = await fetchPage(
+          0,
+          rowCount,
+          muiFormattedFilters,
+          sorting,
+        );
+        rows = response?.rows ?? [];
+      }
+      if (rows.length === 0) return;
+
+      const headers = Object.keys(rows[0]).filter((k) => k !== "id");
+      const csvRows = [headers.join(",")];
+      for (const row of rows) {
+        csvRows.push(
+          headers
+            .map((h) => {
+              const val = row[h] ?? "";
+              const str = String(val);
+              return str.includes(",") ||
+                str.includes('"') ||
+                str.includes("\n")
+                ? `"${str.replace(/"/g, '""')}"`
+                : str;
+            })
+            .join(","),
+        );
+      }
+      const blob = new Blob([csvRows.join("\n")], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "dataset_filtered.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting filtered data:", error);
+    }
+  }, [rowCount, allFilteredData, buildFilterModel, sorting, fetchPage]);
+
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    rowCount,
+    localization,
+    mrtTheme: {
+      baseBackgroundColor:
+        baseBackgroundColor ?? theme.palette.ui.panelDark,
+    },
+    muiTablePaperProps: { elevation: 0 },
+    enablePagination: true,
+    manualPagination: true,
+    manualFiltering: true,
+    manualSorting: true,
+    enableFilters: true,
+    enableColumnFilterModes: true,
+    onPaginationChange: setPagination,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnFilterFnsChange: setColumnFilterFns,
+    onSortingChange: setSorting,
+    onDensityChange: setDensity,
+    onShowColumnFiltersChange: setShowColumnFilters,
+    enableTopToolbar,
+    renderTopToolbarCustomActions: showExportButton
+      ? () => (
+          <Tooltip
+            title={
+              columnFilters.length > 0
+                ? t("common:exportFilteredTooltip")
+                : t("common:exportAllTooltip")
+            }
+            arrow
+          >
+            <span>
+              <Button
+                onClick={handleExportFilteredRows}
+                disabled={rowCount === 0}
+                startIcon={<FileDownloadIcon />}
+                variant="text"
+                size="small"
+              >
+                {columnFilters.length > 0
+                  ? t("common:exportFiltered")
+                  : t("common:export")}
+              </Button>
+            </span>
+          </Tooltip>
+        )
+      : undefined,
+    state: {
+      pagination,
+      columnFilters,
+      columnFilterFns,
+      sorting,
+      columnOrder,
+      showColumnFilters,
+      density,
+      isLoading,
+    },
+  });
 
   return (
-    <Box>
-      <DataGrid
-        ref={gridRef}
-        rows={rows}
-        columns={columns}
-        rowCount={rowCount}
-        loading={loading}
-        autoHeight={autoHeight}
-        disableRowSelectionOnClick
-        paginationMode="server"
-        filterMode="server"
-        paginationModel={paginationModel}
-        onPaginationModelChange={setPaginationModel}
-        pageSizeOptions={pageSizeOptions}
-        density={density}
-        filterModel={filterModel}
-        onFilterModelChange={handleFilterModelChange}
-        initialState={{
-          density: "compact",
-          pagination: { paginationModel: { pageSize: initialPageSize } },
-        }}
-        slots={{
-          toolbar: CustomToolbar,
-          loadingOverlay: LinearProgress,
-        }}
-        columnHeaderHeight={editableColumns ? 95 : 85}
-        {...props}
-      />
+    <Box sx={{ width: "100%" }}>
+      <MaterialReactTable table={table} />
     </Box>
   );
 }

@@ -15,7 +15,7 @@ import { useTheme } from "@mui/material/styles";
 import { Close, UnfoldMore } from "@mui/icons-material";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
-import MrtDatasetTable from "../dataset/MrtDatasetTable";
+import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
 import api from "../../../api/api";
 
@@ -254,7 +254,7 @@ export default function ConfigureToolModal({
             </>
           )}
           {activeTab === 1 && (
-            <MrtDatasetTable
+            <DatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path]}
               initialPageSize={5}

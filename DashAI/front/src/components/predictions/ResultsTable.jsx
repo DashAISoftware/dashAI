@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
-import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
+import DatasetTable from "../notebooks/dataset/DatasetTable";
 import {
   getDatasetFile,
   getDatasetFileFiltered,
@@ -111,7 +111,7 @@ function ResultsTable({ selectedPrediction }) {
                 : t("prediction:label.manuallyProvidedInputData")}
             </Typography>
             <Paper>
-              <MrtDatasetTable
+              <DatasetTable
                 fetchPage={fetchPage}
                 initialPageSize={10}
                 datasetPath={selectedPrediction.results_path}

@@ -10,7 +10,7 @@ import {
   Alert,
   Chip,
 } from "@mui/material";
-import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
+import DatasetTable from "../notebooks/dataset/DatasetTable";
 import {
   getDatasetFile,
   getDatasetFileFiltered,
@@ -105,7 +105,7 @@ function DatasetSelector({
           </Alert>
 
           <Paper>
-            <MrtDatasetTable
+            <DatasetTable
               fetchPage={fetchDatasetPage}
               initialPageSize={10}
               datasetPath={selectedDataset.file_path}

@@ -28,7 +28,7 @@ import {
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { deletePrediction } from "../../api/predict";
 import { useSnackbar } from "notistack";
-import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
+import DatasetTable from "../notebooks/dataset/DatasetTable";
 import {
   getDatasetFile,
   getDatasetFileFiltered,
@@ -235,7 +235,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                   >
                     {t("prediction:label.resultsPreview")}
                   </Typography>
-                  <MrtDatasetTable
+                  <DatasetTable
                     fetchPage={fetchPage}
                     initialPageSize={10}
                     datasetPath={prediction.results_path}

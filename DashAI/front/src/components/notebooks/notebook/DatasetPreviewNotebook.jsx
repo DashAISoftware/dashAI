@@ -23,7 +23,7 @@ import {
   getDatasetFileFiltered,
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
-import MrtDatasetTable from "../dataset/MrtDatasetTable";
+import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
@@ -312,7 +312,7 @@ export default function DatasetPreviewNotebook({
 
         <AccordionDetails>
           <Box sx={{ width: "100%" }}>
-            <MrtDatasetTable
+            <DatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path, converters, explorersAndConverters]}
               initialPageSize={5}
