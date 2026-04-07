@@ -53,15 +53,6 @@ class SimpleImputerSchema(BaseSchema):
             es="El valor para reemplazar los valores faltantes.",
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="If True, a copy of X will be created.",
-            es="Si es True, se creará una copia de X.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     add_indicator: schema_field(
         bool_field(),
         False,

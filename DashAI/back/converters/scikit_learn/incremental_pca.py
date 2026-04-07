@@ -43,21 +43,6 @@ class IncrementalPCASchema(BaseSchema):
             ),
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en=(
-                "If False, data passed to fit are overwritten. Use "
-                "fit_transform(X) instead."
-            ),
-            es=(
-                "Si es False, los datos pasados a fit se sobrescriben. Usa "
-                "fit_transform(X) en su lugar."
-            ),
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     batch_size: schema_field(
         none_type(int_field(ge=1)),
         None,

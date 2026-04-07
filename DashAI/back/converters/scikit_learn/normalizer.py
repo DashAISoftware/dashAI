@@ -4,7 +4,7 @@ from DashAI.back.converters.category.scaling_and_normalization import (
     ScalingAndNormalizationConverter,
 )
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, enum_field, schema_field
+from DashAI.back.core.schema_fields import enum_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -26,15 +26,6 @@ class NormalizerSchema(BaseSchema):
             en="The norm to use to normalize each non-zero sample.",
             es="La norma a usar para normalizar cada muestra no nula.",
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace row normalization.",
-            es="Ponlo en False para normalizar filas in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
 
 

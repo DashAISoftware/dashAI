@@ -2,7 +2,7 @@ from sklearn.preprocessing import Binarizer as BinarizerOperation
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
+from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -25,15 +25,6 @@ class BinarizerSchema(BaseSchema):
                 "los superiores por 1."
             ),
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace binarization.",
-            es="Ponlo en False para binarizar in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
 
 

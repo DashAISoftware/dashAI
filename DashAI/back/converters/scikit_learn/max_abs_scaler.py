@@ -4,7 +4,6 @@ from DashAI.back.converters.category.scaling_and_normalization import (
     ScalingAndNormalizationConverter,
 )
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -14,21 +13,10 @@ from DashAI.back.types.value_types import Float
 class MaxAbsScalerSchema(BaseSchema):
     """Schema for MaxAbsScaler hyperparameters.
 
-    Configures the copy semantics for sklearn's ``MaxAbsScaler``. Because
-    ``MaxAbsScaler`` has no configurable scaling range (it always maps to
-    [-1, 1] by dividing by the per-feature maximum absolute value), the only
-    tuneable option is whether to copy the data before transforming.
+    ``MaxAbsScaler`` has no configurable hyperparameters in DashAI: it always
+    maps each feature to [-1, 1] by dividing by the per-feature maximum
+    absolute value.
     """
-
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace scaling.",
-            es="Ponlo en False para realizar el escalado in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
 
 
 class MaxAbsScaler(
