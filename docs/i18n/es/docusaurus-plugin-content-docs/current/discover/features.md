@@ -6,9 +6,9 @@ sidebar_position: 2
 
 # Características principales
 
-## Gestión de conjuntos de datos
+## Gestión de datasets
 
-Carga y gestiona conjuntos de datos en múltiples formatos — CSV, Excel y JSON. Cada dataset muestra un resumen de filas, columnas, tipos de datos y distribuciones. Desde la vista del dataset puedes iniciar exploraciones de EDA y aplicar conversores de datos directamente.
+Carga y gestiona datasets en múltiples formatos — CSV, Excel y JSON. Cada dataset muestra un resumen de filas, columnas, tipos de datos y distribuciones. Desde la vista del dataset puedes iniciar exploraciones de EDA y aplicar conversores de datos directamente.
 
 **Formatos compatibles:** `.csv`, `.xlsx` / `.xls`, `.json`
 

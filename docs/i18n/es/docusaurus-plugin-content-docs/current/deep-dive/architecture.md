@@ -3,7 +3,7 @@ title: Arquitectura
 sidebar_label: Arquitectura
 ---
 
-DashAI es una plataforma modular y extensible para flujos de trabajo de aprendizaje automático. Provee una interfaz web para entrenar modelos, explorar conjuntos de datos, explicar predicciones y más. Este documento describe el funcionamiento interno de DashAI.
+DashAI es una plataforma modular y extensible para flujos de trabajo de aprendizaje automático. Provee una interfaz web para entrenar modelos, explorar datasets, explicar predicciones y más. Este documento describe el funcionamiento interno de DashAI.
 
 ## Visión General
 

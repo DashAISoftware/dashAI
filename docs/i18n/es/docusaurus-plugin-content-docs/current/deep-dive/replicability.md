@@ -51,7 +51,7 @@ Un Notebook en DashAI es una sesión de trabajo con una copia mutable de un data
 
 | Artefacto             | Ubicación de almacenamiento                                                                          |
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| Conjuntos de datos    | Archivos Apache Arrow IPC en `~/.DashAI/`                                                            |
+| Datasets    | Archivos Apache Arrow IPC en `~/.DashAI/`                                                            |
 | Modelos entrenados    | Archivos pickle/joblib en `~/.DashAI/runs/{run_id}/`                                                 |
 | Gráficos de optimización | Objetos Plotly serializados junto a la ejecución                                                  |
 | Métricas              | Tabla `Metric` en `db.sqlite`                                                                        |

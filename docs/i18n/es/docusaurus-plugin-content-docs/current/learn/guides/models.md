@@ -42,7 +42,7 @@ DashAI admite tres estrategias de división:
 Para divisiones aleatorias, tres opciones adicionales refinan el comportamiento:
 
 - **Mezclar** — aleatoriza el orden de las filas antes de dividir. Habilitado por defecto. Desactívalo solo cuando el orden de las filas sea significativo (p. ej., series de tiempo).
-- **Estratificar** — preserva la distribución de clases de la columna de salida en cada división. Crítico para conjuntos de datos desequilibrados donde las clases minoritarias podrían estar subrepresentadas en divisiones más pequeñas.
+- **Estratificar** — preserva la distribución de clases de la columna de salida en cada división. Crítico para datasets desequilibrados donde las clases minoritarias podrían estar subrepresentadas en divisiones más pequeñas.
 - **Semilla** — semilla aleatoria fija para reproducibilidad. El valor por defecto es 42. Establece un valor específico cuando necesitas comparar modelos entrenados en divisiones idénticas.
 
 ---
@@ -58,7 +58,7 @@ Para divisiones aleatorias, tres opciones adicionales refinan el comportamiento:
 | `RandomForestClassifier`         | Conjunto de árboles de decisión. Robusto ante el sobreajuste, maneja tipos de características mixtas           |
 | `DecisionTreeClassifier`         | Modelo de árbol único. Totalmente interpretable, propenso al sobreajuste sin límites de profundidad            |
 | `KNeighborsClassifier`           | Aprendizaje basado en instancias usando la distancia a los k vecinos más cercanos                              |
-| `HistGradientBoostingClassifier` | Gradient boosting basado en histogramas. Maneja grandes conjuntos de datos eficientemente, admite valores NA nativos |
+| `HistGradientBoostingClassifier` | Gradient boosting basado en histogramas. Maneja grandes datasets eficientemente, admite valores NA nativos |
 | `DummyClassifier`                | Modelo de línea base usando reglas simples (más frecuente, estratificado, etc.). Úsalo como piso de rendimiento |
 
 ### Regresión (Scikit-learn)
@@ -194,7 +194,7 @@ El panel de **Métricas** te permite seleccionar qué métricas aparecen en el g
 
 Después del entrenamiento, cada modelo puede generar predicciones en dos modos, a los que se accede desde la pestaña **PREDICCIONES** de la tarjeta del modelo.
 
-### Predicciones sobre Conjunto de Datos
+### Predicciones sobre Dataset
 
 Ejecuta el modelo contra un dataset completo cargado en DashAI. Útil para puntuación por lotes — aplicar el modelo a un conjunto de validación, un conjunto de retención o nuevos datos entrantes.
 

@@ -36,7 +36,7 @@ Haz clic en **NEW DATASET PREDICTION** para abrir el modal **Create New Predicti
 
 **Paso 1 — Configurar Entrada**
 
-- **Select a dataset** — Elige entre los conjuntos de datos disponibles en DashAI. El desplegable muestra el nombre del dataset y el conteo de filas (p. ej., `Dataset_1 (45000 Rows)`).
+- **Select a dataset** — Elige entre los datasets disponibles en DashAI. El desplegable muestra el nombre del dataset y el conteo de filas (p. ej., `Dataset_1 (45000 Rows)`).
 - Una vez seleccionado un dataset, un panel **Prediction Information** muestra:
   - **Input Columns** — las columnas de características que el modelo espera, mostradas como etiquetas.
   - **Target Column** — la columna que el modelo predecirá, resaltada en teal.
@@ -69,7 +69,7 @@ Una vez completada, la predicción aparece como una tarjeta bajo **Dataset Predi
 - Un botón de **eliminación** (🗑) para eliminar la predicción.
 
 :::tip
-La vista previa muestra 100 filas — siempre descarga el CSV completo cuando trabajes con conjuntos de datos grandes para acceder a todos los resultados de predicción.
+La vista previa muestra 100 filas — siempre descarga el CSV completo cuando trabajes con datasets grandes para acceder a todos los resultados de predicción.
 :::
 
 ---

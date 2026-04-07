@@ -9,7 +9,7 @@ DashAI usa **SQLite** como base de datos (almacenada en `~/.DashAI/db.sqlite`) c
 
 | Tabla                               | Propósito                                                                                                                                                                                                                                    |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Dataset`                           | Conjunto de datos cargado — nombre, ruta del archivo Arrow, estado de carga y marcas de tiempo.                                                                                                                                              |
+| `Dataset`                           | Dataset cargado — nombre, ruta del archivo Arrow, estado de carga y marcas de tiempo.                                                                                                                                              |
 | `ModelSession`                      | Configuración del experimento — dataset, nombre de la tarea, columnas de entrada/salida, proporciones de división train/validación/test y métricas seleccionadas por división.                                                      |
 | `Run`                               | Ejecución individual de entrenamiento dentro de una ModelSession — nombre del modelo, parámetros, configuración del optimizador, métrica objetivo, artefactos de la ejecución, estado y tiempos de ejecución, y rutas a los gráficos de optimización (historial, slice, contorno, importancia). |
 | `Metric`                            | Medición de una única métrica — nombre, valor, división (`TRAIN`/`VALIDATION`/`TEST`), nivel (`LAST`/`STEP`/`BATCH`/`TRIAL`) e índice de paso. Vinculada a una ejecución.                                                                    |
@@ -34,7 +34,7 @@ DashAI usa **SQLite** como base de datos (almacenada en `~/.DashAI/db.sqlite`) c
 
 ## Almacenamiento de Datos
 
-- Los **conjuntos de datos** se almacenan en formato Apache Arrow IPC (columnar, eficiente para cargas de trabajo de ML).
+- Los **datasets** se almacenan en formato Apache Arrow IPC (columnar, eficiente para cargas de trabajo de ML).
 - Los **modelos entrenados** se guardan como archivos pickle/joblib en `~/.DashAI/runs/{run_id}/`.
 - Los **gráficos** generados durante la optimización de hiperparámetros se almacenan como objetos Plotly serializados.
 - Las **series temporales de métricas** (por paso, lote o prueba) se almacenan en la tabla `Metric` para rastrear el progreso del entrenamiento.

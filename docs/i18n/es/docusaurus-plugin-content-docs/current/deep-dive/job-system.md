@@ -78,6 +78,6 @@ class BaseJob(metaclass=ABCMeta):
 | `PredictJob`     | Ejecutar predicciones sobre nuevos datos                  |
 | `ConverterJob`   | Aplicar transformaciones de datos al dataset de un Notebook |
 | `GenerativeJob`  | Manejar interacciones con modelos generativos             |
-| `DatasetJob`     | Cargar y procesar conjuntos de datos                      |
+| `DatasetJob`     | Cargar y procesar datasets                      |
 
 Cada tipo de trabajo gestiona sus propias transiciones de estado en la base de datos y el manejo de errores. Cuando un trabajo falla, registra el mensaje de error en la base de datos y actualiza el estado de la entidad correspondiente a `ERROR`.

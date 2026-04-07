@@ -299,7 +299,7 @@ El dataset original en el que se basó el notebook permanece sin cambios.
 
 :::tip Cuándo guardar
 Guarda un nuevo dataset cuando tengas un pipeline de transformación estable y reproducible
-que quieras usar para el entrenamiento. Puedes crear múltiples conjuntos de datos desde el mismo
+que quieras usar para el entrenamiento. Puedes crear múltiples datasets desde el mismo
 notebook guardando en diferentes puntos de la línea de tiempo.
 :::
 

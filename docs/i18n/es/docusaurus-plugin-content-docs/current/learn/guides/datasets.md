@@ -1,20 +1,20 @@
 ---
-title: "Guía del Módulo: Conjuntos de Datos"
-sidebar_label: Conjuntos de Datos
+title: "Guía del Módulo: Datasets"
+sidebar_label: Datasets
 sidebar_position: 1
 ---
 
-# Guía del Módulo: Conjuntos de Datos
+# Guía del Módulo: Datasets
 
-El módulo de Conjuntos de Datos es el punto de entrada para todos los datos en DashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
+El módulo de Datasets es el punto de entrada para todos los datos en DashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
 
 ---
 
-## La Interfaz del Módulo de Conjuntos de Datos
+## La Interfaz del Módulo de Datasets
 
-La barra lateral izquierda lista todos los conjuntos de datos y notebooks disponibles. Cada entrada de dataset muestra su nombre, cantidad de filas y cantidad de columnas de un vistazo. Al hacer clic en un dataset se abre su vista completa en el área principal.
+La barra lateral izquierda lista todos los datasets y notebooks disponibles. Cada entrada de dataset muestra su nombre, cantidad de filas y cantidad de columnas de un vistazo. Al hacer clic en un dataset se abre su vista completa en el área principal.
 
-El botón **Nuevo Conjunto de Datos/Notebook** en la parte superior de la barra lateral es el punto de entrada tanto para cargar un nuevo dataset como para crear un nuevo notebook vinculado a uno existente.
+El botón **Nuevo Dataset/Notebook** en la parte superior de la barra lateral es el punto de entrada tanto para cargar un nuevo dataset como para crear un nuevo notebook vinculado a uno existente.
 
 ---
 
@@ -30,7 +30,7 @@ DashAI admite cuatro formatos de archivo. Cada uno tiene un cargador de datos de
 | Excel   | `ExcelDataLoader`  | `.xlsx`, `.xls` |
 | JSON    | `JSONDataLoader`   | `.json`         |
 
-El flujo de carga es en línea — todo ocurre dentro de la página de Conjuntos de Datos sin navegar a otra página.
+El flujo de carga es en línea — todo ocurre dentro de la página de Datasets sin navegar a otra página.
 
 ### Inferencia de Tipos
 
@@ -75,7 +75,7 @@ El JSONDataLoader espera una estructura como `{ "data": [{...}, {...}] }`. Cambi
 
 ---
 
-## Explorador de Conjuntos de Datos (EDA)
+## Explorador de Datasets (EDA)
 
 Al hacer clic en un dataset se abre su panel EDA integrado — un conjunto de análisis automáticos que se ejecutan de inmediato sin ninguna configuración. El panel está organizado en seis pestañas.
 
@@ -85,7 +85,7 @@ Un porcentaje que se muestra en la parte superior derecha de cada vista de datas
 
 ### Pestaña de Descripción General
 
-Muestra una tabla de **Vista Previa del Conjunto de Datos** con las filas de datos reales. Hay cuatro controles de barra de herramientas disponibles:
+Muestra una tabla de **Vista Previa del Dataset** con las filas de datos reales. Hay cuatro controles de barra de herramientas disponibles:
 
 - **COLUMNAS** — mostrar/ocultar columnas específicas para enfocarse en lo que importa
 - **FILTROS** — aplicar filtros a nivel de fila para inspeccionar subconjuntos
@@ -162,7 +162,7 @@ Los Exploradores generan visualizaciones y resúmenes estadísticos del estado a
 
 | Categoría                       | Qué contiene                                                                                  |
 | ------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Inspección de Vista Previa**  | Describir Conjunto de Datos (tabla de resumen estadístico), Mostrar Filas (vista paginada de registros) |
+| **Inspección de Vista Previa**  | Describir Dataset (tabla de resumen estadístico), Mostrar Filas (vista paginada de registros) |
 | **Análisis de Relaciones**      | Mapa de calor de densidad, Gráfico de dispersión múltiple, Gráfico de dispersión             |
 | **Análisis Estadístico**        | Matriz de correlación, Matriz de covarianza                                                   |
 | **Análisis de Distribución**    | Diagrama de caja, Distribución empírica acumulada, Histograma, Nube de palabras              |
@@ -208,7 +208,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 | Convertidor                    | Qué hace                                                                         |
 | ------------------------------ | -------------------------------------------------------------------------------- |
 | `Principal Component Analysis` | Reduce a n componentes explicando la máxima varianza                             |
-| `Incremental PCA`              | PCA para conjuntos de datos grandes procesados en lotes eficientes en memoria    |
+| `Incremental PCA`              | PCA para datasets grandes procesados en lotes eficientes en memoria    |
 | `Truncated SVD`                | Reducción basada en SVD, funciona con matrices dispersas                         |
 | `Fast ICA`                     | Análisis de Componentes Independientes                                           |
 | `Nystroem Approximation`       | Aproxima un mapa de características del kernel para representación no lineal     |
@@ -251,9 +251,9 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 | `Tokenizer`    | Convierte texto en secuencias de índices de tokens enteros                         |
 | `Embedding`    | Mapea secuencias de tokens a representaciones vectoriales semánticas densas        |
 
-### Guardar un Conjunto de Datos Transformado
+### Guardar un Dataset Transformado
 
-Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARDAR COMO NUEVO CONJUNTO DE DATOS**. Esto crea un nuevo dataset independiente en DashAI con los datos en su estado actual. El nuevo dataset está disponible inmediatamente para experimentos sin afectar el dataset fuente.
+Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARDAR COMO NUEVO DATASET**. Esto crea un nuevo dataset independiente en DashAI con los datos en su estado actual. El nuevo dataset está disponible inmediatamente para experimentos sin afectar el dataset fuente.
 
 ---
 

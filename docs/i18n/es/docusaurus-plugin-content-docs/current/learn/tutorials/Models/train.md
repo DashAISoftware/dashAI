@@ -26,14 +26,14 @@ Si tienes una sesión existente, también puedes hacer clic directamente en ella
 
 Después de seleccionar una tarea, comienza un flujo de creación de sesión en dos pasos.
 
-### 2a — Seleccionar Conjunto de Datos y Nombrar la Sesión
+### 2a — Seleccionar Dataset y Nombrar la Sesión
 
-- Usa el desplegable **Select a dataset** para elegir entre tus conjuntos de datos disponibles. Una vez seleccionado, una tarjeta resumen muestra el nombre del dataset, la fecha de creación, el conteo de filas y el conteo de columnas.
+- Usa el desplegable **Select a dataset** para elegir entre tus datasets disponibles. Una vez seleccionado, una tarjeta resumen muestra el nombre del dataset, la fecha de creación, el conteo de filas y el conteo de columnas.
 - Ingresa un nombre en el campo **Session Name**. Se pre-rellena un nombre por defecto basado en el tipo de tarea (p. ej., `Session_Tabular Classification_1`), pero puedes cambiarlo por algo más descriptivo.
 
 Haz clic en **NEXT** para continuar.
 
-### 2b — Preparar el Conjunto de Datos
+### 2b — Preparar el Dataset
 
 Este paso tiene dos partes: definir columnas y definir la división de datos.
 
@@ -63,7 +63,7 @@ Al usar **Random split**, hay tres opciones adicionales disponibles:
 | Opción       | Descripción                                                                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Shuffle**  | Mezcla aleatoriamente las filas antes de dividir. Recomendado para evitar sesgo de orden en los datos. Habilitado por defecto.             |
-| **Stratify** | Asegura que cada división preserve las mismas proporciones de clases que el dataset completo. Útil para conjuntos de datos desbalanceados. |
+| **Stratify** | Asegura que cada división preserve las mismas proporciones de clases que el dataset completo. Útil para datasets desbalanceados. |
 | **Seed**     | Una semilla aleatoria fija para reproducibilidad. El valor por defecto es `42`. Establece un valor específico para asegurar que siempre se produzca la misma división. |
 
 Haz clic en **CREATE SESSION** para finalizar la configuración. La sesión se abre inmediatamente.
@@ -166,7 +166,7 @@ Muestra los valores exactos de hiperparámetros usados en la última ejecución 
 ## Consejos
 
 - Añade un **Dummy Classifier** (o modelo de referencia equivalente para tu tarea) junto a tus modelos principales. Te da una referencia de rendimiento para comparar — cualquier modelo que no supere al dummy necesita más ajustes.
-- Habilita **Stratify** al trabajar con conjuntos de datos desbalanceados para asegurar que cada división tenga una muestra representativa de todas las clases.
+- Habilita **Stratify** al trabajar con datasets desbalanceados para asegurar que cada división tenga una muestra representativa de todas las clases.
 - Usa una **Seed** fija al comparar múltiples modelos para asegurar que todos entrenen y evalúen exactamente con la misma división de datos.
 - Puedes añadir múltiples instancias del mismo tipo de modelo con diferentes configuraciones de hiperparámetros para explorar cómo los parámetros afectan el rendimiento.
 

@@ -21,7 +21,7 @@ Cada clase de componente declara un atributo de clase `TYPE` que determina su ca
 | `Explorer`        | `BaseExplorer`        | Visualizar y analizar datos            | ScatterPlotExplorer, HistogramPlotExplorer                          |
 | `Explainer`       | `BaseExplainer`       | Interpretar las predicciones del modelo | KernelShap, PermutationFeatureImportance                           |
 | `Converter`       | `BaseConverter`       | Transformar características            | StandardScaler, OneHotEncoder, PCA, SMOTE                           |
-| `DataLoader`      | `BaseDataLoader`      | Cargar conjuntos de datos desde archivos | CSVDataLoader, ExcelDataLoader                                    |
+| `DataLoader`      | `BaseDataLoader`      | Cargar datasets desde archivos | CSVDataLoader, ExcelDataLoader                                    |
 | `Optimizer`       | `BaseOptimizer`       | Optimización de hiperparámetros        | Optimizadores basados en Optuna                                     |
 | `Job`             | `BaseJob`             | Ejecución de tareas en segundo plano   | ModelJob, ExplorerJob, PredictJob                                   |
 

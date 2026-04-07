@@ -90,7 +90,7 @@ El frontend muestra las métricas y cualquier visualización de optimización al
 
 ---
 
-## Crear un Gráfico para un Conjunto de Datos
+## Crear un Gráfico para un Dataset
 
 Este ejemplo muestra cómo un usuario crea una exploración de gráfico de dispersión para un dataset.
 

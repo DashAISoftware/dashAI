@@ -21,7 +21,7 @@ en toda la plataforma para exploración, preprocesamiento y entrenamiento de mod
 
 ## Guía paso a paso
 
-### 1. Abrir la sección de Conjuntos de datos
+### 1. Abrir la sección de Datasets
 
 En la barra de navegación superior, haz clic en **DATASETS**.
 En el área principal, haz clic en la opción **"Upload Dataset"** en el centro de la pantalla.
@@ -93,7 +93,7 @@ Esta sección aparece para todos los dataloaders.
 
 | Parámetro          | Tipo    | Descripción                                                                                                                                                                                                                                                        |
 | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Inference Rows** | Entero  | El número de filas que DashAI lee para determinar automáticamente el tipo de datos de cada columna. El valor predeterminado es `1000`. Aumentar este valor mejora la precisión de la inferencia en conjuntos de datos con valores inconsistentes o mixtos, a costa de un tiempo de carga ligeramente mayor. |
+| **Inference Rows** | Entero  | El número de filas que DashAI lee para determinar automáticamente el tipo de datos de cada columna. El valor predeterminado es `1000`. Aumentar este valor mejora la precisión de la inferencia en datasets con valores inconsistentes o mixtos, a costa de un tiempo de carga ligeramente mayor. |
 
 #### Configuración del Dataloader
 

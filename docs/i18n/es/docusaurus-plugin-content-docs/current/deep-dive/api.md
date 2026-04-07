@@ -10,7 +10,7 @@ DashAI expone una API RESTful en `/api/v1`. Todos los endpoints devuelven JSON. 
 | Archivo del router      | Recurso                      | Propósito                                                    |
 | ----------------------- | ---------------------------- | ------------------------------------------------------------ |
 | `components.py`         | `/api/v1/component`          | Listar y filtrar componentes registrados                     |
-| `datasets.py`           | `/api/v1/dataset`            | Cargar, listar y validar conjuntos de datos                  |
+| `datasets.py`           | `/api/v1/dataset`            | Cargar, listar y validar datasets                  |
 | `model_sessions.py`     | `/api/v1/model-session`      | CRUD para sesiones de entrenamiento de modelos               |
 | `runs.py`               | `/api/v1/run`                | CRUD para ejecuciones de entrenamiento, métricas y gráficos de optimización |
 | `jobs.py`               | `/api/v1/job`                | Encolar trabajos y consultar el estado de un trabajo         |
@@ -33,7 +33,7 @@ GET /api/v1/component/?select_types=["Model","Metric"]
 
 Devuelve todos los componentes registrados con sus esquemas y metadatos. Acepta un parámetro de consulta opcional `select_types` para filtrar por categoría de componente. El frontend usa esta respuesta para renderizar formularios de configuración de forma dinámica.
 
-### Conjuntos de Datos
+### Datasets
 
 ```http
 GET    /api/v1/dataset/
@@ -147,7 +147,7 @@ GET    /api/v1/predict/filter_datasets
 POST   /api/v1/predict/preview
 ```
 
-`POST /` crea un trabajo de predicción persistido vinculado a una ejecución entrenada. `GET /filter_datasets` devuelve solo los conjuntos de datos cuyo esquema de columnas es compatible con el dataset de entrenamiento de la ejecución. `POST /preview` ejecuta una predicción sincrónica y devuelve el resultado de inmediato sin persistirlo — útil para inferencia interactiva rápida.
+`POST /` crea un trabajo de predicción persistido vinculado a una ejecución entrenada. `GET /filter_datasets` devuelve solo los datasets cuyo esquema de columnas es compatible con el dataset de entrenamiento de la ejecución. `POST /preview` ejecuta una predicción sincrónica y devuelve el resultado de inmediato sin persistirlo — útil para inferencia interactiva rápida.
 
 ### Sesiones y Procesos Generativos
 

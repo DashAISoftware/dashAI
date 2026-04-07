@@ -16,7 +16,7 @@ La barra superior siempre está visible y proporciona acceso a todos los módulo
 
 | Sección        | Qué hace                                                                         |
 | -------------- | -------------------------------------------------------------------------------- |
-| **DATASETS**   | Carga conjuntos de datos, explora su contenido y abre notebooks                  |
+| **DATASETS**   | Carga datasets, explora su contenido y abre notebooks                  |
 | **MODELS**     | Crea sesiones, entrena modelos, compara resultados y genera predicciones          |
 | **GENERATIVE** | Interactúa con modelos de generación de texto e imágenes                         |
 | **PLUGINS**    | Instala y gestiona plugins                                                        |
@@ -29,9 +29,9 @@ El **selector de idioma** (junto al ícono de globo) cambia el idioma de la inte
 
 El contenido de la barra lateral cambia según el módulo en el que te encuentres.
 
-**En Datasets:** Muestra los **conjuntos de datos disponibles** (con recuentos de filas y columnas) y los **Notebooks** (agrupados bajo su dataset padre). Una barra de búsqueda filtra ambos. El botón **New Dataset/Notebook** en la parte superior inicia el flujo de carga o creación de notebooks.
+**En Datasets:** Muestra los **datasets disponibles** (con recuentos de filas y columnas) y los **Notebooks** (agrupados bajo su dataset padre). Una barra de búsqueda filtra ambos. El botón **New Dataset/Notebook** en la parte superior inicia el flujo de carga o creación de notebooks.
 
-**En Models:** Muestra los **conjuntos de datos disponibles** y las **sesiones** agrupadas por tipo de tarea. Una barra de búsqueda filtra conjuntos de datos y sesiones. El botón **New Session** crea una nueva sesión.
+**En Models:** Muestra los **datasets disponibles** y las **sesiones** agrupadas por tipo de tarea. Una barra de búsqueda filtra datasets y sesiones. El botón **New Session** crea una nueva sesión.
 
 **En Generative:** Muestra las sesiones organizadas por tipo de tarea generativa.
 

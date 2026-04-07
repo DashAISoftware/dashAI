@@ -10,7 +10,7 @@ Estos son los conceptos fundamentales que encontrarás a lo largo de DashAI. Cad
 
 ---
 
-## Conjunto de datos
+## Dataset
 
 Un dataset es la colección de datos con la que trabajas. Generalmente es una tabla estructurada (CSV, Excel, JSON). Todo flujo de trabajo en DashAI comienza cargando un dataset en el módulo **Datasets**.
 
