@@ -17,7 +17,7 @@ Cada experimento en DashAI registra:
 - **Configuración completa**: tarea, dataset, divisiones, columnas de características seleccionadas
 - **Parámetros del modelo**: todos los hiperparámetros para cada ejecución
 - **Métricas de evaluación**: por ejecución, por división y por nivel (paso/lote/prueba)
-- **Transformaciones de datos**: la cadena de conversores aplicada al dataset
+- **Transformaciones de datos**: la cadena de converters aplicada al dataset
 
 Estos datos se almacenan en SQLite (`~/.DashAI/db.sqlite`) con historial completo.
 
@@ -44,7 +44,7 @@ La exportación completa de la pipeline (una "receta" portátil que captura toda
 :::
 
 :::info ¿Qué es un Notebook?
-Un Notebook en DashAI es una sesión de trabajo con una copia mutable de un dataset. Agrupa Exploradores (visualizaciones) y Conversores (transformaciones) aplicados a esa copia. El dataset original nunca se modifica. Consulta [Diseño del Sistema → Notebook](./notebook) para más detalles.
+Un Notebook en DashAI es una sesión de trabajo con una copia mutable de un dataset. Agrupa Exploradores (visualizaciones) y Converters (transformaciones) aplicados a esa copia. El dataset original nunca se modifica. Consulta [Diseño del Sistema → Notebook](./notebook) para más detalles.
 :::
 
 ## Detalles del Almacenamiento de Datos

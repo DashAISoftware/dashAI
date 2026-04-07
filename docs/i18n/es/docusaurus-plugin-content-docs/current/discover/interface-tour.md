@@ -56,8 +56,8 @@ Cuando hay un notebook abierto:
 
 - **Título del notebook** — `Notebook: [Nombre del dataset] Preview`
 - **Barra de herramientas** — controles de FILTROS y EXPORTAR
-- **Tabla de vista previa del dataset** — vista paginada de los datos en su estado actual; se actualiza después de cada conversor
-- **Línea de tiempo de operaciones** — cada Explorador o Conversor que agregues aparece debajo de la vista previa como un bloque con su resultado, indicador de estado y controles de edición/eliminación
+- **Tabla de vista previa del dataset** — vista paginada de los datos en su estado actual; se actualiza después de cada converter
+- **Línea de tiempo de operaciones** — cada Explorador o Converter que agregues aparece debajo de la vista previa como un bloque con su resultado, indicador de estado y controles de edición/eliminación
 - **Botón SAVE AS NEW DATASET** — en la parte superior derecha, guarda el estado actual como un nuevo dataset
 
 ### Models — Vista de sesión
@@ -83,7 +83,7 @@ El panel derecho es sensible al contexto y aparece junto al área principal.
 
 **En Notebooks (pestaña EXPLORE):** El panel de Herramientas de análisis lista todas las herramientas de exploración disponibles organizadas por categoría. Pasa el cursor sobre cualquier herramienta para ver una imagen de vista previa y su descripción. Haz clic para abrir el modal de configuración.
 
-**En Notebooks (pestaña CONVERT):** El mismo panel, pero mostrando las herramientas de conversor organizadas por categoría.
+**En Notebooks (pestaña CONVERT):** El mismo panel, pero mostrando las herramientas de converter organizadas por categoría.
 
 **En Models:** El panel de Modelos disponibles lista todos los modelos compatibles con la tarea de la sesión actual. Pasa el cursor para ver una descripción. Haz clic para abrir el modal Agregar modelo.
 
@@ -97,7 +97,7 @@ Muchas herramientas abren un modal de configuración de dos pasos:
 
 **Paso 1 — Configurar alcance:** Selecciona qué columnas utilizará la herramienta. La tabla del selector de columnas muestra el índice, nombre, tipo de valor y tipo de dato. Un contador en la parte superior muestra cuántas columnas están seleccionadas y cuántas son necesarias.
 
-Para los conversores, el Paso 1 también incluye el **alcance de filas** — selecciona filas por rango, por índices específicos o usa SELECT ALL.
+Para los converters, el Paso 1 también incluye el **alcance de filas** — selecciona filas por rango, por índices específicos o usa SELECT ALL.
 
 **Paso 2 — Configurar parámetros:** Cada herramienta tiene su propio conjunto de parámetros, generados automáticamente a partir del esquema de la herramienta. Cada parámetro tiene un ícono de ayuda **?**. Haz clic en **CREATE EXPLORER** o **CREATE CONVERTER** para aplicar.
 
@@ -117,7 +117,7 @@ Las operaciones de larga duración — entrenamiento, exploración, generación 
 
 ## Indicadores de estado
 
-Los indicadores de estado aparecen en las tarjetas de modelos y en los resultados de exploradores/conversores a lo largo de la interfaz:
+Los indicadores de estado aparecen en las tarjetas de modelos y en los resultados de exploradores/converters a lo largo de la interfaz:
 
 | Indicador       | Significado                                                       |
 | --------------- | ----------------------------------------------------------------- |

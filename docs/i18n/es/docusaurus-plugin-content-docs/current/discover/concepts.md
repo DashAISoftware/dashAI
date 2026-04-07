@@ -24,7 +24,7 @@ DashAI incluye cargadores de datos para los formatos más comunes (CSV, Excel, J
 
 ## Notebook
 
-Un notebook es un espacio de trabajo no destructivo vinculado a un dataset. Te permite aplicar una secuencia de **Exploradores** y **Conversores** sobre una copia de trabajo de los datos, mientras el dataset original permanece sin cambios.
+Un notebook es un espacio de trabajo no destructivo vinculado a un dataset. Te permite aplicar una secuencia de **Exploradores** y **Converters** sobre una copia de trabajo de los datos, mientras el dataset original permanece sin cambios.
 
 Cada operación que agregas aparece en la línea de tiempo del notebook, por lo que tu proceso de transformación siempre es visible y auditable. Cuando el resultado esté listo, puedes guardarlo como un nuevo dataset con **Save as New Dataset**.
 
@@ -42,14 +42,14 @@ También puedes [desarrollar exploradores personalizados](/build/plugin-developm
 
 ---
 
-## Conversor
+## Converter
 
-Un conversor es una herramienta de transformación de datos en la pestaña **CONVERT** del notebook. Los conversores modifican los datos — codificando categorías, escalando valores numéricos, eliminando valores faltantes, reduciendo dimensionalidad y más. Cada conversor se aplica a un conjunto específico de columnas y filas, y el efecto es inmediatamente visible en la vista previa del dataset.
+Un converter es una herramienta de transformación de datos en la pestaña **CONVERT** del notebook. Los converters modifican los datos — codificando categorías, escalando valores numéricos, eliminando valores faltantes, reduciendo dimensionalidad y más. Cada converter se aplica a un conjunto específico de columnas y filas, y el efecto es inmediatamente visible en la vista previa del dataset.
 
-DashAI incluye más de 30 conversores organizados en ocho categorías: Preprocesamiento básico, Codificación, Escalado y normalización, Reducción de dimensionalidad, Selección de características, Métodos polinomiales y de kernel, Remuestreo y balanceo de clases, y Preprocesamiento avanzado.
+DashAI incluye más de 30 converters organizados en ocho categorías: Preprocesamiento básico, Codificación, Escalado y normalización, Reducción de dimensionalidad, Selección de características, Métodos polinomiales y de kernel, Remuestreo y balanceo de clases, y Preprocesamiento avanzado.
 
 :::note
-Puedes [crear conversores personalizados](/build/plugin-development/overview) e instalar adicionales desde el módulo **Plugins**.
+Puedes [crear converters personalizados](/build/plugin-development/overview) e instalar adicionales desde el módulo **Plugins**.
 :::
 
 ---

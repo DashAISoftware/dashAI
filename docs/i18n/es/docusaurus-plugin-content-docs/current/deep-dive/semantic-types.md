@@ -13,7 +13,7 @@ Cuando se carga un dataset, DashAI asigna un **tipo semántico** a cada columna.
 Esta clasificación impulsa tres comportamientos críticos en toda la plataforma:
 
 - **Compatibilidad de tareas** — solo las columnas cuyos tipos coinciden con los requisitos de una tarea pueden seleccionarse como entradas o salidas.
-- **Encadenamiento de conversores** — los conversores declaran el tipo que aceptan y el tipo que producen, habilitando pipelines de preprocesamiento seguras.
+- **Encadenamiento de converters** — los converters declaran el tipo que aceptan y el tipo que producen, habilitando pipelines de preprocesamiento seguras.
 - **Codificación de etiquetas** — las columnas de salida categóricas se codifican automáticamente como enteros antes del entrenamiento y se decodifican de vuelta a etiquetas de cadena tras la predicción.
 
 ---
@@ -115,7 +115,7 @@ Los tipos semánticos se serializan en los **metadatos de la tabla Apache Arrow*
 
 - Los tipos sobreviven a ciclos de guardado/carga sin necesidad de re-inferencia.
 - Los Notebooks heredan los tipos de su dataset fuente.
-- Los conversores que cambian el tipo de una columna actualizan los metadatos en el lugar.
+- Los converters que cambian el tipo de una columna actualizan los metadatos en el lugar.
 
 Las utilidades relevantes son `save_types_in_arrow_metadata()` y `get_types_from_arrow_metadata()` en `DashAI/back/types/utils.py`.
 
@@ -147,13 +147,13 @@ Antes del entrenamiento, `validate_dataset_for_task()` verifica que el tipo sem�
 | `TextClassificationTask` | `Text` (exactamente 1 columna) | `Categorical` (exactamente 1 columna) |
 | `TranslationTask` | `Text` (exactamente 1 columna) | `Text` (exactamente 1 columna) |
 
-### Contratos de Tipos de Conversores
+### Contratos de Tipos de Converters
 
-Cada conversor implementa `get_output_type(column_name)` para declarar el tipo semántico de cada columna de salida. Esto permite a DashAI rastrear el tipo de cada columna a través de una pipeline de preprocesamiento de múltiples pasos.
+Cada converter implementa `get_output_type(column_name)` para declarar el tipo semántico de cada columna de salida. Esto permite a DashAI rastrear el tipo de cada columna a través de una pipeline de preprocesamiento de múltiples pasos.
 
-**Contratos de conversores comunes:**
+**Contratos de converters comunes:**
 
-| Conversor | Tipo de entrada | Tipo de salida |
+| Converter | Tipo de entrada | Tipo de salida |
 |-----------|----------------|----------------|
 | `OneHotEncoder` | `Categorical` | `Integer` (una columna binaria por categoría) |
 | `OrdinalEncoder` | `Categorical` | `Integer` |

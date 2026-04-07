@@ -105,7 +105,7 @@ PUT    /api/v1/explorer/{explorer_id}/results/
 
 Los exploradores ejecutan visualizaciones (gráficos de dispersión, histogramas, etc.) sobre el dataset de un Notebook. `POST /` crea un registro de Explorer y encola un `ExplorerJob`. `POST /{explorer_id}/results/` recupera el resultado calculado; `PUT` lo actualiza. Los resultados se almacenan como especificaciones JSON de Plotly.
 
-### Conversores
+### Converters
 
 ```http
 POST   /api/v1/converter/
@@ -114,7 +114,7 @@ GET    /api/v1/converter/notebook/{notebook_id}
 DELETE /api/v1/converter/{converter_list_id}
 ```
 
-`POST` guarda un paso de conversor individual en un Notebook. `GET /notebook/{notebook_id}` devuelve todos los registros de conversores finalizados para ese Notebook. `DELETE` revierte el dataset del Notebook al estado previo al conversor eliminado y vuelve a encolar todos los conversores anteriores.
+`POST` guarda un paso de converter individual en un Notebook. `GET /notebook/{notebook_id}` devuelve todos los registros de converters finalizados para ese Notebook. `DELETE` revierte el dataset del Notebook al estado previo al converter eliminado y vuelve a encolar todos los converters anteriores.
 
 ### Explicadores
 

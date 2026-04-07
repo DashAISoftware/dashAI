@@ -17,7 +17,7 @@ DashAI descubre plugins a través del mecanismo de **entry points** de Python. C
 Esto significa que:
 
 - Un plugin que añade un nuevo modelo aparecerá en la lista de modelos disponibles del módulo de Modelos para la tarea que soporta.
-- Un plugin que añade un nuevo conversor aparecerá en el panel CONVERT del Notebook.
+- Un plugin que añade un nuevo converter aparecerá en el panel CONVERT del Notebook.
 - Un plugin que añade un nuevo cargador de datos aparecerá en la selección de formato de carga.
 
 No se requiere registro ni configuración manual — la declaración del entry point es suficiente.
@@ -33,7 +33,7 @@ Un único paquete plugin puede aportar cualquier combinación de los siguientes 
 | **Modelos**          | Módulo de Modelos — lista de modelos disponibles para la tarea correspondiente |
 | **Tareas**           | Módulo de Modelos — página de selección de tareas             |
 | **Cargadores de datos** | Módulo de Datasets — selector de formato de carga          |
-| **Conversores**      | Módulo Notebook — pestaña CONVERT                             |
+| **Converters**      | Módulo Notebook — pestaña CONVERT                             |
 | **Explicadores**     | Módulo de Modelos — pestaña EXPLAINABILITY                    |
 | **Métricas**         | Módulo de Modelos — métricas de evaluación para la tarea correspondiente |
 

@@ -8,7 +8,7 @@ sidebar_position: 2
 
 ## Gestión de datasets
 
-Carga y gestiona datasets en múltiples formatos — CSV, Excel y JSON. Cada dataset muestra un resumen de filas, columnas, tipos de datos y distribuciones. Desde la vista del dataset puedes iniciar exploraciones de EDA y aplicar conversores de datos directamente.
+Carga y gestiona datasets en múltiples formatos — CSV, Excel y JSON. Cada dataset muestra un resumen de filas, columnas, tipos de datos y distribuciones. Desde la vista del dataset puedes iniciar exploraciones de EDA y aplicar converters de datos directamente.
 
 **Formatos compatibles:** `.csv`, `.xlsx` / `.xls`, `.json`
 
@@ -36,9 +36,9 @@ Crea experimentos que asocian un dataset con una tarea, luego entrena uno o más
 - **Generación de texto a imagen** — síntesis generativa de imágenes
 - **Generación de texto a texto** — modelos conversacionales y de resumen
 
-## Conversores de datos
+## Converters de datos
 
-Transforma tus datos con una biblioteca de más de 30 conversores antes del entrenamiento — normalización, codificación, reducción de dimensionalidad, imputación y más. Los conversores son componibles en cadenas y están impulsados por Scikit-learn e imbalanced-learn.
+Transforma tus datos con una biblioteca de más de 30 converters antes del entrenamiento — normalización, codificación, reducción de dimensionalidad, imputación y más. Los converters son componibles en cadenas y están impulsados por Scikit-learn e imbalanced-learn.
 
 ## Predicciones
 

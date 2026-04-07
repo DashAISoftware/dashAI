@@ -37,6 +37,6 @@ La inyección de dependencias es gestionada por **Kink**. El contenedor DI (`bac
 | Tipos de componentes, registro y objetos configurables | [Componentes](./components) |
 | Esquema SQLite, tablas ORM y almacenamiento de datos | [Base de Datos](./database) |
 | Cola de trabajos Huey y tipos de trabajos | [Sistema de Trabajos](./job-system) |
-| Sesiones de Notebook, exploradores y conversores | [Notebook](./notebook) |
+| Sesiones de Notebook, exploradores y converters | [Notebook](./notebook) |
 | Recorridos completos de entrenamiento y exploración | [Ejemplos de Flujo de Trabajo](./workflow-examples) |
 | Tipos semánticos de columnas e inferencia | [Tipos Semánticos](./semantic-types) |

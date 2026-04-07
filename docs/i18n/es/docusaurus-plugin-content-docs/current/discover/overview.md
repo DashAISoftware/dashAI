@@ -14,7 +14,7 @@ La plataforma unifica la interacción con modelos de ML en distintos dominios de
 
 - **Experimentación con ML sin código** — entrena, evalúa y compara modelos sin escribir una sola línea de código
 - **Soporte multitarea** — clasificación tabular, regresión, clasificación de texto, traducción e IA generativa
-- **Extensible mediante plugins** — agrega nuevos modelos, tareas y conversores sin modificar la plataforma base
+- **Extensible mediante plugins** — agrega nuevos modelos, tareas y converters sin modificar la plataforma base
 - **Experimentos reproducibles** — cada configuración, división y métrica queda registrada para una trazabilidad completa
 - **Integración transparente de bibliotecas** — utiliza Scikit-learn, Hugging Face, PyTorch, TensorFlow y Keras internamente, de forma invisible para el usuario
 
