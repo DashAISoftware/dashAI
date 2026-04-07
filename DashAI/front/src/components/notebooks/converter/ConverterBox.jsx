@@ -10,12 +10,62 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Delete } from "@mui/icons-material";
-import { DataGrid } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../../utils/converterStatus";
 import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
 import { useTranslation } from "react-i18next";
+
+function ConverterParametersTable({ converter, t, localization }) {
+  const paramColumns = [
+    { accessorKey: "key", header: t("common:parameter"), grow: 1 },
+    { accessorKey: "value", header: t("common:value"), grow: 4 },
+  ];
+
+  const paramRows = [
+    {
+      key: t("datasets:label.targetColumn"),
+      value: converter.parameters.target?.columnName,
+    },
+    {
+      key: t("datasets:label.scopeColumns"),
+      value:
+        converter.parameters.scope?.columns?.length === 0
+          ? "All"
+          : converter.parameters.scope.columns
+              .map((col) => col.columnName)
+              .join(", "),
+    },
+    {
+      key: t("datasets:label.scopeRows"),
+      value:
+        converter.parameters.scope.rows.length === 0
+          ? "All"
+          : converter.parameters.scope.rows.join(", "),
+    },
+  ];
+
+  const table = useMaterialReactTable({
+    columns: paramColumns,
+    data: paramRows,
+    localization,
+    initialState: { density: "compact" },
+    enablePagination: false,
+    enableTopToolbar: false,
+    enableBottomToolbar: false,
+    enableColumnActions: false,
+    enableSorting: false,
+    enableColumnFilter: false,
+  });
+
+  return <MaterialReactTable table={table} />;
+}
 
 export default function ConverterBox({
   converter,
@@ -24,7 +74,10 @@ export default function ConverterBox({
 }) {
   const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
-  const { t } = useTranslation(["common", "datasets"]);
+  const { t, i18n } = useTranslation(["common", "datasets"]);
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -148,51 +201,10 @@ export default function ConverterBox({
 
             {/* Parámetros en tabla */}
             {converter.parameters && (
-              <DataGrid
-                rows={[
-                  {
-                    id: 2,
-                    key: t("datasets:label.targetColumn"),
-                    value: converter.parameters.target?.columnName,
-                  },
-                  {
-                    id: 3,
-                    key: t("datasets:label.scopeColumns"),
-                    value:
-                      converter.parameters.scope?.columns?.length === 0
-                        ? "All"
-                        : converter.parameters.scope.columns
-                            .map((col) => col.columnName)
-                            .join(", "),
-                  },
-                  {
-                    id: 4,
-                    key: t("datasets:label.scopeRows"),
-                    value:
-                      converter.parameters.scope.rows.length === 0
-                        ? "All"
-                        : converter.parameters.scope.rows.join(", "),
-                  },
-                ]}
-                columns={[
-                  { field: "key", headerName: t("common:parameter"), flex: 1 },
-                  { field: "value", headerName: t("common:value"), flex: 4 },
-                ]}
-                hideFooter
-                disableColumnMenu
-                disableColumnFilter
-                disableColumnSelector
-                density="compact"
-                sx={{
-                  height: "100%",
-                  width: "100%",
-                  "& .MuiDataGrid-virtualScroller": {
-                    overflowX: "auto",
-                  },
-                  "& .MuiDataGrid-cell": {
-                    whiteSpace: "nowrap", // keep everything on one line
-                  },
-                }}
+              <ConverterParametersTable
+                converter={converter}
+                t={t}
+                localization={localization}
               />
             )}
           </Box>
