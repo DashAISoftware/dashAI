@@ -93,6 +93,11 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     DISPLAY_NAME = MultilingualString(en="Embedding", es="Embedding")
     IMAGE_PREVIEW = "embedding.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise the embedding converter and extract schema parameters.
 

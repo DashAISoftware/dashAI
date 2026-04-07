@@ -82,6 +82,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
     IMAGE_PREVIEW = "tokenizer.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise the tokenizer converter and extract schema parameters.
 

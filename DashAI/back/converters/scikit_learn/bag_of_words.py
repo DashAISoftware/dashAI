@@ -102,6 +102,11 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     SCHEMA = BagOfWordsConverterSchema
     DISPLAY_NAME = MultilingualString(en="Bag of Words", es="Bolsa de Palabras")
     IMAGE_PREVIEW = "bag_of_words.png"
+
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
     DESCRIPTION = MultilingualString(
         en=(
             "Converts text into a Bag-of-Words representation with one column "

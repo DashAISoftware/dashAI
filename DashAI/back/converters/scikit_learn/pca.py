@@ -192,7 +192,11 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         es="Análisis de Componentes Principales (PCA)",
     )
     IMAGE_PREVIEW = "pca.png"
-    metadata = {}
+
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the PCA converter.

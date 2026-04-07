@@ -116,6 +116,11 @@ class SimpleImputer(
     DISPLAY_NAME = MultilingualString(en="Simple Imputer", es="Imputador Simple")
     IMAGE_PREVIEW = "simple_imputer.png"
 
+    metadata = {
+        "allowed_dtypes": ["string", "int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the SimpleImputer converter.
 

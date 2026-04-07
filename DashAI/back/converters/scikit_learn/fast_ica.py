@@ -177,6 +177,11 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     DISPLAY_NAME = MultilingualString(en="Fast ICA", es="Fast ICA")
     IMAGE_PREVIEW = "fast_ica.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the FastICA converter.
 

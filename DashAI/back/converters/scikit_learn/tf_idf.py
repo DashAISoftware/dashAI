@@ -113,6 +113,11 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     SCHEMA = TFIDFConverterSchema
     DISPLAY_NAME = MultilingualString(en="TF-IDF", es="TF-IDF")
     IMAGE_PREVIEW = "tf_idf.png"
+
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
     DESCRIPTION = MultilingualString(
         en=(
             "Converts text into a TF-IDF representation with one column per "

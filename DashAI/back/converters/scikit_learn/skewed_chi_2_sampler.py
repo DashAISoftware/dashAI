@@ -114,6 +114,11 @@ class SkewedChi2Sampler(
     DISPLAY_NAME = MultilingualString(en="Skewed Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise the skewed chi-squared sampler,
         resolving the ``"RandomState"`` sentinel.

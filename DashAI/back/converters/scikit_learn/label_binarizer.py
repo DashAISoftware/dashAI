@@ -69,6 +69,11 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
     )
     IMAGE_PREVIEW = "label_binarizer.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
 

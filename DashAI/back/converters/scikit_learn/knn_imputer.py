@@ -101,6 +101,11 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     DISPLAY_NAME = MultilingualString(en="KNN Imputer", es="Imputador KNN")
     IMAGE_PREVIEW = "knn_imputer.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the KNNImputer converter.
 

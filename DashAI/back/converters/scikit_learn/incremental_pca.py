@@ -101,3 +101,8 @@ class IncrementalPCA(
     )
     DISPLAY_NAME = MultilingualString(en="Incremental PCA", es="PCA Incremental")
     IMAGE_PREVIEW = "incremental_pca.png"
+
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
