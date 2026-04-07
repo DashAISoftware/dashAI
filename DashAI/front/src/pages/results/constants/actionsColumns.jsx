@@ -1,24 +1,22 @@
 // columns related to open details of runs
-import React, { act } from "react";
+import React from "react";
 import { IconButton } from "@mui/material";
-import { getRunStatus } from "../../../utils/runStatus";
 
 export const actionsColumns = (actions) =>
   actions.map((action) => ({
-    field: action.title.toLowerCase(),
-    headerName: action.title,
-    sortable: false,
-    filterable: false,
-    disableColumnMenu: true,
-    align: "center",
-    headerAlign: "center",
-    minWidth: 50,
-    renderCell: (params) => {
-      const loading = params.row.status === 1 || params.row.status === 2; // Delivered or Started
+    id: action.title.toLowerCase(),
+    header: action.title,
+    enableSorting: false,
+    enableColumnFilter: false,
+    size: 50,
+    muiTableHeadCellProps: { align: "center" },
+    muiTableBodyCellProps: { align: "center" },
+    Cell: ({ row }) => {
+      const loading = row.original.status === 1 || row.original.status === 2; // Delivered or Started
 
       return (
         <IconButton
-          onClick={() => action.handleAction(params.row)}
+          onClick={() => action.handleAction(row.original)}
           title={action.title}
           color="primary"
           size="small"
@@ -27,7 +25,7 @@ export const actionsColumns = (actions) =>
               ? false
               : !action.requiresFinished
                 ? loading
-                : params.row.status !== 3 // Finished
+                : row.original.status !== 3 // Finished
           }
           loading={action.alwaysEnabled ? false : loading}
         >

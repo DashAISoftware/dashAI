@@ -27,7 +27,6 @@ function ResultsTable({
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [columnGroupingModel, setColumnGroupingModel] = useState([]);
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
   const [loading, setLoading] = useState(false);
   const [showRunResults, setShowRunResults] = useState(false);
@@ -73,7 +72,7 @@ function ResultsTable({
 
       const extractedRows = extractRows(runs, models);
 
-      const { columns, columnGroupingModel, columnVisibilityModel } =
+      const { columns, columnVisibilityModel } =
         extractColumns(
           metrics,
           runs,
@@ -89,7 +88,6 @@ function ResultsTable({
 
       setRows(extractedRows);
       setColumns(columns);
-      setColumnGroupingModel(columnGroupingModel);
       setColumnVisibilityModel(columnVisibilityModel);
     } catch (error) {
       enqueueSnackbar(t("models:error.preparingRunsTable"), {
@@ -148,7 +146,6 @@ function ResultsTable({
         selectedRun={selectedRun}
         handleCloseRunResults={handleCloseRunResults}
         columnVisibilityModel={columnVisibilityModel}
-        columnGroupingModel={columnGroupingModel}
         handleExecuteRuns={handleExecuteRuns}
         handleRun={handleRun}
       />
