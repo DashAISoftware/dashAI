@@ -5,7 +5,9 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import {
   Box,
   ButtonGroup,
@@ -19,6 +21,7 @@ import {
   IconButton,
   Button,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getRuns as getRunsRequest } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { useSnackbar } from "notistack";
@@ -31,6 +34,12 @@ import SingleRun from "./runButtons/SingleRun";
 import EditRunDialog from "./runButtons/EditRunDialog";
 import DeleteRun from "./runButtons/DeleteRun";
 import { useTranslation } from "react-i18next";
+
+const toMRT = (ids) => Object.fromEntries(ids.map((id) => [String(id), true]));
+const fromMRT = (sel) =>
+  Object.keys(sel)
+    .filter((k) => sel[k])
+    .map(Number);
 
 function RunnerDialog({
   experiment,
@@ -48,7 +57,11 @@ function RunnerDialog({
   const experimentNameRef = useRef(experiment.name);
   const tourContext = useTourContext();
   const [models, setModels] = useState([]);
-  const { t } = useTranslation(["experiments", "common"]);
+  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const hasActiveRuns = rows.some(
     (r) => r.status === 1 || r.status === 2, // Delivered or Started
@@ -85,7 +98,7 @@ function RunnerDialog({
         setExpRunning({ ...expRunning, [experiment.id]: true });
       }
 
-      setRows(runsWithStringStatus);
+      setRows(runs);
 
       // Initialize selection if needed
       if (rowSelectionModel.length === 0) {
@@ -314,78 +327,101 @@ function RunnerDialog({
 
   const columns = [
     {
-      field: "name",
-      headerName: t("common:name"),
-      minWidth: 250,
-      editable: false,
+      accessorKey: "name",
+      header: t("common:name"),
+      minSize: 250,
     },
     {
-      field: "model_name",
-      headerName: t("experiments:label.modelName"),
-      minWidth: 300,
-      editable: false,
-      valueGetter: (value) => {
-        const model = models.find((model) => model.name === value);
+      accessorKey: "model_name",
+      header: t("experiments:label.modelName"),
+      minSize: 300,
+      Cell: ({ cell }) => {
+        const value = cell.getValue();
+        const model = models.find((m) => m.name === value);
         return model && model.display_name ? model.display_name : value;
       },
     },
     {
-      field: "status",
-      headerName: t("common:status"),
-      minWidth: 150,
-      editable: false,
+      accessorKey: "status",
+      header: t("common:status"),
+      minSize: 150,
     },
     {
-      field: "actions",
-      headerName: t("common:actions"),
-      type: "actions",
-      minWidth: 180,
-      getActions: (params) => [
-        <SingleRun key="single-run" run={params.row} onRun={handleSingleRun} />,
-        <EditRunDialog
-          key="edit-run-dialog"
-          experiment={experiment}
-          run={params.row}
-          setRun={(updatedRun) =>
-            setRows((prev) =>
-              prev.map((r) => (r.id === updatedRun.id ? updatedRun : r)),
-            )
-          }
-        />,
-        <DeleteRun
-          key="delete-run-dialog"
-          run={params.row}
-          onRunDelete={() => {
-            setRows((prevRows) =>
-              prevRows.filter((row) => row.id !== params.row.id),
-            );
-            if (rows.length === 1) {
-              setOpen(false);
-              deleteExperiment();
+      id: "actions",
+      header: t("common:actions"),
+      minSize: 180,
+      enableSorting: false,
+      enableColumnFilter: false,
+      Cell: ({ row }) => (
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <SingleRun run={row.original} onRun={handleSingleRun} />
+          <EditRunDialog
+            experiment={experiment}
+            run={row.original}
+            setRun={(updatedRun) =>
+              setRows((prev) =>
+                prev.map((r) => (r.id === updatedRun.id ? updatedRun : r)),
+              )
             }
-          }}
-        />,
-      ],
+          />
+          <DeleteRun
+            run={row.original}
+            onRunDelete={() => {
+              setRows((prevRows) =>
+                prevRows.filter((r) => r.id !== row.original.id),
+              );
+              if (rows.length === 1) {
+                setOpen(false);
+                deleteExperiment();
+              }
+            }}
+          />
+        </Box>
+      ),
     },
   ];
 
+  const mrtRowSelection = toMRT(rowSelectionModel);
+
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    state: {
+      isLoading: loading,
+      rowSelection: mrtRowSelection,
+    },
+    getRowId: (row) => String(row.id),
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      const next =
+        typeof updater === "function" ? updater(mrtRowSelection) : updater;
+      setRowSelectionModel(fromMRT(next));
+    },
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 5, pageIndex: 0 },
+    },
+    localization,
+    enableFullScreenToggle: false,
+    enableDensityToggle: false,
+  });
+
   return (
     <React.Fragment>
-      <GridActionsCellItem
+      <IconButton
         key="runner-button"
         data-tour="run-experiment-button"
-        icon={
-          rows.some(
-            (row) => row.status === 1 || row.status === 2, // Delivered or Started
-          ) ? (
-            <CircularProgress size={18} />
-          ) : (
-            <PlayArrowIcon />
-          )
-        }
-        label="Run"
         onClick={handleOpenDialog}
-      />
+        size="small"
+      >
+        {rows.some(
+          (row) => row.status === 1 || row.status === 2, // Delivered or Started
+        ) ? (
+          <CircularProgress size={18} />
+        ) : (
+          <PlayArrowIcon />
+        )}
+      </IconButton>
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -422,26 +458,7 @@ function RunnerDialog({
             <Typography variant="subtitle1" component="h3" sx={{ pb: 1 }}>
               Select models to run
             </Typography>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              checkboxSelection
-              onRowSelectionModelChange={(newRowSelectionModel) => {
-                setRowSelectionModel(newRowSelectionModel);
-              }}
-              rowSelectionModel={rowSelectionModel}
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 5,
-                  },
-                },
-              }}
-              pageSizeOptions={[5]}
-              disableRowSelectionOnClick
-              autoHeight
-              loading={loading}
-            />
+            <MaterialReactTable table={table} />
           </Paper>
         </DialogContent>
         <DialogActions>
