@@ -108,10 +108,7 @@ export default function Home() {
               by step.
             </div>
           </div>
-          <Link
-            to="/discover/workbench"
-            className="dashai-cta__btn"
-          >
+          <Link to="/discover/workbench" className="dashai-cta__btn">
             Get Started
           </Link>
         </div>
