@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { Button, Grid, Paper, Typography } from "@mui/material";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { filterModels } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
 import { validateNode } from "../../../api/pipeline";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function RetrieveModelNode({
   onClose,
@@ -21,6 +25,11 @@ function RetrieveModelNode({
   const { enqueueSnackbar } = useSnackbar();
   const { pipelineId } = useParams();
   const hasWarnedRef = useRef(false);
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   useEffect(() => {
     if (savedConfig?.model_path && pipelines.length > 0) {
@@ -83,16 +92,42 @@ function RetrieveModelNode({
     }
   };
 
-  const columns = [
-    { field: "id", headerName: "ID", width: 80 },
-    { field: "name", headerName: "Name", flex: 1 },
-    {
-      field: "model",
-      headerName: "Model",
-      flex: 1,
-      valueGetter: (params) => params.row.train?.info || "Unknown",
-    },
-  ];
+  const columns = useMemo(
+    () => [
+      { accessorKey: "id", header: "ID", size: 80 },
+      { accessorKey: "name", header: "Name", grow: true },
+      {
+        id: "model",
+        header: "Model",
+        grow: true,
+        accessorFn: (row) => row.train?.info || "Unknown",
+      },
+    ],
+    [],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: pipelines,
+    state: { isLoading: loading },
+    getRowId: (row) => String(row.id),
+    enableRowSelection: false,
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => setSelectedModelId(row.original.id),
+      sx: {
+        cursor: "pointer",
+        backgroundColor:
+          row.original.id === selectedModelId
+            ? theme.palette.action.selected
+            : undefined,
+      },
+    }),
+    enablePagination: true,
+    initialState: { pagination: { pageSize: 5, pageIndex: 0 } },
+    localization,
+    enableFullScreenToggle: false,
+    enableDensityToggle: false,
+  });
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -106,20 +141,8 @@ function RetrieveModelNode({
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <div style={{ height: 300 }}>
-            <DataGrid
-              rows={pipelines}
-              columns={columns}
-              loading={loading}
-              onRowClick={(params) => setSelectedModelId(params.id)}
-              selectionModel={selectedModelId ? [selectedModelId] : []}
-              pageSizeOptions={[5]}
-              checkboxSelection={false}
-              disableRowSelectionOnClick={false}
-              slots={{
-                loadingOverlay: LinearProgress,
-              }}
-            />
+          <div style={{ height: 300, overflow: "auto" }}>
+            <MaterialReactTable table={table} />
           </div>
         </Grid>
 
