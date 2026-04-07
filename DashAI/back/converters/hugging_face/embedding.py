@@ -177,7 +177,7 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
         for column in batch.column_names:
             # Get text data from dataset
-            texts = [row[column] for row in batch]
+            texts = [row[column] if row[column] is not None else "" for row in batch]
 
             # Tokenize
             encoded = self.tokenizer(
