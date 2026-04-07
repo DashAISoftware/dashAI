@@ -78,8 +78,7 @@ export default function CollapsibleList({
 
         <Typography
           sx={{
-            fontSize: "0.95rem",
-            fontWeight: 600,
+            ...theme.typography.cardTitle,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",

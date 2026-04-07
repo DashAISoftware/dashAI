@@ -100,8 +100,7 @@ export default function GroupedCollapsibleList({
         )}
         <Typography
           sx={{
-            fontSize: "0.95rem",
-            fontWeight: 600,
+            ...theme.typography.cardTitle,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -175,8 +174,7 @@ export default function GroupedCollapsibleList({
               <Typography
                 sx={{
                   ml: 1,
-                  fontSize: "0.9rem",
-                  fontWeight: "medium",
+                  ...theme.typography.cardTitle,
                   textTransform: "capitalize",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
