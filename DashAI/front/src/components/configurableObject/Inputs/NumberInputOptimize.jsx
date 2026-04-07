@@ -35,7 +35,8 @@ function OptimizeNumberInput({
   const mergedUpper = value?.upper_bound ?? placeholder?.upper_bound ?? null;
   const mergedFixed = value?.fixed_value ?? placeholder?.fixed_value ?? null;
 
-  const [internalSwitchState, setInternalSwitchState] = useState(mergedOptimize);
+  const [internalSwitchState, setInternalSwitchState] =
+    useState(mergedOptimize);
 
   const isExternallyControlled = externalSwitchState !== undefined;
   const switchState = isExternallyControlled
@@ -117,7 +118,11 @@ function OptimizeNumberInput({
       {canOptimize && switchState ? (
         <Box display="flex" gap={1}>
           <Box flex={1}>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 0.25, display: "block" }}
+            >
               {t("lowerBound")}
             </Typography>
             <InputWithDebounce
@@ -133,7 +138,11 @@ function OptimizeNumberInput({
             />
           </Box>
           <Box flex={1}>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 0.25, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 0.25, display: "block" }}
+            >
               {t("upperBound")}
             </Typography>
             <InputWithDebounce
@@ -172,9 +181,18 @@ OptimizeNumberInput.propTypes = {
   description: PropTypes.string,
   value: PropTypes.shape({
     optimize: PropTypes.bool,
-    fixed_value: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf([null])]),
-    lower_bound: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf([null])]),
-    upper_bound: PropTypes.oneOfType([PropTypes.number, PropTypes.oneOf([null])]),
+    fixed_value: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
+    lower_bound: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
+    upper_bound: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
   }),
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.shape({

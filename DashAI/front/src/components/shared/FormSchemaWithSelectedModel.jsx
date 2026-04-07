@@ -46,7 +46,12 @@ function FormSchemaWithSelectedModel({
     }
 
     return initialValues ?? valuesByProperties;
-  }, [selectedProperty, propertyData.params, initialValues, valuesByProperties]);
+  }, [
+    selectedProperty,
+    propertyData.params,
+    initialValues,
+    valuesByProperties,
+  ]);
 
   useEffect(() => {
     if (propertyData.model) {

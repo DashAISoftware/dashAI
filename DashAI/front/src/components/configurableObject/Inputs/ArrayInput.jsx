@@ -47,7 +47,7 @@ function ArrayInput({
           autoComplete="off"
           error={!!error}
           helperText={error}
-          />
+        />
       </FormControl>
     </FormInputWrapper>
   );

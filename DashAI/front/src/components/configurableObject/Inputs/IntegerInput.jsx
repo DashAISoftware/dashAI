@@ -36,7 +36,6 @@ function IntegerInput({
         error={error !== undefined}
         helperText={error}
         type="number"
-        
       />
     </FormInputWrapper>
   );

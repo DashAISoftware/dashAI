@@ -39,7 +39,13 @@ const mdComponents = (color) => ({
     </Typography>
   ),
   a: ({ href, children }) => (
-    <Link href={href} target="_blank" rel="noopener noreferrer" variant="caption" color="primary">
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      variant="caption"
+      color="primary"
+    >
       {children}
     </Link>
   ),
@@ -77,18 +83,28 @@ const mdComponents = (color) => ({
       </Box>
     ),
   strong: ({ children }) => (
-    <Box component="strong" sx={{ fontWeight: 700 }}>{children}</Box>
+    <Box component="strong" sx={{ fontWeight: 700 }}>
+      {children}
+    </Box>
   ),
   em: ({ children }) => (
-    <Box component="em" sx={{ fontStyle: "italic" }}>{children}</Box>
+    <Box component="em" sx={{ fontStyle: "italic" }}>
+      {children}
+    </Box>
   ),
   ul: ({ children }) => (
-    <Box component="ul" sx={{ pl: 2, my: 0.25, "& li": { fontSize: "0.75rem" } }}>
+    <Box
+      component="ul"
+      sx={{ pl: 2, my: 0.25, "& li": { fontSize: "0.75rem" } }}
+    >
       {children}
     </Box>
   ),
   ol: ({ children }) => (
-    <Box component="ol" sx={{ pl: 2, my: 0.25, "& li": { fontSize: "0.75rem" } }}>
+    <Box
+      component="ol"
+      sx={{ pl: 2, my: 0.25, "& li": { fontSize: "0.75rem" } }}
+    >
       {children}
     </Box>
   ),
@@ -107,7 +123,9 @@ function DescriptionBlock({ text, isError }) {
 
   return (
     <Box sx={{ mt: 0.5, pb: 0.5 }}>
-      <ReactMarkdown components={mdComponents(color)}>{displayed}</ReactMarkdown>
+      <ReactMarkdown components={mdComponents(color)}>
+        {displayed}
+      </ReactMarkdown>
       {needsTruncation && (
         <Link
           component="button"
