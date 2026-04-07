@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
-import DatasetTable from "../notebooks/dataset/DatasetTable";
+import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
 import { getDatasetFile } from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
@@ -93,11 +93,9 @@ function ResultsTable({ selectedPrediction }) {
                 : t("prediction:label.manuallyProvidedInputData")}
             </Typography>
             <Paper>
-              <DatasetTable
+              <MrtDatasetTable
                 fetchPage={fetchPage}
                 initialPageSize={10}
-                autoHeight={true}
-                slots={{ toolbar: null }}
                 datasetPath={selectedPrediction.results_path}
               />
             </Paper>
