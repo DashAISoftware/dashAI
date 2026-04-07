@@ -23,6 +23,7 @@ export default function MrtDatasetTable({
   onEditColumn = null,
   showExportButton = true,
   baseBackgroundColor,
+  enableTopToolbar = true,
 }) {
   const { t, i18n } = useTranslation(["common"]);
   const theme = useTheme();
@@ -452,6 +453,7 @@ export default function MrtDatasetTable({
     onSortingChange: setSorting,
     onDensityChange: setDensity,
     onShowColumnFiltersChange: setShowColumnFilters,
+    enableTopToolbar,
     renderTopToolbarCustomActions: showExportButton
       ? () => (
           <Tooltip
