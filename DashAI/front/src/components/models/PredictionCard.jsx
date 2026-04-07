@@ -28,8 +28,12 @@ import {
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { deletePrediction } from "../../api/predict";
 import { useSnackbar } from "notistack";
-import DatasetTable from "../notebooks/dataset/DatasetTable";
-import { getDatasetFile, exportDatasetCsvByPath } from "../../api/datasets";
+import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
+import {
+  getDatasetFile,
+  exportDatasetCsvByPath,
+  getDatasetTypesByFilePath,
+} from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
@@ -43,6 +47,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [columnTypes, setColumnTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "datasets", "common"]);
 
@@ -53,6 +58,14 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
       JSON.stringify(expanded),
     );
   }, [expanded, prediction.id]);
+
+  // Fetch column types when results path changes
+  useEffect(() => {
+    if (!prediction?.results_path) return;
+    getDatasetTypesByFilePath(prediction.results_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [prediction?.results_path]);
 
   const statusText = prediction.status;
 
@@ -213,21 +226,11 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                   >
                     {t("prediction:label.resultsPreview")}
                   </Typography>
-                  <DatasetTable
+                  <MrtDatasetTable
                     fetchPage={fetchPage}
-                    initialPageSize={100}
-                    autoHeight={true}
-                    slots={{ toolbar: null }}
+                    initialPageSize={10}
                     datasetPath={prediction.results_path}
-                    hideFooter={true}
-                    pageSizeOptions={[]}
-                    sx={{
-                      maxHeight: 400,
-                      width: "100%",
-                      "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "background.box",
-                      },
-                    }}
+                    columnTypes={columnTypes}
                   />
                 </Box>
               </Collapse>
