@@ -23,9 +23,10 @@ function FormSchemaBreadScrumbs() {
       <Link
         underline="hover"
         color="inherit"
-        href="#"
+        component="button"
         key={"breadcrumb-" + property?.key}
         onClick={() => handleRemoveLastProperty(index)}
+        sx={{ background: "none", border: "none", cursor: "pointer" }}
       >
         {property?.label}
       </Link>

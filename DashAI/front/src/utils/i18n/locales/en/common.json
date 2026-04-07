@@ -157,5 +157,10 @@
     "overall": "Overall",
     "utilization": "Utilization",
     "connecting": "Connecting to hardware monitor..."
-  }
+  },
+  "collapse": "Collapse",
+  "expand": "Expand",
+  "optimize": "Optimize",
+  "viewMore": "View more",
+  "viewLess": "View less"
 }
