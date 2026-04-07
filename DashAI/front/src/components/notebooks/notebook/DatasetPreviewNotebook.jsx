@@ -18,8 +18,8 @@ import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
 import { getConvertersByNotebookId } from "../../../api/notebook";
-import { getDatasetFile } from "../../../api/datasets";
-import DatasetTable from "../dataset/DatasetTable";
+import { getDatasetFile, getDatasetTypesByFilePath } from "../../../api/datasets";
+import MrtDatasetTable from "../dataset/MrtDatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
@@ -69,6 +69,7 @@ export default function DatasetPreviewNotebook({
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
   const [converters, setConverters] = useState([]);
+  const [columnTypes, setColumnTypes] = useState({});
   const { explorersAndConverters } = useExplorersAndConverters();
   const tourContext = useTourContext();
 
@@ -119,6 +120,13 @@ export default function DatasetPreviewNotebook({
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
+
+  useEffect(() => {
+    if (!notebook?.file_path) return;
+    getDatasetTypesByFilePath(notebook.file_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [notebook?.file_path]);
 
   const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
     if (!jobId) return;
@@ -290,25 +298,13 @@ export default function DatasetPreviewNotebook({
 
         <AccordionDetails>
           <Box sx={{ width: "100%" }}>
-            <DatasetTable
+            <MrtDatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path, converters, explorersAndConverters]}
               initialPageSize={5}
-              density="compact"
               datasetPath={notebook.file_path}
-              pageSizeOptions={[5, 10, 25]}
-              autoHeight={true}
-              disableColumnSelector
-              disableDensitySelector
-              slots={{ toolbar: null }}
-              sx={{
-                "& .MuiTablePagination-select": {
-                  display: "none",
-                },
-                "& .MuiTablePagination-selectLabel": {
-                  display: "none",
-                },
-              }}
+              columnTypes={columnTypes}
+              enableTopToolbar={false}
             />
           </Box>
         </AccordionDetails>
