@@ -28,14 +28,15 @@ function IntegerInput({
     <FormInputWrapper name={name} description={description}>
       <InputWithDebounce
         variant="outlined"
+        size="small"
         label={label}
         name={name}
         value={value !== null ? value : ""}
         onChange={handleChange}
         error={error !== undefined}
-        helperText={error || " "}
+        helperText={error}
         type="number"
-        margin="dense"
+        
       />
     </FormInputWrapper>
   );
