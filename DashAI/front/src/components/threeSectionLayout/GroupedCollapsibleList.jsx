@@ -113,7 +113,6 @@ export default function GroupedCollapsibleList({
         </Typography>
         <Box
           sx={{
-            mr: 1,
             bgcolor: theme.palette.ui.scrollbar,
             color: theme.palette.text.primary,
             borderRadius: "50%",
@@ -134,6 +133,7 @@ export default function GroupedCollapsibleList({
         sx={{
           flex: 1,
           overflow: "auto",
+          scrollbarGutter: "stable",
           "&::-webkit-scrollbar": { width: "6px" },
           "&::-webkit-scrollbar-thumb": {
             backgroundColor: theme.palette.ui.scrollbar,
