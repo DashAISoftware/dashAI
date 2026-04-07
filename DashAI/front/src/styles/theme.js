@@ -1,5 +1,5 @@
 import QuicksandBoldWoff2 from "./fonts/Quicksand-Bold.woff2";
-import { dataGridLocales } from "../utils/i18n/datagridLocale";
+
 
 const getTheme = (mode, language) => ({
   palette: {
@@ -212,25 +212,6 @@ const getTheme = (mode, language) => ({
       `,
     },
 
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          "--DataGrid-containerBackground": "transparent",
-          "& .MuiDataGrid-columnSeparator": {
-            visibility: "hidden",
-          },
-          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-columnSeparator": {
-            visibility: "visible",
-          },
-        },
-        columnHeader: {
-          backgroundColor: "transparent",
-        },
-      },
-      defaultProps: {
-        localeText: dataGridLocales[language] ?? dataGridLocales.en,
-      },
-    },
   },
 });
 
