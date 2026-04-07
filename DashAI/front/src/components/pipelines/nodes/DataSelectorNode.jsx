@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import DatasetModal from "../../../components/datasets/DatasetModal";
 import { validateNode } from "../../../api/pipeline";
-import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
+import { Button, Grid, Paper, Typography } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { DataGrid } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { getDatasets } from "../../../api/datasets";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [datasetId, setDatasetId] = useState(savedConfig ? savedConfig.id : "");
@@ -15,6 +19,11 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const [validationStatus, setValidationStatus] = useState("");
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const fetchDatasets = async () => {
     setLoading(true);
@@ -66,10 +75,36 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
     }
   };
 
-  const columns = [
-    { field: "id", headerName: "ID", width: 80 },
-    { field: "name", headerName: "Name", flex: 1 },
-  ];
+  const columns = useMemo(
+    () => [
+      { accessorKey: "id", header: "ID", size: 80 },
+      { accessorKey: "name", header: "Name", grow: true },
+    ],
+    [],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: datasets,
+    state: { isLoading: loading },
+    getRowId: (row) => String(row.id),
+    enableRowSelection: false,
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => setDatasetId(row.original.id),
+      sx: {
+        cursor: "pointer",
+        backgroundColor:
+          row.original.id === datasetId
+            ? theme.palette.action.selected
+            : undefined,
+      },
+    }),
+    enablePagination: true,
+    initialState: { pagination: { pageSize: 5, pageIndex: 0 } },
+    localization,
+    enableFullScreenToggle: false,
+    enableDensityToggle: false,
+  });
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -99,20 +134,8 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
         )}
 
         <Grid size={{ xs: 12 }}>
-          <div style={{ height: 300 }}>
-            <DataGrid
-              rows={datasets}
-              columns={columns}
-              loading={loading}
-              onRowClick={(params) => setDatasetId(params.id)}
-              rowSelectionModel={[datasetId]}
-              pageSizeOptions={[5]}
-              checkboxSelection={false}
-              disableRowSelectionOnClick={false}
-              slots={{
-                loadingOverlay: LinearProgress,
-              }}
-            />
+          <div style={{ height: 300, overflow: "auto" }}>
+            <MaterialReactTable table={table} />
           </div>
         </Grid>
 
