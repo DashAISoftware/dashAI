@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -9,7 +9,10 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
@@ -25,32 +28,6 @@ import { formatDate } from "../../utils";
 import { SplitSelector } from "./SplitSelector";
 import NoteBox from "../notebooks/NoteBox";
 
-const columns = [
-  {
-    field: "name",
-    headerName: "Name",
-    minWidth: 250,
-    editable: false,
-  },
-  {
-    field: "created",
-    headerName: "Created",
-    minWidth: 200,
-    type: Date,
-    valueGetter: (value) => formatDate(value),
-
-    editable: false,
-  },
-  {
-    field: "last_modified",
-    headerName: "Last modified",
-    minWidth: 200,
-    type: Date,
-    valueGetter: (value) => formatDate(value),
-    editable: false,
-  },
-];
-
 export default function SelectDatasetStep({
   newExpl,
   setNewExpl,
@@ -59,7 +36,6 @@ export default function SelectDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [datasets, setDatasets] = useState([]);
-  const [rowSelectedDataset, setRowSelectedDataset] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(false);
   const [isValidDataset, setIsValidDataset] = useState(false);
   const [requestError, setRequestError] = useState(false);
@@ -70,7 +46,31 @@ export default function SelectDatasetStep({
     validation: 0,
     all: 1,
   });
-  const { t } = useTranslation(["explainers", "common"]);
+  const { t, i18n } = useTranslation(["explainers", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        accessorKey: "created",
+        header: "Created",
+        Cell: ({ cell }) => formatDate(cell.getValue()),
+      },
+      {
+        accessorKey: "last_modified",
+        header: "Last modified",
+        Cell: ({ cell }) => formatDate(cell.getValue()),
+      },
+    ],
+    [],
+  );
 
   const getDatasets = async () => {
     setLoading(true);
@@ -162,15 +162,27 @@ export default function SelectDatasetStep({
     getRuninfo();
   }, [newExpl.run_id]);
 
-  useEffect(() => {
-    if (rowSelectedDataset.length > 0) {
-      const selectedDatasetId = rowSelectedDataset[0];
-      const dataset = datasets.find(
-        (dataset) => dataset.id === selectedDatasetId,
-      );
-      setSelectedDatasetId(dataset.id);
-    }
-  }, [rowSelectedDataset]);
+  const handleRowClick = (row) => {
+    setSelectedDatasetId(row.original.id);
+  };
+
+  const datasetsTable = useMaterialReactTable({
+    columns,
+    data: datasets,
+    enableRowSelection: false,
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => handleRowClick(row),
+      sx: { cursor: "pointer" },
+    }),
+    state: { isLoading: loading },
+    enableGlobalFilter: false,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enablePagination: true,
+    muiPaginationProps: { rowsPerPageOptions: [10, 25] },
+    initialState: { pagination: { pageSize: 10, pageIndex: 0 } },
+    localization,
+  });
 
   useEffect(() => {
     if (selectedDatasetId) {
@@ -222,26 +234,7 @@ export default function SelectDatasetStep({
         </React.Fragment>
       )}
       <Paper>
-        <DataGrid
-          rows={datasets}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
-              },
-            },
-          }}
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setRowSelectedDataset(newRowSelectionModel);
-          }}
-          rowSelectionModel={rowSelectedDataset}
-          density="compact"
-          pageSizeOptions={[10]}
-          loading={loading}
-          autoHeight
-          hideFooterSelectedRowCount
-        />
+        <MaterialReactTable table={datasetsTable} />
       </Paper>
 
       {selectedDatasetId && isValidDataset && (
