@@ -31,6 +31,7 @@ import { useSnackbar } from "notistack";
 import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
 import {
   getDatasetFile,
+  getDatasetFileFiltered,
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
 } from "../../api/datasets";
@@ -141,13 +142,19 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   };
 
   const fetchPage = useCallback(
-    async (page, pageSize) => {
+    async (page, pageSize, filterModel, sortModel) => {
       if (!prediction.results_path) return { rows: [], total: 0 };
-      const data = await getDatasetFile(
-        prediction.results_path,
-        page,
-        pageSize,
-      );
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            prediction.results_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(prediction.results_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [prediction.results_path],

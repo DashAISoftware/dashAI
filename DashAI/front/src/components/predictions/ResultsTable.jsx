@@ -14,7 +14,11 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
-import { getDatasetFile, getDatasetTypesByFilePath } from "../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetFileFiltered,
+  getDatasetTypesByFilePath,
+} from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
@@ -35,12 +39,18 @@ function ResultsTable({ selectedPrediction }) {
   }, [selectedPrediction?.results_path]);
 
   const fetchPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(
-        selectedPrediction.results_path,
-        page,
-        pageSize,
-      );
+    async (page, pageSize, filterModel, sortModel) => {
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            selectedPrediction.results_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(selectedPrediction.results_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [selectedPrediction],
