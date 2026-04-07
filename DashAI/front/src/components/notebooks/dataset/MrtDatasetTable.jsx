@@ -21,6 +21,8 @@ export default function MrtDatasetTable({
   columnTypes = {},
   editableColumns = false,
   onEditColumn = null,
+  showExportButton = true,
+  baseBackgroundColor,
 }) {
   const { t, i18n } = useTranslation(["common"]);
   const theme = useTheme();
@@ -433,7 +435,10 @@ export default function MrtDatasetTable({
     data,
     rowCount,
     localization,
-    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    mrtTheme: {
+      baseBackgroundColor:
+        baseBackgroundColor ?? theme.palette.ui.panelDark,
+    },
     muiTablePaperProps: { elevation: 0 },
     enablePagination: true,
     manualPagination: true,
@@ -447,30 +452,32 @@ export default function MrtDatasetTable({
     onSortingChange: setSorting,
     onDensityChange: setDensity,
     onShowColumnFiltersChange: setShowColumnFilters,
-    renderTopToolbarCustomActions: () => (
-      <Tooltip
-        title={
-          columnFilters.length > 0
-            ? t("common:exportFilteredTooltip")
-            : t("common:exportAllTooltip")
-        }
-        arrow
-      >
-        <span>
-          <Button
-            onClick={handleExportFilteredRows}
-            disabled={rowCount === 0}
-            startIcon={<FileDownloadIcon />}
-            variant="text"
-            size="small"
+    renderTopToolbarCustomActions: showExportButton
+      ? () => (
+          <Tooltip
+            title={
+              columnFilters.length > 0
+                ? t("common:exportFilteredTooltip")
+                : t("common:exportAllTooltip")
+            }
+            arrow
           >
-            {columnFilters.length > 0
-              ? t("common:exportFiltered")
-              : t("common:export")}
-          </Button>
-        </span>
-      </Tooltip>
-    ),
+            <span>
+              <Button
+                onClick={handleExportFilteredRows}
+                disabled={rowCount === 0}
+                startIcon={<FileDownloadIcon />}
+                variant="text"
+                size="small"
+              >
+                {columnFilters.length > 0
+                  ? t("common:exportFiltered")
+                  : t("common:export")}
+              </Button>
+            </span>
+          </Tooltip>
+        )
+      : undefined,
     state: {
       pagination,
       columnFilters,

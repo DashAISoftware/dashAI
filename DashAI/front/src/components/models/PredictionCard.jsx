@@ -231,6 +231,8 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                     initialPageSize={10}
                     datasetPath={prediction.results_path}
                     columnTypes={columnTypes}
+                    showExportButton={false}
+                    baseBackgroundColor="transparent"
                   />
                 </Box>
               </Collapse>
