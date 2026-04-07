@@ -102,10 +102,7 @@ function ResponsiveAppBar() {
           <Box
             sx={{
               display: { xs: "none", sm: "block" },
-              fontSize: "8px",
-              fontWeight: 500,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
+              ...theme.typography.statusBadge,
               color: theme.palette.primary.main,
               border: `1px solid ${theme.palette.accent.amberBorder}`,
               background: theme.palette.accent.amberDim,
@@ -160,14 +157,7 @@ function ResponsiveAppBar() {
                 to={page.to}
                 selected={isActive(page.to)}
               >
-                <Typography
-                  sx={{
-                    fontSize: "10px",
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: theme.palette.text.primary,
-                  }}
-                >
+                <Typography sx={{ ...theme.typography.tabLabel }}>
                   {page.name}
                 </Typography>
               </MenuItem>
@@ -209,9 +199,7 @@ function ResponsiveAppBar() {
                   px: "18px",
                   height: "100%",
                   textDecoration: "none",
-                  fontSize: "10px",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
+                  ...theme.typography.tabLabel,
                   color: active
                     ? theme.palette.primary.main
                     : theme.palette.text.secondary,

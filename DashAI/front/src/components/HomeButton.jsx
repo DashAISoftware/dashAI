@@ -88,9 +88,7 @@ function HomeButton({
         <Box sx={{ textAlign: "right" }}>
           <Box
             sx={{
-              fontSize: "12.5px",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
+              ...theme.typography.statusBadge,
               px: "8px",
               py: "3px",
               borderRadius: "2px",
@@ -108,10 +106,8 @@ function HomeButton({
       {/* Title */}
       <Typography
         sx={{
-          fontSize: "19px",
-          fontWeight: 600,
+          ...theme.typography.cardTitle,
           color: theme.palette.text.primary,
-          letterSpacing: "-0.01em",
           mb: "5px",
         }}
       >
@@ -121,7 +117,7 @@ function HomeButton({
       {/* Description */}
       <Typography
         sx={{
-          fontSize: "16px",
+          fontSize: "15px",
           fontWeight: 300,
           color: theme.palette.text.secondary,
           lineHeight: 1.65,
@@ -147,8 +143,7 @@ function HomeButton({
             <Box
               key={chip}
               sx={{
-                fontSize: "12.5px",
-                letterSpacing: "0.06em",
+                ...theme.typography.statusBadge,
                 border: `1px solid ${theme.palette.divider}`,
                 color: theme.palette.text.disabled,
                 px: "7px",

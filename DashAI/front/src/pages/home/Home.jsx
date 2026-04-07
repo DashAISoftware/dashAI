@@ -54,14 +54,12 @@ function SidebarSection({ label, links, t, theme }) {
     >
       <Typography
         sx={{
-          fontSize: "8.5px",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
           color: theme.palette.text.disabled,
           px: "20px",
           py: "10px",
           pb: "6px",
           display: "block",
+          ...theme.typography.pageTitle,
         }}
       >
         {label}
@@ -82,8 +80,7 @@ function SidebarSection({ label, links, t, theme }) {
             borderLeft: "2px solid transparent",
             textDecoration: "none",
             color: theme.palette.text.secondary,
-            fontSize: "12.5px",
-            fontWeight: 400,
+            ...theme.typography.navItem,
             transition: "background 0.15s, color 0.15s, border-color 0.15s",
             "&:hover": {
               background: theme.palette.ui.hover,
@@ -270,20 +267,17 @@ function Home() {
           >
             <Typography
               sx={{
-                fontSize: "18px",
-                fontWeight: 600,
                 color: theme.palette.text.primary,
-                letterSpacing: "-0.01em",
+                ...theme.typography.pageTitle,
               }}
             >
               {t("home:label.welcomeDashboardAI")}
             </Typography>
             <Typography
               sx={{
-                fontSize: "10px",
                 color: theme.palette.text.disabled,
+                ...theme.typography.description,
                 mt: "3px",
-                letterSpacing: "0.06em",
               }}
             >
               {t("home:label.welcomeSubtitle")}

@@ -158,6 +158,61 @@ const getTheme = (mode, language) => ({
 
   typography: {
     fontFamily: '"IBM Plex Sans", sans-serif',
+
+    // --- SANS SERIF ---
+    pageTitle: {
+      fontSize: "18px",
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
+    }, // Main titles
+
+    cardTitle: {
+      fontSize: "15px",
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
+    }, // Module/Card titles
+
+    navItem: {
+      fontSize: "12.5px",
+      fontWeight: 400,
+    }, // Sidebar links/Navigation
+
+    description: {
+      fontSize: "12px",
+      fontWeight: 300,
+      lineHeight: 1.65,
+      color: "rgba(171, 178, 191, 0.45)",
+    }, // Explanatory text
+
+    // --- MONOSPACE ---
+    tabLabel: {
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "10px",
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+    }, // Navigation tabs
+
+    sectionLabel: {
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "9px",
+      letterSpacing: "0.2em",
+      textTransform: "uppercase",
+    }, // Sidebar section headers
+
+    statusBadge: {
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "8.5px",
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+    },
+
+    // Others
+    button: {
+      fontSize: "15px",
+      fontWeight: 400,
+      letterSpacing: "-0.01em",
+      textTransform: "uppercase",
+    },
   },
 
   components: {
