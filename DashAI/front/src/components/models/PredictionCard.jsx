@@ -34,6 +34,7 @@ import {
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
 } from "../../api/datasets";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
@@ -48,6 +49,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [columnTypes, setColumnTypes] = useState({});
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "datasets", "common"]);
 
@@ -232,7 +234,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                     datasetPath={prediction.results_path}
                     columnTypes={columnTypes}
                     showExportButton={false}
-                    baseBackgroundColor="transparent"
+                    baseBackgroundColor={theme.palette.background.paper}
                   />
                 </Box>
               </Collapse>
