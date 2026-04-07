@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Edit } from "@mui/icons-material";
+import { IconButton, Tooltip } from "@mui/material";
 
 import RunInfoModal from "./RunInfoModal";
 import { useTranslation } from "react-i18next";
@@ -15,11 +15,17 @@ export default function EditRunDialog({ experiment, run, setRun }) {
 
   return (
     <>
-      <GridActionsCellItem
-        icon={<Edit />}
-        label={t("button.editRun")}
-        onClick={() => setOpen(true)}
-      />
+      <Tooltip title={t("button.editRun")}>
+        <span>
+          <IconButton
+            size="small"
+            aria-label={t("button.editRun")}
+            onClick={() => setOpen(true)}
+          >
+            <Edit />
+          </IconButton>
+        </span>
+      </Tooltip>
       {open && (
         <RunInfoModal
           experiment={experiment}
