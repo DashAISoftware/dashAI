@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -10,8 +10,8 @@ import {
   Alert,
   Chip,
 } from "@mui/material";
-import DatasetTable from "../notebooks/dataset/DatasetTable";
-import { getDatasetFile } from "../../api/datasets";
+import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
+import { getDatasetFile, getDatasetTypesByFilePath } from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 function DatasetSelector({
@@ -21,6 +21,14 @@ function DatasetSelector({
   setSelectedDataset,
 }) {
   const { t } = useTranslation(["prediction", "common"]);
+  const [columnTypes, setColumnTypes] = useState({});
+
+  useEffect(() => {
+    if (!selectedDataset?.file_path) return;
+    getDatasetTypesByFilePath(selectedDataset.file_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [selectedDataset?.file_path]);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -87,13 +95,11 @@ function DatasetSelector({
           </Alert>
 
           <Paper>
-            <DatasetTable
+            <MrtDatasetTable
               fetchPage={fetchDatasetPage}
               initialPageSize={10}
-              autoHeight={true}
               datasetPath={selectedDataset.file_path}
-              sx={{ mt: 2 }}
-              slots={{ toolbar: null }}
+              columnTypes={columnTypes}
             />
           </Paper>
         </>
