@@ -68,8 +68,8 @@ export const NumericTab = ({ numericStats }) => {
                 </Typography>
                 <Box display="flex" flexDirection="column" gap={1}>
                   <MetricRow
-                    label={t("datasets:label.min")}
-                    value={stats.min.toFixed(2)}
+                    label={t("datasets:label.lowerBound")}
+                    value={stats.lower_bound.toFixed(2)}
                   />
                   <MetricRow
                     label={t("datasets:label.q1")}
@@ -82,6 +82,14 @@ export const NumericTab = ({ numericStats }) => {
                   <MetricRow
                     label={t("datasets:label.q3")}
                     value={stats.q3.toFixed(2)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.upperBound")}
+                    value={stats.upper_bound.toFixed(2)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.min")}
+                    value={stats.min.toFixed(2)}
                   />
                   <MetricRow
                     label={t("datasets:label.max")}
@@ -116,7 +124,7 @@ export const NumericTab = ({ numericStats }) => {
                   />
                   <MetricRow
                     label={t("datasets:label.range")}
-                    value={(stats.max - stats.min).toFixed(2)}
+                    value={(stats.upper_bound - stats.lower_bound).toFixed(2)}
                   />
                 </Box>
               </Box>
@@ -131,46 +139,138 @@ export const NumericTab = ({ numericStats }) => {
               >
                 {t("datasets:label.boxplot")}
               </Typography>
-              <Plot
-                data={[
+              {(() => {
+                const hasLowerOutlier = stats.min < stats.lower_bound;
+                const hasUpperOutlier = stats.max > stats.upper_bound;
+
+                const boxTrace = {
+                  q1: [stats.q1],
+                  median: [stats.median],
+                  q3: [stats.q3],
+                  lowerfence: [stats.lower_bound],
+                  upperfence: [stats.upper_bound],
+                  y: [column],
+                  type: "box",
+                  name: column,
+                  orientation: "h",
+                  boxpoints: false,
+                  marker: { color: theme.palette.info.main },
+                  line: { color: theme.palette.text.secondary },
+                  fillcolor: theme.palette.info.main,
+                  opacity: 0.6,
+                  showlegend: false,
+                  hoverinfo: "skip",
+                };
+
+                const boxHoverTraces = [
                   {
-                    x: [stats.min, stats.q1, stats.median, stats.q3, stats.max],
-                    type: "box",
-                    name: column,
-                    orientation: "h", // ← rotated here
-                    boxpoints: "suspectedoutliers",
-                    marker: { color: theme.palette.info.main },
-                    line: { color: theme.palette.text.secondary },
-                    fillcolor: theme.palette.info.main,
-                    opacity: 0.6,
-                    showlegend: false,
+                    x: stats.upper_bound,
+                    label: t("datasets:label.upperBound"),
                   },
-                ]}
-                layout={{
-                  paper_bgcolor: "transparent",
-                  plot_bgcolor: "transparent",
-                  font: { color: theme.palette.text.primary },
-                  margin: { t: 10, b: 40, l: 40, r: 20 },
-                  height: 220,
-                  xaxis: {
-                    title: "",
-                    zeroline: false,
-                    gridcolor:
-                      theme.palette.mode === "dark"
-                        ? theme.palette.ui.borderLight
-                        : theme.palette.ui.border,
+                  { x: stats.q3, label: t("datasets:label.q3") },
+                  { x: stats.median, label: t("datasets:label.median") },
+                  { x: stats.q1, label: t("datasets:label.q1") },
+                  {
+                    x: stats.lower_bound,
+                    label: t("datasets:label.lowerBound"),
                   },
-                  yaxis: {
-                    showticklabels: false,
-                  },
-                }}
-                config={{
-                  responsive: true,
-                  displayModeBar: false,
-                }}
-                style={{ width: "100%", height: "100%" }}
-              />
+                ].map(({ x, label }) => ({
+                  x: [x],
+                  y: [column],
+                  type: "scatter",
+                  mode: "markers",
+                  marker: { opacity: 0, size: 10 },
+                  hovertemplate: `${label}: ${x.toFixed(2)}<extra></extra>`,
+                  showlegend: false,
+                }));
+
+                const lowerOutlierTrace = hasLowerOutlier
+                  ? {
+                      x: [stats.min],
+                      y: [column],
+                      type: "scatter",
+                      mode: "markers",
+                      marker: {
+                        color: theme.palette.warning.main,
+                        size: 8,
+                        symbol: "circle-open",
+                      },
+                      hovertemplate: `Min: ${stats.min.toFixed(
+                        2,
+                      )}<extra></extra>`,
+                      showlegend: false,
+                    }
+                  : null;
+
+                const upperOutlierTrace = hasUpperOutlier
+                  ? {
+                      x: [stats.max],
+                      y: [column],
+                      type: "scatter",
+                      mode: "markers",
+                      marker: {
+                        color: theme.palette.warning.main,
+                        size: 8,
+                        symbol: "circle-open",
+                      },
+                      hovertemplate: `Max: ${stats.max.toFixed(
+                        2,
+                      )}<extra></extra>`,
+                      showlegend: false,
+                    }
+                  : null;
+
+                const plotData = [
+                  boxTrace,
+                  ...boxHoverTraces,
+                  lowerOutlierTrace,
+                  upperOutlierTrace,
+                ].filter(Boolean);
+
+                return (
+                  <Plot
+                    data={plotData}
+                    layout={{
+                      paper_bgcolor: "transparent",
+                      plot_bgcolor: "transparent",
+                      font: { color: theme.palette.text.primary },
+                      margin: { t: 10, b: 40, l: 40, r: 20 },
+                      height: 220,
+                      xaxis: {
+                        title: "",
+                        zeroline: false,
+                        gridcolor:
+                          theme.palette.mode === "dark"
+                            ? theme.palette.ui.borderLight
+                            : theme.palette.ui.border,
+                      },
+                      yaxis: {
+                        showticklabels: false,
+                      },
+                    }}
+                    config={{
+                      responsive: true,
+                      displayModeBar: false,
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                );
+              })()}
             </Box>
+
+            {stats.outliers_count > 0 && (
+              <Alert
+                severity="warning"
+                icon={<InfoIcon fontSize="inherit" />}
+                sx={{ mt: 3 }}
+              >
+                <Typography variant="body2">
+                  {t("datasets:label.insightOutliers", {
+                    count: stats.outliers_count,
+                  })}
+                </Typography>
+              </Alert>
+            )}
 
             {/* Skewness Warning */}
             {stats.skew > 1 && (
