@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Chip, Stack } from "@mui/material";
-import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -39,35 +42,49 @@ function ColumnSelector({
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
-  const { t } = useTranslation(["datasets", "common"]);
+  const { t, i18n } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
-  const columns = [
-    {
-      field: "id",
-      headerName: t("common:index"),
-    },
-    {
-      field: "columnName",
-      headerName: t("datasets:label.columnName"),
-      flex: 1,
-    },
-    {
-      field: "valueType",
-      headerName: t("datasets:label.valueType"),
-      flex: 0.5,
-    },
-    {
-      field: "dataType",
-      headerName: t("datasets:label.dataType"),
-      flex: 0.5,
-    },
-    {
-      field: "order",
-      headerName: t("datasets:label.selectedOrder"),
-      type: "number",
-      flex: 0.5,
-    },
-  ];
+  const toMRT = (ids) =>
+    Object.fromEntries(ids.map((id) => [String(id), true]));
+  const fromMRT = (sel) =>
+    Object.keys(sel)
+      .filter((k) => sel[k])
+      .map(Number);
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "id",
+        header: t("common:index"),
+        size: 60,
+      },
+      {
+        accessorKey: "columnName",
+        header: t("datasets:label.columnName"),
+        flex: 1,
+      },
+      {
+        accessorKey: "valueType",
+        header: t("datasets:label.valueType"),
+        flex: 0.5,
+      },
+      {
+        accessorKey: "dataType",
+        header: t("datasets:label.dataType"),
+        flex: 0.5,
+      },
+      {
+        accessorKey: "order",
+        header: t("datasets:label.selectedOrder"),
+        flex: 0.5,
+      },
+    ],
+    [t],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -200,7 +217,12 @@ function ColumnSelector({
     }
   }, [rowSelectionModel, rows.length]);
 
-  const handleSelection = (selection) => {
+  const handleSelection = (updaterOrValue) => {
+    const newMRTSelection =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(toMRT(rowSelectionModel))
+        : updaterOrValue;
+    let selection = fromMRT(newMRTSelection);
     if (inputCardinality.max && selection.length > inputCardinality.max) {
       selection = selection.slice(0, inputCardinality.max);
     }
@@ -212,6 +234,27 @@ function ColumnSelector({
     setRows(newRows);
     setRowSelectionModel(selection);
   };
+
+  const columnSelectorTable = useMaterialReactTable({
+    columns,
+    data: rows,
+    enableRowSelection: (row) => isRowSelectable({ id: row.original.id }),
+    onRowSelectionChange: handleSelection,
+    state: { rowSelection: toMRT(rowSelectionModel) },
+    getRowId: (row) => String(row.id),
+    enableGlobalFilter: true,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enablePagination: true,
+    muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
+    initialState: { pagination: { pageSize: 5, pageIndex: 0 } },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: isRowSelectable({ id: row.original.id })
+        ? {}
+        : { backgroundColor: "rgba(0, 0, 0, 0.12)", color: "#777" },
+    }),
+    localization,
+  });
 
   const valid = isValidSelection(rowSelectionModel);
 
@@ -310,45 +353,9 @@ function ColumnSelector({
         )}
       </Box>{" "}
       {/* Data Grid */}
-      <DataGrid
+      <MaterialReactTable
         data-tour="column-selector"
-        key={`${datasetColumns.length}-${inputCardinality.exact}-${inputCardinality.max}`}
-        autoHeight
-        rows={rows}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-        }}
-        disableColumnMenu
-        disableColumnFilter
-        disableColumnSelector
-        disableDensitySelector
-        pageSizeOptions={[5, 10, 20]}
-        checkboxSelection
-        onRowSelectionModelChange={handleSelection}
-        rowSelectionModel={rowSelectionModel}
-        isRowSelectable={isRowSelectable}
-        density="compact"
-        getRowClassName={(params) =>
-          isRowSelectable(params) === false ? "mui-row-disabled" : ""
-        }
-        sx={{
-          "& .mui-row-disabled": {
-            backgroundColor: "rgba(0, 0, 0, 0.12)",
-            color: "#777",
-          },
-        }}
-        slots={{
-          toolbar: () => (
-            <Box sx={{ p: 1 }}>
-              <GridToolbarQuickFilter />
-            </Box>
-          ),
-        }}
+        table={columnSelectorTable}
       />
     </Box>
   );
