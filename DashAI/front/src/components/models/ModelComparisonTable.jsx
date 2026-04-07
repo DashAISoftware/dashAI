@@ -150,11 +150,13 @@ function ModelComparisonTable({
         accessorKey: "name",
         header: t("common:modelName"),
         minSize: 150,
+        grow: 1,
       },
       {
         accessorKey: "model_name",
         header: t("common:model"),
         minSize: 150,
+        grow: 1,
         accessorFn: (row) => {
           const model = models.find((m) => m.name === row.model_name);
           return model?.display_name || row.model_name;
@@ -232,12 +234,14 @@ function ModelComparisonTable({
   const table = useMaterialReactTable({
     columns,
     data,
-    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    mrtTheme: { baseBackgroundColor: theme.palette.background.box },
     muiTablePaperProps: { elevation: 0 },
     localization,
     initialState: { density: "compact" },
     enableRowSelection: false,
     enablePagination: false,
+    enableTopToolbar: false,
+    enableBottomToolbar: false,
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
         if (onRowClick) {
