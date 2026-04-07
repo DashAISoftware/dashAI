@@ -14,7 +14,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import MrtDatasetTable from "../notebooks/dataset/MrtDatasetTable";
-import { getDatasetFile } from "../../api/datasets";
+import { getDatasetFile, getDatasetTypesByFilePath } from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
@@ -24,7 +24,15 @@ function ResultsTable({ selectedPrediction }) {
   const [loadingExecution, setLoadingExecution] = useState(
     RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
   );
+  const [columnTypes, setColumnTypes] = useState({});
   const { t } = useTranslation(["prediction"]);
+
+  useEffect(() => {
+    if (!selectedPrediction?.results_path) return;
+    getDatasetTypesByFilePath(selectedPrediction.results_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [selectedPrediction?.results_path]);
 
   const fetchPage = useCallback(
     async (page, pageSize) => {
@@ -97,6 +105,7 @@ function ResultsTable({ selectedPrediction }) {
                 fetchPage={fetchPage}
                 initialPageSize={10}
                 datasetPath={selectedPrediction.results_path}
+                columnTypes={columnTypes}
               />
             </Paper>
           </>
