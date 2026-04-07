@@ -734,7 +734,7 @@ pre code {
 
 /* Landing hero gradient banner */
 .dashai-landing-hero {
-  background: linear-gradient(135deg, rgba(0, 190, 187, 0.12) 0%, rgba(110, 134, 232, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(184, 137, 28, 0.08) 0%, rgba(74, 122, 212, 0.1) 100%);
   border: 1px solid var(--dashai-accent-border);
   border-radius: 12px;
   padding: 40px 36px;
