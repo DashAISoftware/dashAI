@@ -62,6 +62,7 @@ function ConverterParametersTable({ converter, t, localization }) {
     enableColumnActions: false,
     enableSorting: false,
     enableColumnFilter: false,
+    muiTablePaperProps: { elevation: 0 },
   });
 
   return <MaterialReactTable table={table} />;
