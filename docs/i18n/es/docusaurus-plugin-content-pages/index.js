@@ -4,82 +4,128 @@ import useBaseUrl from "@docusaurus/useBaseUrl";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 
-const CARDS = [
+const SECTIONS = [
   {
-    emoji: "🚀",
-    title: "Primeros Pasos",
-    desc: "Descripción general, características y casos de uso de la plataforma",
+    id: "discover",
+    colorVar: "--dashai-discover",
+    bgVar: "--dashai-discover-bg",
+    label: "Discover",
+    title: "¿Qué es DashAI?",
+    desc: "Descripción general, características clave, instalación y casos de uso — para nuevos usuarios",
     to: "/discover/overview",
   },
   {
-    emoji: "📖",
-    title: "Tutoriales",
-    desc: "Guías paso a paso: cargar datos, entrenar modelos, predecir, explorar",
+    id: "learn",
+    colorVar: "--dashai-learn",
+    bgVar: "--dashai-learn-bg",
+    label: "Learn",
+    title: "Tutoriales y Guías",
+    desc: "Tutoriales paso a paso, guías de módulos y flujos completos de ML",
     to: "/learn/tutorials/upload-dataset",
   },
   {
-    emoji: "📦",
-    title: "Referencia de Componentes",
-    desc: "Más de 112 modelos, convertidores, métricas, exploradores y más — generados automáticamente desde el código fuente",
-    to: "/components/models",
+    id: "deep-dive",
+    colorVar: "--dashai-deep-dive",
+    bgVar: "--dashai-deep-dive-bg",
+    label: "Deep Dive",
+    title: "Arquitectura e Internos",
+    desc: "Arquitectura de la plataforma, registro de componentes, métricas y explicabilidad",
+    to: "/deep-dive/architecture",
   },
   {
-    emoji: "🔌",
-    title: "Desarrollo de Plugins",
-    desc: "Crea y publica tus propios componentes para DashAI",
-    to: "/build/plugin-development/overview",
+    id: "build",
+    colorVar: "--dashai-build",
+    bgVar: "--dashai-build-bg",
+    label: "Build",
+    title: "API y Desarrollo",
+    desc: "Referencia de la API REST, desarrollo de plugins, configuración del entorno y contribuciones",
+    to: "/build/dev-setup",
   },
 ];
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
-  const logoSrc = useBaseUrl("/img/logo.png");
+  const sponsorLogosSrc = useBaseUrl("/img/logos.png");
   return (
     <Layout title="Documentación" description={siteConfig.tagline}>
       <div className="dashai-home">
-        <div className="dashai-hero">
-          <img className="dashai-hero__logo" src={logoSrc} alt="DashAI" />
-          <h1 className="dashai-hero__title">Documentación de DashAI</h1>
-          <p className="dashai-hero__subtitle">
+        {/* ── Hero gradient banner ── */}
+        <div className="dashai-landing-hero">
+          <h1 className="dashai-landing-hero__title">
+            Documentación de DashAI
+          </h1>
+          <p className="dashai-landing-hero__subtitle">
             Tu guía completa para la plataforma de Machine Learning de código
             abierto sin necesidad de programar.
           </p>
-          <div className="dashai-hero__actions">
-            <Link
-              className="button button--primary button--lg"
-              to="/discover/overview"
-            >
-              Comenzar →
-            </Link>
-            <Link
-              className="button button--outline button--lg"
-              to="/components/models"
-            >
-              Componentes
-            </Link>
-          </div>
         </div>
-        <div className="dashai-info">
-          <strong>ℹ Info:</strong> DashAI v0.3.0 — código abierto bajo MIT. Las
-          páginas de referencia de componentes se generan automáticamente desde
-          el código fuente en cada compilación.
-        </div>
-        <div className="dashai-section-title">Explora la documentación</div>
-        <div className="dashai-cards">
-          {CARDS.map((card) => (
-            <Link key={card.title} to={card.to} className="dashai-card">
-              <div className="dashai-card__title">
-                {card.emoji} {card.title}
+
+        {/* ── 4 macro-section cards ── */}
+        <div className="dashai-landing-cards">
+          {SECTIONS.map((sec) => (
+            <Link
+              key={sec.id}
+              to={sec.to}
+              className={`dashai-landing-card dashai-landing-card--${sec.id}`}
+            >
+              <div className="dashai-landing-card__header">
+                <div
+                  className="dashai-landing-card__bar"
+                  style={{ background: `var(${sec.colorVar})` }}
+                />
+                <span
+                  className="dashai-landing-card__label"
+                  style={{ color: `var(${sec.colorVar})` }}
+                >
+                  {sec.label}
+                </span>
               </div>
-              <div className="dashai-card__desc">{card.desc}</div>
+              <div className="dashai-landing-card__title">{sec.title}</div>
+              <div className="dashai-landing-card__desc">{sec.desc}</div>
             </Link>
           ))}
         </div>
+
+        {/* ── "New to DashAI?" CTA ── */}
+        <div className="dashai-cta">
+          <span className="dashai-cta__icon">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+              <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+            </svg>
+          </span>
+          <div className="dashai-cta__body">
+            <div className="dashai-cta__heading">¿Nuevo en DashAI?</div>
+            <div className="dashai-cta__text">
+              Sigue la guía de inicio para entender la plataforma paso a paso.
+            </div>
+          </div>
+          <Link to="/discover/workbench" className="dashai-cta__btn">
+            Comenzar
+          </Link>
+        </div>
+
+        {/* ── Acknowledgments ── */}
         <div className="dashai-ack">
-          <p>
+          <div className="dashai-ack__label">AGRADECIMIENTOS</div>
+          <p className="dashai-ack__text">
             Patrocinado por CENIA (FB210017) e IMFD (ICN17_002). Desarrollado
             por estudiantes de DCC UChile y UTFSM.
           </p>
+          <img
+            className="dashai-ack__logos"
+            src={sponsorLogosSrc}
+            alt="Logos de patrocinadores: DCC UChile, UTFSM, CENIA, IMFD"
+          />
         </div>
       </div>
     </Layout>
