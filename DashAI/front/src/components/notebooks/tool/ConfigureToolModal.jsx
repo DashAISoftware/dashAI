@@ -19,7 +19,11 @@ import MrtDatasetTable from "../dataset/MrtDatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
 import api from "../../../api/api";
 
-import { getDatasetFile, getDatasetTypesByFilePath } from "../../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetFileFiltered,
+  getDatasetTypesByFilePath,
+} from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 export default function ConfigureToolModal({
@@ -83,8 +87,18 @@ export default function ConfigureToolModal({
   }, []);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+    async (page, pageSize, filterModel, sortModel) => {
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            notebook.file_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(notebook.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [notebook.file_path],

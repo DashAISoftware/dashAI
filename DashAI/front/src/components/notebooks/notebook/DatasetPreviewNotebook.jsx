@@ -18,7 +18,11 @@ import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
 import { getConvertersByNotebookId } from "../../../api/notebook";
-import { getDatasetFile, getDatasetTypesByFilePath } from "../../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetFileFiltered,
+  getDatasetTypesByFilePath,
+} from "../../../api/datasets";
 import MrtDatasetTable from "../dataset/MrtDatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -82,8 +86,18 @@ export default function DatasetPreviewNotebook({
   };
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+    async (page, pageSize, filterModel, sortModel) => {
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            notebook.file_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(notebook.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [notebook, converters],
