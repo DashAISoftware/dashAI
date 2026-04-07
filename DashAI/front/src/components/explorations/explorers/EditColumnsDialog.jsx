@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -11,38 +11,47 @@ import {
   Chip,
   Stack,
 } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 import TooltipedCellItem from "../../shared/TooltipedCellItem";
 
 import { useSnackbar } from "notistack";
 
-const columns = [
+// Convert array of IDs → MRT rowSelection format { [id]: boolean }
+const toMRT = (ids) => Object.fromEntries(ids.map((id) => [String(id), true]));
+// Convert MRT rowSelection → array of numeric IDs
+const fromMRT = (sel) => Object.keys(sel).filter((k) => sel[k]).map(Number);
+
+const columnDefs = [
   {
-    field: "id",
-    headerName: "Index",
+    accessorKey: "id",
+    header: "Index",
+    size: 80,
   },
   {
-    field: "columnName",
-    headerName: "Column Name",
-    flex: 1,
+    accessorKey: "columnName",
+    header: "Column Name",
+    grow: true,
   },
   {
-    field: "valueType",
-    headerName: "Value Type",
-    flex: 0.5,
+    accessorKey: "valueType",
+    header: "Value Type",
+    size: 120,
   },
   {
-    field: "dataType",
-    headerName: "Data Type",
-    flex: 0.5,
+    accessorKey: "dataType",
+    header: "Data Type",
+    size: 120,
   },
   {
-    field: "order",
-    headerName: "Selected Order",
-    type: "number",
-    flex: 0.5,
+    accessorKey: "order",
+    header: "Selected Order",
+    size: 130,
   },
 ];
 
@@ -61,10 +70,15 @@ function EditColumnsDialog({
   explorerType,
 }) {
   const { enqueueSnackbar } = useSnackbar();
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const [open, setOpen] = useState(false);
   const handleClose = () => {
-    if (!isValidSelection(rowSelectionModel)) {
+    if (!isValidSelection(fromMRT(rowSelection))) {
       enqueueSnackbar("Invalid selection, changes were not be saved", {
         variant: "warning",
       });
@@ -93,57 +107,69 @@ function EditColumnsDialog({
     }
   }, [datasetColumns, explorerType, open]);
 
-  const [rowSelectionModel, setRowSelectionModel] = useState([]);
-  // update row selection model on initial values change or dialog open
+  // rowSelection in MRT format: { [id]: boolean }
+  const [rowSelection, setRowSelection] = useState({});
+
+  // update row selection on initial values change or dialog open
   useEffect(() => {
-    setRowSelectionModel(initialValues.map((params) => params.id));
+    setRowSelection(toMRT(initialValues.map((params) => params.id)));
   }, [initialValues, open]);
 
-  const handleSelection = (selection) => {
-    if (selection.length > inputCardinality.max) {
-      selection = selection.slice(0, inputCardinality.max);
+  const handleSelectionChange = (updaterOrValue) => {
+    const newMrtSelection =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(rowSelection)
+        : updaterOrValue;
+
+    // Convert to array of numeric IDs in selection order
+    let selectedIds = fromMRT(newMrtSelection);
+
+    if (selectedIds.length > inputCardinality.max) {
+      selectedIds = selectedIds.slice(0, inputCardinality.max);
     }
 
-    // update order for the rows
+    // Rebuild MRT selection from potentially truncated list
+    const finalMrtSelection = toMRT(selectedIds);
+
+    // Update order for the rows
     let newRows = rows.map((row) => {
-      const order = selection.indexOf(row.id) + 1;
+      const order = selectedIds.indexOf(row.id) + 1;
       return { ...row, order };
     });
     setRows(newRows);
-    setRowSelectionModel(selection);
-    if (!isValidSelection(selection)) return;
+    setRowSelection(finalMrtSelection);
+
+    if (!isValidSelection(selectedIds)) return;
 
     updateValue(
       newRows
-        .filter((row) => selection.includes(row.id))
-        .sort((a, b) => {
-          return a.order - b.order;
-        })
-        .map((row) => {
-          return {
-            id: row.id,
-            columnName: row.columnName,
-            valueType: row.valueType,
-            dataType: row.dataType,
-            order: row.order,
-          };
-        }),
+        .filter((row) => selectedIds.includes(row.id))
+        .sort((a, b) => a.order - b.order)
+        .map((row) => ({
+          id: row.id,
+          columnName: row.columnName,
+          valueType: row.valueType,
+          dataType: row.dataType,
+          order: row.order,
+        })),
     );
   };
 
-  const isRowSelectable = (params) => {
-    // check if the row is already selected
-    if (rowSelectionModel.includes(params.id)) {
+  const isRowSelectable = (row) => {
+    const id = row.original.id;
+
+    // Already selected rows remain selectable
+    if (rowSelection[String(id)]) {
       return true;
     }
 
-    // check if the row is disabled
-    if (params.row.disabled) {
+    // Disabled rows are not selectable
+    if (row.original.disabled) {
       return false;
     }
 
-    // check if the row selection model is at the maximum cardinality
-    const selectedCount = rowSelectionModel.length;
+    // Max cardinality reached
+    const selectedCount = fromMRT(rowSelection).length;
     const maxReached =
       selectedCount >= inputCardinality.max ||
       selectedCount >= inputCardinality.exact;
@@ -158,17 +184,44 @@ function EditColumnsDialog({
     if (inputCardinality.exact && selection.length !== inputCardinality.exact) {
       return false;
     }
-
     if (inputCardinality.min && selection.length < inputCardinality.min) {
       return false;
     }
-
     if (inputCardinality.max && selection.length > inputCardinality.max) {
       return false;
     }
-
     return true;
   };
+
+  const columns = useMemo(() => columnDefs, []);
+
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    getRowId: (row) => String(row.id),
+    enableRowSelection: isRowSelectable,
+    onRowSelectionChange: handleSelectionChange,
+    state: { rowSelection },
+    enableGlobalFilter: true,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
+    initialState: {
+      density: "compact",
+      pagination: { pageIndex: 0, pageSize: 5 },
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: !isRowSelectable(row) && !rowSelection[String(row.original.id)]
+        ? {
+            backgroundColor: "rgba(0, 0, 0, 0.12)",
+            color: "#777",
+          }
+        : {},
+    }),
+    localization,
+  });
 
   return (
     <React.Fragment>
@@ -280,52 +333,7 @@ function EditColumnsDialog({
                 </Box>
               )}
 
-              <DataGrid
-                autoHeight
-                rows={rows}
-                columns={columns}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 5,
-                    },
-                  },
-                  sorting: {
-                    // sortModel: [
-                    //   {
-                    //     field: "order",
-                    //     sort: "asc",
-                    //   },
-                    // ],
-                  },
-                }}
-                pageSizeOptions={[5, 10, 20]}
-                checkboxSelection
-                onRowSelectionModelChange={handleSelection}
-                rowSelectionModel={rowSelectionModel}
-                isRowSelectable={isRowSelectable}
-                density="compact"
-                getRowClassName={(params) => {
-                  if (isRowSelectable(params) === false) {
-                    return "mui-row-disabled";
-                  }
-                  return "";
-                }}
-                sx={{
-                  "& .mui-row-disabled": {
-                    backgroundColor: "rgba(0, 0, 0, 0.12)",
-                    color: "#777",
-                  },
-                }}
-                slots={{
-                  toolbar: GridToolbar,
-                }}
-                slotProps={{
-                  toolbar: {
-                    showQuickFilter: true,
-                  },
-                }}
-              />
+              <MaterialReactTable table={table} />
             </Box>
           </DialogContent>
         </Dialog>
