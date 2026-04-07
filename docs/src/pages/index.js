@@ -39,7 +39,7 @@ const SECTIONS = [
     label: "Build",
     title: "API & Development",
     desc: "REST API reference, plugin development, dev setup, and contributing",
-    to: "/build/rest-api",
+    to: "/build/dev-setup",
   },
 ];
 
@@ -109,7 +109,7 @@ export default function Home() {
             </div>
           </div>
           <Link
-            to="/discover/getting-started/workbench"
+            to="/discover/workbench"
             className="dashai-cta__btn"
           >
             Get Started
