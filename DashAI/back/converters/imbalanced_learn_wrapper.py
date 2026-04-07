@@ -11,11 +11,27 @@ if TYPE_CHECKING:
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
-    """Generic wrapper for imbalanced-learn samplers (e.g., SMOTE, ADASYN)."""
+    """Abstract wrapper that adapts imbalanced-learn samplers
+    to the DashAI converter API.
+
+    Implements ``fit`` and ``transform`` by calling ``fit_resample`` from the underlying
+    imbalanced-learn sampler, then wrapping the resampled data back into a
+    ``DashAIDataset``. Because samplers change the number of rows, ``changes_row_count``
+    returns ``True`` for all subclasses.
+
+    All concrete imbalanced-learn converters in DashAI inherit from this class.
+    """
 
     SUPERVISED = True
 
     def __init__(self, **kwargs):
+        """Initialise the imbalanced-learn wrapper and reset internal state.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments forwarded to :class:`BaseConverter`.
+        """
         super().__init__(**kwargs)
         self.fitted = False
         self._resampled_table = None
@@ -23,14 +39,31 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         self.original_target_column_name_: str = ""
 
     def changes_row_count(self) -> bool:
+        """Return ``True`` because all samplers add or remove rows.
+
+        Returns
+        -------
+        bool
+            Always ``True``.
+        """
         return True
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        ImbalancedLearn samplers preserve the data types of the input columns.
-        This method should ideally return the original type for each column,
-        but since samplers don't change types, we raise NotImplementedError
-        and rely on the transform method to preserve types from the input.
+        """Not implemented; type preservation is handled in ``transform``.
+
+        Imbalanced-learn samplers do not change column types — types from the
+        input dataset are copied directly in ``transform``.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the column whose output type is queried. Ignored because
+            this method always raises. Default ``None``.
+
+        Raises
+        ------
+        NotImplementedError
+            Always, because type determination is delegated to ``transform``.
         """
         raise NotImplementedError(
             "ImbalancedLearn samplers preserve input types. "
@@ -38,9 +71,31 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         )
 
     def fit(self, x: "DashAIDataset", y: "DashAIDataset") -> Type[BaseConverter]:
-        """
-        Fit the sampler using imbalanced-learn's fit_resample and store the combined
-        result.
+        """Resample the dataset by calling ``fit_resample`` and store the result.
+
+        Converts ``x`` and ``y`` to pandas, calls the imbalanced-learn sampler's
+        ``fit_resample``, then stores the combined resampled data as a PyArrow table.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The input feature dataset.
+        y : DashAIDataset
+            The target label dataset (required; must be non-empty).
+
+        Returns
+        -------
+        Type[BaseConverter]
+            The fitted sampler instance (self).
+
+        Raises
+        ------
+        ValueError
+            If ``y`` is ``None`` or empty.
+        TypeError
+            If the resampled arrays from imbalanced-learn have an unexpected type.
+        JobError
+            If constructing the resampled PyArrow table fails.
         """
         import numpy as np
         import pandas as pd
@@ -122,7 +177,28 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """Return the stored resampled dataset (X and y combined)."""
+        """Return the resampled dataset stored during ``fit``.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The original feature dataset (used only for type information).
+        y : DashAIDataset, optional
+            The original target dataset (used only for type information).
+            Defaults to None.
+
+        Returns
+        -------
+        DashAIDataset
+            The combined resampled dataset (features + target) produced by ``fit``.
+
+        Raises
+        ------
+        RuntimeError
+            If ``fit`` has not been called or the resampled table is unavailable.
+        JobError
+            If constructing the output ``DashAIDataset`` fails.
+        """
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if not self.fitted:

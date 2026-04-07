@@ -19,6 +19,14 @@ if TYPE_CHECKING:
 
 
 class ExcelDataloaderSchema(BaseSchema):
+    """Schema for ExcelDataLoader hyperparameters.
+
+    Configures the sheet selector, header row, columns to import,
+    row-skipping and row-count limit, and the dataset split ratios.
+    The sheet can be specified as a name string or a zero-based index;
+    leaving the sheet field empty selects the first sheet.
+    """
+
     name: schema_field(
         string_field(),
         "",
@@ -190,7 +198,16 @@ class ExcelDataloaderSchema(BaseSchema):
 
 
 class ExcelDataLoader(BaseDataLoader):
-    """Data loader for tabular data in Excel files."""
+    """Data loader that ingests tabular data from Excel workbooks into DashAI datasets.
+
+    Reads ``.xlsx`` / ``.xls`` files, optionally selecting a specific sheet,
+    samples rows, and splits the result into train/validation/test
+    ``DashAIDataset`` splits. Delegates to ``pandas.read_excel`` after
+    normalising the schema parameters (sheet name/index, header row, column
+    selection, row limits).
+
+    Handles multi-file uploads by concatenating all workbooks before splitting.
+    """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ExcelDataloaderSchema
@@ -211,7 +228,24 @@ class ExcelDataLoader(BaseDataLoader):
     )
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare parameters for pandas.read_excel."""
+        """Convert schema parameters into a dict suitable for ``pandas.read_excel``.
+
+        Maps DashAI schema keys to their pandas equivalents and normalises
+        comma-separated string fields (``names``, ``na_values``,
+        ``true_values``, ``false_values``) into Python lists.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Raw parameter dictionary from the schema (``sheet``, ``header``,
+            ``usecols``, ``skiprows``, ``nrows``, ``names``, ``na_values``,
+            ``keep_default_na``, ``true_values``, ``false_values``).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Keyword-argument dict ready to be unpacked into ``pd.read_excel``.
+        """
         pandas_params = {}
 
         if "sheet" in params and params["sheet"] is not None:

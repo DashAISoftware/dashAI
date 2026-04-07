@@ -19,8 +19,12 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class SVCSchema(BaseSchema):
-    """Support Vector Machine (SVM) is a machine learning algorithm that separates data
-    into different classes by finding the optimal hyperplane
+    """Schema that configures the Support Vector Classifier (SVC).
+
+    Support Vector Classification finds the optimal hyperplane that maximises the
+    margin between classes in a kernel-transformed feature space. It is used for
+    binary and multiclass tabular classification. The underlying implementation is
+    ``sklearn.svm.SVC``.
     """
 
     C: schema_field(
@@ -154,7 +158,25 @@ class SVCSchema(BaseSchema):
 
 
 class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
-    """Scikit-learn's Support Vector Machine (SVM) classifier wrapper for DashAI."""
+    """Support vector machine classifier that maximises the margin between classes.
+
+    SVC constructs a maximum-margin hyperplane in a (possibly kernel-transformed)
+    feature space. Training data points that lie on or inside the margin are called
+    support vectors; they fully define the decision boundary. Non-linearly separable
+    problems are addressed by mapping the input space into a higher-dimensional space
+    via kernel functions (linear, polynomial, RBF, or sigmoid).
+
+    Regularisation is controlled by ``C``: smaller values allow more misclassified
+    training points in exchange for a wider margin, while larger values enforce a
+    harder margin. The ``kernel``, ``gamma``, ``degree``, and ``coef0`` parameters
+    configure the kernel function. The implementation wraps scikit-learn's ``SVC``.
+
+    References
+    ----------
+    - [1] Cortes, C. & Vapnik, V. (1995). "Support-vector networks."
+           Machine Learning, 20(3), 273-297. https://doi.org/10.1007/BF00994018
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
+    """
 
     SCHEMA = SVCSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -190,5 +212,13 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         kwargs["probability"] = True
         super().__init__(**kwargs)

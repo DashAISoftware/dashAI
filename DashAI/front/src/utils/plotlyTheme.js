@@ -55,6 +55,28 @@ function applyThemeToLayout(baseLayout, theme) {
         bordercolor: gridColor,
         font: { color: "#000000" },
         activecolor: theme.palette.primary.main,
+        buttons: menu.buttons?.map((button) => {
+          const layoutArgs = button.args?.[1];
+          if (!layoutArgs) return button;
+          const updatedLayoutArgs = { ...layoutArgs };
+          if (typeof updatedLayoutArgs.title === "string") {
+            updatedLayoutArgs.title = {
+              text: updatedLayoutArgs.title,
+              font: { color: textColor },
+            };
+          } else if (updatedLayoutArgs.title != null) {
+            updatedLayoutArgs.title = {
+              ...updatedLayoutArgs.title,
+              font: { ...updatedLayoutArgs.title.font, color: textColor },
+            };
+          }
+          return {
+            ...button,
+            args: button.args.map((arg, i) =>
+              i === 1 ? updatedLayoutArgs : arg,
+            ),
+          };
+        }),
       })),
     }),
     ...(baseLayout?.polar && {

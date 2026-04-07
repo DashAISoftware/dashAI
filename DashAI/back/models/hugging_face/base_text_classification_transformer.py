@@ -1,6 +1,12 @@
-"""Shared classes for Hugging Face text classification transformers."""
+"""Shared classes for Hugging Face text classification transformers.
 
-from typing import TYPE_CHECKING, Any, Union
+This module defines the common implementation used by DashAI wrappers around
+Hugging Face sequence classification models (for example DistilBERT,
+DeBERTa-v3, and ModernBERT). It centralizes tokenizer/model initialization,
+dataset preparation, training, prediction, and model persistence logic.
+"""
+
+from typing import TYPE_CHECKING, Union
 
 from sklearn.exceptions import NotFittedError
 
@@ -15,7 +21,17 @@ if TYPE_CHECKING:
 
 
 class HuggingFaceTextClassificationTransformer(TextClassificationModel):
-    """Base implementation for Hugging Face text classification wrappers."""
+    """Base implementation for Hugging Face text classification wrappers.
+
+    Subclasses are expected to define at least ``MODEL_NAME`` and optionally
+    override class attributes such as ``MAX_TOKEN_LENGTH`` and
+    ``TEMP_CHECKPOINT_DIR``. The class provides:
+
+    - Automatic tokenizer and model loading from Hugging Face Hub.
+    - Training via ``transformers.Trainer`` with DashAI metric callbacks.
+    - Inference returning per-class probability matrices.
+    - Save/load utilities that preserve custom training parameters.
+    """
 
     MODEL_NAME: str = ""
     TEMP_CHECKPOINT_DIR: str = (
@@ -24,7 +40,24 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
     MAX_TOKEN_LENGTH: int = 512
 
     def __init__(self, model=None, **kwargs):
-        """Initialize tokenizer, model and training configuration."""
+        """Initialize the transformer model.
+
+        The process includes the instantiation of the pre-trained model and the
+        associated tokenizer. When ``model`` is ``None`` a fresh pre-trained
+        model checkpoint is loaded from HuggingFace; when a model object
+        is supplied the tokenizer is reused without re-downloading weights.
+
+        Parameters
+        ----------
+        model : transformers.PreTrainedModel or None, optional
+            An already-loaded HuggingFace model to reuse. If ``None`,
+            the model will be loaded from the Hugging Face Hub based on
+            ``MODEL_NAME``.
+        **kwargs : dict
+            Additional hyperparameters forwarded to ``validate_and_transform``
+            and used to configure training arguments (e.g. ``num_labels``,
+            ``batch_size``, ``epochs``).
+        """
 
         self.num_labels = kwargs.pop("num_labels", None)
         kwargs.pop("model_name", None)
@@ -80,6 +113,24 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         self.encodings = {}  # Store encodings for categorical columns
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
+        """Fine-tune the model on the provided classification data.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Input text features for training.
+        y_train : DashAIDataset
+            Target labels for training.
+        x_validation : DashAIDataset
+            Input text features for validation.
+        y_validation : DashAIDataset
+            Target labels for validation.
+
+        Returns
+        -------
+        HuggingFaceTextClassificationTransformer
+            The fine-tuned model instance.
+        """
         import shutil
         import tempfile
         from pathlib import Path
@@ -182,7 +233,18 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         return self
 
     def predict(self, x_pred: "DashAIDataset"):
-        """Predict class probabilities for text examples."""
+        """Predict with the fine-tuned model.
+
+        Parameters
+        ----------
+        x_pred : DashAIDataset
+            Dataset with text data.
+
+        Returns
+        -------
+        List
+            List of predicted probabilities for each class.
+        """
 
         if not self.fitted:
             raise NotFittedError(
@@ -223,7 +285,21 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
-        """Apply label encoding for categorical data or tokenize text."""
+        """Apply the model transformations to the dataset.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be transformed.
+        is_fit : bool
+            Whether this is for fitting (True) or prediction (False).
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
+        """
         from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
             apply_categorical_label_encoder,
             categorical_label_encoder,
@@ -244,7 +320,18 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         return self.tokenize_data(dataset)
 
     def tokenize_data(self, dataset: "DashAIDataset") -> "DashAIDataset":
-        """Tokenize the text input column."""
+        """Tokenize the input data.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset with the input data to preprocess.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with the tokenized input data.
+        """
         text_columns = [
             col
             for col in dataset.column_names
@@ -264,7 +351,17 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         )
 
     def save(self, filename: Union[str, "Path"]) -> None:
-        """Persist transformer weights and custom training params."""
+        """Store the fine-tuned model and its configuration to disk.
+
+        Saves the model weights via ``save_pretrained`` and embeds the
+        hyperparameters (epochs, batch size, learning rate, etc.) into the
+        Hugging Face config so they can be restored by :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path where the model files will be written.
+        """
         from transformers import AutoConfig
 
         self.model.save_pretrained(filename)
@@ -281,8 +378,26 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         config.save_pretrained(filename)
 
     @classmethod
-    def load(cls, filename: Union[str, "Path"]) -> Any:
-        """Restore transformer instance from a saved directory."""
+    def load(
+        cls, filename: Union[str, "Path"]
+    ) -> "HuggingFaceTextClassificationTransformer":
+        """Restore a HuggingFaceTextClassificationTransformer instance from disk.
+
+        Reads the Hugging Face config to recover the custom hyperparameters
+        saved by :meth:`save`, then reconstructs the model and wraps it in a
+        new :class:`HuggingFaceTextClassificationTransformer` instance.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path from which the model files will be read.
+
+        Returns
+        -------
+        HuggingFaceTextClassificationTransformer
+            The restored model instance with ``fitted`` set to the persisted
+            value.
+        """
         from transformers import AutoConfig, AutoModelForSequenceClassification
 
         config = AutoConfig.from_pretrained(filename)

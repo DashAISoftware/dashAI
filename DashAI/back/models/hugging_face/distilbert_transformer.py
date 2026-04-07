@@ -169,7 +169,7 @@ class DistilBertTransformer(HuggingFaceTextClassificationTransformer):
 
     References
     ----------
-    [1] https://huggingface.co/docs/transformers/model_doc/distilbert
+    - [1] https://huggingface.co/docs/transformers/model_doc/distilbert
     """
 
     DISPLAY_NAME: str = MultilingualString(

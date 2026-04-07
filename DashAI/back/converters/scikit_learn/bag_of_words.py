@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class BagOfWordsConverterSchema(BaseSchema):
-    """Schema for BagOfWordsConverter hyperparameters."""
+    """Schema for configuring the BagOfWordsConverter.
+
+    Wraps ``sklearn.feature_extraction.text.CountVectorizer`` and exposes
+    vocabulary size, casing, stop-word removal, and n-gram range as schema
+    fields validated before being forwarded to the underlying scikit-learn
+    estimator.
+    """
 
     max_features: schema_field(
         int_field(gt=0),
@@ -67,9 +73,28 @@ class BagOfWordsConverterSchema(BaseSchema):
 
 
 class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
-    """
-    Converts text into a Bag-of-Words representation with one column per token
-    (frequency per token).
+    """Convert raw text documents into a matrix of token occurrence counts.
+
+    The Bag-of-Words (BoW) model represents each document as a fixed-length
+    vector of word counts, discarding word order and grammar. During ``fit``
+    a vocabulary of up to ``max_features`` terms is built from the training
+    corpus. During ``transform`` each document is mapped to that vocabulary,
+    producing one integer-valued column per token.
+
+    Optional preprocessing steps include lower-casing, stop-word removal, and
+    n-gram extraction (unigrams, bigrams, …). The result is a sparse integer
+    matrix converted to a DashAI dataset with one column per vocabulary term.
+
+    Internally wraps ``sklearn.feature_extraction.text.CountVectorizer``.
+
+    The BoW representation is one of the foundational techniques in information
+    retrieval described in Salton & McGill (1983) [2].
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
+    - [2] Salton, G. & McGill, M. J. (1983). Introduction to Modern Information
+        Retrieval. McGraw-Hill.
     """
 
     SCHEMA = BagOfWordsConverterSchema
@@ -87,6 +112,22 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the bag-of-words converter and configure the vectorizer.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            max_features : int, optional
+                Maximum vocabulary size. Default ``1000``.
+            lowercase : bool, optional
+                Convert all text to lowercase before tokenizing. Default ``True``.
+            stop_words : str or list, optional
+                Stop-word list to remove. Default ``"english"``.
+            lower_bound_ngrams : int, optional
+                Minimum n-gram size. Default ``1``.
+            upper_bound_ngrams : int, optional
+                Maximum n-gram size. Default ``1``.
+        """
         super().__init__()
         from sklearn.feature_extraction.text import CountVectorizer
 
@@ -102,7 +143,20 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.fitted = False
 
     def fit(self, x: "DashAIDataset", y=None) -> "BagOfWordsConverter":
-        """Fit CountVectorizer to the input text."""
+        """Fit CountVectorizer on the first text column of the dataset.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. Only the first column is used for fitting.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        BagOfWordsConverter
+            The fitted converter instance (``self``).
+        """
         X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
         self.vectorizer.fit(texts)
@@ -110,7 +164,25 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         return self
 
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
-        """Transform text into Bag-of-Words frequency columns."""
+        """Transform text into Bag-of-Words token-frequency columns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. The first column is vectorised.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each token becomes a numeric frequency column.
+
+        Raises
+        ------
+        RuntimeError
+            If :meth:`fit` has not been called yet.
+        """
         import pandas as pd
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset

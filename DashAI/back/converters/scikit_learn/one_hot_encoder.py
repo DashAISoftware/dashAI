@@ -19,6 +19,15 @@ from DashAI.back.types.value_types import Integer
 
 
 class OneHotEncoderSchema(BaseSchema):
+    """Schema for OneHotEncoder hyperparameters.
+
+    Configures the category handling, output dtype, unknown-value strategy,
+    infrequent-category grouping, and feature-name combining behaviour for
+    sklearn's ``OneHotEncoder``. The ``categories`` field accepts ``"auto"``
+    or an explicit list string; ``drop`` controls whether one indicator column
+    per feature is dropped to avoid multicollinearity.
+    """
+
     categories: schema_field(
         string_field(),
         "auto",
@@ -81,7 +90,30 @@ class OneHotEncoderSchema(BaseSchema):
 
 
 class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
-    """Scikit-learn's OneHotEncoder wrapper for DashAI."""
+    """Encode categorical columns as binary indicator (one-hot) vectors.
+
+    For each input feature column every unique category value becomes a
+    separate binary output column. Given a feature with ``k`` categories the
+    encoding produces ``k`` columns (or ``k - 1`` when ``drop`` is set) where
+    exactly one column is 1 and the rest are 0:
+
+    * **Nominal categories without order** — one-hot encoding treats all
+      categories as equidistant, which is appropriate for unordered labels
+      such as city names or product types.
+    * **Avoiding the dummy-variable trap** — the ``drop`` parameter can
+      remove one indicator column per feature so that the resulting matrix
+      has full rank, which is required by unregularized linear models.
+    * **Infrequent categories** — ``min_frequency`` and ``max_categories``
+      can group rare values into a single ``infrequent_categories`` bin,
+      reducing dimensionality.
+
+    The total number of output columns equals the sum of unique category
+    counts across all encoded input columns (minus dropped columns).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
+    """
 
     SCHEMA = OneHotEncoderSchema
     DESCRIPTION = MultilingualString(
@@ -95,6 +127,18 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     IMAGE_PREVIEW = "one_hot_encoder.png"
 
     def __init__(self, **kwargs):
+        """Initialize the OneHotEncoder converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. String representations of ``categories`` and
+            ``drop`` are parsed into lists when they are not sentinel values;
+            ``dtype`` strings are cast to NumPy types; ``sparse_output`` is
+            forced to ``False`` for pandas compatibility. Remaining kwargs
+            are forwarded to the underlying scikit-learn class.
+        """
         self.categories = kwargs.pop("categories", "auto")
         if self.categories != "auto":
             self.categories = [parse_string_to_list(self.categories)]
@@ -116,7 +160,20 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Integer64 as the output type for one-hot encoded data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type backed by ``pyarrow.int64()``,
+            representing the binary indicator values (0 or 1).
+        """
         import pyarrow as pa
 
         return Integer(arrow_type=pa.int64())

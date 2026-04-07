@@ -14,10 +14,11 @@ if TYPE_CHECKING:
 
 
 class BaseModel(ConfigObject, metaclass=ABCMeta):
-    """Abstract class of all machine learning models.
+    """Abstract base class for all machine learning models in DashAI.
 
-    All models must extend this class
-    and implement save, load, train and predict methods.
+    All models must extend this class and implement the abstract methods
+    `save`, `load`, and `train`. The `calculate_metrics` and
+    `prepare_dataset` methods provide optional hooks for subclasses.
     """
 
     TYPE: Final[str] = "Model"
@@ -33,7 +34,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         Returns
         -------
         Dict[str, Any]
-            Dictionary with the metadata including icon.
+            Dictionary containing UI metadata such as the
+            model icon used in the DashAI frontend.
         """
         metadata: Dict[str, Any] = {}
         metadata["icon"] = cls.ICON if cls.ICON else "Science"
@@ -42,18 +44,28 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
     @abstractmethod
     def save(self, filename: str) -> None:
-        """Store an instance of a model.
+        """Store the model to disk.
 
-        filename (Str): Indicates where to store the model,
-        if filename is None, this method returns a bytes array with the model.
+        Parameters
+        ----------
+        filename : str
+            Path where the model will be saved.
         """
         raise NotImplementedError
 
     @abstractmethod
     def load(self, filename: str) -> Any:
-        """Restores an instance of a model.
+        """Restore a model instance from disk.
 
-        filename (Str): Indicates where the model was stored.
+        Parameters
+        ----------
+        filename : str
+            Path where the model was previously saved.
+
+        Returns
+        -------
+        Any
+            The restored model instance.
         """
         raise NotImplementedError
 
@@ -74,9 +86,11 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         y_train : DashAIDataset
             The target labels for training.
         x_validation : DashAIDataset, optional
-            The input features for validation.
+            Input features for
+            validation. Defaults to None.
         y_validation : DashAIDataset, optional
-            The target labels for validation.
+            Target labels for
+            validation. Defaults to None.
 
         Returns
         -------
@@ -93,6 +107,26 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         results: Dict[str, float],
         log_index: int = None,
     ):
+        """Persist computed metric values to the database.
+
+        Handles step-index computation and upsert logic for LAST-level metrics.
+        Called internally by `calculate_metrics` after scores are computed.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split the metrics belong to (TRAIN,
+            VALIDATION, or TEST).
+        level : LevelEnum
+            The granularity level (LAST, TRIAL, STEP, or
+            BATCH). LAST-level entries are upserted; others are inserted.
+        results : Dict[str, float]
+            Mapping of metric name to score value.
+        log_index : int, optional
+            Explicit step index for the entries.
+            If None, the next index is derived from existing database
+            entries. Defaults to None.
+        """
         with di["session_factory"]() as db:
             # Initialize tracking dict if not exists
             if not hasattr(self, "_metric_step_counters"):
@@ -193,24 +227,28 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         x_data: "DashAIDataset" = None,
         y_data: "DashAIDataset" = None,
     ):
-        """
-        Calculate and save metrics for a given data split and level.
+        """Calculate and save metrics for a given data split and level.
 
         Parameters
         ----------
-        split : SplitEnum, default=SplitEnum.VALIDATION
-            The data split (TRAIN, VALIDATION, TEST).
-        level : LevelEnum, default=LevelEnum.LAST
-            The metric level (LAST, TRIAL, STEP, BATCH).
+        split : SplitEnum
+            The data split to evaluate (TRAIN, VALIDATION,
+            or TEST). Defaults to SplitEnum.VALIDATION.
+        level : LevelEnum
+            The metric granularity level (LAST, TRIAL,
+            STEP, or BATCH). Defaults to LevelEnum.LAST.
         log_index : int, optional
-            The index for logging purposes. If None, it will save the metric
-            as last index + 1.
+            Explicit step index for the metric
+            entry. If None, the next step index is computed automatically.
+            Defaults to None.
         x_data : DashAIDataset, optional
-            The input features for the split. If None, the stored dataset
-            associated with the split is used.
+            Input features. If None, the
+            dataset stored in the model for the given split is used.
+            Defaults to None.
         y_data : DashAIDataset, optional
-            The target labels for the split. If None, the stored labels
-            associated with the split are used.
+            Target labels. If None, the
+            labels stored in the model for the given split are used.
+            Defaults to None.
         """
         # Get the appropriate metrics based on split
         metrics_attr = f"{split.value}_metrics"
@@ -251,21 +289,22 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     ) -> "DashAIDataset":
         """Hook for model-specific preprocessing of input features.
 
-        Override in subclasses needing
-        custom tokenization/encoding. Must not mutate input in-place.
+        Override in subclasses that require custom tokenization, encoding,
+        or any other input transformation. Must not mutate the input in-place.
 
         Parameters
         ----------
         dataset : DashAIDataset
-            The dataset to be transformed.
+            The input dataset to preprocess.
         is_fit : bool
-            Whether the dataset is for fitting or not.
+            Whether the call is part of a fitting phase.
+            Defaults to False.
 
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to
-            an accepted format in the model.
+            The preprocessed dataset ready to be fed into
+            the model.
         """
         return dataset
 
@@ -274,16 +313,21 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     ) -> "DashAIDataset":
         """Hook for model-specific preprocessing of output targets.
 
+        By default, delegates to `prepare_dataset`. Override in subclasses
+        that need separate input and output preprocessing logic.
+
         Parameters
         ----------
         dataset : DashAIDataset
-            The output dataset to be transformed.
+            The output dataset (target labels) to
+            preprocess.
         is_fit : bool
-            Whether the dataset is for fitting or not.
+            Whether the call is part of a fitting phase.
+            Defaults to False.
 
         Returns
         -------
         DashAIDataset
-            The prepared output dataset.
+            The preprocessed output dataset.
         """
         return self.prepare_dataset(dataset, is_fit)
