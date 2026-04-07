@@ -1,23 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Box,
   Typography,
   Paper,
   styled,
-  Tooltip,
   IconButton,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { DataGrid } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTranslation } from "react-i18next";
 import { formatDate, getColorByStatus } from "../../utils";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { Delete } from "@mui/icons-material";
-import { useTranslation } from "react-i18next";
 
 function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
-  const { t } = useTranslation(["prediction", "common"]);
+  const { t, i18n } = useTranslation(["prediction", "common"]);
 
   const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
+
   const StyledCell = styled("div")(({ theme, color }) => ({
     display: "inline-block",
     padding: theme.spacing(0.5),
@@ -40,12 +45,12 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
   const columns = [
     {
-      field: "type",
-      headerName: t("common:type"),
-      flex: 1,
-      minWidth: 150,
-      renderCell: (params) => {
-        const dataset = params?.row?.dataset;
+      accessorKey: "type",
+      header: t("common:type"),
+      grow: 1,
+      minSize: 150,
+      Cell: ({ row }) => {
+        const dataset = row.original?.dataset;
 
         return dataset ? (
           <Box
@@ -99,27 +104,27 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
       },
     },
     {
-      field: "created",
-      headerName: t("common:created"),
-      flex: 1.2,
-      minWidth: 150,
-      renderCell: (params) => formatDate(params?.row?.created),
+      accessorKey: "created",
+      header: t("common:created"),
+      grow: 1.2,
+      minSize: 150,
+      Cell: ({ row }) => formatDate(row.original?.created),
     },
     {
-      field: "duration",
-      headerName: t("common:timeTaken"),
-      flex: 0.8,
-      minWidth: 80,
-      renderCell: (params) =>
-        computeDuration(params?.row?.start_time, params?.row?.end_time),
+      id: "duration",
+      header: t("common:timeTaken"),
+      grow: 0.8,
+      minSize: 80,
+      Cell: ({ row }) =>
+        computeDuration(row.original?.start_time, row.original?.end_time),
     },
     {
-      field: "status",
-      headerName: t("common:status"),
-      flex: 1,
-      minWidth: 100,
-      renderCell: (params) => {
-        const statusText = getPredictionStatus(params?.row?.status);
+      accessorKey: "status",
+      header: t("common:status"),
+      grow: 1,
+      minSize: 100,
+      Cell: ({ row }) => {
+        const statusText = getPredictionStatus(row.original?.status);
         return (
           <StyledCell color={getColorByStatus(statusText, theme)}>
             {statusText}
@@ -128,17 +133,18 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
       },
     },
     {
-      field: "delete",
-      headerName: t("common:delete"),
-      flex: 0.5,
-      minWidth: 80,
-      sortable: false,
-      renderCell: (params) => (
+      id: "delete",
+      header: t("common:delete"),
+      grow: 0.5,
+      minSize: 80,
+      enableSorting: false,
+      enableColumnFilter: false,
+      Cell: ({ row }) => (
         <IconButton
           size="small"
           onClick={(e) => {
             e.stopPropagation();
-            onItemDelete(params.row.id);
+            onItemDelete(row.original.id);
           }}
         >
           <Delete fontSize="small" color="error" />
@@ -168,6 +174,20 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
     ...prediction,
   }));
 
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: { density: "compact" },
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => onItemClick(row.original),
+      sx: { cursor: "pointer" },
+    }),
+    enableRowSelection: false,
+  });
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
@@ -180,37 +200,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
         {t("prediction:label.clickToViewOrDelete")}
       </Typography>
       <Paper sx={{ width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          disableRowSelectionOnClick
-          onRowClick={(params) => onItemClick(params.row)}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10, page: 0 },
-            },
-          }}
-          pageSizeOptions={[5, 10, 25, 50]}
-          density="compact"
-          sx={{
-            fontSize: "0.75rem",
-            "& .MuiDataGrid-cell": {
-              fontSize: "0.75rem",
-            },
-            "& .MuiDataGrid-columnHeaders": {
-              fontSize: "0.75rem",
-            },
-            "& .MuiDataGrid-row": {
-              cursor: "pointer",
-            },
-            "& .MuiDataGrid-cell:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: theme.palette.ui.hover,
-            },
-          }}
-        />
+        <MaterialReactTable table={table} />
       </Paper>
     </Box>
   );
