@@ -9,7 +9,10 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -23,34 +26,29 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
   const tourContext = useTourContext();
-  const { t } = useTranslation(["experiments", "common"]);
+  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const columns = useMemo(
     () => [
       {
-        field: "name",
-        headerName: t("common:name"),
-        minWidth: 250,
-        editable: false,
+        accessorKey: "name",
+        header: t("common:name"),
       },
       {
-        field: "created",
-        headerName: t("common:createdAt"),
-        minWidth: 200,
-        type: Date,
-        valueGetter: (value) => formatDate(value),
-        editable: false,
+        accessorKey: "created",
+        header: t("common:createdAt"),
+        Cell: ({ cell }) => formatDate(cell.getValue()),
       },
       {
-        field: "last_modified",
-        headerName: t("common:lastModified"),
-        minWidth: 200,
-        type: Date,
-        valueGetter: (value) => formatDate(value),
-        editable: false,
+        accessorKey: "last_modified",
+        header: t("common:lastModified"),
+        Cell: ({ cell }) => formatDate(cell.getValue()),
       },
     ],
     [t],
@@ -90,36 +88,43 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   // autoselect dataset and enable next button if some dataset was selected previously.
   useEffect(() => {
     if (typeof newExp.dataset === "object" && newExp.dataset !== null) {
-      const taskEqualToExpDataset = datasets.map(
+      const found = datasets.find(
         (dataset) => newExp.dataset.id === dataset.id,
       );
-      const indexOfTrue = taskEqualToExpDataset.indexOf(true);
-      if (indexOfTrue !== -1) {
+      if (found) {
         setNextEnabled(true);
-        setDatasetsSelected([indexOfTrue + 1]);
       }
-    } else {
-      setDatasetsSelected([]);
     }
   }, [datasets]);
 
-  useEffect(() => {
-    if (datasetsSelected.length > 0) {
-      // the index of the table start with 1!
-      // const dataset = datasets[datasetsSelected[0] - 1];
-      const selectedDatasetId = datasetsSelected[0];
-      const dataset = datasets.find(
-        (dataset) => dataset.id === selectedDatasetId,
-      );
-      setNewExp({ ...newExp, dataset });
-      setNextEnabled(true);
-      if (tourContext && tourContext.run) {
-        setTimeout(() => {
-          tourContext.nextStep();
-        }, 300);
-      }
+  const handleRowClick = (row) => {
+    const dataset = row.original;
+    setNewExp({ ...newExp, dataset });
+    setNextEnabled(true);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
     }
-  }, [datasetsSelected]);
+  };
+
+  const datasetsTable = useMaterialReactTable({
+    columns,
+    data: datasets,
+    enableRowSelection: false,
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => handleRowClick(row),
+      sx: { cursor: "pointer" },
+    }),
+    state: { isLoading: loading },
+    enableGlobalFilter: false,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enablePagination: true,
+    muiPaginationProps: { rowsPerPageOptions: [10, 25] },
+    initialState: { pagination: { pageSize: 10, pageIndex: 0 } },
+    localization,
+  });
 
   return (
     <React.Fragment>
@@ -156,26 +161,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         </React.Fragment>
       )}
       <Paper data-tour="exp-dataset-selector">
-        <DataGrid
-          rows={datasets}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
-              },
-            },
-          }}
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setDatasetsSelected(newRowSelectionModel);
-          }}
-          rowSelectionModel={datasetsSelected}
-          density="compact"
-          pageSizeOptions={[10]}
-          loading={loading}
-          autoHeight
-          hideFooterSelectedRowCount
-        />
+        <MaterialReactTable table={datasetsTable} />
       </Paper>
     </React.Fragment>
   );
