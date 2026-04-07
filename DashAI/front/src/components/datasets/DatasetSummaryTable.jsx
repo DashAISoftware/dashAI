@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
-import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import {
   getDatasetSample as getDatasetSampleRequest,
   getDatasetTypes as getDatasetTypesRequest,
@@ -19,7 +23,11 @@ function DatasetSummaryTable({
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
-  const apiRef = useGridApiRef();
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const getDatasetInfo = async () => {
     setLoading(true);
@@ -53,9 +61,7 @@ function DatasetSummaryTable({
     }
   };
 
-  const updateCellValue = async (id, field, newValue) => {
-    await apiRef.current.setEditCellValue({ id, field, value: newValue });
-    apiRef.current.stopCellEditMode({ id, field });
+  const updateCellValue = (id, field, newValue) => {
     setRows((prevRows) =>
       prevRows.map((row) =>
         row.id === id ? { ...row, [field]: newValue } : row,
@@ -74,73 +80,85 @@ function DatasetSummaryTable({
     setColumnsSpec(updateColumns);
   };
 
-  const renderSelectCell = (params, options) => {
-    return (
-      <SelectTypeCell
-        id={params.id}
-        value={params.value}
-        field={params.field}
-        options={options}
-        updateValue={(id, field, newValue) =>
-          updateCellValue(id, field, newValue)
-        }
-      />
-    );
-  };
-
-  const columns = useMemo(() => [
-    {
-      field: "columnName",
-      headerName: "Column name",
-      minWidth: 200,
-      editable: false,
-    },
-    {
-      field: "example",
-      headerName: "Example",
-      minWidth: 200,
-      editable: false,
-    },
-    {
-      field: "columnType",
-      headerName: "Column type",
-      renderEditCell: (params) =>
-        isEditable && renderSelectCell(params, columnTypesList),
-      minWidth: 200,
-      editable: isEditable,
-    },
-    {
-      field: "dataType",
-      headerName: "Data type",
-      renderEditCell: (params) =>
-        isEditable && renderSelectCell(params, dataTypesList),
-      minWidth: 200,
-      editable: isEditable,
-    },
-  ]);
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "columnName",
+        header: "Column name",
+        size: 200,
+      },
+      {
+        accessorKey: "example",
+        header: "Example",
+        size: 200,
+      },
+      {
+        accessorKey: "columnType",
+        header: "Column type",
+        size: 200,
+        Cell: ({ row }) =>
+          isEditable ? (
+            <SelectTypeCell
+              id={row.original.id}
+              value={row.original.columnType}
+              field="columnType"
+              options={columnTypesList}
+              updateValue={(id, field, newValue) =>
+                updateCellValue(id, field, newValue)
+              }
+            />
+          ) : (
+            row.original.columnType
+          ),
+      },
+      {
+        accessorKey: "dataType",
+        header: "Data type",
+        size: 200,
+        Cell: ({ row }) =>
+          isEditable ? (
+            <SelectTypeCell
+              id={row.original.id}
+              value={row.original.dataType}
+              field="dataType"
+              options={dataTypesList}
+              updateValue={(id, field, newValue) =>
+                updateCellValue(id, field, newValue)
+              }
+            />
+          ) : (
+            row.original.dataType
+          ),
+      },
+    ],
+    [isEditable, rows],
+  );
 
   useEffect(() => {
     getDatasetInfo();
   }, []);
 
-  return (
-    <DataGrid
-      rows={rows}
-      columns={columns}
-      initialState={{
-        pagination: {
-          paginationModel: {
-            pageSize: 4,
-          },
-        },
-      }}
-      pageSize={4}
-      pageSizeOptions={[4, 5, 10]}
-      loading={loading}
-      apiRef={apiRef}
-      autoHeight
-    />
-  );
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    getRowId: (row) => String(row.id),
+    state: { isLoading: loading },
+    enableSorting: false,
+    enableColumnFilters: false,
+    enableGlobalFilter: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 4 },
+    },
+    muiPaginationProps: {
+      rowsPerPageOptions: [4, 5, 10],
+    },
+    localization,
+  });
+
+  return <MaterialReactTable table={table} />;
 }
 
 DatasetSummaryTable.propTypes = {
