@@ -8,14 +8,14 @@ const CARDS = [
   {
     emoji: "🚀",
     title: "Primeros Pasos",
-    desc: "Instalación, inicio rápido y descripción general de la arquitectura",
-    to: "/getting-started/installation",
+    desc: "Descripción general, características y casos de uso de la plataforma",
+    to: "/discover/overview",
   },
   {
     emoji: "📖",
     title: "Tutoriales",
     desc: "Guías paso a paso: cargar datos, entrenar modelos, predecir, explorar",
-    to: "/tutorials/upload-dataset",
+    to: "/learn/tutorials/upload-dataset",
   },
   {
     emoji: "📦",
@@ -27,7 +27,7 @@ const CARDS = [
     emoji: "🔌",
     title: "Desarrollo de Plugins",
     desc: "Crea y publica tus propios componentes para DashAI",
-    to: "/plugin-development/overview",
+    to: "/build/plugin-development/overview",
   },
 ];
 
@@ -47,7 +47,7 @@ export default function Home() {
           <div className="dashai-hero__actions">
             <Link
               className="button button--primary button--lg"
-              to="/getting-started/installation"
+              to="/discover/overview"
             >
               Comenzar →
             </Link>
