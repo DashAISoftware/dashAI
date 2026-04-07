@@ -1,6 +1,5 @@
 // columns related to open details of runs
 import React, { act } from "react";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { IconButton } from "@mui/material";
 import { getRunStatus } from "../../../utils/runStatus";
 
