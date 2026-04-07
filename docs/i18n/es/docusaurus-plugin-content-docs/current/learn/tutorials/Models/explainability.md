@@ -19,7 +19,7 @@ La pestaña está dividida en dos paneles lado a lado:
 
 | Panel                    | Descripción                                                                                                                           |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Global Explainers**    | Analiza el comportamiento del modelo en todo el conjunto de datos — qué características importan más en general.                      |
+| **Global Explainers**    | Analiza el comportamiento del modelo en todo el dataset — qué características importan más en general.                      |
 | **Local Explainers**     | Analiza el comportamiento del modelo en predicciones individuales — por qué el modelo produjo una salida específica para una entrada específica. |
 
 Cada panel muestra una insignia de conteo de los explicadores ya creados, y un botón para añadir uno nuevo.

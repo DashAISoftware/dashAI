@@ -12,9 +12,9 @@ Estos son los conceptos fundamentales que encontrarás a lo largo de DashAI. Cad
 
 ## Conjunto de datos
 
-Un conjunto de datos es la colección de datos con la que trabajas. Generalmente es una tabla estructurada (CSV, Excel, JSON). Todo flujo de trabajo en DashAI comienza cargando un conjunto de datos en el módulo **Datasets**.
+Un dataset es la colección de datos con la que trabajas. Generalmente es una tabla estructurada (CSV, Excel, JSON). Todo flujo de trabajo en DashAI comienza cargando un dataset en el módulo **Datasets**.
 
-Una vez cargado, el conjunto de datos es persistente — permanece en DashAI hasta que lo elimines, y puede utilizarse en múltiples notebooks y sesiones.
+Una vez cargado, el dataset es persistente — permanece en DashAI hasta que lo elimines, y puede utilizarse en múltiples notebooks y sesiones.
 
 :::note
 DashAI incluye cargadores de datos para los formatos más comunes (CSV, Excel, JSON). Puedes [crear cargadores de datos personalizados](/build/plugin-development/overview) para admitir fuentes de datos adicionales e instalarlos mediante el módulo **Plugins**.
@@ -24,9 +24,9 @@ DashAI incluye cargadores de datos para los formatos más comunes (CSV, Excel, J
 
 ## Notebook
 
-Un notebook es un espacio de trabajo no destructivo vinculado a un conjunto de datos. Te permite aplicar una secuencia de **Exploradores** y **Conversores** sobre una copia de trabajo de los datos, mientras el conjunto de datos original permanece sin cambios.
+Un notebook es un espacio de trabajo no destructivo vinculado a un dataset. Te permite aplicar una secuencia de **Exploradores** y **Conversores** sobre una copia de trabajo de los datos, mientras el dataset original permanece sin cambios.
 
-Cada operación que agregas aparece en la línea de tiempo del notebook, por lo que tu proceso de transformación siempre es visible y auditable. Cuando el resultado esté listo, puedes guardarlo como un nuevo conjunto de datos con **Save as New Dataset**.
+Cada operación que agregas aparece en la línea de tiempo del notebook, por lo que tu proceso de transformación siempre es visible y auditable. Cuando el resultado esté listo, puedes guardarlo como un nuevo dataset con **Save as New Dataset**.
 
 ---
 
@@ -44,7 +44,7 @@ También puedes [desarrollar exploradores personalizados](/build/plugin-developm
 
 ## Conversor
 
-Un conversor es una herramienta de transformación de datos en la pestaña **CONVERT** del notebook. Los conversores modifican los datos — codificando categorías, escalando valores numéricos, eliminando valores faltantes, reduciendo dimensionalidad y más. Cada conversor se aplica a un conjunto específico de columnas y filas, y el efecto es inmediatamente visible en la vista previa del conjunto de datos.
+Un conversor es una herramienta de transformación de datos en la pestaña **CONVERT** del notebook. Los conversores modifican los datos — codificando categorías, escalando valores numéricos, eliminando valores faltantes, reduciendo dimensionalidad y más. Cada conversor se aplica a un conjunto específico de columnas y filas, y el efecto es inmediatamente visible en la vista previa del dataset.
 
 DashAI incluye más de 30 conversores organizados en ocho categorías: Preprocesamiento básico, Codificación, Escalado y normalización, Reducción de dimensionalidad, Selección de características, Métodos polinomiales y de kernel, Remuestreo y balanceo de clases, y Preprocesamiento avanzado.
 
@@ -77,9 +77,9 @@ Puedes extender DashAI [desarrollando nuevas tareas](/build/plugin-development/o
 
 ## Sesión
 
-Una sesión es la unidad central de trabajo en el módulo Models. Vincula un conjunto de datos, una tarea, una configuración de columnas (cuáles son entradas y cuál es el objetivo) y una estrategia de división de datos. Todos los modelos que entrenas para ese problema viven dentro de la misma sesión, lo que facilita su comparación.
+Una sesión es la unidad central de trabajo en el módulo Models. Vincula un dataset, una tarea, una configuración de columnas (cuáles son entradas y cuál es el objetivo) y una estrategia de división de datos. Todos los modelos que entrenas para ese problema viven dentro de la misma sesión, lo que facilita su comparación.
 
-Las sesiones se agrupan por tipo de tarea en la barra lateral izquierda. Puedes tener múltiples sesiones para el mismo conjunto de datos — por ejemplo, para explorar distintas combinaciones de columnas de entrada o estrategias de división.
+Las sesiones se agrupan por tipo de tarea en la barra lateral izquierda. Puedes tener múltiples sesiones para el mismo dataset — por ejemplo, para explorar distintas combinaciones de columnas de entrada o estrategias de división.
 
 ---
 
@@ -127,13 +127,13 @@ DashAI incluye un conjunto básico de métricas apropiadas para cada tarea. Si n
 
 ## Predicción
 
-Una predicción es la salida de un modelo entrenado aplicado a nuevos datos. DashAI admite dos modos de predicción: **Predicciones por conjunto de datos** (ejecuta el modelo sobre un conjunto de datos completo cargado) y **Predicciones manuales** (ingresa valores específicos fila por fila en la interfaz).
+Una predicción es la salida de un modelo entrenado aplicado a nuevos datos. DashAI admite dos modos de predicción: **Predicciones por dataset** (ejecuta el modelo sobre un dataset completo cargado) y **Predicciones manuales** (ingresa valores específicos fila por fila en la interfaz).
 
 ---
 
 ## Explicador
 
-Un explicador es una herramienta para interpretar el comportamiento de un modelo entrenado. Los **explicadores globales** analizan el comportamiento del modelo sobre el conjunto de datos completo (p. ej., qué características son más importantes en general). Los **explicadores locales** analizan una predicción específica (p. ej., por qué el modelo produjo este resultado para este registro en particular).
+Un explicador es una herramienta para interpretar el comportamiento de un modelo entrenado. Los **explicadores globales** analizan el comportamiento del modelo sobre el dataset completo (p. ej., qué características son más importantes en general). Los **explicadores locales** analizan una predicción específica (p. ej., por qué el modelo produjo este resultado para este registro en particular).
 
 DashAI proporciona explicadores integrados como Kernel SHAP, Permutation Feature Importance y Partial Dependence Plots.
 

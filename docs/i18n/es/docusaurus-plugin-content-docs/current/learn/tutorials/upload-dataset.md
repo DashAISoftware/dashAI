@@ -1,12 +1,12 @@
 ---
-title: Cargar un conjunto de datos
-sidebar_label: Cargar un conjunto de datos
+title: Cargar un dataset
+sidebar_label: Cargar un dataset
 ---
 
-# Cargar un conjunto de datos
+# Cargar un dataset
 
-Este tutorial te guía a través del proceso de carga de un conjunto de datos en DashAI.
-Cargar un conjunto de datos es siempre el primer paso — una vez cargado, queda disponible
+Este tutorial te guía a través del proceso de carga de un dataset en DashAI.
+Cargar un dataset es siempre el primer paso — una vez cargado, queda disponible
 en toda la plataforma para exploración, preprocesamiento y entrenamiento de modelos.
 
 ## Formatos compatibles
@@ -44,13 +44,13 @@ los parámetros de configuración adecuados para ese formato.
 ### 3. Cargar tu archivo
 
 Una vez seleccionado el dataloader, el botón de carga de archivos se habilita.
-Haz clic en **"Upload a File"** y selecciona tu archivo de conjunto de datos desde tu computadora.
+Haz clic en **"Upload a File"** y selecciona tu archivo de dataset desde tu computadora.
 
-Después de que el archivo sea procesado, DashAI muestra una **Vista previa del conjunto de datos** en el centro de la pantalla.
+Después de que el archivo sea procesado, DashAI muestra una **Vista previa del dataset** en el centro de la pantalla.
 
 ---
 
-### 4. Revisar la vista previa del conjunto de datos
+### 4. Revisar la vista previa del dataset
 
 La tabla de vista previa muestra las primeras 5 filas de una **muestra de 100 filas** tomada de tu archivo.
 Esta muestra es utilizada por DashAI para inferir automáticamente el tipo de datos de cada columna.
@@ -85,7 +85,7 @@ selección de archivo sin perder tu configuración de parámetros actual.
 ### 5. Configurar los parámetros
 
 El panel derecho está dividido en dos secciones: **Type Inference Configuration**
-y **Dataloader Configuration**. Ambas afectan cómo se lee y almacena el conjunto de datos.
+y **Dataloader Configuration**. Ambas afectan cómo se lee y almacena el dataset.
 
 #### Configuración de inferencia de tipos
 
@@ -105,7 +105,7 @@ Los parámetros de esta sección dependen del dataloader que hayas seleccionado.
 
 | Parámetro     | Tipo          | Descripción                                                                                                                                                                                                          |
 | ------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**      | Cadena        | El nombre que identificará este conjunto de datos dentro de DashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                      |
+| **Name**      | Cadena        | El nombre que identificará este dataset dentro de DashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                      |
 | **Separator** | Desplegable   | El carácter que separa los valores de las columnas en tu CSV. El valor predeterminado es `,` (coma). Cambia a `;` (punto y coma) para archivos exportados desde Excel en configuraciones regionales en español o europeas, donde la coma es el separador decimal. |
 | **Header**    | Cadena        | Cómo DashAI identifica la fila que contiene los nombres de las columnas. El valor predeterminado `infer` lo detecta automáticamente (generalmente la primera fila). Establece un número de fila explícito si tu archivo tiene líneas de metadatos antes del encabezado real. |
 | **Names**     | Cadena / Null | Lista opcional de nombres de columna para asignar manualmente, reemplazando los nombres encontrados en el archivo. Deja como `Null` para usar los nombres de columna propios del archivo.                             |
@@ -118,7 +118,7 @@ Los parámetros de esta sección dependen del dataloader que hayas seleccionado.
 
 | Parámetro    | Tipo   | Descripción                                                                                                                                                                                                                                         |
 | ------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**     | Cadena | El nombre que identificará este conjunto de datos dentro de DashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                                                     |
+| **Name**     | Cadena | El nombre que identificará este dataset dentro de DashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                                                     |
 | **Data key** | Cadena | La clave dentro de tu archivo JSON que contiene los registros de datos reales. El valor predeterminado es `data`. Cambia esto para que coincida con la clave de tu archivo donde se encuentran las filas o registros (p. ej., `"results"`, `"records"`, `"items"`). |
 
 :::note Estructura JSON
@@ -133,7 +133,7 @@ Si tus datos están almacenados bajo una clave diferente, establece **Data key**
 
 | Parámetro           | Tipo           | Descripción                                                                                                                                                                                                          |
 | ------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Cadena         | El nombre que identificará este conjunto de datos dentro de DashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                      |
+| **Name**            | Cadena         | El nombre que identificará este dataset dentro de DashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                      |
 | **Sheet**           | Entero         | El índice de la hoja a cargar, comenzando en `0`. El valor predeterminado es `0` (la primera hoja). Cámbialo si tus datos están en una hoja diferente.                                                               |
 | **Header**          | Entero / Null  | El número de fila (indexado desde cero) que contiene los nombres de las columnas. El valor predeterminado es `0` (primera fila). Establece en `Null` si tu archivo no tiene fila de encabezado.                      |
 | **Use columns**     | Cadena / Null  | Especifica qué columnas cargar. Deja como `Null` para cargar todas las columnas. Puedes ingresar una lista separada por comas de nombres o índices de columnas para cargar solo columnas específicas.                |
@@ -154,7 +154,7 @@ definidas explícitamente serán tratadas como faltantes.
 
 ---
 
-### 6. Cargar el conjunto de datos
+### 6. Cargar el dataset
 
 Una vez que hayas revisado los tipos de columna y configurado los parámetros, haz clic en **"UPLOAD"**
 para finalizar el proceso.
@@ -175,13 +175,13 @@ Haz clic en **"BACK"** en cualquier momento para volver al paso anterior sin per
 - Usa el parámetro **N rows** (disponible en algunos dataloaders) para cargar solo una parte
   de un archivo grande mientras pruebas tu configuración.
 - El parámetro **Separator** es la fuente más común de errores de carga de una sola columna
-  en archivos CSV. Si tu conjunto de datos aparece como una columna larga, esto es lo primero que debes verificar.
+  en archivos CSV. Si tu dataset aparece como una columna larga, esto es lo primero que debes verificar.
 
 ## Solución de problemas
 
 | Síntoma                                           | Causa probable                                    | Solución                                                                    |
 | ------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------- |
-| El conjunto de datos se carga como una sola columna | Separador incorrecto seleccionado (CSV)          | Haz clic en **RE-UPLOAD DATASET** y establece el separador correcto         |
+| El dataset se carga como una sola columna | Separador incorrecto seleccionado (CSV)          | Haz clic en **RE-UPLOAD DATASET** y establece el separador correcto         |
 | Una columna numérica aparece como `Categorical`   | La columna contiene caracteres no numéricos       | Corrige el archivo fuente y vuelve a cargarlo                               |
 | Los caracteres especiales aparecen distorsionados | Codificación incorrecta (CSV)                     | Cambia **Encoding** a `latin-1` o `ISO-8859-1`                              |
 | Los nombres de columna son incorrectos o faltan   | La fila de encabezado no está en la posición esperada | Ajusta el parámetro **Header** al índice de fila correcto               |

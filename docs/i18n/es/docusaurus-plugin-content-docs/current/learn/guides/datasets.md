@@ -6,15 +6,15 @@ sidebar_position: 1
 
 # Guía del Módulo: Conjuntos de Datos
 
-El módulo de Conjuntos de Datos es el punto de entrada para todos los datos en DashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un conjunto de datos esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
+El módulo de Conjuntos de Datos es el punto de entrada para todos los datos en DashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
 
 ---
 
 ## La Interfaz del Módulo de Conjuntos de Datos
 
-La barra lateral izquierda lista todos los conjuntos de datos y notebooks disponibles. Cada entrada de conjunto de datos muestra su nombre, cantidad de filas y cantidad de columnas de un vistazo. Al hacer clic en un conjunto de datos se abre su vista completa en el área principal.
+La barra lateral izquierda lista todos los conjuntos de datos y notebooks disponibles. Cada entrada de dataset muestra su nombre, cantidad de filas y cantidad de columnas de un vistazo. Al hacer clic en un dataset se abre su vista completa en el área principal.
 
-El botón **Nuevo Conjunto de Datos/Notebook** en la parte superior de la barra lateral es el punto de entrada tanto para cargar un nuevo conjunto de datos como para crear un nuevo notebook vinculado a uno existente.
+El botón **Nuevo Conjunto de Datos/Notebook** en la parte superior de la barra lateral es el punto de entrada tanto para cargar un nuevo dataset como para crear un nuevo notebook vinculado a uno existente.
 
 ---
 
@@ -42,7 +42,7 @@ Puedes sobrescribir cualquier tipo inferido directamente en la vista previa de c
 
 | Parámetro  | Por defecto | Descripción                                                                                                                           |
 | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Nombre     | nombre del archivo | Nombre para mostrar del conjunto de datos dentro de DashAI                                                                   |
+| Nombre     | nombre del archivo | Nombre para mostrar del dataset dentro de DashAI                                                                   |
 | Separador  | `,`         | Carácter que separa los valores de columna. Usa `;` para exportaciones de Excel con configuración regional europea                    |
 | Encabezado | `infer`     | Fila que contiene los nombres de las columnas. `infer` detecta automáticamente; establece un número para archivos con filas de metadatos antes del encabezado |
 | Nombres    | Null        | Sobrescribir los nombres de columnas manualmente                                                                                      |
@@ -77,11 +77,11 @@ El JSONDataLoader espera una estructura como `{ "data": [{...}, {...}] }`. Cambi
 
 ## Explorador de Conjuntos de Datos (EDA)
 
-Al hacer clic en un conjunto de datos se abre su panel EDA integrado — un conjunto de análisis automáticos que se ejecutan de inmediato sin ninguna configuración. El panel está organizado en seis pestañas.
+Al hacer clic en un dataset se abre su panel EDA integrado — un conjunto de análisis automáticos que se ejecutan de inmediato sin ninguna configuración. El panel está organizado en seis pestañas.
 
 ### Puntuación de Calidad
 
-Un porcentaje que se muestra en la parte superior derecha de cada vista de conjunto de datos. Refleja la ausencia de problemas estructurales de calidad de datos. Una puntuación del 100% significa que no se detectaron columnas constantes, problemas de alta cardinalidad ni posibles columnas ID. Cualquier puntuación por debajo del 100% significa que la pestaña **Calidad de Datos** tiene hallazgos que vale la pena revisar antes del entrenamiento.
+Un porcentaje que se muestra en la parte superior derecha de cada vista de dataset. Refleja la ausencia de problemas estructurales de calidad de datos. Una puntuación del 100% significa que no se detectaron columnas constantes, problemas de alta cardinalidad ni posibles columnas ID. Cualquier puntuación por debajo del 100% significa que la pestaña **Calidad de Datos** tiene hallazgos que vale la pena revisar antes del entrenamiento.
 
 ### Pestaña de Descripción General
 
@@ -92,7 +92,7 @@ Muestra una tabla de **Vista Previa del Conjunto de Datos** con las filas de dat
 - **DENSIDAD** — alternar la altura de fila entre compacta y cómoda
 - **EXPORTAR** — descargar la vista actual
 
-Las cinco tarjetas de resumen en la parte superior de cada vista de conjunto de datos ofrecen un chequeo inmediato de salud: Total de Filas, Total de Columnas, Tamaño del Archivo (MB), Filas Duplicadas y Valores Faltantes. Los valores distintos de cero en Filas Duplicadas o Valores Faltantes indican que puede ser necesario trabajar en la calidad de datos antes del entrenamiento.
+Las cinco tarjetas de resumen en la parte superior de cada vista de dataset ofrecen un chequeo inmediato de salud: Total de Filas, Total de Columnas, Tamaño del Archivo (MB), Filas Duplicadas y Valores Faltantes. Los valores distintos de cero en Filas Duplicadas o Valores Faltantes indican que puede ser necesario trabajar en la calidad de datos antes del entrenamiento.
 
 ### Pestaña de Análisis Numérico
 
@@ -128,7 +128,7 @@ Una distribución muy desequilibrada (donde una categoría domina) en tu columna
 
 Activa solo cuando existen columnas de tipo texto. Muestra estadísticas basadas en longitud por columna: Longitud Promedio, Longitud Mediana, Promedio de Palabras, Valores Únicos, Longitud Mínima/Máxima, Rango.
 
-Aparece una **advertencia de baja unicidad** cuando una columna de texto tiene muy pocos valores distintos — esto generalmente significa que la columna fue clasificada incorrectamente como texto y debería ser `Categorical`. Corregir esto a nivel del conjunto de datos (volviendo a cargar el archivo) evita problemas posteriores.
+Aparece una **advertencia de baja unicidad** cuando una columna de texto tiene muy pocos valores distintos — esto generalmente significa que la columna fue clasificada incorrectamente como texto y debería ser `Categorical`. Corregir esto a nivel del dataset (volviendo a cargar el archivo) evita problemas posteriores.
 
 ### Pestaña de Calidad de Datos
 
@@ -152,9 +152,9 @@ Las **Correlaciones Fuertes (|r| > 0.5)** se listan por separado — estas son l
 
 ## Notebooks
 
-Los Notebooks son espacios de trabajo no destructivos vinculados a un conjunto de datos. Permiten aplicar secuencias de **Exploradores** (visualizaciones) y **Convertidores** (transformaciones) a una copia de trabajo de los datos, previsualizar el efecto de cada operación en tiempo real y guardar el resultado como un nuevo conjunto de datos.
+Los Notebooks son espacios de trabajo no destructivos vinculados a un dataset. Permiten aplicar secuencias de **Exploradores** (visualizaciones) y **Convertidores** (transformaciones) a una copia de trabajo de los datos, previsualizar el efecto de cada operación en tiempo real y guardar el resultado como un nuevo dataset.
 
-El conjunto de datos original nunca se modifica. Todos los cambios están aislados en la copia de trabajo del notebook hasta que guardes explícitamente.
+El dataset original nunca se modifica. Todos los cambios están aislados en la copia de trabajo del notebook hasta que guardes explícitamente.
 
 ### Herramientas de Explorador (pestaña EXPLORAR)
 
@@ -172,7 +172,7 @@ Cada explorador tiene una configuración de dos pasos: primero seleccionar qué 
 
 ### Herramientas de Convertidor (pestaña CONVERTIR)
 
-Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configurable de columnas y filas, y la vista previa del conjunto de datos se actualiza inmediatamente después de que cada convertidor se ejecuta. Los convertidores disponibles están organizados en ocho categorías:
+Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configurable de columnas y filas, y la vista previa del dataset se actualiza inmediatamente después de que cada convertidor se ejecuta. Los convertidores disponibles están organizados en ocho categorías:
 
 **Preprocesamiento Básico**
 
@@ -182,7 +182,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 | `Simple Imputer`     | Rellena valores faltantes con media, mediana, más frecuente o una constante  |
 | `KNN Imputer`        | Rellena valores faltantes usando k-vecinos más cercanos                      |
 | `Missing Indicator`  | Agrega columnas binarias que marcan qué valores faltaban                     |
-| `Column Remover`     | Elimina completamente las columnas seleccionadas del conjunto de datos        |
+| `Column Remover`     | Elimina completamente las columnas seleccionadas del dataset        |
 | `Character Replacer` | Reemplaza caracteres o cadenas específicas en columnas de texto              |
 
 **Codificación**
@@ -240,7 +240,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 | ---------------------- | ------------------------------------------------------------------------------- |
 | `SMOTE`                | Genera registros sintéticos de la clase minoritaria por interpolación           |
 | `SMOTE-ENN`            | SMOTE seguido de limpieza por Vecinos Editados más Cercanos                     |
-| `Random Under-Sampler` | Elimina aleatoriamente registros de la clase mayoritaria para balancear el conjunto de datos |
+| `Random Under-Sampler` | Elimina aleatoriamente registros de la clase mayoritaria para balancear el dataset |
 
 **Preprocesamiento Avanzado**
 
@@ -253,7 +253,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 
 ### Guardar un Conjunto de Datos Transformado
 
-Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARDAR COMO NUEVO CONJUNTO DE DATOS**. Esto crea un nuevo conjunto de datos independiente en DashAI con los datos en su estado actual. El nuevo conjunto de datos está disponible inmediatamente para experimentos sin afectar el conjunto de datos fuente.
+Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARDAR COMO NUEVO CONJUNTO DE DATOS**. Esto crea un nuevo dataset independiente en DashAI con los datos en su estado actual. El nuevo dataset está disponible inmediatamente para experimentos sin afectar el dataset fuente.
 
 ---
 
@@ -262,5 +262,5 @@ Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARD
 - Usa la **Puntuación de Calidad** como verificación de salud de primera pasada antes de hacer cualquier análisis. Una puntuación por debajo del 100% siempre tiene una causa específica visible en la pestaña de Calidad de Datos.
 - Las **Alertas Inteligentes** en el Análisis Numérico son sugerencias priorizadas — abórdalas con el convertidor de Notebook correspondiente antes del entrenamiento para mejorar el rendimiento del modelo.
 - Construye pipelines de transformación en Notebooks de forma incremental: agrega un convertidor a la vez y verifica la vista previa antes de agregar el siguiente.
-- Los convertidores de remuestreo (SMOTE, RandomUnderSampler) solo deben aplicarse a la partición de entrenamiento, no al conjunto de datos completo — ten esto en cuenta al guardar un conjunto de datos transformado para usar en experimentos.
+- Los convertidores de remuestreo (SMOTE, RandomUnderSampler) solo deben aplicarse a la partición de entrenamiento, no al dataset completo — ten esto en cuenta al guardar un dataset transformado para usar en experimentos.
 - Para datos de texto, aplica **TF-IDF** o **Bag of Words** cuando trabajes con modelos de ML tradicionales (Regresión Logística, SVM, Random Forest). Los modelos neuronales que aceptan texto sin procesar (como DistilBERT) no requieren estos pasos de preprocesamiento.

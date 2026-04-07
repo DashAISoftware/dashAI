@@ -25,9 +25,9 @@ Una tarea define el tipo de problema de aprendizaje automático. Determina qué 
 
 ### Sesiones
 
-Una sesión une un conjunto de datos, una configuración de tarea (columnas de entrada/salida, división de datos) y todos los modelos entrenados dentro de ese contexto. Las sesiones son persistentes — cerrar DashAI y volver a abrirlo te regresa al mismo estado.
+Una sesión une un dataset, una configuración de tarea (columnas de entrada/salida, división de datos) y todos los modelos entrenados dentro de ese contexto. Las sesiones son persistentes — cerrar DashAI y volver a abrirlo te regresa al mismo estado.
 
-La barra lateral izquierda organiza las sesiones por tipo de tarea. Cada entrada de sesión muestra su nombre y el conjunto de datos desde el que fue creada. Puedes mantener múltiples sesiones para el mismo conjunto de datos y tarea para explorar diferentes configuraciones de columnas o estrategias de división.
+La barra lateral izquierda organiza las sesiones por tipo de tarea. Cada entrada de sesión muestra su nombre y el dataset desde el que fue creada. Puedes mantener múltiples sesiones para el mismo dataset y tarea para explorar diferentes configuraciones de columnas o estrategias de división.
 
 ### Divisiones de Datos
 
@@ -35,7 +35,7 @@ DashAI admite tres estrategias de división:
 
 | Estrategia                       | Cuándo usarla                                                                   |
 | -------------------------------- | ------------------------------------------------------------------------------- |
-| **Predefinida**                  | El conjunto de datos ya contiene la estructura tren/prueba/validación desde el origen |
+| **Predefinida**                  | El dataset ya contiene la estructura tren/prueba/validación desde el origen |
 | **Aleatoria por proporción**     | División estándar usando proporciones configurables (por defecto: 60/20/20)      |
 | **Manual por índices de filas**  | Control total sobre qué filas van a cada subconjunto                            |
 
@@ -196,9 +196,9 @@ Después del entrenamiento, cada modelo puede generar predicciones en dos modos,
 
 ### Predicciones sobre Conjunto de Datos
 
-Ejecuta el modelo contra un conjunto de datos completo cargado en DashAI. Útil para puntuación por lotes — aplicar el modelo a un conjunto de validación, un conjunto de retención o nuevos datos entrantes.
+Ejecuta el modelo contra un dataset completo cargado en DashAI. Útil para puntuación por lotes — aplicar el modelo a un conjunto de validación, un conjunto de retención o nuevos datos entrantes.
 
-El modal muestra una vista previa del conjunto de datos seleccionado con sus columnas de entrada y columna objetivo resaltadas, para que puedas verificar la compatibilidad antes de enviar. Los resultados están disponibles como vista previa en línea (primeras 100 filas) y como descarga CSV completa.
+El modal muestra una vista previa del dataset seleccionado con sus columnas de entrada y columna objetivo resaltadas, para que puedas verificar la compatibilidad antes de enviar. Los resultados están disponibles como vista previa en línea (primeras 100 filas) y como descarga CSV completa.
 
 ### Predicciones Manuales
 
@@ -218,11 +218,11 @@ La pestaña **EXPLICABILIDAD** de cada modelo entrenado proporciona herramientas
 
 ### Explicadores Globales
 
-Analizan el comportamiento del modelo en todo el conjunto de datos — qué características importan más en general y cómo se relacionan con la salida del modelo.
+Analizan el comportamiento del modelo en todo el dataset — qué características importan más en general y cómo se relacionan con la salida del modelo.
 
 | Explicador                         | Qué produce                                                                                               |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Kernel SHAP**                    | Valores SHAP para cada característica — cuantifica la contribución de cada característica a las predicciones en todo el conjunto de datos |
+| **Kernel SHAP**                    | Valores SHAP para cada característica — cuantifica la contribución de cada característica a las predicciones en todo el dataset |
 | **Permutation Feature Importance** | Clasifica las características según cuánto disminuye el rendimiento del modelo cuando cada característica se mezcla aleatoriamente |
 | **Partial Dependence**             | Muestra el efecto marginal de una o dos características en el resultado predicho                          |
 

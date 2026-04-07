@@ -8,7 +8,7 @@ sidebar_position: 4
 
 ## ¿Qué Son los Tipos Semánticos?
 
-Cuando se carga un conjunto de datos, DashAI asigna un **tipo semántico** a cada columna. Los tipos semánticos van más allá de los formatos de almacenamiento en bruto (p. ej., `int32` o `string` de PyArrow) para expresar la naturaleza significativa de los datos para el ML: ¿es esta columna una medida continua, una etiqueta discreta, un texto libre, una fecha?
+Cuando se carga un dataset, DashAI asigna un **tipo semántico** a cada columna. Los tipos semánticos van más allá de los formatos de almacenamiento en bruto (p. ej., `int32` o `string` de PyArrow) para expresar la naturaleza significativa de los datos para el ML: ¿es esta columna una medida continua, una etiqueta discreta, un texto libre, una fecha?
 
 Esta clasificación impulsa tres comportamientos críticos en toda la plataforma:
 
@@ -73,7 +73,7 @@ Los tipos `DashAIValue` representan medidas continuas u ordenadas. `Categorical`
 
 ## Inferencia de Tipos
 
-Los tipos se asignan automáticamente cuando se carga un conjunto de datos. DashAI soporta dos métodos de inferencia, seleccionables al momento de la carga.
+Los tipos se asignan automáticamente cuando se carga un dataset. DashAI soporta dos métodos de inferencia, seleccionables al momento de la carga.
 
 ### Primario: `DashAIPtype`
 
@@ -111,10 +111,10 @@ Una heurística ligera utilizada cuando ptype no está disponible:
 
 ## Persistencia de Tipos
 
-Los tipos semánticos se serializan en los **metadatos de la tabla Apache Arrow** bajo la clave `dashai_types` y se almacenan junto al archivo Arrow IPC del conjunto de datos. Esto significa:
+Los tipos semánticos se serializan en los **metadatos de la tabla Apache Arrow** bajo la clave `dashai_types` y se almacenan junto al archivo Arrow IPC del dataset. Esto significa:
 
 - Los tipos sobreviven a ciclos de guardado/carga sin necesidad de re-inferencia.
-- Los Notebooks heredan los tipos de su conjunto de datos fuente.
+- Los Notebooks heredan los tipos de su dataset fuente.
 - Los conversores que cambian el tipo de una columna actualizan los metadatos en el lugar.
 
 Las utilidades relevantes son `save_types_in_arrow_metadata()` y `get_types_from_arrow_metadata()` en `DashAI/back/types/utils.py`.

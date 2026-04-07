@@ -9,7 +9,7 @@ Este ejemplo recorre el proceso completo de entrenamiento de un modelo de clasif
 
 ### Paso 1: Crear una Sesión de Modelo
 
-El usuario selecciona un conjunto de datos, una tarea, columnas de entrada/salida, métricas y divisiones de datos en el frontend. El frontend envía:
+El usuario selecciona un dataset, una tarea, columnas de entrada/salida, métricas y divisiones de datos en el frontend. El frontend envía:
 
 ```
 POST /api/v1/model-session/
@@ -65,7 +65,7 @@ La API instancia un `ModelJob` con el `run_id` dado, llama a `job_queue.put(job)
 El consumidor Huey recoge el `ModelJob` y llama a `job.run()`. Dentro de `run()`:
 
 1. Cargar los registros `Run`, `ModelSession` y `Dataset` desde la base de datos.
-2. Cargar el conjunto de datos desde su archivo Arrow.
+2. Cargar el dataset desde su archivo Arrow.
 3. Instanciar la clase `Task` (p. ej., `TextClassification`) y llamar a `prepare_for_task()` para validar y formatear los datos.
 4. Dividir los datos en subconjuntos de entrenamiento/validación/test según las proporciones de división de la sesión.
 5. Instanciar la clase `Model` (p. ej., `DistilBertTransformer`) con los parámetros del usuario mediante `validate_and_transform()`.
@@ -92,7 +92,7 @@ El frontend muestra las métricas y cualquier visualización de optimización al
 
 ## Crear un Gráfico para un Conjunto de Datos
 
-Este ejemplo muestra cómo un usuario crea una exploración de gráfico de dispersión para un conjunto de datos.
+Este ejemplo muestra cómo un usuario crea una exploración de gráfico de dispersión para un dataset.
 
 ### Paso 1: Seleccionar un Explorador
 
@@ -135,7 +135,7 @@ Esto crea un registro `Explorer` en la base de datos y encola un `ExplorerJob`.
 
 El consumidor Huey recoge el `ExplorerJob` y llama a `job.run()`:
 
-1. Cargar el registro `Explorer` y el conjunto de datos asociado.
+1. Cargar el registro `Explorer` y el dataset asociado.
 2. Instanciar el componente `ScatterPlotExplorer`.
 3. Llamar a `explorer.launch_exploration(dataset, explorer_info)`, que genera la visualización.
 4. Llamar a `explorer.save_notebook()` para persistir la exploración como un notebook.

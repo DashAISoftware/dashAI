@@ -19,7 +19,7 @@ La pestaña está dividida en dos secciones:
 
 | Sección                     | Descripción                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------- |
-| **Dataset Predictions**     | Ejecuta el modelo contra un conjunto de datos completo cargado en DashAI.       |
+| **Dataset Predictions**     | Ejecuta el modelo contra un dataset completo cargado en DashAI.       |
 | **Manual Predictions**      | Ingresa una o más filas de datos manualmente y obtén una predicción de inmediato. |
 
 Cada sección muestra una insignia de conteo con el número de predicciones ya creadas, y un botón para añadir una nueva.
@@ -28,7 +28,7 @@ Cada sección muestra una insignia de conteo con el número de predicciones ya c
 
 ## Predicciones de Dataset
 
-Usa este modo cuando deseas aplicar el modelo a un conjunto de datos completo — por ejemplo, para generar predicciones para un conjunto de prueba o un nuevo lote de registros.
+Usa este modo cuando deseas aplicar el modelo a un dataset completo — por ejemplo, para generar predicciones para un conjunto de prueba o un nuevo lote de registros.
 
 ### Crear una Predicción de Dataset
 

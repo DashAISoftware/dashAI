@@ -5,12 +5,12 @@ sidebar_label: Notebooks
 
 # Notebooks
 
-Un Notebook es el espacio de trabajo interactivo de DashAI para explorar y transformar un conjunto de datos.
+Un Notebook es el espacio de trabajo interactivo de DashAI para explorar y transformar un dataset.
 Proporciona un entorno en vivo y temporal donde puedes aplicar herramientas de análisis y
 transformaciones de datos, observar su efecto en los datos en tiempo real, y registrar cada operación
-como una línea de tiempo secuencial — sin modificar el conjunto de datos original hasta que decidas guardar.
+como una línea de tiempo secuencial — sin modificar el dataset original hasta que decidas guardar.
 
-Cuando estés satisfecho con el resultado, puedes guardar todo el proceso como un nuevo conjunto de datos,
+Cuando estés satisfecho con el resultado, puedes guardar todo el proceso como un nuevo dataset,
 preservando los datos originales intactos.
 
 ---
@@ -18,27 +18,27 @@ preservando los datos originales intactos.
 ## Conceptos clave
 
 - **No destructivo por defecto.** Todas las operaciones en un notebook se ejecutan en una copia de trabajo del
-  conjunto de datos. El conjunto de datos original nunca se modifica.
-- **Vista previa en vivo.** Cada vez que agregas un Explorer o un Converter, la vista previa del conjunto de datos
+  dataset. El dataset original nunca se modifica.
+- **Vista previa en vivo.** Cada vez que agregas un Explorer o un Converter, la vista previa del dataset
   se actualiza inmediatamente para reflejar el estado actual de los datos.
 - **Línea de tiempo.** Cada operación se agrega en línea debajo de la vista previa de datos, formando un
   registro secuencial de cada transformación aplicada.
 - **Guardar cuando estés listo.** Una vez que tus transformaciones estén completas, puedes guardar el estado
-  actual del notebook como un nuevo conjunto de datos independiente.
+  actual del notebook como un nuevo dataset independiente.
 
 ---
 
 ## Acceder a los Notebooks
 
-Los Notebooks están vinculados a un conjunto de datos específico. Hay dos formas de abrir uno:
+Los Notebooks están vinculados a un dataset específico. Hay dos formas de abrir uno:
 
 - **Desde el Dataset Explorer:** haz clic en el botón **NEW NOTEBOOK** en la esquina superior derecha
-  de cualquier vista de conjunto de datos. Esto crea un nuevo notebook asociado con ese conjunto de datos.
+  de cualquier vista de dataset. Esto crea un nuevo notebook asociado con ese dataset.
 - **Desde la barra lateral izquierda:** en la sección **Notebooks**, haz clic en cualquier notebook existente
-  para volver a abrirlo. Cada entrada de notebook muestra el nombre del conjunto de datos al que pertenece.
+  para volver a abrirlo. Cada entrada de notebook muestra el nombre del dataset al que pertenece.
 
-La barra lateral agrupa los notebooks bajo su conjunto de datos padre, por lo que puedes mantener múltiples
-sesiones de trabajo independientes para el mismo conjunto de datos.
+La barra lateral agrupa los notebooks bajo su dataset padre, por lo que puedes mantener múltiples
+sesiones de trabajo independientes para el mismo dataset.
 
 ---
 
@@ -46,15 +46,15 @@ sesiones de trabajo independientes para el mismo conjunto de datos.
 
 Cuando un notebook está abierto, la pantalla se divide en dos áreas:
 
-### Área principal — Vista previa del conjunto de datos y línea de tiempo
+### Área principal — Vista previa del dataset y línea de tiempo
 
 El área central muestra:
 
-- **Título del notebook** — se muestra como `Notebook: [Nombre del conjunto de datos]` en la parte superior.
+- **Título del notebook** — se muestra como `Notebook: [Nombre del dataset]` en la parte superior.
 - **Barra de herramientas** — dos controles disponibles en todo momento:
   - **FILTERS** — aplica filtros a nivel de fila para enfocar la vista previa en un subconjunto de los datos.
-  - **EXPORT** — descarga el estado actual de la vista previa del conjunto de datos.
-- **Tabla de vista previa del conjunto de datos** — una vista paginada y desplazable del conjunto de datos en su estado
+  - **EXPORT** — descarga el estado actual de la vista previa del dataset.
+- **Tabla de vista previa del dataset** — una vista paginada y desplazable del dataset en su estado
   actual. Los nombres de columna y sus tipos se muestran como sub-encabezados. A medida que agregas Converters,
   los valores de esta tabla se actualizan para reflejar cada transformación.
 - **Línea de tiempo de operaciones** — cada Explorer o Converter que agregues aparece como un bloque debajo
@@ -104,7 +104,7 @@ Usa la barra de búsqueda en la parte superior del panel para filtrar herramient
 
 ## Explorers
 
-Los Explorers son herramientas de análisis. Leen el estado actual del conjunto de datos y generan
+Los Explorers son herramientas de análisis. Leen el estado actual del dataset y generan
 una visualización o un resumen estadístico en línea en la línea de tiempo del notebook. No
 modifican los datos.
 
@@ -125,7 +125,7 @@ El modal de configuración tiene dos pasos, mostrados como un indicador de progr
 El modal también tiene dos pestañas internas: **DESCRIPTION** y **DATASET**.
 
 - **DESCRIPTION** muestra qué hace la herramienta y su configuración de alcance.
-- **DATASET** muestra una vista previa del conjunto de datos como referencia durante la configuración.
+- **DATASET** muestra una vista previa del dataset como referencia durante la configuración.
 
 **Paso 1 — Configurar el alcance**
 
@@ -135,7 +135,7 @@ La tabla de selector de columnas muestra:
 
 | Columna        | Descripción                                                                  |
 | -------------- | ---------------------------------------------------------------------------- |
-| Index          | La posición de la columna en el conjunto de datos (basada en cero).          |
+| Index          | La posición de la columna en el dataset (basada en cero).          |
 | Column Name    | El nombre de la columna.                                                     |
 | Value Type     | El tipo semántico asignado en DashAI (Categorical, Float, Integer).          |
 | Data Type      | El tipo de datos subyacente (float64, string, int64, etc.).                  |
@@ -180,7 +180,7 @@ El encabezado del bloque muestra:
 ## Converters
 
 Los Converters son herramientas de transformación. Modifican los datos en la copia de trabajo del notebook,
-y su efecto se refleja inmediatamente en la tabla de vista previa del conjunto de datos arriba.
+y su efecto se refleja inmediatamente en la tabla de vista previa del dataset arriba.
 
 Usa los Converters para preparar tus datos para el entrenamiento de modelos: codifica variables categóricas,
 escala columnas numéricas, maneja valores faltantes y más.
@@ -216,7 +216,7 @@ procesará el Converter:
 | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | **By Range**   | Selecciona filas especificando un índice de inicio y un índice de fin. El converter procesará todas las filas en ese rango. |
 | **By Indices** | Selecciona índices de filas específicos para procesar.                                                                   |
-| **SELECT ALL** | Botón que selecciona todas las filas del conjunto de datos. El pie de página muestra el conteo: `Rows selected: all \| Total rows: N`. |
+| **SELECT ALL** | Botón que selecciona todas las filas del dataset. El pie de página muestra el conteo: `Rows selected: all \| Total rows: N`. |
 
 Haz clic en **NEXT** una vez que el alcance esté configurado.
 
@@ -234,7 +234,7 @@ o en **CREATE CONVERTER** para aplicar la transformación.
 ### Resultado del Converter
 
 Una vez creado, el Converter aparece como un bloque en la línea de tiempo y la tabla de vista previa del
-conjunto de datos se actualiza inmediatamente para reflejar la transformación.
+dataset se actualiza inmediatamente para reflejar la transformación.
 
 El bloque muestra una tabla resumen con:
 
@@ -291,14 +291,14 @@ La pestaña CONVERT organiza las herramientas en ocho categorías:
 Cuando estés satisfecho con las transformaciones aplicadas en el notebook, haz clic en
 **SAVE AS NEW DATASET** en la esquina superior derecha del notebook.
 
-Esto crea un nuevo conjunto de datos independiente en DashAI que contiene los datos en su
-estado transformado actual. El nuevo conjunto de datos aparece en la lista de **Available Datasets**
-en la barra lateral izquierda y puede usarse para experimentos igual que cualquier conjunto de datos cargado.
+Esto crea un nuevo dataset independiente en DashAI que contiene los datos en su
+estado transformado actual. El nuevo dataset aparece en la lista de **Available Datasets**
+en la barra lateral izquierda y puede usarse para experimentos igual que cualquier dataset cargado.
 
-El conjunto de datos original en el que se basó el notebook permanece sin cambios.
+El dataset original en el que se basó el notebook permanece sin cambios.
 
 :::tip Cuándo guardar
-Guarda un nuevo conjunto de datos cuando tengas un pipeline de transformación estable y reproducible
+Guarda un nuevo dataset cuando tengas un pipeline de transformación estable y reproducible
 que quieras usar para el entrenamiento. Puedes crear múltiples conjuntos de datos desde el mismo
 notebook guardando en diferentes puntos de la línea de tiempo.
 :::
@@ -323,5 +323,5 @@ notebook guardando en diferentes puntos de la línea de tiempo.
 | El botón NEXT no está activo en el Paso 1                 | No hay suficientes columnas seleccionadas | Verifica el contador de columnas requeridas y selecciona el mínimo requerido             |
 | El resultado del Explorer no aparece                      | Error de procesamiento                  | Verifica el bloque de la línea de tiempo para ver el estado de error y revisa la configuración de parámetros |
 | El Converter no cambió los datos como se esperaba         | Columnas o filas incorrectas en el alcance | Haz clic en **Información/Editar** en el bloque y revisa la configuración del alcance   |
-| La vista previa del conjunto de datos se ve incorrecta después de un Converter | Operaciones aplicadas en orden incorrecto | Revisa el orden de la línea de tiempo; elimina y vuelve a agregar operaciones si es necesario |
+| La vista previa del dataset se ve incorrecta después de un Converter | Operaciones aplicadas en orden incorrecto | Revisa el orden de la línea de tiempo; elimina y vuelve a agregar operaciones si es necesario |
 | SAVE AS NEW DATASET no está disponible                    | Aún no se han agregado operaciones      | Agrega al menos un Explorer o Converter antes de guardar                                   |

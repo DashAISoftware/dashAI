@@ -16,9 +16,9 @@ Esto significa que mantienes el control sobre cada decisión: qué datos utiliza
 
 Todo el trabajo en DashAI sigue un ciclo iterativo:
 
-1. **Cargar** — Sube tu conjunto de datos y deja que DashAI lo perfile automáticamente
+1. **Cargar** — Sube tu dataset y deja que DashAI lo perfile automáticamente
 2. **Explorar** — Comprende la estructura, distribuciones y calidad de tus datos a través del panel de EDA integrado y los exploradores del Notebook
-3. **Preparar** — Aplica transformaciones en el espacio de trabajo del Notebook — codificación, escalado, imputación, selección de características — y guarda el resultado como un conjunto de datos limpio
+3. **Preparar** — Aplica transformaciones en el espacio de trabajo del Notebook — codificación, escalado, imputación, selección de características — y guarda el resultado como un dataset limpio
 4. **Modelar** — Crea una sesión, agrega uno o más modelos, configura sus parámetros y entrena
 5. **Evaluar** — Compara los resultados de los modelos usando métricas, gráficos y herramientas de explicabilidad
 6. **Iterar** — Usa lo que observas para ajustar la preparación de datos, la selección de modelos o los parámetros en el siguiente ciclo

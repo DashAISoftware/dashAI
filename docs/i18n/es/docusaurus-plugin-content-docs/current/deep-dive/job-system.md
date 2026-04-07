@@ -76,7 +76,7 @@ class BaseJob(metaclass=ABCMeta):
 | `ExplorerJob`    | Ejecutar una exploración/visualización de datos           |
 | `ExplainerJob`   | Generar explicaciones del modelo (SHAP, etc.)             |
 | `PredictJob`     | Ejecutar predicciones sobre nuevos datos                  |
-| `ConverterJob`   | Aplicar transformaciones de datos al conjunto de datos de un Notebook |
+| `ConverterJob`   | Aplicar transformaciones de datos al dataset de un Notebook |
 | `GenerativeJob`  | Manejar interacciones con modelos generativos             |
 | `DatasetJob`     | Cargar y procesar conjuntos de datos                      |
 

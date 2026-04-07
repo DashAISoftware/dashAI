@@ -3,16 +3,16 @@ title: Notebook
 sidebar_label: Notebook
 ---
 
-Un **Notebook** es una sesión de trabajo que permite a los usuarios interactuar con un conjunto de datos sin modificar los datos originales.
+Un **Notebook** es una sesión de trabajo que permite a los usuarios interactuar con un dataset sin modificar los datos originales.
 
 ## ¿Qué es un Notebook?
 
-Cuando se crea un Notebook a partir de un conjunto de datos, DashAI realiza una **copia mutable** del conjunto de datos original. El registro `Dataset` fuente nunca se modifica. Dentro de un Notebook, los usuarios pueden:
+Cuando se crea un Notebook a partir de un dataset, DashAI realiza una **copia mutable** del dataset original. El registro `Dataset` fuente nunca se modifica. Dentro de un Notebook, los usuarios pueden:
 
 - Ejecutar **Exploradores** (gráficos de dispersión, histogramas, diagramas de caja) para visualizar los datos.
-- Aplicar **Conversores** (StandardScaler, PCA, SMOTE, etc.) para transformar la copia del conjunto de datos.
+- Aplicar **Conversores** (StandardScaler, PCA, SMOTE, etc.) para transformar la copia del dataset.
 - **Revertir** cualquier conversor para restaurar un estado anterior.
-- **Guardar** el conjunto de datos modificado como un nuevo registro `Dataset` disponible para el entrenamiento de modelos.
+- **Guardar** el dataset modificado como un nuevo registro `Dataset` disponible para el entrenamiento de modelos.
 
 ## Representación en la Base de Datos
 

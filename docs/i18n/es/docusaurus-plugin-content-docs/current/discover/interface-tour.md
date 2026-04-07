@@ -29,7 +29,7 @@ El **selector de idioma** (junto al ícono de globo) cambia el idioma de la inte
 
 El contenido de la barra lateral cambia según el módulo en el que te encuentres.
 
-**En Datasets:** Muestra los **conjuntos de datos disponibles** (con recuentos de filas y columnas) y los **Notebooks** (agrupados bajo su conjunto de datos padre). Una barra de búsqueda filtra ambos. El botón **New Dataset/Notebook** en la parte superior inicia el flujo de carga o creación de notebooks.
+**En Datasets:** Muestra los **conjuntos de datos disponibles** (con recuentos de filas y columnas) y los **Notebooks** (agrupados bajo su dataset padre). Una barra de búsqueda filtra ambos. El botón **New Dataset/Notebook** en la parte superior inicia el flujo de carga o creación de notebooks.
 
 **En Models:** Muestra los **conjuntos de datos disponibles** y las **sesiones** agrupadas por tipo de tarea. Una barra de búsqueda filtra conjuntos de datos y sesiones. El botón **New Session** crea una nueva sesión.
 
@@ -41,11 +41,11 @@ El contenido de la barra lateral cambia según el módulo en el que te encuentre
 
 El área de contenido central cambia según lo que hayas seleccionado.
 
-### Datasets — Vista del conjunto de datos
+### Datasets — Vista del dataset
 
-Cuando haces clic en un conjunto de datos en la barra lateral, el área principal muestra el panel de EDA del conjunto de datos:
+Cuando haces clic en un dataset en la barra lateral, el área principal muestra el panel de EDA del dataset:
 
-- **Encabezado** — nombre del conjunto de datos, fecha de creación, Puntuación de calidad y botón NEW NOTEBOOK
+- **Encabezado** — nombre del dataset, fecha de creación, Puntuación de calidad y botón NEW NOTEBOOK
 - **Tarjetas de resumen** — Total de filas, Total de columnas, Tamaño del archivo, Filas duplicadas, Valores faltantes
 - **Banner de calidad** — marca de verificación verde si no hay problemas, advertencia si se detectaron problemas
 - **Pestañas de análisis** — Resumen, Análisis numérico, Categórico, Texto, Calidad de datos, Correlaciones
@@ -54,11 +54,11 @@ Cuando haces clic en un conjunto de datos en la barra lateral, el área principa
 
 Cuando hay un notebook abierto:
 
-- **Título del notebook** — `Notebook: [Nombre del conjunto de datos] Preview`
+- **Título del notebook** — `Notebook: [Nombre del dataset] Preview`
 - **Barra de herramientas** — controles de FILTROS y EXPORTAR
-- **Tabla de vista previa del conjunto de datos** — vista paginada de los datos en su estado actual; se actualiza después de cada conversor
+- **Tabla de vista previa del dataset** — vista paginada de los datos en su estado actual; se actualiza después de cada conversor
 - **Línea de tiempo de operaciones** — cada Explorador o Conversor que agregues aparece debajo de la vista previa como un bloque con su resultado, indicador de estado y controles de edición/eliminación
-- **Botón SAVE AS NEW DATASET** — en la parte superior derecha, guarda el estado actual como un nuevo conjunto de datos
+- **Botón SAVE AS NEW DATASET** — en la parte superior derecha, guarda el estado actual como un nuevo dataset
 
 ### Models — Vista de sesión
 

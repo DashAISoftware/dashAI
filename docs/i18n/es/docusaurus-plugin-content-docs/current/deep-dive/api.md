@@ -51,7 +51,7 @@ PATCH  /api/v1/dataset/{dataset_id}/columns/rename
 GET    /api/v1/dataset/export/csv
 ```
 
-`POST` crea una entrada de conjunto de datos (la carga se maneja como datos de formulario multiparte). `PATCH` renombra un conjunto de datos. El endpoint `/sample` devuelve 10 filas representativas; `/info` devuelve el esquema y metadatos de las columnas; `/types` devuelve los tipos de datos por columna. `/filter/` soporta paginación y filtrado de columnas para la cuadrícula de datos del frontend. `POST /copy` duplica un conjunto de datos existente. `/export/csv` descarga el conjunto de datos completo como un archivo CSV.
+`POST` crea una entrada de dataset (la carga se maneja como datos de formulario multiparte). `PATCH` renombra un dataset. El endpoint `/sample` devuelve 10 filas representativas; `/info` devuelve el esquema y metadatos de las columnas; `/types` devuelve los tipos de datos por columna. `/filter/` soporta paginación y filtrado de columnas para la cuadrícula de datos del frontend. `POST /copy` duplica un dataset existente. `/export/csv` descarga el dataset completo como un archivo CSV.
 
 ### Sesiones de Modelo (Experimentos)
 
@@ -64,7 +64,7 @@ DELETE /api/v1/model-session/{session_id}
 POST   /api/v1/model-session/validation
 ```
 
-Una ModelSession captura la configuración completa del experimento — conjunto de datos, tarea, columnas de entrada/salida, proporciones de división y métricas seleccionadas. `POST /validation` verifica que las columnas del conjunto de datos seleccionado son compatibles con la tarea elegida antes de crear la sesión.
+Una ModelSession captura la configuración completa del experimento — dataset, tarea, columnas de entrada/salida, proporciones de división y métricas seleccionadas. `POST /validation` verifica que las columnas del dataset seleccionado son compatibles con la tarea elegida antes de crear la sesión.
 
 ### Ejecuciones
 
@@ -103,7 +103,7 @@ POST   /api/v1/explorer/{explorer_id}/results/
 PUT    /api/v1/explorer/{explorer_id}/results/
 ```
 
-Los exploradores ejecutan visualizaciones (gráficos de dispersión, histogramas, etc.) sobre el conjunto de datos de un Notebook. `POST /` crea un registro de Explorer y encola un `ExplorerJob`. `POST /{explorer_id}/results/` recupera el resultado calculado; `PUT` lo actualiza. Los resultados se almacenan como especificaciones JSON de Plotly.
+Los exploradores ejecutan visualizaciones (gráficos de dispersión, histogramas, etc.) sobre el dataset de un Notebook. `POST /` crea un registro de Explorer y encola un `ExplorerJob`. `POST /{explorer_id}/results/` recupera el resultado calculado; `PUT` lo actualiza. Los resultados se almacenan como especificaciones JSON de Plotly.
 
 ### Conversores
 
@@ -114,7 +114,7 @@ GET    /api/v1/converter/notebook/{notebook_id}
 DELETE /api/v1/converter/{converter_list_id}
 ```
 
-`POST` guarda un paso de conversor individual en un Notebook. `GET /notebook/{notebook_id}` devuelve todos los registros de conversores finalizados para ese Notebook. `DELETE` revierte el conjunto de datos del Notebook al estado previo al conversor eliminado y vuelve a encolar todos los conversores anteriores.
+`POST` guarda un paso de conversor individual en un Notebook. `GET /notebook/{notebook_id}` devuelve todos los registros de conversores finalizados para ese Notebook. `DELETE` revierte el dataset del Notebook al estado previo al conversor eliminado y vuelve a encolar todos los conversores anteriores.
 
 ### Explicadores
 
@@ -135,7 +135,7 @@ POST   /api/v1/explainer/local/validate-dataset
 PATCH  /api/v1/explainer/
 ```
 
-Los explicadores **globales** (p. ej., Permutation Feature Importance) producen una explicación única que cubre todo el modelo. Los explicadores **locales** (p. ej., KernelShap) producen explicaciones por instancia. Ambos soportan un endpoint `/plot` que devuelve la visualización. `POST /local/validate-dataset` verifica que un conjunto de datos de entrada es compatible con la ejecución entrenada antes de crear un explicador local.
+Los explicadores **globales** (p. ej., Permutation Feature Importance) producen una explicación única que cubre todo el modelo. Los explicadores **locales** (p. ej., KernelShap) producen explicaciones por instancia. Ambos soportan un endpoint `/plot` que devuelve la visualización. `POST /local/validate-dataset` verifica que un dataset de entrada es compatible con la ejecución entrenada antes de crear un explicador local.
 
 ### Predicciones
 
@@ -147,7 +147,7 @@ GET    /api/v1/predict/filter_datasets
 POST   /api/v1/predict/preview
 ```
 
-`POST /` crea un trabajo de predicción persistido vinculado a una ejecución entrenada. `GET /filter_datasets` devuelve solo los conjuntos de datos cuyo esquema de columnas es compatible con el conjunto de datos de entrenamiento de la ejecución. `POST /preview` ejecuta una predicción sincrónica y devuelve el resultado de inmediato sin persistirlo — útil para inferencia interactiva rápida.
+`POST /` crea un trabajo de predicción persistido vinculado a una ejecución entrenada. `GET /filter_datasets` devuelve solo los conjuntos de datos cuyo esquema de columnas es compatible con el dataset de entrenamiento de la ejecución. `POST /preview` ejecuta una predicción sincrónica y devuelve el resultado de inmediato sin persistirlo — útil para inferencia interactiva rápida.
 
 ### Sesiones y Procesos Generativos
 

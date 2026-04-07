@@ -9,8 +9,8 @@ Esta página te guía para crear una sesión, añadir modelos, configurar hiperp
 
 ## Requisitos Previos
 
-- Al menos un conjunto de datos cargado en DashAI.
-- El conjunto de datos debe tener columnas compatibles con la tarea que deseas ejecutar (p. ej., una columna de salida categórica para tareas de clasificación).
+- Al menos un dataset cargado en DashAI.
+- El dataset debe tener columnas compatibles con la tarea que deseas ejecutar (p. ej., una columna de salida categórica para tareas de clasificación).
 
 ---
 
@@ -28,7 +28,7 @@ Después de seleccionar una tarea, comienza un flujo de creación de sesión en 
 
 ### 2a — Seleccionar Conjunto de Datos y Nombrar la Sesión
 
-- Usa el desplegable **Select a dataset** para elegir entre tus conjuntos de datos disponibles. Una vez seleccionado, una tarjeta resumen muestra el nombre del conjunto de datos, la fecha de creación, el conteo de filas y el conteo de columnas.
+- Usa el desplegable **Select a dataset** para elegir entre tus conjuntos de datos disponibles. Una vez seleccionado, una tarjeta resumen muestra el nombre del dataset, la fecha de creación, el conteo de filas y el conteo de columnas.
 - Ingresa un nombre en el campo **Session Name**. Se pre-rellena un nombre por defecto basado en el tipo de tarea (p. ej., `Session_Tabular Classification_1`), pero puedes cambiarlo por algo más descriptivo.
 
 Haz clic en **NEXT** para continuar.
@@ -39,7 +39,7 @@ Este paso tiene dos partes: definir columnas y definir la división de datos.
 
 **Columnas de Entrada y Salida**
 
-DashAI valida si el conjunto de datos seleccionado es compatible con la tarea elegida. Un banner en la parte superior del paso confirma la compatibilidad y muestra los tipos de columnas requeridos para entradas y salidas.
+DashAI valida si el dataset seleccionado es compatible con la tarea elegida. Un banner en la parte superior del paso confirma la compatibilidad y muestra los tipos de columnas requeridos para entradas y salidas.
 
 - **Input Columns** — Selecciona las características que el modelo usará para aprender. Cada columna se muestra como una etiqueta con su insignia de tipo (Float, Integer, Categorical). Haz clic dentro del campo y selecciona columnas del desplegable. Elimina cualquier columna haciendo clic en la `×` de su etiqueta.
 - **Output Columns** — Selecciona la columna objetivo que el modelo predecirá. La salida debe coincidir con el tipo requerido por la tarea (p. ej., Categorical para tareas de clasificación).
@@ -50,11 +50,11 @@ Cada tarea impone requisitos de tipo específicos. Para Clasificación Tabular, 
 
 **División de Datos**
 
-Define cómo DashAI divide el conjunto de datos en subconjuntos de entrenamiento, validación y prueba. Hay tres opciones disponibles:
+Define cómo DashAI divide el dataset en subconjuntos de entrenamiento, validación y prueba. Hay tres opciones disponibles:
 
 | Opción                               | Descripción                                                                                                                                    |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use predefined splits**            | Usa divisiones train/validación/test ya definidas en el archivo del conjunto de datos. Solo disponible si el dataset fue cargado con estructura pre-dividida. |
+| **Use predefined splits**            | Usa divisiones train/validación/test ya definidas en el archivo del dataset. Solo disponible si el dataset fue cargado con estructura pre-dividida. |
 | **Random split by proportion**       | Asigna filas aleatoriamente a cada subconjunto según las proporciones que especifiques. El valor por defecto es Train: 0.6, Validation: 0.2, Test: 0.2. |
 | **Manual split by row indices**      | Especifica manualmente los índices de fila de inicio y fin para cada subconjunto.                                                              |
 
@@ -63,7 +63,7 @@ Al usar **Random split**, hay tres opciones adicionales disponibles:
 | Opción       | Descripción                                                                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Shuffle**  | Mezcla aleatoriamente las filas antes de dividir. Recomendado para evitar sesgo de orden en los datos. Habilitado por defecto.             |
-| **Stratify** | Asegura que cada división preserve las mismas proporciones de clases que el conjunto de datos completo. Útil para conjuntos de datos desbalanceados. |
+| **Stratify** | Asegura que cada división preserve las mismas proporciones de clases que el dataset completo. Útil para conjuntos de datos desbalanceados. |
 | **Seed**     | Una semilla aleatoria fija para reproducibilidad. El valor por defecto es `42`. Establece un valor específico para asegurar que siempre se produzca la misma división. |
 
 Haz clic en **CREATE SESSION** para finalizar la configuración. La sesión se abre inmediatamente.

@@ -8,7 +8,7 @@ sidebar_position: 2
 
 ## Gestión de conjuntos de datos
 
-Carga y gestiona conjuntos de datos en múltiples formatos — CSV, Excel y JSON. Cada conjunto de datos muestra un resumen de filas, columnas, tipos de datos y distribuciones. Desde la vista del conjunto de datos puedes iniciar exploraciones de EDA y aplicar conversores de datos directamente.
+Carga y gestiona conjuntos de datos en múltiples formatos — CSV, Excel y JSON. Cada dataset muestra un resumen de filas, columnas, tipos de datos y distribuciones. Desde la vista del dataset puedes iniciar exploraciones de EDA y aplicar conversores de datos directamente.
 
 **Formatos compatibles:** `.csv`, `.xlsx` / `.xls`, `.json`
 
@@ -27,7 +27,7 @@ Analiza tus datos visualmente con exploradores integrados antes de comprometerte
 
 ## Entrenamiento de modelos
 
-Crea experimentos que asocian un conjunto de datos con una tarea, luego entrena uno o más modelos en paralelo. Configura los hiperparámetros mediante formularios generados automáticamente — sin necesidad de escribir archivos de esquema. Tareas compatibles:
+Crea experimentos que asocian un dataset con una tarea, luego entrena uno o más modelos en paralelo. Configura los hiperparámetros mediante formularios generados automáticamente — sin necesidad de escribir archivos de esquema. Tareas compatibles:
 
 - **Clasificación tabular** — predice una categoría a partir de datos estructurados
 - **Regresión** — predice un valor continuo
