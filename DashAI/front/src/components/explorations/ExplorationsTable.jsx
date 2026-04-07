@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Box, Paper } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 
 import { formatDate } from "../../utils";
@@ -49,6 +53,11 @@ function ExplorationsTable({
   const { explorationData } = useExplorationsContext();
   const { dataset_id: datasetId } = explorationData;
   const { enqueueSnackbar } = useSnackbar();
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const [loading, setLoading] = useState(false);
   const [explorations, setExplorations] = useState([]);
@@ -119,56 +128,69 @@ function ExplorationsTable({
   const columns = useMemo(
     () => [
       {
-        field: "id",
-        headerName: "ID",
-        minWidth: 30,
+        accessorKey: "id",
+        header: "ID",
+        minSize: 30,
       },
       {
-        field: "name",
-        headerName: "Name",
-        flex: 1,
-        minwidth: 200,
+        accessorKey: "name",
+        header: "Name",
+        grow: 1,
+        minSize: 200,
       },
       {
-        field: "created",
-        headerName: "Created",
-        width: 200,
-        valueGetter: (value) => formatDate(value),
+        accessorKey: "created",
+        header: "Created",
+        size: 200,
+        accessorFn: (row) => formatDate(row.created),
       },
       {
-        field: "last_modified",
-        headerName: "Edited",
-        width: 200,
-        valueGetter: (value) => formatDate(value),
+        accessorKey: "last_modified",
+        header: "Edited",
+        size: 200,
+        accessorFn: (row) => formatDate(row.last_modified),
       },
       {
-        field: "actions",
-        headerName: "Actions",
-        flex: 1,
-        minWidth: 150,
-        type: "actions",
-        getActions: (params) => [
-          <EditExplorationAction
-            key="edit-button"
-            onAction={() => handleSelectExploration(params.row)}
-          />,
-          <RunExplorationAction
-            key="run-button"
-            onAction={() => handleRunExploration(params.row)}
-          />,
-          <ViewExplorationResultsAction
-            key="view-results-button"
-            onAction={() => handleViewExplorationResults(params.row)}
-          />,
-          <DeleteItemModal
-            key="delete-button"
-            deleteFromTable={() => handleDeleteExploration(params.row.id)}
-          />,
-        ],
+        id: "actions",
+        header: "Actions",
+        grow: 1,
+        minSize: 150,
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <EditExplorationAction
+              onAction={() => handleSelectExploration(row.original)}
+            />
+            <RunExplorationAction
+              onAction={() => handleRunExploration(row.original)}
+            />
+            <ViewExplorationResultsAction
+              onAction={() => handleViewExplorationResults(row.original)}
+            />
+            <DeleteItemModal
+              deleteFromTable={() => handleDeleteExploration(row.original.id)}
+            />
+          </Box>
+        ),
       },
     ],
     [setUpdateTableFlag],
   );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: explorations,
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: {
+      density: "compact",
+      sorting: [{ id: "created", desc: true }],
+    },
+    state: { isLoading: loading },
+    enableGlobalFilter: true,
+  });
 
   return (
     <Box sx={{ height: "100%", width: "100%" }}>
@@ -179,32 +201,7 @@ function ExplorationsTable({
           event.target = document.body;
         }}
       >
-        <DataGrid
-          loading={loading}
-          autoHeight
-          rows={explorations}
-          columns={columns}
-          disableRowSelectionOnClick
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 5,
-              },
-            },
-            sorting: {
-              sortModel: [{ field: "created", sort: "desc" }],
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          slots={{
-            toolbar: GridToolbar,
-          }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-            },
-          }}
-        />
+        <MaterialReactTable table={table} />
       </Paper>
     </Box>
   );
