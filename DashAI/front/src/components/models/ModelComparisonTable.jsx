@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { DataGrid } from "@mui/x-data-grid";
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
@@ -22,7 +25,11 @@ function ModelComparisonTable({
 }) {
   const [models, setModels] = useState([]);
   const [metrics, setMetrics] = useState([]);
-  const { t } = useTranslation(["models", "common"]);
+  const { t, i18n } = useTranslation(["models", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -101,10 +108,10 @@ function ModelComparisonTable({
       const metricDescription = metricInfo?.description || metricName;
 
       return {
-        field: metricField,
-        headerName: metricName,
-        width: 120,
-        renderHeader: (params) => (
+        accessorKey: metricField,
+        header: metricName,
+        size: 120,
+        Header: () => (
           <Tooltip title={metricDescription} arrow placement="top">
             <Box
               sx={{
@@ -118,15 +125,16 @@ function ModelComparisonTable({
             </Box>
           </Tooltip>
         ),
-        renderCell: (params) => {
-          const { statusCode } = params.row;
+        Cell: ({ row, cell }) => {
+          const { statusCode } = row.original;
           const isRunning = statusCode === 1 || statusCode === 2;
 
           if (isRunning) return "-";
-          if (params.value === null || params.value === undefined) return "-";
+          const val = cell.getValue();
+          if (val === null || val === undefined) return "-";
 
-          const value = Number(params.value);
-          if (isNaN(value)) return params.value;
+          const value = Number(val);
+          if (isNaN(value)) return val;
 
           return value.toFixed(4);
         },
@@ -134,119 +142,115 @@ function ModelComparisonTable({
     });
   };
 
-  const columns = [
-    {
-      field: "name",
-      headerName: t("common:modelName"),
-      flex: 1,
-      minWidth: 150,
-    },
-    {
-      field: "model_name",
-      headerName: t("common:model"),
-      flex: 1,
-      minWidth: 150,
-      valueGetter: (value) => {
-        const model = models.find((m) => m.name === value);
-        return model?.display_name || value;
-      },
-    },
-    ...getMetricColumns(),
-    {
-      field: "actions",
-      headerName: t("common:actions"),
-      width: 150,
-      sortable: false,
-      renderCell: (params) => {
-        const canTrain =
-          params.row.status === 0 || // Not Started
-          params.row.status === 4 || // Error
-          params.row.status === 3; // Finished
-        const isRunning = params.row.status === 1 || params.row.status === 2; // Delivered or Started
+  const data = useMemo(() => getRows(), [runs]);
 
-        return (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Tooltip title={t("common:train")}>
-              <span>
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: t("common:modelName"),
+        minSize: 150,
+      },
+      {
+        accessorKey: "model_name",
+        header: t("common:model"),
+        minSize: 150,
+        accessorFn: (row) => {
+          const model = models.find((m) => m.name === row.model_name);
+          return model?.display_name || row.model_name;
+        },
+      },
+      ...getMetricColumns(),
+      {
+        id: "actions",
+        header: t("common:actions"),
+        enableSorting: false,
+        enableColumnFilter: false,
+        size: 150,
+        Cell: ({ row }) => {
+          const canTrain =
+            row.original.status === 0 || // Not Started
+            row.original.status === 4 || // Error
+            row.original.status === 3; // Finished
+          const isRunning =
+            row.original.status === 1 || row.original.status === 2; // Delivered or Started
+
+          return (
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Tooltip title={t("common:train")}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTrain(runs.find((r) => r.id === row.original.id));
+                    }}
+                    disabled={!canTrain}
+                    color="primary"
+                  >
+                    <PlayArrow fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Tooltip title={t("common:viewDetails")}>
                 <IconButton
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onTrain(runs.find((r) => r.id === params.row.id));
+                    onViewDetails(runs.find((r) => r.id === row.original.id));
                   }}
-                  disabled={!canTrain}
-                  color="primary"
+                  color="default"
                 >
-                  <PlayArrow fontSize="small" />
+                  <Visibility fontSize="small" />
                 </IconButton>
-              </span>
-            </Tooltip>
+              </Tooltip>
 
-            <Tooltip title={t("common:viewDetails")}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewDetails(runs.find((r) => r.id === params.row.id));
-                }}
-                color="default"
-              >
-                <Visibility fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title={t("common:delete")}>
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(runs.find((r) => r.id === params.row.id));
-                  }}
-                  disabled={isRunning}
-                  color="error"
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Box>
-        );
+              <Tooltip title={t("common:delete")}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(runs.find((r) => r.id === row.original.id));
+                    }}
+                    disabled={isRunning}
+                    color="error"
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
+          );
+        },
       },
-    },
-  ];
+    ],
+    [models, metrics, runs, metricSplit, t, onTrain, onViewDetails, onDelete],
+  );
 
-  const rows = getRows();
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: { density: "compact" },
+    enableRowSelection: false,
+    enablePagination: false,
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => {
+        if (onRowClick) {
+          onRowClick(row.original.id);
+        }
+      },
+      sx: { cursor: onRowClick ? "pointer" : "default" },
+    }),
+  });
 
   return (
     <Box sx={{ height: "100%", width: "100%" }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        disableRowSelectionOnClick
-        density="compact"
-        hideFooter
-        onRowClick={(params) => {
-          if (onRowClick) {
-            onRowClick(params.row.id);
-          }
-        }}
-        initialState={{
-          density: "compact",
-        }}
-        sx={{
-          backgroundColor: "background.box",
-          "& .MuiDataGrid-row": {
-            cursor: onRowClick ? "pointer" : "default",
-          },
-          "& .MuiDataGrid-virtualScroller": {
-            marginBottom: "8px",
-          },
-          "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: "background.box",
-          },
-        }}
-      />
+      <MaterialReactTable table={table} />
     </Box>
   );
 }
