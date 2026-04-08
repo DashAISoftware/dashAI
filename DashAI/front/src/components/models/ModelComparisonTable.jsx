@@ -251,6 +251,7 @@ function ModelComparisonTable({
     muiTableContainerProps: { sx: { flex: 1, overflow: "auto" } },
     localization,
     initialState: { density: "compact" },
+    enableStickyHeader: true,
     enableRowSelection: false,
     enablePagination: false,
     enableTopToolbar: false,
