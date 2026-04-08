@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, TextField, Divider, Typography } from "@mui/material";
+import { Box, MenuItem, TextField, Divider, Typography } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 import { useTranslation } from "react-i18next";
@@ -33,13 +33,14 @@ export default function GeneralForm({ layout, handleChange }) {
   const { t } = useTranslation(["datasets"]);
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Title */}
       <SectionLabel>{t("datasets:label.title", "Title")}</SectionLabel>
 
       <TextField
         label={t("datasets:label.title")}
-        variant="filled"
+        variant="outlined"
+        size="small"
         value={layout.title?.text || ""}
         onChange={(e) =>
           handleChange("title", { ...layout.title, text: e.target.value })
@@ -50,7 +51,8 @@ export default function GeneralForm({ layout, handleChange }) {
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
           label={t("datasets:label.titleFontSize")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.title?.font?.size || 16}
           onChange={(e) =>
@@ -69,18 +71,18 @@ export default function GeneralForm({ layout, handleChange }) {
         <TextField
           select
           label={t("datasets:label.fontFamily")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           value={layout.font?.family || "Arial"}
           onChange={(e) =>
             handleChange("font", { ...layout.font, family: e.target.value })
           }
-          slotProps={{ select: { native: true } }}
           fullWidth
         >
           {FONT_LIST.map((font) => (
-            <option key={font} value={font}>
+            <MenuItem key={font} value={font}>
               {font}
-            </option>
+            </MenuItem>
           ))}
         </TextField>
       </Box>
@@ -121,7 +123,8 @@ export default function GeneralForm({ layout, handleChange }) {
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
           label={t("datasets:label.marginLeft")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.margin?.l ?? 80}
           onChange={(e) =>
@@ -135,7 +138,8 @@ export default function GeneralForm({ layout, handleChange }) {
         />
         <TextField
           label={t("datasets:label.marginRight")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.margin?.r ?? 80}
           onChange={(e) =>
@@ -152,7 +156,8 @@ export default function GeneralForm({ layout, handleChange }) {
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
           label={t("datasets:label.marginTop")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.margin?.t ?? 100}
           onChange={(e) =>
@@ -166,7 +171,8 @@ export default function GeneralForm({ layout, handleChange }) {
         />
         <TextField
           label={t("datasets:label.marginBottom")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.margin?.b ?? 80}
           onChange={(e) =>
@@ -179,6 +185,6 @@ export default function GeneralForm({ layout, handleChange }) {
           slotProps={{ htmlInput: { min: 0 } }}
         />
       </Box>
-    </>
+    </Box>
   );
 }
