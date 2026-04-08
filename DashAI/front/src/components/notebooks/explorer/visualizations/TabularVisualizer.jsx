@@ -61,17 +61,20 @@ function TabularVisualizerInner({
         overflow: "hidden",
       }
     : undefined;
+  const tablePaperStyles = {
+    border: 1,
+    borderColor: theme.palette.divider,
+    ...(fullSizeTableStyles ?? {}),
+  };
 
   const table = useMaterialReactTable({
     columns,
     data,
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
-    muiTablePaperProps: minimalist
-      ? {
-          elevation: 0,
-          sx: fullSizeTableStyles,
-        }
-      : { elevation: 0 },
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: tablePaperStyles,
+    },
     muiTableContainerProps: minimalist
       ? {
           sx: {
