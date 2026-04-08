@@ -31,6 +31,7 @@ export default function ExportableCard({
   const ref = useRef(null);
   const { t } = useTranslation(["datasets"]);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [capturing, setCapturing] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleClick = (e) => {
@@ -43,14 +44,21 @@ export default function ExportableCard({
   const captureElement = useCallback(
     async (element) => {
       if (!element) return;
-      const canvas = await html2canvas(element, {
-        backgroundColor: null,
-        scale: 2,
-      });
-      const link = document.createElement("a");
-      link.download = `${filename}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      setCapturing(true);
+      try {
+        // Wait a tick so the hidden button is removed from the DOM before capture
+        await new Promise((r) => requestAnimationFrame(r));
+        const canvas = await html2canvas(element, {
+          backgroundColor: null,
+          scale: 2,
+        });
+        const link = document.createElement("a");
+        link.download = `${filename}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } finally {
+        setCapturing(false);
+      }
     },
     [filename],
   );
@@ -67,14 +75,20 @@ export default function ExportableCard({
       ref.current.querySelector(".recharts-wrapper") ||
       ref.current.querySelector(".js-plotly-plot");
     if (chart) {
-      const canvas = await html2canvas(chart, {
-        backgroundColor: null,
-        scale: 2,
-      });
-      const link = document.createElement("a");
-      link.download = `${filename}_chart.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      setCapturing(true);
+      try {
+        await new Promise((r) => requestAnimationFrame(r));
+        const canvas = await html2canvas(chart, {
+          backgroundColor: null,
+          scale: 2,
+        });
+        const link = document.createElement("a");
+        link.download = `${filename}_chart.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } finally {
+        setCapturing(false);
+      }
     }
   }, [filename]);
 
@@ -126,22 +140,24 @@ export default function ExportableCard({
 
   return (
     <Card ref={ref} sx={{ position: "relative", ...sx }} {...props}>
-      <Tooltip title={t("datasets:label.exportImage")} arrow>
-        <IconButton
-          size="small"
-          onClick={handleClick}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 1,
-            color: "primary.main",
-            opacity: 1,
-          }}
-        >
-          <FileDownloadOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+      {!capturing && (
+        <Tooltip title={t("datasets:label.exportImage")} arrow>
+          <IconButton
+            size="small"
+            onClick={handleClick}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              color: "primary.main",
+              opacity: 1,
+            }}
+          >
+            <FileDownloadOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
       <Menu
         anchorEl={anchorEl}
