@@ -22,10 +22,7 @@ export default function ModelsContent() {
   const { t } = useTranslation(["models"]);
 
   const {
-    fetchDatasets,
     sessions,
-    fetchSessions,
-    fetchTasks,
     step,
     setStep,
     selectedSessionId,
@@ -34,12 +31,6 @@ export default function ModelsContent() {
     setRuns,
     fetchRuns,
   } = useModels();
-
-  useEffect(() => {
-    fetchDatasets();
-    fetchSessions();
-    fetchTasks();
-  }, []);
 
   useEffect(() => {
     if (location.state?.openSessionId && sessions.length > 0) {
