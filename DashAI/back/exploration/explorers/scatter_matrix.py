@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 class ScatterMatrixSchema(BaseExplorerSchema):
+    """Schema for ScatterMatrixExplorer hyperparameters.
+
+    Configures the optional colour-group and symbol-group columns used to
+    differentiate sample clusters in the pairwise scatter matrix. All numeric
+    columns to display on the axes are selected via the base schema.
+    """
+
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -46,9 +53,17 @@ class ScatterMatrixSchema(BaseExplorerSchema):
 
 
 class ScatterMatrixExplorer(RelationshipExplorer):
-    """
-    ScatterMatrixExplorer is an explorer that returns a scatter matrix plot
-    of selected columns of a dataset.
+    """Display pairwise scatter plots for all selected numeric columns.
+
+    Generates a grid of scatter plots (also known as a SPLOM — Scatter PLOt
+    Matrix) where each cell shows the relationship between one pair of numeric
+    columns. The diagonal cells can optionally show the distribution of a single
+    variable. Colour and symbol encodings can be mapped to a grouping column to
+    reveal class separation or cluster structure across all feature pairs at once.
+
+    This explorer is the standard first step for discovering linear and non-linear
+    pairwise correlations in tabular datasets before applying feature selection or
+    dimensionality reduction.
     """
 
     DISPLAY_NAME = MultilingualString(
@@ -81,6 +96,17 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the ScatterMatrixExplorer with optional grouping columns.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            color_group (str or int, optional): Column name or index to
+            color-code data points. Defaults to None.
+            simbol_group (str or int, optional): Column name or index to
+            assign point symbols. Defaults to None.
+        """
         self.color_column = kwargs.get("color_group")
         self.simbol_column = kwargs.get("simbol_group")
         super().__init__(**kwargs)
@@ -88,6 +114,22 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend column selection to include optional color
+        and symbol grouping columns.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset.
+        columns : List[Dict[str, Any]]
+            Explicitly selected column descriptors.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset containing the selected columns plus any
+            optional grouping columns.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -118,6 +160,24 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly scatter matrix for N selected columns.
+
+        Produces pairwise scatter plots for all selected columns, with
+        histograms on the diagonal.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The prepared dataset with at least two columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive scatter matrix figure.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -146,6 +206,24 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the scatter matrix figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -158,6 +236,22 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved scatter matrix for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         import plotly.io as pio
 
         resultType = "plotly_json"

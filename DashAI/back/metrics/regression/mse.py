@@ -5,11 +5,31 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class MSE(RegressionMetric):
-    """Mean Squared Error metric for regression tasks."""
+    """Average of squared differences between predicted and true values.
+
+    Mean Squared Error (MSE) squares each residual before averaging, which
+    penalises large errors much more heavily than small ones. This makes MSE
+    sensitive to outliers: a single large prediction error can dominate the
+    score. It is the most widely used regression loss and is the basis for
+    ordinary least-squares regression and RMSE.
+
+    ::
+
+        MSE(y, ŷ) = (1/N) · Σᵢ (yᵢ - ŷᵢ)²
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``). Units are the
+    square of the target variable's unit (use RMSE for the original unit).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html
+    """
 
     DESCRIPTION: str = (
         "Mean Squared Error (MSE) measures the average "
@@ -20,7 +40,10 @@ class MSE(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", predicted_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        predicted_values: "np.ndarray",
+    ) -> float:
         """Calculate the MSE between true values and predicted values.
 
         Parameters

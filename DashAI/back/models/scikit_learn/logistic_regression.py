@@ -18,9 +18,13 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class LogisticRegressionSchema(BaseSchema):
-    """Logistic Regression is a supervised classification method that uses a linear
-    model plus a a logistic funcion to predict binary outcomes (it can be configured
-    as multiclass via the one-vs-rest strategy).
+    """Schema that configures the Logistic Regression classifier.
+
+    Logistic Regression is a supervised classification method that fits a linear
+    decision boundary using a logistic (sigmoid) function. It supports binary and
+    multiclass classification via the one-vs-rest strategy and optional L1, L2, or
+    Elastic-Net regularisation. The underlying implementation is
+    ``sklearn.linear_model.LogisticRegression``.
     """
 
     penalty: schema_field(
@@ -86,7 +90,24 @@ class LogisticRegressionSchema(BaseSchema):
 class LogisticRegression(
     TabularClassificationModel, SklearnLikeClassifier, _LogisticRegression
 ):
-    """Scikit-learn's Logistic Regression wrapper for DashAI."""
+    """Logistic regression classifier with L1, L2, or Elastic-Net regularisation.
+
+    Logistic Regression models the probability that a sample belongs to a given
+    class by applying the logistic (sigmoid) function to a linear combination of
+    input features. The decision boundary is linear in the feature space. For
+    multiclass problems the model applies a one-vs-rest (OvR) strategy by default.
+
+    Regularisation is controlled by the penalty (L1, L2, or Elastic-Net) and the
+    inverse-strength parameter ``C``. The solver is selected automatically based on
+    the chosen penalty. Key hyperparameters are ``penalty``, ``C``, ``tol``, and
+    ``max_iter``. The implementation wraps scikit-learn's ``LogisticRegression``.
+
+    References
+    ----------
+    - [1] Cox, D.R. (1958). "The regression analysis of binary sequences."
+           Journal of the Royal Statistical Society, Series B, 20(2), 215-242.
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    """
 
     SCHEMA = LogisticRegressionSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -103,4 +124,12 @@ class LogisticRegression(
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)

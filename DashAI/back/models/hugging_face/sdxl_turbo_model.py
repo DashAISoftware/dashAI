@@ -15,7 +15,18 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class SDXLTurboSchema(BaseSchema):
-    """Schema for SDXL Turbo image generation."""
+    """Configuration schema for SDXL Turbo text-to-image generation.
+
+    Configures the prompt conditioning (``negative_prompt``), number of
+    denoising steps (``num_inference_steps``; 1-4 is optimal for this
+    distilled model), output dimensions (``width``, ``height``),
+    reproducibility (``seed``), hardware target (``device``), and batch size
+    (``num_images_per_prompt``) for ``SDXLTurboModel``.
+
+    Note: ``guidance_scale`` is not exposed because SDXL Turbo always runs
+    with ``guidance_scale=0`` due to its Adversarial Diffusion Distillation
+    (ADD) training.
+    """
 
     negative_prompt: Optional[
         schema_field(
@@ -158,7 +169,27 @@ class SDXLTurboSchema(BaseSchema):
 
 
 class SDXLTurboModel(TextToImageGenerationTaskModel):
-    """SDXL Turbo model for fast single-step text-to-image generation."""
+    """Distilled SDXL model for near-real-time text-to-image generation.
+
+    Wraps ``stabilityai/sdxl-turbo``, a version of Stable Diffusion XL
+    trained with Adversarial Diffusion Distillation (ADD) by Stability AI.
+    ADD transfers knowledge from a large teacher model into a student that
+    can produce photorealistic 512 px images in as few as one denoising step,
+    up to 30x faster than standard SDXL.
+
+    Because ADD bakes guidance directly into the model weights, classifier-free
+    guidance is disabled (``guidance_scale=0`` is enforced internally) and
+    negative prompts have minimal effect.
+
+    Ideal for interactive and real-time applications where latency matters
+    more than absolute peak quality.
+
+    References
+    ----------
+    - [1] Sauer et al., "Adversarial Diffusion Distillation", 2023.
+           https://arxiv.org/abs/2311.17042
+    - [2] https://huggingface.co/stabilityai/sdxl-turbo
+    """
 
     SCHEMA = SDXLTurboSchema
     COLOR: str = "#b71c1c"
@@ -190,7 +221,38 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
-        """Initialize the model."""
+        """Download and initialise the SDXL Turbo pipeline.
+
+        Downloads ``stabilityai/sdxl-turbo`` from HuggingFace Hub via
+        ``AutoPipelineForText2Image.from_pretrained`` and moves the pipeline
+        to the requested device.  When a GPU is available, the ``fp16``
+        variant is loaded to halve memory usage; CPU inference uses
+        ``float32``.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            negative_prompt : str or None, optional
+                Text describing content to suppress.  Has minimal effect
+                because SDXL Turbo uses ADD training with ``guidance_scale=0``.
+            num_inference_steps : int, optional
+                Number of denoising steps (1-4 recommended).  Defaults to
+                ``1``.  Values above 4 provide diminishing returns.
+            device : str
+                Target device string from ``DEVICE_ENUM``.  Mapped to a
+                ``cuda:<index>`` string or ``"cpu"`` via ``DEVICE_TO_IDX``.
+            seed : int
+                Fixed seed for reproducible outputs.  Values ≤ 0 disable
+                seeding.
+            width : int
+                Output image width in pixels (multiple of 8).  Optimal is
+                512 px.
+            height : int
+                Output image height in pixels (multiple of 8).  Optimal is
+                512 px.
+            num_images_per_prompt : int
+                Number of images to generate per prompt call.
+        """
         import torch
         from diffusers import AutoPipelineForText2Image
 

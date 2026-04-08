@@ -26,6 +26,12 @@ from DashAI.back.types.value_types import Float
 
 
 class FastICASchema(BaseSchema):
+    """Configuration schema for the FastICA converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.FastICA``.
+    """
+
     n_components: schema_field(
         none_type(int_field(ge=1)),
         None,
@@ -127,7 +133,38 @@ class FastICASchema(BaseSchema):
 
 
 class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation):
-    """Scikit-learn's FastICA wrapper for DashAI."""
+    """Decompose features into statistically independent components using FastICA.
+
+    Independent Component Analysis (ICA) models the observed data X as a linear
+    mixture X = A S of latent source signals S that are assumed to be mutually
+    statistically independent and non-Gaussian. FastICA recovers the unmixing
+    matrix W = A^{-1} by maximising the non-Gaussianity of the projected
+    components, using the fixed-point iteration algorithm of Hyvärinen & Oja.
+
+    Typical applications include blind source separation (e.g. recovering
+    individual audio signals from a mixture of microphone recordings), removal
+    of artefacts from EEG/fMRI signals, and feature extraction for image
+    processing where latent factors are expected to be non-Gaussian.
+
+    Key properties:
+
+    - Unsupervised: does not require labels.
+    - The ``algorithm`` parameter selects between a fully parallel update
+      (faster) and a sequential deflation strategy (more stable for some data).
+    - The contrast function ``fun`` (logcosh, exp, or cube) controls the
+      approximation to negentropy used as the independence criterion.
+    - Data are whitened before ICA unless ``whiten=False``; the ``whiten_solver``
+      parameter selects between an eigenvalue decomposition and SVD.
+    - Component signs and ordering are arbitrary and may differ between runs.
+
+    Wraps scikit-learn's ``FastICA``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html
+    - [2] Hyvärinen, A. & Oja, E. (2000). "Independent Component Analysis:
+        Algorithms and Applications." Neural Networks, 13(4-5), 411-430.
+    """
 
     SCHEMA = FastICASchema
     DESCRIPTION = MultilingualString(
@@ -141,6 +178,14 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     IMAGE_PREVIEW = "fast_ica.png"
 
     def __init__(self, **kwargs):
+        """Initialize the FastICA converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         self.fun_args = kwargs.pop("fun_args", None)
         if self.fun_args is not None:
             self.fun_args = parse_string_to_dict(self.fun_args)
@@ -159,7 +204,19 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

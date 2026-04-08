@@ -1,6 +1,6 @@
 """DashAI precision classification metric implementation."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -8,11 +8,33 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Precision(ClassificationMetric):
-    """Precision metric to classification tasks."""
+    """Fraction of positive predictions that are actually correct.
+
+    Precision (also called positive predictive value) measures the ability
+    of the classifier to avoid labelling negative samples as positive. It is
+    the metric of choice when the cost of false positives is high — e.g. in
+    spam detection, flagging a legitimate email is more costly than missing
+    a spam.
+
+    For binary tasks the standard binary precision is used. For multiclass
+    tasks, macro averaging (unweighted mean over all classes) is applied.
+
+    ::
+
+        Precision = TP / (TP + FP)
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html
+    """
 
     DESCRIPTION: str = (
         "Fraction of predicted positives that are correct, "
@@ -21,7 +43,9 @@ class Precision(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate precision between true labels and predicted labels.
 

@@ -19,7 +19,13 @@ from DashAI.back.models.utils import (
 
 
 class QwenSchema(BaseSchema):
-    """Schema for Qwen model."""
+    """Schema for QwenModel hyperparameters.
+
+    Configures the Qwen 2.5 Instruct checkpoint variant (0.5B or 1.5B), generation
+    length, sampling temperature, frequency penalty, context window, and target
+    device. The GGUF filename is selected automatically using a Q8_0 quantization
+    pattern; no manual filename override is exposed.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -159,7 +165,22 @@ class QwenSchema(BaseSchema):
 
 
 class QwenModel(TextToTextGenerationTaskModel):
-    """Qwen model for text generation using llama.cpp library."""
+    """Qwen 2.5 Instruct model for efficient text generation via llama.cpp.
+
+    Qwen 2.5 is a series of dense transformer language models from Alibaba Cloud,
+    spanning 0.5B to 72B parameters. The DashAI integration exposes the 0.5B and
+    1.5B Instruct variants, which run comfortably on CPU. Both are trained on 18
+    trillion tokens with improved coding, mathematics, and multilingual capability
+    over Qwen 2.
+
+    Models are loaded as GGUF Q8_0 quantized checkpoints via ``llama-cpp-python``;
+    the quantization file is selected automatically from the HuggingFace repo.
+
+    References
+    ----------
+    - [1] Qwen Team (2024). "Qwen2.5 Technical Report." https://arxiv.org/abs/2412.15115
+    - [2] https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
+    """
 
     SCHEMA = QwenSchema
     COLOR: str = "#2e7d32"
@@ -190,6 +211,38 @@ class QwenModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
+        """Download and initialise a Qwen 2.5 Instruct GGUF model via llama.cpp.
+
+        The model weights are fetched from HuggingFace Hub using
+        ``Llama.from_pretrained`` and kept in memory for repeated calls to
+        ``generate``. The Q8_0 quantization file is always selected regardless
+        of the chosen model variant.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace repo ID for the GGUF checkpoint.
+                Defaults to ``"Qwen/Qwen2.5-1.5B-Instruct-GGUF"``.
+            max_tokens : int, optional
+                Maximum number of new tokens to generate per call. Default 100.
+            temperature : float, optional
+                Sampling temperature in [0.0, 1.0]. Default 0.7.
+            frequency_penalty : float, optional
+                Token-frequency penalty in [0.0, 2.0]. Default 0.1.
+            context_window : int, optional
+                Total token budget (prompt + response) for a single forward
+                pass. Default 512.
+            device : str, optional
+                Target device from ``LLAMA_DEVICE_ENUM``. Any value whose
+                index is >= 0 enables full GPU offload (``n_gpu_layers=-1``);
+                ``"CPU"`` runs fully in RAM.
+
+        Raises
+        ------
+        RuntimeError
+            If ``llama-cpp-python`` is not installed.
+        """
         try:
             from llama_cpp import Llama
         except ImportError as e:
@@ -217,6 +270,21 @@ class QwenModel(TextToTextGenerationTaskModel):
         )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        """Generate a reply for the given chat prompt.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format. Each dict must contain
+            at least ``"role"`` (``"system"``, ``"user"``, or ``"assistant"``)
+            and ``"content"`` (the message text).
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the model's reply text, extracted
+            from ``choices[0]["message"]["content"]``.
+        """
         output = self.model.create_chat_completion(
             messages=prompt,
             max_tokens=self.max_tokens,

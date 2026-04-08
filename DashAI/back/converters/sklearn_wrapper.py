@@ -10,9 +10,25 @@ if TYPE_CHECKING:
 
 
 class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
-    """Abstract class to define generic rules for sklearn transformers."""
+    """Abstract mixin that adapts scikit-learn transformers to the DashAI converter API.
+
+    This wrapper bridges scikit-learn's `fit` / `transform` interface with
+    DashAI's `DashAIDataset`. It converts datasets to pandas DataFrames before
+    calling the underlying scikit-learn methods, then converts the output back to
+    `DashAIDataset` with proper DashAI types set via `get_output_type`.
+
+    All concrete scikit-learn converters in DashAI inherit from this class.
+    """
 
     def __init__(self, **kwargs):
+        """Initialize the sklearn wrapper and configure pandas output format.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments forwarded to the
+            parent scikit-learn transformer and ConfigObject.
+        """
         super().__init__(**kwargs)
 
         if hasattr(self, "set_output"):
@@ -20,13 +36,15 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Each sklearn converter must implement this method to specify its output type.
+        """Return the DashAI data type produced by this transformer for a column.
+
+        Each concrete sklearn converter must implement this to declare its
+        output column type after transformation.
 
         Parameters
         ----------
         column_name : str, optional
-            The name of the column for which to get the output type.
+            The name of the column. Defaults to None.
 
         Returns
         -------
@@ -38,20 +56,33 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
     def fit(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> BaseConverter:
-        """
-        Fit the sklearn transformer to the data.
+        """Fit the scikit-learn transformer to the data.
+
+        Converts `x` (and optionally `y`) to pandas DataFrames, then delegates
+        to the underlying scikit-learn class's `fit` method found in the MRO.
 
         Parameters
         ----------
         x : DashAIDataset
             The input dataset to fit the transformer on.
-        y : DashAIDataset or None, optional
+        y : DashAIDataset, optional
             Target values for supervised transformers.
+            Defaults to None.
 
         Returns
         -------
         BaseConverter
-            The fitted transformer instance.
+            The fitted transformer instance (self).
+
+        Raises
+        ------
+        ValueError
+            If the transformer requires ``y`` but none is provided
+            (only applies to legacy sklearn estimators that define
+            ``_get_tags()`` with ``requires_y=True``).
+        RuntimeError
+            If no scikit-learn class with a `fit` method is found
+            in the MRO.
         """
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
         y_pandas = y.to_pandas() if y is not None and hasattr(y, "to_pandas") else y
@@ -90,20 +121,30 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """
-        Transform the data using the fitted sklearn transformer.
+        """Transform the data using the fitted scikit-learn transformer.
+
+        Converts `x` to a pandas DataFrame, applies the underlying scikit-learn
+        transformer's `transform` method, then converts the result back to a
+        `DashAIDataset` with column types set via `get_output_type`.
 
         Parameters
         ----------
         x : DashAIDataset
             The input dataset to transform.
-        y : DashAIDataset or None, optional
-            Not used, present for API consistency.
+        y : DashAIDataset, optional
+            Not used. Present for API consistency.
+            Defaults to None.
 
         Returns
         -------
         DashAIDataset
-            The transformed dataset with proper DashAI types.
+            The transformed dataset with updated DashAI column types.
+
+        Raises
+        ------
+        RuntimeError
+            If no scikit-learn class with a `transform` method is
+            found in the MRO.
         """
         import numpy as np
         import pandas as pd

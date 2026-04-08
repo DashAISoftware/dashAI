@@ -12,6 +12,13 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
     """Abstract base wrapper for HuggingFace transformers."""
 
     def __init__(self, **kwargs):
+        """Initialise the HuggingFace wrapper base class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keyword arguments forwarded to :class:`BaseConverter`.
+        """
         super().__init__()
 
     @abstractmethod
@@ -21,19 +28,63 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
 
     @abstractmethod
     def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
-        """Process a batch of data through the model."""
+        """Process a single batch of records through the HuggingFace model.
+
+        Parameters
+        ----------
+        batch : DashAIDataset
+            A slice of the full dataset containing the rows to process.
+
+        Returns
+        -------
+        DashAIDataset
+            Transformed batch with model outputs.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Each HuggingFace converter must implement this method to specify
-        its output type.
+        """Return the DashAI data type produced for the given output column.
+
+        Each concrete HuggingFace converter must implement this method to
+        declare the type of the column it produces after transformation.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the output column whose type is requested. Default ``None``.
+
+        Returns
+        -------
+        DashAIDataType
+            The DashAI type assigned to the output column.
         """
         raise NotImplementedError
 
     def fit(self, x: "DashAIDataset", y: "DashAIDataset" = None) -> Type[BaseConverter]:
-        """Validate parameters and prepare for transformation."""
+        """Validate the input dataset and load the HuggingFace model.
+
+        Checks that the dataset is non-empty and that all columns contain
+        string data, then calls :meth:`_load_model` to download and cache
+        the model weights if not already loaded.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset whose columns must all be string-typed.
+        y : DashAIDataset or None, optional
+            Ignored. Present for API compatibility. Default ``None``.
+
+        Returns
+        -------
+        HuggingFaceWrapper
+            The fitted converter instance (``self``).
+
+        Raises
+        ------
+        ValueError
+            If ``x`` is empty or any column does not contain string data.
+        """
         if len(x) == 0:
             raise ValueError("Input dataset is empty")
 
@@ -50,7 +101,24 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
     def transform(
         self, x: "DashAIDataset", y: "DashAIDataset" = None
     ) -> "DashAIDataset":
-        """Transform the input data using the model."""
+        """Transform the input dataset by running inference in batches.
+
+        Splits ``x`` into chunks of ``self.batch_size``, passes each chunk
+        through :meth:`_process_batch`, concatenates the results, and assigns
+        column types via :meth:`get_output_type`.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The dataset to transform. Must have been fitted first.
+        y : DashAIDataset or None, optional
+            Ignored. Present for API compatibility. Default ``None``.
+
+        Returns
+        -------
+        DashAIDataset
+            Transformed dataset with output types set per column.
+        """
         from datasets import concatenate_datasets
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
