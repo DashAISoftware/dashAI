@@ -1,45 +1,74 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-
-import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
-
-import JsonDisplayer from "../../../shared/JsonDisplayer";
+import {
+  Box,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-/**
- * Component that displays the parameters associated with an object.
- * @param {object} data object that contains all the necesary info
- */
+function formatValue(value) {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "object") {
+    const str = JSON.stringify(value);
+    return str.length > 60 ? str.slice(0, 60) + "…" : str;
+  }
+  return String(value);
+}
+
 function Parameters({ data }) {
-  const [displayMode, setDisplayMode] = useState("nested-list");
   const { t } = useTranslation(["common"]);
+  const entries = data ? Object.entries(data) : [];
 
   return (
-    <Grid container direction="column">
-      {/* Toggle to select the mode of displaying the JSON object. */}
-      <Grid>
-        <ToggleButtonGroup
-          value={displayMode}
-          exclusive
-          onChange={(event, newMode) => {
-            if (newMode !== null) {
-              setDisplayMode(newMode);
-            }
-          }}
-          sx={{ float: "right" }}
-        >
-          <ToggleButton value="nested-list">{t("common:list")}</ToggleButton>
-          <ToggleButton value="json">{t("common:json")}</ToggleButton>
-        </ToggleButtonGroup>
-      </Grid>
-
-      {/* JSON object display */}
-      <JsonDisplayer
-        displayMode={displayMode}
-        name={t("common:parameters")}
-        data={data}
-      />
-    </Grid>
+    <Box>
+      <Typography variant="sectionLabel" sx={{ color: "text.secondary" }}>
+        {t("common:parameters")}
+      </Typography>
+      <Divider sx={{ mt: 1, mb: 1, borderColor: "ui.borderLight" }} />
+      <Table size="small">
+        <TableBody>
+          {entries.map(([key, value]) => (
+            <TableRow key={key} sx={{ "&:last-child td": { borderBottom: 0 } }}>
+              <TableCell
+                sx={{
+                  fontFamily: '"IBM Plex Mono", monospace',
+                  fontSize: "0.8rem",
+                  color: "text.secondary",
+                  borderColor: "ui.borderLight",
+                  py: 0.75,
+                }}
+              >
+                {key}
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontSize: "0.8rem",
+                  color: "text.primary",
+                  borderColor: "ui.borderLight",
+                  py: 0.75,
+                }}
+              >
+                {formatValue(value)}
+              </TableCell>
+            </TableRow>
+          ))}
+          {entries.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={2} sx={{ borderBottom: 0 }}>
+                <Typography variant="body2" color="text.disabled">
+                  {t("common:noItemsAvailable")}
+                </Typography>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Box>
   );
 }
 
