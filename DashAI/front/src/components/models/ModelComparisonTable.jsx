@@ -234,6 +234,11 @@ function ModelComparisonTable({
     [models, metrics, runs, metricSplit, t, onTrain, onViewDetails, onDelete],
   );
 
+  const columnOrder = useMemo(
+    () => columns.map((col) => col.id ?? col.accessorKey).filter(Boolean),
+    [columns],
+  );
+
   const table = useMaterialReactTable({
     columns,
     data,
@@ -258,6 +263,7 @@ function ModelComparisonTable({
     enableBottomToolbar: false,
     muiTableBodyCellProps: { sx: { py: 0.25, whiteSpace: "pre" } },
     muiTableHeadCellProps: { sx: { py: 0.5 } },
+    state: { columnOrder },
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
         if (onRowClick) {
