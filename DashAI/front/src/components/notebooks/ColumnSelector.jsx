@@ -254,6 +254,13 @@ function ColumnSelector({
       pagination: { pageSize: 5, pageIndex: 0 },
       density: "compact",
     },
+    mrtTheme: {
+      baseBackgroundColor: theme.palette.ui.panelDark,
+    },
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: { border: "1px solid", borderColor: "divider" },
+    },
     muiTableBodyRowProps: ({ row }) => ({
       sx: isRowSelectable({ id: row.original.id })
         ? {}
@@ -279,10 +286,7 @@ function ColumnSelector({
       >
         {/* Column requirement info */}
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography
-            variant="body1"
-            sx={{ color: "text.secondary", mb: 0.5 }}
-          >
+          <Typography variant="body1" sx={{ color: "text.secondary", mb: 0.5 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
