@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Chip, Stack } from "@mui/material";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
@@ -247,11 +250,14 @@ function ColumnSelector({
     enableSorting: true,
     enablePagination: true,
     muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
-    initialState: { pagination: { pageSize: 5, pageIndex: 0 } },
+    initialState: {
+      pagination: { pageSize: 5, pageIndex: 0 },
+      density: "compact",
+    },
     muiTableBodyRowProps: ({ row }) => ({
       sx: isRowSelectable({ id: row.original.id })
         ? {}
-        : { backgroundColor: "rgba(0, 0, 0, 0.12)", color: "#777" },
+        : { backgroundColor: theme.palette.action.disabledBackground },
     }),
     localization,
   });
@@ -266,8 +272,8 @@ function ColumnSelector({
           mb: 2,
           p: 2,
           borderRadius: 2,
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
+          backgroundColor: theme.palette.ui.hover,
+          border: `1px solid ${theme.palette.ui.divider}`,
           textAlign: "center",
         }}
       >
@@ -275,7 +281,7 @@ function ColumnSelector({
         {Object.keys(inputCardinality).length > 0 && (
           <Typography
             variant="body1"
-            sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
+            sx={{ color: "text.secondary", mb: 0.5 }}
           >
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
@@ -284,8 +290,8 @@ function ColumnSelector({
               context: inputCardinality.exact
                 ? "exact"
                 : inputCardinality.max
-                  ? "range"
-                  : "min",
+                ? "range"
+                : "min",
             })}
           </Typography>
         )}
@@ -314,7 +320,7 @@ function ColumnSelector({
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.5)",
+              color: "text.disabled",
               fontStyle: "italic",
               mt: 1,
             }}
@@ -335,7 +341,7 @@ function ColumnSelector({
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.5)",
+              color: "text.disabled",
               fontStyle: "italic",
               mt: 1,
             }}
