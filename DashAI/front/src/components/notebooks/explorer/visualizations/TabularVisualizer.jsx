@@ -7,6 +7,7 @@ import {
 } from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
@@ -51,11 +52,35 @@ function TabularVisualizerInner({
   theme,
   minimalist,
 }) {
+  const fullSizeTableStyles = minimalist
+    ? {
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }
+    : undefined;
+
   const table = useMaterialReactTable({
     columns,
     data,
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
-    muiTablePaperProps: { elevation: 0 },
+    muiTablePaperProps: minimalist
+      ? {
+          elevation: 0,
+          sx: fullSizeTableStyles,
+        }
+      : { elevation: 0 },
+    muiTableContainerProps: minimalist
+      ? {
+          sx: {
+            flex: 1,
+            width: "100%",
+            height: "100%",
+          },
+        }
+      : undefined,
     localization,
     initialState: {
       density: "compact",
@@ -69,7 +94,13 @@ function TabularVisualizerInner({
     enableColumnFilters: !minimalist,
   });
 
-  return <MaterialReactTable table={table} />;
+  return minimalist ? (
+    <Box sx={{ width: "100%", height: "100%", display: "flex" }}>
+      <MaterialReactTable table={table} />
+    </Box>
+  ) : (
+    <MaterialReactTable table={table} />
+  );
 }
 
 function TabularVisualizer({
