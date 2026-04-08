@@ -1,7 +1,10 @@
 // DatasetPreviewTable.js
 import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
@@ -108,8 +111,7 @@ function DatasetPreviewTable({
         header: "Data type",
         size: 200,
         Cell: ({ row }) => {
-          const options =
-            dataTypesbyColumnType[row.original.columnType] || [];
+          const options = dataTypesbyColumnType[row.original.columnType] || [];
           return isEditable ? (
             <SelectTypeCell
               id={row.original.id}

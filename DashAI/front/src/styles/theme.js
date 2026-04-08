@@ -1,6 +1,5 @@
 import QuicksandBoldWoff2 from "./fonts/Quicksand-Bold.woff2";
 
-
 const getTheme = (mode, language) => ({
   palette: {
     mode,
@@ -211,7 +210,6 @@ const getTheme = (mode, language) => ({
         }
       `,
     },
-
   },
 });
 

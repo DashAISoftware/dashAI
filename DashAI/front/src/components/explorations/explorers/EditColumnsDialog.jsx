@@ -12,7 +12,10 @@ import {
   Stack,
 } from "@mui/material";
 import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
@@ -25,7 +28,10 @@ import { useSnackbar } from "notistack";
 // Convert array of IDs → MRT rowSelection format { [id]: boolean }
 const toMRT = (ids) => Object.fromEntries(ids.map((id) => [String(id), true]));
 // Convert MRT rowSelection → array of numeric IDs
-const fromMRT = (sel) => Object.keys(sel).filter((k) => sel[k]).map(Number);
+const fromMRT = (sel) =>
+  Object.keys(sel)
+    .filter((k) => sel[k])
+    .map(Number);
 
 const columnDefs = [
   {
@@ -213,12 +219,13 @@ function EditColumnsDialog({
       pagination: { pageIndex: 0, pageSize: 5 },
     },
     muiTableBodyRowProps: ({ row }) => ({
-      sx: !isRowSelectable(row) && !rowSelection[String(row.original.id)]
-        ? {
-            backgroundColor: "rgba(0, 0, 0, 0.12)",
-            color: "#777",
-          }
-        : {},
+      sx:
+        !isRowSelectable(row) && !rowSelection[String(row.original.id)]
+          ? {
+              backgroundColor: "rgba(0, 0, 0, 0.12)",
+              color: "#777",
+            }
+          : {},
     }),
     localization,
   });

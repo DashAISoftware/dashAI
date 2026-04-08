@@ -26,7 +26,11 @@ export default function SingleRun({ run, onRun }) {
           onClick={handleClick}
           disabled={isStarting || isRunning}
         >
-          {isStarting || isRunning ? <CircularProgress size={18} /> : <PlayArrow />}
+          {isStarting || isRunning ? (
+            <CircularProgress size={18} />
+          ) : (
+            <PlayArrow />
+          )}
         </IconButton>
       </span>
     </Tooltip>

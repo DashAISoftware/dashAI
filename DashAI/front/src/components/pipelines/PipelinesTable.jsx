@@ -1,11 +1,21 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Button, Grid, Paper, Typography, IconButton, Tooltip } from "@mui/material";
+import {
+  Button,
+  Grid,
+  Paper,
+  Typography,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import {
   AddCircleOutline as AddIcon,
   Update as UpdateIcon,
 } from "@mui/icons-material";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
@@ -29,7 +39,9 @@ function PipelinesTable({
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es") ? MRT_Localization_ES : MRT_Localization_EN;
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const fetchPipelines = async () => {
     setLoading(true);

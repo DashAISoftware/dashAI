@@ -30,7 +30,10 @@ function toMrtColumn(col) {
 
   if (col.renderCell) {
     mrt.Cell = ({ row }) =>
-      col.renderCell({ value: row.original[col.field], row: { ...row, original: row.original } });
+      col.renderCell({
+        value: row.original[col.field],
+        row: { ...row, original: row.original },
+      });
   }
 
   if (col.valueGetter) {
@@ -81,10 +84,7 @@ function TabularVisualizer({
     ? MRT_Localization_ES
     : MRT_Localization_EN;
 
-  const mrtColumns = useMemo(
-    () => columns.map(toMrtColumn),
-    [columns],
-  );
+  const mrtColumns = useMemo(() => columns.map(toMrtColumn), [columns]);
 
   return (
     <TabularVisualizerInner

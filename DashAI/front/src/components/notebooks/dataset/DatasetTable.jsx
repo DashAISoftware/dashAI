@@ -437,8 +437,7 @@ export default function DatasetTable({
     rowCount,
     localization,
     mrtTheme: {
-      baseBackgroundColor:
-        baseBackgroundColor ?? theme.palette.ui.panelDark,
+      baseBackgroundColor: baseBackgroundColor ?? theme.palette.ui.panelDark,
     },
     muiTablePaperProps: {
       elevation: 0,

@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Box, ButtonGroup, Paper, Typography } from "@mui/material";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
@@ -45,8 +48,12 @@ function ExplorationRunner({
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState(explorers);
 
-  const toMRT = (ids) => Object.fromEntries(ids.map((id) => [String(id), true]));
-  const fromMRT = (sel) => Object.keys(sel).filter((k) => sel[k]).map(Number);
+  const toMRT = (ids) =>
+    Object.fromEntries(ids.map((id) => [String(id), true]));
+  const fromMRT = (sel) =>
+    Object.keys(sel)
+      .filter((k) => sel[k])
+      .map(Number);
 
   const [rowSelection, setRowSelection] = useState(
     toMRT(explorers.map((explorer) => explorer.id)),

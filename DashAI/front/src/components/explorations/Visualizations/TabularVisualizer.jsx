@@ -29,7 +29,11 @@ function toMrtColumn(col) {
   if (col.filterable === false) mrt.enableColumnFilter = false;
 
   if (col.renderCell) {
-    mrt.Cell = ({ row }) => col.renderCell({ value: row.original[col.field], row: { ...row, original: row.original } });
+    mrt.Cell = ({ row }) =>
+      col.renderCell({
+        value: row.original[col.field],
+        row: { ...row, original: row.original },
+      });
   }
 
   if (col.valueGetter) {
@@ -39,7 +43,13 @@ function toMrtColumn(col) {
   return mrt;
 }
 
-function TabularVisualizerInner({ loading, columns, data, localization, theme }) {
+function TabularVisualizerInner({
+  loading,
+  columns,
+  data,
+  localization,
+  theme,
+}) {
   const table = useMaterialReactTable({
     columns,
     data,
@@ -57,21 +67,14 @@ function TabularVisualizerInner({ loading, columns, data, localization, theme })
   return <MaterialReactTable table={table} />;
 }
 
-function TabularVisualizer({
-  loading = false,
-  rows = [],
-  columns = [],
-}) {
+function TabularVisualizer({ loading = false, rows = [], columns = [] }) {
   const theme = useTheme();
   const { i18n } = useTranslation();
   const localization = i18n.language.startsWith("es")
     ? MRT_Localization_ES
     : MRT_Localization_EN;
 
-  const mrtColumns = useMemo(
-    () => columns.map(toMrtColumn),
-    [columns],
-  );
+  const mrtColumns = useMemo(() => columns.map(toMrtColumn), [columns]);
 
   return (
     <TabularVisualizerInner

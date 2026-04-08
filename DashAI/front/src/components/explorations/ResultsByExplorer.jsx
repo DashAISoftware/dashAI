@@ -7,7 +7,10 @@ import { getComponents } from "../../api/component";
 
 import { Box, Paper } from "@mui/material";
 import { Info as DetailsIcon } from "@mui/icons-material";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";

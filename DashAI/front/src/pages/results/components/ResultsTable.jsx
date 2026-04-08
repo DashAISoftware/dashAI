@@ -72,17 +72,16 @@ function ResultsTable({
 
       const extractedRows = extractRows(runs, models);
 
-      const { columns, columnVisibilityModel } =
-        extractColumns(
-          metrics,
-          runs,
-          experiment.dataset_id,
-          handleRun,
-          handleRunResultsOpen,
-          handlePrediction,
-          handleExplainer,
-          handleDeleteRun,
-        );
+      const { columns, columnVisibilityModel } = extractColumns(
+        metrics,
+        runs,
+        experiment.dataset_id,
+        handleRun,
+        handleRunResultsOpen,
+        handlePrediction,
+        handleExplainer,
+        handleDeleteRun,
+      );
 
       console.log("Columns:", columns);
 

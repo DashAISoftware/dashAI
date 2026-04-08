@@ -1,13 +1,10 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  styled,
-  IconButton,
-} from "@mui/material";
+import { Box, Typography, Paper, styled, IconButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTranslation } from "react-i18next";

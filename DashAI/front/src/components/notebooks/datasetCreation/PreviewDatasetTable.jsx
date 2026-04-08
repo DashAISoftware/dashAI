@@ -253,7 +253,10 @@ export default function PreviewDatasetTable({
     columns,
     data: rows ?? [],
     localization,
-    initialState: { density: "compact", pagination: { pageSize: 5, pageIndex: 0 } },
+    initialState: {
+      density: "compact",
+      pagination: { pageSize: 5, pageIndex: 0 },
+    },
     muiTablePaperProps: { elevation: 0 },
     paginationDisplayMode: "pages",
   });
