@@ -440,7 +440,10 @@ export default function DatasetTable({
       baseBackgroundColor:
         baseBackgroundColor ?? theme.palette.ui.panelDark,
     },
-    muiTablePaperProps: { elevation: 0 },
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: { border: "1px solid", borderColor: "divider" },
+    },
     enablePagination: true,
     manualPagination: true,
     manualFiltering: true,
