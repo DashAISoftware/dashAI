@@ -287,6 +287,7 @@ const ConverterTable = ({
   const table = useMaterialReactTable({
     columns,
     data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
     muiTablePaperProps: { elevation: 0 },
     localization,

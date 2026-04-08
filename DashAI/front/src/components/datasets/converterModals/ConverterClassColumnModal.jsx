@@ -116,6 +116,7 @@ const ConverterClassColumnModal = ({
   const classTable = useMaterialReactTable({
     columns,
     data: datasetColumns,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     enableRowSelection: true,
     enableMultiRowSelection: false,
     onRowSelectionChange: handleColumnSelection,

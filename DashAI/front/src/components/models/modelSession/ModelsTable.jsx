@@ -172,6 +172,7 @@ function ModelsTable({ newExp, setNewExp }) {
   const table = useMaterialReactTable({
     columns,
     data: newExp.runs,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
     muiTablePaperProps: { elevation: 0 },
     localization,

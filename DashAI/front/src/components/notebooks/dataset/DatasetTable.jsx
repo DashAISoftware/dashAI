@@ -434,6 +434,7 @@ export default function DatasetTable({
   const table = useMaterialReactTable({
     columns,
     data,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     rowCount,
     localization,
     mrtTheme: {

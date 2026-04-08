@@ -153,6 +153,7 @@ function OptimizationTable({ newExp, setNewExp }) {
   const table = useMaterialReactTable({
     columns,
     data: newExp.runs.filter(checkIfHaveOptimazers),
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
     muiTablePaperProps: { elevation: 0 },
     localization,

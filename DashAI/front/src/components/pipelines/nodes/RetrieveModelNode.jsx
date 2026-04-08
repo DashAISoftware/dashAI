@@ -112,6 +112,7 @@ function RetrieveModelNode({
   const table = useMaterialReactTable({
     columns,
     data: pipelines,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     state: { isLoading: loading },
     getRowId: (row) => String(row.id),
     enableRowSelection: false,

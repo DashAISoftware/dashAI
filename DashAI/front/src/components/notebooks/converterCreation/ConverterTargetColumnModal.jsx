@@ -136,6 +136,7 @@ const ConverterTargetColumnModal = ({
   const table = useMaterialReactTable({
     columns,
     data: datasetColumns,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     localization,
     initialState: {
       density: "compact",

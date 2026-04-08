@@ -54,6 +54,7 @@ function ConverterParametersTable({ converter, t, localization }) {
   const table = useMaterialReactTable({
     columns: paramColumns,
     data: paramRows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     localization,
     initialState: { density: "compact" },
     enablePagination: false,

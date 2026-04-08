@@ -89,6 +89,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const table = useMaterialReactTable({
     columns,
     data: datasets,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     state: { isLoading: loading },
     getRowId: (row) => String(row.id),
     enableRowSelection: false,

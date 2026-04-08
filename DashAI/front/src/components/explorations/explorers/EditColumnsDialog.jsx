@@ -204,6 +204,7 @@ function EditColumnsDialog({
   const table = useMaterialReactTable({
     columns,
     data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     getRowId: (row) => String(row.id),
     enableRowSelection: isRowSelectable,
     onRowSelectionChange: handleSelectionChange,

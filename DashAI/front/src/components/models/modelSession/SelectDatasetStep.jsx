@@ -114,6 +114,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const datasetsTable = useMaterialReactTable({
     columns,
     data: datasets,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     enableRowSelection: false,
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => handleRowClick(row),

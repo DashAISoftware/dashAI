@@ -252,6 +252,7 @@ export default function PreviewDatasetTable({
   const table = useMaterialReactTable({
     columns,
     data: rows ?? [],
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     localization,
     initialState: {
       density: "compact",

@@ -389,6 +389,7 @@ function RunnerDialog({
   const table = useMaterialReactTable({
     columns,
     data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     state: {
       isLoading: loading,
       rowSelection: mrtRowSelection,

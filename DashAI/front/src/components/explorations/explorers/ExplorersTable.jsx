@@ -136,6 +136,7 @@ function ExplorersTable({ explorerTypes = [] }) {
   const table = useMaterialReactTable({
     columns,
     data: explorers,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
     muiTablePaperProps: { elevation: 0 },
     localization,

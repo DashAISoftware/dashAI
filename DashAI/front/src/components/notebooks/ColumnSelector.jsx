@@ -241,6 +241,7 @@ function ColumnSelector({
   const columnSelectorTable = useMaterialReactTable({
     columns,
     data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     enableRowSelection: (row) => isRowSelectable({ id: row.original.id }),
     onRowSelectionChange: handleSelection,
     state: { rowSelection: toMRT(rowSelectionModel) },

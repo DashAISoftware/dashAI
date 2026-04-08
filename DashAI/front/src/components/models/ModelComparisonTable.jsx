@@ -255,7 +255,7 @@ function ModelComparisonTable({
     enablePagination: false,
     enableTopToolbar: false,
     enableBottomToolbar: false,
-    muiTableBodyCellProps: { sx: { py: 0.25 } },
+    muiTableBodyCellProps: { sx: { py: 0.25, whiteSpace: "pre" } },
     muiTableHeadCellProps: { sx: { py: 0.5 } },
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {

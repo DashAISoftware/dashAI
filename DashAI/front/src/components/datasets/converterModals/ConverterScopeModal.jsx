@@ -133,6 +133,7 @@ const ConverterScopeModal = ({
   const scopeTable = useMaterialReactTable({
     columns,
     data: datasetColumns,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     enableRowSelection: true,
     onRowSelectionChange: handleColumnSelection,
     state: { rowSelection: toMRT(selectedColumns) },

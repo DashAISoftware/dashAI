@@ -184,6 +184,7 @@ function ExplorationsTable({
   const table = useMaterialReactTable({
     columns,
     data: explorations,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
     muiTablePaperProps: { elevation: 0 },
     localization,

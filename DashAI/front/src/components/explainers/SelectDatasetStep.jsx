@@ -172,6 +172,7 @@ export default function SelectDatasetStep({
   const datasetsTable = useMaterialReactTable({
     columns,
     data: datasets,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     enableRowSelection: false,
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => handleRowClick(row),

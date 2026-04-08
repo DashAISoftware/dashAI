@@ -59,6 +59,7 @@ function ResultsTableLayout({
     muiTableBodyCellProps: {
       sx: {
         "&:focus": { outline: "none" },
+        whiteSpace: "pre",
       },
     },
     mrtTheme: (theme) => ({

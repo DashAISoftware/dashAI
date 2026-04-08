@@ -144,6 +144,7 @@ function DatasetSummaryTable({
   const table = useMaterialReactTable({
     columns,
     data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     getRowId: (row) => String(row.id),
     state: { isLoading: loading },
     enableSorting: false,
