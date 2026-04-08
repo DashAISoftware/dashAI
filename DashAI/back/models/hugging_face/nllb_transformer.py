@@ -31,8 +31,8 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
                 "Example: spa_Latn for Spanish."
             ),
             es=(
-                "Codigo de idioma de origen para el tokenizer NLLB. "
-                "Ejemplo: spa_Latn para espanol."
+                "Código de idioma de origen para el tokenizer NLLB. "
+                "Ejemplo: spa_Latn para español."
             ),
         ),
         alias=MultilingualString(en="Source language", es="Idioma de origen"),
@@ -46,8 +46,8 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
                 "Example: eng_Latn for English."
             ),
             es=(
-                "Codigo de idioma destino para la generacion NLLB. "
-                "Ejemplo: eng_Latn para ingles."
+                "Código de idioma destino para la generación NLLB. "
+                "Ejemplo: eng_Latn para inglés."
             ),
         ),
         alias=MultilingualString(en="Target language", es="Idioma destino"),

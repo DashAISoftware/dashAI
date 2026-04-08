@@ -1,5 +1,6 @@
 """Shared classes for Hugging Face text classification transformers."""
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Union
 
 from sklearn.exceptions import NotFittedError
@@ -9,8 +10,6 @@ from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
 from DashAI.back.types.categorical import Categorical
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
