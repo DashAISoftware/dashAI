@@ -1,16 +1,26 @@
 from pathlib import Path
 
 import torch
+from datasets import Dataset
 
-from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
-    OpusMtEnESTransformer,
+from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
+    OpusMtEsENTransformer,
 )
 
 
 class DummyTokenizer:
     def __call__(self, text, truncation=True, padding="max_length", max_length=512):
-        del text, truncation, padding, max_length
-        return {"input_ids": [1, 2, 3], "attention_mask": [1, 1, 1]}
+        del truncation, padding
+        n_tokens = min(max_length, max(1, len(str(text).split())))
+        return {
+            "input_ids": [1] * n_tokens + [0] * (max_length - n_tokens),
+            "attention_mask": [1] * n_tokens + [0] * (max_length - n_tokens),
+        }
+
+    def decode(self, token_ids, skip_special_tokens=True):
+        del token_ids, skip_special_tokens
+        return "translated text"
 
 
 class DummySeq2SeqModel:
@@ -60,7 +70,7 @@ def _patch_transformers(monkeypatch):
 def test_model_initialization(monkeypatch):
     _patch_transformers(monkeypatch)
 
-    model = OpusMtEnESTransformer(
+    model = OpusMtEsENTransformer(
         num_train_epochs=1,
         batch_size=2,
         learning_rate=2e-5,
@@ -74,14 +84,39 @@ def test_model_initialization(monkeypatch):
 
     assert model.model is not None
     assert model.tokenizer is not None
-    assert model.model_name == "Helsinki-NLP/opus-mt-en-es"
+    assert model.model_name == "Helsinki-NLP/opus-mt-es-en"
     assert model.fitted is False
+
+
+def test_tokenize_data(monkeypatch):
+    _patch_transformers(monkeypatch)
+
+    model = OpusMtEsENTransformer(
+        num_train_epochs=1,
+        batch_size=2,
+        learning_rate=2e-5,
+        device="CPU",
+        weight_decay=0.01,
+        log_train_every_n_epochs=None,
+        log_train_every_n_steps=None,
+        log_validation_every_n_epochs=None,
+        log_validation_every_n_steps=None,
+    )
+
+    x = to_dashai_dataset(Dataset.from_list([{"text": "hola mundo"}]))
+    y = to_dashai_dataset(Dataset.from_list([{"class": "hello world"}]))
+    tokenized_dataset = model.tokenize_data(x, y)
+
+    assert "input_ids" in tokenized_dataset.features
+    assert "attention_mask" in tokenized_dataset.features
+    assert "labels" in tokenized_dataset.features
+    assert len(tokenized_dataset) == len(x)
 
 
 def test_save_replaces_file_path_with_directory(monkeypatch, tmp_path):
     _patch_transformers(monkeypatch)
 
-    model = OpusMtEnESTransformer(
+    model = OpusMtEsENTransformer(
         num_train_epochs=1,
         batch_size=2,
         learning_rate=2e-5,
