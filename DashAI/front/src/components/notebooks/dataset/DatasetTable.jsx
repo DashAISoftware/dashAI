@@ -24,6 +24,7 @@ export default function DatasetTable({
   showExportButton = true,
   baseBackgroundColor,
   enableTopToolbar = true,
+  enableRowsPerPageSelector = true,
 }) {
   const { t, i18n } = useTranslation(["common"]);
   const theme = useTheme();
@@ -457,6 +458,9 @@ export default function DatasetTable({
     onDensityChange: setDensity,
     onShowColumnFiltersChange: setShowColumnFilters,
     enableTopToolbar,
+    muiPaginationProps: enableRowsPerPageSelector
+      ? undefined
+      : { showRowsPerPage: false },
     renderTopToolbarCustomActions: showExportButton
       ? () => (
           <Tooltip

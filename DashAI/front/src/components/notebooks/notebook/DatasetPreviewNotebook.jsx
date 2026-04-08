@@ -319,6 +319,7 @@ export default function DatasetPreviewNotebook({
               datasetPath={notebook.file_path}
               columnTypes={columnTypes}
               enableTopToolbar={false}
+              enableRowsPerPageSelector={false}
             />
           </Box>
         </AccordionDetails>
