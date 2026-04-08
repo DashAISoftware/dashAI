@@ -20,17 +20,16 @@ import {
 
 import {
   InfoOutlined,
-  ViewColumnOutlined,
-  TuneOutlined,
   AnalyticsOutlined,
   Close as CloseIcon,
 } from "@mui/icons-material";
 
-import { TabColumns, TabResults, TabInfo, TabParameters } from "./tabs";
+import { TabColumns, TabResults, TabParameters } from "./tabs";
 import PlotLayoutForm from "./plotLayout/PlotLayoutForm";
 import { updateExplorerResults } from "../../../api/explorer";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
+import { formatDate } from "../../../utils";
 
 export default function ExplorerDetailsModal({
   open = false,
@@ -42,30 +41,32 @@ export default function ExplorerDetailsModal({
   dataType,
   loading,
 }) {
-  const [currentTab, setCurrentTab] = useState(3);
+  const [currentTab, setCurrentTab] = useState(0);
   const [localData, setLocalData] = useState(data);
-  // Defer PlotLayoutForm render until after first paint
   const [formReady, setFormReady] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
 
-  // Always-current ref so handleSaveChangesLayout doesn't need localData in deps
   const localDataRef = useRef(localData);
   localDataRef.current = localData;
+
+  // Sync data prop → localData when data arrives after mount (explorer results load async)
+  useEffect(() => {
+    if (data && !localData) {
+      setLocalData(data);
+    }
+  }, [data, localData]);
 
   useEffect(() => {
     startTransition(() => setFormReady(true));
   }, []);
 
-  // Early returns must come after all hooks
   if (!explorer) return null;
   if (!data) return null;
 
   const tabs = [
-    { label: t("common:info"), value: 0, icon: <InfoOutlined /> },
-    { label: t("common:columns"), value: 1, icon: <ViewColumnOutlined /> },
-    { label: t("common:parameters"), value: 2, icon: <TuneOutlined /> },
-    { label: t("common:results"), value: 3, icon: <AnalyticsOutlined /> },
+    { label: t("common:results"), value: 0, icon: <AnalyticsOutlined /> },
+    { label: t("common:info"), value: 1, icon: <InfoOutlined /> },
   ];
 
   const handleTabChange = (_, newValue) => {
@@ -110,12 +111,21 @@ export default function ExplorerDetailsModal({
             m: "auto",
             display: "flex",
             flexDirection: "column",
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "ui.border",
           },
         },
       }}
     >
       <DialogTitle
-        sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          flexShrink: 0,
+          bgcolor: "background.paper",
+        }}
       >
         <Typography variant="h6" component="div">
           {t("datasets:label.detailsForExplorer", {
@@ -123,7 +133,7 @@ export default function ExplorerDetailsModal({
           })}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
-        <IconButton onClick={onClose}>
+        <IconButton onClick={onClose} aria-label={t("common:close")}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -137,6 +147,7 @@ export default function ExplorerDetailsModal({
           flexDirection: "column",
           overflow: "hidden",
           flex: 1,
+          bgcolor: "background.paper",
         }}
       >
         {/* Tab bar */}
@@ -144,14 +155,18 @@ export default function ExplorerDetailsModal({
           value={currentTab}
           onChange={handleTabChange}
           centered
-          sx={{ borderBottom: 1, borderColor: "divider", flexShrink: 0 }}
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            flexShrink: 0,
+            bgcolor: "background.paper",
+          }}
         >
           {tabs.map((tab) => (
             <Tab
               key={tab.value}
               value={tab.value}
               label={tab.label}
-              disabled={tab.disabled}
               icon={tab.icon}
             />
           ))}
@@ -159,27 +174,60 @@ export default function ExplorerDetailsModal({
 
         {/* Tab content */}
         <Box sx={{ flex: 1, overflow: "hidden", position: "relative" }}>
-          {/* Non-results tabs: conditionally rendered, padded */}
-          {currentTab === 0 && (
-            <Box sx={{ p: 3, height: "100%", overflowY: "auto" }}>
-              <TabInfo data={explorer} />
-            </Box>
-          )}
+          {/* Details tab */}
           {currentTab === 1 && (
-            <Box sx={{ p: 3, height: "100%", overflowY: "auto" }}>
-              <TabColumns data={explorer.columns} />
-            </Box>
-          )}
-          {currentTab === 2 && (
-            <Box sx={{ p: 3, height: "100%", overflowY: "auto" }}>
-              <TabParameters data={explorer.parameters} />
+            <Box sx={{ p: 2.5, height: "100%", overflowY: "auto" }}>
+              {/* Metadata strip */}
+              {explorer.created && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
+                    pb: 1.5,
+                    borderBottom: "1px solid",
+                    borderColor: "ui.borderLight",
+                  }}
+                >
+                  <Typography variant="sectionLabel" color="text.secondary">
+                    {t("common:created")}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontSize: "0.78rem",
+                    }}
+                    color="text.primary"
+                  >
+                    {formatDate(explorer.created)}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Columns + Parameters side by side */}
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 3,
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                }}
+              >
+                <Box sx={{ flex: "1 1 240px", minWidth: 0 }}>
+                  <TabColumns data={explorer.columns} />
+                </Box>
+                <Box sx={{ flex: "1 1 240px", minWidth: 0 }}>
+                  <TabParameters data={explorer.parameters} />
+                </Box>
+              </Box>
             </Box>
           )}
 
-          {/* Results tab: always mounted to preserve state, side-by-side layout */}
+          {/* Results tab: always mounted to preserve state */}
           <Box
             sx={{
-              display: currentTab === 3 ? "flex" : "none",
+              display: currentTab === 0 ? "flex" : "none",
               flexDirection: { xs: "column", xl: "row" },
               height: "100%",
               overflow: "auto",
@@ -193,11 +241,8 @@ export default function ExplorerDetailsModal({
                   left: "50%",
                   transform: "translate(-50%, -50%)",
                 }}
-              >
-                {t("common:loading")}
-              </CircularProgress>
+              />
             )}
-            {/* Chart panel */}
             {formReady && (
               <>
                 <Box
@@ -219,7 +264,6 @@ export default function ExplorerDetailsModal({
                   />
                 </Box>
 
-                {/* Form sidebar — deferred until after first paint */}
                 {dataType === "plotly_json" && (
                   <Box
                     sx={{
