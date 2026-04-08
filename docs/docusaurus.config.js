@@ -8,7 +8,7 @@ const config = {
   favicon: "img/favicon.ico",
 
   url: "https://DashAISoftware.github.io",
-  baseUrl: "/DashAI/",
+  baseUrl: "/",
 
   organizationName: "DashAISoftware",
   projectName: "DashAI",
