@@ -64,6 +64,7 @@ function TabularVisualizerInner({
   const tablePaperStyles = {
     border: 1,
     borderColor: theme.palette.divider,
+    borderRadius: minimalist ? 0 : 1,
     ...(fullSizeTableStyles ?? {}),
   };
 
@@ -87,8 +88,9 @@ function TabularVisualizerInner({
     localization,
     initialState: {
       density: "compact",
-      pagination: { pageSize: 5, pageIndex: 0 },
+      pagination: { pageSize: minimalist ? 5 : 10, pageIndex: 0 },
     },
+    muiPaginationProps: minimalist ? { showRowsPerPage: false } : undefined,
     state: { isLoading: loading },
     enableGlobalFilter: !minimalist,
     enableTopToolbar: !minimalist,
