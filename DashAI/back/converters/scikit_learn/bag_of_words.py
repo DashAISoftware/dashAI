@@ -141,7 +141,7 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.vectorizer = CountVectorizer(
             max_features=kwargs.get("max_features", 1000),
             lowercase=kwargs.get("lowercase", True),
-            stop_words=kwargs.get("stop_words", "english"),
+            stop_words=kwargs.get("stop_words"),
             ngram_range=(
                 kwargs.get("lower_bound_ngrams", 1),
                 kwargs.get("upper_bound_ngrams", 1),
@@ -206,7 +206,11 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         # One column per token (frequency)
         df_bow = pd.DataFrame(bow_matrix.toarray(), columns=feature_names)
 
-        return to_dashai_dataset(df_bow)
+        converted_dataset = to_dashai_dataset(df_bow)
+        output_type = self.get_output_type()
+        for col in converted_dataset.column_names:
+            converted_dataset.types[col] = output_type
+        return converted_dataset
 
     def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
