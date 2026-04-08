@@ -117,7 +117,7 @@ class SimpleImputer(
     IMAGE_PREVIEW = "simple_imputer.png"
 
     metadata = {
-        "allowed_dtypes": ["string", "int64", "float64", "float32"],
+        "allowed_dtypes": ["int64", "float64", "float32"],
         "restricted_dtypes": [],
     }
 
