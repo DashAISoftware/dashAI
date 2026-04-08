@@ -126,6 +126,11 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     DISPLAY_NAME = MultilingualString(en="One-Hot Encoder", es="Codificador One-Hot")
     IMAGE_PREVIEW = "one_hot_encoder.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the OneHotEncoder converter.
 

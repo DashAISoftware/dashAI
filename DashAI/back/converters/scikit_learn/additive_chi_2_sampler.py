@@ -61,6 +61,11 @@ class AdditiveChi2Sampler(
     DISPLAY_NAME = MultilingualString(en="Additive Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
 

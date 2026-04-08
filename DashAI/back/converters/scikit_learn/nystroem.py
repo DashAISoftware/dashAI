@@ -157,6 +157,11 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
     )
     IMAGE_PREVIEW = "nystroem.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the Nystroem converter.
 
