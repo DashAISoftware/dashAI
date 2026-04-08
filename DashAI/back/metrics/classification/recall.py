@@ -1,6 +1,6 @@
 """DashAI recall classification metric implementation."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -8,11 +8,32 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Recall(ClassificationMetric):
-    """Recall metric to classification tasks."""
+    """Fraction of actual positives that are correctly identified.
+
+    Recall (also called sensitivity or true positive rate) measures the
+    ability of the classifier to find all positive samples. It is the metric
+    of choice when the cost of false negatives is high — e.g. in medical
+    screening, missing a disease is more costly than a false alarm.
+
+    For binary tasks the standard binary recall is used. For multiclass tasks,
+    macro averaging (unweighted mean over all classes) is applied.
+
+    ::
+
+        Recall = TP / (TP + FN)
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
+    """
 
     DESCRIPTION: str = (
         "Fraction of actual positives correctly identified, "
@@ -21,7 +42,9 @@ class Recall(ClassificationMetric):
 
     @staticmethod
     def score(
-        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate recall between true labels and predicted labels.
 

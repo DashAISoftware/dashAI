@@ -8,9 +8,14 @@ from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class ControlNetTask(BaseGenerativeTask):
-    """Base class for image generation tasks using ControlNet.
+    """Task for structure-conditioned image generation using ControlNet pipelines.
 
-    Here you can change the methods provided by class Task.
+    ControlNet tasks accept a source image and a text prompt as inputs and
+    produce one or more generated images. The source image is pre-processed
+    by the model (e.g. depth estimation, HED soft-edge detection, OpenPose
+    skeleton extraction, or Canny edge detection) to derive a spatial
+    conditioning signal, which guides the diffusion process alongside the text
+    prompt.
     """
 
     metadata: dict = {

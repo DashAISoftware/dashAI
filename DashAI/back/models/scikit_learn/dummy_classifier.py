@@ -9,7 +9,13 @@ from DashAI.back.models.tabular_classification_model import TabularClassificatio
 
 
 class DummyClassifierSchema(BaseSchema):
-    "DummyClassifier makes predictions that ignore the input features."
+    """Schema that configures the Dummy Classifier.
+
+    DummyClassifier is a baseline classification model that makes predictions by
+    applying simple rules that completely ignore the input features. It is used to
+    establish a trivial performance baseline for comparison with more complex
+    classifiers. The underlying implementation is ``sklearn.dummy.DummyClassifier``.
+    """
 
     strategy: schema_field(
         enum_field(enum=["most_frequent", "prior", "stratified", "uniform"]),
@@ -25,7 +31,21 @@ class DummyClassifierSchema(BaseSchema):
 class DummyClassifier(
     TabularClassificationModel, SklearnLikeClassifier, _DummyClassifier
 ):
-    """Scikit-learn's DummyClassifier wrapper for DashAI."""
+    """Baseline classifier that makes predictions ignoring the input features.
+
+    DummyClassifier generates predictions using one of several simple strategies
+    that do not use the input features at all: always predicting the most frequent
+    class (``most_frequent``), sampling from the training class distribution
+    (``stratified``), or predicting uniformly at random (``uniform``). It is used
+    as a sanity-check baseline: any meaningful classifier should outperform it.
+
+    The only configurable hyperparameter is ``strategy``. The implementation wraps
+    scikit-learn's ``DummyClassifier``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
+    """
 
     SCHEMA = DummyClassifierSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -40,5 +60,13 @@ class DummyClassifier(
     ICON: str = "Science"
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         kwargs = self.validate_and_transform(kwargs)
         super().__init__(**kwargs)

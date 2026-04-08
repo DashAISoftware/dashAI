@@ -20,7 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
-    ConverterListStatus,
+    ConverterStatus,
     DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
@@ -520,8 +520,8 @@ class GenerativeSession(Base):
     )
 
 
-class ConverterList(Base):
-    __tablename__ = "converter_list"
+class Converter(Base):
+    __tablename__ = "converter"
     """
     Table to store a list of converters applied to a dataset.
     """
@@ -539,9 +539,9 @@ class ConverterList(Base):
         onupdate=datetime.now,
     )
     status: Mapped[Enum] = mapped_column(
-        Enum(ConverterListStatus),
+        Enum(ConverterStatus),
         nullable=False,
-        default=ConverterListStatus.NOT_STARTED,
+        default=ConverterStatus.NOT_STARTED,
     )
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
@@ -554,26 +554,26 @@ class ConverterList(Base):
         """Update the status of the list to delivered and set delivery_time
         to now.
         """
-        self.status = ConverterListStatus.DELIVERED
+        self.status = ConverterStatus.DELIVERED
         self.delivery_time = datetime.now()
 
     def set_status_as_started(self) -> None:
         """Update the status of the list to started and set start_time
         to now.
         """
-        self.status = ConverterListStatus.STARTED
+        self.status = ConverterStatus.STARTED
         self.start_time = datetime.now()
 
     def set_status_as_finished(self) -> None:
         """Update the status of the list to finished and set end_time
         to now.
         """
-        self.status = ConverterListStatus.FINISHED
+        self.status = ConverterStatus.FINISHED
         self.end_time = datetime.now()
 
     def set_status_as_error(self) -> None:
         """Update the status of the list to error."""
-        self.status = ConverterListStatus.ERROR
+        self.status = ConverterStatus.ERROR
 
 
 class Notebook(Base):
@@ -598,7 +598,7 @@ class Notebook(Base):
     explorers: Mapped[List["Explorer"]] = relationship(
         back_populates="notebook", cascade="all, delete-orphan"
     )
-    converters: Mapped[List["ConverterList"]] = relationship(
+    converters: Mapped[List["Converter"]] = relationship(
         back_populates="notebook", cascade="all, delete-orphan"
     )
     dataset: Mapped["Dataset"] = relationship(back_populates="notebooks")

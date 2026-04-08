@@ -17,7 +17,13 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 
 
 class GradientBoostingRSchema(BaseSchema):
-    """Gradient Boosting for regression."""
+    """Schema that configures the Gradient Boosting Regressor.
+
+    Gradient Boosting is a sequential ensemble regression method that fits a new
+    decision tree at each stage to the negative gradient (pseudo-residuals) of a
+    differentiable loss function. The underlying implementation is
+    ``sklearn.ensemble.GradientBoostingRegressor``.
+    """
 
     loss: schema_field(
         enum_field(enum=["squared_error", "absolute_error", "huber", "quantile"]),
@@ -334,7 +340,28 @@ class GradientBoostingRSchema(BaseSchema):
 
 
 class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
-    """Scikit-learn's Ridge Regression wrapper for DashAI."""
+    """Gradient boosting regressor that builds
+    an ensemble of decision trees sequentially.
+
+    Gradient Boosting builds an additive model in a forward stage-wise fashion. At
+    each stage a shallow decision tree is fitted to the negative gradient of the
+    chosen loss function with respect to the current ensemble prediction. A
+    ``learning_rate`` shrinkage factor scales the contribution of each new tree,
+    trading a slower learning process for better generalisation.
+
+    Key hyperparameters include ``n_estimators`` (number of boosting stages),
+    ``learning_rate``, ``max_depth``, ``subsample`` (fraction of training samples
+    per tree, enabling stochastic gradient boosting), ``loss``, and
+    ``min_samples_split``. The implementation wraps scikit-learn's
+    ``GradientBoostingRegressor``.
+
+    References
+    ----------
+    - [1] Friedman, J.H. (2001). "Greedy function approximation: a gradient
+           boosting machine." Annals of Statistics, 29(5), 1189-1232.
+           https://doi.org/10.1214/aos/1013203451
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
+    """
 
     SCHEMA = GradientBoostingRSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -354,4 +381,12 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
     ICON: str = "AutoGraph"
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)

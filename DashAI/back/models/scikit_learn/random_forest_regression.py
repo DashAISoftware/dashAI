@@ -17,7 +17,14 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 
 
 class RandomForestRegressionSchema(BaseSchema):
-    """Random Forest Regressor for DashAI."""
+    """Schema that configures the Random Forest Regressor.
+
+    Random Forest is an ensemble regression algorithm that builds multiple decision
+    trees on bootstrap samples of the training data, using a random subset of
+    features at each split, and averages their predictions to produce the final
+    output. The underlying implementation is
+    ``sklearn.ensemble.RandomForestRegressor``.
+    """
 
     n_estimators: schema_field(
         optimizer_int_field(ge=1),
@@ -252,7 +259,25 @@ class RandomForestRegressionSchema(BaseSchema):
 class RandomForestRegression(
     RegressionModel, SklearnLikeRegressor, _RandomForestRegressor
 ):
-    """Scikit-learn's Ridge Regression wrapper for DashAI."""
+    """Random forest regressor that averages predictions from multiple decision trees.
+
+    Random Forest is a bagging ensemble that fits ``n_estimators`` decision trees,
+    each on a bootstrap sample of the training data. At each split only a random
+    subset of features is considered, decorrelating the trees and reducing variance
+    relative to a single tree. The final prediction is the mean of all individual
+    tree predictions.
+
+    Key hyperparameters include ``n_estimators``, ``criterion``, ``max_depth``,
+    ``min_samples_split``, ``min_samples_leaf``, ``max_features``, ``bootstrap``,
+    and ``random_state``. The implementation wraps scikit-learn's
+    ``RandomForestRegressor``.
+
+    References
+    ----------
+    - [1] Breiman, L. (2001). "Random Forests." Machine Learning, 45(1), 5-32.
+           https://doi.org/10.1023/A:1010933404324
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+    """
 
     SCHEMA = RandomForestRegressionSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -270,4 +295,12 @@ class RandomForestRegression(
     ICON: str = "Forest"
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)

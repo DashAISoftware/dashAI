@@ -22,11 +22,14 @@ class BaseConverterSchema(BaseSchema):
 
 
 class BaseConverter(ConfigObject, ABC):
-    """
-    Base class for all converters
+    """Abstract base class for all data converters in DashAI.
 
-    Converters are for modifying the data in a supervised or unsupervised way
-    (e.g. by adding, changing, or removing columns, but not by adding or removing rows)
+    Converters modify dataset columns in a supervised or unsupervised way.
+    Operations include scaling, encoding, dimensionality reduction, imputation,
+    and feature engineering. Converters do not add or remove rows unless
+    `changes_row_count` returns True (e.g. samplers).
+
+    All converters must implement `fit`, `transform`, and `get_output_type`.
     """
 
     TYPE: Final[str] = "Converter"
@@ -42,13 +45,20 @@ class BaseConverter(ConfigObject, ABC):
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """
-        Get metadata values for the current converter.
+        """Get metadata for the converter, used by the DashAI frontend.
+
+        Parameters
+        ----------
+        cls : type
+            The converter class (injected automatically by Python for
+            classmethods).
 
         Returns
         -------
         Dict[str, Any]
-            Dictionary with the metadata
+            Dictionary containing display name, short description, image
+            preview path, category, icon, color, and whether the converter
+            is supervised.
         """
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["display_name"] = cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
@@ -64,31 +74,35 @@ class BaseConverter(ConfigObject, ABC):
         return meta
 
     def changes_row_count(self) -> bool:
-        """
-        Indicates if the converter changes the number of rows in the dataset.
-        Samplers typically do, while most other transformers do not.
+        """Indicate whether this converter changes the number of dataset rows.
+
+        Samplers (e.g. SMOTE, RandomUnderSampler) return True because they
+        add or remove rows. Most transformers return False.
+
+        Returns
+        -------
+        bool
+            True if the converter may add or remove rows, False otherwise.
         """
         return False
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Get the output type for a specific column after transformation.
+        """Return the DashAI data type produced by this converter for a given column.
 
-        This method must be implemented by each converter to specify what type
-        of data it produces. The converter should determine the output type based
-        on its transformation logic.
+        Each converter must implement this to declare what type its output columns
+        will have after transformation, so that DashAI can update the dataset schema.
 
         Parameters
         ----------
         column_name : str, optional
-            The name of the column to get the output type for.
-            Useful for converters that may produce different types per column.
+            The name of the output column. Useful for
+            converters that may produce different types per column. Defaults to None.
 
         Returns
         -------
         DashAIDataType
-            The output type after transformation for the specified column.
+            The output data type for the specified column.
         """
         raise NotImplementedError
 
@@ -96,20 +110,24 @@ class BaseConverter(ConfigObject, ABC):
     def fit(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> Type[BaseConverter]:
-        """Fit the converter.
-        This method should allow to validate the converter's parameters.
+        """Fit the converter to the training data.
+
+        For unsupervised converters (e.g. scalers, PCA), only `x` is used.
+        For supervised converters (e.g. feature selectors), both `x` and `y`
+        must be provided.
 
         Parameters
         ----------
-        X : DashAIDataset
-            Training data
-        y: DashAIDataset
-            Target data for supervised learning
+        x : DashAIDataset
+            The input dataset to fit the converter on.
+        y : DashAIDataset, optional
+            Target labels for supervised converters.
+            Defaults to None.
 
         Returns
-        ----------
-        self
-            The fitted converter object.
+        -------
+        BaseConverter
+            The fitted converter instance (self).
         """
         raise NotImplementedError
 
@@ -117,17 +135,22 @@ class BaseConverter(ConfigObject, ABC):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """Transform the dataset.
+        """Apply the fitted converter to transform the dataset.
+
+        Must be called after `fit`. The converter is applied to `x` and
+        the resulting DashAIDataset is returned with updated column types.
 
         Parameters
         ----------
-        X : DashAIDataset
-            Dataset to be converted
-        y: DashAIDataset
-            Target vectors
+        x : DashAIDataset
+            The input dataset to transform.
+        y : DashAIDataset, optional
+            Target vectors. Not used by most
+            converters. Defaults to None.
 
         Returns
         -------
-            Dataset converted
+        DashAIDataset
+            The transformed dataset with updated column types.
         """
         raise NotImplementedError

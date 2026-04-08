@@ -5,11 +5,33 @@ from typing import TYPE_CHECKING
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class R2(RegressionMetric):
-    """R2 score metric for regression tasks."""
+    """Coefficient of determination — goodness of fit for regression models.
+
+    R² (R-squared) measures the proportion of variance in the target variable
+    that is explained by the model. It compares the model's predictions to a
+    trivial baseline that always predicts the target mean. An R² of 1.0 means
+    the model explains all variance perfectly; 0.0 means it is no better than
+    the mean predictor; negative values indicate worse-than-baseline performance.
+
+    R² is scale-invariant (unlike MAE/MSE), making it easy to compare models
+    trained on targets with different units or magnitudes.
+
+    ::
+
+        R²(y, ŷ) = 1 - Σᵢ(yᵢ - ŷᵢ)² / Σᵢ(yᵢ - ȳ)²
+
+    Range: (-∞, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html
+    """
 
     MAXIMIZE: bool = True
     DESCRIPTION: str = (
@@ -20,7 +42,10 @@ class R2(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", pred_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        pred_values: "np.ndarray",
+    ) -> float:
         """Calculate the R2 score between true values and predicted values.
 
         Parameters

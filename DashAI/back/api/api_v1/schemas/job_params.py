@@ -12,7 +12,7 @@ class JobParams(BaseModel):
         "PredictJob",
         "DatasetJob",
         "ExplorerJob",
-        "ConverterListJob",
+        "ConverterJob",
         "GenerativeJob",
     ]
     kwargs: dict

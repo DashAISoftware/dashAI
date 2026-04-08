@@ -20,6 +20,12 @@ from DashAI.back.types.value_types import Float
 
 
 class TruncatedSVDSchema(BaseSchema):
+    """Configuration schema for the TruncatedSVD converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.TruncatedSVD``.
+    """
+
     n_components: schema_field(
         int_field(gt=0),
         2,
@@ -90,7 +96,33 @@ class TruncatedSVDSchema(BaseSchema):
 class TruncatedSVD(
     DimensionalityReductionConverter, SklearnWrapper, TruncatedSVDOperation
 ):
-    """Scikit-learn's TruncatedSVD wrapper for DashAI."""
+    """Reduce dimensionality using Truncated Singular Value Decomposition (LSA).
+
+    TruncatedSVD performs linear dimensionality reduction by computing the
+    thin SVD of the data matrix X, retaining only the top ``n_components``
+    singular values and their associated left and right singular vectors:
+    X ≈ U_k Σ_k V_k^T. The transformed data is X_new = X V_k.
+
+    Unlike PCA, TruncatedSVD does not center the data before decomposition.
+    This is crucial for sparse matrices such as TF-IDF or bag-of-words
+    representations, where centering would introduce a dense intermediate matrix
+    and destroy memory efficiency. In the text-mining community this algorithm
+    is often called Latent Semantic Analysis (LSA).
+
+    Key properties:
+
+    - Works on both dense and sparse input matrices.
+    - No mean-centering: safe for high-dimensional sparse data.
+    - Supports a randomized solver (fast, approximate) and ARPACK (exact).
+    - The ``n_oversamples`` and ``power_iteration_normalizer`` parameters
+      control the accuracy-speed trade-off of the randomized solver.
+
+    Wraps scikit-learn's ``TruncatedSVD``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
+    """
 
     SCHEMA = TruncatedSVDSchema
     DESCRIPTION = MultilingualString(
@@ -118,6 +150,14 @@ class TruncatedSVD(
     metadata = {}
 
     def __init__(self, **kwargs):
+        """Initialize the TruncatedSVD converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
@@ -126,7 +166,19 @@ class TruncatedSVD(
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

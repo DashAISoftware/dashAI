@@ -95,7 +95,7 @@ from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
-from DashAI.back.job.converter_job import ConverterListJob
+from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
@@ -123,10 +123,12 @@ from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
 
 # Models
+from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Transformer
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.llama_model import LlamaModel
 from DashAI.back.models.hugging_face.mistral_model import MistralModel
 from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
+from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
@@ -254,6 +256,8 @@ def get_initial_components():
         RandomForestClassifier,
         RandomForestRegression,
         DistilBertTransformer,
+        ModernBertTransformer,
+        DebertaV3Transformer,
         OpusMtEnESTransformer,
         BagOfWordsTextClassificationModel,
         RidgeRegression,
@@ -289,7 +293,7 @@ def get_initial_components():
         ModelJob,
         ExplorerJob,
         PredictJob,
-        ConverterListJob,
+        ConverterJob,
         DatasetJob,
         GenerativeJob,
         # Explainers

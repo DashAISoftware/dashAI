@@ -14,7 +14,13 @@ if TYPE_CHECKING:
 
 
 class TranslationTask(BaseTask):
-    """Base class for translation task."""
+    """Task for sequence-to-sequence machine translation between languages.
+
+    Translation tasks take a single ``Text`` input column (source language) and
+    produce a single ``Text`` output column (target language). The compatible
+    metrics are BLEU and TER, which measure n-gram overlap and translation edit
+    rate against reference translations respectively.
+    """
 
     COMPATIBLE_COMPONENTS = ["Bleu", "Ter"]
 
