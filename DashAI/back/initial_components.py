@@ -188,6 +188,7 @@ from DashAI.back.models.scikit_learn.random_forest_regression import (
 )
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
 from DashAI.back.models.scikit_learn.svc import SVC
+from DashAI.back.models.scikit_learn.tabpfn_classifier import TabPFNClassifier
 
 # Optimizers
 from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
@@ -262,6 +263,7 @@ def get_initial_components():
         LogisticRegression,
         MLPRegression,
         RandomForestClassifier,
+        TabPFNClassifier,
         RandomForestRegression,
         DistilBertTransformer,
         ModernBertTransformer,
