@@ -95,22 +95,10 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     def __init__(self, **kwargs):
         """Initialize the SelectKBest converter.
 
-        Patches ``_get_tags`` to advertise ``requires_y=True`` so that the
-        pipeline passes the target array at fit time, then delegates to the
-        parent initializer.
-
         Parameters
         ----------
         **kwargs
             Configuration keyword arguments matching the converter's
             schema fields. Forwarded to the underlying scikit-learn class.
         """
-        if callable(self._get_tags):
-            original_get_tags = self._get_tags
-            self._get_tags = lambda *a, **k: {
-                **original_get_tags(*a, **k),
-                "requires_y": True,
-            }
-        else:
-            self._get_tags = {**self._get_tags, "requires_y": True}
         super().__init__(**kwargs)
