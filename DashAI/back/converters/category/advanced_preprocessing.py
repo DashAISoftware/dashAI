@@ -6,6 +6,16 @@ from DashAI.back.static.icons import Icon
 
 
 class AdvancedPreprocessingConverter(BaseConverter):
+    """Base class for converters that apply advanced preprocessing transformations.
+
+    Advanced preprocessing converters handle complex feature transformations
+    beyond basic scaling or encoding. Examples include CCA (Canonical Correlation
+    Analysis), BagOfWords, and TF-IDF text vectorization.
+
+    Use these converters when standard preprocessing is insufficient and the
+    dataset requires more sophisticated feature engineering pipelines.
+    """
+
     CATEGORY: Final[str] = MultilingualString(
         en="Advanced Preprocessing", es="Preprocesamiento Avanzado"
     )

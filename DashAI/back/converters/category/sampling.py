@@ -6,6 +6,16 @@ from DashAI.back.static.icons import Icon
 
 
 class SamplingConverter(BaseConverter):
+    """Base class for converters that resample dataset rows to address class imbalance.
+
+    Sampling converters add or remove rows from the dataset, unlike most other
+    converters which only transform column values. Examples include
+    RandomUnderSampler, SMOTE, and SMOTEENN.
+
+    Use these converters when training on imbalanced classification datasets
+    where minority classes are underrepresented.
+    """
+
     CATEGORY = MultilingualString(
         en="Resampling & Class Balancing", es="Remuestreo y Balanceo de Clases"
     )

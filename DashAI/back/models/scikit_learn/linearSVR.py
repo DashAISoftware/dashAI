@@ -19,7 +19,14 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 
 
 class LinearSVRSchema(BaseSchema):
-    """Support Vector Regression (SVR) using a linear kernel."""
+    """Schema that configures the Linear Support Vector Regressor (LinearSVR).
+
+    LinearSVR is a support vector regression model that uses a linear kernel. It
+    minimises the epsilon-insensitive loss (no penalty for predictions within an
+    epsilon-tube around the target) and is particularly efficient on large datasets
+    compared to kernel-based SVR. It is used for tabular regression tasks. The
+    underlying implementation is ``sklearn.svm.LinearSVR``.
+    """
 
     epsilon: schema_field(
         optimizer_float_field(ge=0.0),
@@ -195,8 +202,26 @@ class LinearSVRSchema(BaseSchema):
 
 
 class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
-    """Scikit-learn's Linear Support Vector Regression (LinearSVR)
-    wrapper for DashAI.
+    """Support vector regression with a linear kernel for large datasets.
+
+    LinearSVR fits a linear function by minimising the epsilon-insensitive loss:
+    predictions within ``epsilon`` of the true target incur no penalty, while
+    deviations beyond that are penalised linearly. The regularisation parameter
+    ``C`` controls the trade-off between margin width and training error. Because it
+    uses a linear kernel and relies on liblinear internally, LinearSVR scales to
+    large datasets much more efficiently than ``SVR`` with a non-linear kernel.
+
+    Key hyperparameters include ``C``, ``epsilon``, ``loss`` (epsilon-insensitive or
+    squared epsilon-insensitive), ``fit_intercept``, ``dual``, ``tol``, and
+    ``max_iter``. The implementation wraps scikit-learn's ``LinearSVR``.
+
+    References
+    ----------
+    - [1] Fan, R.-E., Chang, K.-W., Hsieh, C.-J., Wang, X.-R., & Lin, C.-J.
+           (2008). "LIBLINEAR: A library for large linear classification."
+           Journal of Machine Learning Research, 9, 1871-1874.
+           https://www.jmlr.org/papers/v9/fan08a.html
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html
     """
 
     SCHEMA = LinearSVRSchema
@@ -214,4 +239,12 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
         super().__init__(**kwargs)

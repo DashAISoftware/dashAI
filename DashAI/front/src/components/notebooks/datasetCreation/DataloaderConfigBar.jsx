@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import PropTypes from "prop-types";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { generateSequentialName } from "../../../utils/nameGenerator";
@@ -26,6 +26,8 @@ export default function DataloaderConfigBar({
   onValuesChange,
 }) {
   const [inferenceRows, setInferenceRows] = useState(1000);
+  // Track FormSchema values separately so we can merge with inference_rows
+  const schemaValuesRef = useRef({});
   const { t } = useTranslation(["common", "datasets"]);
 
   const { defaultName } = useMemo(
@@ -35,6 +37,27 @@ export default function DataloaderConfigBar({
         items: existingDatasets,
       }),
     [existingDatasets],
+  );
+
+  // Handler for when FormSchema values change - merge with inference_rows
+  const handleFormSchemaValuesChange = useCallback(() => {
+    const values = formSubmitRef?.current?.values || {};
+    schemaValuesRef.current = values;
+    if (onValuesChange) {
+      onValuesChange({ ...values, inference_rows: inferenceRows });
+    }
+  }, [formSubmitRef, inferenceRows, onValuesChange]);
+
+  // Handler for when inference_rows changes - merge with schema values
+  const handleInferenceRowsChange = useCallback(
+    (val) => {
+      const numeric = val ? Number(val) : undefined;
+      setInferenceRows(numeric);
+      if (onValuesChange) {
+        onValuesChange({ ...schemaValuesRef.current, inference_rows: numeric });
+      }
+    },
+    [onValuesChange],
   );
 
   if (!selectedDataloader) {
@@ -100,11 +123,7 @@ export default function DataloaderConfigBar({
               label={t("datasets:label.inferenceRows")}
               name="inference_rows"
               value={inferenceRows}
-              onChange={(val) => {
-                setInferenceRows(val);
-                const numeric = val ? Number(val) : undefined;
-                if (onValuesChange) onValuesChange({ inference_rows: numeric });
-              }}
+              onChange={handleInferenceRowsChange}
               type="number"
               helperText=" "
               margin="dense"
@@ -151,7 +170,7 @@ export default function DataloaderConfigBar({
               formSubmitRef={formSubmitRef}
               setError={setError}
               initialValues={{ name: defaultName }}
-              onValuesChange={onValuesChange}
+              onValuesChange={handleFormSchemaValuesChange}
               showBorder={false}
             />
           </FormSchemaContainer>

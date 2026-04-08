@@ -16,6 +16,14 @@ if TYPE_CHECKING:
 
 
 class SD15HEDControlNetSchema(BaseSchema):
+    """Configuration schema for SD 1.5 HED ControlNet image generation.
+
+    Configures the denoising schedule (``num_inference_steps``), soft-edge
+    conditioning strength (``controlnet_conditioning_scale``), prompt adherence
+    (``guidance_scale``), and hardware target (``device``) for
+    ``SD15HEDControlNetModel``.
+    """
+
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=20,
@@ -92,7 +100,25 @@ class SD15HEDControlNetSchema(BaseSchema):
 
 
 class SD15HEDControlNetModel(BaseControlNetModel):
-    """ControlNet with HED soft-edge preprocessing and Stable Diffusion 1.5 pipeline."""
+    """HED soft-edge-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
+
+    Takes an input image and a text prompt. Soft edge maps are extracted from
+    the image using the Holistically-nested Edge Detection (HED) detector from
+    ``lllyasviel/Annotators``, then fed as spatial conditioning into the
+    ``lllyasviel/sd-controlnet-hed`` ControlNet backbone together with the
+    ``runwayml/stable-diffusion-v1-5`` diffusion pipeline. HED produces
+    sketch-like contours that preserve structural outlines while allowing more
+    creative variation than hard-edge Canny maps, making this model well-suited
+    for artistic reinterpretation of existing images.
+
+    Requires the ``controlnet_aux`` package (``pip install controlnet_aux``).
+
+    References
+    ----------
+    - [1] Zhang & Agrawala, "Adding Conditional Control to Text-to-Image
+           Diffusion Models", ICCV 2023. https://arxiv.org/abs/2302.05543
+    - [2] https://huggingface.co/lllyasviel/sd-controlnet-hed
+    """
 
     SCHEMA = SD15HEDControlNetSchema
     COLOR: str = "#006064"
@@ -130,6 +156,37 @@ class SD15HEDControlNetModel(BaseControlNetModel):
     )
 
     def __init__(self, **kwargs: Any):
+        """Initialize the SD 1.5 HED ControlNet model and pipeline.
+
+        Loads the HED soft-edge detector from ``lllyasviel/Annotators``, then
+        loads ``lllyasviel/sd-controlnet-hed`` as the ControlNet backbone and
+        ``runwayml/stable-diffusion-v1-5`` as the base diffusion pipeline, both
+        moved to the requested device. CPU offloading is enabled automatically
+        via ``pipe.enable_model_cpu_offload()`` to reduce VRAM pressure.
+
+        Requires the ``controlnet_aux`` package
+        (``pip install controlnet_aux``).
+
+        Parameters
+        ----------
+        **kwargs : Any
+            Keyword arguments validated against :class:`SD15HEDControlNetSchema`.
+            Recognised keys are:
+
+            device : str
+                Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            num_inference_steps : int
+                Number of denoising steps during generation.
+            controlnet_conditioning_scale : float
+                Strength of the HED soft-edge conditioning signal (0.0-2.0).
+            guidance_scale : float
+                Classifier-Free Guidance scale controlling prompt adherence.
+
+        Raises
+        ------
+        RuntimeError
+            If ``controlnet_aux`` is not installed.
+        """
         try:
             from controlnet_aux import HEDdetector
         except ImportError as e:

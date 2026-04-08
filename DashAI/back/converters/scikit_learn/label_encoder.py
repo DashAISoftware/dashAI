@@ -12,11 +12,33 @@ if TYPE_CHECKING:
 
 
 class LabelEncoderSchema(BaseSchema):
-    pass
+    """Schema for LabelEncoder hyperparameters.
+
+    Placeholder schema for sklearn's ``LabelEncoder``. The encoder has no
+    user-configurable hyperparameters; the schema is kept for consistency with
+    the DashAI component registration pattern.
+    """
 
 
 class LabelEncoder(EncodingConverter, SklearnWrapper):
-    """Scikit-learn's LabelEncoder wrapper for DashAI that supports multiple columns."""
+    """Encode categorical labels as contiguous integer codes in [0, n_classes - 1].
+
+    Each unique label value is mapped to a unique integer in ascending order
+    of the sorted class list. For example, given classes ``["cat", "dog",
+    "fish"]`` the mapping is ``cat -> 0``, ``dog -> 1``, ``fish -> 2``.
+
+    Unlike ``OrdinalEncoder`` (which operates on feature columns),
+    ``LabelEncoder`` is designed for target label columns. It is typically
+    applied to the output column before training classifiers that require
+    numeric class indices (e.g. gradient-boosted trees, support vector
+    machines, or any model that indexes a class-weight array). The DashAI
+    implementation extends the sklearn behaviour to support multiple columns
+    and to preserve ``NaN`` values during transformation.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
+    """
 
     SCHEMA = LabelEncoderSchema
     DESCRIPTION = MultilingualString(
@@ -37,15 +59,38 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     }
 
     def __init__(self, **kwargs):
+        """Initialize the LabelEncoder converter.
+
+        Initializes the per-column encoder registry (``self.encoders``) and the
+        list of fitted columns (``self.fitted_columns``). Note that ``kwargs``
+        are not forwarded to the underlying scikit-learn class.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Not forwarded to the parent class.
+        """
         super().__init__()
         self.encoders = {}
         self.fitted_columns = []
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Returns Categorical type with the proper encoding for label encoded data.
-        If the encoder has been fitted and has classes_, use them to create
-        a proper categorical type.
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The column name to look up in the fitted
+            encoders. When provided and the encoder has been fitted, the
+            returned type reflects the actual fitted classes. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Categorical type derived from the encoder's fitted
+            classes. Returns a placeholder ``Categorical`` if the encoder has
+            not been fitted for the given column.
         """
         import pyarrow as pa
 
@@ -60,7 +105,23 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         return Categorical(values=pa.array(["0", "1"]))
 
     def fit(self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None):
-        """Fit label encoders to each column in the dataset."""
+        """Fit a LabelEncoder for each eligible column in the dataset.
+
+        Only columns with string, object, or category dtype (or a matching
+        DashAI type) are processed. NaN values are masked out before fitting.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset whose categorical/string columns will be encoded.
+        y : DashAIDataset or None, optional
+            Ignored. Present for API compatibility. Default ``None``.
+
+        Returns
+        -------
+        LabelEncoderConverter
+            The fitted converter instance (``self``).
+        """
         from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
 
         x_pandas = x.to_pandas()
@@ -88,7 +149,20 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """Transform columns preserving NaN values."""
+        """Apply fitted label encoders to each eligible column, preserving NaN.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. Columns not seen during ``fit`` are left unchanged.
+        y : DashAIDataset or None, optional
+            Ignored. Present for API compatibility. Default ``None``.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with categorical/string columns replaced by integer codes.
+        """
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         x_pandas = x.to_pandas().copy()

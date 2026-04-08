@@ -107,7 +107,10 @@ const OverviewTab = ({
                 {t("datasets:label.missingValuesOverview")}
               </Typography>
               <Chip
-                label={`Total: ${Object.values(nan).reduce((sum, v) => sum + v, 0)}`}
+                label={`Total: ${Object.values(nan).reduce(
+                  (sum, v) => sum + v,
+                  0,
+                )}`}
                 size="small"
                 variant="outlined"
                 sx={{ fontWeight: "bold" }}
@@ -115,9 +118,15 @@ const OverviewTab = ({
             </Box>
             <Box sx={{ width: "100%", height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={missingData}>
+                <BarChart data={missingData} margin={{ bottom: 120 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="column" />
+                  <XAxis
+                    dataKey="column"
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
+                  />
                   <YAxis />
                   <Tooltip
                     contentStyle={{

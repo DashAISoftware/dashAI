@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class TFIDFConverterSchema(BaseSchema):
-    """Schema for TFIDFConverter hyperparameters."""
+    """Schema for configuring the TFIDFConverter.
+
+    Wraps ``sklearn.feature_extraction.text.TfidfVectorizer`` and exposes
+    vocabulary size, casing, stop-word removal, and n-gram range as schema
+    fields validated before being forwarded to the underlying scikit-learn
+    estimator.
+    """
 
     max_features: schema_field(
         int_field(gt=0),
@@ -71,9 +77,35 @@ class TFIDFConverterSchema(BaseSchema):
 
 
 class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
-    """
-    Converts text into TF-IDF representation with one column per token
-    (TF-IDF weight per token).
+    """Convert raw text documents into a matrix of TF-IDF weighted features.
+
+    TF-IDF (Term Frequency - Inverse Document Frequency) re-weights raw token
+    counts so that terms that appear frequently in a specific document but
+    rarely across the whole corpus receive a higher score, while common
+    stop-like terms are down-weighted. Each document is represented as a
+    floating-point vector of TF-IDF scores, one dimension per vocabulary term.
+
+    The TF-IDF score for term *t* in document *d* is:
+
+        tfidf(t, d) = tf(t, d) x log((1 + n) / (1 + df(t))) + 1
+
+    where *n* is the total number of documents and *df(t)* is the number of
+    documents containing *t* (scikit-learn's ``smooth_idf=True`` default).
+
+    Optional preprocessing steps include lower-casing, stop-word removal, and
+    n-gram extraction. The result is a floating-point DashAI dataset with one
+    column per vocabulary term.
+
+    Internally wraps ``sklearn.feature_extraction.text.TfidfVectorizer``.
+
+    The TF-IDF weighting scheme was introduced as a core technique in
+    information retrieval by Salton & McGill (1983) [2].
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html
+    - [2] Salton, G. & McGill, M. J. (1983). Introduction to Modern Information
+        Retrieval. McGraw-Hill.
     """
 
     SCHEMA = TFIDFConverterSchema
@@ -91,6 +123,22 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the TF-IDF converter and configure the vectorizer.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            max_features : int, optional
+                Maximum vocabulary size. Default ``1000``.
+            lowercase : bool, optional
+                Convert all text to lowercase before tokenizing. Default ``True``.
+            stop_words : str or list, optional
+                Stop-word list to remove. Default ``"english"``.
+            lower_bound_ngrams : int, optional
+                Minimum n-gram size. Default ``1``.
+            upper_bound_ngrams : int, optional
+                Maximum n-gram size. Default ``1``.
+        """
         super().__init__()
         from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -106,7 +154,20 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.fitted = False
 
     def fit(self, x: "DashAIDataset", y=None) -> "TFIDFConverter":
-        """Fit TfidfVectorizer to the input text."""
+        """Fit TfidfVectorizer on the first text column of the dataset.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. Only the first column is used for fitting.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        TFIDFConverter
+            The fitted converter instance (``self``).
+        """
         X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
         self.vectorizer.fit(texts)
@@ -114,7 +175,25 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         return self
 
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
-        """Transform text into TF-IDF weighted columns."""
+        """Transform text into TF-IDF weighted token columns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset. The first column is vectorised.
+        y : ignored
+            Present for API compatibility.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each token becomes a numeric TF-IDF weight column.
+
+        Raises
+        ------
+        RuntimeError
+            If :meth:`fit` has not been called yet.
+        """
         import pandas as pd
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset

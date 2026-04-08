@@ -12,9 +12,13 @@ if TYPE_CHECKING:
 
 
 class TabularClassificationTask(ClassificationTask):
-    """Base class for tabular classification tasks.
+    """Task for classifying structured tabular data into discrete categories.
 
-    Here you can change the methods provided by class Task.
+    Tabular classification predicts categorical labels from structured feature
+    tables (rows of observations, columns of features). It accepts numeric
+    (``Float``, ``Integer``) and categorical (``Categorical``) inputs, requires
+    a single categorical output column, and is compatible with all sklearn-based
+    and DashAI tabular classifier models.
     """
 
     DESCRIPTION: str = MultilingualString(

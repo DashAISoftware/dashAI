@@ -8,11 +8,30 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Accuracy(ClassificationMetric):
-    """Accuracy metric to classification tasks."""
+    """Fraction of correctly classified samples over all predictions.
+
+    Accuracy is the simplest classification metric: the number of correct
+    predictions divided by the total number of samples. It is well-suited
+    for balanced datasets but can be misleading when class distributions are
+    skewed — a model that always predicts the majority class would still
+    score high without learning anything useful.
+
+    ::
+
+        Accuracy = correct predictions / total samples
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html
+    """
 
     DESCRIPTION: str = (
         "Proportion of correct predictions over all samples, "
@@ -20,7 +39,10 @@ class Accuracy(ClassificationMetric):
     )
 
     @staticmethod
-    def score(true_labels: "DashAIDataset", probs_pred_labels) -> float:
+    def score(
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+    ) -> float:
         """Calculate the accuracy between true labels and predicted labels.
 
         Parameters

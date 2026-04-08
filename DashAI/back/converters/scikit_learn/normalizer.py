@@ -12,6 +12,13 @@ from DashAI.back.types.value_types import Float
 
 
 class NormalizerSchema(BaseSchema):
+    """Schema for Normalizer hyperparameters.
+
+    Configures the norm used for row-wise unit-norm scaling and the copy
+    semantics for sklearn's ``Normalizer``. The ``norm`` field selects between
+    the L1, L2, and max norms applied to each individual sample.
+    """
+
     norm: schema_field(
         enum_field(["l1", "l2", "max"]),
         "l2",
@@ -32,7 +39,32 @@ class NormalizerSchema(BaseSchema):
 
 
 class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOperation):
-    """Scikit-learn's Normalizer wrapper for DashAI."""
+    """Normalize each sample (row) independently to unit norm.
+
+    Unlike column-wise scalers such as ``StandardScaler`` or
+    ``MinMaxScaler``, this transformer operates along the sample axis.
+    For each row vector ``x`` the transformation is::
+
+        x_normalized = x / ||x||_p
+
+    where ``p`` is chosen by the ``norm`` parameter:
+
+    * ``"l2"`` (default) — Euclidean norm; the dot product of any two
+      normalized samples equals the cosine of the angle between them.
+    * ``"l1"`` — Manhattan norm; useful when the direction of the feature
+      vector matters more than relative magnitudes.
+    * ``"max"`` — divides by the largest absolute element; guarantees the
+      output lies in [-1, 1].
+
+    Row-wise normalization is particularly effective for text classification
+    and clustering algorithms that rely on the dot product or cosine
+    similarity (e.g. k-means on TF-IDF vectors, linear SVMs on bag-of-words
+    features).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.Normalizer.html
+    """
 
     SCHEMA = NormalizerSchema
     DESCRIPTION = MultilingualString(
@@ -43,7 +75,19 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
     IMAGE_PREVIEW = "normalizer.png"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for normalized data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

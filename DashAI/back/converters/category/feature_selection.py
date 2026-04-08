@@ -6,6 +6,17 @@ from DashAI.back.static.icons import Icon
 
 
 class FeatureSelectionConverter(BaseConverter):
+    """Base class for converters that select a subset of features from the dataset.
+
+    Feature selection converters remove low-relevance columns based on
+    statistical tests, thresholds, or rankings. Examples include SelectKBest,
+    SelectPercentile, GenericUnivariateSelect, SelectFDR, SelectFPR, and
+    SelectFWE.
+
+    Use these converters to reduce overfitting, speed up training, and improve
+    model interpretability by retaining only the most informative features.
+    """
+
     CATEGORY = MultilingualString(
         en="Feature Selection", es="Selección de Características"
     )
