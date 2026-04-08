@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
 import { Box } from "@mui/material";
@@ -9,6 +9,14 @@ const MIN_HEIGHT_NORMAL = 500;
 
 function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const [expanded, setExpanded] = useState(false);
+
+  // Increment revision whenever data reference changes to force Plotly.react
+  const revisionRef = useRef(0);
+  const prevDataRef = useRef(null);
+  if (prevDataRef.current !== data) {
+    revisionRef.current += 1;
+    prevDataRef.current = data;
+  }
 
   // Parse JSON if data is a string
   const parsedData = typeof data === "string" ? JSON.parse(data) : data;
@@ -145,6 +153,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
             id="plotly-graph"
             data={plotData.data}
             layout={plotLayout}
+            revision={revisionRef.current}
             style={{
               width: "100%",
               // Explicit floor so Plotly never renders at 0 height
