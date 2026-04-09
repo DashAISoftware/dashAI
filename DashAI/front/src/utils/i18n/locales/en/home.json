@@ -32,7 +32,7 @@
     "dataImport": "Data import",
     "dataCleaning": "Data cleaning",
     "dataTransformation": "Data transformation",
-    "exploreConvertData": "Explore and convert data",
+    "exploreConvertData": "Data exploration",
     "tabularClassification": "tabular classification",
     "textClassification": "text classification",
     "translation": "translation",
