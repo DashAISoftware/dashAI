@@ -59,7 +59,7 @@ function SidebarSection({ label, links, t, theme }) {
           py: "10px",
           pb: "6px",
           display: "block",
-          ...theme.typography.pageTitle,
+          ...theme.typography.sectionLabel,
         }}
       >
         {label}
