@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TourProvider } from "../../components/tour/TourProvider";
@@ -20,14 +19,10 @@ import { useModels } from "../../components/models/ModelsContext";
 export default function ModelsContent() {
   const location = useLocation();
   const threePanelLayout = useThreePanelLayout();
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const { t } = useTranslation(["models"]);
 
   const {
-    fetchDatasets,
     sessions,
-    fetchSessions,
-    fetchTasks,
     step,
     setStep,
     selectedSessionId,
@@ -36,14 +31,6 @@ export default function ModelsContent() {
     setRuns,
     fetchRuns,
   } = useModels();
-
-  useEffect(() => {
-    const loadInitialData = async () => {
-      await Promise.all([fetchDatasets(), fetchSessions(), fetchTasks()]);
-      setIsInitialLoading(false);
-    };
-    loadInitialData();
-  }, []);
 
   useEffect(() => {
     if (location.state?.openSessionId && sessions.length > 0) {
@@ -76,21 +63,6 @@ export default function ModelsContent() {
       setSelectedSession(session || null);
     }
   }, [selectedSessionId, sessions]);
-
-  if (isInitialLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>

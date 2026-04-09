@@ -424,10 +424,15 @@ class OpusMtEnESTransformer(TranslationModel):
         filename : str or Path
             Directory path where the model files will be written.
         """
-        self.model.save_pretrained(filename)
+        save_dir = Path(filename)
+        if save_dir.exists() and save_dir.is_file():
+            save_dir.unlink()
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        self.model.save_pretrained(save_dir)
         from transformers import AutoConfig
 
-        config = AutoConfig.from_pretrained(filename)
+        config = AutoConfig.from_pretrained(save_dir)
 
         config.custom_params = {
             "num_train_epochs": self.training_args.get("num_train_epochs"),
@@ -438,7 +443,7 @@ class OpusMtEnESTransformer(TranslationModel):
             "fitted": self.fitted,
         }
 
-        config.save_pretrained(filename)
+        config.save_pretrained(save_dir)
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]):

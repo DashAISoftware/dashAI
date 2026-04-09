@@ -2,7 +2,7 @@ from sklearn.preprocessing import Binarizer as BinarizerOperation
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
+from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -26,15 +26,6 @@ class BinarizerSchema(BaseSchema):
             ),
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace binarization.",
-            es="Ponlo en False para binarizar in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
 
 
 class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
@@ -53,6 +44,11 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     )
     DISPLAY_NAME = MultilingualString(en="Binarizer", es="Binarizador")
     IMAGE_PREVIEW = "binarizer.png"
+
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

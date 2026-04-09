@@ -15,6 +15,7 @@ export default function ModelsCenterContent() {
     setSessions,
     selectedTask,
     tasks,
+    loadingTasks,
     datasets,
     selectedDatasetId,
     step,
@@ -93,6 +94,7 @@ export default function ModelsCenterContent() {
         />
       ) : step === 0 ? (
         <SelectOptionMenu
+          loading={loadingTasks}
           title={
             selectedDatasetId
               ? t("models:label.selectTaskForSession")

@@ -103,6 +103,11 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
     DISPLAY_NAME = MultilingualString(en="RBF Sampler", es="Muestreador RBF")
     IMAGE_PREVIEW = "rbf_sampler.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise the RBF sampler, resolving the ``"RandomState"`` sentinel.
 

@@ -7,6 +7,7 @@ from DashAI.back.converters.category.basic_preprocessing import (
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer, Text
 
@@ -119,16 +120,20 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             return self
 
         for col_name in x.column_names:
-            if col_name in x.types and isinstance(x.types[col_name], Text):
+            if col_name in x.types and isinstance(
+                x.types[col_name], (Text, Categorical)
+            ):
                 self._target_columns.append(col_name)
             else:
                 print(
-                    f"Warning: Column '{col_name}' in scope is not of Text type "
+                    f"Warning: Column '{col_name}' in scope is not of "
+                    "Text or Categorical type "
                     "and will be ignored by CharacterReplacer."
                 )
         if not self._target_columns:
             print(
-                "Warning: CharacterReplacer did not find any valid Text columns "
+                "Warning: CharacterReplacer did not find any valid "
+                "Text or Categorical columns "
                 "in the provided scope."
             )
         return self
@@ -223,7 +228,15 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
                             processed_batch[column_name] = replaced_values
                             new_types[column_name] = Text(arrow_type=pa.string())
                     else:
-                        processed_batch[column_name] = values
+                        # Categorical column: apply replacement to string values
+                        processed_batch[column_name] = [
+                            (
+                                val.replace(self.char_to_replace, self.replacement_char)
+                                if isinstance(val, str)
+                                else val
+                            )
+                            for val in values
+                        ]
                 else:
                     processed_batch[column_name] = values
             return processed_batch

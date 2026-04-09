@@ -69,6 +69,47 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
     )
     IMAGE_PREVIEW = "label_binarizer.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
+    def fit(self, x, y=None):
+        """Fit LabelBinarizer with validation for exactly 2 unique labels.
+
+        LabelBinarizer is designed for binary classification problems and expects
+        exactly 2 unique class labels. For multiclass problems, use OneHotEncoder
+        or OrdinalEncoder instead.
+        """
+        import pandas as pd
+
+        # Convert to pandas if needed
+        x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
+
+        # Validate that we have exactly 1 column
+        if isinstance(x_pandas, pd.DataFrame):
+            if x_pandas.shape[1] != 1:
+                raise ValueError(
+                    f"LabelBinarizer only supports a single column, "
+                    f"but got {x_pandas.shape[1]} columns. "
+                    f"Please select exactly one column in the scope."
+                )
+            column_data = x_pandas.iloc[:, 0]
+        else:
+            column_data = x_pandas
+
+        # Validate that we have exactly 2 unique labels
+        unique_labels = column_data.dropna().unique()
+        if len(unique_labels) != 2:
+            raise ValueError(
+                f"LabelBinarizer requires exactly 2 unique labels for binary "
+                f"classification, but got {len(unique_labels)}. "
+                f"For multiclass problems, use OneHotEncoder instead."
+            )
+
+        # Call parent fit
+        return super().fit(x, y)
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
 

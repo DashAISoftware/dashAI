@@ -108,7 +108,7 @@ export default function ColumnInsights({
           fontSize="small"
           sx={{ color: theme.palette.warning.main }}
         />
-        <Typography variant="subtitle2" fontWeight="bold">
+        <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
           {t("datasets:label.columnInsights")}
         </Typography>
         <Chip

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -7,6 +7,8 @@ from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -79,6 +81,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     )
     DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
     IMAGE_PREVIEW = "tokenizer.png"
+
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialise the tokenizer converter and extract schema parameters.
@@ -160,3 +167,26 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         # Concatenate all tokenized columns
         concatenated_dataset = concatenate_datasets(all_column_tokens)
         return DashAIDataset(concatenated_dataset.data.table)
+
+    def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        The output of this converter is a set of integer columns, one per
+        token position. The number of output columns depends on the maximum
+        sequence length specified in the configuration.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The column name to look up in the fitted encoders. When provided
+            and the encoder has been fitted, the returned type reflects the
+            actual fitted classes. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type for each token position column.
+        """
+        import pyarrow as pa
+
+        return Integer(arrow_type=pa.int64())

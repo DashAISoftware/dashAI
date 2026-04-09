@@ -90,3 +90,8 @@ class VarianceThreshold(
         return Float(arrow_type=pa.float64())
 
     IMAGE_PREVIEW = "variance_threshold.png"
+
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }

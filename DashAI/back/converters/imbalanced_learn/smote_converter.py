@@ -85,6 +85,11 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
     )
     IMAGE_PREVIEW = "smote.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise by forwarding kwargs to the imbalanced-learn wrapper.
 
