@@ -326,6 +326,7 @@ export default function MrtDatasetTableInfScroll({
   const table = useMaterialReactTable({
     columns,
     data: allData,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
     localization,
     mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
     muiTablePaperProps: { elevation: 0 },

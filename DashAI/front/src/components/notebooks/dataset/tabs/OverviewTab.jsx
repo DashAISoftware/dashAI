@@ -10,7 +10,7 @@ import {
   Tooltip,
   Bar,
 } from "recharts";
-import MrtDatasetTable from "../MrtDatasetTable";
+import DatasetTable from "../DatasetTable";
 import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../../utils";
@@ -75,7 +75,7 @@ const OverviewTab = ({
               ))}
             </Box>
           </Box>
-          <MrtDatasetTable
+          <DatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
             initialPageSize={10}

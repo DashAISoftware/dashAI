@@ -10,7 +10,6 @@
     "@mui/material": "^7",
     "@mui/system": "^7",
     "@mui/utils": "^7",
-    "@mui/x-data-grid": "^7",
     "@mui/x-date-pickers": "^8.27.2",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.3.4",
