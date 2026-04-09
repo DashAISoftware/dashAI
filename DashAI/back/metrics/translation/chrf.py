@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -24,12 +25,21 @@ class Chrf(TranslationMetric):
     """
 
     MAXIMIZE: bool = True
-    DESCRIPTION: str = (
-        "CHRF (Character n-gram F-score) evaluates machine translation "
-        "quality by comparing candidate and reference texts at the "
-        "character level. It computes precision, recall, and F-score "
-        "over character n-grams, and is especially useful for "
-        "morphologically rich languages or short texts."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "CHRF (Character n-gram F-score) evaluates machine translation "
+            "quality by comparing candidate and reference texts at the "
+            "character level. It computes precision, recall, and F-score "
+            "over character n-grams, and is especially useful for "
+            "morphologically rich languages or short texts."
+        ),
+        es=(
+            "CHRF (Character n-gram F-score) evalúa la calidad de la traducción "
+            "automática comparando textos candidatos y de referencia a nivel "
+            "de caracteres. Calcula precisión, exhaustividad y F-score "
+            "sobre n-gramas de caracteres, y es especialmente útil para "
+            "idiomas morfológicamente ricos o textos cortos."
+        ),
     )
 
     @staticmethod

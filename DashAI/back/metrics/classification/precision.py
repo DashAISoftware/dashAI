@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -36,9 +37,15 @@ class Precision(ClassificationMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html
     """
 
-    DESCRIPTION: str = (
-        "Fraction of predicted positives that are correct, "
-        "important when false positives are costly."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Fraction of predicted positives that are correct, "
+            "important when false positives are costly."
+        ),
+        es=(
+            "Fracción de positivos predichos que son correctos, "
+            "importante cuando los falsos positivos son costosos."
+        ),
     )
 
     @staticmethod

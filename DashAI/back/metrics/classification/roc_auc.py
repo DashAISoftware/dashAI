@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -39,11 +40,19 @@ class ROCAUC(ClassificationMetric):
     - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
     """
 
-    DESCRIPTION: str = (
-        "The Receiver Operating Characteristic Area Under the Curve (RoC AUC) "
-        "is a performance measurement for classification problems at various "
-        "threshold settings. It represents the degree or measure "
-        "of separability between classes."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "The Receiver Operating Characteristic Area Under the Curve (RoC AUC) "
+            "is a performance measurement for classification problems at various "
+            "threshold settings. It represents the degree or measure "
+            "of separability between classes."
+        ),
+        es=(
+            "El Área Bajo la Curva ROC (RoC AUC) "
+            "es una medida de rendimiento para problemas de clasificación en varios "
+            "umbrales de decisión. Representa el grado de "
+            "separabilidad entre clases."
+        ),
     )
 
     @staticmethod

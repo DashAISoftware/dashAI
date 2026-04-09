@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.base_metric import prepare_to_metric
 from DashAI.back.metrics.translation_metric import TranslationMetric
 
@@ -23,10 +24,17 @@ class Bleu(TranslationMetric):
     """
 
     MAXIMIZE: bool = True
-    DESCRIPTION: str = (
-        "BLEU (bilingual evaluation understudy) "
-        "measures similarity between generated and reference text "
-        "based on n-gram overlap."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "BLEU (bilingual evaluation understudy) "
+            "measures similarity between generated and reference text "
+            "based on n-gram overlap."
+        ),
+        es=(
+            "BLEU (bilingual evaluation understudy) "
+            "mide la similitud entre el texto generado y el de referencia "
+            "basándose en la superposición de n-gramas."
+        ),
     )
 
     @staticmethod

@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -35,9 +36,15 @@ class Recall(ClassificationMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
     """
 
-    DESCRIPTION: str = (
-        "Fraction of actual positives correctly identified, "
-        "important when false negatives are costly."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Fraction of actual positives correctly identified, "
+            "important when false negatives are costly."
+        ),
+        es=(
+            "Fracción de positivos reales correctamente identificados, "
+            "importante cuando los falsos negativos son costosos."
+        ),
     )
 
     @staticmethod

@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -33,9 +34,15 @@ class Accuracy(ClassificationMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html
     """
 
-    DESCRIPTION: str = (
-        "Proportion of correct predictions over all samples, "
-        "best suited for balanced datasets."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Proportion of correct predictions over all samples, "
+            "best suited for balanced datasets."
+        ),
+        es=(
+            "Proporción de predicciones correctas sobre todas las muestras, "
+            "más adecuada para datasets balanceados."
+        ),
     )
 
     @staticmethod

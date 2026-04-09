@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -31,9 +32,15 @@ class RMSE(RegressionMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.root_mean_squared_error.html
     """
 
-    DESCRIPTION: str = (
-        "Square root of the average of squared differences between "
-        "predicted and actual values, penalizes larger errors more heavily."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Square root of the average of squared differences between "
+            "predicted and actual values, penalizes larger errors more heavily."
+        ),
+        es=(
+            "Raíz cuadrada del promedio de las diferencias al cuadrado entre "
+            "valores predichos y reales, penaliza más los errores grandes."
+        ),
     )
 
     @staticmethod
