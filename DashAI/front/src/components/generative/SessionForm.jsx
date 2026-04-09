@@ -15,8 +15,8 @@ export default function SessionForm({
   return (
     <form onSubmit={formik.handleSubmit}>
       <Box sx={{ mb: 5 }}>
-        <Box data-tour="model-parameters">
-          <Box width="60%">
+        <Box>
+          <Box width="60%" data-tour="model-parameters">
             <Typography
               sx={{
                 fontSize: "16px",

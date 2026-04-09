@@ -90,6 +90,8 @@ export const generativeTourSteps = [
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableOverlay: true,
+    disableScrolling: true,
   },
   {
     target: '[data-tour="create-session-button"]',
