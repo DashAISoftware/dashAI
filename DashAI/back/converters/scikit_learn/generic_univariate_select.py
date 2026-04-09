@@ -66,7 +66,10 @@ class GenericUnivariateSelect(
         en="Generic Univariate Select", es="Selección Univariante Genérica"
     )
     IMAGE_PREVIEW = "generic_univariate_select.png"
-    metadata = {}
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

@@ -47,7 +47,10 @@ class AudioDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "dir":
             dataset = load_dataset(
-                "audiofolder", data_dir=prepared_path[0], streaming=bool(n_sample)
+                "audiofolder",
+                data_dir=prepared_path[0],
+                streaming=bool(n_sample),
+                cache_dir=temp_path,
             )
             if n_sample:
                 if type(dataset) is IterableDatasetDict:

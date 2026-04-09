@@ -9,6 +9,7 @@ import {
   Divider,
   Tabs,
   Tab,
+  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
@@ -20,7 +21,6 @@ import {
 import { useTourContext } from "./tour/TourProvider";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
-import Tooltip from "@mui/material/Tooltip";
 import OverviewTab from "./notebooks/dataset/tabs/OverviewTab";
 import { NumericTab } from "./notebooks/dataset/tabs/NumericTab";
 import { CategoricalTab } from "./notebooks/dataset/tabs/CategoricalTab";
@@ -185,7 +185,7 @@ export default function DatasetVisualization({
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                 <Typography variant="h4">{dataset.name}</Typography>
               </Box>
-              <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Tooltip
                   title={t("datasets:label.dataQualityScoreTooltip")}
                   arrow

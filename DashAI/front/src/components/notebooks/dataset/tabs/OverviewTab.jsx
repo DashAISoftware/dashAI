@@ -11,6 +11,7 @@ import {
   Bar,
 } from "recharts";
 import MrtDatasetTable from "../MrtDatasetTable";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../../utils";
 
@@ -88,7 +89,11 @@ const OverviewTab = ({
       </Card>
       {/* Missing Values Overview — only shown when there are missing values */}
       {missingData.some((data) => data.missing > 0) && (
-        <Card data-section="missing-values-overview">
+        <ExportableCard
+          filename="missing_values_overview"
+          exportData={missingData}
+          data-section="missing-values-overview"
+        >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             <Box
               sx={{
@@ -141,7 +146,7 @@ const OverviewTab = ({
               </ResponsiveContainer>
             </Box>
           </CardContent>
-        </Card>
+        </ExportableCard>
       )}
     </Box>
   );

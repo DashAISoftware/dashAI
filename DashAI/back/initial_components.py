@@ -130,8 +130,12 @@ from DashAI.back.models.hugging_face.llama_model import LlamaModel
 from DashAI.back.models.hugging_face.mistral_model import MistralModel
 from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
+from DashAI.back.models.hugging_face.nllb_transformer import NllbTransformer
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
+    OpusMtEsENTransformer,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
@@ -267,6 +271,8 @@ def get_initial_components():
         ModernBertTransformer,
         DebertaV3Transformer,
         OpusMtEnESTransformer,
+        OpusMtEsENTransformer,
+        NllbTransformer,
         BagOfWordsTextClassificationModel,
         RidgeRegression,
         LinearSVR,

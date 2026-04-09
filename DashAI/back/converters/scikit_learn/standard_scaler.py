@@ -20,15 +20,6 @@ class StandardScalerSchema(BaseSchema):
     the result is divided by the standard deviation.
     """
 
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en=("If False, try to avoid a copy and do inplace scaling instead."),
-            es=("Si es False, intenta evitar copias y realiza la escalación in situ."),
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     with_mean: schema_field(
         bool_field(),
         True,

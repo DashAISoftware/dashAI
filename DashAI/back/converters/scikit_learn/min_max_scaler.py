@@ -36,15 +36,6 @@ class MinMaxScalerSchema(BaseSchema):
             es="El valor máximo del rango al que escalar los datos.",
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace row normalization.",
-            es="Ponlo en False para normalizar filas in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     clip: schema_field(
         bool_field(),
         False,

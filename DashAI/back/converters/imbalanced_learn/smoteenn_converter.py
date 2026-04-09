@@ -92,6 +92,11 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     )
     IMAGE_PREVIEW = "smoteenn.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise SMOTE-ENN with a SMOTE sub-instance and combined kwargs.
 

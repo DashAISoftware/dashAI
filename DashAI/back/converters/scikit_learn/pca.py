@@ -43,21 +43,6 @@ class PCASchema(BaseSchema):
             ),
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en=(
-                "If False, data passed to fit are overwritten. Use "
-                "fit_transform(X) instead of fit(X).transform(X)."
-            ),
-            es=(
-                "Si es False, los datos pasados a fit se sobrescriben. Usa "
-                "fit_transform(X) en lugar de fit(X).transform(X)."
-            ),
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     whiten: schema_field(
         bool_field(),
         False,
@@ -207,7 +192,11 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         es="Análisis de Componentes Principales (PCA)",
     )
     IMAGE_PREVIEW = "pca.png"
-    metadata = {}
+
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the PCA converter.

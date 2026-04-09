@@ -79,7 +79,7 @@ export default function FormConverterSection({
                   console.error("Converter job failed:", result);
                   enqueueSnackbar(
                     t("datasets:error.converterFailedWithInfo", {
-                      error: result.error || t("common:unknownError"),
+                      error: result.error_msg || t("common:unknownError"),
                     }),
                     { variant: "error" },
                   );
