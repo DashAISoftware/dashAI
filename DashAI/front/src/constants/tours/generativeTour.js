@@ -52,7 +52,7 @@ export const generativeTourSteps = [
   },
 
   {
-    target: '[data-tour="model-selection"]',
+    target: '[data-tour="model-card-qwen"]',
     content: (
       <Trans i18nKey="generativeTour:selectModel">
         <div>
@@ -68,7 +68,6 @@ export const generativeTourSteps = [
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
-    disableOverlay: true,
     isInteractive: true,
     disableBackButton: true,
     maxWidth: "320px",
