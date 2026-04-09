@@ -16,6 +16,8 @@ export default function GroupedCollapsibleList({
   title = t("common:items", "Items"),
   Icon,
   getItemDescription,
+  getDeleteConfirmationContent,
+  getDeleteConfirmationWarning,
   initialOpenGroups = {},
 }) {
   const theme = useTheme();
@@ -225,6 +227,16 @@ export default function GroupedCollapsibleList({
                       onEdit={(name) => onItemEdit(item.id, name)}
                       onInfo={
                         onItemInfo ? () => onItemInfo(item.id) : undefined
+                      }
+                      deleteConfirmationContent={
+                        getDeleteConfirmationContent
+                          ? getDeleteConfirmationContent(item)
+                          : undefined
+                      }
+                      deleteConfirmationWarning={
+                        getDeleteConfirmationWarning
+                          ? getDeleteConfirmationWarning(item)
+                          : undefined
                       }
                     />
                   ))

@@ -103,6 +103,13 @@ export default function SessionBar({ onToggle }) {
     }
   };
 
+  const getSessionDeleteConfirmationContent = (session) =>
+    t(
+      "generative:label.confirmDeleteSession",
+      'Are you sure you want to delete the session "{{name}}"? This action cannot be undone.',
+      { name: session.name },
+    );
+
   // Group sessions by task display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
     // Get the display name from the task using the session's task_name
@@ -195,6 +202,7 @@ export default function SessionBar({ onToggle }) {
           Icon={FolderIcon}
           initialOpenGroups={openSections}
           getItemDescription={(session) => session.model_name}
+          getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
         />
       </Box>
 

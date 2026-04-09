@@ -58,6 +58,7 @@
   },
   "label": {
     "addModelToSession": "Add Model to Session",
+    "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
     "availableModels": "Available Models",
     "bar": "Bar",
     "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",
