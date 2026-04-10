@@ -16,23 +16,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { getJobDetails } from "../../api/job";
 import { formatDate } from "../../utils";
-
-const getStatusText = (status, t) => {
-  switch (status) {
-    case "not_started":
-      return t("common:jobQueue.status.queued");
-    case "started":
-      return t("common:jobQueue.status.running");
-    case "finished":
-      return t("common:jobQueue.status.completed");
-    case "error":
-      return t("common:jobQueue.status.failed");
-    case "deleted":
-      return t("common:jobQueue.status.deleted");
-    default:
-      return status || t("common:unknown");
-  }
-};
+import { getStatusText } from "../../utils/jobStatusText";
 
 const JobDetailsDialog = ({ job, open, onClose }) => {
   const { t } = useTranslation(["common"]);

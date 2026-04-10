@@ -164,8 +164,10 @@
     "confirmDeleteJob": "¿Estás seguro de que deseas eliminar este trabajo?",
     "confirmClearAll": "¿Estás seguro de que deseas eliminar TODOS los trabajos registrados?",
     "confirmClearAllDetail": "Esto cancelará todos los trabajos de la cola.",
-    "activeCount": "{{count}} activos",
-    "failedCount": "{{count}} fallidos",
+    "activeCount_one": "{{count}} activo",
+    "activeCount_other": "{{count}} activos",
+    "failedCount_one": "{{count}} fallido",
+    "failedCount_other": "{{count}} fallidos",
     "details": {
       "title": "Detalles del trabajo",
       "jobId": "ID del trabajo",
@@ -181,6 +183,18 @@
       "completed": "Completado",
       "failed": "Fallido",
       "deleted": "Eliminado"
+    },
+    "relativeTime": {
+      "justNow": "ahora mismo",
+      "secondsAgo": "hace {{count}}s",
+      "minutesAgo": "hace {{count}}m",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d",
+      "inSeconds": "en {{count}}s",
+      "inMinutes": "en {{count}}m",
+      "inHours": "en {{count}}h",
+      "inDays": "en {{count}}d",
+      "unknown": "hora desconocida"
     }
   },
   "hardwareMonitor": {

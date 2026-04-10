@@ -40,6 +40,7 @@ import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import { deleteAllJobs } from "../../api/job";
 import { useJobManager } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
+import { getStatusText } from "../../utils/jobStatusText";
 
 export const StatusIcon = ({ status }) => {
   switch (status) {
@@ -55,23 +56,6 @@ export const StatusIcon = ({ status }) => {
       return <DeleteIcon fontSize="small" />;
     default:
       return <MoreHorizIcon fontSize="small" />;
-  }
-};
-
-const getStatusText = (status, t) => {
-  switch (status) {
-    case "not_started":
-      return t("common:jobQueue.status.queued");
-    case "started":
-      return t("common:jobQueue.status.running");
-    case "finished":
-      return t("common:jobQueue.status.completed");
-    case "error":
-      return t("common:jobQueue.status.failed");
-    case "deleted":
-      return t("common:jobQueue.status.deleted");
-    default:
-      return status;
   }
 };
 
@@ -200,15 +184,27 @@ const JobQueueWidget = () => {
     refresh();
   };
 
+  const parseTimestamp = (ts) =>
+    ts
+      ? ts.includes("T")
+        ? new Date(ts)
+        : new Date(ts.replace(" ", "T") + "Z")
+      : new Date(0);
+
   const getJobsToShow = () => {
     if (showFinished) {
       return [...jobs]
-        .sort((a, b) => new Date(b.last_update) - new Date(a.last_update))
+        .sort(
+          (a, b) =>
+            parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
+        )
         .slice(0, 25);
     }
 
     return [...activeJobs]
-      .sort((a, b) => new Date(b.last_update) - new Date(a.last_update))
+      .sort(
+        (a, b) => parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
+      )
       .slice(0, 10);
   };
 
@@ -220,31 +216,52 @@ const JobQueueWidget = () => {
           : new Date(timestamp.replace(" ", "T") + "Z");
 
         const now = new Date();
-
         const diffSeconds = Math.floor((now - date) / 1000);
 
         if (diffSeconds < 0) {
-          if (diffSeconds > -60) return "just now";
+          if (diffSeconds > -60)
+            return t("common:jobQueue.relativeTime.justNow");
 
           const absDiff = Math.abs(diffSeconds);
-          if (absDiff < 60) return `in ${absDiff}s`;
-          if (absDiff < 3600) return `in ${Math.floor(absDiff / 60)}m`;
-          if (absDiff < 86400) return `in ${Math.floor(absDiff / 3600)}h`;
-          return `in ${Math.floor(absDiff / 86400)}d`;
+          if (absDiff < 60)
+            return t("common:jobQueue.relativeTime.inSeconds", {
+              count: absDiff,
+            });
+          if (absDiff < 3600)
+            return t("common:jobQueue.relativeTime.inMinutes", {
+              count: Math.floor(absDiff / 60),
+            });
+          if (absDiff < 86400)
+            return t("common:jobQueue.relativeTime.inHours", {
+              count: Math.floor(absDiff / 3600),
+            });
+          return t("common:jobQueue.relativeTime.inDays", {
+            count: Math.floor(absDiff / 86400),
+          });
         }
 
-        if (diffSeconds < 30) return "just now";
-        if (diffSeconds < 60) return `${diffSeconds}s ago`;
-        if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+        if (diffSeconds < 30) return t("common:jobQueue.relativeTime.justNow");
+        if (diffSeconds < 60)
+          return t("common:jobQueue.relativeTime.secondsAgo", {
+            count: diffSeconds,
+          });
+        if (diffSeconds < 3600)
+          return t("common:jobQueue.relativeTime.minutesAgo", {
+            count: Math.floor(diffSeconds / 60),
+          });
         if (diffSeconds < 86400)
-          return `${Math.floor(diffSeconds / 3600)}h ago`;
-        return `${Math.floor(diffSeconds / 86400)}d ago`;
+          return t("common:jobQueue.relativeTime.hoursAgo", {
+            count: Math.floor(diffSeconds / 3600),
+          });
+        return t("common:jobQueue.relativeTime.daysAgo", {
+          count: Math.floor(diffSeconds / 86400),
+        });
       } catch (e) {
         console.error("Error parsing time:", e, timestamp);
-        return "time unknown";
+        return t("common:jobQueue.relativeTime.unknown");
       }
     },
-    [forceUpdate],
+    [forceUpdate, t],
   );
 
   const jobsToShow = getJobsToShow();

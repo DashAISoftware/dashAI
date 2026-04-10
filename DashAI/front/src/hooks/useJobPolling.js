@@ -8,6 +8,11 @@ import {
   stopJobPolling as _stopJobPolling,
 } from "../utils/jobPoller";
 
+function parseTimestamp(ts) {
+  if (!ts) return new Date(0);
+  return ts.includes("T") ? new Date(ts) : new Date(ts.replace(" ", "T") + "Z");
+}
+
 function mergeJobsById(previousJobs, changedJobs) {
   const byId = new Map(previousJobs.map((job) => [job.id, job]));
 
@@ -17,7 +22,7 @@ function mergeJobsById(previousJobs, changedJobs) {
   });
 
   return Array.from(byId.values()).sort(
-    (a, b) => new Date(b.last_update) - new Date(a.last_update),
+    (a, b) => parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
   );
 }
 
@@ -84,14 +89,15 @@ export function useJobManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchAllJobs = useCallback(() => {
     setLoading(true);
     getJobs()
       .then((data) => {
         if (Array.isArray(data)) {
           setJobs(
             [...data].sort(
-              (a, b) => new Date(b.last_update) - new Date(a.last_update),
+              (a, b) =>
+                parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
             ),
           );
         }
@@ -102,6 +108,10 @@ export function useJobManager() {
         setError("Failed to load jobs");
         setLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    fetchAllJobs();
 
     const unsubscribe = subscribeJobs((updatedJobs) => {
       if (Array.isArray(updatedJobs)) {
@@ -115,9 +125,8 @@ export function useJobManager() {
   }, []);
 
   const refresh = useCallback(() => {
-    setLoading(true);
-    forceRefreshNow();
-  }, []);
+    fetchAllJobs();
+  }, [fetchAllJobs]);
 
   return { jobs, loading, error, refresh };
 }
