@@ -68,8 +68,8 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "character_replacer.png"
 
     metadata = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, char_to_replace: str, replacement_char: str):

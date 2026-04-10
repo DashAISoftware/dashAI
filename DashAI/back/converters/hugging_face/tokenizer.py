@@ -8,7 +8,7 @@ from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Integer
+from DashAI.back.types.value_types import Integer, Text
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -83,8 +83,8 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     IMAGE_PREVIEW = "tokenizer.png"
 
     metadata = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):

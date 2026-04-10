@@ -14,7 +14,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Integer
+from DashAI.back.types.value_types import Integer, Text
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -104,8 +104,8 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "bag_of_words.png"
 
     metadata = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
     }
     DESCRIPTION = MultilingualString(
         en=(
