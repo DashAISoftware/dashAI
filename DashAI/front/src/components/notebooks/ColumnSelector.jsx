@@ -22,8 +22,8 @@ import { Trans, useTranslation } from "react-i18next";
  * @param {Object} props
  * @param {Array} props.file_path - String path to the dataset file
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
- * @param {Array} props.allowedDtypes - Array of allowed data types (optional)
- * @param {Array} props.restrictedDtypes - Array of restricted data types (optional)
+ * @param {Array} props.allowedDtypes - Array of allowed dtype strings (optional)
+ * @param {Array} props.allowedTypes - Array of allowed semantic type names (optional)
  * @param {Function} props.onSelectionChange - Callback when selection changes (selectedColumns) (optional)
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
@@ -32,7 +32,7 @@ function ColumnSelector({
   file_path,
   inputCardinality = {},
   allowedDtypes = [],
-  restrictedDtypes = [],
+  allowedTypes = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
 }) {
@@ -130,20 +130,16 @@ function ColumnSelector({
   const getValidColumnIds = useCallback(() => {
     return rows
       .filter((row) => {
-        if (allowedDtypes.length > 0 && !allowedDtypes.includes("*")) {
-          if (!allowedDtypes.includes(row.dataType)) {
-            return false;
-          }
+        if (allowedTypes.length > 0 && !allowedTypes.includes(row.valueType)) {
+          return false;
         }
-        if (restrictedDtypes.length > 0) {
-          if (restrictedDtypes.includes(row.dataType)) {
-            return false;
-          }
+        if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
+          return false;
         }
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, restrictedDtypes]);
+  }, [rows, allowedDtypes, allowedTypes]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -254,11 +250,7 @@ function ColumnSelector({
             fontWeight: 700,
             color: valid ? "success.main" : "error.main",
             letterSpacing: 0.3,
-            mb:
-              (allowedDtypes?.length > 0 && !allowedDtypes.includes("*")) ||
-              restrictedDtypes?.length > 0
-                ? 1
-                : 0,
+            mb: allowedTypes.length > 0 || allowedDtypes.length > 0 ? 1 : 0,
           }}
         >
           {t("datasets:label.selectedColumns", {
@@ -266,8 +258,29 @@ function ColumnSelector({
           })}
         </Typography>
 
+        {/* Allowed value types (semantic) */}
+        {allowedTypes.length > 0 && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.5)",
+              fontStyle: "italic",
+              mt: 1,
+            }}
+          >
+            <Trans i18nKey="datasets:label.allowedValueTypes">
+              Allowed types:
+              <Box
+                component="span"
+                sx={{ color: "secondary.main", fontWeight: 500 }}
+              >
+                {allowedTypes.join(", ")}
+              </Box>
+            </Trans>
+          </Typography>
+        )}
         {/* Allowed data types */}
-        {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
+        {allowedDtypes.length > 0 && (
           <Typography
             variant="body2"
             sx={{
@@ -283,27 +296,6 @@ function ColumnSelector({
                 sx={{ color: "secondary.main", fontWeight: 500 }}
               >
                 {allowedDtypes.join(", ")}
-              </Box>
-            </Trans>
-          </Typography>
-        )}
-        {/* Restricted data types */}
-        {restrictedDtypes?.length > 0 && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgba(255, 255, 255, 0.5)",
-              fontStyle: "italic",
-              mt: 1,
-            }}
-          >
-            <Trans i18nKey="datasets:label.restrictedDataTypes">
-              Restricted data types:
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {restrictedDtypes.join(", ")}
               </Box>
             </Trans>
           </Typography>
@@ -362,7 +354,7 @@ ColumnSelector.propTypes = {
     exact: PropTypes.number,
   }),
   allowedDtypes: PropTypes.array,
-  restrictedDtypes: PropTypes.array,
+  allowedTypes: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };
