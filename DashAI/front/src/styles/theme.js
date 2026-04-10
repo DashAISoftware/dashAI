@@ -1,6 +1,4 @@
-import { dataGridLocales } from "../utils/i18n/datagridLocale";
-
-const getTheme = (mode, language) => ({
+const getTheme = (mode) => ({
   palette: {
     mode,
 
@@ -237,22 +235,6 @@ const getTheme = (mode, language) => ({
           };
         }
       `,
-    },
-
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          "--DataGrid-containerBackground": "transparent",
-          "& .MuiDataGrid-columnSeparator": { visibility: "hidden" },
-          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-columnSeparator": {
-            visibility: "visible",
-          },
-        },
-        columnHeader: { backgroundColor: "transparent" },
-      },
-      defaultProps: {
-        localeText: dataGridLocales[language] ?? dataGridLocales.en,
-      },
     },
   },
 });

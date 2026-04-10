@@ -10,7 +10,7 @@ import { ColorModeContext } from "../contexts/ThemeContext";
 const mockColorMode = { toggleColorMode: jest.fn() };
 
 export function renderWithProviders(ui, { route = "/" } = {}) {
-  const theme = createTheme(getTheme("dark", "en"));
+  const theme = createTheme(getTheme("dark"));
   return render(
     <ColorModeContext.Provider value={mockColorMode}>
       <ThemeProvider theme={theme}>
