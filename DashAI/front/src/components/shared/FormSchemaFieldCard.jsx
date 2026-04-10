@@ -1,30 +1,11 @@
-import { Avatar, Box, Link, Paper, Typography } from "@mui/material";
+import { Box, Link, Paper, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { FormCardProvider } from "../../contexts/FormCardContext";
 
-const AVATAR_COLORS = [
-  "#5C6BC0",
-  "#26A69A",
-  "#7E57C2",
-  "#29B6F6",
-  "#66BB6A",
-  "#FFA726",
-  "#EF5350",
-  "#8D6E63",
-];
-
 const CHAR_LIMIT = 120;
-
-function charHashColor(str = "") {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) & 0xffffffff;
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
 
 // Markdown component overrides — render with caption sizing and theme colours
 const mdComponents = (color) => ({
@@ -174,9 +155,6 @@ function FormSchemaFieldCard({
   headerRight,
   children,
 }) {
-  const avatarLetter = (label || paramKey || "?")[0].toUpperCase();
-  const avatarBg = charHashColor(paramKey || label || "");
-
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
       {/* ── Header ── */}
@@ -191,18 +169,6 @@ function FormSchemaFieldCard({
           borderColor: "divider",
         }}
       >
-        <Avatar
-          sx={{
-            width: 26,
-            height: 26,
-            bgcolor: avatarBg,
-            fontSize: 12,
-            flexShrink: 0,
-          }}
-        >
-          {avatarLetter}
-        </Avatar>
-
         <Box flex={1} minWidth={0}>
           <Typography
             variant="body2"
