@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer
 
@@ -127,8 +128,8 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     IMAGE_PREVIEW = "one_hot_encoder.png"
 
     metadata = {
+        "allowed_types": [Categorical],
         "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
     }
 
     def __init__(self, **kwargs):

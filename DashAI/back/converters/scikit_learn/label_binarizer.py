@@ -5,6 +5,7 @@ from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer
 
@@ -70,8 +71,8 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
     IMAGE_PREVIEW = "label_binarizer.png"
 
     metadata = {
+        "allowed_types": [Categorical],
         "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
     }
 
     def fit(self, x, y=None):

@@ -121,8 +121,8 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
     metadata = {
+        "allowed_types": [Categorical],
         "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
     }
 
     def __init__(self, **kwargs):
