@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Chip, Stack } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
@@ -194,7 +194,7 @@ function ColumnSelector({
       const isValid = isValidSelection(rowSelectionModel);
       onValidationChange(isValid);
     }
-  }, [rowSelectionModel, rows.length]);
+  }, [rowSelectionModel, rows, isValidSelection, onSelectionChange, onValidationChange]);
 
   const handleSelection = (selection) => {
     if (inputCardinality.max && selection.length > inputCardinality.max) {
