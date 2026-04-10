@@ -1,4 +1,3 @@
-import { fontFamily } from "@mui/system";
 import { dataGridLocales } from "../utils/i18n/datagridLocale";
 
 const getTheme = (mode, language) => ({

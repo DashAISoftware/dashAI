@@ -5,9 +5,16 @@ import { useExplorationsContext, contextDefaults } from "./context";
 import { ExplorerStatus } from "../../types/explorer";
 import { getComponents } from "../../api/component";
 
-import { Paper } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 import { Info as DetailsIcon } from "@mui/icons-material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 import TooltipedCellItem from "../shared/TooltipedCellItem";
 import ExplorerDetails from "./explorers/ExplorerDetails";
@@ -26,6 +33,11 @@ function ResultsByExplorer({
 }) {
   const { explorationData, setExplorerData } = useExplorationsContext();
   const { explorers } = explorationData;
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const [explorerTypes, setExplorerTypes] = useState([]);
   const getExplorerTypes = () => {
@@ -41,8 +53,8 @@ function ResultsByExplorer({
   const [rows, setRows] = useState([]);
   const [showExplorerDetails, setShowExplorerDetails] = useState(false);
 
-  const handleShowExplorerDetails = (params) => {
-    setExplorerData(params.row);
+  const handleShowExplorerDetails = (row) => {
+    setExplorerData(row);
     setShowExplorerDetails(true);
   };
 
@@ -62,56 +74,70 @@ function ResultsByExplorer({
   const columns = useMemo(() => {
     return [
       {
-        field: "actions",
-        type: "actions",
-        minWidth: 80,
-        getActions: (params) => [
-          <TooltipedCellItem
-            key="details-button"
-            icon={<DetailsIcon />}
-            label="Show Explorer details"
-            tooltip="Show Explorer details"
-            onClick={() => handleShowExplorerDetails(params)}
-            sx={{ color: "primary.main" }}
-          />,
-        ],
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        enableColumnFilter: false,
+        size: 60,
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <TooltipedCellItem
+              icon={<DetailsIcon />}
+              label="Show Explorer details"
+              tooltip="Show Explorer details"
+              onClick={() => handleShowExplorerDetails(row.original)}
+              sx={{ color: "primary.main" }}
+            />
+          </Box>
+        ),
       },
       {
-        field: "name",
-        headerName: "Name",
-        minWidth: 200,
+        accessorKey: "name",
+        header: "Name",
       },
       {
-        field: "type_display_name",
-        headerName: "Type",
-        minWidth: 200,
-        valueGetter: (params) => {
+        id: "type_display_name",
+        header: "Type",
+        accessorFn: (row) => {
           const explorerType = explorerTypes.find(
-            (explorer) => explorer.name === params.row.exploration_type,
+            (explorer) => explorer.name === row.exploration_type,
           );
           return explorerType?.metadata.display_name;
         },
       },
       {
-        field: "exploration_type",
-        headerName: "Component Name",
-        minWidth: 200,
+        accessorKey: "exploration_type",
+        header: "Component Name",
       },
       {
-        field: "status",
-        headerName: "Status Value",
-        minWidth: 200,
+        accessorKey: "status",
+        header: "Status Value",
       },
       {
-        field: "status_display",
-        headerName: "Status",
-        minWidth: 200,
-        valueGetter: (params) => {
-          return ExplorerStatus[params.row.status];
-        },
+        id: "status_display",
+        header: "Status",
+        accessorFn: (row) => ExplorerStatus[row.status],
       },
     ];
   }, [handleShowExplorerDetails, explorerTypes]);
+
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: {
+      density: "compact",
+      columnVisibility: {
+        exploration_type: false,
+        status: false,
+      },
+    },
+    state: { isLoading: loading },
+    enableRowSelection: false,
+  });
 
   return (
     <React.Fragment>
@@ -128,47 +154,7 @@ function ResultsByExplorer({
           event.target = document.body;
         }}
       >
-        <DataGrid
-          slots={{
-            toolbar: GridToolbar,
-          }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-            },
-          }}
-          loading={loading}
-          rows={rows}
-          columns={columns}
-          autoHeight
-          disableRowSelectionOnClick
-          density="compact"
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 5,
-              },
-            },
-            filter: {
-              // filterModel: {
-              //   items: [
-              //     {
-              //       field: "status_display",
-              //       operator: "contains",
-              //       value: ExplorerStatus[ExplorerStatus.FINISHED],
-              //     },
-              //   ],
-              // },
-            },
-            columns: {
-              columnVisibilityModel: {
-                exploration_type: false,
-                status: false,
-              },
-            },
-          }}
-          pageSizeOptions={[5, 10, 20]}
-        />
+        <MaterialReactTable table={table} />
 
         {showExplorerDetails && (
           <ExplorerDetails

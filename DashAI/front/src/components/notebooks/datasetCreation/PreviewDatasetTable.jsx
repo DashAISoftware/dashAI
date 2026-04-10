@@ -7,7 +7,12 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { TypeChangeValidator } from "./TypeChangeValidator";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
@@ -45,13 +50,17 @@ export default function PreviewDatasetTable({
   onTypeChange,
   onColumnRename,
 }) {
-  const { t } = useTranslation(["common"]);
+  const { t, i18n } = useTranslation(["common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
   const [editingColumn, setEditingColumn] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [columnNames, setColumnNames] = useState({});
+
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const handleTypeChangeRequest = (columnName, newType) => {
     const currentType = columnTypes[columnName]?.type;
@@ -162,13 +171,13 @@ export default function PreviewDatasetTable({
       const displayName = columnNames[field] || field;
 
       return {
-        field,
-        headerName: displayName,
-        minWidth: 150,
-        flex: 1,
-        sortable: false,
-        disableColumnMenu: true,
-        renderHeader: () => (
+        accessorKey: field,
+        header: displayName,
+        minSize: 150,
+        grow: 1,
+        enableSorting: false,
+        enableColumnActions: false,
+        Header: () => (
           <Box
             sx={{
               display: "flex",
@@ -240,33 +249,22 @@ export default function PreviewDatasetTable({
     });
   }, [rows, columnTypes, columnNames, editingColumn, editValue, t]);
 
-  const rowsWithIds = useMemo(() => {
-    if (!rows) return [];
-    return rows.map((row, index) => ({
-      id: row.id !== undefined ? row.id : index,
-      ...row,
-    }));
-  }, [rows]);
+  const table = useMaterialReactTable({
+    columns,
+    data: rows ?? [],
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    localization,
+    initialState: {
+      density: "compact",
+      pagination: { pageSize: 5, pageIndex: 0 },
+    },
+    muiTablePaperProps: { elevation: 0 },
+    paginationDisplayMode: "pages",
+  });
 
   return (
     <>
-      <DataGrid
-        rows={rowsWithIds}
-        columns={columns}
-        autoHeight
-        density="compact"
-        disableRowSelectionOnClick
-        initialState={{
-          pagination: { paginationModel: { pageSize: 5 } },
-        }}
-        pageSizeOptions={[5, 10, 25]}
-        columnHeaderHeight={100}
-        sx={{
-          "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "rgba(0, 0, 0, 0.02)",
-          },
-        }}
-      />
+      <MaterialReactTable table={table} />
 
       <TypeChangeValidator
         open={showValidator}

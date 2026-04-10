@@ -1,7 +1,7 @@
 // columns that are common to all runs
 import React from "react";
 import { styled, useTheme } from "@mui/material";
-import { formatDate, getColorByStatus } from "../../../utils";
+import { getColorByStatus } from "../../../utils";
 import { Translation } from "react-i18next";
 import { getRunStatus } from "../../../utils/runStatus";
 
@@ -26,54 +26,27 @@ const StatusCell = ({ value }) => {
 
 export const initialColumns = [
   {
-    field: "name",
-    headerName: "Name",
-    minWidth: 150,
+    accessorKey: "name",
+    header: "Name",
+    minSize: 150,
   },
   {
-    field: "model_name",
-    headerName: "Model",
-    minWidth: 200,
-    renderCell: (params) => {
+    accessorKey: "model_name",
+    header: "Model",
+    minSize: 200,
+    Cell: ({ cell }) => {
+      const value = cell.getValue();
       return (
-        <StyledCell color={params.value.color ?? "#535353ff"}>
-          {params.value.display_name ?? params.value.name}
+        <StyledCell color={value?.color ?? "#535353ff"}>
+          {value?.display_name ?? value?.name ?? value}
         </StyledCell>
       );
     },
   },
   {
-    field: "status",
-    headerName: "Status",
-    minWidth: 100,
-    renderCell: (params) => <StatusCell value={params.value} />,
+    accessorKey: "status",
+    header: "Status",
+    minSize: 100,
+    Cell: ({ cell }) => <StatusCell value={cell.getValue()} />,
   },
-  // {
-  //   field: "created",
-  //   headerName: "Created",
-  //   type: Date,
-  //   minWidth: 140,
-  //   valueGetter: (value) => formatDate(value),
-  // },
-  // {
-  //   field: "last_modified",
-  //   headerName: "Last modified",
-  //   type: Date,
-  //   minWidth: 140,
-  //   valueGetter: (value) => formatDate(value),
-  // },
-  // {
-  //   field: "start_time",
-  //   headerName: "Start",
-  //   type: Date,
-  //   minWidth: 140,
-  //   valueGetter: (value) => formatDate(value),
-  // },
-  // {
-  //   field: "end_time",
-  //   headerName: "End",
-  //   type: Date,
-  //   minWidth: 140,
-  //   valueGetter: (value) => formatDate(value),
-  // },
 ];

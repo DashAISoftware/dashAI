@@ -318,6 +318,8 @@ class DashAIDataset(Dataset):
                 "mean": float(series.mean()),
                 "std": float(series.std()),
                 "min": float(series.min()),
+                "lower_bound": lower_bound,
+                "upper_bound": upper_bound,
                 "max": float(series.max()),
                 "median": float(series.median()),
                 "q1": q1,

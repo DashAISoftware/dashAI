@@ -1,6 +1,13 @@
 import React, { useCallback, useState, useEffect } from "react";
-import { DataGrid } from "@mui/x-data-grid";
-import { Grid, Typography } from "@mui/material";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
+import { Box, Grid, Typography } from "@mui/material";
 import DeleteItemModal from "../custom/DeleteItemModal";
 import ConverterEditorModal from "./converterModals/ConverterEditorModal";
 import PropTypes from "prop-types";
@@ -29,6 +36,11 @@ const ConverterTable = ({
   const [datasetColumns, setDatasetColumns] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const getDatasetInfo = async () => {
     setLoading(true);
@@ -126,95 +138,89 @@ const ConverterTable = ({
   const columns = React.useMemo(
     () => [
       {
-        field: "order",
-        headerName: "Order",
-        minWidth: 50,
-        editable: false,
-        sortable: true,
+        accessorKey: "order",
+        header: "Order",
+        minSize: 50,
+        enableSorting: true,
       },
       {
-        field: "name",
-        headerName: "Converter",
-        minWidth: 250,
-        editable: false,
-        sortable: false,
-        renderCell: ({ row }) => {
-          return (
-            <Grid container>
-              <Grid size={{ xs: 12 }}>
-                <Typography>{row.name}</Typography>
-              </Grid>
+        accessorKey: "name",
+        header: "Converter",
+        minSize: 250,
+        enableSorting: false,
+        Cell: ({ row }) => (
+          <Grid container>
+            <Grid size={{ xs: 12 }}>
+              <Typography>{row.original.name}</Typography>
             </Grid>
-          );
-        },
+          </Grid>
+        ),
       },
       {
-        field: `columns`,
-        headerName: "Columns",
-        minWidth: 100,
-        editable: false,
-        sortable: false,
-        valueGetter: (params) => params.row.scope.columns,
-        renderCell: ({ row }) => {
-          const columns = row.scope.columns;
-          const columnsLabel = row.isStepInChain
+        id: "columns",
+        header: "Columns",
+        minSize: 100,
+        enableSorting: false,
+        enableColumnFilter: false,
+        accessorFn: (row) => row.scope.columns,
+        Cell: ({ row }) => {
+          const cols = row.original.scope.columns;
+          const columnsLabel = row.original.isStepInChain
             ? "-"
-            : columns.length > 0
-              ? parseIndexToRange(columns).join(", ")
+            : cols.length > 0
+              ? parseIndexToRange(cols).join(", ")
               : "All columns";
           return <Typography variant="p">{columnsLabel}</Typography>;
         },
       },
       {
-        field: `rows`,
-        headerName: "Rows",
-        minWidth: 100,
-        editable: false,
-        sortable: false,
-        valueGetter: (params) => params.row.scope.rows,
-        renderCell: ({ row }) => {
-          const rows = row.scope.rows;
-          const rowsLabel = row.isStepInChain
+        id: "rows",
+        header: "Rows",
+        minSize: 100,
+        enableSorting: false,
+        enableColumnFilter: false,
+        accessorFn: (row) => row.scope.rows,
+        Cell: ({ row }) => {
+          const scopeRows = row.original.scope.rows;
+          const rowsLabel = row.original.isStepInChain
             ? "-"
-            : rows.length > 0
-              ? parseIndexToRange(rows).join(", ")
+            : scopeRows.length > 0
+              ? parseIndexToRange(scopeRows).join(", ")
               : "All rows";
           return <Typography variant="p">{rowsLabel}</Typography>;
         },
       },
       {
-        field: "actions",
-        type: "actions",
-        minWidth: 150,
-        getActions: (params) =>
-          [
+        id: "actions",
+        header: "Actions",
+        minSize: 150,
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => {
+          const actions = [
             <ConverterEditorModal
               key="edit-component"
-              converterToConfigure={params.row.name}
-              updateParameters={handleUpdateParams(params.row.id)}
-              paramsInitialValues={params.row.params}
+              converterToConfigure={row.original.name}
+              updateParameters={handleUpdateParams(row.original.id)}
+              paramsInitialValues={row.original.params}
             />,
-            <ConverterScopeModal
-              key="scope-component"
-              elementToConfigure={params.row.name}
-              updateScope={handleUpdateScope(params.row.id)}
-              scopeInitialValues={params.row.scope}
-              datasetInfo={datasetInfo}
-              datasetColumns={datasetColumns}
-            />,
+            !row.original.isStepInChain && (
+              <ConverterScopeModal
+                key="scope-component"
+                elementToConfigure={row.original.name}
+                updateScope={handleUpdateScope(row.original.id)}
+                scopeInitialValues={row.original.scope}
+                datasetInfo={datasetInfo}
+                datasetColumns={datasetColumns}
+              />
+            ),
             <DeleteItemModal
               key="delete-component"
-              deleteFromTable={createDeleteHandler(params.id)}
+              deleteFromTable={createDeleteHandler(row.original.id)}
             />,
-          ].filter(
-            // Filter Scope modal if the converter is after a chain
-            (action, index) => {
-              if (action.key === "scope-component") {
-                return !params.row.isStepInChain;
-              }
-              return true;
-            },
-          ),
+          ].filter(Boolean);
+          return <Box sx={{ display: "flex", gap: 0.5 }}>{actions}</Box>;
+        },
       },
     ],
     [createDeleteHandler, datasetInfo, datasetColumns],
@@ -278,17 +284,18 @@ const ConverterTable = ({
     return result;
   }, [convertersToApply]);
 
-  return (
-    <DataGrid
-      rows={rows}
-      columns={columns}
-      pageSize={5}
-      rowsPerPageOptions={[5]}
-      disableSelectionOnClick
-      autoHeight
-      loading={loading}
-    />
-  );
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: { density: "compact" },
+    state: { isLoading: loading },
+  });
+
+  return <MaterialReactTable table={table} />;
 };
 
 ConverterTable.propTypes = {
