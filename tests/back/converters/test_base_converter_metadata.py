@@ -49,6 +49,20 @@ class _EmptyMetaConverter(BaseConverter):
         return x
 
 
+class _NoneMetaConverter(BaseConverter):
+    SCHEMA = None
+    metadata = None
+
+    def get_output_type(self, column_name=None):
+        return None
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, x, y=None):
+        return x
+
+
 def test_get_metadata_serializes_allowed_types_to_name_strings():
     meta = _FloatIntConverter.get_metadata()
     assert meta["allowed_types"] == ["Float", "Integer"]
@@ -66,6 +80,13 @@ def test_get_metadata_normalizes_star_allowed_dtypes_to_empty_list():
 
 def test_get_metadata_empty_metadata_produces_empty_lists():
     meta = _EmptyMetaConverter.get_metadata()
+    assert meta["allowed_types"] == []
+    assert meta["allowed_dtypes"] == []
+    assert "restricted_dtypes" not in meta
+
+
+def test_get_metadata_none_metadata_produces_empty_lists():
+    meta = _NoneMetaConverter.get_metadata()
     assert meta["allowed_types"] == []
     assert meta["allowed_dtypes"] == []
     assert "restricted_dtypes" not in meta
