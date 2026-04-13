@@ -13,7 +13,7 @@ class EncodingConverter(BaseConverter):
 
     Encoding converters transform non-numeric columns into a representation
     that machine learning models can process. Examples include OneHotEncoder,
-    OrdinalEncoder, LabelEncoder, and LabelBinarizer.
+    OrdinalEncoder, and LabelEncoder.
 
     Use these converters when the dataset contains string or categorical columns
     that must be converted before model training.
