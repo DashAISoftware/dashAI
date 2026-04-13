@@ -105,17 +105,58 @@ function ModelComparisonTable({
       }
     });
 
+    // Compute best value per metric field across all finished runs
+    const bestValues = {};
+    Array.from(metricsSet).forEach((metricField) => {
+      const metricName = metricField.replace(/^(test|train|val)_/, "");
+      const metricInfo = metrics.find((m) => m.name === metricName);
+      const maximize = metricInfo?.metadata?.maximize;
+      if (maximize === undefined || maximize === null) return;
+
+      const metricsKey = `${metricSplit}_metrics`;
+      const values = runs
+        .filter(
+          (run) =>
+            run[metricsKey]?.[metricName] !== undefined &&
+            run[metricsKey]?.[metricName] !== null,
+        )
+        .map((run) => Number(run[metricsKey][metricName]))
+        .filter((v) => !isNaN(v));
+
+      if (values.length > 0) {
+        bestValues[metricField] = maximize
+          ? Math.max(...values)
+          : Math.min(...values);
+      }
+    });
+
     return Array.from(metricsSet).map((metricField) => {
       const metricName = metricField.replace(/^(test|train|val)_/, "");
       const metricInfo = metrics.find((m) => m.name === metricName);
       const metricDescription = metricInfo?.description || metricName;
+      const maximize = metricInfo?.metadata?.maximize;
+
+      const directionArrow =
+        maximize === true ? "↑" : maximize === false ? "↓" : "";
+      const directionLabel =
+        maximize === true
+          ? t("models:label.higherIsBetter")
+          : maximize === false
+            ? t("models:label.lowerIsBetter")
+            : "";
+
+      const tooltipContent = directionLabel
+        ? `${metricDescription} — ${directionLabel}`
+        : metricDescription;
+
+      const bestVal = bestValues[metricField];
 
       return {
         accessorKey: metricField,
-        header: metricName,
+        header: `${metricName} ${directionArrow}`.trim(),
         size: 120,
         Header: () => (
-          <Tooltip title={metricDescription} arrow placement="top">
+          <Tooltip title={tooltipContent} arrow placement="top">
             <Box
               sx={{
                 cursor: "help",
@@ -125,6 +166,11 @@ function ModelComparisonTable({
               }}
             >
               {metricName}
+              {directionArrow && (
+                <Box component="span" sx={{ ml: 0.5, opacity: 0.7 }}>
+                  {directionArrow}
+                </Box>
+              )}
             </Box>
           </Tooltip>
         ),
@@ -139,7 +185,25 @@ function ModelComparisonTable({
           const value = Number(val);
           if (isNaN(value)) return val;
 
-          return value.toFixed(4);
+          const formatted = value.toFixed(4);
+          const isBest =
+            bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
+
+          return (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {isBest && (
+                <Tooltip title={t("models:label.bestModel")} placement="top">
+                  <Box
+                    component="span"
+                    sx={{ color: "warning.main", lineHeight: 1 }}
+                  >
+                    ★
+                  </Box>
+                </Tooltip>
+              )}
+              {formatted}
+            </Box>
+          );
         },
       };
     });
