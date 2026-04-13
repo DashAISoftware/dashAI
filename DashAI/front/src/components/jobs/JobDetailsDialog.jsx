@@ -204,7 +204,6 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                           ? theme.palette.grey[900]
                           : theme.palette.grey[100],
                       p: 2,
-                      fontFamily: "monospace",
                       fontSize: "0.875rem",
                       overflow: "auto",
                       maxHeight: "200px",

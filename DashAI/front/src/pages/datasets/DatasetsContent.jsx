@@ -6,7 +6,6 @@ import RightBar from "../../components/notebooks/RightBar";
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import DatasetsCenterContent from "../../components/notebooks/dataset/DatasetsCenterContent";
 import { TourProvider } from "../../components/tour/TourProvider";
-import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
@@ -39,7 +38,11 @@ export default function DatasetsContent() {
 
         <ExplorersAndConvertersProvider>
           {selectedNotebookId ? (
-            <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
+            <TourProvider
+              tourKey={TOUR_KEYS.NOTEBOOK}
+              disabled={step !== 0}
+              disabledMessage={t("datasets:label.tourDisabledMessage")}
+            >
               <>
                 <CenterPanel>
                   <DatasetsCenterContent />
@@ -54,15 +57,14 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton
-                  tourKey={TOUR_KEYS.NOTEBOOK}
-                  disabled={step !== 0}
-                  disabledMessage={t("datasets:label.tourDisabledMessage")}
-                />
               </>
             </TourProvider>
           ) : selectedDatasetId ? (
-            <TourProvider tourKey={TOUR_KEYS.DATASET_VIEW}>
+            <TourProvider
+              tourKey={TOUR_KEYS.DATASET_VIEW}
+              disabled={step !== 0}
+              disabledMessage={t("datasets:label.tourDisabledMessageNotebook")}
+            >
               <>
                 <CenterPanel>
                   <DatasetsCenterContent />
@@ -77,17 +79,14 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton
-                  tourKey={TOUR_KEYS.DATASET_VIEW}
-                  disabled={step !== 0}
-                  disabledMessage={t(
-                    "datasets:label.tourDisabledMessageNotebook",
-                  )}
-                />
               </>
             </TourProvider>
           ) : (
-            <TourProvider tourKey={TOUR_KEYS.DATASETS}>
+            <TourProvider
+              tourKey={TOUR_KEYS.DATASETS}
+              disabled={step !== 0}
+              disabledMessage={t("datasets:label.tourDisabledMessage")}
+            >
               <>
                 <CenterPanel>
                   <DatasetsCenterContent />
@@ -102,11 +101,6 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton
-                  tourKey={TOUR_KEYS.DATASETS}
-                  disabled={step !== 0}
-                  disabledMessage={t("datasets:label.tourDisabledMessage")}
-                />
               </>
             </TourProvider>
           )}

@@ -41,6 +41,11 @@ export default function ModelGrid({
                 color={color}
                 isSelected={selectedModelName === model.name}
                 onClick={() => onSelect(model, globalIndex)}
+                dataTour={
+                  model.name.toLowerCase().includes("qwen")
+                    ? "model-card-qwen"
+                    : undefined
+                }
               />
             </Grid>
           );

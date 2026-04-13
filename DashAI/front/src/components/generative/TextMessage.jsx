@@ -105,7 +105,6 @@ export function TextMessage({ message, isError = false }) {
                     py: 0.1,
                     borderRadius: 0.5,
                     bgcolor: "action.hover",
-                    fontFamily: "monospace",
                     fontSize: "0.85em",
                   }}
                   {...props}

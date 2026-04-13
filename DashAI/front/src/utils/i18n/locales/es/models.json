@@ -58,6 +58,7 @@
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
+    "confirmDeleteSession": "¿Seguro que quieres eliminar la sesión \"{{name}}\"? Esta acción no se puede deshacer.",
     "availableModels": "Modelos Disponibles",
     "bar": "Barra",
     "chooseTaskForSessionWithDataset": "Elija la tarea de aprendizaje automático para su sesión con el dataset \"{{datasetName}}\".",

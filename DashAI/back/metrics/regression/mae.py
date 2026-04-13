@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -30,9 +31,15 @@ class MAE(RegressionMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html
     """
 
-    DESCRIPTION: str = (
-        "Average of absolute differences between predicted and actual values, "
-        "provides a clear measure of prediction accuracy."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Average of absolute differences between predicted and actual values, "
+            "provides a clear measure of prediction accuracy."
+        ),
+        es=(
+            "Promedio de las diferencias absolutas entre valores predichos y reales, "
+            "proporciona una medida clara de la precisión de predicción."
+        ),
     )
 
     @staticmethod

@@ -10,6 +10,40 @@
   "label": {
     "advanced": "Avanzado",
     "getStarted": "Comenzar",
-    "welcomeDashboardAI": "¡Bienvenido a DashAI!"
+    "welcomeDashboardAI": "¡Bienvenido a DashAI!",
+    "welcomeSubtitle": "Selecciona un módulo para comenzar",
+    "resources": "Recursos",
+    "community": "Comunidad"
+  },
+  "link": {
+    "documentation": "Documentación",
+    "tutorials": "Tutoriales",
+    "github": "GitHub",
+    "website": "Sitio web",
+    "forum": "Foro DashAI",
+    "discord": "Discord",
+    "twitter": "Twitter / X"
+  },
+  "tag": {
+    "beginner": "Comenzar",
+    "advanced": "Avanzado"
+  },
+  "chip": {
+    "dataImport": "importación de datos",
+    "dataCleaning": "limpieza de datos",
+    "dataTransformation": "transformación de datos",
+    "exploreConvertData": "exploración de datos",
+    "tabularClassification": "clasificación tabular",
+    "textClassification": "clasificación de texto",
+    "translation": "traducción",
+    "regression": "regresión",
+    "modelComparison": "comparación de modelos",
+    "inference": "inferencia",
+    "parameterConfig": "configuración de parámetros",
+    "generativeTasks": "tareas generativas",
+    "contentGeneration": "generación de contenido",
+    "installation": "instalación",
+    "extensions": "extensiones",
+    "customIntegrations": "integraciones personalizadas"
   }
 }

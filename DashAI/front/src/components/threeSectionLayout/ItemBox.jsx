@@ -4,7 +4,18 @@ import ItemMenu from "./ItemMenu";
 import { useTheme } from "@mui/material/styles";
 
 const ItemBox = forwardRef(function ItemBox(
-  { isSelected, name, description, id, onClick, onDelete, onEdit, onInfo },
+  {
+    isSelected,
+    name,
+    description,
+    id,
+    onClick,
+    onDelete,
+    onEdit,
+    onInfo,
+    deleteConfirmationContent,
+    deleteConfirmationWarning,
+  },
   ref,
 ) {
   const [isEditing, setIsEditing] = useState(false);
@@ -148,6 +159,8 @@ const ItemBox = forwardRef(function ItemBox(
         onInfo={onInfo}
         onDelete={onDelete}
         onEdit={handleEdit}
+        deleteConfirmationContent={deleteConfirmationContent}
+        deleteConfirmationWarning={deleteConfirmationWarning}
       />
     </Box>
   );
