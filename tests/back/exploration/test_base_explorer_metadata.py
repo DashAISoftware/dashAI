@@ -1,4 +1,5 @@
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 
@@ -167,3 +168,36 @@ def test_validate_columns_cardinality_max_fails():
         "b": {"type": "Float", "dtype": "float64"},
     }
     assert cls.validate_columns(explorer_info, column_spec) is False
+
+
+def test_validate_columns_categorical_passes_categorical_restriction():
+    cls = _make_explorer(
+        allowed_types=[Categorical],
+        allowed_dtypes=[],
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "label"}])
+    column_spec = {"label": {"type": "Categorical", "dtype": "string"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+def test_validate_columns_missing_column_in_spec_returns_false_when_restricted():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer],
+        allowed_dtypes=[],
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "missing_col"}])
+    column_spec = {}  # column not in spec → col_type = "" → blocked
+    assert cls.validate_columns(explorer_info, column_spec) is False
+
+
+def test_validate_columns_missing_column_in_spec_passes_when_unrestricted():
+    cls = _make_explorer(
+        allowed_types=[],
+        allowed_dtypes=[],
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "missing_col"}])
+    column_spec = {}  # no restrictions → passes regardless
+    assert cls.validate_columns(explorer_info, column_spec) is True

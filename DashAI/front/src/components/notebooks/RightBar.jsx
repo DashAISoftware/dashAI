@@ -145,7 +145,7 @@ export default function RightBar({ notebook, onToggle }) {
 
     let validColumns = datasetColumns;
     let disabled = false;
-    let tooltip = explorer.description || "";
+    let tooltip = explorer.description || explorer.metadata?.short_description || "";
 
     // Filter by allowed semantic types
     if (allowedTypes.length > 0) {
