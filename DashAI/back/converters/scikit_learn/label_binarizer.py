@@ -70,6 +70,8 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
     )
     IMAGE_PREVIEW = "label_binarizer.png"
 
+    PREFIX = "lb_"
+
     metadata = {
         "allowed_types": [Categorical],
         "allowed_dtypes": ["string"],

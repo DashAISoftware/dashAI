@@ -45,6 +45,8 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     DISPLAY_NAME = MultilingualString(en="Binarizer", es="Binarizador")
     IMAGE_PREVIEW = "binarizer.png"
 
+    PREFIX = "bin_"
+
     metadata = {
         "allowed_types": [Float, Integer],
         "allowed_dtypes": [],
