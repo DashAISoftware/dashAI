@@ -14,8 +14,8 @@ export default function ScopeStepExplorer({
 }) {
   const theme = useTheme();
   const [isSelectionValid, setIsSelectionValid] = useState(false);
+  const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
-  const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
@@ -58,8 +58,8 @@ export default function ScopeStepExplorer({
         <ColumnSelector
           file_path={notebook.file_path}
           inputCardinality={inputCardinality}
+          allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
-          restrictedDtypes={restrictedDtypes}
           onSelectionChange={(selected) => setScopeColumns(selected)}
           onValidationChange={(isValid) => setIsSelectionValid(isValid)}
         />
