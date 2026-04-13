@@ -14,6 +14,14 @@ export const NumericTab = ({ numericStats }) => {
   const theme = useTheme();
 
   const toNumberOrNull = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "")
+    ) {
+      return null;
+    }
+
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
   };
@@ -141,15 +149,14 @@ export const NumericTab = ({ numericStats }) => {
                   />
                   <MetricRow
                     label={t("datasets:label.range")}
-                    value={
-                      toNumberOrNull(stats?.upper_bound) !== null &&
-                      toNumberOrNull(stats?.lower_bound) !== null
-                        ? (
-                            toNumberOrNull(stats?.upper_bound) -
-                            toNumberOrNull(stats?.lower_bound)
-                          ).toFixed(2)
-                        : "N/A"
-                    }
+                    value={(() => {
+                      const upperBound = toNumberOrNull(stats?.upper_bound);
+                      const lowerBound = toNumberOrNull(stats?.lower_bound);
+
+                      return upperBound !== null && lowerBound !== null
+                        ? (upperBound - lowerBound).toFixed(2)
+                        : "N/A";
+                    })()}
                   />
                 </Box>
               </Box>
@@ -313,21 +320,27 @@ export const NumericTab = ({ numericStats }) => {
             )}
 
             {/* Skewness Warning */}
-            {toNumberOrNull(stats?.skew) !== null &&
-              toNumberOrNull(stats?.skew) > 1 && (
-                <Alert
-                  severity="warning"
-                  icon={<InfoIcon fontSize="inherit" />}
-                  sx={{ mt: 3 }}
-                >
-                  <Typography variant="body2">
-                    <Trans i18nKey="datasets:label.rightSkewedWarning">
-                      <strong>Right-skewed distribution:</strong> Consider
-                      applying a log transformation.
-                    </Trans>
-                  </Typography>
-                </Alert>
-              )}
+            {(() => {
+              const skew = toNumberOrNull(stats?.skew);
+
+              return (
+                skew !== null &&
+                skew > 1 && (
+                  <Alert
+                    severity="warning"
+                    icon={<InfoIcon fontSize="inherit" />}
+                    sx={{ mt: 3 }}
+                  >
+                    <Typography variant="body2">
+                      <Trans i18nKey="datasets:label.rightSkewedWarning">
+                        <strong>Right-skewed distribution:</strong> Consider
+                        applying a log transformation.
+                      </Trans>
+                    </Typography>
+                  </Alert>
+                )
+              );
+            })()}
           </CardContent>
         </ExportableCard>
       ))}
