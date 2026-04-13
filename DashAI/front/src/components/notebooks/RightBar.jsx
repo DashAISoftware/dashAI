@@ -194,7 +194,9 @@ export default function RightBar({ notebook, onToggle }) {
       (allowedTypes.length > 0 || allowedDtypes.length > 0)
     ) {
       disabled = true;
-      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypes")}`;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
+        dtypes: [...allowedTypes, ...allowedDtypes].join(", "),
+      })}`;
     }
 
     return { disabled, tooltip, validColumns };
