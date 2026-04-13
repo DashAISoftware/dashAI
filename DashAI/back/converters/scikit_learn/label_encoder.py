@@ -58,7 +58,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     metadata = {
         "changes_data_types": True,
         "allowed_types": [Categorical],
-        "allowed_dtypes": ["string"],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):

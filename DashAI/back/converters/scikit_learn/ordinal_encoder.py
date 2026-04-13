@@ -125,7 +125,7 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
 
     metadata = {
         "allowed_types": [Categorical],
-        "allowed_dtypes": ["string"],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):
