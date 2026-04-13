@@ -1,7 +1,5 @@
-import pytest
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
-from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.value_types import Float, Integer, Text
+from DashAI.back.types.value_types import Float, Integer
 
 
 def _make_explorer(**metadata_fields):
@@ -138,9 +136,7 @@ def test_validate_columns_cardinality_exact_passes():
         allowed_dtypes=[],
         input_cardinality={"exact": 2},
     )
-    explorer_info = _MockExplorerInfo(
-        [{"columnName": "a"}, {"columnName": "b"}]
-    )
+    explorer_info = _MockExplorerInfo([{"columnName": "a"}, {"columnName": "b"}])
     column_spec = {
         "a": {"type": "Float", "dtype": "float64"},
         "b": {"type": "Float", "dtype": "float64"},
@@ -165,9 +161,7 @@ def test_validate_columns_cardinality_max_fails():
         allowed_dtypes=[],
         input_cardinality={"max": 1},
     )
-    explorer_info = _MockExplorerInfo(
-        [{"columnName": "a"}, {"columnName": "b"}]
-    )
+    explorer_info = _MockExplorerInfo([{"columnName": "a"}, {"columnName": "b"}])
     column_spec = {
         "a": {"type": "Float", "dtype": "float64"},
         "b": {"type": "Float", "dtype": "float64"},
