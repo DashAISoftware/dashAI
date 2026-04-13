@@ -68,7 +68,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "character_replacer.png"
 
     metadata = {
-        "allowed_types": [Text],
+        "allowed_types": [Text, Categorical],
         "allowed_dtypes": [],
     }
 
@@ -185,21 +185,14 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
                 return value
 
         new_types = x.types.copy()
+        categorical_new_values: dict = {
+            col: set()
+            for col in self._target_columns
+            if isinstance(x.types[col], Categorical)
+        }
 
         def replace_function(batch):
-            """Apply character replacement to each column in a HuggingFace batch.
-
-            Parameters
-            ----------
-            batch : dict of {str: list}
-                A HuggingFace ``Dataset.map`` batch dict mapping column names
-                to lists of values.
-
-            Returns
-            -------
-            dict of {str: list}
-                Processed batch with characters replaced in targeted columns.
-            """
+            """Apply character replacement to each column in a HuggingFace batch."""
             processed_batch = {}
             for column_name, values in batch.items():
                 if column_name in self._target_columns:
@@ -228,8 +221,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
                             processed_batch[column_name] = replaced_values
                             new_types[column_name] = Text(arrow_type=pa.string())
                     else:
-                        # Categorical column: apply replacement to string values
-                        processed_batch[column_name] = [
+                        replaced_values = [
                             (
                                 val.replace(self.char_to_replace, self.replacement_char)
                                 if isinstance(val, str)
@@ -237,11 +229,23 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
                             )
                             for val in values
                         ]
+                        processed_batch[column_name] = replaced_values
+                        categorical_new_values[column_name].update(
+                            v for v in replaced_values if v is not None
+                        )
                 else:
                     processed_batch[column_name] = values
             return processed_batch
 
         transformed_hf_dataset = x.map(replace_function, batched=True)
+
+        for col_name, new_values in categorical_new_values.items():
+            old_cat = x.types[col_name]
+            new_types[col_name] = Categorical(
+                values=sorted(new_values),
+                dtype=old_cat.dtype,
+                converted=old_cat.converted,
+            )
 
         return DashAIDataset(
             transformed_hf_dataset.data.table,
