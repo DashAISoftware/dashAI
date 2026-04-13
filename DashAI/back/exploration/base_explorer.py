@@ -75,29 +75,34 @@ class BaseExplorer(ConfigObject, ABC):
         -------
         Dict[str, Any]
             Dictionary containing display name, description,
-            image preview path, category, icon, color, allowed dtypes,
-            restricted dtypes, and input cardinality constraints.
+            image preview path, category, icon, color, allowed semantic
+            types, allowed dtypes, and input cardinality constraints.
         """
-        metadata = cls.metadata
-        metadata["display_name"] = (
-            cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
-        )
-        metadata["short_description"] = (
+        meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
+        meta["display_name"] = cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
+        meta["short_description"] = (
             cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
-        metadata["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
-        metadata["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
-        metadata["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
-        metadata["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
-        # Set default values if not present
-        # TODO: Update the metadata when DashAI Types are implemented
-        if metadata.get("allowed_dtypes", None) is None:
-            metadata["allowed_dtypes"] = ["*"]
-        if metadata.get("restricted_dtypes", None) is None:
-            metadata["restricted_dtypes"] = []
-        if metadata.get("input_cardinality", None) is None:
-            metadata["input_cardinality"] = {"min": 1}
-        return metadata
+        meta["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
+        meta["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
+        meta["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
+        meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
+
+        if meta.get("input_cardinality") is None:
+            meta["input_cardinality"] = {"min": 1}
+
+        # Serialize allowed_types class references → class name strings for the frontend
+        raw_types = meta.get("allowed_types", [])
+        meta["allowed_types"] = [t.__name__ for t in raw_types]
+
+        # Normalize allowed_dtypes: absent or ["*"] → [] (empty means no restriction)
+        if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:
+            meta["allowed_dtypes"] = []
+
+        # Drop restricted_dtypes — always [] in all explorers
+        meta.pop("restricted_dtypes", None)
+
+        return meta
 
     @classmethod
     def validate_parameters(cls, params: Dict[str, Any]) -> bool:
@@ -128,18 +133,19 @@ class BaseExplorer(ConfigObject, ABC):
     ) -> bool:
         """Validate that the selected columns satisfy the explorer's constraints.
 
-        Checks column count against `input_cardinality` and column data types
-        against `allowed_dtypes` / `restricted_dtypes` in the explorer metadata.
+        Checks column count against ``input_cardinality`` and checks each
+        column's semantic type against ``allowed_types`` AND its dtype against
+        ``allowed_dtypes`` (AND logic; empty list means no restriction on
+        that dimension).
 
         Parameters
         ----------
         explorer_info : Explorer
-            The database record for the explorer
-            instance, including the selected columns.
+            The database record for the explorer instance,
+            including the selected columns.
         column_spec : Dict[str, Dict[str, str]]
-            A mapping from column name
-            to a dict with at least a ``"type"`` key describing the column's
-            data type.
+            A mapping from column name to a dict with at least
+            ``"type"`` (semantic type name) and ``"dtype"`` (dtype string).
 
         Returns
         -------
@@ -148,40 +154,29 @@ class BaseExplorer(ConfigObject, ABC):
         """
         metadata = cls.get_metadata()
         selected_columns = explorer_info.columns
-
-        # Check if the number of columns is valid
+        allowed_types = metadata.get("allowed_types", [])
+        allowed_dtypes = metadata.get("allowed_dtypes", [])
         input_cardinality = metadata.get("input_cardinality", {})
-        if (
-            "min" in input_cardinality
-            and len(selected_columns) < input_cardinality["min"]
-        ):
+
+        # Check cardinality
+        n = len(selected_columns)
+        if "exact" in input_cardinality and n != input_cardinality["exact"]:
             return False
-        if (
-            "max" in input_cardinality
-            and len(selected_columns) > input_cardinality["max"]
-        ):
+        if "min" in input_cardinality and n < input_cardinality["min"]:
             return False
-        if (
-            "exact" in input_cardinality
-            and len(selected_columns) != input_cardinality["exact"]
-        ):
+        if "max" in input_cardinality and n > input_cardinality["max"]:
             return False
 
-        # TODO: Update the logic when DashAI Types are implemented
-        # Check if the columns are of valid types
+        # Check each column against allowed_types (semantic) AND allowed_dtypes (dtype)
         for column in selected_columns:
             column_name = column["columnName"]
-            column_type = column_spec[column_name]["type"]
+            col_info = column_spec.get(column_name, {})
+            col_type = col_info.get("type", "")
+            col_dtype = col_info.get("dtype", "")
 
-            # Check if the column's type is allowed
-            if (
-                "*" not in metadata["allowed_dtypes"]
-                and column_type not in metadata["allowed_dtypes"]
-            ):
+            if allowed_types and col_type not in allowed_types:
                 return False
-
-            # Check if the column's type is restricted
-            if column_type in metadata["restricted_dtypes"]:
+            if allowed_dtypes and col_dtype not in allowed_dtypes:
                 return False
 
         return True
