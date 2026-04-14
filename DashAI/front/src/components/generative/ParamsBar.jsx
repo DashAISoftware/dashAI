@@ -14,7 +14,6 @@ import {
 import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
-import { ChevronRight } from "@mui/icons-material";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
 
@@ -141,13 +140,6 @@ export default function ParamsBar({ onToggle }) {
             height: 70,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
           <Typography variant="h6">{t("common:modelParameters")}</Typography>
 
           {/* Parameter History Modal */}

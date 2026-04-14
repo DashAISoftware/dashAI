@@ -47,7 +47,7 @@ export default function DatasetsContent() {
                 <CenterPanel>
                   <DatasetsCenterContent />
                 </CenterPanel>
-                <RightPanel toggleButtonTop="calc(50% + 60px)">
+                <RightPanel toggleButtonTop="50%">
                   {rightBarContent ? (
                     rightBarContent
                   ) : (
