@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 
 export default function DatasetsContent() {
   const { t } = useTranslation();
-  const threePanelLayout = useThreePanelLayout();
+  const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
   const {
     notebooks,
