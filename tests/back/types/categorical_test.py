@@ -54,3 +54,28 @@ def test_categorical_init_int():
     for value, exp_index in custom_encoding.items():
         assert custom_cat.str2int(value) == exp_index
         assert custom_cat.int2str(exp_index) == value
+
+
+def test_categorical_encoder_default_string():
+    """String categories default to one_hot encoder."""
+    categories = ["cat", "dog", "mouse"]
+    cat = Categorical(values=categories)
+    assert cat.encoder == "one_hot"
+    s = cat.to_string()
+    assert s["encoder"] == "one_hot"
+
+
+def test_categorical_encoder_default_int():
+    """Integer categories default to one_hot (inference is in inference_methods, not here)."""
+    categories = [1, 2, 3]
+    cat = Categorical(values=categories)
+    assert cat.encoder == "one_hot"
+    s = cat.to_string()
+    assert s["encoder"] == "one_hot"
+
+
+def test_categorical_encoder_explicit():
+    """Explicitly passed encoder is stored."""
+    cat = Categorical(values=["a", "b"], encoder="label")
+    assert cat.encoder == "label"
+    assert cat.to_string()["encoder"] == "label"
