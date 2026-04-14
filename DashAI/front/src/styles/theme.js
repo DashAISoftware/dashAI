@@ -1,7 +1,4 @@
-import { fontFamily } from "@mui/system";
-import { dataGridLocales } from "../utils/i18n/datagridLocale";
-
-const getTheme = (mode, language) => ({
+const getTheme = (mode) => ({
   palette: {
     mode,
 
@@ -106,14 +103,14 @@ const getTheme = (mode, language) => ({
     },
 
     dataType: {
-      numerical: "#ef9f27",
-      integer: "#3e68ff",
-      categorical: "#9c27b0",
-      text: "#f1ae61",
-      boolean: "#43A047",
-      datetime: "#e91e63",
-      image: "#9b7de8",
-      default: "#757575",
+      numerical: "#00BEBB", // Numerical data (float)
+      integer: "#3e68ff", // Integer data
+      categorical: "#9c27b0", // Categorical data
+      text: "#f1ae61", // Text/string data
+      boolean: "#43A047", // Boolean data
+      datetime: "#e91e63", // Date/time data
+      image: "#6E86E8", // Image data
+      default: "#757575", // Unknown or default type
     },
 
     chart: {
@@ -238,22 +235,6 @@ const getTheme = (mode, language) => ({
           };
         }
       `,
-    },
-
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          "--DataGrid-containerBackground": "transparent",
-          "& .MuiDataGrid-columnSeparator": { visibility: "hidden" },
-          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-columnSeparator": {
-            visibility: "visible",
-          },
-        },
-        columnHeader: { backgroundColor: "transparent" },
-      },
-      defaultProps: {
-        localeText: dataGridLocales[language] ?? dataGridLocales.en,
-      },
     },
   },
 });

@@ -128,12 +128,9 @@ export default function ModelsRightBar({ onToggle }) {
             height: 64,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
           }}
         >
-          <Typography variant="h6" color="text.primary">
-            {t("models:label.availableModels")}
-          </Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -141,6 +138,9 @@ export default function ModelsRightBar({ onToggle }) {
           >
             <ChevronRight />
           </IconButton>
+          <Typography variant="h6" color="text.primary">
+            {t("models:label.availableModels")}
+          </Typography>
         </Box>
 
         {/* Content */}

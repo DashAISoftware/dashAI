@@ -124,6 +124,11 @@ class PolynomialFeatures(
     )
     IMAGE_PREVIEW = "polynomial_features.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return ``Float64`` as the output type for all polynomial feature columns.
 

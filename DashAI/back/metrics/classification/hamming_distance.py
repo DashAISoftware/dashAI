@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -39,10 +40,17 @@ class HammingDistance(ClassificationMetric):
     """
 
     MAXIMIZE: bool = False
-    DESCRIPTION: str = (
-        "Hamming Distance measures the fraction of "
-        "labels that are incorrectly predicted. "
-        "It is particularly useful for multi-label classification tasks."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Hamming Distance measures the fraction of "
+            "labels that are incorrectly predicted. "
+            "It is particularly useful for multi-label classification tasks."
+        ),
+        es=(
+            "La Distancia de Hamming mide la fracción de "
+            "etiquetas predichas incorrectamente. "
+            "Es especialmente útil para tareas de clasificación multi-etiqueta."
+        ),
     )
 
     @staticmethod

@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -30,13 +31,23 @@ class MedianAbsoluteError(RegressionMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.median_absolute_error.html
     """
 
-    DESCRIPTION: str = (
-        "Median Absolute Error (MedAE) measures the median "
-        "of the absolute differences "
-        "between predicted values and actual values in a regression model. "
-        "It provides a robust measure of prediction accuracy, "
-        "less sensitive to outliers "
-        "compared to Mean Absolute Error (MAE)."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Median Absolute Error (MedAE) measures the median "
+            "of the absolute differences "
+            "between predicted values and actual values in a regression model. "
+            "It provides a robust measure of prediction accuracy, "
+            "less sensitive to outliers "
+            "compared to Mean Absolute Error (MAE)."
+        ),
+        es=(
+            "El Error Absoluto Mediano (MedAE) mide la mediana "
+            "de las diferencias absolutas "
+            "entre valores predichos y reales en un modelo de regresión. "
+            "Proporciona una medida robusta de la precisión de predicción, "
+            "menos sensible a valores atípicos "
+            "en comparación con el Error Absoluto Medio (MAE)."
+        ),
     )
 
     @staticmethod

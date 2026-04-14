@@ -21,6 +21,7 @@ import { startJobPolling } from "../../utils/jobPoller";
 export function useSessions({ t }) {
   const { enqueueSnackbar } = useSnackbar();
   const [tasks, setTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -45,6 +46,7 @@ export function useSessions({ t }) {
   }, [enqueueSnackbar, t]);
 
   const fetchTasks = useCallback(async () => {
+    setLoadingTasks(true);
     try {
       const data = await getComponents({
         selectTypes: ["Task"],
@@ -56,6 +58,8 @@ export function useSessions({ t }) {
         variant: "error",
       });
       console.error("Failed to fetch tasks:", error);
+    } finally {
+      setLoadingTasks(false);
     }
   }, [enqueueSnackbar, t]);
 
@@ -274,6 +278,7 @@ export function useSessions({ t }) {
 
   return {
     tasks,
+    loadingTasks,
     setTasks,
     selectedTask,
     setSelectedTask,

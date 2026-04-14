@@ -39,6 +39,7 @@ export function ModelsProvider({ children }) {
 
   const {
     tasks,
+    loadingTasks,
     selectedTask,
     selectedSessionId,
     selectedSession,
@@ -116,6 +117,7 @@ export function ModelsProvider({ children }) {
     replaceDatasets,
     startDatasetPolling,
     tasks,
+    loadingTasks,
     selectedTask,
     selectedSessionId,
     selectedSession,

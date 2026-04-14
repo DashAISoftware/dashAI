@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { PlayArrow } from "@mui/icons-material";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export default function SingleRun({ run, onRun }) {
@@ -19,13 +18,21 @@ export default function SingleRun({ run, onRun }) {
   };
 
   return (
-    <GridActionsCellItem
-      icon={
-        isStarting || isRunning ? <CircularProgress size={18} /> : <PlayArrow />
-      }
-      label={t("button.run")}
-      onClick={handleClick}
-      disabled={isStarting || isRunning}
-    />
+    <Tooltip title={t("button.run")}>
+      <span>
+        <IconButton
+          size="small"
+          aria-label={t("button.run")}
+          onClick={handleClick}
+          disabled={isStarting || isRunning}
+        >
+          {isStarting || isRunning ? (
+            <CircularProgress size={18} />
+          ) : (
+            <PlayArrow />
+          )}
+        </IconButton>
+      </span>
+    </Tooltip>
   );
 }

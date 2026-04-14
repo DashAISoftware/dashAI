@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -39,9 +40,15 @@ class CohenKappa(ClassificationMetric):
     - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html
     """
 
-    DESCRIPTION: str = (
-        "Cohen Kappa score measures the agreement between two raters "
-        "who each classify items into mutually exclusive categories."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Cohen Kappa score measures the agreement between two raters "
+            "who each classify items into mutually exclusive categories."
+        ),
+        es=(
+            "El puntaje Cohen Kappa mide la concordancia entre dos evaluadores "
+            "que clasifican elementos en categorías mutuamente excluyentes."
+        ),
     )
 
     @staticmethod

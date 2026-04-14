@@ -68,7 +68,10 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(en="Select FPR", es="Seleccionar FPR")
     IMAGE_PREVIEW = "select_fpr.png"
-    metadata = {}
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the SelectFpr converter.

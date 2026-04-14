@@ -71,7 +71,10 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(en="Select FDR", es="Seleccionar FDR")
     IMAGE_PREVIEW = "select_fdr.png"
-    metadata = {}
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the SelectFdr converter.

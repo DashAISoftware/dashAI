@@ -105,6 +105,26 @@ export default function ModelsLeftBar({ onToggle }) {
     [sessions],
   );
 
+  const getDatasetDeleteConfirmationContent = (dataset) =>
+    t(
+      "datasets:label.confirmDeleteDataset",
+      'Are you sure you want to delete the dataset "{{name}}"? This action cannot be undone.',
+      { name: dataset.name },
+    );
+
+  const getDatasetDeleteConfirmationWarning = () =>
+    t(
+      "datasets:label.confirmDeleteDatasetLinkedWarning",
+      "All notebooks and sessions linked to this dataset will also be deleted.",
+    );
+
+  const getSessionDeleteConfirmationContent = (session) =>
+    t(
+      "models:label.confirmDeleteSession",
+      'Are you sure you want to delete the session "{{name}}"? This action cannot be undone.',
+      { name: session.name },
+    );
+
   const getDatasetDescription = (dataset) => {
     return t("datasets:label.datasetDescription", {
       rows: dataset.total_rows || 0,
@@ -269,6 +289,8 @@ export default function ModelsLeftBar({ onToggle }) {
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
+          getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
+          getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
         />
 
         <Divider
@@ -289,6 +311,7 @@ export default function ModelsLeftBar({ onToggle }) {
           title={t("common:sessions")}
           Icon={Biotech}
           getItemDescription={getSessionDescription}
+          getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
           initialOpenGroups={openSections}
         />
       </Box>

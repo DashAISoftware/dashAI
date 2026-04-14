@@ -46,11 +46,7 @@ function AddModelDialog({
   const [selectedModel, setSelectedModel] = useState(preselectedModel || "");
   const [modelParameters, setModelParameters] = useState({});
   const [selectedOptimizer, setSelectedOptimizer] = useState("OptunaOptimizer");
-  const [optimizerParameters, setOptimizerParameters] = useState({
-    n_trials: 10,
-    sampler: "TPESampler",
-    pruner: "None",
-  });
+  const [optimizerParameters, setOptimizerParameters] = useState({});
   const [loading, setLoading] = useState(false);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
@@ -117,25 +113,6 @@ function AddModelDialog({
     }
   }, [selectedModel, defaultModelParams, hasLoadedInitialParams]);
 
-  useEffect(() => {
-    if (
-      defaultOptimizerParams &&
-      Object.keys(defaultOptimizerParams).length > 0
-    ) {
-      setOptimizerParameters((prev) => {
-        const prevKeys = Object.keys(prev).sort().join(",");
-        const newKeys = Object.keys(defaultOptimizerParams).sort().join(",");
-        if (
-          prevKeys === newKeys &&
-          JSON.stringify(prev) === JSON.stringify(defaultOptimizerParams)
-        ) {
-          return prev;
-        }
-        return defaultOptimizerParams;
-      });
-    }
-  }, [defaultOptimizerParams]);
-
   const handleClose = () => {
     setTimeout(() => {
       setActiveStep(0);
@@ -143,11 +120,7 @@ function AddModelDialog({
       setSelectedModel("");
       setModelParameters({});
       setSelectedOptimizer("OptunaOptimizer");
-      setOptimizerParameters({
-        n_trials: 10,
-        sampler: "TPESampler",
-        pruner: "None",
-      });
+      setOptimizerParameters({});
       setGoalMetric("");
       setHasUserTouchedName(false);
       setHasLoadedInitialParams(false);
@@ -388,8 +361,8 @@ function AddModelDialog({
                 <FormSchemaContainer>
                   <FormSchemaWithSelectedModel
                     modelToConfigure={selectedOptimizer}
-                    initialValues={optimizerParameters}
-                    onFormSubmit={(values) => setOptimizerParameters(values)}
+                    initialValues={defaultOptimizerParams}
+                    onFormSubmit={() => {}}
                     onValuesChange={handleOptimizerParametersChange}
                     onCancel={() => {}}
                     hideButtons

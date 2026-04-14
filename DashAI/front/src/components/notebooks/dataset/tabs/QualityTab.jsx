@@ -1,14 +1,8 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Card,
-  CardContent,
-  Alert,
-} from "@mui/material";
+import { Box, Typography, Paper, CardContent, Alert } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import IssueCard from "../IssueCard";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 const QualityTab = ({ qualityInfo, totalRows }) => {
@@ -18,7 +12,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data Quality Summary */}
-      <Card>
+      <ExportableCard filename="quality_summary" exportData={qualityInfo}>
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
             {t("datasets:label.dataQualitySummary")}
@@ -127,10 +121,15 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
             </Box>
           </Box>
         </CardContent>
-      </Card>
+      </ExportableCard>
 
       {/* Missing Data by Column */}
-      <Card>
+      <ExportableCard
+        filename="missing_data_by_column"
+        exportData={Object.entries(qualityInfo.nan_ratio_per_column).map(
+          ([col, ratio]) => ({ column: col, missing_ratio: ratio }),
+        )}
+      >
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
             {t("datasets:label.missingDataByColumn")}
@@ -195,7 +194,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
             )}
           </Box>
         </CardContent>
-      </Card>
+      </ExportableCard>
     </Box>
   );
 };

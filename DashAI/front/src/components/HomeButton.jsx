@@ -144,12 +144,12 @@ function HomeButton({
               key={chip}
               sx={{
                 ...theme.typography.statusBadge,
-                border: `1px solid ${theme.palette.divider}`,
-                color: theme.palette.text.disabled,
+                border: `1px solid ${accentBorder}`,
+                color: accent,
                 px: "7px",
                 py: "2px",
                 borderRadius: "2px",
-                background: theme.palette.background.default,
+                background: accentDim,
               }}
             >
               {chip}

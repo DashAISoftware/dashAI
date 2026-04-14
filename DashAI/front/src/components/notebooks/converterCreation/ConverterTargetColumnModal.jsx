@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -29,33 +34,43 @@ const ConverterTargetColumnModal = ({
   notebook,
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedColumn, setSelectedColumn] = useState(null);
+  // rowSelection is an MRT selection map: { [rowId]: boolean }
+  const [rowSelection, setRowSelection] = useState({});
   const [datasetColumns, setDatasetColumns] = useState([]);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["common", "datasets"]);
+  const { t, i18n } = useTranslation(["common", "datasets"]);
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const columns = [
     {
-      field: "columnName",
-      headerName: t("datasets:label.columnName"),
-      flex: 1,
+      accessorKey: "columnName",
+      header: t("datasets:label.columnName"),
+      grow: 1,
     },
     {
-      field: "valueType",
-      headerName: t("datasets:label.valueType"),
-      flex: 0.5,
+      accessorKey: "valueType",
+      header: t("datasets:label.valueType"),
+      grow: 0.5,
     },
     {
-      field: "dataType",
-      headerName: t("datasets:label.dataType"),
-      flex: 0.5,
+      accessorKey: "dataType",
+      header: t("datasets:label.dataType"),
+      grow: 0.5,
     },
   ];
 
   useEffect(() => {
     if (open) {
-      setSelectedColumn(classColumnInitialValue - 1);
+      // initialValue is 1-based column index; convert to 0-based row id
+      if (classColumnInitialValue !== null) {
+        const rowId = String(classColumnInitialValue - 1);
+        setRowSelection({ [rowId]: true });
+      } else {
+        setRowSelection({});
+      }
       fetchDatasetColumns();
     }
   }, [open, classColumnInitialValue]);
@@ -87,22 +102,53 @@ const ConverterTargetColumnModal = ({
     }
   };
 
-  const handleColumnSelection = (newSelection) => {
-    // Only allow single selection
-    if (newSelection.length > 0) {
-      setSelectedColumn(newSelection[0]);
+  // Keep only the most recently selected row (single selection)
+  const handleRowSelectionChange = (updaterOrValue) => {
+    const newSelection =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(rowSelection)
+        : updaterOrValue;
+
+    // Enforce single selection: if more than one row is selected,
+    // keep only the newly added one
+    const prevKeys = Object.keys(rowSelection).filter((k) => rowSelection[k]);
+    const newKeys = Object.keys(newSelection).filter((k) => newSelection[k]);
+    const added = newKeys.find((k) => !prevKeys.includes(k));
+
+    if (added !== undefined) {
+      setRowSelection({ [added]: true });
     } else {
-      setSelectedColumn(null);
+      setRowSelection(newSelection);
     }
   };
 
+  const selectedRowId = Object.keys(rowSelection).find((k) => rowSelection[k]);
+
   const handleOnSave = () => {
-    if (selectedColumn === null) {
+    if (selectedRowId === undefined) {
       return;
     }
-    updateClassColumn(datasetColumns[selectedColumn]);
+    const idx = parseInt(selectedRowId, 10);
+    updateClassColumn(datasetColumns[idx]);
     setOpen(false);
   };
+
+  const table = useMaterialReactTable({
+    columns,
+    data: datasetColumns,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    localization,
+    initialState: {
+      density: "compact",
+      pagination: { pageSize: 25, pageIndex: 0 },
+    },
+    state: { rowSelection, isLoading: loading },
+    onRowSelectionChange: handleRowSelectionChange,
+    enableRowSelection: true,
+    enableMultiRowSelection: false,
+    enableGlobalFilter: true,
+    getRowId: (row) => String(row.id),
+  });
 
   return (
     <React.Fragment>
@@ -165,35 +211,7 @@ const ConverterTargetColumnModal = ({
                   >
                     {t("datasets:label.selectTargetColumnDescription")}
                   </Typography>
-                  <DataGrid
-                    rows={datasetColumns}
-                    columns={columns}
-                    checkboxSelection
-                    onRowSelectionModelChange={handleColumnSelection}
-                    rowSelectionModel={
-                      selectedColumn !== null ? [selectedColumn] : []
-                    }
-                    slots={{
-                      toolbar: GridToolbar,
-                    }}
-                    slotProps={{
-                      toolbar: {
-                        showQuickFilter: true,
-                      },
-                    }}
-                    initialState={{
-                      pagination: {
-                        paginationModel: { pageSize: 25 },
-                      },
-                    }}
-                    loading={loading}
-                    sx={{
-                      height: 300,
-                      "& .MuiDataGrid-cell:focus": {
-                        outline: "none",
-                      },
-                    }}
-                  />
+                  <MaterialReactTable table={table} />
                 </Box>
               </Stack>
             </Box>
@@ -205,7 +223,7 @@ const ConverterTargetColumnModal = ({
             <Button
               variant="contained"
               onClick={handleOnSave}
-              disabled={selectedColumn === null}
+              disabled={selectedRowId === undefined}
             >
               {t("common:save")}
             </Button>

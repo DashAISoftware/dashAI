@@ -44,11 +44,11 @@ export const getColorByColumnType = (type, theme) => {
   if (!theme?.palette?.dataType) {
     // Fallback to hardcoded colors if theme is not available
     const fallbackColors = {
-      numerical: "#ef9f27",
-      float: "#ef9f27",
+      numerical: "#00BEBB",
+      float: "#00BEBB",
       integer: "#3e68ff",
       int: "#3e68ff",
-      number: "#ef9f27",
+      number: "#00BEBB",
       categorical: "#9c27b0",
       category: "#9c27b0",
       text: "#f1ae61",
@@ -59,7 +59,7 @@ export const getColorByColumnType = (type, theme) => {
       date: "#e91e63",
       time: "#e91e63",
       timestamp: "#e91e63",
-      image: "#9b7de8",
+      image: "#6E86E8",
       default: "#757575",
     };
     const normalizedType = type.toLowerCase();

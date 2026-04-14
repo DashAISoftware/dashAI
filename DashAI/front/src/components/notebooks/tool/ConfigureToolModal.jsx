@@ -21,7 +21,11 @@ import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
 import api from "../../../api/api";
 
-import { getDatasetFile } from "../../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetFileFiltered,
+  getDatasetTypesByFilePath,
+} from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 export default function ConfigureToolModal({
@@ -40,6 +44,14 @@ export default function ConfigureToolModal({
   const [topHeight, setTopHeight] = useState(100);
   const isResizingRef = useRef(false);
   const { t } = useTranslation(["datasets", "common"]);
+  const [columnTypes, setColumnTypes] = useState({});
+
+  useEffect(() => {
+    if (!notebook?.file_path) return;
+    getDatasetTypesByFilePath(notebook.file_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [notebook?.file_path]);
 
   const handleMouseDown = () => {
     isResizingRef.current = true;
@@ -77,8 +89,18 @@ export default function ConfigureToolModal({
   }, []);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+    async (page, pageSize, filterModel, sortModel) => {
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            notebook.file_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(notebook.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [notebook.file_path],
@@ -253,15 +275,9 @@ export default function ConfigureToolModal({
                 fetchPage={fetchDatasetPage}
                 deps={[notebook.file_path]}
                 initialPageSize={5}
-                density="compact"
-                disableColumnMenu
-                disableColumnFilter
-                disableColumnSelector
-                disableDensitySelector
                 datasetPath={notebook.file_path}
-                containerHeight={topHeight - 48}
-                autoHeight={false}
-                slots={{ toolbar: null }}
+                columnTypes={columnTypes}
+                enableTopToolbar={false}
               />
             )}
           </Box>
