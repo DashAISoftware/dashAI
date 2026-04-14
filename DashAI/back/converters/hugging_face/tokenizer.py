@@ -134,11 +134,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             Dataset where each original text column is replaced by its
             token-ID list column.
         """
-        from datasets import Dataset, concatenate_datasets
+        import pyarrow as pa
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-        all_column_tokens = [batch]
+        result_table = batch.arrow_table
 
         for column in batch.column_names:
             texts = [row[column] for row in batch]
@@ -154,19 +154,14 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             # Move tensor to the specified device
             input_ids = encoded["input_ids"].to(self.device)
 
-            # Create a dictionary with prefixed token columns
-            column_dict = {
-                f"tok_{column}_{i}": input_ids[:, i].tolist()
-                for i in range(input_ids.size(1))
-            }
+            # Append one column per token position
+            for i in range(input_ids.size(1)):
+                result_table = result_table.append_column(
+                    f"tok_{column}_{i}",
+                    pa.array(input_ids[:, i].tolist(), type=pa.int64()),
+                )
 
-            hf_dataset = Dataset.from_dict(column_dict)
-            column_dataset = DashAIDataset(hf_dataset.data.table)
-            all_column_tokens.append(column_dataset)
-
-        # Concatenate original batch with all tokenized columns
-        concatenated_dataset = concatenate_datasets(all_column_tokens)
-        return DashAIDataset(concatenated_dataset.data.table)
+        return DashAIDataset(result_table)
 
     def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

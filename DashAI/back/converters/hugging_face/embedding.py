@@ -173,12 +173,12 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             Dataset where each original text column is replaced by its
             dense embedding vector column(s).
         """
+        import pyarrow as pa
         import torch
-        from datasets import Dataset, concatenate_datasets
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-        all_column_embeddings = [batch]
+        result_table = batch.arrow_table
 
         for column in batch.column_names:
             # Get text data from dataset
@@ -211,20 +211,11 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
             embeddings_np = embeddings.cpu().numpy()
 
-            # Create a dictionary with prefixed embedding columns
-            embedding_dict = {
-                f"emb_{column}_{i}": embeddings_np[:, i].tolist()
-                for i in range(embeddings_np.shape[1])
-            }
+            # Append one column per embedding dimension
+            for i in range(embeddings_np.shape[1]):
+                result_table = result_table.append_column(
+                    f"emb_{column}_{i}",
+                    pa.array(embeddings_np[:, i].tolist(), type=pa.float32()),
+                )
 
-            # Create a HuggingFace Dataset and convert it to a PyArrow table
-            hf_dataset = Dataset.from_dict(embedding_dict)
-            arrow_table = hf_dataset.data.table
-
-            # Create a new dataset for this column's embeddings
-            column_dataset = DashAIDataset(arrow_table)
-            all_column_embeddings.append(column_dataset)
-
-        # Concatenate original batch with all column embeddings
-        concatenated_dataset = concatenate_datasets(all_column_embeddings)
-        return DashAIDataset(concatenated_dataset.data.table)
+        return DashAIDataset(result_table)
