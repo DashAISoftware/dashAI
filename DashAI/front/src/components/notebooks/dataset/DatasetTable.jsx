@@ -9,7 +9,7 @@ import { Box, Button, Tooltip, Typography } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { renameDatasetColumn } from "../../../api/datasets";
+import { renameDatasetColumn, updateColumnEncoder } from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
 
 export default function DatasetTable({
@@ -312,6 +312,15 @@ export default function DatasetTable({
     [datasetId, onEditColumn, columnFilters, pagination, fetchPage],
   );
 
+  const handleEncoderChange = useCallback(
+    async (columnName, encoder) => {
+      if (!datasetId) return;
+      await updateColumnEncoder(datasetId, columnName, encoder);
+      if (onEditColumn) onEditColumn();
+    },
+    [datasetId, onEditColumn],
+  );
+
   const columns = useMemo(() => {
     let columnKeys = [];
 
@@ -366,7 +375,9 @@ export default function DatasetTable({
               <EditableColumnHeader
                 columnName={key}
                 columnType={getColType(key)}
+                columnEncoder={columnTypes[key]?.encoder ?? null}
                 onRename={handleColumnRename}
+                onEncoderChange={handleEncoderChange}
               />
             </div>
           ) : (
@@ -381,7 +392,7 @@ export default function DatasetTable({
           ),
       };
     });
-  }, [data, columnTypes, editableColumns, datasetId, handleColumnRename, t]);
+  }, [data, columnTypes, editableColumns, datasetId, handleColumnRename, handleEncoderChange, t]);
 
   const handleExportFilteredRows = useCallback(async () => {
     if (rowCount === 0) return;
