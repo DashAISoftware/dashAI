@@ -240,10 +240,24 @@ function ColumnSelector({
     setRowSelectionModel(selection);
   };
 
+  const isTypeInvalid = useCallback(
+    (rowId) => !getValidColumnIds().includes(rowId),
+    [getValidColumnIds],
+  );
+
   const columnSelectorTable = useMaterialReactTable({
     columns,
     data: rows,
-    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    muiTableBodyCellProps: ({ row }) => ({
+      sx: {
+        whiteSpace: "pre",
+        ...(isTypeInvalid(row.original.id) && {
+          color: theme.palette.text.disabled,
+          textDecoration: "line-through",
+          textDecorationColor: theme.palette.text.disabled,
+        }),
+      },
+    }),
     enableRowSelection: (row) => isRowSelectable({ id: row.original.id }),
     onRowSelectionChange: handleSelection,
     state: { rowSelection: toMRT(rowSelectionModel) },
@@ -265,9 +279,14 @@ function ColumnSelector({
       sx: { border: "1px solid", borderColor: "divider" },
     },
     muiTableBodyRowProps: ({ row }) => ({
-      sx: isRowSelectable({ id: row.original.id })
-        ? {}
-        : { backgroundColor: theme.palette.action.disabledBackground },
+      sx: isTypeInvalid(row.original.id)
+        ? {
+            backgroundColor: theme.palette.ui.rowDisabled,
+            opacity: 0.55,
+            cursor: "not-allowed",
+            pointerEvents: "none",
+          }
+        : {},
     }),
     localization,
   });
@@ -297,8 +316,8 @@ function ColumnSelector({
               context: inputCardinality.exact
                 ? "exact"
                 : inputCardinality.max
-                ? "range"
-                : "min",
+                  ? "range"
+                  : "min",
             })}
           </Typography>
         )}
