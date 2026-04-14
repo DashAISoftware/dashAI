@@ -194,7 +194,13 @@ function ColumnSelector({
       const isValid = isValidSelection(rowSelectionModel);
       onValidationChange(isValid);
     }
-  }, [rowSelectionModel, rows, isValidSelection, onSelectionChange, onValidationChange]);
+  }, [
+    rowSelectionModel,
+    rows,
+    isValidSelection,
+    onSelectionChange,
+    onValidationChange,
+  ]);
 
   const handleSelection = (selection) => {
     if (inputCardinality.max && selection.length > inputCardinality.max) {
