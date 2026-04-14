@@ -316,7 +316,7 @@ export default function DatasetTable({
     async (columnName, encoder) => {
       if (!datasetId) return;
       await updateColumnEncoder(datasetId, columnName, encoder);
-      if (onEditColumn) onEditColumn();
+      if (onEditColumn) await onEditColumn();
     },
     [datasetId, onEditColumn],
   );

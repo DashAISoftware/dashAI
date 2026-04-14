@@ -37,6 +37,7 @@ export default function EditableColumnHeader({
   const [error, setError] = useState("");
   const [encoderAnchor, setEncoderAnchor] = useState(null);
   const [encoderLoading, setEncoderLoading] = useState(false);
+  const [encoderError, setEncoderError] = useState("");
   const inputRef = useRef(null);
   const { t } = useTranslation(["common"]);
 
@@ -113,8 +114,15 @@ export default function EditableColumnHeader({
     setEncoderAnchor(null);
     if (newEncoder === columnEncoder) return;
     setEncoderLoading(true);
+    setEncoderError("");
     try {
       await onEncoderChange(columnName, newEncoder);
+    } catch (err) {
+      setEncoderError(
+        err.response?.data?.detail ||
+          err.message ||
+          t("common:errorChangingEncoder"),
+      );
     } finally {
       setEncoderLoading(false);
     }
@@ -215,18 +223,26 @@ export default function EditableColumnHeader({
       {columnType === "Categorical" && columnEncoder && (
         <>
           <Tooltip title={t("common:changeEncoder")} arrow>
-            <Chip
-              label={encoderLoading ? "…" : encoderLabel(columnEncoder)}
-              size="small"
-              onClick={handleEncoderClick}
-              disabled={disabled || !onEncoderChange}
-              sx={{
-                fontSize: "0.65rem",
-                height: "18px",
-                cursor: onEncoderChange && !disabled ? "pointer" : "default",
-              }}
-            />
+            <span style={{ display: "inline-flex" }}>
+              <Chip
+                label={encoderLoading ? "…" : encoderLabel(columnEncoder)}
+                size="small"
+                onClick={handleEncoderClick}
+                disabled={disabled || !onEncoderChange}
+                aria-label={t("common:encoder")}
+                sx={{
+                  fontSize: "0.65rem",
+                  height: "18px",
+                  cursor: onEncoderChange && !disabled ? "pointer" : "default",
+                }}
+              />
+            </span>
           </Tooltip>
+          {encoderError && (
+            <Typography variant="caption" color="error" sx={{ fontSize: "0.7rem" }}>
+              {encoderError}
+            </Typography>
+          )}
           <Menu
             anchorEl={encoderAnchor}
             open={Boolean(encoderAnchor)}
