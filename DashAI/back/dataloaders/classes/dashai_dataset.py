@@ -1361,6 +1361,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
             column_info["categories"] = spec_dict.get("categories", [])
             column_info["num_categories"] = spec_dict.get("num_categories", 0)
             column_info["converted"] = spec_dict.get("converted", False)
+            column_info["encoder"] = spec_dict.get("encoder", "one_hot")
 
         column_types[column_name] = column_info
 

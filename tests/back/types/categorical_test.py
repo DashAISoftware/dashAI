@@ -79,3 +79,81 @@ def test_categorical_encoder_explicit():
     cat = Categorical(values=["a", "b"], encoder="label")
     assert cat.encoder == "label"
     assert cat.to_string()["encoder"] == "label"
+
+
+def test_categorical_encoder_survives_arrow_roundtrip():
+    """Encoder persists through to_string() → save_types_in_arrow_metadata()
+    → get_types_from_arrow_metadata() round-trip."""
+    import pyarrow as pa
+    from DashAI.back.types.utils import (
+        get_types_from_arrow_metadata,
+        save_types_in_arrow_metadata,
+    )
+
+    cat = Categorical(values=["a", "b", "c"], encoder="label")
+    types_dict = {"col1": cat.to_string()}
+
+    table = pa.table({"col1": pa.array(["a", "b", "c"])})
+    table_with_meta = save_types_in_arrow_metadata(table, types_dict)
+
+    recovered = get_types_from_arrow_metadata(table_with_meta)
+    assert isinstance(recovered["col1"], Categorical)
+    assert recovered["col1"].encoder == "label"
+
+
+def test_categorical_encoder_get_columns_spec(tmp_path):
+    """get_columns_spec() returns encoder for Categorical columns."""
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+    from DashAI.back.types.utils import save_types_in_arrow_metadata
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
+    cat = Categorical(values=["x", "y"], encoder="label")
+    types_dict = {"species": cat.to_string()}
+
+    table = pa.table({"species": pa.array(["x", "y"])})
+    table_with_meta = save_types_in_arrow_metadata(table, types_dict)
+
+    dataset_dir = tmp_path / "dataset"
+    dataset_dir.mkdir()
+    arrow_path = str(dataset_dir / "data.arrow")
+    with pa.OSFile(arrow_path, "wb") as sink:
+        writer = ipc.new_file(sink, table_with_meta.schema)
+        writer.write_table(table_with_meta)
+        writer.close()
+
+    spec = get_columns_spec(str(dataset_dir))
+    assert spec["species"]["encoder"] == "label"
+
+
+def test_categorical_encoder_missing_key_defaults_to_one_hot(tmp_path):
+    """Old Arrow files with no encoder key in metadata default to one_hot."""
+    import json
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
+    # Manually craft metadata without "encoder" key (simulates pre-feature Arrow file)
+    types_dict = {
+        "col": {
+            "type": "Categorical",
+            "categories": ["a", "b"],
+            "num_categories": 2,
+            "converted": False,
+            "dtype": "string",
+        }
+    }
+    table = pa.table({"col": pa.array(["a", "b"])})
+    meta = dict(table.schema.metadata or {})
+    meta[b"dashai_types"] = json.dumps(types_dict).encode()
+    table = table.replace_schema_metadata(meta)
+
+    dataset_dir = tmp_path / "ds"
+    dataset_dir.mkdir()
+    with pa.OSFile(str(dataset_dir / "data.arrow"), "wb") as sink:
+        writer = ipc.new_file(sink, table.schema)
+        writer.write_table(table)
+        writer.close()
+
+    spec = get_columns_spec(str(dataset_dir))
+    assert spec["col"]["encoder"] == "one_hot"
