@@ -22,11 +22,6 @@ export default function ScopeStepExplorer({
 
   const handleSubmit = () => {
     nextStep();
-    if (tourContext && tourContext.run) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 500);
-    }
   };
 
   return (

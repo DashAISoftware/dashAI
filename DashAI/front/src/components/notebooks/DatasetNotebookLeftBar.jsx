@@ -64,6 +64,26 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     }
   };
 
+  const getDatasetDeleteConfirmationContent = (dataset) =>
+    t(
+      "datasets:label.confirmDeleteDataset",
+      'Are you sure you want to delete the dataset "{{name}}"? This action cannot be undone.',
+      { name: dataset.name },
+    );
+
+  const getDatasetDeleteConfirmationWarning = () =>
+    t(
+      "datasets:label.confirmDeleteDatasetLinkedWarning",
+      "All notebooks and sessions linked to this dataset will also be deleted.",
+    );
+
+  const getNotebookDeleteConfirmationContent = (notebook) =>
+    t(
+      "datasets:label.confirmDeleteNotebook",
+      'Are you sure you want to delete the notebook "{{name}}"? This action cannot be undone.',
+      { name: notebook.name },
+    );
+
   const getDatasetDescription = (dataset) => {
     return (
       dataset.description ||
@@ -190,6 +210,8 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
+          getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
+          getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
         />
 
         <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
@@ -206,6 +228,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
           Icon={DescriptionIcon}
           datasets={datasets}
           getItemDescription={getNotebookDescription}
+          getDeleteConfirmationContent={getNotebookDeleteConfirmationContent}
         />
       </Box>
 

@@ -7,6 +7,10 @@ import SelectOptionMenu from "../../threeSectionLayout/SelectOptionMenu";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import {
+  CloudUpload as UploadDatasetIcon,
+  AutoStories as NotebookIcon,
+} from "@mui/icons-material";
 
 export default function DatasetsCenterContent() {
   const {
@@ -124,14 +128,14 @@ export default function DatasetsCenterContent() {
             name: "dataset",
             display_name: t("datasets:label.uploadDataset"),
             description: t("datasets:label.uploadDatasetDescription"),
-            Icon: null,
+            Icon: UploadDatasetIcon,
             "data-tour": "dataset-option",
           },
           {
             name: "notebook",
             display_name: t("datasets:label.createNewNotebook"),
             description: t("datasets:label.createNewNotebookDescription"),
-            Icon: null,
+            Icon: NotebookIcon,
             "data-tour": "notebook-option",
           },
         ]}

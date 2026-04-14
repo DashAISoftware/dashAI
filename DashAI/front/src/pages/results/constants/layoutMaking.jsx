@@ -53,7 +53,7 @@ function layoutMaking(selectedChart, _graphsToView, theme) {
     plot_bgcolor: bgColor,
     font: {
       color: textColor,
-      family: "Quicksand-Bold, sans-serif",
+      family: theme.typography.fontFamily,
       size: 12,
     },
     legend: {

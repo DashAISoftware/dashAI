@@ -73,7 +73,6 @@ export default function SplitColumn({
           sx={{
             backgroundColor: config.bg,
             color: config.color,
-            fontFamily: "monospace",
           }}
         />
       </Box>

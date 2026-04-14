@@ -53,16 +53,16 @@ export const datasetsTourSteps = [
               download="personality_dataset.csv"
               style={{
                 display: "inline-block",
-                backgroundColor: "#1976d2",
-                color: "white",
+                backgroundColor: "#ef9f27",
+                color: "#0c0c0a",
                 padding: "10px 20px",
                 textDecoration: "none",
                 borderRadius: "4px",
                 fontWeight: "bold",
                 marginTop: "10px",
               }}
-              onMouseOver={(e) => (e.target.style.backgroundColor = "#1565c0")}
-              onMouseOut={(e) => (e.target.style.backgroundColor = "#1976d2")}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#c47d0e")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#ef9f27")}
             ></a>
           </p>
           <p style={{ fontSize: "0.9em", color: "#666" }}>

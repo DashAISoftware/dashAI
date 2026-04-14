@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Edit } from "@mui/icons-material";
 import {
   Dialog,
@@ -13,6 +12,8 @@ import {
   Typography,
   CircularProgress,
   Paper,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import DatasetSummaryTable from "./DatasetSummaryTable";
 import { updateDataset } from "../../api/datasets";
@@ -49,13 +50,19 @@ function EditDataTypeModal({ datasetId, updateDatasets }) {
 
   return (
     <>
-      <GridActionsCellItem
-        key="edit-types-button"
-        icon={<Edit />}
-        label="Edit Data Types"
-        onClick={() => setOpen(true)}
-        sx={{ color: "warning.main" }}
-      />
+      <Tooltip title="Edit Data Types">
+        <span>
+          <IconButton
+            key="edit-types-button"
+            size="small"
+            aria-label="Edit Data Types"
+            onClick={() => setOpen(true)}
+            sx={{ color: "warning.main" }}
+          >
+            <Edit />
+          </IconButton>
+        </span>
+      </Tooltip>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
         <DialogTitle>Edit Data Types</DialogTitle>
         <DialogContent onClick={(event) => event.stopPropagation()}>

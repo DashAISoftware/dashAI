@@ -34,10 +34,11 @@ export const homeTourSteps = [
         <div>
           <h3></h3>
           <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "top",
   },
   {
     target: '[data-tour="plugins-button"]',
@@ -46,10 +47,11 @@ export const homeTourSteps = [
         <div>
           <h3></h3>
           <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "top",
   },
   {
     target: '[data-tour="datasets-button"]',
