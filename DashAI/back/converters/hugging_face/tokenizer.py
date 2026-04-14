@@ -138,7 +138,7 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-        all_column_tokens = []
+        all_column_tokens = [batch]
 
         for column in batch.column_names:
             texts = [row[column] for row in batch]
@@ -154,9 +154,9 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             # Move tensor to the specified device
             input_ids = encoded["input_ids"].to(self.device)
 
-            # Create a dictionary with each token in its own column
+            # Create a dictionary with prefixed token columns
             column_dict = {
-                f"{column}_token_{i}": input_ids[:, i].tolist()
+                f"tok_{column}_{i}": input_ids[:, i].tolist()
                 for i in range(input_ids.size(1))
             }
 
@@ -164,7 +164,7 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             column_dataset = DashAIDataset(hf_dataset.data.table)
             all_column_tokens.append(column_dataset)
 
-        # Concatenate all tokenized columns
+        # Concatenate original batch with all tokenized columns
         concatenated_dataset = concatenate_datasets(all_column_tokens)
         return DashAIDataset(concatenated_dataset.data.table)
 

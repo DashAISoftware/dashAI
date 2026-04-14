@@ -184,6 +184,9 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
         """Transform text into TF-IDF weighted token columns.
 
+        Appends one ``tfidf_<token>`` column per vocabulary term to the original
+        dataset. The source text column is preserved unchanged.
+
         Parameters
         ----------
         x : DashAIDataset
@@ -194,16 +197,16 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         Returns
         -------
         DashAIDataset
-            Dataset where each token becomes a numeric TF-IDF weight column.
+            Original dataset with ``tfidf_*`` token-weight columns appended.
 
         Raises
         ------
         RuntimeError
             If :meth:`fit` has not been called yet.
         """
-        import pandas as pd
+        import pyarrow as pa
 
-        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
@@ -213,15 +216,20 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
 
         tfidf_matrix = self.vectorizer.transform(texts)
         feature_names = self.vectorizer.get_feature_names_out()
-
-        # One column per token/ngram (TF-IDF weight)
-        df_tfidf = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
-
-        converted_dataset = to_dashai_dataset(df_tfidf)
         output_type = self.get_output_type()
-        for col in converted_dataset.column_names:
-            converted_dataset.types[col] = output_type
-        return converted_dataset
+
+        combined_table = x.arrow_table
+        combined_types = dict(x.types)
+
+        tfidf_array = tfidf_matrix.toarray()
+        for i, token in enumerate(feature_names):
+            prefixed = f"tfidf_{token}"
+            combined_table = combined_table.append_column(
+                prefixed, pa.array(tfidf_array[:, i].tolist(), type=pa.float64())
+            )
+            combined_types[prefixed] = output_type
+
+        return DashAIDataset(combined_table, types=combined_types, splits=x.splits)
 
     def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

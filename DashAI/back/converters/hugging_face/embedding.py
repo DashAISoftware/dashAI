@@ -178,7 +178,7 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-        all_column_embeddings = []
+        all_column_embeddings = [batch]
 
         for column in batch.column_names:
             # Get text data from dataset
@@ -211,9 +211,9 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
             embeddings_np = embeddings.cpu().numpy()
 
-            # Create a dictionary with embedding columns
+            # Create a dictionary with prefixed embedding columns
             embedding_dict = {
-                f"{column}_embedding_{i}": embeddings_np[:, i].tolist()
+                f"emb_{column}_{i}": embeddings_np[:, i].tolist()
                 for i in range(embeddings_np.shape[1])
             }
 
@@ -225,6 +225,6 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             column_dataset = DashAIDataset(arrow_table)
             all_column_embeddings.append(column_dataset)
 
-        # Concatenate all column embeddings
+        # Concatenate original batch with all column embeddings
         concatenated_dataset = concatenate_datasets(all_column_embeddings)
         return DashAIDataset(concatenated_dataset.data.table)
