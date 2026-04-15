@@ -219,6 +219,7 @@ export default function ModelsLeftBar({ onToggle }) {
 
   const onSessionClick = (sessionId) => {
     setSelectedSessionId(sessionId);
+    selectDataset(null);
   };
 
   const handleNewSessionButton = () => {
