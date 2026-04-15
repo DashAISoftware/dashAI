@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -38,9 +39,15 @@ class F1(ClassificationMetric):
     - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
     """
 
-    DESCRIPTION: str = (
-        "Harmonic mean of precision and recall, "
-        "useful for imbalanced classification tasks."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Harmonic mean of precision and recall, "
+            "useful for imbalanced classification tasks."
+        ),
+        es=(
+            "Media armónica de precisión y exhaustividad, "
+            "útil para tareas de clasificación desbalanceadas."
+        ),
     )
 
     @staticmethod

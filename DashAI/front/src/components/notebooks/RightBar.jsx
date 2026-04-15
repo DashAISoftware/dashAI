@@ -337,12 +337,9 @@ export default function RightBar({ notebook, onToggle }) {
             height: 64,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
           }}
         >
-          <Typography variant="h6" color="text.primary">
-            {t("datasets:label.analysisTools")}
-          </Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -350,6 +347,9 @@ export default function RightBar({ notebook, onToggle }) {
           >
             <ChevronRight />
           </IconButton>
+          <Typography variant="h6" color="text.primary">
+            {t("datasets:label.analysisTools")}
+          </Typography>
         </Box>
 
         {notebook ? (

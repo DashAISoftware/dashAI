@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 export const CustomTooltip = ({
@@ -14,6 +15,7 @@ export const CustomTooltip = ({
   isLastStep,
 }) => {
   const { t } = useTranslation(["common"]);
+  const theme = useTheme();
   const isInteractive = step.isInteractive;
 
   return (
@@ -117,14 +119,14 @@ export const CustomTooltip = ({
             <Button
               {...primaryProps}
               sx={{
-                backgroundColor: "#1976d2",
-                color: "#fff",
+                backgroundColor: theme.palette.primary.main,
+                color: theme.palette.primary.contrastText,
                 borderRadius: "4px",
                 padding: "8px 16px",
                 fontSize: "14px",
                 textTransform: "none",
                 "&:hover": {
-                  backgroundColor: "#1565c0",
+                  backgroundColor: theme.palette.primary.dark,
                 },
                 display: "flex",
                 gap: 1,

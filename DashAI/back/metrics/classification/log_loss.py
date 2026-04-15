@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -40,11 +41,19 @@ class LogLoss(ClassificationMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.log_loss.html
     """
 
-    DESCRIPTION: str = (
-        "Log Loss, also known as Logistic Loss or Cross-Entropy Loss, "
-        "measures the performance of a classification model "
-        "where the prediction input is a probability value "
-        "between 0 and 1."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Log Loss, also known as Logistic Loss or Cross-Entropy Loss, "
+            "measures the performance of a classification model "
+            "where the prediction input is a probability value "
+            "between 0 and 1."
+        ),
+        es=(
+            "Log Loss, también conocido como Pérdida Logística o Entropía Cruzada, "
+            "mide el rendimiento de un modelo de clasificación "
+            "donde la entrada de predicción es un valor de probabilidad "
+            "entre 0 y 1."
+        ),
     )
 
     MAXIMIZE: bool = False

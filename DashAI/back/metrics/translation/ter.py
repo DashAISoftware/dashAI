@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.base_metric import prepare_to_metric
 from DashAI.back.metrics.translation_metric import TranslationMetric
 
@@ -23,9 +24,16 @@ class Ter(TranslationMetric):
     """
 
     MAXIMIZE: bool = False
-    DESCRIPTION: str = (
-        "TER (Translation Edit Rate) measures the number of edits "
-        "needed to change a system output into one of the references."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "TER (Translation Edit Rate) measures the number of edits "
+            "needed to change a system output into one of the references."
+        ),
+        es=(
+            "TER (Translation Edit Rate) mide el número de ediciones "
+            "necesarias para transformar la salida del sistema "
+            "en una de las referencias."
+        ),
     )
 
     @staticmethod

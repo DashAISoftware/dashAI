@@ -19,7 +19,7 @@ export const TourButton = ({
         }}
         sx={{
           position: "fixed",
-          top: 20,
+          top: 64,
           right: 16,
           backgroundColor: disabled ? "#9e9e9e" : "#1976d2",
           color: "white",
