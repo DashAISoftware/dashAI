@@ -149,7 +149,18 @@
     "viewResultsAs": "View results as columns or graphs",
     "higherIsBetter": "Higher is better",
     "lowerIsBetter": "Lower is better",
-    "bestModel": "Best"
+    "bestModel": "Best",
+    "score": "Score",
+    "scoreProfile": "Score Profile",
+    "scoreHeaderTooltip": "Weighted score 0–100 based on the selected profile. Unbounded error metrics (MAE, RMSE, TER, …) are normalized relative to the worst model in this comparison. Hover a cell to see the breakdown.",
+    "profile_balanced": "Balanced",
+    "profile_detectPositives": "Detect Positives",
+    "profile_avoidFalseAlarms": "Avoid False Alarms",
+    "profile_probabilityQuality": "Probability Quality",
+    "profile_regression_fit": "Model Fit",
+    "profile_regression_error": "Error Balanced",
+    "profile_translation_quality": "Translation Quality",
+    "profile_translation_balanced": "Translation Balanced"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

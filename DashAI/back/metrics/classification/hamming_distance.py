@@ -35,10 +35,12 @@ class HammingDistance(ClassificationMetric):
     ----------
     - [1] Hamming, R.W. (1950). "Error detecting and error correcting codes."
            Bell System Technical Journal, 29(2), 147-160.
-    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.hamming_loss.html
+    - [2] https://scikit-learn.org/stable/modules/generated/
+           sklearn.metrics.hamming_loss.html
     """
 
     MAXIMIZE: bool = False
+    NORMALIZE_REF: float = 1.0
     DESCRIPTION: str = (
         "Hamming Distance measures the fraction of "
         "labels that are incorrectly predicted. "

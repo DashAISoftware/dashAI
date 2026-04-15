@@ -24,6 +24,17 @@ class TranslationTask(BaseTask):
 
     COMPATIBLE_COMPONENTS = ["Bleu", "Ter"]
 
+    SCORING_PROFILES = {
+        "translation_quality": {
+            "description": "Translation Quality",
+            "weights": {"Bleu": 0.5, "Chrf": 0.5},
+        },
+        "translation_balanced": {
+            "description": "Translation Balanced",
+            "weights": {"Bleu": 0.4, "Chrf": 0.3, "Ter": 0.3},
+        },
+    }
+
     metadata: dict = {
         "inputs_types": [Text],
         "outputs_types": [Text],
