@@ -190,15 +190,18 @@ class SklearnLikeModel(BaseModel):
             return dataset
 
         one_hot_cols = [
-            c for c, t in types.items()
+            c
+            for c, t in types.items()
             if isinstance(t, Categorical) and t.encoder == "one_hot"
         ]
         label_cols = [
-            c for c, t in types.items()
+            c
+            for c, t in types.items()
             if isinstance(t, Categorical) and t.encoder == "label"
         ]
         default_cols = [
-            c for c, t in types.items()
+            c
+            for c, t in types.items()
             if isinstance(t, Categorical) and t.encoder not in ("one_hot", "label")
         ]
         if default_cols:
@@ -255,7 +258,8 @@ class SklearnLikeModel(BaseModel):
         else:
             if self.encodings:
                 relevant_encodings = {
-                    k: v for k, v in self.encodings.items()
+                    k: v
+                    for k, v in self.encodings.items()
                     if columns is None or k in columns
                 }
                 prepared = apply_categorical_label_encoder(dataset, relevant_encodings)

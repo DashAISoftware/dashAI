@@ -239,7 +239,11 @@ export default function EditableColumnHeader({
             </span>
           </Tooltip>
           {encoderError && (
-            <Typography variant="caption" color="error" sx={{ fontSize: "0.7rem" }}>
+            <Typography
+              variant="caption"
+              color="error"
+              sx={{ fontSize: "0.7rem" }}
+            >
               {encoderError}
             </Typography>
           )}

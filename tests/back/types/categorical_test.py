@@ -66,7 +66,9 @@ def test_categorical_encoder_default_string():
 
 
 def test_categorical_encoder_default_int():
-    """Integer categories default to one_hot (inference is in inference_methods, not here)."""
+    """
+    Integer categories default to one_hot (inference is in inference_methods, not here).
+    """
     categories = [1, 2, 3]
     cat = Categorical(values=categories)
     assert cat.encoder == "one_hot"
@@ -85,6 +87,7 @@ def test_categorical_encoder_survives_arrow_roundtrip():
     """Encoder persists through to_string() → save_types_in_arrow_metadata()
     → get_types_from_arrow_metadata() round-trip."""
     import pyarrow as pa
+
     from DashAI.back.types.utils import (
         get_types_from_arrow_metadata,
         save_types_in_arrow_metadata,
@@ -105,8 +108,9 @@ def test_categorical_encoder_get_columns_spec(tmp_path):
     """get_columns_spec() returns encoder for Categorical columns."""
     import pyarrow as pa
     import pyarrow.ipc as ipc
-    from DashAI.back.types.utils import save_types_in_arrow_metadata
+
     from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+    from DashAI.back.types.utils import save_types_in_arrow_metadata
 
     cat = Categorical(values=["x", "y"], encoder="label")
     types_dict = {"species": cat.to_string()}
@@ -129,8 +133,10 @@ def test_categorical_encoder_get_columns_spec(tmp_path):
 def test_categorical_encoder_missing_key_defaults_to_one_hot(tmp_path):
     """Old Arrow files with no encoder key in metadata default to one_hot."""
     import json
+
     import pyarrow as pa
     import pyarrow.ipc as ipc
+
     from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 
     # Manually craft metadata without "encoder" key (simulates pre-feature Arrow file)

@@ -284,7 +284,11 @@ export default function PreviewDatasetTable({
                     size="small"
                     onClick={(e) => handleEncoderClick(e, field)}
                     aria-label={t("common:encoder")}
-                    sx={{ fontSize: "0.65rem", height: "18px", cursor: "pointer" }}
+                    sx={{
+                      fontSize: "0.65rem",
+                      height: "18px",
+                      cursor: "pointer",
+                    }}
                   />
                 </span>
               </Tooltip>
@@ -293,7 +297,15 @@ export default function PreviewDatasetTable({
         ),
       };
     });
-  }, [rows, columnTypes, columnNames, editingColumn, editValue, encoderAnchorColumn, t]);
+  }, [
+    rows,
+    columnTypes,
+    columnNames,
+    editingColumn,
+    editValue,
+    encoderAnchorColumn,
+    t,
+  ]);
 
   const table = useMaterialReactTable({
     columns,

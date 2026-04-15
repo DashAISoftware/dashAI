@@ -84,7 +84,11 @@ const OverviewTab = ({
             datasetId={dataset.id}
             onEditColumn={onEditColumnName}
             editableColumns={true}
-            columnTypes={columnTypes && Object.keys(columnTypes).length > 0 ? columnTypes : dtypes}
+            columnTypes={
+              columnTypes && Object.keys(columnTypes).length > 0
+                ? columnTypes
+                : dtypes
+            }
           />
         </CardContent>
       </Card>

@@ -9,7 +9,10 @@ import { Box, Button, Tooltip, Typography } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { renameDatasetColumn, updateColumnEncoder } from "../../../api/datasets";
+import {
+  renameDatasetColumn,
+  updateColumnEncoder,
+} from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
 
 export default function DatasetTable({
@@ -392,7 +395,15 @@ export default function DatasetTable({
           ),
       };
     });
-  }, [data, columnTypes, editableColumns, datasetId, handleColumnRename, handleEncoderChange, t]);
+  }, [
+    data,
+    columnTypes,
+    editableColumns,
+    datasetId,
+    handleColumnRename,
+    handleEncoderChange,
+    t,
+  ]);
 
   const handleExportFilteredRows = useCallback(async () => {
     if (rowCount === 0) return;

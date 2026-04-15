@@ -202,9 +202,9 @@ def categorical_one_hot_encoder(
     types = dataset.types
 
     categorical_cols = [
-        col for col, _type in types.items()
-        if isinstance(_type, Categorical)
-        and (columns is None or col in columns)
+        col
+        for col, _type in types.items()
+        if isinstance(_type, Categorical) and (columns is None or col in columns)
     ]
 
     if not categorical_cols:

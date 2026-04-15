@@ -135,21 +135,18 @@ function PreviewDataset({
     [enqueueSnackbar, onTypesChanged],
   );
 
-  const handleEncoderChange = useCallback(
-    (columnName, newEncoder) => {
-      setColumnTypes((prevTypes) => {
-        const updatedTypes = {
-          ...prevTypes,
-          [columnName]: { ...prevTypes[columnName], encoder: newEncoder },
-        };
-        if (onTypesChangedRef.current) {
-          onTypesChangedRef.current(updatedTypes);
-        }
-        return updatedTypes;
-      });
-    },
-    [],
-  );
+  const handleEncoderChange = useCallback((columnName, newEncoder) => {
+    setColumnTypes((prevTypes) => {
+      const updatedTypes = {
+        ...prevTypes,
+        [columnName]: { ...prevTypes[columnName], encoder: newEncoder },
+      };
+      if (onTypesChangedRef.current) {
+        onTypesChangedRef.current(updatedTypes);
+      }
+      return updatedTypes;
+    });
+  }, []);
 
   const handleColumnRename = useCallback(
     (oldName, newName) => {
