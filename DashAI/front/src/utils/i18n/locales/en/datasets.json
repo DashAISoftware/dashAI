@@ -1,4 +1,36 @@
 {
+  "inferenceReason": {
+    "title": "Why is \"{{column}}\" typed this way?",
+    "openExplanation": "Show type inference explanation",
+    "baseType": "(detected base type: {{type}})",
+    "stats": "Statistics from sample",
+    "uniqueCount": "Unique values: {{count}} of {{total}} rows",
+    "uniqueRatio": "Unique ratio: {{ratio}}% (categorical threshold: ≤{{threshold}}%)",
+    "uniqueRatioNoThreshold": "Unique ratio: {{ratio}}%",
+    "stringLength": "Avg. text length: {{mean}} chars (std {{std}})",
+    "sampleValues": "Sample values",
+    "canChangeHint": "If this is wrong, change the type using the selector on the left.",
+    "rule": {
+      "boolean": "Boolean columns are always treated as Categorical.",
+      "dateExcluded": "Date/time types are excluded from categorical detection.",
+      "dateMappedToText": "Values were detected as dates ({{baseType}} format), but DashAI does not yet have a Date type — the column is stored as Text and not classified as categorical.",
+      "stringLooksLikeDate": "Values look like dates, so the column was kept as text/date instead of categorical.",
+      "tooManyUnique": "Too many distinct values to be categorical (above the unique-count threshold).",
+      "uniqueRatioAbove": "Unique values represent too large a fraction of the rows — treated as numeric/text instead of categorical.",
+      "stringTooLong": "Average text length is too long to be a category label.",
+      "stringHighVariance": "Text length varies too much across values for a categorical interpretation.",
+      "integerAllUnique": "Every integer value is unique — looks like an identifier, not a category.",
+      "integerSequentialRange": "Integers form a sequential range (e.g. 1, 2, 3, ...) — treated as numeric, not categorical.",
+      "integerDenseSmallRange": "Integers form a dense small range — treated as numeric.",
+      "floatHasDecimals": "Float values have real decimals — treated as numeric, never categorical.",
+      "lowCardinality": "Few distinct values relative to row count — classified as Categorical.",
+      "mlClassifierCategorical": "The categorical classifier model scored this column above the categorical threshold.",
+      "mlClassifierNotCategorical": "The categorical classifier model did not consider this column categorical.",
+      "emptyColumn": "Column is empty — no inference performed.",
+      "unsupportedBaseType": "Base type is not eligible for categorical detection.",
+      "unknown": "No specific rule recorded for this classification."
+    }
+  },
   "button": {
     "addColorStop": "Add Color Stop",
     "applyChanges": "Apply Changes",
