@@ -1,24 +1,16 @@
 """Scoring and model comparison endpoints."""
 
-import logging
 from typing import TYPE_CHECKING, Optional
 
 from fastapi import APIRouter, Query
-from kink import inject
-
-from DashAI.back.services.scoring_service import ScoringService
 
 if TYPE_CHECKING:
     pass
-
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 @router.get("/profiles")
-@inject
 def get_scoring_profiles(
     task_name: Optional[str] = Query(None),
 ):
@@ -40,5 +32,8 @@ def get_scoring_profiles(
         - description: str
         - weights: Dict[str, float] (metric name → weight)
     """
+    from DashAI.back.services.scoring_service import ScoringService
+
     service = ScoringService()
-    return service.get_available_profiles(task_name)
+    profiles = service.get_available_profiles(task_name)
+    return profiles

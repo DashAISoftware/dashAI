@@ -76,20 +76,29 @@ class ScoringService:
             return self._profile_cache
 
         all_profiles = {}
+
+        # Get all tasks from registry
         tasks = component_registry.get_components_by_types(select=["Task"])
 
         for task_dict in tasks:
-            task_class = task_dict.get("class")
             task_name = task_dict["name"]
 
-            if task_class and hasattr(task_class, "SCORING_PROFILES"):
-                profiles = task_class.SCORING_PROFILES
-                for profile_id, profile_data in profiles.items():
-                    all_profiles[profile_id] = {
-                        "description": profile_data["description"],
-                        "weights": profile_data["weights"],
-                        "task_name": task_name,
-                    }
+            # Access the task class via registry's __getitem__ to get SCORING_PROFILES
+            try:
+                full_task_dict = component_registry[task_name]
+                task_class = full_task_dict.get("class")
+
+                if task_class and hasattr(task_class, "SCORING_PROFILES"):
+                    profiles = task_class.SCORING_PROFILES
+                    for profile_id, profile_data in profiles.items():
+                        all_profiles[profile_id] = {
+                            "description": profile_data["description"],
+                            "weights": profile_data["weights"],
+                            "task_name": task_name,
+                        }
+            except Exception:
+                # Skip if task not found or error accessing it
+                continue
 
         self._profile_cache = all_profiles
         return all_profiles

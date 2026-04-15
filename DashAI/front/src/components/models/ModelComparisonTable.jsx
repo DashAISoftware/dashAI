@@ -27,7 +27,7 @@ import api from "../../api/api";
  * Scores are computed server-side and fetched from the backend.
  */
 function ModelComparisonTable({
-  runs = [],
+  runs: initialRuns = [],
   session,
   onTrain,
   onViewDetails,
@@ -41,12 +41,21 @@ function ModelComparisonTable({
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [scores, setScores] = useState({});
   const [loadingScores, setLoadingScores] = useState(false);
+  const [runs, setRuns] = useState(initialRuns);
 
   const { t, i18n } = useTranslation(["models", "common"]);
   const theme = useTheme();
   const localization = i18n.language.startsWith("es")
     ? MRT_Localization_ES
     : MRT_Localization_EN;
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Sync initial runs prop with local state
+  // ────────────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    setRuns(initialRuns);
+  }, [initialRuns]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Fetch models and metrics
@@ -121,7 +130,10 @@ function ModelComparisonTable({
           },
         });
 
-        // Extract scores from runs
+        // Update runs with metrics and scores
+        setRuns(response.data);
+
+        // Extract scores into separate map for easy lookup
         const scoresMap = {};
         response.data.forEach((run) => {
           if (run.score) {
@@ -137,7 +149,7 @@ function ModelComparisonTable({
     };
 
     fetchScores();
-  }, [runs, selectedProfile, metricSplit, session?.id]);
+  }, [selectedProfile, metricSplit, session?.id]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
@@ -173,6 +185,7 @@ function ModelComparisonTable({
         )
         .map((run) => Number(run[metricsKey][metricName]))
         .filter((v) => !isNaN(v));
+      console.log(`Values for ${metricField}:`, values);
 
       if (values.length > 0) {
         bestValues[metricField] = maximize
@@ -201,9 +214,11 @@ function ModelComparisonTable({
         : metricDescription;
 
       const bestVal = bestValues[metricField];
+      const metricsKey = `${metricSplit}_metrics`;
 
       return {
-        accessorKey: metricField,
+        id: metricField,
+        accessorFn: (row) => row[metricsKey]?.[metricName],
         header: `${metricName} ${directionArrow}`.trim(),
         size: 120,
         Header: () => (
