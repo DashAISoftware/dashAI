@@ -1,11 +1,14 @@
 """Scoring service for model comparison using weighted metric profiles."""
 
+import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from kink import inject
 
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
+
+log = logging.getLogger(__name__)
 
 
 class ScoringService:
@@ -15,21 +18,15 @@ class ScoringService:
     This service fetches them from the registry and applies normalization
     across different metric ranges, producing 0–100 scores per model.
 
-    Note: This service is stateless except for internal caches.
     Component registry is injected when needed via @inject decorator.
     """
 
-    def __init__(self):
-        """Initialize the scoring service with empty caches."""
-        self._metric_cache = None
-        self._profile_cache = None
-
     @inject
-    def _build_metric_cache(
+    def _get_metric_metadata(
         self,
         component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> Dict[str, Dict[str, Any]]:
-        """Build a cache of metric metadata by name.
+        """Get metric metadata (maximize, normalize_ref) from registry.
 
         Parameters
         ----------
@@ -41,26 +38,22 @@ class ScoringService:
         Dict[str, Dict[str, Any]]
             Map of metric name (str) to metadata dict.
         """
-        if self._metric_cache is not None:
-            return self._metric_cache
-
-        cache = {}
+        metadata = {}
         metrics = component_registry.get_components_by_types(select=["Metric"])
         for metric_dict in metrics:
             name = metric_dict["name"]
-            cache[name] = {
+            metadata[name] = {
                 "maximize": metric_dict.get("metadata", {}).get("maximize"),
                 "normalize_ref": metric_dict.get("metadata", {}).get("normalize_ref"),
             }
-        self._metric_cache = cache
-        return cache
+        return metadata
 
     @inject
     def _get_all_profiles(
         self,
         component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> Dict[str, Dict[str, Any]]:
-        """Build a map of all profiles from all tasks in the registry.
+        """Get all profiles from all tasks in the registry.
 
         Parameters
         ----------
@@ -72,19 +65,13 @@ class ScoringService:
         Dict[str, Dict[str, Any]]
             Map of profile_id → {description, weights, task_name}.
         """
-        if self._profile_cache is not None:
-            return self._profile_cache
-
         all_profiles = {}
-
-        # Get all tasks from registry
         tasks = component_registry.get_components_by_types(select=["Task"])
 
         for task_dict in tasks:
             task_name = task_dict["name"]
-
-            # Access the task class via registry's __getitem__ to get SCORING_PROFILES
             try:
+                # Get task class from registry to access SCORING_PROFILES
                 full_task_dict = component_registry[task_name]
                 task_class = full_task_dict.get("class")
 
@@ -96,11 +83,11 @@ class ScoringService:
                             "weights": profile_data["weights"],
                             "task_name": task_name,
                         }
-            except Exception:
-                # Skip if task not found or error accessing it
-                continue
+            except KeyError:
+                log.debug(f"Task {task_name} not found in registry")
+            except Exception as e:
+                log.warning(f"Error accessing SCORING_PROFILES for {task_name}: {e}")
 
-        self._profile_cache = all_profiles
         return all_profiles
 
     def get_available_profiles(self, task_name: Optional[str]) -> List[Dict[str, Any]]:
@@ -201,8 +188,10 @@ class ScoringService:
                 return 1.0  # All tied = all best
             return max(0.0, min(1.0, (max_val - value) / range_val))
 
-        # Fallback when no values available (shouldn't happen in practice)
-        return max(0.0, 1.0 - min(value / 2.303, 1.0))  # log(10) as default
+        # Fallback when no range available: normalize against log(10)
+        # This should rarely occur; ideally all_values is always provided for
+        # data-driven metrics. Used only as a safety fallback.
+        return max(0.0, 1.0 - min(value / 2.303, 1.0))
 
     def compute_score(
         self,
@@ -239,7 +228,7 @@ class ScoringService:
 
         profile_data = all_profiles[profile_id]
         profile_weights = profile_data["weights"]
-        metric_cache = self._build_metric_cache()
+        metric_metadata = self._get_metric_metadata()
 
         # Find metrics that are both in the profile and in the model data
         available_entries = [
@@ -259,7 +248,7 @@ class ScoringService:
         for metric_name, weight in available_entries:
             normalized_weight = weight / total_weight
             value = float(metrics_dict[metric_name])
-            meta = metric_cache.get(metric_name, {})
+            meta = metric_metadata.get(metric_name, {})
             maximize = meta.get("maximize")
             normalize_ref = meta.get("normalize_ref")
             all_values = metric_ranges.get(metric_name) if metric_ranges else None

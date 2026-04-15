@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.exceptions import HTTPException
@@ -79,7 +79,7 @@ async def get_runs(
     model_session_id: Union[int, None] = None,
     include_scores: bool = Query(False),
     profile_id: Optional[str] = Query(None),
-    metric_split: str = Query("test"),
+    metric_split: Literal["train", "validation", "test"] = Query("test"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):

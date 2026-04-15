@@ -100,10 +100,14 @@ function ModelComparisonTable({
         const profilesList = response.data;
         setProfiles(profilesList);
 
-        // Select first profile by default
-        if (profilesList.length > 0 && !selectedProfile) {
-          setSelectedProfile(profilesList[0].id);
-        }
+        // Keep current profile only if still valid; otherwise select first
+        setSelectedProfile((prevProfile) => {
+          if (profilesList.length === 0) {
+            return null;
+          }
+          const profileExists = profilesList.some((p) => p.id === prevProfile);
+          return profileExists ? prevProfile : profilesList[0].id;
+        });
       } catch (error) {
         console.error("Error fetching scoring profiles:", error);
       }
@@ -240,8 +244,8 @@ function ModelComparisonTable({
           </Tooltip>
         ),
         Cell: ({ row, cell }) => {
-          const { statusCode } = row.original;
-          const isRunning = statusCode === 1 || statusCode === 2;
+          const { status } = row.original;
+          const isRunning = status === 1 || status === 2;
 
           if (isRunning) return "-";
           const val = cell.getValue();
