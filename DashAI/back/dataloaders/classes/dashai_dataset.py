@@ -749,8 +749,9 @@ def transform_dataset_with_schema(
             col_list = base_col.to_pylist()
             categories = sorted({v for v in col_list if v is not None})
 
+            encoder = info.get("encoder", "one_hot")
             dashai_types[column_name] = Categorical(
-                values=categories, converted=converted, dtype=dtype
+                values=categories, converted=converted, dtype=dtype, encoder=encoder
             )
             # Keep the column data as-is without converting to string
             dai_table[column_name] = base_col
