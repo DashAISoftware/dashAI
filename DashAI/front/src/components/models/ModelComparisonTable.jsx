@@ -185,7 +185,6 @@ function ModelComparisonTable({
         )
         .map((run) => Number(run[metricsKey][metricName]))
         .filter((v) => !isNaN(v));
-      console.log(`Values for ${metricField}:`, values);
 
       if (values.length > 0) {
         bestValues[metricField] = maximize
