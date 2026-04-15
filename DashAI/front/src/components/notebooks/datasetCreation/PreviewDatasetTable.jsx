@@ -101,7 +101,13 @@ export default function PreviewDatasetTable({
       return;
     }
 
-    const newDtype = TYPE_TO_DEFAULT_DTYPE[newType] || "string";
+    const currentDtype = columnTypes[columnName]?.dtype;
+    // For Categorical, preserve the column's actual dtype so label encoding
+    // uses the correct numeric type rather than defaulting to string.
+    const newDtype =
+      newType === "Categorical" && currentDtype
+        ? currentDtype
+        : TYPE_TO_DEFAULT_DTYPE[newType] || "string";
 
     setPendingChanges({
       [columnName]: {
