@@ -476,32 +476,57 @@ export default function RightBar({ notebook, onToggle }) {
                         }
                       : { flex: 1, overflow: "auto", p: 2 };
 
-                  const sectionTitleSx = {
-                    color: "text.secondary",
-                    fontWeight: 600,
-                    mb: 1,
-                    mt: 0,
-                    display: "block",
-                  };
+                  const SectionHeader = ({ icon: Icon, label, count, mt }) => (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1.5,
+                        mt: mt ?? 0,
+                        pb: 0.5,
+                        borderBottom: "1px solid",
+                        borderColor: theme.palette.divider,
+                      }}
+                    >
+                      <Icon
+                        sx={{ fontSize: 18, color: theme.palette.accent.main }}
+                      />
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ flex: 1, color: "text.primary", fontWeight: 600 }}
+                      >
+                        {label}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        {t("datasets:label.toolsCount", { count })}
+                      </Typography>
+                    </Box>
+                  );
 
                   return (
                     <Box sx={containerSx}>
                       {isSearching ? (
                         <>
-                          <Typography variant="caption" sx={sectionTitleSx}>
-                            {t("datasets:label.explore")}
-                          </Typography>
+                          <SectionHeader
+                            icon={AnalyticsIcon}
+                            label={t("datasets:label.explore")}
+                            count={filteredExplorers.length}
+                          />
                           <ListComponent
                             tools={filteredExplorers}
                             notebook={notebook}
                             FormComponent={FormExplorerSection}
                           />
-                          <Typography
-                            variant="caption"
-                            sx={{ ...sectionTitleSx, mt: 2 }}
-                          >
-                            {t("datasets:label.convert")}
-                          </Typography>
+                          <SectionHeader
+                            icon={TransformIcon}
+                            label={t("datasets:label.convert")}
+                            count={filteredConverters.length}
+                            mt={3}
+                          />
                           <ListComponent
                             tools={filteredConverters}
                             notebook={notebook}
