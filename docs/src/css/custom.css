@@ -294,6 +294,28 @@ a:focus-visible {
   text-decoration: none;
 }
 
+/* GitHub icon-only link */
+.navbar-github-icon {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  margin-left: 4px;
+  color: var(--dashai-text-primary);
+  opacity: 0.75;
+  transition: opacity 0.15s;
+  text-decoration: none;
+}
+
+.navbar-github-icon:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.navbar-github-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
 
 /* Theme toggle button — bordered icon button */
 .navbar__items--right [class*="colorModeToggle"] button,
@@ -1223,8 +1245,9 @@ tbody tr:hover {
     display: none !important;
   }
 
-  /* Hide GitHub link — accessible via mobile sidebar */
-  .navbar__items--right .navbar__link {
+  /* Hide GitHub link and icon — accessible via mobile sidebar */
+  .navbar__items--right .navbar__link,
+  .navbar-github-icon {
     display: none !important;
   }
 
