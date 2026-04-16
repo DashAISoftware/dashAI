@@ -26,3 +26,4 @@ jobs:
           include_fix_links: true
           classify_inline_comments: false
           show_full_output: true
+          allowed_tools: "Bash(gh*),Bash(git*),Read,Glob,Grep"
