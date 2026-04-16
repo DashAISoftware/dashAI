@@ -99,7 +99,7 @@ const OverviewTab = ({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                gap: 1,
                 mb: 1,
               }}
             >
