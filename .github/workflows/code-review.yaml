@@ -25,3 +25,4 @@ jobs:
           claude_args: "--max-turns 20 --model claude-sonnet-4-6"
           include_fix_links: true
           classify_inline_comments: false
+          show_full_output: true
