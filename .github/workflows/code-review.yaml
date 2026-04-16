@@ -16,13 +16,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
           fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "Review this pull request for code quality, correctness, and security. Analyze the diff, then post your findings as inline review comments."
-          claude_args: "--max-turns 20 --model claude-sonnet-4-6 --allowedTools Bash,Read,Glob,Grep"
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.issue.number }}
+
+            You are reviewing this pull request. Follow these steps:
+            1. Run `gh pr view ${{ github.event.issue.number }} --json title,body,files` to understand the PR.
+            2. Run `gh pr diff ${{ github.event.issue.number }}` to see the full diff.
+            3. Read the key changed files to understand context.
+            4. Analyze for bugs, security issues, correctness problems, and code quality concerns.
+            5. Post your findings as inline review comments using the GitHub review tools available to you. If inline comments are not possible, post a consolidated review as a PR comment using `gh pr comment ${{ github.event.issue.number }} --body "..."`.
+
+            Focus on actionable feedback. Skip nitpicks and style issues already enforced by linters.
+          claude_args: "--max-turns 30 --model claude-sonnet-4-6 --allowedTools Bash,Read,Glob,Grep"
           include_fix_links: true
           classify_inline_comments: false
           show_full_output: true
