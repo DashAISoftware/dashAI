@@ -1359,6 +1359,12 @@ tbody tr:hover {
 
 /* ── Navbar mobile ── */
 @media (max-width: 996px) {
+  /* Remove backdrop-filter so navbar-sidebar (position:fixed child) isn't trapped in navbar's stacking context */
+  .navbar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   /* Show only search bar on mobile — hide everything else */
   .navbar__items--right .navbar__link,
   .navbar-github-icon,
