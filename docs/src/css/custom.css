@@ -298,6 +298,10 @@ a:focus-visible {
 }
 
 /* GitHub icon-only link — matches theme toggle style */
+.navbar__item:has(.navbar-github-icon) {
+  padding: 0;
+}
+
 .navbar-github-icon {
   display: flex;
   align-items: center;
