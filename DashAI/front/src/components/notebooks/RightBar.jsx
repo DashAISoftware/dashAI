@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import {
   Box,
@@ -28,6 +28,34 @@ import { ChevronRight } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
 import ColumnInsights from "./dataset/ColumnInsights";
+
+function SectionHeader({ icon: Icon, label, count, mt, theme, t }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        mb: 1.5,
+        mt: mt ?? 0,
+        pb: 0.5,
+        borderBottom: "1px solid",
+        borderColor: theme.palette.divider,
+      }}
+    >
+      <Icon sx={{ fontSize: 18, color: theme.palette.accent.main }} />
+      <Typography
+        variant="subtitle2"
+        sx={{ flex: 1, color: "text.primary", fontWeight: 600 }}
+      >
+        {label}
+      </Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        {t("datasets:label.toolsCount", { count })}
+      </Typography>
+    </Box>
+  );
+}
 
 function RightBarDatasetView() {
   const { t } = useTranslation(["datasets"]);
@@ -70,8 +98,6 @@ export default function RightBar({ notebook, onToggle }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
-  const [filteredConverters, setFilteredConverters] = useState([]);
-  const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
   const [viewMode, setViewMode] = useState("list");
@@ -80,24 +106,27 @@ export default function RightBar({ notebook, onToggle }) {
   const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         const data = await getComponents({
           selectTypes: ["Converter", "Explorer"],
         });
+        if (cancelled) return;
         setConverters(data.filter((item) => item.type === "Converter"));
         setExplorers(data.filter((item) => item.type === "Explorer"));
-        setFilteredConverters(data.filter((item) => item.type === "Converter"));
-        setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
       } catch (error) {
         enqueueSnackbar(t("datasets:error.fetchingExplorersConverters"), {
           variant: "error",
         });
         console.error("Failed to fetch explorers/converters:", error);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    fetchData();
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [explorersAndConverters]);
 
   // Clear search when the selected notebook changes
   useEffect(() => {
@@ -150,7 +179,8 @@ export default function RightBar({ notebook, onToggle }) {
 
     let validColumns = datasetColumns;
     let disabled = false;
-    let tooltip = explorer.description || "";
+    let tooltip =
+      explorer.description || explorer.metadata?.short_description || "";
 
     // Filter by allowed dtypes
     if (!allowedDtypes.includes("*")) {
@@ -259,8 +289,40 @@ export default function RightBar({ notebook, onToggle }) {
     return { disabled, tooltip, validColumns };
   };
 
-  useEffect(() => {
-    const query = searchQuery.toLowerCase();
+  const validatedExplorers = useMemo(
+    () =>
+      explorers.map((explorer) => {
+        const validation = validateExplorer(explorer);
+        return {
+          ...explorer,
+          disabled: validation.disabled,
+          tooltip: validation.tooltip,
+          validColumns: validation.validColumns,
+          notebook,
+        };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [explorers, datasetColumns, notebook?.id],
+  );
+
+  const validatedConverters = useMemo(
+    () =>
+      converters.map((converter) => {
+        const validation = validateConverter(converter);
+        return {
+          ...converter,
+          disabled: validation.disabled,
+          tooltip: validation.tooltip,
+          validColumns: validation.validColumns,
+          notebook,
+        };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [converters, datasetColumns, notebook?.id],
+  );
+
+  const { filteredExplorers, filteredConverters } = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
     const rankMatch = (item) => {
       const displayName = (
@@ -278,43 +340,20 @@ export default function RightBar({ notebook, onToggle }) {
       return 0;
     };
 
-    const filterAndRank = (items) =>
-      items
+    const filterAndRank = (items) => {
+      if (!query) return items;
+      return items
         .map((item) => ({ item, rank: rankMatch(item) }))
         .filter(({ rank }) => rank > 0)
         .sort((a, b) => a.rank - b.rank)
         .map(({ item }) => item);
+    };
 
-    const filteredAndValidatedExplorers = filterAndRank(explorers).map(
-      (explorer) => {
-        const validation = validateExplorer(explorer);
-        return {
-          ...explorer,
-          disabled: validation.disabled,
-          tooltip: validation.tooltip,
-          validColumns: validation.validColumns,
-          notebook,
-        };
-      },
-    );
-
-    setFilteredExplorers(filteredAndValidatedExplorers);
-
-    const filteredAndValidatedConverters = filterAndRank(converters).map(
-      (converter) => {
-        const validation = validateConverter(converter);
-        return {
-          ...converter,
-          disabled: validation.disabled,
-          tooltip: validation.tooltip,
-          validColumns: validation.validColumns,
-          notebook,
-        };
-      },
-    );
-
-    setFilteredConverters(filteredAndValidatedConverters);
-  }, [searchQuery, explorers, converters, datasetColumns, notebook]);
+    return {
+      filteredExplorers: filterAndRank(validatedExplorers),
+      filteredConverters: filterAndRank(validatedConverters),
+    };
+  }, [searchQuery, validatedExplorers, validatedConverters]);
 
   const handleChangeTab = (_event, newValue) => {
     setActiveTab(newValue);
@@ -481,62 +520,58 @@ export default function RightBar({ notebook, onToggle }) {
                         }
                       : { flex: 1, overflow: "auto", p: 2 };
 
-                  const SectionHeader = ({ icon: Icon, label, count, mt }) => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1.5,
-                        mt: mt ?? 0,
-                        pb: 0.5,
-                        borderBottom: "1px solid",
-                        borderColor: theme.palette.divider,
-                      }}
-                    >
-                      <Icon
-                        sx={{ fontSize: 18, color: theme.palette.accent.main }}
-                      />
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ flex: 1, color: "text.primary", fontWeight: 600 }}
-                      >
-                        {label}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "text.secondary" }}
-                      >
-                        {t("datasets:label.toolsCount", { count })}
-                      </Typography>
-                    </Box>
-                  );
+                  const hasExplorers = filteredExplorers.length > 0;
+                  const hasConverters = filteredConverters.length > 0;
 
                   return (
                     <Box sx={containerSx}>
                       {isSearching ? (
                         <>
-                          <SectionHeader
-                            icon={AnalyticsIcon}
-                            label={t("datasets:label.explore")}
-                            count={filteredExplorers.length}
-                          />
-                          <ListComponent
-                            tools={filteredExplorers}
-                            notebook={notebook}
-                            FormComponent={FormExplorerSection}
-                          />
-                          <SectionHeader
-                            icon={TransformIcon}
-                            label={t("datasets:label.convert")}
-                            count={filteredConverters.length}
-                            mt={3}
-                          />
-                          <ListComponent
-                            tools={filteredConverters}
-                            notebook={notebook}
-                            FormComponent={FormConverterSection}
-                          />
+                          {hasExplorers && (
+                            <>
+                              <SectionHeader
+                                icon={AnalyticsIcon}
+                                label={t("datasets:label.explore")}
+                                count={filteredExplorers.length}
+                                theme={theme}
+                                t={t}
+                              />
+                              <ListComponent
+                                tools={filteredExplorers}
+                                notebook={notebook}
+                                FormComponent={FormExplorerSection}
+                              />
+                            </>
+                          )}
+                          {hasConverters && (
+                            <>
+                              <SectionHeader
+                                icon={TransformIcon}
+                                label={t("datasets:label.convert")}
+                                count={filteredConverters.length}
+                                mt={hasExplorers ? 3 : 0}
+                                theme={theme}
+                                t={t}
+                              />
+                              <ListComponent
+                                tools={filteredConverters}
+                                notebook={notebook}
+                                FormComponent={FormConverterSection}
+                              />
+                            </>
+                          )}
+                          {!hasExplorers && !hasConverters && (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "text.secondary",
+                                textAlign: "center",
+                                py: 2,
+                              }}
+                            >
+                              {t("datasets:label.noToolsMatched")}
+                            </Typography>
+                          )}
                         </>
                       ) : activeTab === 0 ? (
                         <ListComponent
