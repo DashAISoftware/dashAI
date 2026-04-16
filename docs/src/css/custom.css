@@ -271,13 +271,16 @@ a:focus-visible {
   margin: 0 12px;
 }
 
+.navbar__items--right {
+  gap: 6px;
+}
+
 /* GitHub navbar link — bordered button like JSX */
 .navbar__items--right .navbar__link {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  margin-left: 12px;
   border: 1px solid var(--dashai-border) !important;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -294,25 +297,27 @@ a:focus-visible {
   text-decoration: none;
 }
 
-/* GitHub icon-only link */
+/* GitHub icon-only link — matches theme toggle style */
 .navbar-github-icon {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
-  margin-left: 4px;
-  color: var(--dashai-text-primary);
-  opacity: 0.75;
-  transition: opacity 0.15s;
+  padding: 5px 8px;
+  color: var(--dashai-text-secondary);
+  border: 1px solid var(--dashai-border);
+  border-radius: 6px;
+  transition: border-color 0.15s, color 0.15s;
   text-decoration: none;
 }
 
 .navbar-github-icon:hover {
-  opacity: 1;
+  border-color: var(--dashai-border-hover);
+  color: var(--dashai-text-primary);
   text-decoration: none;
 }
 
 .navbar-github-icon:focus-visible {
-  opacity: 1;
+  color: var(--dashai-text-primary);
+  border-color: var(--dashai-border-hover);
 }
 
 .navbar-github-icon svg {
