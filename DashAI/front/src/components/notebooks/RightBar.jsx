@@ -255,18 +255,23 @@ export default function RightBar({ notebook, onToggle }) {
   };
 
   useEffect(() => {
+    const query = searchQuery.toLowerCase();
+    const matchesQuery = (item) => {
+      const displayName = (
+        item.metadata?.display_name ||
+        item.name ||
+        ""
+      ).toLowerCase();
+      const description = (
+        item.metadata?.short_description ||
+        item.description ||
+        ""
+      ).toLowerCase();
+      return displayName.includes(query) || description.includes(query);
+    };
+
     const filteredAndValidatedExplorers = explorers
-      .filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.metadata.short_description
-            ? item.metadata.short_description
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            : item.description
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())),
-      )
+      .filter(matchesQuery)
       .map((explorer) => {
         const validation = validateExplorer(explorer);
         return {
@@ -281,17 +286,7 @@ export default function RightBar({ notebook, onToggle }) {
     setFilteredExplorers(filteredAndValidatedExplorers);
 
     const filteredAndValidatedConverters = converters
-      .filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.metadata.short_description
-            ? item.metadata.short_description
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            : item.description
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())),
-      )
+      .filter(matchesQuery)
       .map((converter) => {
         const validation = validateConverter(converter);
         return {
