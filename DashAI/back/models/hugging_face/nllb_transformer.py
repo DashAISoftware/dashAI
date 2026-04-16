@@ -20,7 +20,11 @@ if TYPE_CHECKING:
 
 
 class NllbTransformerSchema(OpusMtEnESTransformerSchema):
-    """Schema for NLLB multilingual translation model."""
+    """Schema for the NLLB multilingual translation model. Extends the standard
+    translation schema with ``source_language`` and ``target_language`` fields,
+    which accept NLLB language codes in the form ``<iso639>_<script>``
+    (e.g. ``spa_Latn`` for Spanish, ``eng_Latn`` for English).
+    """
 
     source_language: schema_field(
         string_field(),
@@ -55,7 +59,26 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
 
 
 class NllbTransformer(TranslationModel):
-    """NLLB model for configurable multilingual translation."""
+    """Pre-trained transformer for configurable multilingual translation.
+
+    This model fine-tunes the ``facebook/nllb-200-distilled-600M`` checkpoint from
+    Meta AI's No Language Left Behind (NLLB) project. The base model supports
+    translation across 200 languages using a single unified model, identified by
+    NLLB language codes of the form ``<iso639>_<script>`` (e.g. ``spa_Latn``,
+    ``eng_Latn``). The 600M-parameter distilled variant provides a balance between
+    translation quality and computational cost.
+
+    Target language generation is guided by ``forced_bos_token_id``, which forces
+    the decoder to start with the target language token. Fine-tuning is performed
+    with the HuggingFace ``Seq2SeqTrainer`` using the AdamW optimizer. Training and
+    validation metrics are logged at configurable epoch and step intervals via a
+    custom ``MetricsCallback``.
+
+    References
+    ----------
+    - [1] https://huggingface.co/facebook/nllb-200-distilled-600M
+    - [2] https://arxiv.org/abs/2207.04672
+    """
 
     SCHEMA = NllbTransformerSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -70,7 +93,32 @@ class NllbTransformer(TranslationModel):
     ICON: str = "Translate"
 
     def _resolve_language_token_id(self, language_code: str, field_name: str) -> int:
-        """Resolve NLLB language code to token id across tokenizer variants."""
+        """Resolve an NLLB language code to its vocabulary token ID.
+
+        Tries ``tokenizer.lang_code_to_id`` first (available on
+        ``NllbTokenizer``), then falls back to ``convert_tokens_to_ids``.
+        Raises ``ValueError`` when the code is not found in either lookup.
+
+        Parameters
+        ----------
+        language_code : str
+            NLLB language code in ``<iso639>_<script>`` format
+            (e.g. ``spa_Latn``, ``eng_Latn``).
+        field_name : str
+            Name of the field being resolved, used in the error message
+            (e.g. ``"source_language"``).
+
+        Returns
+        -------
+        int
+            Token ID corresponding to ``language_code`` in the tokenizer
+            vocabulary.
+
+        Raises
+        ------
+        ValueError
+            If ``language_code`` cannot be resolved by either lookup method.
+        """
         lang_code_to_id = getattr(self.tokenizer, "lang_code_to_id", None)
         if isinstance(lang_code_to_id, dict) and language_code in lang_code_to_id:
             return lang_code_to_id[language_code]
@@ -85,7 +133,31 @@ class NllbTransformer(TranslationModel):
         raise ValueError(f"Unsupported {field_name} '{language_code}'.")
 
     def __init__(self, model=None, **kwargs):
-        """Initialize the NLLB tokenizer and model."""
+        """Initialize the NLLB tokenizer and model.
+
+        Downloads the ``facebook/nllb-200-distilled-600M`` tokenizer and,
+        when ``model`` is ``None``, the seq2seq model weights from HuggingFace.
+        Resolves the source and target language codes to vocabulary token IDs
+        and sets ``tokenizer.src_lang`` when the attribute is available.
+
+        Parameters
+        ----------
+        model : transformers.PreTrainedModel or None, optional
+            An already-loaded HuggingFace seq2seq model to reuse. If ``None``,
+            the ``facebook/nllb-200-distilled-600M`` checkpoint is downloaded
+            and initialised. Default ``None``.
+        **kwargs : dict
+            Hyperparameters forwarded to ``validate_and_transform`` and used to
+            configure training (e.g. ``num_train_epochs``, ``batch_size``,
+            ``learning_rate``, ``weight_decay``, ``device``,
+            ``source_language``, ``target_language``).
+
+        Raises
+        ------
+        ValueError
+            If ``source_language`` or ``target_language`` cannot be resolved to
+            a token ID in the tokenizer vocabulary.
+        """
         kwargs = self.validate_and_transform(kwargs)
 
         from transformers import AutoTokenizer
@@ -137,7 +209,29 @@ class NllbTransformer(TranslationModel):
     def tokenize_data(
         self, x: "DashAIDataset", y: Optional["DashAIDataset"] = None
     ) -> "DashAIDataset":
-        """Tokenize input and optional output datasets for NLLB."""
+        """Tokenize input and optional target datasets for seq2seq training.
+
+        Sets ``tokenizer.src_lang`` to ``source_language`` before tokenizing
+        so the NLLB tokenizer inserts the correct language prefix token. Each
+        sample is tokenized with truncation and max-length padding to 512
+        tokens. When ``y`` is provided, target tokens are stored under the
+        ``labels`` key.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Source-language dataset. Only the first column is used.
+        y : DashAIDataset, optional
+            Target-language dataset. When provided, tokenized targets are added
+            as ``labels``. When ``None``, only ``input_ids`` and
+            ``attention_mask`` are returned (inference mode).
+
+        Returns
+        -------
+        DashAIDataset
+            Tokenized dataset with keys ``input_ids``, ``attention_mask``, and
+            optionally ``labels``.
+        """
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if hasattr(self.tokenizer, "src_lang"):
@@ -185,7 +279,25 @@ class NllbTransformer(TranslationModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "NllbTransformer":
-        """Train NLLB for the configured language pair."""
+        """Fine-tune the NLLB model on the configured language pair.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Input source-language text features for training.
+        y_train : DashAIDataset
+            Target-language translation labels for training.
+        x_validation : DashAIDataset, optional
+            Input source-language text features for validation. Default
+            ``None``.
+        y_validation : DashAIDataset, optional
+            Target-language translation labels for validation. Default ``None``.
+
+        Returns
+        -------
+        NllbTransformer
+            The fine-tuned model instance.
+        """
         from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
         from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
@@ -242,7 +354,28 @@ class NllbTransformer(TranslationModel):
         return self
 
     def predict(self, x_pred: "DashAIDataset") -> List:
-        """Generate translations using NLLB target language forcing."""
+        """Translate source texts to the configured target language.
+
+        Uses ``forced_bos_token_id`` to force the decoder to start with the
+        target language token, ensuring NLLB generates output in the correct
+        language.
+
+        Parameters
+        ----------
+        x_pred : DashAIDataset
+            Source-language dataset. Only the first column is used.
+
+        Returns
+        -------
+        list of str
+            One translated string per input sample, in the same order as
+            ``x_pred``.
+
+        Raises
+        ------
+        sklearn.exceptions.NotFittedError
+            If the model has not been fine-tuned yet (``fitted`` is ``False``).
+        """
         if not self.fitted:
             raise NotFittedError(
                 f"This {self.__class__.__name__} instance is not fitted yet. Call 'fit'"
@@ -273,11 +406,40 @@ class NllbTransformer(TranslationModel):
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
-        """Keep compatibility with model preprocessing hook."""
+        """Return the dataset unchanged.
+
+        No pre-processing transformations are required for this model. The
+        method exists for compatibility with the DashAI model interface.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be prepared.
+        is_fit : bool, optional
+            Whether the call is made during fitting. Unused here. Default
+            ``False``.
+
+        Returns
+        -------
+        DashAIDataset
+            The original dataset, unmodified.
+        """
         return dataset
 
     def save(self, filename: Union[str, "Path"]) -> None:
-        """Save model and custom configuration."""
+        """Store the fine-tuned model and its configuration to disk.
+
+        Saves the model weights via ``save_pretrained`` and embeds the
+        hyperparameters (epochs, batch size, learning rate, language codes,
+        etc.) into the HuggingFace config so they can be restored by
+        :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path where the model files will be written. If a file
+            exists at that path it is removed and replaced by a directory.
+        """
         from transformers import AutoConfig
 
         save_dir = Path(filename)
@@ -301,7 +463,23 @@ class NllbTransformer(TranslationModel):
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]):
-        """Load model from disk."""
+        """Restore an NllbTransformer instance from disk.
+
+        Reads the HuggingFace config to recover the custom hyperparameters
+        saved by :meth:`save`, then reconstructs the seq2seq model and wraps
+        it in a new :class:`NllbTransformer` instance.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path from which the model files will be read.
+
+        Returns
+        -------
+        NllbTransformer
+            The restored model instance with ``fitted`` set to the persisted
+            value.
+        """
         from transformers import AutoConfig, AutoModelForSeq2SeqLM
 
         model = AutoModelForSeq2SeqLM.from_pretrained(filename)
