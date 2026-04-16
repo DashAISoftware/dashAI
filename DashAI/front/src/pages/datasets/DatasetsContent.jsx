@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 
 export default function DatasetsContent() {
   const { t } = useTranslation();
-  const threePanelLayout = useThreePanelLayout();
+  const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
   const {
     notebooks,
@@ -47,7 +47,7 @@ export default function DatasetsContent() {
                 <CenterPanel>
                   <DatasetsCenterContent />
                 </CenterPanel>
-                <RightPanel toggleButtonTop="calc(50% + 60px)">
+                <RightPanel toggleButtonTop="50%">
                   {rightBarContent ? (
                     rightBarContent
                   ) : (

@@ -7,7 +7,6 @@ import {
   Tab,
   ToggleButtonGroup,
   ToggleButton,
-  IconButton,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ViewList, ViewModule } from "@mui/icons-material";
@@ -24,7 +23,6 @@ import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
-import { ChevronRight } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
 import ColumnInsights from "./dataset/ColumnInsights";
@@ -329,13 +327,6 @@ export default function RightBar({ notebook, onToggle }) {
             justifyContent: "flex-start",
           }}
         >
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
           <Typography variant="h6" color="text.primary">
             {t("datasets:label.analysisTools")}
           </Typography>
