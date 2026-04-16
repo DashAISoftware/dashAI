@@ -256,7 +256,8 @@ export default function RightBar({ notebook, onToggle }) {
 
   useEffect(() => {
     const query = searchQuery.toLowerCase();
-    const matchesQuery = (item) => {
+
+    const rankMatch = (item) => {
       const displayName = (
         item.metadata?.display_name ||
         item.name ||
@@ -267,12 +268,20 @@ export default function RightBar({ notebook, onToggle }) {
         item.description ||
         ""
       ).toLowerCase();
-      return displayName.includes(query) || description.includes(query);
+      if (displayName.includes(query)) return 1;
+      if (description.includes(query)) return 2;
+      return 0;
     };
 
-    const filteredAndValidatedExplorers = explorers
-      .filter(matchesQuery)
-      .map((explorer) => {
+    const filterAndRank = (items) =>
+      items
+        .map((item) => ({ item, rank: rankMatch(item) }))
+        .filter(({ rank }) => rank > 0)
+        .sort((a, b) => a.rank - b.rank)
+        .map(({ item }) => item);
+
+    const filteredAndValidatedExplorers = filterAndRank(explorers).map(
+      (explorer) => {
         const validation = validateExplorer(explorer);
         return {
           ...explorer,
@@ -281,13 +290,13 @@ export default function RightBar({ notebook, onToggle }) {
           validColumns: validation.validColumns,
           notebook,
         };
-      });
+      },
+    );
 
     setFilteredExplorers(filteredAndValidatedExplorers);
 
-    const filteredAndValidatedConverters = converters
-      .filter(matchesQuery)
-      .map((converter) => {
+    const filteredAndValidatedConverters = filterAndRank(converters).map(
+      (converter) => {
         const validation = validateConverter(converter);
         return {
           ...converter,
@@ -296,12 +305,13 @@ export default function RightBar({ notebook, onToggle }) {
           validColumns: validation.validColumns,
           notebook,
         };
-      });
+      },
+    );
 
     setFilteredConverters(filteredAndValidatedConverters);
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
-  const handleChangeTab = (event, newValue) => {
+  const handleChangeTab = (_event, newValue) => {
     setActiveTab(newValue);
 
     if (tourContext && tourContext.run) {
