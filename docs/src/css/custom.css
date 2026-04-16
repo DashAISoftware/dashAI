@@ -1258,22 +1258,19 @@ tbody tr:hover {
 
 /* ── Navbar mobile ── */
 @media (max-width: 996px) {
-  /* Hide search bar — accessible via mobile sidebar */
-  .navbar__search,
-  [class*="searchBarContainer"] {
-    display: none !important;
-  }
-
-  /* Hide GitHub link and icon — accessible via mobile sidebar */
+  /* Show only search bar on mobile — hide everything else */
   .navbar__items--right .navbar__link,
-  .navbar-github-icon {
+  .navbar-github-icon,
+  .navbar__item.dropdown.dropdown--hoverable.dropdown--right,
+  .navbar__items--right [class*="colorModeToggle"],
+  .navbar__items--right [class*="toggle_"] {
     display: none !important;
   }
 
-  /* Keep theme toggle visible but compact */
-  .navbar__items--right [class*="colorModeToggle"] button,
-  .navbar__items--right [class*="toggle_"] button {
-    padding: 2px 5px !important;
+  .navbar__search,
+  [class*="searchBarContainer"],
+  [class*="navbarSearchContainer"] {
+    display: flex !important;
   }
 
 
