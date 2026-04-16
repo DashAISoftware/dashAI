@@ -8,6 +8,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import InputWithDebounce from "../../shared/InputWithDebounce";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders an HPO form field for "integer" parameters.
@@ -17,12 +18,38 @@ import InputWithDebounce from "../../shared/InputWithDebounce";
 function OptimizeIntegerInput({
   name,
   label,
-  value,
+  value = {},
   onChange,
-  description,
-  error,
-  placeholder,
+  description = "",
+  error = undefined,
+  placeholder = {},
 }) {
+  const { t } = useTranslation("configurableObject");
+
+  // 0) Split errors into fixed_value vs upper/lower bound for display
+  const errors = error
+    ? value?.optimize
+      ? typeof error === "string"
+        ? error
+        : (error["upper_bound"] || "") + (error["lower_bound"] || "")
+      : error["fixed_value"]
+    : null;
+
+  const fixedError = error && !value?.optimize ? error["fixed_value"] : null;
+  const upperError =
+    error && value?.optimize
+      ? typeof error === "string"
+        ? error
+        : error["upper_bound"] || null
+      : null;
+
+  const lowerError =
+    error && value?.optimize
+      ? typeof error === "string"
+        ? error
+        : error["lower_bound"] || null
+      : null;
+
   // 1) Merge existing user data with defaults from placeholder (if user data is missing)
   const mergedOptimize = value?.optimize ?? placeholder?.optimize ?? false;
   const mergedLower = value?.lower_bound ?? placeholder?.lower_bound ?? null;
@@ -41,11 +68,20 @@ function OptimizeIntegerInput({
   const handleSwitchChange = () => {
     const toggled = !switchState;
     setSwitchState(toggled);
-    // Spread the entire "value" and override 'optimize'
+
+    // If switching modes and there was an error, use placeholder values
+    const shouldUseePlaceholder = error !== undefined;
+
     onChange({
-      fixed_value: mergedFixed,
-      lower_bound: mergedLower,
-      upper_bound: mergedUpper,
+      fixed_value: shouldUseePlaceholder
+        ? (placeholder?.fixed_value ?? null)
+        : mergedFixed,
+      lower_bound: shouldUseePlaceholder
+        ? (placeholder?.lower_bound ?? null)
+        : mergedLower,
+      upper_bound: shouldUseePlaceholder
+        ? (placeholder?.upper_bound ?? null)
+        : mergedUpper,
       optimize: toggled,
     });
   };
@@ -81,9 +117,9 @@ function OptimizeIntegerInput({
     <FormInputWrapper name={name} description={description}>
       {/* If we can optimize, show the switch control */}
       {canOptimize && (
-        <FormControl error={error !== undefined}>
+        <FormControl error={errors !== null}>
           <FormControlLabel
-            label={`Optimize hyperparameter "${label || name}"`}
+            label={t("optimize", { name: label || name })}
             control={
               <Switch
                 name={name}
@@ -92,7 +128,6 @@ function OptimizeIntegerInput({
               />
             }
           />
-          <FormHelperText>{error || " "}</FormHelperText>
         </FormControl>
       )}
       {canOptimize && switchState ? (
@@ -100,24 +135,24 @@ function OptimizeIntegerInput({
         <>
           <InputWithDebounce
             variant="outlined"
-            label="Lower bound of search space"
+            label={t("lowerBound")}
             name={`${name}-lower`}
             value={mergedLower !== null ? mergedLower : ""}
             onChange={handleChangeLower}
-            error={error !== undefined}
-            helperText={error || " "}
+            error={lowerError !== null}
+            helperText={lowerError || " "}
             type="number"
             margin="dense"
             inputProps={{ step: 1 }}
           />
           <InputWithDebounce
             variant="outlined"
-            label="Upper bound of search space"
+            label={t("upperBound")}
             name={`${name}-upper`}
             value={mergedUpper !== null ? mergedUpper : ""}
             onChange={handleChangeUpper}
-            error={error !== undefined}
-            helperText={error || " "}
+            error={upperError !== null}
+            helperText={upperError || " "}
             type="number"
             margin="dense"
             inputProps={{ step: 1 }}
@@ -127,12 +162,12 @@ function OptimizeIntegerInput({
         // If "optimize" is off (or we can't optimize), show a single "fixed_value"
         <InputWithDebounce
           variant="outlined"
-          label={label || "Enter a value"}
+          label={label || t("enterValue")}
           name={`${name}-fixed`}
           value={mergedFixed !== null ? mergedFixed : ""}
           onChange={handleChangeFixed}
-          error={error !== undefined}
-          helperText={error || " "}
+          error={fixedError !== null}
+          helperText={fixedError || " "}
           type="number"
           margin="dense"
           inputProps={{ step: 1 }}
@@ -169,13 +204,6 @@ OptimizeIntegerInput.propTypes = {
     lower_bound: PropTypes.number,
     upper_bound: PropTypes.number,
   }),
-};
-
-OptimizeIntegerInput.defaultProps = {
-  value: {},
-  placeholder: {},
-  error: undefined,
-  description: "",
 };
 
 export default OptimizeIntegerInput;

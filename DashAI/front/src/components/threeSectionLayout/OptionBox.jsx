@@ -12,6 +12,7 @@ export default function OptionBox({
   description,
   onClick,
   Icon = null,
+  dataTour,
   ...otherProps
 }) {
   const theme = useTheme();
@@ -19,6 +20,7 @@ export default function OptionBox({
 
   return (
     <Button
+      data-tour={dataTour}
       onClick={onClick}
       sx={{
         p: 0,
@@ -43,7 +45,7 @@ export default function OptionBox({
           justifyContent: matches ? "space-between" : "center",
           textAlign: matches ? "left" : "center",
           "&:hover": {
-            backgroundColor: "#1e1e1e",
+            backgroundColor: theme.palette.action.hover,
           },
         }}
       >
@@ -62,10 +64,14 @@ export default function OptionBox({
             gap: 1,
           }}
         >
-          <Typography variant="h6" sx={{ mb: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1, color: "text.primary" }}>
             {optionName}
           </Typography>
-          <Typography variant="caption" component="p">
+          <Typography
+            variant="body2"
+            component="p"
+            sx={{ color: "text.secondary" }}
+          >
             {description}
           </Typography>
         </Box>

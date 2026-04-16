@@ -1,13 +1,5 @@
-import enum
-import os
-import pathlib
-
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objs as go
-import plotly.io as pio
-from beartype.typing import Any, Dict, Union
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -15,67 +7,127 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-class Method(enum.Enum):
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class Method(Enum):
     pearson = "pearson"
     kendall = "kendall"
     spearman = "spearman"
 
 
 class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
+    """Schema for CorrelationMatrixExplorer configuration.
+
+    Controls the statistical method used to compute pairwise correlations, the
+    minimum number of complete observations required per column pair, and
+    whether the result is displayed as a heatmap or returned as a raw table.
+
+    The ``method`` field selects between three estimators: ``"pearson"``
+    measures linear association and assumes approximately normal distributions;
+    ``"spearman"`` measures monotonic association using rank-transformed data
+    and is more robust to non-linear relationships and outliers; ``"kendall"``
+    uses concordance/discordance counts and is preferred for small samples or
+    heavily tied data.  Use ``"numeric_only"`` to exclude non-numeric columns
+    from the calculation automatically.
+    """
+
     method: schema_field(
         enum_field([e.value for e in Method]),
         Method.pearson.value,
-        (
-            "The correlation method to use. "
-            "Must be one of 'pearson', 'kendall', or 'spearman'."
+        description=MultilingualString(
+            en=("Correlation method to use: 'pearson', 'kendall', or 'spearman'."),
+            es=("Método de correlación a usar: 'pearson', 'kendall' o 'spearman'."),
+        ),
+        alias=MultilingualString(
+            en="Correlation method",
+            es="Método de correlación",
         ),
     )  # type: ignore
     min_periods: schema_field(
         int_field(gt=0),
         1,
-        (
-            "The minimum number of observations required per pair of columns to"
-            " have a valid result. Only used if method is 'pearson' or 'spearman'."
+        description=MultilingualString(
+            en=(
+                "Minimum observations required per column pair to have a valid "
+                "result. Used only with 'pearson' or 'spearman'."
+            ),
+            es=(
+                "Número mínimo de observaciones requeridas por par de columnas "
+                "para obtener un resultado válido. Solo con 'pearson' o "
+                "'spearman'."
+            ),
         ),
+        alias=MultilingualString(en="Minimum periods", es="Períodos mínimos"),
     )  # type: ignore
     numeric_only: schema_field(
         bool_field(),
         True,
-        (
-            "If True, only include numeric columns when calculating correlation."
-            "If False, all columns are included."
+        description=MultilingualString(
+            en=(
+                "If True, include only numeric columns when calculating "
+                "correlation; otherwise include all columns."
+            ),
+            es=(
+                "Si es True, incluye solo columnas numéricas al calcular la "
+                "correlación; de lo contrario incluye todas."
+            ),
         ),
+        alias=MultilingualString(en="Numeric only", es="Solo numéricas"),
     )  # type: ignore
     plot: schema_field(
         bool_field(),
         True,
-        ("If True, the result will be plotted."),
+        description=MultilingualString(
+            en=("If True, the result will be plotted."),
+            es=("Si es True, el resultado será graficado."),
+        ),
+        alias=MultilingualString(en="Plot result", es="Graficar resultado"),
     )  # type: ignore
 
 
 class CorrelationMatrixExplorer(StatisticalExplorer):
-    """
-    CorrelationMatrixExplorer is an explorer that returns a correlation matrix
-    of a dataset.
+    """Explorer that computes and visualises pairwise correlation coefficients.
 
-    Its result is a heatmap by default, but can also be returned as a tabular result.
+    A correlation matrix contains one coefficient for every pair of selected
+    columns.  Each coefficient ranges from -1 to +1: values near +1 indicate a
+    strong positive relationship, values near -1 indicate a strong negative
+    relationship, and values near 0 indicate little or no linear (or monotonic)
+    association.
+
+    By default the result is rendered as an annotated heatmap where warm colours
+    represent high positive correlation and cool colours represent high negative
+    correlation, making it easy to scan for strongly related feature pairs at a
+    glance.  Setting ``plot=False`` returns the raw correlation DataFrame instead,
+    which is useful for downstream numerical analysis.
+
+    Use this explorer to detect multicollinearity between features before
+    modelling, to identify the features most correlated with a target variable,
+    or to understand the overall dependency structure of a dataset.
     """
 
-    DISPLAY_NAME = "Correlation Matrix"
-    DESCRIPTION = (
-        "CorrelationMatrixExplorer is an explorer that returns a correlation matrix"
-        " of a dataset."
-        "\n"
-        "Its result is a heatmap by default, "
-        "but can also be returned as a tabular result."
+    DISPLAY_NAME = MultilingualString(
+        en="Correlation Matrix",
+        es="Matriz de Correlación",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Returns the correlation matrix of the dataset. The default output is "
+            "a heatmap, but a tabular result can also be returned."
+        ),
+        es=(
+            "Devuelve la matriz de correlación del dataset. Por defecto se "
+            "muestra como mapa de calor, pero también puede retornarse en "
+            "formato tabular."
+        ),
     )
     IMAGE_PREVIEW = "correlation_matrix.png"
 
@@ -87,6 +139,22 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize CorrelationMatrixExplorer with correlation parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments matching
+            ``CorrelationMatrixExplorerSchema`` fields:
+            method (str): Correlation method — ``"pearson"``,
+            ``"kendall"``, or ``"spearman"``.
+            min_periods (int): Minimum observations required per column
+            pair. Applied only for ``"pearson"`` and ``"spearman"``.
+            numeric_only (bool): Whether to restrict calculation to
+            numeric columns.
+            plot (bool): Whether to render the result as a Plotly heatmap.
+            When ``False`` the raw correlation DataFrame is returned.
+        """
         self.method = kwargs.get("method")
         self.min_periods = kwargs.get("min_periods")
         self.numeric_only = kwargs.get("numeric_only")
@@ -94,8 +162,32 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(
-        self, dataset: DashAIDataset, explorer_info: Explorer
-    ) -> Union[pd.DataFrame, go.Figure]:
+        self, dataset: "DashAIDataset", explorer_info: Explorer
+    ) -> Any:
+        """Compute a correlation matrix and optionally render it as a Plotly heatmap.
+
+        Converts the dataset to a pandas DataFrame, computes pairwise column
+        correlations using the configured method, and — when ``self.plot`` is
+        ``True`` — wraps the result in a Plotly ``imshow`` heatmap figure.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset whose columns will be
+            correlated.
+        explorer_info : Explorer
+            The explorer database record used for
+            the plot title and column count.
+
+        Returns
+        -------
+        Any
+            A ``plotly.graph_objs.Figure`` heatmap when ``self.plot`` is
+            ``True``, or a ``pandas.DataFrame`` containing the correlation
+            matrix when ``self.plot`` is ``False``.
+        """
+        import plotly.express as px
+
         result = dataset.to_pandas().corr(
             method=self.method,
             min_periods=(
@@ -122,11 +214,41 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Union[pd.DataFrame, go.Figure],
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        """Save the correlation result to a JSON file on disk.
+
+        When ``self.plot`` is ``True``, writes the Plotly figure as JSON using
+        ``Figure.write_json``; otherwise writes the correlation DataFrame using
+        ``DataFrame.to_json``.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename
+            generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The result returned by ``launch_exploration`` — either
+            a ``plotly.graph_objs.Figure`` or a ``pandas.DataFrame``.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
+        import os
+        from pathlib import Path
+
+        import pandas as pd
+        import plotly.graph_objs as go
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         if self.plot:
             assert isinstance(result, go.Figure)
@@ -139,18 +261,45 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved correlation result for the frontend.
+
+        When ``self.plot`` is ``True``, reads the raw Plotly JSON string from
+        disk. Otherwise reads the JSON file as a pandas DataFrame and converts
+        it to a nested dictionary.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by
+            ``save_notebook``.
+        options : Dict[str, Any]
+            Rendering options from the frontend
+            (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (Plotly JSON string
+            when plotting, or nested dict of the correlation matrix otherwise),
+            ``"type"`` (``"plotly_json"`` when plotting, or ``"tabular"``
+            otherwise), and ``"config"`` (empty dict when plotting, or
+            ``{"orient": "dict"}`` otherwise).
+        """
+        from pathlib import Path
+
+        import numpy as np
+        import pandas as pd
+
         if self.plot:
             resultType = "plotly_json"
-            path = pathlib.Path(exploration_path)
-            result = pio.read_json(path).to_json()
+            with open(exploration_path, "r", encoding="utf-8") as f:
+                result = f.read()
             return {"type": resultType, "data": result, "config": {}}
 
         resultType = "tabular"
-        orientation = options.get("orientation", "dict")
-        config = {"orient": orientation}
+        config = {"orient": "dict"}
 
-        path = pathlib.Path(exploration_path)
-        result = (
-            pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)
-        )
+        path = Path(exploration_path)
+
+        result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}

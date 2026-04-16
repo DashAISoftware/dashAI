@@ -1,0 +1,46 @@
+{
+  "button": {
+    "backToTaskSelection": "Volver a Selección de Tarea",
+    "createSession": "Crear una sesión"
+  },
+  "error": {
+    "failedToCreateSession": "Error al crear la sesión",
+    "failedToDeleteSession": "Error al eliminar sesión",
+    "failedToFetchHistory": "Error al obtener historial de parámetros",
+    "failedToFetchMessages": "Error al obtener mensajes",
+    "failedToFetchSessionInfo": "Error al obtener información de la sesión",
+    "failedToFetchSessions": "Error al obtener sesiones",
+    "failedToFetchTasks": "Error al obtener tareas generativas",
+    "failedToUpdateSession": "Error al actualizar la sesión",
+    "nameRequired": "Se requiere un nombre",
+    "processError": "El proceso ha fallado. Eliminándolo... {{error}}",
+    "sessionNameEmpty": "El nombre de la sesión no puede estar vacío",
+    "sessionNameExists": "Ya existe una sesión con este nombre"
+  },
+  "label": {
+    "deleteSessionConfirmation": "¿Está seguro de que desea eliminar esta sesión? Esta acción no se puede deshacer.",
+    "generativeModule": "Módulo Generativo",
+    "nameYourSession": "Nombre su sesión",
+    "noSessionsFound": "No se encontraron sesiones",
+    "parameterChangeEvent": "Parámetros actualizados: <1></1>",
+    "parameterChangeHistory": "Historial de cambios de parámetros para la sesión actual",
+    "searchSessions": "Buscar Sesiones",
+    "selectGenerativeTask": "Seleccione una tarea generativa para comenzar una nueva sesión",
+    "selectModel": "Seleccione un modelo",
+    "selectModelAndConfigureParameters": "Seleccione un modelo y configure sus parámetros.",
+    "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",
+    "sessionDescription": "Descripción de la Sesión",
+    "sessionInformation": "Información de la Sesión",
+    "sessionName": "Nombre de la Sesión",
+    "sessions": "Sesiones",
+    "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
+    "typeYourMessage": "Escribe un mensaje",
+    "untitledSession": "Sesión Sin Título"
+  },
+
+  "message": {
+    "sessionCreatedSuccess": "Sesión creada exitosamente.",
+    "sessionDeleted": "Sesión eliminada exitosamente",
+    "sessionUpdated": "Sesión actualizada exitosamente"
+  }
+}

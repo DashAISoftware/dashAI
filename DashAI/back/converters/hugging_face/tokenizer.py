@@ -1,5 +1,4 @@
-from datasets import Dataset, concatenate_datasets
-from transformers import AutoTokenizer
+from typing import TYPE_CHECKING
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -7,10 +6,15 @@ from DashAI.back.converters.category.advanced_preprocessing import (
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.core.utils import MultilingualString
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TokenizerSchema(BaseSchema):
+    """Schema for TokenizerConverter hyperparameters."""
+
     model_name: schema_field(
         enum_field(
             [
@@ -25,21 +29,37 @@ class TokenizerSchema(BaseSchema):
             ]
         ),
         "bert-base-uncased",
-        "Name of the pre-trained tokenizer model",
+        description=MultilingualString(
+            en="Name of the pre-trained tokenizer model",
+            es="Nombre del modelo de tokenización preentrenado",
+        ),
     )  # type: ignore
 
     max_length: schema_field(
-        int_field(ge=1), 512, "Maximum sequence length for tokenization"
+        int_field(ge=1),
+        512,
+        description=MultilingualString(
+            en="Maximum sequence length for tokenization",
+            es="Longitud máxima de secuencia para la tokenización",
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
-        int_field(ge=1), 32, "Number of samples to process at once"
+        int_field(ge=1),
+        32,
+        description=MultilingualString(
+            en="Number of samples to process at once",
+            es="Número de muestras a procesar a la vez",
+        ),
     )  # type: ignore
 
     device: schema_field(
         enum_field(["cuda", "cpu"]),
         "cpu",
-        "Device to use for computation",
+        description=MultilingualString(
+            en="Device to use for computation",
+            es="Dispositivo a usar para el cómputo",
+        ),
     )  # type: ignore
 
 
@@ -47,14 +67,35 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """Converter that tokenizes text and stores each token ID in a separate column."""
 
     SCHEMA = TokenizerSchema
-    DESCRIPTION = (
-        "Tokenize text into input IDs; each token ID goes into its own column. "
-        "Attention mask is ignored."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Tokenize text into input IDs; each token ID goes into its own column. "
+            "Attention mask is ignored."
+        ),
+        es=(
+            "Tokeniza texto a IDs de entrada; cada ID va en su propia columna. "
+            "Se ignora la máscara de atención."
+        ),
     )
-    DISPLAY_NAME = "Tokenizer"
+    DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
     IMAGE_PREVIEW = "tokenizer.png"
 
     def __init__(self, **kwargs):
+        """Initialise the tokenizer converter and extract schema parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace tokenizer model ID.
+                Default ``"bert-base-uncased"``.
+            device : str, optional
+                Torch device string. Default ``"cpu"``.
+            max_length : int, optional
+                Maximum token sequence length. Default ``512``.
+            batch_size : int, optional
+                Number of examples per inference batch. Default ``32``.
+        """
         super().__init__(**kwargs)
         self.model_name = kwargs.get("model_name", "bert-base-uncased")
         self.device = kwargs.get("device", "cpu")
@@ -64,12 +105,32 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     def _load_model(self):
         """Load tokenizer only."""
+        from transformers import AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
+    def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
+        """Tokenise a batch of text columns and store token IDs as integer columns.
+
+        Each text column is tokenised with the loaded HuggingFace tokenizer.
+        The resulting token-id sequence for each column is stored as a new
+        ``Integer``-typed column whose name matches the source column.
+
+        Parameters
+        ----------
+        batch : DashAIDataset
+            A slice of the full dataset. Each column must contain string values.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each original text column is replaced by its
+            token-ID list column.
         """
-        Tokenize a batch of text columns and store each input_id in a separate column.
-        """
+        from datasets import Dataset, concatenate_datasets
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         all_column_tokens = []
 
         for column in batch.column_names:

@@ -1,13 +1,6 @@
 """DashAI Excel Dataloader."""
 
-import glob
-import shutil
-from typing import Any, Dict
-
-import pandas as pd
-from beartype import beartype
-from datasets import Dataset, DatasetDict
-from datasets.builder import DatasetGenerationError
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -18,118 +11,241 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ExcelDataloaderSchema(BaseSchema):
+    """Schema for ExcelDataLoader hyperparameters.
+
+    Configures the sheet selector, header row, columns to import,
+    row-skipping and row-count limit, and the dataset split ratios.
+    The sheet can be specified as a name string or a zero-based index;
+    leaving the sheet field empty selects the first sheet.
+    """
+
     name: schema_field(
         string_field(),
         "",
-        (
-            "Custom name to register your dataset. If no name is specified, "
-            "the name of the uploaded file will be used."
+        description=MultilingualString(
+            en=(
+                "Custom name to register your dataset. If no name is specified, "
+                "the name of the uploaded file will be used."
+            ),
+            es=(
+                "Nombre personalizado para registrar su dataset. Si no se especifica "
+                "un nombre, se usará el nombre del archivo subido."
+            ),
         ),
+        alias=MultilingualString(en="Name", es="Nombre"),
     )  # type: ignore
     sheet: schema_field(
         union_type(int_field(ge=0), string_field()),
         placeholder=0,
-        description="""
-        The name of the sheet to read or its zero-based index.
-        If a string is provided, the reader will search for a sheet named exactly as
-        the string.
-        If an integer is provided, the reader will select the sheet at the corresponding
-        index.
-        By default, the first sheet will be read.
-        """,
+        description=MultilingualString(
+            en=(
+                "The name of the sheet to read or its zero-based index. "
+                "If a string is provided, the reader will search for a sheet named "
+                "exactly as the string. If an integer is provided, the reader will "
+                "select the sheet at the corresponding index. By default, the first "
+                "sheet will be read."
+            ),
+            es=(
+                "El nombre de la hoja a leer o su índice basado en cero. "
+                "Si se proporciona una cadena, el lector buscará una hoja con ese "
+                "nombre exacto. Si se proporciona un entero, el lector seleccionará "
+                "la hoja en el índice correspondiente. Por defecto, se leerá la "
+                "primera hoja."
+            ),
+        ),
+        alias=MultilingualString(en="Sheet", es="Hoja"),
     )  # type: ignore
     header: schema_field(
         none_type(int_field(ge=0)),
         placeholder=0,
-        description="""
-        The row number where the column names are located, indexed from 0.
-        If null, the file will be considered to have no column names.
-        """,
+        description=MultilingualString(
+            en=(
+                "The row number where the column names are located, indexed from 0. "
+                "If null, the file will be considered to have no column names."
+            ),
+            es=(
+                "El número de fila donde se encuentran los nombres de columna, "
+                "indexado desde 0. Si es null, se considerará que el archivo no "
+                "tiene nombres de columna."
+            ),
+        ),
+        alias=MultilingualString(en="Header", es="Encabezado"),
     )  # type: ignore
     usecols: schema_field(
         none_type(string_field()),
         placeholder=None,
-        description="""
-        If None, the reader will load all columns.
-        If str, then indicates comma separated list of Excel column letters and column
-        ranges (e.g. “A:E” or “A,C,E:F”). Ranges are inclusive of both sides.
-        """,
+        description=MultilingualString(
+            en=(
+                "If None, the reader will load all columns. If str, then indicates "
+                "comma separated list of Excel column letters and column ranges "
+                '(e.g. "A:E" or "A,C,E:F"). Ranges are inclusive of both sides.'
+            ),
+            es=(
+                "Si es None, el lector cargará todas las columnas. Si es str, indica "
+                "una lista separada por comas de letras de columna de Excel y rangos "
+                'de columna (ej. "A:E" o "A,C,E:F"). Los rangos son inclusivos en '
+                "ambos lados."
+            ),
+        ),
+        alias=MultilingualString(en="Use columns", es="Usar columnas"),
     )  # type: ignore
 
     skiprows: schema_field(
         none_type(int_field(ge=0)),
         None,
-        (
-            "Number of rows to skip at the start of the file. "
-            "Leave empty to not skip any rows."
+        description=MultilingualString(
+            en=(
+                "Number of rows to skip at the start of the file. "
+                "Leave empty to not skip any rows."
+            ),
+            es=(
+                "Número de filas a omitir al inicio del archivo. "
+                "Deje vacío para no omitir ninguna fila."
+            ),
         ),
+        alias=MultilingualString(en="Skip rows", es="Omitir filas"),
     )  # type: ignore
 
     nrows: schema_field(
         none_type(int_field(ge=1)),
         None,
-        "Number of rows to read. Leave empty to read all rows.",
+        description=MultilingualString(
+            en="Number of rows to read. Leave empty to read all rows.",
+            es="Número de filas a leer. Deje vacío para leer todas las filas.",
+        ),
+        alias=MultilingualString(en="N rows", es="N filas"),
     )  # type: ignore
 
     names: schema_field(
         none_type(string_field()),
         None,
-        (
-            "Comma-separated list of column names to use. Example: 'col1,col2,col3'. "
-            "Leave empty to use header row."
+        description=MultilingualString(
+            en=(
+                "Comma-separated list of column names to use. "
+                "Example: 'col1,col2,col3'. Leave empty to use header row."
+            ),
+            es=(
+                "Lista de nombres de columna separados por comas. "
+                "Ejemplo: 'col1,col2,col3'. Deje vacío para usar la fila de "
+                "encabezado."
+            ),
         ),
+        alias=MultilingualString(en="Names", es="Nombres"),
     )  # type: ignore
 
     na_values: schema_field(
         none_type(string_field()),
         None,
-        (
-            "Comma-separated additional strings to recognize as NA/NaN. "
-            "Example: 'NA,N/A,null'."
+        description=MultilingualString(
+            en=(
+                "Comma-separated additional strings to recognize as NA/NaN. "
+                "Example: 'NA,N/A,null'."
+            ),
+            es=(
+                "Cadenas adicionales separadas por comas para reconocer como NA/NaN. "
+                "Ejemplo: 'NA,N/A,null'."
+            ),
         ),
+        alias=MultilingualString(en="NA values", es="Valores NA"),
     )  # type: ignore
 
     keep_default_na: schema_field(
         bool_field(),
         True,
-        "Whether to include the default NaN values when parsing the data.",
+        description=MultilingualString(
+            en="Whether to include the default NaN values when parsing the data.",
+            es=(
+                "Si se deben incluir los valores NaN predeterminados al analizar los "
+                "datos."
+            ),
+        ),
+        alias=MultilingualString(en="Keep default NA", es="Mantener NA predeterminado"),
     )  # type: ignore
 
     true_values: schema_field(
         none_type(string_field()),
         None,
-        "Comma-separated values to consider as True. Example: 'yes,true,1'.",
+        description=MultilingualString(
+            en="Comma-separated values to consider as True. Example: 'yes,true,1'.",
+            es=(
+                "Valores separados por comas a considerar como True. "
+                "Ejemplo: 'yes,true,1'."
+            ),
+        ),
+        alias=MultilingualString(en="True values", es="Valores verdaderos"),
     )  # type: ignore
 
     false_values: schema_field(
         none_type(string_field()),
         None,
-        "Comma-separated values to consider as False. Example: 'no,false,0'.",
+        description=MultilingualString(
+            en="Comma-separated values to consider as False. Example: 'no,false,0'.",
+            es=(
+                "Valores separados por comas a considerar como False. "
+                "Ejemplo: 'no,false,0'."
+            ),
+        ),
+        alias=MultilingualString(en="False values", es="Valores falsos"),
     )  # type: ignore
 
 
 class ExcelDataLoader(BaseDataLoader):
-    """Data loader for tabular data in Excel files."""
+    """Data loader that ingests tabular data from Excel workbooks into DashAI datasets.
+
+    Reads ``.xlsx`` / ``.xls`` files, optionally selecting a specific sheet,
+    samples rows, and splits the result into train/validation/test
+    ``DashAIDataset`` splits. Delegates to ``pandas.read_excel`` after
+    normalising the schema parameters (sheet name/index, header row, column
+    selection, row limits).
+
+    Handles multi-file uploads by concatenating all workbooks before splitting.
+    """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ExcelDataloaderSchema
 
-    DESCRIPTION: str = """
-    Data loader for tabular data in Excel files.
-    Supports xls, xlsx, xlsm, xlsb, odf, ods and odt file extensions.
-    """
-    DISPLAY_NAME: str = "Excel Data Loader"
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Data loader for tabular data in Excel files. "
+            "Supports xls, xlsx, xlsm, xlsb, odf, ods and odt file extensions."
+        ),
+        es=(
+            "Cargador de datos para datos tabulares en archivos Excel. "
+            "Soporta extensiones de archivo xls, xlsx, xlsm, xlsb, odf, ods y odt."
+        ),
+    )
+    DISPLAY_NAME: str = MultilingualString(
+        en="Excel Data Loader",
+        es="Cargador de Datos Excel",
+    )
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare parameters for pandas.read_excel."""
+        """Convert schema parameters into a dict suitable for ``pandas.read_excel``.
+
+        Maps DashAI schema keys to their pandas equivalents and normalises
+        comma-separated string fields (``names``, ``na_values``,
+        ``true_values``, ``false_values``) into Python lists.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Raw parameter dictionary from the schema (``sheet``, ``header``,
+            ``usecols``, ``skiprows``, ``nrows``, ``names``, ``na_values``,
+            ``keep_default_na``, ``true_values``, ``false_values``).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Keyword-argument dict ready to be unpacked into ``pd.read_excel``.
+        """
         pandas_params = {}
 
         if "sheet" in params and params["sheet"] is not None:
@@ -171,14 +287,13 @@ class ExcelDataLoader(BaseDataLoader):
 
         return pandas_params
 
-    @beartype
     def load_data(
         self,
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
         n_sample: int | None = None,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load the uploaded Excel files into a DatasetDict.
 
         Parameters
@@ -198,6 +313,15 @@ class ExcelDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
+        import glob
+        import shutil
+
+        import pandas as pd
+        from datasets import Dataset, DatasetDict
+        from datasets.builder import DatasetGenerationError
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         print("path prepared", prepared_path)
 
@@ -248,3 +372,41 @@ class ExcelDataLoader(BaseDataLoader):
             finally:
                 shutil.rmtree(prepared_path[0])
         return to_dashai_dataset(dataset_dict)
+
+    def load_preview(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 10,
+    ):
+        """
+        Load a preview of the Excel dataset.
+
+        Note: Excel doesn't support native streaming in the same way as CSV/JSON,
+        so we use nrows parameter to limit memory usage.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to the Excel file.
+        params : Dict[str, Any]
+            Parameters for loading Excel (sheet, header, etc.).
+        n_rows : int, optional
+            Number of rows to preview. Default is 10.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the preview rows.
+        """
+        pandas_params = self._prepare_pandas_params(params)
+        pandas_params["nrows"] = n_rows
+
+        import pandas as pd
+
+        df_preview = pd.read_excel(
+            io=filepath_or_buffer,
+            **pandas_params,
+        )
+
+        return df_preview

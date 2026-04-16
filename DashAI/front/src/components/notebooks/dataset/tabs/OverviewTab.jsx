@@ -1,13 +1,6 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Paper,
-  Alert,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent, Chip } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   ResponsiveContainer,
   BarChart,
@@ -17,7 +10,9 @@ import {
   Tooltip,
   Bar,
 } from "recharts";
-import DatasetTable from "../DatasetTable";
+import MrtDatasetTable from "../MrtDatasetTable";
+import { useTranslation } from "react-i18next";
+import { getColorByColumnType } from "../../../../utils";
 
 const OverviewTab = ({
   dataset,
@@ -25,105 +20,129 @@ const OverviewTab = ({
   nan,
   total_rows,
   fetchDatasetPage,
+  onEditColumnName,
 }) => {
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const theme = useTheme();
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
     missing: count,
     percentage: ((count / total_rows) * 100).toFixed(1),
   }));
 
-  const typeCounts = Object.entries(
-    Object.values(dtypes ?? {}).reduce((acc, type) => {
-      const category =
-        type.includes("float") || type.includes("int")
-          ? "Numeric"
-          : type.includes("object")
-            ? "Text"
-            : "Other";
-      acc[category] = (acc[category] || 0) + 1;
-      return acc;
-    }, {}),
-  );
+  // Get all unique dtype values
+  const dtypeValues = new Set(Object.values(dtypes ?? {}));
+
+  // Count occurrences of each dtype
+  const typeCounts = Array.from(dtypeValues).map((dtype) => [
+    dtype,
+    Object.values(dtypes).filter((v) => v === dtype).length,
+  ]);
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data View */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
-          <Typography variant="h6" gutterBottom>
-            Dataset Preview
-          </Typography>
-          <DatasetTable
+        <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              mb: 1,
+            }}
+          >
+            <Typography variant="h6">
+              {t("datasets:label.datasetPreview")}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {typeCounts.map(([type, count]) => (
+                <Chip
+                  key={type}
+                  label={`${count} ${type}`}
+                  size="small"
+                  sx={{
+                    backgroundColor: getColorByColumnType(type, theme),
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    height: "22px",
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+          <MrtDatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
             initialPageSize={10}
             datasetPath={dataset.file_path}
+            datasetId={dataset.id}
+            onEditColumn={onEditColumnName}
+            editableColumns={true}
+            columnTypes={dtypes}
           />
         </CardContent>
       </Card>
-      {/* Missing Values Overview */}
-      <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
-          <Typography variant="h6" gutterBottom>
-            Missing Values Overview
-          </Typography>
-          {missingData.some((data) => data.missing > 0) ? (
+      {/* Missing Values Overview — only shown when there are missing values */}
+      {missingData.some((data) => data.missing > 0) && (
+        <Card data-section="missing-values-overview">
+          <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
+            >
+              <Typography variant="h6">
+                {t("datasets:label.missingValuesOverview")}
+              </Typography>
+              <Chip
+                label={`Total: ${Object.values(nan).reduce(
+                  (sum, v) => sum + v,
+                  0,
+                )}`}
+                size="small"
+                variant="outlined"
+                sx={{ fontWeight: "bold" }}
+              />
+            </Box>
             <Box sx={{ width: "100%", height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={missingData}>
+                <BarChart data={missingData} margin={{ bottom: 120 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="column" />
+                  <XAxis
+                    dataKey="column"
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
+                  />
                   <YAxis />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#121212",
+                      backgroundColor: theme.palette.background.paper,
                       borderRadius: 4,
-                      color: "#ffffff",
+                      color: theme.palette.text.primary,
+                      border: `1px solid ${theme.palette.divider}`,
                     }}
-                    labelStyle={{ color: "#ffffff" }}
+                    labelStyle={{ color: theme.palette.text.primary }}
                   />
-                  <Bar dataKey="missing" fill="rgba(136, 132, 216, 0.7)" />
+                  <Bar
+                    dataKey="missing"
+                    fill="rgba(136, 132, 216, 0.7)"
+                    name={t("common:missing")}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
-          ) : (
-            <Alert severity="success">
-              No missing values detected in the dataset.
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Column Types Distribution */}
-      <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
-          <Typography variant="h6" gutterBottom>
-            Column Types Distribution
-          </Typography>
-          <Grid container spacing={2}>
-            {typeCounts.map(([type, count]) => (
-              <Grid item xs={12} sm={6} md={4} key={type}>
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: 2,
-                    textAlign: "center",
-                    bgcolor: "#363636",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography variant="h4" fontWeight="bold">
-                    {count}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {type} Columns
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 };

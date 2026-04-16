@@ -1,17 +1,21 @@
-import os
-import uuid
 from typing import Any, List, Tuple, Union
 
 from PIL import Image
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class ControlNetTask(BaseGenerativeTask):
-    """Base class for image generation tasks using ControlNet.
+    """Task for structure-conditioned image generation using ControlNet pipelines.
 
-    Here you can change the methods provided by class Task.
+    ControlNet tasks accept a source image and a text prompt as inputs and
+    produce one or more generated images. The source image is pre-processed
+    by the model (e.g. depth estimation, HED soft-edge detection, OpenPose
+    skeleton extraction, or Canny edge detection) to derive a spatial
+    conditioning signal, which guides the diffusion process alongside the text
+    prompt.
     """
 
     metadata: dict = {
@@ -21,9 +25,18 @@ class ControlNetTask(BaseGenerativeTask):
         "outputs_cardinality": "n",
     }
 
-    DISPLAY_NAME: str = "ControlNet"
-    DESCRIPTION: str = (
-        "This task generates images based on the provided input text and image."
+    DISPLAY_NAME: str = MultilingualString(
+        en="ControlNet Image Generation", es="Generación de Imágenes con ControlNet"
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="""
+        This task generates images based on the
+        provided input text and image.
+        """,
+        es="""
+        Esta tarea genera imágenes basadas en el texto de entrada
+        y la imagen proporcionados.
+        """,
     )
 
     def prepare_for_task(
@@ -43,7 +56,6 @@ class ControlNetTask(BaseGenerativeTask):
         str
             Input with the new types
         """
-
         # Read the image from the path and ensure image is first, text second
         image = None
         text = None
@@ -77,6 +89,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[Tuple[str, str]]
             Image path and prompt
         """
+        import uuid
 
         path = kwargs.get("images_path")
         if not path.exists():
@@ -121,6 +134,8 @@ class ControlNetTask(BaseGenerativeTask):
         List[Tuple[str, str]]
             Processed output data as a list of tuples containing the data and its type
         """
+        import uuid
+
         save_dir = kwargs.get("images_path")
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
@@ -157,6 +172,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[ProcessData]
             Processed output data, a list of ProcessData objects
         """
+        import os
 
         for op in output:
             op.data = os.path.basename(op.data)
@@ -180,6 +196,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[ProcessData]
             Processed input data, a list of ProcessData objects
         """
+        import os
 
         for ip in input:
             if ip.data_type == "Image":

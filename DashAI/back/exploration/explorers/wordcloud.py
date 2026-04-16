@@ -1,10 +1,4 @@
-import base64
-import os
-import pathlib
-
-from beartype.typing import Any, Dict
-from PIL.Image import Image
-from wordcloud import STOPWORDS, WordCloud
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     int_field,
@@ -12,43 +6,79 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
 
 class WordcloudSchema(BaseExplorerSchema):
+    """Schema for WordcloudExplorer hyperparameters.
+
+    Configures the vocabulary size cap (``max_words``) and the background colour
+    of the word cloud image. All text columns to concatenate are selected via
+    the base schema's column-selection mechanism.
+    """
+
     max_words: schema_field(
         t=int_field(gt=0),
         placeholder=200,
-        description="The maximum number of words to display in the wordcloud.",
+        description=MultilingualString(
+            en="Maximum number of words to display in the word cloud.",
+            es="Número máximo de palabras a mostrar en la nube de palabras.",
+        ),
+        alias=MultilingualString(en="Max words", es="Máximo de palabras"),
     )  # type: ignore
     background_color: schema_field(
         t=none_type(string_field()),
         placeholder=None,
-        description=(
-            "The background color of the wordcloud. "
-            "If None, the background will be transparent."
+        description=MultilingualString(
+            en=(
+                "Background color of the word cloud. If None, the background is "
+                "transparent."
+            ),
+            es=(
+                "Color de fondo de la nube de palabras. Si es None, el fondo es "
+                "transparente."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Background color",
+            es="Color de fondo",
         ),
     )  # type: ignore
 
 
 class WordcloudExplorer(DistributionExplorer):
-    """
-    WordcloudExplorer is an explorer that generates a wordcloud
-    from the concatenated strings of all selected columns in the dataset.
+    """Visualise word frequency in text columns as a word cloud.
+
+    Concatenates the values of all selected text columns across every row of the
+    dataset and produces a word cloud image where each word is rendered at a
+    size proportional to its term frequency. Stop words are not removed
+    automatically; pre-processing should be applied via converters before
+    running this explorer if stop-word filtering is desired.
+
+    Word clouds are a quick way to identify the most common terms in a text
+    corpus, detect vocabulary overlap between classes, and communicate the
+    dominant topics in a dataset to non-technical audiences.
     """
 
-    DISPLAY_NAME = "Word Cloud"
-    DESCRIPTION = (
-        "A wordcloud is a visual representation of text data, "
-        "where the size of each word indicates its frequency in the text."
-        "\n"
-        "This explorer generates a wordcloud from the concatenated "
-        "strings of all selected columns in the dataset."
+    DISPLAY_NAME = MultilingualString(en="Word Cloud", es="Nube de Palabras")
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Visual representation of text where word size reflects frequency. "
+            "Generates a word cloud by concatenating selected text columns."
+        ),
+        es=(
+            "Representación visual del texto donde el tamaño de la palabra "
+            "refleja su frecuencia. Genera una nube de palabras concatenando "
+            "columnas de texto seleccionadas."
+        ),
     )
     IMAGE_PREVIEW = "wordcloud.png"
 
@@ -60,11 +90,45 @@ class WordcloudExplorer(DistributionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize WordcloudExplorer with word cloud rendering parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments matching ``WordcloudSchema`` fields:
+            max_words (int): Maximum number of words to display in the
+            word cloud. Defaults to ``200``.
+            background_color (str | None): Background color of the
+            rendered image. When ``None`` the background is
+            transparent (RGBA mode). Defaults to ``None``.
+        """
         self.max_words = kwargs.get("max_words", 200)
         self.background_color = kwargs.get("background_color")
         super().__init__(**kwargs)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a word cloud image from the selected text columns.
+
+        Concatenates all values from the selected columns into a single string,
+        removes common stop words, and renders a ``WordCloud`` image with the
+        configured parameters.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset containing the text columns.
+        explorer_info : Explorer
+            The explorer database record used to
+            determine which columns to concatenate.
+
+        Returns
+        -------
+        Any
+            A ``PIL.Image.Image`` of the rendered word cloud (PNG-compatible,
+            RGBA when ``background_color`` is ``None``, RGB otherwise).
+        """
+        from wordcloud import STOPWORDS, WordCloud
+
         _df = dataset.to_pandas()
         cols = [col["columnName"] for col in explorer_info.columns]
 
@@ -87,11 +151,35 @@ class WordcloudExplorer(DistributionExplorer):
         self,
         __exploration_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Image,
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        """Save the word cloud PIL image to a PNG file on disk.
+
+        Parameters
+        ----------
+        __exploration_info__ : Notebook
+            The notebook database record
+            (unused).
+        explorer_info : Explorer
+            The explorer record used for filename
+            generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The ``PIL.Image.Image`` returned by
+            ``launch_exploration``.
+
+        Returns
+        -------
+        str
+            The path of the saved PNG file as a POSIX string.
+        """
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.png"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
         result.save(path, format="PNG")
 
         return path.as_posix()
@@ -99,6 +187,29 @@ class WordcloudExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved word cloud image for the frontend.
+
+        Reads the PNG file written by ``save_notebook`` and encodes it as a
+        base64 string for transmission to the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the PNG file saved by
+            ``save_notebook``.
+        options : Dict[str, Any]
+            Rendering options from the frontend
+            (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (base64-encoded
+            UTF-8 string of the PNG image), ``"type"``
+            (``"image_base64"``), and ``"config"`` (empty dict).
+        """
+        import base64
+
         resultType = "image_base64"
         config = {}
 

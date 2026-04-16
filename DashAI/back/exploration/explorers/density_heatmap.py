@@ -1,43 +1,81 @@
-import os
-import pathlib
-
-import plotly.express as px
-import plotly.io as pio
-from beartype.typing import Any, Dict
-from plotly.graph_objs import Figure
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import int_field, none_type, schema_field
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
 
 class DensityHeatmapSchema(BaseExplorerSchema):
+    """Schema for DensityHeatmapExplorer configuration.
+
+    Controls the binning resolution of the 2-D density grid.  ``nbinsx`` sets
+    the number of bins along the x-axis and ``nbinsy`` sets the number along the
+    y-axis.  Leaving either value as ``None`` lets Plotly choose an automatic
+    bin count based on the data range.  Increasing the bin count reveals finer
+    detail in the joint distribution at the cost of sparser (noisier) bins when
+    data are limited; decreasing it gives a smoother but coarser picture.
+    """
+
     nbinsx: schema_field(
         none_type(int_field(ge=1)),
         None,
-        ("The number of bins along the x axis."),
+        description=MultilingualString(
+            en=("Number of bins along the x axis."),
+            es=("Número de bins a lo largo del eje x."),
+        ),
+        alias=MultilingualString(en="Bins (x)", es="Bins (x)"),
     )  # type: ignore
     nbinsy: schema_field(
         none_type(int_field(ge=1)),
         None,
-        ("The number of bins along the y axis."),
+        description=MultilingualString(
+            en=("Number of bins along the y axis."),
+            es=("Número de bins a lo largo del eje y."),
+        ),
+        alias=MultilingualString(en="Bins (y)", es="Bins (y)"),
     )  # type: ignore
 
 
 class DensityHeatmapExplorer(RelationshipExplorer):
-    """
-    DensityHeatmapExplorer is an explorer that returns a density heatmap
-    of selected columns of a dataset.
+    """Explorer that visualises the joint distribution of two columns as a 2-D heatmap.
+
+    The explorer partitions the value range of each selected column into a
+    regular grid of rectangular bins and colours each cell according to the count
+    of data points that fall inside it.  Darker or warmer colours (depending on
+    the colour scale) indicate regions of higher data density, making it easy to
+    identify modes, concentration areas, and gaps in the joint distribution of
+    the two variables.
+
+    This visualisation is especially useful when there are too many data points
+    for a scatter plot to remain legible.  It provides a non-parametric estimate
+    of the joint density and reveals whether the relationship between the two
+    columns is concentrated around a single peak, multimodal, or approximately
+    uniform.
+
+    Exactly two columns must be selected: the first maps to the x-axis and the
+    second to the y-axis.
     """
 
-    DISPLAY_NAME = "Density Heatmap"
-    DESCRIPTION = (
-        "DensityHeatmapExplorer is an explorer that returns a density heatmap "
-        "of selected columns of a dataset."
+    DISPLAY_NAME = MultilingualString(
+        en="Density Heatmap",
+        es="Mapa de Calor de Densidad",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Returns a density heatmap for two selected columns to visualize the "
+            "joint distribution."
+        ),
+        es=(
+            "Devuelve un mapa de calor de densidad para dos columnas "
+            "seleccionadas y visualizar su distribución conjunta."
+        ),
     )
     IMAGE_PREVIEW = "density_heatmap.png"
 
@@ -49,11 +87,39 @@ class DensityHeatmapExplorer(RelationshipExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the DensityHeatmapExplorer with optional bin counts.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            nbinsx (int, optional): Number of bins along the x axis.
+            Defaults to None (auto).
+            nbinsy (int, optional): Number of bins along the y axis.
+            Defaults to None (auto).
+        """
         self.nbinsx = kwargs.get("nbinsx")
         self.nbinsy = kwargs.get("nbinsy")
         super().__init__(**kwargs)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly density heatmap for two selected columns.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The prepared dataset with exactly two columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive density heatmap figure.
+        """
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
@@ -75,11 +141,32 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Figure,
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        """Save the density heatmap figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
         return path.as_posix()
@@ -87,10 +174,26 @@ class DensityHeatmapExplorer(RelationshipExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved density heatmap for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         resultType = "plotly_json"
         config = {}
 
-        result = pio.read_json(exploration_path)
-        result = result.to_json()
+        with open(exploration_path, "r", encoding="utf-8") as f:
+            result = f.read()
 
         return {"data": result, "type": resultType, "config": config}

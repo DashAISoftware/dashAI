@@ -14,17 +14,25 @@ import CustomLayout from "../../components/custom/CustomLayout";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
+import { useTranslation } from "react-i18next";
 
 function Home() {
+  const { t } = useTranslation(["home", "common"]);
+
   return (
     <TourProvider tourKey={TOUR_KEYS.HOME}>
       <CustomLayout>
         {/* Title */}
-        <Typography variant="h3" component="h1" sx={{ mb: 6 }}>
-          Welcome to DashAI!
+        <Typography
+          variant="h3"
+          component="h1"
+          color="text.primary"
+          sx={{ mb: 6 }}
+        >
+          {t("home:label.welcomeDashboardAI")}
         </Typography>
-        <Typography variant="h5" component="h2">
-          Getting started
+        <Typography variant="h5" component="h2" color="text.primary">
+          {t("home:label.getStarted")}
         </Typography>
         <Grid
           container
@@ -35,51 +43,28 @@ function Home() {
         >
           <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="datasets-button">
             <HomeButton
-              title="Datasets"
-              description="Create and manage the datasets registered in the application."
+              title={t("common:datasets")}
+              description={t("home:description.datasets")}
               to="/app/data"
               Icon={FileUploadIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="experiments-button">
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="models-button">
             <HomeButton
-              title="Experiments"
-              description="Create and manage and view the status of your experiments."
-              to="/app/experiments"
+              title={t("common:models")}
+              description={t("home:description.models")}
+              to="/app/models"
               Icon={ScienceIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="predictions-button">
-            <HomeButton
-              title="Predictions"
-              description="Make predictions using your trained models."
-              to="/app/predict"
-              Icon={TimelineIcon}
-            />
-          </Grid>
-          <Grid
-            size={{ md: 4, sm: 6, xs: 12 }}
-            data-tour="explainability-button"
-          >
-            <HomeButton
-              title="Explainers"
-              description="Explore and understand the decision-making process behind your models."
-              to="/app/explainers"
-              Icon={InsightsIcon}
-            />
-          </Grid>
-          {/* Pipelines button */}
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="pipelines-button">
-            <HomeButton
-              title="Pipelines"
-              description="Create and manage pipelines."
-              to="/app/pipelines"
-              Icon={MergeIcon}
-            />
-          </Grid>
         </Grid>
-        <Typography variant="h5" component="h2" sx={{ mt: 6 }}>
-          Advanced
+        <Typography
+          variant="h5"
+          component="h2"
+          color="text.primary"
+          sx={{ mt: 6 }}
+        >
+          {t("home:label.advanced")}
         </Typography>
         <Grid
           container
@@ -88,18 +73,18 @@ function Home() {
           alignItems="center"
           sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
         >
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="generative-button">
             <HomeButton
-              title="Generative"
-              description={"Interact with AI models to infere."}
+              title={t("common:generative")}
+              description={t("home:description.generative")}
               to="/app/generative"
               Icon={AutoAwesomeIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="plugins-button">
             <HomeButton
-              title="Plugins"
-              description={"Browse and manage plugins."}
+              title={t("common:plugins")}
+              description={t("home:description.plugins")}
               to="/app/plugins/browse"
               Icon={ExtensionIcon}
             />

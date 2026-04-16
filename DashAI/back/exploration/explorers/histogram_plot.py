@@ -1,11 +1,5 @@
-import enum
-import os
-import pathlib
-
-import plotly.express as px
-import plotly.io as pio
-from beartype.typing import Any, Dict, List, Union
-from plotly.graph_objs import Figure
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -15,15 +9,18 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-class HistFunc(enum.Enum):
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class HistFunc(Enum):
     COUNT = "count"
     SUM = "sum"
     AVG = "avg"
@@ -31,7 +28,7 @@ class HistFunc(enum.Enum):
     MAX = "max"
 
 
-class HistNorm(enum.Enum):
+class HistNorm(Enum):
     NONE = ""
     PERCENT = "percent"
     PROBABILITY = "probability"
@@ -40,43 +37,108 @@ class HistNorm(enum.Enum):
 
 
 class HistogramPlotSchema(BaseExplorerSchema):
+    """Schema for HistogramPlotExplorer configuration.
+
+    Controls the bin count, the aggregation function applied within each bin,
+    the normalisation of bar heights, and optional grouping columns.
+
+    ``nbins`` sets the number of equally-spaced bins; leaving it as ``None``
+    lets Plotly choose automatically.  ``histfunc`` determines what is plotted
+    per bin: ``"count"`` (default) counts observations, while ``"sum"``,
+    ``"avg"``, ``"min"``, and ``"max"`` aggregate a numeric value within each
+    bin.  ``histnorm`` rescales the y-axis: ``""`` shows raw counts;
+    ``"percent"`` and ``"probability"`` normalise to 100 and 1 respectively;
+    ``"density"`` and ``"probability density"`` divide by the bin width so that
+    the area under the histogram integrates to the total count or 1.
+    ``color_group`` and ``pattern_group`` split bars by the values of an
+    additional column, producing grouped or stacked histograms.
+    """
+
     nbins: schema_field(
         none_type(int_field(ge=1)),
         None,
-        ("The number of bins to use for the histogram."),
+        description=MultilingualString(
+            en=("Number of bins to use for the histogram."),
+            es=("Número de bins a usar en el histograma."),
+        ),
+        alias=MultilingualString(en="Number of bins", es="Número de bins"),
     )  # type: ignore
     histfunc: schema_field(
         enum_field([e.value for e in HistFunc]),
         HistFunc.COUNT.value,
-        ("Specifies the binning function used for this histogram trace."),
+        description=MultilingualString(
+            en=("Binning function used for this histogram trace."),
+            es=("Función de agrupación usada para este trazo de histograma."),
+        ),
+        alias=MultilingualString(en="Binning function", es="Función de binning"),
     )  # type: ignore
     histnorm: schema_field(
         enum_field([e.value for e in HistNorm]),
         HistNorm.NONE.value,
-        ("Specifies the type of normalization used for this histogram trace."),
+        description=MultilingualString(
+            en=("Type of normalization used for this histogram trace."),
+            es=("Tipo de normalización usada en este histograma."),
+        ),
+        alias=MultilingualString(en="Normalization", es="Normalización"),
     )  # type: ignore
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping colored points."),
+        description=MultilingualString(
+            en=("Column name or index used to group colored points."),
+            es=("Nombre o índice de columna para agrupar puntos por color."),
+        ),
+        alias=MultilingualString(
+            en="Color group column",
+            es="Columna para grupo de color",
+        ),
     )  # type: ignore
     pattern_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping pattern of the points."),
+        description=MultilingualString(
+            en=("Column name or index used to group point patterns."),
+            es=("Nombre o índice de columna para agrupar patrones de puntos."),
+        ),
+        alias=MultilingualString(
+            en="Pattern group column",
+            es="Columna para grupo de patrón",
+        ),
     )  # type: ignore
 
 
 class HistogramPlotExplorer(DistributionExplorer):
-    """
-    HistogramPlotExplorer is an explorer that returns a density heatmap
-    of a selected column of a dataset.
+    """Explorer that renders an interactive histogram for a single column.
+
+    A histogram divides the value range of the selected column into adjacent
+    bins and represents the number (or aggregated value) of observations falling
+    into each bin as a bar height.  It is the most direct way to visualise the
+    frequency distribution of a numeric variable: the overall shape reveals
+    whether the data are roughly symmetric, skewed, bimodal, or uniform, while
+    the spread of the bars indicates the range and variability of the values.
+
+    Normalisation options allow the y-axis to be expressed as raw counts,
+    percentages, probabilities, or probability densities, making it easy to
+    compare distributions with different sample sizes on the same scale.  The
+    optional colour and pattern grouping parameters produce stacked or
+    side-by-side histograms that compare frequency distributions across
+    categorical subgroups.
+
+    Use this explorer as a first step in univariate data exploration or to
+    verify the distributional assumptions of a model (e.g. checking normality
+    of residuals).
     """
 
-    DISPLAY_NAME = "Histogram Plot"
-    DESCRIPTION = (
-        "HistogramPlotExplorer is an explorer that returns a density heatmap "
-        "of a selected column of a dataset."
+    DISPLAY_NAME = MultilingualString(
+        en="Histogram Plot",
+        es="Histograma",
+    )
+    DESCRIPTION = MultilingualString(
+        en=("Displays a histogram for a selected column to explore its distribution."),
+        es=(
+            "Muestra un histograma de una columna seleccionada para explorar su "
+            "distribución."
+        ),
     )
     IMAGE_PREVIEW = "histogram_plot.png"
 
@@ -88,6 +150,25 @@ class HistogramPlotExplorer(DistributionExplorer):
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the HistogramPlotExplorer with binning and grouping options.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            nbins (int, optional): Number of bins to use. If None, Plotly
+            chooses automatically. Defaults to None.
+            histfunc (str, optional): Aggregation function applied to each bin.
+            One of ``"count"``, ``"sum"``, ``"avg"``, ``"min"``, or
+            ``"max"``. Defaults to ``"count"``.
+            histnorm (str, optional): Normalization method. One of ``""``
+            (counts), ``"percent"``, ``"probability"``, ``"density"``,
+            or ``"probability density"``. Defaults to ``""`` (counts).
+            color_group (str or int, optional): Column name or zero-based index
+            used to color-group histogram bars. Defaults to None.
+            pattern_group (str or int, optional): Column name or zero-based
+            index used to pattern-group histogram bars. Defaults to None.
+        """
         self.nbins: Union[int, None] = kwargs.get("nbins")
         self.histfunc: HistFunc = HistFunc(kwargs.get("histfunc"))
         self.histnorm: HistNorm = HistNorm(kwargs.get("histnorm"))
@@ -96,8 +177,29 @@ class HistogramPlotExplorer(DistributionExplorer):
         super().__init__(**kwargs)
 
     def prepare_dataset(
-        self, loaded_dataset: DashAIDataset, columns: List[Dict[str, Any]]
-    ) -> DashAIDataset:
+        self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
+    ) -> "DashAIDataset":
+        """Extend the column list to include color and pattern grouping columns.
+
+        If ``color_group`` or ``pattern_group`` was given as an integer index,
+        each is resolved to the corresponding column name. Resolved columns are
+        appended to ``columns`` when not already present, so the base class loads
+        them alongside the primary selected column.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset being explored.
+        columns : List[Dict[str, Any]]
+            List of column descriptors already
+            selected by the user.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset slice containing all required columns, as
+            returned by the parent ``prepare_dataset`` implementation.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -127,7 +229,29 @@ class HistogramPlotExplorer(DistributionExplorer):
 
         return super().prepare_dataset(loaded_dataset, columns)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly histogram for the selected column.
+
+        The histogram is configured with the binning function, normalization,
+        optional color grouping, and optional pattern grouping set during
+        initialization. Exactly one primary column is supported.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset containing the selected column and any
+            grouping columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive histogram figure.
+        """
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
@@ -151,11 +275,32 @@ class HistogramPlotExplorer(DistributionExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
-        result: Figure,
+        save_path: "Path",
+        result: Any,
     ) -> str:
+        """Save the histogram figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
         return path.as_posix()
@@ -163,6 +308,24 @@ class HistogramPlotExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved histogram for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
+        import plotly.io as pio
+
         resultType = "plotly_json"
         config = {}
 

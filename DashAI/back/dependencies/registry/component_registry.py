@@ -4,6 +4,7 @@ from typing import Any, Union
 from beartype import beartype
 from beartype.typing import Dict, List, Type
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry.relationship_manager import RelationshipManager
 
 logging.basicConfig(level=logging.INFO)
@@ -195,6 +196,17 @@ class ComponentRegistry:
             if hasattr(new_component, "get_metadata")
             else None
         )
+
+        # Format description and display_name as MultilingualString if they are str
+        if hasattr(new_component, "DESCRIPTION"):
+            description = new_component.DESCRIPTION
+            if isinstance(description, str):
+                new_component.DESCRIPTION = MultilingualString(en=description)
+
+        if hasattr(new_component, "DISPLAY_NAME"):
+            display_name = new_component.DISPLAY_NAME
+            if isinstance(display_name, str):
+                new_component.DISPLAY_NAME = MultilingualString(en=display_name)
 
         new_register_component = {
             "name": new_component.__name__,

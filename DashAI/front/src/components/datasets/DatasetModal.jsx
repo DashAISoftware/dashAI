@@ -12,6 +12,7 @@ import {
   Grid,
   Typography,
   StepButton,
+  Tooltip,
   IconButton,
   Box,
 } from "@mui/material";
@@ -19,14 +20,18 @@ import CloseIcon from "@mui/icons-material/Close";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
-import { updateDataset as updateDatasetRequest } from "../../api/datasets";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
-import DatasetSummaryStep from "./DatasetSummaryStep";
+import DatasetPreviewStep from "./DatasetPreviewStep";
+import { loadPreview } from "../../api/datasets";
 
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },
   { name: "uploadDataset", label: "Configure and upload your dataset" },
+  { name: "previewDataset", label: "Preview dataset" },
 ];
+
+import { inferDataTypes } from "../../api/datasets";
+import InferenceMethodSelector from "../custom/InferenceMethodDialog";
 
 const defaultNewDataset = {
   dataloader: "",
@@ -48,6 +53,10 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const [uploaded, setUploaded] = useState(false);
   const [requestError, setRequestError] = useState(false);
   const [columnsSpec, setColumnsSpec] = useState({});
+  const [previewData, setPreviewData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [inferenceDialogOpen, setInferenceDialogOpen] = useState(false);
+  const [selectedInferenceMethods, setSelectedInferenceMethods] = useState([]);
   const formSubmitRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -58,12 +67,10 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           ? newDataset.file.name
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
-      await enqueueDatasetRequest(
-        newDataset.file,
-        name,
-        newDataset.url,
-        newDataset.params,
-      );
+      await enqueueDatasetRequest(newDataset.file, name, newDataset.url, {
+        ...newDataset.params,
+        schema: columnsSpec,
+      });
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
       updateDatasets();
@@ -74,6 +81,113 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       enqueueSnackbar("Error when trying to upload the dataset.");
     } finally {
       setUploaded(true);
+    }
+  };
+
+  const handlePreviewDataset = async (file, url) => {
+    const formData = new FormData();
+    formData.append("file", newDataset.file);
+    formData.append("params", JSON.stringify(newDataset.params));
+
+    try {
+      const preview = await loadPreview(formData);
+
+      setPreviewData(preview);
+
+      //Save the columns spec to be used in the preview table
+      const initialColumnsSpec = {};
+      Object.keys(preview.schema).forEach((columnName) => {
+        initialColumnsSpec[columnName] = {
+          type: preview.schema[columnName].type,
+          dtype: preview.schema[columnName].dtype,
+        };
+      });
+
+      setColumnsSpec(initialColumnsSpec);
+      setNextEnabled(true);
+    } catch (error) {
+      enqueueSnackbar(
+        "Error while trying to obtain preview of the uploaded file",
+      );
+      setRequestError(true);
+      setPreviewData(null);
+      setNextEnabled(false);
+    }
+  };
+
+  const handleColumnRename = (oldName, newName) => {
+    setColumnsSpec((prevSpec) => {
+      const updatedSpec = { ...prevSpec };
+
+      // Move the spec from old name to new name
+      if (updatedSpec[oldName]) {
+        updatedSpec[newName] = updatedSpec[oldName];
+        delete updatedSpec[oldName];
+      }
+
+      return updatedSpec;
+    });
+
+    // Also update previewData to reflect the new column name
+    setPreviewData((prevData) => {
+      if (!prevData || !prevData.schema) return prevData;
+
+      const updatedSchema = { ...prevData.schema };
+      if (updatedSchema[oldName]) {
+        updatedSchema[newName] = updatedSchema[oldName];
+        delete updatedSchema[oldName];
+      }
+
+      const updatedSample = prevData.sample.map((row) => {
+        const newRow = { ...row };
+        if (oldName in newRow) {
+          newRow[newName] = newRow[oldName];
+          delete newRow[oldName];
+        }
+        return newRow;
+      });
+
+      return {
+        ...prevData,
+        schema: updatedSchema,
+        sample: updatedSample,
+      };
+    });
+  };
+
+  const handleInferDataTypes = async (methods) => {
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("file", newDataset.file);
+    formData.append(
+      "params",
+      JSON.stringify({
+        ...newDataset.params,
+        methods,
+      }),
+    );
+
+    try {
+      const response = await inferDataTypes(formData);
+      const updatedTypes = Object.fromEntries(
+        Object.entries(response).map(([key, value]) => [
+          key,
+          {
+            type: value.type,
+            dtype: value.dtype,
+          },
+        ]),
+      );
+
+      setColumnsSpec(updatedTypes);
+      enqueueSnackbar("Inferred datatypes successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to infer datatypes", error);
+      enqueueSnackbar("Failed to infer datatypes", { variant: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,6 +208,9 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       setActiveStep(activeStep + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
+      handlePreviewDataset();
+      setActiveStep(2);
+    } else if (activeStep === 2) {
       handleSubmitNewDataset();
     }
   };
@@ -195,24 +312,74 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             formSubmitRef={formSubmitRef}
           />
         )}
+
+        {/* Step 3: Preview dataset */}
+        {activeStep === 2 && (
+          <DatasetPreviewStep
+            previewData={previewData}
+            newDataset={newDataset}
+            setNewDataset={setNewDataset}
+            onConfirm={handleSubmitNewDataset}
+            setNextEnabled={setNextEnabled}
+            columnsSpec={columnsSpec}
+            setColumnsSpec={setColumnsSpec}
+            onColumnRename={handleColumnRename}
+          />
+        )}
       </DialogContent>
       {/* Actions - Back and Next */}
       <DialogActions>
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
-          </Button>
-          <Button
-            onClick={handleNextButton}
-            autoFocus
-            variant="contained"
-            color="primary"
-            disabled={!nextEnabled}
-          >
-            {activeStep === 1 ? "Upload" : "Next"}
-          </Button>
-        </ButtonGroup>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            alignItems: "center",
+          }}
+        >
+          <Box sx={{ minWidth: "180px" }}>
+            {activeStep === 2 && (
+              <Tooltip title="The methods used to infer columns datatypes are not perfect and can commit mistakes, please check yourself the types before pressing the Upload button.">
+                <Button
+                  size="large"
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setInferenceDialogOpen(true)}
+                >
+                  Infer column Data Types
+                </Button>
+              </Tooltip>
+            )}
+          </Box>
+          <ButtonGroup size="large">
+            <Button onClick={handleBackButton}>
+              {activeStep === 0 ? "Close" : "Back"}
+            </Button>
+            <Button
+              onClick={handleNextButton}
+              autoFocus
+              variant="contained"
+              color="primary"
+              disabled={!nextEnabled}
+            >
+              {activeStep === 0
+                ? "Next"
+                : activeStep === 1
+                  ? "Preview"
+                  : "Upload"}
+            </Button>
+          </ButtonGroup>
+        </Box>
       </DialogActions>
+      <InferenceMethodSelector
+        open={inferenceDialogOpen}
+        onClose={() => setInferenceDialogOpen(false)}
+        onConfirm={(methods) => {
+          setSelectedInferenceMethods(methods);
+          handleInferDataTypes(methods);
+        }}
+        defaultSelected={selectedInferenceMethods}
+      />
     </Dialog>
   );
 }

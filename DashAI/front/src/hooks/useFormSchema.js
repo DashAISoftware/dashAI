@@ -9,9 +9,16 @@ import useSchema from "./useSchema";
  * @param {object} initialValues - The initial values of the form
  * @param {object} formSubmitRef - The reference to the formik object
  * @param {function} setError - The function to set the error state of the form
+ * @param {function} onValuesChange - The function to call when the form values change
  */
 
-function useFormSchema({ model, initialValues, formSubmitRef, setError }) {
+function useFormSchema({
+  model,
+  initialValues,
+  formSubmitRef,
+  setError,
+  onValuesChange,
+}) {
   const { modelSchema, defaultValues, yupSchema, loading } = useSchema({
     modelName: model,
   });
@@ -52,6 +59,12 @@ function useFormSchema({ model, initialValues, formSubmitRef, setError }) {
       setError(isError);
     }
   }, [formik.errors, setError]);
+
+  useEffect(() => {
+    if (onValuesChange) {
+      onValuesChange();
+    }
+  }, [formik.values]);
 
   const formProps = {
     formik,

@@ -1,17 +1,34 @@
-import { React, useEffect, useState } from "react";
-import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
+import { React, useEffect, useMemo, useState } from "react";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  CircularProgress,
+  Box,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
+import { useTranslation } from "react-i18next";
+import { applyThemeToLayout } from "../../utils/plotlyTheme";
 
 export default function ExplainersPlot({ explainer, scope }) {
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
   const [explainersPlots, setExplainersPlots] = useState([]);
   const [currentPlot, setCurrentPlot] = useState(0);
   const [loading, setLoading] = useState(true);
   const isLocal = scope === "local";
+  const { t } = useTranslation(["explainers"]);
+
+  const themedLayout = useMemo(() => {
+    if (!explainersPlots[currentPlot]) return {};
+    return applyThemeToLayout(explainersPlots[currentPlot].layout, theme);
+  }, [explainersPlots, currentPlot, theme]);
   function parseExplanationPlot(explanation) {
     const formattedPlot = JSON.parse(JSON.stringify(explanation));
     return formattedPlot.map(JSON.parse);
@@ -27,7 +44,9 @@ export default function ExplainersPlot({ explainer, scope }) {
       const parsedExplainersPlot = parseExplanationPlot(explainersPlots);
       setExplainersPlots(parsedExplainersPlot);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the explainers.");
+      enqueueSnackbar(t("explainers:error.fetchExplainers"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -41,45 +60,55 @@ export default function ExplainersPlot({ explainer, scope }) {
   };
 
   useEffect(() => {
-    getExplainerPlot();
-  }, []);
+    if (explainer.status === 3) {
+      getExplainerPlot();
+    }
+  }, [explainer.status]);
 
   return (
-    <Grid container flexDirection={"row"} justifyContent={"space-between"}>
-      <Grid size={{ xs: 8 }}>
-        {!loading && isLocal && (
-          <FormControl variant="outlined" sx={{ minWidth: "200px" }}>
-            <InputLabel id="select-type-label">Select an instance</InputLabel>
-            <Select
-              id="select-type"
-              value={currentPlot}
-              onChange={(event) => setCurrentPlot(event.target.value)}
-              label="class"
-              autoWidth
-            >
-              {explainersPlots.map((_, i) => (
-                <MenuItem key={i} value={i}>
-                  Instance {i + 1}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </Grid>
-      <Grid size={{ xs: 8 }}>
-        {!loading && (
-          <Plot
-            data={explainersPlots[currentPlot].data}
-            layout={{
-              ...explainersPlots[currentPlot].layout,
-              width: 730,
-              height: 380,
-            }}
-            config={{ staticPlot: false }}
-          />
-        )}
-      </Grid>
-    </Grid>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+      }}
+    >
+      {!loading && isLocal && (
+        <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 1 }}>
+          <InputLabel id="select-type-label">Select an instance</InputLabel>
+          <Select
+            id="select-type"
+            value={currentPlot}
+            onChange={(event) => setCurrentPlot(event.target.value)}
+            label="class"
+            autoWidth
+          >
+            {explainersPlots.map((_, i) => (
+              <MenuItem key={i} value={i}>
+                {t("explainers:label.instanceNumber", { number: i + 1 })}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+      {!loading && explainer.status === 3 ? (
+        <Plot
+          data={explainersPlots[currentPlot].data}
+          layout={{
+            ...themedLayout,
+            width: 700,
+            height: 380,
+          }}
+          config={{ displayModeBar: false }}
+        />
+      ) : explainer.status === 4 ? (
+        <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>
+      ) : (
+        <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
+          <CircularProgress />
+        </Box>
+      )}
+    </Box>
   );
 }
 

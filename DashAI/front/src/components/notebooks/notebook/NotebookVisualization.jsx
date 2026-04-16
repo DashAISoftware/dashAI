@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import { Box, Divider } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
-import JobQueueWidget from "../../jobs/JobQueueWidget";
 
 export default function NotebookVisualization({
   notebook,
-  handleAddDatasetFromNotebook,
   existingDatasets = [],
 }) {
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(true);
@@ -21,7 +19,6 @@ export default function NotebookVisualization({
         <Box sx={{ flexGrow: 0, position: "sticky" }}>
           <DatasetPreviewNotebook
             notebook={notebook}
-            handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
             existingDatasets={existingDatasets}
             onAccordionChange={setIsAccordionExpanded}
           />
@@ -34,7 +31,6 @@ export default function NotebookVisualization({
           <NotebookView notebook={notebook} />
         </Box>
       </Box>
-      <JobQueueWidget />
     </>
   );
 }

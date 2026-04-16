@@ -42,7 +42,7 @@ const columns = [
  */
 const ConverterClassColumnModal = ({
   updateClassColumn,
-  classColumnInitialValue,
+  classColumnInitialValue = null,
   datasetId,
 }) => {
   const [open, setOpen] = useState(false);
@@ -217,10 +217,6 @@ ConverterClassColumnModal.propTypes = {
   updateClassColumn: PropTypes.func.isRequired,
   classColumnInitialValue: PropTypes.number,
   datasetId: PropTypes.number.isRequired,
-};
-
-ConverterClassColumnModal.defaultProps = {
-  classColumnInitialValue: null,
 };
 
 export default ConverterClassColumnModal;

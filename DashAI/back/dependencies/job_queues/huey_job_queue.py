@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import sqlite3
+import warnings
 from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +22,34 @@ from DashAI.back.dependencies.job_queues.base_job_queue import (
     JobQueueError,
 )
 from DashAI.back.job.base_job import BaseJob
+
+warnings.filterwarnings(
+    "ignore",
+    message=".*mediapipe.*",
+    category=UserWarning,
+    module="controlnet_aux",
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Importing from timm.models.layers.*",
+    category=FutureWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Importing from timm.models.registry.*",
+    category=FutureWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*Overwriting tiny_vit.*",
+    category=UserWarning,
+    module="controlnet_aux",
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*found in sys.modules after import.*",
+    category=RuntimeWarning,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)

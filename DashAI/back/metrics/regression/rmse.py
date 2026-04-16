@@ -1,17 +1,46 @@
 """DashAI RMSE regression metric implementation."""
 
-import numpy as np
-from sklearn.metrics import root_mean_squared_error
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RMSE(RegressionMetric):
-    """Root Mean Squared Error metric for regression tasks."""
+    """Square root of the mean squared error between predicted and true values.
+
+    Root Mean Squared Error (RMSE) is the square root of MSE, bringing the
+    metric back to the same unit as the target variable. Like MSE, it
+    penalises large errors more heavily than MAE, but its interpretability
+    advantage over MSE makes it the standard regression error metric in most
+    applications. RMSE is equivalent to the Euclidean distance between the
+    prediction vector and the true value vector, normalised by sample count.
+
+    ::
+
+        RMSE(y, ŷ) = sqrt( (1/N) · Σᵢ (yᵢ - ŷᵢ)² )
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.root_mean_squared_error.html
+    """
+
+    DESCRIPTION: str = (
+        "Square root of the average of squared differences between "
+        "predicted and actual values, penalizes larger errors more heavily."
+    )
 
     @staticmethod
-    def score(true_values: DashAIDataset, predicted_values: np.ndarray) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        predicted_values: "np.ndarray",
+    ) -> float:
         """Calculate the RMSE between true values and predicted values.
 
         Parameters
@@ -27,5 +56,7 @@ class RMSE(RegressionMetric):
         float
             RMSE score between true values and predicted values
         """
+        from sklearn.metrics import root_mean_squared_error
+
         true_values, pred_values = prepare_to_metric(true_values, predicted_values)
         return root_mean_squared_error(true_values, pred_values)

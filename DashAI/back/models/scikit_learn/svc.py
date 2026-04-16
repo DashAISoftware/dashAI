@@ -8,15 +8,23 @@ from DashAI.back.core.schema_fields import (
     optimizer_int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
+)
+from DashAI.back.models.scikit_learn.sklearn_like_model import (
+    CategoricalEncodingStrategy,
 )
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
 
 class SVCSchema(BaseSchema):
-    """Support Vector Machine (SVM) is a machine learning algorithm that separates data
-    into different classes by finding the optimal hyperplane
+    """Schema that configures the Support Vector Classifier (SVC).
+
+    Support Vector Classification finds the optimal hyperplane that maximises the
+    margin between classes in a kernel-transformed feature space. It is used for
+    binary and multiclass tabular classification. The underlying implementation is
+    ``sklearn.svm.SVC``.
     """
 
     C: schema_field(
@@ -27,8 +35,17 @@ class SVCSchema(BaseSchema):
             "lower_bound": 1.0,
             "upper_bound": 10.0,
         },
-        description="The parameter 'C' is a regularization parameter. It must be of "
-        "type positive number.",
+        description=MultilingualString(
+            en=(
+                "The parameter 'C' is a regularization parameter. "
+                "The strength of the regularization is inversely proportional to C"
+            ),
+            es=(
+                "El parámetro 'C' es un parámetro de regularización. "
+                "La fuerza de la regularización es inversamente proporcional a C"
+            ),
+        ),
+        alias=MultilingualString(en="C", es="C"),
     )  # type: ignore
     coef0: schema_field(
         optimizer_float_field(),
@@ -38,8 +55,19 @@ class SVCSchema(BaseSchema):
             "lower_bound": 1.0,
             "upper_bound": 10.0,
         },
-        description="The 'coef0' parameter is a kernel independent value. It is only "
-        "significant for kernel poly and sigmoid. It must be of type number.",
+        description=MultilingualString(
+            en=(
+                "The parameter 'coef0' is independent term in "
+                "kernel function. "
+                "It is only significant for kernel poly and sigmoid. "
+            ),
+            es=(
+                "El parámetro 'coef0' es un término independiente en la "
+                "función del kernel. "
+                "Solo es significativo para los kernels poly y sigmoid. "
+            ),
+        ),
+        alias=MultilingualString(en="coef0", es="coef0"),
     )  # type: ignore
     degree: schema_field(
         optimizer_float_field(ge=0.0),
@@ -49,20 +77,29 @@ class SVCSchema(BaseSchema):
             "lower_bound": 1.0,
             "upper_bound": 10.0,
         },
-        description="The parameter 'degree' is the degree of the polynomial for the "
-        "kernel = 'poly'. It must be of type number.",
+        description=MultilingualString(
+            en="The 'degree' parameter is only significant for 'poly' kernel.",
+            es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
+        ),
+        alias=MultilingualString(en="degree", es="grado"),
     )  # type: ignore
     gamma: schema_field(
         enum_field(enum=["scale", "auto"]),
         placeholder="scale",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels. Must be in "
-        "string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels.",
+            es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
+        ),
+        alias=MultilingualString(en="gamma", es="gamma"),
     )  # type: ignore
     kernel: schema_field(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
         placeholder="rbf",
-        description="The 'kernel' parameter is the kernel used in the model. It must "
-        "be a string equal to 'linear', 'poly', 'rbf' or 'sigmoid'.",
+        description=MultilingualString(
+            en="The 'kernel' parameter is the kernel used in the model.",
+            es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
+        ),
+        alias=MultilingualString(en="kernel", es="kernel"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=-1),
@@ -72,20 +109,34 @@ class SVCSchema(BaseSchema):
             "lower_bound": -1,
             "upper_bound": 10,
         },
-        description="The 'max_iter' parameter determines the iteration limit for the "
-        "solver. It must be of type positive integer or -1 to indicate no limit.",
-    )  # type: ignore
-    probability: schema_field(
-        bool_field(),
-        placeholder=True,
-        description="The parameter 'probability' indicates whether or not to predict "
-        "with probabilities. It must be of type boolean.",
+        description=MultilingualString(
+            en=(
+                "The 'max_iter' parameter determines the iteration limit for the "
+                "solver. It must be of type positive integer "
+                "or -1 to indicate no limit."
+            ),
+            es=(
+                "El parámetro 'max_iter' determina el límite de iteraciones para el "
+                "solucionador. Debe ser un entero positivo "
+                "o -1 para indicar sin límite."
+            ),
+        ),
+        alias=MultilingualString(en="max iterations", es="max iteraciones"),
     )  # type: ignore
     shrinking: schema_field(
         bool_field(),
         placeholder=True,
-        description="The 'shrinking' parameter determines whether a shrinking "
-        "heristic is used. It must be of type boolean.",
+        description=MultilingualString(
+            en=(
+                "The 'shrinking' parameter determines whether "
+                "a shrinking heuristic is used."
+            ),
+            es=(
+                "El parámetro 'reducción' determina si "
+                "se utiliza una heurística de reducción."
+            ),
+        ),
+        alias=MultilingualString(en="shrinking", es="reducción"),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(gt=0.0),
@@ -95,23 +146,79 @@ class SVCSchema(BaseSchema):
             "lower_bound": 1.0,
             "upper_bound": 10.0,
         },
-        description="The parameter 'tol' determines the tolerance for the stop "
-        "criterion. It must be of type positive number.",
-    )  # type: ignore
-    verbose: schema_field(
-        bool_field(),
-        placeholder=False,
-        description="The 'verbose' parameter allows to have a verbose output."
-        "It must be of type boolean.",
+        description=MultilingualString(
+            en=("The parameter 'tol' determines the tolerance for the stop criterion."),
+            es=(
+                "El parámetro 'tol' determina "
+                " la tolerancia para el criterio de detención."
+            ),
+        ),
+        alias=MultilingualString(en="tolerance", es="tolerancia"),
     )  # type: ignore
 
 
 class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
-    """Scikit-learn's Support Vector Machine (SVM) classifier wrapper for DashAI."""
+    """Support vector machine classifier that maximises the margin between classes.
+
+    SVC constructs a maximum-margin hyperplane in a (possibly kernel-transformed)
+    feature space. Training data points that lie on or inside the margin are called
+    support vectors; they fully define the decision boundary. Non-linearly separable
+    problems are addressed by mapping the input space into a higher-dimensional space
+    via kernel functions (linear, polynomial, RBF, or sigmoid).
+
+    Regularisation is controlled by ``C``: smaller values allow more misclassified
+    training points in exchange for a wider margin, while larger values enforce a
+    harder margin. The ``kernel``, ``gamma``, ``degree``, and ``coef0`` parameters
+    configure the kernel function. The implementation wraps scikit-learn's ``SVC``.
+
+    References
+    ----------
+    - [1] Cortes, C. & Vapnik, V. (1995). "Support-vector networks."
+           Machine Learning, 20(3), 273-297. https://doi.org/10.1007/BF00994018
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
+    """
 
     SCHEMA = SVCSchema
-    DISPLAY_NAME: str = "Support Vector Machine (SVM)"
+    DISPLAY_NAME: str = MultilingualString(
+        en="Support Vector Machine (SVM)",
+        es="Máquina de Vectores de Soporte (SVM)",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Support Vector Machine (SVM) is a supervised machine learning algorithm "
+            "used for classification and regression tasks. It works by finding the "
+            "optimal hyperplane that maximizes the margin between different classes "
+            "in a high-dimensional feature space. SVMs are effective in cases where "
+            "the number of features is large relative to the number of samples and "
+            "can model complex, non-linear decision boundaries through the use of "
+            "kernel functions such as linear, polynomial, and radial basis function "
+            "(RBF) kernels."
+        ),
+        es=(
+            "La Máquina de Vectores de Soporte (SVM) es un algoritmo de aprendizaje "
+            "automático supervisado utilizado para tareas de clasificación y "
+            "regresión. Funciona encontrando el hiperplano óptimo que maximiza el "
+            "margen entre las distintas clases en un espacio de características de "
+            "alta dimensionalidad. Las SVM son especialmente efectivas cuando el "
+            "número de características es grande en relación con el número de "
+            "muestras y pueden modelar fronteras de decisión complejas y no lineales "
+            "mediante el uso de funciones kernel como lineal, polinomial y de base "
+            "radial (RBF)."
+        ),
+    )
     COLOR: str = "#FF80AB"
+    ICON: str = "Timeline"
+
+    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
+        """Initialise the model by forwarding all kwargs to the parent class.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Hyperparameter values forwarded to the parent sklearn wrapper.  See
+            the associated schema class for available keys and their defaults.
+        """
+        kwargs["probability"] = True
         super().__init__(**kwargs)

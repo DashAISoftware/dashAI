@@ -1,11 +1,11 @@
-import optuna
-
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
@@ -13,8 +13,13 @@ class OptunaSchema(BaseSchema):
     n_trials: schema_field(
         int_field(gt=0),
         placeholder=10,
-        description="The parameter 'n_trials' is the quantity of trials"
-        "per study. It must be of type positive integer.",
+        description=MultilingualString(
+            en=(
+                "The quantity of trials per study. It must be of type positive integer."
+            ),
+            es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
+        ),
+        alias=MultilingualString(en="N trials", es="N pruebas"),
     )  # type: ignore
     sampler: schema_field(
         enum_field(
@@ -29,19 +34,47 @@ class OptunaSchema(BaseSchema):
             ]
         ),
         placeholder="TPESampler",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
-        ". Must be in string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en=(
+                "The sampler algorithm to use for hyperparameter optimization. "
+                "Different samplers use different strategies for exploring the "
+                "hyperparameter space."
+            ),
+            es=(
+                "El algoritmo de muestreo a usar para la optimización de "
+                "hiperparámetros. Diferentes muestreadores usan diferentes "
+                "estrategias para explorar el espacio de hiperparámetros."
+            ),
+        ),
+        alias=MultilingualString(en="Sampler", es="Muestreador"),
     )  # type: ignore
     pruner: schema_field(
         enum_field(enum=["MedianPruner", "None"]),
         placeholder="None",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
-        ". Must be in string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en=(
+                "The pruner to use for early stopping of unpromising trials. "
+                "'MedianPruner' stops trials below the median. 'None' disables pruning."
+            ),
+            es=(
+                "El podador a usar para detener tempranamente pruebas poco "
+                "prometedoras. 'MedianPruner' detiene pruebas bajo la mediana. "
+                "'None' desactiva la poda."
+            ),
+        ),
+        alias=MultilingualString(en="Pruner", es="Podador"),
     )  # type: ignore
 
 
 class OptunaOptimizer(BaseOptimizer):
-    DISPLAY_NAME: str = "Optuna Optimizer"
+    DISPLAY_NAME: str = MultilingualString(
+        en="Optuna Optimizer",
+        es="Optimizador Optuna",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Hyperparameter optimization using Optuna library.",
+        es="Optimización de hiperparámetros usando la librería Optuna.",
+    )
     COLOR: str = "#E91E63"
     SCHEMA = OptunaSchema
 
@@ -54,7 +87,7 @@ class OptunaOptimizer(BaseOptimizer):
 
     def __init__(self, n_trials=None, sampler=None, pruner=None):
         self.n_trials = n_trials
-        self.sampler = getattr(optuna.samplers, sampler)
+        self.sampler = sampler
         self.pruner = pruner
 
     def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
@@ -71,13 +104,17 @@ class OptunaOptimizer(BaseOptimizer):
         -------
             None
         """
+        import optuna
+
+        sampler = getattr(optuna.samplers, self.sampler)
+
         self.model = model
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
         direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(
-            direction=direction, sampler=self.sampler(), pruner=self.pruner
+            direction=direction, sampler=sampler(), pruner=self.pruner
         )
 
         self.metric = metric["class"]
@@ -94,9 +131,19 @@ class OptunaOptimizer(BaseOptimizer):
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
                 setattr(obj, key, value)
 
-            self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
+            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
             y_pred = self.model.predict(input_dataset["validation"])
-            score = self.metric.score(output_dataset["validation"], y_pred)
+
+            # Calculate metric for train and validation data each trial
+            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+            self.model.calculate_metrics(
+                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            )
+
+            output_dataset_transformed = self.model.prepare_output(
+                output_dataset["validation"], is_fit=False
+            )
+            score = self.metric.score(output_dataset_transformed, y_pred)
 
             return score
 
@@ -106,7 +153,7 @@ class OptunaOptimizer(BaseOptimizer):
         best_model = self.model
         for hyperparameter, value in best_params.items():
             setattr(best_model, hyperparameter, value)
-        best_model.fit(self.input_dataset["train"], self.output_dataset["train"])
+        best_model.train(self.input_dataset["train"], self.output_dataset["train"])
         self.model = best_model
         self.study = study
 
@@ -114,8 +161,14 @@ class OptunaOptimizer(BaseOptimizer):
         return self.model
 
     def get_trials_values(self):
+        import optuna
+
         trials = []
         for trial in self.study.trials:
             if trial.state == optuna.trial.TrialState.COMPLETE:
                 trials.append({"params": trial.params, "value": trial.value})
         return trials
+
+    def get_best_params(self):
+        """Return the best parameters found during optimization."""
+        return self.study.best_params

@@ -2,6 +2,7 @@
 from typing import Tuple
 
 import numpy as np
+import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 from sklearn.exceptions import NotFittedError
@@ -9,6 +10,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
     select_columns,
     split_dataset,
     split_indexes,
@@ -19,6 +21,9 @@ from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
 from DashAI.back.models.scikit_learn.svc import SVC
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+from DashAI.back.types.value_types import Float
 
 
 @pytest.fixture(scope="module", name="divided_dataset")
@@ -29,10 +34,38 @@ def tabular_model_fixture():
     datasetdict = dataloader_test.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/models",
-        params={"separator": ","},
+        params={
+            "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     datasetdict = to_dashai_dataset(datasetdict)
+
+    datasetdict.types = datasetdict.types = {
+        "SepalLengthCm": Float(arrow_type=pa.float64()),
+        "SepalWidthCm": Float(arrow_type=pa.float64()),
+        "PetalLengthCm": Float(arrow_type=pa.float64()),
+        "PetalWidthCm": Float(arrow_type=pa.float64()),
+        "Species": Categorical(
+            values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+        ),
+    }
+
+    new_table = save_types_in_arrow_metadata(
+        datasetdict.arrow_table,
+        {col: dtype.to_string() for col, dtype in datasetdict.types.items()},
+    )
+
+    datasetdict = DashAIDataset(
+        new_table, splits=datasetdict.splits, types=datasetdict.types
+    )
 
     total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
@@ -94,13 +127,13 @@ def test_check_is_fitted(
 ):
     knn_model = KNeighborsClassifier(**model_params["knn"])
 
-    knn_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    knn_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
     rf_model = RandomForestClassifier(**model_params["rf"])
-    rf_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    rf_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
     svc_model = SVC(**model_params["svc"])
-    svc_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    svc_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
     try:
         check_is_fitted(knn_model)
@@ -115,15 +148,15 @@ def test_predict_tabular_models(
     divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
 ):
     knn_model = KNeighborsClassifier(**model_params["knn"])
-    knn_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    knn_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
     y_pred_knn = knn_model.predict(divided_dataset[0]["test"])
 
     rf_model = RandomForestClassifier(**model_params["rf"])
-    rf_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    rf_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
     y_pred_rf = rf_model.predict(divided_dataset[0]["test"])
 
     svc_model = SVC(**model_params["svc"])
-    svc_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    svc_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
     y_pred_svm = svc_model.predict(divided_dataset[0]["test"])
 
     assert isinstance(y_pred_knn, np.ndarray)

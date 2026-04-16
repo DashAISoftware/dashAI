@@ -1,31 +1,36 @@
 import logging
-import pathlib
+from typing import TYPE_CHECKING, List
 
-from beartype.typing import List
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session, sessionmaker
 
-from DashAI.back.api.api_v1.schemas import explorers_params as schemas
+from DashAI.back.api.api_v1.schemas.explorers_params import Explorer as ExplorerSchema
+from DashAI.back.api.api_v1.schemas.explorers_params import (
+    ExplorerBase,
+    ExplorerCreate,
+    ExplorerResultsOptions,
+)
 from DashAI.back.core.enums.status import ExplorerStatus
-from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Explorer, Notebook
-from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.exploration.base_explorer import BaseExplorer
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session, sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.exploration.base_explorer import BaseExplorer
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
 # Validations
-
-
 def validate_explorer_params(
-    session: Session,
-    component_registry: ComponentRegistry,
+    session: "Session",
+    component_registry: "ComponentRegistry",
     explorer: Explorer,
     validate_columns: bool = True,
 ):
@@ -36,6 +41,8 @@ def validate_explorer_params(
     - The `parameters` against the explorer schema.
     - The `dataset_id` and `columns` against the dataset.
     """
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     # validate exploration_type in registered explorers
     if explorer.exploration_type not in component_registry:
         raise HTTPException(
@@ -44,7 +51,7 @@ def validate_explorer_params(
         )
 
     # validate parameters with class method
-    explorer_class: BaseExplorer = component_registry[explorer.exploration_type][
+    explorer_class: "BaseExplorer" = component_registry[explorer.exploration_type][
         "class"
     ]
     try:
@@ -98,6 +105,8 @@ def validate_explorer_finished(explorer: Explorer):
     """
     Function to validate if the explorer is finished.
     """
+    import pathlib
+
     if explorer.status != ExplorerStatus.FINISHED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -118,14 +127,14 @@ def validate_explorer_finished(explorer: Explorer):
 
 
 # GET
-@router.get("/", response_model=List[schemas.Explorer])
+@router.get("/", response_model=List[ExplorerSchema])
 @inject
 async def get_explorers(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     skip: int = 0,
     limit: int = 0,
 ):
-    db: Session
+    db: "Session"
     with session_factory() as db:
         explorers = db.query(Explorer)
 
@@ -137,13 +146,13 @@ async def get_explorers(
         return explorers.all()
 
 
-@router.get("/{explorer_id}/", response_model=schemas.Explorer)
+@router.get("/{explorer_id}/", response_model=ExplorerSchema)
 @inject
 async def get_explorer_by_id(
     explorer_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    db: Session
+    db: "Session"
     with session_factory() as db:
         explorer = db.query(Explorer).get(explorer_id)
         if explorer is None:
@@ -154,15 +163,15 @@ async def get_explorer_by_id(
         return explorer
 
 
-@router.get("/exploration/{exploration_id}/", response_model=List[schemas.Explorer])
+@router.get("/exploration/{exploration_id}/", response_model=List[ExplorerSchema])
 @inject
 async def get_explorers_by_exploration_id(
     exploration_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     skip: int = 0,
     limit: int = 0,
 ):
-    db: Session
+    db: "Session"
     with session_factory() as db:
         explorers = db.query(Explorer).filter(Explorer.exploration_id == exploration_id)
 
@@ -175,14 +184,14 @@ async def get_explorers_by_exploration_id(
 
 
 # CREATE
-@router.post("/", response_model=schemas.Explorer, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ExplorerSchema, status_code=status.HTTP_201_CREATED)
 @inject
 async def create_explorer(
-    params: schemas.ExplorerCreate,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    params: ExplorerCreate,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
-    db: Session
+    db: "Session"
     with session_factory() as db:
         explorer = Explorer(**params.model_dump())
         validate_explorer_params(
@@ -196,15 +205,15 @@ async def create_explorer(
 
 
 # UPDATE
-@router.patch("/{explorer_id}/", response_model=schemas.Explorer)
+@router.patch("/{explorer_id}/", response_model=ExplorerSchema)
 @inject
 async def update_explorer(
     explorer_id: int,
-    params: schemas.ExplorerBase,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    params: ExplorerBase,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
-    db: Session
+    db: "Session"
     with session_factory() as db:
         explorer = db.query(Explorer).get(explorer_id)
         if explorer is None:
@@ -234,7 +243,7 @@ async def update_explorer(
 @inject
 async def delete_explorer(
     explorer_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     db: Session
     with session_factory() as db:
@@ -256,11 +265,11 @@ async def delete_explorer(
 @inject
 async def get_explorer_results(
     explorer_id: int,
-    params: schemas.ExplorerResultsOptions,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    params: ExplorerResultsOptions,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
-    db: Session
+    db: "Session"
     with session_factory() as db:
         try:
             explorer_info = db.query(Explorer).get(explorer_id)
@@ -314,3 +323,35 @@ async def get_explorer_results(
         ) from e
 
     return results
+
+
+@router.put("/{explorer_id}/results/")
+@inject
+async def update_explorer_results(
+    params: dict,
+    explorer_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    import json
+
+    db: "Session"
+    with session_factory() as db:
+        explorer = db.query(Explorer).get(explorer_id)
+        if explorer is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Explorer not found",
+            )
+
+    # update results
+    try:
+        exploration_path = explorer.exploration_path
+        with open(f"{exploration_path}", "w") as f:
+            json.dump(params, f)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error while updating explorer results",
+        ) from e
+
+    return {"message": "Explorer results updated successfully"}

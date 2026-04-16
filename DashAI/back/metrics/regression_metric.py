@@ -1,54 +1,52 @@
-from typing import Tuple
+from typing import TYPE_CHECKING
 
-import numpy as np
-
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.base_metric import BaseMetric
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RegressionMetric(BaseMetric):
-    """Class for metrics associated with regression models."""
+    """Base class for all regression evaluation metrics.
+
+    Subclasses implement :meth:`score` to quantify the difference between
+    continuous predicted values and ground-truth targets. By default
+    regression metrics are minimised (``MAXIMIZE = False``) because smaller
+    error values indicate better performance.
+
+    Compatible with DashAI regression tasks. The helper ``prepare_to_metric``
+    in this module converts ``DashAIDataset`` targets and raw numpy predictions
+    to flat numpy arrays before passing them to sklearn metric functions.
+    """
 
     MAXIMIZE: bool = False
     COMPATIBLE_COMPONENTS = ["RegressionTask"]
 
 
-def validate_inputs(true_values: np.ndarray, pred_values: np.ndarray) -> None:
-    """Validate inputs.
-
-    Parameters
-    ----------
-    true_values : ndarray
-        True values.
-    pred_values : ndarray
-        Predicted values by the model.
-    """
-    if len(true_values) != len(pred_values):
-        raise ValueError(
-            "The length of the true and the predicted values must be equal, "
-            f"given: len(true_values) = {len(true_values)} and "
-            f"len(pred_values) = {len(pred_values)}."
-        )
-
-
 def prepare_to_metric(
-    y: DashAIDataset, predicted_values: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Prepare true and predicted values to be used later in metrics.
+    y: "DashAIDataset",
+    y_pred: "np.ndarray",
+) -> tuple["np.ndarray", "np.ndarray"]:
+    """
+    Prepare true and predicted values for metric calculation.
 
     Parameters
     ----------
     y : DashAIDataset
-        A DashAIDataset with the output columns of the data.
-    predicted_values: np.ndarray
-        A one-dimensional array with the predicted values for each instance.
+        True values.
+    y_pred : np.ndarray
+        Predicted values by the model.
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray]
-        A tuple with the true and predicted values in numpy format.
+    tuple[np.ndarray, np.ndarray]
+        Tuple containing true values and predicted values as numpy arrays.
     """
-    column_name = y.column_names[0]
-    true_values = np.array(y[column_name])
-    validate_inputs(true_values, predicted_values)
-    return true_values, predicted_values
+    import numpy as np
+
+    true_values = np.array(y.to_pandas().to_numpy().flatten())
+    pred_values = np.array(y_pred).flatten()
+
+    return true_values, pred_values

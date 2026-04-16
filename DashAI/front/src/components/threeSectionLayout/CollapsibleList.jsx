@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Collapse } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ItemBox from "./ItemBox";
+import { t } from "i18next";
 
 export default function CollapsibleList({
   items = [],
@@ -13,12 +15,34 @@ export default function CollapsibleList({
   onItemEdit,
   onItemInfo,
   defaultOpen = true,
-  title = "Available Items",
+  title = t("common:availableItems", "Available Items"),
   Icon = FolderIcon,
   getItemDescription,
 }) {
+  const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
   const count = items?.length ?? 0;
+  const prevCountRef = useRef(count);
+  const lastItemRef = useRef(null);
+
+  useEffect(() => {
+    const prevCount = prevCountRef.current;
+
+    if (count > prevCount && prevCount > 0) {
+      setOpen(true);
+
+      setTimeout(() => {
+        if (lastItemRef.current) {
+          lastItemRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      }, 300);
+    }
+
+    prevCountRef.current = count;
+  }, [count]);
 
   const defaultGetDescription = (item) => item.description || "";
 
@@ -46,11 +70,11 @@ export default function CollapsibleList({
           py: 0.5,
           px: 1,
           borderRadius: 1,
-          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+          "&:hover": { bgcolor: theme.palette.ui.hover },
         }}
         onClick={() => setOpen((v) => !v)}
       >
-        <Icon sx={{ fontSize: 20, color: "#00BEBB", mr: 1 }} />
+        <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
 
         <Typography
           sx={{
@@ -62,6 +86,7 @@ export default function CollapsibleList({
             flex: 1,
           }}
           title={title}
+          color="text.primary"
         >
           {title}
         </Typography>
@@ -69,8 +94,8 @@ export default function CollapsibleList({
         <Box
           sx={{
             mr: 1,
-            bgcolor: "#374151",
-            color: "white",
+            bgcolor: theme.palette.ui.scrollbar,
+            color: theme.palette.text.primary,
             borderRadius: "50%",
             width: 20,
             height: 20,
@@ -84,9 +109,13 @@ export default function CollapsibleList({
         </Box>
 
         {open ? (
-          <KeyboardArrowDownIcon sx={{ fontSize: 20, color: "#00BEBB" }} />
+          <KeyboardArrowDownIcon
+            sx={{ fontSize: 20, color: theme.palette.primary.main }}
+          />
         ) : (
-          <KeyboardArrowRightIcon sx={{ fontSize: 20, color: "#00BEBB" }} />
+          <KeyboardArrowRightIcon
+            sx={{ fontSize: 20, color: theme.palette.primary.main }}
+          />
         )}
       </Box>
 
@@ -97,18 +126,21 @@ export default function CollapsibleList({
         sx={{
           "&::-webkit-scrollbar": { width: "6px" },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#374151",
+            backgroundColor: theme.palette.ui.scrollbar,
             borderRadius: "3px",
           },
-          "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#4B5563" },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: theme.palette.ui.scrollbarHover,
+          },
           overflowY: "auto",
         }}
       >
         <Box pl={2}>
           {items?.length ? (
-            items.map((ds) => (
+            items.map((ds, index) => (
               <ItemBox
                 key={ds.id ?? ds.name}
+                ref={index === items.length - 1 ? lastItemRef : null}
                 isSelected={ds.id === selectedItemId}
                 name={ds.name}
                 description={
@@ -125,9 +157,14 @@ export default function CollapsibleList({
             ))
           ) : (
             <Typography
-              sx={{ color: "#ffffff", opacity: 0.5, textAlign: "center", p: 2 }}
+              sx={{
+                color: theme.palette.text.primary,
+                opacity: 0.5,
+                textAlign: "center",
+                p: 2,
+              }}
             >
-              No items found
+              {t("common:noItemsAvailable", "No items available.")}
             </Typography>
           )}
         </Box>

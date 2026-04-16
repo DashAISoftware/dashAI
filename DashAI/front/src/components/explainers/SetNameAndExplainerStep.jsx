@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getComponents as getComponentsRequest } from "../../api/component";
-import { generateSequentialName } from "../../utils/nameGenerator";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
+import { useTranslation } from "react-i18next";
 
 function SetNameAndExplainerStep({
   newExpl,
@@ -14,6 +14,7 @@ function SetNameAndExplainerStep({
   setNextEnabled,
   scope,
   taskName,
+  existingExplainers = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -22,10 +23,12 @@ function SetNameAndExplainerStep({
   const [nModifications, setNModifications] = useState(0);
   const [explNameOk, setExplNameOk] = useState(false);
   const [explNameError, setExplNameError] = useState(false);
+  const [explNameExistsError, setExplNameExistsError] = useState(false);
 
   const [explainers, setExplainers] = useState([]);
   const [selectedExplainer, setSelectedExplainer] = useState({});
   const [selectedExplainerOk, setSelectedExplainerOk] = useState(false);
+  const { t } = useTranslation(["explainers"]);
 
   function filterObjects(arr) {
     return arr.filter((obj) => !obj.name.startsWith("Fit"));
@@ -40,7 +43,9 @@ function SetNameAndExplainerStep({
       });
       setExplainers(filterObjects(explainers));
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the explainers list.");
+      enqueueSnackbar(t("explainers:error.fetchExplainers"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -84,18 +89,31 @@ function SetNameAndExplainerStep({
 
   useEffect(() => {
     if (typeof newExpl.name === "string" && newExpl.name.length >= 4) {
+      const normalizedName = newExpl.name.trim().toLowerCase();
+      const nameExists = existingExplainers.some(
+        (explainer) => explainer?.name?.trim().toLowerCase() === normalizedName,
+      );
+
+      setExplNameExistsError(nameExists);
       setExplNameOk(true);
+      setExplNameError(false);
       setNModifications(4);
+    } else {
+      setExplNameOk(false);
+      setExplNameExistsError(false);
+      if (nModifications >= 4) {
+        setExplNameError(true);
+      }
     }
-  }, []);
+  }, [newExpl.name, nModifications, existingExplainers]);
 
   useEffect(() => {
-    if (explNameOk && selectedExplainerOk) {
+    if (explNameOk && selectedExplainerOk && !explNameExistsError) {
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
     }
-  }, [explNameOk, selectedExplainerOk]);
+  }, [explNameOk, selectedExplainerOk, explNameExistsError]);
 
   return (
     <Grid
@@ -108,19 +126,25 @@ function SetNameAndExplainerStep({
       {/* Set Name subcomponent */}
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Select a {scope.toLowerCase()} explainer and anter a name
+          {t("explainers:label.selectExplainerAndName")}
         </Typography>
 
         <TextField
           id="explainer-name-input"
-          label="Explainer name"
+          label={t("explainers:label.explainerName")}
           value={newExpl.name}
           fullWidth
           onChange={handleNameInputChange}
           autoComplete="off"
           sx={{ mb: 2 }}
-          error={explNameError}
-          helperText="The explainer name must have at least 4 alphanumeric characters."
+          error={explNameError || explNameExistsError}
+          helperText={
+            explNameExistsError
+              ? t("explainers:error.nameAlreadyExists", {
+                  defaultValue: "Name already exists",
+                })
+              : t("explainers:error.nameTooShort")
+          }
         />
       </Grid>
 
@@ -154,6 +178,8 @@ SetNameAndExplainerStep.propTypes = {
   setNewExpl: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   scope: PropTypes.string.isRequired,
+  taskName: PropTypes.string,
+  existingExplainers: PropTypes.array,
 };
 
 export default SetNameAndExplainerStep;

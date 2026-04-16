@@ -1,23 +1,54 @@
-# flake8: noqa: ERA001
 import os
 from pathlib import Path
 
 import numpy as np
+import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
     select_columns,
     split_dataset,
-    split_indexes,
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.models import RandomForestClassifier
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.model_job import ModelJob
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
+from DashAI.back.models.scikit_learn.random_forest_classifier import (
+    RandomForestClassifier,
+)
+from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+from DashAI.back.types.value_types import Text
+
+
+@pytest.fixture(autouse=True, name="test_registry")
+def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
+    """Setup a test registry with test task, dataloader and model components."""
+    container = client.app.container
+
+    test_registry = ComponentRegistry(
+        initial_components=[
+            JSONDataLoader,
+            ModelJob,
+            OptunaOptimizer,
+            RandomForestClassifier,
+            BagOfWordsTextClassificationModel,
+        ]
+    )
+
+    monkeypatch.setitem(
+        container._services,
+        "component_registry",
+        test_registry,
+    )
+    return test_registry
 
 
 @pytest.fixture(scope="module", name="splited_dataset")
@@ -28,23 +59,35 @@ def splited_dataset_fixture():
     datasetdict = dataloader_test.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/models",
-        params={"data_key": "data"},
+        params={
+            "data_key": "data",
+            "schema": {
+                "text": {"type": "Text", "dtype": "string"},
+                "class": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     datasetdict = to_dashai_dataset(datasetdict)
+    datasetdict.types = datasetdict.types = {
+        "text": Text(arrow_type=pa.string()),
+        "class": Categorical(values=["0", "1"]),
+    }
 
-    train_idx, test_idx, val_idx = split_indexes(
-        total_rows=datasetdict.num_rows,
-        train_size=0.6,
-        test_size=0.2,
-        val_size=0.2,
+    new_table = save_types_in_arrow_metadata(
+        datasetdict.arrow_table,
+        {col: dtype.to_string() for col, dtype in datasetdict.types.items()},
+    )
+
+    datasetdict = DashAIDataset(
+        new_table, splits=datasetdict.splits, types=datasetdict.types
     )
 
     splited_dataset = split_dataset(
         datasetdict,
-        train_indexes=train_idx,
-        test_indexes=test_idx,
-        val_indexes=val_idx,
+        train_indexes=[0, 1, 2],
+        test_indexes=[3, 4],
+        val_indexes=[5, 6],
     )
 
     x, y = select_columns(
@@ -111,7 +154,7 @@ def test_fit_model(
     x, y = splited_dataset
     x = x["train"]
     y = y["train"]
-    sample_model.fit(x, y)
+    sample_model.train(x, y)
 
     assert hasattr(sample_model.vectorizer, "vocabulary_")
     assert hasattr(sample_model.classifier, "estimators_")
@@ -127,7 +170,7 @@ def test_predict_model(
     vectorizer_func = sample_model.get_vectorizer(input_column)
     vectorized_dataset = x.map(vectorizer_func, remove_columns="text")
     vectorized_dataset = to_dashai_dataset(vectorized_dataset)
-    sample_model.classifier.fit(vectorized_dataset, y["test"])
+    sample_model.classifier.train(vectorized_dataset, y["test"])
     predictions = sample_model.predict(x)
     assert isinstance(predictions, np.ndarray)
     assert len(predictions) == len(y["test"])
@@ -139,7 +182,7 @@ def test_save_and_load_model(
     tmp_path: Path,
 ):
     x, y = splited_dataset
-    sample_model.fit(x["train"], y["train"])
+    sample_model.train(x["train"], y["train"])
     nwft_filename = os.path.join(tmp_path, "nwft_model")
     sample_model.save(nwft_filename)
     loaded_model = sample_model.load(nwft_filename)

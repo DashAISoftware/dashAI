@@ -1,12 +1,3 @@
-from typing import Tuple, Union
-
-import numpy as np
-import pandas as pd
-import plotly
-import plotly.graph_objs as go
-import shap
-from datasets import DatasetDict
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
@@ -14,60 +5,140 @@ from DashAI.back.core.schema_fields import (
     float_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
-from DashAI.back.models import BaseModel
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.types.categorical import Categorical
 
 
 class KernelShapSchema(BaseSchema):
-    """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
-    values to explain the output of machine learning model by attributing contributions
-    of each feature to the model's prediction.
+    """Schema for KernelShap explainer hyperparameters.
+
+    Configures the link function that connects SHAP feature-attribution values to
+    the model output scale (``"identity"`` for regression/probability outputs,
+    ``"logit"`` for log-odds interpretation), and the background-data fraction
+    used to estimate the expected model output.
     """
 
     link: schema_field(
         enum_field(enum=["identity", "logit"]),
         placeholder="identity",
-        description="Link function to connect the feature importance values to the "
-        "model's outputs. Options are 'identity' to use identity function or 'logit' "
-        "to use log-odds function.",
+        description=MultilingualString(
+            en=(
+                "Link function to connect feature importance values to the "
+                "model's outputs. Options are 'identity' (identity function) "
+                "or 'logit' (log-odds)."
+            ),
+            es=(
+                "Función de enlace para conectar los valores de importancia de "
+                "características con las salidas del modelo. Opciones: 'identity' "
+                "(identidad) o 'logit' (log-odds)."
+            ),
+        ),
+        alias=MultilingualString(en="Link function", es="Función de enlace"),
     )  # type: ignore
 
     fit_parameter_sample_background_data: schema_field(
         bool_field(),
         placeholder=True,
-        description="Parameter to fit the explainer. 'true' if the background "
-        "data must be sampled, otherwise the entire train data set is used. "
-        "Smaller datasets speed up the algorithm run time.",
+        description=MultilingualString(
+            en=(
+                "Parameter to fit the explainer. 'true' if background data must "
+                "be sampled; otherwise the entire training set is used. Smaller "
+                "datasets speed up the algorithm runtime."
+            ),
+            es=(
+                "Parámetro para ajustar el explicador. 'true' si se deben "
+                "muestrear los datos de fondo; de lo contrario se usa el "
+                "conjunto de entrenamiento completo. Conjuntos más pequeños "
+                "reducen el tiempo de ejecución."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Sample background data",
+            es="Muestrear datos de fondo",
+        ),
     )  # type: ignore
 
     fit_parameter_background_fraction: schema_field(
         float_field(ge=0, le=1),
         placeholder=0.2,
-        description="Parameter to fit the explainer. If the parameter "
-        "'sample_background_data' is 'true', the proportion of background "
-        "data samples to be drawn from the training data set.",
+        description=MultilingualString(
+            en=(
+                "If 'Sample background data' is selected, this corresponds to "
+                "the fraction of background samples to draw from the training set."
+            ),
+            es=(
+                "Si se selecciona 'Muestrear datos de fondo', entonces corresponde "
+                "a la proporción de muestras de fondo a extraer "
+                "del conjunto de entrenamiento."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Background fraction",
+            es="Fracción de fondo",
+        ),
     )  # type: ignore
 
     fit_parameter_sampling_method: schema_field(
         enum_field(enum=["shuffle", "kmeans"]),
         placeholder="shuffle",
-        description="Parameter to fit the explainer. If the parameter "
-        "'sample_background_data' is 'true', whether to sample random "
-        "samples with 'shuffle' option or summarize the data set with "
-        "'kmeans' option. If 'categorical_features' is 'true', 'shuffle' "
-        "options used by default.",
+        description=MultilingualString(
+            en=(
+                "If 'true', choose to sample random "
+                "instances with 'shuffle' or summarize the dataset with "
+                "'kmeans'. If there are categorical features, 'shuffle' is used "
+                "by default."
+            ),
+            es=(
+                "Si es 'true', elija muestrear "
+                "instancias aleatorias con 'shuffle' o resumir el conjunto con "
+                "'kmeans'. Si hay características categóricas, se usa 'shuffle' "
+                "por defecto."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Sampling method",
+            es="Método de muestreo",
+        ),
     )  # type: ignore
 
 
 class KernelShap(BaseLocalExplainer):
-    """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
-    values to explain the output of machine learning model by attributing contributions
-    of each feature to the model's prediction.
+    """Model-agnostic local explainer that estimates SHAP values
+    via a weighted linear model.
+
+    Kernel SHAP (SHapley Additive exPlanations) unifies LIME and classic Shapley
+    values from cooperative game theory. For each instance to explain, it fits a
+    weighted linear model over a sampled coalition of feature subsets, where the
+    sample weights are derived from the Shapley kernel. The resulting coefficients
+    are the SHAP values — each one represents the marginal contribution of a feature
+    to the model's prediction relative to a background (reference) distribution.
+
+    Because it treats the model as a black box (querying only ``predict_proba``),
+    Kernel SHAP works with any classifier. The trade-off is higher computational
+    cost compared to model-specific SHAP implementations (Tree SHAP, Deep SHAP).
+
+    References
+    ----------
+    - [1] Lundberg, S.M. & Lee, S.I. (2017). "A Unified Approach to Interpreting
+           Model Predictions." NeurIPS 30. https://arxiv.org/abs/1705.07874
+    - [2] https://shap.readthedocs.io/en/latest/generated/shap.KernelExplainer.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
-    DISPLAY_NAME = "Kernel SHAP"
+    DISPLAY_NAME = MultilingualString(en="Kernel SHAP", es="Kernel SHAP")
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Kernel SHAP approximates SHAP values to explain a model's output by "
+            "attributing contributions of each feature to the prediction."
+        ),
+        es=(
+            "Kernel SHAP aproxima los valores SHAP para explicar la salida del "
+            "modelo atribuyendo la contribución de cada característica a la "
+            "predicción."
+        ),
+    )
     COLOR = "#008000"
     SCHEMA = KernelShapSchema
 
@@ -92,7 +163,7 @@ class KernelShap(BaseLocalExplainer):
 
     def _sample_background_data(
         self,
-        background_data: np.array,
+        background_data,
         background_fraction: float,
         sampling_method: str = "shuffle",
         categorical_features: bool = False,
@@ -124,6 +195,9 @@ class KernelShap(BaseLocalExplainer):
             explainer.
         """
 
+        # Lazy import of shap to avoid heavy imports at module load time
+        import shap
+
         samplers = {"shuffle": shap.sample, "kmeans": shap.kmeans}
 
         n_background_samples = int(background_fraction * background_data.shape[0])
@@ -137,10 +211,10 @@ class KernelShap(BaseLocalExplainer):
 
     def fit(
         self,
-        background_dataset: Tuple[DatasetDict, DatasetDict],
-        sample_background_data: str = "false",
-        background_fraction: Union[float, None] = None,
-        sampling_method: Union[str, None] = None,
+        background_dataset,
+        sample_background_data="false",
+        background_fraction=None,
+        sampling_method=None,
     ):
         """Method to train the KernelShap explainer.
 
@@ -170,13 +244,17 @@ class KernelShap(BaseLocalExplainer):
 
         x, y = background_dataset
 
-        background_data = x["train"].to_pandas()
-        features = x["train"].features
+        x_train = x["train"]
+        y_train = y["train"]
+
+        background_data = x_train.to_pandas()
+        features = x_train.column_names
+        types = x_train.types
         feature_names = list(features)
 
         categorical_features = False
         for feature in features:
-            if features[feature]._type == "ClassLabel":
+            if isinstance(types[feature], Categorical):
                 categorical_features = True
 
         if sample_background_data:
@@ -188,6 +266,9 @@ class KernelShap(BaseLocalExplainer):
             )
 
         # TODO: consider the case where the predictor is not a Sklearn model
+        # Lazy import of shap
+        import shap
+
         self.explainer = shap.KernelExplainer(
             model=self.model.predict,
             data=background_data,
@@ -196,15 +277,15 @@ class KernelShap(BaseLocalExplainer):
         )
 
         # Metadata
-        output_column = list(y["train"].features)[0]
-        target_names = y["train"].features[output_column].names
+        output_column = y_train.column_names[0]
+        target_names = y_train.types[output_column].categories
         self.metadata = {"feature_names": feature_names, "target_names": target_names}
 
         return self
 
     def explain_instance(
         self,
-        instances: DatasetDict,
+        instances,
     ):
         """Method for explaining the model prediciton of an instance using the Kernel
         Shap method.
@@ -219,18 +300,28 @@ class KernelShap(BaseLocalExplainer):
         dict
             dictionary with the shap values for each instance.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         dataset_dashai = to_dashai_dataset(instances)
-        X = dataset_dashai.to_pandas()
 
-        predictions = self.model.predict(x_pred=X)
+        if hasattr(self.model, "prepare_dataset"):
+            dataset_prepared = self.model.prepare_dataset(dataset_dashai, is_fit=False)
+        else:
+            dataset_prepared = dataset_dashai
+
+        X = dataset_prepared.to_pandas()
+
+        predictions = self.model.predict(x_pred=dataset_dashai)
 
         # TODO: evaluate args nsamples y l1_reg
+        # Lazy import numpy
+        import numpy as np
+
         shap_values = self.explainer.shap_values(X=X)
 
-        # shap_values has size (n_clases, n_instances, n_features)
-        # Reorder shap values: (n_instances, n_clases, n_features)
-        shap_values = np.array(shap_values).swapaxes(1, 0)
+        # shap_values has size (n_instances, n_features, n_classes)
+        # Reorder shap values: (n_instances, n_classes, n_features)
+        shap_values = np.array(shap_values).transpose(0, 2, 1)
 
         explanation = {
             "metadata": self.metadata,
@@ -249,7 +340,7 @@ class KernelShap(BaseLocalExplainer):
         return explanation
 
     def _create_plot(
-        self, data: pd.DataFrame, base_value: float, y_pred_pbb: float, y_pred_name: str
+        self, data, base_value: float, y_pred_pbb: float, y_pred_name: str
     ):
         """Helper method to create the explanation plot using plotly.
 
@@ -269,6 +360,11 @@ class KernelShap(BaseLocalExplainer):
             JSON containing the information of the explanation plot
             to be rendered.
         """
+        # Lazy imports
+        import numpy as np
+        import plotly
+        import plotly.graph_objs as go
+
         x = data["shap_values"].to_numpy()
         y = data["label"].to_numpy()
         measure = np.repeat("relative", len(y))
@@ -354,6 +450,10 @@ class KernelShap(BaseLocalExplainer):
         target_names = metadata["target_names"]
 
         # Normaliza feature_names a 1D
+        # Lazy import heavy libs
+        import numpy as np
+        import pandas as pd
+
         feats = np.asarray(feature_names, dtype=str).reshape(-1)
 
         plots = []
@@ -377,6 +477,7 @@ class KernelShap(BaseLocalExplainer):
 
             # 2) Intenta extraer del objeto shap.Explanation si aplica
             try:
+                # Lazy import of shap Explanation type only if available
                 from shap._explanation import Explanation
 
                 if isinstance(sv, Explanation):

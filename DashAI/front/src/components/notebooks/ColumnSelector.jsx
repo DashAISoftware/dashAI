@@ -3,34 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Typography, Chip, Stack } from "@mui/material";
 import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
-
-const columns = [
-  {
-    field: "id",
-    headerName: "Index",
-  },
-  {
-    field: "columnName",
-    headerName: "Column Name",
-    flex: 1,
-  },
-  {
-    field: "valueType",
-    headerName: "Value Type",
-    flex: 0.5,
-  },
-  {
-    field: "dataType",
-    headerName: "Data Type",
-    flex: 0.5,
-  },
-  {
-    field: "order",
-    headerName: "Selected Order",
-    type: "number",
-    flex: 0.5,
-  },
-];
+import { Trans, useTranslation } from "react-i18next";
 
 /**
  * Generic column selection component that can be reused across the application
@@ -66,6 +39,35 @@ function ColumnSelector({
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const columns = [
+    {
+      field: "id",
+      headerName: t("common:index"),
+    },
+    {
+      field: "columnName",
+      headerName: t("datasets:label.columnName"),
+      flex: 1,
+    },
+    {
+      field: "valueType",
+      headerName: t("datasets:label.valueType"),
+      flex: 0.5,
+    },
+    {
+      field: "dataType",
+      headerName: t("datasets:label.dataType"),
+      flex: 0.5,
+    },
+    {
+      field: "order",
+      headerName: t("datasets:label.selectedOrder"),
+      type: "number",
+      flex: 0.5,
+    },
+  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -79,8 +81,8 @@ function ColumnSelector({
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -215,88 +217,98 @@ function ColumnSelector({
 
   return (
     <Box>
-      {Object.keys(inputCardinality).length > 0 && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            borderRadius: 2,
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            textAlign: "center",
-          }}
-        >
-          {/* Column requirement info */}
+      {/* Selected count - always shown */}
+      <Box
+        sx={{
+          mb: 2,
+          p: 2,
+          borderRadius: 2,
+          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          textAlign: "center",
+        }}
+      >
+        {/* Column requirement info */}
+        {Object.keys(inputCardinality).length > 0 && (
           <Typography
             variant="body1"
             sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
           >
-            Required columns:
-            {inputCardinality.exact
-              ? ` exactly ${inputCardinality.exact}`
-              : inputCardinality.max
-                ? ` between ${inputCardinality.min || 0} and ${
-                    inputCardinality.max
-                  }`
-                : ` at least ${inputCardinality.min || 0}`}
+            {t("datasets:label.requiredColumns", {
+              exact: inputCardinality.exact,
+              min: inputCardinality.min || 0,
+              max: inputCardinality.max,
+              context: inputCardinality.exact
+                ? "exact"
+                : inputCardinality.max
+                  ? "range"
+                  : "min",
+            })}
           </Typography>
+        )}
 
-          {/* Selected count */}
+        {/* Selected count */}
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: valid ? "success.main" : "error.main",
+            letterSpacing: 0.3,
+            mb:
+              (allowedDtypes?.length > 0 && !allowedDtypes.includes("*")) ||
+              restrictedDtypes?.length > 0
+                ? 1
+                : 0,
+          }}
+        >
+          {t("datasets:label.selectedColumns", {
+            count: rowSelectionModel.length,
+          })}
+        </Typography>
+
+        {/* Allowed data types */}
+        {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
           <Typography
-            variant="h6"
+            variant="body2"
             sx={{
-              fontWeight: 700,
-              color: valid ? "success.main" : "error.main",
-              letterSpacing: 0.3,
-              mb: allowedDtypes?.length > 0 ? 1 : 0,
+              color: "rgba(255, 255, 255, 0.5)",
+              fontStyle: "italic",
+              mt: 1,
             }}
           >
-            {`Selected ${rowSelectionModel.length} column${
-              rowSelectionModel.length !== 1 ? "s" : ""
-            }`}
-          </Typography>
-
-          {/* Allowed data types */}
-          {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "rgba(255, 255, 255, 0.5)",
-                fontStyle: "italic",
-                mt: 1,
-              }}
-            >
-              Allowed data types:{" "}
+            <Trans i18nKey="datasets:label.allowedDataTypes">
+              Allowed data types:
               <Box
                 component="span"
                 sx={{ color: "secondary.main", fontWeight: 500 }}
               >
                 {allowedDtypes.join(", ")}
               </Box>
-            </Typography>
-          )}
-          {/* Restricted data types */}
-          {restrictedDtypes?.length > 0 && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "rgba(255, 255, 255, 0.5)",
-                fontStyle: "italic",
-                mt: 1,
-              }}
-            >
-              Restricted data types:{" "}
+            </Trans>
+          </Typography>
+        )}
+        {/* Restricted data types */}
+        {restrictedDtypes?.length > 0 && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.5)",
+              fontStyle: "italic",
+              mt: 1,
+            }}
+          >
+            <Trans i18nKey="datasets:label.restrictedDataTypes">
+              Restricted data types:
               <Box
                 component="span"
                 sx={{ color: "secondary.main", fontWeight: 500 }}
               >
                 {restrictedDtypes.join(", ")}
               </Box>
-            </Typography>
-          )}
-        </Box>
-      )}
-
+            </Trans>
+          </Typography>
+        )}
+      </Box>{" "}
       {/* Data Grid */}
       <DataGrid
         data-tour="column-selector"

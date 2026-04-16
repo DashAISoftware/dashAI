@@ -1,38 +1,57 @@
-from typing import List
+from typing import TYPE_CHECKING, List, Union
 
-from datasets import DatasetDict, Value
-
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RegressionTask(BaseTask):
-    """Base class for regression tasks.
+    """Abstract base task for continuous-output (regression) problems in DashAI.
 
-    Here you can change the methods provided by class Task.
+    Regression tasks predict one or more continuous numeric values from input
+    features. This base class constrains output columns to ``Float`` or
+    ``Integer`` types and accepts ``Float``, ``Integer``, and ``Categorical``
+    input types. Unlike classification tasks, regression does not require a
+    ``Categorical`` output and ``num_labels`` always returns ``None``.
     """
 
-    DESCRIPTION: str = """
+    DESCRIPTION: str = MultilingualString(
+        en="""
     Regression in machine learning involves predicting continuous values for
     structured data organized in tabular form (rows and columns).
     Models are trained to learn patterns and relationships in the data,
-    enabling accurate prediction of new instances."""
-    DISPLAY_NAME: str = "Regression"
+    enabling accurate prediction of new instances.""",
+        es="""
+    La regresión en el aprendizaje automático implica predecir valores
+    continuos para datos estructurados organizados en
+    forma tabular (filas y columnas).
+    Los modelos se entrenan para aprender patrones y relaciones en los datos,
+    lo que permite una predicción precisa de nuevas instancias.""",
+    )
+    DISPLAY_NAME: str = MultilingualString(en="Regression", es="Regresión")
 
     metadata: dict = {
-        "inputs_types": [Value],
-        "outputs_types": [Value],
+        "inputs_types": [Float, Integer, Categorical],
+        "outputs_types": [Float, Integer],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
     }
 
     def prepare_for_task(
-        self, datasetdict: DatasetDict, outputs_columns: List[str]
-    ) -> DashAIDataset:
-        """Change the column types to suit the regression task.
+        self,
+        dataset: Union["DatasetDict", "DashAIDataset"],
+        input_columns: List[str],
+        output_columns: List[str],
+    ) -> "DashAIDataset":
+        """Convert the dataset to DashAIDataset and validate types.
+
 
         A copy of the dataset is created.
 
@@ -44,11 +63,16 @@ class RegressionTask(BaseTask):
         Returns
         -------
         DashAIDataset
-            Dataset with the new types
+            Dataset with validated types
         """
-        return to_dashai_dataset(datasetdict)
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset
 
-    def process_predictions(self, dataset, predictions, output_column):
+    def process_predictions(
+        self, dataset: "DashAIDataset", predictions: "ndarray", output_column: str
+    ):
         """Process the predictions
 
         Parameters
@@ -66,7 +90,7 @@ class RegressionTask(BaseTask):
         """
         return predictions
 
-    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
         """Get the number of unique labels in the output column.
 
         Parameters

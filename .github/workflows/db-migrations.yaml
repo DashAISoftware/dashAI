@@ -1,0 +1,62 @@
+name: DB Migrations
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  alembic-migrations:
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade --upgrade-strategy eager -r requirements.txt
+          pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
+
+      - name: Set DB env vars
+        run: |
+          echo "DB_FILE=$RUNNER_TEMP/dashai-ci.sqlite3" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=sqlite:///$RUNNER_TEMP/dashai-ci.sqlite3" >> "$GITHUB_ENV"
+          echo "Temp dir: $RUNNER_TEMP"
+
+      - name: Show Alembic info
+        run: |
+          alembic --version
+          echo "DB will be at: $DATABASE_URL"
+
+      - name: Prepare temp dir
+        run: |
+          mkdir -p "$(dirname "$DB_FILE")"
+          rm -f "$DB_FILE"
+
+      # upgrade to head
+      - name: Upgrade to head
+        run: |
+          alembic -x url="$DATABASE_URL" upgrade head
+
+      # Checks downgrade and upgrade again (reversibility)
+      - name: Downgrade to base and upgrade again (reversibility check)
+        run: |
+          alembic -x url="$DATABASE_URL" downgrade base
+          alembic -x url="$DATABASE_URL" upgrade head
+
+      - name: Check for pending autogenerate (python-based)
+        env:
+          PYTHONPATH: "${PYTHONPATH}:."
+        run: python -m scripts.ci_alembic_check

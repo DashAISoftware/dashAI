@@ -61,12 +61,57 @@ const generateField = (subSchema) => {
   // SPECIAL CASE: If it has placeholder.optimize, it is an optimizable field
   // It must be validated as an object regardless of the declared type
   if (subSchema.placeholder?.optimize !== undefined) {
-    field = Yup.object().shape({
-      fixed_value: Yup.number().nullable(),
-      lower_bound: Yup.number().nullable(),
-      upper_bound: Yup.number().nullable(),
-      optimize: Yup.boolean(),
-    });
+    // Create base validators for optimizer fields with min/max constraints
+    let fixedValueValidator = Yup.number().nullable();
+    let lowerBoundValidator = Yup.number().nullable();
+    let upperBoundValidator = Yup.number().nullable();
+
+    // Apply min/max constraints from the schema to each field
+    fixedValueValidator = applyMinMax(
+      fixedValueValidator,
+      subSchema.minimum,
+      subSchema.maximum,
+      subSchema.exclusiveMinimum,
+      subSchema.exclusiveMaximum,
+    );
+
+    lowerBoundValidator = applyMinMax(
+      lowerBoundValidator,
+      subSchema.minimum,
+      subSchema.maximum,
+      subSchema.exclusiveMinimum,
+      subSchema.exclusiveMaximum,
+    );
+
+    upperBoundValidator = applyMinMax(
+      upperBoundValidator,
+      subSchema.minimum,
+      subSchema.maximum,
+      subSchema.exclusiveMinimum,
+      subSchema.exclusiveMaximum,
+    );
+
+    field = Yup.object()
+      .shape({
+        fixed_value: fixedValueValidator,
+        lower_bound: lowerBoundValidator,
+        upper_bound: upperBoundValidator,
+        optimize: Yup.boolean(),
+      })
+      .test(
+        "bounds-validation",
+        "Lower bound must be less than or equal to upper bound",
+        function (value) {
+          if (!value) return true;
+          const { lower_bound, upper_bound } = value;
+
+          // Only validate if both bounds are defined
+          if (lower_bound != null && upper_bound != null) {
+            return lower_bound <= upper_bound;
+          }
+          return true;
+        },
+      );
 
     // Apply required validation if necessary
     if (subSchema.required) {
@@ -133,7 +178,13 @@ const applyEnum = (validator, enumValues) => {
   return validator;
 };
 
-const applyMinMax = (validator, minimum, maximum, exclusiveMinimum) => {
+const applyMinMax = (
+  validator,
+  minimum,
+  maximum,
+  exclusiveMinimum,
+  exclusiveMaximum,
+) => {
   if (minimum !== undefined) {
     validator = validator.min(minimum);
   }
@@ -142,6 +193,9 @@ const applyMinMax = (validator, minimum, maximum, exclusiveMinimum) => {
   }
   if (exclusiveMinimum !== undefined) {
     validator = validator.min(exclusiveMinimum);
+  }
+  if (exclusiveMaximum !== undefined) {
+    validator = validator.max(exclusiveMaximum);
   }
   return validator;
 };
@@ -178,9 +232,8 @@ export const getValidator = (option) => {
     validator,
     option.minimum,
     option.maximum,
-    option.exclusiveMinimum && option.default !== undefined
-      ? Math.min(option.exclusiveMinimum, option.default)
-      : option.exclusiveMinimum,
+    option.exclusiveMinimum,
+    option.exclusiveMaximum,
   );
   validator = applyRequired(validator, option.required);
 
@@ -292,35 +345,21 @@ export const checkHowManyOptimazers = (values) => {
 };
 
 export const getParamsFromSubform = (subform) => {
-  if (!subform || !subform.properties) {
+  if (!subform) {
     return null;
   }
-  if (
-    subform.properties.params &&
-    subform.properties.params.comp &&
-    subform.properties.params.comp.params
-  ) {
+  if (subform.properties.params.comp) {
     return subform.properties.params.comp.params;
   }
-  if (subform.properties.params) {
-    return subform.properties.params;
-  }
-  return null;
+  return subform.properties.params;
 };
 
 export const getModelFromSubform = (subform) => {
-  if (!subform || !subform.properties) {
+  if (!subform) {
     return null;
   }
-  if (
-    subform.properties.params &&
-    subform.properties.params.comp &&
-    subform.properties.params.comp.component
-  ) {
+  if (subform.properties.params.comp) {
     return subform.properties.params.comp.component;
   }
-  if (subform.properties.component) {
-    return subform.properties.component;
-  }
-  return null;
+  return subform.properties.component;
 };

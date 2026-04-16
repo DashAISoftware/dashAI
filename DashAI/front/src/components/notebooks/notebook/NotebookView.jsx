@@ -1,3 +1,4 @@
+import { useTourContext } from "../../tour/TourProvider";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Box, CircularProgress, Typography } from "@mui/material";
@@ -7,17 +8,16 @@ import {
 } from "../../../api/notebook";
 import ExplorerBox from "../explorer/ExplorerBox";
 import ConverterBox from "../converter/ConverterBox";
-import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 import ItemsToDeleteList from "../converter/ItemsToDeleteList";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { deleteExplorer } from "../../../api/explorer";
 import { deleteConverterById } from "../../../api/converter";
 import { startJobPolling } from "../../../utils/jobPoller";
+import { useTranslation } from "react-i18next";
 
 const RowItem = React.memo(function RowItem({
   item,
-  handleExplorerDetailsClick,
   handleExplorerDeleteClick,
   handleConverterDeleteClick,
   handleStatusChange,
@@ -32,7 +32,6 @@ const RowItem = React.memo(function RowItem({
       {item.type === "explorer" ? (
         <ExplorerBox
           explorer={item}
-          handleExplorerDetailsClick={handleExplorerDetailsClick}
           handleExplorerDeleteClick={handleExplorerDeleteClick}
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
@@ -52,21 +51,35 @@ const RowItem = React.memo(function RowItem({
 });
 
 export default function NotebookView({ notebook }) {
+  const { t } = useTranslation(["datasets", "common"]);
+  const tourContext = useTourContext();
+
+  useEffect(() => {
+    if (sessionStorage.getItem("startNotebookTour") === "true") {
+      sessionStorage.removeItem("startNotebookTour");
+      setTimeout(() => {
+        if (tourContext && typeof tourContext.startTour === "function") {
+          tourContext.startTour();
+        } else if (tourContext && typeof tourContext.run === "undefined") {
+          tourContext.run = true;
+        }
+      }, 1000);
+    }
+  }, [tourContext]);
+
   if (!notebook) {
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
-        <Typography>Loading...</Typography>
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}</Typography>
       </Box>
     );
   }
 
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
-  const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
-  const [selectedExplorer, setSelectedExplorer] = useState(null);
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -118,15 +131,12 @@ export default function NotebookView({ notebook }) {
     fetchExplorersAndConverters();
   }, [fetchExplorersAndConverters]);
 
-  const handleExplorerDetailsClick = useCallback((explorer) => {
-    setSelectedExplorer(explorer);
-    setOpenExplorerDetails(true);
-  }, []);
-
   const handleExplorerDeleteClick = useCallback((explorer) => {
     setExplorerToDelete(explorer);
     setDeleteModalContent(
-      `Are you sure you want to delete the explorer "${explorer?.exploration_type}"? This action cannot be undone.`,
+      t("datasets:label.deleteExplorerConfirmation", {
+        explorer: explorer?.exploration_type,
+      }),
     );
     setOpenDeleteExplorerConfirmation(true);
   }, []);
@@ -139,8 +149,11 @@ export default function NotebookView({ notebook }) {
       setItemsToDelete(items);
 
       setDeleteModalContent(
-        `Are you sure you want to delete the converter "${converter?.converter}"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.`,
+        t("datasets:label.deleteConverterConfirmation", {
+          converter: converter?.converter,
+        }),
       );
+
       setOpenDeleteConverterConfirmation(true);
     },
     [getItemsToDelete],
@@ -241,9 +254,7 @@ export default function NotebookView({ notebook }) {
             alignItems: "center",
           }}
         >
-          <Typography>
-            Start exploring by adding your first explorer or converter!
-          </Typography>
+          <Typography>{t("datasets:label.noExplorersOrConverters")}</Typography>
         </Box>
       ) : (
         <Virtuoso
@@ -254,7 +265,6 @@ export default function NotebookView({ notebook }) {
           itemContent={(index, item) => (
             <RowItem
               item={item}
-              handleExplorerDetailsClick={handleExplorerDetailsClick}
               handleExplorerDeleteClick={handleExplorerDeleteClick}
               handleConverterDeleteClick={handleConverterDeleteClick}
               handleStatusChange={handleStatusChange}
@@ -262,14 +272,7 @@ export default function NotebookView({ notebook }) {
           )}
         />
       )}
-      <ExplorerDetailsModal
-        open={openExplorerDetails}
-        onClose={() => {
-          setOpenExplorerDetails(false);
-          setSelectedExplorer(null);
-        }}
-        explorer={selectedExplorer}
-      />
+
       <DeleteConfirmationModal
         open={openDeleteExplorerConfirmation}
         onClose={handleCancelDelete}

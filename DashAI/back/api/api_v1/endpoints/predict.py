@@ -1,252 +1,136 @@
 import json
 import logging
-import os
-from pathlib import Path
+from typing import TYPE_CHECKING, Dict, List
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.predict_params import RenameRequest
-from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
-from DashAI.back.tasks.base_task import BaseTask
-from DashAI.back.tasks.classification_task import ClassificationTask
+from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    ModelSession,
+    Prediction,
+    Run,
+)
+from DashAI.back.job.predict_job import run_manual_prediction
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session, sessionmaker
+
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 router = APIRouter()
 
 
-@router.get("/metadata_json/")
+@router.post("/")
 @inject
-async def get_metadata_prediction_json(
-    config: dict = Depends(lambda: di["config"]), path: Path = Path("")
+async def create_prediction(
+    params: PredictionCreationParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
-    Fetches prediction metadata from JSON files.
+    Creates a prediction for a given trained model/run.
 
     Parameters
     ----------
-    config : dict
-        Configuration dictionary injected automatically.
+    run_id : int
+        The ID of the trained model/run.
+    dataset_id : int | None
+        The ID of the dataset to use for prediction (optional).
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
-    List[dict]
-        A list of metadata dictionaries from prediction JSON files.
+    dict
+        A dictionary containing the prediction result.
 
     Raises
     ------
     HTTPException
-        If the directory or files cannot be accessed.
+        If the run or model session is not found.
     """
-    if path == Path(""):
-        path = Path(f"{config['DATASETS_PATH']}/predictions/")
-    try:
-        path.mkdir(parents=True, exist_ok=True)
-        files = os.listdir(path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-    json_files = [f for f in files if f.endswith(".json")]
-    if not json_files:
-        return []
-
-    prediction_data = []
-    # Read and collect metadata from each JSON file
-    for json_file in json_files:
-        file_path = path / json_file
-        with open(file_path, "r") as f:
-            data = json.load(f)["metadata"]
-            prediction_data.append(data)
-    return prediction_data
-
-
-@router.get("/prediction_table")
-@inject
-async def get_prediction_table(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-):
-    """
-    Fetches a table of prediction metadata from the database.
-
-    Parameters
-    ----------
-    session_factory : sessionmaker
-        SQLAlchemy session factory injected automatically.
-
-    Returns
-    -------
-    List[dict]
-        A list of dictionaries containing prediction metadata.
-
-    Raises
-    ------
-    HTTPException
-        If no data is found.
-    """
-
+    db: Session
     with session_factory() as db:
-        query_results = db.query(
-            Experiment.task_name,
-            Run.model_name.label("run_type"),
-            Dataset.name.label("dataset_name"),
-            Dataset.id.label("dataset_id"),
-            Run.name.label("model_name"),
-            Dataset.last_modified,
-        ).all()
-
-        if not query_results:
+        run: Run = db.get(Run, params.run_id)
+        if not run:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No data found",
+                status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
             )
 
-        prediction_data = [
-            {
-                "id": result.dataset_id,
-                "last_modified": result.last_modified,
-                "run_name": result.run_type,
-                "model_name": result.model_name,
-                "dataset_name": result.dataset_name,
-                "task_name": result.task_name,
-            }
-            for result in query_results
-        ]
-        return prediction_data
+        prediction = Prediction(
+            run_id=run.id,
+            dataset_id=params.dataset_id,
+        )
+        db.add(prediction)
+        db.commit()
+        db.refresh(prediction)
+        return prediction
 
 
-@router.get("/model_table")
+@router.get("/")
 @inject
-async def get_model_table(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+async def get_all_predictions(
+    run_id: int = Query(None, description="The ID of the trained model/run"),
+    prediction_id: int = Query(None, description="The ID of the prediction"),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
-    Fetches a table of model metadata from the database.
+    Fetches all predictions, optionally filtered by run_id.
 
     Parameters
     ----------
-    session_factory : sessionmaker
-        SQLAlchemy session factory injected automatically.
+    run_id : int, optional
+        The ID of the trained model/run to filter predictions.
+    prediction_id : int, optional
+        The ID of the prediction to fetch.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
-    List[dict]
-        A list of dictionaries containing model metadata.
-
-    Raises
-    ------
-    HTTPException
-        If no data is found.
+    List[Prediction]
+        A list of Prediction objects.
     """
+    print("Fetching predictions with run_id:", run_id)
+
+    db: Session
     with session_factory() as db:
-        query_results = (
-            db.query(
-                Run.id.label("run_id"),
-                Experiment.name.label("experiment_name"),
-                Experiment.created,
-                Experiment.task_name,
-                Run.name.label("run_name"),
-                Run.model_name,
-                Dataset.name.label("dataset_name"),
-                Dataset.id.label("dataset_id"),
-            )
-            .join(Experiment, Experiment.id == Run.experiment_id)
-            .join(Dataset, Experiment.dataset_id == Dataset.id)
+        query = db.query(Prediction)
+        if run_id is not None:
+            query = query.filter(Prediction.run_id == run_id)
+        if prediction_id is not None:
+            query = query.filter(Prediction.id == prediction_id)
+
+        predictions = query.all()
+
+        datasets = (
+            db.query(Dataset)
+            .filter(Dataset.id.in_([p.dataset_id for p in predictions if p.dataset_id]))
             .all()
         )
-        if not query_results:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No data found",
-            )
 
-        prediction_data = [
-            {
-                "id": result.run_id,
-                "experiment_name": result.experiment_name,
-                "created": result.created,
-                "run_name": result.run_name,
-                "task_name": result.task_name,
-                "model_name": result.model_name,
-                "dataset_name": result.dataset_name,
-                "dataset_id": result.dataset_id,
-            }
-            for result in query_results
-        ]
-        return prediction_data
+        # Concatenate datasets to predictions
+        dataset_dict = {dataset.id: dataset for dataset in datasets}
+        for prediction in predictions:
+            prediction.dataset = dataset_dict.get(prediction.dataset_id, None)
 
-
-@router.get("/predict_summary")
-@inject
-async def get_predict_summary(
-    pred_name: str,
-    config: dict = Depends(lambda: di["config"]),
-    component_registry: dict = Depends(lambda: di["component_registry"]),
-):
-    path = Path(f"{config['DATASETS_PATH']}/predictions/{pred_name}")
-    summary = {}
-    try:
-        with open(path, "r") as f:
-            try:
-                json_file = json.load(f)
-                data = json_file["prediction"]
-                metadata = json_file["metadata"]
-            except json.JSONDecodeError as e:
-                raise HTTPException(
-                    status_code=400, detail="Invalid JSON format"
-                ) from e
-
-            summary["total_data_points"] = len(data)
-
-            task: BaseTask = component_registry[metadata["task_name"]]["class"]
-            if not task:
-                raise HTTPException(
-                    status_code=400, detail="Task not found in component registry"
-                )
-            summary["data_type"] = str(task().get_metadata().get("outputs_types")[0])
-            # Only for classification tasks
-            if issubclass(task, ClassificationTask):
-                class_set = set(data)
-                classes = [str(item) for item in class_set]
-                summary["Unique_classes"] = len(classes)
-                class_distribution = []
-                id = 1
-                for class_name in classes:
-                    try:
-                        occurrences = data.count(str(class_name))
-                    except ValueError as e:
-                        raise HTTPException(
-                            status_code=400, detail=f"Invalid class value: {class_name}"
-                        ) from e
-                    distribution = {
-                        "id": id,
-                        "Class": class_name,
-                        "Ocurrences": occurrences,
-                        "Percentage": round(occurrences / len(data) * 100, 2),
-                    }
-                    id += 1
-                    class_distribution.append(distribution)
-                summary["class_distribution"] = class_distribution
-
-            sample_data = [
-                {"id": idx, "value": value} for idx, value in enumerate(data[:50], 1)
-            ]
-            summary["sample_data"] = sample_data
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail="Prediction not found") from e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-    return summary
+        return predictions
 
 
 @router.get("/filter_datasets")
 async def filter_datasets_endpoint(
     run_id: int = Query(..., description="The ID of the trained model/run"),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Filter datasets that match the column specifications of the train dataset.
@@ -255,12 +139,19 @@ async def filter_datasets_endpoint(
     ----------
     run_id : int
         The ID of the trained model/run.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     List[Dataset]
         List of datasets that match the column specifications of the train dataset.
     """
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     try:
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
@@ -269,12 +160,13 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
 
-            exp: Experiment = db.get(Experiment, run.experiment_id)
-            if not exp:
+            model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+            if not model_session:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Experiment not found"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
                 )
-            input_columns = list(exp.input_columns)
+            input_columns = list(model_session.input_columns)
 
             datasets = db.query(Dataset).all()
             datasets_filtered = []
@@ -287,6 +179,9 @@ async def filter_datasets_endpoint(
                 else:
                     logger.warning("Dataset path does not exist: %s", dataset_path)
             return datasets_filtered
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is
+        raise
     except Exception as e:
         logger.exception("Error filtering datasets: %s", str(e))
         raise HTTPException(
@@ -295,135 +190,147 @@ async def filter_datasets_endpoint(
         ) from e
 
 
-@router.get("/download/{predict_name}")
-@inject
-async def download_prediction(
-    predict_name: str,
-    config: dict = Depends(lambda: di["config"]),
-):
-    """
-    Downloads a prediction file based on the provided predict_name.
-
-    Parameters
-    ----------
-    predict_name : str
-        The name of the prediction file to download.
-
-    Raises
-    ------
-    HTTPException
-        If the file cannot be found.
-    """
-    logger.debug("Downloading prediction file with name %s", predict_name)
-    predict_path = os.path.join(config["DATASETS_PATH"], "predictions", predict_name)
-    try:
-        if os.path.exists(predict_path):
-            with open(predict_path, "r") as json_file:
-                data = json.load(json_file)
-                return data["prediction"]
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found",
-            )
-    except Exception as e:
-        logger.exception("Error downloading file %s: %s", predict_name, str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while downloading the prediction file",
-        ) from e
-
-
-@router.delete("/{predict_name}")
+@router.delete("/{prediction_id}")
 @inject
 async def delete_prediction(
-    predict_name: str,
-    config: dict = Depends(lambda: di["config"]),
+    prediction_id: str,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
     Deletes a prediction file based on the provided predict_name.
 
     Parameters
     ----------
-    predict_name : str
-        The name of the prediction file to delete.
+    prediction_id : str
+        The ID of the prediction file to delete.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Raises
     ------
     HTTPException
         If the file cannot be found or deleted.
     """
-    logger.debug("Deleting prediction file with name %s", predict_name)
-    predict_path = os.path.join(config["DATASETS_PATH"], "predictions", predict_name)
-    try:
-        if os.path.exists(predict_path):
-            os.remove(predict_path)
-            logger.debug("File %s deleted successfully", predict_path)
-        else:
+    logger.debug("Deleting prediction file with ID %s", prediction_id)
+    import os
+    import shutil
+
+    with session_factory() as db:
+        prediction: Prediction | None = db.get(Prediction, int(prediction_id))
+
+        if not prediction:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found",
+                detail="Prediction not found",
             )
+
+        predict_path = prediction.results_path
+        db.delete(prediction)
+        db.commit()
+
+    try:
+        if predict_path and os.path.exists(predict_path):
+            shutil.rmtree(predict_path)
+            logger.debug("File %s deleted successfully", predict_path)
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.exception("Error deleting file %s: %s", predict_name, str(e))
+        logger.exception("Error deleting file %s: %s", predict_path, str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while deleting the prediction file",
         ) from e
 
 
-@router.patch("/{predict_name}")
+@router.post("/preview")
 @inject
-async def rename_prediction(
-    predict_name: str,
-    request: RenameRequest,
-    config: dict = Depends(lambda: di["config"]),
+async def preview_manual_prediction(
+    request: Request,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """
-    Renames a prediction file based on the provided predict_name.
+    """Run a synchronous manual prediction and return results without persisting.
 
     Parameters
     ----------
-    predict_name : str
-        The current name of the prediction file.
-    new_name : str
-        The new name for the prediction file.
+    run_id : int
+        The ID of the trained model/run.
+    manual_input_data : str
+        JSON-encoded list of row dicts (one dict per input row, keyed by column name).
 
-    Raises
-    ------
-    HTTPException
-        If the file cannot be found or renamed.
+    Returns
+    -------
+    dict
+        ``{"columns": [...], "rows": [[...], ...]}``
     """
-    new_name = f"{request.new_name}.json"
-    logger.debug("Renaming prediction file from %s to %s", predict_name, new_name)
-    predict_path = os.path.join(config["DATASETS_PATH"], "predictions", predict_name)
-    new_path = os.path.join(config["DATASETS_PATH"], "predictions", new_name)
+    import re
+
+    from starlette.datastructures import UploadFile
+
+    form = await request.form()
+
+    run_id = form.get("run_id")
+    manual_input_data = form.get("manual_input_data")
+    if run_id is None or manual_input_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Missing run_id or manual_input_data",
+        )
 
     try:
-        if os.path.exists(predict_path):
-            with open(predict_path, "r") as json_file:
-                data = json.load(json_file)
-            data["metadata"]["pred_name"] = new_name
-            with open(predict_path, "w") as json_file:
-                json.dump(data, json_file, indent=4)
-            os.rename(predict_path, new_path)
-            logger.debug(
-                "File renamed from %s to %s successfully", predict_path, new_path
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found",
-            )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        logger.exception(
-            "Error renaming file %s to %s: %s", predict_name, new_name, str(e)
-        )
+        run_id_int = int(run_id)
+    except (TypeError, ValueError) as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while renaming the prediction file",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid run_id: {run_id}",
         ) from e
+
+    try:
+        rows_data: List[Dict] = json.loads(manual_input_data)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid manual_input_data JSON: {e}",
+        ) from e
+
+    if not isinstance(rows_data, list) or not rows_data:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "manual_input_data must be a non-empty JSON array "
+                "of objects (list[dict])."
+            ),
+        )
+
+    if not all(isinstance(item, dict) for item in rows_data):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Each item in manual_input_data must be a JSON object (dict).",
+        )
+
+    file_key_regex = re.compile(r"^file_(\d+)_(.+)$")
+    for field_name, value in form.multi_items():
+        if not isinstance(value, UploadFile):
+            continue
+
+        match = file_key_regex.match(field_name)
+        if not match:
+            continue
+
+        row_index = int(match.group(1))
+        column_name = match.group(2)
+        if row_index < 0 or row_index >= len(rows_data):
+            continue
+
+        if rows_data[row_index].get(column_name) == field_name:
+            rows_data[row_index][column_name] = value
+
+    columns, rows = await run_in_threadpool(
+        run_manual_prediction,
+        run_id=run_id_int,
+        manual_input_data=rows_data,
+        component_registry=component_registry,
+        session_factory=session_factory,
+    )
+    return {"columns": columns, "rows": rows}

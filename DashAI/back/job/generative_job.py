@@ -1,11 +1,8 @@
-import gc
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import torch
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
@@ -16,6 +13,10 @@ from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks import BaseGenerativeTask
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class GenerativeJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         generative_process_id: int = self.kwargs["generative_process_id"]
@@ -50,7 +51,7 @@ class GenerativeJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as error."""
         generative_process_id: int = self.kwargs.get("generative_process_id")
@@ -104,11 +105,15 @@ class GenerativeJob(BaseJob):
     def run(
         self,
     ) -> None:
+        import gc
+
+        import torch
         from kink import di
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
+        # (Lazy imports removed to avoid duplicate and unused imports warnings)
         model = None
         generative_process = None
         with session_factory() as db:

@@ -1,10 +1,14 @@
 """TER (Translation Edit Rate) metric implementation for DashAI."""
 
-import evaluate
-import numpy as np
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
+from DashAI.back.metrics.base_metric import prepare_to_metric
+from DashAI.back.metrics.translation_metric import TranslationMetric
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Ter(TranslationMetric):
@@ -15,13 +19,20 @@ class Ter(TranslationMetric):
 
     References
     ----------
-    [1] https://huggingface.co/spaces/evaluate-metric/ter
+    - [1] https://huggingface.co/spaces/evaluate-metric/ter
     """
 
     MAXIMIZE: bool = False
+    DESCRIPTION: str = (
+        "TER (Translation Edit Rate) measures the number of edits "
+        "needed to change a system output into one of the references."
+    )
 
     @staticmethod
-    def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):
+    def score(
+        source_sentences: "DashAIDataset",
+        target_sentences: "np.ndarray",
+    ) -> float:
         """Calculate the TER score between source and target sentences.
 
         Parameters
@@ -36,9 +47,11 @@ class Ter(TranslationMetric):
         float
             The calculated score.
         """
+        import evaluate
+
         metric = evaluate.load("ter")
         source_sentences, target_sentences = prepare_to_metric(
-            source_sentences, target_sentences
+            source_sentences, target_sentences, "Ter"
         )
         return metric.compute(
             references=source_sentences, predictions=target_sentences

@@ -1,20 +1,17 @@
-import gc
-import json
 import logging
-import os
-import shutil
-import uuid
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from kink import inject
+from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
 from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +35,7 @@ class DatasetJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the dataset as delivered."""
         dataset_id: int = self.kwargs["dataset_id"]
@@ -59,7 +56,7 @@ class DatasetJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the job status as error."""
         dataset_id: int = self.kwargs["dataset_id"]
@@ -93,7 +90,19 @@ class DatasetJob(BaseJob):
     def run(
         self,
     ) -> None:
-        from kink import di
+        import gc
+        import json
+        import os
+        import shutil
+        import uuid
+        from pathlib import Path
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            save_dataset,
+            transform_dataset_with_schema,
+        )
+        from DashAI.back.types.inf.type_inference import infer_types
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
@@ -165,7 +174,43 @@ class DatasetJob(BaseJob):
                         n_sample=n_sample,
                     )
 
-                # Calculate metadata
+                    if "inferred_types" in params:
+                        schema = params["inferred_types"]
+                    else:
+                        schema = infer_types(
+                            new_dataset.to_pandas(), method="DashAIPtype"
+                        )
+
+                    if "column_renames" in params:
+                        renames = params["column_renames"]
+                        original_names = new_dataset.arrow_table.schema.names
+                        new_names = [renames.get(col, col) for col in original_names]
+
+                        if len(new_names) != len(set(new_names)):
+                            duplicate_names = set()
+                            seen = set()
+                            for name in new_names:
+                                if name in seen:
+                                    duplicate_names.add(name)
+                                else:
+                                    seen.add(name)
+                            msg = (
+                                "Invalid column_renames: resulting column names "
+                                "contain duplicates: "
+                                f"{sorted(duplicate_names)}"
+                            )
+                            raise JobError(msg)
+
+                        arrow_table = new_dataset.arrow_table.rename_columns(new_names)
+                        new_dataset = new_dataset.__class__(
+                            arrow_table,
+                            splits=new_dataset.splits,
+                            types=new_dataset.types,
+                        )
+                        schema = {renames.get(col, col): schema[col] for col in schema}
+
+                    new_dataset = transform_dataset_with_schema(new_dataset, schema)
+
                 new_dataset.compute_metadata()
                 gc.collect()
 

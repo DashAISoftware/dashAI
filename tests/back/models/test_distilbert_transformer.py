@@ -1,13 +1,18 @@
 # flake8: noqa: ERA001
+import pyarrow as pa
 import pytest
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
     select_columns,
     split_dataset,
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+from DashAI.back.types.value_types import Text
 
 
 @pytest.fixture(scope="module", name="splited_dataset")
@@ -18,10 +23,30 @@ def splited_dataset_fixture():
     datasetdict = dataloader_test.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/models",
-        params={"data_key": "data"},
+        params={
+            "data_key": "data",
+            "schema": {
+                "text": {"type": "Text", "dtype": "string"},
+                "class": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     datasetdict = to_dashai_dataset(datasetdict)
+
+    datasetdict.types = datasetdict.types = {
+        "text": Text(arrow_type=pa.string()),
+        "class": Categorical(values=["0", "1"]),
+    }
+
+    new_table = save_types_in_arrow_metadata(
+        datasetdict.arrow_table,
+        {col: dtype.to_string() for col, dtype in datasetdict.types.items()},
+    )
+
+    datasetdict = DashAIDataset(
+        new_table, splits=datasetdict.splits, types=datasetdict.types
+    )
 
     splited_dataset = split_dataset(
         datasetdict,
@@ -52,8 +77,12 @@ def sample_model():
         num_train_epochs=2,
         batch_size=16,
         learning_rate=5e-5,
-        device="cpu",
+        device="CPU",
         weight_decay=0.01,
+        log_train_every_n_epochs=None,
+        log_train_every_n_steps=None,
+        log_validation_every_n_epochs=None,
+        log_validation_every_n_steps=None,
     )
     return model
 

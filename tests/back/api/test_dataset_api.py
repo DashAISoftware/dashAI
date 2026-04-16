@@ -80,11 +80,17 @@ def test_get_types(
     response = client.get(f"/api/v1/dataset/{dataset_1.id}/types")
     data = response.json()
     assert data == {
-        "SepalLengthCm": {"type": "Value", "dtype": "float64"},
-        "SepalWidthCm": {"type": "Value", "dtype": "float64"},
-        "PetalLengthCm": {"type": "Value", "dtype": "float64"},
-        "PetalWidthCm": {"type": "Value", "dtype": "float64"},
-        "Species": {"type": "Value", "dtype": "string"},
+        "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+        "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+        "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+        "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+        "Species": {
+            "type": "Categorical",
+            "dtype": "string",
+            "categories": ["Iris-setosa", "Iris-versicolor", "Iris-virginica"],
+            "num_categories": 3,
+            "converted": False,
+        },
     }
 
     response = client.get(f"/api/v1/dataset/{dataset_not_started.id}/types")

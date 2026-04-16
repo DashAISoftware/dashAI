@@ -16,13 +16,19 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import useSchema from "../../../hooks/useSchema";
 import ParamsSettings from "../ParamsSettings";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../../api/experiment";
+import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import { validateNode } from "../../../api/pipeline";
 
-const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
+const Train = ({
+  open,
+  onClose,
+  onSave,
+  savedConfig = null,
+  prevNodes = [],
+}) => {
   const [inputColumns, setInputColumns] = useState(
     savedConfig?.input_columns || "",
   );
@@ -495,11 +501,6 @@ Train.propTypes = {
   onSave: PropTypes.func.isRequired,
   savedConfig: PropTypes.object,
   prevNodes: PropTypes.arrayOf(PropTypes.object),
-};
-
-Train.defaultProps = {
-  savedConfig: null,
-  prevNodes: [],
 };
 
 export default Train;

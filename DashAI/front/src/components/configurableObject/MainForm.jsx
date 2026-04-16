@@ -5,6 +5,7 @@ import { useFormik } from "formik";
 import { FormRenderer } from "./FormRenderer";
 import { getValidationSchema } from "../../utils/paramFormValidation";
 import useSchema from "../../hooks/useSchema";
+import { useTranslation } from "react-i18next";
 
 /**
  * This code implements a component that is responsible for rendering the main form,
@@ -21,12 +22,12 @@ import useSchema from "../../hooks/useSchema";
  */
 function MainForm({
   parameterSchema,
-  defaultValues,
-  extraOptions,
-  submitButton,
-  onFormSubmit,
-  getValues,
-  formSubmitRef,
+  defaultValues = { emptyDefaultValues: true },
+  extraOptions = null,
+  submitButton = false,
+  onFormSubmit = () => {},
+  getValues = null,
+  formSubmitRef = null,
 }) {
   // manages and submits the values of the parameters in the form
   const formik = useFormik({
@@ -37,6 +38,7 @@ function MainForm({
     },
   });
   useSchema();
+  const { t } = useTranslation(["common"]);
 
   // Updates the formSubmitRef with the current formik object if formSubmitRef is not null
   // this is used when the form needs to be submitted from outside the ParameterForm component
@@ -68,7 +70,7 @@ function MainForm({
           size="large"
           onClick={formik.handleSubmit}
         >
-          Save
+          {t("common:save")}
         </Button>
       )}
     </div>
@@ -94,15 +96,6 @@ MainForm.propTypes = {
     PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
   ),
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
-};
-
-MainForm.defaultProps = {
-  defaultValues: { emptyDefaultValues: true },
-  onFormSubmit: () => {},
-  extraOptions: null,
-  submitButton: false,
-  getValues: null,
-  formSubmitRef: null,
 };
 
 export default MainForm;

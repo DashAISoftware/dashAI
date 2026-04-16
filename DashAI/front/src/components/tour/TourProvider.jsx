@@ -1,13 +1,16 @@
 import React, { createContext, useContext } from "react";
 import Joyride from "react-joyride";
+import { useTranslation } from "react-i18next";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
 import { tourStyles } from "./tourStyles";
+import { CustomTooltip } from "./CustomTooltip";
 
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
 
 export const TourProvider = ({ tourKey, children }) => {
+  const { t } = useTranslation(["common"]);
   const {
     run,
     stepIndex,
@@ -24,6 +27,15 @@ export const TourProvider = ({ tourKey, children }) => {
   if (!tourData) {
     return children;
   }
+
+  // Internacionalized locale for tour buttons
+  const locale = {
+    back: t("common:back"),
+    close: t("common:close"),
+    last: t("common:finish"),
+    next: t("common:next"),
+    skip: t("common:skipTour"),
+  };
 
   const contextValue = {
     run,
@@ -50,10 +62,15 @@ export const TourProvider = ({ tourKey, children }) => {
         showSkipButton={tourData.config.showSkipButton}
         disableOverlayClose={tourData.config.disableOverlayClose}
         disableCloseOnEsc={tourData.config.disableCloseOnEsc}
-        locale={tourData.config.locale}
+        locale={locale}
+        disableScrollParentFix={true}
         styles={tourStyles}
+        tooltipComponent={CustomTooltip}
         scrollToFirstStep
         scrollOffset={100}
+        floaterProps={{
+          disableFlip: true,
+        }}
       />
       {children}
     </TourContext.Provider>

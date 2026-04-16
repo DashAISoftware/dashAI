@@ -7,13 +7,16 @@ import {
   GridToolbarDensitySelector,
   useGridApiContext,
 } from "@mui/x-data-grid";
-import { Button, Menu, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Menu, MenuItem, Typography } from "@mui/material";
 import { Download } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
 import {
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
+  renameDatasetColumn,
 } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
+import EditableColumnHeader from "./EditableColumnHeader";
 
 /**
  * Props:
@@ -24,6 +27,8 @@ import {
  * - autoHeight?: boolean (default true)
  * - pageSizeOptions?: number[] (default [5, 10, 25])
  * - datasetPath?: string (optional) - Path to dataset for CSV export
+ * - datasetId?: number (optional) - Dataset ID for column renaming
+ * - editableColumns?: boolean (default false) - Enable column name editing
  */
 export default function DatasetTable({
   fetchPage,
@@ -33,6 +38,9 @@ export default function DatasetTable({
   autoHeight = true,
   pageSizeOptions = [5, 10, 25],
   datasetPath,
+  datasetId,
+  editableColumns = false,
+  onEditColumn = null,
   density = "compact",
   ...props
 }) {
@@ -41,6 +49,7 @@ export default function DatasetTable({
   const [loading, setLoading] = useState(false);
   const [columnTypes, setColumnTypes] = useState({});
   const gridRef = useRef(null);
+  const { t } = useTranslation(["common"]);
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
@@ -58,7 +67,7 @@ export default function DatasetTable({
     };
 
     fetchColumnTypes();
-  }, [datasetPath]);
+  }, [datasetPath, ...deps]);
 
   useEffect(() => {
     let alive = true;
@@ -75,7 +84,6 @@ export default function DatasetTable({
         }));
 
         setRows(withIds);
-        // Siempre usa el total devuelto por el backend para la paginación
         setRowCount(data?.total ?? withIds.length);
       } catch (e) {
         setRows([]);
@@ -89,10 +97,8 @@ export default function DatasetTable({
       alive = false;
     };
   }, [fetchPage, paginationModel, filterModel, ...deps]);
-  // Handler for DataGrid filter changes
   const handleFilterModelChange = useCallback((model) => {
     setFilterModel((prev) => {
-      // Si el filtro es igual al anterior, igual resetea la paginación
       setPaginationModel((m) => ({ ...m, page: 0 }));
       if (!model || !model.items || model.items.length === 0) {
         return { items: [] };
@@ -104,6 +110,43 @@ export default function DatasetTable({
   useEffect(() => {
     setPaginationModel((m) => ({ ...m, page: 0 }));
   }, deps);
+
+  const handleColumnRename = useCallback(
+    async (oldName, newName) => {
+      if (!datasetId) {
+        throw new Error("Dataset ID is required for renaming columns");
+      }
+
+      try {
+        const result = await renameDatasetColumn(datasetId, oldName, newName);
+        onEditColumn && (await onEditColumn(result));
+
+        const { page, pageSize } = paginationModel;
+        const data = await fetchPage(page, pageSize, filterModel);
+        const withIds = (data?.rows ?? []).map((r, i) => ({
+          id: page * pageSize + i,
+          ...r,
+        }));
+
+        setColumnTypes((prevTypes) => {
+          const newTypes = { ...prevTypes };
+          if (newTypes[oldName]) {
+            newTypes[newName] = newTypes[oldName];
+            delete newTypes[oldName];
+          }
+          return newTypes;
+        });
+
+        setRows(withIds);
+        setRowCount(data?.total ?? withIds.length);
+
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [datasetId, paginationModel, filterModel, fetchPage],
+  );
 
   const columns = useMemo(() => {
     if (columnsProp?.length) return columnsProp;
@@ -133,39 +176,47 @@ export default function DatasetTable({
                 : "string",
         minWidth: 120,
         width: Math.max(120, field.length * 8 + 40),
-        renderHeader: () => (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
-              {field}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              style={{ fontSize: "0.7rem" }}
+        sortable: !editableColumns,
+        disableColumnMenu: editableColumns,
+        renderHeader: () =>
+          editableColumns && datasetId ? (
+            <EditableColumnHeader
+              columnName={field}
+              columnType={columnTypes[field]?.type}
+              onRename={handleColumnRename}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                width: "100%",
+              }}
             >
-              {columnTypes[field]?.type || "unknown"}
-            </Typography>
-            {columnTypes[field]?.dtype && (
+              <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
+                {field}
+              </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
-                style={{ fontSize: "0.7rem", opacity: 0.8 }}
+                style={{ fontSize: "0.7rem" }}
               >
-                {columnTypes[field]?.dtype}
+                {columnTypes[field]?.type || t("common:unknown")}
               </Typography>
-            )}
-          </div>
-        ),
+            </div>
+          ),
       }));
-  }, [rows, columnsProp, columnTypes]);
+  }, [
+    rows,
+    columnsProp,
+    columnTypes,
+    editableColumns,
+    datasetId,
+    handleColumnRename,
+    t,
+  ]);
 
   // Custom CSV Export Button
   function CsvExportButton() {
@@ -232,7 +283,7 @@ export default function DatasetTable({
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
         >
-          Export
+          {t("common:export")}
         </Button>
         <Menu
           id="export-menu"
@@ -247,7 +298,7 @@ export default function DatasetTable({
         >
           <MenuItem onClick={handleExportCsv}>
             <Download sx={{ mr: 1, fontSize: 16 }} />
-            Download as CSV
+            {t("common:exportAsCSV")}
           </MenuItem>
         </Menu>
       </>
@@ -274,32 +325,34 @@ export default function DatasetTable({
   }, [filterModel]);
 
   return (
-    <DataGrid
-      ref={gridRef}
-      rows={rows}
-      columns={columns}
-      rowCount={rowCount}
-      loading={loading}
-      autoHeight={autoHeight}
-      disableRowSelectionOnClick
-      paginationMode="server"
-      filterMode="server"
-      paginationModel={paginationModel}
-      onPaginationModelChange={setPaginationModel}
-      pageSizeOptions={pageSizeOptions}
-      density={density}
-      filterModel={filterModel}
-      onFilterModelChange={handleFilterModelChange}
-      initialState={{
-        density: "compact",
-        pagination: { paginationModel: { pageSize: initialPageSize } },
-      }}
-      slots={{
-        toolbar: CustomToolbar,
-        loadingOverlay: LinearProgress,
-      }}
-      columnHeaderHeight={85}
-      {...props}
-    />
+    <Box>
+      <DataGrid
+        ref={gridRef}
+        rows={rows}
+        columns={columns}
+        rowCount={rowCount}
+        loading={loading}
+        autoHeight={autoHeight}
+        disableRowSelectionOnClick
+        paginationMode="server"
+        filterMode="server"
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        pageSizeOptions={pageSizeOptions}
+        density={density}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterModelChange}
+        initialState={{
+          density: "compact",
+          pagination: { paginationModel: { pageSize: initialPageSize } },
+        }}
+        slots={{
+          toolbar: CustomToolbar,
+          loadingOverlay: LinearProgress,
+        }}
+        columnHeaderHeight={editableColumns ? 95 : 85}
+        {...props}
+      />
+    </Box>
   );
 }

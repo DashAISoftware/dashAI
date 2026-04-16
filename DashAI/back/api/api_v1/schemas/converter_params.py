@@ -18,7 +18,7 @@ class ConverterParams(BaseModel):
         }
 
 
-class ConverterListParams(BaseModel):
+class ConverterParams(BaseModel):
     notebook_id: int
     converter: str
     parameters: ConverterParams

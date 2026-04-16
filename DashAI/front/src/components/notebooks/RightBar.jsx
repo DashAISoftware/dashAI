@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   ToggleButton,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
@@ -24,8 +25,47 @@ import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 import { ChevronRight } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+import ColumnInsights from "./dataset/ColumnInsights";
+
+function RightBarDatasetView() {
+  const { t } = useTranslation(["datasets"]);
+  const { datasetInfo } = useDatasetsAndNotebooks();
+
+  if (!datasetInfo) {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 2,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", textAlign: "center" }}
+        >
+          {t("datasets:label.selectNotebookToAccessAnalysisTools")}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+      <ColumnInsights
+        numericStats={datasetInfo?.numeric_stats}
+        textStats={datasetInfo?.text_stats}
+      />
+    </Box>
+  );
+}
 
 export default function RightBar({ notebook, onToggle }) {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
@@ -37,6 +77,7 @@ export default function RightBar({ notebook, onToggle }) {
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
   const { explorersAndConverters } = useExplorersAndConverters();
+  const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,14 +90,14 @@ export default function RightBar({ notebook, onToggle }) {
         setFilteredConverters(data.filter((item) => item.type === "Converter"));
         setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
       } catch (error) {
-        enqueueSnackbar("Failed to fetch explorers/converters", {
+        enqueueSnackbar(t("datasets:error.fetchingExplorersConverters"), {
           variant: "error",
         });
         console.error("Failed to fetch explorers/converters:", error);
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
   // Fetch dataset columns from notebook file
   useEffect(() => {
@@ -71,8 +112,8 @@ export default function RightBar({ notebook, onToggle }) {
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -125,31 +166,33 @@ export default function RightBar({ notebook, onToggle }) {
     }
 
     // Check cardinality requirements
-    if (inputCardinality.exact != undefined && inputCardinality.exact != null) {
+    if (inputCardinality.exact != null) {
       if (validColumns.length < inputCardinality.exact) {
         disabled = true;
+
         if (validColumns.length === 0) {
-          tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
+          tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
-        tooltip += `\n\nRequires exactly ${
-          inputCardinality.exact
-        } valid column${inputCardinality.exact === 1 ? "" : "s"}, but ${
-          validColumns.length
-        } available.`;
+
+        tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
+          required: inputCardinality.exact,
+          available: validColumns.length,
+          count: inputCardinality.exact,
+        })}`;
       }
-    } else {
-      if (inputCardinality.min != undefined && inputCardinality.min != null) {
-        if (validColumns.length < inputCardinality.min) {
-          disabled = true;
-          if (validColumns.length === 0) {
-            tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
-          }
-          tooltip += `\n\nRequires at least ${
-            inputCardinality.min
-          } valid column${inputCardinality.min === 1 ? "" : "s"}, but only ${
-            validColumns.length
-          } available.`;
+    } else if (inputCardinality.min != null) {
+      if (validColumns.length < inputCardinality.min) {
+        disabled = true;
+
+        if (validColumns.length === 0) {
+          tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
+
+        tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
+          required: inputCardinality.min,
+          available: validColumns.length,
+          count: inputCardinality.min,
+        })}`;
       }
     }
 
@@ -160,15 +203,52 @@ export default function RightBar({ notebook, onToggle }) {
       !allowedDtypes.includes("*")
     ) {
       disabled = true;
-      tooltip += `\n\nThis dataset does not have any columns with the required data types.`;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypes")}`;
     }
 
-    if (!allowedDtypes.includes("*") && allowedDtypes.length > 0) {
-      tooltip += `\n\nAccepts: ${allowedDtypes.join(", ")}`;
+    return { disabled, tooltip, validColumns };
+  };
+
+  // Validate converters based on dataset columns
+  const validateConverter = (converter) => {
+    if (!datasetColumns.length) return { disabled: false, tooltip: "" };
+
+    const allowedDtypes = converter?.metadata?.allowed_dtypes || ["*"];
+    const restrictedDtypes = converter?.metadata?.restricted_dtypes || [];
+
+    let validColumns = datasetColumns;
+    let disabled = false;
+    let tooltip =
+      converter.description || converter.metadata?.short_description || "";
+
+    // Filter by allowed dtypes
+    if (!allowedDtypes.includes("*")) {
+      validColumns = datasetColumns.filter((col) =>
+        allowedDtypes.includes(col.dataType),
+      );
     }
 
-    if (restrictedDtypes.length > 0) {
-      tooltip += `\n\nRestricted: ${restrictedDtypes.join(", ")}`;
+    // Filter out restricted dtypes
+    if (
+      restrictedDtypes.some((dtype) =>
+        datasetColumns.some((col) => col.dataType === dtype),
+      )
+    ) {
+      validColumns = validColumns.filter(
+        (col) => !restrictedDtypes.includes(col.dataType),
+      );
+    }
+
+    // Check if there are no valid columns at all
+    if (
+      validColumns.length === 0 &&
+      allowedDtypes.length > 0 &&
+      !allowedDtypes.includes("*")
+    ) {
+      disabled = true;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
+        dtypes: allowedDtypes.join(", "),
+      })}`;
     }
 
     return { disabled, tooltip, validColumns };
@@ -200,17 +280,30 @@ export default function RightBar({ notebook, onToggle }) {
 
     setFilteredExplorers(filteredAndValidatedExplorers);
 
-    const filteredConverters = converters.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.metadata.short_description
-          ? item.metadata.short_description
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())
-          : item.description.toLowerCase().includes(searchQuery.toLowerCase())),
-    );
+    const filteredAndValidatedConverters = converters
+      .filter(
+        (item) =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.metadata.short_description
+            ? item.metadata.short_description
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            : item.description
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())),
+      )
+      .map((converter) => {
+        const validation = validateConverter(converter);
+        return {
+          ...converter,
+          disabled: validation.disabled,
+          tooltip: validation.tooltip,
+          validColumns: validation.validColumns,
+          notebook,
+        };
+      });
 
-    setFilteredConverters(filteredConverters);
+    setFilteredConverters(filteredAndValidatedConverters);
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
   const handleChangeTab = (event, newValue) => {
@@ -239,7 +332,7 @@ export default function RightBar({ notebook, onToggle }) {
         <Box
           sx={{
             p: 2,
-            borderBottom: "1px solid #333",
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
             display: "flex",
@@ -247,7 +340,9 @@ export default function RightBar({ notebook, onToggle }) {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">Analysis Tools</Typography>
+          <Typography variant="h6" color="text.primary">
+            {t("datasets:label.analysisTools")}
+          </Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -271,7 +366,7 @@ export default function RightBar({ notebook, onToggle }) {
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
-                    Explore
+                    {t("datasets:label.explore")}
                   </Box>
                 }
               />
@@ -280,7 +375,7 @@ export default function RightBar({ notebook, onToggle }) {
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
-                    Convert
+                    {t("datasets:label.convert")}
                   </Box>
                 }
               />
@@ -296,12 +391,18 @@ export default function RightBar({ notebook, onToggle }) {
               className="explorer-converter-box"
             >
               {/* Search bar */}
-              <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: `1px solid ${theme.palette.ui.border}`,
+                  flexShrink: 0,
+                }}
+              >
                 <SearchBar
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery("")}
-                  placeholder="Search explorers/converters"
+                  placeholder={t("datasets:label.searchExplorersConverters")}
                 />
               </Box>
               {/* View Mode Toggle */}
@@ -312,15 +413,12 @@ export default function RightBar({ notebook, onToggle }) {
                   alignItems: "center",
                   px: 2,
                   py: 1,
-                  borderBottom: "1px solid #333",
+                  borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "rgb(161, 161, 170)" }}
-                >
-                  View mode
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {t("datasets:label.viewMode")}
                 </Typography>
                 <ToggleButtonGroup
                   value={viewMode}
@@ -329,11 +427,12 @@ export default function RightBar({ notebook, onToggle }) {
                   size="small"
                   sx={{
                     "& .MuiToggleButton-root": {
-                      color: "rgb(161, 161, 170)",
-                      border: "1px solid rgb(39, 39, 42)",
+                      color: "text.secondary",
+                      border: "1px solid",
+                      borderColor: theme.palette.ui.border,
                       "&.Mui-selected": {
-                        bgcolor: "rgb(39, 39, 42)",
-                        color: "rgb(6, 182, 212)",
+                        bgcolor: theme.palette.ui.border,
+                        color: theme.palette.accent.main,
                       },
                     },
                   }}
@@ -408,22 +507,7 @@ export default function RightBar({ notebook, onToggle }) {
             </Box>
           </>
         ) : (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
-            >
-              Select a notebook to access analysis tools.
-            </Typography>
-          </Box>
+          <RightBarDatasetView />
         )}
       </Box>
     </SideBar>

@@ -17,6 +17,7 @@ import {
 } from "../../utils/schema";
 import useModelParents from "../../hooks/useModelParents";
 import { Settings } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component is a subform for the form schema
@@ -39,6 +40,7 @@ function FormSchemaFieldWithParent({
   const { models } = useModelParents({
     parent: field.value?.properties.component,
   });
+  const { t } = useTranslation(["common"]);
 
   // State for handling the sub-modal
   const [openSubModal, setOpenSubModal] = useState(false);
@@ -101,48 +103,29 @@ function FormSchemaFieldWithParent({
   };
 
   return (
-    <>
-      <Box sx={{ display: "flex", alignItems: "center", pb: 3 }}>
-        <Input
-          select
-          label={label}
-          value={selectedModelName || ""}
-          onChange={handleOnChange}
-        >
-          {models?.map((model, index) => (
-            <MenuItem key={index} value={model.name}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Input>
-        <Tooltip title="Configure submodel">
-          <IconButton onClick={handleClick} disabled={!selectedModelName}>
-            <Settings />
-          </IconButton>
-        </Tooltip>
-        <FormTooltip
-          contentStr={errorMessage ?? description}
-          error={Boolean(errorMessage)}
-        />
-      </Box>
-
-      {/* Sub-configuration Modal */}
-      {openSubModal && selectedModelName && (
-        <FormSchemaDialog
-          modelToConfigure={selectedModelName}
-          open={openSubModal}
-          setOpen={setOpenSubModal}
-          onFormSubmit={handleSubModelSave}
-        >
-          <FormSchema
-            model={selectedModelName}
-            initialValues={getSubModelInitialValues()}
-            onFormSubmit={handleSubModelSave}
-            onCancel={() => setOpenSubModal(false)}
-          />
-        </FormSchemaDialog>
-      )}
-    </>
+    <Box sx={{ display: "flex", alignItems: "center", pb: 3 }}>
+      <Input
+        select
+        label={label}
+        value={getModelFromCurrentProperty(name)}
+        onChange={handleOnChange}
+      >
+        {models?.map((model, index) => (
+          <MenuItem key={index} value={model.name}>
+            {model.name}
+          </MenuItem>
+        ))}
+      </Input>
+      <Tooltip title={t("common:configureSubmodel")}>
+        <IconButton onClick={handleClick}>
+          <Settings />
+        </IconButton>
+      </Tooltip>
+      <FormTooltip
+        contentStr={errorMessage ?? description}
+        error={Boolean(errorMessage)}
+      />
+    </Box>
   );
 }
 

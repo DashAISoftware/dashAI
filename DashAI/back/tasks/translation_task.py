@@ -1,45 +1,63 @@
 """DashAI Translation Task."""
 
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
-from datasets import DatasetDict, Sequence, Value
-
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.value_types import Text
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TranslationTask(BaseTask):
-    """Base class for translation task."""
+    """Task for sequence-to-sequence machine translation between languages.
+
+    Translation tasks take a single ``Text`` input column (source language) and
+    produce a single ``Text`` output column (target language). The compatible
+    metrics are BLEU and TER, which measure n-gram overlap and translation edit
+    rate against reference translations respectively.
+    """
 
     COMPATIBLE_COMPONENTS = ["Bleu", "Ter"]
 
     metadata: dict = {
-        "inputs_types": [Value, Sequence],
-        "outputs_types": [Value, Sequence],
+        "inputs_types": [Text],
+        "outputs_types": [Text],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
-
-    DESCRIPTION: str = """
+    DESCRIPTION: str = MultilingualString(
+        en="""
     The translation task is natural language processing (NLP) task that involves
     converting text or speech from one language into another language while
     preserving the meaning and context.
-    """
-    DISPLAY_NAME: str = "Translation"
+    """,
+        es="""
+    La tarea de traducción es una tarea de procesamiento de lenguaje natural (PLN)
+    que implica convertir texto o habla de un idioma a otro idioma mientras se
+    preserva el significado y el contexto.
+    """,
+    )
+
+    DISPLAY_NAME: str = MultilingualString(en="Translation", es="Traducción")
 
     def prepare_for_task(
-        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
-    ) -> DashAIDataset:
-        """Change the column types to suit the tabular classification task.
+        self,
+        dataset: Union["DatasetDict", "DashAIDataset"],
+        input_columns: List[str],
+        output_columns: List[str],
+    ) -> "DashAIDataset":
+        """Convert the dataset to DashAIDataset and check the columns types
 
         A copy of the dataset is created.
 
         Parameters
         ----------
-        datasetdict : DatasetDict
+        dataset : Union[DatasetDict, DashAIDataset]
             Dataset to be changed
 
         Returns
@@ -47,9 +65,14 @@ class TranslationTask(BaseTask):
         DashAIDataset
             Dataset with the new types
         """
-        return to_dashai_dataset(datasetdict)
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset
 
-    def process_predictions(self, dataset, predictions, output_column):
+    def process_predictions(
+        self, dataset: "DashAIDataset", predictions: "ndarray", output_column: str
+    ):
         """Process the predictions
 
         Parameters
@@ -67,7 +90,7 @@ class TranslationTask(BaseTask):
         """
         return predictions
 
-    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
         """Get the number of unique labels in the output column.
 
         Parameters

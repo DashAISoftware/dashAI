@@ -1,4 +1,3 @@
-import re
 from typing import Dict, List
 
 from DashAI.back.pipeline.validator.nodes_definitions import NODE_TYPES
@@ -35,6 +34,8 @@ class PipelineValidator:
 
     def _validate_duplicates(self):
         def extract_number(id_str):
+            import re
+
             match = re.search(r"-(\d+)$", id_str)
             return int(match.group(1)) if match else float("inf")
 

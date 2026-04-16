@@ -1,13 +1,16 @@
+from typing import TYPE_CHECKING
+
 from kink import inject
 
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dependencies.registry import ComponentRegistry
+if TYPE_CHECKING:
+    from DashAI.back.core.schema_fields.base_schema import BaseSchema
+    from DashAI.back.dependencies.registry import ComponentRegistry
 
 
 @inject
 def fill_objects(
-    schema_instance: BaseSchema,
-    component_registry: ComponentRegistry = lambda di: di["component_registry"],
+    schema_instance: "BaseSchema",
+    component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
 ) -> dict:
     """Fills in the schema instance, replacing the component fields with the
     target component. Returns the dumped dictionary of the schema instance.

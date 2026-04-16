@@ -1,22 +1,17 @@
 import logging
-import os
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
-from kink import di
+from kink import di, inject
 
-from DashAI.back.config import DefaultSettings
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    get_column_names_from_indexes,
-    prepare_for_experiment,
-    select_columns,
-    split_dataset,
-)
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
 
 log = logging.getLogger(__name__)
 
@@ -75,11 +70,22 @@ class Train(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Train executed successfully.")
 
+    @inject
     async def run(
         self,
         context: Dict[str, Any],
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+        config: Dict[str, Any] = lambda: di["config"],
+        component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> Dict[str, Any]:
+        import os
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            get_column_names_from_indexes,
+            prepare_for_model_session,
+            select_columns,
+            split_dataset,
+        )
+
         context["task_name"] = self.task
         context["model_name"] = self.model
         pipeline_id = context["pipeline_id"]
@@ -121,7 +127,7 @@ class Train(BaseJob):
                 n_labels = len(all_classes)
 
             splits = self.splits
-            prepared_dataset, splits = prepare_for_experiment(
+            prepared_dataset, splits = prepare_for_model_session(
                 dataset=prepared_dataset,
                 splits=splits,
                 output_columns=output_columns_names,
@@ -175,8 +181,7 @@ class Train(BaseJob):
             ) from e
 
         try:
-            settings = DefaultSettings()
-            sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+            sqlite_local = config["LOCAL_PATH"]
             path = os.path.join(sqlite_local, "pipelines", "train")
             os.makedirs(path, exist_ok=True)
             model_path = os.path.join(path, str(pipeline_id))

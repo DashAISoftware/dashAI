@@ -1,5 +1,6 @@
 from kink import di
 
+from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.metrics.classification_metric import ClassificationMetric
 
 
@@ -23,16 +24,62 @@ class ModelFactory:
         Extracts fixed and optimizable parameters from a dictionary.
     """
 
-    def __init__(self, model, params: dict, n_labels=None):
+    def __init__(
+        self,
+        model,
+        params: dict,
+        run_id: id = None,
+        x_data: dict = None,
+        y_data: dict = None,
+        train_metrics: list[BaseMetric] = None,
+        validation_metrics: list[BaseMetric] = None,
+        test_metrics: list[BaseMetric] = None,
+        n_labels=None,
+    ):
+        """Initialise the factory, instantiate the model, and attach runtime state.
+
+        Parameters
+        ----------
+        model : type
+            A DashAI model class (not an instance) to instantiate with the
+            extracted fixed parameters.
+        params : dict
+            Nested parameter dictionary as produced by the DashAI UI, containing
+            ``fixed_value`` and optional ``optimizable`` sub-keys.
+        run_id : id, optional
+            Identifier of the associated experiment run. Default is ``None``.
+        x_data : dict, optional
+            Dataset splits for model input (``{"train": ..., "test": ...}``).
+            Default is ``None``.
+        y_data : dict, optional
+            Dataset splits for model targets. Default is ``None``.
+        train_metrics : list[BaseMetric], optional
+            Metric instances to evaluate on the training split. Default is ``None``.
+        validation_metrics : list[BaseMetric], optional
+            Metric instances to evaluate on the validation split. Default is ``None``.
+        test_metrics : list[BaseMetric], optional
+            Metric instances to evaluate on the test split. Default is ``None``.
+        n_labels : int, optional
+            Number of unique class labels; used to determine whether the task is
+            binary or multiclass. Default is ``None``.
+        """
         self.model, self.fixed_parameters, self.optimizable_parameters = (
             self._extract_parameters(model, params)
         )
 
+        # Set run id
+        self.model.run_id = run_id
+
+        # Set data for the model
+        self.model.x_data = x_data
+        self.model.y_data = y_data
+
+        # Set metrics
+        self.model.train_metrics = train_metrics
+        self.model.validation_metrics = validation_metrics
+        self.model.test_metrics = test_metrics
+
         self.num_labels = n_labels
-
-        if self.num_labels is not None:
-            self.model.num_labels_from_factory = self.num_labels
-
         self.fitted = False
 
     def _extract_parameters(self, model_class, parameters: dict):
@@ -166,6 +213,67 @@ class ModelFactory:
 
         return fixed_val, local_refs
 
+    def update_parameters(
+        self,
+        old_parameters: dict,
+        new_params: dict,
+    ) -> dict:
+        """
+        Update the old parameters of the model with new parameter
+        values found during optimization.
+
+        Parameters
+        ----------
+        old_parameters : dict
+            A dictionary of the current parameters of the model,
+            which may include nested DashAI components
+            and optimizable parameters.
+
+        new_params : dict
+            A dictionary of new parameter values to update in the model,
+            where keys correspond to parameter names and
+            values are the new fixed values.
+
+        Returns
+        -------
+            updated_parameters (dict): A dictionary with the updated parameters
+            in the same format as old_parameters.
+
+        """
+
+        def recursive_update(params, param_name, new_value):
+            """Recursively set ``fixed_value`` for a named parameter in a nested dict.
+
+            Parameters
+            ----------
+            params : dict
+                Nested parameter dictionary to search.
+            param_name : str
+                The key whose ``fixed_value`` should be updated.
+            new_value : Any
+                The new value to assign.
+
+            Returns
+            -------
+            bool
+                ``True`` if the parameter was found and updated; ``False`` otherwise.
+            """
+            for key, val in params.items():
+                if isinstance(val, dict):
+                    if key == param_name and "fixed_value" in val:
+                        val["fixed_value"] = new_value
+                        return True  # Stop searching after updating
+                    if recursive_update(val, param_name, new_value):
+                        return True
+            return False
+
+        updated_parameters = old_parameters.copy()
+        for param_name, new_value in new_params.items():
+            # Recursively search for the parameter in the old parameters dict
+            recursive_update(updated_parameters, param_name, new_value)
+
+        return updated_parameters
+
     def evaluate(self, x, y, metrics):
         """
         Computes metrics only if the model is fitted.
@@ -197,6 +305,10 @@ class ModelFactory:
                 results[split] = split_results
                 continue
             predictions = self.model.predict(x[split])
+            if hasattr(self.model, "prepare_output"):
+                transformed_y = self.model.prepare_output(y[split])
+            else:
+                transformed_y = self.model.prepare_dataset(y[split])
             for metric in metrics:
                 if (
                     isinstance(metric, type)
@@ -204,10 +316,11 @@ class ModelFactory:
                     and "multiclass" in metric.score.__code__.co_varnames
                     and multiclass is not None
                 ):
-                    score = metric.score(y[split], predictions, multiclass=multiclass)
+                    score = metric.score(
+                        transformed_y, predictions, multiclass=multiclass
+                    )
                 else:
-                    # For metrics that don't accept the multiclass parameter
-                    score = metric.score(y[split], predictions)
+                    score = metric.score(transformed_y, predictions)
 
                 split_results[metric.__name__] = score
 
