@@ -660,18 +660,49 @@ async def validate_dataset(
                 detail="Internal database error",
             ) from e
 
-    # TODO: validate dataset for task
     validation_response = {}
     input_columns = model_session.input_columns
     output_columns = model_session.output_columns
-    columns = input_columns + output_columns
+    required_columns = input_columns + output_columns
 
     instances_columns = list(instances.features)
-    is_valid = set(columns).issubset(instances_columns)
 
-    if not is_valid:
+    # Check all required columns are present
+    missing = [c for c in required_columns if c not in instances_columns]
+    if missing:
         validation_response["dataset_status"] = "invalid"
-    else:
-        validation_response["dataset_status"] = "valid"
+        validation_response["missing_columns"] = missing
+        return validation_response
 
+    # Check column types match the original training dataset
+    with session_factory() as db:
+        try:
+            training_dataset: Dataset = db.get(Dataset, model_session.dataset_id)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    if training_dataset:
+        training_instances = load_dataset(f"{training_dataset.file_path}/dataset")
+        if training_instances:
+            training_types = {
+                col: type(t).__name__ for col, t in training_instances.types.items()
+            }
+            new_types = {col: type(t).__name__ for col, t in instances.types.items()}
+            type_mismatches = {
+                col: {"expected": training_types[col], "got": new_types[col]}
+                for col in required_columns
+                if col in training_types
+                and col in new_types
+                and training_types[col] != new_types[col]
+            }
+            if type_mismatches:
+                validation_response["dataset_status"] = "invalid"
+                validation_response["type_mismatches"] = type_mismatches
+                return validation_response
+
+    validation_response["dataset_status"] = "valid"
     return validation_response

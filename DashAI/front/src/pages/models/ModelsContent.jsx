@@ -17,7 +17,7 @@ import { useModels } from "../../components/models/ModelsContext";
 
 export default function ModelsContent() {
   const location = useLocation();
-  const threePanelLayout = useThreePanelLayout();
+  const threePanelLayout = useThreePanelLayout({ storageKey: "models" });
   const { t } = useTranslation(["models"]);
 
   const {

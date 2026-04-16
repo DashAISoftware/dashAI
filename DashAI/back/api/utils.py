@@ -67,10 +67,10 @@ def cast_string_to_type(string):
 
     type_map = {
         "int": int,
-        "np.int32": np.int32,
-        "np.int64": np.int64,
-        "np.float32": np.float32,
-        "np.float64": np.float64,
+        "int32": np.int32,
+        "int64": np.int64,
+        "float32": np.float32,
+        "float64": np.float64,
         "np.nan": np.nan,
         "pandas.NA": pd.NA,
     }

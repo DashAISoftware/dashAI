@@ -144,8 +144,8 @@ class HistogramPlotExplorer(DistributionExplorer):
 
     SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [],
+        "allowed_dtypes": [],
         "input_cardinality": {"exact": 1},
     }
 

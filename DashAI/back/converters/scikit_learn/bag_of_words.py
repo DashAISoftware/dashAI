@@ -14,7 +14,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Integer
+from DashAI.back.types.value_types import Integer, Text
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -104,8 +104,8 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "bag_of_words.png"
 
     metadata = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
     }
     DESCRIPTION = MultilingualString(
         en=(
@@ -173,6 +173,9 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
         """Transform text into Bag-of-Words token-frequency columns.
 
+        Appends one ``bow_<token>`` column per vocabulary term to the original
+        dataset. The source text column is preserved unchanged.
+
         Parameters
         ----------
         x : DashAIDataset
@@ -183,16 +186,16 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         Returns
         -------
         DashAIDataset
-            Dataset where each token becomes a numeric frequency column.
+            Original dataset with ``bow_*`` token-frequency columns appended.
 
         Raises
         ------
         RuntimeError
             If :meth:`fit` has not been called yet.
         """
-        import pandas as pd
+        import pyarrow as pa
 
-        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
@@ -202,15 +205,20 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
         bow_matrix = self.vectorizer.transform(texts)
         feature_names = self.vectorizer.get_feature_names_out()
-
-        # One column per token (frequency)
-        df_bow = pd.DataFrame(bow_matrix.toarray(), columns=feature_names)
-
-        converted_dataset = to_dashai_dataset(df_bow)
         output_type = self.get_output_type()
-        for col in converted_dataset.column_names:
-            converted_dataset.types[col] = output_type
-        return converted_dataset
+
+        combined_table = x.arrow_table
+        combined_types = dict(x.types)
+
+        bow_array = bow_matrix.toarray()
+        for i, token in enumerate(feature_names):
+            prefixed = f"bow_{token}"
+            combined_table = combined_table.append_column(
+                prefixed, pa.array(bow_array[:, i].tolist(), type=pa.int64())
+            )
+            combined_types[prefixed] = output_type
+
+        return DashAIDataset(combined_table, types=combined_types, splits=x.splits)
 
     def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

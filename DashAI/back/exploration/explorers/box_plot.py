@@ -5,6 +5,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -90,10 +91,8 @@ class BoxPlotExplorer(DistributionExplorer):
 
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {
-        # It should be added, maybe in a own validate_columns method,
-        # that in this case at least one column should be numeric
-        "allowed_dtypes": ["int64", "float64"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 1, "max": 2},
     }
 

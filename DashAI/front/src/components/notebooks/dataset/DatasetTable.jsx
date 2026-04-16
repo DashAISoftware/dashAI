@@ -9,7 +9,10 @@ import { Box, Button, Tooltip, Typography } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { renameDatasetColumn } from "../../../api/datasets";
+import {
+  renameDatasetColumn,
+  updateColumnEncoder,
+} from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
 
 export default function DatasetTable({
@@ -39,6 +42,7 @@ export default function DatasetTable({
   const CLIENT_SIDE_THRESHOLD = 2000;
   const initialized = useRef(false);
   const isLoadingFullDataRef = useRef(false);
+  const allFilteredDataRef = useRef(null);
 
   const [data, setData] = useState([]);
   const [rowCount, setRowCount] = useState(0);
@@ -93,6 +97,7 @@ export default function DatasetTable({
     setData([]);
     setRowCount(0);
     setTotalRowCount(0);
+    allFilteredDataRef.current = null;
     setAllFilteredData(null);
     setIsLoading(true);
     setShowColumnFilters(false);
@@ -182,7 +187,8 @@ export default function DatasetTable({
   // Clear cached data when filters/sorting change
   // Reset lazy-load flag to allow re-fetching full data if needed
   useEffect(() => {
-    if (allFilteredData) {
+    if (allFilteredDataRef.current) {
+      allFilteredDataRef.current = null;
       setAllFilteredData(null);
       isLoadingFullDataRef.current = false;
     }
@@ -195,9 +201,11 @@ export default function DatasetTable({
     if (!initialized.current) return;
 
     // If we have cached filtered data, use it for pagination
-    if (allFilteredData) {
+    if (allFilteredDataRef.current) {
       const start = pagination.pageIndex * pagination.pageSize;
-      setData(allFilteredData.slice(start, start + pagination.pageSize));
+      setData(
+        allFilteredDataRef.current.slice(start, start + pagination.pageSize),
+      );
       setIsLoading(false);
       return;
     }
@@ -256,6 +264,7 @@ export default function DatasetTable({
           if (cancelled) return;
 
           const allRows = fullResponse?.rows ?? rows;
+          allFilteredDataRef.current = allRows;
           setAllFilteredData(allRows);
           setRowCount(total);
           const start = pagination.pageIndex * pagination.pageSize;
@@ -312,6 +321,15 @@ export default function DatasetTable({
     [datasetId, onEditColumn, columnFilters, pagination, fetchPage],
   );
 
+  const handleEncoderChange = useCallback(
+    async (columnName, encoder) => {
+      if (!datasetId) return;
+      await updateColumnEncoder(datasetId, columnName, encoder);
+      if (onEditColumn) await onEditColumn();
+    },
+    [datasetId, onEditColumn],
+  );
+
   const columns = useMemo(() => {
     let columnKeys = [];
 
@@ -362,11 +380,17 @@ export default function DatasetTable({
             ],
         Header: () =>
           editableColumns && datasetId ? (
-            <div onDoubleClick={(e) => e.stopPropagation()}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.stopPropagation()}
+              style={{ cursor: "default" }}
+            >
               <EditableColumnHeader
                 columnName={key}
                 columnType={getColType(key)}
+                columnEncoder={columnTypes[key]?.encoder ?? null}
                 onRename={handleColumnRename}
+                onEncoderChange={handleEncoderChange}
               />
             </div>
           ) : (
@@ -381,7 +405,15 @@ export default function DatasetTable({
           ),
       };
     });
-  }, [data, columnTypes, editableColumns, datasetId, handleColumnRename, t]);
+  }, [
+    data,
+    columnTypes,
+    editableColumns,
+    datasetId,
+    handleColumnRename,
+    handleEncoderChange,
+    t,
+  ]);
 
   const handleExportFilteredRows = useCallback(async () => {
     if (rowCount === 0) return;

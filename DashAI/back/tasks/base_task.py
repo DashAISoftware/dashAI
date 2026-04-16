@@ -15,6 +15,7 @@ class BaseTask:
     """Base class for DashAI compatible tasks."""
 
     TYPE: Final[str] = "Task"
+    SCORING_PROFILES: Dict[str, Dict[str, Any]] = {}
 
     @property
     @abstractmethod

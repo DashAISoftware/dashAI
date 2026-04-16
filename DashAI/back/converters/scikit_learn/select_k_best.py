@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SelectKBestSchema(BaseSchema):
@@ -69,10 +69,7 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(en="Select K Best", es="Seleccionar K Mejores")
     IMAGE_PREVIEW = "select_k_best.png"
-    metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
-    }
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
