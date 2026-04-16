@@ -306,7 +306,8 @@ a:focus-visible {
 .navbar-github-icon {
   display: flex;
   align-items: center;
-  padding: 5px 8px;
+  height: 35px;
+  padding: 0 8px;
   color: var(--dashai-text-secondary);
   border: 1px solid var(--dashai-border);
   border-radius: 6px;
@@ -340,7 +341,11 @@ a:focus-visible {
   background: none !important;
   color: var(--dashai-text-secondary) !important;
   transition: border-color 0.15s, color 0.15s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
+
 
 .navbar__items--right [class*="colorModeToggle"] button:hover,
 .navbar__items--right [class*="toggle_"] button:hover {
