@@ -94,7 +94,8 @@ from DashAI.back.models import (
     StableDiffusionV2Model,
     StableDiffusionV3Model,
     StableDiffusionXLV1ControlNet,
-    OpenAITextToTextGenerationModel
+    OpenAITextToTextGenerationModel,
+    Phi4MiniInstructModel,
 )
 from DashAI.back.models.RAG import (
     RAGPipeline,
@@ -191,6 +192,7 @@ def get_initial_components():
         LinearSVR,
         LinearRegression,
         OpenAITextToTextGenerationModel,
+        Phi4MiniInstructModel,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,
