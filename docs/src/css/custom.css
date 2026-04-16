@@ -298,7 +298,8 @@ a:focus-visible {
 }
 
 /* GitHub icon-only link — matches theme toggle style */
-.navbar__item:has(.navbar-github-icon) {
+.navbar__item:has(.navbar-github-icon),
+.navbar__item.dropdown.dropdown--hoverable.dropdown--right {
   padding: 0;
 }
 
