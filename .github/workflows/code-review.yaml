@@ -24,4 +24,4 @@ jobs:
           prompt: "Review this pull request for code quality, correctness, and security. Analyze the diff, then post your findings as inline review comments."
           claude_args: "--max-turns 20 --model claude-sonnet-4-6"
           include_fix_links: true
-          classify_inline_comments: true
+          classify_inline_comments: false
