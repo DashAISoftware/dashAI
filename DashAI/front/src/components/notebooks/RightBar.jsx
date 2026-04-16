@@ -99,6 +99,11 @@ export default function RightBar({ notebook, onToggle }) {
     fetchData();
   }, [t]);
 
+  // Clear search when the selected notebook changes
+  useEffect(() => {
+    setSearchQuery("");
+  }, [notebook?.id]);
+
   // Fetch dataset columns from notebook file
   useEffect(() => {
     let isMounted = true;
