@@ -15,10 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: anthropics/claude-code-action@beta
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          model: claude-sonnet-4-6
-          direct_prompt: "Review this pull request for code quality, correctness, and security. Analyze the diff, then post your findings as review comments."
-          max_turns: 5
+          prompt: "Review this pull request for code quality, correctness, and security. Analyze the diff, then post your findings as inline review comments."
+          claude_args: "--max-turns 20 --model claude-sonnet-4-6"
+          include_fix_links: true
+          classify_inline_comments: true
+
