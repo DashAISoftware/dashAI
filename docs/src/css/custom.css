@@ -1278,6 +1278,10 @@ tbody tr:hover {
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
 }
 
+[data-theme='dark'] .navbar-sidebar {
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+}
+
 .navbar-sidebar__brand {
   height: var(--ifm-navbar-height);
   padding: 0 12px;
@@ -1285,10 +1289,6 @@ tbody tr:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.navbar-sidebar__brand .navbar-github-icon__label {
-  display: none;
 }
 
 .navbar-sidebar__close svg {
@@ -1312,7 +1312,7 @@ tbody tr:hover {
 }
 
 .navbar-sidebar .menu__link--active {
-  color: var(--dashai-accent);
+  color: var(--dashai-accent) !important;
   font-weight: 600;
 }
 
