@@ -303,7 +303,6 @@ export default function RightBar({ notebook, onToggle }) {
 
   const handleChangeTab = (event, newValue) => {
     setActiveTab(newValue);
-    setSearchQuery("");
 
     if (tourContext && tourContext.run) {
       setTimeout(() => {
@@ -452,49 +451,69 @@ export default function RightBar({ notebook, onToggle }) {
                 }}
               >
                 {/* Tool list - grid */}
-                {viewMode === "list" ? (
-                  <Box
-                    sx={{
-                      flex: 1,
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      p: 2,
-                      minWidth: 0,
-                    }}
-                  >
-                    {activeTab === 0 && (
-                      <ToolList
-                        tools={filteredExplorers}
-                        notebook={notebook}
-                        FormComponent={FormExplorerSection}
-                      />
-                    )}
-                    {activeTab === 1 && (
-                      <ToolList
-                        tools={filteredConverters}
-                        notebook={notebook}
-                        FormComponent={FormConverterSection}
-                      />
-                    )}
-                  </Box>
-                ) : (
-                  <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                    {activeTab === 0 && (
-                      <ToolGrid
-                        tools={filteredExplorers}
-                        notebook={notebook}
-                        FormComponent={FormExplorerSection}
-                      />
-                    )}
-                    {activeTab === 1 && (
-                      <ToolGrid
-                        tools={filteredConverters}
-                        notebook={notebook}
-                        FormComponent={FormConverterSection}
-                      />
-                    )}
-                  </Box>
-                )}
+                {(() => {
+                  const isSearching = searchQuery.trim().length > 0;
+                  const ListComponent =
+                    viewMode === "list" ? ToolList : ToolGrid;
+                  const containerSx =
+                    viewMode === "list"
+                      ? {
+                          flex: 1,
+                          overflowY: "auto",
+                          overflowX: "hidden",
+                          p: 2,
+                          minWidth: 0,
+                        }
+                      : { flex: 1, overflow: "auto", p: 2 };
+
+                  const sectionTitleSx = {
+                    color: "text.secondary",
+                    fontWeight: 600,
+                    mb: 1,
+                    mt: 0,
+                    display: "block",
+                  };
+
+                  return (
+                    <Box sx={containerSx}>
+                      {isSearching ? (
+                        <>
+                          <Typography variant="caption" sx={sectionTitleSx}>
+                            {t("datasets:label.explore")}
+                          </Typography>
+                          <ListComponent
+                            tools={filteredExplorers}
+                            notebook={notebook}
+                            FormComponent={FormExplorerSection}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ ...sectionTitleSx, mt: 2 }}
+                          >
+                            {t("datasets:label.convert")}
+                          </Typography>
+                          <ListComponent
+                            tools={filteredConverters}
+                            notebook={notebook}
+                            FormComponent={FormConverterSection}
+                          />
+                        </>
+                      ) : activeTab === 0 ? (
+                        <ListComponent
+                          tools={filteredExplorers}
+                          notebook={notebook}
+                          FormComponent={FormExplorerSection}
+                        />
+                      ) : (
+                        <ListComponent
+                          tools={filteredConverters}
+                          notebook={notebook}
+                          FormComponent={FormConverterSection}
+                        />
+                      )}
+                    </Box>
+                  );
+                })()}
 
                 {/* Description panel - Fixed height */}
                 <DescriptionPanel />
