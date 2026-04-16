@@ -139,29 +139,26 @@ export default function RightBar({ notebook, onToggle }) {
   const validateExplorer = (explorer) => {
     if (!datasetColumns.length) return { disabled: false, tooltip: "" };
 
-    const allowedDtypes = explorer?.metadata?.allowed_dtypes || ["*"];
-    const restrictedDtypes = explorer?.metadata?.restricted_dtypes || [];
+    const allowedTypes = explorer?.metadata?.allowed_types || [];
+    const allowedDtypes = explorer?.metadata?.allowed_dtypes || [];
     const inputCardinality = explorer?.metadata?.input_cardinality || {};
 
     let validColumns = datasetColumns;
     let disabled = false;
-    let tooltip = explorer.description || "";
+    let tooltip =
+      explorer.description || explorer.metadata?.short_description || "";
 
-    // Filter by allowed dtypes
-    if (!allowedDtypes.includes("*")) {
-      validColumns = datasetColumns.filter((col) =>
-        allowedDtypes.includes(col.dataType),
+    // Filter by allowed semantic types
+    if (allowedTypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
+        allowedTypes.includes(col.valueType),
       );
     }
 
-    // Filter out restricted dtypes
-    if (
-      restrictedDtypes.some((dtype) =>
-        datasetColumns.some((col) => col.dataType === dtype),
-      )
-    ) {
-      validColumns = validColumns.filter(
-        (col) => !restrictedDtypes.includes(col.dataType),
+    // Filter by allowed dtypes
+    if (allowedDtypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
+        allowedDtypes.includes(col.dataType),
       );
     }
 
@@ -169,11 +166,9 @@ export default function RightBar({ notebook, onToggle }) {
     if (inputCardinality.exact != null) {
       if (validColumns.length < inputCardinality.exact) {
         disabled = true;
-
         if (validColumns.length === 0) {
           tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
-
         tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
           required: inputCardinality.exact,
           available: validColumns.length,
@@ -183,11 +178,9 @@ export default function RightBar({ notebook, onToggle }) {
     } else if (inputCardinality.min != null) {
       if (validColumns.length < inputCardinality.min) {
         disabled = true;
-
         if (validColumns.length === 0) {
           tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
-
         tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
           required: inputCardinality.min,
           available: validColumns.length,
@@ -196,14 +189,15 @@ export default function RightBar({ notebook, onToggle }) {
       }
     }
 
-    // Check if there are no valid columns at all
+    // Check if there are no valid columns and some restriction was applied
     if (
       validColumns.length === 0 &&
-      allowedDtypes.length > 0 &&
-      !allowedDtypes.includes("*")
+      (allowedTypes.length > 0 || allowedDtypes.length > 0)
     ) {
       disabled = true;
-      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypes")}`;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
+        dtypes: [...allowedTypes, ...allowedDtypes].join(", "),
+      })}`;
     }
 
     return { disabled, tooltip, validColumns };
@@ -213,41 +207,36 @@ export default function RightBar({ notebook, onToggle }) {
   const validateConverter = (converter) => {
     if (!datasetColumns.length) return { disabled: false, tooltip: "" };
 
-    const allowedDtypes = converter?.metadata?.allowed_dtypes || ["*"];
-    const restrictedDtypes = converter?.metadata?.restricted_dtypes || [];
+    const allowedTypes = converter?.metadata?.allowed_types || [];
+    const allowedDtypes = converter?.metadata?.allowed_dtypes || [];
 
     let validColumns = datasetColumns;
     let disabled = false;
     let tooltip =
       converter.description || converter.metadata?.short_description || "";
 
+    // Filter by allowed semantic types
+    if (allowedTypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
+        allowedTypes.includes(col.valueType),
+      );
+    }
+
     // Filter by allowed dtypes
-    if (!allowedDtypes.includes("*")) {
-      validColumns = datasetColumns.filter((col) =>
+    if (allowedDtypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
     }
 
-    // Filter out restricted dtypes
-    if (
-      restrictedDtypes.some((dtype) =>
-        datasetColumns.some((col) => col.dataType === dtype),
-      )
-    ) {
-      validColumns = validColumns.filter(
-        (col) => !restrictedDtypes.includes(col.dataType),
-      );
-    }
-
-    // Check if there are no valid columns at all
+    // Check if there are no valid columns at all (some restriction was applied)
     if (
       validColumns.length === 0 &&
-      allowedDtypes.length > 0 &&
-      !allowedDtypes.includes("*")
+      (allowedTypes.length > 0 || allowedDtypes.length > 0)
     ) {
       disabled = true;
       tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
-        dtypes: allowedDtypes.join(", "),
+        dtypes: [...allowedTypes, ...allowedDtypes].join(", "),
       })}`;
     }
 

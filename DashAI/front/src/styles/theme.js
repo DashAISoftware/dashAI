@@ -135,6 +135,7 @@ const getTheme = (mode) => ({
             divider: "rgba(239,159,39,0.10)",
             box: "#0f0f0d",
             disabled: "#161614",
+            rowDisabled: "rgba(255,255,255,0.04)",
           }
         : {
             border: "rgba(0,0,0,0.10)",
@@ -150,6 +151,7 @@ const getTheme = (mode) => ({
             divider: "rgba(0,0,0,0.10)",
             box: "#fafafa",
             disabled: "#f5f5f5",
+            rowDisabled: "rgba(0,0,0,0.04)",
           },
   },
 

@@ -62,16 +62,32 @@ def _rebuild_dataset_with_transformed_columns(
     new_cols = [col for col in transformed_cols if col not in scope_column_names]
 
     new_columns_order = []
-    for _i, col in enumerate(original_columns):
+    seen_cols = set()
+    for col in original_columns:
         if col in removed_cols:
             continue
-        new_columns_order.append(col)
-    new_columns_order.extend(new_cols)
+        if col not in seen_cols:
+            new_columns_order.append(col)
+            seen_cols.add(col)
+
+    col_name_mapping = {}
+    for col in new_cols:
+        unique_col = col
+        counter = 1
+        while unique_col in seen_cols:
+            unique_col = f"{col}_{counter}"
+            counter += 1
+        new_columns_order.append(unique_col)
+        seen_cols.add(unique_col)
+        col_name_mapping[col] = unique_col
 
     updated_arrays = {}
-    for col in replacement_cols + new_cols:
+    for col in replacement_cols:
         if col in transformed.arrow_table.column_names:
             updated_arrays[col] = transformed.arrow_table[col]
+    for col, unique_col in col_name_mapping.items():
+        if col in transformed.arrow_table.column_names:
+            updated_arrays[unique_col] = transformed.arrow_table[col]
 
     updated_types = base.types.copy()
 
@@ -79,13 +95,12 @@ def _rebuild_dataset_with_transformed_columns(
         if col in updated_types:
             del updated_types[col]
 
-    updated_types.update(
-        {
-            col: transformed.types[col]
-            for col in replacement_cols + new_cols
-            if col in transformed.types
-        }
-    )
+    for col in replacement_cols:
+        if col in transformed.types:
+            updated_types[col] = transformed.types[col]
+    for col, unique_col in col_name_mapping.items():
+        if col in transformed.types:
+            updated_types[unique_col] = transformed.types[col]
 
     # Use existing modify_table (imported at module level)
     modified_dataset = modify_table(base, updated_arrays, types=updated_types)

@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.types.categorical import Categorical
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -70,8 +71,8 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
 
     SCHEMA = ParallelCategoriesSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Categorical],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 2},
     }
 
