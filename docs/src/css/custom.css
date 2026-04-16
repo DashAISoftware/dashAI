@@ -351,20 +351,26 @@ a:focus-visible {
 
 /* Search bar — local search plugin */
 [class*="navbarSearchContainer"] {
-  padding-left: 0 !important;
+  padding: 0 !important;
+  width: 250px !important;
+  max-width: 250px !important;
 }
 
 [class*="searchBarContainer"],
+[class*="searchBar_"],
 .navbar__search {
   flex: 1;
-  max-width: 320px;
+  width: 100% !important;
+  max-width: 250px !important;
   margin: 0 !important;
   padding: 0;
 }
 
 [class*="searchBar_"] input,
 [class*="searchBar_"] .searchBarInput,
+[class*="input_"],
 .navbar__search-input {
+  width: 100% !important;
   background: rgba(255, 255, 255, 0.9) !important;
   border: 1px solid var(--dashai-border) !important;
   border-radius: 8px !important;
