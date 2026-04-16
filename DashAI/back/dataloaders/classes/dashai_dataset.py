@@ -1101,6 +1101,45 @@ def split_dataset(
     return separate_dataset_dict
 
 
+def split_dataset_cv(
+    dataset: DashAIDataset,
+    indices: Dict[Dict[str, List[int]]],
+    train_indexes: List = None,
+    test_indexes: List = None,
+) -> object:
+    import numpy as np
+
+    # Get the number of records
+    n = len(dataset)
+
+    # Convert the indexes into boolean masks
+    train_mask = np.isin(np.arange(n), train_indexes)
+    test_mask = np.isin(np.arange(n), test_indexes)
+
+    # Get the underlying table
+    import pyarrow as pa  # local import
+
+    table = dataset.arrow_table
+
+    dataset.splits["split_indices"] = indices
+
+    # Create separate tables for each split
+    train_table = table.filter(pa.array(train_mask))
+    test_table = table.filter(pa.array(test_mask))
+
+    # Preserve types from the original dataset to maintain categorical mappings
+    from datasets import DatasetDict  # local import
+
+    separate_dataset_dict = DatasetDict(
+        {
+            "train": DashAIDataset(train_table, types=dataset.types),
+            "test": DashAIDataset(test_table, types=dataset.types),
+        }
+    )
+
+    return separate_dataset_dict
+
+
 def to_dashai_dataset(
     dataset: object,
     types: Optional[Dict[str, DashAIDataType]] = None,

@@ -12,3 +12,5 @@ class LevelEnum(Enum):
     TRIAL = "trial"
     STEP = "step"
     EPOCH = "epoch"
+    FOLD = "fold"
+    TRIAL_FOLD = "trial_fold"
