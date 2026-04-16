@@ -267,9 +267,23 @@ function ColumnSelector({
       sx: { border: "1px solid", borderColor: "divider" },
     },
     muiTableBodyRowProps: ({ row }) => ({
-      sx: isRowSelectable({ id: row.original.id })
-        ? {}
-        : { backgroundColor: theme.palette.action.disabledBackground },
+      onClick: () => {
+        if (!isRowSelectable({ id: row.original.id })) return;
+        const id = row.original.id;
+        const isSelected = rowSelectionModel.includes(id);
+        const newSelection = isSelected
+          ? rowSelectionModel.filter((s) => s !== id)
+          : [...rowSelectionModel, id];
+        handleSelection(toMRT(newSelection));
+      },
+      sx: {
+        cursor: isRowSelectable({ id: row.original.id })
+          ? "pointer"
+          : "default",
+        ...(isRowSelectable({ id: row.original.id })
+          ? {}
+          : { backgroundColor: theme.palette.action.disabledBackground }),
+      },
     }),
     localization,
   });
