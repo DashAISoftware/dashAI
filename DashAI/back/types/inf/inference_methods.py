@@ -90,6 +90,12 @@ class DashAIPtype(PtypeCat, InferenceMethod):
                 else:
                     dashai_info["dtype"] = "string"
 
+                # Infer encoder from dtype
+                if dashai_info["dtype"] in ("int64", "float64"):
+                    dashai_info["encoder"] = "label"
+                else:
+                    dashai_info["encoder"] = "one_hot"
+
             inferred_types[col_name] = dashai_info
 
         return inferred_types
@@ -127,6 +133,7 @@ class DummyCategoricalInference(InferenceMethod):
                 if n_unique < 10:
                     result = PTYPE_TO_DASHAI["categorical"].copy()
                     result["dtype"] = "string"
+                    result["encoder"] = "one_hot"
                     inferred_types[col] = result
                 else:
                     inferred_types[col] = PTYPE_TO_DASHAI["string"]
@@ -136,6 +143,7 @@ class DummyCategoricalInference(InferenceMethod):
                 if n_unique < 10:
                     result = PTYPE_TO_DASHAI["categorical"].copy()
                     result["dtype"] = "int64"
+                    result["encoder"] = "label"
                     inferred_types[col] = result
                 else:
                     inferred_types[col] = PTYPE_TO_DASHAI["integer"]

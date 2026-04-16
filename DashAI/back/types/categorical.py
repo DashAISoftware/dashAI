@@ -23,6 +23,7 @@ class Categorical(DashAIDataType):
     categories: list
     converted: bool = False
     dtype: str = None
+    encoder: str = "one_hot"
 
     def __init__(
         self,
@@ -30,6 +31,7 @@ class Categorical(DashAIDataType):
         encoding: dict = None,
         converted: bool = False,
         dtype: str = None,
+        encoder: str = "one_hot",
     ):
         import pyarrow as pa
 
@@ -55,6 +57,7 @@ class Categorical(DashAIDataType):
 
         self.categories = values
         self.converted = converted
+        self.encoder = encoder
 
         # Infer dtype from values if not explicitly provided
         if dtype is None:
@@ -122,6 +125,7 @@ class Categorical(DashAIDataType):
         return {
             "type": "Categorical",
             "dtype": self.dtype,
+            "encoder": self.encoder,
             "categories": [str(c) for c in self.categories],
             "num_categories": self.num_categories(),
             "converted": self.converted,
