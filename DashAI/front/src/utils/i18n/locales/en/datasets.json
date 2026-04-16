@@ -125,6 +125,7 @@
     "datasetModuleSubtitle": "Upload your datasets: Explore, analyze, and transform your data with advanced exploratory analysis tools. Create interactive notebooks, generate visualizations, and apply data transformations intuitively.",
     "datasetName": "Dataset Name",
     "datasetPreview": "Dataset Preview",
+    "aboutTool": "About {{toolName}}",
     "datasetPreviewFor": "Notebook: {{name}} Preview",
     "dataType": "Data Type",
     "deleteConverterConfirmation": "Are you sure you want to delete the converter \"{{converter}}\"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.",

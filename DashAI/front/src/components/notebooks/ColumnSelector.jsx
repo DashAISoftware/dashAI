@@ -248,7 +248,11 @@ function ColumnSelector({
     getRowId: (row) => String(row.id),
     enableGlobalFilter: true,
     enableColumnFilters: false,
-    enableSorting: true,
+    enableColumnActions: false,
+    enableSorting: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
     enablePagination: true,
     muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
     initialState: {

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Box, Typography } from "@mui/material";
 import ToolGridItem from "./ToolGridItem";
-import ConfigureToolModal from "./ConfigureToolModal";
+import ConfigureToolModalSplitView from "./ConfigureToolModalSplitView";
 import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
 import { useTranslation } from "react-i18next";
@@ -112,7 +112,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
       })}
 
       {selectedTool && (
-        <ConfigureToolModal
+        <ConfigureToolModalSplitView
           open={open}
           handleClose={() => {
             setOpen(false);
