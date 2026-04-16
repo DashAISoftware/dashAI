@@ -349,11 +349,16 @@ a:focus-visible {
 }
 
 /* Search bar — local search plugin */
+[class*="navbarSearchContainer"] {
+  padding-left: 0 !important;
+}
+
 [class*="searchBarContainer"],
 .navbar__search {
   flex: 1;
   max-width: 320px;
-  margin-left: auto;
+  margin: 0 !important;
+  padding: 0;
 }
 
 [class*="searchBar_"] input,
