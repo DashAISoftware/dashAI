@@ -205,5 +205,10 @@
     "overall": "General",
     "utilization": "Utilización",
     "connecting": "Conectando al monitor de hardware..."
-  }
+  },
+  "collapse": "Contraer",
+  "expand": "Expandir",
+  "optimize": "Optimizar",
+  "viewMore": "Ver más",
+  "viewLess": "Ver menos"
 }

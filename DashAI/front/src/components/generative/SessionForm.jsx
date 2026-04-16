@@ -16,7 +16,7 @@ export default function SessionForm({
     <form onSubmit={formik.handleSubmit}>
       <Box sx={{ mb: 5 }}>
         <Box>
-          <Box width="60%" data-tour="model-parameters">
+          <Box width="100%" mb={2} data-tour="model-parameters">
             <Typography
               sx={{
                 fontSize: "16px",
@@ -40,6 +40,7 @@ export default function SessionForm({
               onFormSubmit={formik.handleSubmit}
               setError={(error) => console.error(error)}
               errorsMessage={formik.errors}
+              spacing={2}
             />
           </Box>
 
