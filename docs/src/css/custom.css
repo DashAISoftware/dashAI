@@ -332,6 +332,10 @@ a:focus-visible {
   display: block;
 }
 
+.navbar-github-icon__label {
+  display: none;
+}
+
 /* Theme toggle button — bordered icon button */
 .navbar__items--right [class*="colorModeToggle"] button,
 .navbar__items--right [class*="toggle_"] button {
@@ -1265,6 +1269,92 @@ tbody tr:hover {
 
 .navbar__search-input:focus {
   border-color: var(--dashai-border-active);
+}
+
+/* ── Mobile sidebar ── */
+.navbar-sidebar {
+  background: var(--ifm-navbar-background-color);
+  border-right: 1px solid var(--dashai-border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.navbar-sidebar__brand {
+  height: var(--ifm-navbar-height);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--dashai-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-sidebar__brand .navbar-github-icon__label {
+  display: none;
+}
+
+.navbar-sidebar__close svg {
+  color: var(--dashai-text-secondary);
+}
+
+.navbar-sidebar__close:hover svg {
+  color: var(--dashai-text-primary);
+}
+
+/* Nav items inside sidebar */
+.navbar-sidebar .menu__link {
+  color: var(--dashai-text-secondary);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.navbar-sidebar .menu__link:hover {
+  color: var(--dashai-text-primary);
+  background: var(--dashai-accent-glow);
+}
+
+.navbar-sidebar .menu__link--active {
+  color: var(--dashai-accent);
+  font-weight: 600;
+}
+
+/* GitHub link row in sidebar */
+.navbar-sidebar .navbar-github-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: auto;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  width: 100%;
+  color: var(--dashai-text-secondary);
+}
+
+.navbar-sidebar .navbar-github-icon:hover {
+  color: var(--dashai-text-primary);
+  background: var(--dashai-accent-glow);
+  border: none;
+}
+
+.navbar-sidebar .navbar-github-icon__label {
+  display: inline;
+  font-size: 0.9rem;
+}
+
+/* Back button */
+.navbar-sidebar__back {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  text-align: left;
+  font-size: 0.875rem;
+  color: var(--dashai-text-secondary);
+  border-bottom: 1px solid var(--dashai-border);
+  transition: color 0.15s;
+}
+
+.navbar-sidebar__back:hover {
+  color: var(--dashai-accent);
 }
 
 /* ── Navbar mobile ── */
