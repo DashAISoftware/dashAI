@@ -8,7 +8,7 @@ import PropTypes from "prop-types";
  * @param {node} children content of the box
  */
 
-function BoxWithTitle({ title, children, boderColor = "grey.700" }) {
+function BoxWithTitle({ title, children, borderColor = "grey.700" }) {
   const titleRef = useRef(null);
   const [titleWidth, setTitleWidth] = useState(0);
 
@@ -21,7 +21,7 @@ function BoxWithTitle({ title, children, boderColor = "grey.700" }) {
   return (
     <Box
       border={1}
-      borderColor={boderColor}
+      borderColor={borderColor}
       borderRadius={2}
       position="relative"
     >
@@ -59,7 +59,7 @@ function BoxWithTitle({ title, children, boderColor = "grey.700" }) {
 BoxWithTitle.propTypes = {
   title: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
-  boderColor: PropTypes.string,
+  borderColor: PropTypes.string,
 };
 
 export default BoxWithTitle;

@@ -1,6 +1,7 @@
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import { Box, IconButton, Typography } from "@mui/material";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useFormSchemaStore } from "../../contexts/schema";
 import PropTypes from "prop-types";
 
@@ -13,6 +14,7 @@ import PropTypes from "prop-types";
 
 function FormSchemaHeader({ title, onClose, onFormSubmit }) {
   const { formValues, properties, removeLastProperty } = useFormSchemaStore();
+  const { t } = useTranslation(["common"]);
 
   const handleClose = () => {
     if (properties.length > 0) {
@@ -25,7 +27,7 @@ function FormSchemaHeader({ title, onClose, onFormSubmit }) {
 
   return (
     <Box display="flex" alignItems="center">
-      <IconButton onClick={handleClose}>
+      <IconButton onClick={handleClose} aria-label={t("common:back")}>
         <ArrowBackOutlined />
       </IconButton>
       <Typography variant="h5" sx={{ ml: 2 }}>
