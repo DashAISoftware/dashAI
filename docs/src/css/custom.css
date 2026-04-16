@@ -311,6 +311,10 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.navbar-github-icon:focus-visible {
+  opacity: 1;
+}
+
 .navbar-github-icon svg {
   width: 20px;
   height: 20px;
