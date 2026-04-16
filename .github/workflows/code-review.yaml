@@ -22,8 +22,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: "Review this pull request for code quality, correctness, and security. Analyze the diff, then post your findings as inline review comments."
-          claude_args: "--max-turns 20 --model claude-sonnet-4-6"
+          claude_args: "--max-turns 20 --model claude-sonnet-4-6 --allowedTools Bash,Read,Glob,Grep"
           include_fix_links: true
           classify_inline_comments: false
           show_full_output: true
-          allowed_tools: "Bash(gh*),Bash(git*),Read,Glob,Grep"
