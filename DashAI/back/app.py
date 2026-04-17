@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
 from DashAI.back.container import build_container
+from DashAI.back.custom_components.startup import rehydrate_custom_components
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
 
@@ -74,6 +75,7 @@ def create_app(
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
     _create_path_if_not_exists(config["NOTEBOOK_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
+    _create_path_if_not_exists(config["CUSTOM_COMPONENTS_PATH"])
 
     logger.debug("3. Creating app container and setting up dependency injection.")
     container = build_container(config=config)
@@ -82,6 +84,9 @@ def create_app(
     migrate_on_startup(
         sqlite_file_path=pathlib.Path(config["SQLITE_DB_PATH"]),
     )
+
+    logger.debug("4b. Rehydrating user-authored custom components.")
+    rehydrate_custom_components()
     logger.debug("5. Initializing FastAPI application.")
     app = FastAPI(title="DashAI")
     api_v1 = FastAPI(title="DashAI API v1")

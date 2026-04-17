@@ -21,3 +21,4 @@ class DefaultSettings(BaseSettings):
     RUNS_PATH: str = "runs"
     EXPLANATIONS_PATH: str = "explanations"
     NOTEBOOK_PATH: str = "notebook"
+    CUSTOM_COMPONENTS_PATH: str = "custom_components"
