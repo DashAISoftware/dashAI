@@ -99,6 +99,22 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def predict(self, x_data: "DashAIDataset") -> "DashAIDataset":
+        """Generate predictions for the given input data.
+
+        Parameters
+        ----------
+        x_data : DashAIDataset
+            The input features to generate predictions for.
+
+        Returns
+        -------
+        DashAIDataset
+            The predicted output dataset.
+        """
+        raise NotImplementedError
+
     @final
     def _save_metrics(
         self,
