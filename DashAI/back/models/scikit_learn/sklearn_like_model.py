@@ -117,6 +117,8 @@ class SklearnLikeModel(BaseModel):
         np.ndarray
             Predicted values.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         if isinstance(x, DashAIDataset):
             x = self.prepare_dataset(x, is_fit=False).to_pandas()
         return super().predict(x)
