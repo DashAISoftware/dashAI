@@ -101,12 +101,15 @@ export default function ScopeStepConverter({
           gap: 1,
         }}
       >
-        <Typography variant="subtitle2" gutterBottom>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 0.5 }}
+        >
           {t("datasets:label.selectScopeStep", { step: 1 })}
         </Typography>
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.secondary }}
+          sx={{ color: theme.palette.text.primary, mb: 0.5 }}
         >
           {t("datasets:label.selectScopeDescriptionColumns")}
         </Typography>

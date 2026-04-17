@@ -292,20 +292,19 @@ function ColumnSelector({
 
   return (
     <Box>
-      {/* Selected count - always shown */}
+      {/* Column requirements */}
       <Box
         sx={{
-          mb: 2,
-          p: 2,
+          mb: 1.5,
+          p: 1.5,
           borderRadius: 2,
           backgroundColor: theme.palette.ui.hover,
           border: `1px solid ${theme.palette.ui.divider}`,
           textAlign: "center",
         }}
       >
-        {/* Column requirement info */}
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography variant="body1" sx={{ color: "text.secondary", mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
@@ -319,68 +318,34 @@ function ColumnSelector({
           </Typography>
         )}
 
-        {/* Selected count */}
         <Typography
-          variant="h6"
+          variant="body2"
           sx={{
             fontWeight: 700,
             color: valid ? "success.main" : "error.main",
-            letterSpacing: 0.3,
-            mb:
-              (allowedDtypes?.length > 0 && !allowedDtypes.includes("*")) ||
-              restrictedDtypes?.length > 0
-                ? 1
-                : 0,
           }}
         >
           {t("datasets:label.selectedColumns", {
             count: rowSelectionModel.length,
-          })}
+          })}{" "}
+          {valid ? "✓" : ""}
         </Typography>
 
-        {/* Allowed data types */}
         {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
           <Typography
-            variant="body2"
-            sx={{
-              color: "text.disabled",
-              fontStyle: "italic",
-              mt: 1,
-            }}
+            variant="caption"
+            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
           >
-            <Trans i18nKey="datasets:label.allowedDataTypes">
-              Allowed data types:
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {allowedDtypes.join(", ")}
-              </Box>
-            </Trans>
+            {t("common:allowedTypes")}:{" "}
+            <Box
+              component="span"
+              sx={{ color: "secondary.main", fontWeight: 500 }}
+            >
+              {allowedDtypes.join(", ")}
+            </Box>
           </Typography>
         )}
-        {/* Restricted data types */}
-        {restrictedDtypes?.length > 0 && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.disabled",
-              fontStyle: "italic",
-              mt: 1,
-            }}
-          >
-            <Trans i18nKey="datasets:label.restrictedDataTypes">
-              Restricted data types:
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {restrictedDtypes.join(", ")}
-              </Box>
-            </Trans>
-          </Typography>
-        )}
-      </Box>{" "}
+      </Box>
       {/* Data Grid */}
       <MaterialReactTable
         data-tour="column-selector"
