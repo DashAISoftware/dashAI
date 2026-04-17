@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.advanced_preprocessing import (
@@ -13,6 +13,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer, Text
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -100,6 +102,11 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     SCHEMA = BagOfWordsConverterSchema
     DISPLAY_NAME = MultilingualString(en="Bag of Words", es="Bolsa de Palabras")
     IMAGE_PREVIEW = "bag_of_words.png"
+
+    metadata = {
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
+    }
     DESCRIPTION = MultilingualString(
         en=(
             "Converts text into a Bag-of-Words representation with one column "
@@ -134,7 +141,7 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.vectorizer = CountVectorizer(
             max_features=kwargs.get("max_features", 1000),
             lowercase=kwargs.get("lowercase", True),
-            stop_words=kwargs.get("stop_words", "english"),
+            stop_words=kwargs.get("stop_words"),
             ngram_range=(
                 kwargs.get("lower_bound_ngrams", 1),
                 kwargs.get("upper_bound_ngrams", 1),
@@ -166,6 +173,9 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
         """Transform text into Bag-of-Words token-frequency columns.
 
+        Appends one ``bow_<token>`` column per vocabulary term to the original
+        dataset. The source text column is preserved unchanged.
+
         Parameters
         ----------
         x : DashAIDataset
@@ -176,16 +186,16 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         Returns
         -------
         DashAIDataset
-            Dataset where each token becomes a numeric frequency column.
+            Original dataset with ``bow_*`` token-frequency columns appended.
 
         Raises
         ------
         RuntimeError
             If :meth:`fit` has not been called yet.
         """
-        import pandas as pd
+        import pyarrow as pa
 
-        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
@@ -195,8 +205,40 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
         bow_matrix = self.vectorizer.transform(texts)
         feature_names = self.vectorizer.get_feature_names_out()
+        output_type = self.get_output_type()
 
-        # One column per token (frequency)
-        df_bow = pd.DataFrame(bow_matrix.toarray(), columns=feature_names)
+        combined_table = x.arrow_table
+        combined_types = dict(x.types)
 
-        return to_dashai_dataset(df_bow)
+        bow_array = bow_matrix.toarray()
+        for i, token in enumerate(feature_names):
+            prefixed = f"bow_{token}"
+            combined_table = combined_table.append_column(
+                prefixed, pa.array(bow_array[:, i].tolist(), type=pa.int64())
+            )
+            combined_types[prefixed] = output_type
+
+        return DashAIDataset(combined_table, types=combined_types, splits=x.splits)
+
+    def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        The output of this converter is a set of integer columns, one per
+        vocabulary term, containing the raw token-frequency counts produced
+        by ``CountVectorizer``.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The column name to look up in the fitted vectoriser. When provided
+            and the vectoriser has been fitted, the returned type reflects the
+            actual fitted vocabulary. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type for each token-frequency column.
+        """
+        import pyarrow as pa
+
+        return Integer(arrow_type=pa.int64())

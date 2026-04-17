@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SMOTESchema(BaseSchema):
@@ -84,6 +85,11 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
         en="SMOTE (Oversampling)", es="SMOTE (Sobre-muestreo)"
     )
     IMAGE_PREVIEW = "smote.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialise by forwarding kwargs to the imbalanced-learn wrapper.

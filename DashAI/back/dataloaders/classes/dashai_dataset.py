@@ -318,6 +318,8 @@ class DashAIDataset(Dataset):
                 "mean": float(series.mean()),
                 "std": float(series.std()),
                 "min": float(series.min()),
+                "lower_bound": lower_bound,
+                "upper_bound": upper_bound,
                 "max": float(series.max()),
                 "median": float(series.median()),
                 "q1": q1,
@@ -747,8 +749,9 @@ def transform_dataset_with_schema(
             col_list = base_col.to_pylist()
             categories = sorted({v for v in col_list if v is not None})
 
+            encoder = info.get("encoder", "one_hot")
             dashai_types[column_name] = Categorical(
-                values=categories, converted=converted, dtype=dtype
+                values=categories, converted=converted, dtype=dtype, encoder=encoder
             )
             # Keep the column data as-is without converting to string
             dai_table[column_name] = base_col
@@ -1359,6 +1362,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
             column_info["categories"] = spec_dict.get("categories", [])
             column_info["num_categories"] = spec_dict.get("num_categories", 0)
             column_info["converted"] = spec_dict.get("converted", False)
+            column_info["encoder"] = spec_dict.get("encoder", "one_hot")
 
         column_types[column_name] = column_info
 

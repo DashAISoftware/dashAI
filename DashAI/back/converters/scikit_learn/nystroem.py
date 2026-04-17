@@ -17,7 +17,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class NystroemSchema(BaseSchema):
@@ -156,6 +156,11 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
         en="Nystroem Approximation", es="Aproximación Nystroem"
     )
     IMAGE_PREVIEW = "nystroem.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the Nystroem converter.

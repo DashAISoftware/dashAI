@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -7,6 +7,8 @@ from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer, Text
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -80,6 +82,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
     IMAGE_PREVIEW = "tokenizer.png"
 
+    metadata = {
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialise the tokenizer converter and extract schema parameters.
 
@@ -127,11 +134,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             Dataset where each original text column is replaced by its
             token-ID list column.
         """
-        from datasets import Dataset, concatenate_datasets
+        import pyarrow as pa
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
-        all_column_tokens = []
+        result_table = batch.arrow_table
 
         for column in batch.column_names:
             texts = [row[column] for row in batch]
@@ -147,16 +154,34 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             # Move tensor to the specified device
             input_ids = encoded["input_ids"].to(self.device)
 
-            # Create a dictionary with each token in its own column
-            column_dict = {
-                f"{column}_token_{i}": input_ids[:, i].tolist()
-                for i in range(input_ids.size(1))
-            }
+            # Append one column per token position
+            for i in range(input_ids.size(1)):
+                result_table = result_table.append_column(
+                    f"tok_{column}_{i}",
+                    pa.array(input_ids[:, i].tolist(), type=pa.int64()),
+                )
 
-            hf_dataset = Dataset.from_dict(column_dict)
-            column_dataset = DashAIDataset(hf_dataset.data.table)
-            all_column_tokens.append(column_dataset)
+        return DashAIDataset(result_table)
 
-        # Concatenate all tokenized columns
-        concatenated_dataset = concatenate_datasets(all_column_tokens)
-        return DashAIDataset(concatenated_dataset.data.table)
+    def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        The output of this converter is a set of integer columns, one per
+        token position. The number of output columns depends on the maximum
+        sequence length specified in the configuration.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The column name to look up in the fitted encoders. When provided
+            and the encoder has been fitted, the returned type reflects the
+            actual fitted classes. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type for each token position column.
+        """
+        import pyarrow as pa
+
+        return Integer(arrow_type=pa.int64())

@@ -13,7 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class KNNImputerSchema(BaseSchema):
@@ -48,15 +48,6 @@ class KNNImputerSchema(BaseSchema):
             en="The metric to use for imputation.",
             es="La métrica a usar para la imputación.",
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="If True, a copy of X will be created.",
-            es="Si es True, se creará una copia de X.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
     add_indicator: schema_field(
         bool_field(),
@@ -109,6 +100,11 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     )
     DISPLAY_NAME = MultilingualString(en="KNN Imputer", es="Imputador KNN")
     IMAGE_PREVIEW = "knn_imputer.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the KNNImputer converter.

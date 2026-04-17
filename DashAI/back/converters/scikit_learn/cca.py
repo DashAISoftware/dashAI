@@ -13,7 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class CCASchema(BaseSchema):
@@ -105,6 +105,11 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
         es="Análisis de Correlación Canónica, también conocido como PLS 'Modo B'.",
     )
     DISPLAY_NAME = MultilingualString(en="CCA", es="CCA")
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

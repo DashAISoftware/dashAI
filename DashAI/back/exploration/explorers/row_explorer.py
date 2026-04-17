@@ -88,8 +88,8 @@ class RowExplorer(PreviewInspectionExplorer):
 
     SCHEMA = RowExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 1},
     }
 

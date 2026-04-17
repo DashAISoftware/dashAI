@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Grid, Button, Alert, AlertTitle } from "@mui/material";
+import { Box, Grid, Button, Alert, AlertTitle, Skeleton } from "@mui/material";
 import SearchBar from "./SearchBar";
 import CustomLayout from "../custom/CustomLayout";
 import OptionBox from "./OptionBox";
@@ -10,6 +10,7 @@ export default function SelectOptionMenu({
   title,
   subtitle,
   options,
+  loading = false,
   searchBar = false,
   showNoDatasetAlert = false,
   onGoToDatasets = null,
@@ -68,29 +69,43 @@ export default function SelectOptionMenu({
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-          {filteredOptions.map((option, index) => {
-            const { name, display_name, description, Icon, ...otherProps } =
-              option;
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <Grid
+                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  key={index}
+                >
+                  <Skeleton variant="rounded" height={100} />
+                </Grid>
+              ))
+            : null}
+          {!loading &&
+            filteredOptions.map((option, index) => {
+              const { name, display_name, description, Icon, ...otherProps } =
+                option;
 
-            return (
-              <Grid size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
-                <OptionBox
-                  optionName={display_name}
-                  description={description}
-                  onClick={() => goToNextStep(option.name)}
-                  Icon={Icon}
-                  dataTour={
-                    dataTour && dataTourTarget && name === dataTourTarget
-                      ? dataTour
-                      : dataTour && !dataTourTarget
+              return (
+                <Grid
+                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  key={index}
+                >
+                  <OptionBox
+                    optionName={display_name}
+                    description={description}
+                    onClick={() => goToNextStep(option.name)}
+                    Icon={Icon}
+                    dataTour={
+                      dataTour && dataTourTarget && name === dataTourTarget
                         ? dataTour
-                        : undefined
-                  }
-                  {...otherProps}
-                />
-              </Grid>
-            );
-          })}
+                        : dataTour && !dataTourTarget
+                          ? dataTour
+                          : undefined
+                    }
+                    {...otherProps}
+                  />
+                </Grid>
+              );
+            })}
         </Grid>
       </Box>
 

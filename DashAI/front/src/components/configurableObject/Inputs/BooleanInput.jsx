@@ -1,22 +1,47 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {
+  Box,
+  Checkbox,
   FormControl,
   FormControlLabel,
-  Checkbox,
   FormHelperText,
+  Switch,
 } from "@mui/material";
 import FormInputWrapper from "./FormInputWrapper";
+import { useFormCard } from "../../../contexts/FormCardContext";
+
 /**
- * renders a checkbox to handle boolean inputs.
- * @param {string} name name of the input to use as an identifier
- * @param {bool} value the value of the input
- * @param {function} onChange function to manage changes in the input
- * @param {string} error text to indicate the reason the validation failed, undefined if there are no errors in validation
- * @param {string} description text to put in a tooltip that helps the user to understand the parameter
- *
+ * Renders a boolean input.
+ * Inside a card the label is already shown in the card header, so only a compact
+ * Switch is rendered (same height as size="small" TextFields).
+ * Outside a card the full Checkbox + label layout is used.
  */
 function BooleanInput({ name, value, label, onChange, error, description }) {
+  const isInCard = useFormCard();
+
+  if (isInCard) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          height: 36, // match size="small" TextField height
+        }}
+      >
+        <FormControl error={error !== undefined}>
+          <Switch
+            size="small"
+            name={name}
+            checked={Boolean(value)}
+            onChange={(e) => onChange(e.target.checked)}
+          />
+          {error && <FormHelperText sx={{ mt: 0 }}>{error}</FormHelperText>}
+        </FormControl>
+      </Box>
+    );
+  }
+
   return (
     <FormInputWrapper name={name} description={description} disabledPadding>
       <FormControl error={error !== undefined}>
@@ -30,7 +55,7 @@ function BooleanInput({ name, value, label, onChange, error, description }) {
             />
           }
         />
-        <FormHelperText>{error || " "}</FormHelperText>
+        {error && <FormHelperText>{error}</FormHelperText>}
       </FormControl>
     </FormInputWrapper>
   );

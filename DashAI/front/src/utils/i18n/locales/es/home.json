@@ -29,18 +29,21 @@
     "advanced": "Avanzado"
   },
   "chip": {
-    "csv": "CSV",
-    "joins": "joins",
-    "recipes": "recetas",
-    "eda": "EDA",
-    "classification": "clasificación",
+    "dataImport": "importación de datos",
+    "dataCleaning": "limpieza de datos",
+    "dataTransformation": "transformación de datos",
+    "exploreConvertData": "exploración de datos",
+    "tabularClassification": "clasificación tabular",
+    "textClassification": "clasificación de texto",
+    "translation": "traducción",
     "regression": "regresión",
-    "clustering": "clustering",
+    "modelComparison": "comparación de modelos",
     "inference": "inferencia",
-    "synthesis": "síntesis",
-    "shapStories": "SHAP stories",
-    "injection": "inyección",
+    "parameterConfig": "configuración de parámetros",
+    "generativeTasks": "tareas generativas",
+    "contentGeneration": "generación de contenido",
+    "installation": "instalación",
     "extensions": "extensiones",
-    "custom": "custom"
+    "customIntegrations": "integraciones personalizadas"
   }
 }

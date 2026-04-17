@@ -22,7 +22,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class FastICASchema(BaseSchema):
@@ -176,6 +176,11 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     )
     DISPLAY_NAME = MultilingualString(en="Fast ICA", es="Fast ICA")
     IMAGE_PREVIEW = "fast_ica.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the FastICA converter.

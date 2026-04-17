@@ -46,11 +46,7 @@ function AddModelDialog({
   const [selectedModel, setSelectedModel] = useState(preselectedModel || "");
   const [modelParameters, setModelParameters] = useState({});
   const [selectedOptimizer, setSelectedOptimizer] = useState("OptunaOptimizer");
-  const [optimizerParameters, setOptimizerParameters] = useState({
-    n_trials: 10,
-    sampler: "TPESampler",
-    pruner: "None",
-  });
+  const [optimizerParameters, setOptimizerParameters] = useState({});
   const [loading, setLoading] = useState(false);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
@@ -60,7 +56,10 @@ function AddModelDialog({
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: selectedModel,
   });
-  const { defaultValues: defaultOptimizerParams } = useSchema({
+  const {
+    defaultValues: defaultOptimizerParams,
+    loading: optimizerSchemaLoading,
+  } = useSchema({
     modelName: selectedOptimizer,
   });
 
@@ -119,22 +118,13 @@ function AddModelDialog({
 
   useEffect(() => {
     if (
+      !optimizerSchemaLoading &&
       defaultOptimizerParams &&
       Object.keys(defaultOptimizerParams).length > 0
     ) {
-      setOptimizerParameters((prev) => {
-        const prevKeys = Object.keys(prev).sort().join(",");
-        const newKeys = Object.keys(defaultOptimizerParams).sort().join(",");
-        if (
-          prevKeys === newKeys &&
-          JSON.stringify(prev) === JSON.stringify(defaultOptimizerParams)
-        ) {
-          return prev;
-        }
-        return defaultOptimizerParams;
-      });
+      setOptimizerParameters(defaultOptimizerParams);
     }
-  }, [defaultOptimizerParams]);
+  }, [selectedOptimizer, optimizerSchemaLoading]);
 
   const handleClose = () => {
     setTimeout(() => {
@@ -143,11 +133,7 @@ function AddModelDialog({
       setSelectedModel("");
       setModelParameters({});
       setSelectedOptimizer("OptunaOptimizer");
-      setOptimizerParameters({
-        n_trials: 10,
-        sampler: "TPESampler",
-        pruner: "None",
-      });
+      setOptimizerParameters({});
       setGoalMetric("");
       setHasUserTouchedName(false);
       setHasLoadedInitialParams(false);
@@ -268,20 +254,13 @@ function AddModelDialog({
     }
   };
 
-  const handleOptimizerSelected = (optimizerName, defaultValues) => {
+  const handleOptimizerSelected = (optimizerName) => {
+    setOptimizerParameters({});
     setSelectedOptimizer(optimizerName);
-    if (defaultValues && Object.keys(defaultValues).length > 0) {
-      setOptimizerParameters(defaultValues);
-    }
   };
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
-  const isStep2Valid = Boolean(
-    selectedOptimizer &&
-    optimizerParameters &&
-    Object.keys(optimizerParameters).length > 0 &&
-    goalMetric,
-  );
+  const isStep2Valid = Boolean(selectedOptimizer && goalMetric);
 
   return (
     <Dialog
@@ -293,7 +272,7 @@ function AddModelDialog({
         sx: { minHeight: "500px" },
       }}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ bgcolor: "background.paper" }}>
         <Box
           sx={{
             display: "flex",
@@ -312,7 +291,7 @@ function AddModelDialog({
         </Box>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
         <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
           {steps.map((label) => (
             <Step key={label}>
@@ -385,11 +364,11 @@ function AddModelDialog({
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   {t("models:label.optimizerParameters")}
                 </Typography>
-                <FormSchemaContainer>
+                <FormSchemaContainer key={selectedOptimizer}>
                   <FormSchemaWithSelectedModel
                     modelToConfigure={selectedOptimizer}
                     initialValues={optimizerParameters}
-                    onFormSubmit={(values) => setOptimizerParameters(values)}
+                    onFormSubmit={() => {}}
                     onValuesChange={handleOptimizerParametersChange}
                     onCancel={() => {}}
                     hideButtons
@@ -401,7 +380,7 @@ function AddModelDialog({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2 }}>
+      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
         <Button onClick={handleClose} disabled={loading}>
           {t("common:cancel")}
         </Button>

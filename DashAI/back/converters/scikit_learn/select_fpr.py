@@ -6,7 +6,7 @@ from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SelectFprSchema(BaseSchema):
@@ -68,7 +68,7 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(en="Select FPR", es="Seleccionar FPR")
     IMAGE_PREVIEW = "select_fpr.png"
-    metadata = {}
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def __init__(self, **kwargs):
         """Initialize the SelectFpr converter.

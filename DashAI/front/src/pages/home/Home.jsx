@@ -59,7 +59,7 @@ function SidebarSection({ label, links, t, theme }) {
           py: "10px",
           pb: "6px",
           display: "block",
-          ...theme.typography.pageTitle,
+          ...theme.typography.sectionLabel,
         }}
       >
         {label}
@@ -126,10 +126,10 @@ function Home() {
       accentGlow: theme.palette.accent.amberGlow,
       tag: t("home:tag.beginner"),
       chips: [
-        t("home:chip.csv"),
-        t("home:chip.joins"),
-        t("home:chip.recipes"),
-        t("home:chip.eda"),
+        t("home:chip.dataImport"),
+        t("home:chip.dataCleaning"),
+        t("home:chip.dataTransformation"),
+        t("home:chip.exploreConvertData"),
       ],
       tourAttr: "datasets-button",
     },
@@ -144,9 +144,11 @@ function Home() {
       accentGlow: theme.palette.accent.tealGlow,
       tag: t("home:tag.beginner"),
       chips: [
-        t("home:chip.classification"),
+        t("home:chip.modelComparison"),
+        t("home:chip.tabularClassification"),
+        t("home:chip.textClassification"),
+        t("home:chip.translation"),
         t("home:chip.regression"),
-        t("home:chip.clustering"),
       ],
       tourAttr: "models-button",
     },
@@ -162,8 +164,9 @@ function Home() {
       tag: t("home:tag.advanced"),
       chips: [
         t("home:chip.inference"),
-        t("home:chip.synthesis"),
-        t("home:chip.shapStories"),
+        t("home:chip.parameterConfig"),
+        t("home:chip.generativeTasks"),
+        t("home:chip.contentGeneration"),
       ],
       tourAttr: "generative-button",
     },
@@ -178,9 +181,9 @@ function Home() {
       accentGlow: theme.palette.accent.coralGlow,
       tag: t("home:tag.advanced"),
       chips: [
-        t("home:chip.injection"),
+        t("home:chip.installation"),
         t("home:chip.extensions"),
-        t("home:chip.custom"),
+        t("home:chip.customIntegrations"),
       ],
       tourAttr: "plugins-button",
     },

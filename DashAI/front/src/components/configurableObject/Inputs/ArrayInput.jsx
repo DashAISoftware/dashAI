@@ -46,8 +46,7 @@ function ArrayInput({
           onChange={handleChange}
           autoComplete="off"
           error={!!error}
-          helperText={error || " "}
-          margin="dense"
+          helperText={error}
         />
       </FormControl>
     </FormInputWrapper>

@@ -1,3 +1,4 @@
+import contextlib
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, Union
 
@@ -87,9 +88,21 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
         y_pandas = y.to_pandas() if y is not None and hasattr(y, "to_pandas") else y
 
-        requires_y = hasattr(self, "_get_tags") and self._get_tags().get(
-            "requires_y", False
-        )
+        # Detect whether the underlying sklearn estimator needs a target.
+        # sklearn >= 1.6 moved tags from ``_get_tags`` to ``__sklearn_tags__``,
+        # so we consult both for backward/forward compatibility.
+        requires_y = False
+        if hasattr(self, "__sklearn_tags__"):
+            try:
+                tags = self.__sklearn_tags__()
+                target_tags = getattr(tags, "target_tags", None)
+                if target_tags is not None:
+                    requires_y = bool(getattr(target_tags, "required", False))
+            except Exception:
+                requires_y = False
+        if not requires_y and hasattr(self, "_get_tags"):
+            with contextlib.suppress(Exception):
+                requires_y = bool(self._get_tags().get("requires_y", False))
 
         if requires_y and y is None:
             raise ValueError("This transformer requires y for fitting")
@@ -111,7 +124,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
                 "Ensure that your transformer inherits from a valid sklearn class."
             )
         fit_method = sklearn_cls.__dict__["fit"]
-        if requires_y:
+        if requires_y or y_pandas is not None:
             fit_method(self, x_pandas, y_pandas)
         else:
             fit_method(self, x_pandas)

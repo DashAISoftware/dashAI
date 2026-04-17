@@ -4,7 +4,6 @@ import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
 import { PlayArrow } from "@mui/icons-material";
-import { Icon } from "@mui/material";
 import { styled } from "@mui/system";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -21,15 +20,15 @@ export const extractColumns = (
   console.log("Extracting columns with metrics:", rawMetrics);
   // ===== METRICS (only test metrics) =====
   const metrics = rawMetrics.map((metric) => ({
-    field: `${metric.name}`,
-    headerName: `${metric.name}`,
-    renderCell: ({ row, value }) => {
-      if ([0, 1, 2].includes(row.status))
+    accessorKey: metric.name,
+    header: metric.name,
+    Cell: ({ row, cell }) => {
+      if ([0, 1, 2].includes(row.original.status))
         // Not Started, Delivered, Started
         return "-";
 
-      return row.test_metrics[metric.name] !== undefined
-        ? Number(row.test_metrics[metric.name]).toFixed(2)
+      return row.original.test_metrics?.[metric.name] !== undefined
+        ? Number(row.original.test_metrics[metric.name]).toFixed(2)
         : "-";
     },
   }));
@@ -53,7 +52,7 @@ export const extractColumns = (
     {
       title: "Predict",
       Icon: TrendingUpIcon,
-      handleAction: (runId) => handlePrediction(runId, datasetId),
+      handleAction: (run) => handlePrediction(run, datasetId),
       requiresFinished: true,
       alwaysEnabled: false,
     },
@@ -75,27 +74,27 @@ export const extractColumns = (
     },
   ]);
 
-  // ===== GROUPING =====
-  const columnGroupingModel = [
-    { groupId: "Info", children: [...initialColumns] },
-    { groupId: "Test Metrics", children: [...metrics] },
-    { groupId: "Actions", children: [...actions] },
+  // ===== MRT NESTED COLUMN GROUPS =====
+  const columns = [
+    {
+      id: "info-group",
+      header: "Info",
+      columns: [...initialColumns],
+    },
+    {
+      id: "test-metrics-group",
+      header: "Test Metrics",
+      columns: [...metrics],
+    },
+    {
+      id: "actions-group",
+      header: "Actions",
+      columns: [...actions],
+    },
   ];
 
-  // ===== VISIBILITY (hide everything except test metrics) =====
-  let columnVisibilityModel = {
-    created: false,
-    last_modified: false,
-    start_time: false,
-    end_time: false,
-  };
+  // ===== VISIBILITY (hide nothing by default — all visible) =====
+  const columnVisibilityModel = {};
 
-  // hide nothing from test metrics (show them all)
-  metrics.forEach((m) => {
-    columnVisibilityModel[m.field] = true;
-  });
-
-  const columns = [...initialColumns, ...metrics, ...actions];
-
-  return { columns, columnGroupingModel, columnVisibilityModel };
+  return { columns, columnVisibilityModel };
 };

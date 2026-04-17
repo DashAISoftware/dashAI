@@ -37,6 +37,11 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     DISPLAY_NAME = MultilingualString(en="Column Remover", es="Removedor de Columnas")
     IMAGE_PREVIEW = "column_remover.png"
 
+    metadata = {
+        "allowed_types": [],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self):
         """Initialise the column remover and set up state.
 
