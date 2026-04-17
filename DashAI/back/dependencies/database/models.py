@@ -733,6 +733,7 @@ class CustomComponent(Base):
     source_code: Mapped[str] = mapped_column(Text, nullable=False)
     file_path: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
+    is_override: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
