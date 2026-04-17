@@ -87,6 +87,7 @@ def test_get_types(
         "Species": {
             "type": "Categorical",
             "dtype": "string",
+            "encoder": "one_hot",
             "categories": ["Iris-setosa", "Iris-versicolor", "Iris-virginica"],
             "num_categories": 3,
             "converted": False,
@@ -108,6 +109,76 @@ def test_modify_dataset_name(client: TestClient, dataset_1: Dataset) -> None:
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == "test_modify_name"
+
+
+@pytest.mark.dependency(depends=["test_get_types"])
+def test_update_column_encoder_ok(client: TestClient, dataset_1: Dataset) -> None:
+    """Change a categorical column's encoder."""
+    response = client.patch(
+        f"/api/v1/dataset/{dataset_1.id}/columns/Species/encoder",
+        json={"encoder": "label"},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["Species"]["encoder"] == "label"
+
+    # Verify persisted
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}/types")
+    assert response.json()["Species"]["encoder"] == "label"
+
+    # Reset back to one_hot for downstream tests
+    client.patch(
+        f"/api/v1/dataset/{dataset_1.id}/columns/Species/encoder",
+        json={"encoder": "one_hot"},
+    )
+
+
+@pytest.mark.dependency(depends=["test_get_types"])
+def test_update_column_encoder_non_categorical(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    """Updating encoder on a non-categorical column returns 422."""
+    response = client.patch(
+        f"/api/v1/dataset/{dataset_1.id}/columns/SepalLengthCm/encoder",
+        json={"encoder": "label"},
+    )
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.dependency(depends=["test_get_types"])
+def test_update_column_encoder_invalid_value(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    """Invalid encoder value returns 422."""
+    response = client.patch(
+        f"/api/v1/dataset/{dataset_1.id}/columns/Species/encoder",
+        json={"encoder": "bogus_encoder"},
+    )
+    assert response.status_code == 422, response.text
+
+
+@pytest.mark.dependency(depends=["test_get_types"])
+def test_update_column_encoder_column_not_found(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    """Unknown column name returns 404."""
+    response = client.patch(
+        f"/api/v1/dataset/{dataset_1.id}/columns/nonexistent_col/encoder",
+        json={"encoder": "label"},
+    )
+    assert response.status_code == 404, response.text
+
+
+@pytest.mark.dependency(depends=["test_get_types"])
+def test_update_column_encoder_dataset_not_started(
+    client: TestClient, dataset_not_started: Dataset
+) -> None:
+    """Dataset not in FINISHED state returns 422."""
+    response = client.patch(
+        f"/api/v1/dataset/{dataset_not_started.id}/columns/col/encoder",
+        json={"encoder": "label"},
+    )
+    assert response.status_code == 422, response.text
 
 
 def test_delete_dataset(client: TestClient, dataset_1: Dataset) -> None:

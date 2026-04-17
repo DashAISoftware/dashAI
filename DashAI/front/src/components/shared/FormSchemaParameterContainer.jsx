@@ -9,6 +9,8 @@ import { useTranslation } from "react-i18next";
  */
 
 function FormSchemaParameterContainer({ children, showBorder = true }) {
+  const { t } = useTranslation(["common"]);
+
   if (!showBorder) {
     return (
       <Box
@@ -24,23 +26,17 @@ function FormSchemaParameterContainer({ children, showBorder = true }) {
     );
   }
 
-  const { t } = useTranslation(["common"]);
-
   return (
-    <BoxWithTitle title={t("common:parameters")}>
-      <Box
-        sx={{
-          px: 2,
-          overflowY: "auto",
-          py: 4,
-          height: "auto",
-          width: "inherit",
-          transition: "opacity 0.3s ease",
-        }}
-      >
-        {children}
-      </Box>
-    </BoxWithTitle>
+    <Box
+      sx={{
+        overflowY: "auto",
+        height: "auto",
+        width: "inherit",
+        transition: "opacity 0.3s ease",
+      }}
+    >
+      {children}
+    </Box>
   );
 }
 

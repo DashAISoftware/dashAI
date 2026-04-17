@@ -14,7 +14,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class RBFSamplerSchema(BaseSchema):
@@ -103,10 +103,7 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
     DISPLAY_NAME = MultilingualString(en="RBF Sampler", es="Muestreador RBF")
     IMAGE_PREVIEW = "rbf_sampler.png"
 
-    metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
-    }
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def __init__(self, **kwargs):
         """Initialise the RBF sampler, resolving the ``"RandomState"`` sentinel.

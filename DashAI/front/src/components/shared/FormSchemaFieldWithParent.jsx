@@ -1,30 +1,23 @@
-import ModeEditIcon from "@mui/icons-material/ModeEdit";
-import { Box, Chip, IconButton, MenuItem, Tooltip } from "@mui/material";
+import { MenuItem, Tooltip, IconButton } from "@mui/material";
 import PropTypes from "prop-types";
 import { Input } from "../configurableObject/Inputs/InputStyles";
 import React from "react";
 import { useFormSchemaStore } from "../../contexts/schema";
-import FormTooltip from "../configurableObject/FormTooltip";
-import TextWithOptions from "./TextWithOptions";
 import {
   formattedModel,
   formattedSubform,
   generateYupSchema,
-  getModelFromSubform,
 } from "../../utils/schema";
 import useModelParents from "../../hooks/useModelParents";
 import { Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import FormSchemaFieldCard from "./FormSchemaFieldCard";
 
 /**
- * This component is a subform for the form schema
- * @param {string} name - The name of the subform
- * @param {string} label - The label of the subform
- * @param {string} description - The description of the subform
- * @param {string} errorMessage - The error message of the subform
- * @param {object} children - The children of the subform
+ * Renders a parent-model selector field as a card.
+ * The "configure sub-model" icon button lives in the card header.
+ * The body contains the model select dropdown.
  */
-
 function FormSchemaFieldWithParent({
   name,
   label,
@@ -57,30 +50,36 @@ function FormSchemaFieldWithParent({
     addProperty({ key: name, label });
   };
 
+  const configureButton = (
+    <Tooltip title={t("common:configureSubmodel")}>
+      <IconButton size="small" onClick={handleClick}>
+        <Settings fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+
   return (
-    <Box sx={{ display: "flex", alignItems: "center", pb: 3 }}>
+    <FormSchemaFieldCard
+      label={label}
+      paramKey={name}
+      description={description}
+      errorMessage={errorMessage}
+      headerRight={configureButton}
+    >
       <Input
         select
-        label={label}
         value={getModelFromCurrentProperty(name)}
         onChange={handleOnChange}
+        size="small"
+        sx={{ width: "100%" }}
       >
-        {models?.map((model, index) => (
-          <MenuItem key={index} value={model.name}>
+        {models?.map((model) => (
+          <MenuItem key={model.name} value={model.name}>
             {model.name}
           </MenuItem>
         ))}
       </Input>
-      <Tooltip title={t("common:configureSubmodel")}>
-        <IconButton onClick={handleClick}>
-          <Settings />
-        </IconButton>
-      </Tooltip>
-      <FormTooltip
-        contentStr={errorMessage ?? description}
-        error={Boolean(errorMessage)}
-      />
-    </Box>
+    </FormSchemaFieldCard>
   );
 }
 
@@ -89,7 +88,7 @@ FormSchemaFieldWithParent.propTypes = {
   label: PropTypes.string.isRequired,
   description: PropTypes.string,
   errorMessage: PropTypes.string,
-  children: PropTypes.node,
+  field: PropTypes.object.isRequired,
 };
 
 export default FormSchemaFieldWithParent;

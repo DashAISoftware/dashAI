@@ -143,6 +143,11 @@
   "vertical": "Vertical",
   "viewDetails": "View Details",
   "renameColumn": "Double-click to rename column",
+  "encoder": "Encoder",
+  "encoderOneHot": "One-Hot",
+  "encoderLabel": "Label",
+  "changeEncoder": "Change encoder",
+  "errorChangingEncoder": "Error changing encoder",
   "columnNameEmpty": "Column name cannot be empty",
   "columnNameInvalid": "Column name can only contain letters, numbers and underscores",
   "columnNameCannotBeEmpty": "Column name cannot be empty",
@@ -205,5 +210,10 @@
     "overall": "Overall",
     "utilization": "Utilization",
     "connecting": "Connecting to hardware monitor..."
-  }
+  },
+  "collapse": "Collapse",
+  "expand": "Expand",
+  "optimize": "Optimize",
+  "viewMore": "View more",
+  "viewLess": "View less"
 }

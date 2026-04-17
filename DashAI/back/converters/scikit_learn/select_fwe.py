@@ -6,7 +6,7 @@ from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SelectFweSchema(BaseSchema):
@@ -73,10 +73,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(en="Select FWE", es="Seleccionar FWE")
     IMAGE_PREVIEW = "select_fwe.png"
-    metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
-    }
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

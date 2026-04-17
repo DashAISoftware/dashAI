@@ -46,8 +46,7 @@
     "noDatasetFileAvailable": "No dataset file available",
     "notebookNameEmpty": "Notebook name cannot be empty",
     "noValidColumnsForExplorer": "No valid columns available for this explorer.",
-    "noValidColumnsWithDtypes": "This dataset does not have any columns with the required data types.",
-    "noValidColumnsWithDtypesMentioned": "This dataset does not have any columns with the required data types ({{dtypes}}) ",
+    "noValidColumnsWithDtypesMentioned": "This dataset does not have any columns with the required types ({{dtypes}}).",
     "processConverterError": "Failed to process converter",
     "requiredFieldsMissing": "Required fields missing",
     "requiresExactColumns_one": "Requires exactly {{required}} valid column, but {{available}} available.",
@@ -59,6 +58,7 @@
   "label": {
     "all": "all",
     "allowedDataTypes": "Allowed data types: <1><0></0></1>",
+    "allowedValueTypes": "Allowed value types: <1><0></0></1>",
     "allTypeChangesValid": "All type changes are valid and can be applied safely.",
     "analysisTools": "Analysis Tools",
     "appearance": "Appearance",

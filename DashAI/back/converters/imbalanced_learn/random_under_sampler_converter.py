@@ -82,8 +82,8 @@ class RandomUnderSamplerConverter(
     IMAGE_PREVIEW = "random_under_sampler.png"
 
     metadata = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):

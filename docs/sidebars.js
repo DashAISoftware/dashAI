@@ -59,6 +59,7 @@ const sidebars = {
         "deep-dive/notebook",
         "deep-dive/workflow-examples",
         "deep-dive/semantic-types",
+        "deep-dive/dashai-dataset",
       ],
     },
     "deep-dive/papers",

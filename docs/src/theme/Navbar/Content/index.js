@@ -57,14 +57,14 @@ export default function NavbarContent() {
       }
       right={
         <>
-          {/* Order: 1. Search  2. Theme toggle  3. GitHub (right config items) */}
+          {/* Order: 1. Right config items (locale, GitHub)  2. Theme toggle  3. Search */}
+          <NavbarItems items={rightItems} />
+          <NavbarColorModeToggle className="navbar-color-mode-toggle" />
           {!searchBarItem && (
             <NavbarSearch>
               <SearchBar />
             </NavbarSearch>
           )}
-          <NavbarColorModeToggle className="navbar-color-mode-toggle" />
-          <NavbarItems items={rightItems} />
         </>
       }
     />

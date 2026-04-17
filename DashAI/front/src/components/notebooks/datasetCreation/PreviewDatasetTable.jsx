@@ -6,6 +6,8 @@ import {
   Box,
   TextField,
   Tooltip,
+  Chip,
+  Menu,
 } from "@mui/material";
 import {
   MaterialReactTable,
@@ -31,16 +33,19 @@ const TYPE_TO_DEFAULT_DTYPE = {
   // Boolean: "bool",  // Boolean is always Categorical
 };
 
+const ENCODER_OPTIONS = ["one_hot", "label"];
+
 /**
  * Table component to display dataset preview with inferred types in column headers.
  *
  * @param {Array} rows - Array of row objects to display
  * @param {Object} columnTypes - Object mapping column names to their inferred types
- *                                (e.g., { columnName: { type: "Categorical", dtype: "string" } })
+ *                                (e.g., { columnName: { type: "Categorical", dtype: "string", encoder: "one_hot" } })
  * @param {File} file - The uploaded file (needed for validation)
  * @param {Object} params - Dataloader parameters (needed for validation)
  * @param {Function} onTypeChange - Callback when types are successfully changed
  * @param {Function} onColumnRename - Callback when a column is renamed (oldName, newName) => void
+ * @param {Function} onEncoderChange - Callback when encoder changes (columnName, encoder) => void
  */
 export default function PreviewDatasetTable({
   rows,
@@ -49,6 +54,7 @@ export default function PreviewDatasetTable({
   params,
   onTypeChange,
   onColumnRename,
+  onEncoderChange,
 }) {
   const { t, i18n } = useTranslation(["common"]);
   const { enqueueSnackbar } = useSnackbar();
@@ -57,10 +63,36 @@ export default function PreviewDatasetTable({
   const [editingColumn, setEditingColumn] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [columnNames, setColumnNames] = useState({});
+  const [encoderAnchor, setEncoderAnchor] = useState(null);
+  const [encoderAnchorColumn, setEncoderAnchorColumn] = useState(null);
 
   const localization = i18n.language.startsWith("es")
     ? MRT_Localization_ES
     : MRT_Localization_EN;
+
+  const encoderLabel = (enc) => {
+    if (enc === "one_hot") return t("common:encoderOneHot");
+    if (enc === "label") return t("common:encoderLabel");
+    return enc;
+  };
+
+  const handleEncoderClick = (e, columnName) => {
+    e.stopPropagation();
+    setEncoderAnchor(e.currentTarget);
+    setEncoderAnchorColumn(columnName);
+  };
+
+  const handleEncoderClose = () => {
+    setEncoderAnchor(null);
+    setEncoderAnchorColumn(null);
+  };
+
+  const handleEncoderSelect = (newEncoder) => {
+    if (encoderAnchorColumn && onEncoderChange) {
+      onEncoderChange(encoderAnchorColumn, newEncoder);
+    }
+    handleEncoderClose();
+  };
 
   const handleTypeChangeRequest = (columnName, newType) => {
     const currentType = columnTypes[columnName]?.type;
@@ -69,7 +101,13 @@ export default function PreviewDatasetTable({
       return;
     }
 
-    const newDtype = TYPE_TO_DEFAULT_DTYPE[newType] || "string";
+    const currentDtype = columnTypes[columnName]?.dtype;
+    // For Categorical, preserve the column's actual dtype so label encoding
+    // uses the correct numeric type rather than defaulting to string.
+    const newDtype =
+      newType === "Categorical" && currentDtype
+        ? currentDtype
+        : TYPE_TO_DEFAULT_DTYPE[newType] || "string";
 
     setPendingChanges({
       [columnName]: {
@@ -243,11 +281,37 @@ export default function PreviewDatasetTable({
               <MenuItem value="Text">Text</MenuItem>
               <MenuItem value="Categorical">Categorical</MenuItem>
             </Select>
+
+            {columnType?.type === "Categorical" && columnType?.encoder && (
+              <Tooltip title={t("common:changeEncoder")} arrow>
+                <span style={{ display: "inline-flex" }}>
+                  <Chip
+                    label={encoderLabel(columnType.encoder)}
+                    size="small"
+                    onClick={(e) => handleEncoderClick(e, field)}
+                    aria-label={t("common:encoder")}
+                    sx={{
+                      fontSize: "0.65rem",
+                      height: "18px",
+                      cursor: "pointer",
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
           </Box>
         ),
       };
     });
-  }, [rows, columnTypes, columnNames, editingColumn, editValue, t]);
+  }, [
+    rows,
+    columnTypes,
+    columnNames,
+    editingColumn,
+    editValue,
+    encoderAnchorColumn,
+    t,
+  ]);
 
   const table = useMaterialReactTable({
     columns,
@@ -265,6 +329,23 @@ export default function PreviewDatasetTable({
   return (
     <>
       <MaterialReactTable table={table} />
+
+      <Menu
+        anchorEl={encoderAnchor}
+        open={Boolean(encoderAnchor)}
+        onClose={handleEncoderClose}
+      >
+        {ENCODER_OPTIONS.map((enc) => (
+          <MenuItem
+            key={enc}
+            selected={enc === columnTypes[encoderAnchorColumn]?.encoder}
+            onClick={() => handleEncoderSelect(enc)}
+            sx={{ fontSize: "0.85rem" }}
+          >
+            {encoderLabel(enc)}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <TypeChangeValidator
         open={showValidator}
