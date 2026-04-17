@@ -10,7 +10,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ToolListItem from "./ToolListItem";
-import ConfigureToolModalSplitView from "./ConfigureToolModalSplitView";
+import ConfigureToolModal from "./ConfigureToolModal";
 import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
 import { useTranslation } from "react-i18next";
@@ -128,7 +128,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
       })}
 
       {selectedTool && (
-        <ConfigureToolModalSplitView
+        <ConfigureToolModal
           open={open}
           handleClose={() => {
             setOpen(false);
