@@ -526,7 +526,10 @@ huey = _job_queue.huey
 
 @huey.on_startup()
 def create_container_huey():
+    from kink import di
+
     from DashAI.back.container import build_container
+    from DashAI.back.custom_components.originals import snapshot_originals
     from DashAI.back.custom_components.startup import rehydrate_custom_components
     from DashAI.back.dependencies.config_builder import build_config_dict
 
@@ -537,6 +540,7 @@ def create_container_huey():
     build_container(config)
 
     try:
+        snapshot_originals(di["component_registry"])
         rehydrate_custom_components()
     except Exception:  # noqa: BLE001
         logging.getLogger(__name__).exception(
