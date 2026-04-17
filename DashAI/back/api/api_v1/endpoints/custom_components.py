@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 import pathlib
 from typing import TYPE_CHECKING, Any, Dict, List
@@ -14,6 +15,7 @@ from sqlalchemy import exc, select
 from DashAI.back.api.api_v1.schemas.custom_component_params import (
     BaseClassInfo,
     BaseClassSummary,
+    ComponentSourceResponse,
     CustomComponentCreate,
     CustomComponentResponse,
     CustomComponentUpdate,
@@ -23,7 +25,9 @@ from DashAI.back.api.api_v1.schemas.custom_component_params import (
 from DashAI.back.custom_components.introspection import (
     describe_base,
     get_supported_base_classes,
+    resolve_base_class,
 )
+from DashAI.back.custom_components.originals import has_original
 from DashAI.back.custom_components.registry_bridge import (
     register_custom,
     unregister_custom,
@@ -66,6 +70,26 @@ def _delete_source_file(path_str: str | None) -> None:
             logger.exception("Failed to delete custom component file %s", path)
 
 
+def _detect_base_class(cls: type) -> str | None:
+    """Return the name of the first supported base class `cls` extends, if any."""
+    from DashAI.back.custom_components.introspection import _SUPPORTED_BASES
+
+    for base_name, info in _SUPPORTED_BASES.items():
+        if info["class"] in cls.__mro__ and info["class"] is not cls:
+            return base_name
+    return None
+
+
+def _classify_origin(cls: type) -> str:
+    """Best-effort classification of a component's origin by module path."""
+    module = cls.__module__ or ""
+    if module.startswith("dashai_custom_"):
+        return "custom"
+    if module.startswith("DashAI."):
+        return "core"
+    return "plugin"
+
+
 @router.get("/base-classes", response_model=List[BaseClassSummary])
 async def list_base_classes() -> List[Dict[str, Any]]:
     """List base classes that can be extended via the editor."""
@@ -79,6 +103,72 @@ async def get_base_class(name: str) -> Dict[str, Any]:
         return describe_base(name)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.get("/source/{class_name}", response_model=ComponentSourceResponse)
+@inject
+async def get_component_source(
+    class_name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the source for any registered component (core, plugin, or custom).
+
+    For components backed by a custom-component row we return that row's
+    source; for core/plugin classes we fall back to `inspect.getsource`.
+    """
+    if class_name not in component_registry:
+        raise HTTPException(
+            status_code=404, detail=f"Component '{class_name}' not found."
+        )
+    cls = component_registry[class_name]["class"]
+
+    # Is this component currently an override?
+    with session_factory() as db:
+        row = (
+            db.execute(
+                select(CustomComponent).where(CustomComponent.class_name == class_name)
+            )
+            .scalars()
+            .first()
+        )
+
+    if row is not None:
+        source_code = row.source_code
+        base_class = row.base_class
+        base_type = row.base_type
+        origin = "custom-override" if row.is_override else "custom"
+    else:
+        try:
+            source_code = inspect.getsource(cls)
+        except (OSError, TypeError) as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Could not read source for '{class_name}': {e}",
+            ) from e
+        base_class = _detect_base_class(cls) or ""
+        base_type = getattr(cls, "TYPE", "")
+        origin = _classify_origin(cls)
+
+    editable = base_class != "" and _is_base_editable(base_class)
+
+    return ComponentSourceResponse(
+        class_name=class_name,
+        source_code=source_code,
+        base_class=base_class,
+        base_type=base_type,
+        import_path=getattr(cls, "__module__", None),
+        origin=origin,
+        editable=editable,
+    )
+
+
+def _is_base_editable(base_name: str) -> bool:
+    try:
+        resolve_base_class(base_name)
+        return True
+    except ValueError:
+        return False
 
 
 @router.post("/validate", response_model=ValidationResponse)
@@ -131,7 +221,13 @@ async def create_custom_component(
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
-    """Validate, persist, then register a custom component into the live registry."""
+    """Validate and register a custom component.
+
+    If a component with the same class_name is already registered AND holds a
+    snapshotted original (i.e. it's a core or plugin class), the new class is
+    persisted as an override and replaces the original in the registry. A
+    subsequent DELETE restores the original via `unregister_custom`.
+    """
     result = validate_source(
         source=body.source_code,
         class_name=body.class_name,
@@ -143,16 +239,20 @@ async def create_custom_component(
             detail={"errors": result.errors, "warnings": result.warnings},
         )
 
+    is_override = False
     if body.class_name in component_registry:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                f"Component '{body.class_name}' is already registered. "
-                "Pick a different class name."
-            ),
-        )
+        if has_original(body.class_name):
+            is_override = True
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Component '{body.class_name}' already exists as a custom "
+                    "component. Edit or delete the existing one instead."
+                ),
+            )
 
-    base_type = result.cls.TYPE  # set on the base class via __init_subclass
+    base_type = result.cls.TYPE
     with session_factory() as db:
         row = CustomComponent(
             class_name=body.class_name,
@@ -160,6 +260,7 @@ async def create_custom_component(
             base_class=body.base_class,
             source_code=body.source_code,
             description=body.description,
+            is_override=is_override,
         )
         db.add(row)
         try:
@@ -178,7 +279,7 @@ async def create_custom_component(
             ) from e
 
         try:
-            register_custom(result.cls, component_registry)
+            register_custom(result.cls, component_registry, override=is_override)
         except ValueError as e:
             db.delete(row)
             db.commit()
@@ -222,17 +323,31 @@ async def update_custom_component(
             )
 
         old_class_name = row.class_name
-        unregister_custom(row.class_name, component_registry)
-        if new_class != row.class_name and new_class in component_registry:
+        # Drop the current class; we may be renaming the override or just
+        # replacing its body.
+        unregister_custom(
+            row.class_name,
+            component_registry,
+            restore_original=False,
+        )
+        if (
+            new_class != row.class_name
+            and new_class in component_registry
+            and not has_original(new_class)
+        ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Component '{new_class}' is already registered.",
+                detail=(
+                    f"Component '{new_class}' already exists as a custom "
+                    "component. Pick a different name."
+                ),
             )
 
         row.class_name = new_class
         row.base_class = new_base
         row.base_type = result.cls.TYPE
         row.source_code = new_source
+        row.is_override = has_original(new_class) and new_class in component_registry
         if body.description is not None:
             row.description = body.description
 
@@ -252,7 +367,7 @@ async def update_custom_component(
                 detail="Internal database error",
             ) from e
 
-        register_custom(result.cls, component_registry)
+        register_custom(result.cls, component_registry, override=row.is_override)
         if old_class_name != row.class_name:
             forget_custom_component(old_class_name)
         record_custom_component(row)
@@ -266,11 +381,22 @@ async def delete_custom_component(
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> None:
+    """Delete a user-authored component.
+
+    For overrides, this acts as a revert: the override is dropped and the
+    snapshotted original is re-registered under the same name so the rest of
+    the app sees the built-in/plugin class again.
+    """
     with session_factory() as db:
         row = db.get(CustomComponent, component_id)
         if row is None:
             raise HTTPException(status_code=404, detail="Custom component not found")
-        unregister_custom(row.class_name, component_registry)
+        # Restore the original only if this row was an override.
+        unregister_custom(
+            row.class_name,
+            component_registry,
+            restore_original=row.is_override,
+        )
         _delete_source_file(row.file_path)
         db.delete(row)
         db.commit()

@@ -66,7 +66,18 @@ class CustomComponentResponse(BaseModel):
     base_class: str
     description: Optional[str]
     source_code: str
+    is_override: bool
     created: datetime
     last_modified: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ComponentSourceResponse(BaseModel):
+    class_name: str
+    source_code: str
+    base_class: str
+    base_type: str
+    import_path: Optional[str] = None
+    origin: str  # "core" | "plugin" | "custom-override" | "custom"
+    editable: bool

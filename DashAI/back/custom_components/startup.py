@@ -37,10 +37,15 @@ _loaded_state: Dict[str, Optional[datetime]] = {}
 
 def _load_and_register(row: CustomComponent, registry) -> bool:
     try:
-        # Replace any stale registration (e.g. after an edit).
-        unregister_custom(row.class_name, registry)
+        # Replace any stale registration (previous override or a core/plugin
+        # class). `register_custom` with override=True handles the swap.
+        unload_only = row.class_name in registry and not row.is_override
+        if unload_only:
+            # Custom (non-override) row: drop any stale entry of the same name
+            # without restoring an original.
+            unregister_custom(row.class_name, registry, restore_original=False)
         cls = load_user_class(row.source_code, row.class_name)
-        register_custom(cls, registry)
+        register_custom(cls, registry, override=True)
         return True
     except Exception:  # noqa: BLE001
         logger.exception(
@@ -98,7 +103,10 @@ def reconcile_custom_components() -> None:
         for name in list(_loaded_state.keys()):
             if name in db_by_name:
                 continue
-            unregister_custom(name, registry)
+            # Row disappeared. If it was an override (we know because an
+            # original snapshot exists), restore the original; otherwise just
+            # drop the class.
+            unregister_custom(name, registry, restore_original=True)
             _loaded_state.pop(name, None)
 
 
