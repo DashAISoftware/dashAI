@@ -112,7 +112,15 @@ const JobQueueWidget = () => {
         0,
         Math.min(moveEvent.clientY - offsetY, window.innerHeight - rect.height),
       );
-      setPosition({ left: newLeft, top: newTop });
+
+      // If in lower half of screen, use bottom instead of top
+      // so widget expands upward when opened
+      const isLowerHalf = newTop > window.innerHeight / 2;
+      const positionData = isLowerHalf
+        ? { left: newLeft, bottom: window.innerHeight - newTop - rect.height }
+        : { left: newLeft, top: newTop };
+
+      setPosition(positionData);
     };
 
     const handleMouseUp = () => {
@@ -198,8 +206,8 @@ const JobQueueWidget = () => {
   const hasInitializedRef = useRef(false);
   const prevActiveCountRef = useRef(0);
 
-  // Snapshot del estado inicial al completar la primera carga (evita tratar
-  // jobs ya existentes como nuevos y disparar el expand al montar)
+  // Snapshot initial state after first load completes (prevents treating
+  // existing jobs as new and triggering expand on mount)
   useEffect(() => {
     if (!loading && !hasInitializedRef.current) {
       hasInitializedRef.current = true;
@@ -207,7 +215,7 @@ const JobQueueWidget = () => {
     }
   }, [loading, activeJobs.length]);
 
-  // Auto expand/collapse por transiciones reales durante la sesión
+  // Auto expand/collapse on real transitions during session
   useEffect(() => {
     if (!hasInitializedRef.current) return;
     const prev = prevActiveCountRef.current;
@@ -338,7 +346,12 @@ const JobQueueWidget = () => {
           sx={{
             position: "fixed",
             ...(position
-              ? { top: position.top, left: position.left }
+              ? {
+                  left: position.left,
+                  ...(position.top !== undefined
+                    ? { top: position.top }
+                    : { bottom: position.bottom }),
+                }
               : {
                   bottom: { xs: 16, sm: (theme) => theme.spacing(3) },
                   right: { xs: 16, sm: (theme) => theme.spacing(3) },
