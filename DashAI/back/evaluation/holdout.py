@@ -25,7 +25,7 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
 
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
-            self._doHPO(x, y, factory, run, db)
+            self._do_hpo(x, y, factory, run, db)
 
             # Generate hyperparameter plot
             trials = self.optimizer.get_trials_values()

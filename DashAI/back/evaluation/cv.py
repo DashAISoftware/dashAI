@@ -21,7 +21,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
-            self._doHPO(x, y, factory, run, db)
+            self._do_hpo(x, y, factory, run, db)
 
             # Generate hyperparameter plot
             trials = self.optimizer.get_trials_values()
@@ -50,7 +50,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
                 self.model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.FOLD)
 
-        self.model.train(x[-1]["train"], y[-1]["train"])
+            self.model.train(x[-1]["train"], y[-1]["train"])
 
         return self.model, plot_paths
 
@@ -68,10 +68,10 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
             model.train(x_fold["train"], y_fold["train"])
 
-            y_pred = model.predict(input_dataset["test"])
+            y_pred = model.predict(x_fold["test"])
 
             output_dataset_transformed = model.prepare_output(
-                output_dataset["test"], is_fit=False
+                y_fold["test"], is_fit=False
             )
 
             # Calculate metric for train and validation data each trial
