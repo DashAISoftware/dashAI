@@ -7,6 +7,27 @@ import reportWebVitals from "./reportWebVitals";
 import { SnackbarProvider } from "notistack";
 import { CustomThemeProvider } from "./contexts/ThemeContext";
 
+// Benign browser warning fired by ResizeObserver when observers cascade in the
+// same frame (Monaco + resizable panels). The CRA dev overlay treats any window
+// error as fatal; suppress these specific strings so the overlay stays quiet.
+const RESIZE_OBSERVER_ERRORS = [
+  "ResizeObserver loop completed with undelivered notifications.",
+  "ResizeObserver loop limit exceeded",
+];
+window.addEventListener("error", (event) => {
+  if (RESIZE_OBSERVER_ERRORS.some((msg) => event.message?.includes(msg))) {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+  }
+});
+window.addEventListener("unhandledrejection", (event) => {
+  const msg = event.reason?.message || String(event.reason || "");
+  if (RESIZE_OBSERVER_ERRORS.some((m) => msg.includes(m))) {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 import "./utils/i18n";
 
