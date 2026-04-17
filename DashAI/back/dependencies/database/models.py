@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
+    Text,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -716,3 +717,25 @@ class Explorer(Base):
             self.delivery_time = None
             self.start_time = None
             self.end_time = None
+
+
+class CustomComponent(Base):
+    __tablename__ = "custom_component"
+    """
+    Table to store user-authored components created through the in-app code
+    editor. Each row owns a source file on disk and is re-registered into the
+    ComponentRegistry on app startup.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    class_name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    base_type: Mapped[str] = mapped_column(String, nullable=False)
+    base_class: Mapped[str] = mapped_column(String, nullable=False)
+    source_code: Mapped[str] = mapped_column(Text, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
