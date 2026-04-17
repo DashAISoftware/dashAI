@@ -43,8 +43,30 @@ export interface CustomComponent {
   base_class: string;
   description: string | null;
   source_code: string;
+  is_override: boolean;
   created: string;
   last_modified: string;
+}
+
+export type ComponentOrigin = "core" | "plugin" | "custom" | "custom-override";
+
+export interface ComponentSource {
+  class_name: string;
+  source_code: string;
+  base_class: string;
+  base_type: string;
+  import_path: string | null;
+  origin: ComponentOrigin;
+  editable: boolean;
+}
+
+export interface RegistryComponent {
+  name: string;
+  type: string;
+  display_name?: string | null;
+  description?: string | null;
+  color?: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface CustomComponentCreate {

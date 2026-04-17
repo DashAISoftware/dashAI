@@ -9,22 +9,34 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-function DeleteCustomComponentDialog({ component, onClose, onConfirm }) {
+function DeleteCustomComponentDialog({
+  component,
+  onClose,
+  onConfirm,
+  revert = false,
+}) {
   const { t } = useTranslation(["customComponents", "common"]);
   const open = Boolean(component);
+  const titleKey = revert ? "revertDialog.title" : "deleteDialog.title";
+  const bodyKey = revert ? "revertDialog.body" : "deleteDialog.body";
+  const confirmKey = revert ? "actions.revert" : "actions.delete";
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{t("deleteDialog.title")}</DialogTitle>
+      <DialogTitle>{t(titleKey)}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {t("deleteDialog.body", { name: component?.class_name })}
+          {t(bodyKey, { name: component?.class_name })}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t("common:cancel")}</Button>
-        <Button color="error" variant="contained" onClick={onConfirm}>
-          {t("actions.delete")}
+        <Button
+          color={revert ? "warning" : "error"}
+          variant="contained"
+          onClick={onConfirm}
+        >
+          {t(confirmKey)}
         </Button>
       </DialogActions>
     </Dialog>

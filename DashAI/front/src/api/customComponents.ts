@@ -2,6 +2,7 @@ import api from "./api";
 import type {
   BaseClassInfo,
   BaseClassSummary,
+  ComponentSource,
   CustomComponent,
   CustomComponentCreate,
   CustomComponentUpdate,
@@ -59,4 +60,13 @@ export const updateCustomComponent = async (
 
 export const deleteCustomComponent = async (id: number): Promise<void> => {
   await api.delete(`${BASE}/${id}`);
+};
+
+export const getComponentSource = async (
+  className: string,
+): Promise<ComponentSource> => {
+  const response = await api.get<ComponentSource>(
+    `${BASE}/source/${className}`,
+  );
+  return response.data;
 };

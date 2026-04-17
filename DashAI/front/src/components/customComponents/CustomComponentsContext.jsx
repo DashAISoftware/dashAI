@@ -12,11 +12,13 @@ import {
   createCustomComponent,
   deleteCustomComponent,
   getBaseClassInfo,
+  getComponentSource,
   listBaseClasses,
   listCustomComponents,
   updateCustomComponent,
   validateCustomComponent,
 } from "../../api/customComponents";
+import { getComponents } from "../../api/component";
 
 const CLASS_NAME_REGEX = /^[A-Z][A-Za-z0-9_]*$/;
 
@@ -39,14 +41,22 @@ const EMPTY_DRAFT = {
   description: "",
   source_code: "",
   isNew: true,
+  isOverride: false,
+  origin: "custom",
   dirty: false,
 };
+
+function originOf(customRow) {
+  if (customRow) return customRow.is_override ? "custom-override" : "custom";
+  return "core";
+}
 
 export function CustomComponentsProvider({ children }) {
   const { t } = useTranslation("customComponents");
   const { enqueueSnackbar } = useSnackbar();
 
-  const [components, setComponents] = useState([]);
+  const [registry, setRegistry] = useState([]);
+  const [customRows, setCustomRows] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [listError, setListError] = useState(null);
 
@@ -55,6 +65,7 @@ export function CustomComponentsProvider({ children }) {
   const [loadingBaseInfo, setLoadingBaseInfo] = useState(false);
 
   const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [loadingDraft, setLoadingDraft] = useState(false);
   const [validation, setValidation] = useState(null);
   const [validating, setValidating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,12 +74,16 @@ export function CustomComponentsProvider({ children }) {
     setLoadingList(true);
     setListError(null);
     try {
-      const rows = await listCustomComponents();
-      setComponents(rows);
-      return rows;
+      const [regRows, customList] = await Promise.all([
+        getComponents(),
+        listCustomComponents(),
+      ]);
+      setRegistry(regRows);
+      setCustomRows(customList);
+      return { registry: regRows, custom: customList };
     } catch (err) {
       setListError(err?.message || "Unknown error");
-      return [];
+      return { registry: [], custom: [] };
     } finally {
       setLoadingList(false);
     }
@@ -80,14 +95,7 @@ export function CustomComponentsProvider({ children }) {
 
   useEffect(() => {
     listBaseClasses()
-      .then((rows) => {
-        setBaseClasses(rows);
-        setDraft((prev) => {
-          if (prev.base_class) return prev;
-          const defaultBase = rows.find((r) => r.enabled)?.name || "";
-          return { ...prev, base_class: defaultBase };
-        });
-      })
+      .then(setBaseClasses)
       .catch(() => setBaseClasses([]));
   }, []);
 
@@ -130,18 +138,53 @@ export function CustomComponentsProvider({ children }) {
     setValidation(null);
   }, [baseClasses]);
 
-  const selectComponent = useCallback((component) => {
-    setDraft({
-      id: component.id,
-      class_name: component.class_name,
-      base_class: component.base_class,
-      description: component.description || "",
-      source_code: component.source_code,
-      isNew: false,
-      dirty: false,
-    });
-    setValidation(null);
-  }, []);
+  const _customRowByName = useCallback(
+    (name) => customRows.find((r) => r.class_name === name),
+    [customRows],
+  );
+
+  const selectComponent = useCallback(
+    async (registryItem) => {
+      const customRow = _customRowByName(registryItem.name);
+      setValidation(null);
+      setLoadingDraft(true);
+      try {
+        if (customRow) {
+          setDraft({
+            id: customRow.id,
+            class_name: customRow.class_name,
+            base_class: customRow.base_class,
+            description: customRow.description || "",
+            source_code: customRow.source_code,
+            isNew: false,
+            isOverride: customRow.is_override,
+            origin: customRow.is_override ? "custom-override" : "custom",
+            dirty: false,
+          });
+        } else {
+          const info = await getComponentSource(registryItem.name);
+          setDraft({
+            id: null,
+            class_name: info.class_name,
+            base_class: info.base_class,
+            description: "",
+            source_code: info.source_code,
+            isNew: true,
+            isOverride: true,
+            origin: info.origin,
+            dirty: false,
+          });
+        }
+      } catch (err) {
+        enqueueSnackbar(err?.message || "Failed to load component source", {
+          variant: "error",
+        });
+      } finally {
+        setLoadingDraft(false);
+      }
+    },
+    [_customRowByName, enqueueSnackbar],
+  );
 
   const classNameValid = useMemo(
     () => CLASS_NAME_REGEX.test(draft.class_name),
@@ -187,20 +230,29 @@ export function CustomComponentsProvider({ children }) {
         source_code: draft.source_code,
         description: draft.description,
       };
-      const result = draft.isNew
-        ? await createCustomComponent(payload)
-        : await updateCustomComponent(draft.id, payload);
+      const result =
+        draft.id != null
+          ? await updateCustomComponent(draft.id, payload)
+          : await createCustomComponent(payload);
+
       enqueueSnackbar(
-        t(draft.isNew ? "messages.created" : "messages.updated", {
+        t(draft.id == null ? "messages.created" : "messages.updated", {
           name: result.class_name,
         }),
         { variant: "success" },
       );
-      const rows = await refreshList();
-      const saved = rows.find((r) => r.id === result.id);
-      if (saved) {
-        selectComponent(saved);
-      }
+      await refreshList();
+      setDraft({
+        id: result.id,
+        class_name: result.class_name,
+        base_class: result.base_class,
+        description: result.description || "",
+        source_code: result.source_code,
+        isNew: false,
+        isOverride: result.is_override,
+        origin: result.is_override ? "custom-override" : "custom",
+        dirty: false,
+      });
     } catch (err) {
       const detail = err?.response?.data?.detail;
       if (detail?.errors) {
@@ -218,16 +270,19 @@ export function CustomComponentsProvider({ children }) {
     } finally {
       setSaving(false);
     }
-  }, [canSubmit, draft, enqueueSnackbar, refreshList, selectComponent, t]);
+  }, [canSubmit, draft, enqueueSnackbar, refreshList, t]);
 
   const remove = useCallback(
-    async (component) => {
+    async (customRow, { isRevert = false } = {}) => {
       try {
-        await deleteCustomComponent(component.id);
-        enqueueSnackbar(t("messages.deleted", { name: component.class_name }), {
-          variant: "success",
-        });
-        if (draft.id === component.id) {
+        await deleteCustomComponent(customRow.id);
+        enqueueSnackbar(
+          t(isRevert ? "messages.reverted" : "messages.deleted", {
+            name: customRow.class_name,
+          }),
+          { variant: "success" },
+        );
+        if (draft.id === customRow.id) {
           startNewDraft();
         }
         await refreshList();
@@ -238,15 +293,51 @@ export function CustomComponentsProvider({ children }) {
     [draft.id, enqueueSnackbar, refreshList, startNewDraft, t],
   );
 
+  const revert = useCallback(async () => {
+    if (draft.id == null || !draft.isOverride) return;
+    const row = customRows.find((r) => r.id === draft.id);
+    if (!row) return;
+    await remove(row, { isRevert: true });
+  }, [customRows, draft.id, draft.isOverride, remove]);
+
+  const mergedItems = useMemo(() => {
+    const customByName = new Map(customRows.map((r) => [r.class_name, r]));
+    const items = registry.map((item) => {
+      const row = customByName.get(item.name);
+      return {
+        ...item,
+        customRow: row || null,
+        origin: originOf(row),
+        base_type: item.type,
+      };
+    });
+    for (const row of customRows) {
+      if (!items.some((i) => i.name === row.class_name)) {
+        items.push({
+          name: row.class_name,
+          type: row.base_type,
+          base_type: row.base_type,
+          customRow: row,
+          origin: row.is_override ? "custom-override" : "custom",
+          orphan: true,
+        });
+      }
+    }
+    return items;
+  }, [registry, customRows]);
+
   const value = useMemo(
     () => ({
-      components,
+      items: mergedItems,
+      registry,
+      customRows,
       loadingList,
       listError,
       baseClasses,
       baseInfo,
       loadingBaseInfo,
       draft,
+      loadingDraft,
       validation,
       validating,
       saving,
@@ -258,16 +349,20 @@ export function CustomComponentsProvider({ children }) {
       runValidate,
       save,
       remove,
+      revert,
       refreshList,
     }),
     [
-      components,
+      mergedItems,
+      registry,
+      customRows,
       loadingList,
       listError,
       baseClasses,
       baseInfo,
       loadingBaseInfo,
       draft,
+      loadingDraft,
       validation,
       validating,
       saving,
@@ -279,6 +374,7 @@ export function CustomComponentsProvider({ children }) {
       runValidate,
       save,
       remove,
+      revert,
       refreshList,
     ],
   );

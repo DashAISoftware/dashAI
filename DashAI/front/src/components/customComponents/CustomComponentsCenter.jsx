@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -10,13 +10,30 @@ import {
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
+import UndoIcon from "@mui/icons-material/Undo";
 import CodeIcon from "@mui/icons-material/Code";
 import { useTranslation } from "react-i18next";
 import CodeEditor from "./CodeEditor";
 import ValidationStatus from "./ValidationStatus";
+import DeleteCustomComponentDialog from "./DeleteCustomComponentDialog";
 import { useCustomComponents } from "./CustomComponentsContext";
 
 const VALIDATION_SLOT_HEIGHT = 160;
+
+function originChip(origin, t) {
+  switch (origin) {
+    case "custom":
+      return { label: t("origin.custom"), color: "primary" };
+    case "custom-override":
+      return { label: t("origin.modified"), color: "warning" };
+    case "core":
+      return { label: t("origin.core"), color: "default" };
+    case "plugin":
+      return { label: t("origin.plugin"), color: "secondary" };
+    default:
+      return null;
+  }
+}
 
 export default function CustomComponentsCenter() {
   const { t } = useTranslation(["customComponents", "common"]);
@@ -29,13 +46,24 @@ export default function CustomComponentsCenter() {
     canSubmit,
     runValidate,
     save,
+    revert,
+    customRows,
   } = useCustomComponents();
 
-  const title = draft.isNew
-    ? t("dialog.createTitle")
-    : draft.class_name || t("dialog.editTitle");
-
+  const [revertOpen, setRevertOpen] = useState(false);
   const showValidation = Boolean(validation);
+
+  const title = draft.class_name
+    ? draft.class_name
+    : draft.isNew
+      ? t("dialog.createTitle")
+      : t("dialog.editTitle");
+
+  const chip = originChip(draft.origin, t);
+  const canRevert = draft.id != null && draft.isOverride;
+  const revertRow = canRevert
+    ? customRows.find((r) => r.id === draft.id)
+    : null;
 
   return (
     <Box
@@ -62,6 +90,14 @@ export default function CustomComponentsCenter() {
         >
           {title}
         </Typography>
+        {chip && (
+          <Chip
+            size="small"
+            label={chip.label}
+            color={chip.color}
+            variant={chip.color === "default" ? "outlined" : "filled"}
+          />
+        )}
         {draft.dirty && (
           <Chip
             size="small"
@@ -69,6 +105,17 @@ export default function CustomComponentsCenter() {
             color="warning"
             variant="outlined"
           />
+        )}
+        {canRevert && (
+          <Button
+            size="small"
+            color="warning"
+            onClick={() => setRevertOpen(true)}
+            disabled={saving}
+            startIcon={<UndoIcon />}
+          >
+            {t("actions.revert")}
+          </Button>
         )}
         <Button
           size="small"
@@ -87,7 +134,11 @@ export default function CustomComponentsCenter() {
           disabled={!canSubmit || saving}
           startIcon={saving ? <CircularProgress size={14} /> : <SaveIcon />}
         >
-          {draft.isNew ? t("actions.create") : t("actions.update")}
+          {draft.id == null
+            ? draft.isOverride
+              ? t("actions.createOverride")
+              : t("actions.create")
+            : t("actions.update")}
         </Button>
       </Stack>
 
@@ -117,6 +168,16 @@ export default function CustomComponentsCenter() {
       >
         {showValidation && <ValidationStatus result={validation} />}
       </Box>
+
+      <DeleteCustomComponentDialog
+        component={revertOpen ? revertRow : null}
+        revert
+        onClose={() => setRevertOpen(false)}
+        onConfirm={async () => {
+          await revert();
+          setRevertOpen(false);
+        }}
+      />
     </Box>
   );
 }

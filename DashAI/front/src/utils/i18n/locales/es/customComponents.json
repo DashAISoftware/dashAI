@@ -1,6 +1,6 @@
 {
   "pageTitle": "Componentes personalizados",
-  "pageSubtitle": "Crea nuevos componentes de DashAI directamente desde el navegador y regístralos al instante.",
+  "pageSubtitle": "Crea o modifica componentes de DashAI directamente desde el navegador y regístralos al instante.",
   "tabDescription": "Escribe una clase de Python que herede de una clase base de DashAI. Estará disponible en toda la aplicación de inmediato.",
   "emptyState": "Aún no hay componentes personalizados. Haz clic en \"Nuevo\" para escribir el primero.",
   "comingSoon": "Próximamente",
@@ -8,9 +8,17 @@
     "new": "Nuevo",
     "edit": "Editar",
     "delete": "Eliminar",
+    "revert": "Revertir",
     "validate": "Validar",
     "create": "Crear",
+    "createOverride": "Guardar modificación",
     "update": "Guardar cambios"
+  },
+  "origin": {
+    "custom": "Personalizado",
+    "modified": "Modificado",
+    "core": "Núcleo",
+    "plugin": "Plugin"
   },
   "columns": {
     "className": "Clase",
@@ -48,10 +56,21 @@
     "title": "Eliminar componente personalizado",
     "body": "¿Seguro que quieres eliminar \"{{name}}\"? Se retirará del registro y se borrará del disco. Esta acción no se puede deshacer."
   },
+  "revertDialog": {
+    "title": "Revertir al original",
+    "body": "¿Descartar tus cambios en \"{{name}}\" y restaurar el componente original incluido con DashAI?"
+  },
   "leftBar": {
-    "title": "Mis componentes",
+    "title": "Componentes",
     "searchPlaceholder": "Buscar por nombre, clase o tipo…",
-    "noMatches": "Ningún componente coincide con tu búsqueda."
+    "noMatches": "Ningún componente coincide con tu búsqueda.",
+    "empty": "No hay componentes disponibles.",
+    "filters": {
+      "all": "Todos",
+      "modified": "Modificados",
+      "custom": "Personalizados",
+      "core": "Integrados"
+    }
   },
   "rightBar": {
     "title": "Configuración del componente",
@@ -66,6 +85,7 @@
   "messages": {
     "created": "\"{{name}}\" ya está disponible en la aplicación.",
     "updated": "\"{{name}}\" se ha actualizado.",
-    "deleted": "\"{{name}}\" se ha eliminado."
+    "deleted": "\"{{name}}\" se ha eliminado.",
+    "reverted": "\"{{name}}\" se ha revertido al original."
   }
 }

@@ -1,6 +1,6 @@
 {
   "pageTitle": "Custom Components",
-  "pageSubtitle": "Author new DashAI components directly in the browser and register them instantly.",
+  "pageSubtitle": "Author or override DashAI components directly in the browser and register them instantly.",
   "tabDescription": "Write a Python class that inherits from a DashAI base class. It will be available immediately across the app.",
   "emptyState": "No custom components yet. Click \"New\" to write your first one.",
   "comingSoon": "Coming soon",
@@ -8,9 +8,17 @@
     "new": "New",
     "edit": "Edit",
     "delete": "Delete",
+    "revert": "Revert",
     "validate": "Validate",
     "create": "Create",
+    "createOverride": "Save override",
     "update": "Save changes"
+  },
+  "origin": {
+    "custom": "Custom",
+    "modified": "Modified",
+    "core": "Core",
+    "plugin": "Plugin"
   },
   "columns": {
     "className": "Class",
@@ -48,10 +56,21 @@
     "title": "Delete custom component",
     "body": "Are you sure you want to delete \"{{name}}\"? It will be removed from the registry and deleted from disk. This cannot be undone."
   },
+  "revertDialog": {
+    "title": "Revert to original",
+    "body": "Discard your changes to \"{{name}}\" and restore the original component shipped with DashAI?"
+  },
   "leftBar": {
-    "title": "My components",
+    "title": "Components",
     "searchPlaceholder": "Search by name, class, or type…",
-    "noMatches": "No components match your search."
+    "noMatches": "No components match your search.",
+    "empty": "No components available.",
+    "filters": {
+      "all": "All",
+      "modified": "Modified",
+      "custom": "Custom",
+      "core": "Built-in"
+    }
   },
   "rightBar": {
     "title": "Component settings",
@@ -66,6 +85,7 @@
   "messages": {
     "created": "\"{{name}}\" is now available in the app.",
     "updated": "\"{{name}}\" has been updated.",
-    "deleted": "\"{{name}}\" has been deleted."
+    "deleted": "\"{{name}}\" has been deleted.",
+    "reverted": "\"{{name}}\" has been reverted to the original."
   }
 }
