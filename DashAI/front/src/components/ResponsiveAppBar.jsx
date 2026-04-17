@@ -31,6 +31,7 @@ function ResponsiveAppBar() {
     { name: t("common:models"), to: "/app/models" },
     { name: t("common:generative"), to: "/app/generative" },
     { name: t("common:plugins"), to: "/app/plugins/browse" },
+    { name: t("common:customComponents"), to: "/app/custom-components" },
   ];
 
   const isActive = (path) =>

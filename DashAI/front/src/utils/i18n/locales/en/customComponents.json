@@ -1,0 +1,71 @@
+{
+  "pageTitle": "Custom Components",
+  "pageSubtitle": "Author new DashAI components directly in the browser and register them instantly.",
+  "tabDescription": "Write a Python class that inherits from a DashAI base class. It will be available immediately across the app.",
+  "emptyState": "No custom components yet. Click \"New\" to write your first one.",
+  "comingSoon": "Coming soon",
+  "actions": {
+    "new": "New",
+    "edit": "Edit",
+    "delete": "Delete",
+    "validate": "Validate",
+    "create": "Create",
+    "update": "Save changes"
+  },
+  "columns": {
+    "className": "Class",
+    "baseClass": "Base class",
+    "type": "Type",
+    "description": "Description",
+    "lastModified": "Last modified",
+    "actions": "Actions"
+  },
+  "fields": {
+    "baseClass": "Base class",
+    "className": "Class name",
+    "classNameHint": "Use CamelCase, e.g. MyCustomModel",
+    "classNameHelp": "Must start with an uppercase letter and contain only letters, digits, or underscores.",
+    "description": "Description (optional)"
+  },
+  "dialog": {
+    "createTitle": "New custom component",
+    "editTitle": "Edit custom component"
+  },
+  "skeletonPanel": {
+    "abstractTitle": "Abstract methods",
+    "abstractHelp": "You must implement every method listed below.",
+    "attrsTitle": "Overridable attributes",
+    "noDocstring": "No documentation available.",
+    "empty": "Pick a base class to see the methods you need to implement.",
+    "noBase": "No base class selected"
+  },
+  "validation": {
+    "okTitle": "Validation passed",
+    "okBody": "The class compiles, inherits from the selected base, and implements all abstract methods.",
+    "errorTitle": "Validation failed"
+  },
+  "deleteDialog": {
+    "title": "Delete custom component",
+    "body": "Are you sure you want to delete \"{{name}}\"? It will be removed from the registry and deleted from disk. This cannot be undone."
+  },
+  "leftBar": {
+    "title": "My components",
+    "searchPlaceholder": "Search by name, class, or type…",
+    "noMatches": "No components match your search."
+  },
+  "rightBar": {
+    "title": "Component settings",
+    "tabMethods": "Methods",
+    "tabDocs": "Base class",
+    "noDocs": "No documentation available for this base class.",
+    "importPath": "Import path"
+  },
+  "center": {
+    "unsaved": "Unsaved changes"
+  },
+  "messages": {
+    "created": "\"{{name}}\" is now available in the app.",
+    "updated": "\"{{name}}\" has been updated.",
+    "deleted": "\"{{name}}\" has been deleted."
+  }
+}

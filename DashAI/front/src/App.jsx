@@ -11,6 +11,7 @@ import ResponsiveAppBar from "./components/ResponsiveAppBar";
 import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
+import CustomComponentsPage from "./pages/customComponents/CustomComponents";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
@@ -41,6 +42,10 @@ function App() {
               <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
           </Route>
+          <Route
+            path="/app/custom-components"
+            element={<CustomComponentsPage />}
+          />
         </Routes>
         <JobQueueWidget />
       </BrowserRouter>

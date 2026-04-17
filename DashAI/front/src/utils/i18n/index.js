@@ -33,6 +33,8 @@ import homeEN from "./locales/en/home.json";
 import homeES from "./locales/es/home.json";
 import pluginsEN from "./locales/en/plugins.json";
 import pluginsES from "./locales/es/plugins.json";
+import customComponentsEN from "./locales/en/customComponents.json";
+import customComponentsES from "./locales/es/customComponents.json";
 import generativeTourEN from "./locales/en/generativeTour.json";
 import generativeTourES from "./locales/es/generativeTour.json";
 
@@ -51,6 +53,7 @@ const resources = {
     datasets: datasetsEN,
     prediction: predictionEN,
     plugins: pluginsEN,
+    customComponents: customComponentsEN,
     home: homeEN,
     homeTour: homeTourEN,
     datasetsTour: datasetsTourEN,
@@ -70,6 +73,7 @@ const resources = {
     datasets: datasetsES,
     prediction: predictionES,
     plugins: pluginsES,
+    customComponents: customComponentsES,
     home: homeES,
     homeTour: homeTourES,
     datasetsTour: datasetsTourES,
@@ -105,6 +109,7 @@ i18n
       "modelsTour",
       "modelsSessionTour",
       "plugins",
+      "customComponents",
       "generativeTour",
     ],
     defaultNS: "common",

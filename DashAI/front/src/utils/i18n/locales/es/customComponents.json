@@ -1,0 +1,71 @@
+{
+  "pageTitle": "Componentes personalizados",
+  "pageSubtitle": "Crea nuevos componentes de DashAI directamente desde el navegador y regístralos al instante.",
+  "tabDescription": "Escribe una clase de Python que herede de una clase base de DashAI. Estará disponible en toda la aplicación de inmediato.",
+  "emptyState": "Aún no hay componentes personalizados. Haz clic en \"Nuevo\" para escribir el primero.",
+  "comingSoon": "Próximamente",
+  "actions": {
+    "new": "Nuevo",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "validate": "Validar",
+    "create": "Crear",
+    "update": "Guardar cambios"
+  },
+  "columns": {
+    "className": "Clase",
+    "baseClass": "Clase base",
+    "type": "Tipo",
+    "description": "Descripción",
+    "lastModified": "Última modificación",
+    "actions": "Acciones"
+  },
+  "fields": {
+    "baseClass": "Clase base",
+    "className": "Nombre de la clase",
+    "classNameHint": "Usa CamelCase, por ejemplo MiModeloCustom",
+    "classNameHelp": "Debe comenzar con mayúscula y contener solo letras, dígitos o guiones bajos.",
+    "description": "Descripción (opcional)"
+  },
+  "dialog": {
+    "createTitle": "Nuevo componente personalizado",
+    "editTitle": "Editar componente personalizado"
+  },
+  "skeletonPanel": {
+    "abstractTitle": "Métodos abstractos",
+    "abstractHelp": "Debes implementar todos los métodos listados abajo.",
+    "attrsTitle": "Atributos sobreescribibles",
+    "noDocstring": "No hay documentación disponible.",
+    "empty": "Elige una clase base para ver los métodos que debes implementar.",
+    "noBase": "Ninguna clase base seleccionada"
+  },
+  "validation": {
+    "okTitle": "Validación exitosa",
+    "okBody": "La clase compila, hereda de la clase base seleccionada e implementa todos los métodos abstractos.",
+    "errorTitle": "Validación fallida"
+  },
+  "deleteDialog": {
+    "title": "Eliminar componente personalizado",
+    "body": "¿Seguro que quieres eliminar \"{{name}}\"? Se retirará del registro y se borrará del disco. Esta acción no se puede deshacer."
+  },
+  "leftBar": {
+    "title": "Mis componentes",
+    "searchPlaceholder": "Buscar por nombre, clase o tipo…",
+    "noMatches": "Ningún componente coincide con tu búsqueda."
+  },
+  "rightBar": {
+    "title": "Configuración del componente",
+    "tabMethods": "Métodos",
+    "tabDocs": "Clase base",
+    "noDocs": "No hay documentación disponible para esta clase base.",
+    "importPath": "Ruta de importación"
+  },
+  "center": {
+    "unsaved": "Cambios sin guardar"
+  },
+  "messages": {
+    "created": "\"{{name}}\" ya está disponible en la aplicación.",
+    "updated": "\"{{name}}\" se ha actualizado.",
+    "deleted": "\"{{name}}\" se ha eliminado."
+  }
+}

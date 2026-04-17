@@ -91,6 +91,7 @@
   "parameters": "Parameters",
   "pipelines": "Pipelines",
   "plugins": "Plugins",
+  "customComponents": "Custom Components",
   "processing": "Processing...",
   "remove": "Remove",
   "required": "Required",
