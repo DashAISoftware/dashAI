@@ -15,7 +15,7 @@ import { useGenerative } from "../../components/generative/GenerativeContext";
 import { useTranslation } from "react-i18next";
 
 export default function GenerativeContent() {
-  const threePanelLayout = useThreePanelLayout();
+  const threePanelLayout = useThreePanelLayout({ storageKey: "generative" });
   const { stepIndex, selectedSessionId } = useGenerative();
   const { setDisabled } = useTourContext() ?? {};
   const { t } = useTranslation(["generative"]);

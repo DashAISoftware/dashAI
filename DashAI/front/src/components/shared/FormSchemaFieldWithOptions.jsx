@@ -1,18 +1,14 @@
-import { Box } from "@mui/material";
 import React, { useEffect, useState, useMemo } from "react";
 import FormSchemaField from "./FormSchemaField";
 import SingleSelectChipGroup from "./SingleSelectChipGroup";
 import { getValidator } from "../../utils/schema";
 import PropTypes from "prop-types";
+import FormSchemaFieldCard from "./FormSchemaFieldCard";
 
 /**
- * This component is a HOC that wraps the FormSchemaField component and adds a dropdown to select the type of the input
- * @param {string} title title of the input
- * @param {string} description description of the input
- * @param {boolean} required if the input is required
- * @param {array} options array of objects that describe the options for the input
- * @param {object} field object that contains the value of the parameter and a function to set the value
- *
+ * Renders an anyOf field as a card.
+ * The type-selector chip group (String / Int / Float / Null) lives in the card header.
+ * The body renders the appropriate input for the selected type.
  */
 const typesLabels = {
   string: "String",
@@ -37,12 +33,13 @@ const getType = (value, options) => {
   return "string";
 };
 
-function FormSchemaFieldsWithOptions({
+function FormSchemaFieldWithOptions({
   title,
   description,
   required,
   options,
   field,
+  objName,
   placeholder,
   setError,
   ...rest
@@ -50,20 +47,17 @@ function FormSchemaFieldsWithOptions({
   const [selectedType, setSelectedType] = useState(null);
   const [errorField, setErrorField] = useState(null);
 
-  const paramJsonSchema = useMemo(() => {
-    return {
+  const paramJsonSchema = useMemo(
+    () => ({
       title,
       description,
       required,
       ...options.find((option) => option.type === selectedType),
-    };
-  }, [title, description, required, options, selectedType]);
+    }),
+    [title, description, required, options, selectedType],
+  );
 
-  const fieldProps = {
-    paramJsonSchema,
-    field,
-    ...rest,
-  };
+  const fieldProps = { paramJsonSchema, field, objName, ...rest };
 
   const handleSetError = (error) => {
     setErrorField(error);
@@ -78,8 +72,6 @@ function FormSchemaFieldsWithOptions({
     setSelectedType(type);
   };
 
-  //  initialize selectedType
-
   useEffect(() => {
     if (field.value !== undefined && selectedType === null) {
       setSelectedType(getType(field.value, options));
@@ -90,43 +82,43 @@ function FormSchemaFieldsWithOptions({
       validator
         .strict()
         .validate(field.value)
-        .then(() => {
-          handleSetError(null);
-        })
-        .catch((err) => {
-          handleSetError(err.message);
-        });
+        .then(() => handleSetError(null))
+        .catch((err) => handleSetError(err.message));
     }
   }, [selectedType, field.value, fieldProps.paramJsonSchema]);
 
+  const chipGroup = selectedType ? (
+    <SingleSelectChipGroup
+      options={options.map(({ type }) => ({
+        key: type,
+        label: typesLabels[type],
+      }))}
+      onChange={handleTypeChange}
+      selected={selectedType}
+    />
+  ) : null;
+
   return (
-    <Box display="flex" gap={2} width={"100%"}>
-      <Box flex={1}>
-        <FormSchemaField {...fieldProps} error={errorField} />
-      </Box>
-      <Box pt={2.5}>
-        {selectedType && (
-          <SingleSelectChipGroup
-            options={options.map(({ type }) => ({
-              key: type,
-              label: typesLabels[type],
-            }))}
-            onChange={(type) => handleTypeChange(type)}
-            selected={selectedType}
-          />
-        )}
-      </Box>
-    </Box>
+    <FormSchemaFieldCard
+      label={title}
+      paramKey={objName}
+      description={description}
+      headerRight={chipGroup}
+    >
+      <FormSchemaField {...fieldProps} error={errorField} />
+    </FormSchemaFieldCard>
   );
 }
 
-FormSchemaFieldsWithOptions.propTypes = {
+FormSchemaFieldWithOptions.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string,
   required: PropTypes.bool,
   options: PropTypes.array.isRequired,
   field: PropTypes.object.isRequired,
+  objName: PropTypes.string,
+  placeholder: PropTypes.any,
   setError: PropTypes.func,
 };
 
-export default FormSchemaFieldsWithOptions;
+export default FormSchemaFieldWithOptions;

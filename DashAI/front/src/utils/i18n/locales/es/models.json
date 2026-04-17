@@ -147,7 +147,21 @@
     "validation": "Validación",
     "validationMetrics": "Métricas de Validación",
     "validationSet": "conjunto de validación",
-    "viewResultsAs": "Ver resultados como columnas o gráficos"
+    "viewResultsAs": "Ver resultados como columnas o gráficos",
+    "higherIsBetter": "Mayor es mejor",
+    "lowerIsBetter": "Menor es mejor",
+    "bestModel": "Mejor",
+    "score": "Puntuación",
+    "scoreProfile": "Perfil de Puntuación",
+    "scoreHeaderTooltip": "Puntuación ponderada 0–100 según el perfil seleccionado. Las métricas de error sin límite superior (MAE, RMSE, TER, …) se normalizan respecto al peor modelo en esta comparación. Pasa el cursor sobre una celda para ver el desglose.",
+    "profile_balanced": "Equilibrio",
+    "profile_detectPositives": "Detectar Positivos",
+    "profile_avoidFalseAlarms": "Evitar Falsas Alarmas",
+    "profile_probabilityQuality": "Calidad de Probabilidades",
+    "profile_regression_fit": "Ajuste del Modelo",
+    "profile_regression_error": "Error Balanceado",
+    "profile_translation_quality": "Calidad de Traducción",
+    "profile_translation_balanced": "Traducción Balanceada"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

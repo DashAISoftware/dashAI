@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Box, Divider, Typography, IconButton } from "@mui/material";
+import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { ChevronLeft } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
 import Footer from "../threeSectionLayout/Footer";
-import BarHeader from "../threeSectionLayout/BarHeader";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
@@ -219,6 +217,7 @@ export default function ModelsLeftBar({ onToggle }) {
 
   const onSessionClick = (sessionId) => {
     setSelectedSessionId(sessionId);
+    selectDataset(null);
   };
 
   const handleNewSessionButton = () => {
@@ -230,26 +229,6 @@ export default function ModelsLeftBar({ onToggle }) {
 
   return (
     <SideBar>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          pr: 2,
-        }}
-      >
-        <BarHeader />
-        <IconButton
-          size="small"
-          onClick={onToggle}
-          sx={{ color: "text.secondary" }}
-        >
-          <ChevronLeft />
-        </IconButton>
-      </Box>
-      <Divider sx={{ width: "100%", bgcolor: theme.palette.ui.borderDark }} />
-
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (

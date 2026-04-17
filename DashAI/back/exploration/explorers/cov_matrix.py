@@ -5,6 +5,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -123,8 +124,8 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
 
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 2},
     }
 

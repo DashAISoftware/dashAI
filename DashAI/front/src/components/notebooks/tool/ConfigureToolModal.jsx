@@ -10,6 +10,8 @@ import {
   Step,
   StepLabel,
   Tooltip,
+  DialogTitle,
+  DialogContent,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Close, UnfoldMore } from "@mui/icons-material";
@@ -129,202 +131,222 @@ export default function ConfigureToolModal({
         },
       }}
     >
-      {/* HEADER */}
-      <Box
-        sx={{
-          p: 2,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-        }}
-      >
-        <Typography variant="h6" fontWeight="600" sx={{ whiteSpace: "nowrap" }}>
-          {t("datasets:label.configureToolTitle", {
-            toolType: tool.type,
-            toolName: tool.display_name,
-          })}
-        </Typography>
-
-        {/* Stepper */}
-        <Box sx={{ flex: 1 }}>
-          <Stepper activeStep={step}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Box>
-
-        <IconButton onClick={handleClose}>
-          <Close />
-        </IconButton>
-      </Box>
-      {/* TABS */}
-      <Tabs
-        value={activeTab}
-        onChange={(_, newValue) => setActiveTab(newValue)}
-        centered
-        sx={{
-          minHeight: "36px",
-          "& .MuiTab-root": {
-            minHeight: "36px",
-            fontSize: "0.85rem",
-          },
-          "& .MuiTabs-indicator": {
-            height: "2px",
-          },
-        }}
-      >
-        <Tab
-          icon={<DescriptionIcon fontSize="small" />}
-          iconPosition="start"
-          label={t("common:description")}
-        />
-        <Tab
-          icon={<DatasetIcon fontSize="small" />}
-          iconPosition="start"
-          label={t("common:dataset")}
-        />
-      </Tabs>
-      {/* CONTENT AREA */}
-      <Box
-        ref={containerRef}
-        sx={{
-          flex: 1,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          position: "relative",
-        }}
-      >
-        {/* Tab Panels */}
+      <DialogTitle sx={{ p: 0, bgcolor: "background.paper" }}>
+        {/* HEADER */}
         <Box
           sx={{
-            height: `${topHeight}px`,
-            overflow: "auto",
             p: 2,
-            flexShrink: 0,
-          }}
-        >
-          {activeTab === 0 && (
-            <>
-              {/* Tool Description */}
-              <Box
-                sx={{
-                  bgcolor: "theme.palette.background.box",
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 1.5,
-                  p: 2,
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    mb: 1,
-                    display: "block",
-                  }}
-                >
-                  {t("common:description")}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    lineHeight: 1.6,
-                    mb: 2,
-                  }}
-                >
-                  {tool.description || t("common:noDescription")}
-                </Typography>
-                <img
-                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
-                  alt={tool.display_name}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                  }}
-                />
-              </Box>
-            </>
-          )}
-          {activeTab === 1 && (
-            <DatasetTable
-              fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path]}
-              initialPageSize={5}
-              datasetPath={notebook.file_path}
-              columnTypes={columnTypes}
-              enableTopToolbar={false}
-            />
-          )}
-        </Box>
-
-        {/* Divider for resizing */}
-        <Tooltip title={t("datasets:label.dragToResize")} placement="top" arrow>
-          <Box
-            onMouseDown={handleMouseDown}
-            sx={{
-              height: "24px",
-              cursor: "row-resize",
-              backgroundColor: "divider",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-              transition: "all 0.2s",
-              "&:hover": {
-                backgroundColor: theme.palette.primary.main,
-                "& .drag-icon": {
-                  color: "white",
-                },
-              },
-              zIndex: 2,
-            }}
-          >
-            <UnfoldMore
-              className="drag-icon"
-              sx={{
-                fontSize: 22,
-                color: "text.secondary",
-                transition: "color 0.2s",
-              }}
-            />
-          </Box>
-        </Tooltip>
-
-        {/* Bottom section (form) */}
-        <Box
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            p: 2,
-            borderTop: "1px solid",
+            borderBottom: "1px solid",
             borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
           }}
         >
           <Typography
-            variant="body2"
-            color="text.secondary"
-            gutterBottom
-            textAlign="center"
+            variant="h6"
+            fontWeight="600"
+            sx={{ whiteSpace: "nowrap" }}
           >
-            {t("common:configureTheSettings")}
+            {t("datasets:label.configureToolTitle", {
+              toolType: tool.type,
+              toolName: tool.display_name,
+            })}
           </Typography>
-          <FormSection
-            step={step}
-            setStep={setStep}
-            handleClose={handleClose}
-            tool={tool}
-            notebook={notebook}
-          />
+
+          {/* Stepper */}
+          <Box sx={{ flex: 1 }}>
+            <Stepper activeStep={step}>
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
+
+          <IconButton onClick={handleClose}>
+            <Close />
+          </IconButton>
         </Box>
-      </Box>
+        {/* TABS */}
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          centered
+          sx={{
+            minHeight: "36px",
+            "& .MuiTab-root": {
+              minHeight: "36px",
+              fontSize: "0.85rem",
+            },
+            "& .MuiTabs-indicator": {
+              height: "2px",
+            },
+          }}
+        >
+          <Tab
+            icon={<DescriptionIcon fontSize="small" />}
+            iconPosition="start"
+            label={t("common:description")}
+          />
+          <Tab
+            icon={<DatasetIcon fontSize="small" />}
+            iconPosition="start"
+            label={t("common:dataset")}
+          />
+        </Tabs>
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          p: 0,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          bgcolor: "background.paper",
+        }}
+      >
+        {/* CONTENT AREA */}
+        <Box
+          ref={containerRef}
+          sx={{
+            flex: 1,
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+          }}
+        >
+          {/* Tab Panels */}
+          <Box
+            sx={{
+              height: `${topHeight}px`,
+              overflow: "auto",
+              p: 2,
+              flexShrink: 0,
+            }}
+          >
+            {activeTab === 0 && (
+              <>
+                {/* Tool Description */}
+                <Box
+                  sx={{
+                    bgcolor: "theme.palette.background.box",
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1.5,
+                    p: 2,
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      mb: 1,
+                      display: "block",
+                    }}
+                  >
+                    {t("common:description")}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      lineHeight: 1.6,
+                      mb: 2,
+                    }}
+                  >
+                    {tool.description || t("common:noDescription")}
+                  </Typography>
+                  <img
+                    src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                    alt={tool.display_name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                </Box>
+              </>
+            )}
+            {activeTab === 1 && (
+              <DatasetTable
+                fetchPage={fetchDatasetPage}
+                deps={[notebook.file_path]}
+                initialPageSize={5}
+                datasetPath={notebook.file_path}
+                columnTypes={columnTypes}
+                enableTopToolbar={false}
+              />
+            )}
+          </Box>
+
+          {/* Divider for resizing */}
+          <Tooltip
+            title={t("datasets:label.dragToResize")}
+            placement="top"
+            arrow
+          >
+            <Box
+              onMouseDown={handleMouseDown}
+              sx={{
+                height: "24px",
+                cursor: "row-resize",
+                backgroundColor: "divider",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                transition: "all 0.2s",
+                "&:hover": {
+                  backgroundColor: theme.palette.primary.main,
+                  "& .drag-icon": {
+                    color: "white",
+                  },
+                },
+                zIndex: 2,
+              }}
+            >
+              <UnfoldMore
+                className="drag-icon"
+                sx={{
+                  fontSize: 22,
+                  color: "text.secondary",
+                  transition: "color 0.2s",
+                }}
+              />
+            </Box>
+          </Tooltip>
+
+          {/* Bottom section (form) */}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: "auto",
+              p: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              gutterBottom
+              textAlign="center"
+            >
+              {t("common:configureTheSettings")}
+            </Typography>
+            <FormSection
+              step={step}
+              setStep={setStep}
+              handleClose={handleClose}
+              tool={tool}
+              notebook={notebook}
+            />
+          </Box>
+        </Box>
+      </DialogContent>
     </Dialog>
   );
 }

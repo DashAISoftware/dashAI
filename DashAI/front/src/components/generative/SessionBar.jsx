@@ -1,4 +1,4 @@
-import { Box, Typography, Divider, IconButton } from "@mui/material";
+import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -8,8 +8,6 @@ import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList
 import Footer from "../threeSectionLayout/Footer";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
-import BarHeader from "../threeSectionLayout/BarHeader";
-import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 
@@ -142,26 +140,6 @@ export default function SessionBar({ onToggle }) {
         justifyContent={"flex-start"}
         minHeight={0}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pr: 2,
-          }}
-        >
-          <BarHeader />
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronLeft />
-          </IconButton>
-        </Box>
-        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
-
         <Box
           p={2}
           sx={{ height: "64px", display: "flex", alignItems: "center" }}

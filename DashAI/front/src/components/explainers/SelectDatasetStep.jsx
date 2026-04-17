@@ -176,15 +176,28 @@ export default function SelectDatasetStep({
     enableRowSelection: false,
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => handleRowClick(row),
-      sx: { cursor: "pointer" },
+      sx: {
+        cursor: "pointer",
+        ...(row.original.id === selectedDatasetId && {
+          backgroundColor: theme.palette.accent.amberDim,
+          borderLeft: `3px solid ${theme.palette.primary.main}`,
+          "&:hover td": {
+            backgroundColor: "transparent",
+          },
+        }),
+      },
     }),
     state: { isLoading: loading },
     enableGlobalFilter: false,
     enableColumnFilters: false,
     enableSorting: true,
     enablePagination: true,
-    muiPaginationProps: { rowsPerPageOptions: [10, 25] },
-    initialState: { pagination: { pageSize: 10, pageIndex: 0 } },
+    enableTopToolbar: false,
+    muiPaginationProps: { showRowsPerPage: false },
+    initialState: {
+      pagination: { pageSize: 10, pageIndex: 0 },
+      density: "compact",
+    },
     localization,
   });
 

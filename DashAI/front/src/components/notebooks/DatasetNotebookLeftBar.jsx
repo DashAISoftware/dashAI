@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
-import { Box, Divider, Typography, IconButton } from "@mui/material";
+import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
 import Footer from "../threeSectionLayout/Footer";
-import BarHeader from "../threeSectionLayout/BarHeader";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
-import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
@@ -153,26 +151,6 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
 
   return (
     <SideBar>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          pr: 2,
-        }}
-      >
-        <BarHeader />
-        <IconButton
-          size="small"
-          onClick={onToggle}
-          sx={{ color: "text.secondary" }}
-        >
-          <ChevronLeft />
-        </IconButton>
-      </Box>
-      <Divider sx={{ width: "100%", bgcolor: "divider" }} />
-
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedNotebookId ? (

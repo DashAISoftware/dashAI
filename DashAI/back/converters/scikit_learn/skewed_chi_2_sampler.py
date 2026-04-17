@@ -14,7 +14,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SkewedChi2SamplerSchema(BaseSchema):
@@ -114,10 +114,7 @@ class SkewedChi2Sampler(
     DISPLAY_NAME = MultilingualString(en="Skewed Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
 
-    metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
-    }
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def __init__(self, **kwargs):
         """Initialise the skewed chi-squared sampler,

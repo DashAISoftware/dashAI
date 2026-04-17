@@ -7,7 +7,7 @@ from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class MaxAbsScalerSchema(BaseSchema):
@@ -51,8 +51,8 @@ class MaxAbsScaler(
     IMAGE_PREVIEW = "max_abs_scaler.png"
 
     metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
     }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

@@ -29,7 +29,6 @@ from DashAI.back.converters.scikit_learn.generic_univariate_select import (
 )
 from DashAI.back.converters.scikit_learn.incremental_pca import IncrementalPCA
 from DashAI.back.converters.scikit_learn.knn_imputer import KNNImputer
-from DashAI.back.converters.scikit_learn.label_binarizer import LabelBinarizer
 from DashAI.back.converters.scikit_learn.label_encoder import LabelEncoder
 from DashAI.back.converters.scikit_learn.max_abs_scaler import MaxAbsScaler
 from DashAI.back.converters.scikit_learn.min_max_scaler import MinMaxScaler
@@ -339,7 +338,6 @@ def get_initial_components():
         PCA,
         TruncatedSVD,
         Binarizer,
-        LabelBinarizer,
         LabelEncoder,
         MaxAbsScaler,
         MinMaxScaler,
