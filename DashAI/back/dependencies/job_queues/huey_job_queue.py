@@ -82,6 +82,20 @@ class HueyJobQueue(BaseJobQueue):
 
         @self.huey.task(context=True, priority=0)
         def _execute_base_job(job: BaseJob, task=None):
+            # Worker process owns its own ComponentRegistry. Reconcile against
+            # the custom_component table so user-authored classes created in
+            # the FastAPI process are visible here before the job runs.
+            try:
+                from DashAI.back.custom_components.startup import (
+                    reconcile_custom_components,
+                )
+
+                reconcile_custom_components()
+            except Exception:  # noqa: BLE001
+                logging.getLogger(__name__).exception(
+                    "Custom component reconcile failed; continuing with "
+                    "existing registry state."
+                )
             job.kwargs["huey_id"] = task.id
             result = job.run()
             return result
@@ -513,6 +527,7 @@ huey = _job_queue.huey
 @huey.on_startup()
 def create_container_huey():
     from DashAI.back.container import build_container
+    from DashAI.back.custom_components.startup import rehydrate_custom_components
     from DashAI.back.dependencies.config_builder import build_config_dict
 
     local_path = _lp
@@ -520,3 +535,10 @@ def create_container_huey():
 
     config = build_config_dict(local_path=local_path, logging_level=logging_level)
     build_container(config)
+
+    try:
+        rehydrate_custom_components()
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception(
+            "Failed to rehydrate custom components on worker startup."
+        )
