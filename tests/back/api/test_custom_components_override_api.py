@@ -66,6 +66,10 @@ def test_get_source_for_core_component(client):
     assert "class" in data["source_code"]
     assert data["origin"] in ("core", "plugin")
     assert data["editable"] is True
+    # Full module source must include imports and any sibling schema class,
+    # not just the component class body.
+    assert "import" in data["source_code"]
+    assert "Schema" in data["source_code"]
 
 
 def test_get_source_for_unknown_component_404(client):

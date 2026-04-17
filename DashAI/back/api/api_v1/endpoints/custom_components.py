@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import logging
 import pathlib
+import sys
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from fastapi import APIRouter, Depends, status
@@ -80,6 +81,44 @@ def _detect_base_class(cls: type) -> str | None:
     return None
 
 
+def _read_module_source(cls: type) -> str:
+    """Return the full source file that defines `cls`.
+
+    Core and plugin components typically define their Pydantic schema class
+    and all imports at module scope next to the component class. Returning
+    only `inspect.getsource(cls)` strips those away and leaves the user with
+    an uneditable snippet. Read the whole module instead so the editor shows
+    everything the user needs to tweak.
+    """
+    module = sys.modules.get(cls.__module__)
+    if module is not None:
+        try:
+            return inspect.getsource(module)
+        except (OSError, TypeError):
+            pass
+
+    # Fallback: read the source file directly.
+    try:
+        path = inspect.getsourcefile(cls) or inspect.getfile(cls)
+    except TypeError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not locate source for '{cls.__name__}': {e}",
+        ) from e
+    if not path:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not locate source file for '{cls.__name__}'.",
+        )
+    try:
+        return pathlib.Path(path).read_text(encoding="utf-8")
+    except OSError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not read source for '{cls.__name__}': {e}",
+        ) from e
+
+
 def _classify_origin(cls: type) -> str:
     """Best-effort classification of a component's origin by module path."""
     module = cls.__module__ or ""
@@ -139,13 +178,7 @@ async def get_component_source(
         base_type = row.base_type
         origin = "custom-override" if row.is_override else "custom"
     else:
-        try:
-            source_code = inspect.getsource(cls)
-        except (OSError, TypeError) as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Could not read source for '{class_name}': {e}",
-            ) from e
+        source_code = _read_module_source(cls)
         base_class = _detect_base_class(cls) or ""
         base_type = getattr(cls, "TYPE", "")
         origin = _classify_origin(cls)
