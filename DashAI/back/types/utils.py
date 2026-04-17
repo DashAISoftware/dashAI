@@ -217,8 +217,13 @@ def get_types_from_arrow_metadata(
                 converted = info.get("converted", False)
                 encoding = info.get("encoding", None)
                 dtype = info.get("dtype", "string")
+                encoder = info.get("encoder", "one_hot")
                 dashai_types[column] = Categorical(
-                    values=cats, encoding=encoding, converted=converted, dtype=dtype
+                    values=cats,
+                    encoding=encoding,
+                    converted=converted,
+                    dtype=dtype,
+                    encoder=encoder,
                 )
             # Future implementation for images, modify as needed
             else:

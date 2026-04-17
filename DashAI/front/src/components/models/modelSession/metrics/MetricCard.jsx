@@ -74,12 +74,7 @@ export default function MetricCard({
 
         <Box sx={{ pr: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-            <Typography
-              variant="h6"
-              sx={{ fontFamily: "monospace", fontWeight: 600 }}
-            >
-              {metric.name}
-            </Typography>
+            <Typography variant="h6">{metric.name}</Typography>
 
             <Chip
               icon={

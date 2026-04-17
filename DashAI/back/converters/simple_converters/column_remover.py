@@ -38,8 +38,8 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "column_remover.png"
 
     metadata = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [],
+        "allowed_dtypes": [],
     }
 
     def __init__(self):

@@ -4,7 +4,7 @@ export const tourStyles = {
     backgroundColor: "#fff",
     beaconSize: 36,
     overlayColor: "rgba(0, 0, 0, 0.5)",
-    primaryColor: "#1976d2",
+    primaryColor: "#ef9f27",
     spotlightShadow: "0 0 15px rgba(0, 0, 0, 0.5)",
     textColor: "#333",
     width: 380,

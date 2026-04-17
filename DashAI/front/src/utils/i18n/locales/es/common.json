@@ -143,12 +143,65 @@
   "vertical": "Vertical",
   "viewDetails": "Ver Detalles",
   "renameColumn": "Doble-click para renombrar columna",
+  "encoder": "Codificador",
+  "encoderOneHot": "One-Hot",
+  "encoderLabel": "Etiqueta",
+  "changeEncoder": "Cambiar codificador",
+  "errorChangingEncoder": "Error al cambiar el codificador",
   "columnNameEmpty": "El nombre de la columna no puede estar vacío",
   "columnNameInvalid": "El nombre de la columna solo puede contener letras, números y guiones bajos",
   "columnNameCannotBeEmpty": "El nombre de la columna no puede estar vacío",
   "columnNameInvalidCharacters": "El nombre de la columna solo puede contener letras, números y guiones bajos",
   "columnNameAlreadyExists": "Ya existe una columna con este nombre",
   "errorRenamingColumn": "Error al renombrar la columna",
+  "jobQueue": {
+    "title": "Cola de trabajos",
+    "refresh": "Actualizar",
+    "clearAll": "Borrar todo",
+    "clearAllJobs": "Borrar todos los trabajos",
+    "clearing": "Borrando...",
+    "showCompleted": "Mostrar completados",
+    "hideCompleted": "Ocultar completados",
+    "noJobs": "No hay trabajos en la cola",
+    "noActiveJobs": "No hay trabajos activos",
+    "noCompletedJobs": "No hay trabajos completados",
+    "deleteJob": "Eliminar trabajo",
+    "confirmDeleteJob": "¿Estás seguro de que deseas eliminar este trabajo?",
+    "confirmClearAll": "¿Estás seguro de que deseas eliminar TODOS los trabajos registrados?",
+    "confirmClearAllDetail": "Esto cancelará todos los trabajos de la cola.",
+    "activeCount_one": "{{count}} activo",
+    "activeCount_other": "{{count}} activos",
+    "failedCount_one": "{{count}} fallido",
+    "failedCount_other": "{{count}} fallidos",
+    "details": {
+      "title": "Detalles del trabajo",
+      "jobId": "ID del trabajo",
+      "jobName": "Nombre del trabajo",
+      "jobType": "Tipo de trabajo",
+      "lastUpdated": "Última actualización",
+      "errorMessage": "Mensaje de error",
+      "unnamedJob": "Trabajo sin nombre"
+    },
+    "status": {
+      "queued": "En cola",
+      "running": "En ejecución",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "deleted": "Eliminado"
+    },
+    "relativeTime": {
+      "justNow": "ahora mismo",
+      "secondsAgo": "hace {{count}}s",
+      "minutesAgo": "hace {{count}}m",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d",
+      "inSeconds": "en {{count}}s",
+      "inMinutes": "en {{count}}m",
+      "inHours": "en {{count}}h",
+      "inDays": "en {{count}}d",
+      "unknown": "hora desconocida"
+    }
+  },
   "hardwareMonitor": {
     "title": "Monitor de Hardware",
     "cpu": "CPU",
@@ -157,5 +210,10 @@
     "overall": "General",
     "utilization": "Utilización",
     "connecting": "Conectando al monitor de hardware..."
-  }
+  },
+  "collapse": "Contraer",
+  "expand": "Expandir",
+  "optimize": "Optimizar",
+  "viewMore": "Ver más",
+  "viewLess": "Ver menos"
 }

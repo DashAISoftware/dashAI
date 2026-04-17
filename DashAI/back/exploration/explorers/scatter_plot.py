@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -89,8 +90,8 @@ class ScatterPlotExplorer(RelationshipExplorer):
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
         "input_cardinality": {"exact": 2},
     }
 

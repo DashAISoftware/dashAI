@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -34,11 +35,19 @@ class R2(RegressionMetric):
     """
 
     MAXIMIZE: bool = True
-    DESCRIPTION: str = (
-        "R2 score, also known as the coefficient of determination, "
-        "measures how well the predicted values from a regression model "
-        "approximate the actual data points. It provides an indication of "
-        "the goodness of fit of the model."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "R2 score, also known as the coefficient of determination, "
+            "measures how well the predicted values from a regression model "
+            "approximate the actual data points. It provides an indication of "
+            "the goodness of fit of the model."
+        ),
+        es=(
+            "El puntaje R2, también conocido como coeficiente de determinación, "
+            "mide qué tan bien los valores predichos de un modelo de regresión "
+            "se aproximan a los datos reales. Proporciona una indicación de "
+            "la bondad de ajuste del modelo."
+        ),
     )
 
     @staticmethod

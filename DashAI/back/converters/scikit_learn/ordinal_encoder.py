@@ -16,6 +16,7 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 
 class OrdinalEncoderSchema(BaseSchema):
@@ -37,8 +38,8 @@ class OrdinalEncoderSchema(BaseSchema):
         ),
     )  # type: ignore
     dtype: schema_field(
-        enum_field(["np.int32", "np.int64", "np.float32", "np.float64"]),
-        "np.float64",
+        enum_field(["int32", "int64"]),
+        "int64",
         description=MultilingualString(
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
@@ -120,9 +121,11 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     DISPLAY_NAME = MultilingualString(en="Ordinal Encoder", es="Codificador Ordinal")
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
+    PREFIX = "oe_"
+
     metadata = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Categorical],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):
@@ -165,13 +168,13 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
         Returns
         -------
         DashAIDataType
-            A placeholder ``Categorical`` type with two string
-            values (``"0"`` and ``"1"``). The actual category values are not
-            reflected at schema-declaration time; the real categories are
-            available after fitting via ``self.categories_``.
+            A placeholder ``Integer`` type with the same dtype
+            as the encoder's output. The actual categories will
+            be set by sklearn_wrapper's transform method.
+
         """
         import pyarrow as pa
 
         # Return a placeholder categorical type
         # The actual categories will be set by sklearn_wrapper's transform method
-        return Categorical(values=pa.array(["0", "1"]))
+        return Integer(arrow_type=pa.from_numpy_dtype(self.dtype))

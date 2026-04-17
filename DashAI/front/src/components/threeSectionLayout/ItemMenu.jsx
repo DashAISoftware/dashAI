@@ -24,7 +24,14 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
+export default function ItemMenu({
+  itemId,
+  onInfo,
+  onDelete,
+  onEdit,
+  deleteConfirmationContent,
+  deleteConfirmationWarning,
+}) {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -138,6 +145,8 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
       </Menu>
       {/* Confirmation Modal */}
       <DeleteConfirmationModal
+        content={deleteConfirmationContent}
+        warning={deleteConfirmationWarning}
         open={deleteModalOpen}
         onClose={(e) => {
           e.stopPropagation();

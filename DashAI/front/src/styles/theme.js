@@ -1,125 +1,107 @@
-import QuicksandBoldWoff2 from "./fonts/Quicksand-Bold.woff2";
-
-const getTheme = (mode, language) => ({
+const getTheme = (mode) => ({
   palette: {
     mode,
 
-    // PRIMARY - Main application color
-    // Used in: primary buttons, highlighted icons, links, active elements
     primary: {
-      light: "#008582",
-      main: "#00BEBB",
-      dark: "#002884",
-      contrastText: "#fff",
+      light: mode === "dark" ? "#f5b94a" : "#d98200",
+      main: mode === "dark" ? "#ef9f27" : "#b86e00",
+      dark: mode === "dark" ? "#c47d0e" : "#8f5200",
+      contrastText: mode === "dark" ? "#0c0c0a" : "#ffffff",
     },
 
-    // SECONDARY - Complementary secondary color
-    // Used in: secondary buttons, supporting elements
     secondary: {
-      light: "#6E86E8",
-      main: "#6E86E8",
-      dark: "#4d5da2",
-      contrastText: "#000",
+      light: "#2ec98a",
+      main: "#1d9e75",
+      dark: "#14735a",
+      contrastText: "#ffffff",
     },
 
-    // DIVIDER - Divider color
-    // Used in: Divider components, separators
-    divider:
-      mode === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
+    divider: mode === "dark" ? "rgba(239,159,39,0.10)" : "rgba(0,0,0,0.10)",
 
-    // BACKGROUND - Background colors for different surfaces
-    // Used in: page backgrounds, cards, modals, panels
     background:
       mode === "dark"
         ? {
-            default: "#2e3037", // Main app background
-            paper: "#121212", // Cards and modals background
-            box: "#212121", // Boxes and containers (AppBar, sidebars)
+            default: "#0c0c0a",
+            paper: "#111110",
+            box: "#0f0f0d",
           }
         : {
-            default: "#f5f5f5", // Main app background
-            paper: "#ffffff", // Cards and modals background
-            box: "#fafafa", // Boxes and containers (AppBar, sidebars)
+            default: "#f5f5f5",
+            paper: "#ffffff",
+            box: "#fafafa",
           },
 
-    // TEXT - Text colors
-    // Used in: Typography components, labels, paragraphs
     text:
       mode === "dark"
         ? {
-            primary: "#ffffff", // Primary text (titles, important labels)
-            secondary: "#b0b0b0", // Secondary text (descriptions, subtitles)
-            disabled: "#757575", // Disabled text
+            primary: "#f2ede2",
+            secondary: "rgba(232,228,217,0.75)",
+            disabled: "rgba(232,228,217,0.45)",
           }
         : {
-            primary: "#1a1a1a", // Primary text (titles, important labels)
-            secondary: "#666666", // Secondary text (descriptions, subtitles)
-            disabled: "#9e9e9e", // Disabled text
+            primary: "#111111",
+            secondary: "rgba(17,17,17,0.5)",
+            disabled: "rgba(17,17,17,0.3)",
           },
 
-    // ACTION - Interactive states
-    // Used in: hover states, selected items, disabled states, focus indicators
     action:
       mode === "dark"
         ? {
-            hover: "rgba(255, 255, 255, 0.08)", // Hover state for interactive elements
-            selected: "rgba(255, 255, 255, 0.16)", // Selected state for items
-            disabled: "rgba(255, 255, 255, 0.3)", // Disabled state opacity
-            disabledBackground: "rgba(255, 255, 255, 0.12)", // Disabled background
+            hover: "rgba(239,159,39,0.04)",
+            selected: "rgba(239,159,39,0.08)",
+            disabled: "rgba(232,228,217,0.3)",
+            disabledBackground: "rgba(232,228,217,0.12)",
           }
         : {
-            hover: "rgba(0, 0, 0, 0.04)", // Hover state for interactive elements
-            selected: "rgba(0, 0, 0, 0.08)", // Selected state for items
-            disabled: "rgba(0, 0, 0, 0.26)", // Disabled state opacity
-            disabledBackground: "rgba(0, 0, 0, 0.12)", // Disabled background
+            hover: "rgba(0,0,0,0.04)",
+            selected: "rgba(0,0,0,0.08)",
+            disabled: "rgba(0,0,0,0.26)",
+            disabledBackground: "rgba(0,0,0,0.12)",
           },
 
-    // ERROR - Error states
-    // Used in: error messages, failed validations, critical alerts
     error: {
       main: mode === "dark" ? "#ff8383" : "#d32f2f",
     },
-
-    // WARNING - Warning states
-    // Used in: warning alerts, pending states requiring attention
     warning: {
       main: mode === "dark" ? "#f1ae61" : "#ed6c02",
     },
-
-    // SUCCESS - Success states
-    // Used in: confirmations, successful validations, completed states
     success: {
       main: "#43A047",
       light: "#4caf50",
     },
-
-    // INFO - Informational states
-    // Used in: info messages, tooltips, contextual help
     info: {
       main: "#2196f3",
       light: "#3e68ff",
     },
 
-    // ACCENT - Custom accent colors
-    // Used in: elements requiring emphasis, special details
+    // Card accent colors — same in both modes
     accent: {
-      main: "#16FFFF", // Main accent color (cyan)
-      cyan: "#16FFFF", // For highlights
-      teal: "#00BEBB", // For featured elements
+      amber: "#ef9f27",
+      amberDim: "rgba(239,159,39,0.12)",
+      amberBorder: "rgba(239,159,39,0.22)",
+      amberGlow: "rgba(239,159,39,0.04)",
+      teal: "#1d9e75",
+      tealDim: "rgba(29,158,117,0.10)",
+      tealBorder: "rgba(29,158,117,0.22)",
+      tealGlow: "rgba(29,158,117,0.04)",
+      purple: "#9b7de8",
+      purpleDim: "rgba(155,125,232,0.10)",
+      purpleBorder: "rgba(155,125,232,0.22)",
+      purpleGlow: "rgba(155,125,232,0.04)",
+      coral: "#d85a30",
+      coralDim: "rgba(216,90,48,0.10)",
+      coralBorder: "rgba(216,90,48,0.22)",
+      coralGlow: "rgba(216,90,48,0.04)",
     },
 
-    // STATUS - Experiment/job states
-    // Used in: status badges, progress indicators in experiments and runs
     status: {
-      notStarted: mode === "dark" ? "#626262" : "#9e9e9e", // Experiment not started
-      started: "#3e68ffff", // Experiment running
-      finished: "#43A047", // Experiment completed successfully
-      delivered: "#3e68ffff", // Results delivered
-      error: mode === "dark" ? "#A70909" : "#c62828", // Experiment error
+      notStarted: mode === "dark" ? "#626262" : "#9e9e9e",
+      started: "#3e68ffff",
+      finished: "#43A047",
+      delivered: "#3e68ffff",
+      error: mode === "dark" ? "#A70909" : "#c62828",
     },
 
-    // DATATYPE - Colors for data types in columns
-    // Used in: dataset visualization, column type identification
     dataType: {
       numerical: "#00BEBB", // Numerical data (float)
       integer: "#3e68ff", // Integer data
@@ -131,82 +113,128 @@ const getTheme = (mode, language) => ({
       default: "#757575", // Unknown or default type
     },
 
-    // CHART - Colors for charts and visualizations
-    // Used in: metric charts, data splits in results
     chart: {
-      train: "#4caf50", // Training data
-      test: "#2196f3", // Test data
-      validation: "#ff9800", // Validation data
+      train: "#4caf50",
+      test: "#2196f3",
+      validation: "#ff9800",
     },
 
-    // UI - Interface elements and borders
-    // Used in: borders, dividers, scrollbars, hover states
     ui:
       mode === "dark"
         ? {
-            border: "#333", // Standard border
-            borderLight: "#444", // Lighter border
-            borderDark: "#252836", // Darker border
-            panelDark: "#2C2C2C", // Dark panel
-            panelMedium: "#363636", // Medium panel
-            panelLight: "#2F2F2F", // Light panel
-            scrollbar: "#374151", // Scrollbar color
-            scrollbarHover: "#4B5563", // Scrollbar on hover
-            hover: "rgba(255, 255, 255, 0.05)", // Element hover state
-            divider: "rgba(255, 255, 255, 0.15)", // Dividers and separators
-            box: "#212121", // Boxes and containers background
-            disabled: "#2C2C2C", // Disabled elements background
+            border: "rgba(239,159,39,0.10)",
+            borderLight: "rgba(239,159,39,0.06)",
+            borderMed: "rgba(239,159,39,0.18)",
+            borderDark: "rgba(239,159,39,0.22)",
+            panelDark: "#0f0f0d",
+            panelMedium: "#111110",
+            panelLight: "#161614",
+            scrollbar: "rgba(239,159,39,0.25)",
+            scrollbarHover: "rgba(239,159,39,0.4)",
+            hover: "rgba(239,159,39,0.03)",
+            divider: "rgba(239,159,39,0.10)",
+            box: "#0f0f0d",
+            disabled: "#161614",
+            rowDisabled: "rgba(255,255,255,0.04)",
           }
         : {
-            border: "#e0e0e0", // Standard border
-            borderLight: "#f0f0f0", // Lighter border
-            borderDark: "#d0d0d0", // Darker border
-            panelDark: "#f5f5f5", // Light panel
-            panelMedium: "#fafafa", // Medium panel
-            panelLight: "#ffffff", // Lightest panel
-            scrollbar: "#bdbdbd", // Scrollbar color
-            scrollbarHover: "#9e9e9e", // Scrollbar on hover
-            hover: "rgba(0, 0, 0, 0.04)", // Element hover state
-            divider: "rgba(0, 0, 0, 0.12)", // Dividers and separators
-            box: "#fafafa", // Boxes and containers background
-            disabled: "#f5f5f5", // Disabled elements background
+            border: "rgba(0,0,0,0.10)",
+            borderLight: "rgba(0,0,0,0.06)",
+            borderMed: "rgba(0,0,0,0.16)",
+            borderDark: "rgba(0,0,0,0.22)",
+            panelDark: "#f5f5f5",
+            panelMedium: "#fafafa",
+            panelLight: "#ffffff",
+            scrollbar: "#bdbdbd",
+            scrollbarHover: "#9e9e9e",
+            hover: "rgba(0,0,0,0.04)",
+            divider: "rgba(0,0,0,0.10)",
+            box: "#fafafa",
+            disabled: "#f5f5f5",
+            rowDisabled: "rgba(0,0,0,0.04)",
           },
   },
+
   typography: {
-    fontFamily: "Quicksand-Bold",
+    fontFamily: '"IBM Plex Sans", sans-serif',
+
+    // --- SANS SERIF ---
+    pageTitle: {
+      fontSize: "18px",
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
+    }, // Main titles
+
+    cardTitle: {
+      fontSize: "15px",
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
+    }, // Module/Card titles
+
+    navItem: {
+      fontSize: "12.5px",
+      fontWeight: 400,
+    }, // Sidebar links/Navigation
+
+    description: {
+      fontSize: "12px",
+      fontWeight: 300,
+      lineHeight: 1.65,
+      color: "rgba(171, 178, 191, 0.45)",
+    }, // Explanatory text
+
+    // --- MONOSPACE ---
+    tabLabel: {
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "10px",
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+    }, // Navigation tabs
+
+    sectionLabel: {
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "9px",
+      letterSpacing: "0.2em",
+      textTransform: "uppercase",
+    }, // Sidebar section headers
+
+    statusBadge: {
+      fontFamily: '"IBM Plex Mono", monospace',
+      fontSize: "8.5px",
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+    },
+
+    // Others
+    button: {
+      fontSize: "15px",
+      fontWeight: 400,
+      letterSpacing: "-0.01em",
+      textTransform: "uppercase",
+    },
   },
+
   components: {
     MuiCssBaseline: {
       styleOverrides: `
-        @font-face {
-          font-family: 'Quicksand-Bold';
-          src: url(${QuicksandBoldWoff2});
-        }
-        /* custom scrollbar */
-
-        ::-webkit-scrollbar {
-          width: 12px;
-        }
-        /* Track */
+        ::-webkit-scrollbar { width: 12px; }
         ::-webkit-scrollbar-track {
-            -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-            -webkit-border-radius: 10px;
-            border-radius: 10px;
+          -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+          -webkit-border-radius: 10px;
+          border-radius: 10px;
         }
-
-        /* Handle */
         ::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            border-radius: 10px;
-            background: ${
-              mode === "dark" ? "rgba(0, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.3)"
-            };
-            -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+          -webkit-border-radius: 10px;
+          border-radius: 10px;
+          background: ${
+            mode === "dark" ? "rgba(239,159,39,0.25)" : "rgba(0,0,0,0.3)"
+          };
+          -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
         ::-webkit-scrollbar-thumb:window-inactive {
-                background: ${
-                  mode === "dark" ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"
-                };
+          background: ${
+            mode === "dark" ? "rgba(239,159,39,0.12)" : "rgba(0,0,0,0.2)"
+          };
         }
       `,
     },

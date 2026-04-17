@@ -129,3 +129,59 @@ def test_dummy_different_from_dashaiptype():
 
     assert inferred_ptype["float_dot"]["type"] in {"Float", "String", "Categorical"}
     assert inferred_dummy["float_dot"]["type"] in {"Float", "String", "Categorical"}
+
+
+def test_dashaptype_infers_one_hot_for_string_categorical():
+    """String categorical columns get encoder='one_hot'."""
+    import pandas as pd
+
+    from DashAI.back.types.inf.inference_methods import DashAIPtype
+
+    data = pd.DataFrame({"color": ["red", "blue", "red", "green", "blue"]})
+    result = DashAIPtype().infer_types(data)
+
+    assert result["color"]["type"] == "Categorical"
+    assert result["color"]["encoder"] == "one_hot"
+
+
+def test_dashaptype_infers_label_for_int_categorical():
+    """Integer categorical columns get encoder='label'."""
+    import pandas as pd
+
+    from DashAI.back.types.inf.inference_methods import DashAIPtype
+
+    # Binary integer labels (0/1) over 100 rows
+    # ptype reliably classifies as categorical
+    data = pd.DataFrame({"grade": [0, 1] * 50})
+    result = DashAIPtype().infer_types(data)
+
+    assert result["grade"]["type"] == "Categorical", (
+        f"Expected 'grade' to be Categorical, got {result['grade']['type']}"
+    )
+    assert result["grade"]["encoder"] == "label"
+
+
+def test_dummy_infers_one_hot_for_string_categorical():
+    """DummyCategoricalInference: string categoricals get one_hot."""
+    import pandas as pd
+
+    from DashAI.back.types.inf.inference_methods import DummyCategoricalInference
+
+    data = pd.DataFrame({"animal": ["cat", "dog", "cat", "fish", "dog"]})
+    result = DummyCategoricalInference().infer_types(data)
+
+    assert result["animal"]["type"] == "Categorical"
+    assert result["animal"]["encoder"] == "one_hot"
+
+
+def test_dummy_infers_label_for_int_categorical():
+    """DummyCategoricalInference: int categoricals get label."""
+    import pandas as pd
+
+    from DashAI.back.types.inf.inference_methods import DummyCategoricalInference
+
+    data = pd.DataFrame({"code": [0, 1, 2, 0, 1, 2, 0, 1, 2]})
+    result = DummyCategoricalInference().infer_types(data)
+
+    assert result["code"]["type"] == "Categorical"
+    assert result["code"]["encoder"] == "label"

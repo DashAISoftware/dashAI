@@ -19,11 +19,30 @@ if TYPE_CHECKING:
 
 
 class OpusMtEsENTransformerSchema(OpusMtEnESTransformerSchema):
-    """opus-mt-es-en is a pre-trained model for Spanish-to-English translation."""
+    """opus-mt-es-en is a transformer pre-trained model that allows translation of
+    texts from Spanish to English. The implementation is based on the Helsinki-NLP
+    opus-mt-es-en checkpoint, which uses the MarianMT architecture and was trained
+    on parallel corpora from the OPUS collection.
+    """
 
 
 class OpusMtEsENTransformer(TranslationModel):
-    """Pre-trained transformer for spanish-english translation."""
+    """Pre-trained transformer for Spanish-to-English translation.
+
+    This model fine-tunes the Helsinki-NLP ``opus-mt-es-en`` checkpoint, which is
+    based on the MarianMT sequence-to-sequence architecture. The base model was
+    trained on parallel Spanish-English corpora from the OPUS collection and supports
+    direct translation without intermediate pivot languages.
+
+    Fine-tuning is performed with the HuggingFace ``Seq2SeqTrainer`` using the AdamW
+    optimizer. Training and validation metrics are logged at configurable epoch and
+    step intervals via a custom ``MetricsCallback``.
+
+    References
+    ----------
+    - [1] https://huggingface.co/Helsinki-NLP/opus-mt-es-en
+    - [2] https://opus.nlpl.eu/
+    """
 
     SCHEMA = OpusMtEsENTransformerSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -38,7 +57,24 @@ class OpusMtEsENTransformer(TranslationModel):
     ICON: str = "Translate"
 
     def __init__(self, model=None, **kwargs):
-        """Initialize the transformer and tokenizer."""
+        """Initialize the transformer.
+
+        Downloads the ``Helsinki-NLP/opus-mt-es-en`` tokenizer and, when
+        ``model`` is ``None``, the seq2seq model weights from HuggingFace.
+        When a pre-loaded model is supplied, the weights are reused directly
+        and ``fitted`` is set to ``True``.
+
+        Parameters
+        ----------
+        model : transformers.PreTrainedModel or None, optional
+            An already-loaded HuggingFace seq2seq model to reuse. If ``None``,
+            the ``Helsinki-NLP/opus-mt-es-en`` checkpoint is downloaded and
+            initialised. Default ``None``.
+        **kwargs : dict
+            Hyperparameters forwarded to ``validate_and_transform`` and used to
+            configure training (e.g. ``num_train_epochs``, ``batch_size``,
+            ``learning_rate``, ``weight_decay``, ``device``).
+        """
         kwargs = self.validate_and_transform(kwargs)
 
         from transformers import AutoTokenizer
@@ -75,7 +111,27 @@ class OpusMtEsENTransformer(TranslationModel):
     def tokenize_data(
         self, x: "DashAIDataset", y: Optional["DashAIDataset"] = None
     ) -> "DashAIDataset":
-        """Tokenize input and optional output datasets."""
+        """Tokenize input and optional target datasets for seq2seq training.
+
+        Each sample is tokenized with truncation and max-length padding to 512
+        tokens. When ``y`` is provided, the target tokens are stored under the
+        ``labels`` key so the ``Seq2SeqTrainer`` can compute the loss directly.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Source-language dataset. Only the first column is used.
+        y : DashAIDataset, optional
+            Target-language dataset. When provided, tokenized targets are added
+            as ``labels``. When ``None``, only ``input_ids`` and
+            ``attention_mask`` are returned (inference mode).
+
+        Returns
+        -------
+        DashAIDataset
+            Tokenized dataset with keys ``input_ids``, ``attention_mask``, and
+            optionally ``labels``.
+        """
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         is_y = bool(y)
@@ -120,7 +176,24 @@ class OpusMtEsENTransformer(TranslationModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "OpusMtEsENTransformer":
-        """Train the translation model."""
+        """Fine-tune the opus-mt-es-en model on Spanish-English translation data.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Input Spanish text features for training.
+        y_train : DashAIDataset
+            Target English translation labels for training.
+        x_validation : DashAIDataset, optional
+            Input Spanish text features for validation. Default ``None``.
+        y_validation : DashAIDataset, optional
+            Target English translation labels for validation. Default ``None``.
+
+        Returns
+        -------
+        OpusMtEsENTransformer
+            The fine-tuned model instance.
+        """
         from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
         from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
@@ -177,7 +250,24 @@ class OpusMtEsENTransformer(TranslationModel):
         return self
 
     def predict(self, x_pred: "DashAIDataset") -> List:
-        """Generate translations for input text."""
+        """Translate Spanish source texts to English.
+
+        Parameters
+        ----------
+        x_pred : DashAIDataset
+            Source-language dataset. Only the first column is used.
+
+        Returns
+        -------
+        list of str
+            One translated string per input sample, in the same order as
+            ``x_pred``.
+
+        Raises
+        ------
+        sklearn.exceptions.NotFittedError
+            If the model has not been fine-tuned yet (``fitted`` is ``False``).
+        """
         if not self.fitted:
             raise NotFittedError(
                 f"This {self.__class__.__name__} instance is not fitted yet. Call 'fit'"
@@ -204,11 +294,39 @@ class OpusMtEsENTransformer(TranslationModel):
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
-        """Keep compatibility with model preprocessing hook."""
+        """Return the dataset unchanged.
+
+        No pre-processing transformations are required for this model. The
+        method exists for compatibility with the DashAI model interface.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be prepared.
+        is_fit : bool, optional
+            Whether the call is made during fitting. Unused here. Default
+            ``False``.
+
+        Returns
+        -------
+        DashAIDataset
+            The original dataset, unmodified.
+        """
         return dataset
 
     def save(self, filename: Union[str, "Path"]) -> None:
-        """Save model and custom configuration."""
+        """Store the fine-tuned model and its configuration to disk.
+
+        Saves the model weights via ``save_pretrained`` and embeds the
+        hyperparameters (epochs, batch size, learning rate, etc.) into the
+        HuggingFace config so they can be restored by :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path where the model files will be written. If a file
+            exists at that path it is removed and replaced by a directory.
+        """
         from transformers import AutoConfig
 
         save_dir = Path(filename)
@@ -230,7 +348,23 @@ class OpusMtEsENTransformer(TranslationModel):
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]):
-        """Load model from disk."""
+        """Restore an OpusMtEsENTransformer instance from disk.
+
+        Reads the HuggingFace config to recover the custom hyperparameters
+        saved by :meth:`save`, then reconstructs the seq2seq model and wraps
+        it in a new :class:`OpusMtEsENTransformer` instance.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path from which the model files will be read.
+
+        Returns
+        -------
+        OpusMtEsENTransformer
+            The restored model instance with ``fitted`` set to the persisted
+            value.
+        """
         from transformers import AutoConfig, AutoModelForSeq2SeqLM
 
         model = AutoModelForSeq2SeqLM.from_pretrained(filename)

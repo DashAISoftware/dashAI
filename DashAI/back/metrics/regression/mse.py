@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -31,12 +32,21 @@ class MSE(RegressionMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html
     """
 
-    DESCRIPTION: str = (
-        "Mean Squared Error (MSE) measures the average "
-        "of the squared differences "
-        "between predicted values and actual values in a regression model. "
-        "It provides an indication of the model's prediction accuracy, "
-        "with lower values indicating better fit."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Mean Squared Error (MSE) measures the average "
+            "of the squared differences "
+            "between predicted values and actual values in a regression model. "
+            "It provides an indication of the model's prediction accuracy, "
+            "with lower values indicating better fit."
+        ),
+        es=(
+            "El Error Cuadrático Medio (MSE) mide el promedio "
+            "de las diferencias al cuadrado "
+            "entre valores predichos y reales en un modelo de regresión. "
+            "Indica la precisión de predicción del modelo, "
+            "donde valores más bajos indican mejor ajuste."
+        ),
     )
 
     @staticmethod

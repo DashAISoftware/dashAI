@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
@@ -35,14 +36,23 @@ class HammingDistance(ClassificationMetric):
     ----------
     - [1] Hamming, R.W. (1950). "Error detecting and error correcting codes."
            Bell System Technical Journal, 29(2), 147-160.
-    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.hamming_loss.html
+    - [2] https://scikit-learn.org/stable/modules/generated/
+           sklearn.metrics.hamming_loss.html
     """
 
     MAXIMIZE: bool = False
-    DESCRIPTION: str = (
-        "Hamming Distance measures the fraction of "
-        "labels that are incorrectly predicted. "
-        "It is particularly useful for multi-label classification tasks."
+    NORMALIZE_REF: float = 1.0
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Hamming Distance measures the fraction of "
+            "labels that are incorrectly predicted. "
+            "It is particularly useful for multi-label classification tasks."
+        ),
+        es=(
+            "La Distancia de Hamming mide la fracción de "
+            "etiquetas predichas incorrectamente. "
+            "Es especialmente útil para tareas de clasificación multi-etiqueta."
+        ),
     )
 
     @staticmethod

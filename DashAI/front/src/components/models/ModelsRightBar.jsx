@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  IconButton,
-  TextField,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, TextField, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { ChevronRight, Search as SearchIcon } from "@mui/icons-material";
+import { Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
@@ -128,19 +122,12 @@ export default function ModelsRightBar({ onToggle }) {
             height: 64,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
           }}
         >
           <Typography variant="h6" color="text.primary">
             {t("models:label.availableModels")}
           </Typography>
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
         </Box>
 
         {/* Content */}

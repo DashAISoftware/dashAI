@@ -16,8 +16,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SimpleImputerSchema(BaseSchema):
@@ -117,8 +118,8 @@ class SimpleImputer(
     IMAGE_PREVIEW = "simple_imputer.png"
 
     metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer, Categorical],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):
