@@ -12,13 +12,22 @@ import BarHeader from "../threeSectionLayout/BarHeader";
 import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
+import { useNavigate } from "react-router-dom";
 
-export default function SessionBar({ onToggle }) {
+export default function SessionBar({
+  onToggle,
+  sessions: sessionsProp,
+  selectedSessionId: selectedSessionIdProp,
+  handleSessionClick: handleSessionClickProp,
+  handleNewSessionButton: handleNewSessionButtonProp,
+  handleSessionDelete: handleSessionDeleteProp,
+}) {
   const theme = useTheme();
+  const navigate = useNavigate();
   const {
     tasks,
-    sessions,
-    selectedSessionId,
+    sessions: sessionsCtx,
+    selectedSessionId: selectedSessionIdCtx,
     setSelectedTaskName,
     setSelectedSessionId,
     setSelectedDisplayName,
@@ -26,6 +35,11 @@ export default function SessionBar({ onToggle }) {
     setStepIndex,
     editSession,
   } = useGenerative();
+
+  const sessions = sessionsProp ?? sessionsCtx ?? [];
+  const selectedSessionId = selectedSessionIdProp ?? selectedSessionIdCtx;
+  const deleteHandler = handleSessionDeleteProp ?? deleteSessionById;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
@@ -60,7 +74,7 @@ export default function SessionBar({ onToggle }) {
       if (prevKeys === newKeys) return prev;
       return initialOpenState;
     });
-  }, [sessions, tasks]);
+  }, [sessions, tasks, taskDisplayNameMap, t]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -86,6 +100,10 @@ export default function SessionBar({ onToggle }) {
   };
 
   const handleNewSessionButton = () => {
+    if (handleNewSessionButtonProp) {
+      handleNewSessionButtonProp();
+      return;
+    }
     setSelectedSessionId(null);
     setStepIndex(0);
     setSelectedTaskName("");
@@ -93,14 +111,30 @@ export default function SessionBar({ onToggle }) {
 
   const handleSessionClick = (sessionId) => {
     const session = sessions.find((s) => s.id === sessionId);
-    if (session) {
-      const displayName =
-        taskDisplayNameMap[session.task_name] || t("common:other");
-      //handleSessionClick(sessionId, session.task_name, displayName);
-      setSelectedTaskName(session.task_name);
-      setSelectedSessionId(sessionId);
-      setSelectedDisplayName(displayName);
+    if (!session) return;
+
+    const displayName =
+      taskDisplayNameMap[session.task_name] || t("common:other");
+
+    if (handleSessionClickProp) {
+      handleSessionClickProp(sessionId, session.task_name, displayName);
+      return;
     }
+
+    setSelectedTaskName(session.task_name);
+    setSelectedSessionId(sessionId);
+    setSelectedDisplayName(displayName);
+    setStepIndex(0); // sesión existente => modo chat
+
+    navigate("/app/generative", {
+      replace: true,
+      state: {
+        selectedSessionId: sessionId,
+        taskName: session.task_name,
+        taskDisplayName: displayName,
+        fromSessionSelection: true,
+      },
+    });
   };
 
   // Group sessions by task display_name
@@ -188,7 +222,7 @@ export default function SessionBar({ onToggle }) {
           groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={handleSessionClick}
-          onItemDelete={deleteSessionById}
+          onItemDelete={deleteHandler}
           onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
           title={t("common:generative")}

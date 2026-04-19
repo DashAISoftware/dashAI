@@ -19,18 +19,88 @@ import RAGHomePage from "./RAG/RAGHomePage";
 
 export default function GenerativeContent() {
   const threePanelLayout = useThreePanelLayout();
-  const { stepIndex, selectedSessionId, selectedTaskName } = useGenerative();
+  const {
+    stepIndex,
+    selectedSessionId,
+    selectedTaskName,
+    selectedDisplayName,
+    setSelectedSessionId,
+    setSelectedTaskName,
+    setSelectedDisplayName,
+    setStepIndex,
+  } = useGenerative();
   const { t } = useTranslation(["generative"]);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isRagRoute = location.pathname.startsWith("/app/generative/RAG");
+  const isRagRoute = location.pathname.toLowerCase().startsWith("/app/generative/rag");
+
+  // Acepta state de selección aunque no venga con fromSessionSelection
+  const sessionSelectionState =
+    location.state?.selectedSessionId != null ? location.state : null;
 
   useEffect(() => {
-    if (selectedTaskName === "RAGTask" && !isRagRoute) {
+    if (!sessionSelectionState?.selectedSessionId) return;
+
+    setSelectedSessionId?.(sessionSelectionState.selectedSessionId);
+    setSelectedTaskName?.(sessionSelectionState.taskName ?? selectedTaskName ?? null);
+    setSelectedDisplayName?.(sessionSelectionState.taskDisplayName ?? selectedDisplayName ?? null);
+    setStepIndex?.(0);
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [
+    sessionSelectionState,
+    setSelectedSessionId,
+    setSelectedTaskName,
+    setSelectedDisplayName,
+    setStepIndex,
+    navigate,
+    location.pathname,
+    selectedTaskName,
+    selectedDisplayName,
+  ]);
+
+  useEffect(() => {
+    if (sessionSelectionState) return;
+
+    if (
+      isRagRoute &&
+      selectedSessionId &&
+      selectedTaskName &&
+      selectedTaskName !== "RAGTask"
+    ) {
+      navigate("/app/generative", {
+        replace: true,
+        state: {
+          selectedSessionId,
+          taskName: selectedTaskName,
+          taskDisplayName: selectedDisplayName ?? null,
+        },
+      });
+      return;
+    }
+
+    if (
+      !isRagRoute &&
+      selectedTaskName === "RAGTask" &&
+      !selectedSessionId &&
+      stepIndex > 0
+    ) {
       navigate("/app/generative/RAG", { replace: true });
     }
-  }, [isRagRoute, navigate, selectedTaskName]);
+  }, [
+    sessionSelectionState,
+    isRagRoute,
+    navigate,
+    selectedSessionId,
+    selectedTaskName,
+    selectedDisplayName,
+    stepIndex,
+  ]);
+
+  if (isRagRoute) {
+    return <RAGHomePage />;
+  }
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -38,10 +108,9 @@ export default function GenerativeContent() {
         <LeftPanel data-tour="sessions-left-panel">
           <SessionBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
+
         <CenterPanel data-tour="task-gallery">
-          {isRagRoute ? (
-            <RAGHomePage />
-          ) : selectedSessionId ? (
+          {selectedSessionId ? (
             <GenerativeChat />
           ) : stepIndex === 0 ? (
             <SelectTaskMenu />

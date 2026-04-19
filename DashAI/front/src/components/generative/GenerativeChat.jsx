@@ -24,6 +24,7 @@ import RAGBreadcrumbs from "./RAG/RAGBreadcrumbs";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
+import { useTheme } from "@mui/material/styles";
 
 export default function GenerativeChat() {
   const theme = useTheme();
@@ -47,6 +48,7 @@ export default function GenerativeChat() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
   const tourContext = useTourContext();
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -305,11 +307,7 @@ export default function GenerativeChat() {
       {/* RAG Breadcrumbs - only show for RAG tasks */}
       {taskName === "RAGTask" && (
         <Box sx={{ width: "100%", px: 2, pt: 2 }}>
-          <RAGBreadcrumbs 
-            isEmbedded={true} 
-            onNavigateToGenerative={onNavigateToGenerative}
-            sessionName={sessionInfo?.name}
-          />
+          <RAGBreadcrumbs sessionName={sessionInfo?.name} />
         </Box>
       )}
 

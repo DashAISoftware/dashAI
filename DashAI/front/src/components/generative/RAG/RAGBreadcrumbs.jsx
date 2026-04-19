@@ -6,88 +6,76 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useGenerative } from "../GenerativeContext";
 
 /**
  * Breadcrumbs component for RAG navigation
- * @param {boolean} isEmbedded - Whether this is embedded in the main Generative flow or standalone
- * @param {function} onNavigateToGenerative - Callback function to handle navigation to Generative (for embedded mode)
  * @param {string} sessionName - Optional session name to show in breadcrumbs
  */
-function RAGBreadcrumbs({ isEmbedded = false, onNavigateToGenerative, sessionName }) {
+function RAGBreadcrumbs({ sessionName }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const {
+    setSelectedSessionId,
+    setSelectedTaskName,
+    setSelectedDisplayName,
+    setStepIndex,
+  } = useGenerative() ?? {};
+
+  const navigateToGenerative = () => {
+    setSelectedSessionId?.(null);
+    setSelectedTaskName?.(null);
+    setSelectedDisplayName?.(null);
+    setStepIndex?.(0);
+    navigate("/app/generative");
+  };
 
   const getBreadcrumbs = () => {
-    const path = location.pathname;
-    
-    if (path === "/app/generative/rag" || isEmbedded) {
-      const breadcrumbs = [
-        { label: "Generative", path: "/app/generative" },
-        { label: "RAG", path: "/app/generative/rag" }
-      ];
-      
-      // If session name is provided, add it as the current breadcrumb
-      if (sessionName) {
-        breadcrumbs.push({ label: sessionName, path: null, current: true, isSession: true });
-      } else {
-        // Mark RAG as current if no session name
-        breadcrumbs[breadcrumbs.length - 1].current = true;
-        breadcrumbs[breadcrumbs.length - 1].path = null;
-      }
-      
-      return breadcrumbs;
-    } else if (path === "/app/generative/rag/sessions") {
-      return [
-        { label: "Generative", path: "/app/generative" },
-        { label: "RAG", path: "/app/generative/rag" },
-        { label: "Sessions", path: null, current: true }
-      ];
-    } else if (path === "/app/generative/rag/documents") {
-      return [
-        { label: "Generative", path: "/app/generative" },
-        { label: "RAG", path: "/app/generative/rag" },
-        { label: "Documents", path: null, current: true }
-      ];
-    } else if (path === "/app/generative/rag/prompts") {
-      return [
-        { label: "Generative", path: "/app/generative" },
-        { label: "RAG", path: "/app/generative/rag" },
-        { label: "Prompts", path: null, current: true }
-      ];
-    }
-    
-    return [];
+    const path = location.pathname.toLowerCase();
+    if (!path.startsWith("/app/generative/rag")) return [];
+
+    const base = [
+      { label: "Generative", path: "/app/generative" },
+      { label: "RAG", path: "/app/generative/RAG" },
+    ];
+
+    if (path === "/app/generative/rag/sessions") return [...base, { label: "Sessions", path: null, current: true }];
+    if (path === "/app/generative/rag/documents") return [...base, { label: "Documents", path: null, current: true }];
+    if (path === "/app/generative/rag/prompts") return [...base, { label: "Prompts", path: null, current: true }];
+
+    if (sessionName) return [...base, { label: sessionName, path: null, current: true, isSession: true }];
+
+    base[1] = { ...base[1], path: null, current: true };
+    return base;
   };
 
   const breadcrumbs = getBreadcrumbs();
 
   const handleNavigate = (path) => {
-    if (path) {
-      // If we're in embedded mode and trying to navigate to generative, use the callback
-      if (isEmbedded && path === "/app/generative" && onNavigateToGenerative) {
-        onNavigateToGenerative();
-      } else {
-        navigate(path);
-      }
+    if (!path) return;
+    if (path === "/app/generative") {
+      navigateToGenerative();
+      return;
     }
+    if (path === "/app/generative/RAG") {
+      setSelectedSessionId?.(null);
+      setSelectedTaskName?.("RAGTask");
+      setSelectedDisplayName?.(null);
+      setStepIndex?.(0);
+    }
+    navigate(path);
   };
 
   const handleBack = () => {
-    // Find the parent breadcrumb (second to last)
     if (breadcrumbs.length > 1) {
       const parentBreadcrumb = breadcrumbs[breadcrumbs.length - 2];
       handleNavigate(parentBreadcrumb.path);
-    } else if (breadcrumbs.length === 1 && !isEmbedded) {
-      // If we're at the top level (RAG) and not embedded, go to generative
-      navigate("/app/generative");
-    } else if (isEmbedded && onNavigateToGenerative) {
-      // If embedded, use the callback
-      onNavigateToGenerative();
+      return;
     }
+    navigateToGenerative();
   };
 
-  // Don't show back button if we're at the root level and embedded
-  const showBackButton = !isEmbedded || breadcrumbs.length > 1;
+  const showBackButton = breadcrumbs.length > 0;
 
   return (
     <Box 

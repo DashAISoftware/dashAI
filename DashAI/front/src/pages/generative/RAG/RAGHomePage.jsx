@@ -1,14 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
+import ModuleContainer from "../../../components/layout/ModuleContainer";
+import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
+import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
+import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel";
 import SelectOptionMenu from "../../../components/threeSectionLayout/SelectOptionMenu";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import SessionBar from "../../../components/generative/SessionBar";
-import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
-import { getSessions, removeSession } from "../../../api/session";
-import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
+import GenerativeChat from "../../../components/generative/GenerativeChat";
+import { removeSession } from "../../../api/session";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
+import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
+import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 
 const ragOptions = [
   {
@@ -31,143 +36,71 @@ const ragOptions = [
   },
 ];
 
-function RAGHomePage({
-  onSessionCreated,
-  onSessionSelect,
-  sessions,
-  setSessions,
-  onNavigateToGenerative,
-  isStandalone = false,
-}) {
+function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
-  const generative = useGenerative();
-  const [standaloneSessions, setStandaloneSessions] = useState([]);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
-  const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
+  const threePanelLayout = useThreePanelLayout();
+  const generative = useGenerative() ?? {};
 
-  const { setSelectedSessionId: setGlobalSelectedSessionId, setSelectedTaskName, setStepIndex } =
-    generative ?? {};
+  const {
+    sessions: contextSessions,
+    setSessions: setContextSessions,
+    selectedSessionId: globalSelectedSessionId,
+    setSelectedSessionId: setGlobalSelectedSessionId,
+    selectedTaskName,
+    setSelectedTaskName,
+    setSelectedDisplayName,
+    setStepIndex,
+  } = generative;
 
-  // Use sessions from props if available (embedded mode), otherwise manage own sessions (standalone mode)
-  const currentSessions = sessions || standaloneSessions;
-  const currentSetSessions = setSessions || setStandaloneSessions;
-
-  const loadSessions = useCallback(async () => {
-    if (isStandalone) {
-      try {
-        const allSessions = await getSessions();
-        setStandaloneSessions(allSessions);
-      } catch (error) {
-        console.error("RAGHomePage: Error loading sessions:", error);
-      }
-    }
-  }, [isStandalone]);
-
-  useEffect(() => {
-    if (isStandalone) {
-      loadSessions();
-    }
-  }, [loadSessions, isStandalone]);
+  const currentSessions = sessions || contextSessions || [];
+  const currentSetSessions = setSessions || setContextSessions;
+  const isRagSessionSelected =
+    selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
 
   const goToNextStep = (option) => {
     navigate(`/app/generative/RAG/${option}`);
   };
 
-  const handleNavigateToGenerative = () => {
-    setGlobalSelectedSessionId?.(null);
-    setSelectedTaskName?.(null);
+  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
+    if (onSessionSelect) {
+      onSessionSelect(sessionId, taskName, taskDisplayName);
+      return;
+    }
+
+    setGlobalSelectedSessionId?.(sessionId);
+    setSelectedTaskName?.(taskName);
+    setSelectedDisplayName?.(taskDisplayName);
     setStepIndex?.(0);
 
-    if (onNavigateToGenerative) {
-      onNavigateToGenerative();
-    } else {
-      navigate("/app/generative");
-    }
-  };
-
-  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
-    if (isStandalone) {
-      setSelectedSessionId(sessionId);
-      navigate("/app/generative/RAG", { state: { selectedSessionId: sessionId } });
-    } else if (onSessionSelect) {
-      onSessionSelect(sessionId, taskName, taskDisplayName);
+    if (taskName !== "RAGTask") {
+      navigate("/app/generative", {
+        replace: true,
+        state: {
+          selectedSessionId: sessionId,
+          taskName,
+          taskDisplayName,
+          fromSessionSelection: true,
+        },
+      });
     }
   };
 
   const handleNewSessionButton = () => {
-    if (isStandalone) {
-      setSelectedSessionId(null);
-      navigate("/app/generative/RAG");
-    }
-    // For embedded mode, this might be handled by parent
+    setGlobalSelectedSessionId?.(null);
+    setSelectedTaskName?.("RAGTask");
+    setSelectedDisplayName?.(null);
+    setStepIndex?.(0);
   };
 
   const handleSessionDelete = async (id) => {
-    if (isStandalone) {
-      setStandaloneSessions((prev) => prev.filter((s) => s.id !== id));
-      await removeSession(id);
+    currentSetSessions?.((prev) => prev.filter((s) => s.id !== id));
+    if (id === globalSelectedSessionId) {
+      setGlobalSelectedSessionId?.(null);
     }
-    // For embedded mode, this might be handled by parent
+    await removeSession(id);
   };
 
-  const handleDocumentChange = () => {
-    setDocumentRefreshTrigger((prev) => prev + 1);
-  };
-
-  if (isStandalone) {
-    // Standalone layout with sidebar
-    return (
-      <Box height="calc(100vh - 74px)" width="100%" display="flex">
-        <Box width="20%">
-          <SessionBar
-            sessions={currentSessions}
-            selectedSessionId={selectedSessionId}
-            handleSessionClick={handleSessionClick}
-            handleNewSessionButton={handleNewSessionButton}
-            handleSessionDelete={handleSessionDelete}
-            stepIndex={0}
-          />
-        </Box>
-
-        <Box width="60%">
-          <CenterBox>
-            <RAGBreadcrumbs />
-            <SelectOptionMenu
-              title="RAG Module"
-              subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
-              options={ragOptions}
-              searchBar={false}
-              goToNextStep={goToNextStep}
-            />
-          </CenterBox>
-        </Box>
-
-        <Box width="20%" sx={{ flexShrink: 0, flexGrow: 0 }}>
-          <Box
-            width="100%"
-            height="100%"
-            sx={{ 
-              backgroundColor: "background.box", 
-              borderRadius: 2,
-              minWidth: 0,
-              maxWidth: "100%",
-              overflow: "hidden"
-            }}
-          >
-            <DocumentsBar
-              selectedSessionId={null}
-              taskName="RAGTask"
-              onDocumentChange={handleDocumentChange}
-              key={`documents-standalone-${documentRefreshTrigger}`}
-            />
-          </Box>
-        </Box>
-      </Box>
-    );
-  }
-
-  // Embedded layout (original)
-  return (
+  const ragContent = (
     <Box
       display={"flex"}
       flexDirection={"column"}
@@ -178,10 +111,7 @@ function RAGHomePage({
       overflow={"scroll"}
       p={2}
     >
-      <RAGBreadcrumbs
-        isEmbedded={true}
-        onNavigateToGenerative={handleNavigateToGenerative}
-      />
+      <RAGBreadcrumbs />
       <SelectOptionMenu
         title="RAG Module"
         subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
@@ -190,6 +120,48 @@ function RAGHomePage({
         goToNextStep={goToNextStep}
       />
     </Box>
+  );
+
+  return (
+    <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+      <ModuleContainer>
+        <LeftPanel data-tour="sessions-left-panel">
+          <SessionBar
+            sessions={currentSessions}
+            selectedSessionId={globalSelectedSessionId}
+            handleSessionClick={handleSessionClick}
+            handleNewSessionButton={handleNewSessionButton}
+            handleSessionDelete={handleSessionDelete}
+            stepIndex={0}
+            onToggle={threePanelLayout.handleToggleLeft}
+          />
+        </LeftPanel>
+
+        <CenterPanel data-tour="task-gallery">
+          {isRagSessionSelected ? <GenerativeChat /> : ragContent}
+        </CenterPanel>
+
+        <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
+          <Box
+            width="100%"
+            height="100%"
+            sx={{
+              backgroundColor: "background.box",
+              borderRadius: 2,
+              minWidth: 0,
+              maxWidth: "100%",
+              overflow: "hidden",
+            }}
+          >
+            <DocumentsBar
+              selectedSessionId={isRagSessionSelected ? globalSelectedSessionId : null}
+              taskName="RAGTask"
+              key={`rag-docs-${isRagSessionSelected ? globalSelectedSessionId : "all"}`}
+            />
+          </Box>
+        </RightPanel>
+      </ModuleContainer>
+    </ThreePanelLayoutContext.Provider>
   );
 }
 
