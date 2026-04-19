@@ -10,6 +10,7 @@ import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import SessionBar from "../../../components/generative/SessionBar";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
+import RAGSessionSummary from "../../../components/generative/RAG/RAGSessionSummary";
 import { removeSession } from "../../../api/session";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
@@ -40,6 +41,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
   const threePanelLayout = useThreePanelLayout();
   const generative = useGenerative() ?? {};
+  const [showRagChat, setShowRagChat] = useState(false);
 
   const {
     sessions: contextSessions,
@@ -56,6 +58,16 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const currentSetSessions = setSessions || setContextSessions;
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
+
+  useEffect(() => {
+    if (!isRagSessionSelected) {
+      setShowRagChat(false);
+    }
+  }, [isRagSessionSelected, globalSelectedSessionId]);
+
+  const handleStartRagChat = () => {
+    setShowRagChat(true);
+  };
 
   const goToNextStep = (option) => {
     navigate(`/app/generative/RAG/${option}`);
@@ -122,6 +134,19 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
     </Box>
   );
 
+  const centerContent = isRagSessionSelected ? (
+    showRagChat ? (
+      <GenerativeChat />
+    ) : (
+      <RAGSessionSummary
+        sessionId={globalSelectedSessionId}
+        onStartChat={handleStartRagChat}
+      />
+    )
+  ) : (
+    ragContent
+  );
+
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
@@ -138,7 +163,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
         </LeftPanel>
 
         <CenterPanel data-tour="task-gallery">
-          {isRagSessionSelected ? <GenerativeChat /> : ragContent}
+          {centerContent}
         </CenterPanel>
 
         <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">

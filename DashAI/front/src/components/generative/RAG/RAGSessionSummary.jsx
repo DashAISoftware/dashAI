@@ -31,10 +31,9 @@ import { getGenerativeSession } from "../../../api/generativeTask";
 import { getRAGPrompts } from "../../../api/rag";
 import RAGBreadcrumbs from "./RAGBreadcrumbs";
 
-export default function RAGSessionSummary({ 
-  sessionId, 
+export default function RAGSessionSummary({
+  sessionId,
   onStartChat,
-  onNavigateToGenerative
 }) {
   const [sessionData, setSessionData] = useState(null);
   const [promptData, setPromptData] = useState(null);
@@ -298,11 +297,7 @@ export default function RAGSessionSummary({
       overflow="auto"
     >
       {/* RAG Breadcrumbs */}
-      <RAGBreadcrumbs 
-        isEmbedded={true} 
-        onNavigateToGenerative={onNavigateToGenerative}
-        sessionName={sessionData?.name}
-      />
+      <RAGBreadcrumbs sessionName={sessionData?.name} />
       {/* Header */}
       <Box 
         display="flex" 
