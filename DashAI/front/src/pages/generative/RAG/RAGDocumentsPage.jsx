@@ -10,7 +10,7 @@ import {
   deleteDocument,
 } from "../../../api/rag";
 import { getSessions, removeSession } from "../../../api/session";
-import CenterBox from "../../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
 
 function RAGDocumentsPage() {
   const navigate = useNavigate();

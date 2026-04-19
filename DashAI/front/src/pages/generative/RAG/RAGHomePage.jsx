@@ -7,7 +7,7 @@ import SessionBar from "../../../components/generative/SessionBar";
 import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import { getSessions, removeSession } from "../../../api/session";
-import CenterBox from "../../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
 
 function RAGHomePage({
   onSessionCreated,

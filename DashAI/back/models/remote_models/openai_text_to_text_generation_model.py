@@ -2,11 +2,6 @@ from typing import List
 
 from pydantic import field_validator
 
-try:
-    from llama_cpp import Llama
-except ImportError:
-    Llama = None
-
 from openai import OpenAI
 
 from DashAI.back.core.schema_fields import (
@@ -21,6 +16,8 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
+from DashAI.back.core.utils import MultilingualString
+
 
 # Hardcoded since the list of available models is only accessible via API call with
 # api key :c
@@ -147,6 +144,26 @@ class OpenAITextToTextGenerationModel(TextToTextGenerationTaskModel):
     """Wrapper around OpenAI's text-to-text generation models."""
 
     SCHEMA = OpenAITextToTextGenerationModelSchema
+    DISPLAY_NAME:str = MultilingualString(
+        en="OpenAI API",
+        es="API de OpenAI"
+    )
+    DESCRIPTION:str = MultilingualString(
+        en = (
+            "API for OpenAI's language models, allowing you to select and configure the "
+            "text-to-text models supported by the OpenAI API (https://openai.com/api/). "
+            "Note that it requires a private API key with an associated cost, that the "
+            "language model runs on OpenAI's servers, and that your data will be used "
+            "according to that company's policies."
+        ),
+        es = (
+            "API para los modelos de lenguaje de OpenAI, permite seleccionar y configurar los "
+            "modelos de texto a texto soportados por la API de OpenAI (https://openai.com/api/). "
+            "Considere que requiere una API key (clave de API) privada con un costo asociado, "
+            "que el modelo de lenguaje se ejecuta en los servidores de OpenAI y que sus datos "
+            "serán utilizados según las políticas de esa empresa."
+        )
+    )
 
     def __init__(self, **kwargs):
         kwargs = self.validate_and_transform(kwargs)

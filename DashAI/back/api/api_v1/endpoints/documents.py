@@ -23,7 +23,6 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas import DocumentResponse
 from DashAI.back.dependencies.database.models import (
     Document as DocumentDBModel,
-    RAGDocumentPipelineSessionLink as DocumentPipelineSessionLinkDBModel,
 )
 from DashAI.back.dependencies.database.models import (
     GenerativeSession,

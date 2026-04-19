@@ -11,8 +11,13 @@ import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
+import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
+import RAGHomePage from "./pages/generative/RAG/RAGHomePage";
+import RAGSessionsPage from "./pages/generative/RAG/RAGSessionsPage";
+import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
+import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
 
 function App() {
   return (
@@ -26,10 +31,38 @@ function App() {
         <Route path="/app/data/" element={<DatasetsPage />} />
         <Route path="/app/models" element={<ModelsPage />} />
         <Route path="/app/generative" element={<Generative />} />
-        <Route path="/app/generative/rag" element={<RAGHomePage isStandalone={true} />} />
-        <Route path="/app/generative/rag/sessions" element={<RAGSessionsPage />} />
-        <Route path="/app/generative/rag/documents" element={<RAGDocumentsPage />} />
-        <Route path="/app/generative/rag/prompts" element={<RAGPromptsPage />} />
+        <Route
+          path="/app/generative/rag"
+          element={
+            <GenerativeProvider>
+              <RAGHomePage />
+            </GenerativeProvider>
+          }
+        />
+        <Route
+          path="/app/generative/rag/sessions"
+          element={
+            <GenerativeProvider>
+              <RAGSessionsPage />
+            </GenerativeProvider>
+          }
+        />
+        <Route
+          path="/app/generative/rag/documents"
+          element={
+            <GenerativeProvider>
+              <RAGDocumentsPage />
+            </GenerativeProvider>
+          }
+        />
+        <Route
+          path="/app/generative/rag/prompts"
+          element={
+            <GenerativeProvider>
+              <RAGPromptsPage />
+            </GenerativeProvider>
+          }
+        />
         <Route path="/app/pipelines" element={<PipelinesPage />} />
         <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
         <Route

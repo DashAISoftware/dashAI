@@ -13,6 +13,3 @@ class DocumentResponse(BaseModel):
     optional_metadata: Optional[Dict[str, Any]]
     related_sessions: List[int] | None
     file_url: str
-
-    class Config:
-        orm_mode = True

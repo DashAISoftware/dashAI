@@ -133,6 +133,7 @@ from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTra
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
+from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import Phi4MiniInstructModel
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
 from DashAI.back.models.hugging_face.sd15_depth_controlnet_model import (
@@ -151,8 +152,6 @@ from DashAI.back.models.hugging_face.sdxl_turbo_model import SDXLTurboModel
 from DashAI.back.models.hugging_face.smol_lm_model import SmolLMModel
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
-    OpenAITextToTextGenerationModel,
-    Phi4MiniInstructModel,
 )
 from DashAI.back.models.RAG import (
     RAGPipeline,
@@ -189,6 +188,7 @@ from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
     StableDiffusionXLModel,
 )
 from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
+from DashAI.back.models.remote_models.openai_text_to_text_generation_model import OpenAITextToTextGenerationModel
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
@@ -231,6 +231,7 @@ from DashAI.back.pipeline.train_node import Train
 from DashAI.back.plugins.utils import get_available_plugins
 
 # Tasks
+from DashAI.back.tasks.RAG_task import RAGTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask

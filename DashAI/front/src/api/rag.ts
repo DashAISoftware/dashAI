@@ -11,7 +11,7 @@ export const createRAGPrompt = async (prompt: {
   name: string;
   parameters?: Record<string, any>;
 }): Promise<{ id: number }> => {
-  const response = await api.post("/v1/prompts/", prompt);
+  const response = await api.post("/v1/prompt/", prompt);
   if (response.status !== 201) {
     throw new Error(`Failed to create RAG prompt: ${response.statusText}`);
   }
@@ -242,7 +242,7 @@ export const addDocument = async ({
 };
 
 export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
-  const response = await api.get<IRAGPrompt[]>("/v1/prompts/");
+  const response = await api.get<IRAGPrompt[]>("/v1/prompt/");
   if (response.status !== 200) {
     throw new Error(`Failed to fetch RAG prompts: ${response.statusText}`);
   }

@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
+    Column,
     DateTime,
     Enum,
     Float,
@@ -13,6 +15,8 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship

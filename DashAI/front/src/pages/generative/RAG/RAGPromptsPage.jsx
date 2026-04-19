@@ -7,7 +7,8 @@ import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
 import { getSessions, removeSession } from "../../../api/session";
-import CenterBox from "../../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
+
 
 function RAGPromptsPage() {
   const navigate = useNavigate();

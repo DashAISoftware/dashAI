@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from DashAI.back.api.api_v1.endpoints.components import router as components
 from DashAI.back.api.api_v1.endpoints.converters import router as converters
 from DashAI.back.api.api_v1.endpoints.datasets import router as datasets
+from DashAI.back.api.api_v1.endpoints.documents import router as documents
 from DashAI.back.api.api_v1.endpoints.explainers import router as explainers
 from DashAI.back.api.api_v1.endpoints.explorers import router as explorers
 from DashAI.back.api.api_v1.endpoints.generative_process import (
@@ -19,12 +20,14 @@ from DashAI.back.api.api_v1.endpoints.notebook import router as notebook
 from DashAI.back.api.api_v1.endpoints.pipelines import router as pipelines
 from DashAI.back.api.api_v1.endpoints.plugins import router as plugins
 from DashAI.back.api.api_v1.endpoints.predict import router as predict
+from DashAI.back.api.api_v1.endpoints.prompts import router as prompts
 from DashAI.back.api.api_v1.endpoints.runs import router as runs
 
 api_router_v1 = APIRouter()
 api_router_v1.include_router(converters, prefix="/converter")
 api_router_v1.include_router(components, prefix="/component")
 api_router_v1.include_router(datasets, prefix="/dataset")
+api_router_v1.include_router(documents, prefix="/document")
 api_router_v1.include_router(model_sessions, prefix="/model-session")
 api_router_v1.include_router(explainers, prefix="/explainer")
 api_router_v1.include_router(explorers, prefix="/explorer")
@@ -35,6 +38,7 @@ api_router_v1.include_router(generative_session, prefix="/generative-session")
 api_router_v1.include_router(generative_process, prefix="/generative-process")
 api_router_v1.include_router(pipelines, prefix="/pipelines")
 api_router_v1.include_router(plugins, prefix="/plugin")
+api_router_v1.include_router(prompts, prefix="/prompt")
 api_router_v1.include_router(notebook, prefix="/notebook")
 api_router_v1.include_router(metrics, prefix="/metrics")
 api_router_v1.include_router(hardware, prefix="/hardware")

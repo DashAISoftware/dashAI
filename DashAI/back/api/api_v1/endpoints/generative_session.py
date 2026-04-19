@@ -16,6 +16,7 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSessionParameterHistory,
     ProcessData,
 )
+from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker

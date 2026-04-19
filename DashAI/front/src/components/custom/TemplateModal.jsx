@@ -15,17 +15,18 @@ export default function TemplateModal({
   handleClose, 
   template,
   title = "Prompt",
-  formatText = false,
+  formatText = true,
 }) {
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              whiteSpace: formatText ? "pre-wrap" : "normal" 
+        <DialogContentText component="div">
+          <Typography
+            variant="body1"
+            sx={{
+              whiteSpace: formatText ? "pre-wrap" : "normal",
+              wordBreak: "break-word",
             }}
           >
             {template}

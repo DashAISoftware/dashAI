@@ -321,7 +321,7 @@ async def update_component() -> None:
 async def get_child_components(
     component_name:str,
     recursive:bool=False,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"])):
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"])):
     """Get child components of a specific component.
 
     Args:
