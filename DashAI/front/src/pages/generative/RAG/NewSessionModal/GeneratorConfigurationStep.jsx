@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -12,6 +12,10 @@ import {
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
 import FormSchema from "../../../../components/shared/FormSchema";
 import { getGeneratorComponents } from "../../../../api/rag";
+import {
+  buildDefaultValuesFromSchemaProperties,
+  getInitialModelParameters,
+} from "./ragFormDefaults";
 
 /**
  * Simple generator configuration step that allows selecting a generator model
@@ -24,6 +28,16 @@ export default function GeneratorConfigurationStep({
 }) {
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
+
+  const formInitialValues = useMemo(
+    () =>
+      getInitialModelParameters({
+        selectedModel: selectedGenerator,
+        currentModelName: generatorModel?.component,
+        currentParams: generatorModel?.params,
+      }),
+    [selectedGenerator, generatorModel?.component, generatorModel?.params],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -52,22 +66,11 @@ export default function GeneratorConfigurationStep({
   const handleSelection = (event, newValue) => {
     setSelectedGenerator(newValue);
     if (newValue) {
-      // set initial params using placeholders if available
-      const initialParams = Object.keys(
-        newValue.schema?.properties || {},
-      ).reduce((acc, k) => {
-        const placeholder = newValue.schema.properties[k].placeholder;
-        acc[k] = placeholder !== undefined ? placeholder : "";
-        return acc;
-      }, {});
-
-      const existingParams = generatorModel?.params;
-      const shouldUseInitialParams =
-        !existingParams || Object.keys(existingParams).length === 0;
-
       setGeneratorModel({
         component: newValue.name,
-        params: shouldUseInitialParams ? initialParams : existingParams,
+        params: buildDefaultValuesFromSchemaProperties(
+          newValue.schema?.properties || {},
+        ),
       });
       setNextEnabled(true);
     } else {
@@ -99,21 +102,10 @@ export default function GeneratorConfigurationStep({
       {selectedGenerator && (
         <FormSchemaLayout>
           <FormSchema
+            key={`generator-form-${selectedGenerator.name}`}
             autoSave
             model={selectedGenerator.name}
-            initialValues={
-              generatorModel?.params &&
-              Object.keys(generatorModel.params).length > 0
-                ? generatorModel.params
-                : Object.keys(
-                    selectedGenerator.schema?.properties || {},
-                  ).reduce((acc, k) => {
-                    const placeholder =
-                      selectedGenerator.schema.properties[k].placeholder;
-                    acc[k] = placeholder !== undefined ? placeholder : "";
-                    return acc;
-                  }, {})
-            }
+            initialValues={formInitialValues}
             onFormSubmit={(values) => {
               setGeneratorModel({
                 component: selectedGenerator.name,

@@ -37,8 +37,10 @@ function FormSchemaFieldWithParent({
 }) {
   const { formValues, setFormValues, getModelFromCurrentProperty } =
     useFormSchemaStore();
+  const parentComponent =
+    field?.value?.properties?.component ?? field?.value?.component ?? null;
   const { models } = useModelParents({
-    parent: field.value?.properties.component,
+    parent: parentComponent,
   });
   const { t } = useTranslation(["common"]);
 
@@ -54,14 +56,22 @@ function FormSchemaFieldWithParent({
   });
 
   const handleOnChange = async (event) => {
+    if (!parentComponent) {
+      return;
+    }
+
     const model = models?.find((model) => model.name === event.target.value);
+    if (!model?.schema) {
+      return;
+    }
+
     const { initialValues } = generateYupSchema(
       await formattedModel(model?.schema),
     );
 
     field.onChange(
       formattedSubform({
-        parent: field.value?.properties.component,
+        parent: parentComponent,
         model: model?.name,
         params: initialValues,
       }),
@@ -107,7 +117,7 @@ function FormSchemaFieldWithParent({
       <Input
         select
         label={label}
-        value={getModelFromCurrentProperty(name)}
+        value={getModelFromCurrentProperty(name) ?? ""}
         onChange={handleOnChange}
       >
         {models?.map((model, index) => (
@@ -125,6 +135,22 @@ function FormSchemaFieldWithParent({
         contentStr={errorMessage ?? description}
         error={Boolean(errorMessage)}
       />
+
+      {selectedModelName && (
+        <FormSchemaDialog
+          modelToConfigure={selectedModelName}
+          open={openSubModal}
+          setOpen={setOpenSubModal}
+          onFormSubmit={handleSubModelSave}
+        >
+          <FormSchema
+            model={selectedModelName}
+            initialValues={getSubModelInitialValues()}
+            onFormSubmit={handleSubModelSave}
+            onCancel={() => setOpenSubModal(false)}
+          />
+        </FormSchemaDialog>
+      )}
     </Box>
   );
 }

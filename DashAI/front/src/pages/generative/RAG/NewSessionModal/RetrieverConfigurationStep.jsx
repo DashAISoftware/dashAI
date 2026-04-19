@@ -21,6 +21,7 @@ import {
   FormSchemaProvider,
   useFormSchemaStore,
 } from "../../../../contexts/schema";
+import { getInitialModelParameters } from "./ragFormDefaults";
 
 function FormSchemaInterceptor({ currentFormValuesRef }) {
   const store = useFormSchemaStore();
@@ -47,14 +48,14 @@ function AutoSaveFormSchema({
   const formikRef = useRef(null);
 
   const initialValues = useMemo(() => {
-    const baseValues = selectedRetriever.parameters || {};
-    return {
-      ...baseValues,
-      ...(retrieverModel?.params || {}),
-    };
+    return getInitialModelParameters({
+      selectedModel: selectedRetriever,
+      currentModelName: retrieverModel?.component,
+      currentParams: retrieverModel?.params,
+    });
   }, [
-    selectedRetriever.name,
-    selectedRetriever.parameters,
+    selectedRetriever,
+    retrieverModel?.component,
     retrieverModel?.params,
   ]);
 
@@ -96,6 +97,7 @@ const RetrieverConfigurationStep = forwardRef(
     const [retrieverOptions, setRetrieverOptions] = useState([]);
     const [selectedRetriever, setSelectedRetriever] = useState(null);
     const [openConfig, setOpenConfig] = useState(false);
+    const [retrieversLoading, setRetrieversLoading] = useState(false);
     const currentFormValuesRef = useRef(null);
 
     const saveCurrentFormValues = useCallback(() => {
@@ -234,39 +236,59 @@ const RetrieverConfigurationStep = forwardRef(
 
     useEffect(() => {
       fetchRetrievalParadigms();
-    }, [retrieverModel?.component]);
+    }, []);
 
     const fetchRetrievers = useCallback(async () => {
       if (!selectedRetrievalParadigm) {
         setRetrieverOptions([]);
         setSelectedRetriever(null);
+        setOpenConfig(false);
         return;
       }
-      if (selectedRetrievalParadigm.name === "SparseRetriever") {
-        const retrievers = await getRetrieverComponents(
-          selectedRetrievalParadigm.name,
-        );
-        setRetrieverOptions(retrievers);
 
-        if (retrieverModel?.component) {
-          const existingRetriever = retrievers.find(
-            (r) => r.name === retrieverModel.component,
+      setRetrieversLoading(true);
+      if (selectedRetrievalParadigm.name === "SparseRetriever") {
+        try {
+          const retrievers = await getRetrieverComponents(
+            selectedRetrievalParadigm.name,
           );
-          if (existingRetriever) {
-            setSelectedRetriever(existingRetriever);
-            setOpenConfig(true);
-            setNextEnabled(true);
+          const filteredRetrievers = retrievers.filter(
+            (retriever) =>
+              retriever?.name !== selectedRetrievalParadigm.name &&
+              retriever?.configurable_object !== false,
+          );
+          setRetrieverOptions(filteredRetrievers);
+
+          if (retrieverModel?.component) {
+            const existingRetriever = filteredRetrievers.find(
+              (r) => r.name === retrieverModel.component,
+            );
+            if (existingRetriever) {
+              setSelectedRetriever(existingRetriever);
+              setOpenConfig(Boolean(existingRetriever?.schema?.properties));
+              setNextEnabled(true);
+            } else {
+              setSelectedRetriever(null);
+              setOpenConfig(false);
+            }
           } else {
             setSelectedRetriever(null);
+            setOpenConfig(false);
           }
-        } else {
+        } catch (error) {
+          console.error("Error fetching sparse retrievers:", error);
+          setRetrieverOptions([]);
           setSelectedRetriever(null);
+          setOpenConfig(false);
         }
       } else {
         setRetrieverOptions([selectedRetrievalParadigm]);
         setSelectedRetriever(selectedRetrievalParadigm);
+        setOpenConfig(Boolean(selectedRetrievalParadigm?.schema?.properties));
+        setNextEnabled(true);
       }
-    }, [selectedRetrievalParadigm, retrieverModel?.component]);
+      setRetrieversLoading(false);
+    }, [selectedRetrievalParadigm, retrieverModel?.component, setNextEnabled]);
 
     useEffect(() => {
       fetchRetrievers();
@@ -296,7 +318,17 @@ const RetrieverConfigurationStep = forwardRef(
         setNextEnabled(false);
       } else if (newValue) {
         setRetrieverOptions([newValue]);
-        handleRetrieverSelectionChange(event, newValue);
+        setSelectedRetriever(newValue);
+        setOpenConfig(Boolean(newValue?.schema?.properties));
+        setRetrieverModel({
+          component: newValue.name,
+          params: getInitialModelParameters({
+            selectedModel: newValue,
+            currentModelName: null,
+            currentParams: null,
+          }),
+        });
+        setNextEnabled(true);
       } else {
         setSelectedRetriever(null);
         setOpenConfig(false);
@@ -307,16 +339,21 @@ const RetrieverConfigurationStep = forwardRef(
     const handleRetrieverSelectionChange = (event, newValue) => {
       setSelectedRetriever(newValue);
       if (newValue) {
-        setOpenConfig(true);
+        setOpenConfig(Boolean(newValue?.schema?.properties));
         setNextEnabled(true);
 
         // Clear previous form values and use only the new retriever's default parameters
         currentFormValuesRef.current = null;
         setRetrieverModel({
           component: newValue.name,
-          params: newValue.parameters || {},
+          params: getInitialModelParameters({
+            selectedModel: newValue,
+            currentModelName: null,
+            currentParams: null,
+          }),
         });
       } else {
+        setRetrieverModel({ component: "", params: {} });
         setOpenConfig(false);
         setNextEnabled(false);
       }
@@ -365,7 +402,13 @@ const RetrieverConfigurationStep = forwardRef(
               <Autocomplete
                 disablePortal
                 options={retrieverOptions}
+                loading={retrieversLoading}
                 getOptionLabel={(option) => option.name}
+                noOptionsText={
+                  retrieversLoading
+                    ? "Loading retrievers..."
+                    : "No retrievers available"
+                }
                 value={selectedRetriever}
                 onChange={handleRetrieverSelectionChange}
                 isOptionEqualToValue={(option, value) =>
@@ -390,8 +433,9 @@ const RetrieverConfigurationStep = forwardRef(
           )}
 
         {selectedRetriever && openConfig && (
-          <FormSchemaProvider>
+          <FormSchemaProvider key={`retriever-provider-${selectedRetriever.name}`}>
             <AutoSaveFormSchema
+              key={`retriever-form-${selectedRetriever.name}`}
               selectedRetriever={selectedRetriever}
               retrieverModel={retrieverModel}
               onParametersChange={handleRetrieverParametersSave}

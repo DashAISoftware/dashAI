@@ -19,6 +19,15 @@ import { useSnackbar } from "notistack";
 // Create the FormSchema context
 const FormSchemaContext = createContext();
 
+const fallbackContextValue = {
+  formValues: {},
+  setFormValues: () => {},
+  properties: [],
+  setProperties: () => {},
+  errorForm: false,
+  setErrorForm: () => {},
+};
+
 // Create the FormSchema provider
 export const FormSchemaProvider = ({ children }) => {
   // Define the default values for the form
@@ -59,6 +68,7 @@ FormSchemaProvider.propTypes = {
 
 // Custom hook to obtain the state
 export const useFormSchemaStore = () => {
+  const context = useContext(FormSchemaContext) || fallbackContextValue;
   const {
     formValues,
     setFormValues,
@@ -66,7 +76,7 @@ export const useFormSchemaStore = () => {
     setProperties,
     errorForm,
     ...rest
-  } = useContext(FormSchemaContext);
+  } = context;
 
   const { enqueueSnackbar } = useSnackbar();
 

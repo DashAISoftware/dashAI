@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Autocomplete,
@@ -11,6 +11,10 @@ import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
 import FormSchema from "../../../../components/shared/FormSchema";
+import {
+  buildDefaultValuesFromSchemaProperties,
+  getInitialModelParameters,
+} from "./ragFormDefaults";
 
 export default function ChunkingConfigurationStep({
   chunkingModel,
@@ -20,6 +24,16 @@ export default function ChunkingConfigurationStep({
   const [chunkingOptions, setChunkingOptions] = useState([]);
   const [selectedChunking, setSelectedChunking] = useState(null);
   const [error, setError] = useState(null);
+
+  const formInitialValues = useMemo(
+    () =>
+      getInitialModelParameters({
+        selectedModel: selectedChunking,
+        currentModelName: chunkingModel?.component,
+        currentParams: chunkingModel?.params,
+      }),
+    [selectedChunking, chunkingModel?.component, chunkingModel?.params],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -52,21 +66,11 @@ export default function ChunkingConfigurationStep({
     setError(null);
 
     if (newValue) {
-      // Set initial params using placeholders if available
-      const initialParams = Object.keys(
-        newValue.schema?.properties || {},
-      ).reduce((acc, k) => {
-        acc[k] = newValue.schema.properties[k].placeholder ?? "";
-        return acc;
-      }, {});
-
-      const existingParams = chunkingModel?.params;
-      const shouldUseInitialParams =
-        !existingParams || Object.keys(existingParams).length === 0;
-
       setChunkingModel({
         component: newValue.name,
-        params: shouldUseInitialParams ? initialParams : existingParams,
+        params: buildDefaultValuesFromSchemaProperties(
+          newValue.schema?.properties || {},
+        ),
       });
       setNextEnabled(true);
     } else {
@@ -125,21 +129,10 @@ export default function ChunkingConfigurationStep({
       {selectedChunking && (
         <FormSchemaLayout>
           <FormSchema
+            key={`chunking-form-${selectedChunking.name}`}
             autoSave
             model={selectedChunking.name}
-            initialValues={
-              chunkingModel?.params &&
-              Object.keys(chunkingModel.params).length > 0
-                ? chunkingModel.params
-                : Object.keys(selectedChunking.schema?.properties || {}).reduce(
-                    (acc, k) => {
-                      acc[k] =
-                        selectedChunking.schema.properties[k].placeholder ?? "";
-                      return acc;
-                    },
-                    {},
-                  )
-            }
+            initialValues={formInitialValues}
             onFormSubmit={handleFormSubmit}
             setError={(err) => {
               if (err) {
