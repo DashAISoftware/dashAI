@@ -348,18 +348,24 @@ export const getParamsFromSubform = (subform) => {
   if (!subform) {
     return null;
   }
-  if (subform.properties.params.comp) {
+  if (subform.properties?.params?.comp?.params) {
     return subform.properties.params.comp.params;
   }
-  return subform.properties.params;
+  if (subform.params !== undefined) {
+    return subform.params;
+  }
+  return subform.properties?.params ?? null;
 };
 
 export const getModelFromSubform = (subform) => {
   if (!subform) {
     return null;
   }
-  if (subform.properties.params.comp) {
+  if (subform.component !== undefined) {
+    return subform.component;
+  }
+  if (subform.properties?.params?.comp?.component) {
     return subform.properties.params.comp.component;
   }
-  return subform.properties.component;
+  return subform.properties?.component ?? null;
 };

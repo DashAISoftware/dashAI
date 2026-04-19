@@ -7,6 +7,7 @@ import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
+import DocumentsBar from "../../components/generative/RAG/DocumentsBar";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { TourButton } from "../../components/tour/TourButton";
@@ -120,7 +121,14 @@ export default function GenerativeContent() {
         </CenterPanel>
 
         <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
-          <ParamsBar onToggle={threePanelLayout.handleToggleRight} />
+          {selectedSessionId && selectedTaskName === "RAGTask" ? (
+            <DocumentsBar
+              selectedSessionId={selectedSessionId}
+              taskName="RAGTask"
+            />
+          ) : (
+            <ParamsBar onToggle={threePanelLayout.handleToggleRight} />
+          )}
           <TourButton
             tourKey={TOUR_KEYS.GENERATIVE}
             disabled={stepIndex !== 0 || selectedSessionId}
