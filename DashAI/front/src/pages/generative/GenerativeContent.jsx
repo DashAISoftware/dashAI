@@ -13,11 +13,24 @@ import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { useGenerative } from "../../components/generative/GenerativeContext";
 import { useTranslation } from "react-i18next";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import RAGHomePage from "./RAG/RAGHomePage";
 
 export default function GenerativeContent() {
   const threePanelLayout = useThreePanelLayout();
-  const { stepIndex, selectedSessionId } = useGenerative();
+  const { stepIndex, selectedSessionId, selectedTaskName } = useGenerative();
   const { t } = useTranslation(["generative"]);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isRagRoute = location.pathname.startsWith("/app/generative/RAG");
+
+  useEffect(() => {
+    if (selectedTaskName === "RAGTask" && !isRagRoute) {
+      navigate("/app/generative/RAG", { replace: true });
+    }
+  }, [isRagRoute, navigate, selectedTaskName]);
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -26,7 +39,9 @@ export default function GenerativeContent() {
           <SessionBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
         <CenterPanel data-tour="task-gallery">
-          {selectedSessionId ? (
+          {isRagRoute ? (
+            <RAGHomePage />
+          ) : selectedSessionId ? (
             <GenerativeChat />
           ) : stepIndex === 0 ? (
             <SelectTaskMenu />

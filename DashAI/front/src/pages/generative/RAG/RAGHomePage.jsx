@@ -8,6 +8,28 @@ import MainGenerativeBox from "../../../components/generative/MainGenerativeBox"
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import { getSessions, removeSession } from "../../../api/session";
 import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
+import { useGenerative } from "../../../components/generative/GenerativeContext";
+
+const ragOptions = [
+  {
+    name: "sessions",
+    display_name: "RAG Sessions",
+    description: "View existing RAG sessions and create new ones.",
+    Icon: null,
+  },
+  {
+    name: "documents",
+    display_name: "RAG Documents",
+    description: "Manage the documents used by RAG sessions.",
+    Icon: null,
+  },
+  {
+    name: "prompts",
+    display_name: "RAG Prompts",
+    description: "View existing prompts and create new ones.",
+    Icon: null,
+  },
+];
 
 function RAGHomePage({
   onSessionCreated,
@@ -18,9 +40,13 @@ function RAGHomePage({
   isStandalone = false,
 }) {
   const navigate = useNavigate();
+  const generative = useGenerative();
   const [standaloneSessions, setStandaloneSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
+
+  const { setSelectedSessionId: setGlobalSelectedSessionId, setSelectedTaskName, setStepIndex } =
+    generative ?? {};
 
   // Use sessions from props if available (embedded mode), otherwise manage own sessions (standalone mode)
   const currentSessions = sessions || standaloneSessions;
@@ -44,10 +70,14 @@ function RAGHomePage({
   }, [loadSessions, isStandalone]);
 
   const goToNextStep = (option) => {
-    navigate(`/app/generative/rag/${option}`);
+    navigate(`/app/generative/RAG/${option}`);
   };
 
   const handleNavigateToGenerative = () => {
+    setGlobalSelectedSessionId?.(null);
+    setSelectedTaskName?.(null);
+    setStepIndex?.(0);
+
     if (onNavigateToGenerative) {
       onNavigateToGenerative();
     } else {
@@ -58,8 +88,7 @@ function RAGHomePage({
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     if (isStandalone) {
       setSelectedSessionId(sessionId);
-      // Navigate back to generative page with selected session
-      navigate("/app/generative", { state: { selectedSessionId: sessionId } });
+      navigate("/app/generative/RAG", { state: { selectedSessionId: sessionId } });
     } else if (onSessionSelect) {
       onSessionSelect(sessionId, taskName, taskDisplayName);
     }
@@ -68,6 +97,7 @@ function RAGHomePage({
   const handleNewSessionButton = () => {
     if (isStandalone) {
       setSelectedSessionId(null);
+      navigate("/app/generative/RAG");
     }
     // For embedded mode, this might be handled by parent
   };
@@ -101,27 +131,14 @@ function RAGHomePage({
 
         <Box width="60%">
           <CenterBox>
-              <RAGBreadcrumbs />
-              <SelectOptionMenu
-                title="RAG Module"
-                subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
-                options={[
-                  {
-                    name: "sessions",
-                    display_name: "Sessions",
-                    description: "View existing RAG sessions and create new ones.",
-                    Icon: null,
-                  },
-                  {
-                    name: "prompts",
-                    display_name: "Prompts",
-                    description: "View existing prompts and create new ones.",
-                    Icon: null,
-                  },
-                ]}
-                searchBar={false}
-                goToNextStep={goToNextStep}
-              />
+            <RAGBreadcrumbs />
+            <SelectOptionMenu
+              title="RAG Module"
+              subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
+              options={ragOptions}
+              searchBar={false}
+              goToNextStep={goToNextStep}
+            />
           </CenterBox>
         </Box>
 
@@ -161,33 +178,14 @@ function RAGHomePage({
       overflow={"scroll"}
       p={2}
     >
-      <RAGBreadcrumbs 
-        isEmbedded={true} 
+      <RAGBreadcrumbs
+        isEmbedded={true}
         onNavigateToGenerative={handleNavigateToGenerative}
       />
       <SelectOptionMenu
         title="RAG Module"
         subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
-        options={[
-          {
-            name: "sessions",
-            display_name: "Sessions",
-            description: "View existing RAG sessions and create new ones.",
-            Icon: null,
-          },
-          {
-            name: "documents",
-            display_name: "Documents",
-            description: "Detailed view and management of all documents.",
-            Icon: null,
-          },
-          {
-            name: "prompts",
-            display_name: "Prompts",
-            description: "View existing prompts and create new ones.",
-            Icon: null,
-          },
-        ]}
+        options={ragOptions}
         searchBar={false}
         goToNextStep={goToNextStep}
       />
