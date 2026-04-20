@@ -52,6 +52,7 @@
     "selectDatasetToExplain": "Seleccione un dataset con instancias para explicar",
     "selectExplainer": "Establecer nombre y explicador",
     "selectExplainerAndName": "Seleccione un explicador e ingrese un nombre",
+    "explainerInProgress": "Explicador en progreso...",
     "splitSelectionSummary": "Porcentaje: {{percentage}}% | Filas seleccionadas: {{rowsSelected}} / {{totalRows}}"
   },
   "message": {

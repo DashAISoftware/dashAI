@@ -16,6 +16,7 @@ import {
 import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { TypeChangeValidator } from "./TypeChangeValidator";
+import InferenceReasonPopover from "../dataset/InferenceReasonPopover";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 
@@ -262,43 +263,50 @@ export default function PreviewDatasetTable({
               </Tooltip>
             )}
 
-            <Select
-              value={columnType?.type || "Text"}
-              onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
-              size="small"
-              disabled={editingColumn === field}
-              sx={{
-                fontSize: "0.75rem",
-                minWidth: 120,
-                "& .MuiSelect-select": {
-                  paddingY: 0.5,
-                  paddingX: 1,
-                },
-              }}
-            >
-              <MenuItem value="Integer">Integer</MenuItem>
-              <MenuItem value="Float">Float</MenuItem>
-              <MenuItem value="Text">Text</MenuItem>
-              <MenuItem value="Categorical">Categorical</MenuItem>
-            </Select>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Select
+                value={columnType?.type || "Text"}
+                onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
+                size="small"
+                disabled={editingColumn === field}
+                sx={{
+                  fontSize: "0.75rem",
+                  minWidth: 120,
+                  "& .MuiSelect-select": {
+                    paddingY: 0.5,
+                    paddingX: 1,
+                  },
+                }}
+              >
+                <MenuItem value="Integer">Integer</MenuItem>
+                <MenuItem value="Float">Float</MenuItem>
+                <MenuItem value="Text">Text</MenuItem>
+                <MenuItem value="Categorical">Categorical</MenuItem>
+              </Select>
 
-            {columnType?.type === "Categorical" && columnType?.encoder && (
-              <Tooltip title={t("common:changeEncoder")} arrow>
-                <span style={{ display: "inline-flex" }}>
-                  <Chip
-                    label={encoderLabel(columnType.encoder)}
-                    size="small"
-                    onClick={(e) => handleEncoderClick(e, field)}
-                    aria-label={t("common:encoder")}
-                    sx={{
-                      fontSize: "0.65rem",
-                      height: "18px",
-                      cursor: "pointer",
-                    }}
-                  />
-                </span>
-              </Tooltip>
-            )}
+              <InferenceReasonPopover
+                columnName={displayName}
+                reason={columnType?.inference_reason}
+              />
+
+              {columnType?.type === "Categorical" && columnType?.encoder && (
+                <Tooltip title={t("common:changeEncoder")} arrow>
+                  <span style={{ display: "inline-flex" }}>
+                    <Chip
+                      label={encoderLabel(columnType.encoder)}
+                      size="small"
+                      onClick={(e) => handleEncoderClick(e, field)}
+                      aria-label={t("common:encoder")}
+                      sx={{
+                        fontSize: "0.65rem",
+                        height: "18px",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </span>
+                </Tooltip>
+              )}
+            </Box>
           </Box>
         ),
       };

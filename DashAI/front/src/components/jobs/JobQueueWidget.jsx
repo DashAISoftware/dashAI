@@ -37,6 +37,7 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import JobDetailsDialog from "./JobDetailsDialog";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { deleteAllJobs } from "../../api/job";
 import { useJobManager } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
@@ -76,6 +77,74 @@ const JobQueueWidget = () => {
   const [clearingAll, setClearingAll] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Drag state
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem("jobQueueWidgetPosition");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const dragRef = useRef(null);
+  const isDragging = useRef(false);
+
+  const handleDragStart = useCallback((e) => {
+    // Ignore if clicking on buttons/icons inside the header
+    if (e.target.closest("button") || e.target.closest("[role='button']"))
+      return;
+    e.preventDefault();
+    isDragging.current = false;
+    const paperEl = dragRef.current;
+    if (!paperEl) return;
+    const rect = paperEl.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    const handleMouseMove = (moveEvent) => {
+      isDragging.current = true;
+      const newLeft = Math.max(
+        0,
+        Math.min(moveEvent.clientX - offsetX, window.innerWidth - rect.width),
+      );
+      const newTop = Math.max(
+        0,
+        Math.min(moveEvent.clientY - offsetY, window.innerHeight - rect.height),
+      );
+
+      // If in lower half of screen, use bottom instead of top
+      // so widget expands upward when opened
+      const isLowerHalf = newTop > window.innerHeight / 2;
+      const positionData = isLowerHalf
+        ? { left: newLeft, bottom: window.innerHeight - newTop - rect.height }
+        : { left: newLeft, top: newTop };
+
+      setPosition(positionData);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, []);
+
+  // Persist drag position
+  useEffect(() => {
+    if (position) {
+      try {
+        localStorage.setItem(
+          "jobQueueWidgetPosition",
+          JSON.stringify(position),
+        );
+      } catch {
+        // ignore
+      }
+    }
+  }, [position]);
 
   const handleClearAllJobs = () => {
     setConfirmClearAll(true);
@@ -137,8 +206,8 @@ const JobQueueWidget = () => {
   const hasInitializedRef = useRef(false);
   const prevActiveCountRef = useRef(0);
 
-  // Snapshot del estado inicial al completar la primera carga (evita tratar
-  // jobs ya existentes como nuevos y disparar el expand al montar)
+  // Snapshot initial state after first load completes (prevents treating
+  // existing jobs as new and triggering expand on mount)
   useEffect(() => {
     if (!loading && !hasInitializedRef.current) {
       hasInitializedRef.current = true;
@@ -146,7 +215,7 @@ const JobQueueWidget = () => {
     }
   }, [loading, activeJobs.length]);
 
-  // Auto expand/collapse por transiciones reales durante la sesión
+  // Auto expand/collapse on real transitions during session
   useEffect(() => {
     if (!hasInitializedRef.current) return;
     const prev = prevActiveCountRef.current;
@@ -270,14 +339,24 @@ const JobQueueWidget = () => {
     <>
       <Fade in={true}>
         <Paper
+          ref={dragRef}
           elevation={0}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           sx={{
             position: "fixed",
-            bottom: { xs: 16, sm: (theme) => theme.spacing(3) },
-            right: { xs: 16, sm: (theme) => theme.spacing(3) },
-            zIndex: 1000,
+            ...(position
+              ? {
+                  left: position.left,
+                  ...(position.top !== undefined
+                    ? { top: position.top }
+                    : { bottom: position.bottom }),
+                }
+              : {
+                  bottom: { xs: 16, sm: (theme) => theme.spacing(3) },
+                  right: { xs: 16, sm: (theme) => theme.spacing(3) },
+                }),
+            zIndex: 1300,
             width: { xs: "calc(100vw - 32px)", sm: 320 },
             maxWidth: 320,
             maxHeight: { xs: "60vh", sm: "80vh" },
@@ -293,11 +372,14 @@ const JobQueueWidget = () => {
           style={{
             opacity: `${isHovered || expanded ? 1 : 0.5}`,
             filter: `brightness(${isHovered || expanded ? 1 : 0.5})`,
-            transition: "all 0.2s ease",
+            transition: isDragging.current ? "none" : "all 0.2s ease",
           }}
         >
           <Box
-            onClick={handleToggleExpand}
+            onMouseDown={handleDragStart}
+            onClick={(e) => {
+              if (!isDragging.current) handleToggleExpand();
+            }}
             sx={{
               display: "flex",
               justifyContent: "space-between",
@@ -305,10 +387,22 @@ const JobQueueWidget = () => {
               padding: (theme) => theme.spacing(1, 2),
               backgroundColor: (theme) => theme.palette.primary.main,
               color: (theme) => theme.palette.primary.contrastText,
-              cursor: "pointer",
+              cursor: "grab",
+              "&:active": { cursor: "grabbing" },
             }}
           >
             <Box display="flex" alignItems="center">
+              <Tooltip title="Drag to move · Double-click to reset">
+                <DragIndicatorIcon
+                  fontSize="small"
+                  sx={{ opacity: 0.6, mr: 0.5 }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setPosition(null);
+                    localStorage.removeItem("jobQueueWidgetPosition");
+                  }}
+                />
+              </Tooltip>
               <Badge
                 badgeContent={activeJobs.length}
                 color="error"

@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Box,
   TextField,
   FormControlLabel,
   Switch,
@@ -32,7 +33,7 @@ export default function YAxisForm({
   const tickvalsArray = Array.isArray(data[0]?.y) ? data[0].y : [];
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Title */}
       <SectionLabel>
         {t("datasets:label.axisTitle", { axis: "Y" })}
@@ -40,7 +41,8 @@ export default function YAxisForm({
 
       <TextField
         label={t("datasets:label.axisTitle", { axis: "Y" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         value={layout.yaxis?.title?.text || ""}
         onChange={(e) =>
           handleAxisChange("yaxis", "title", {
@@ -53,7 +55,8 @@ export default function YAxisForm({
 
       <TextField
         label={t("datasets:label.axisFontSize", { axis: "Y" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.yaxis?.title?.font?.size || 14}
         onChange={(e) =>
@@ -82,7 +85,8 @@ export default function YAxisForm({
 
       <TextField
         label={t("datasets:label.axisTitleStandoff", { axis: "Y" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.yaxis?.title?.standoff ?? 15}
         onChange={(e) =>
@@ -113,7 +117,8 @@ export default function YAxisForm({
 
       <TextField
         label={t("datasets:label.axisTickAngle", { axis: "Y" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.yaxis?.tickangle ?? 0}
         onChange={(e) =>
@@ -130,7 +135,8 @@ export default function YAxisForm({
       {tickvalsArray.length > 0 && (
         <TextField
           label={t("datasets:label.tickLabels", "Tick Labels")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           multiline
           minRows={3}
           maxRows={8}
@@ -172,7 +178,8 @@ export default function YAxisForm({
 
       <TextField
         label={t("datasets:label.axisGridWidth", { axis: "Y" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.yaxis?.gridwidth ?? 1}
         onChange={(e) =>
@@ -212,7 +219,8 @@ export default function YAxisForm({
 
       <TextField
         label={t("datasets:label.axisLineWidth", { axis: "Y" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.yaxis?.linewidth ?? 1}
         onChange={(e) =>
@@ -225,6 +233,6 @@ export default function YAxisForm({
         fullWidth
         slotProps={{ htmlInput: { min: 1, max: 10 } }}
       />
-    </>
+    </Box>
   );
 }

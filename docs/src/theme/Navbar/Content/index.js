@@ -6,6 +6,7 @@ import NavbarColorModeToggle from "@theme/Navbar/ColorModeToggle";
 import SearchBar from "@theme/SearchBar";
 import NavbarLogo from "@theme/Navbar/Logo";
 import NavbarSearch from "@theme/Navbar/Search";
+import NavbarMobileSidebarToggle from "@theme/Navbar/MobileSidebar/Toggle";
 
 function useNavbarItems() {
   return useThemeConfig().navbar.items;
@@ -51,6 +52,7 @@ export default function NavbarContent() {
     <NavbarContentLayout
       left={
         <>
+          <NavbarMobileSidebarToggle />
           <NavbarLogo />
           <NavbarItems items={leftItems} />
         </>

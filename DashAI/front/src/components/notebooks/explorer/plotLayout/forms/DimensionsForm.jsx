@@ -29,7 +29,8 @@ export default function DimensionsForm({ data, handleTraceChange }) {
 
           <TextField
             label={t("datasets:label.dimensionTitle")}
-            variant="filled"
+            variant="outlined"
+            size="small"
             value={dim.label || ""}
             onChange={(e) =>
               handleTraceChange(0, `dimensions.${idx}.label`, e.target.value)

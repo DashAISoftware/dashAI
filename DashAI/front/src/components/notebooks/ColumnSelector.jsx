@@ -264,7 +264,11 @@ function ColumnSelector({
     getRowId: (row) => String(row.id),
     enableGlobalFilter: true,
     enableColumnFilters: false,
-    enableSorting: true,
+    enableColumnActions: false,
+    enableSorting: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
     enablePagination: true,
     muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
     initialState: {
@@ -295,20 +299,19 @@ function ColumnSelector({
 
   return (
     <Box>
-      {/* Selected count - always shown */}
+      {/* Column requirements */}
       <Box
         sx={{
-          mb: 2,
-          p: 2,
+          mb: 1.5,
+          p: 1.5,
           borderRadius: 2,
           backgroundColor: theme.palette.ui.hover,
           border: `1px solid ${theme.palette.ui.divider}`,
           textAlign: "center",
         }}
       >
-        {/* Column requirement info */}
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography variant="body1" sx={{ color: "text.secondary", mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
@@ -322,9 +325,8 @@ function ColumnSelector({
           </Typography>
         )}
 
-        {/* Selected count */}
         <Typography
-          variant="h6"
+          variant="body2"
           sx={{
             fontWeight: 700,
             color: valid ? "success.main" : "error.main",
@@ -334,7 +336,8 @@ function ColumnSelector({
         >
           {t("datasets:label.selectedColumns", {
             count: rowSelectionModel.length,
-          })}
+          })}{" "}
+          {valid ? "✓" : ""}
         </Typography>
 
         {/* Allowed value types (semantic) */}
@@ -361,22 +364,16 @@ function ColumnSelector({
         {/* Allowed data types */}
         {allowedDtypes.length > 0 && (
           <Typography
-            variant="body2"
-            sx={{
-              color: "text.disabled",
-              fontStyle: "italic",
-              mt: 1,
-            }}
+            variant="caption"
+            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
           >
-            <Trans i18nKey="datasets:label.allowedDataTypes">
-              Allowed data types:
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {allowedDtypes.join(", ")}
-              </Box>
-            </Trans>
+            {t("common:allowedTypes")}:{" "}
+            <Box
+              component="span"
+              sx={{ color: "secondary.main", fontWeight: 500 }}
+            >
+              {allowedDtypes.join(", ")}
+            </Box>
           </Typography>
         )}
       </Box>{" "}
