@@ -1638,6 +1638,15 @@ async def preview_with_types(
                     with zipfile.ZipFile(tmp_file_path, "r") as zf:
                         zf.extractall(extract_dir)
 
+                    image_extensions = {
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".bmp",
+                        ".gif",
+                        ".tiff",
+                        ".webp",
+                    }
                     supported_map = {
                         ".csv": "CSVDataLoader",
                         ".json": "JSONDataLoader",
@@ -1646,6 +1655,7 @@ async def preview_with_types(
                     }
                     dataloader_name = None
                     matched_file = None
+                    has_images = False
                     for root, _, files in os.walk(extract_dir):
                         for f in files:
                             ext = os.path.splitext(f)[1].lower()
@@ -1653,8 +1663,32 @@ async def preview_with_types(
                                 dataloader_name = supported_map[ext]
                                 matched_file = os.path.join(root, f)
                                 break
+                            if ext in image_extensions:
+                                has_images = True
                         if dataloader_name:
                             break
+
+                    if dataloader_name is None and has_images:
+                        shutil.rmtree(extract_dir, ignore_errors=True)
+                        os.unlink(tmp_file_path)
+                        return {
+                            "sample": [],
+                            "schema": {
+                                "image": {"type": "Image", "dtype": "string"},
+                                "label": {
+                                    "type": "Categorical",
+                                    "dtype": "string",
+                                },
+                            },
+                            "inferred_types": {
+                                "image": {"type": "Image", "dtype": "string"},
+                                "label": {
+                                    "type": "Categorical",
+                                    "dtype": "string",
+                                },
+                            },
+                            "preview_row_count": 0,
+                        }
 
                     if dataloader_name is None:
                         raise HTTPException(

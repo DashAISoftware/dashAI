@@ -240,11 +240,23 @@ class DashAIDataset(Dataset):
         dict
             General information including rows, columns, memory usage, and dtypes.
         """
+        from DashAI.back.types.dashai_image import DashAIImage
+
+        hashable_cols = [
+            c
+            for c in dataset_df.columns
+            if not isinstance(self.types.get(c), DashAIImage)
+        ]
+        if hashable_cols:
+            duplicate_rows = int(dataset_df[hashable_cols].duplicated().sum())
+        else:
+            duplicate_rows = 0
+
         return {
             "n_rows": len(dataset_df),
             "n_columns": len(dataset_df.columns),
             "memory_usage_mb": float(dataset_df.memory_usage(deep=True).sum() / 1e6),
-            "duplicate_rows": int(dataset_df.duplicated().sum()),
+            "duplicate_rows": duplicate_rows,
             "dtypes": {k: v.to_string().get("type") for k, v in self.types.items()},
         }
 
@@ -757,8 +769,12 @@ def transform_dataset_with_schema(
             dai_table[column_name] = base_col
             # Use the dtype from schema for pa_type
             pa_type = to_arrow_types(dtype)
-        # DashAIImage is currently not fully implemented
-        # This step should be formalized after solving that.
+        elif _type == "Image":
+            from DashAI.back.types.dashai_image import DashAIImage
+
+            dashai_types[column_name] = DashAIImage(dtype=dtype)
+            dai_table[column_name] = table.column(column_name)
+            pa_type = table.schema.field(column_name).type
         else:
             if _type in ["Date", "Time", "Timestamp"]:
                 # Since DashAI is not using date, time or timestamp types for its models

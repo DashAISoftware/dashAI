@@ -64,6 +64,7 @@ from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 # DataLoaders
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
+from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
 # Explainers
@@ -121,8 +122,6 @@ from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
-
-# Models
 from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Transformer
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.llama_model import LlamaModel
@@ -165,6 +164,9 @@ from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
     StableDiffusionXLModel,
 )
 from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
+
+# Models
+from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
@@ -208,6 +210,7 @@ from DashAI.back.plugins.utils import get_available_plugins
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -239,6 +242,7 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
+        ImageClassificationTask,
         # Models
         SVC,
         DecisionTreeClassifier,
@@ -276,10 +280,12 @@ def get_initial_components():
         RidgeRegression,
         LinearSVR,
         LinearRegression,
+        MLPImageClassifier,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,
         ExcelDataLoader,
+        ImageDataLoader,
         # Metrics
         F1,
         Accuracy,

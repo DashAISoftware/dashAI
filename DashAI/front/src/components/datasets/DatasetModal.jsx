@@ -24,6 +24,8 @@ import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetPreviewStep from "./DatasetPreviewStep";
 import { loadPreview } from "../../api/datasets";
 
+const SKIP_PREVIEW_DATALOADERS = new Set(["ImageDataLoader"]);
+
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },
   { name: "uploadDataset", label: "Configure and upload your dataset" },
@@ -203,13 +205,19 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     setActiveStep(stepIndex);
   };
 
+  const skipPreview = SKIP_PREVIEW_DATALOADERS.has(newDataset.dataloader);
+
   const handleNextButton = () => {
     if (activeStep === 0) {
       setActiveStep(activeStep + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
-      handlePreviewDataset();
-      setActiveStep(2);
+      if (skipPreview) {
+        handleSubmitNewDataset();
+      } else {
+        handlePreviewDataset();
+        setActiveStep(2);
+      }
     } else if (activeStep === 2) {
       handleSubmitNewDataset();
     }
@@ -365,7 +373,9 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               {activeStep === 0
                 ? "Next"
                 : activeStep === 1
-                  ? "Preview"
+                  ? skipPreview
+                    ? "Upload"
+                    : "Preview"
                   : "Upload"}
             </Button>
           </ButtonGroup>
