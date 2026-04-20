@@ -33,6 +33,8 @@ class SklearnLikeRegressor(SklearnLikeModel):
         """
         import pandas as pd
 
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         if isinstance(x_pred, DashAIDataset):
             try:
                 x_prepared = self.prepare_dataset(x_pred, is_fit=False)
