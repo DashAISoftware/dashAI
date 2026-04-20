@@ -159,6 +159,7 @@
     "datasetModuleSubtitle": "Sube tus datasets: Explora, analiza y transforma tus datos con herramientas avanzadas de análisis exploratorio. Crea cuadernos interactivos, genera visualizaciones y aplica transformaciones de datos de manera intuitiva.",
     "datasetName": "Nombre del Dataset",
     "datasetPreview": "Vista Previa del Dataset",
+    "aboutTool": "Acerca de {{toolName}}",
     "datasetPreviewFor": "Cuaderno: Vista Previa de {{name}}",
     "dataType": "Tipo de Dato",
     "deleteConverterConfirmation": "¿Está seguro de que desea eliminar el convertidor \"{{converter}}\"? Eliminar este convertidor también eliminará todos los convertidores y exploradores posteriores aplicados después. Esta acción no se puede deshacer.",

@@ -56,7 +56,10 @@ export default function ParameterStepConverter({
 
   return (
     <Box flex={1} data-tour="converter-parameters">
-      <Typography variant="subtitle2" gutterBottom>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+      >
         {t("datasets:label.configureParametersStep", { step: 2 })}
       </Typography>
       <FormSchemaContainer>
