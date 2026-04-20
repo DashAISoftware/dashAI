@@ -1,6 +1,7 @@
 import os
 from copyreg import pickle
 
+import numpy as np
 from kink import di
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
@@ -37,20 +38,20 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                     pickle.dump(plot, file)
                     plot_paths.append(plot_path)
 
-        else:
-            # Suponiendo que el último fold es el conjunto completo
-            for i in range(len(x) - 1):
-                x_fold = x[i]
-                y_fold = y[i]
+        # Suponiendo que el último fold es el conjunto completo
+        for i in range(len(x) - 1):
+            x_fold = x[i]
+            y_fold = y[i]
 
-                self.model.x_data = x_fold
-                self.model.y_data = y_fold
+            self.model.x_data = x_fold
+            self.model.y_data = y_fold
 
-                self.model.train(x_fold["train"], y_fold["train"])
+            self.model.train(x_fold["train"], y_fold["train"])
 
-                self.model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.FOLD)
+            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.FOLD)
+            self.model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.FOLD)
 
-            self.model.train(x[-1]["train"], y[-1]["train"])
+        self.model.train(x[-1]["train"], y[-1]["train"])
 
         return self.model, plot_paths
 
@@ -78,12 +79,12 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             # Aqui podriamos guardar solo las metricas del mejor trial
             # encontrado en lugar de todos.
             model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL_FOLD)
-            model.calculate_metrics(
-                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL_FOLD
-            )
+            model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.TRIAL_FOLD)
 
             score = metric.score(output_dataset_transformed, y_pred)
 
             folds_results.append(score)
 
-        return folds_results.mean()  # Retorna el promedio de las métricas de los folds
+        return np.mean(
+            folds_results
+        )  # Retorna el promedio de las métricas de los folds

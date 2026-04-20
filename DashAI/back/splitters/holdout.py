@@ -6,8 +6,8 @@ from .base_splitter import BaseSplitter
 
 
 class HoldoutSplitter(BaseSplitter):
-    def __init__(self, dataset, input_columns, output_column, splits_data):
-        super().__init__(dataset, input_columns, output_column, splits_data)
+    def __init__(self, splits_data):
+        super().__init__(splits_data)
         self.train_size = splits_data.get("train_size", 0.8)
         self.test_size = splits_data.get("test_size", 0.1)
         self.val_size = splits_data.get("val_size", 0.1)

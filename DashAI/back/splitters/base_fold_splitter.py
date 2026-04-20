@@ -8,8 +8,8 @@ from .base_splitter import BaseSplitter
 
 
 class BaseFoldSplitter(BaseSplitter):
-    def __init__(self, dataset, input_columns, output_column, splits_data):
-        super().__init__(dataset, input_columns, output_column, splits_data)
+    def __init__(self, splits_data):
+        super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)
 
     @abstractmethod

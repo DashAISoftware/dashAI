@@ -3,7 +3,7 @@ import numpy as np
 from DashAI.back.dependencies.database.models import Run
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
 from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.splitters.base_splitter import BaseSplitter
+from DashAI.back.splitters.base_fold_splitter import BaseFoldSplitter
 
 
 class NestedCrossValidationStrategy(CrossValidationEvaluationStrategy):
@@ -11,7 +11,7 @@ class NestedCrossValidationStrategy(CrossValidationEvaluationStrategy):
         self, model, optimizer, run_optimizable_parameters, goal_metric, **kwargs
     ):
         super().__init__(model, optimizer, run_optimizable_parameters, goal_metric)
-        self.inner_splitter: BaseSplitter = kwargs.get("inner_splitter")
+        self.inner_splitter: BaseFoldSplitter = kwargs.get("inner_splitter")
 
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
         plot_paths = []

@@ -41,9 +41,8 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
                     pickle.dump(plot, file)
                     plot_paths.append(plot_path)
 
-        else:
-            # otherwise, just train the model with the provided data and return it
-            self.model.train(x["train"], y["train"], x["validation"], y["validation"])
+        # Train the model with the provided data and return it
+        self.model.train(x["train"], y["train"], x["validation"], y["validation"])
 
         # Calculate metrics at the end of training if not done already
         last_train_metric = (
@@ -95,4 +94,4 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
 
         score = metric.score(output_dataset_transformed, y_pred)
 
-        return model, score
+        return score

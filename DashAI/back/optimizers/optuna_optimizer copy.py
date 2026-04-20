@@ -133,7 +133,7 @@ class OptunaOptimizer(BaseOptimizer):
                 setattr(obj, key, value)
 
             # Train the model and get the score from the strategy
-            self.model, score = strategy(
+            score = strategy(
                 self.model, self.input_dataset, self.output_dataset, self.metric
             )
 
@@ -146,15 +146,6 @@ class OptunaOptimizer(BaseOptimizer):
         for hyperparameter, value in best_params.items():
             setattr(best_model, hyperparameter, value)
 
-        # if input_dataset length is not 1, it means that the strategy is cv
-        # so we train the best model with all the data, which is the last fold in the
-        # input_dataset and output_dataset lists
-        if len(input_dataset) == 1:
-            best_model.train(self.input_dataset["train"], self.output_dataset["train"])
-        else:
-            best_model.train(
-                self.input_dataset[-1]["train"], self.output_dataset[-1]["train"]
-            )
         self.model = best_model
         self.study = study
 
