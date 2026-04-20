@@ -958,14 +958,56 @@ pre code {
   font-size: 0.8125rem;
   color: var(--dashai-text-secondary);
   line-height: 1.65;
-  margin: 0 0 12px;
+  margin: 0 0 24px;
 }
 
 .dashai-ack__logos {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   width: 100%;
-  height: auto;
+}
+
+@media (min-width: 768px) {
+  .dashai-ack__logos {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.dashai-ack__logo-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid var(--dashai-border);
+  border-radius: 10px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.dashai-ack__logo-card:hover {
+  border-color: var(--dashai-border-active);
+  text-decoration: none;
+}
+
+.dashai-ack__logo {
   max-width: 100%;
+  max-height: 64px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.dashai-ack__logo--small {
+  max-height: 88px;
+}
+
+.dashai-ack__logo-card:hover .dashai-ack__logo {
+  opacity: 1;
 }
 
 /* kept for legacy compatibility */
@@ -1105,15 +1147,11 @@ pre code {
 }
 
 .dashai-ack__logos {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
   margin: 0 0 12px;
 }
 
 .dashai-ack p {
-  margin: 0;
+  margin: 0 0 12px;
 }
 
 /* ── Doc page header block ── */

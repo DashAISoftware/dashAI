@@ -45,7 +45,35 @@ const SECTIONS = [
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
-  const sponsorLogosSrc = useBaseUrl("/img/logos.png");
+  const logos = [
+    {
+      name: "DCC Universidad de Chile",
+      url: "https://dcc.uchile.cl/",
+      src: useBaseUrl("/img/institutions/dcc-logo.png"),
+      small: true,
+    },
+    {
+      name: "Universidad Técnica Federico Santa María",
+      url: "https://www.usm.cl/",
+      src: useBaseUrl("/img/institutions/utfsm-logo.png"),
+      small: true,
+    },
+    {
+      name: "Centro Nacional de Inteligencia Artificial",
+      url: "https://www.cenia.cl/",
+      src: useBaseUrl("/img/institutions/cenia-logo.png"),
+    },
+    {
+      name: "Instituto Milenio Fundamentos de los Datos",
+      url: "https://www.imfd.cl/",
+      src: useBaseUrl("/img/institutions/imfd-logo.png"),
+    },
+    {
+      name: "Agencia Nacional de Investigación y Desarrollo (ANID)",
+      url: "https://www.anid.cl/",
+      src: useBaseUrl("/img/institutions/anid-logo.png"),
+    },
+  ];
   return (
     <Layout title="Documentation" description={siteConfig.tagline}>
       <div className="dashai-home">
@@ -117,14 +145,30 @@ export default function Home() {
         <div className="dashai-ack">
           <div className="dashai-ack__label">ACKNOWLEDGMENTS</div>
           <p className="dashai-ack__text">
-            Sponsored by CENIA (FB210017) and IMFD (ICN17_002). Developed by
-            students of DCC UChile and UTFSM.
+            This work is sponsored by ANID through Fondef IDEA ID25I10330 and
+            grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002).
+            Developed by students of DCC UChile and UTFSM.
           </p>
-          <img
-            className="dashai-ack__logos"
-            src={sponsorLogosSrc}
-            alt="Sponsor logos: DCC UChile, UTFSM, CENIA, IMFD"
-          />
+          <div className="dashai-ack__logos">
+            {logos.map((logo) => (
+              <a
+                key={logo.name}
+                href={logo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dashai-ack__logo-card"
+                aria-label={logo.name}
+              >
+                <img
+                  className={`dashai-ack__logo${
+                    logo.small ? " dashai-ack__logo--small" : ""
+                  }`}
+                  src={logo.src}
+                  alt={logo.name}
+                />
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </Layout>
