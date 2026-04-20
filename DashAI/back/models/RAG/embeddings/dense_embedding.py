@@ -1,4 +1,4 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 import hashlib
 from typing import Any, List
 import numpy as np
@@ -40,3 +40,8 @@ class DenseEmbedding(BaseModel):
         :return: A list of lists representing the encodings (embeddings) of the input texts.
         """
         raise NotImplementedError("Subclasses must implement this method.")
+    
+    @abstractmethod
+    def train(self, **kwargs):
+        """Train the embedding model."""
+        return

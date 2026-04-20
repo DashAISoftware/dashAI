@@ -129,3 +129,7 @@ class RetrieverModel(BaseModel):
             self.id = id
         else:
             raise RAGWorkflowError("ID is already set and cannot be modified.")
+        
+    def train(self, **kwargs):
+        """Train the retriever model."""
+        return

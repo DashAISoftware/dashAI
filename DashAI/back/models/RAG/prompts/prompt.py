@@ -30,6 +30,9 @@ class Prompt(BaseModel):
     def save(self) -> None:
         pass
 
+    def train(self, **kwargs: Any) -> None:
+        pass
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         metadata = cls.metadata if hasattr(cls, "metadata") else {}

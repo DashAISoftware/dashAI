@@ -351,7 +351,7 @@ export default function RAGSessionSummary({
             transition: 'all 0.2s ease-in-out'
           }}
         >
-          Start Chatting
+          Open RAG session chat
         </Button>
       </Box>
 

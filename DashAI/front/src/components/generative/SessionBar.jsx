@@ -126,7 +126,10 @@ export default function SessionBar({
     setSelectedDisplayName(displayName);
     setStepIndex(0); // sesión existente => modo chat
 
-    navigate("/app/generative", {
+    const targetRoute =
+      session.task_name === "RAGTask" ? "/app/generative/RAG" : "/app/generative";
+
+    navigate(targetRoute, {
       replace: true,
       state: {
         selectedSessionId: sessionId,

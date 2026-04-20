@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import numpy as np
 import os
 from sqlalchemy.orm import Session
@@ -208,4 +210,3 @@ class DenseRetriever(RetrieverModel):
             chunk = self.chunks[doc_id][chunk_id]
             results.append(chunk)
         return results
-            

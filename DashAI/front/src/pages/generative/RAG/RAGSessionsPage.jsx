@@ -67,18 +67,24 @@ function RAGSessionsPage() {
   );
 
   const handleSessionSelect = (sessionId) => {
-    // Navigate back to generative page with selected session
-    navigate("/app/generative", { state: { selectedSessionId: sessionId } });
+    // Open selected RAG session in RAG home so summary is shown first
+    navigate("/app/generative/RAG", {
+      state: {
+        selectedSessionId: sessionId,
+        taskName: "RAGTask",
+        taskDisplayName: "RAG",
+      },
+    });
   };
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
-    // Instead of setting local state, navigate directly to generative with session
-    navigate("/app/generative", { 
-      state: { 
+    const isRagTask = taskName === "RAGTask";
+    navigate(isRagTask ? "/app/generative/RAG" : "/app/generative", {
+      state: {
         selectedSessionId: sessionId,
-        selectedTaskName: taskName,
-        selectedDisplayName: taskDisplayName
-      } 
+        taskName,
+        taskDisplayName,
+      },
     });
   };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
@@ -39,6 +39,7 @@ const ragOptions = [
 
 function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const threePanelLayout = useThreePanelLayout();
   const generative = useGenerative() ?? {};
   const [showRagChat, setShowRagChat] = useState(false);
@@ -58,6 +59,40 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const currentSetSessions = setSessions || setContextSessions;
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
+
+  const sessionSelectionState =
+    location.state?.selectedSessionId != null ? location.state : null;
+
+  useEffect(() => {
+    if (!sessionSelectionState?.selectedSessionId) return;
+
+    const nextTaskName =
+      sessionSelectionState.taskName ??
+      sessionSelectionState.selectedTaskName ??
+      selectedTaskName ??
+      "RAGTask";
+    const nextDisplayName =
+      sessionSelectionState.taskDisplayName ??
+      sessionSelectionState.selectedDisplayName ??
+      null;
+
+    setGlobalSelectedSessionId?.(sessionSelectionState.selectedSessionId);
+    setSelectedTaskName?.(nextTaskName);
+    setSelectedDisplayName?.(nextDisplayName);
+    setStepIndex?.(0);
+    setShowRagChat(false);
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [
+    sessionSelectionState,
+    selectedTaskName,
+    setGlobalSelectedSessionId,
+    setSelectedTaskName,
+    setSelectedDisplayName,
+    setStepIndex,
+    navigate,
+    location.pathname,
+  ]);
 
   useEffect(() => {
     if (!isRagSessionSelected) {
@@ -99,9 +134,11 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
 
   const handleNewSessionButton = () => {
     setGlobalSelectedSessionId?.(null);
-    setSelectedTaskName?.("RAGTask");
+    setSelectedTaskName?.("");
     setSelectedDisplayName?.(null);
     setStepIndex?.(0);
+    setShowRagChat(false);
+    navigate("/app/generative", { replace: true });
   };
 
   const handleSessionDelete = async (id) => {

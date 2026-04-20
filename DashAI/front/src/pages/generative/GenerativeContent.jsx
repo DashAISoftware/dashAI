@@ -43,9 +43,20 @@ export default function GenerativeContent() {
   useEffect(() => {
     if (!sessionSelectionState?.selectedSessionId) return;
 
+    const nextTaskName =
+      sessionSelectionState.taskName ??
+      sessionSelectionState.selectedTaskName ??
+      selectedTaskName ??
+      null;
+    const nextDisplayName =
+      sessionSelectionState.taskDisplayName ??
+      sessionSelectionState.selectedDisplayName ??
+      selectedDisplayName ??
+      null;
+
     setSelectedSessionId?.(sessionSelectionState.selectedSessionId);
-    setSelectedTaskName?.(sessionSelectionState.taskName ?? selectedTaskName ?? null);
-    setSelectedDisplayName?.(sessionSelectionState.taskDisplayName ?? selectedDisplayName ?? null);
+    setSelectedTaskName?.(nextTaskName);
+    setSelectedDisplayName?.(nextDisplayName);
     setStepIndex?.(0);
 
     navigate(location.pathname, { replace: true, state: null });

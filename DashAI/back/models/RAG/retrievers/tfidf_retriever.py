@@ -181,6 +181,9 @@ class TFIDFVectorizerModel(BaseModel):
     def load(self):
         pass
 
+    def train(self, **kwargs):
+        return
+
 
 class TFIDFRetrieverSchema(BaseSchema):
     """

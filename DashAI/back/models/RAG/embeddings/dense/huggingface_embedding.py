@@ -82,6 +82,9 @@ class HuggingFaceEmbedding(DenseEmbedding):
     def save(self):
         pass
 
+    def train(self, **kwargs):
+        return
+
     def load(self):
         """Load the embedding model and tokenizer."""
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
