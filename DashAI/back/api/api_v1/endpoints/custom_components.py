@@ -380,7 +380,10 @@ async def update_custom_component(
         row.base_class = new_base
         row.base_type = result.cls.TYPE
         row.source_code = new_source
-        row.is_override = has_original(new_class) and new_class in component_registry
+        # We already unregistered the current class; can't use the registry to
+        # decide override-ness. A component is an override iff it shadows a
+        # class we snapshotted at startup.
+        row.is_override = has_original(new_class)
         if body.description is not None:
             row.description = body.description
 

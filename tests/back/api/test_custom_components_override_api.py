@@ -111,6 +111,46 @@ def test_override_and_revert_flow(client):
     assert restored_cls is original_cls
 
 
+def test_override_stays_override_after_edit(client):
+    """Editing an override must keep is_override=True so the Revert UI stays."""
+    # Create the override.
+    resp = client.post(
+        "/api/v1/custom-component/",
+        json={
+            "class_name": TARGET_CLASS,
+            "base_class": "BaseModel",
+            "source_code": OVERRIDE_SOURCE,
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    first = resp.json()
+    assert first["is_override"] is True
+    component_id = first["id"]
+
+    # Edit the override (change the DISPLAY_NAME string).
+    edited = OVERRIDE_SOURCE.replace("Overridden KNN", "Overridden KNN v2")
+    resp = client.put(
+        f"/api/v1/custom-component/{component_id}",
+        json={"source_code": edited},
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["is_override"] is True
+
+    # And a second edit — historically this is when the flag flipped to False.
+    edited_again = OVERRIDE_SOURCE.replace("Overridden KNN", "Overridden KNN v3")
+    resp = client.put(
+        f"/api/v1/custom-component/{component_id}",
+        json={"source_code": edited_again},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["is_override"] is True
+
+    # /source/ should still classify it as custom-override.
+    src = client.get(f"/api/v1/custom-component/source/{TARGET_CLASS}").json()
+    assert src["origin"] == "custom-override"
+
+
 def test_cannot_override_pure_custom_component(client):
     # First create a brand-new custom component with an unused name.
     resp = client.post(
