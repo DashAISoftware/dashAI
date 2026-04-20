@@ -10,6 +10,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
+from DashAI.back.types.value_types import Text
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -84,8 +85,8 @@ class WordcloudExplorer(DistributionExplorer):
 
     SCHEMA = WordcloudSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 1},
     }
 

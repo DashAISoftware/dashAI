@@ -46,8 +46,7 @@
     "noDatasetFileAvailable": "No hay archivo del dataset disponible",
     "notebookNameEmpty": "El nombre del cuaderno no puede estar vacío",
     "noValidColumnsForExplorer": "No hay columnas válidas disponibles para este explorador.",
-    "noValidColumnsWithDtypes": "Este dataset no tiene columnas con los tipos de datos requeridos.",
-    "noValidColumnsWithDtypesMentioned": "Este dataset no tiene columnas con los tipos de datos requeridos ({{dtypes}})",
+    "noValidColumnsWithDtypesMentioned": "Este dataset no tiene columnas con los tipos requeridos ({{dtypes}}).",
     "processConverterError": "Fallo al procesar convertidor",
     "requiredFieldsMissing": "Faltan campos requeridos",
     "requiresExactColumns_one": "Requiere exactamente {{required}} columna válida, pero {{available}} disponible.",
@@ -61,6 +60,7 @@
   "label": {
     "all": "todos",
     "allowedDataTypes": "Tipos de datos permitidos: <1><0></0></1>",
+    "allowedValueTypes": "Tipos de valores permitidos: <1><0></0></1>",
     "allTypeChangesValid": "Todos los cambios de tipo son válidos y pueden aplicarse de forma segura.",
     "analysisTools": "Herramientas de Análisis",
     "appearance": "Apariencia",

@@ -271,13 +271,16 @@ a:focus-visible {
   margin: 0 12px;
 }
 
+.navbar__items--right {
+  gap: 6px;
+}
+
 /* GitHub navbar link — bordered button like JSX */
 .navbar__items--right .navbar__link {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  margin-left: 12px;
   border: 1px solid var(--dashai-border) !important;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -294,6 +297,40 @@ a:focus-visible {
   text-decoration: none;
 }
 
+/* GitHub icon-only link — matches theme toggle style */
+.navbar__item:has(.navbar-github-icon),
+.navbar__item.dropdown.dropdown--hoverable.dropdown--right {
+  padding: 0;
+}
+
+.navbar-github-icon {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  padding: 0 8px;
+  color: var(--dashai-text-secondary);
+  border: 1px solid var(--dashai-border);
+  border-radius: 6px;
+  transition: border-color 0.15s, color 0.15s;
+  text-decoration: none;
+}
+
+.navbar-github-icon:hover {
+  border-color: var(--dashai-border-hover);
+  color: var(--dashai-text-primary);
+  text-decoration: none;
+}
+
+.navbar-github-icon:focus-visible {
+  color: var(--dashai-text-primary);
+  border-color: var(--dashai-border-hover);
+}
+
+.navbar-github-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
 
 /* Theme toggle button — bordered icon button */
 .navbar__items--right [class*="colorModeToggle"] button,
@@ -304,7 +341,11 @@ a:focus-visible {
   background: none !important;
   color: var(--dashai-text-secondary) !important;
   transition: border-color 0.15s, color 0.15s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
+
 
 .navbar__items--right [class*="colorModeToggle"] button:hover,
 .navbar__items--right [class*="toggle_"] button:hover {
@@ -314,16 +355,27 @@ a:focus-visible {
 }
 
 /* Search bar — local search plugin */
+[class*="navbarSearchContainer"] {
+  padding: 0 !important;
+  width: 250px !important;
+  max-width: 250px !important;
+}
+
 [class*="searchBarContainer"],
+[class*="searchBar_"],
 .navbar__search {
   flex: 1;
-  max-width: 320px;
-  margin-left: auto;
+  width: 100% !important;
+  max-width: 250px !important;
+  margin: 0 !important;
+  padding: 0;
 }
 
 [class*="searchBar_"] input,
 [class*="searchBar_"] .searchBarInput,
+[class*="input_"],
 .navbar__search-input {
+  width: 100% !important;
   background: rgba(255, 255, 255, 0.9) !important;
   border: 1px solid var(--dashai-border) !important;
   border-radius: 8px !important;
@@ -1217,21 +1269,19 @@ tbody tr:hover {
 
 /* ── Navbar mobile ── */
 @media (max-width: 996px) {
-  /* Hide search bar — accessible via mobile sidebar */
+  /* Show only search bar on mobile — hide everything else */
+  .navbar__items--right .navbar__link,
+  .navbar-github-icon,
+  .navbar__item.dropdown.dropdown--hoverable.dropdown--right,
+  .navbar__items--right [class*="colorModeToggle"],
+  .navbar__items--right [class*="toggle_"] {
+    display: none !important;
+  }
+
   .navbar__search,
-  [class*="searchBarContainer"] {
-    display: none !important;
-  }
-
-  /* Hide GitHub link — accessible via mobile sidebar */
-  .navbar__items--right .navbar__link {
-    display: none !important;
-  }
-
-  /* Keep theme toggle visible but compact */
-  .navbar__items--right [class*="colorModeToggle"] button,
-  .navbar__items--right [class*="toggle_"] button {
-    padding: 2px 5px !important;
+  [class*="searchBarContainer"],
+  [class*="navbarSearchContainer"] {
+    display: flex !important;
   }
 
 

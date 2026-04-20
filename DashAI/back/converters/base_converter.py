@@ -71,6 +71,17 @@ class BaseConverter(ConfigObject, ABC):
         meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         meta["supervised"] = cls.SUPERVISED
 
+        # Serialize allowed_types class references → class name strings for the frontend
+        raw_types = meta.get("allowed_types", [])
+        meta["allowed_types"] = [t.__name__ for t in raw_types]
+
+        # Normalize allowed_dtypes: absent or ["*"] → [] (empty means no restriction)
+        if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:
+            meta["allowed_dtypes"] = []
+
+        # Drop restricted_dtypes — no converter uses it; it is always []
+        meta.pop("restricted_dtypes", None)
+
         return meta
 
     def changes_row_count(self) -> bool:

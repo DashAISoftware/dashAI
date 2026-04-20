@@ -18,11 +18,22 @@ class TranslationTask(BaseTask):
 
     Translation tasks take a single ``Text`` input column (source language) and
     produce a single ``Text`` output column (target language). The compatible
-    metrics are BLEU and TER, which measure n-gram overlap and translation edit
-    rate against reference translations respectively.
+    metrics are BLEU, CHRF, and TER, which measure n-gram overlap, character-level
+    F-score, and translation edit rate against reference translations respectively.
     """
 
-    COMPATIBLE_COMPONENTS = ["Bleu", "Ter"]
+    COMPATIBLE_COMPONENTS = ["Bleu", "Chrf", "Ter"]
+
+    SCORING_PROFILES = {
+        "translation_quality": {
+            "description": "Translation Quality",
+            "weights": {"Bleu": 0.5, "Chrf": 0.5},
+        },
+        "translation_balanced": {
+            "description": "Translation Balanced",
+            "weights": {"Bleu": 0.4, "Chrf": 0.3, "Ter": 0.3},
+        },
+    }
 
     metadata: dict = {
         "inputs_types": [Text],
