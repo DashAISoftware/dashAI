@@ -1,5 +1,5 @@
 import React from "react";
-import { TextField } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 import ColorscaleSelector from "../ColorscaleSelector";
@@ -20,11 +20,12 @@ export default function TraceForm({
   const { t } = useTranslation(["datasets", "common"]);
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Common trace settings */}
       <TextField
         label={t("common:name")}
-        variant="filled"
+        variant="outlined"
+        size="small"
         value={trace.name || ""}
         onChange={(e) => handleTraceChange(index, "name", e.target.value)}
         fullWidth
@@ -71,7 +72,8 @@ export default function TraceForm({
           />
           <TextField
             label={t("datasets:label.colorbarBorderWidth")}
-            variant="filled"
+            variant="outlined"
+            size="small"
             type="number"
             value={trace.colorbar?.borderwidth || 0}
             onChange={(e) =>
@@ -85,6 +87,6 @@ export default function TraceForm({
           />
         </>
       )}
-    </>
+    </Box>
   );
 }
