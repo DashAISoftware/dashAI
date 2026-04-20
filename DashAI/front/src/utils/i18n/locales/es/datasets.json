@@ -1,4 +1,36 @@
 {
+  "inferenceReason": {
+    "title": "¿Por qué \"{{column}}\" recibió este tipo?",
+    "openExplanation": "Mostrar explicación de inferencia de tipo",
+    "baseType": "(tipo base detectado: {{type}})",
+    "stats": "Estadísticas de la muestra",
+    "uniqueCount": "Valores únicos: {{count}} de {{total}} filas",
+    "uniqueRatio": "Proporción única: {{ratio}}% (umbral categórico: ≤{{threshold}}%)",
+    "uniqueRatioNoThreshold": "Proporción única: {{ratio}}%",
+    "stringLength": "Largo medio de texto: {{mean}} caracteres (std {{std}})",
+    "sampleValues": "Valores de ejemplo",
+    "canChangeHint": "Si no es correcto, cambia el tipo desde el selector de la izquierda.",
+    "rule": {
+      "boolean": "Las columnas booleanas siempre se tratan como Categóricas.",
+      "dateExcluded": "Los tipos fecha/hora se excluyen de la detección categórica.",
+      "dateMappedToText": "Los valores se detectaron como fechas (formato {{baseType}}), pero DashAI aún no tiene un tipo Date — la columna se guarda como Text y no se clasifica como categórica.",
+      "stringLooksLikeDate": "Los valores parecen fechas, por eso la columna se mantuvo como texto/fecha y no como categórica.",
+      "tooManyUnique": "Demasiados valores distintos para ser categórica (sobre el umbral de cantidad única).",
+      "uniqueRatioAbove": "Los valores únicos representan una fracción demasiado alta de las filas — se trata como numérica/texto en lugar de categórica.",
+      "stringTooLong": "El largo medio del texto es demasiado grande para ser una etiqueta de categoría.",
+      "stringHighVariance": "El largo del texto varía demasiado entre valores para considerarse categórica.",
+      "integerAllUnique": "Cada valor entero es único — parece un identificador, no una categoría.",
+      "integerSequentialRange": "Los enteros forman un rango secuencial (ej. 1, 2, 3, ...) — se trata como numérica, no categórica.",
+      "integerDenseSmallRange": "Los enteros forman un rango pequeño y denso — se trata como numérica.",
+      "floatHasDecimals": "Los valores flotantes tienen decimales reales — se tratan como numéricos, nunca categóricos.",
+      "lowCardinality": "Pocos valores distintos en relación al total de filas — clasificada como Categórica.",
+      "mlClassifierCategorical": "El modelo clasificador categórico superó el umbral para esta columna.",
+      "mlClassifierNotCategorical": "El modelo clasificador categórico no consideró esta columna como categórica.",
+      "emptyColumn": "La columna está vacía — no se infirió ningún tipo.",
+      "unsupportedBaseType": "El tipo base no es elegible para detección categórica.",
+      "unknown": "No se registró una regla específica para esta clasificación."
+    }
+  },
   "button": {
     "addColorStop": "Agregar Punto de Color",
     "applyChanges": "Aplicar Cambios",
