@@ -57,6 +57,7 @@ class LogLoss(ClassificationMetric):
     )
 
     MAXIMIZE: bool = False
+    BOUNDED: bool = True  # Normalised to [0, 1] via log(num_classes) in score()
 
     @staticmethod
     def score(
@@ -65,6 +66,10 @@ class LogLoss(ClassificationMetric):
         multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate Log Loss score between true labels and predicted labels.
+
+        The raw log loss is normalised by ``log(num_classes)`` so the result
+        lies in [0, 1].  A perfect classifier returns 0; a uniformly random
+        classifier returns 1.
 
         Parameters
         ----------
@@ -81,10 +86,15 @@ class LogLoss(ClassificationMetric):
         Returns
         -------
         float
-            Log Loss score between true labels and predicted labels
+            Normalised Log Loss in [0, 1], lower is better.
         """
+        import math
+
         from sklearn.metrics import log_loss
 
         true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
-
-        return log_loss(true_labels, probs_pred_labels)
+        raw = log_loss(true_labels, probs_pred_labels)
+        num_classes = probs_pred_labels.shape[1]
+        if num_classes < 2:
+            return raw
+        return raw / math.log(num_classes)

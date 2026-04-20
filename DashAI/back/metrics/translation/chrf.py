@@ -25,6 +25,7 @@ class Chrf(TranslationMetric):
     """
 
     MAXIMIZE: bool = True
+    BOUNDED: bool = True  # Returns [0, 1]
     DESCRIPTION = MultilingualString(
         en=(
             "CHRF (Character n-gram F-score) evaluates machine translation "

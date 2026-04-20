@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front show --stat HEAD)",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front branch -a)",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front rev-parse --abbrev-ref HEAD)",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front log --oneline -5 -- \"*ModelComparisonTable*\")",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front diff HEAD~1 HEAD -- \"*ModelComparisonTable*\")",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front status)",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front diff --name-only)",
+      "Bash(git -C /c/Users/felip/OneDrive/Escritorio/proyecto/DashAI/DashAI/front diff src/components/models/ModelComparisonTable.jsx)",
+      "Bash(ls \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Escritorio\\\\proyecto\\\\DashAI\\\\front\\\\src\\\\pages\\\\results\\\\constants\\\\\\\\\")",
+      "Bash(cmd /c \"dir /b \\\\\"C:\\\\Users\\\\felip\\\\OneDrive\\\\Escritorio\\\\proyecto\\\\DashAI\\\\front\\\\src\\\\pages\\\\results\\\\constants\\\\\"\")",
+      "Bash(xargs grep *)"
+    ]
+  }
+}

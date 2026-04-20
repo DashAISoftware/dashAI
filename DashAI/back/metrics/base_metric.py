@@ -31,6 +31,9 @@ class BaseMetric:
     TYPE: Final[str] = "Metric"
     MAXIMIZE: Final[bool] = False
     NORMALIZE_REF: Optional[float] = None
+    BOUNDED: bool = False
+    """True if the metric's range is naturally [0, 1] (or normalized to [0, 1]).
+    False means the metric is unbounded and cannot be colour-coded on a [0,1] scale."""
     metadata: Dict[str, Any] = {}
 
     @classmethod
@@ -46,6 +49,7 @@ class BaseMetric:
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["maximize"] = cls.MAXIMIZE
         meta["normalize_ref"] = cls.NORMALIZE_REF
+        meta["bounded"] = cls.BOUNDED
 
         return meta
 

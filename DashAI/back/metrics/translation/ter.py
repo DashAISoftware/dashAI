@@ -24,6 +24,7 @@ class Ter(TranslationMetric):
     """
 
     MAXIMIZE: bool = False
+    BOUNDED: bool = False  # Range [0, ∞), no upper bound
     DESCRIPTION = MultilingualString(
         en=(
             "TER (Translation Edit Rate) measures the number of edits "

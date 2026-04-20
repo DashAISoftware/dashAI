@@ -5,7 +5,8 @@ import { useSnackbar } from "notistack";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
-import graphsMaking from "../constants/graphsMaking";
+import { getComponents } from "../../../api/component";
+import graphsMaking, { heatmapMaking } from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
 
@@ -23,10 +24,25 @@ function ResultsGraphs({
   const [internalSplit, setInternalSplit] = useState("test");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [chartData, setChartData] = useState({});
+  // { MetricName: { bounded: bool, maximize: bool } } — fetched once on mount
+  const [metricsMetadata, setMetricsMetadata] = useState({});
 
   // Controlled or uncontrolled split
   const selectedSplit = splitProp ?? internalSplit;
   const handleChangeSplit = onSplitChange ?? setInternalSplit;
+
+  // Fetch metric bounded/maximize metadata once on mount
+  useEffect(() => {
+    getComponents({ selectTypes: ["Metric"] })
+      .then((components) => {
+        const meta = {};
+        components.forEach((c) => {
+          meta[c.name] = c.metadata;
+        });
+        setMetricsMetadata(meta);
+      })
+      .catch(() => {});
+  }, []);
 
   const finishedRuns = useMemo(
     () => runs.filter((r) => r.status === 3),
@@ -86,6 +102,15 @@ function ResultsGraphs({
         graphsMaking(graphsToView, run, selectedMetrics, values, idx, theme);
       });
 
+      // Heatmap is a single all-runs trace — built after the loop.
+      graphsToView.heatmap = heatmapMaking(
+        finishedRuns,
+        selectedMetrics,
+        metricsKey,
+        theme,
+        metricsMetadata,
+      );
+
       const { generalLayout } = layoutMaking(
         selectedChart,
         graphsToView,
@@ -104,6 +129,7 @@ function ResultsGraphs({
     selectedMetrics,
     selectedChart,
     theme,
+    metricsMetadata,
     enqueueSnackbar,
     t,
   ]);

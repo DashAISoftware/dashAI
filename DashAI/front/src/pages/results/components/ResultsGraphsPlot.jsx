@@ -8,7 +8,9 @@ function ResultsGraphsPlot({ selectedChart, chartData }) {
   const { t } = useTranslation(["models"]);
 
   const traceData =
-    selectedChart === "radar" ? (chartData.radar ?? []) : (chartData.bar ?? []);
+    selectedChart === "heatmap"
+      ? (chartData.heatmap ?? [])
+      : (chartData.bar ?? []);
 
   const hasData = traceData.length > 0;
 
