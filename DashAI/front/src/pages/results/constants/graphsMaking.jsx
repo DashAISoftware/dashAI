@@ -73,9 +73,14 @@ function heatmapMaking(
   // sharp black→background boundary in the colorscale.
   const pZero = (0 - ZMIN) / (ZMAX - ZMIN); // ≈ 0.0099
 
-  const runLabels = finishedRuns.map(
+  const MAX_LABEL = 20;
+  const truncate = (s) =>
+    s.length > MAX_LABEL ? `${s.slice(0, MAX_LABEL)}…` : s;
+
+  const fullRunNames = finishedRuns.map(
     (run, idx) => run.run_name || run.name || `Run ${idx + 1}`,
   );
+  const runLabels = fullRunNames.map(truncate);
 
   // Raw values matrix [runs × metrics]
   const zRaw = finishedRuns.map((run) => {
@@ -115,13 +120,17 @@ function heatmapMaking(
     row.map((v) => (v !== null ? v.toFixed(4) : "N/A")),
   );
 
-  // Hover content: "Not bounded" for unbounded columns, raw value otherwise.
-  // Combined with hoverongaps: true this surfaces info even on null-z cells.
-  const customData = zRaw.map((row) =>
+  // Hover content: each cell carries [fullRunName, valueOrStatus] so the
+  const customData = zRaw.map((row, rIdx) =>
     row.map((v, mIdx) => {
       const meta = metricsMetadata[metrics[mIdx]];
-      if (!meta || !meta.bounded) return "Not bounded";
-      return v !== null ? v.toFixed(4) : "N/A";
+      const valueStr =
+        !meta || !meta.bounded
+          ? "Not bounded"
+          : v !== null
+            ? v.toFixed(4)
+            : "N/A";
+      return [fullRunNames[rIdx], valueStr];
     }),
   );
 
@@ -137,7 +146,8 @@ function heatmapMaking(
       text: annotationText,
       texttemplate: "%{text}",
       customdata: customData,
-      hovertemplate: "<b>%{x}</b><br>%{y}<br>%{customdata}<extra></extra>",
+      hovertemplate:
+        "<b>%{x}</b><br>%{customdata[0]}<br>%{customdata[1]}<extra></extra>",
       colorscale: [
         [0, "#1a1a1a"], // SENTINEL region → near black
         [pZero * 0.99, "#1a1a1a"], // just below z=0 → still black
