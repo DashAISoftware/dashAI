@@ -225,7 +225,11 @@ def get_types_from_arrow_metadata(
                     dtype=dtype,
                     encoder=encoder,
                 )
-            # Future implementation for images, modify as needed
+            elif _type == "Image":
+                from DashAI.back.types.dashai_image import DashAIImage
+
+                dtype = info.get("dtype", "string")
+                dashai_types[column] = DashAIImage(dtype=dtype)
             else:
                 dtype = info.get("dtype")
                 dtype_map = _get_dtype_arrow_map()

@@ -86,22 +86,51 @@ class _ImageDataset(torch.utils.data.Dataset):
             column_names[1] if has_labels and len(column_names) > 1 else None
         )
 
-        self.tensor_shape = self.transforms(self.dataset[0][self.image_col_name]).shape
+        # Create label to index mapping if labels exist
+        self.label_to_idx = {}
+        self.idx_to_label = {}
+        if self.label_col_name:
+            unique_labels = sorted(set(self.dataset[self.label_col_name]))
+            self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
+            self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+
+        pil_image = self._get_pil_image(self.dataset[0][self.image_col_name])
+        self.tensor_shape = self.transforms(pil_image).shape
+
+    @staticmethod
+    def _get_pil_image(img_data):
+        """Convert image data (dict with bytes or PIL.Image) to PIL.Image."""
+        import io
+
+        from PIL import Image
+
+        if isinstance(img_data, dict) and "bytes" in img_data:
+            # Image stored as bytes
+            buffer = io.BytesIO(img_data["bytes"])
+            return Image.open(buffer)
+        elif hasattr(img_data, "format"):
+            # Already a PIL.Image
+            return img_data
+        else:
+            raise TypeError(f"Unsupported image data type: {type(img_data)}")
 
     def num_classes(self):
         if self.label_col_name is None:
             return 0
-        return len(set(self.dataset[self.label_col_name]))
+        return len(self.label_to_idx)
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        image = self.transforms(self.dataset[idx][self.image_col_name])
+        pil_image = self._get_pil_image(self.dataset[idx][self.image_col_name])
+        image = self.transforms(pil_image)
         if self.label_col_name is None:
             return image
-        label = self.dataset[idx][self.label_col_name]
-        return image, label
+        # Convert label string to index
+        label_str = self.dataset[idx][self.label_col_name]
+        label_idx = self.label_to_idx[label_str]
+        return image, label_idx
 
 
 class _MLP(nn.Module):
@@ -157,6 +186,18 @@ class MLPImageClassifier(BaseModel):
     COLOR: str = "#E91E63"
     ICON: str = "Image"
 
+    @staticmethod
+    def _collate_fn_with_labels(batch):
+        """Custom collate function for batches with (image, label) tuples."""
+        images = torch.stack([item[0] for item in batch])
+        labels = torch.tensor([item[1] for item in batch], dtype=torch.long)
+        return images, labels
+
+    @staticmethod
+    def _collate_fn_no_labels(batch):
+        """Custom collate function for batches with only images."""
+        return torch.stack(batch)
+
     def __init__(self, epochs=10, learning_rate=0.001, hidden_dims=None, **kwargs):
         if hidden_dims is None:
             hidden_dims = [128, 64]
@@ -168,6 +209,23 @@ class MLPImageClassifier(BaseModel):
         self.optimizer = None
         self.input_dim = None
         self.output_dim = None
+        self.idx_to_label = {}
+        self.label_to_idx = {}
+
+    def prepare_output(self, dataset, is_fit=False):
+        """Encode string labels to integer indices matching the model's class order."""
+        import pyarrow as pa
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+        if not self.label_to_idx:
+            return dataset
+
+        col_name = dataset.column_names[0]
+        labels = dataset[col_name]
+        encoded = [self.label_to_idx.get(label, label) for label in labels]
+        table = pa.table({col_name: encoded})
+        return DashAIDataset(table)
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
         """Train the MLP on the provided image dataset.
@@ -206,8 +264,14 @@ class MLPImageClassifier(BaseModel):
         )
         self.output_dim = image_dataset.num_classes()
 
+        self.idx_to_label = image_dataset.idx_to_label
+        self.label_to_idx = image_dataset.label_to_idx
+
         train_loader = torch.utils.data.DataLoader(
-            image_dataset, batch_size=32, shuffle=True
+            image_dataset,
+            batch_size=32,
+            shuffle=True,
+            collate_fn=self._collate_fn_with_labels,
         )
 
         self.model = _MLP(self.input_dim, self.output_dim, self.hidden_dims).to(
@@ -238,24 +302,29 @@ class MLPImageClassifier(BaseModel):
 
         Returns
         -------
-        list
-            List of predicted probabilities for each class.
+        list of lists
+            List of predicted probabilities for each class for each image.
         """
         image_col = list(x.features.keys())[0]
         hf_dataset = datasets.Dataset.from_dict({"image": x[image_col]})
         image_dataset = _ImageDataset(hf_dataset, has_labels=False)
         test_loader = torch.utils.data.DataLoader(
-            image_dataset, batch_size=32, shuffle=False
+            image_dataset,
+            batch_size=32,
+            shuffle=False,
+            collate_fn=self._collate_fn_no_labels,
         )
 
         self.model.eval()
-        probs_predicted = []
+        all_probs = []
         with torch.no_grad():
             for images in test_loader:
                 images = images.to(self.device)
-                output_probs = self.model(images)
-                probs_predicted += output_probs.tolist()
-        return probs_predicted
+                logits = self.model(images)
+                probs = torch.softmax(logits, dim=1)
+                all_probs += probs.cpu().tolist()
+
+        return all_probs
 
     def save(self, filename: str) -> None:
         """Save the model checkpoint to disk.
@@ -273,6 +342,8 @@ class MLPImageClassifier(BaseModel):
             "hidden_dims": self.hidden_dims,
             "input_dim": self.input_dim,
             "output_dim": self.output_dim,
+            "idx_to_label": self.idx_to_label,
+            "label_to_idx": self.label_to_idx,
         }
         torch.save(checkpoint, filename)
 
@@ -304,4 +375,6 @@ class MLPImageClassifier(BaseModel):
         instance.model.load_state_dict(checkpoint["model_state_dict"])
         instance.optimizer = optim.Adam(instance.model.parameters())
         instance.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        instance.idx_to_label = checkpoint.get("idx_to_label", {})
+        instance.label_to_idx = checkpoint.get("label_to_idx", {})
         return instance

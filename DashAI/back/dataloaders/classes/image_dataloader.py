@@ -113,4 +113,21 @@ class ImageDataLoader(BaseDataLoader):
 
         shutil.rmtree(prepared_path[0])
 
-        return to_dashai_dataset(dataset)
+        from DashAI.back.types.categorical import Categorical
+        from DashAI.back.types.dashai_image import DashAIImage
+
+        if isinstance(dataset, Dataset):
+            ds_for_types = dataset
+        else:
+            first_key = list(dataset.keys())[0]
+            ds_for_types = dataset[first_key]
+
+        types = {}
+        for col in ds_for_types.column_names:
+            if col == "image":
+                types[col] = DashAIImage()
+            else:
+                unique_vals = sorted({v for v in ds_for_types[col] if v is not None})
+                types[col] = Categorical(values=unique_vals, dtype="string")
+
+        return to_dashai_dataset(dataset, types=types)

@@ -438,26 +438,51 @@ class DashAIDataset(Dataset):
         completeness = 1 - (
             dataset_df.isna().sum().sum() / (len(dataset_df) * len(dataset_df.columns))
         )
-        duplicate_rows = int(dataset_df.duplicated().sum())
+
+        from DashAI.back.types.dashai_image import DashAIImage
+
+        hashable_cols = [
+            c
+            for c in dataset_df.columns
+            if not isinstance(self.types.get(c), DashAIImage)
+        ]
+        if hashable_cols:
+            duplicate_rows = int(dataset_df[hashable_cols].duplicated().sum())
+        else:
+            duplicate_rows = 0
         uniqueness = 1 - (duplicate_rows / len(dataset_df))
         data_quality_score = float((completeness * 0.7 + uniqueness * 0.3) * 100)
 
-        # Compute unique counts
-        nunique_series = dataset_df.nunique(dropna=False)
+        # Compute unique counts (excluding image columns which are unhashable)
+        nunique_series = (
+            dataset_df[hashable_cols].nunique(dropna=False) if hashable_cols else {}
+        )
 
         categorical_keys = self._get_categorical_columns()
-        categorical_cols = dataset_df[categorical_keys]
-        nunique_categorical = categorical_cols.nunique(dropna=False)
+        # Filter categorical columns to only hashable ones
+        hashable_categorical_keys = [k for k in categorical_keys if k in hashable_cols]
+        categorical_cols = (
+            dataset_df[hashable_categorical_keys]
+            if hashable_categorical_keys
+            else dataset_df[[]]
+        )
+        nunique_categorical = (
+            categorical_cols.nunique(dropna=False) if hashable_categorical_keys else {}
+        )
 
         return {
             "constant_columns": [
-                c for c in dataset_df.columns if int(nunique_series[c]) == 1
+                c
+                for c in hashable_cols
+                if c in nunique_series and int(nunique_series[c]) == 1
             ],
             "high_cardinality_columns": [
-                c for c in categorical_cols.columns if int(nunique_categorical[c]) > 100
+                c
+                for c in hashable_categorical_keys
+                if c in nunique_categorical and int(nunique_categorical[c]) > 100
             ],
             "possible_id_columns": [
-                c for c in dataset_df.columns if dataset_df[c].is_unique
+                c for c in hashable_cols if dataset_df[c].is_unique
             ],
             "nan_ratio_per_column": {
                 c: float(dataset_df[c].isna().mean()) for c in dataset_df.columns

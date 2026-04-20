@@ -176,6 +176,11 @@ class DatasetJob(BaseJob):
 
                     if "inferred_types" in params:
                         schema = params["inferred_types"]
+                    elif new_dataset.types:
+                        schema = {
+                            col: typ.to_string()
+                            for col, typ in new_dataset.types.items()
+                        }
                     else:
                         schema = infer_types(
                             new_dataset.to_pandas(), method="DashAIPtype"
