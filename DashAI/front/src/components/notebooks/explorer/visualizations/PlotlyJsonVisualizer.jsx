@@ -19,6 +19,15 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const plotRef = useRef(null);
   const fullscreenPlotRef = useRef(null);
 
+  // Increment revision whenever data reference changes to force Plotly.react
+  const revisionRef = useRef(0);
+  const prevDataRef = useRef(null);
+  if (prevDataRef.current !== data) {
+    revisionRef.current += 1;
+    prevDataRef.current = data;
+  }
+
+  // Parse JSON if data is a string
   const parsedData = typeof data === "string" ? JSON.parse(data) : data;
 
   const plotData = minimalist
@@ -269,6 +278,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
             id="plotly-graph"
             data={plotData.data}
             layout={plotLayout}
+            revision={revisionRef.current}
             style={{
               width: "100%",
               minHeight: minimalist ? MIN_HEIGHT_MINIMALIST : MIN_HEIGHT_NORMAL,

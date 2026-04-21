@@ -2,6 +2,7 @@ import React from "react";
 import {
   TextField,
   FormControlLabel,
+  MenuItem,
   Switch,
   Box,
   Divider,
@@ -25,7 +26,7 @@ export default function LegendForm({ layout, handleChange }) {
   const { t } = useTranslation(["datasets", "common"]);
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Visibility & Orientation */}
       <FormControlLabel
         control={
@@ -41,7 +42,8 @@ export default function LegendForm({ layout, handleChange }) {
       <TextField
         select
         label={t("datasets:label.legendPosition")}
-        variant="filled"
+        variant="outlined"
+        size="small"
         value={layout.legend?.orientation || "v"}
         onChange={(e) =>
           handleChange("legend", {
@@ -49,11 +51,10 @@ export default function LegendForm({ layout, handleChange }) {
             orientation: e.target.value,
           })
         }
-        slotProps={{ select: { native: true } }}
         fullWidth
       >
-        <option value="v">{t("common:vertical")}</option>
-        <option value="h">{t("common:horizontal")}</option>
+        <MenuItem value="v">{t("common:vertical")}</MenuItem>
+        <MenuItem value="h">{t("common:horizontal")}</MenuItem>
       </TextField>
 
       <Divider />
@@ -64,7 +65,8 @@ export default function LegendForm({ layout, handleChange }) {
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
           label={t("datasets:label.legendXPosition")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.legend?.x ?? 1}
           onChange={(e) =>
@@ -82,7 +84,8 @@ export default function LegendForm({ layout, handleChange }) {
         />
         <TextField
           label={t("datasets:label.legendYPosition")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           type="number"
           value={layout.legend?.y ?? 1}
           onChange={(e) =>
@@ -123,7 +126,8 @@ export default function LegendForm({ layout, handleChange }) {
 
       <TextField
         label={t("datasets:label.legendBorderWidth")}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.legend?.borderwidth ?? 0}
         onChange={(e) =>
@@ -135,6 +139,6 @@ export default function LegendForm({ layout, handleChange }) {
         fullWidth
         slotProps={{ htmlInput: { min: 0, max: 10 } }}
       />
-    </>
+    </Box>
   );
 }

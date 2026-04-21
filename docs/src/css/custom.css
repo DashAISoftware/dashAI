@@ -332,6 +332,10 @@ a:focus-visible {
   display: block;
 }
 
+.navbar-github-icon__label {
+  display: none;
+}
+
 /* Theme toggle button — bordered icon button */
 .navbar__items--right [class*="colorModeToggle"] button,
 .navbar__items--right [class*="toggle_"] button {
@@ -958,14 +962,56 @@ pre code {
   font-size: 0.8125rem;
   color: var(--dashai-text-secondary);
   line-height: 1.65;
-  margin: 0 0 12px;
+  margin: 0 0 24px;
 }
 
 .dashai-ack__logos {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   width: 100%;
-  height: auto;
+}
+
+@media (min-width: 768px) {
+  .dashai-ack__logos {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.dashai-ack__logo-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 110px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid var(--dashai-border);
+  border-radius: 10px;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.dashai-ack__logo-card:hover {
+  border-color: var(--dashai-border-active);
+  text-decoration: none;
+}
+
+.dashai-ack__logo {
   max-width: 100%;
+  max-height: 64px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.dashai-ack__logo--small {
+  max-height: 88px;
+}
+
+.dashai-ack__logo-card:hover .dashai-ack__logo {
+  opacity: 1;
 }
 
 /* kept for legacy compatibility */
@@ -1105,15 +1151,11 @@ pre code {
 }
 
 .dashai-ack__logos {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
   margin: 0 0 12px;
 }
 
 .dashai-ack p {
-  margin: 0;
+  margin: 0 0 12px;
 }
 
 /* ── Doc page header block ── */
@@ -1267,8 +1309,100 @@ tbody tr:hover {
   border-color: var(--dashai-border-active);
 }
 
+/* ── Mobile sidebar ── */
+.navbar-sidebar {
+  background: var(--ifm-navbar-background-color);
+  border-right: 1px solid var(--dashai-border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='dark'] .navbar-sidebar {
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+}
+
+.navbar-sidebar__brand {
+  height: var(--ifm-navbar-height);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--dashai-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navbar-sidebar__close svg {
+  color: var(--dashai-text-secondary);
+}
+
+.navbar-sidebar__close:hover svg {
+  color: var(--dashai-text-primary);
+}
+
+/* Nav items inside sidebar */
+.navbar-sidebar .menu__link {
+  color: var(--dashai-text-secondary);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.navbar-sidebar .menu__link:hover {
+  color: var(--dashai-text-primary);
+  background: var(--dashai-accent-glow);
+}
+
+.navbar-sidebar .menu__link--active {
+  color: var(--dashai-accent) !important;
+  font-weight: 600;
+}
+
+/* GitHub link row in sidebar */
+.navbar-sidebar .navbar-github-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: auto;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  width: 100%;
+  color: var(--dashai-text-secondary);
+}
+
+.navbar-sidebar .navbar-github-icon:hover {
+  color: var(--dashai-text-primary);
+  background: var(--dashai-accent-glow);
+  border: none;
+}
+
+.navbar-sidebar .navbar-github-icon__label {
+  display: inline;
+  font-size: 0.9rem;
+}
+
+/* Back button */
+.navbar-sidebar__back {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  text-align: left;
+  font-size: 0.875rem;
+  color: var(--dashai-text-secondary);
+  border-bottom: 1px solid var(--dashai-border);
+  transition: color 0.15s;
+}
+
+.navbar-sidebar__back:hover {
+  color: var(--dashai-accent);
+}
+
 /* ── Navbar mobile ── */
 @media (max-width: 996px) {
+  /* Remove backdrop-filter so navbar-sidebar (position:fixed child) isn't trapped in navbar's stacking context */
+  .navbar {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   /* Show only search bar on mobile — hide everything else */
   .navbar__items--right .navbar__link,
   .navbar-github-icon,
