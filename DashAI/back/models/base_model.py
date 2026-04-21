@@ -92,6 +92,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         level: LevelEnum,
         results: Dict[str, float],
         log_index: int = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         with di["session_factory"]() as db:
             # Initialize tracking dict if not exists
@@ -177,6 +179,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                         name=name,
                         value=score,
                         step=log_index,
+                        fold_index=fold_index,
+                        inner_fold_index=inner_fold_index,
                     )
                     for name, score in results.items()
                 ]
@@ -192,6 +196,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         log_index: int = None,
         x_data: "DashAIDataset" = None,
         y_data: "DashAIDataset" = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """
         Calculate and save metrics for a given data split and level.
@@ -243,7 +249,12 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         # Save to database
         self._save_metrics(
-            split=split, level=level, results=results, log_index=log_index
+            split=split,
+            level=level,
+            results=results,
+            log_index=log_index,
+            fold_index=fold_index,
+            inner_fold_index=inner_fold_index,
         )
 
     def prepare_dataset(

@@ -1,5 +1,6 @@
-import numpy as np
+from functools import partial
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Run
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
 from DashAI.back.models.model_factory import ModelFactory
@@ -16,53 +17,64 @@ class NestedCrossValidationStrategy(CrossValidationEvaluationStrategy):
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
         plot_paths = []
 
-        outer_score_mean, outer_score_std = self.nested_cv(
-            self.model, x, y, self.goal_metric
-        )
-
+        self.nested_cv(self.model, x, y)
         self._do_hpo(x, y, factory, run, db)
+
+        # Suponiendo que el último fold es el conjunto completo
+        for i in range(len(x) - 1):
+            x_fold = x[i]
+            y_fold = y[i]
+
+            self.model.x_data = x_fold
+            self.model.y_data = y_fold
+
+            self.model.train(x_fold["train"], y_fold["train"])
+
+            self.model.calculate_metrics(
+                split=SplitEnum.TRAIN, level=LevelEnum.FOLD, fold_index=i
+            )
+            self.model.calculate_metrics(
+                split=SplitEnum.TEST, level=LevelEnum.FOLD, fold_index=i
+            )
+
+        self.model.train(x[-1]["train"], y[-1]["train"])
 
         return self.model, plot_paths
 
-    def nested_cv(self, model, input_dataset, output_dataset, metric):
+    def nested_cv(self, model, input_dataset, output_dataset):
         # Implement the logic to evaluate the model using nested cross-validation
         # This will involve using self.inner_splitter
         # to create inner folds and evaluating the model on those folds
 
-        metric = metric["class"]
-
-        outer_scores = []
-
         for i in range(len(input_dataset) - 1):
-            x_train_outer = input_dataset[i]["train"]
-            y_train_outer = output_dataset[i]["train"]
-            x_test_outer = input_dataset[i]["test"]
-            y_test_outer = output_dataset[i]["test"]
+            x_outer = input_dataset[i]
+            y_outer = output_dataset[i]
 
             # Use inner_splitter to create inner folds
             inner_x, inner_y, _ = self.inner_splitter.split(
-                x_train_outer, y_train_outer
+                x_outer["train"], y_outer["train"]
             )
 
+            strategy_with_context = partial(self.evaluate, fold_index=i)
             # Evaluate the model on the inner folds
             # best model is the best model obtained from the inner fold in all trials
-            best_model, _ = self.optimizer.optimize(
+            self.model, _ = self.optimizer.optimize(
                 model,
                 inner_x,
                 inner_y,
                 self.run_optimizable_parameters,
                 self.goal_metric,
-                strategy=self.evaluate,
+                strategy=strategy_with_context,
             )
 
-            y_pred = best_model.predict(x_test_outer)
-            output_dataset_transformed = best_model.prepare_output(
-                y_test_outer, is_fit=False
+            self.model.x_data = x_outer
+            self.model.y_data = y_outer
+
+            self.model.train(x_outer["train"], y_outer["train"])
+
+            self.model.calculate_metrics(
+                split=SplitEnum.TEST, level=LevelEnum.OUTER_FOLD, fold_index=i
             )
-
-            score = metric.score(output_dataset_transformed, y_pred)
-
-            outer_scores.append(score)
-
-            # return the average and std of the scores obtained in the outer folds
-        return np.mean(outer_scores), np.std(outer_scores)
+            self.model.calculate_metrics(
+                split=SplitEnum.TRAIN, level=LevelEnum.OUTER_FOLD, fold_index=i
+            )

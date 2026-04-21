@@ -48,14 +48,19 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
             self.model.train(x_fold["train"], y_fold["train"])
 
-            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.FOLD)
-            self.model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.FOLD)
+            self.model.calculate_metrics(
+                split=SplitEnum.TRAIN, level=LevelEnum.FOLD, fold_index=i
+            )
+            self.model.calculate_metrics(
+                split=SplitEnum.TEST, level=LevelEnum.FOLD, fold_index=i
+            )
 
         self.model.train(x[-1]["train"], y[-1]["train"])
 
         return self.model, plot_paths
 
-    def evaluate(self, model, input_dataset, output_dataset, metric):
+    def evaluate(self, model, input_dataset, output_dataset, metric, **kwargs):
+        fold_index = kwargs.get("fold_index")
         folds_results = []
 
         # Suponiendo que el último fold es el conjunto completo
@@ -75,16 +80,29 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 y_fold["test"], is_fit=False
             )
 
-            # Calculate metric for train and validation data each trial
-            # Aqui podriamos guardar solo las metricas del mejor trial
-            # encontrado en lugar de todos.
-            model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL_FOLD)
-            model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.TRIAL_FOLD)
+            if fold_index is None:
+                model.calculate_metrics(
+                    split=SplitEnum.TRAIN, level=LevelEnum.TRIAL, fold_index=i
+                )
+                model.calculate_metrics(
+                    split=SplitEnum.TEST, level=LevelEnum.TRIAL, fold_index=i
+                )
+            else:
+                model.calculate_metrics(
+                    split=SplitEnum.TRAIN,
+                    level=LevelEnum.TRIAL,
+                    fold_index=fold_index,
+                    inner_fold_index=i,
+                )
+                model.calculate_metrics(
+                    split=SplitEnum.TEST,
+                    level=LevelEnum.TRIAL,
+                    fold_index=fold_index,
+                    inner_fold_index=i,
+                )
 
             score = metric.score(output_dataset_transformed, y_pred)
-
             folds_results.append(score)
 
-        return np.mean(
-            folds_results
-        )  # Retorna el promedio de las métricas de los folds
+        # Retorna el promedio de las métricas de los folds
+        return np.mean(folds_results)
