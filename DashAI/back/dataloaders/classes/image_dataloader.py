@@ -111,23 +111,61 @@ class ImageDataLoader(BaseDataLoader):
 
         dataset = dataset.map(convert_image_to_bytes)
 
+        # Convert ClassLabel columns (integers) back to their string names.
+        # HF ClassLabel silently casts map() outputs back to int, so we need
+        # to build a new dataset with the strings directly.
+        from datasets import ClassLabel as HFClassLabel
+        from datasets import Features, Value
+
+        if isinstance(dataset, Dataset):
+            ds_ref = dataset
+        else:
+            first_key = list(dataset.keys())[0]
+            ds_ref = dataset[first_key]
+
+        classlabel_cols = {}
+        for col in ds_ref.column_names:
+            feat = ds_ref.features.get(col)
+            if isinstance(feat, HFClassLabel):
+                classlabel_cols[col] = feat.names
+
+        if classlabel_cols:
+            new_features = Features(
+                {
+                    col: Value("string") if col in classlabel_cols else feat
+                    for col, feat in ds_ref.features.items()
+                }
+            )
+
+            def convert_labels(example):
+                for col, names in classlabel_cols.items():
+                    example[col] = names[example[col]]
+                return example
+
+            if isinstance(dataset, Dataset):
+                dataset = dataset.map(convert_labels, features=new_features)
+            else:
+                for split_name in list(dataset.keys()):
+                    dataset[split_name] = dataset[split_name].map(
+                        convert_labels, features=new_features
+                    )
+                ds_ref = dataset[first_key]
+
         shutil.rmtree(prepared_path[0])
 
         from DashAI.back.types.categorical import Categorical
         from DashAI.back.types.dashai_image import DashAIImage
 
-        if isinstance(dataset, Dataset):
-            ds_for_types = dataset
-        else:
-            first_key = list(dataset.keys())[0]
-            ds_for_types = dataset[first_key]
+        ds_for_types = dataset if isinstance(dataset, Dataset) else ds_ref
 
         types = {}
         for col in ds_for_types.column_names:
             if col == "image":
                 types[col] = DashAIImage()
             else:
-                unique_vals = sorted({v for v in ds_for_types[col] if v is not None})
+                unique_vals = sorted(
+                    {str(v) for v in ds_for_types[col] if v is not None}
+                )
                 types[col] = Categorical(values=unique_vals, dtype="string")
 
         return to_dashai_dataset(dataset, types=types)
