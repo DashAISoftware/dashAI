@@ -22,9 +22,9 @@ import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetPreviewStep from "./DatasetPreviewStep";
-import { loadPreview } from "../../api/datasets";
+import { previewWithTypes } from "../../api/datasets";
 
-const SKIP_PREVIEW_DATALOADERS = new Set(["ImageDataLoader"]);
+const SKIP_PREVIEW_DATALOADERS = new Set([]);
 
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },
@@ -71,7 +71,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       newDataset.params["dataloader"] = newDataset.dataloader;
       await enqueueDatasetRequest(newDataset.file, name, newDataset.url, {
         ...newDataset.params,
-        schema: columnsSpec,
+        inferred_types: columnsSpec,
       });
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
@@ -92,17 +92,14 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     formData.append("params", JSON.stringify(newDataset.params));
 
     try {
-      const preview = await loadPreview(formData);
+      const preview = await previewWithTypes(formData);
 
       setPreviewData(preview);
 
-      //Save the columns spec to be used in the preview table
+      const source = preview.inferred_types || preview.schema;
       const initialColumnsSpec = {};
-      Object.keys(preview.schema).forEach((columnName) => {
-        initialColumnsSpec[columnName] = {
-          type: preview.schema[columnName].type,
-          dtype: preview.schema[columnName].dtype,
-        };
+      Object.keys(source).forEach((columnName) => {
+        initialColumnsSpec[columnName] = { ...source[columnName] };
       });
 
       setColumnsSpec(initialColumnsSpec);

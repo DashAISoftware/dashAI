@@ -29,6 +29,49 @@ if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
 
 
+def _build_image_preview_sample(
+    extract_dir: str, image_extensions: set, max_rows: int = 5
+) -> list:
+    """Walk an extracted imagefolder directory and return sample rows."""
+    import os
+
+    samples = []
+    for root, _, files in os.walk(extract_dir):
+        for f in sorted(files):
+            ext = os.path.splitext(f)[1].lower()
+            if ext not in image_extensions:
+                continue
+            filepath = os.path.join(root, f)
+            label = os.path.basename(root)
+            try:
+                with open(filepath, "rb") as fh:
+                    thumb = _image_bytes_to_thumbnail_data_uri(fh.read())
+                samples.append({"image": thumb, "label": label})
+            except Exception:
+                continue
+            if len(samples) >= max_rows:
+                return samples
+    return samples
+
+
+def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> str:
+    """Convert raw image bytes to a small base64 data URI thumbnail."""
+    import base64
+    import io
+
+    from PIL import Image
+
+    try:
+        img = Image.open(io.BytesIO(img_bytes))
+        img.thumbnail((max_size, max_size))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        return f"data:image/png;base64,{b64}"
+    except Exception:
+        return "[Image]"
+
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -277,10 +320,28 @@ async def filter_dataset_file(
 
     start = page * page_size
     paged_table = table.slice(start, page_size)
-    rows = [
-        {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
-        for i in range(paged_table.num_rows)
-    ]
+
+    image_cols = {
+        col
+        for col in paged_table.schema.names
+        if pa.types.is_struct(paged_table.schema.field(col).type)
+    }
+
+    rows = []
+    for i in range(paged_table.num_rows):
+        row = {}
+        for col in paged_table.schema.names:
+            val = paged_table[col][i].as_py()
+            if col in image_cols and isinstance(val, dict):
+                img_bytes = val.get("bytes", b"")
+                row[col] = (
+                    _image_bytes_to_thumbnail_data_uri(img_bytes)
+                    if img_bytes
+                    else "[Image]"
+                )
+            else:
+                row[col] = val
+        rows.append(row)
 
     return JSONResponse(content={"rows": rows, "total": total})
 
@@ -1380,11 +1441,25 @@ async def get_dataset_file(
             slice_end = min(batch.num_rows, end - batch_start)
             sliced_batch = batch.slice(slice_start, slice_end - slice_start)
 
+            image_cols = {
+                col
+                for col in sliced_batch.schema.names
+                if pa.types.is_struct(sliced_batch.schema.field(col).type)
+            }
+
             for j in range(sliced_batch.num_rows):
-                row = {
-                    col: sliced_batch[col][j].as_py()
-                    for col in sliced_batch.schema.names
-                }
+                row = {}
+                for col in sliced_batch.schema.names:
+                    val = sliced_batch[col][j].as_py()
+                    if col in image_cols and isinstance(val, dict):
+                        img_bytes = val.get("bytes", b"")
+                        row[col] = (
+                            _image_bytes_to_thumbnail_data_uri(img_bytes)
+                            if img_bytes
+                            else "[Image]"
+                        )
+                    else:
+                        row[col] = val
                 rows.append(row)
                 rows_collected += 1
                 if rows_collected >= page_size:
@@ -1669,10 +1744,13 @@ async def preview_with_types(
                             break
 
                     if dataloader_name is None and has_images:
+                        sample_rows = _build_image_preview_sample(
+                            extract_dir, image_extensions, max_rows=5
+                        )
                         shutil.rmtree(extract_dir, ignore_errors=True)
                         os.unlink(tmp_file_path)
                         return {
-                            "sample": [],
+                            "sample": sample_rows,
                             "schema": {
                                 "image": {"type": "Image", "dtype": "string"},
                                 "label": {
@@ -1687,7 +1765,7 @@ async def preview_with_types(
                                     "dtype": "string",
                                 },
                             },
-                            "preview_row_count": 0,
+                            "preview_row_count": len(sample_rows),
                         }
 
                     if dataloader_name is None:

@@ -351,11 +351,38 @@ export default function DatasetTable({
       const colTypeRaw = columnTypes[key];
       const colType =
         typeof colTypeRaw === "string" ? colTypeRaw : (colTypeRaw?.type ?? "");
+      const isImage =
+        colType === "Image" ||
+        (data.length > 0 &&
+          typeof data[0][key] === "string" &&
+          data[0][key].startsWith("data:image"));
       const filterVariant = "text";
       return {
         accessorKey: key,
         header: key,
         filterVariant,
+        enableColumnFilter: !isImage,
+        enableSorting: !isImage,
+        ...(isImage && {
+          Cell: ({ cell }) => {
+            const val = cell.getValue();
+            if (typeof val === "string" && val.startsWith("data:image")) {
+              return (
+                <img
+                  src={val}
+                  alt="img"
+                  style={{
+                    maxHeight: 48,
+                    maxWidth: 48,
+                    objectFit: "contain",
+                  }}
+                />
+              );
+            }
+            return val;
+          },
+          size: 80,
+        }),
         filterFn: ["Integer", "Float"].includes(colType)
           ? "between"
           : "contains",
