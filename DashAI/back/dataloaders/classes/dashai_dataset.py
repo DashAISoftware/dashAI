@@ -247,7 +247,10 @@ class DashAIDataset(Dataset):
             for c in dataset_df.columns
             if not isinstance(self.types.get(c), DashAIImage)
         ]
-        if hashable_cols:
+        all_categorical = hashable_cols and all(
+            isinstance(self.types.get(c), Categorical) for c in hashable_cols
+        )
+        if hashable_cols and not all_categorical:
             duplicate_rows = int(dataset_df[hashable_cols].duplicated().sum())
         else:
             duplicate_rows = 0
@@ -446,7 +449,10 @@ class DashAIDataset(Dataset):
             for c in dataset_df.columns
             if not isinstance(self.types.get(c), DashAIImage)
         ]
-        if hashable_cols:
+        all_categorical = hashable_cols and all(
+            isinstance(self.types.get(c), Categorical) for c in hashable_cols
+        )
+        if hashable_cols and not all_categorical:
             duplicate_rows = int(dataset_df[hashable_cols].duplicated().sum())
         else:
             duplicate_rows = 0
