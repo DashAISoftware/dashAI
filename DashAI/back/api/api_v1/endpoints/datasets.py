@@ -31,15 +31,20 @@ if TYPE_CHECKING:
 
 def _build_image_preview_sample(
     extract_dir: str, image_extensions: set, max_rows: int = 5
-) -> list:
-    """Walk an extracted imagefolder directory and return sample rows."""
+) -> tuple:
+    """Walk an extracted imagefolder directory and return sample rows
+    and total count."""
     import os
 
     samples = []
+    total = 0
     for root, _, files in os.walk(extract_dir):
         for f in sorted(files):
             ext = os.path.splitext(f)[1].lower()
             if ext not in image_extensions:
+                continue
+            total += 1
+            if len(samples) >= max_rows:
                 continue
             filepath = os.path.join(root, f)
             label = os.path.basename(root)
@@ -49,9 +54,7 @@ def _build_image_preview_sample(
                 samples.append({"image": thumb, "label": label})
             except Exception:
                 continue
-            if len(samples) >= max_rows:
-                return samples
-    return samples
+    return samples, total
 
 
 def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> str:
@@ -1524,20 +1527,94 @@ async def export_dataset_as_csv(
 
             table = pa.Table.from_batches(batches)
 
-            # Convert to CSV
-            output = io.BytesIO()
-            csv.write_csv(table, output)
-            output.seek(0)
+            # Detect image columns (struct with binary bytes)
+            image_cols = [
+                col
+                for col in table.column_names
+                if pa.types.is_struct(table.schema.field(col).type)
+            ]
 
-            # Get dataset name from path for filename
             dataset_name = os.path.basename(path.rstrip("/"))
-            filename = f"{dataset_name}.csv"
 
-            return StreamingResponse(
-                io.BytesIO(output.getvalue()),
-                media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename={filename}"},
-            )
+            if image_cols:
+                # Export as ZIP: images as files + CSV with other columns
+                import zipfile
+
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                    # Save images and build filename references
+                    image_filenames = {col: [] for col in image_cols}
+                    num_rows = table.num_rows
+                    for col in image_cols:
+                        struct_col = table.column(col)
+                        for i in range(num_rows):
+                            struct_val = struct_col[i].as_py()
+                            if struct_val and struct_val.get("bytes"):
+                                img_bytes = struct_val["bytes"]
+                                fmt = (struct_val.get("format", "PNG") or "PNG").lower()
+                                ext = "jpg" if fmt == "jpeg" else fmt
+                                fname = f"images/{col}_{i}.{ext}"
+                                zf.writestr(fname, img_bytes)
+                                image_filenames[col].append(fname)
+                            else:
+                                image_filenames[col].append("")
+
+                    # Build CSV without image columns but with filename refs
+                    csv_table = table.drop(image_cols)
+                    for col in image_cols:
+                        csv_table = csv_table.append_column(
+                            f"{col}_file",
+                            pa.array(image_filenames[col], type=pa.string()),
+                        )
+
+                    # Drop any remaining binary columns
+                    remaining_drop = [
+                        c
+                        for c in csv_table.column_names
+                        if pa.types.is_binary(csv_table.schema.field(c).type)
+                        or pa.types.is_large_binary(csv_table.schema.field(c).type)
+                    ]
+                    if remaining_drop:
+                        csv_table = csv_table.drop(remaining_drop)
+
+                    csv_output = io.BytesIO()
+                    csv.write_csv(csv_table, csv_output)
+                    zf.writestr("data.csv", csv_output.getvalue())
+
+                zip_buffer.seek(0)
+                filename = f"{dataset_name}.zip"
+
+                return StreamingResponse(
+                    zip_buffer,
+                    media_type="application/zip",
+                    headers={
+                        "Content-Disposition": (f"attachment; filename={filename}")
+                    },
+                )
+            else:
+                # No image columns: export as plain CSV
+                drop_cols = [
+                    col
+                    for col in table.column_names
+                    if pa.types.is_binary(table.schema.field(col).type)
+                    or pa.types.is_large_binary(table.schema.field(col).type)
+                ]
+                if drop_cols:
+                    table = table.drop(drop_cols)
+
+                output = io.BytesIO()
+                csv.write_csv(table, output)
+                output.seek(0)
+
+                filename = f"{dataset_name}.csv"
+
+                return StreamingResponse(
+                    io.BytesIO(output.getvalue()),
+                    media_type="text/csv",
+                    headers={
+                        "Content-Disposition": (f"attachment; filename={filename}")
+                    },
+                )
 
     except FileNotFoundError as e:
         raise HTTPException(
@@ -1626,19 +1703,88 @@ async def export_dataset_csv_by_id(
 
                 table = pa.Table.from_batches(batches)
 
-                # Convert to CSV
-                output = io.BytesIO()
-                csv.write_csv(table, output)
-                output.seek(0)
+                image_cols = [
+                    col
+                    for col in table.column_names
+                    if pa.types.is_struct(table.schema.field(col).type)
+                ]
 
-                # Use dataset name for filename
-                filename = f"{dataset.name}.csv"
+                if image_cols:
+                    import zipfile
 
-                return StreamingResponse(
-                    io.BytesIO(output.getvalue()),
-                    media_type="text/csv",
-                    headers={"Content-Disposition": f"attachment; filename={filename}"},
-                )
+                    zip_buffer = io.BytesIO()
+                    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                        image_filenames = {col: [] for col in image_cols}
+                        num_rows = table.num_rows
+                        for col in image_cols:
+                            struct_col = table.column(col)
+                            for i in range(num_rows):
+                                struct_val = struct_col[i].as_py()
+                                if struct_val and struct_val.get("bytes"):
+                                    img_bytes = struct_val["bytes"]
+                                    fmt = (
+                                        struct_val.get("format", "PNG") or "PNG"
+                                    ).lower()
+                                    ext = "jpg" if fmt == "jpeg" else fmt
+                                    fname = f"images/{col}_{i}.{ext}"
+                                    zf.writestr(fname, img_bytes)
+                                    image_filenames[col].append(fname)
+                                else:
+                                    image_filenames[col].append("")
+
+                        csv_table = table.drop(image_cols)
+                        for col in image_cols:
+                            csv_table = csv_table.append_column(
+                                f"{col}_file",
+                                pa.array(image_filenames[col], type=pa.string()),
+                            )
+
+                        remaining_drop = [
+                            c
+                            for c in csv_table.column_names
+                            if pa.types.is_binary(csv_table.schema.field(c).type)
+                            or pa.types.is_large_binary(csv_table.schema.field(c).type)
+                        ]
+                        if remaining_drop:
+                            csv_table = csv_table.drop(remaining_drop)
+
+                        csv_output = io.BytesIO()
+                        csv.write_csv(csv_table, csv_output)
+                        zf.writestr("data.csv", csv_output.getvalue())
+
+                    zip_buffer.seek(0)
+                    filename = f"{dataset.name}.zip"
+
+                    return StreamingResponse(
+                        zip_buffer,
+                        media_type="application/zip",
+                        headers={
+                            "Content-Disposition": (f"attachment; filename={filename}")
+                        },
+                    )
+                else:
+                    drop_cols = [
+                        col
+                        for col in table.column_names
+                        if pa.types.is_binary(table.schema.field(col).type)
+                        or pa.types.is_large_binary(table.schema.field(col).type)
+                    ]
+                    if drop_cols:
+                        table = table.drop(drop_cols)
+
+                    output = io.BytesIO()
+                    csv.write_csv(table, output)
+                    output.seek(0)
+
+                    filename = f"{dataset.name}.csv"
+
+                    return StreamingResponse(
+                        io.BytesIO(output.getvalue()),
+                        media_type="text/csv",
+                        headers={
+                            "Content-Disposition": (f"attachment; filename={filename}")
+                        },
+                    )
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -1744,7 +1890,7 @@ async def preview_with_types(
                             break
 
                     if dataloader_name is None and has_images:
-                        sample_rows = _build_image_preview_sample(
+                        sample_rows, total_images = _build_image_preview_sample(
                             extract_dir, image_extensions, max_rows=5
                         )
                         shutil.rmtree(extract_dir, ignore_errors=True)
@@ -1766,7 +1912,8 @@ async def preview_with_types(
                                     "encoder": "one_hot",
                                 },
                             },
-                            "preview_row_count": len(sample_rows),
+                            "preview_row_count": total_images,
+                            "types_inferred": False,
                         }
 
                     if dataloader_name is None:
@@ -1867,6 +2014,7 @@ async def preview_with_types(
                 "schema": arrow_schema,
                 "inferred_types": inferred_types,
                 "preview_row_count": len(loaded_dataset),
+                "types_inferred": True,
             }
 
         finally:

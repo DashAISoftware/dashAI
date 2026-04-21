@@ -323,6 +323,7 @@
     "shapeIndicators": "Indicadores de Forma",
     "showGrid": "Mostrar Cuadrícula del Eje {{axis}}",
     "showingRowsInference": "Mostrando {{sampleLength}} de {{previewRowCount}} filas analizadas para inferencia de tipo.",
+    "showingRowsPreview": "Mostrando {{sampleLength}} de {{previewRowCount}} filas.",
     "showLegend": "Mostrar Leyenda",
     "showZeroLine": "Mostrar Línea Cero del Eje {{axis}}",
     "skewness": "Asimetría",

@@ -249,13 +249,17 @@ export default function PredictionModal({ isOpen, onClose, run }) {
 
   const handleDownload = async (selectedPrediction) => {
     const data = await exportDatasetCsvByPath(selectedPrediction.results_path);
-    const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+    const isZip = data.type === "application/zip";
+    const blob = new Blob([data], {
+      type: isZip ? "application/zip" : "text/csv;charset=utf-8;",
+    });
+    const ext = isZip ? "zip" : "csv";
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute(
       "download",
-      `${"prediction-" + selectedPrediction.created}.csv`,
+      `${"prediction-" + selectedPrediction.created}.${ext}`,
     );
     document.body.appendChild(link);
     link.click();

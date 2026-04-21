@@ -358,6 +358,12 @@ export default function PreviewDatasetTable({
     },
     muiTablePaperProps: { elevation: 0 },
     paginationDisplayMode: "pages",
+    enableColumnFilters: false,
+    enableGlobalFilter: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
+    enableTopToolbar: false,
   });
 
   return (

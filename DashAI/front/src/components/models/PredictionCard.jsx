@@ -116,7 +116,11 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   const handleDownload = async () => {
     try {
       const data = await exportDatasetCsvByPath(prediction.results_path);
-      const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+      const isZip = data.type === "application/zip";
+      const blob = new Blob([data], {
+        type: isZip ? "application/zip" : "text/csv;charset=utf-8;",
+      });
+      const ext = isZip ? "zip" : "csv";
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -124,7 +128,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
         "download",
         `prediction-${prediction.id}-${
           new Date(prediction.created).toISOString().split("T")[0]
-        }.csv`,
+        }.${ext}`,
       );
       document.body.appendChild(link);
       link.click();
