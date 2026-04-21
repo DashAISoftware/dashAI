@@ -185,7 +185,7 @@ class MLPImageClassifier(BaseModel):
         ),
     )
     COLOR: str = "#E91E63"
-    ICON: str = "Image"
+    ICON: str = "ImageSearch"
 
     @staticmethod
     def _collate_fn_with_labels(batch):
