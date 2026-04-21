@@ -1763,6 +1763,7 @@ async def preview_with_types(
                                 "label": {
                                     "type": "Categorical",
                                     "dtype": "string",
+                                    "encoder": "one_hot",
                                 },
                             },
                             "preview_row_count": len(sample_rows),
