@@ -105,11 +105,12 @@ class _ImageDataset(torch.utils.data.Dataset):
         from PIL import Image
 
         if isinstance(img_data, dict) and "bytes" in img_data:
-            # Image stored as bytes
             buffer = io.BytesIO(img_data["bytes"])
             return Image.open(buffer)
+        elif isinstance(img_data, bytes):
+            buffer = io.BytesIO(img_data)
+            return Image.open(buffer)
         elif hasattr(img_data, "format"):
-            # Already a PIL.Image
             return img_data
         else:
             raise TypeError(f"Unsupported image data type: {type(img_data)}")

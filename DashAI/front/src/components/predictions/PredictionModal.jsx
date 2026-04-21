@@ -290,7 +290,16 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     if (predictionMode === "dataset") {
       return selectedDataset !== null;
     }
-    return manualRows && manualRows.length > 0;
+    if (!manualRows || manualRows.length === 0) return false;
+    const imageColumns = Object.keys(types).filter(
+      (col) => types[col]?.type === "Image",
+    );
+    if (imageColumns.length > 0) {
+      return manualRows.every((row) =>
+        imageColumns.every((col) => row[col] instanceof File),
+      );
+    }
+    return true;
   };
 
   if (!isOpen || !run) return null;

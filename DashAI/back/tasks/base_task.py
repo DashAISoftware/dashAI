@@ -394,12 +394,26 @@ class BaseTask:
                 if isinstance(value, UploadFile):
                     file_bytes = value.file.read()
                     data, detected_type = get_bytes_with_type_filetype(file_bytes)
-
-                    if detected_type != column_spec.get("type"):
+                    expected_type = column_spec.get("type", "")
+                    if detected_type.lower() != expected_type.lower():
                         raise TypeError(
                             f"Row {row_idx}, column '{col_name}': "
                             f"File type '{detected_type}' doesn't match "
-                            f"expected type '{column_spec.get('type')}'"
+                            f"expected type '{expected_type}'"
+                        )
+                    row[col_name] = data
+
+                # File saved to disk by job queue
+                elif isinstance(value, dict) and "__image_file__" in value:
+                    with open(value["__image_file__"], "rb") as f:
+                        file_bytes = f.read()
+                    data, detected_type = get_bytes_with_type_filetype(file_bytes)
+                    expected_type = column_spec.get("type", "")
+                    if detected_type.lower() != expected_type.lower():
+                        raise TypeError(
+                            f"Row {row_idx}, column '{col_name}': "
+                            f"File type '{detected_type}' doesn't match "
+                            f"expected type '{expected_type}'"
                         )
                     row[col_name] = data
 

@@ -328,6 +328,8 @@ async def filter_dataset_file(
         col
         for col in paged_table.schema.names
         if pa.types.is_struct(paged_table.schema.field(col).type)
+        or pa.types.is_large_binary(paged_table.schema.field(col).type)
+        or pa.types.is_binary(paged_table.schema.field(col).type)
     }
 
     rows = []
@@ -335,8 +337,13 @@ async def filter_dataset_file(
         row = {}
         for col in paged_table.schema.names:
             val = paged_table[col][i].as_py()
-            if col in image_cols and isinstance(val, dict):
-                img_bytes = val.get("bytes", b"")
+            if col in image_cols:
+                if isinstance(val, dict):
+                    img_bytes = val.get("bytes", b"")
+                elif isinstance(val, bytes):
+                    img_bytes = val
+                else:
+                    img_bytes = b""
                 row[col] = (
                     _image_bytes_to_thumbnail_data_uri(img_bytes)
                     if img_bytes
@@ -1448,14 +1455,21 @@ async def get_dataset_file(
                 col
                 for col in sliced_batch.schema.names
                 if pa.types.is_struct(sliced_batch.schema.field(col).type)
+                or pa.types.is_large_binary(sliced_batch.schema.field(col).type)
+                or pa.types.is_binary(sliced_batch.schema.field(col).type)
             }
 
             for j in range(sliced_batch.num_rows):
                 row = {}
                 for col in sliced_batch.schema.names:
                     val = sliced_batch[col][j].as_py()
-                    if col in image_cols and isinstance(val, dict):
-                        img_bytes = val.get("bytes", b"")
+                    if col in image_cols:
+                        if isinstance(val, dict):
+                            img_bytes = val.get("bytes", b"")
+                        elif isinstance(val, bytes):
+                            img_bytes = val
+                        else:
+                            img_bytes = b""
                         row[col] = (
                             _image_bytes_to_thumbnail_data_uri(img_bytes)
                             if img_bytes
@@ -1527,11 +1541,13 @@ async def export_dataset_as_csv(
 
             table = pa.Table.from_batches(batches)
 
-            # Detect image columns (struct with binary bytes)
+            # Detect image columns (struct or raw binary)
             image_cols = [
                 col
                 for col in table.column_names
                 if pa.types.is_struct(table.schema.field(col).type)
+                or pa.types.is_binary(table.schema.field(col).type)
+                or pa.types.is_large_binary(table.schema.field(col).type)
             ]
 
             dataset_name = os.path.basename(path.rstrip("/"))
@@ -1546,13 +1562,20 @@ async def export_dataset_as_csv(
                     image_filenames = {col: [] for col in image_cols}
                     num_rows = table.num_rows
                     for col in image_cols:
-                        struct_col = table.column(col)
+                        arr_col = table.column(col)
                         for i in range(num_rows):
-                            struct_val = struct_col[i].as_py()
-                            if struct_val and struct_val.get("bytes"):
-                                img_bytes = struct_val["bytes"]
-                                fmt = (struct_val.get("format", "PNG") or "PNG").lower()
+                            val = arr_col[i].as_py()
+                            if isinstance(val, dict) and val.get("bytes"):
+                                img_bytes = val["bytes"]
+                                fmt = (val.get("format", "PNG") or "PNG").lower()
                                 ext = "jpg" if fmt == "jpeg" else fmt
+                            elif isinstance(val, bytes) and val:
+                                img_bytes = val
+                                ext = "png"
+                            else:
+                                img_bytes = None
+                                ext = "png"
+                            if img_bytes:
                                 fname = f"images/{col}_{i}.{ext}"
                                 zf.writestr(fname, img_bytes)
                                 image_filenames[col].append(fname)
