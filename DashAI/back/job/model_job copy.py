@@ -300,6 +300,8 @@ class ModelJob(BaseJob):
         try:
             # Get splits data from model session
             splits_data = json.loads(model_session.splits)
+            if run.split_indexes:
+                splits_data["splitted_indexes"] = json.loads(run.split_indexes)
         except Exception as e:
             log.exception(e)
             raise JobError(

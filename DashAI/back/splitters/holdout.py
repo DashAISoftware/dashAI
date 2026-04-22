@@ -8,34 +8,45 @@ from .base_splitter import BaseSplitter
 class HoldoutSplitter(BaseSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
-        self.train_size = splits_data.get("train_size", 0.8)
-        self.test_size = splits_data.get("test_size", 0.1)
-        self.val_size = splits_data.get("val_size", 0.1)
+        # actualmente están como "train", "test" y "val"
+        self.train_size = splits_data.get("train_size", None)
+        self.test_size = splits_data.get("test_size", None)
+        self.val_size = splits_data.get("val_size", None)
+        self.splitted_indexes = splits_data.get("splitted_indexes", {})
         self.stratify = splits_data.get("stratify", False)
 
     def split(self, x, y) -> Tuple[object, object, List[List]]:
-        total_rows = len(x)
+        # Si algún tamaño es None, se asume que se asignaron indices manualmente
+        if all(idx is None for idx in [self.train_size, self.test_size, self.val_size]):
+            train_indices = self.splitted_indexes.get("train_indexes", [])
+            test_indices = self.splitted_indexes.get("test_indexes", [])
+            val_indices = self.splitted_indexes.get("val_indexes", [])
 
-        labels = None
-        if self.stratify:
-            labels = self.prepare_y(y)
+            indices = self.splitted_indexes
 
-        train_indices, test_indices, val_indices = self.split_indexes(
-            total_rows=total_rows,
-            train_size=self.train_size,
-            test_size=self.test_size,
-            val_size=self.val_size,
-            shuffle=self.shuffle,
-            stratify=self.stratify,
-            labels=labels,
-            seed=self.random_state,
-        )
+        else:
+            total_rows = len(x)
 
-        indices = {
-            "train_indexes": train_indices,
-            "test_indexes": test_indices,
-            "val_indexes": val_indices,
-        }
+            labels = None
+            if self.stratify:
+                labels = self.prepare_y(y)
+
+            train_indices, test_indices, val_indices = self.split_indexes(
+                total_rows=total_rows,
+                train_size=self.train_size,
+                test_size=self.test_size,
+                val_size=self.val_size,
+                shuffle=self.shuffle,
+                stratify=self.stratify,
+                labels=labels,
+                seed=self.random_state,
+            )
+
+            indices = {
+                "train_indexes": train_indices,
+                "test_indexes": test_indices,
+                "val_indexes": val_indices,
+            }
 
         x_prepared = split_dataset(x, train_indices, test_indices, val_indices)
         y_prepared = split_dataset(y, train_indices, test_indices, val_indices)
