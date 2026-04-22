@@ -17,7 +17,7 @@ class RAGTask(BaseGenerativeTask):
         "outputs_cardinality": 2,
     }
 
-    DISPLAY_NAME: str = "Retreival-Augmented Generation (RAG) Task"
+    DISPLAY_NAME: str = "Retrieval-Augmented Generation (RAG) Task"
     DESCRIPTION: str = "This task generates a text response based on documents provided and chat."
 
     USE_HISTORY: bool = True
