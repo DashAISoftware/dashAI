@@ -29,14 +29,15 @@ if TYPE_CHECKING:
 
 
 class NanRemoverSchema(BaseSchema):
-    pass
+    """Schema for NanRemover (no configurable hyperparameters)."""
 
 
 class NanRemover(BasicPreprocessingConverter, BaseConverter):
-    """
-    A converter that removes rows with NaN values from the dataset.
-    Only the columns selected in the scope are used to determine which
-    rows to drop; other columns are deleted entirely.
+    """Remove rows that contain NaN (or null-like) values in the scoped columns.
+
+    Only the columns selected in scope are scanned for nulls; rows with nulls in
+    those columns are dropped from the dataset. String representations of null such
+    as ``"None"``, ``"nan"``, ``"N/A"`` are also treated as missing.
     """
 
     SCHEMA = NanRemoverSchema
@@ -59,28 +60,54 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     IMAGE_PREVIEW = "nan_remover.png"
 
     metadata = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [],
+        "allowed_dtypes": [],
     }
 
     def __init__(self):
+        """Initialise the NaN remover and set up state.
+
+        The columns and types to process are populated during :meth:`fit`.
+        """
         super().__init__()
         self.columns = []
         self.column_types = {}
 
     def fit(self, x: "DashAIDataset", y: "DashAIDataset" = None) -> "NanRemover":
-        """
-        Fit the NaN remover.
+        """Record the scoped column names and their types for use in ``transform``.
 
-        The columns to be affected are determined by the columns passed to x,
-        which are selected by scope in converter_job.
+        Parameters
+        ----------
+        x : DashAIDataset
+            The scoped dataset whose column names and types are stored.
+        y : DashAIDataset, optional
+            Ignored. Defaults to None.
+
+        Returns
+        -------
+        NanRemover
+            The fitted converter instance (self).
         """
         self.columns = x.column_names
         self.column_types = x.types.copy()
         return self
 
     def _is_null_value(self, value) -> bool:
-        """Check if a value should be treated as null."""
+        """Check whether a value should be treated as null.
+
+        Returns ``True`` for Python ``None``, ``float('nan')``, or any string
+        representation found in the ``NULL_VALUES`` sentinel set.
+
+        Parameters
+        ----------
+        value : object
+            The value to test.
+
+        Returns
+        -------
+        bool
+            ``True`` if ``value`` is considered null, ``False`` otherwise.
+        """
         import numpy as np
 
         if value is None:
@@ -93,9 +120,24 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     def transform(
         self, x: "DashAIDataset", y: "DashAIDataset" = None
     ) -> "DashAIDataset":
-        """
-        Remove the nan rows from the columns selected in the scope.
-        Also handles string representations of null values like "None", "nan", etc.
+        """Drop all rows containing null or null-like values in the scoped columns.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The dataset to clean.
+        y : DashAIDataset, optional
+            Ignored. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataset
+            A new dataset with null-containing rows removed.
+
+        Raises
+        ------
+        ValueError
+            If any fitted column is not present in ``x``.
         """
         import numpy as np
 
@@ -137,15 +179,28 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         return to_dashai_dataset(cleaned_dataset, types=preserved_types)
 
     def changes_row_count(self) -> bool:
-        """
-        Indicates that the converter changes the number of rows in the dataset.
+        """Return ``True`` because this converter removes rows with null values.
+
+        Returns
+        -------
+        bool
+            Always ``True``.
         """
         return True
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        This converter removes rows with NaN, doesn't change column types.
-        Return the original type if available.
+        """Return the preserved type for a column, or a Text placeholder.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Name of the column to look up. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            The original type stored during ``fit`` if available; otherwise a
+            Text type backed by ``pyarrow.string()``.
         """
         import pyarrow as pa
 

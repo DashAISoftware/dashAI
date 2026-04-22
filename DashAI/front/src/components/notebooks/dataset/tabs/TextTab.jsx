@@ -2,7 +2,6 @@ import React from "react";
 import {
   Box,
   Typography,
-  Card,
   CardContent,
   Chip,
   Alert,
@@ -22,6 +21,7 @@ import {
 } from "recharts";
 import { StatBox } from "../StatBox";
 import { MetricRow } from "../MetricRow";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 export const TextTab = ({ textStats }) => {
@@ -58,7 +58,13 @@ export const TextTab = ({ textStats }) => {
           : null;
 
         return (
-          <Card key={column} sx={{ borderRadius: 2 }}>
+          <ExportableCard
+            key={column}
+            filename={`text_${column}`}
+            exportData={{ column, ...stats }}
+            data-column-card={column}
+            sx={{ borderRadius: 2 }}
+          >
             <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
               {/* Title */}
               <Box display="flex" alignItems="center" mb={2}>
@@ -134,8 +140,10 @@ export const TextTab = ({ textStats }) => {
                 <Box flex="1 1 300px" minWidth="250px">
                   <Typography
                     variant="subtitle2"
-                    color="text.secondary"
+                    fontWeight="bold"
+                    color="text.primary"
                     gutterBottom
+                    sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
                   >
                     {t("datasets:label.lengthMetrics")}
                   </Typography>
@@ -206,7 +214,7 @@ export const TextTab = ({ textStats }) => {
                 </Box>
               </Box>
             </CardContent>
-          </Card>
+          </ExportableCard>
         );
       })}
     </Box>

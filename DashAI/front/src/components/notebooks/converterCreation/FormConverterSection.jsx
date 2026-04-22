@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-import { saveConverterList } from "../../../api/converter";
+import { saveConverter } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
 import ParameterStepConverter from "./ParameterStepConverter";
@@ -39,7 +39,7 @@ export default function FormConverterSection({
       },
     };
 
-    saveConverterList(data)
+    saveConverter(data)
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
@@ -79,7 +79,7 @@ export default function FormConverterSection({
                   console.error("Converter job failed:", result);
                   enqueueSnackbar(
                     t("datasets:error.converterFailedWithInfo", {
-                      error: result.error || t("common:unknownError"),
+                      error: result.error_msg || t("common:unknownError"),
                     }),
                     { variant: "error" },
                   );

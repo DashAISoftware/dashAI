@@ -13,8 +13,12 @@ from DashAI.back.types.categorical import Categorical
 
 
 class PartialDependenceSchema(BaseSchema):
-    """Partial Dependence of a feature shows the average prediction of a machine
-    learning model for each possible value of the feature.
+    """Schema for PartialDependence explainer hyperparameters.
+
+    Configures the grid resolution (number of evenly-spaced evaluation points per
+    feature) and the fraction of training samples used to compute the marginal
+    averages. Higher grid resolution gives smoother curves at the cost of more
+    model evaluations.
     """
 
     grid_resolution: schema_field(
@@ -63,9 +67,29 @@ class PartialDependenceSchema(BaseSchema):
 
 
 class PartialDependence(BaseGlobalExplainer):
-    """Partial Dependence is a model-agnostic explainability method that
-    shows the average prediction of a machine learning model for each
-    possible value of a feature.
+    """Global explainer that shows how the model's average prediction
+    changes with each feature.
+
+    A Partial Dependence Plot (PDP) marginalises the model output over the
+    distribution of all other features, leaving a curve (or surface) that
+    shows the average effect of the target feature in isolation. For a feature
+    `x_j`, the partial dependence is:
+
+    ::
+
+        f̄(x_j) = E_(x_-j) [ f(x_j, x_-j) ] ≈ (1/n) Σ_i f(x_j, x_-j,i)
+
+
+    PDPs assume feature independence; when features are correlated, the
+    marginalisation extrapolates into regions with low data density. Individual
+    Conditional Expectation (ICE) plots (one line per sample) can be overlaid
+    to detect heterogeneous effects hidden by the average.
+
+    References
+    ----------
+    - [1] Friedman, J.H. (2001). "Greedy function approximation: A gradient
+           boosting machine." Annals of Statistics, 29(5), 1189-1232.
+    - [2] https://scikit-learn.org/stable/modules/partial_dependence.html
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]

@@ -1,115 +1,103 @@
-# flake8: noqa: ERA001
+from pathlib import Path
+
+import torch
+
+from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
+    OpusMtEnESTransformer,
+)
 
 
-# @pytest.fixture(scope="module", name="translation_dataset")
-# def translation_dataset_fixture():
-#     test_dataset_path = "tests/back/models/translationEngSpaDatasetSmall.json"
-#     dataloader_test = JSONDataLoader()
-
-#     datasetdict = dataloader_test.load_data(
-#         filepath_or_buffer=test_dataset_path,
-#         temp_path="tests/back/models",
-#         params={"data_key": "data"},
-#     )
-
-#     datasetdict = to_dashai_dataset(datasetdict)
-
-#     train_idx, test_idx, val_idx = split_indexes(
-#         total_rows=len(datasetdict),
-#         train_size=0.6,
-#         test_size=0.2,
-#         val_size=0.2,
-#     )
-
-#     splited_dataset = split_dataset(
-#         datasetdict,
-#         train_indexes=train_idx,
-#         test_indexes=test_idx,
-#         val_indexes=val_idx,
-#     )
-
-#     x, y = select_columns(
-#         splited_dataset,
-#         ["text"],
-#         ["class"],
-#     )
-#     x = split_dataset(x)
-#     y = split_dataset(y)
-
-#     return (x["train"], y["train"])
+class DummyTokenizer:
+    def __call__(self, text, truncation=True, padding="max_length", max_length=512):
+        del text, truncation, padding, max_length
+        return {"input_ids": [1, 2, 3], "attention_mask": [1, 1, 1]}
 
 
-# @pytest.fixture()
-# def sample_model() -> OpusMtEnESTransformer:
-#     model = OpusMtEnESTransformer(
-#         num_train_epochs=1,
-#         batch_size=4,
-#         learning_rate=2e-5,
-#         device="gpu",
-#         weight_decay=0.01,
-#     )
-#     return model
+class DummySeq2SeqModel:
+    def __init__(self):
+        self.device = torch.device("cpu")
+
+    def generate(self, **kwargs):
+        del kwargs
+        return torch.tensor([[1, 2, 3]])
+
+    def save_pretrained(self, save_directory):
+        save_path = Path(save_directory)
+        save_path.mkdir(parents=True, exist_ok=True)
+        (save_path / "weights.bin").write_bytes(b"weights")
 
 
-# @pytest.fixture(autouse=True)
-# def _clear_cuda_cache():
-#     yield
-#     if torch.cuda.is_available():
-#         torch.cuda.empty_cache()
+class DummyConfig:
+    def __init__(self):
+        self.custom_params = {}
+
+    def save_pretrained(self, save_directory):
+        save_path = Path(save_directory)
+        save_path.mkdir(parents=True, exist_ok=True)
+        (save_path / "config.json").write_text("{}", encoding="utf-8")
 
 
-# def test_model_initialization(sample_model):
-#     assert sample_model.model is not None
-#     assert sample_model.tokenizer is not None
-#     assert sample_model.model_name == "Helsinki-NLP/opus-mt-en-es"
-#     assert sample_model.fitted is False
+def _patch_transformers(monkeypatch):
+    from transformers import AutoConfig, AutoModelForSeq2SeqLM, AutoTokenizer
+
+    monkeypatch.setattr(
+        AutoTokenizer,
+        "from_pretrained",
+        staticmethod(lambda *args, **kwargs: DummyTokenizer()),
+    )
+    monkeypatch.setattr(
+        AutoModelForSeq2SeqLM,
+        "from_pretrained",
+        staticmethod(lambda *args, **kwargs: DummySeq2SeqModel()),
+    )
+    monkeypatch.setattr(
+        AutoConfig,
+        "from_pretrained",
+        staticmethod(lambda *args, **kwargs: DummyConfig()),
+    )
 
 
-# def test_tokenize_data(sample_model, translation_dataset):
-#     x_train, y_train = translation_dataset
-#     tokenized_dataset = sample_model.tokenize_data(x_train, y_train)
+def test_model_initialization(monkeypatch):
+    _patch_transformers(monkeypatch)
 
-#     assert "input_ids" in tokenized_dataset.features
-#     assert "attention_mask" in tokenized_dataset.features
-#     assert "labels" in tokenized_dataset.features
-#     assert len(tokenized_dataset) == len(x_train)
+    model = OpusMtEnESTransformer(
+        num_train_epochs=1,
+        batch_size=2,
+        learning_rate=2e-5,
+        device="CPU",
+        weight_decay=0.01,
+        log_train_every_n_epochs=None,
+        log_train_every_n_steps=None,
+        log_validation_every_n_epochs=None,
+        log_validation_every_n_steps=None,
+    )
 
-
-# def test_fit(sample_model, translation_dataset):
-#     x_train, y_train = translation_dataset
-#     sample_model.fit(x_train, y_train)
-#     assert sample_model.fitted is True
-
-
-# def test_predict(sample_model, translation_dataset):
-#     x_train, y_train = translation_dataset
-
-#     sample_model.fit(x_train, y_train)
-#     translations = sample_model.predict(x_train)
-
-#     assert isinstance(translations, list)
-#     assert len(translations) == len(x_train)
-#     assert all(isinstance(translation, str) for translation in translations)
+    assert model.model is not None
+    assert model.tokenizer is not None
+    assert model.model_name == "Helsinki-NLP/opus-mt-en-es"
+    assert model.fitted is False
 
 
-# def test_save_and_load(sample_model, translation_dataset, tmp_path):
-#     x_train, y_train = translation_dataset
-#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def test_save_replaces_file_path_with_directory(monkeypatch, tmp_path):
+    _patch_transformers(monkeypatch)
 
-#     sample_model.fit(x_train, y_train)
+    model = OpusMtEnESTransformer(
+        num_train_epochs=1,
+        batch_size=2,
+        learning_rate=2e-5,
+        device="CPU",
+        weight_decay=0.01,
+        log_train_every_n_epochs=None,
+        log_train_every_n_steps=None,
+        log_validation_every_n_epochs=None,
+        log_validation_every_n_steps=None,
+    )
 
-#     save_path = os.path.join(tmp_path, "opus_mt_model")
-#     sample_model.save(save_path)
+    save_path = tmp_path / "run_path"
+    save_path.write_bytes(b"\x80\x04stale")
+    assert save_path.is_file()
 
-#     loaded_model = OpusMtEnESTransformer.load(save_path)
-#     assert loaded_model.fitted, "Model should be fitted after loading"
+    model.save(save_path)
 
-#     sample_model.model.to(device)
-#     loaded_model.model.to(device)
-#     for param_original, param_loaded in zip(
-#         sample_model.model.parameters(), loaded_model.model.parameters()
-#     ):
-#         assert torch.equal(
-#             param_original, param_loaded
-#         ), """The loaded model should have the same weights
-#             and parameters as the original model"""
+    assert save_path.is_dir()
+    assert (save_path / "weights.bin").exists()

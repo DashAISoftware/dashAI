@@ -13,10 +13,12 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class AdditiveChi2SamplerSchema(BaseSchema):
+    """Schema for AdditiveChi2Sampler hyperparameters."""
+
     sample_steps: schema_field(
         int_field(ge=1),
         2,
@@ -38,7 +40,12 @@ class AdditiveChi2SamplerSchema(BaseSchema):
 class AdditiveChi2Sampler(
     PolynomialKernelConverter, SklearnWrapper, AdditiveChi2SamplerOperation
 ):
-    """Scikit-learn's AdditiveChi2Sampler wrapper for DashAI."""
+    """Approximate the additive chi-squared kernel using Fourier sampling.
+
+    Maps features to a higher-dimensional space that approximates the additive
+    chi-squared kernel, enabling efficient linear classification. Wraps
+    scikit-learn's ``AdditiveChi2Sampler``.
+    """
 
     SCHEMA = AdditiveChi2SamplerSchema
     DESCRIPTION = MultilingualString(
@@ -54,8 +61,21 @@ class AdditiveChi2Sampler(
     DISPLAY_NAME = MultilingualString(en="Additive Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
 
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

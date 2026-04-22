@@ -24,7 +24,14 @@ class CategoricalEncodingStrategy(str, Enum):
 
 
 class SklearnLikeModel(BaseModel):
-    """Abstract class to define the way to save sklearn like models."""
+    """Abstract base class for scikit-learn-compatible DashAI models.
+
+    Provides ``save`` / ``load`` via joblib, categorical encoding helpers
+    (label or one-hot), and the ``prepare_dataset`` / ``prepare_output``
+    pipeline expected by the DashAI training loop. Concrete subclasses
+    (classifiers and regressors) inherit this mixin and supply ``train`` and
+    ``predict`` implementations backed by scikit-learn estimators.
+    """
 
     CATEGORICAL_ENCODING: CategoricalEncodingStrategy = (
         CategoricalEncodingStrategy.LABEL
@@ -39,14 +46,31 @@ class SklearnLikeModel(BaseModel):
         self.output_encodings = {}
 
     def save(self, filename: str) -> None:
-        """Save the model in the specified path."""
+        """Serialise the model to disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Destination file path where the model will be written.
+        """
         import joblib
 
         joblib.dump(self, filename)
 
     @staticmethod
     def load(filename: str) -> None:
-        """Load the model of the specified path."""
+        """Deserialise a model from disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file previously written by :meth:`save`.
+
+        Returns
+        -------
+        SklearnLikeModel
+            The loaded model instance.
+        """
         import joblib
 
         model = joblib.load(filename)
@@ -55,6 +79,27 @@ class SklearnLikeModel(BaseModel):
     # --- Methods for process the data for sklearn models ---
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
+        """Train the sklearn model on the provided dataset.
+
+        Applies ``prepare_dataset`` and ``prepare_output`` to encode categorical
+        features and targets before delegating to the scikit-learn ``fit`` method.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            The input features for training.
+        y_train : DashAIDataset
+            The target labels for training.
+        x_validation : DashAIDataset, optional
+            Validation input features (unused in sklearn models). Defaults to None.
+        y_validation : DashAIDataset, optional
+            Validation target labels (unused in sklearn models). Defaults to None.
+
+        Returns
+        -------
+        BaseModel
+            The fitted scikit-learn estimator (self).
+        """
         x_processed = self.prepare_dataset(x_train, is_fit=True).to_pandas()
         y_processed = self.prepare_output(y_train, is_fit=True).to_pandas()
         return super().fit(x_processed, y_processed)
@@ -72,6 +117,8 @@ class SklearnLikeModel(BaseModel):
         np.ndarray
             Predicted values.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         if isinstance(x, DashAIDataset):
             x = self.prepare_dataset(x, is_fit=False).to_pandas()
         return super().predict(x)
@@ -116,9 +163,9 @@ class SklearnLikeModel(BaseModel):
     ) -> "DashAIDataset":
         """Apply the model transformations to the dataset.
 
-        Uses the encoding strategy specified by CATEGORICAL_ENCODING:
-        - LABEL: Converts categories to integers
-        - ONE_HOT: Creates binary columns
+        Respects per-column encoder preference stored in each Categorical
+        column's `encoder` field. Falls back to model's CATEGORICAL_ENCODING
+        for columns with unrecognized encoder values.
 
         Parameters
         ----------
@@ -134,20 +181,52 @@ class SklearnLikeModel(BaseModel):
             The prepared dataset ready to be converted to
             an accepted format in the model.
         """
-        has_categorical = any(
-            isinstance(t, Categorical) for t in dataset.types.values()
-        )
+        import logging
+
+        _logger = logging.getLogger(__name__)
+
+        types = dataset.types
+        has_categorical = any(isinstance(t, Categorical) for t in types.values())
 
         if not has_categorical:
             return dataset
 
-        if self.CATEGORICAL_ENCODING == CategoricalEncodingStrategy.ONE_HOT:
-            return self._prepare_one_hot(dataset, is_fit)
-        else:
-            return self._prepare_label_encoded(dataset, is_fit)
+        one_hot_cols = [
+            c
+            for c, t in types.items()
+            if isinstance(t, Categorical) and t.encoder == "one_hot"
+        ]
+        label_cols = [
+            c
+            for c, t in types.items()
+            if isinstance(t, Categorical) and t.encoder == "label"
+        ]
+        default_cols = [
+            c
+            for c, t in types.items()
+            if isinstance(t, Categorical) and t.encoder not in ("one_hot", "label")
+        ]
+        if default_cols:
+            _logger.warning(
+                "Columns %s have unrecognized encoder preference. "
+                "Falling back to model strategy %s.",
+                default_cols,
+                self.CATEGORICAL_ENCODING,
+            )
+            if self.CATEGORICAL_ENCODING == CategoricalEncodingStrategy.ONE_HOT:
+                one_hot_cols.extend(default_cols)
+            else:
+                label_cols.extend(default_cols)
+
+        prepared = dataset
+        if label_cols:
+            prepared = self._prepare_label_encoded(prepared, is_fit, columns=label_cols)
+        if one_hot_cols:
+            prepared = self._prepare_one_hot(prepared, is_fit, columns=one_hot_cols)
+        return prepared
 
     def _prepare_label_encoded(
-        self, dataset: "DashAIDataset", is_fit: bool
+        self, dataset: "DashAIDataset", is_fit: bool, columns: list = None
     ) -> "DashAIDataset":
         """Prepare dataset using label encoding for categorical columns.
 
@@ -160,6 +239,8 @@ class SklearnLikeModel(BaseModel):
             The dataset to be transformed.
         is_fit : bool
             If True, fit the encoder. If False, use existing encodings.
+        columns : list, optional
+            If given, only label-encode the specified columns.
 
         Returns
         -------
@@ -174,16 +255,21 @@ class SklearnLikeModel(BaseModel):
         prepared = dataset
 
         if is_fit:
-            prepared, encodings = categorical_label_encoder(dataset)
+            prepared, encodings = categorical_label_encoder(dataset, columns=columns)
             self.encodings.update(encodings)
         else:
             if self.encodings:
-                prepared = apply_categorical_label_encoder(dataset, self.encodings)
+                relevant_encodings = {
+                    k: v
+                    for k, v in self.encodings.items()
+                    if columns is None or k in columns
+                }
+                prepared = apply_categorical_label_encoder(dataset, relevant_encodings)
 
         return prepared
 
     def _prepare_one_hot(
-        self, dataset: "DashAIDataset", is_fit: bool
+        self, dataset: "DashAIDataset", is_fit: bool, columns: list = None
     ) -> "DashAIDataset":
         """Prepare dataset using one-hot encoding for categorical columns.
 
@@ -193,6 +279,8 @@ class SklearnLikeModel(BaseModel):
             The dataset to be transformed.
         is_fit : bool
             If True, fit the encoder. If False, use existing encoder.
+        columns : list, optional
+            If given, only one-hot encode the specified columns.
 
         Returns
         -------
@@ -205,7 +293,9 @@ class SklearnLikeModel(BaseModel):
         )
 
         if is_fit:
-            prepared, encoder, cat_cols = categorical_one_hot_encoder(dataset)
+            prepared, encoder, cat_cols = categorical_one_hot_encoder(
+                dataset, columns=columns
+            )
             self.one_hot_encoder = encoder
             self.categorical_columns = cat_cols
         else:

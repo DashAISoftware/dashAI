@@ -16,7 +16,15 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class StableDiffusionXLSchema(BaseSchema):
-    """Schema for Stable Diffusion XL image generation."""
+    """Configuration schema for Stable Diffusion XL text-to-image generation.
+
+    Configures the checkpoint variant (``model_name``), prompt conditioning
+    (``negative_prompt``), denoising schedule (``num_inference_steps``),
+    classifier-free guidance strength (``guidance_scale``), output dimensions
+    (``width``, ``height``), reproducibility (``seed``), hardware target
+    (``device``), and batch size (``num_images_per_prompt``) for
+    ``StableDiffusionXLModel``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -204,7 +212,25 @@ class StableDiffusionXLSchema(BaseSchema):
 
 
 class StableDiffusionXLModel(TextToImageGenerationTaskModel):
-    """Wrapper for Stable Diffusion XL models from Stability AI."""
+    """Latent diffusion model for high-resolution 1024 px text-to-image generation.
+
+    Wraps Stable Diffusion XL (SDXL) checkpoints. SDXL scales the standard
+    SD architecture with a larger U-Net backbone and a two-text-encoder
+    conditioning stack (OpenCLIP-ViT/G + CLIP-ViT/L), enabling significantly
+    better prompt following and photorealism at 1024 x 1024 px compared to
+    SD 1.x/2.x.
+
+    Two checkpoints are supported: the official
+    ``stabilityai/stable-diffusion-xl-base-1.0`` and
+    ``SG161222/RealVisXL_V4.0``, a popular community fine-tune optimised for
+    realistic portraits and photography.
+
+    References
+    ----------
+    - [1] Podell et al., "SDXL: Improving Latent Diffusion Models for
+           High-Resolution Image Synthesis", 2023. https://arxiv.org/abs/2307.01952
+    - [2] https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
+    """
 
     SCHEMA = StableDiffusionXLSchema
     COLOR: str = "#0d47a1"

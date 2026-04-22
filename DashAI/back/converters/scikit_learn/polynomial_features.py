@@ -11,10 +11,18 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class PolynomialFeaturesSchema(BaseSchema):
+    """Schema for configuring the PolynomialFeatures converter.
+
+    Wraps ``sklearn.preprocessing.PolynomialFeatures`` and exposes the
+    polynomial degree, interaction-only flag, bias column inclusion, and
+    output array memory order as schema fields validated before being
+    forwarded to the underlying scikit-learn estimator.
+    """
+
     degree: schema_field(
         int_field(ge=1),
         2,
@@ -71,7 +79,32 @@ class PolynomialFeaturesSchema(BaseSchema):
 class PolynomialFeatures(
     PolynomialKernelConverter, SklearnWrapper, PolynomialFeaturesOperation
 ):
-    """Scikit-learn's PolynomialFeatures wrapper for DashAI."""
+    """Generate polynomial and interaction features up to a specified degree.
+
+    Given *d* input features, this converter produces all monomials of the
+    form ``x_1^p_1 * x_2^p_2 * … * x_d^p_d`` where ``p_1 + … + p_d <= degree``
+    (and each ``p_i >= 0``). For example, with two input features ``[a, b]``
+    and ``degree=2``, the output is ``[1, a, b, a², ab, b²]``.
+
+    When ``interaction_only=True`` only cross-terms are retained (no squared
+    or higher pure-power terms), which is useful when features are already on
+    a meaningful scale and self-interactions are not informative.
+
+    Setting ``include_bias=True`` (the default) prepends a column of ones,
+    acting as an intercept term for linear models that lack an explicit bias.
+
+    The ``order`` parameter controls whether the dense output array is stored
+    in C (row-major) or Fortran (column-major) order. ``"F"`` order can speed
+    up the transformation itself but may slow downstream estimators.
+
+    Output columns are typed as ``Float64`` in DashAI.
+
+    Wraps ``sklearn.preprocessing.PolynomialFeatures``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
+    """
 
     SCHEMA = PolynomialFeaturesSchema
     DESCRIPTION = MultilingualString(
@@ -91,8 +124,22 @@ class PolynomialFeatures(
     )
     IMAGE_PREVIEW = "polynomial_features.png"
 
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for polynomial features."""
+        """Return ``Float64`` as the output type for all polynomial feature columns.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the output column. Not used — all columns receive the
+            same ``Float64`` type. Default ``None``.
+
+        Returns
+        -------
+        Float
+            A DashAI ``Float`` type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

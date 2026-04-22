@@ -1,7 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
-import { DataGrid } from "@mui/x-data-grid";
-import { Grid, Paper, TextField, Typography } from "@mui/material";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { Box, Grid, Paper, Typography } from "@mui/material";
 import DeleteItemModal from "../custom//DeleteItemModal";
 import EditModelDialog from "./EditModelDialog";
 import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
@@ -17,7 +23,11 @@ import { useTranslation } from "react-i18next";
 function ModelsTable({ newExp, setNewExp }) {
   const [selectedMetric, setSelectedMetric] = useState({});
   const [models, setModels] = useState([]);
-  const { t } = useTranslation(["experiments", "common"]);
+  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -87,79 +97,88 @@ function ModelsTable({ newExp, setNewExp }) {
     handleAddMetric(name, id);
   };
 
-  const columns = [
-    {
-      field: "name",
-      headerName: t("common:name"),
-      flex: 1,
-      editable: false,
-    },
-    {
-      field: "model",
-      headerName: t("common:model"),
-      flex: 1,
-      editable: false,
-      valueGetter: (value) => {
-        const model = models.find((model) => model.name === value);
-        return model && model.display_name ? model.display_name : value;
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: t("common:name"),
       },
-    },
-    {
-      field: "actions",
-      headerName: t("common:actions"),
-      type: "actions",
-      flex: 0.5,
-      getActions: (params) => {
-        return [
-          <EditModelDialog
-            key="edit-component"
-            modelToConfigure={params.row.model}
-            updateParameters={handleUpdateParameters(params.id)}
-            paramsInitialValues={params.row.params}
-          />,
-          <DeleteItemModal
-            key="delete-component"
-            deleteFromTable={() => handleDeleteModel(params.id)}
-          />,
-        ];
+      {
+        accessorKey: "model",
+        header: t("common:model"),
+        accessorFn: (row) => {
+          const model = models.find((m) => m.name === row.model);
+          return model && model.display_name ? model.display_name : row.model;
+        },
       },
-    },
-    {
-      field: "metric",
-      headerName: t("experiments:label.optimizerMetric"),
-      flex: 1,
-      renderCell: (params) => {
-        // Check if this specific row has optimizers
-        const rowHasOptimizers = checkIfHaveOptimazers(params.row);
+      {
+        id: "actions",
+        header: t("common:actions"),
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <EditModelDialog
+              modelToConfigure={row.original.model}
+              updateParameters={handleUpdateParameters(row.original.id)}
+              paramsInitialValues={row.original.params}
+            />
+            <DeleteItemModal
+              deleteFromTable={() => handleDeleteModel(row.original.id)}
+            />
+          </Box>
+        ),
+      },
+      {
+        id: "metric",
+        header: t("experiments:label.optimizerMetric"),
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => {
+          // Check if this specific row has optimizers
+          const rowHasOptimizers = checkIfHaveOptimazers(row.original);
 
-        // Only render the metric selector if the row has optimizers
-        if (!rowHasOptimizers) {
+          // Only render the metric selector if the row has optimizers
+          if (!rowHasOptimizers) {
+            return (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  fontStyle: "italic",
+                }}
+              >
+                {t("experiments:label.noOptimizersNoMetric")}
+              </Typography>
+            );
+          }
+
           return (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                fontStyle: "italic",
-              }}
-            >
-              {t("experiments:label.noOptimizersNoMetric")}
-            </Typography>
+            <ModelsTableSelectMetric
+              taskName={newExp.task_name}
+              metricName={row.original.goal_metric}
+              handleSelectedMetric={(metricName) =>
+                handleSelectedMetric(metricName, row.original.id)
+              }
+              required
+            />
           );
-        }
-
-        return (
-          <ModelsTableSelectMetric
-            taskName={newExp.task_name}
-            metricName={params.row.goal_metric}
-            handleSelectedMetric={(metricName) =>
-              handleSelectedMetric(metricName, params.row.id)
-            }
-            required
-          />
-        );
+        },
       },
-    },
-  ];
+    ],
+    [models, newExp, t],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: newExp.runs,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: { density: "compact" },
+    enableRowSelection: false,
+  });
 
   return (
     <Paper sx={{ py: 1, px: 2 }}>
@@ -177,28 +196,7 @@ function ModelsTable({ newExp, setNewExp }) {
       </Grid>
 
       {/* Models Table */}
-      <DataGrid
-        rows={newExp.runs}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-        }}
-        sx={{
-          "& .MuiDataGrid-cell": {
-            display: "flex",
-            alignItems: "center",
-          },
-        }}
-        pageSizeOptions={[5]}
-        disableRowSelectionOnClick
-        density="compact"
-        autoHeight
-        hideFooterSelectedRowCount
-      />
+      <MaterialReactTable table={table} />
     </Paper>
   );
 }

@@ -26,7 +26,9 @@ if TYPE_CHECKING:
 
 class OpusMtEnESTransformerSchema(BaseSchema):
     """opus-mt-en-es is a transformer pre-trained model that allows translation of
-    texts from English to Spanish.
+    texts from English to Spanish. The implementation is based on the Helsinki-NLP
+    opus-mt-en-es checkpoint, which uses the MarianMT architecture and was trained
+    on parallel corpora from the OPUS collection.
     """
 
     num_train_epochs: schema_field(
@@ -169,9 +171,21 @@ class OpusMtEnESTransformerSchema(BaseSchema):
 
 
 class OpusMtEnESTransformer(TranslationModel):
-    """Pre-trained transformer for english-spanish translation.
+    """Pre-trained transformer for English-to-Spanish translation.
 
-    This model fine-tunes the pre-trained model opus-mt-en-es.
+    This model fine-tunes the Helsinki-NLP ``opus-mt-en-es`` checkpoint, which is
+    based on the MarianMT sequence-to-sequence architecture. The base model was
+    trained on parallel English-Spanish corpora from the OPUS collection and supports
+    direct translation without intermediate pivot languages.
+
+    Fine-tuning is performed with the HuggingFace ``Seq2SeqTrainer`` using the AdamW
+    optimizer. Training and validation metrics are logged at configurable epoch and
+    step intervals via a custom ``MetricsCallback``.
+
+    References
+    ----------
+    - [1] https://huggingface.co/Helsinki-NLP/opus-mt-en-es
+    - [2] https://opus.nlpl.eu/
     """
 
     SCHEMA = OpusMtEnESTransformerSchema
@@ -190,7 +204,20 @@ class OpusMtEnESTransformer(TranslationModel):
         """Initialize the transformer.
 
         This process includes the instantiation of the pre-trained model and the
-        associated tokenizer.
+        associated tokenizer. When ``model`` is ``None`` the Helsinki-NLP
+        ``opus-mt-en-es`` checkpoint is downloaded from HuggingFace; when a
+        model object is supplied the tokenizer is reused without re-downloading.
+
+        Parameters
+        ----------
+        model : transformers.PreTrainedModel or None, optional
+            An already-loaded HuggingFace translation model to reuse. If
+            ``None``, the pre-trained ``Helsinki-NLP/opus-mt-en-es`` checkpoint
+            is downloaded and initialised. Default ``None``.
+        **kwargs : dict
+            Additional hyperparameters forwarded to ``validate_and_transform``
+            and used to configure training arguments (e.g. ``batch_size``,
+            ``epochs``, ``learning_rate``).
         """
         kwargs = self.validate_and_transform(kwargs)
         from transformers import AutoTokenizer
@@ -221,19 +248,26 @@ class OpusMtEnESTransformer(TranslationModel):
     def tokenize_data(
         self, x: "DashAIDataset", y: Optional["DashAIDataset"] = None
     ) -> "DashAIDataset":
-        """Tokenize input and output.
+        """Tokenize input and optional target datasets for seq2seq training.
+
+        Each sample is tokenized with truncation and max-length padding to 512
+        tokens. When ``y`` is provided, the target tokens are stored under the
+        ``labels`` key so the ``Seq2SeqTrainer`` can compute the loss directly.
 
         Parameters
         ----------
-        x: DashAIDataset
-            Dataset with the input data to preprocess.
-        y: Optional DashAIDataset
-            Dataset with the output data to preprocess.
+        x : DashAIDataset
+            Source-language dataset. Only the first column is used.
+        y : DashAIDataset, optional
+            Target-language dataset. When provided, tokenized targets are added
+            as ``labels``. When ``None``, only ``input_ids`` and
+            ``attention_mask`` are returned (inference mode).
 
         Returns
         -------
-        Dataset
-            Dataset with the processed data.
+        DashAIDataset
+            Tokenized dataset with keys ``input_ids``, ``attention_mask``, and
+            optionally ``labels``.
         """
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -277,6 +311,24 @@ class OpusMtEnESTransformer(TranslationModel):
         x_validation: "DashAIDataset" = None,
         y_validation: "DashAIDataset" = None,
     ) -> "OpusMtEnESTransformer":
+        """Fine-tune the opus-mt-en-es model on English-Spanish translation data.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            Input English text features for training.
+        y_train : DashAIDataset
+            Target Spanish translation labels for training.
+        x_validation : DashAIDataset, optional
+            Input English text features for validation. Defaults to None.
+        y_validation : DashAIDataset, optional
+            Target Spanish translation labels for validation. Defaults to None.
+
+        Returns
+        -------
+        OpusMtEnESTransformer
+            The fine-tuned model instance.
+        """
         from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 
         dataset = self.tokenize_data(x_train, y_train)
@@ -323,17 +375,23 @@ class OpusMtEnESTransformer(TranslationModel):
         return self
 
     def predict(self, x_pred: "DashAIDataset") -> List:
-        """Predict with the fine-tuned model.
+        """Translate English source texts to Spanish.
 
         Parameters
         ----------
-        x_pred : Dataset
-            Dataset with text data.
+        x_pred : DashAIDataset
+            Source-language dataset. Only the first column is used.
 
         Returns
         -------
-        List
-            list of translations made by the model.
+        list of str
+            One translated string per input sample, in the same order as
+            ``x_pred``.
+
+        Raises
+        ------
+        sklearn.exceptions.NotFittedError
+            If the model has not been fine-tuned yet (``fitted`` is ``False``).
         """
         if not self.fitted:
             raise NotFittedError(
@@ -362,18 +420,23 @@ class OpusMtEnESTransformer(TranslationModel):
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
-        """Apply the model transformations to the dataset.
+        """Return the dataset unchanged.
+
+        No pre-processing transformations are required for this model. The
+        method exists for compatibility with the DashAI model interface.
 
         Parameters
         ----------
         dataset : DashAIDataset
-            The dataset to be transformed.
+            The dataset to be prepared.
+        is_fit : bool, optional
+            Whether the call is made during fitting. Unused here. Default
+            ``False``.
 
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to
-            an accepted format in the model.
+            The original dataset, unmodified.
         """
         try:
             # Useless in this case, but we keep it for consistency with other models.
@@ -382,10 +445,26 @@ class OpusMtEnESTransformer(TranslationModel):
             print(f"Couldn't apply transformations to the dataset for the model: {e}")
 
     def save(self, filename: Union[str, "Path"]) -> None:
-        self.model.save_pretrained(filename)
+        """Store the fine-tuned model and its configuration to disk.
+
+        Saves the model weights via ``save_pretrained`` and embeds the
+        hyperparameters (epochs, batch size, learning rate, etc.) into the
+        Hugging Face config so they can be restored by :meth:`load`.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path where the model files will be written.
+        """
+        save_dir = Path(filename)
+        if save_dir.exists() and save_dir.is_file():
+            save_dir.unlink()
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        self.model.save_pretrained(save_dir)
         from transformers import AutoConfig
 
-        config = AutoConfig.from_pretrained(filename)
+        config = AutoConfig.from_pretrained(save_dir)
 
         config.custom_params = {
             "num_train_epochs": self.training_args.get("num_train_epochs"),
@@ -396,10 +475,27 @@ class OpusMtEnESTransformer(TranslationModel):
             "fitted": self.fitted,
         }
 
-        config.save_pretrained(filename)
+        config.save_pretrained(save_dir)
 
     @classmethod
     def load(cls, filename: Union[str, "Path"]):
+        """Restore an OpusMtEnESTransformer instance from disk.
+
+        Reads the Hugging Face config to recover the custom hyperparameters
+        saved by :meth:`save`, then reconstructs the seq2seq model and wraps
+        it in a new :class:`OpusMtEnESTransformer` instance.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Directory path from which the model files will be read.
+
+        Returns
+        -------
+        OpusMtEnESTransformer
+            The restored model instance with ``fitted`` set to the persisted
+            value.
+        """
         from transformers import AutoConfig, AutoModelForSeq2SeqLM
 
         model = AutoModelForSeq2SeqLM.from_pretrained(filename)

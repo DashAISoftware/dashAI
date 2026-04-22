@@ -3,7 +3,7 @@ import { IConverter } from "../types/converter";
 
 const converterEndpoint = "/v1/converter";
 
-export const saveConverterList = async (
+export const saveConverter = async (
   converters: object,
 ): Promise<IConverter> => {
   const data = converters;
@@ -12,7 +12,7 @@ export const saveConverterList = async (
   return response.data;
 };
 
-export const getDatasetConverterList = async (
+export const getDatasetConverter = async (
   datasetId: number,
 ): Promise<IConverter> => {
   const response = await api.get<IConverter>(

@@ -8,6 +8,24 @@ import {
   stopJobPolling as _stopJobPolling,
 } from "../utils/jobPoller";
 
+function parseTimestamp(ts) {
+  if (!ts) return new Date(0);
+  return ts.includes("T") ? new Date(ts) : new Date(ts.replace(" ", "T") + "Z");
+}
+
+function mergeJobsById(previousJobs, changedJobs) {
+  const byId = new Map(previousJobs.map((job) => [job.id, job]));
+
+  changedJobs.forEach((job) => {
+    const prev = byId.get(job.id) || {};
+    byId.set(job.id, { ...prev, ...job });
+  });
+
+  return Array.from(byId.values()).sort(
+    (a, b) => parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
+  );
+}
+
 /**
  * Hook to subscribe to all job updates
  * @param {function} callback - Function called with updated jobs
@@ -71,12 +89,17 @@ export function useJobManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchAllJobs = useCallback(() => {
     setLoading(true);
     getJobs()
       .then((data) => {
         if (Array.isArray(data)) {
-          setJobs(data);
+          setJobs(
+            [...data].sort(
+              (a, b) =>
+                parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
+            ),
+          );
         }
         setLoading(false);
       })
@@ -85,10 +108,15 @@ export function useJobManager() {
         setError("Failed to load jobs");
         setLoading(false);
       });
+  }, []);
+
+  useEffect(() => {
+    fetchAllJobs();
 
     const unsubscribe = subscribeJobs((updatedJobs) => {
       if (Array.isArray(updatedJobs)) {
-        setJobs(updatedJobs);
+        // `updatedJobs` is incremental (changes since cursor), so merge it.
+        setJobs((previousJobs) => mergeJobsById(previousJobs, updatedJobs));
         setLoading(false);
       }
     });
@@ -97,9 +125,8 @@ export function useJobManager() {
   }, []);
 
   const refresh = useCallback(() => {
-    setLoading(true);
-    forceRefreshNow();
-  }, []);
+    fetchAllJobs();
+  }, [fetchAllJobs]);
 
   return { jobs, loading, error, refresh };
 }

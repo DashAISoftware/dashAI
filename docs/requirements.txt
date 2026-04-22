@@ -1,5 +1,0 @@
-sphinx_rtd_theme
-sphinx-rtd-dark-mode
-sphinx>=6.1.3
-docutils>=0.19
-sphinx-design

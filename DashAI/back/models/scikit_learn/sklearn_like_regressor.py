@@ -9,7 +9,14 @@ if TYPE_CHECKING:
 
 
 class SklearnLikeRegressor(SklearnLikeModel):
-    """Class for handling sklearn-like regressor models."""
+    """Abstract mixin for scikit-learn-style regression models.
+
+    Extends ``SklearnLikeModel`` with a ``predict`` method that converts a
+    ``DashAIDataset`` into a NumPy array, calls the wrapped sklearn estimator's
+    ``predict``, and returns the continuous output values.  Concrete regressor
+    wrappers (e.g. ``LinearRegression``, ``RandomForestRegressor``) inherit
+    from this class and from a ``BaseSchema`` subclass.
+    """
 
     def predict(self, x_pred: "DashAIDataset") -> "ndarray":
         """Make a prediction with the model.
@@ -25,6 +32,8 @@ class SklearnLikeRegressor(SklearnLikeModel):
             Array with the predicted target values for x_pred
         """
         import pandas as pd
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if isinstance(x_pred, DashAIDataset):
             try:

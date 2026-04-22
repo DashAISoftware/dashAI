@@ -18,6 +18,8 @@ export default function CollapsibleList({
   title = t("common:availableItems", "Available Items"),
   Icon = FolderIcon,
   getItemDescription,
+  getDeleteConfirmationContent,
+  getDeleteConfirmationWarning,
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
@@ -78,8 +80,7 @@ export default function CollapsibleList({
 
         <Typography
           sx={{
-            fontSize: "0.95rem",
-            fontWeight: 600,
+            ...theme.typography.cardTitle,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -119,7 +120,7 @@ export default function CollapsibleList({
         )}
       </Box>
 
-      {/* Lista colapsable */}
+      {/* Collapsible list */}
       <Collapse
         in={open}
         timeout="auto"
@@ -153,6 +154,16 @@ export default function CollapsibleList({
                 onDelete={() => onItemDelete(ds.id)}
                 onEdit={(name) => onItemEdit(ds.id, name)}
                 onInfo={onItemInfo ? () => onItemInfo(ds.id) : undefined}
+                deleteConfirmationContent={
+                  getDeleteConfirmationContent
+                    ? getDeleteConfirmationContent(ds)
+                    : undefined
+                }
+                deleteConfirmationWarning={
+                  getDeleteConfirmationWarning
+                    ? getDeleteConfirmationWarning(ds)
+                    : undefined
+                }
               />
             ))
           ) : (

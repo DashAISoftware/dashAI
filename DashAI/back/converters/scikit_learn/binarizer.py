@@ -2,14 +2,16 @@ from sklearn.preprocessing import Binarizer as BinarizerOperation
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
+from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Integer
+from DashAI.back.types.value_types import Float, Integer
 
 
 class BinarizerSchema(BaseSchema):
+    """Schema for Binarizer hyperparameters."""
+
     threshold: schema_field(
         float_field(),
         0.0,
@@ -24,19 +26,14 @@ class BinarizerSchema(BaseSchema):
             ),
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace binarization.",
-            es="Ponlo en False para binarizar in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
 
 
 class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
-    """Scikit-learn's Binarizer wrapper for DashAI."""
+    """Threshold each feature to produce binary (0/1) values.
+
+    Values greater than the threshold become 1; all others become 0.
+    Wraps scikit-learn's ``Binarizer``.
+    """
 
     SCHEMA = BinarizerSchema
     DESCRIPTION = MultilingualString(
@@ -48,8 +45,26 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     DISPLAY_NAME = MultilingualString(en="Binarizer", es="Binarizador")
     IMAGE_PREVIEW = "binarizer.png"
 
+    PREFIX = "bin_"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Integer64 as the output type for binarized data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            An Integer type backed by ``pyarrow.int64()``.
+        """
         import pyarrow as pa
 
         return Integer(arrow_type=pa.int64())

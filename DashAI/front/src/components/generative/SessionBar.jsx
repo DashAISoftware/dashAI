@@ -1,15 +1,13 @@
-import { Box, Typography, Divider, IconButton } from "@mui/material";
+import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
-import Footer from "./Footer";
+import Footer from "../threeSectionLayout/Footer";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
-import BarHeader from "../threeSectionLayout/BarHeader";
-import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 
@@ -103,6 +101,13 @@ export default function SessionBar({ onToggle }) {
     }
   };
 
+  const getSessionDeleteConfirmationContent = (session) =>
+    t(
+      "generative:label.confirmDeleteSession",
+      'Are you sure you want to delete the session "{{name}}"? This action cannot be undone.',
+      { name: session.name },
+    );
+
   // Group sessions by task display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
     // Get the display name from the task using the session's task_name
@@ -135,26 +140,6 @@ export default function SessionBar({ onToggle }) {
         justifyContent={"flex-start"}
         minHeight={0}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pr: 2,
-          }}
-        >
-          <BarHeader />
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronLeft />
-          </IconButton>
-        </Box>
-        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
-
         <Box
           p={2}
           sx={{ height: "64px", display: "flex", alignItems: "center" }}
@@ -195,6 +180,7 @@ export default function SessionBar({ onToggle }) {
           Icon={FolderIcon}
           initialOpenGroups={openSections}
           getItemDescription={(session) => session.model_name}
+          getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
         />
       </Box>
 

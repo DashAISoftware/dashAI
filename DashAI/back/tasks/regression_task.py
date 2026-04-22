@@ -13,9 +13,13 @@ if TYPE_CHECKING:
 
 
 class RegressionTask(BaseTask):
-    """Base class for regression tasks.
+    """Abstract base task for continuous-output (regression) problems in DashAI.
 
-    Here you can change the methods provided by class Task.
+    Regression tasks predict one or more continuous numeric values from input
+    features. This base class constrains output columns to ``Float`` or
+    ``Integer`` types and accepts ``Float``, ``Integer``, and ``Categorical``
+    input types. Unlike classification tasks, regression does not require a
+    ``Categorical`` output and ``num_labels`` always returns ``None``.
     """
 
     DESCRIPTION: str = MultilingualString(
@@ -32,6 +36,17 @@ class RegressionTask(BaseTask):
     lo que permite una predicción precisa de nuevas instancias.""",
     )
     DISPLAY_NAME: str = MultilingualString(en="Regression", es="Regresión")
+
+    SCORING_PROFILES = {
+        "regression_fit": {
+            "description": "Model Fit",
+            "weights": {"R2": 0.6, "ExplainedVariance": 0.4},
+        },
+        "regression_error": {
+            "description": "Error Balanced",
+            "weights": {"R2": 0.4, "RMSE": 0.35, "MAE": 0.25},
+        },
+    }
 
     metadata: dict = {
         "inputs_types": [Float, Integer, Categorical],

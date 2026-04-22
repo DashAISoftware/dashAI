@@ -13,6 +13,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -21,6 +22,18 @@ if TYPE_CHECKING:
 
 
 class MultiColumnBoxPlotSchema(BaseExplorerSchema):
+    """Schema for MultiColumnBoxPlotExplorer configuration.
+
+    Configures the layout and optional grouping axis for the multi-column box
+    plot.  ``horizontal`` flips all boxes so that the value axis runs
+    left-to-right, which is convenient when column names are long.  ``points``
+    controls whether individual data points are overlaid on each box (``"all"``
+    shows every point, ``"outliers"`` shows only outliers, and ``"False"``
+    hides all points).  ``opposite_axis`` specifies a column whose distinct
+    values are used as a shared grouping axis for all selected columns,
+    producing grouped boxes within each column trace.
+    """
+
     horizontal: schema_field(
         bool_field(),
         False,
@@ -65,11 +78,25 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
 
 
 class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
-    """
-    MultiColumnBoxPlotExplorer is an explorer that returns a figure with a box plot
-    of multiple columns of a dataset in a single axis.
+    """Explorer that renders one box plot trace per selected column on a shared figure.
 
-    The other axis is selected through the opposite_axis parameter.
+    While the single-column BoxPlotExplorer is suited to examining one variable
+    at a time, this explorer places multiple box plot traces side by side in the
+    same figure, making it straightforward to compare the distributional
+    properties — median, spread, and outliers — of several numeric columns
+    simultaneously.
+
+    Each box trace summarises its column through the five-number summary (Q1,
+    median, Q3, lower whisker, upper whisker) and optionally overlays individual
+    data points.  When an ``opposite_axis`` column is provided, every trace is
+    additionally split by the distinct categories of that column, producing
+    grouped boxes that reveal how the distribution of each numeric column varies
+    across groups.
+
+    Use this explorer when you need a compact, side-by-side comparison of
+    multiple numeric features, for example to detect scale differences between
+    model input features or to contrast the spread of several metrics across
+    experimental conditions.
     """
 
     DISPLAY_NAME = MultilingualString(
@@ -90,12 +117,27 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 1},
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the MultiColumnBoxPlotExplorer with layout and grouping options.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            horizontal (bool, optional): If True, render horizontal box plots.
+            Defaults to False.
+            points (str, optional): Which data points to overlay on each box.
+            One of ``"all"``, ``"outliers"``, or ``"False"`` (no points).
+            Defaults to ``"outliers"``.
+            opposite_axis (str or int, optional): Column name or zero-based
+            index to use as the shared opposite axis across all boxes.
+            Defaults to None.
+        """
         self.horizontal = kwargs.get("horizontal", False)
 
         if kwargs.get("points") == "False":
@@ -108,6 +150,27 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend the column list to include the opposite-axis column if specified.
+
+        If ``opposite_axis`` was given as an integer index, it is resolved to the
+        corresponding column name. The resolved column is appended to ``columns``
+        when it is not already present, so that the base class loads it along with
+        the selected columns.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset being explored.
+        columns : List[Dict[str, Any]]
+            List of column descriptors already
+            selected by the user.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset slice containing all required columns, as
+            returned by the parent ``prepare_dataset`` implementation.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -128,6 +191,27 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly figure with a box plot trace for each selected column.
+
+        All selected columns are rendered on a single shared axis. If an
+        ``opposite_axis`` column was provided it is used as the grouping axis
+        for every trace. Orientation is controlled by the ``horizontal`` parameter.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset containing the selected columns and,
+            if configured, the opposite-axis column.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive multi-box plot figure with
+            one box trace per selected column.
+        """
         import plotly.graph_objects as go
 
         _df = dataset.to_pandas()
@@ -167,6 +251,30 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the multi-column box plot figure to disk
+        (JSON content, ``.pickle`` extension).
+
+        Notes
+        -----
+        Despite the ``.pickle`` file extension, the file is written using
+        ``write_json`` and contains JSON-serialized Plotly figure data.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -180,6 +288,22 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved multi-column box plot for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         from plotly.io import read_json
 
         resultType = "plotly_json"

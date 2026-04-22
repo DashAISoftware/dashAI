@@ -39,6 +39,7 @@ export function ModelsProvider({ children }) {
 
   const {
     tasks,
+    loadingTasks,
     selectedTask,
     selectedSessionId,
     selectedSession,
@@ -73,6 +74,8 @@ export function ModelsProvider({ children }) {
   const [configOpen, setConfigOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW);
+  const [datasetInfo, setDatasetInfo] = useState(null);
+  const [datasetTab, setDatasetTab] = useState(0);
 
   const selectModel = useCallback((model) => {
     setSelectedModel(model);
@@ -114,6 +117,7 @@ export function ModelsProvider({ children }) {
     replaceDatasets,
     startDatasetPolling,
     tasks,
+    loadingTasks,
     selectedTask,
     selectedSessionId,
     selectedSession,
@@ -144,6 +148,10 @@ export function ModelsProvider({ children }) {
     onDeleteRun,
     handleCancelRetrain,
     handleConfirmRetrain,
+    datasetInfo,
+    setDatasetInfo,
+    datasetTab,
+    setDatasetTab,
   };
 
   return (

@@ -1,6 +1,6 @@
 """Base Metric abstract class."""
 
-from typing import TYPE_CHECKING, Any, Dict, Final, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -9,14 +9,32 @@ if TYPE_CHECKING:
 
 
 class BaseMetric:
-    """Abstract class of all metrics."""
+    """Abstract base class for all DashAI evaluation metrics.
+
+    Every concrete metric must subclass ``BaseMetric`` (or one of its
+    category subclasses) and implement a static ``score`` method that
+    accepts the true labels/values and model predictions and returns a
+    scalar float.
+
+    Class attributes
+    ----------------
+    TYPE : str
+        Always ``"Metric"``; used by the DashAI component registry.
+    MAXIMIZE : bool
+        ``True`` if higher values are better (e.g. accuracy, R²),
+        ``False`` if lower values are better (e.g. MAE, RMSE).
+    metadata : dict
+        Optional extra metadata surfaced to the frontend via
+        :meth:`get_metadata`.
+    """
 
     TYPE: Final[str] = "Metric"
     MAXIMIZE: Final[bool] = False
+    NORMALIZE_REF: Optional[float] = None
     metadata: Dict[str, Any] = {}
 
     @classmethod
-    def get_metadata(cls) -> Dict[str, Any]:
+    def get_metadata(cls: "BaseMetric") -> Dict[str, Any]:
         """
         Get metadata values for the current metric.
 
@@ -27,6 +45,7 @@ class BaseMetric:
         """
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["maximize"] = cls.MAXIMIZE
+        meta["normalize_ref"] = cls.NORMALIZE_REF
 
         return meta
 

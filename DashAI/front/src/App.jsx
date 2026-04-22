@@ -1,6 +1,7 @@
 import React from "react";
 
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { TourRegistryProvider } from "./contexts/TourRegistryContext";
 
 import "./App.css";
 import DatasetsPage from "./pages/datasets/Datasets";
@@ -16,32 +17,34 @@ import JobQueueWidget from "./components/jobs/JobQueueWidget";
 
 function App() {
   return (
-    <BrowserRouter
-      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-    >
-      <ResponsiveAppBar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/app" element={<Home />} />
-        <Route path="/app/data/" element={<DatasetsPage />} />
-        <Route path="/app/models" element={<ModelsPage />} />
-        <Route path="/app/generative" element={<Generative />} />
-        <Route path="/app/pipelines" element={<PipelinesPage />} />
-        <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
-        <Route
-          path="/app/pipelines/:pipelineId"
-          element={<NewPipelineWrapper />}
-        />
-        <Route path="/app/plugins">
-          <Route index element={<PluginsPage />} />
-          <Route path=":category">
+    <TourRegistryProvider>
+      <BrowserRouter
+        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+      >
+        <ResponsiveAppBar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/app" element={<Home />} />
+          <Route path="/app/data/" element={<DatasetsPage />} />
+          <Route path="/app/models" element={<ModelsPage />} />
+          <Route path="/app/generative" element={<Generative />} />
+          <Route path="/app/pipelines" element={<PipelinesPage />} />
+          <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
+          <Route
+            path="/app/pipelines/:pipelineId"
+            element={<NewPipelineWrapper />}
+          />
+          <Route path="/app/plugins">
             <Route index element={<PluginsPage />} />
-            <Route path="details/:id" element={<PluginsDetails />} />
+            <Route path=":category">
+              <Route index element={<PluginsPage />} />
+              <Route path="details/:id" element={<PluginsDetails />} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
-      <JobQueueWidget />
-    </BrowserRouter>
+        </Routes>
+        <JobQueueWidget />
+      </BrowserRouter>
+    </TourRegistryProvider>
   );
 }
 export default App;

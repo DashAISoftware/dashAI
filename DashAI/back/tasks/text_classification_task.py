@@ -12,7 +12,15 @@ if TYPE_CHECKING:
 
 
 class TextClassificationTask(ClassificationTask):
-    """Base class for Text Classification Task."""
+    """Task for classifying a single text column into discrete categories.
+
+    Text classification takes one input column of type ``Text`` and maps it to
+    one categorical output column. The task covers any NLP scenario where a
+    raw or pre-processed text sequence must be assigned to one of a fixed set
+    of labels, such as sentiment analysis, spam detection, topic labelling, and
+    intent recognition. Compatible models consume the text directly and output
+    a predicted class label for each sample.
+    """
 
     metadata: dict = {
         "inputs_types": [Text],
@@ -22,19 +30,22 @@ class TextClassificationTask(ClassificationTask):
     }
 
     DESCRIPTION: str = MultilingualString(
-        en="""
-    Text classification is an essential Natural Language Processing (NLP) task that
-    involves automatically assigning pre-defined categories or labels to text documents
-    based on their content. It serves as the foundation for applications like sentiment
-    analysis, spam filtering, topic classification, and document categorization.
-    """,
-        es="""
-    La clasificación de texto es una tarea esencial del Procesamiento de Lenguaje
-    Natural (PLN) que implica asignar automáticamente categorías o etiquetas
-    predefinidas a documentos de texto según su contenido. Sirve como base para
-    aplicaciones como el análisis de sentimientos, el filtrado de spam,
-    la clasificación de temas y la categorización de documentos.
-    """,
+        en=(
+            "Text classification is a Natural Language Processing (NLP) task "
+            "that assigns a predefined label to a text input. "
+            "It requires one text input column and one categorical output column. "
+            "Common use cases include sentiment analysis, spam detection, "
+            "and intent recognition."
+        ),
+        es=(
+            "La clasificación de texto es una tarea de Procesamiento de "
+            "Lenguaje Natural (PLN) que asigna una etiqueta predefinida a una "
+            "entrada de texto. "
+            "Requiere una columna de entrada de tipo texto y una columna de "
+            "salida categórica. "
+            "Los casos de uso más comunes incluyen análisis de sentimientos, "
+            "detección de spam y reconocimiento de intenciones."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Text Classification", es="Clasificación de Texto"

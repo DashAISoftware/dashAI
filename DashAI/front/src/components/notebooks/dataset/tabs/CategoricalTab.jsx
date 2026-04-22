@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, Card, CardContent } from "@mui/material";
+import { Box, Typography, CardContent } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {
@@ -15,6 +15,7 @@ import {
   Cell,
 } from "recharts";
 import { StatBox } from "../StatBox";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 export const CategoricalTab = ({ categoricalStats }) => {
@@ -24,7 +25,12 @@ export const CategoricalTab = ({ categoricalStats }) => {
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(categoricalStats).map(([column, stats]) => (
-        <Card key={column} sx={{ borderRadius: 2 }}>
+        <ExportableCard
+          key={column}
+          filename={`categorical_${column}`}
+          exportData={{ column, ...stats }}
+          sx={{ borderRadius: 2 }}
+        >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Header */}
             <Box display="flex" alignItems="center" mb={2}>
@@ -148,7 +154,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
               </Box>
             </Box>
           </CardContent>
-        </Card>
+        </ExportableCard>
       ))}
     </Box>
   );

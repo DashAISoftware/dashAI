@@ -18,7 +18,11 @@
     "sessionNameExists": "A session with this name already exists"
   },
   "label": {
+    "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
     "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
+    "noDescriptionAvailable": "No description available",
+    "showLess": "Show less",
+    "readMore": "Read more",
     "generativeModule": "Generative Module",
     "nameYourSession": "Name your session",
     "noSessionsFound": "No sessions found",

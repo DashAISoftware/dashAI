@@ -123,11 +123,7 @@ export default function SessionHistoryModal({
                     width: "100%",
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontFamily: "monospace" }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     {new Date(event.timestamp).toLocaleString()}
                   </Typography>
                   <Typography variant="body1" sx={{ flexGrow: 1 }}>

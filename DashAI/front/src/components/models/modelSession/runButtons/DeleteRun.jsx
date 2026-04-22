@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { IconButton, Tooltip } from "@mui/material";
 import { deleteRun } from "../../../api/run";
 import { useSnackbar } from "notistack";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
@@ -17,13 +17,19 @@ export default function DeleteRun({ run, onRunDelete }) {
 
   return (
     <>
-      <GridActionsCellItem
-        icon={<DeleteIcon />}
-        label={t("button.deleteRun")}
-        onClick={() => {
-          setOpen(true);
-        }}
-      />
+      <Tooltip title={t("button.deleteRun")}>
+        <span>
+          <IconButton
+            size="small"
+            aria-label={t("button.deleteRun")}
+            onClick={() => {
+              setOpen(true);
+            }}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </span>
+      </Tooltip>
       {open && (
         <DeleteConfirmationModal
           open={open}

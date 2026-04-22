@@ -1,27 +1,61 @@
 """DashAI Cohen Kappa classification metric implementation."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
 )
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class CohenKappa(ClassificationMetric):
-    """Cohen Kappa score to classification tasks."""
+    """Agreement between classifier predictions and true labels beyond chance.
 
-    DESCRIPTION: str = (
-        "Cohen Kappa score measures the agreement between two raters "
-        "who each classify items into mutually exclusive categories."
+    Cohen's Kappa (κ) measures the extent to which two raters (here, the model
+    and ground truth) agree on class assignments, correcting for the probability
+    of agreement occurring by chance. Unlike raw accuracy, Kappa accounts for
+    class imbalance and is particularly useful when evaluating classifiers on
+    unbalanced datasets.
+
+    ::
+
+        κ = (p_o - p_e) / (1 - p_e)
+
+    where p_o is the observed agreement (accuracy) and p_e is the expected
+    agreement by chance.
+
+    Range: (-∞, 1]. Interpretation: < 0 worse than chance; 0.21-0.40 fair;
+    0.41-0.60 moderate; 0.61-0.80 substantial; 0.81-1.0 almost perfect.
+
+    References
+    ----------
+    - [1] Cohen, J. (1960). "A coefficient of agreement for nominal scales."
+           Educational and Psychological Measurement, 20(1), 37-46.
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html
+    """
+
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Cohen Kappa score measures the agreement between two raters "
+            "who each classify items into mutually exclusive categories."
+        ),
+        es=(
+            "El puntaje Cohen Kappa mide la concordancia entre dos evaluadores "
+            "que clasifican elementos en categorías mutuamente excluyentes."
+        ),
     )
 
     @staticmethod
     def score(
-        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate Cohen Kappa score between true labels and predicted labels.
 

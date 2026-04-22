@@ -12,9 +12,17 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Integer
 
 
 class IncrementalPCASchema(BaseSchema):
+    """Configuration schema for the IncrementalPCA converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.IncrementalPCA``.
+    """
+
     n_components: schema_field(
         none_type(int_field(ge=1)),
         2,
@@ -37,21 +45,6 @@ class IncrementalPCASchema(BaseSchema):
             ),
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en=(
-                "If False, data passed to fit are overwritten. Use "
-                "fit_transform(X) instead."
-            ),
-            es=(
-                "Si es False, los datos pasados a fit se sobrescriben. Usa "
-                "fit_transform(X) en su lugar."
-            ),
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     batch_size: schema_field(
         none_type(int_field(ge=1)),
         None,
@@ -65,7 +58,33 @@ class IncrementalPCASchema(BaseSchema):
 class IncrementalPCA(
     DimensionalityReductionConverter, SklearnWrapper, IncrementalPCAOperation
 ):
-    """Scikit-learn's IncrementalPCA wrapper for DashAI."""
+    """Reduce dimensionality using PCA computed incrementally over mini-batches.
+
+    IncrementalPCA (IPCA) implements an online variant of PCA that processes
+    data one batch at a time and updates the component estimates after each
+    batch using a singular value merging strategy. This allows the algorithm
+    to fit datasets that are too large to hold in memory simultaneously, while
+    still converging to results that closely approximate full-batch PCA.
+
+    The algorithm maintains a running estimate of the mean and the principal
+    components, merging each new batch with the accumulated SVD from previous
+    batches. When ``batch_size`` is ``None``, it defaults to ``5 * n_features``.
+
+    Key properties:
+
+    - Constant memory footprint regardless of dataset size.
+    - Supports the ``partial_fit`` API for true out-of-core usage.
+    - The ``whiten`` option rescales components to unit variance, which can
+      improve downstream estimators that assume spherical features.
+    - Produces output numerically close to full-batch PCA when the batch size
+      is reasonably large relative to the number of components.
+
+    Wraps scikit-learn's ``IncrementalPCA``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html
+    """
 
     SCHEMA = IncrementalPCASchema
     DESCRIPTION = MultilingualString(
@@ -84,3 +103,26 @@ class IncrementalPCA(
     )
     DISPLAY_NAME = MultilingualString(en="Incremental PCA", es="PCA Incremental")
     IMAGE_PREVIEW = "incremental_pca.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
+        import pyarrow as pa
+
+        return Float(arrow_type=pa.float64())

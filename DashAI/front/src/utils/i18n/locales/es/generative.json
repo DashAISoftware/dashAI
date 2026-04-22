@@ -18,7 +18,11 @@
     "sessionNameExists": "Ya existe una sesión con este nombre"
   },
   "label": {
+    "confirmDeleteSession": "¿Seguro que quieres eliminar la sesión \"{{name}}\"? Esta acción no se puede deshacer.",
     "deleteSessionConfirmation": "¿Está seguro de que desea eliminar esta sesión? Esta acción no se puede deshacer.",
+    "noDescriptionAvailable": "No hay descripción disponible",
+    "showLess": "Mostrar menos",
+    "readMore": "Leer más",
     "generativeModule": "Módulo Generativo",
     "nameYourSession": "Nombre su sesión",
     "noSessionsFound": "No se encontraron sesiones",

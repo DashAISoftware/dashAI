@@ -144,8 +144,21 @@ export default function SelectModelMenu() {
       hasAdvancedTourRef.current = true;
       const waitForElement = () => {
         const el = document.querySelector('[data-tour="model-parameters"]');
-        if (el) setTimeout(() => tourContext.nextStep(), 100);
-        else setTimeout(waitForElement, 100);
+        if (el) {
+          const distanceToViewportCenter = Math.abs(
+            el.getBoundingClientRect().top - window.innerHeight / 2,
+          );
+          const scrollWaitMs = Math.min(
+            800,
+            Math.max(300, Math.round(distanceToViewportCenter * 0.7)),
+          );
+
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => tourContext.nextStep(), scrollWaitMs);
+          return;
+        }
+
+        setTimeout(waitForElement, 100);
       };
       setTimeout(waitForElement, 200);
     }

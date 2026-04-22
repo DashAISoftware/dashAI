@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  IconButton,
-  TextField,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, TextField, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { ChevronRight, Search as SearchIcon } from "@mui/icons-material";
+import { Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
@@ -17,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
+import ColumnInsights from "../notebooks/dataset/ColumnInsights";
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
@@ -35,6 +30,8 @@ export default function ModelsRightBar({ onToggle }) {
     configOpen,
     selectedModel,
     closeConfig,
+    datasetInfo,
+    setDatasetTab,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -125,39 +122,42 @@ export default function ModelsRightBar({ onToggle }) {
             height: 64,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
           }}
         >
           <Typography variant="h6" color="text.primary">
             {t("models:label.availableModels")}
           </Typography>
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
         </Box>
 
         {/* Content */}
         {!session ? (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
+          datasetInfo ? (
+            <Box sx={{ flex: 1, overflowY: "auto" }}>
+              <ColumnInsights
+                numericStats={datasetInfo?.numeric_stats}
+                textStats={datasetInfo?.text_stats}
+                onNavigateTab={setDatasetTab}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 2,
+              }}
             >
-              {t("models:label.selectSessionToViewModels")}
-            </Typography>
-          </Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", textAlign: "center" }}
+              >
+                {t("models:label.selectSessionToViewModels")}
+              </Typography>
+            </Box>
+          )
         ) : (
           <>
             {/* Search Box */}

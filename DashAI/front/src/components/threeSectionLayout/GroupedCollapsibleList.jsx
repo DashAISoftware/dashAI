@@ -16,6 +16,8 @@ export default function GroupedCollapsibleList({
   title = t("common:items", "Items"),
   Icon,
   getItemDescription,
+  getDeleteConfirmationContent,
+  getDeleteConfirmationWarning,
   initialOpenGroups = {},
 }) {
   const theme = useTheme();
@@ -95,13 +97,24 @@ export default function GroupedCollapsibleList({
       >
         {Icon && (
           <Icon
-            sx={{ color: theme.palette.accent.cyan, mr: 1, fontSize: 20 }}
+            sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 20 }}
           />
         )}
-        <Typography color="text.primary">{title}</Typography>
+        <Typography
+          sx={{
+            ...theme.typography.cardTitle,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flex: 1,
+          }}
+          title={title}
+          color="text.primary"
+        >
+          {title}
+        </Typography>
         <Box
           sx={{
-            ml: 1,
             bgcolor: theme.palette.ui.scrollbar,
             color: theme.palette.text.primary,
             borderRadius: "50%",
@@ -122,6 +135,7 @@ export default function GroupedCollapsibleList({
         sx={{
           flex: 1,
           overflow: "auto",
+          scrollbarGutter: "stable",
           "&::-webkit-scrollbar": { width: "6px" },
           "&::-webkit-scrollbar-thumb": {
             backgroundColor: theme.palette.ui.scrollbar,
@@ -152,18 +166,17 @@ export default function GroupedCollapsibleList({
             >
               {openGroups[groupName] ? (
                 <KeyboardArrowDownIcon
-                  sx={{ fontSize: 20, color: theme.palette.accent.cyan }}
+                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
                 />
               ) : (
                 <KeyboardArrowRightIcon
-                  sx={{ fontSize: 20, color: theme.palette.accent.cyan }}
+                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
                 />
               )}
               <Typography
                 sx={{
                   ml: 1,
-                  fontSize: "0.9rem",
-                  fontWeight: "medium",
+                  ...theme.typography.cardTitle,
                   textTransform: "capitalize",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -214,6 +227,16 @@ export default function GroupedCollapsibleList({
                       onEdit={(name) => onItemEdit(item.id, name)}
                       onInfo={
                         onItemInfo ? () => onItemInfo(item.id) : undefined
+                      }
+                      deleteConfirmationContent={
+                        getDeleteConfirmationContent
+                          ? getDeleteConfirmationContent(item)
+                          : undefined
+                      }
+                      deleteConfirmationWarning={
+                        getDeleteConfirmationWarning
+                          ? getDeleteConfirmationWarning(item)
+                          : undefined
                       }
                     />
                   ))

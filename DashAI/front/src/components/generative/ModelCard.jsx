@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { useTranslation } from "react-i18next";
 
 const DESCRIPTION_LINE_CLAMP = 3;
 
@@ -15,6 +16,7 @@ export default function ModelCard({
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
+  const { t } = useTranslation(["generative"]);
   const descRef = useRef(null);
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function ModelCard({
           fontWeight="bold"
           sx={{ color: isSelected ? color : "text.primary", lineHeight: 1.3 }}
         >
-          {model.display_name}
+          {model.display_name ? model.display_name : model.name}
         </Typography>
         {isSelected && (
           <CheckCircleIcon sx={{ color, ml: 1, flexShrink: 0, fontSize: 20 }} />
@@ -89,7 +91,9 @@ export default function ModelCard({
           }),
         }}
       >
-        {model.description}
+        {model.description
+          ? model.description
+          : t("generative:label.noDescriptionAvailable")}
       </Typography>
 
       {(isClamped || expanded) && (
@@ -105,7 +109,9 @@ export default function ModelCard({
             "&:hover": { textDecoration: "underline" },
           }}
         >
-          {expanded ? "Show less" : "Read more"}
+          {expanded
+            ? t("generative:label.showLess")
+            : t("generative:label.readMore")}
         </Typography>
       )}
     </Paper>

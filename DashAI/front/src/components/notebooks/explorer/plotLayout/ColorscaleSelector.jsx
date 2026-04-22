@@ -95,11 +95,11 @@ export default function ColorscaleSelector({ value, onChange }) {
     <Box
       sx={{
         bgcolor: theme.palette.ui.panelDark,
-        p: 2,
+        p: 1.5,
         borderBottom: `1px solid ${theme.palette.ui.borderLight}`,
       }}
     >
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         <Box>
           <Typography
             variant="subtitle2"
@@ -109,7 +109,7 @@ export default function ColorscaleSelector({ value, onChange }) {
               textTransform: "uppercase",
               fontSize: "0.75rem",
               letterSpacing: "0.5px",
-              mb: 1.5,
+              mb: 1,
             }}
           >
             {t("datasets:label.colorscaleMode")}
@@ -162,7 +162,7 @@ export default function ColorscaleSelector({ value, onChange }) {
                 textTransform: "uppercase",
                 fontSize: "0.75rem",
                 letterSpacing: "0.5px",
-                mb: 1.5,
+                mb: 1,
               }}
             >
               {t("datasets:label.selectColorscale")}
@@ -215,7 +215,7 @@ export default function ColorscaleSelector({ value, onChange }) {
                 textTransform: "uppercase",
                 fontSize: "0.75rem",
                 letterSpacing: "0.5px",
-                mb: 1.5,
+                mb: 1,
               }}
             >
               {t("datasets:label.colorStops")}

@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 def categorical_label_encoder(
     dataset: "DashAIDataset",
+    columns: list = None,
 ) -> Tuple["DashAIDataset", Dict[str, Dict[str, int]]]:
     """Convert categorical columns from the DashAIDataset to label encoded integers.
 
@@ -24,6 +25,9 @@ def categorical_label_encoder(
     dataset : DashAIDataset
         The dataset containing both non categorical
         and categorical columns to be label encoded.
+    columns : list, optional
+        If given, only encode categorical columns whose names are in this list.
+        Other categorical columns pass through unchanged.
 
     Returns
     -------
@@ -45,7 +49,7 @@ def categorical_label_encoder(
     for col, _type in dataset.types.items():
         array = table[col]
         # Check every column dashai_type to find the categorical ones
-        if isinstance(_type, Categorical):
+        if isinstance(_type, Categorical) and (columns is None or col in columns):
             encodings[col] = dict(_type._str2int)  # Store the encoding for later use
 
             # Need to check everything later, predictions and model reuse.
@@ -121,7 +125,22 @@ def apply_categorical_label_encoder(
 def vectorize_text(
     dataset: "DashAIDataset",
 ) -> "DashAIDataset":
-    """Convert text columns from the DashAIDataset to vectorized columns."""
+    """Tokenise all ``Text``-typed columns by splitting on whitespace.
+
+    Each text column is replaced by a ``list<string>`` column where every
+    entry is a list of space-delimited tokens. Non-text columns are preserved
+    unchanged.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Input dataset whose text columns will be tokenised.
+
+    Returns
+    -------
+    DashAIDataset
+        A new dataset with text columns replaced by token-list columns.
+    """
     import pyarrow as pa
 
     from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
@@ -150,6 +169,7 @@ def vectorize_text(
 def categorical_one_hot_encoder(
     dataset: "DashAIDataset",
     encoder: Optional["OneHotEncoder"] = None,
+    columns: list = None,
 ) -> Tuple["DashAIDataset", "OneHotEncoder", List[str]]:
     """Convert categorical columns from the DashAIDataset to one-hot encoded columns.
 
@@ -159,6 +179,9 @@ def categorical_one_hot_encoder(
         The dataset containing categorical columns to be one-hot encoded.
     encoder : OneHotEncoder, optional
         Pre-fitted encoder to use. If None, a new encoder will be fitted.
+    columns : list, optional
+        If given, only one-hot encode columns in this list. Other categorical
+        columns pass through unchanged.
 
     Returns
     -------
@@ -172,11 +195,16 @@ def categorical_one_hot_encoder(
     import numpy as np
     import pandas as pd
     import pyarrow as pa
+    from sklearn.preprocessing import OneHotEncoder
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
     types = dataset.types
 
     categorical_cols = [
-        col for col, _type in types.items() if isinstance(_type, Categorical)
+        col
+        for col, _type in types.items()
+        if isinstance(_type, Categorical) and (columns is None or col in columns)
     ]
 
     if not categorical_cols:
@@ -241,6 +269,8 @@ def apply_categorical_one_hot_encoder(
     import pandas as pd
     import pyarrow as pa
 
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
     if encoder is None or not categorical_cols:
         return dataset
 
@@ -278,11 +308,3 @@ def apply_categorical_one_hot_encoder(
     )
 
     return new_dataset
-
-
-# Time Transformations
-
-# Date Transformations
-
-
-# Image Transformations
