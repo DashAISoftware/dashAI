@@ -290,11 +290,7 @@ def test_get_text_to_text_task_metadata():
     text_to_text_task = TextToTextGenerationTask()
     metadata = text_to_text_task.get_metadata()
 
-    assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["str"]
-    assert metadata["outputs_types"] == ["str"]
-    assert metadata["inputs_cardinality"] == 1
-    assert metadata["outputs_cardinality"] == 1
+    assert metadata == {"inputs": {"str": 1}, "outputs": {"str": 1}}
 
 
 def test_prepare_for_task_text_to_text():
@@ -353,11 +349,7 @@ def test_get_text_to_image_task_metadata():
     text_to_image_task = TextToImageGenerationTask()
     metadata = text_to_image_task.get_metadata()
 
-    assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["str"]
-    assert metadata["outputs_types"] == ["Image"]
-    assert metadata["inputs_cardinality"] == 1
-    assert metadata["outputs_cardinality"] == "n"
+    assert metadata == {"inputs": {"str": 1}, "outputs": {"Image": "n"}}
 
 
 def test_prepare_for_task_text_to_image():
@@ -420,11 +412,10 @@ def test_get_controlnet_task_metadata():
     controlnet_task = ControlNetTask()
     metadata = controlnet_task.get_metadata()
 
-    assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Image", "str"]
-    assert metadata["outputs_types"] == ["Image"]
-    assert metadata["inputs_cardinality"] == 2
-    assert metadata["outputs_cardinality"] == "n"
+    assert metadata == {
+        "inputs": {"Image": 1, "str": 1},
+        "outputs": {"Image": "n"},
+    }
 
 
 def test_prepare_for_task_controlnet(sample_image, temp_path):
