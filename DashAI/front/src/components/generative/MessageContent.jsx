@@ -1,6 +1,8 @@
 import { Box, Paper, useTheme } from "@mui/material";
 import { TextMessage } from "./TextMessage";
 import { ImageMessage } from "./ImageMessage";
+import { AudioMessage } from "./AudioMessage";
+import { VideoMessage } from "./VideoMessage";
 import { WaitingAnimationChat } from "./WaitingAnimationChat";
 
 export function MessageContent({ messages, isUser, isWaiting }) {
@@ -28,6 +30,8 @@ export function MessageContent({ messages, isUser, isWaiting }) {
             <Box key={message.id}>
               {type === "str" && <TextMessage message={message.data} />}
               {type === "Image" && <ImageMessage image={message.data} />}
+              {type === "Audio" && <AudioMessage audio={message.data} />}
+              {type === "Video" && <VideoMessage video={message.data} />}
             </Box>
           );
         })

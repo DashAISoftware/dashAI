@@ -39,7 +39,10 @@
     "sessions": "Sesiones",
     "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
     "typeYourMessage": "Escribe un mensaje",
-    "untitledSession": "Sesión Sin Título"
+    "untitledSession": "Sesión Sin Título",
+    "attachImage": "Adjuntar imagen",
+    "attachAudio": "Adjuntar audio",
+    "attachVideo": "Adjuntar video"
   },
 
   "message": {
