@@ -773,60 +773,72 @@ def transform_dataset_with_schema(
     my_schema = pa.schema([])
     dashai_types = {}
 
-    for column_name, info in schema.items():
-        # Skip columns that don't exist in the dataset
-        if column_name not in dataset.column_names:
-            continue
-
-        _type = info.get("type")
-        dtype = info.get("dtype")
-        pa_type = to_arrow_types(dtype)
-        if _type == "Categorical":
-            base_col = table.column(column_name)
-            converted = info.get("converted", False)
-
-            # Always infer categories from actual data to ensure all values are
-            # included. Type inference (ptype) excludes anomalous values from
-            # its suggested categories, which causes KeyErrors during training
-            # when those "anomalous" values appear in the data.
-            col_list = base_col.to_pylist()
-            categories = sorted({v for v in col_list if v is not None})
-
-            encoder = info.get("encoder", "one_hot")
-            dashai_types[column_name] = Categorical(
-                values=categories, converted=converted, dtype=dtype, encoder=encoder
-            )
-            # Keep the column data as-is without converting to string
-            dai_table[column_name] = base_col
-            # Use the dtype from schema for pa_type
-            pa_type = to_arrow_types(dtype)
-        elif _type == "Image":
-            from DashAI.back.types.dashai_image import DashAIImage
-
-            dashai_types[column_name] = DashAIImage(dtype=dtype)
-            dai_table[column_name] = table.column(column_name)
+    # First, include all columns from the dataset in the order they appear
+    for column_name in dataset.column_names:
+        if column_name not in schema:
+            # Column not in schema - preserve it as-is with inferred type
+            col_data = table.column(column_name)
+            dai_table[column_name] = col_data
             pa_type = table.schema.field(column_name).type
+            my_schema = my_schema.append(pa.field(column_name, pa_type))
+
+            # Infer the DashAI type from Arrow type
+            dashai_types[column_name] = arrow_to_dashai_types(pa_type)
         else:
-            if _type in ["Date", "Time", "Timestamp"]:
-                # Since DashAI is not using date, time or timestamp types for its models
-                # we are saving them as strings to preserve the original format.
-                # Can modify classes in value_types.py
-                # if want to use PyArrow date, time or timestamp types.
-                dashai_types[column_name] = arrow_to_dashai_types(
-                    arrow_type=_type, format=dtype
+            # Column is in schema - process according to schema definition
+            info = schema[column_name]
+            _type = info.get("type")
+            dtype = info.get("dtype")
+            pa_type = to_arrow_types(dtype)
+            if _type == "Categorical":
+                base_col = table.column(column_name)
+                converted = info.get("converted", False)
+
+                # Always infer categories from actual data to ensure all values are
+                # included. Type inference (ptype) excludes anomalous values from
+                # its suggested categories, which causes KeyErrors during training
+                # when those "anomalous" values appear in the data.
+                col_list = base_col.to_pylist()
+                categories = sorted({v for v in col_list if v is not None})
+
+                encoder = info.get("encoder", "one_hot")
+                dashai_types[column_name] = Categorical(
+                    values=categories, converted=converted, dtype=dtype, encoder=encoder
                 )
-                pa_type = to_arrow_types("string")
+                # Keep the column data as-is without converting to string
+                dai_table[column_name] = base_col
+                # Use the dtype from schema for pa_type
+                pa_type = to_arrow_types(dtype)
+            elif _type == "Image":
+                from DashAI.back.types.dashai_image import DashAIImage
+
+                dashai_types[column_name] = DashAIImage(dtype=dtype)
                 dai_table[column_name] = table.column(column_name)
-
-            elif _type == "Float":
-                dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-                dai_table[column_name] = comma_float_to_float(table.column(column_name))
-
+                pa_type = table.schema.field(column_name).type
             else:
-                dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-                dai_table[column_name] = table.column(column_name)
+                if _type in ["Date", "Time", "Timestamp"]:
+                    # Since DashAI is not using date, time or timestamp types for its
+                    # models
+                    # we are saving them as strings to preserve the original format.
+                    # Can modify classes in value_types.py
+                    # if want to use PyArrow date, time or timestamp types.
+                    dashai_types[column_name] = arrow_to_dashai_types(
+                        arrow_type=_type, format=dtype
+                    )
+                    pa_type = to_arrow_types("string")
+                    dai_table[column_name] = table.column(column_name)
 
-        my_schema = my_schema.append(pa.field(column_name, pa_type))
+                elif _type == "Float":
+                    dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+                    dai_table[column_name] = comma_float_to_float(
+                        table.column(column_name)
+                    )
+
+                else:
+                    dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+                    dai_table[column_name] = table.column(column_name)
+
+            my_schema = my_schema.append(pa.field(column_name, pa_type))
 
     # Create the transformed table with the new schema
     transformed_table = pa.table(dai_table)

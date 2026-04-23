@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import Dataset, IterableDatasetDict, load_dataset
+from datasets import Dataset
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -25,6 +25,89 @@ class ImageDataLoaderSchema(BaseSchema):
             "the name of the uploaded file will be used."
         ),
     )  # type: ignore
+
+
+IMAGE_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".gif",
+    ".tiff",
+    ".webp",
+}
+
+
+def _find_imagefolder_root(base_path: str) -> str:
+    """Descend into single-child directories until we find the level
+    that contains the class subdirectories."""
+    import os
+
+    while True:
+        entries = [
+            e
+            for e in os.listdir(base_path)
+            if not e.startswith(".") and e != "__MACOSX"
+        ]
+        if len(entries) == 1 and os.path.isdir(os.path.join(base_path, entries[0])):
+            base_path = os.path.join(base_path, entries[0])
+        else:
+            break
+    return base_path
+
+
+def _load_images_from_directory(data_dir: str, n_sample=None):
+    """Walk the directory structure and build a list of dicts with
+    'image' (bytes+format) and 'label' (parent folder name) entries.
+
+    This replaces HF's imagefolder loader to guarantee label detection.
+    """
+    import io
+    import os
+
+    from PIL import Image as PILImage
+
+    records = []
+    entries = [
+        e
+        for e in sorted(os.listdir(data_dir))
+        if not e.startswith(".") and e != "__MACOSX"
+    ]
+
+    for class_name in entries:
+        class_path = os.path.join(data_dir, class_name)
+        if not os.path.isdir(class_path):
+            continue
+        for root, _dirs, files in os.walk(class_path):
+            for fname in sorted(files):
+                ext = os.path.splitext(fname)[1].lower()
+                if ext not in IMAGE_EXTENSIONS:
+                    continue
+                fpath = os.path.join(root, fname)
+                try:
+                    img = PILImage.open(fpath)
+                    img.load()
+                    if img.mode in ("CMYK", "YCbCr", "LAB", "HSV"):
+                        img = img.convert("RGB")
+                    elif img.mode in ("LA", "PA"):
+                        img = img.convert("RGBA")
+                    buf = io.BytesIO()
+                    fmt = img.format or "PNG"
+                    img.save(buf, format=fmt)
+                    records.append(
+                        {
+                            "image": {
+                                "bytes": buf.getvalue(),
+                                "format": fmt,
+                            },
+                            "label": class_name,
+                        }
+                    )
+                except Exception:
+                    continue
+                if n_sample and len(records) >= n_sample:
+                    return records
+    return records
 
 
 class ImageDataLoader(BaseDataLoader):
@@ -82,7 +165,10 @@ class ImageDataLoader(BaseDataLoader):
         DashAIDataset
             A DashAI Dataset with the loaded image data.
         """
-        import io
+        import logging
+        import os
+
+        log = logging.getLogger(__name__)
 
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
 
@@ -91,81 +177,33 @@ class ImageDataLoader(BaseDataLoader):
                 "The image dataloader requires the input file to be a zip file."
             )
 
-        dataset = load_dataset(
-            "imagefolder",
-            data_dir=prepared_path[0],
-            streaming=bool(n_sample),
-            cache_dir=temp_path,
+        data_dir = _find_imagefolder_root(prepared_path[0])
+        log.debug("Resolved data_dir: %s", data_dir)
+        log.debug(
+            "data_dir contents: %s",
+            [e for e in os.listdir(data_dir) if not e.startswith(".")],
         )
 
-        if n_sample:
-            if isinstance(dataset, IterableDatasetDict):
-                dataset = dataset["train"]
-            dataset = Dataset.from_list(list(dataset.take(n_sample)))
+        records = _load_images_from_directory(data_dir, n_sample)
+        log.debug("Loaded %d images from directory", len(records))
 
-        def convert_image_to_bytes(example):
-            buffer = io.BytesIO()
-            img_format = example["image"].format or "PNG"
-            example["image"].save(buffer, format=img_format)
-            return {"image": {"bytes": buffer.getvalue(), "format": img_format}}
+        if not records:
+            raise ValueError("No images found in the uploaded zip file.")
 
-        dataset = dataset.map(convert_image_to_bytes)
-
-        # Convert ClassLabel columns (integers) back to their string names.
-        # HF ClassLabel silently casts map() outputs back to int, so we need
-        # to build a new dataset with the strings directly.
-        from datasets import ClassLabel as HFClassLabel
-        from datasets import Features, Value
-
-        if isinstance(dataset, Dataset):
-            ds_ref = dataset
-        else:
-            first_key = list(dataset.keys())[0]
-            ds_ref = dataset[first_key]
-
-        classlabel_cols = {}
-        for col in ds_ref.column_names:
-            feat = ds_ref.features.get(col)
-            if isinstance(feat, HFClassLabel):
-                classlabel_cols[col] = feat.names
-
-        if classlabel_cols:
-            new_features = Features(
-                {
-                    col: Value("string") if col in classlabel_cols else feat
-                    for col, feat in ds_ref.features.items()
-                }
-            )
-
-            def convert_labels(example):
-                for col, names in classlabel_cols.items():
-                    example[col] = names[example[col]]
-                return example
-
-            if isinstance(dataset, Dataset):
-                dataset = dataset.map(convert_labels, features=new_features)
-            else:
-                for split_name in list(dataset.keys()):
-                    dataset[split_name] = dataset[split_name].map(
-                        convert_labels, features=new_features
-                    )
-                ds_ref = dataset[first_key]
+        dataset = Dataset.from_list(records)
+        log.debug("Dataset columns: %s", dataset.column_names)
 
         shutil.rmtree(prepared_path[0])
 
         from DashAI.back.types.categorical import Categorical
         from DashAI.back.types.dashai_image import DashAIImage
 
-        ds_for_types = dataset if isinstance(dataset, Dataset) else ds_ref
-
         types = {}
-        for col in ds_for_types.column_names:
+        for col in dataset.column_names:
             if col == "image":
                 types[col] = DashAIImage()
             else:
-                unique_vals = sorted(
-                    {str(v) for v in ds_for_types[col] if v is not None}
-                )
+                unique_vals = sorted({str(v) for v in dataset[col] if v is not None})
                 types[col] = Categorical(values=unique_vals, dtype="string")
 
         return to_dashai_dataset(dataset, types=types)

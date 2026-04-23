@@ -32,29 +32,57 @@ if TYPE_CHECKING:
 def _build_image_preview_sample(
     extract_dir: str, image_extensions: set, max_rows: int = 5
 ) -> tuple:
-    """Walk an extracted imagefolder directory and return sample rows
-    and total count."""
+    """Walk an extracted imagefolder directory and return sample rows,
+    total count, and whether class subdirectories exist.
+
+    Returns
+    -------
+    tuple of (list[dict], int, bool)
+        (sample_rows, total_images, has_labels)
+    """
     import os
 
     samples = []
     total = 0
-    for root, _, files in os.walk(extract_dir):
+    labels_seen = set()
+    for root, dirs, files in os.walk(extract_dir):
+        dirs[:] = [
+            d for d in dirs if not d.startswith("__MACOSX") and not d.startswith(".")
+        ]
         for f in sorted(files):
+            if f.startswith("."):
+                continue
             ext = os.path.splitext(f)[1].lower()
             if ext not in image_extensions:
                 continue
             total += 1
+            label = os.path.basename(root)
+            labels_seen.add(label)
             if len(samples) >= max_rows:
                 continue
             filepath = os.path.join(root, f)
-            label = os.path.basename(root)
             try:
                 with open(filepath, "rb") as fh:
-                    thumb = _image_bytes_to_thumbnail_data_uri(fh.read())
-                samples.append({"image": thumb, "label": label})
+                    img_bytes = fh.read()
+                if len(img_bytes) == 0:
+                    continue
+                thumb = _image_bytes_to_thumbnail_data_uri(img_bytes)
+                if thumb == "[Image]":
+                    continue
+                samples.append({"image": thumb, "_label": label})
             except Exception:
                 continue
-    return samples, total
+
+    has_labels = len(labels_seen) > 1
+
+    if has_labels:
+        for s in samples:
+            s["label"] = s.pop("_label")
+    else:
+        for s in samples:
+            s.pop("_label", None)
+
+    return samples, total, has_labels
 
 
 def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> str:
@@ -66,12 +94,22 @@ def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> 
 
     try:
         img = Image.open(io.BytesIO(img_bytes))
+        if img.mode in ("CMYK", "YCbCr", "LAB", "HSV"):
+            img = img.convert("RGB")
+        elif img.mode in ("LA", "PA"):
+            img = img.convert("RGBA")
         img.thumbnail((max_size, max_size))
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         b64 = base64.b64encode(buf.getvalue()).decode()
         return f"data:image/png;base64,{b64}"
-    except Exception:
+    except Exception as e:
+        logger.warning(
+            "Failed to generate thumbnail (len=%d, head=%r): %s",
+            len(img_bytes),
+            img_bytes[:16],
+            e,
+        )
         return "[Image]"
 
 
@@ -1900,8 +1938,15 @@ async def preview_with_types(
                     dataloader_name = None
                     matched_file = None
                     has_images = False
-                    for root, _, files in os.walk(extract_dir):
+                    for root, dirs, files in os.walk(extract_dir):
+                        dirs[:] = [
+                            d
+                            for d in dirs
+                            if not d.startswith("__MACOSX") and not d.startswith(".")
+                        ]
                         for f in files:
+                            if f.startswith("."):
+                                continue
                             ext = os.path.splitext(f)[1].lower()
                             if ext in supported_map:
                                 dataloader_name = supported_map[ext]
@@ -1913,28 +1958,35 @@ async def preview_with_types(
                             break
 
                     if dataloader_name is None and has_images:
-                        sample_rows, total_images = _build_image_preview_sample(
-                            extract_dir, image_extensions, max_rows=5
+                        sample_rows, total_images, has_labels = (
+                            _build_image_preview_sample(
+                                extract_dir, image_extensions, max_rows=5
+                            )
                         )
                         shutil.rmtree(extract_dir, ignore_errors=True)
                         os.unlink(tmp_file_path)
+
+                        schema = {
+                            "image": {"type": "Image", "dtype": "string"},
+                        }
+                        inferred_types = {
+                            "image": {"type": "Image", "dtype": "string"},
+                        }
+                        if has_labels:
+                            schema["label"] = {
+                                "type": "Categorical",
+                                "dtype": "string",
+                            }
+                            inferred_types["label"] = {
+                                "type": "Categorical",
+                                "dtype": "string",
+                                "encoder": "one_hot",
+                            }
+
                         return {
                             "sample": sample_rows,
-                            "schema": {
-                                "image": {"type": "Image", "dtype": "string"},
-                                "label": {
-                                    "type": "Categorical",
-                                    "dtype": "string",
-                                },
-                            },
-                            "inferred_types": {
-                                "image": {"type": "Image", "dtype": "string"},
-                                "label": {
-                                    "type": "Categorical",
-                                    "dtype": "string",
-                                    "encoder": "one_hot",
-                                },
-                            },
+                            "schema": schema,
+                            "inferred_types": inferred_types,
                             "preview_row_count": total_images,
                             "types_inferred": False,
                         }
