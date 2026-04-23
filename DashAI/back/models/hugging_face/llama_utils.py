@@ -1,3 +1,4 @@
+import contextlib
 import ctypes
 import logging
 import os
@@ -16,7 +17,8 @@ except ImportError:
     llama_cpp = None
 
 
-# llama_log_callback signature: void (*)(ggml_log_level level, const char * text, void * user_data)
+# llama_log_callback signature: void (*)(ggml_log_level level,
+# const char * text, void * user_data)
 _LOG_CB_T = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p, ctypes.c_void_p)
 
 _log_capture: list[str] = []
@@ -185,10 +187,8 @@ def get_llama_gpu_devices_formatted() -> list[str]:
         cuda_lib = _find_symbol(libs, "ggml_backend_cuda_get_device_count")
         if cuda_lib is not None:
             cuda_lib.ggml_backend_cuda_get_device_count.restype = ctypes.c_int
-            try:
+            with contextlib.suppress(Exception):
                 cuda_lib.ggml_backend_cuda_get_device_count()
-            except Exception:
-                pass
 
         caps = _parse_compute_caps("".join(_log_capture))
         devices = _enum_via_cuda_api(libs, caps)
@@ -201,6 +201,17 @@ def get_llama_gpu_devices_formatted() -> list[str]:
 
 
 def is_gpu_available_for_llama_cpp() -> bool:
+    """Check whether the installed llama-cpp-python was compiled with GPU support.
+
+    Dispatches to a version-specific helper based on the ``llama_cpp`` package
+    version, because the internal API changed between 0.2.x and 0.3.x.
+
+    Returns
+    -------
+    bool
+        ``True`` if GPU offloading is available; ``False`` if ``llama-cpp-python``
+        is not installed or if the check raises an unexpected exception.
+    """
     if llama_cpp is None:
         return False
     try:
@@ -217,10 +228,34 @@ def is_gpu_available_for_llama_cpp() -> bool:
 
 
 def __is_gpu_available_for_llama_cpp_v03() -> bool:
+    """Check GPU availability using the llama.cpp v0.3 shared-library API.
+
+    Loads the ``llama`` shared library from the llama_cpp package directory and
+    calls ``llama_supports_gpu_offload`` to determine whether the build was
+    compiled with GPU support.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``llama_supports_gpu_offload()`` returns a truthy value,
+        ``False`` otherwise.
+    """
     lib = _load_llama_lib()
     return bool(lib.llama_supports_gpu_offload())
 
 
 def __is_gpu_available_for_llama_cpp_v02() -> bool:
+    """Check GPU availability using the llama.cpp v0.2 shared-library API.
+
+    Loads the ``llama`` shared library via the legacy ``_load_shared_library``
+    helper and inspects it for the ``ggml_init_cublas`` symbol, which is only
+    present in CUDA-enabled builds.
+
+    Returns
+    -------
+    bool
+        ``True`` if the ``ggml_init_cublas`` attribute is found in the loaded
+        library, ``False`` otherwise.
+    """
     lib = llama_cpp.llama_cpp._load_shared_library("llama")
     return hasattr(lib, "ggml_init_cublas")
