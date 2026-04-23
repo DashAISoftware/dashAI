@@ -247,7 +247,8 @@ class SD15DepthControlNetModel(BaseControlNetModel):
         self.num_inference_steps = kwargs.get("num_inference_steps")
         self.guidance_scale = kwargs.get("guidance_scale")
 
-        self.pipe.enable_model_cpu_offload()
+        if self.device != "cpu":
+            self.pipe.enable_model_cpu_offload()
 
     def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.
