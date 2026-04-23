@@ -18,8 +18,8 @@ class TextToImageGenerationTask(BaseGenerativeTask):
     """
 
     metadata: dict = {
-        "inputs": {"str": 1},
-        "outputs": {"Image": "n"},
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"Image": {"min": 1, "max": "n"}},
     }
     DISPLAY_NAME: str = MultilingualString(en="Text to Image", es="Texto a Imagen")
     DESCRIPTION: str = MultilingualString(

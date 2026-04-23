@@ -20,8 +20,8 @@ class TextToTextGenerationTask(BaseGenerativeTask):
     """
 
     metadata: dict = {
-        "inputs": {"str": 1},
-        "outputs": {"str": 1},
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"str": {"min": 1, "max": 1}},
     }
 
     DISPLAY_NAME: MultilingualString = MultilingualString(

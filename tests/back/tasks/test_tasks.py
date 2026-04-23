@@ -290,7 +290,10 @@ def test_get_text_to_text_task_metadata():
     text_to_text_task = TextToTextGenerationTask()
     metadata = text_to_text_task.get_metadata()
 
-    assert metadata == {"inputs": {"str": 1}, "outputs": {"str": 1}}
+    assert metadata == {
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"str": {"min": 1, "max": 1}},
+    }
 
 
 def test_prepare_for_task_text_to_text():
@@ -349,7 +352,10 @@ def test_get_text_to_image_task_metadata():
     text_to_image_task = TextToImageGenerationTask()
     metadata = text_to_image_task.get_metadata()
 
-    assert metadata == {"inputs": {"str": 1}, "outputs": {"Image": "n"}}
+    assert metadata == {
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"Image": {"min": 1, "max": "n"}},
+    }
 
 
 def test_prepare_for_task_text_to_image():
@@ -413,8 +419,11 @@ def test_get_controlnet_task_metadata():
     metadata = controlnet_task.get_metadata()
 
     assert metadata == {
-        "inputs": {"Image": 1, "str": 1},
-        "outputs": {"Image": "n"},
+        "inputs": {
+            "Image": {"min": 1, "max": 1},
+            "str": {"min": 1, "max": 1},
+        },
+        "outputs": {"Image": {"min": 1, "max": "n"}},
     }
 
 

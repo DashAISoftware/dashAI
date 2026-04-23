@@ -19,8 +19,11 @@ class ControlNetTask(BaseGenerativeTask):
     """
 
     metadata: dict = {
-        "inputs": {"Image": 1, "str": 1},
-        "outputs": {"Image": "n"},
+        "inputs": {
+            "Image": {"min": 1, "max": 1},
+            "str": {"min": 1, "max": 1},
+        },
+        "outputs": {"Image": {"min": 1, "max": "n"}},
     }
 
     DISPLAY_NAME: str = MultilingualString(
