@@ -42,7 +42,8 @@
     "untitledSession": "Untitled Session",
     "attachImage": "Attach image",
     "attachAudio": "Attach audio",
-    "attachVideo": "Attach video"
+    "attachVideo": "Attach video",
+    "attachMedia": "Attach media"
   },
 
   "message": {

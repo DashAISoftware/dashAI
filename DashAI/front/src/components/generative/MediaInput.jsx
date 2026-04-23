@@ -1,9 +1,21 @@
 import { useState, useRef, useMemo } from "react";
-import { TextField, Button, Box, IconButton, Tooltip } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  IconButton,
+  Popper,
+  Fade,
+  ClickAwayListener,
+  Stack,
+  Tooltip,
+  Paper,
+} from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import ImageIcon from "@mui/icons-material/Image";
 import AudiotrackIcon from "@mui/icons-material/Audiotrack";
 import VideocamIcon from "@mui/icons-material/Videocam";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 
@@ -25,6 +37,8 @@ const MEDIA_KINDS = {
   },
 };
 
+const MEDIA_ORDER = Object.keys(MEDIA_KINDS);
+
 const limitFor = (cardinality) =>
   cardinality === "n" ? Infinity : Number(cardinality) || 0;
 
@@ -36,17 +50,17 @@ export function MediaInput({
   const [text, setText] = useState("");
   const [filesByKind, setFilesByKind] = useState({});
   const [previewsByKind, setPreviewsByKind] = useState({});
+  const [menuOpen, setMenuOpen] = useState(false);
+  const attachBtnRef = useRef(null);
   const fileInputRefs = useRef({});
   const { t } = useTranslation(["generative"]);
 
   const wantsText = (inputsCardinality.str ?? 0) !== 0;
-  const mediaKinds = useMemo(
-    () =>
-      Object.keys(MEDIA_KINDS).filter(
-        (kind) => (inputsCardinality[kind] ?? 0) !== 0,
-      ),
+  const activeKinds = useMemo(
+    () => MEDIA_ORDER.filter((kind) => (inputsCardinality[kind] ?? 0) !== 0),
     [inputsCardinality],
   );
+  const hasAnyMedia = activeKinds.length > 0;
 
   const handleFileChange = (kind) => (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -80,7 +94,7 @@ export function MediaInput({
 
   const requirementsMet = useMemo(() => {
     if (wantsText && !text.trim()) return false;
-    for (const kind of mediaKinds) {
+    for (const kind of activeKinds) {
       const card = inputsCardinality[kind];
       const count = (filesByKind[kind] || []).length;
       if (card === "n") {
@@ -90,11 +104,11 @@ export function MediaInput({
       }
     }
     return true;
-  }, [wantsText, text, mediaKinds, filesByKind, inputsCardinality]);
+  }, [wantsText, text, activeKinds, filesByKind, inputsCardinality]);
 
   const handleSend = () => {
     if (!requirementsMet) return;
-    const allFiles = mediaKinds.flatMap((kind) => filesByKind[kind] || []);
+    const allFiles = activeKinds.flatMap((kind) => filesByKind[kind] || []);
     const payload = wantsText ? [...allFiles, text] : allFiles;
     onSendMessage(payload);
 
@@ -109,11 +123,16 @@ export function MediaInput({
     });
   };
 
+  const pickKind = (kind) => {
+    setMenuOpen(false);
+    fileInputRefs.current[kind]?.click();
+  };
+
   return (
     <Box
       sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2 }}
     >
-      {mediaKinds.map((kind) => {
+      {activeKinds.map((kind) => {
         const previews = previewsByKind[kind] || [];
         if (previews.length === 0) return null;
         const isImage = kind === "Image";
@@ -179,14 +198,12 @@ export function MediaInput({
         {wantsText && (
           <TextField
             fullWidth
-            multiline={mediaKinds.length > 0}
-            minRows={mediaKinds.length > 0 ? 3 : 1}
-            maxRows={mediaKinds.length > 0 ? 3 : 1}
+            multiline={hasAnyMedia}
+            minRows={hasAnyMedia ? 3 : 1}
+            maxRows={hasAnyMedia ? 3 : 1}
             placeholder={t("generative:label.typeYourMessage")}
             label={
-              mediaKinds.length === 0
-                ? t("generative:label.typeYourMessage")
-                : undefined
+              !hasAnyMedia ? t("generative:label.typeYourMessage") : undefined
             }
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -202,52 +219,162 @@ export function MediaInput({
           />
         )}
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {mediaKinds.map((kind) => {
-            const { accept, icon: Icon, tooltipKey } = MEDIA_KINDS[kind];
-            const limit = limitFor(inputsCardinality[kind]);
-            const current = (filesByKind[kind] || []).length;
-            const reachedLimit = current >= limit;
-            const inputId = `media-upload-${kind}`;
-            return (
-              <Box key={`attach-${kind}`}>
-                <Tooltip title={t(`generative:${tooltipKey}`, kind)}>
-                  <Box
-                    component="label"
-                    htmlFor={inputId}
-                    sx={{
-                      cursor: reachedLimit ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1,
-                      border: 1,
-                      borderColor: "divider",
-                      opacity: reachedLimit ? 0.5 : 1,
-                      "&:hover": {
-                        bgcolor: reachedLimit ? undefined : "action.hover",
-                      },
-                    }}
-                  >
-                    <Icon sx={{ fontSize: 20 }} />
-                  </Box>
-                </Tooltip>
-                <Box
-                  component="input"
-                  id={inputId}
-                  type="file"
-                  accept={accept}
-                  multiple={limit > 1}
-                  onChange={handleFileChange(kind)}
-                  disabled={isLoading || reachedLimit}
-                  sx={{ display: "none" }}
-                  ref={(el) => {
-                    fileInputRefs.current[kind] = el;
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
+          <IconButton
+            ref={attachBtnRef}
+            onClick={() => hasAnyMedia && !isLoading && setMenuOpen((v) => !v)}
+            disabled={isLoading || !hasAnyMedia}
+            sx={(theme) => {
+              const isDark = theme.palette.mode === "dark";
+              const bg = isDark
+                ? theme.palette.grey[800]
+                : theme.palette.grey[300];
+              const fg = isDark
+                ? theme.palette.grey[100]
+                : theme.palette.grey[800];
+              return {
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                color: fg,
+                backgroundColor: bg,
+                "&:hover": { backgroundColor: bg },
+                "&.Mui-disabled": {
+                  color: theme.palette.text.disabled,
+                  backgroundColor: bg,
+                  opacity: 0.6,
+                },
+              };
+            }}
+          >
+            {menuOpen ? <CloseIcon /> : <AttachFileIcon />}
+          </IconButton>
+
+          <Popper
+            open={menuOpen}
+            anchorEl={attachBtnRef.current}
+            placement="top-end"
+            transition
+            modifiers={[{ name: "offset", options: { offset: [0, 8] } }]}
+            sx={{ zIndex: 1200 }}
+          >
+            {({ TransitionProps }) => (
+              <Fade {...TransitionProps} timeout={200}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 0,
+                    backgroundColor: "transparent",
+                    boxShadow: "none",
                   }}
-                />
-              </Box>
+                >
+                  <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
+                    <Stack direction="column" spacing={1.25}>
+                      {MEDIA_ORDER.map((kind) => {
+                        const { icon: Icon, tooltipKey } = MEDIA_KINDS[kind];
+                        const enabled = (inputsCardinality[kind] ?? 0) !== 0;
+                        const limit = limitFor(inputsCardinality[kind]);
+                        const current = (filesByKind[kind] || []).length;
+                        const reachedLimit = enabled && current >= limit;
+                        const disabled = !enabled || reachedLimit;
+                        const label = t(`generative:${tooltipKey}`, kind);
+                        const tooltipText = !enabled
+                          ? `${label} (not supported)`
+                          : limit === Infinity
+                          ? `${label} — ${current} attached`
+                          : `${label} — ${current}/${limit}`;
+                        return (
+                          <Tooltip
+                            key={`action-${kind}`}
+                            title={tooltipText}
+                            placement="left"
+                            arrow
+                          >
+                            <span>
+                              <IconButton
+                                onClick={() => pickKind(kind)}
+                                disabled={disabled}
+                                sx={(theme) => {
+                                  const isDark = theme.palette.mode === "dark";
+                                  const bg = isDark
+                                    ? theme.palette.grey[700]
+                                    : theme.palette.grey[200];
+                                  const fg = isDark
+                                    ? theme.palette.grey[100]
+                                    : theme.palette.grey[800];
+                                  const disabledBg =
+                                    theme.palette.ui?.disabled ??
+                                    theme.palette.action.disabledBackground;
+                                  const borderColor =
+                                    theme.palette.ui?.border ??
+                                    theme.palette.divider;
+                                  return {
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: 1,
+                                    color: fg,
+                                    backgroundColor: bg,
+                                    "&:hover": { backgroundColor: bg },
+                                    "&.Mui-disabled": {
+                                      position: "relative",
+                                      overflow: "hidden",
+                                      color: theme.palette.text.disabled,
+                                      backgroundColor: disabledBg,
+                                      border: `1px solid ${borderColor}`,
+                                      opacity: 0.6,
+                                      filter: "grayscale(0.6)",
+                                      cursor: "not-allowed",
+                                    },
+                                    "&.Mui-disabled::after": {
+                                      content: '""',
+                                      position: "absolute",
+                                      inset: 0,
+                                      borderRadius: 1,
+                                      pointerEvents: "none",
+                                      background:
+                                        "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
+                                    },
+                                  };
+                                }}
+                              >
+                                <Icon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        );
+                      })}
+                    </Stack>
+                  </ClickAwayListener>
+                </Paper>
+              </Fade>
+            )}
+          </Popper>
+
+          {MEDIA_ORDER.map((kind) => {
+            const { accept } = MEDIA_KINDS[kind];
+            const limit = limitFor(inputsCardinality[kind]);
+            return (
+              <Box
+                key={`file-input-${kind}`}
+                component="input"
+                type="file"
+                accept={accept}
+                multiple={limit > 1}
+                onChange={handleFileChange(kind)}
+                disabled={isLoading}
+                sx={{ display: "none" }}
+                ref={(el) => {
+                  fileInputRefs.current[kind] = el;
+                }}
+              />
             );
           })}
 
