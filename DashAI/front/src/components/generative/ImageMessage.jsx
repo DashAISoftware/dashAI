@@ -18,14 +18,13 @@ export function ImageMessage({ image }) {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <>
       <Box
         onClick={handleImageClick}
         sx={{
           cursor: "pointer",
-          "&:hover": {
-            opacity: 0.9,
-          },
+          lineHeight: 0,
+          "&:hover": { opacity: 0.9 },
           transition: theme.transitions.create("opacity"),
         }}
       >
@@ -33,6 +32,7 @@ export function ImageMessage({ image }) {
           src={`${api.defaults.baseURL}/v1/generative-process/image/${image}`}
           alt={t("common:image")}
           style={{
+            display: "block",
             maxWidth: "100%",
             maxHeight: "300px",
             objectFit: "contain",
@@ -45,6 +45,6 @@ export function ImageMessage({ image }) {
         onClose={handleCloseFullscreen}
         imageData={fullscreenImage}
       />
-    </Box>
+    </>
   );
 }
