@@ -316,3 +316,21 @@ async def get_generative_image(
         raise HTTPException(status_code=404, detail="Image not found")
 
     return FileResponse(image_path, media_type="image/png")
+
+
+@router.get("/file/{filename}", status_code=200, response_model=None)
+async def get_generative_file(
+    filename: str,
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+):
+    """Serve a generated media file (image, audio, video) with auto-detected mime."""
+    import mimetypes
+    import os
+
+    file_path = os.path.join(config["IMAGES_PATH"], filename)
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    media_type, _ = mimetypes.guess_type(file_path)
+    return FileResponse(file_path, media_type=media_type or "application/octet-stream")
