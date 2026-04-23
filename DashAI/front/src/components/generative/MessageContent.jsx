@@ -24,17 +24,19 @@ export function MessageContent({ messages, isUser, isWaiting }) {
       {isWaiting ? (
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
-        messages?.map((message) => {
-          const type = message["data_type"];
-          return (
-            <Box key={message.id}>
-              {type === "str" && <TextMessage message={message.data} />}
-              {type === "Image" && <ImageMessage image={message.data} />}
-              {type === "Audio" && <AudioMessage audio={message.data} />}
-              {type === "Video" && <VideoMessage video={message.data} />}
-            </Box>
-          );
-        })
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {messages?.map((message) => {
+            const type = message["data_type"];
+            return (
+              <Box key={message.id}>
+                {type === "str" && <TextMessage message={message.data} />}
+                {type === "Image" && <ImageMessage image={message.data} />}
+                {type === "Audio" && <AudioMessage audio={message.data} />}
+                {type === "Video" && <VideoMessage video={message.data} />}
+              </Box>
+            );
+          })}
+        </Box>
       )}
     </Paper>
   );
