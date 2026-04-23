@@ -39,8 +39,27 @@ const MEDIA_KINDS = {
 
 const MEDIA_ORDER = Object.keys(MEDIA_KINDS);
 
-const limitFor = (cardinality) =>
-  cardinality === "n" ? Infinity : Number(cardinality) || 0;
+// Normalize cardinality entries into {min, max}.
+// Accepts:
+//   - integer N → exactly N
+//   - "n"       → 0..Infinity
+//   - {min, max} → as-is, max "n" means Infinity
+const parseCardinality = (value) => {
+  if (value === "n") return { min: 0, max: Infinity };
+  if (typeof value === "number") return { min: value, max: value };
+  if (value && typeof value === "object") {
+    const min = Number(value.min ?? 0);
+    const rawMax = value.max ?? "n";
+    const max = rawMax === "n" ? Infinity : Number(rawMax);
+    return { min, max };
+  }
+  return { min: 0, max: 0 };
+};
+
+const isActive = (value) => {
+  const { min, max } = parseCardinality(value);
+  return max > 0 || min > 0;
+};
 
 export function MediaInput({
   onSendMessage,
@@ -55,18 +74,20 @@ export function MediaInput({
   const fileInputRefs = useRef({});
   const { t } = useTranslation(["generative"]);
 
-  const wantsText = (inputsCardinality.str ?? 0) !== 0;
+  const textCard = parseCardinality(inputsCardinality.str);
+  const wantsText = textCard.max > 0;
+  const textRequired = textCard.min > 0;
   const activeKinds = useMemo(
-    () => MEDIA_ORDER.filter((kind) => (inputsCardinality[kind] ?? 0) !== 0),
+    () => MEDIA_ORDER.filter((kind) => isActive(inputsCardinality[kind])),
     [inputsCardinality],
   );
   const hasAnyMedia = activeKinds.length > 0;
 
   const handleFileChange = (kind) => (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const limit = limitFor(inputsCardinality[kind]);
+    const { max } = parseCardinality(inputsCardinality[kind]);
     const current = filesByKind[kind] || [];
-    const remaining = limit - current.length;
+    const remaining = max - current.length;
     if (remaining <= 0) return;
 
     const incoming = Array.from(e.target.files).slice(0, remaining);
@@ -93,18 +114,14 @@ export function MediaInput({
   };
 
   const requirementsMet = useMemo(() => {
-    if (wantsText && !text.trim()) return false;
+    if (textRequired && !text.trim()) return false;
     for (const kind of activeKinds) {
-      const card = inputsCardinality[kind];
+      const { min, max } = parseCardinality(inputsCardinality[kind]);
       const count = (filesByKind[kind] || []).length;
-      if (card === "n") {
-        if (count === 0) return false;
-      } else if (count !== Number(card)) {
-        return false;
-      }
+      if (count < min || count > max) return false;
     }
     return true;
-  }, [wantsText, text, activeKinds, filesByKind, inputsCardinality]);
+  }, [textRequired, text, activeKinds, filesByKind, inputsCardinality]);
 
   const handleSend = () => {
     if (!requirementsMet) return;
@@ -280,17 +297,24 @@ export function MediaInput({
                     <Stack direction="column" spacing={1.25}>
                       {MEDIA_ORDER.map((kind) => {
                         const { icon: Icon, tooltipKey } = MEDIA_KINDS[kind];
-                        const enabled = (inputsCardinality[kind] ?? 0) !== 0;
-                        const limit = limitFor(inputsCardinality[kind]);
+                        const enabled = isActive(inputsCardinality[kind]);
+                        const { min, max } = parseCardinality(
+                          inputsCardinality[kind],
+                        );
                         const current = (filesByKind[kind] || []).length;
-                        const reachedLimit = enabled && current >= limit;
+                        const reachedLimit = enabled && current >= max;
                         const disabled = !enabled || reachedLimit;
                         const label = t(`generative:${tooltipKey}`, kind);
+                        const maxLabel = max === Infinity ? "∞" : max;
+                        const rangeLabel =
+                          min === max
+                            ? `exactly ${min}`
+                            : max === Infinity
+                              ? `min ${min}, max ∞`
+                              : `min ${min}, max ${max}`;
                         const tooltipText = !enabled
                           ? `${label} (not supported)`
-                          : limit === Infinity
-                          ? `${label} — ${current} attached`
-                          : `${label} — ${current}/${limit}`;
+                          : `${label} — ${current}/${maxLabel} (${rangeLabel})`;
                         return (
                           <Tooltip
                             key={`action-${kind}`}
@@ -360,14 +384,14 @@ export function MediaInput({
 
           {MEDIA_ORDER.map((kind) => {
             const { accept } = MEDIA_KINDS[kind];
-            const limit = limitFor(inputsCardinality[kind]);
+            const { max } = parseCardinality(inputsCardinality[kind]);
             return (
               <Box
                 key={`file-input-${kind}`}
                 component="input"
                 type="file"
                 accept={accept}
-                multiple={limit > 1}
+                multiple={max > 1}
                 onChange={handleFileChange(kind)}
                 disabled={isLoading}
                 sx={{ display: "none" }}

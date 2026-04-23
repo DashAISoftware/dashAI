@@ -1,5 +1,6 @@
 export type GenerativeInputType = "str" | "Image" | "Audio" | "Video" | string;
-export type Cardinality = number | "n";
+export type CardinalityRange = { min: number; max: number | "n" };
+export type Cardinality = number | "n" | CardinalityRange;
 export type CardinalityMap = Partial<Record<GenerativeInputType, Cardinality>>;
 
 export interface IGenerativeTask {
