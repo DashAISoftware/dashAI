@@ -115,13 +115,6 @@ First, set the python enviroment, for that you can use
     $ conda create -n dashai python=3.10
     $ conda activate dashai
 
-Then, move to `DashAI/back`
-
-.. code:: bash
-
-    $ cd DashAI/back
-
-
 Later, install the requirements:
 
 .. code:: bash
@@ -133,9 +126,9 @@ Later, install the requirements:
 Running the Backend
 ~~~~~~~~~~~~~~~~~~~
 
-There are three ways to run DashAI:
+There are two ways to run DashAI:
 
-1. By executing DashAI as a module:
+1. By executing DashAI as a module from the root of the repository:
 
 .. code:: bash
 
