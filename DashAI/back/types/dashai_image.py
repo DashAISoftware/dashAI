@@ -14,22 +14,15 @@ class DashAIImage(DashAIDataType):
     Attributes
     ----------
     dtype : str
-        The data type of the image, default is "string" which represents the path to the image.
+        The data type of the image, default is "struct" (Arrow struct<bytes: binary, format: string>).
     base_path : Optional[str]
-        An optional base path for images, useful if images are represented just by their filenames.
+        An optional base path for images.
     """
 
-    dtype: str = "string"  # Default: Path to image (str)
-    ####
-    # Optional base path in case images are represented just by their filenames
-    # Since Dataloaders are not something I'm working on,
-    # this was done in the basis that the final image dataloader
-    # will contain an optional parameter to specify a base path for images
-    # (If they are in the same folder, for example).
+    dtype: str = "struct"
     base_path: Optional[str] = None
-    ####
 
-    def __init__(self, dtype: str = "string"):
+    def __init__(self, dtype: str = "struct"):
         self.dtype = dtype
 
     def to_string(self):
