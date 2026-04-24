@@ -42,16 +42,14 @@ class TranslationTask(BaseTask):
         "outputs_cardinality": 1,
     }
     DESCRIPTION: str = MultilingualString(
-        en="""
-    The translation task is natural language processing (NLP) task that involves
-    converting text or speech from one language into another language while
-    preserving the meaning and context.
-    """,
-        es="""
-    La tarea de traducción es una tarea de procesamiento de lenguaje natural (PLN)
-    que implica convertir texto o habla de un idioma a otro idioma mientras se
-    preserva el significado y el contexto.
-    """,
+        en=(
+            "Convert text from one language to another while "
+            "preserving meaning and context."
+        ),
+        es=(
+            "Convierte texto de un idioma a otro preservando "
+            "el significado y el contexto."
+        ),
     )
 
     DISPLAY_NAME: str = MultilingualString(en="Translation", es="Traducción")
