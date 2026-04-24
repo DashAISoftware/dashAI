@@ -41,8 +41,16 @@ function ResultsGraphs({
         });
         setMetricsMetadata(meta);
       })
-      .catch(() => {});
-  }, []);
+      .catch((error) => {
+        console.error(
+          "Failed to fetch metric metadata for results heatmap.",
+          error,
+        );
+        enqueueSnackbar(t("models:error.metricMetadataFetch"), {
+          variant: "warning",
+        });
+      });
+  }, [enqueueSnackbar, t]);
 
   const finishedRuns = useMemo(
     () => runs.filter((r) => r.status === 3),

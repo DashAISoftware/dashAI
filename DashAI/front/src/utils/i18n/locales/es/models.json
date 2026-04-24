@@ -42,6 +42,7 @@
     "failedToStartRun": "Error al iniciar la ejecución {{runName}}",
     "failedToUpdateSession": "Error al actualizar la sesión",
     "fetchingModels": "Error al obtener modelos compatibles",
+    "metricMetadataFetch": "No se pudieron cargar los metadatos de métricas. Los colores del mapa de calor pueden no reflejar correctamente la dirección de las métricas.",
     "nameRequired": "Se requiere un nombre",
     "noModelSelected": "No se seleccionó ningún modelo",
     "preparingRunsTable": "Error al preparar la tabla de ejecuciones",

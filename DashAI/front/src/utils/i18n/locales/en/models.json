@@ -42,6 +42,7 @@
     "failedToStartRun": "Error starting run {{runName}}",
     "failedToUpdateSession": "Failed to update session",
     "fetchingModels": "Error fetching compatible models",
+    "metricMetadataFetch": "Metric metadata could not be loaded. Heatmap colors may not reflect metric direction correctly.",
     "nameRequired": "Name is required",
     "noModelSelected": "No model selected",
     "preparingRunsTable": "Error while preparing runs table",

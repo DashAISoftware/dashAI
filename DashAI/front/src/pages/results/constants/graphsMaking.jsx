@@ -41,11 +41,12 @@ function graphsMaking(graphsToView, run, metrics, values, runIndex, theme) {
 /**
  * Build a single Plotly heatmap trace from all runs at once.
  *
- * Each metric column is independently min-max normalized so every metric
- * fills the full color range. For lower-is-better metrics (maximize=false),
- * the normalization is inverted so lower raw values map to the "better" color.
+ * Each metric column is independently min-max normalized relative to the
+ * visible runs, so every metric fills the full color range regardless of its
+ * scale. For lower-is-better metrics (maximize=false in metricsMetadata), the
+ * normalization is inverted so the lowest raw value maps to the "best" color.
  *
- * Colorscale: orange (primary) = min/worst → green (secondary) = max/best.
+ * Colorscale: orange (primary) = worst → green (secondary) = best.
  *
  * @param {object[]} finishedRuns          Array of completed run objects
  * @param {string[]} metrics               Metric names (x-axis columns)
@@ -134,7 +135,7 @@ function heatmapMaking(
       colorbar: {
         tickmode: "array",
         tickvals: [0, 1],
-        ticktext: ["Min", "Max"],
+        ticktext: ["Worst", "Best"],
         tickfont: { color: theme.palette.text.primary },
       },
       hoverongaps: false,
