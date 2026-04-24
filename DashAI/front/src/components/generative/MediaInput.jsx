@@ -243,27 +243,118 @@ export function MediaInput({
               flex: 1,
               minHeight: "104px",
               boxSizing: "border-box",
-              px: "14px",
-              py: "16.5px",
+              px: 2,
+              py: 1.5,
               display: "flex",
-              alignItems: "flex-start",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               backgroundColor: "transparent",
               color: theme.palette.text.secondary,
-              fontSize: "1rem",
-              lineHeight: "1.4375em",
             })}
           >
-            {activeKinds.length > 0
-              ? t(
-                  "generative:label.attachMediaToContinue",
-                  "Attach media to continue",
-                )
-              : t(
+            {hasAnyMedia ? (
+              <>
+                <Box sx={{ fontSize: "0.875rem" }}>
+                  {t(
+                    "generative:label.attachMediaToContinue",
+                    "Attach media to continue",
+                  )}
+                </Box>
+                <Stack direction="row" spacing={1}>
+                  {MEDIA_ORDER.map((kind) => {
+                    const { icon: Icon, tooltipKey } = MEDIA_KINDS[kind];
+                    const enabled = isActive(inputsCardinality[kind]);
+                    const { min, max } = parseCardinality(
+                      inputsCardinality[kind],
+                    );
+                    const current = (filesByKind[kind] || []).length;
+                    const reachedLimit = enabled && current >= max;
+                    const disabled = !enabled || reachedLimit;
+                    const label = t(`generative:${tooltipKey}`, kind);
+                    const maxLabel = max === Infinity ? "∞" : max;
+                    const rangeLabel =
+                      min === max
+                        ? `exactly ${min}`
+                        : max === Infinity
+                          ? `min ${min}, max ∞`
+                          : `min ${min}, max ${max}`;
+                    const tooltipText = !enabled
+                      ? `${label} (not supported)`
+                      : `${label} — ${current}/${maxLabel} (${rangeLabel})`;
+                    return (
+                      <Tooltip
+                        key={`inline-${kind}`}
+                        title={tooltipText}
+                        placement="top"
+                        arrow
+                      >
+                        <span>
+                          <IconButton
+                            onClick={() => pickKind(kind)}
+                            disabled={disabled}
+                            sx={(theme) => {
+                              const isDark = theme.palette.mode === "dark";
+                              const bg = isDark
+                                ? theme.palette.grey[700]
+                                : theme.palette.grey[200];
+                              const fg = isDark
+                                ? theme.palette.grey[100]
+                                : theme.palette.grey[800];
+                              const disabledBg =
+                                theme.palette.ui?.disabled ??
+                                theme.palette.action.disabledBackground;
+                              const borderColor =
+                                theme.palette.ui?.border ??
+                                theme.palette.divider;
+                              return {
+                                width: 40,
+                                height: 40,
+                                borderRadius: 1,
+                                color: fg,
+                                backgroundColor: bg,
+                                "&:hover": { backgroundColor: bg },
+                                "&.Mui-disabled": {
+                                  position: "relative",
+                                  overflow: "hidden",
+                                  color: theme.palette.text.disabled,
+                                  backgroundColor: disabledBg,
+                                  border: `1px solid ${borderColor}`,
+                                  opacity: 0.6,
+                                  filter: "grayscale(0.6)",
+                                  cursor: "not-allowed",
+                                },
+                                "&.Mui-disabled::after": {
+                                  content: '""',
+                                  position: "absolute",
+                                  inset: 0,
+                                  borderRadius: 1,
+                                  pointerEvents: "none",
+                                  background:
+                                    "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
+                                },
+                              };
+                            }}
+                          >
+                            <Icon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    );
+                  })}
+                </Stack>
+              </>
+            ) : (
+              <Box sx={{ fontSize: "0.875rem" }}>
+                {t(
                   "generative:label.noInputAvailable",
                   "No input available for this task",
                 )}
+              </Box>
+            )}
           </Box>
         )}
 
@@ -276,142 +367,150 @@ export function MediaInput({
             position: "relative",
           }}
         >
-          <IconButton
-            ref={attachBtnRef}
-            onClick={() => hasAnyMedia && !isLoading && setMenuOpen((v) => !v)}
-            disabled={isLoading || !hasAnyMedia}
-            sx={(theme) => {
-              const isDark = theme.palette.mode === "dark";
-              const bg = isDark
-                ? theme.palette.grey[800]
-                : theme.palette.grey[300];
-              const fg = isDark
-                ? theme.palette.grey[100]
-                : theme.palette.grey[800];
-              return {
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                color: fg,
-                backgroundColor: bg,
-                "&:hover": { backgroundColor: bg },
-                "&.Mui-disabled": {
-                  color: theme.palette.text.disabled,
-                  backgroundColor: bg,
-                  opacity: 0.6,
-                },
-              };
-            }}
-          >
-            {menuOpen ? <CloseIcon /> : <AttachFileIcon />}
-          </IconButton>
+          {wantsText && (
+            <>
+              <IconButton
+                ref={attachBtnRef}
+                onClick={() =>
+                  hasAnyMedia && !isLoading && setMenuOpen((v) => !v)
+                }
+                disabled={isLoading || !hasAnyMedia}
+                sx={(theme) => {
+                  const isDark = theme.palette.mode === "dark";
+                  const bg = isDark
+                    ? theme.palette.grey[800]
+                    : theme.palette.grey[300];
+                  const fg = isDark
+                    ? theme.palette.grey[100]
+                    : theme.palette.grey[800];
+                  return {
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1,
+                    color: fg,
+                    backgroundColor: bg,
+                    "&:hover": { backgroundColor: bg },
+                    "&.Mui-disabled": {
+                      color: theme.palette.text.disabled,
+                      backgroundColor: bg,
+                      opacity: 0.6,
+                    },
+                  };
+                }}
+              >
+                {menuOpen ? <CloseIcon /> : <AttachFileIcon />}
+              </IconButton>
 
-          <Popper
-            open={menuOpen}
-            anchorEl={attachBtnRef.current}
-            placement="top-end"
-            transition
-            modifiers={[{ name: "offset", options: { offset: [0, 8] } }]}
-            sx={{ zIndex: 1200 }}
-          >
-            {({ TransitionProps }) => (
-              <Fade {...TransitionProps} timeout={200}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 0,
-                    backgroundColor: "transparent",
-                    boxShadow: "none",
-                  }}
-                >
-                  <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
-                    <Stack direction="column" spacing={1.25}>
-                      {MEDIA_ORDER.map((kind) => {
-                        const { icon: Icon, tooltipKey } = MEDIA_KINDS[kind];
-                        const enabled = isActive(inputsCardinality[kind]);
-                        const { min, max } = parseCardinality(
-                          inputsCardinality[kind],
-                        );
-                        const current = (filesByKind[kind] || []).length;
-                        const reachedLimit = enabled && current >= max;
-                        const disabled = !enabled || reachedLimit;
-                        const label = t(`generative:${tooltipKey}`, kind);
-                        const maxLabel = max === Infinity ? "∞" : max;
-                        const rangeLabel =
-                          min === max
-                            ? `exactly ${min}`
-                            : max === Infinity
-                              ? `min ${min}, max ∞`
-                              : `min ${min}, max ${max}`;
-                        const tooltipText = !enabled
-                          ? `${label} (not supported)`
-                          : `${label} — ${current}/${maxLabel} (${rangeLabel})`;
-                        return (
-                          <Tooltip
-                            key={`action-${kind}`}
-                            title={tooltipText}
-                            placement="left"
-                            arrow
-                          >
-                            <span>
-                              <IconButton
-                                onClick={() => pickKind(kind)}
-                                disabled={disabled}
-                                sx={(theme) => {
-                                  const isDark = theme.palette.mode === "dark";
-                                  const bg = isDark
-                                    ? theme.palette.grey[700]
-                                    : theme.palette.grey[200];
-                                  const fg = isDark
-                                    ? theme.palette.grey[100]
-                                    : theme.palette.grey[800];
-                                  const disabledBg =
-                                    theme.palette.ui?.disabled ??
-                                    theme.palette.action.disabledBackground;
-                                  const borderColor =
-                                    theme.palette.ui?.border ??
-                                    theme.palette.divider;
-                                  return {
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 1,
-                                    color: fg,
-                                    backgroundColor: bg,
-                                    "&:hover": { backgroundColor: bg },
-                                    "&.Mui-disabled": {
-                                      position: "relative",
-                                      overflow: "hidden",
-                                      color: theme.palette.text.disabled,
-                                      backgroundColor: disabledBg,
-                                      border: `1px solid ${borderColor}`,
-                                      opacity: 0.6,
-                                      filter: "grayscale(0.6)",
-                                      cursor: "not-allowed",
-                                    },
-                                    "&.Mui-disabled::after": {
-                                      content: '""',
-                                      position: "absolute",
-                                      inset: 0,
-                                      borderRadius: 1,
-                                      pointerEvents: "none",
-                                      background:
-                                        "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
-                                    },
-                                  };
-                                }}
+              <Popper
+                open={menuOpen}
+                anchorEl={attachBtnRef.current}
+                placement="top-end"
+                transition
+                modifiers={[{ name: "offset", options: { offset: [0, 8] } }]}
+                sx={{ zIndex: 1200 }}
+              >
+                {({ TransitionProps }) => (
+                  <Fade {...TransitionProps} timeout={200}>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 0,
+                        backgroundColor: "transparent",
+                        boxShadow: "none",
+                      }}
+                    >
+                      <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
+                        <Stack direction="column" spacing={1.25}>
+                          {MEDIA_ORDER.map((kind) => {
+                            const { icon: Icon, tooltipKey } =
+                              MEDIA_KINDS[kind];
+                            const enabled = isActive(inputsCardinality[kind]);
+                            const { min, max } = parseCardinality(
+                              inputsCardinality[kind],
+                            );
+                            const current = (filesByKind[kind] || []).length;
+                            const reachedLimit = enabled && current >= max;
+                            const disabled = !enabled || reachedLimit;
+                            const label = t(`generative:${tooltipKey}`, kind);
+                            const maxLabel = max === Infinity ? "∞" : max;
+                            const rangeLabel =
+                              min === max
+                                ? `exactly ${min}`
+                                : max === Infinity
+                                  ? `min ${min}, max ∞`
+                                  : `min ${min}, max ${max}`;
+                            const tooltipText = !enabled
+                              ? `${label} (not supported)`
+                              : `${label} — ${current}/${maxLabel} (${rangeLabel})`;
+                            return (
+                              <Tooltip
+                                key={`action-${kind}`}
+                                title={tooltipText}
+                                placement="left"
+                                arrow
                               >
-                                <Icon fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        );
-                      })}
-                    </Stack>
-                  </ClickAwayListener>
-                </Paper>
-              </Fade>
-            )}
-          </Popper>
+                                <span>
+                                  <IconButton
+                                    onClick={() => pickKind(kind)}
+                                    disabled={disabled}
+                                    sx={(theme) => {
+                                      const isDark =
+                                        theme.palette.mode === "dark";
+                                      const bg = isDark
+                                        ? theme.palette.grey[700]
+                                        : theme.palette.grey[200];
+                                      const fg = isDark
+                                        ? theme.palette.grey[100]
+                                        : theme.palette.grey[800];
+                                      const disabledBg =
+                                        theme.palette.ui?.disabled ??
+                                        theme.palette.action.disabledBackground;
+                                      const borderColor =
+                                        theme.palette.ui?.border ??
+                                        theme.palette.divider;
+                                      return {
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 1,
+                                        color: fg,
+                                        backgroundColor: bg,
+                                        "&:hover": { backgroundColor: bg },
+                                        "&.Mui-disabled": {
+                                          position: "relative",
+                                          overflow: "hidden",
+                                          color: theme.palette.text.disabled,
+                                          backgroundColor: disabledBg,
+                                          border: `1px solid ${borderColor}`,
+                                          opacity: 0.6,
+                                          filter: "grayscale(0.6)",
+                                          cursor: "not-allowed",
+                                        },
+                                        "&.Mui-disabled::after": {
+                                          content: '""',
+                                          position: "absolute",
+                                          inset: 0,
+                                          borderRadius: 1,
+                                          pointerEvents: "none",
+                                          background:
+                                            "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.12) 6px, rgba(0,0,0,0.12) 12px)",
+                                        },
+                                      };
+                                    }}
+                                  >
+                                    <Icon fontSize="small" />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            );
+                          })}
+                        </Stack>
+                      </ClickAwayListener>
+                    </Paper>
+                  </Fade>
+                )}
+              </Popper>
+            </>
+          )}
 
           {MEDIA_ORDER.map((kind) => {
             const { accept } = MEDIA_KINDS[kind];
