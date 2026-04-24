@@ -1,4 +1,5 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import NotebookVisualization from "../notebook/NotebookVisualization";
 import UploadDatasetSteps from "../datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../notebookCreation/UploadNotebookSteps";
@@ -32,6 +33,16 @@ export default function DatasetsCenterContent() {
 
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "upload" && step === 0) {
+      setStep(1);
+      setSelectedOption("dataset");
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams]);
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);

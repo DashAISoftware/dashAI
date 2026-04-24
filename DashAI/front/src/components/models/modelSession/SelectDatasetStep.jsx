@@ -155,7 +155,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             </AlertTitle>
             <Trans i18nKey="experiments:label.noDatasetsAvailableGoToDataTab">
               Go to
-              <Link component={RouterLink} to="/app/data">
+              <Link component={RouterLink} to="/app/data?action=upload">
                 data tab
               </Link>
               to upload one first.
