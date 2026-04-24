@@ -125,9 +125,8 @@ export default function DocumentSelectionTable({
     <>
       <Box
         sx={{
-          backgroundColor: "background.paper",
-          borderRadius: 2,
-          p: 2,
+          display: "flex",
+          flexDirection: "column",
           height: "100%",
           width: "100%",
         }}
@@ -152,6 +151,9 @@ export default function DocumentSelectionTable({
             loadingOverlay: LinearProgress,
           }}
           sx={{
+            backgroundColor: "background.paper",
+            borderRadius: 2,
+            p: 2,
             "& .MuiDataGrid-row.Mui-selected": {
               backgroundColor: "action.hover",
             },

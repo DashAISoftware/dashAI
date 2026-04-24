@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
 import PropTypes from "prop-types";
-import DocumentSelectionTable from "./DocumentSelectionTable";
+import SimplifiedDocumentTable from "./SimplifiedDocumentTable";
 import Upload from "../../shared/Upload";
 import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
 
@@ -125,30 +125,32 @@ export default function DocumentSelector({
   );
 
   return (
-    <Box display="flex" gap={2} height="100%">
-      <Box width="65%">
-        <DocumentSelectionTable
-          documents={documents.map((doc) => ({
-            ...doc,
-            preview: doc.file_url, // Map file_url to preview for modal
-            file_type: doc.file_name.split(".").pop().toLowerCase(), // crude file type detection
-          }))}
-          selectedIds={selectedIds}
-          onToggle={handleToggleSelection}
-          onSelectAll={handleSelectAll}
-          onDeselectAll={handleDeselectAll}
-          onRemove={handleRemoveDocument}
-          isLoading={isLoading}
-        />
-      </Box>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 2,
+        height: "100%",
+        width: "100%",
+      }}
+    >
+      <SimplifiedDocumentTable
+        documents={documents.map((doc) => ({
+          ...doc,
+          preview: doc.file_url,
+          file_type: doc.file_name.split(".").pop().toLowerCase(),
+        }))}
+        selectedIds={selectedIds}
+        onToggle={handleToggleSelection}
+        onRemove={handleRemoveDocument}
+        isLoading={isLoading}
+      />
 
-      <Box width="35%">
-        <Upload
-          key={uploadKey}
-          onFileUpload={handleFileUpload}
-          multiple={true}
-        />
-      </Box>
+      <Upload
+        key={uploadKey}
+        onFileUpload={handleFileUpload}
+        multiple={true}
+      />
     </Box>
   );
 }

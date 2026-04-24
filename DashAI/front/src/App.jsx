@@ -18,6 +18,7 @@ import RAGHomePage from "./pages/generative/RAG/RAGHomePage";
 import RAGSessionsPage from "./pages/generative/RAG/RAGSessionsPage";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
+import SimplifiedRAGPage from "./pages/generative/simplified-RAG/SimplifiedRAGPage";
 
 function App() {
   return (
@@ -60,6 +61,14 @@ function App() {
           element={
             <GenerativeProvider>
               <RAGPromptsPage />
+            </GenerativeProvider>
+          }
+        />
+        <Route
+          path="/app/generative/simplified-rag"
+          element={
+            <GenerativeProvider>
+              <SimplifiedRAGPage />
             </GenerativeProvider>
           }
         />

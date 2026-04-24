@@ -6,13 +6,11 @@ export default function CenterBox({ children }) {
       width={"100%"}
       height={"100%"}
       sx={{
-        border: "0.1px solid",
-        borderColor: "grey.600",
-        // bgcolor: "background.paper",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto",
+        p: 2,
       }}
-      // borderRadius={2}
-      overflow={"auto"}
-      p={2}
     >
       {children}
     </Box>

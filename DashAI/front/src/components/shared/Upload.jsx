@@ -139,62 +139,96 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
   };
 
   return (
-    <Paper sx={{ p: 4, height: "100%", borderRadius: 2 }}>
-      <Grid container direction="column" rowSpacing={3}>
-        {/* state text */}
-        <Grid sx={{ textAlign: "center" }}>
-          <DialogContentText>
-            {datasetState === LOADING && "Loading..."}
-            {datasetState === LOADED && "Loaded"}
-            {/* {datasetState === EMPTY && "Upload your dataset"} */}
-            {datasetState === EMPTY && emptyUploadText}
-          </DialogContentText>
-        </Grid>
+    <Paper
+      sx={{
+        p: 4,
+        borderRadius: 2,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
+      {/* state text */}
+      <Box sx={{ textAlign: "center", mb: 2 }}>
+        <DialogContentText>
+          {datasetState === LOADING && "Loading..."}
+          {datasetState === LOADED && "Loaded"}
+          {datasetState === EMPTY && emptyUploadText}
+        </DialogContentText>
+      </Box>
 
-        {/* Drag and drop */}
-        <Grid>
-          <Box
-            sx={{
-              border: 1,
-              height: "33vh",
-              width: "100%",
-              borderRadius: 2,
-              cursor: datasetState === EMPTY ? "pointer" : "auto",
-              borderWidth: 1,
-              borderStyle: "dashed",
-              overflow: "auto",
-              position: "relative",
-            }}
-            // blocks the upload of a new file if the file state is not empty
-            onClick={datasetState === EMPTY ? handleButtonClick : null}
-            onDragEnter={datasetState === EMPTY ? handleDrag : null}
-            onDragLeave={datasetState === EMPTY ? handleDrag : null}
-            onDragOver={datasetState === EMPTY ? handleDrag : null}
-            onDrop={datasetState === EMPTY ? handleDrop : null}
-          >
-            <Grid
-              container
-              rowSpacing={1}
-              direction="column"
-              alignItems="center"
-              justifyContent="center"
-              sx={{ height: "100%" }}
-            >
-              {/* delete uploaded dataset button */}
-              {datasetState === LOADED && (
-                <Grid sx={{ position: "absolute", right: 0, top: 0 }}>
-                  <IconButton onClick={handleDeleteDataset}>
-                    <ClearIcon />
-                  </IconButton>
-                </Grid>
-              )}
+      {/* Drag and drop */}
+      <Box
+        sx={{
+          flex: 1,
+          border: 1,
+          borderRadius: 2,
+          cursor: datasetState === EMPTY ? "pointer" : "auto",
+          borderStyle: "dashed",
+          borderColor: "divider",
+          overflow: "auto",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 0,
+        }}
+        onClick={datasetState === EMPTY ? handleButtonClick : null}
+        onDragEnter={datasetState === EMPTY ? handleDrag : null}
+        onDragLeave={datasetState === EMPTY ? handleDrag : null}
+        onDragOver={datasetState === EMPTY ? handleDrag : null}
+        onDrop={datasetState === EMPTY ? handleDrop : null}
+      >
+        <input
+          type="file"
+          ref={inputRef}
+          style={{ display: "none" }}
+          onChange={handleSelect}
+          multiple={multiple}
+        />
 
-              {/* Content inside the drag and drop that depends on the state */}
-              {stateContent(datasetState)}
-            </Grid>
-          </Box>
-        </Grid>
-      </Grid>
+        <Box sx={{ textAlign: "center" }}>
+          {datasetState === EMPTY &&
+            (dragActive ? (
+              <Typography variant="subtitle1">
+                Drop the file{multiple ? "s" : ""} here.
+              </Typography>
+            ) : (
+              <>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                  Drag and drop {multiple ? "your files" : "a file"} here, or
+                </Typography>
+                <Button variant="contained">Upload a file</Button>
+              </>
+            ))}
+
+          {datasetState === LOADING && <CircularProgress color="inherit" />}
+
+          {datasetState === LOADED && (
+            <>
+              <TextSnippetIcon sx={{ fontSize: "58px", mb: 1 }} />
+              {fileNames.map((name, index) => (
+                <Typography
+                  key={index}
+                  variant="subtitle1"
+                  sx={{
+                    color: "gray",
+                    textAlign: "center",
+                  }}
+                >
+                  {name}
+                </Typography>
+              ))}
+              <IconButton
+                onClick={handleDeleteDataset}
+                sx={{ position: "absolute", right: 0, top: 0 }}
+              >
+                <ClearIcon />
+              </IconButton>
+            </>
+          )}
+        </Box>
+      </Box>
     </Paper>
   );
 }
