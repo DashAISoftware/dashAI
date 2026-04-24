@@ -15,7 +15,6 @@ import { useTourContext } from "../../components/tour/TourProvider";
 import { useGenerative } from "../../components/generative/GenerativeContext";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect } from "react";
 import RAGHomePage from "./RAG/RAGHomePage";
 
 export default function GenerativeContent() {
