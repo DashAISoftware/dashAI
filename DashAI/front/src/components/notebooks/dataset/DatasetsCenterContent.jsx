@@ -1,10 +1,12 @@
 import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Box } from "@mui/material";
 import NotebookVisualization from "../notebook/NotebookVisualization";
 import UploadDatasetSteps from "../datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../notebookCreation/UploadNotebookSteps";
 import DatasetVisualization from "../../DatasetVisualization";
 import SelectOptionMenu from "../../threeSectionLayout/SelectOptionMenu";
+import DataBreadcrumbs from "../DataBreadcrumbs";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
@@ -95,27 +97,53 @@ export default function DatasetsCenterContent() {
 
   if (step === 1 && selectedOption === "dataset") {
     return (
-      <UploadDatasetSteps
-        backHome={() => {
-          fetchDatasets();
-          setRightBarContent(null);
-          navigate("/app/data");
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          overflow: "auto",
+          px: 2,
+          pt: 2,
         }}
-      />
+      >
+        <DataBreadcrumbs />
+        <UploadDatasetSteps
+          backHome={() => {
+            fetchDatasets();
+            setRightBarContent(null);
+            navigate("/app/data");
+          }}
+        />
+      </Box>
     );
   }
   if (step === 1 && selectedOption === "notebook") {
     return (
-      <UploadNotebookSteps
-        backHome={() => {
-          fetchNotebooks();
-          navigate("/app/data");
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          height: "100%",
+          overflow: "auto",
+          px: 2,
+          pt: 2,
         }}
-        datasets={datasets}
-        handleNotebookCreated={handleNotebookCreated}
-        existingNotebooks={notebooks}
-        preselectedDatasetId={preselectedDatasetIdFromState}
-      />
+      >
+        <DataBreadcrumbs />
+        <UploadNotebookSteps
+          backHome={() => {
+            fetchNotebooks();
+            navigate("/app/data");
+          }}
+          datasets={datasets}
+          handleNotebookCreated={handleNotebookCreated}
+          existingNotebooks={notebooks}
+          preselectedDatasetId={preselectedDatasetIdFromState}
+        />
+      </Box>
     );
   }
   if (step === 0) {
