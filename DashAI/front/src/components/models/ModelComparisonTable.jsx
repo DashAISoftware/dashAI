@@ -281,7 +281,6 @@ function ModelComparisonTable({
   const data = useMemo(() => runs, [runs]);
 
   const columns = useMemo(() => {
-    // ── Score column ────────────────────────────────────────────────────
     const scoreColumn = {
       id: "score",
       header: t("models:label.score"),
@@ -356,18 +355,44 @@ function ModelComparisonTable({
       {
         accessorKey: "name",
         header: t("common:modelName"),
-        minSize: 150,
-        grow: 1,
+        size: 120,
+        Cell: ({ cell }) => (
+          <Tooltip title={cell.getValue()} placement="top" arrow>
+            <Box
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                width: "120px",
+              }}
+            >
+              {cell.getValue()}
+            </Box>
+          </Tooltip>
+        ),
       },
       {
         accessorKey: "model_name",
         header: t("common:model"),
-        minSize: 150,
-        grow: 1,
+        size: 120,
         accessorFn: (row) => {
           const model = models.find((m) => m.name === row.model_name);
           return model?.display_name || row.model_name;
         },
+        Cell: ({ cell }) => (
+          <Tooltip title={cell.getValue()} placement="top" arrow>
+            <Box
+              sx={{
+                width: "120px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {cell.getValue()}
+            </Box>
+          </Tooltip>
+        ),
       },
       scoreColumn,
       ...getMetricColumns(),
