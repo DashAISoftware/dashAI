@@ -22,11 +22,11 @@ slower, and some larger models may fail to load due to memory constraints.
 When you open the Generative module, you select a task type that determines which
 models are available:
 
-| Task             | Description                                                                      |
-| ---------------- | -------------------------------------------------------------------------------- |
-| **TextToText**   | Generate text from a text prompt. Includes LLMs such as Qwen, Llama, and others. |
-| **TextToImage**  | Generate images from a text description using models like Stable Diffusion.      |
-| **ImageToImage** | Transform or modify an existing image guided by text and an input image.         |
+| Task            | Description                                                                      |
+| --------------- | -------------------------------------------------------------------------------- |
+| **TextToText**  | Generate text from a text prompt. Includes LLMs such as Qwen, Llama, and others. |
+| **TextToImage** | Generate images from a text description using models like Stable Diffusion.      |
+| **ControlNet**  | Transform or modify an existing image guided by text and an input image.         |
 
 ---
 
@@ -86,7 +86,7 @@ The main area of the session is the interaction interface:
 
 - **TextToText** — an input field where you type a prompt and receive the model's
   text response. Each exchange is shown as a conversation thread.
-- **TextToImage / ImageToImage** — an input field for the text prompt and, where
+- **TextToImage / ControlNet** — an input field for the text prompt and, where
   applicable, an image upload area. The generated image is displayed inline.
 
 Submit your input and wait for the model to generate a response. Generation time
