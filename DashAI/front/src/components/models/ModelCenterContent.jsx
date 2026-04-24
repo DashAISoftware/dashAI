@@ -67,7 +67,7 @@ export default function ModelsCenterContent() {
   };
 
   const handleGoToDatasets = () => {
-    navigate("/app/data");
+    navigate("/app/data?action=upload");
   };
 
   const handleSessionCreated = (newSession) => {
