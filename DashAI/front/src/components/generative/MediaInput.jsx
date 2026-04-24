@@ -147,7 +147,13 @@ export function MediaInput({
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2 }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        gap: 2,
+        flexShrink: 0,
+      }}
     >
       {activeKinds.map((kind) => {
         const previews = previewsByKind[kind] || [];
@@ -212,16 +218,13 @@ export function MediaInput({
       })}
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {wantsText && (
+        {wantsText ? (
           <TextField
             fullWidth
-            multiline={hasAnyMedia}
-            minRows={hasAnyMedia ? 3 : 1}
-            maxRows={hasAnyMedia ? 3 : 1}
+            multiline
+            minRows={3}
+            maxRows={3}
             placeholder={t("generative:label.typeYourMessage")}
-            label={
-              !hasAnyMedia ? t("generative:label.typeYourMessage") : undefined
-            }
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={isLoading}
@@ -234,6 +237,34 @@ export function MediaInput({
             }}
             data-tour="chat-input"
           />
+        ) : (
+          <Box
+            sx={(theme) => ({
+              flex: 1,
+              minHeight: "104px",
+              boxSizing: "border-box",
+              px: "14px",
+              py: "16.5px",
+              display: "flex",
+              alignItems: "flex-start",
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              backgroundColor: "transparent",
+              color: theme.palette.text.secondary,
+              fontSize: "1rem",
+              lineHeight: "1.4375em",
+            })}
+          >
+            {activeKinds.length > 0
+              ? t(
+                  "generative:label.attachMediaToContinue",
+                  "Attach media to continue",
+                )
+              : t(
+                  "generative:label.noInputAvailable",
+                  "No input available for this task",
+                )}
+          </Box>
         )}
 
         <Box

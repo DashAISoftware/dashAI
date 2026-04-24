@@ -43,7 +43,9 @@
     "attachImage": "Attach image",
     "attachAudio": "Attach audio",
     "attachVideo": "Attach video",
-    "attachMedia": "Attach media"
+    "attachMedia": "Attach media",
+    "attachMediaToContinue": "Attach media to continue",
+    "noInputAvailable": "No input available for this task"
   },
 
   "message": {

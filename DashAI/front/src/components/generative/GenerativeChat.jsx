@@ -211,7 +211,7 @@ export default function GenerativeChat() {
       gap={1}
       width={"100%"}
       height={"100%"}
-      //bgcolor={"background.box"}
+      sx={{ overflow: "hidden", minHeight: 0 }}
     >
       {/* Model display */}
       <Box
@@ -264,7 +264,8 @@ export default function GenerativeChat() {
         alignItems="flex-start"
         gap={1}
         width={"100%"}
-        height={"100%"}
+        flex={1}
+        minHeight={0}
         overflow={"auto"}
         mt={1}
         p={2}
@@ -329,6 +330,7 @@ export default function GenerativeChat() {
 
       {/* Chat input */}
       <MediaInput
+        key={sessionId}
         onSendMessage={(input) => {
           handleSendMessage(input);
         }}
