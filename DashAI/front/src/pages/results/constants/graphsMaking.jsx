@@ -41,20 +41,17 @@ function graphsMaking(graphsToView, run, metrics, values, runIndex, theme) {
 /**
  * Build a single Plotly heatmap trace from all runs at once.
  *
- * Colour mapping uses the backend-provided bounded/maximize metadata:
- *  - bounded=true  + maximize=true  → z = raw value (≥0 → gradient; <0 → black)
- *  - bounded=true  + maximize=false → z = 1 − raw value (↓ label on x-axis)
- *  - bounded=false or missing meta  → z = null (no colour; hover shows "Not bounded")
+ * Each metric column is independently min-max normalized so every metric
+ * fills the full color range. For lower-is-better metrics (maximize=false),
+ * the normalization is inverted so lower raw values map to the "better" color.
  *
- * A sentinel z value of -0.01 (below zmin=0) is used to render
- * bounded+maximize metrics with negative raw values as black cells,
- * signalling "worse than chance / broken model".
+ * Colorscale: orange (primary) = min/worst → green (secondary) = max/best.
  *
  * @param {object[]} finishedRuns          Array of completed run objects
  * @param {string[]} metrics               Metric names (x-axis columns)
  * @param {string}   metricsKey            e.g. "test_metrics"
  * @param {object}   theme                 MUI theme object
- * @param {object}   [metricsMetadata={}]  { MetricName: { bounded, maximize } }
+ * @param {object}   [metricsMetadata={}]  { MetricName: { maximize: bool } }
  * @returns {object[]}  Array containing one heatmap trace
  */
 function heatmapMaking(
@@ -64,23 +61,13 @@ function heatmapMaking(
   theme,
   metricsMetadata = {},
 ) {
-  // Any bounded+maximize metric whose raw value is negative gets this sentinel,
-  // which maps to near-black via the colorscale (e.g. CohenKappa < 0).
-  const SENTINEL = -0.01;
-  const ZMIN = SENTINEL;
-  const ZMAX = 1.0;
-  // Proportional position of z=0 inside [ZMIN, ZMAX] — used to place the
-  // sharp black→background boundary in the colorscale.
-  const pZero = (0 - ZMIN) / (ZMAX - ZMIN); // ≈ 0.0099
-
   const MAX_LABEL = 20;
   const truncate = (s) =>
     s.length > MAX_LABEL ? `${s.slice(0, MAX_LABEL)}…` : s;
 
-  const fullRunNames = finishedRuns.map(
-    (run, idx) => run.run_name || run.name || `Run ${idx + 1}`,
+  const runLabels = finishedRuns.map((run, idx) =>
+    truncate(run.run_name || run.name || `Run ${idx + 1}`),
   );
-  const runLabels = fullRunNames.map(truncate);
 
   // Raw values matrix [runs × metrics]
   const zRaw = finishedRuns.map((run) => {
@@ -93,78 +80,64 @@ function heatmapMaking(
     });
   });
 
-  // X-axis labels:
-  //   bounded + maximize=false → append ↓ (scale is inverted: lower raw = brighter)
-  //   everything else          → plain metric name
-  const xLabels = metrics.map((m) => {
-    const meta = metricsMetadata[m];
-    return meta && meta.bounded && !meta.maximize ? `${m} ↓` : m;
-  });
-
-  // Colour z-matrix (absolute scale [ZMIN, ZMAX]):
-  //   unbounded            → null  (transparent gap, hover shows "Not bounded")
-  //   bounded + maximize   → raw value, or SENTINEL when raw < 0 (renders black)
-  //   bounded + !maximize  → 1 − raw  (inverted so brighter = better)
-  const zColor = zRaw.map((row) =>
-    row.map((v, mIdx) => {
+  // Per-column min-max normalization.
+  // Lower-is-better metrics (maximize===false) are inverted so the best
+  // (lowest) value maps to 1 (green) and the worst maps to 0 (orange).
+  const zColorByCol = metrics.map((m, mIdx) => {
+    const colVals = zRaw.map((row) => row[mIdx]).filter((v) => v !== null);
+    const colMin = colVals.length ? Math.min(...colVals) : 0;
+    const colMax = colVals.length ? Math.max(...colVals) : 1;
+    const range = colMax - colMin;
+    const isInverse = metricsMetadata[m]?.maximize === false;
+    return zRaw.map((row) => {
+      const v = row[mIdx];
       if (v === null) return null;
-      const meta = metricsMetadata[metrics[mIdx]];
-      if (!meta || !meta.bounded) return null;
-      if (meta.maximize) return v < 0 ? SENTINEL : v;
-      return 1 - v;
-    }),
+      const norm = range === 0 ? 0.5 : (v - colMin) / range;
+      return isInverse ? 1 - norm : norm;
+    });
+  });
+  // Transpose back to [runs × metrics]
+  const zNorm = finishedRuns.map((_, rIdx) =>
+    metrics.map((_, mIdx) => zColorByCol[mIdx][rIdx]),
   );
 
-  // Text annotations: always show the real raw value (including negatives).
   const annotationText = zRaw.map((row) =>
     row.map((v) => (v !== null ? v.toFixed(4) : "N/A")),
   );
 
-  // Hover content: each cell carries [fullRunName, valueOrStatus] so the
-  const customData = zRaw.map((row, rIdx) =>
-    row.map((v, mIdx) => {
-      const meta = metricsMetadata[metrics[mIdx]];
-      const valueStr =
-        !meta || !meta.bounded
-          ? "Not bounded"
-          : v !== null
-            ? v.toFixed(4)
-            : "N/A";
-      return [fullRunNames[rIdx], valueStr];
-    }),
+  // X-axis labels: add ↓ arrow for lower-is-better metrics
+  const xLabels = metrics.map((m) =>
+    metricsMetadata[m]?.maximize === false ? `${m} ↓` : m,
   );
 
-  const bgColor = theme.palette.background.paper;
   const primaryColor = theme.palette.primary.main;
+  const secondaryColor = theme.palette.secondary.main;
 
   return [
     {
       type: "heatmap",
       x: xLabels,
       y: runLabels,
-      z: zColor,
+      z: zNorm,
       text: annotationText,
       texttemplate: "%{text}",
-      customdata: customData,
-      hovertemplate:
-        "<b>%{x}</b><br>%{customdata[0]}<br>%{customdata[1]}<extra></extra>",
+      textfont: { size: 11, weight: 700, color: theme.palette.text.primary },
+      // orange (primary) = min/worst, green (secondary) = max/best
       colorscale: [
-        [0, "#1a1a1a"], // SENTINEL region → near black
-        [pZero * 0.99, "#1a1a1a"], // just below z=0 → still black
-        [pZero, bgColor], // z=0 → background (sharp boundary)
-        [1, primaryColor], // z=1 → primary colour
+        [0, primaryColor],
+        [1, secondaryColor],
       ],
       zauto: false,
-      zmin: ZMIN,
-      zmax: ZMAX,
+      zmin: 0,
+      zmax: 1,
       showscale: true,
       colorbar: {
         tickmode: "array",
         tickvals: [0, 1],
-        ticktext: ["0", "1"],
+        ticktext: ["Min", "Max"],
         tickfont: { color: theme.palette.text.primary },
       },
-      hoverongaps: true,
+      hoverongaps: false,
       xgap: 2,
       ygap: 2,
     },

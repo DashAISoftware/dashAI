@@ -24,14 +24,14 @@ function ResultsGraphs({
   const [internalSplit, setInternalSplit] = useState("test");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [chartData, setChartData] = useState({});
-  // { MetricName: { bounded: bool, maximize: bool } } — fetched once on mount
+  // { MetricName: { maximize: bool } } — fetched once on mount
   const [metricsMetadata, setMetricsMetadata] = useState({});
 
   // Controlled or uncontrolled split
   const selectedSplit = splitProp ?? internalSplit;
   const handleChangeSplit = onSplitChange ?? setInternalSplit;
 
-  // Fetch metric bounded/maximize metadata once on mount
+  // Fetch metric maximize direction once on mount
   useEffect(() => {
     getComponents({ selectTypes: ["Metric"] })
       .then((components) => {

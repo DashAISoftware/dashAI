@@ -22,7 +22,6 @@ class ClassificationMetric(BaseMetric):
     """
 
     MAXIMIZE: bool = True
-    BOUNDED: bool = True  # All standard classification metrics are naturally in [0, 1]
 
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",

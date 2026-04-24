@@ -281,7 +281,6 @@ function ModelComparisonTable({
   const data = useMemo(() => runs, [runs]);
 
   const columns = useMemo(() => {
-    // ── Score column ────────────────────────────────────────────────────
     const scoreColumn = {
       id: "score",
       header: t("models:label.score"),

@@ -24,7 +24,6 @@ class Bleu(TranslationMetric):
     """
 
     MAXIMIZE: bool = True
-    BOUNDED: bool = True  # Returns [0, 1]
     DESCRIPTION = MultilingualString(
         en=(
             "BLEU (bilingual evaluation understudy) "

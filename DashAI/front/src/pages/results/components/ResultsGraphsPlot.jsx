@@ -47,7 +47,11 @@ function ResultsGraphsPlot({ selectedChart, chartData }) {
         }}
         useResizeHandler
         style={{ width: "100%", height: "100%" }}
-        config={{ responsive: true, displayModeBar: false }}
+        config={{
+          responsive: true,
+          displayModeBar: false,
+          staticPlot: selectedChart === "heatmap",
+        }}
       />
     </Box>
   );
