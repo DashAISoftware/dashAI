@@ -289,41 +289,37 @@ async def get_generative_process_by_session_id(
             ) from e
 
 
-@router.get("/image/{filename}", status_code=200, response_model=None)
-async def get_generative_image(
-    filename: str,
-    config: Dict[str, Any] = Depends(lambda: di["config"]),
-):
-    """
-    Get a generated image by its path.
-
-    Parameters
-    ----------
-    filename : str
-        The relative path or filename of the image to retrieve.
-
-    Returns
-    -------
-    FileResponse
-        The image file to be served to the client.
-    """
-
-    import os
-
-    image_path = os.path.join(config["IMAGES_PATH"], filename)
-
-    if not os.path.exists(image_path):
-        raise HTTPException(status_code=404, detail="Image not found")
-
-    return FileResponse(image_path, media_type="image/png")
-
-
 @router.get("/file/{filename}", status_code=200, response_model=None)
 async def get_generative_file(
     filename: str,
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
-    """Serve a generated media file (image, audio, video) with auto-detected mime."""
+    """Serve a generated media file with an auto-detected mime type.
+
+    Handles every modality produced by generative tasks (image, audio,
+    video) by resolving the file under ``IMAGES_PATH`` and returning it
+    with the mime type guessed from its extension. Falls back to
+    ``application/octet-stream`` when the extension is unknown.
+
+    Parameters
+    ----------
+    filename : str
+        The relative path or filename of the file to retrieve inside
+        ``IMAGES_PATH``.
+    config : Dict[str, Any]
+        Application configuration container; must expose
+        ``IMAGES_PATH`` (injected via ``kink``).
+
+    Returns
+    -------
+    FileResponse
+        The file served with a guessed mime type.
+
+    Raises
+    ------
+    HTTPException
+        404 if no file exists at the resolved path.
+    """
     import mimetypes
     import os
 

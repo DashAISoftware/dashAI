@@ -29,7 +29,7 @@ export function ImageMessage({ image }) {
         }}
       >
         <img
-          src={`${api.defaults.baseURL}/v1/generative-process/image/${image}`}
+          src={`${api.defaults.baseURL}/v1/generative-process/file/${image}`}
           alt={t("common:image")}
           style={{
             display: "block",
