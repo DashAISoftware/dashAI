@@ -55,7 +55,7 @@ export default function SelectTaskMenu() {
         description: task.description,
         Icon: GENERATIVE_TASK_ICONS[task.name] || DefaultGenerativeIcon,
       }))}
-      searchBar={true}
+      searchBar={false}
       dataTour="task-selection"
       dataTourTarget="TextToTextGenerationTask"
     />

@@ -136,7 +136,7 @@ export default function ModelsCenterContent() {
               task.description || task.metadata?.short_description || "",
             Icon: TASK_ICONS[task.name] || DefaultTaskIcon,
           }))}
-          searchBar={true}
+          searchBar={false}
           goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
           showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}
           onGoToDatasets={handleGoToDatasets}
