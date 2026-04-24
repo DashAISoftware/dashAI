@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import NotebookVisualization from "../notebook/NotebookVisualization";
 import UploadDatasetSteps from "../datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../notebookCreation/UploadNotebookSteps";
@@ -17,7 +17,6 @@ export default function DatasetsCenterContent() {
   const {
     datasets,
     notebooks,
-    selectNotebook,
     selectedDatasetId,
     selectedNotebookId,
     setRightBarContent,
@@ -25,22 +24,21 @@ export default function DatasetsCenterContent() {
     fetchDatasets,
     fetchNotebooks,
     selectedOption,
-    setStep,
-    setSelectedOption,
-    clearSelectedDataset,
-    clearSelectedNotebook,
   } = useDatasetsAndNotebooks();
 
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const preselectedDatasetIdFromState =
+    location.state?.preselectedDatasetId ?? null;
 
   useEffect(() => {
-    if (searchParams.get("action") === "upload" && step === 0) {
-      setStep(1);
-      setSelectedOption("dataset");
+    if (searchParams.get("action") === "upload") {
       searchParams.delete("action");
       setSearchParams(searchParams, { replace: true });
+      navigate("/app/data/upload/dataset");
     }
   }, [searchParams]);
 
@@ -50,36 +48,29 @@ export default function DatasetsCenterContent() {
   const goToNextStep = useCallback(
     (option) => {
       if (option === "dataset") {
-        setStep(1);
-        setSelectedOption("dataset");
-      } else {
-        setStep(1);
-        setSelectedOption("notebook");
+        navigate("/app/data/upload/dataset");
+        if (tourContext?.run) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 600);
+        }
+        return;
       }
 
-      clearSelectedDataset();
-      clearSelectedNotebook();
-
-      if (option === "dataset" && tourContext?.run) {
-        setTimeout(() => {
-          tourContext.nextStep();
-        }, 600);
-      }
+      navigate("/app/data/upload/notebook");
     },
-    [tourContext],
+    [tourContext, navigate],
   );
 
   const handleNotebookCreated = async (createdNotebook) => {
     await fetchNotebooks();
-    setStep(0);
-    setSelectedOption("notebook");
-    selectNotebook(createdNotebook.id);
-    clearSelectedDataset();
+    navigate(`/app/data/notebooks/${createdNotebook.id}`);
   };
 
   const handleNewNotebookFromDataset = () => {
-    setSelectedOption("notebook");
-    setStep(1);
+    navigate("/app/data/upload/notebook", {
+      state: { preselectedDatasetId: selectedDatasetId },
+    });
   };
 
   if (selectedNotebookId && selectedOption === "notebook") {
@@ -106,10 +97,9 @@ export default function DatasetsCenterContent() {
     return (
       <UploadDatasetSteps
         backHome={() => {
-          setStep(0);
-          setSelectedOption(null);
           fetchDatasets();
           setRightBarContent(null);
+          navigate("/app/data");
         }}
       />
     );
@@ -118,14 +108,13 @@ export default function DatasetsCenterContent() {
     return (
       <UploadNotebookSteps
         backHome={() => {
-          setStep(0);
-          setSelectedOption(null);
           fetchNotebooks();
+          navigate("/app/data");
         }}
         datasets={datasets}
         handleNotebookCreated={handleNotebookCreated}
         existingNotebooks={notebooks}
-        preselectedDatasetId={selectedDatasetId}
+        preselectedDatasetId={preselectedDatasetIdFromState}
       />
     );
   }

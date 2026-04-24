@@ -26,6 +26,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/app" element={<Home />} />
           <Route path="/app/data/" element={<DatasetsPage />} />
+          <Route path="/app/data/datasets/:id" element={<DatasetsPage />} />
+          <Route path="/app/data/notebooks/:id" element={<DatasetsPage />} />
+          <Route path="/app/data/upload/dataset" element={<DatasetsPage />} />
+          <Route
+            path="/app/data/upload/dataset/configure"
+            element={<DatasetsPage />}
+          />
+          <Route path="/app/data/upload/notebook" element={<DatasetsPage />} />
           <Route path="/app/models" element={<ModelsPage />} />
           <Route path="/app/generative" element={<Generative />} />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
