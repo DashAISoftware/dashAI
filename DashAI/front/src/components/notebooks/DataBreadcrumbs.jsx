@@ -36,7 +36,7 @@ export default function DataBreadcrumbs() {
       return [
         rootCrumb,
         {
-          label: t("datasets:label.uploadDataset"),
+          label: t("datasets:label.selectDataloader"),
           path: "/app/data/upload/dataset",
         },
         {
@@ -50,11 +50,6 @@ export default function DataBreadcrumbs() {
     if (path.startsWith("/app/data/upload/dataset")) {
       return [
         rootCrumb,
-        {
-          label: t("datasets:label.uploadDataset"),
-          path: "/app/data/upload/dataset",
-          current: false,
-        },
         {
           label: t("datasets:label.selectDataloader"),
           path: null,
