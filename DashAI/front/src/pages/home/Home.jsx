@@ -30,7 +30,7 @@ const SIDEBAR_LINKS = {
     },
     {
       key: "tutorials",
-      href: "https://docs.dash-ai.com/tutorials/upload_dataset.html",
+      href: "https://docs.dash-ai.com/learn/tutorials/upload-dataset",
       Icon: TutorialsIcon,
     },
     {
