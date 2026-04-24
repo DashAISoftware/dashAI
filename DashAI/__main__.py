@@ -265,8 +265,6 @@ def main(
         ),
     ] = False,
 ) -> None:
-    import threading
-
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
     logger = logging.getLogger(__name__)
     logger.info("Starting DashAI application.")
