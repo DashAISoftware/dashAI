@@ -21,7 +21,7 @@ export default function OptionBox({
       onClick={onClick}
       sx={{
         width: "100%",
-        height: "100%",
+        height: 250,
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
