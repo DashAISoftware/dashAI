@@ -4,6 +4,18 @@ import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
 import SimplifiedIcon from "@mui/icons-material/ViewAgenda";
+import {
+  ChatBubbleOutline as TextToTextIcon,
+  Image as TextToImageIcon,
+  Tune as ControlNetIcon,
+  AutoAwesome as DefaultGenerativeIcon,
+} from "@mui/icons-material";
+
+const GENERATIVE_TASK_ICONS = {
+  TextToTextGenerationTask: TextToTextIcon,
+  TextToImageGenerationTask: TextToImageIcon,
+  ControlNetTask: ControlNetIcon,
+};
 
 export default function SelectTaskMenu() {
   const { t } = useTranslation(["generative", "common"]);
@@ -47,6 +59,7 @@ export default function SelectTaskMenu() {
       name: task.name,
       display_name: task.display_name,
       description: task.description,
+      Icon: GENERATIVE_TASK_ICONS[task.name] || DefaultGenerativeIcon,
     })),
     simplifiedRAGOption,
   ];

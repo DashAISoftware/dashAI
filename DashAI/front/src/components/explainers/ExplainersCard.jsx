@@ -12,6 +12,7 @@ import {
   Button,
   Collapse,
   Box,
+  CircularProgress,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
@@ -23,6 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { deleteExplainer } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import { getComponentById } from "../../api/component";
+
+const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 /**
  * GlobalExplainersCard
@@ -47,6 +50,7 @@ export default function ExplainersCard({
   }, [expanded, expandedStorageKey]);
   const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
+  const isRunning = RUNNING_STATUSES.includes(explainer.status);
 
   function plotName(name) {
     return name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
@@ -118,37 +122,46 @@ export default function ExplainersCard({
                   </Typography>
                 </Typography>
               </Grid>
-              <Grid>
+              <Grid sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {isRunning && <CircularProgress size={18} />}
                 <IconButton
                   size="small"
                   aria-label="delete"
                   color="error"
                   onClick={handleDeleteExplainer}
+                  disabled={isRunning}
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </Grid>
             </Grid>
 
-            {/* Expandable plot section */}
-            <Grid sx={{ width: "100%" }}>
-              <Button
-                size="small"
-                onClick={() => setExpanded(!expanded)}
-                endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                sx={{ textTransform: "none" }}
-              >
-                {expanded
-                  ? t("explainers:button.hidePlot")
-                  : t("explainers:button.showPlot")}
-              </Button>
+            {isRunning ? (
+              <Box sx={{ py: 1, textAlign: "center" }}>
+                <Typography variant="body2" color="text.secondary">
+                  {t("explainers:label.explainerInProgress")}
+                </Typography>
+              </Box>
+            ) : (
+              <Grid sx={{ width: "100%" }}>
+                <Button
+                  size="small"
+                  onClick={() => setExpanded(!expanded)}
+                  endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  sx={{ textTransform: "none" }}
+                >
+                  {expanded
+                    ? t("explainers:button.hidePlot")
+                    : t("explainers:button.showPlot")}
+                </Button>
 
-              <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <Box sx={{ mt: 2 }}>
-                  <ExplainersPlot explainer={explainer} scope={scope} />
-                </Box>
-              </Collapse>
-            </Grid>
+                <Collapse in={expanded} timeout="auto" unmountOnExit>
+                  <Box sx={{ mt: 2 }}>
+                    <ExplainersPlot explainer={explainer} scope={scope} />
+                  </Box>
+                </Collapse>
+              </Grid>
+            )}
           </Grid>
         </Paper>
 
@@ -196,9 +209,11 @@ export default function ExplainersCard({
               {t("explainers:label.forExplainer", { name: explainer.name })}
             </Typography>
           </Grid>
-          <Grid>
+          <Grid sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            {isRunning && <CircularProgress size={22} />}
             <IconButton
               aria-label="zoomin"
+              disabled={isRunning}
               onClick={() => {
                 navigate(
                   `/app/explainers/explainer/${scope}/${explainer.run_id}/${explainer.id}`,
@@ -211,6 +226,7 @@ export default function ExplainersCard({
               aria-label="delete"
               color="error"
               onClick={handleDeleteExplainer}
+              disabled={isRunning}
             >
               <DeleteIcon />
             </IconButton>

@@ -4,11 +4,11 @@ from DashAI.back.converters.category.scaling_and_normalization import (
     ScalingAndNormalizationConverter,
 )
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, enum_field, schema_field
+from DashAI.back.core.schema_fields import enum_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class NormalizerSchema(BaseSchema):
@@ -26,15 +26,6 @@ class NormalizerSchema(BaseSchema):
             en="The norm to use to normalize each non-zero sample.",
             es="La norma a usar para normalizar cada muestra no nula.",
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace row normalization.",
-            es="Ponlo en False para normalizar filas in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
 
 
@@ -73,6 +64,11 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
     )
     DISPLAY_NAME = MultilingualString(en="Normalizer", es="Normalizador")
     IMAGE_PREVIEW = "normalizer.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

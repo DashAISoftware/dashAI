@@ -16,6 +16,7 @@ from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.datasets_params import Dataset as DatasetSchema
 from DashAI.back.api.api_v1.schemas.datasets_params import (
+    DatasetColumnEncoderParams,
     DatasetCreateParams,
     DatasetRenameColumnParams,
     DatasetUpdateParams,
@@ -1203,6 +1204,126 @@ async def rename_dataset_column(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error renaming column: {str(e)}",
             ) from e
+
+
+@router.patch("/{dataset_id}/columns/{column_name}/encoder")
+@inject
+async def update_column_encoder(
+    dataset_id: int,
+    column_name: str,
+    params: DatasetColumnEncoderParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Update the encoder preference for a single Categorical column.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to update.
+    column_name : str
+        Name of the column to update.
+    params : DatasetColumnEncoderParams
+        Parameters containing the new encoder value.
+
+    Returns
+    -------
+    Dict
+        Updated column types dict (same shape as GET /types).
+    """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+    from DashAI.back.types.categorical import Categorical
+    from DashAI.back.types.utils import (
+        get_types_from_arrow_metadata,
+        save_types_in_arrow_metadata,
+    )
+
+    with session_factory() as db:
+        dataset = db.get(Dataset, dataset_id)
+        if dataset is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+
+        if dataset.status != DatasetStatus.FINISHED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Dataset is not in finished state",
+            )
+
+        try:
+            dataset.set_status_as_started()
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error locking dataset for modification",
+            ) from e
+
+        data_filepath = os.path.join(dataset.file_path, "dataset", "data.arrow")
+
+        try:
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = pa.ipc.open_file(source)
+                table = reader.read_all()
+                schema = reader.schema
+
+            if column_name not in table.schema.names:
+                dataset.set_status_as_finished()
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Column '{column_name}' not found in dataset",
+                )
+
+            types_dict = get_types_from_arrow_metadata(schema)
+
+            col_type = types_dict.get(column_name)
+            if not isinstance(col_type, Categorical):
+                dataset.set_status_as_finished()
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Column '{column_name}' is not a Categorical column",
+                )
+
+            col_type.encoder = params.encoder
+            types_serialized = {col: t.to_string() for col, t in types_dict.items()}
+
+            updated_table = save_types_in_arrow_metadata(table, types_serialized)
+            sink = pa.BufferOutputStream()
+            with ipc.new_file(sink, updated_table.schema) as writer:
+                writer.write_table(updated_table)
+
+            with open(data_filepath, "wb") as f:
+                f.write(sink.getvalue().to_pybytes())
+
+            dataset.set_status_as_finished()
+            db.commit()
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.exception(e)
+            try:
+                dataset.set_status_as_finished()
+                db.commit()
+            except Exception:
+                pass
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error updating encoder: {str(e)}",
+            ) from e
+
+        dataset_file_path = dataset.file_path
+
+    return get_columns_spec(os.path.join(dataset_file_path, "dataset"))
 
 
 @router.get("/file/")

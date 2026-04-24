@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class PolynomialFeaturesSchema(BaseSchema):
@@ -123,6 +123,8 @@ class PolynomialFeatures(
         en="Polynomial Features", es="Características Polinomiales"
     )
     IMAGE_PREVIEW = "polynomial_features.png"
+
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return ``Float64`` as the output type for all polynomial feature columns.

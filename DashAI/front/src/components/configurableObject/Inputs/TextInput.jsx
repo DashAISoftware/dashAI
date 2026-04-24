@@ -27,6 +27,7 @@ function TextInput({
     <FormInputWrapper name={name} description={description}>
       <InputWithDebounce
         {...props}
+        size="small"
         name={name}
         label={label}
         value={value === null ? "none" : value}

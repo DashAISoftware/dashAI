@@ -27,10 +27,7 @@ export function CustomThemeProvider({ children }) {
     [],
   );
 
-  const theme = useMemo(
-    () => createTheme(getTheme(mode, i18n.language)),
-    [mode, i18n.language],
-  );
+  const theme = useMemo(() => createTheme(getTheme(mode)), [mode]);
 
   return (
     <ColorModeContext.Provider value={colorMode}>

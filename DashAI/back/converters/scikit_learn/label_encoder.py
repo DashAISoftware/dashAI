@@ -6,6 +6,7 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -52,10 +53,12 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     DISPLAY_NAME = MultilingualString(en="Label Encoder", es="Codificador de Etiquetas")
     IMAGE_PREVIEW = "label_encoder.png"
 
+    PREFIX = "le_"
+
     metadata = {
         "changes_data_types": True,
-        "allowed_dtypes": ["string", "int64", "float64"],
-        "restricted_dtypes": [],
+        "allowed_types": [Categorical],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):
@@ -81,28 +84,17 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         Parameters
         ----------
         column_name : str, optional
-            The column name to look up in the fitted
-            encoders. When provided and the encoder has been fitted, the
-            returned type reflects the actual fitted classes. Defaults to None.
+            Not used. Defaults to None.
 
         Returns
         -------
         DashAIDataType
-            A Categorical type derived from the encoder's fitted
-            classes. Returns a placeholder ``Categorical`` if the encoder has
-            not been fitted for the given column.
+            An Integer type backed by ``pyarrow.int64()``, representing the
+            contiguous integer label codes produced by the encoder.
         """
         import pyarrow as pa
 
-        if column_name and column_name in self.encoders:
-            encoder = self.encoders[column_name]
-            if hasattr(encoder, "classes_"):
-                values = pa.array(encoder.classes_.tolist())
-                encoding = {v: i for i, v in enumerate(encoder.classes_)}
-                return Categorical(values=values, encoding=encoding, converted=True)
-
-        # Default placeholder if not fitted yet
-        return Categorical(values=pa.array(["0", "1"]))
+        return Integer(arrow_type=pa.int64())
 
     def fit(self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None):
         """Fit a LabelEncoder for each eligible column in the dataset.
@@ -149,7 +141,10 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """Apply fitted label encoders to each eligible column, preserving NaN.
+        """Apply fitted label encoders and append encoded columns with a prefix.
+
+        Encodes each fitted column and appends the result as a new
+        ``encoded_<col>`` column. The original column is left unchanged.
 
         Parameters
         ----------
@@ -161,25 +156,29 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         Returns
         -------
         DashAIDataset
-            Dataset with categorical/string columns replaced by integer codes.
+            Dataset with original columns preserved plus new ``encoded_*``
+            columns appended containing the integer label codes.
         """
-        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        import pyarrow as pa
 
-        x_pandas = x.to_pandas().copy()
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+        x_pandas = x.to_pandas()
+
+        combined_table = x.arrow_table
+        combined_types = dict(x.types)
 
         for col in self.fitted_columns:
-            if col in x_pandas.columns:
-                mask = x_pandas[col].notna()
-                if mask.any():
-                    x_pandas.loc[mask, col] = self.encoders[col].transform(
-                        x_pandas.loc[mask, col]
-                    )
+            if col not in x_pandas.columns:
+                continue
+            series = x_pandas[col].copy()
+            mask = series.notna()
+            if mask.any():
+                series.loc[mask] = self.encoders[col].transform(series.loc[mask])
+            prefixed = f"{self.PREFIX}{col}"
+            combined_table = combined_table.append_column(
+                prefixed, pa.array(series.tolist(), type=pa.int64())
+            )
+            combined_types[prefixed] = self.get_output_type(col)
 
-        converted_dataset = to_dashai_dataset(x_pandas)
-
-        # Set proper categorical types for each encoded column
-        for col in self.fitted_columns:
-            if col in converted_dataset.column_names:
-                converted_dataset.types[col] = self.get_output_type(col)
-
-        return converted_dataset
+        return DashAIDataset(combined_table, types=combined_types, splits=x.splits)

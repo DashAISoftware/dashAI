@@ -9,6 +9,7 @@ import {
   Divider,
   Tabs,
   Tab,
+  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
@@ -16,11 +17,11 @@ import {
   getDatasetInfo,
   getDatasetFile,
   getDatasetFileFiltered,
+  getDatasetTypes,
 } from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
-import Tooltip from "@mui/material/Tooltip";
 import OverviewTab from "./notebooks/dataset/tabs/OverviewTab";
 import { NumericTab } from "./notebooks/dataset/tabs/NumericTab";
 import { CategoricalTab } from "./notebooks/dataset/tabs/CategoricalTab";
@@ -61,6 +62,7 @@ export default function DatasetVisualization({
     (() => {});
 
   const [datasetInfo, setDatasetInfo] = useState(null);
+  const [columnTypes, setColumnTypes] = useState({});
   const tourContext = useTourContext();
 
   useEffect(() => {
@@ -97,6 +99,7 @@ export default function DatasetVisualization({
     if (!dataset || dataset.status !== 3) {
       setDatasetInfo(null);
       setSharedDatasetInfo(null);
+      setColumnTypes({});
       return;
     }
 
@@ -111,7 +114,17 @@ export default function DatasetVisualization({
       }
     };
 
+    const fetchColumnTypes = async () => {
+      try {
+        const types = await getDatasetTypes(Number(dataset.id));
+        setColumnTypes(types);
+      } catch (error) {
+        setColumnTypes({});
+      }
+    };
+
     fetchDatasetInfo();
+    fetchColumnTypes();
 
     return () => setSharedDatasetInfo(null);
   }, [dataset?.id, dataset?.status]);
@@ -147,8 +160,14 @@ export default function DatasetVisualization({
     ],
   );
 
-  const updateDatasetInfo = () => {
+  const updateDatasetInfo = async () => {
     fetchDatasetInfo();
+    try {
+      const types = await getDatasetTypes(Number(dataset.id));
+      setColumnTypes(types);
+    } catch (error) {
+      // keep existing types on failure
+    }
   };
 
   if (!dataset) {
@@ -185,7 +204,7 @@ export default function DatasetVisualization({
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                 <Typography variant="h4">{dataset.name}</Typography>
               </Box>
-              <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Tooltip
                   title={t("datasets:label.dataQualityScoreTooltip")}
                   arrow
@@ -409,6 +428,7 @@ export default function DatasetVisualization({
               <OverviewTab
                 dataset={dataset}
                 dtypes={datasetInfo?.general_info?.dtypes}
+                columnTypes={columnTypes}
                 nan={datasetInfo?.nan}
                 total_rows={datasetInfo?.total_rows}
                 onEditColumnName={updateDatasetInfo}

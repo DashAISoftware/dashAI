@@ -29,7 +29,6 @@ from DashAI.back.converters.scikit_learn.generic_univariate_select import (
 )
 from DashAI.back.converters.scikit_learn.incremental_pca import IncrementalPCA
 from DashAI.back.converters.scikit_learn.knn_imputer import KNNImputer
-from DashAI.back.converters.scikit_learn.label_binarizer import LabelBinarizer
 from DashAI.back.converters.scikit_learn.label_encoder import LabelEncoder
 from DashAI.back.converters.scikit_learn.max_abs_scaler import MaxAbsScaler
 from DashAI.back.converters.scikit_learn.min_max_scaler import MinMaxScaler
@@ -130,8 +129,12 @@ from DashAI.back.models.hugging_face.llama_model import LlamaModel
 from DashAI.back.models.hugging_face.mistral_model import MistralModel
 from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
+from DashAI.back.models.hugging_face.nllb_transformer import NllbTransformer
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
+    OpusMtEsENTransformer,
 )
 from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import Phi4MiniInstructModel
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
@@ -297,6 +300,8 @@ def get_initial_components():
         ModernBertTransformer,
         DebertaV3Transformer,
         OpusMtEnESTransformer,
+        OpusMtEsENTransformer,
+        NllbTransformer,
         BagOfWordsTextClassificationModel,
         RidgeRegression,
         LinearSVR,
@@ -365,7 +370,6 @@ def get_initial_components():
         PCA,
         TruncatedSVD,
         Binarizer,
-        LabelBinarizer,
         LabelEncoder,
         MaxAbsScaler,
         MinMaxScaler,

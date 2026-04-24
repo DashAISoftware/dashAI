@@ -192,3 +192,15 @@ job_queue.db-wal
 
 db.sqlite
 trained_models/
+
+# Docusaurus auto-generated component reference (rebuilt on every yarn build/start)
+docs/docs/components/
+
+# Docusaurus cache and build output
+docs/.docusaurus/
+docs/build/
+docs/node_modules/
+
+# Re-include docs content section named "build" (not a build output)
+!docs/docs/build/
+!docs/docs/build/**

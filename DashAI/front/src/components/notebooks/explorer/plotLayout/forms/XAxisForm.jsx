@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Box,
   TextField,
   FormControlLabel,
   Switch,
@@ -32,7 +33,7 @@ export default function XAxisForm({
   const tickvalsArray = Array.isArray(data[0]?.x) ? data[0].x : [];
 
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Title */}
       <SectionLabel>
         {t("datasets:label.axisTitle", { axis: "X" })}
@@ -40,7 +41,8 @@ export default function XAxisForm({
 
       <TextField
         label={t("datasets:label.axisTitle", { axis: "X" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         value={layout.xaxis?.title?.text || ""}
         onChange={(e) =>
           handleAxisChange("xaxis", "title", {
@@ -53,7 +55,8 @@ export default function XAxisForm({
 
       <TextField
         label={t("datasets:label.axisFontSize", { axis: "X" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.xaxis?.title?.font?.size || 14}
         onChange={(e) =>
@@ -82,7 +85,8 @@ export default function XAxisForm({
 
       <TextField
         label={t("datasets:label.axisTitleStandoff", { axis: "X" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.xaxis?.title?.standoff ?? 15}
         onChange={(e) =>
@@ -113,7 +117,8 @@ export default function XAxisForm({
 
       <TextField
         label={t("datasets:label.axisTickAngle", { axis: "X" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.xaxis?.tickangle ?? 0}
         onChange={(e) =>
@@ -130,7 +135,8 @@ export default function XAxisForm({
       {tickvalsArray.length > 0 && (
         <TextField
           label={t("datasets:label.tickLabels", "Tick Labels")}
-          variant="filled"
+          variant="outlined"
+          size="small"
           multiline
           minRows={3}
           maxRows={8}
@@ -172,7 +178,8 @@ export default function XAxisForm({
 
       <TextField
         label={t("datasets:label.axisGridWidth", { axis: "X" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.xaxis?.gridwidth ?? 1}
         onChange={(e) =>
@@ -212,7 +219,8 @@ export default function XAxisForm({
 
       <TextField
         label={t("datasets:label.axisLineWidth", { axis: "X" })}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="number"
         value={layout.xaxis?.linewidth ?? 1}
         onChange={(e) =>
@@ -225,6 +233,6 @@ export default function XAxisForm({
         fullWidth
         slotProps={{ htmlInput: { min: 1, max: 10 } }}
       />
-    </>
+    </Box>
   );
 }

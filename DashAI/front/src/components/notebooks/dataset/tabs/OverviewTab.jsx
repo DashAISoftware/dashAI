@@ -10,13 +10,15 @@ import {
   Tooltip,
   Bar,
 } from "recharts";
-import MrtDatasetTable from "../MrtDatasetTable";
+import DatasetTable from "../DatasetTable";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../../utils";
 
 const OverviewTab = ({
   dataset,
   dtypes,
+  columnTypes,
   nan,
   total_rows,
   fetchDatasetPage,
@@ -74,7 +76,7 @@ const OverviewTab = ({
               ))}
             </Box>
           </Box>
-          <MrtDatasetTable
+          <DatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
             initialPageSize={10}
@@ -82,19 +84,27 @@ const OverviewTab = ({
             datasetId={dataset.id}
             onEditColumn={onEditColumnName}
             editableColumns={true}
-            columnTypes={dtypes}
+            columnTypes={
+              columnTypes && Object.keys(columnTypes).length > 0
+                ? columnTypes
+                : dtypes
+            }
           />
         </CardContent>
       </Card>
       {/* Missing Values Overview — only shown when there are missing values */}
       {missingData.some((data) => data.missing > 0) && (
-        <Card data-section="missing-values-overview">
+        <ExportableCard
+          filename="missing_values_overview"
+          exportData={missingData}
+          data-section="missing-values-overview"
+        >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                gap: 1,
                 mb: 1,
               }}
             >
@@ -141,7 +151,7 @@ const OverviewTab = ({
               </ResponsiveContainer>
             </Box>
           </CardContent>
-        </Card>
+        </ExportableCard>
       )}
     </Box>
   );

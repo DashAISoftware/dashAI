@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
@@ -32,11 +33,20 @@ class ExplainedVariance(RegressionMetric):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html
     """
 
-    DESCRIPTION: str = (
-        "Explained Variance measures the proportion of the variance in the "
-        "dependent variable that is predictable from the independent variables "
-        "in a regression model. It provides an indication of how well the model "
-        "captures the variability of the data."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Explained Variance measures the proportion of the variance in the "
+            "dependent variable that is predictable from the independent variables "
+            "in a regression model. It provides an indication of how well the model "
+            "captures the variability of the data."
+        ),
+        es=(
+            "La Varianza Explicada mide la proporción de la varianza en la "
+            "variable dependiente que es predecible a partir de las variables "
+            "independientes "
+            "en un modelo de regresión. Indica qué tan bien el modelo "
+            "captura la variabilidad de los datos."
+        ),
     )
 
     @staticmethod

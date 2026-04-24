@@ -8,7 +8,7 @@ from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class VarianceThresholdSchema(BaseSchema):
@@ -90,3 +90,8 @@ class VarianceThreshold(
         return Float(arrow_type=pa.float64())
 
     IMAGE_PREVIEW = "variance_threshold.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }

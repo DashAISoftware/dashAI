@@ -17,7 +17,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class PCASchema(BaseSchema):
@@ -42,21 +42,6 @@ class PCASchema(BaseSchema):
                 "todas las componentes."
             ),
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en=(
-                "If False, data passed to fit are overwritten. Use "
-                "fit_transform(X) instead of fit(X).transform(X)."
-            ),
-            es=(
-                "Si es False, los datos pasados a fit se sobrescriben. Usa "
-                "fit_transform(X) en lugar de fit(X).transform(X)."
-            ),
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
     whiten: schema_field(
         bool_field(),
@@ -207,7 +192,11 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         es="Análisis de Componentes Principales (PCA)",
     )
     IMAGE_PREVIEW = "pca.png"
-    metadata = {}
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the PCA converter.

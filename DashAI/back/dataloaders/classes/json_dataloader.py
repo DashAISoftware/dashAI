@@ -167,10 +167,15 @@ class JSONDataLoader(BaseDataLoader):
                 data_files=prepared_path[0],
                 field=field,
                 streaming=bool(n_sample),
+                cache_dir=temp_path,
             )
         else:
             dataset = load_dataset(
-                "json", data_dir=prepared_path[0], field=field, streaming=bool(n_sample)
+                "json",
+                data_dir=prepared_path[0],
+                field=field,
+                streaming=bool(n_sample),
+                cache_dir=temp_path,
             )
             shutil.rmtree(prepared_path[0])
         if n_sample:

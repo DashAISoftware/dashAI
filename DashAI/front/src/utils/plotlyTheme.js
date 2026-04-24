@@ -26,7 +26,7 @@ function applyThemeToLayout(baseLayout, theme) {
     font: {
       ...baseLayout?.font,
       color: textColor,
-      family: "Quicksand-Bold, sans-serif",
+      family: theme.typography.fontFamily,
     },
     xaxis: {
       ...baseLayout?.xaxis,

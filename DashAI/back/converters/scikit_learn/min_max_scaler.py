@@ -8,7 +8,7 @@ from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class MinMaxScalerSchema(BaseSchema):
@@ -35,15 +35,6 @@ class MinMaxScalerSchema(BaseSchema):
             en="The maximum value of the range to scale the data to.",
             es="El valor máximo del rango al que escalar los datos.",
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace row normalization.",
-            es="Ponlo en False para normalizar filas in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
     clip: schema_field(
         bool_field(),
@@ -88,8 +79,8 @@ class MinMaxScaler(
     IMAGE_PREVIEW = "min_max_scaler.png"
 
     metadata = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):

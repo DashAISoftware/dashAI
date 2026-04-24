@@ -22,6 +22,7 @@ from DashAI.back.api.api_v1.endpoints.plugins import router as plugins
 from DashAI.back.api.api_v1.endpoints.predict import router as predict
 from DashAI.back.api.api_v1.endpoints.prompts import router as prompts
 from DashAI.back.api.api_v1.endpoints.runs import router as runs
+from DashAI.back.api.api_v1.endpoints.scoring import router as scoring
 
 api_router_v1 = APIRouter()
 api_router_v1.include_router(converters, prefix="/converter")
@@ -42,3 +43,4 @@ api_router_v1.include_router(prompts, prefix="/prompt")
 api_router_v1.include_router(notebook, prefix="/notebook")
 api_router_v1.include_router(metrics, prefix="/metrics")
 api_router_v1.include_router(hardware, prefix="/hardware")
+api_router_v1.include_router(scoring, prefix="/scoring")

@@ -18,7 +18,11 @@ import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
 import { getConvertersByNotebookId } from "../../../api/notebook";
-import { getDatasetFile } from "../../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetFileFiltered,
+  getDatasetTypesByFilePath,
+} from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -69,6 +73,7 @@ export default function DatasetPreviewNotebook({
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
   const [converters, setConverters] = useState([]);
+  const [columnTypes, setColumnTypes] = useState({});
   const { explorersAndConverters } = useExplorersAndConverters();
   const tourContext = useTourContext();
 
@@ -81,8 +86,18 @@ export default function DatasetPreviewNotebook({
   };
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+    async (page, pageSize, filterModel, sortModel) => {
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            notebook.file_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(notebook.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [notebook, converters],
@@ -119,6 +134,13 @@ export default function DatasetPreviewNotebook({
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
+
+  useEffect(() => {
+    if (!notebook?.file_path) return;
+    getDatasetTypesByFilePath(notebook.file_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [notebook?.file_path]);
 
   const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
     if (!jobId) return;
@@ -294,21 +316,10 @@ export default function DatasetPreviewNotebook({
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path, converters, explorersAndConverters]}
               initialPageSize={5}
-              density="compact"
               datasetPath={notebook.file_path}
-              pageSizeOptions={[5, 10, 25]}
-              autoHeight={true}
-              disableColumnSelector
-              disableDensitySelector
-              slots={{ toolbar: null }}
-              sx={{
-                "& .MuiTablePagination-select": {
-                  display: "none",
-                },
-                "& .MuiTablePagination-selectLabel": {
-                  display: "none",
-                },
-              }}
+              columnTypes={columnTypes}
+              enableTopToolbar={false}
+              enableRowsPerPageSelector={false}
             />
           </Box>
         </AccordionDetails>

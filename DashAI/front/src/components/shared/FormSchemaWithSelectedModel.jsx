@@ -46,7 +46,12 @@ function FormSchemaWithSelectedModel({
     }
 
     return initialValues ?? valuesByProperties;
-  }, [propertyData.params]);
+  }, [
+    selectedProperty,
+    propertyData.params,
+    initialValues,
+    valuesByProperties,
+  ]);
 
   useEffect(() => {
     if (propertyData.model) {
@@ -57,7 +62,7 @@ function FormSchemaWithSelectedModel({
   }, [propertyData.model, propertyData.params, modelToConfigure]);
 
   return (
-    <Stack spacing={4} sx={{ py: 2 }} transition="ease">
+    <Stack spacing={2} sx={{ py: 2 }}>
       {Boolean(propertyData?.parent) && (
         <>
           <FormSchemaBreadScrumbs />

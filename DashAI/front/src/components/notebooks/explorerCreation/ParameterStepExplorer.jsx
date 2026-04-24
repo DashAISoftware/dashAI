@@ -25,7 +25,9 @@ export default function ParameterStepExplorer({
 
   useEffect(() => {
     if (tourContext?.run) {
+      // Advance tour once this component is mounted and visible
       const timeout = setTimeout(() => {
+        tourContext.nextStep();
         const button = document.querySelector(
           '[data-tour="create-explorer-button"]',
         );
@@ -40,11 +42,14 @@ export default function ParameterStepExplorer({
 
       return () => clearTimeout(timeout);
     }
-  }, [tourContext?.stepIndex, tourContext?.run]);
+  }, []);
 
   return (
     <Box flex={1} data-tour="explorer-parameters">
-      <Typography variant="subtitle2" gutterBottom>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+      >
         {t("datasets:label.configureParametersStep", {
           step: 2,
         })}

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.advanced_preprocessing import (
@@ -13,6 +13,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Text
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -111,6 +113,11 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     SCHEMA = TFIDFConverterSchema
     DISPLAY_NAME = MultilingualString(en="TF-IDF", es="TF-IDF")
     IMAGE_PREVIEW = "tf_idf.png"
+
+    metadata = {
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
+    }
     DESCRIPTION = MultilingualString(
         en=(
             "Converts text into a TF-IDF representation with one column per "
@@ -145,7 +152,7 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.vectorizer = TfidfVectorizer(
             max_features=kwargs.get("max_features", 1000),
             lowercase=kwargs.get("lowercase", True),
-            stop_words=kwargs.get("stop_words", "english"),
+            stop_words=kwargs.get("stop_words"),
             ngram_range=(
                 kwargs.get("lower_bound_ngrams", 1),
                 kwargs.get("upper_bound_ngrams", 1),
@@ -177,6 +184,9 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
         """Transform text into TF-IDF weighted token columns.
 
+        Appends one ``tfidf_<token>`` column per vocabulary term to the original
+        dataset. The source text column is preserved unchanged.
+
         Parameters
         ----------
         x : DashAIDataset
@@ -187,16 +197,16 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         Returns
         -------
         DashAIDataset
-            Dataset where each token becomes a numeric TF-IDF weight column.
+            Original dataset with ``tfidf_*`` token-weight columns appended.
 
         Raises
         ------
         RuntimeError
             If :meth:`fit` has not been called yet.
         """
-        import pandas as pd
+        import pyarrow as pa
 
-        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
@@ -206,8 +216,40 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
 
         tfidf_matrix = self.vectorizer.transform(texts)
         feature_names = self.vectorizer.get_feature_names_out()
+        output_type = self.get_output_type()
 
-        # One column per token/ngram (TF-IDF weight)
-        df_tfidf = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
+        combined_table = x.arrow_table
+        combined_types = dict(x.types)
 
-        return to_dashai_dataset(df_tfidf)
+        tfidf_array = tfidf_matrix.toarray()
+        for i, token in enumerate(feature_names):
+            prefixed = f"tfidf_{token}"
+            combined_table = combined_table.append_column(
+                prefixed, pa.array(tfidf_array[:, i].tolist(), type=pa.float64())
+            )
+            combined_types[prefixed] = output_type
+
+        return DashAIDataset(combined_table, types=combined_types, splits=x.splits)
+
+    def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        The output of this converter is a set of float columns, one per
+        vocabulary term, containing the TF-IDF weights produced by
+        ``TfidfVectorizer``.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The column name to look up in the fitted vectoriser. When provided
+            and the vectoriser has been fitted, the returned type reflects the
+            actual fitted vocabulary. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type for each TF-IDF weight column.
+        """
+        import pyarrow as pa
+
+        return Float(arrow_type=pa.float64())

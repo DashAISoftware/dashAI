@@ -54,6 +54,11 @@ class MissingIndicator(
     )
     IMAGE_PREVIEW = "missing_indicator.png"
 
+    metadata = {
+        "allowed_types": [],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the MissingIndicator converter.
 

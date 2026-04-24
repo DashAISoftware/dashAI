@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
@@ -10,8 +11,7 @@ import ParamsBar from "../../components/generative/ParamsBar";
 import DocumentsBar from "../../components/generative/RAG/DocumentsBar";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
-import { TourButton } from "../../components/tour/TourButton";
-import { TOUR_KEYS } from "../../constants/tours";
+import { useTourContext } from "../../components/tour/TourProvider";
 import { useGenerative } from "../../components/generative/GenerativeContext";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -19,7 +19,7 @@ import { useEffect } from "react";
 import RAGHomePage from "./RAG/RAGHomePage";
 
 export default function GenerativeContent() {
-  const threePanelLayout = useThreePanelLayout();
+  const threePanelLayout = useThreePanelLayout({ storageKey: "generative" });
   const {
     stepIndex,
     selectedSessionId,
@@ -30,6 +30,7 @@ export default function GenerativeContent() {
     setSelectedDisplayName,
     setStepIndex,
   } = useGenerative();
+  const { setDisabled } = useTourContext() ?? {};
   const { t } = useTranslation(["generative"]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -114,6 +115,13 @@ export default function GenerativeContent() {
     return <RAGHomePage />;
   }
 
+  useEffect(() => {
+    setDisabled?.(
+      stepIndex !== 0 || !!selectedSessionId,
+      t("generative:label.tourDisabledMessage"),
+    );
+  }, [stepIndex, selectedSessionId, setDisabled, t]);
+
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
@@ -140,11 +148,6 @@ export default function GenerativeContent() {
           ) : (
             <ParamsBar onToggle={threePanelLayout.handleToggleRight} />
           )}
-          <TourButton
-            tourKey={TOUR_KEYS.GENERATIVE}
-            disabled={stepIndex !== 0 || selectedSessionId}
-            disabledMessage={t("generative:label.tourDisabledMessage")}
-          />
         </RightPanel>
       </ModuleContainer>
     </ThreePanelLayoutContext.Provider>

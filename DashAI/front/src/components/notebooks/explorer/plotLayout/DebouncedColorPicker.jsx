@@ -121,13 +121,14 @@ export default function DebouncedColorPicker({
       sx={{
         display: "flex",
         alignItems: "flex-start",
-        gap: 2,
+        gap: 1,
         width: "100%",
       }}
     >
       <TextField
         label={label}
-        variant="filled"
+        variant="outlined"
+        size="small"
         type="color"
         value={getColorInputValue(localValue)}
         onChange={handleColorChange}
@@ -135,7 +136,8 @@ export default function DebouncedColorPicker({
         InputLabelProps={{ shrink: true }}
       />
       <TextField
-        variant="filled"
+        variant="outlined"
+        size="small"
         value={getTextInputValue(localValue)}
         onChange={handleTextChange}
         placeholder="#000000 or rgb(0,0,0)"

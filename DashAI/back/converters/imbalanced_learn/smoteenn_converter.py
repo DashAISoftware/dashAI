@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SMOTEENNSchema(BaseSchema):
@@ -91,6 +92,11 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
         en="SMOTE-ENN (Hybrid Sampling)", es="SMOTE-ENN (Muestreo Híbrido)"
     )
     IMAGE_PREVIEW = "smoteenn.png"
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialise SMOTE-ENN with a SMOTE sub-instance and combined kwargs.

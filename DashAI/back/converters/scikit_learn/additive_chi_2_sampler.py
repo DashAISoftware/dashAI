@@ -13,7 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class AdditiveChi2SamplerSchema(BaseSchema):
@@ -60,6 +60,8 @@ class AdditiveChi2Sampler(
     )
     DISPLAY_NAME = MultilingualString(en="Additive Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
+
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

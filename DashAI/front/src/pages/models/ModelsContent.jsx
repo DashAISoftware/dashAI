@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TourProvider } from "../../components/tour/TourProvider";
-import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
@@ -19,15 +17,11 @@ import { useModels } from "../../components/models/ModelsContext";
 
 export default function ModelsContent() {
   const location = useLocation();
-  const threePanelLayout = useThreePanelLayout();
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const threePanelLayout = useThreePanelLayout({ storageKey: "models" });
   const { t } = useTranslation(["models"]);
 
   const {
-    fetchDatasets,
     sessions,
-    fetchSessions,
-    fetchTasks,
     step,
     setStep,
     selectedSessionId,
@@ -36,14 +30,6 @@ export default function ModelsContent() {
     setRuns,
     fetchRuns,
   } = useModels();
-
-  useEffect(() => {
-    const loadInitialData = async () => {
-      await Promise.all([fetchDatasets(), fetchSessions(), fetchTasks()]);
-      setIsInitialLoading(false);
-    };
-    loadInitialData();
-  }, []);
 
   useEffect(() => {
     if (location.state?.openSessionId && sessions.length > 0) {
@@ -77,58 +63,41 @@ export default function ModelsContent() {
     }
   }, [selectedSessionId, sessions]);
 
-  if (isInitialLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
-      <ModuleContainer>
-        {/* Left Panel */}
-        <LeftPanel data-tour="models-left-panel">
-          <ModelsLeftBar onToggle={threePanelLayout.handleToggleLeft} />
-        </LeftPanel>
-        {selectedSessionId ? (
-          <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
-            <CenterPanel data-tour="models-center-panel">
-              <SessionVisualization />
-            </CenterPanel>
-            <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-              <ModelsRightBar onToggle={threePanelLayout.handleToggleRight} />
-            </RightPanel>
-            <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
-          </TourProvider>
-        ) : (
-          <>
-            <CenterPanel data-tour="models-center-panel">
-              <ModelsCenterContent />
-            </CenterPanel>
+      <TourProvider
+        tourKey={TOUR_KEYS.MODELS}
+        disabled={step !== 0}
+        disabledMessage={t("models:label.tourDisabledMessage")}
+      >
+        <ModuleContainer>
+          {/* Left Panel */}
+          <LeftPanel data-tour="models-left-panel">
+            <ModelsLeftBar onToggle={threePanelLayout.handleToggleLeft} />
+          </LeftPanel>
+          {selectedSessionId ? (
+            <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
+              <CenterPanel data-tour="models-center-panel">
+                <SessionVisualization />
+              </CenterPanel>
+              <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+                <ModelsRightBar onToggle={threePanelLayout.handleToggleRight} />
+              </RightPanel>
+            </TourProvider>
+          ) : (
+            <>
+              <CenterPanel data-tour="models-center-panel">
+                <ModelsCenterContent />
+              </CenterPanel>
 
-            {/* Right Panel */}
-            <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-              <ModelsRightBar onToggle={threePanelLayout.handleToggleRight} />
-            </RightPanel>
-          </>
-        )}
-      </ModuleContainer>
-      {!selectedSessionId && (
-        <TourButton
-          tourKey={TOUR_KEYS.MODELS}
-          disabled={step !== 0}
-          disabledMessage={t("models:label.tourDisabledMessage")}
-        />
-      )}
+              {/* Right Panel */}
+              <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+                <ModelsRightBar onToggle={threePanelLayout.handleToggleRight} />
+              </RightPanel>
+            </>
+          )}
+        </ModuleContainer>
+      </TourProvider>
     </ThreePanelLayoutContext.Provider>
   );
 }

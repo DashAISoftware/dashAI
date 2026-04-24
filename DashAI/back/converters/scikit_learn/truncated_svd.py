@@ -16,7 +16,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class TruncatedSVDSchema(BaseSchema):
@@ -147,7 +147,11 @@ class TruncatedSVD(
     )
     DISPLAY_NAME = MultilingualString(en="Truncated SVD", es="SVD Truncado")
     IMAGE_PREVIEW = "truncated_svd.png"
-    metadata = {}
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
         """Initialize the TruncatedSVD converter.

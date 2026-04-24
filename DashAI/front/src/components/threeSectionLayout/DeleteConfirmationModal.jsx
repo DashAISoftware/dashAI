@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -15,6 +16,7 @@ export default function DeleteConfirmationModal({
   onClose,
   onConfirm,
   content,
+  warning,
   onExited,
 }) {
   const theme = useTheme();
@@ -36,16 +38,21 @@ export default function DeleteConfirmationModal({
         {t("common:confirmDeletion")}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText sx={{ whiteSpace: "pre-line" }}>
           {content ||
             t(
               "common:confirmDeletionMessage",
               "Are you sure you want to delete this item? This action cannot be undone.",
             )}
         </DialogContentText>
+        {warning && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            {warning}
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        <Button onClick={onClose} sx={{ color: "common.white" }}>
           {t("common:cancel")}
         </Button>
         <Button onClick={onConfirm} color="error" autoFocus>

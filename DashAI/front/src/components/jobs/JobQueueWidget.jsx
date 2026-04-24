@@ -14,6 +14,7 @@ import {
   List,
   CircularProgress,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   ListItemSecondaryAction,
@@ -36,8 +37,11 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import JobDetailsDialog from "./JobDetailsDialog";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { deleteAllJobs } from "../../api/job";
 import { useJobManager } from "../../hooks/useJobPolling";
+import { useTranslation } from "react-i18next";
+import { getStatusText } from "../../utils/jobStatusText";
 
 export const StatusIcon = ({ status }) => {
   switch (status) {
@@ -56,15 +60,8 @@ export const StatusIcon = ({ status }) => {
   }
 };
 
-export const statusText = {
-  not_started: "Queued",
-  started: "Running",
-  finished: "Completed",
-  error: "Failed",
-  deleted: "Deleted",
-};
-
 const JobQueueWidget = () => {
+  const { t } = useTranslation(["common"]);
   const [expanded, setExpanded] = useState(() => {
     try {
       const savedState = localStorage.getItem("jobQueueWidgetExpanded");
@@ -80,6 +77,74 @@ const JobQueueWidget = () => {
   const [clearingAll, setClearingAll] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Drag state
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem("jobQueueWidgetPosition");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const dragRef = useRef(null);
+  const isDragging = useRef(false);
+
+  const handleDragStart = useCallback((e) => {
+    // Ignore if clicking on buttons/icons inside the header
+    if (e.target.closest("button") || e.target.closest("[role='button']"))
+      return;
+    e.preventDefault();
+    isDragging.current = false;
+    const paperEl = dragRef.current;
+    if (!paperEl) return;
+    const rect = paperEl.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    const handleMouseMove = (moveEvent) => {
+      isDragging.current = true;
+      const newLeft = Math.max(
+        0,
+        Math.min(moveEvent.clientX - offsetX, window.innerWidth - rect.width),
+      );
+      const newTop = Math.max(
+        0,
+        Math.min(moveEvent.clientY - offsetY, window.innerHeight - rect.height),
+      );
+
+      // If in lower half of screen, use bottom instead of top
+      // so widget expands upward when opened
+      const isLowerHalf = newTop > window.innerHeight / 2;
+      const positionData = isLowerHalf
+        ? { left: newLeft, bottom: window.innerHeight - newTop - rect.height }
+        : { left: newLeft, top: newTop };
+
+      setPosition(positionData);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, []);
+
+  // Persist drag position
+  useEffect(() => {
+    if (position) {
+      try {
+        localStorage.setItem(
+          "jobQueueWidgetPosition",
+          JSON.stringify(position),
+        );
+      } catch {
+        // ignore
+      }
+    }
+  }, [position]);
 
   const handleClearAllJobs = () => {
     setConfirmClearAll(true);
@@ -141,8 +206,8 @@ const JobQueueWidget = () => {
   const hasInitializedRef = useRef(false);
   const prevActiveCountRef = useRef(0);
 
-  // Snapshot del estado inicial al completar la primera carga (evita tratar
-  // jobs ya existentes como nuevos y disparar el expand al montar)
+  // Snapshot initial state after first load completes (prevents treating
+  // existing jobs as new and triggering expand on mount)
   useEffect(() => {
     if (!loading && !hasInitializedRef.current) {
       hasInitializedRef.current = true;
@@ -150,7 +215,7 @@ const JobQueueWidget = () => {
     }
   }, [loading, activeJobs.length]);
 
-  // Auto expand/collapse por transiciones reales durante la sesión
+  // Auto expand/collapse on real transitions during session
   useEffect(() => {
     if (!hasInitializedRef.current) return;
     const prev = prevActiveCountRef.current;
@@ -188,14 +253,28 @@ const JobQueueWidget = () => {
     refresh();
   };
 
+  const parseTimestamp = (ts) =>
+    ts
+      ? ts.includes("T")
+        ? new Date(ts)
+        : new Date(ts.replace(" ", "T") + "Z")
+      : new Date(0);
+
   const getJobsToShow = () => {
     if (showFinished) {
-      return jobs;
-    } else {
-      return [...activeJobs]
-        .sort((a, b) => new Date(b.last_update) - new Date(a.last_update))
-        .slice(0, 10);
+      return [...jobs]
+        .sort(
+          (a, b) =>
+            parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
+        )
+        .slice(0, 25);
     }
+
+    return [...activeJobs]
+      .sort(
+        (a, b) => parseTimestamp(b.last_update) - parseTimestamp(a.last_update),
+      )
+      .slice(0, 10);
   };
 
   const getRelativeTime = useCallback(
@@ -206,31 +285,52 @@ const JobQueueWidget = () => {
           : new Date(timestamp.replace(" ", "T") + "Z");
 
         const now = new Date();
-
         const diffSeconds = Math.floor((now - date) / 1000);
 
         if (diffSeconds < 0) {
-          if (diffSeconds > -60) return "just now";
+          if (diffSeconds > -60)
+            return t("common:jobQueue.relativeTime.justNow");
 
           const absDiff = Math.abs(diffSeconds);
-          if (absDiff < 60) return `in ${absDiff}s`;
-          if (absDiff < 3600) return `in ${Math.floor(absDiff / 60)}m`;
-          if (absDiff < 86400) return `in ${Math.floor(absDiff / 3600)}h`;
-          return `in ${Math.floor(absDiff / 86400)}d`;
+          if (absDiff < 60)
+            return t("common:jobQueue.relativeTime.inSeconds", {
+              count: absDiff,
+            });
+          if (absDiff < 3600)
+            return t("common:jobQueue.relativeTime.inMinutes", {
+              count: Math.floor(absDiff / 60),
+            });
+          if (absDiff < 86400)
+            return t("common:jobQueue.relativeTime.inHours", {
+              count: Math.floor(absDiff / 3600),
+            });
+          return t("common:jobQueue.relativeTime.inDays", {
+            count: Math.floor(absDiff / 86400),
+          });
         }
 
-        if (diffSeconds < 30) return "just now";
-        if (diffSeconds < 60) return `${diffSeconds}s ago`;
-        if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+        if (diffSeconds < 30) return t("common:jobQueue.relativeTime.justNow");
+        if (diffSeconds < 60)
+          return t("common:jobQueue.relativeTime.secondsAgo", {
+            count: diffSeconds,
+          });
+        if (diffSeconds < 3600)
+          return t("common:jobQueue.relativeTime.minutesAgo", {
+            count: Math.floor(diffSeconds / 60),
+          });
         if (diffSeconds < 86400)
-          return `${Math.floor(diffSeconds / 3600)}h ago`;
-        return `${Math.floor(diffSeconds / 86400)}d ago`;
+          return t("common:jobQueue.relativeTime.hoursAgo", {
+            count: Math.floor(diffSeconds / 3600),
+          });
+        return t("common:jobQueue.relativeTime.daysAgo", {
+          count: Math.floor(diffSeconds / 86400),
+        });
       } catch (e) {
         console.error("Error parsing time:", e, timestamp);
-        return "time unknown";
+        return t("common:jobQueue.relativeTime.unknown");
       }
     },
-    [forceUpdate],
+    [forceUpdate, t],
   );
 
   const jobsToShow = getJobsToShow();
@@ -239,30 +339,47 @@ const JobQueueWidget = () => {
     <>
       <Fade in={true}>
         <Paper
-          elevation={6}
+          ref={dragRef}
+          elevation={0}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           sx={{
             position: "fixed",
-            bottom: (theme) => theme.spacing(3),
-            right: (theme) => theme.spacing(3),
-            zIndex: 1000,
-            width: 320,
-            maxHeight: "80vh",
+            ...(position
+              ? {
+                  left: position.left,
+                  ...(position.top !== undefined
+                    ? { top: position.top }
+                    : { bottom: position.bottom }),
+                }
+              : {
+                  bottom: { xs: 16, sm: (theme) => theme.spacing(3) },
+                  right: { xs: 16, sm: (theme) => theme.spacing(3) },
+                }),
+            zIndex: 1300,
+            width: { xs: "calc(100vw - 32px)", sm: 320 },
+            maxWidth: 320,
+            maxHeight: { xs: "60vh", sm: "80vh" },
             display: "flex",
             flexDirection: "column",
             boxShadow: (theme) => theme.shadows[6],
             borderRadius: (theme) => theme.shape.borderRadius,
             overflow: "hidden",
+            bgcolor: "background.box",
+            color: "text.primary",
+            backgroundImage: "none",
           }}
           style={{
             opacity: `${isHovered || expanded ? 1 : 0.5}`,
             filter: `brightness(${isHovered || expanded ? 1 : 0.5})`,
-            transition: "all 0.2s ease",
+            transition: isDragging.current ? "none" : "all 0.2s ease",
           }}
         >
           <Box
-            onClick={handleToggleExpand}
+            onMouseDown={handleDragStart}
+            onClick={(e) => {
+              if (!isDragging.current) handleToggleExpand();
+            }}
             sx={{
               display: "flex",
               justifyContent: "space-between",
@@ -270,10 +387,22 @@ const JobQueueWidget = () => {
               padding: (theme) => theme.spacing(1, 2),
               backgroundColor: (theme) => theme.palette.primary.main,
               color: (theme) => theme.palette.primary.contrastText,
-              cursor: "pointer",
+              cursor: "grab",
+              "&:active": { cursor: "grabbing" },
             }}
           >
             <Box display="flex" alignItems="center">
+              <Tooltip title="Drag to move · Double-click to reset">
+                <DragIndicatorIcon
+                  fontSize="small"
+                  sx={{ opacity: 0.6, mr: 0.5 }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setPosition(null);
+                    localStorage.removeItem("jobQueueWidgetPosition");
+                  }}
+                />
+              </Tooltip>
               <Badge
                 badgeContent={activeJobs.length}
                 color="error"
@@ -282,32 +411,36 @@ const JobQueueWidget = () => {
                 <TaskAltIcon />
               </Badge>
               <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
-                Job Queue
+                {t("common:jobQueue.title")}
               </Typography>
             </Box>
             <Box display="flex" alignItems="center">
               {jobs.length > 0 && (
-                <Tooltip title="Clear All Jobs">
+                <Tooltip title={t("common:jobQueue.clearAllJobs")}>
                   <IconButton
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleClearAllJobs();
                     }}
-                    sx={{ color: "white", opacity: 0.8, mr: 0.5 }}
+                    sx={{
+                      color: "primary.contrastText",
+                      opacity: 0.8,
+                      mr: 0.5,
+                    }}
                   >
                     <DeleteSweepIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title="Refresh">
+              <Tooltip title={t("common:jobQueue.refresh")}>
                 <IconButton
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRefresh();
                   }}
-                  sx={{ color: "white", opacity: 0.8, mr: 0.5 }}
+                  sx={{ color: "primary.contrastText", opacity: 0.8, mr: 0.5 }}
                 >
                   <RefreshIcon fontSize="small" />
                 </IconButton>
@@ -325,19 +458,19 @@ const JobQueueWidget = () => {
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                backgroundColor: (theme) => theme.palette.background.paper,
+                backgroundColor: "background.box",
               }}
             >
               <Box
                 sx={{
-                  maxHeight: 280,
+                  maxHeight: { xs: 180, sm: 280 },
                   overflowY: "auto",
                 }}
               >
                 {loading && jobs.length === 0 && (
                   <Box display="flex" justifyContent="center" p={2}>
                     <Typography variant="body2" color="text.secondary">
-                      Loading jobs...
+                      {t("common:loading")}
                     </Typography>
                   </Box>
                 )}
@@ -345,15 +478,17 @@ const JobQueueWidget = () => {
                 {error && (
                   <Box p={2}>
                     <Typography variant="body2" color="error">
-                      Error: {error}
+                      {t("common:error")}: {error}
                     </Typography>
                   </Box>
                 )}
 
-                {jobs.length === 0 && !loading && (
+                {jobsToShow.length === 0 && !loading && !error && (
                   <Box display="flex" justifyContent="center" p={2}>
                     <Typography variant="body2" color="text.secondary">
-                      No jobs in queue
+                      {showFinished
+                        ? t("common:jobQueue.noJobs")
+                        : t("common:jobQueue.noActiveJobs")}
                     </Typography>
                   </Box>
                 )}
@@ -361,58 +496,64 @@ const JobQueueWidget = () => {
                 {jobsToShow.length > 0 && (
                   <List dense disablePadding>
                     {jobsToShow.map((job) => (
-                      <ListItem
-                        key={job.id}
-                        component="button"
-                        divider
-                        onClick={() => handleJobClick(job)}
-                        sx={{
-                          backgroundColor:
-                            job.status === "started"
-                              ? "rgba(25, 118, 210, 0.08)"
-                              : undefined,
-                        }}
-                      >
-                        <ListItemIcon sx={{ minWidth: 40 }}>
-                          <StatusIcon status={job.status} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Box display="flex" alignItems="center">
-                              <Tooltip title={job.job_name || ""}>
-                                <Typography variant="body2" noWrap>
-                                  {job.job_name
-                                    ? job.job_name
-                                    : job.task_type
-                                      ? job.task_type.split(".").pop()
-                                      : "Unknown Job"}
-                                </Typography>
-                              </Tooltip>
-                            </Box>
-                          }
-                          secondary={
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: "flex", alignItems: "center" }}
-                            >
-                              <span>
-                                {statusText[job.status] || job.status}
-                              </span>
-                              {job.status === "error" && (
-                                <Tooltip
-                                  title={job.error_msg || "Unknown error"}
-                                >
-                                  <ErrorIcon
-                                    fontSize="inherit"
-                                    color="error"
-                                    sx={{ ml: 0.5, fontSize: "1rem" }}
-                                  />
+                      <ListItem key={job.id} disablePadding divider>
+                        <ListItemButton
+                          onClick={() => handleJobClick(job)}
+                          sx={{
+                            pr: 8,
+                            bgcolor:
+                              job.status === "started"
+                                ? "action.selected"
+                                : "transparent",
+                            "&:hover": {
+                              bgcolor:
+                                job.status === "started"
+                                  ? "action.selected"
+                                  : "action.hover",
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 40 }}>
+                            <StatusIcon status={job.status} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={
+                              <Box display="flex" alignItems="center">
+                                <Tooltip title={job.job_name || ""}>
+                                  <Typography variant="body2" noWrap>
+                                    {job.job_name
+                                      ? job.job_name
+                                      : job.task_type
+                                        ? job.task_type.split(".").pop()
+                                        : t("common:unknown")}
+                                  </Typography>
                                 </Tooltip>
-                              )}
-                            </Typography>
-                          }
-                        />
+                              </Box>
+                            }
+                            secondary={
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "flex", alignItems: "center" }}
+                              >
+                                <span>{getStatusText(job.status, t)}</span>
+                                {job.status === "error" && (
+                                  <Tooltip
+                                    title={
+                                      job.error_msg || t("common:unknownError")
+                                    }
+                                  >
+                                    <ErrorIcon
+                                      fontSize="inherit"
+                                      color="error"
+                                      sx={{ ml: 0.5, fontSize: "1rem" }}
+                                    />
+                                  </Tooltip>
+                                )}
+                              </Typography>
+                            }
+                          />
+                        </ListItemButton>
                         <ListItemSecondaryAction>
                           <Box display="flex" alignItems="center">
                             <Typography
@@ -425,7 +566,7 @@ const JobQueueWidget = () => {
                             {(job.status === "not_started" ||
                               job.status === "error" ||
                               job.status === "finished") && (
-                              <Tooltip title="Cancel job">
+                              <Tooltip title={t("common:jobQueue.deleteJob")}>
                                 <IconButton
                                   edge="end"
                                   aria-label="delete"
@@ -464,13 +605,17 @@ const JobQueueWidget = () => {
                   >
                     <Box display="flex" gap={0.5}>
                       <Chip
-                        label={`${activeJobs.length} active`}
+                        label={t("common:jobQueue.activeCount", {
+                          count: activeJobs.length,
+                        })}
                         size="small"
                         color="primary"
                         variant="outlined"
                       />
                       <Chip
-                        label={`${errorJobs.length} failed`}
+                        label={t("common:jobQueue.failedCount", {
+                          count: errorJobs.length,
+                        })}
                         size="small"
                         color="error"
                         variant="outlined"
@@ -478,7 +623,11 @@ const JobQueueWidget = () => {
                     </Box>
 
                     <Chip
-                      label={showFinished ? "Hide Completed" : "Show Completed"}
+                      label={
+                        showFinished
+                          ? t("common:jobQueue.hideCompleted")
+                          : t("common:jobQueue.showCompleted")
+                      }
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -505,23 +654,27 @@ const JobQueueWidget = () => {
         onClose={cancelDeleteJob}
         aria-labelledby="delete-job-dialog-title"
       >
-        <DialogTitle id="delete-job-dialog-title">Delete Job</DialogTitle>
+        <DialogTitle id="delete-job-dialog-title">
+          {t("common:jobQueue.deleteJob")}
+        </DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this job?
+            {t("common:jobQueue.confirmDeleteJob")}
             {jobToDelete && (
               <Box component="span" fontWeight="bold" display="block" mt={1}>
-                {jobToDelete.job_name || jobToDelete.task_type || "Unknown Job"}
+                {jobToDelete.job_name ||
+                  jobToDelete.task_type ||
+                  t("common:unknown")}
               </Box>
             )}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={cancelDeleteJob} color="primary">
-            Cancel
+            {t("common:cancel")}
           </Button>
           <Button onClick={confirmDeleteJob} color="error">
-            Delete
+            {t("common:delete")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -531,12 +684,14 @@ const JobQueueWidget = () => {
         onClose={cancelClearAllJobs}
         aria-labelledby="clear-all-dialog-title"
       >
-        <DialogTitle id="clear-all-dialog-title">Clear All Jobs</DialogTitle>
+        <DialogTitle id="clear-all-dialog-title">
+          {t("common:jobQueue.clearAllJobs")}
+        </DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete ALL registered jobs?
+            {t("common:jobQueue.confirmClearAll")}
             <Box component="span" fontWeight="bold" display="block" mt={1}>
-              This will cancel all jobs in the queue.
+              {t("common:jobQueue.confirmClearAllDetail")}
             </Box>
           </Typography>
         </DialogContent>
@@ -546,7 +701,7 @@ const JobQueueWidget = () => {
             color="primary"
             disabled={clearingAll}
           >
-            Cancel
+            {t("common:cancel")}
           </Button>
           <Button
             onClick={confirmClearAllJobs}
@@ -554,7 +709,9 @@ const JobQueueWidget = () => {
             disabled={clearingAll}
             startIcon={clearingAll ? <CircularProgress size={20} /> : null}
           >
-            {clearingAll ? "Clearing..." : "Clear All"}
+            {clearingAll
+              ? t("common:jobQueue.clearing")
+              : t("common:jobQueue.clearAll")}
           </Button>
         </DialogActions>
       </Dialog>

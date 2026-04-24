@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer
 
@@ -48,8 +49,8 @@ class OneHotEncoderSchema(BaseSchema):
         ),
     )  # type: ignore
     dtype: schema_field(
-        enum_field(["int", "np.float32", "np.float64"]),
-        "np.float64",
+        enum_field(["int32", "int64"]),
+        "int64",
         description=MultilingualString(
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
@@ -126,6 +127,13 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     DISPLAY_NAME = MultilingualString(en="One-Hot Encoder", es="Codificador One-Hot")
     IMAGE_PREVIEW = "one_hot_encoder.png"
 
+    PREFIX = "ohe_"
+
+    metadata = {
+        "allowed_types": [Categorical],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         """Initialize the OneHotEncoder converter.
 
@@ -171,9 +179,9 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
         Returns
         -------
         DashAIDataType
-            An Integer type backed by ``pyarrow.int64()``,
+            An Integer type backed by ``pyarrow`` type,
             representing the binary indicator values (0 or 1).
         """
         import pyarrow as pa
 
-        return Integer(arrow_type=pa.int64())
+        return Integer(arrow_type=pa.from_numpy_dtype(self.dtype))

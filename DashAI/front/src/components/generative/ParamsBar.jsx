@@ -14,7 +14,6 @@ import {
 import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
-import { ChevronRight } from "@mui/icons-material";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
 
@@ -141,13 +140,6 @@ export default function ParamsBar({ onToggle }) {
             height: 70,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
           <Typography variant="h6">{t("common:modelParameters")}</Typography>
 
           {/* Parameter History Modal */}
@@ -176,7 +168,7 @@ export default function ParamsBar({ onToggle }) {
         {selectedSessionId ? (
           <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
             <form onSubmit={formik.handleSubmit}>
-              <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
+              <Box sx={{ mr: 2, ml: 2, mb: 5 }}>
                 {/* Render the parameter fields */}
                 <FormSchemaRenderFields
                   modelSchema={processedProperties}
@@ -191,7 +183,7 @@ export default function ParamsBar({ onToggle }) {
                   onFormSubmit={formik.handleSubmit}
                   setError={(error) => console.error(error)}
                   errorsMessage={formik.errors || {}}
-                  spacing={0}
+                  spacing={1}
                 />
                 <Box
                   sx={{

@@ -1,7 +1,13 @@
-import { Grid, Paper, Typography } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { Box, Grid, Paper, Typography } from "@mui/material";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import EditOptimizerDialog from "./EditOptimizerDialog";
 import OptimizationTableSelectOptimizer from "./OptimizationTableSelectOptimizer";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -16,7 +22,11 @@ import { useTranslation } from "react-i18next";
 function OptimizationTable({ newExp, setNewExp }) {
   const [selectedOptimizer, setSelectedOptimizer] = useState({});
   const [models, setModels] = useState([]);
-  const { t } = useTranslation(["experiments", "common"]);
+  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -82,58 +92,74 @@ function OptimizationTable({ newExp, setNewExp }) {
     handleAddOptimizer(name, defaultValues, id);
   };
 
-  const columns = React.useMemo(() => [
-    {
-      field: "name",
-      headerName: t("common:name"),
-      minWidth: 300,
-      editable: false,
-    },
-    {
-      field: "model",
-      headerName: t("common:model"),
-      minWidth: 300,
-      editable: false,
-      valueGetter: (value) => {
-        const model = models.find((model) => model.name === value);
-        return model && model.display_name ? model.display_name : value;
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: t("common:name"),
       },
-    },
-    {
-      field: "optimizer",
-      headerName: t("experiments:label.configureOptimizer"),
-      minWidth: 300,
-      renderCell: (params) => (
-        <OptimizationTableSelectOptimizer
-          taskName={newExp.task_name}
-          optimizerName={params.row.optimizer_name}
-          handleSelectedOptimizer={(optimizerName, defaultValues) =>
-            handleSelectedOptimizer(optimizerName, defaultValues, params.row.id)
+      {
+        accessorKey: "model",
+        header: t("common:model"),
+        accessorFn: (row) => {
+          const model = models.find((m) => m.name === row.model);
+          return model && model.display_name ? model.display_name : row.model;
+        },
+      },
+      {
+        id: "optimizer",
+        header: t("experiments:label.configureOptimizer"),
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <OptimizationTableSelectOptimizer
+            taskName={newExp.task_name}
+            optimizerName={row.original.optimizer_name}
+            handleSelectedOptimizer={(optimizerName, defaultValues) =>
+              handleSelectedOptimizer(
+                optimizerName,
+                defaultValues,
+                row.original.id,
+              )
+            }
+          />
+        ),
+      },
+      {
+        id: "actions",
+        header: t("common:actions"),
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => {
+          if (!row.original.optimizer_name) {
+            return null;
           }
-        />
-      ),
-    },
-    {
-      field: "actions",
-      headerName: t("common:actions"),
-      type: "actions",
-      minWidth: 100,
-      getActions: (params) => {
-        if (!params.row.optimizer_name) {
-          return [];
-        }
 
-        return [
-          <EditOptimizerDialog
-            key="edit-component"
-            optimizerToConfigure={params.row.optimizer_name}
-            updateParameters={handleUpdateParameters(params.row.id)}
-            paramsInitialValues={params.row.optimizer_parameters}
-          />,
-        ];
+          return (
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <EditOptimizerDialog
+                optimizerToConfigure={row.original.optimizer_name}
+                updateParameters={handleUpdateParameters(row.original.id)}
+                paramsInitialValues={row.original.optimizer_parameters}
+              />
+            </Box>
+          );
+        },
       },
-    },
-  ]);
+    ],
+    [models, newExp, t],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: newExp.runs.filter(checkIfHaveOptimazers),
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: { density: "compact" },
+    enableRowSelection: false,
+  });
 
   return (
     <Paper sx={{ py: 1, px: 2 }}>
@@ -151,22 +177,7 @@ function OptimizationTable({ newExp, setNewExp }) {
       </Grid>
 
       {/* Models Table */}
-      <DataGrid
-        rows={newExp.runs.filter(checkIfHaveOptimazers)}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-        }}
-        pageSizeOptions={[5]}
-        disableRowSelectionOnClick
-        density="compact"
-        autoHeight
-        hideFooterSelectedRowCount
-      />
+      <MaterialReactTable table={table} />
     </Paper>
   );
 }
