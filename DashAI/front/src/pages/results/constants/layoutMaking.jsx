@@ -1,35 +1,74 @@
-// Add news graphs and how to generate if applies
-function layoutMaking(selectedChart, graphsToView) {
-  // General Layout
-  const generalLayout = {
-    polar: {
-      radialaxis: { visible: selectedChart === "radar", range: [0, 1] },
-    },
-    showlegend: true,
-    height: 480,
-    width: 800,
-  };
+/**
+ * Build a Plotly layout object that respects the current MUI theme.
+ * Colors update automatically whenever the user switches between light / dark mode.
+ *
+ * @param {string} selectedChart  "heatmap" | "bar"
+ * @param {object} _graphsToView  Unused – kept for API compatibility
+ * @param {object} theme          MUI theme object
+ * @returns {{ generalLayout: object }}
+ */
+function layoutMaking(selectedChart, _graphsToView, theme) {
+  const bgColor = theme.palette.background.paper;
+  const textColor = theme.palette.text.primary;
+  const gridColor = theme.palette.divider;
 
-  // Layout only for Pie Charts
-  let numRows, numColumns;
-  if (graphsToView.pie.length <= 2) {
-    numRows = 1;
-    numColumns = graphsToView.pie.length;
+  let axisConfig;
+
+  if (selectedChart === "heatmap") {
+    axisConfig = {
+      xaxis: {
+        tickangle: -35,
+        automargin: true,
+        tickfont: { color: textColor },
+        gridcolor: gridColor,
+      },
+      yaxis: {
+        automargin: true,
+        tickfont: { color: textColor },
+        gridcolor: gridColor,
+      },
+    };
   } else {
-    numRows = Math.ceil(graphsToView.pie.length / 2);
-    numColumns = Math.min(2, graphsToView.pie.length);
+    // "bar"
+    axisConfig = {
+      barmode: "group",
+      xaxis: {
+        gridcolor: gridColor,
+        zerolinecolor: gridColor,
+        tickfont: { color: textColor },
+      },
+      yaxis: {
+        gridcolor: gridColor,
+        zerolinecolor: gridColor,
+        tickfont: { color: textColor },
+      },
+    };
   }
 
-  const pieLayout = {
-    height: 480,
-    width: 800,
-    grid: { rows: numRows, columns: numColumns },
-    legend: {
-      itemclick: false,
+  const generalLayout = {
+    ...axisConfig,
+    showlegend: selectedChart !== "heatmap",
+    height: 460,
+    autosize: true,
+    paper_bgcolor: bgColor,
+    plot_bgcolor: bgColor,
+    font: {
+      color: textColor,
+      family: theme.typography.fontFamily,
+      size: 12,
     },
+    legend: {
+      bgcolor: bgColor,
+      bordercolor: gridColor,
+      borderwidth: 1,
+    },
+    margin:
+      selectedChart === "heatmap"
+        ? { l: 160, r: 60, t: 40, b: 100 }
+        : { l: 60, r: 30, t: 40, b: 80 },
   };
 
-  return { generalLayout, pieLayout };
+  return { generalLayout };
 }
 
 export default layoutMaking;

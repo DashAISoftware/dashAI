@@ -6,7 +6,6 @@ on:
       - production
 
 jobs:
-
   # ============================================================
   # 1. Frontend Build
   # ============================================================
@@ -22,8 +21,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-          cache: 'yarn'
+          node-version: "18.x"
+          cache: "yarn"
           cache-dependency-path: DashAI/front/yarn.lock
       - name: Install and build
         run: |
@@ -58,7 +57,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install build tools
         run: |
@@ -74,6 +73,9 @@ jobs:
             echo "Frontend files not found in the wheel package!"
             exit 1
           fi
+
+      - name: Check distribution metadata
+        run: twine check dist/*
 
       - name: Publish to PyPI
         env:
@@ -107,27 +109,20 @@ jobs:
       - name: Build executable
         shell: cmd
         run: |
-          for /f "delims=" %%i in ('python -c "import site; s=site.getsitepackages(); print(s[-1])"') do set SITEPKG=%%i
-          echo SITEPKG=%SITEPKG%
-          if exist "%SITEPKG%\llama_cpp\lib" (
-              echo Found llama_cpp/lib — adding binaries
-              pyinstaller -F -n DashAI-launcher-cpu --clean ^
-                --add-data "DashAI/front/build;DashAI/front/build" ^
-                --add-data "%SITEPKG%\transformers;transformers" ^
-                --add-binary "%SITEPKG%\llama_cpp\lib\*;llama_cpp/lib" ^
-                --additional-hooks-dir=hooks DashAI/__main__.py
-          ) else (
-              echo No llama_cpp/lib — building without binaries
-              pyinstaller -F -n DashAI-launcher-cpu --clean ^
-                --add-data "DashAI/front/build;DashAI/front/build" ^
-                --add-data "%SITEPKG%\transformers;transformers" ^
-                --additional-hooks-dir=hooks DashAI/__main__.py
-          )
-      - name: Upload Windows executable
+          pyinstaller --clean --noconfirm dashai.spec
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build Windows Installer
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/installer.iss
+      - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: DashAI-windows-cpu
-          path: dist/DashAI-launcher-cpu.exe
+          name: DashAI-windows-installer
+          path: installer/DashAI-Installer.exe
           retention-days: 1
 
   # ============================================================
@@ -152,33 +147,35 @@ jobs:
           pip install -r requirements-cpu.txt
           pip install pyinstaller
           pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
-      - name: Build ARM64 executable
+          brew install create-dmg
+
+      - name: Build ARM64 App Bundle
         run: |
-          SITEPKG=$(python -c "import site; print(site.getsitepackages()[-1])")
-          echo "SITEPKG=$SITEPKG"
-          if [ -d "$SITEPKG/llama_cpp/lib" ]; then
-            echo "Found llama_cpp/lib — adding binaries"
-            pyinstaller -F -n DashAI-launcher-cpu-arm64 --clean \
-              --add-data "DashAI/front/build:DashAI/front/build" \
-              --add-data "$SITEPKG/transformers:transformers" \
-              --add-binary "$SITEPKG/llama_cpp/lib/*:llama_cpp/lib" \
-              --additional-hooks-dir=hooks DashAI/__main__.py
-          else
-            echo "No llama_cpp/lib — building without binaries"
-            pyinstaller -F -n DashAI-launcher-cpu-arm64 --clean \
-              --add-data "DashAI/front/build:DashAI/front/build" \
-              --add-data "$SITEPKG/transformers:transformers" \
-              --additional-hooks-dir=hooks DashAI/__main__.py
-          fi
-      - name: Sign ARM64 binary (ad-hoc)
+          pyinstaller --clean --noconfirm dashai.spec
+
+      - name: Sign App Bundle (ad-hoc)
         run: |
-          chmod +x dist/DashAI-launcher-cpu-arm64
-          codesign --force --deep --sign - dist/DashAI-launcher-cpu-arm64
-      - name: Upload ARM64 executable
+          codesign --force --deep --sign - dist/DashAI.app
+
+      - name: Create DMG
+        run: |
+          rm -f DashAI-macos-arm64.dmg
+
+          create-dmg \
+            --volname "DashAI Installer" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --app-drop-link 600 185 \
+            --hide-extension "DashAI.app" \
+            --no-internet-enable \
+            "DashAI-macos-arm64.dmg" \
+            "dist/DashAI.app"
+
+      - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DashAI-macos-arm64
-          path: dist/DashAI-launcher-cpu-arm64
+          name: DashAI-dmg-arm64
+          path: DashAI-macos-arm64.dmg
           retention-days: 1
 
   # ============================================================
@@ -205,22 +202,7 @@ jobs:
           pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
       - name: Build x86_64 executable
         run: |
-          SITEPKG=$(python -c "import site; print(site.getsitepackages()[-1])")
-          echo "SITEPKG=$SITEPKG"
-          if [ -d "$SITEPKG/llama_cpp/lib" ]; then
-            echo "Found llama_cpp/lib — adding binaries"
-            pyinstaller -F -n DashAI-launcher-cpu-x86_64 --clean \
-              --add-data "DashAI/front/build:DashAI/front/build" \
-              --add-data "$SITEPKG/transformers:transformers" \
-              --add-binary "$SITEPKG/llama_cpp/lib/*:llama_cpp/lib" \
-              --additional-hooks-dir=hooks DashAI/__main__.py
-          else
-            echo "No llama_cpp/lib — building without binaries"
-            pyinstaller -F -n DashAI-launcher-cpu-x86_64 --clean \
-              --add-data "DashAI/front/build:DashAI/front/build" \
-              --add-data "$SITEPKG/transformers:transformers" \
-              --additional-hooks-dir=hooks DashAI/__main__.py
-          fi
+          pyinstaller --clean --noconfirm dashai.spec
       - name: Sign x86_64 binary (ad-hoc)
         run: |
           chmod +x dist/DashAI-launcher-cpu-x86_64
@@ -231,3 +213,55 @@ jobs:
           name: DashAI-macos-x86_64
           path: dist/DashAI-launcher-cpu-x86_64
           retention-days: 1
+
+  # ============================================================
+  # 6. Publish installers to GitHub Release
+  # ============================================================
+  github-release:
+    needs:
+      - publish-pypi
+      - build-windows-executable
+      - build-macos-arm64
+      - build-macos-x86_64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from setup.py
+        id: version
+        run: |
+          VERSION=$(grep -m 1 '    version=' setup.py | sed -E 's/.*version="([^"]+)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: DashAI-windows-installer
+          path: artifacts/windows
+
+      - name: Download macOS ARM64 DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: DashAI-dmg-arm64
+          path: artifacts/macos-arm64
+
+      - name: Download macOS x86_64 executable
+        uses: actions/download-artifact@v4
+        with:
+          name: DashAI-macos-x86_64
+          path: artifacts/macos-x86_64
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/windows/DashAI-Installer.exe
+            artifacts/macos-arm64/DashAI-macos-arm64.dmg
+            artifacts/macos-x86_64/DashAI-launcher-cpu-x86_64

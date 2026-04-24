@@ -20,18 +20,33 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Integer
 
 
 class FastICASchema(BaseSchema):
+    """Configuration schema for the FastICA converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.FastICA``.
+    """
+
     n_components: schema_field(
         none_type(int_field(ge=1)),
         None,
-        "Number of components to extract.",
+        description=MultilingualString(
+            en="Number of components to extract.",
+            es="Número de componentes a extraer.",
+        ),
     )  # type: ignore
     algorithm: schema_field(
         enum_field(["parallel", "deflation"]),
         "parallel",
-        "Apply parallel or deflational algorithm for FastICA.",
+        description=MultilingualString(
+            en="Apply parallel or deflational algorithm for FastICA.",
+            es="Aplica el algoritmo paralelo o deflacional para FastICA.",
+        ),
     )  # type: ignore
     # Deprecated since version 1.1
     whiten: schema_field(
@@ -41,63 +56,141 @@ class FastICASchema(BaseSchema):
             )
         ),
         "unit-variance",
-        "If True, the data is whitened.",
+        description=MultilingualString(
+            en="If True, the data is whitened.",
+            es="Si es True, los datos se blanquean.",
+        ),
     )  # type: ignore
     fun: schema_field(
-        enum_field(
-            ["logcosh", "exp", "cube"]
-        ),  # {‘logcosh’, ‘exp’, ‘cube’} or callable
+        enum_field(["logcosh", "exp", "cube"]),
         "logcosh",
-        (
-            "The functional form of the G function used in "
-            "the approximation to neg-entropy."
+        description=MultilingualString(
+            en=(
+                "Functional form of the G function used in the approximation "
+                "to neg-entropy."
+            ),
+            es=(
+                "Forma funcional de la función G utilizada en la aproximación "
+                "a la neg-entropía."
+            ),
         ),
     )  # type: ignore
     fun_args: schema_field(
-        none_type(string_field()),  # {"logcosh": 1.0, "exp": 1.0, "cube": 1.0},
+        none_type(string_field()),
         None,
-        "Arguments to the G function.",
+        description=MultilingualString(
+            en="Arguments to the G function.",
+            es="Argumentos de la función G.",
+        ),
     )  # type: ignore
     max_iter: schema_field(
         int_field(ge=1),
         200,
-        "Maximum number of iterations to perform.",
+        description=MultilingualString(
+            en="Maximum number of iterations to perform.",
+            es="Número máximo de iteraciones a realizar.",
+        ),
     )  # type: ignore
     tol: schema_field(
         float_field(ge=0.0),
         1e-04,
-        "Tolerance on update at each iteration.",
+        description=MultilingualString(
+            en="Tolerance on update at each iteration.",
+            es="Tolerancia en la actualización en cada iteración.",
+        ),
     )  # type: ignore
     w_init: schema_field(
-        none_type(string_field()),  # array-like of shape (n_components, n_components)
+        none_type(string_field()),
         None,
-        "Initial guess for the unmixing matrix.",
+        description=MultilingualString(
+            en="Initial guess for the unmixing matrix.",
+            es="Estimación inicial de la matriz de separación.",
+        ),
     )  # type: ignore
     whiten_solver: schema_field(
         enum_field(["eigh", "svd"]),
         "svd",
-        "The solver to use for whitening.",
+        description=MultilingualString(
+            en="The solver to use for whitening.",
+            es="Método a utilizar para el blanqueo.",
+        ),
     )  # type: ignore
     random_state: schema_field(
-        none_type(
-            union_type(int_field(), enum_field(["RandomState"]))
-        ),  # int, RandomState instance or None
+        none_type(union_type(int_field(), enum_field(["RandomState"]))),
         None,
-        "Used to initialize w_init when not specified, with a normal distribution. "
-        "Pass an int, for reproducible results across multiple function calls.",
+        description=MultilingualString(
+            en=(
+                "Used to initialize w_init when not specified, with a normal "
+                "distribution. Pass an int for reproducible results."
+            ),
+            es=(
+                "Usado para inicializar w_init cuando no se especifica, con "
+                "una distribución normal. Pasa un entero para resultados "
+                "reproducibles."
+            ),
+        ),
     )  # type: ignore
 
 
 class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation):
-    """Scikit-learn's FastICA wrapper for DashAI."""
+    """Decompose features into statistically independent components using FastICA.
+
+    Independent Component Analysis (ICA) models the observed data X as a linear
+    mixture X = A S of latent source signals S that are assumed to be mutually
+    statistically independent and non-Gaussian. FastICA recovers the unmixing
+    matrix W = A^{-1} by maximising the non-Gaussianity of the projected
+    components, using the fixed-point iteration algorithm of Hyvärinen & Oja.
+
+    Typical applications include blind source separation (e.g. recovering
+    individual audio signals from a mixture of microphone recordings), removal
+    of artefacts from EEG/fMRI signals, and feature extraction for image
+    processing where latent factors are expected to be non-Gaussian.
+
+    Key properties:
+
+    - Unsupervised: does not require labels.
+    - The ``algorithm`` parameter selects between a fully parallel update
+      (faster) and a sequential deflation strategy (more stable for some data).
+    - The contrast function ``fun`` (logcosh, exp, or cube) controls the
+      approximation to negentropy used as the independence criterion.
+    - Data are whitened before ICA unless ``whiten=False``; the ``whiten_solver``
+      parameter selects between an eigenvalue decomposition and SVD.
+    - Component signs and ordering are arbitrary and may differ between runs.
+
+    Wraps scikit-learn's ``FastICA``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html
+    - [2] Hyvärinen, A. & Oja, E. (2000). "Independent Component Analysis:
+        Algorithms and Applications." Neural Networks, 13(4-5), 411-430.
+    """
 
     SCHEMA = FastICASchema
-    DESCRIPTION = "FastICA: a fast algorithm for Independent Component Analysis."
-    CATEGORY = "Dimensionality Reduction"
-    DISPLAY_NAME = "Fast ICA"
+    DESCRIPTION = MultilingualString(
+        en="FastICA: a fast algorithm for Independent Component Analysis.",
+        es=(
+            "FastICA: un algoritmo rápido para "
+            "el Análisis de Componentes Independientes."
+        ),
+    )
+    DISPLAY_NAME = MultilingualString(en="Fast ICA", es="Fast ICA")
     IMAGE_PREVIEW = "fast_ica.png"
 
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
+        """Initialize the FastICA converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         self.fun_args = kwargs.pop("fun_args", None)
         if self.fun_args is not None:
             self.fun_args = parse_string_to_dict(self.fun_args)
@@ -114,3 +207,21 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
         kwargs["random_state"] = self.random_state
 
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
+        import pyarrow as pa
+
+        return Float(arrow_type=pa.float64())

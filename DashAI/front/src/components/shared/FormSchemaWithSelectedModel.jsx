@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormSchemaStore } from "../../contexts/schema";
 import FormSchemaBreadScrumbs from "./FormSchemaBreadScrumbs";
 import FormSchema from "./FormSchema";
@@ -19,7 +19,9 @@ function FormSchemaWithSelectedModel({
   initialValues,
   onFormSubmit,
   onCancel,
-  saveButtonText, // New prop
+  saveButtonText,
+  hideButtons,
+  onValuesChange = () => {},
 }) {
   const {
     formValues,
@@ -44,7 +46,12 @@ function FormSchemaWithSelectedModel({
     }
 
     return initialValues ?? valuesByProperties;
-  }, [selectedModel, propertyData.params]);
+  }, [
+    selectedProperty,
+    propertyData.params,
+    initialValues,
+    valuesByProperties,
+  ]);
 
   useEffect(() => {
     if (propertyData.model) {
@@ -55,9 +62,7 @@ function FormSchemaWithSelectedModel({
   }, [propertyData.model, propertyData.params, modelToConfigure]);
 
   return (
-    <Stack spacing={4} sx={{ py: 2 }} transition="ease">
-      {/* Dropdown to select a configurable object to render a subform */}
-
+    <Stack spacing={2} sx={{ py: 2 }}>
       {Boolean(propertyData?.parent) && (
         <>
           <FormSchemaBreadScrumbs />
@@ -75,6 +80,8 @@ function FormSchemaWithSelectedModel({
         onFormSubmit={() => onFormSubmit(formValues)}
         setError={setErrorForm}
         saveButtonText={saveButtonText}
+        hideButtons={hideButtons}
+        onValuesChange={() => onValuesChange(formValues)}
         onCancel={() => {
           if (properties.length > 0) {
             removeLastProperty();
@@ -93,6 +100,8 @@ FormSchemaWithSelectedModel.propTypes = {
   onFormSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   saveButtonText: PropTypes.string,
+  hideButtons: PropTypes.bool,
+  onValuesChange: PropTypes.func,
 };
 
 export default FormSchemaWithSelectedModel;

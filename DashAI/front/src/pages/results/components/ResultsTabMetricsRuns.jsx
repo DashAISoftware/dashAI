@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { getDisplaySetName } from "../constants/getDisplaySetName";
+import { Trans } from "react-i18next";
 
 function ResultsTabMetricsRuns({ runData, displaySet }) {
   return (
@@ -27,23 +28,26 @@ function ResultsTabMetricsRuns({ runData, displaySet }) {
             ) : (
               <Alert severity="warning" sx={{ mb: 2 }}>
                 <AlertTitle>
-                  {`There are no metrics associated with the ${getDisplaySetName(
-                    displaySet,
-                  )} set in this run`}
+                  {t("models:label.thereAreNoMetricsForThisRun", {
+                    set: getDisplaySetName(displaySet),
+                  })}
                 </AlertTitle>
-                Go to{" "}
-                <Link component={RouterLink} to="/app/experiments">
-                  experiments tab
-                </Link>{" "}
-                to run your experiment.
+                <Trans i18nKey="models:label.runExperimentToSeeMetrics">
+                  Go to
+                  <Link component={RouterLink} to="/app/experiments">
+                    experiments tab
+                  </Link>
+                  to run your experiment.
+                </Trans>
               </Alert>
             )
           ) : Object.keys(runData[displaySet]).length === 0 ? (
             <Alert severity="error" sx={{ mb: 2 }}>
               <AlertTitle>Error</AlertTitle>
               <Typography variant="body1">
-                The result metrics for {getDisplaySetName(displaySet)} set are
-                empty.
+                {t("models:label.metricsEmptyForDisplaySet", {
+                  set: getDisplaySetName(displaySet),
+                })}
               </Typography>
             </Alert>
           ) : (

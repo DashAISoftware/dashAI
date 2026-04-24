@@ -1,0 +1,33 @@
+{
+  "button": {
+    "install": "Install",
+    "refresh": "Refresh",
+    "return": "Return",
+    "uninstall": "Uninstall",
+    "upgrade": "Upgrade"
+  },
+  "error": {
+    "installingPlugin": "Error while installing plugin.",
+    "obtainPluginDetails": "Error while trying to obtain plugin details.",
+    "obtainPlugins": "Error while trying to obtain plugins.",
+    "updatePlugins": "Error while trying to update plugins.",
+    "upgradingPlugin": "Error while upgrading plugin."
+  },
+  "label": {
+    "browse": "Browse",
+    "details": "Details",
+    "installed": "Installed",
+    "latest": "Latest",
+    "noPluginsToShow": "No plugins to show (try refreshing)",
+    "oldest": "Oldest",
+    "plugins": "{{label}} - Plugins",
+    "tags": "Tags",
+    "version": "Version: {{version}}",
+    "versionInstalledLatestAvailable": "Version installed: <1></1> | Latest version available: <3></3>"
+  },
+  "message": {
+    "pluginInstalled": "Plugin installed successfully",
+    "pluginUninstalled": "Plugin uninstalled successfully",
+    "pluginUpgraded": "Plugin upgraded successfully"
+  }
+}

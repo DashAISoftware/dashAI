@@ -14,7 +14,14 @@ import InputWithDebounce from "../../shared/InputWithDebounce";
  * @param {string} description text to put in a tooltip that helps the user to understand the parameter
  *
  */
-function NumberInput({ name, label, value, onChange, description, error }) {
+function NumberInput({
+  name,
+  label,
+  value = null,
+  onChange,
+  description,
+  error = undefined,
+}) {
   const handleChange = (inputValue) => {
     const newValue = inputValue === "" ? null : Number(inputValue);
     onChange(newValue);
@@ -24,14 +31,14 @@ function NumberInput({ name, label, value, onChange, description, error }) {
     <FormInputWrapper name={name} description={description}>
       <InputWithDebounce
         variant="outlined"
+        size="small"
         label={label}
         name={name}
         value={value !== null ? value : ""}
         onChange={handleChange}
         type="number"
         error={error !== undefined}
-        helperText={error || " "}
-        margin="dense"
+        helperText={error}
       />
     </FormInputWrapper>
   );
@@ -43,10 +50,6 @@ NumberInput.propTypes = {
   onChange: PropTypes.func.isRequired,
   description: PropTypes.string.isRequired,
   error: PropTypes.string,
-};
-NumberInput.defaultProps = {
-  value: null,
-  error: undefined,
 };
 
 export default NumberInput;

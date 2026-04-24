@@ -1,0 +1,63 @@
+{
+  "button": {
+    "addExplainer": "Add Explainer",
+    "backToExplainers": "Back to explainers",
+    "hidePlot": "Hide Plot",
+    "showPlot": "Show Plot"
+  },
+  "error": {
+    "explainerFailed": "Explainer failed to generate.",
+    "fetchDataError": "Error while trying to obtain data of the explainer with id: {{explainerId}}",
+    "fetchDatasets": "Error while trying to obtain the datasets.",
+    "fetchExplainers": "Error while trying to obtain the explainers.",
+    "fetchRuns": "Error while trying to obtain the runs table.",
+    "fetchTasks": "Error while trying to obtain the tasks.",
+    "globalExplainerCreationError": "Error while trying to create the global explainer.",
+    "globalExplainerJobEnqueueError": "Error while trying to enqueue the global explainer job.",
+    "globalExplainerJobFailed": "Global explainer job failed: {{error}}",
+    "invalidDataset": "The selected dataset is not valid.",
+    "localExplainerCreationError": "Error while trying to create the local explainer.",
+    "localExplainerJobEnqueueError": "Error while trying to enqueue the local explainer job.",
+    "localExplainerJobFailed": "Local explainer job failed: {{error}}",
+    "nameTooShort": "The explainer name must have at least 4 alphanumeric characters.",
+    "validateDataset": "Error while trying to validate the selected dataset."
+  },
+  "label": {
+    "configureExplainer": "Configure your Explainer",
+    "configureExplainerParameters": "Configure explainer parameters",
+    "datasetId": "Dataset ID",
+    "datasetSelection": "The dataset selected here will be used to compute the explanations. If you chose the same dataset that was used to train the model, you may want to use a sample of your test set instead. Keep in mind that some explainers can take a long time to generate explanations, depending on the number of instances selected.",
+    "datasetSplit": "Dataset Split",
+    "deleteExplainer": "Delete explainer?",
+    "deleteExplainerConfirmation": "Are you sure you want to delete this explainer?",
+    "explainerConfiguration": "Explainer configuration",
+    "explainerName": "Explainer name",
+    "explainerParameters": "Explainer parameters",
+    "explainersDashboardDescription": "Configure global or local explainers for your trained model to explore and understand its decision-making process.",
+    "explainersDashboardTitle": "Explanations dashboard for model {{modelName}}",
+    "explanationPath": "Explanation path",
+    "forExplainer": "Explainer name: {{name}}",
+    "globalExplanations": "Global Explanations",
+    "globalExplanationsDescription": "Global explanations describe how the overall machine learning model works.",
+    "instanceNumber": "Instance {{number}}",
+    "localExplanations": "Local Explanations",
+    "localExplanationsDescription": "Local explanations explain model predictions for an specific instance.",
+    "newGlobalExplainer": "New Global Explainer",
+    "newLocalExplainer": "New Local Explainer",
+    "noDatasetsAvailable": "<0>There are no datasets available.</0>Go to <2>data tab</2> to upload one first.",
+    "percentageOfSplitToUse": "Percentage of Split to Use",
+    "plotPath": "Plot path",
+    "runId": "Run ID",
+    "selectDataset": "Select dataset",
+    "selectDatasetToExplain": "Select a dataset with instances to explain",
+    "selectExplainer": "Set name and explainer",
+    "selectExplainerAndName": "Select a explainer and enter a name",
+    "explainerInProgress": "Explainer in progress...",
+    "splitSelectionSummary": "Percentage: {{percentage}}% | Rows selected: {{rowsSelected}} / {{totalRows}}"
+  },
+  "message": {
+    "explainerJobCompleted": "Explainer {{name}} completed successfully",
+    "globalExplainerJobCreated": "Global explainer job successfully created.",
+    "localExplainerJobCreated": "Local explainer job successfully created."
+  }
+}

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import ColumnSelector from "../ColumnSelector";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export default function ScopeStepExplorer({
   notebook,
@@ -10,19 +12,16 @@ export default function ScopeStepExplorer({
   setScopeColumns,
   nextStep,
 }) {
+  const theme = useTheme();
   const [isSelectionValid, setIsSelectionValid] = useState(false);
+  const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
-  const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
   const tourContext = useTourContext();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const handleSubmit = () => {
     nextStep();
-    if (tourContext && tourContext.run) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 500);
-    }
   };
 
   return (
@@ -38,18 +37,26 @@ export default function ScopeStepExplorer({
     >
       {/* Content */}
       <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
-        <Typography variant="subtitle2" gutterBottom>
-          Step 1: Select Scope
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 0.5 }}
+        >
+          {t("datasets:label.selectScopeStep", {
+            step: 1,
+          })}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Select the columns to be used by the explorer.
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.primary, mb: 1.5 }}
+        >
+          {t("datasets:label.selectColumnsForExplorerScope")}
         </Typography>
 
         <ColumnSelector
           file_path={notebook.file_path}
           inputCardinality={inputCardinality}
+          allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
-          restrictedDtypes={restrictedDtypes}
           onSelectionChange={(selected) => setScopeColumns(selected)}
           onValidationChange={(isValid) => setIsSelectionValid(isValid)}
         />
@@ -69,7 +76,9 @@ export default function ScopeStepExplorer({
           onFormSubmit={handleSubmit}
           error={!isSelectionValid}
           saveButtonText={
-            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
+            Object.values(tool.schema.properties).length > 0
+              ? t("common:next")
+              : t("common:save")
           }
           data-tour="explorer-scope-next-button"
         />

@@ -7,13 +7,13 @@ from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.model_job import ModelJob
-from DashAI.back.metrics import BaseMetric
-from DashAI.back.models import BaseModel
-from DashAI.back.optimizers import OptunaOptimizer
-from DashAI.back.tasks import BaseTask
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
+from DashAI.back.tasks.base_task import BaseTask
 
 
 class DummyTask(BaseTask):
@@ -25,7 +25,7 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, dataset, output_columns):
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
         return dataset
 
     def num_labels(self, dataset, output_column):
@@ -44,7 +44,10 @@ class DummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
+        return
+
+    def prepare_dataset(self, dataset, is_fit=False):
         return
 
 
@@ -60,8 +63,11 @@ class FailDummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         raise Exception("Always fails")
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return
 
 
 class DummyMetric(BaseMetric):
@@ -103,18 +109,21 @@ def dataset_id(dataset_1: Dataset) -> int:
     return dataset_1.id
 
 
-@pytest.fixture(scope="module", name="experiment_id", autouse=True)
-def create_experiment(client: TestClient, dataset_id: int):
+@pytest.fixture(scope="module", name="model_session_id", autouse=True)
+def create_model_session(client: TestClient, dataset_id: int):
     container = client.app.container
     session = container["session_factory"]
 
     with session() as db:
-        experiment = Experiment(
+        model_session = ModelSession(
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
             input_columns=["SepalLengthCm"],
             output_columns=["Species"],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -129,23 +138,23 @@ def create_experiment(client: TestClient, dataset_id: int):
                 }
             ),
         )
-        db.add(experiment)
+        db.add(model_session)
         db.commit()
-        db.refresh(experiment)
+        db.refresh(model_session)
 
-        yield experiment.id
+        yield model_session.id
 
-        db.delete(experiment)
+        db.delete(model_session)
         db.commit()
         db.close()
 
 
 @pytest.fixture(scope="module", name="run_id", autouse=True)
-def create_run(client: TestClient, experiment_id: int):
+def create_run(client: TestClient, model_session_id: int):
     response = client.post(
         "/api/v1/run/",
         json={
-            "experiment_id": experiment_id,
+            "model_session_id": model_session_id,
             "model_name": "DummyModel",
             "name": "DummyRun",
             "parameters": {},
@@ -173,13 +182,13 @@ def create_run(client: TestClient, experiment_id: int):
 
 
 @pytest.fixture(scope="module", name="failed_run_id", autouse=True)
-def create_failed_run(client: TestClient, experiment_id: int):
+def create_failed_run(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             model_name="FailDummyModel",
             parameters={},
             optimizer_name="",
@@ -273,11 +282,6 @@ def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
     response = client.get(f"/api/v1/run/{run_id}")
     data = response.json()
     assert data["status"] == 3
-    assert isinstance(data["train_metrics"], dict)
-    assert "DummyMetric" in data["train_metrics"]
-    assert data["train_metrics"]["DummyMetric"] == 1
-    assert data["train_metrics"] == data["validation_metrics"]
-    assert data["train_metrics"] == data["test_metrics"]
     assert data["run_path"] is not None
     assert os.path.exists(data["run_path"])
     assert data["status"] == 3

@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 import { Clear as ClearIcon } from "@mui/icons-material";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+
 /**
  *This component renders a list of items so that the user can select one.
  * @param {object[]} itemsList The list of items to select from
@@ -18,13 +20,27 @@ import PropTypes from "prop-types";
  * @param {function} setSelectedItem function to change the value of the selected item
  * @param {bool} disabled true to disable the item selection, false to enable it
  */
-function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
+function ItemSelector({
+  itemsList,
+  selectedItem = undefined,
+  setSelectedItem,
+  disabled = false,
+}) {
   const [itemsToShow, setItemsToShow] = useState(itemsList.map(() => true));
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     setItemsToShow(itemsList.map(() => true));
+  }, [itemsList]);
+
+  useEffect(() => {
+    if (selectedItem) {
+      setSelectedItem(
+        itemsList.find((item) => item.name === selectedItem.name) || {},
+      );
+    }
   }, [itemsList]);
 
   const handleClearSearchField = (event) => {
@@ -36,7 +52,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
     setSearchField(event.target.value.toLowerCase());
     setItemsToShow(
       itemsList.map((val) =>
-        val.name.toLowerCase().includes(event.target.value),
+        val.display_name.toLowerCase().includes(event.target.value),
       ),
     );
   };
@@ -65,7 +81,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
           <TextField
             id="item-search-input"
             fullWidth
-            label="Search..."
+            label={t("search")}
             type="search"
             variant="standard"
             value={searchField}
@@ -124,11 +140,6 @@ ItemSelector.propTypes = {
   }),
   setSelectedItem: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
-};
-
-ItemSelector.defaultProps = {
-  selectedItem: undefined,
-  disabled: false,
 };
 
 export default ItemSelector;

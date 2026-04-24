@@ -1,3 +1,5 @@
+import i18n from "i18next";
+
 export const formatDate = (dateStr) => {
   const date = new Date(dateStr);
   const options = {
@@ -7,8 +9,8 @@ export const formatDate = (dateStr) => {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
-    locale: "en-US",
+    locale: i18n.language,
   };
 
-  return date.toLocaleString("en-US", options);
+  return date.toLocaleString(i18n.language, options);
 };

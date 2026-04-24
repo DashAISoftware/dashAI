@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export default function ParameterStepConverter({
   converter,
@@ -11,6 +12,7 @@ export default function ParameterStepConverter({
   setStep,
 }) {
   const tourContext = useTourContext();
+  const { t } = useTranslation(["common", "datasets"]);
 
   const handleSave = async (params) => {
     await handleSaveConverter(params);
@@ -54,8 +56,11 @@ export default function ParameterStepConverter({
 
   return (
     <Box flex={1} data-tour="converter-parameters">
-      <Typography variant="subtitle2" gutterBottom>
-        Step 2: Configure Parameters
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+      >
+        {t("datasets:label.configureParametersStep", { step: 2 })}
       </Typography>
       <FormSchemaContainer>
         <FormSchemaWithSelectedModel
@@ -63,7 +68,7 @@ export default function ParameterStepConverter({
           modelToConfigure={converter}
           initialValues={initialParams}
           onCancel={() => setStep(0)}
-          saveButtonText="Create Converter"
+          saveButtonText={t("datasets:button.createConverter")}
         />
       </FormSchemaContainer>
     </Box>

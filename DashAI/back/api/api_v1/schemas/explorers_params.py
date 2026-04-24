@@ -1,6 +1,6 @@
 from datetime import datetime
+from typing import Any, Dict, List, Union
 
-from beartype.typing import Any, Dict, List, Union
 from pydantic import BaseModel
 
 from DashAI.back.core.enums.status import ExplorerStatus

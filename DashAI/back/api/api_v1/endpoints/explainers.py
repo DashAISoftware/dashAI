@@ -1,12 +1,10 @@
 import logging
-import os
-import pickle
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.explainers_params import (
     GlobalExplainerParams,
@@ -14,15 +12,16 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     ValidateDatasetParams,
 )
 from DashAI.back.core.enums.status import ExplainerStatus
-from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
+    ModelSession,
     Run,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ router = APIRouter()
 @inject
 async def get_global_explainers(
     run_id: int = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the global explainers in the database.
 
@@ -82,8 +81,7 @@ async def get_global_explainers(
 @inject
 async def get_global_explanation(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the global explanation associated with id explainer_id.
 
@@ -106,6 +104,8 @@ async def get_global_explanation(
         If there is no global explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             global_explainer = db.scalars(
@@ -143,8 +143,7 @@ async def get_global_explanation(
 @inject
 async def get_global_explanation_plot(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the global explanation plot associated with id explainer_id.
 
@@ -167,6 +166,8 @@ async def get_global_explanation_plot(
         If there is no global explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             global_explainer = db.scalars(
@@ -204,7 +205,7 @@ async def get_global_explanation_plot(
 @inject
 async def upload_global_explainer(
     params: GlobalExplainerParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Endpoint to create a global explainer
 
@@ -265,7 +266,7 @@ async def upload_global_explainer(
 @inject
 async def delete_global_explainer(
     explainer_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the global explainer with id explanation_id from the database and its
     associated explanation file.
@@ -283,6 +284,8 @@ async def delete_global_explainer(
     HTTPException
         If the global explanation with id explanation_id is not registered in the DB.
     """
+    import os
+
     with session_factory() as db:
         try:
             global_explainer = db.get(GlobalExplainer, explainer_id)
@@ -313,7 +316,7 @@ async def delete_global_explainer(
 @inject
 async def get_local_explainers(
     run_id: int = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the local explainers in the database.
 
@@ -361,8 +364,7 @@ async def get_local_explainers(
 @inject
 async def get_local_explanation(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the local explanation associated with id explainer_id.
 
@@ -385,6 +387,8 @@ async def get_local_explanation(
         If there is no local explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             local_explainer = db.scalars(
@@ -422,8 +426,7 @@ async def get_local_explanation(
 @inject
 async def get_local_explanation_plot(
     explainer_id: int,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Returns the local explanation plot associated with id explainer_id.
 
@@ -446,6 +449,8 @@ async def get_local_explanation_plot(
         If there is no local explanation associated with the explanation_id in the
         database.
     """
+    import pickle
+
     with session_factory() as db:
         try:
             local_explainer = db.scalars(
@@ -483,7 +488,7 @@ async def get_local_explanation_plot(
 @inject
 async def upload_local_explainer(
     params: LocalExplainerParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Endpoint to create a local explainer
 
@@ -551,7 +556,7 @@ async def upload_local_explainer(
 @inject
 async def delete_local_explainer(
     explainer_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Deletes the local explainer with id explanation_id from the database and its
     associated explanation file.
@@ -569,6 +574,8 @@ async def delete_local_explainer(
     HTTPException
         If the local explanation with id explanation_id is not registered in the DB.
     """
+    import os
+
     with session_factory() as db:
         try:
             local_explainer = db.get(LocalExplainer, explainer_id)
@@ -613,9 +620,10 @@ async def update_explainer() -> None:
 @inject
 async def validate_dataset(
     params: ValidateDatasetParams,
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
+    from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
+
     with session_factory() as db:
         try:
             run: Run = db.get(Run, params.run_id)
@@ -624,11 +632,11 @@ async def validate_dataset(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Run not found",
                 )
-            experiment: Experiment = db.get(Experiment, run.experiment_id)
-            if not experiment:
+            model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+            if not model_session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Experiment not found",
+                    detail="Model session not found",
                 )
 
             dataset: Dataset = db.get(Dataset, params.dataset_id)
@@ -652,18 +660,49 @@ async def validate_dataset(
                 detail="Internal database error",
             ) from e
 
-    # TODO: validate dataset for task
     validation_response = {}
-    input_columns = experiment.input_columns
-    output_columns = experiment.output_columns
-    columns = input_columns + output_columns
+    input_columns = model_session.input_columns
+    output_columns = model_session.output_columns
+    required_columns = input_columns + output_columns
 
     instances_columns = list(instances.features)
-    is_valid = set(columns).issubset(instances_columns)
 
-    if not is_valid:
+    # Check all required columns are present
+    missing = [c for c in required_columns if c not in instances_columns]
+    if missing:
         validation_response["dataset_status"] = "invalid"
-    else:
-        validation_response["dataset_status"] = "valid"
+        validation_response["missing_columns"] = missing
+        return validation_response
 
+    # Check column types match the original training dataset
+    with session_factory() as db:
+        try:
+            training_dataset: Dataset = db.get(Dataset, model_session.dataset_id)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    if training_dataset:
+        training_instances = load_dataset(f"{training_dataset.file_path}/dataset")
+        if training_instances:
+            training_types = {
+                col: type(t).__name__ for col, t in training_instances.types.items()
+            }
+            new_types = {col: type(t).__name__ for col, t in instances.types.items()}
+            type_mismatches = {
+                col: {"expected": training_types[col], "got": new_types[col]}
+                for col in required_columns
+                if col in training_types
+                and col in new_types
+                and training_types[col] != new_types[col]
+            }
+            if type_mismatches:
+                validation_response["dataset_status"] = "invalid"
+                validation_response["type_mismatches"] = type_mismatches
+                return validation_response
+
+    validation_response["dataset_status"] = "valid"
     return validation_response

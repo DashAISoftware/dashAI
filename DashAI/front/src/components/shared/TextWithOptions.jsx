@@ -18,7 +18,7 @@ function TextWithOptions({ label, error, children }) {
   return (
     <Box
       display="flex"
-      sx={{ width: "100%", pb: 2 }}
+      sx={{ width: "100%", pb: 0.5 }}
       alignItems="center"
       justifyContent={"space-between"}
     >

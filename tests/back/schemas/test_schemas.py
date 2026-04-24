@@ -21,6 +21,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 
@@ -229,6 +230,7 @@ def test_normal_json_schema():
         "required",
         "title",
         "type",
+        "display_name",
     }
     assert isinstance(json_schema["properties"]["obj"]["properties"], dict)
     assert json_schema["properties"]["obj"]["parent"] == "DummyBaseConfigComponent"
@@ -277,13 +279,19 @@ def test_union_json_schema():
     assert json_schema["properties"]["int_str"]["anyOf"][0]["type"] == "integer"
     assert json_schema["properties"]["int_str"]["anyOf"][1]["type"] == "string"
     assert json_schema["properties"]["int_str"]["placeholder"] == 1
-    assert json_schema["properties"]["int_str"]["description"] == ""
+    assert isinstance(
+        json_schema["properties"]["int_str"]["description"], MultilingualString
+    )
+    assert json_schema["properties"]["int_str"]["description"].en == ""
     assert "anyOf" in json_schema["properties"]["int_obj"]
     assert len(json_schema["properties"]["int_obj"]["anyOf"]) == 2
     assert json_schema["properties"]["int_obj"]["anyOf"][0]["type"] == "integer"
     assert json_schema["properties"]["int_obj"]["anyOf"][1]["type"] == "object"
     assert json_schema["properties"]["int_obj"]["placeholder"] == 1
-    assert json_schema["properties"]["int_obj"]["description"] == ""
+    assert isinstance(
+        json_schema["properties"]["int_obj"]["description"], MultilingualString
+    )
+    assert json_schema["properties"]["int_obj"]["description"].en == ""
 
     assert set(json_schema["required"]) == {"int_str", "int_obj"}
     assert json_schema["title"] == "UnionSchema"

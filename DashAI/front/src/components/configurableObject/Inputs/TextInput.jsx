@@ -14,9 +14,9 @@ import FormInputWrapper from "./FormInputWrapper";
 function TextInput({
   name,
   label,
-  value,
+  value = "",
   onChange,
-  error,
+  error = undefined,
   description,
   ...props
 }) {
@@ -24,14 +24,14 @@ function TextInput({
     <FormInputWrapper name={name} description={description}>
       <InputWithDebounce
         {...props}
+        size="small"
         name={name}
         label={label}
         value={value === null ? "none" : value}
         onChange={onChange}
         autoComplete="off"
         error={error !== undefined}
-        helperText={error || " "}
-        margin="dense"
+        helperText={error}
       />
     </FormInputWrapper>
   );
@@ -43,10 +43,6 @@ TextInput.propTypes = {
   onChange: PropTypes.func.isRequired,
   description: PropTypes.string.isRequired,
   error: PropTypes.string,
-};
-TextInput.defaultProps = {
-  value: "",
-  error: undefined,
 };
 
 export default TextInput;

@@ -15,13 +15,13 @@ import { Input } from "./InputStyles";
  */
 function SelectInput({
   name,
-  value,
+  value = null,
   label,
   onChange,
-  error,
+  error = undefined,
   description,
   options,
-  optionNames,
+  optionNames = undefined,
 }) {
   const handleChange = (event) => {
     const inputValue = event.target.value;
@@ -29,19 +29,23 @@ function SelectInput({
     onChange(newValue);
   };
 
+  // Include current value in options if it's not already there
+  const allOptions =
+    value !== null && !options.includes(value) ? [...options, value] : options;
+
   return (
     <FormInputWrapper name={name} description={description}>
       <Input
         select
+        size="small"
         name={name}
         label={label}
         value={value !== null ? value : ""}
         onChange={handleChange}
         error={error !== undefined}
-        helperText={error || " "}
-        margin="dense"
+        helperText={error}
       >
-        {options.map((option, index) => (
+        {allOptions.map((option, index) => (
           <MenuItem key={option} value={option}>
             <ListItemText
               slotProps={{
@@ -55,7 +59,11 @@ function SelectInput({
                   },
                 },
               }}
-              primary={optionNames !== undefined ? optionNames[index] : option}
+              primary={
+                optionNames !== undefined && index < options.length
+                  ? optionNames[index]
+                  : option
+              }
             />
           </MenuItem>
         ))}
@@ -72,11 +80,6 @@ SelectInput.propTypes = {
   error: PropTypes.string,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
   optionNames: PropTypes.arrayOf(PropTypes.string),
-};
-SelectInput.defaultProps = {
-  value: null,
-  error: undefined,
-  optionNames: undefined,
 };
 
 export default SelectInput;

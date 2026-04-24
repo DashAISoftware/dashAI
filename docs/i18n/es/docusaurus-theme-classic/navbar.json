@@ -1,0 +1,19 @@
+{
+  "navbar.title": {
+    "message": "DashAI",
+    "description": "The title in the navbar"
+  },
+  "navbar.logo.alt": {
+    "message": "DashAI",
+    "description": "The alt text of the navbar logo"
+  },
+  "item.label.Getting Started": { "message": "Comenzando" },
+  "item.label.Tutorials": { "message": "Tutoriales" },
+  "item.label.Components": { "message": "Componentes" },
+  "item.label.Plugin Development": { "message": "Plugins" },
+  "item.label.Discover": { "message": "Descubre" },
+  "item.label.Learn": { "message": "Aprende" },
+  "item.label.Deep Dive": { "message": "Profundiza" },
+  "item.label.Build": { "message": "Construye" },
+  "item.label.GitHub": { "message": "GitHub" }
+}

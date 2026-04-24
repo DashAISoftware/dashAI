@@ -4,16 +4,14 @@ import logging
 import pathlib
 from typing import Literal, Union
 
-import datasets
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from DashAI.back.api.api_v0.api import api_router_v0
 from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
-from DashAI.back.dependencies.database.models import Base
+from DashAI.back.dependencies.database.migrate import migrate_on_startup
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +63,6 @@ def create_app(
     )
 
     logging.getLogger(__package__).setLevel(level=config["LOGGING_LEVEL"])
-    datasets.logging.set_verbosity(int(config["LOGGING_LEVEL"]))
 
     logger.debug("App parameters: %s.", str(config))
     logger.debug("Logging level set to %s.", config["LOGGING_LEVEL"])
@@ -81,19 +78,17 @@ def create_app(
     logger.debug("3. Creating app container and setting up dependency injection.")
     container = build_container(config=config)
 
-    logger.debug("5. Creating database.")
-    Base.metadata.create_all(bind=container["engine"])
-
-    logger.debug("6. Initializing FastAPI application.")
+    logger.debug("4. Applying database migrations.")
+    migrate_on_startup(
+        sqlite_file_path=pathlib.Path(config["SQLITE_DB_PATH"]),
+    )
+    logger.debug("5. Initializing FastAPI application.")
     app = FastAPI(title="DashAI")
-    api_v0 = FastAPI(title="DashAI API v0")
     api_v1 = FastAPI(title="DashAI API v1")
 
-    logger.debug("7. Mounting API routers.")
-    api_v0.include_router(api_router_v0)
+    logger.debug("6. Mounting API router.")
     api_v1.include_router(api_router_v1)
 
-    app.mount(config["API_V0_STR"], api_v0)
     app.mount(config["API_V1_STR"], api_v1)
 
     app.include_router(app_router)

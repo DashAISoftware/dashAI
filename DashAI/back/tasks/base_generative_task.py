@@ -12,31 +12,44 @@ class BaseGenerativeTask:
     @property
     @abstractmethod
     def schema(self) -> Dict[str, Any]:
+        """Return the schema of components compatible with this generative task.
+
+        Concrete subclasses must implement this property to return a mapping
+        that describes which models and other components are compatible with
+        the task.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dictionary whose keys are component category names and whose
+            values are lists or mappings of the compatible component classes
+            or identifiers.
+
+        Raises
+        ------
+        NotImplementedError
+            If the subclass does not provide an implementation.
+        """
         raise NotImplementedError
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """Get metadata values for the current task
+        """Return serialisable metadata for the current generative task.
 
-        Returns:
-            Dict[str, Any]: Dictionary with the metadata containing the input and output
-             types/cardinality.
+        ``inputs`` and ``outputs`` are dicts mapping type name to per-type
+        cardinality (e.g. ``{"str": 1, "Image": 1}``) so the frontend can
+        render the correct number of inputs per modality.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"inputs"`` and ``"outputs"``.
         """
         metadata = cls.metadata
-
-        # Extract class names
-        inputs_types = [input_type.__name__ for input_type in metadata["inputs_types"]]
-        outputs_types = [
-            output_type.__name__ for output_type in metadata["outputs_types"]
-        ]
-
-        parsed_metadata: dict = {
-            "inputs_types": inputs_types,
-            "outputs_types": outputs_types,
-            "inputs_cardinality": metadata["inputs_cardinality"],
-            "outputs_cardinality": metadata["outputs_cardinality"],
+        return {
+            "inputs": dict(metadata["inputs"]),
+            "outputs": dict(metadata["outputs"]),
         }
-        return parsed_metadata
 
     @abstractmethod
     def prepare_for_task(

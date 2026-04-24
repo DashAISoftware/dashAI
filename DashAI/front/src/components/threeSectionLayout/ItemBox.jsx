@@ -1,20 +1,27 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Box, Typography, TextField } from "@mui/material";
 import ItemMenu from "./ItemMenu";
+import { useTheme } from "@mui/material/styles";
 
-export default function ItemBox({
-  isSelected,
-  name,
-  description,
-  id,
-  onClick,
-  onDelete,
-  onEdit,
-  onInfo,
-}) {
+const ItemBox = forwardRef(function ItemBox(
+  {
+    isSelected,
+    name,
+    description,
+    id,
+    onClick,
+    onDelete,
+    onEdit,
+    onInfo,
+    deleteConfirmationContent,
+    deleteConfirmationWarning,
+  },
+  ref,
+) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
   const inputRef = useRef(null);
+  const theme = useTheme();
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -74,6 +81,7 @@ export default function ItemBox({
 
   return (
     <Box
+      ref={ref}
       sx={{
         width: "100%",
         height: "50px",
@@ -82,10 +90,12 @@ export default function ItemBox({
         alignItems: "center",
         borderRadius: 1,
         cursor: isSelected || isEditing ? "default" : "pointer",
-        bgcolor: isSelected ? "rgba(255, 255, 255, 0.05)" : "transparent",
+        bgcolor: isSelected ? theme.palette.action.selected : "transparent",
         p: 0.5,
         "&:hover": {
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          backgroundColor: isSelected
+            ? theme.palette.action.selected
+            : theme.palette.action.hover,
         },
       }}
       onClick={isSelected || isEditing ? undefined : onClick}
@@ -96,6 +106,8 @@ export default function ItemBox({
           alignItems: "center",
           justifyContent: "flex-start",
           width: "100%",
+          minWidth: 0,
+          flex: 1,
         }}
       >
         <Box
@@ -104,6 +116,7 @@ export default function ItemBox({
             flexDirection: "column",
             justifyContent: "flex-start",
             width: "100%",
+            minWidth: 0, // Permite que el contenido se encoja
           }}
         >
           {isEditing ? (
@@ -116,7 +129,7 @@ export default function ItemBox({
               size="small"
               variant="outlined"
               sx={{
-                maxWidth: 180,
+                width: "100%",
                 fontSize: 14,
                 "& .MuiInputBase-input": { fontSize: 14, padding: "2px 6px" },
               }}
@@ -124,16 +137,18 @@ export default function ItemBox({
           ) : (
             <Typography
               variant="body2"
+              color="text.primary"
               noWrap
-              sx={{ maxWidth: 180, fontSize: 14 }}
+              sx={{ fontSize: 14 }}
             >
               {editedName}
             </Typography>
           )}
           <Typography
             variant="caption"
+            color="text.secondary"
             noWrap
-            sx={{ maxWidth: 150, fontSize: 10, pl: 1 }}
+            sx={{ fontSize: 10, pl: 1 }}
           >
             {description ? description : ""}
           </Typography>
@@ -144,7 +159,11 @@ export default function ItemBox({
         onInfo={onInfo}
         onDelete={onDelete}
         onEdit={handleEdit}
+        deleteConfirmationContent={deleteConfirmationContent}
+        deleteConfirmationWarning={deleteConfirmationWarning}
       />
     </Box>
   );
-}
+});
+
+export default ItemBox;

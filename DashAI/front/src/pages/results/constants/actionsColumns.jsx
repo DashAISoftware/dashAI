@@ -1,28 +1,36 @@
 // columns related to open details of runs
 import React from "react";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { IconButton } from "@mui/material";
-import { getRunStatus } from "../../../utils/runStatus";
 
 export const actionsColumns = (actions) =>
   actions.map((action) => ({
-    field: action.title.toLowerCase(),
-    headerName: action.title,
-    sortable: false,
-    filterable: false,
-    disableColumnMenu: true,
-    align: "center",
-    headerAlign: "center",
-    minWidth: 50,
-    renderCell: (params) => (
-      <IconButton
-        onClick={() => action.handleAction(params.id)}
-        title={action.title}
-        color="primary"
-        size="small"
-        disabled={params.row.status !== "Finished"}
-      >
-        <action.Icon />
-      </IconButton>
-    ),
+    id: action.title.toLowerCase(),
+    header: action.title,
+    enableSorting: false,
+    enableColumnFilter: false,
+    size: 50,
+    muiTableHeadCellProps: { align: "center" },
+    muiTableBodyCellProps: { align: "center" },
+    Cell: ({ row }) => {
+      const loading = row.original.status === 1 || row.original.status === 2; // Delivered or Started
+
+      return (
+        <IconButton
+          onClick={() => action.handleAction(row.original)}
+          title={action.title}
+          color="primary"
+          size="small"
+          disabled={
+            action.alwaysEnabled
+              ? false
+              : !action.requiresFinished
+                ? loading
+                : row.original.status !== 3 // Finished
+          }
+          loading={action.alwaysEnabled ? false : loading}
+        >
+          {action.alwaysEnabled || !loading ? <action.Icon /> : null}
+        </IconButton>
+      );
+    },
   }));

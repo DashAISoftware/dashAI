@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import SideBar from "../threeSectionLayout/SideBar";
+import { useState, useEffect, useMemo } from "react";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import {
   Box,
   Typography,
@@ -7,8 +7,8 @@ import {
   Tab,
   ToggleButtonGroup,
   ToggleButton,
-  IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
@@ -23,40 +23,113 @@ import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
-import { ChevronRight } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+import ColumnInsights from "./dataset/ColumnInsights";
+
+function SectionHeader({ icon: Icon, label, count, mt, theme, t }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        mb: 1.5,
+        mt: mt ?? 0,
+        pb: 0.5,
+        borderBottom: "1px solid",
+        borderColor: theme.palette.divider,
+      }}
+    >
+      <Icon sx={{ fontSize: 18, color: theme.palette.accent.main }} />
+      <Typography
+        variant="subtitle2"
+        sx={{ flex: 1, color: "text.primary", fontWeight: 600 }}
+      >
+        {label}
+      </Typography>
+      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        {t("datasets:label.toolsCount", { count })}
+      </Typography>
+    </Box>
+  );
+}
+
+function RightBarDatasetView() {
+  const { t } = useTranslation(["datasets"]);
+  const { datasetInfo } = useDatasetsAndNotebooks();
+
+  if (!datasetInfo) {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 2,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", textAlign: "center" }}
+        >
+          {t("datasets:label.selectNotebookToAccessAnalysisTools")}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+      <ColumnInsights
+        numericStats={datasetInfo?.numeric_stats}
+        textStats={datasetInfo?.text_stats}
+      />
+    </Box>
+  );
+}
 
 export default function RightBar({ notebook, onToggle }) {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
-  const [filteredConverters, setFilteredConverters] = useState([]);
-  const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
   const { explorersAndConverters } = useExplorersAndConverters();
+  const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         const data = await getComponents({
           selectTypes: ["Converter", "Explorer"],
         });
+        if (cancelled) return;
         setConverters(data.filter((item) => item.type === "Converter"));
         setExplorers(data.filter((item) => item.type === "Explorer"));
-        setFilteredConverters(data.filter((item) => item.type === "Converter"));
-        setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
       } catch (error) {
-        enqueueSnackbar("Failed to fetch explorers/converters", {
+        enqueueSnackbar(t("datasets:error.fetchingExplorersConverters"), {
           variant: "error",
         });
         console.error("Failed to fetch explorers/converters:", error);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [explorersAndConverters]);
+
+  // Clear search when the selected notebook changes
+  useEffect(() => {
+    setSearchQuery("");
+  }, [notebook?.id]);
 
   // Fetch dataset columns from notebook file
   useEffect(() => {
@@ -71,8 +144,8 @@ export default function RightBar({ notebook, onToggle }) {
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -98,96 +171,113 @@ export default function RightBar({ notebook, onToggle }) {
   const validateExplorer = (explorer) => {
     if (!datasetColumns.length) return { disabled: false, tooltip: "" };
 
-    const allowedDtypes = explorer?.metadata?.allowed_dtypes || ["*"];
-    const restrictedDtypes = explorer?.metadata?.restricted_dtypes || [];
+    const allowedTypes = explorer?.metadata?.allowed_types || [];
+    const allowedDtypes = explorer?.metadata?.allowed_dtypes || [];
     const inputCardinality = explorer?.metadata?.input_cardinality || {};
 
     let validColumns = datasetColumns;
     let disabled = false;
-    let tooltip = explorer.description || "";
+    let tooltip =
+      explorer.description || explorer.metadata?.short_description || "";
+
+    // Filter by allowed semantic types
+    if (allowedTypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
+        allowedTypes.includes(col.valueType),
+      );
+    }
 
     // Filter by allowed dtypes
-    if (!allowedDtypes.includes("*")) {
-      validColumns = datasetColumns.filter((col) =>
+    if (allowedDtypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
     }
 
-    // Filter out restricted dtypes
-    if (
-      restrictedDtypes.some((dtype) =>
-        datasetColumns.some((col) => col.dataType === dtype),
-      )
-    ) {
-      validColumns = validColumns.filter(
-        (col) => !restrictedDtypes.includes(col.dataType),
-      );
-    }
-
     // Check cardinality requirements
-    if (inputCardinality.exact != undefined && inputCardinality.exact != null) {
+    if (inputCardinality.exact != null) {
       if (validColumns.length < inputCardinality.exact) {
         disabled = true;
         if (validColumns.length === 0) {
-          tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
+          tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
-        tooltip += `\n\nRequires exactly ${
-          inputCardinality.exact
-        } valid column${inputCardinality.exact === 1 ? "" : "s"}, but ${
-          validColumns.length
-        } available.`;
+        tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
+          required: inputCardinality.exact,
+          available: validColumns.length,
+          count: inputCardinality.exact,
+        })}`;
       }
-    } else {
-      if (inputCardinality.min != undefined && inputCardinality.min != null) {
-        if (validColumns.length < inputCardinality.min) {
-          disabled = true;
-          if (validColumns.length === 0) {
-            tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
-          }
-          tooltip += `\n\nRequires at least ${
-            inputCardinality.min
-          } valid column${inputCardinality.min === 1 ? "" : "s"}, but only ${
-            validColumns.length
-          } available.`;
+    } else if (inputCardinality.min != null) {
+      if (validColumns.length < inputCardinality.min) {
+        disabled = true;
+        if (validColumns.length === 0) {
+          tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
+        tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
+          required: inputCardinality.min,
+          available: validColumns.length,
+          count: inputCardinality.min,
+        })}`;
       }
     }
 
-    // Check if there are no valid columns at all
+    // Check if there are no valid columns and some restriction was applied
     if (
       validColumns.length === 0 &&
-      allowedDtypes.length > 0 &&
-      !allowedDtypes.includes("*")
+      (allowedTypes.length > 0 || allowedDtypes.length > 0)
     ) {
       disabled = true;
-      tooltip += `\n\nThis dataset does not have any columns with the required data types.`;
-    }
-
-    if (!allowedDtypes.includes("*") && allowedDtypes.length > 0) {
-      tooltip += `\n\nAccepts: ${allowedDtypes.join(", ")}`;
-    }
-
-    if (restrictedDtypes.length > 0) {
-      tooltip += `\n\nRestricted: ${restrictedDtypes.join(", ")}`;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
+        dtypes: [...allowedTypes, ...allowedDtypes].join(", "),
+      })}`;
     }
 
     return { disabled, tooltip, validColumns };
   };
 
-  useEffect(() => {
-    const filteredAndValidatedExplorers = explorers
-      .filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (item.metadata.short_description
-            ? item.metadata.short_description
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-            : item.description
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())),
-      )
-      .map((explorer) => {
+  // Validate converters based on dataset columns
+  const validateConverter = (converter) => {
+    if (!datasetColumns.length) return { disabled: false, tooltip: "" };
+
+    const allowedTypes = converter?.metadata?.allowed_types || [];
+    const allowedDtypes = converter?.metadata?.allowed_dtypes || [];
+
+    let validColumns = datasetColumns;
+    let disabled = false;
+    let tooltip =
+      converter.description || converter.metadata?.short_description || "";
+
+    // Filter by allowed semantic types
+    if (allowedTypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
+        allowedTypes.includes(col.valueType),
+      );
+    }
+
+    // Filter by allowed dtypes
+    if (allowedDtypes.length > 0) {
+      validColumns = validColumns.filter((col) =>
+        allowedDtypes.includes(col.dataType),
+      );
+    }
+
+    // Check if there are no valid columns at all (some restriction was applied)
+    if (
+      validColumns.length === 0 &&
+      (allowedTypes.length > 0 || allowedDtypes.length > 0)
+    ) {
+      disabled = true;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
+        dtypes: [...allowedTypes, ...allowedDtypes].join(", "),
+      })}`;
+    }
+
+    return { disabled, tooltip, validColumns };
+  };
+
+  const validatedExplorers = useMemo(
+    () =>
+      explorers.map((explorer) => {
         const validation = validateExplorer(explorer);
         return {
           ...explorer,
@@ -196,26 +286,63 @@ export default function RightBar({ notebook, onToggle }) {
           validColumns: validation.validColumns,
           notebook,
         };
-      });
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [explorers, datasetColumns, notebook?.id],
+  );
 
-    setFilteredExplorers(filteredAndValidatedExplorers);
+  const validatedConverters = useMemo(
+    () =>
+      converters.map((converter) => {
+        const validation = validateConverter(converter);
+        return {
+          ...converter,
+          disabled: validation.disabled,
+          tooltip: validation.tooltip,
+          validColumns: validation.validColumns,
+          notebook,
+        };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [converters, datasetColumns, notebook?.id],
+  );
 
-    const filteredConverters = converters.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.metadata.short_description
-          ? item.metadata.short_description
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())
-          : item.description.toLowerCase().includes(searchQuery.toLowerCase())),
-    );
+  const { filteredExplorers, filteredConverters } = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-    setFilteredConverters(filteredConverters);
-  }, [searchQuery, explorers, converters, datasetColumns, notebook]);
+    const rankMatch = (item) => {
+      const displayName = (
+        item.metadata?.display_name ||
+        item.name ||
+        ""
+      ).toLowerCase();
+      const description = (
+        item.metadata?.short_description ||
+        item.description ||
+        ""
+      ).toLowerCase();
+      if (displayName.includes(query)) return 1;
+      if (description.includes(query)) return 2;
+      return 0;
+    };
 
-  const handleChangeTab = (event, newValue) => {
+    const filterAndRank = (items) => {
+      if (!query) return items;
+      return items
+        .map((item) => ({ item, rank: rankMatch(item) }))
+        .filter(({ rank }) => rank > 0)
+        .sort((a, b) => a.rank - b.rank)
+        .map(({ item }) => item);
+    };
+
+    return {
+      filteredExplorers: filterAndRank(validatedExplorers),
+      filteredConverters: filterAndRank(validatedConverters),
+    };
+  }, [searchQuery, validatedExplorers, validatedConverters]);
+
+  const handleChangeTab = (_event, newValue) => {
     setActiveTab(newValue);
-    setSearchQuery("");
 
     if (tourContext && tourContext.run) {
       setTimeout(() => {
@@ -239,22 +366,17 @@ export default function RightBar({ notebook, onToggle }) {
         <Box
           sx={{
             p: 2,
-            borderBottom: "1px solid #333",
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
           }}
         >
-          <Typography variant="h6">Analysis Tools</Typography>
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
+          <Typography variant="h6" color="text.primary">
+            {t("datasets:label.analysisTools")}
+          </Typography>
         </Box>
 
         {notebook ? (
@@ -271,7 +393,7 @@ export default function RightBar({ notebook, onToggle }) {
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
-                    Explore
+                    {t("datasets:label.explore")}
                   </Box>
                 }
               />
@@ -280,7 +402,7 @@ export default function RightBar({ notebook, onToggle }) {
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
-                    Convert
+                    {t("datasets:label.convert")}
                   </Box>
                 }
               />
@@ -296,12 +418,18 @@ export default function RightBar({ notebook, onToggle }) {
               className="explorer-converter-box"
             >
               {/* Search bar */}
-              <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: `1px solid ${theme.palette.ui.border}`,
+                  flexShrink: 0,
+                }}
+              >
                 <SearchBar
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery("")}
-                  placeholder="Search explorers/converters"
+                  placeholder={t("datasets:label.searchExplorersConverters")}
                 />
               </Box>
               {/* View Mode Toggle */}
@@ -312,15 +440,12 @@ export default function RightBar({ notebook, onToggle }) {
                   alignItems: "center",
                   px: 2,
                   py: 1,
-                  borderBottom: "1px solid #333",
+                  borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "rgb(161, 161, 170)" }}
-                >
-                  View mode
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {t("datasets:label.viewMode")}
                 </Typography>
                 <ToggleButtonGroup
                   value={viewMode}
@@ -329,11 +454,12 @@ export default function RightBar({ notebook, onToggle }) {
                   size="small"
                   sx={{
                     "& .MuiToggleButton-root": {
-                      color: "rgb(161, 161, 170)",
-                      border: "1px solid rgb(39, 39, 42)",
+                      color: "text.secondary",
+                      border: "1px solid",
+                      borderColor: theme.palette.ui.border,
                       "&.Mui-selected": {
-                        bgcolor: "rgb(39, 39, 42)",
-                        color: "rgb(6, 182, 212)",
+                        bgcolor: theme.palette.ui.border,
+                        color: theme.palette.accent.main,
                       },
                     },
                   }}
@@ -358,49 +484,90 @@ export default function RightBar({ notebook, onToggle }) {
                 }}
               >
                 {/* Tool list - grid */}
-                {viewMode === "list" ? (
-                  <Box
-                    sx={{
-                      flex: 1,
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      p: 2,
-                      minWidth: 0,
-                    }}
-                  >
-                    {activeTab === 0 && (
-                      <ToolList
-                        tools={filteredExplorers}
-                        notebook={notebook}
-                        FormComponent={FormExplorerSection}
-                      />
-                    )}
-                    {activeTab === 1 && (
-                      <ToolList
-                        tools={filteredConverters}
-                        notebook={notebook}
-                        FormComponent={FormConverterSection}
-                      />
-                    )}
-                  </Box>
-                ) : (
-                  <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                    {activeTab === 0 && (
-                      <ToolGrid
-                        tools={filteredExplorers}
-                        notebook={notebook}
-                        FormComponent={FormExplorerSection}
-                      />
-                    )}
-                    {activeTab === 1 && (
-                      <ToolGrid
-                        tools={filteredConverters}
-                        notebook={notebook}
-                        FormComponent={FormConverterSection}
-                      />
-                    )}
-                  </Box>
-                )}
+                {(() => {
+                  const isSearching = searchQuery.trim().length > 0;
+                  const ListComponent =
+                    viewMode === "list" ? ToolList : ToolGrid;
+                  const containerSx =
+                    viewMode === "list"
+                      ? {
+                          flex: 1,
+                          overflowY: "auto",
+                          overflowX: "hidden",
+                          p: 2,
+                          minWidth: 0,
+                        }
+                      : { flex: 1, overflow: "auto", p: 2 };
+
+                  const hasExplorers = filteredExplorers.length > 0;
+                  const hasConverters = filteredConverters.length > 0;
+
+                  return (
+                    <Box sx={containerSx}>
+                      {isSearching ? (
+                        <>
+                          {hasExplorers && (
+                            <>
+                              <SectionHeader
+                                icon={AnalyticsIcon}
+                                label={t("datasets:label.explore")}
+                                count={filteredExplorers.length}
+                                theme={theme}
+                                t={t}
+                              />
+                              <ListComponent
+                                tools={filteredExplorers}
+                                notebook={notebook}
+                                FormComponent={FormExplorerSection}
+                              />
+                            </>
+                          )}
+                          {hasConverters && (
+                            <>
+                              <SectionHeader
+                                icon={TransformIcon}
+                                label={t("datasets:label.convert")}
+                                count={filteredConverters.length}
+                                mt={hasExplorers ? 3 : 0}
+                                theme={theme}
+                                t={t}
+                              />
+                              <ListComponent
+                                tools={filteredConverters}
+                                notebook={notebook}
+                                FormComponent={FormConverterSection}
+                              />
+                            </>
+                          )}
+                          {!hasExplorers && !hasConverters && (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "text.secondary",
+                                textAlign: "center",
+                                py: 2,
+                              }}
+                            >
+                              {t("datasets:label.noToolsMatched")}
+                            </Typography>
+                          )}
+                        </>
+                      ) : activeTab === 0 ? (
+                        <ListComponent
+                          tools={filteredExplorers}
+                          notebook={notebook}
+                          FormComponent={FormExplorerSection}
+                        />
+                      ) : (
+                        <ListComponent
+                          tools={filteredConverters}
+                          notebook={notebook}
+                          FormComponent={FormConverterSection}
+                        />
+                      )}
+                    </Box>
+                  );
+                })()}
 
                 {/* Description panel - Fixed height */}
                 <DescriptionPanel />
@@ -408,22 +575,7 @@ export default function RightBar({ notebook, onToggle }) {
             </Box>
           </>
         ) : (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 2,
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
-            >
-              Select a notebook to access analysis tools.
-            </Typography>
-          </Box>
+          <RightBarDatasetView />
         )}
       </Box>
     </SideBar>

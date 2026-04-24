@@ -1,5 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import PropTypes from "prop-types";
 import {
@@ -21,24 +27,7 @@ import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
 import { parseIndexToRange } from "../../../utils/parseRange";
 import TooltipedCellItem from "../../shared/TooltipedCellItem";
 import InputWithDebounce from "../../shared/InputWithDebounce";
-
-const columns = [
-  {
-    field: "columnName",
-    headerName: "Column Name",
-    flex: 1,
-  },
-  {
-    field: "valueType",
-    headerName: "Value Type",
-    flex: 0.5,
-  },
-  {
-    field: "dataType",
-    headerName: "Data Type",
-    flex: 0.5,
-  },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * Modal to define the scope of a converter
@@ -52,12 +41,49 @@ const columns = [
  * @param {Array} props.datasetColumns - Array of dataset columns
  */
 const ConverterScopeModal = ({
-  elementToConfigure,
+  elementToConfigure = "",
   updateScope,
   scopeInitialValues,
-  datasetInfo,
+  datasetInfo = {
+    total_columns: 0,
+    total_rows: 0,
+  },
   datasetColumns,
 }) => {
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "columnName",
+        header: "Column Name",
+        flex: 1,
+      },
+      {
+        accessorKey: "valueType",
+        header: "Value Type",
+        flex: 0.5,
+      },
+      {
+        accessorKey: "dataType",
+        header: "Data Type",
+        flex: 0.5,
+      },
+    ],
+    [],
+  );
+
+  const toMRT = (ids) =>
+    Object.fromEntries(ids.map((id) => [String(id), true]));
+  const fromMRT = (sel) =>
+    Object.keys(sel)
+      .filter((k) => sel[k])
+      .map(Number);
+
   const [open, setOpen] = useState(false);
   const [inputError, setInputError] = useState({
     columns: "",
@@ -91,13 +117,35 @@ const ConverterScopeModal = ({
     }
   }, [open, scopeInitialValues, datasetColumns]);
 
-  const handleColumnSelection = (newSelection) => {
+  const handleColumnSelection = (updaterOrValue) => {
+    const newMRTSelection =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(toMRT(selectedColumns))
+        : updaterOrValue;
+    const newSelection = fromMRT(newMRTSelection);
     setSelectedColumns(newSelection);
     setInputError((previousError) => ({
       ...previousError,
       columns: "",
     }));
   };
+
+  const scopeTable = useMaterialReactTable({
+    columns,
+    data: datasetColumns,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    enableRowSelection: true,
+    onRowSelectionChange: handleColumnSelection,
+    state: { rowSelection: toMRT(selectedColumns) },
+    getRowId: (row) => String(row.id),
+    enableGlobalFilter: true,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enablePagination: true,
+    muiPaginationProps: { rowsPerPageOptions: [25, 50] },
+    initialState: { pagination: { pageSize: 25, pageIndex: 0 } },
+    localization,
+  });
 
   const handleRadioChange = (event) => {
     setInputError((previousError) => ({
@@ -238,32 +286,7 @@ const ConverterScopeModal = ({
                       </Typography>
                     </Box>
                   )}
-                  <DataGrid
-                    rows={datasetColumns}
-                    columns={columns}
-                    checkboxSelection
-                    onRowSelectionModelChange={handleColumnSelection}
-                    rowSelectionModel={selectedColumns}
-                    slots={{
-                      toolbar: GridToolbar,
-                    }}
-                    slotProps={{
-                      toolbar: {
-                        showQuickFilter: true,
-                      },
-                    }}
-                    initialState={{
-                      pagination: {
-                        paginationModel: { pageSize: 25 },
-                      },
-                    }}
-                    sx={{
-                      height: 300,
-                      "& .MuiDataGrid-cell:focus": {
-                        outline: "none",
-                      },
-                    }}
-                  />
+                  <MaterialReactTable table={scopeTable} />
                 </Box>
 
                 <Box>
@@ -361,14 +384,6 @@ ConverterScopeModal.propTypes = {
       dataType: PropTypes.string.isRequired,
     }),
   ).isRequired,
-};
-
-ConverterScopeModal.defaultProps = {
-  elementToConfigure: "",
-  datasetInfo: {
-    total_columns: 0,
-    total_rows: 0,
-  },
 };
 
 export default ConverterScopeModal;

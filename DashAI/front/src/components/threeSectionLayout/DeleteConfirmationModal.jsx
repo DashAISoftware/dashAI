@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -8,16 +9,19 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function DeleteConfirmationModal({
   open,
   onClose,
   onConfirm,
   content,
+  warning,
   onExited,
 }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const { t } = useTranslation(["common"]);
 
   return (
     <Dialog
@@ -31,20 +35,28 @@ export default function DeleteConfirmationModal({
       }}
     >
       <DialogTitle id="delete-confirmation-dialog-title">
-        Confirm Deletion
+        {t("common:confirmDeletion")}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText>
+        <DialogContentText sx={{ whiteSpace: "pre-line" }}>
           {content ||
-            "Are you sure you want to delete this item? This action cannot be undone."}
+            t(
+              "common:confirmDeletionMessage",
+              "Are you sure you want to delete this item? This action cannot be undone.",
+            )}
         </DialogContentText>
+        {warning && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            {warning}
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Cancel
+        <Button onClick={onClose} sx={{ color: "common.white" }}>
+          {t("common:cancel")}
         </Button>
         <Button onClick={onConfirm} color="error" autoFocus>
-          Delete
+          {t("common:delete")}
         </Button>
       </DialogActions>
     </Dialog>

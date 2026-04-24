@@ -1,9 +1,5 @@
-import ast
 import logging
-import re
 
-import numpy as np
-import pandas as pd
 import pydantic
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
@@ -44,6 +40,8 @@ def parse_string_to_list(string):
     """
     Parse a string to a list.
     """
+    import re
+
     no_brackets = re.sub(r"[\[\]\(\)\{\}]", "", string)
     no_double_quotes = re.sub(r'"', "", no_brackets)
     no_quotes = re.sub(r"'", "", no_double_quotes)
@@ -55,6 +53,8 @@ def parse_string_to_dict(string):
     """
     Parse a string to a dictionary.
     """
+    import ast
+
     return ast.literal_eval(string)
 
 
@@ -62,12 +62,15 @@ def cast_string_to_type(string):
     """
     Cast a string to a type.
     """
+    import numpy as np
+    import pandas as pd
+
     type_map = {
         "int": int,
-        "np.int32": np.int32,
-        "np.int64": np.int64,
-        "np.float32": np.float32,
-        "np.float64": np.float64,
+        "int32": np.int32,
+        "int64": np.int64,
+        "float32": np.float32,
+        "float64": np.float64,
         "np.nan": np.nan,
         "pandas.NA": pd.NA,
     }
@@ -78,4 +81,6 @@ def create_random_state():
     """
     Create a random state using numpy random.
     """
+    import numpy as np
+
     return np.random.RandomState()

@@ -18,7 +18,6 @@ export const getJobChanges = async (
   server_now: string;
   queue_empty: boolean;
   recently_completed: boolean;
-  all_jobs: any[];
 }> => {
   const response = await api.get<any>("/v1/job/changes", {
     params: { since },
@@ -122,16 +121,28 @@ export const enqueueExplorerJob = async (
 };
 
 export const enqueuePredictionJob = async (
-  run_id: number,
-  id: number,
-  json_filename: string,
+  prediction_id: number,
+  manual_input_data?: object[],
 ): Promise<object> => {
+  const formData = new FormData();
+
+  const simpleManualData = manual_input_data?.map((obj, i) => {
+    const cleanObj: any = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(`file_${i}_${key}`, value); // attach file
+      } else {
+        cleanObj[key] = value;
+      }
+    });
+    return cleanObj;
+  });
+
   const data = {
     job_type: "PredictJob",
-    kwargs: { run_id, id, json_filename },
+    kwargs: { prediction_id, manual_input_data: simpleManualData },
   };
 
-  const formData = new FormData();
   formData.append("job_type", data.job_type);
   formData.append("kwargs", JSON.stringify(data.kwargs));
 
@@ -164,12 +175,12 @@ export const enqueueGenerativeProcessJob = async (
 };
 
 export const enqueueConverterJob = async (
-  converterListId: number,
+  converterId: number,
 ): Promise<object> => {
   const data = {
-    job_type: "ConverterListJob",
+    job_type: "ConverterJob",
     kwargs: {
-      converter_list_id: converterListId,
+      converter_id: converterId,
     },
     stop_when_queue_empties: true,
   };

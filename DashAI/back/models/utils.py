@@ -32,4 +32,4 @@ if is_gpu_available_for_llama_cpp():
     cuda_devices = get_llama_gpu_devices_formatted()
     LLAMA_DEVICE_ENUM = cuda_devices + ["CPU"]
     LLAMA_DEVICE_PLACEHOLDER = LLAMA_DEVICE_ENUM[0]
-    LLAMA_DEVICE_TO_IDX.update({name: i - 1 for i, name in enumerate(cuda_devices)})
+    LLAMA_DEVICE_TO_IDX.update({name: i for i, name in enumerate(cuda_devices)})

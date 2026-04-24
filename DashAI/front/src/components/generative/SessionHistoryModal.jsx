@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useTranslation } from "react-i18next";
 
 // Styled component for the scrollable area
 const ScrollableContent = styled(DialogContent)(({ theme }) => ({
@@ -40,6 +41,7 @@ export default function SessionHistoryModal({
   setOpen,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation(["generative", "common"]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -85,7 +87,7 @@ export default function SessionHistoryModal({
             </IconButton>
           </Box>
           <Typography variant="body2" color="text.secondary" mt={1}>
-            Parameter change history for the current session
+            {t("generative:label.parameterChangeHistory")}
           </Typography>
         </DialogTitle>
 
@@ -121,11 +123,7 @@ export default function SessionHistoryModal({
                     width: "100%",
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontFamily: "monospace" }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     {new Date(event.timestamp).toLocaleString()}
                   </Typography>
                   <Typography variant="body1" sx={{ flexGrow: 1 }}>
@@ -179,7 +177,7 @@ export default function SessionHistoryModal({
                             }}
                           >
                             <Typography variant="body2" color="text.secondary">
-                              From:
+                              {t("common:from")}:
                             </Typography>
                             <Chip
                               label={change.oldValue.toString()}
@@ -195,7 +193,7 @@ export default function SessionHistoryModal({
                             }}
                           >
                             <Typography variant="body2" color="text.secondary">
-                              To:
+                              {t("common:to")}:
                             </Typography>
                             <Chip
                               label={change.newValue.toString()}

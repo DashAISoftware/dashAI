@@ -1,32 +1,25 @@
-import json
 import logging
-import os
-import pickle
-from typing import Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Tuple
 
-from datasets import DatasetDict
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    load_dataset,
-    prepare_for_experiment,
-    select_columns,
-    split_dataset,
-)
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
+    ModelSession,
     Run,
 )
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.models import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -37,7 +30,7 @@ class ExplainerJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         explainer_id: int = self.kwargs["explainer_id"]
@@ -66,7 +59,7 @@ class ExplainerJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the explainer as error."""
         explainer_id: int = self.kwargs.get("explainer_id")
@@ -127,8 +120,11 @@ class ExplainerJob(BaseJob):
     def _generate_global_explanation(
         self,
         explainer: BaseGlobalExplainer,
-        dataset=Tuple[DatasetDict, DatasetDict],
+        dataset=Tuple["DatasetDict", "DatasetDict"],
     ) -> None:
+        import os
+        import pickle
+
         from kink import di
 
         explainer_id: int = self.kwargs["explainer_id"]
@@ -175,12 +171,25 @@ class ExplainerJob(BaseJob):
     def _generate_local_explanation(
         self,
         explainer: BaseLocalExplainer,
-        dataset: Tuple[DatasetDict, DatasetDict],
+        dataset: Tuple["DatasetDict", "DatasetDict"],
         splits: Dict[str, Any],
         task: BaseTask,
         same_dataset: bool,
+        trained_model: BaseModel,
     ) -> None:
+        import json
+        import os
+        import pickle
+
+        from datasets import DatasetDict
         from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            prepare_for_model_session,
+            select_columns,
+            split_dataset,
+        )
 
         explainer_id: int = self.kwargs["explainer_id"]
         session_factory = di["session_factory"]
@@ -203,7 +212,9 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 prepared_instance = task.prepare_for_task(
-                    loaded_instance, outputs_columns=self.output_columns
+                    loaded_instance,
+                    input_columns=self.input_columns,
+                    output_columns=self.output_columns,
                 )
 
                 split = self.explainer_db.scope.get("split")
@@ -212,18 +223,24 @@ class ExplainerJob(BaseJob):
 
                 if split != "all":
                     if not same_dataset:
-                        prepared_instance, splits = prepare_for_experiment(
+                        if isinstance(splits, str):
+                            splits = json.loads(splits)
+                        prepared_dataset_dict, splits = prepare_for_model_session(
                             dataset=prepared_instance,
                             splits=splits,
                             output_columns=self.output_columns,
                         )
-
-                    prepared_instance = split_dataset(
-                        prepared_instance,
-                        train_indexes=splits["train_indexes"],
-                        test_indexes=splits["test_indexes"],
-                        val_indexes=splits["val_indexes"],
-                    )[split]
+                        split_key = "validation" if split == "val" else split
+                        prepared_instance = prepared_dataset_dict[split_key]
+                    else:
+                        prepared_instance = split_dataset(
+                            prepared_instance,
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
+                        split_key = "validation" if split == "val" else split
+                        prepared_instance = prepared_instance[split_key]
 
                 prepared_instance = prepared_instance.select(
                     range(
@@ -244,6 +261,8 @@ class ExplainerJob(BaseJob):
                     self.input_columns,
                     self.output_columns,
                 )
+                X = trained_model.prepare_dataset(X, is_fit=False)
+
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -290,7 +309,15 @@ class ExplainerJob(BaseJob):
     def run(
         self,
     ) -> None:
+        import json
+
         from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            select_columns,
+            split_dataset,
+        )
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
@@ -313,19 +340,19 @@ class ExplainerJob(BaseJob):
                     raise JobError(
                         f"Run {self.explainer_db.run_id} does not exist in DB."
                     )
-                experiment: Experiment = db.get(Experiment, run.experiment_id)
-                if not experiment:
+                model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+                if not model_session:
                     raise JobError(
-                        f"Experiment {run.experiment_id} does not exist in DB."
+                        f"Model session {run.model_session_id} does not exist in DB."
                     )
-                dataset: Dataset = db.get(Dataset, experiment.dataset_id)
+                dataset: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset:
                     raise JobError(
                         f"Dataset {self.explainer_db.dataset_id} does not exist in DB."
                     )
 
-                self.input_columns = experiment.input_columns
-                self.output_columns = experiment.output_columns
+                self.input_columns = model_session.input_columns
+                self.output_columns = model_session.output_columns
 
                 try:
                     run_model_class = component_registry[run.model_name]["class"]
@@ -367,7 +394,7 @@ class ExplainerJob(BaseJob):
                         f"Unable to instantiate {explainer_scope} explainer.",
                     ) from e
                 try:
-                    loaded_dataset: DatasetDict = load_dataset(
+                    loaded_dataset: "DatasetDict" = load_dataset(
                         f"{dataset.file_path}/dataset"
                     )
                 except Exception as e:
@@ -376,12 +403,14 @@ class ExplainerJob(BaseJob):
                         f"Can not load dataset from path {dataset.file_path}",
                     ) from e
                 try:
-                    task: BaseTask = component_registry[experiment.task_name]["class"]()
+                    task: BaseTask = component_registry[model_session.task_name][
+                        "class"
+                    ]()
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         (
-                            f"Unable to find Task with name {experiment.task_name} "
+                            f"Unable to find Task with name {model_session.task_name} "
                             "in registry"
                         ),
                     ) from e
@@ -394,9 +423,10 @@ class ExplainerJob(BaseJob):
                         val_indexes=splits["val_indexes"],
                     )
 
-                    prepared_dataset: DatasetDict = task.prepare_for_task(
-                        datasetdict=loaded_dataset,
-                        outputs_columns=self.output_columns,
+                    prepared_dataset = task.prepare_for_task(
+                        dataset=loaded_dataset,
+                        input_columns=self.input_columns,
+                        output_columns=self.output_columns,
                     )
                     data = select_columns(
                         prepared_dataset,
@@ -416,6 +446,13 @@ class ExplainerJob(BaseJob):
                         test_indexes=splits["test_indexes"],
                         val_indexes=splits["val_indexes"],
                     )
+                    for split_name in data_x:
+                        data_x[split_name] = trained_model.prepare_dataset(
+                            data_x[split_name], is_fit=False
+                        )
+                        data_y[split_name] = trained_model.prepare_output(
+                            data_y[split_name], is_fit=False
+                        )
 
                 except Exception as e:
                     log.exception(e)
@@ -430,16 +467,17 @@ class ExplainerJob(BaseJob):
                     raise JobError(
                         "Connection with the database failed",
                     ) from e
-
                 if explainer_scope == "global":
                     self._generate_global_explanation(
                         explainer=explainer, dataset=(data_x, data_y)
                     )
 
                 elif explainer_scope == "local":
-                    same_dataset = experiment.dataset_id == self.explainer_db.dataset_id
+                    same_dataset = (
+                        model_session.dataset_id == self.explainer_db.dataset_id
+                    )
                     if not same_dataset:
-                        splits = experiment.splits
+                        splits = model_session.splits
 
                     self._generate_local_explanation(
                         explainer=explainer,
@@ -447,6 +485,7 @@ class ExplainerJob(BaseJob):
                         splits=splits,
                         task=task,
                         same_dataset=same_dataset,
+                        trained_model=trained_model,
                     )
                 else:
                     raise JobError(f"{explainer_scope} is an invalid explainer type")

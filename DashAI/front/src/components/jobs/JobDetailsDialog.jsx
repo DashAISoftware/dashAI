@@ -13,10 +13,13 @@ import {
   Divider,
   CircularProgress,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { getJobDetails } from "../../api/job";
 import { formatDate } from "../../utils";
+import { getStatusText } from "../../utils/jobStatusText";
 
 const JobDetailsDialog = ({ job, open, onClose }) => {
+  const { t } = useTranslation(["common"]);
   const [jobDetails, setJobDetails] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -49,9 +52,9 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        Job Details
+        {t("common:jobQueue.details.title")}
         <Chip
-          label={displayJob.status}
+          label={getStatusText(displayJob.status, t)}
           color={
             displayJob.status === "finished"
               ? "success"
@@ -75,12 +78,12 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
           </Box>
         ) : (
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
               >
-                Job ID
+                {t("common:jobQueue.details.jobId")}
               </Typography>
               <Typography
                 variant="body1"
@@ -89,16 +92,16 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                   fontFamily: (theme) => theme.typography.fontFamily,
                 }}
               >
-                {displayJob.entity_id || "N/A"}
+                {displayJob.entity_id || t("common:na")}
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
               >
-                Job Name
+                {t("common:jobQueue.details.jobName")}
               </Typography>
               <Typography
                 variant="body1"
@@ -107,16 +110,16 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                   wordBreak: "break-word",
                 }}
               >
-                {displayJob.job_name || "Unnamed Job"}
+                {displayJob.job_name || t("common:jobQueue.details.unnamedJob")}
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
               >
-                Job Type
+                {t("common:jobQueue.details.jobType")}
               </Typography>
               <Typography
                 variant="body1"
@@ -128,16 +131,16 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                 {displayJob.entity_type ||
                   (displayJob.task_type
                     ? displayJob.task_type.split(".").pop()
-                    : "Unknown")}
+                    : t("common:unknown"))}
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
               >
-                Last Updated
+                {t("common:jobQueue.details.lastUpdated")}
               </Typography>
               <Typography
                 variant="body1"
@@ -150,12 +153,12 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
               >
-                Created At
+                {t("common:createdAt")}
               </Typography>
               <Typography
                 variant="body1"
@@ -168,12 +171,12 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
               >
-                Status
+                {t("common:status")}
               </Typography>
               <Typography
                 variant="body1"
@@ -182,19 +185,19 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                   wordBreak: "break-word",
                 }}
               >
-                {displayJob.status}
+                {getStatusText(displayJob.status, t)}
               </Typography>
             </Grid>
 
             {displayJob.error_msg && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box mt={2}>
                   <Divider />
                   <Typography
                     variant="subtitle2"
                     sx={{ fontWeight: "bold", color: "error.main", mt: 2 }}
                   >
-                    Error Message
+                    {t("common:jobQueue.details.errorMessage")}
                   </Typography>
                   <Paper
                     variant="outlined"
@@ -204,7 +207,6 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                           ? theme.palette.grey[900]
                           : theme.palette.grey[100],
                       p: 2,
-                      fontFamily: "monospace",
                       fontSize: "0.875rem",
                       overflow: "auto",
                       maxHeight: "200px",
@@ -221,7 +223,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
 
       <DialogActions>
         <Button onClick={onClose} color="primary">
-          Close
+          {t("common:close")}
         </Button>
       </DialogActions>
     </Dialog>

@@ -7,17 +7,17 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
+    ModelSession,
     Run,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
-from DashAI.back.job import ExplainerJob
-from DashAI.back.models import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.job.explainer_job import ExplainerJob
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks.base_task import BaseTask
 
 input_columns = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 output_columns = ["Species"]
@@ -51,8 +51,8 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, datasetdict, outputs_columns):
-        return datasetdict
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
+        return dataset
 
 
 class DummyModel(BaseModel):
@@ -65,14 +65,22 @@ class DummyModel(BaseModel):
     def save(self, filename):
         joblib.dump(self, filename)
 
-    def load(self, filename):
-        return
+    @staticmethod
+    def load(filename):
+        # Return a new DummyModel instance for testing
+        return DummyModel()
 
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         return
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return dataset
+
+    def prepare_output(self, dataset, is_fit=False):
+        return dataset
 
 
 class DummyGlobalExplainer(BaseGlobalExplainer):
@@ -137,13 +145,13 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     return test_registry
 
 
-@pytest.fixture(scope="module", name="experiment_id", autouse=True)
-def create_experiment(client: TestClient, dataset_id: int):
+@pytest.fixture(scope="module", name="model_session_id", autouse=True)
+def create_model_session(client: TestClient, dataset_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
-        experiment = Experiment(
+        model_session = ModelSession(
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
@@ -151,25 +159,25 @@ def create_experiment(client: TestClient, dataset_id: int):
             output_columns=output_columns,
             splits=splits,
         )
-        db.add(experiment)
+        db.add(model_session)
         db.commit()
-        db.refresh(experiment)
+        db.refresh(model_session)
 
-        yield experiment.id
+        yield model_session.id
 
-        db.delete(experiment)
+        db.delete(model_session)
         db.commit()
         db.close()
 
 
 @pytest.fixture(scope="module", name="run_id")
-def create_run_id(client: TestClient, experiment_id: int):
+def create_run_id(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             optimizer_name="OptunaOptimizer",
             optimizer_parameters={
                 "n_trials": 10,

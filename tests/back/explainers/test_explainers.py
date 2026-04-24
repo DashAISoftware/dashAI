@@ -1,17 +1,27 @@
+import copy
+
+import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
     select_columns,
     split_dataset,
     split_indexes,
 )
-from DashAI.back.explainability import PartialDependence, PermutationFeatureImportance
+from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
+from DashAI.back.explainability.explainers.permutation_feature_importance import (
+    PermutationFeatureImportance,
+)
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+from DashAI.back.types.value_types import Float
 
 INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -35,7 +45,35 @@ def tabular_model_fixture():
     datasetdict = dataloader.load_data(
         filepath_or_buffer=dataset_path,
         temp_path="tests/back/explainers",
-        params={"separator": ","},
+        params={
+            "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
+        },
+    )
+    # Since we're not saving to disk, we need to initialize the types manually
+    datasetdict.types = datasetdict.types = {
+        "SepalLengthCm": Float(arrow_type=pa.float64()),
+        "SepalWidthCm": Float(arrow_type=pa.float64()),
+        "PetalLengthCm": Float(arrow_type=pa.float64()),
+        "PetalWidthCm": Float(arrow_type=pa.float64()),
+        "Species": Categorical(
+            values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+        ),
+    }
+
+    new_table = save_types_in_arrow_metadata(
+        datasetdict.arrow_table,
+        {col: dtype.to_string() for col, dtype in datasetdict.types.items()},
+    )
+
+    datasetdict = DashAIDataset(
+        new_table, splits=datasetdict.splits, types=datasetdict.types
     )
 
     total_rows = datasetdict.num_rows
@@ -50,9 +88,8 @@ def tabular_model_fixture():
     )
 
     x, y = select_columns(split_dataset_dict, INPUT_COLUMNS, OUTPUT_COLUMNS)
-    types = dict.fromkeys(OUTPUT_COLUMNS, "Categorical")
 
-    y = split_dataset(y.change_columns_type(types))
+    y = split_dataset(y)
     x = split_dataset(x)
 
     dataset = x, y
@@ -70,7 +107,7 @@ def trained_model(dataset):
         min_samples_leaf=1,
         max_features=None,
     )
-    model.fit(x["train"], y["train"])
+    model.train(x["train"], y["train"])
 
     return model
 
@@ -82,7 +119,9 @@ def test_partial_dependence(trained_model: BaseModel, dataset):
         "upper_percentile": 0.99,
     }
     explainer = PartialDependence(trained_model, **parameters)
-    explanation = explainer.explain(dataset)
+    explanation = explainer.explain(
+        copy.deepcopy(dataset)
+    )  # use deepcopy to avoid modifying the original dataset
     plot = explainer.plot(explanation)
 
     metadata = explanation.pop("metadata")
@@ -117,7 +156,7 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         "max_samples_fraction": 1.0,
     }
     explainer = PermutationFeatureImportance(trained_model, **parameters)
-    explanation = explainer.explain(dataset)
+    explanation = explainer.explain(copy.deepcopy(dataset))
     plot = explainer.plot(explanation)
 
     assert all(
@@ -136,7 +175,7 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         "max_samples_fraction": 1.0,
     }
     explainer = PermutationFeatureImportance(trained_model, **parameters)
-    explanation = explainer.explain(dataset)
+    explanation = explainer.explain(copy.deepcopy(dataset))
     plot = explainer.plot(explanation)
 
     assert all(

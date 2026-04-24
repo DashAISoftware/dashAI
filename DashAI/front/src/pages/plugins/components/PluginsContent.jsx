@@ -5,6 +5,7 @@ import { Grid, Typography, Card } from "@mui/material";
 import PluginCard from "./PluginsCard";
 import usePluginsContent from "../hooks/usePluginsContent";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useTranslation } from "react-i18next";
 
 /**
  * component to render tab content: toolbar and plugins grid
@@ -38,6 +39,7 @@ function PluginsContent({
       setCardView(newAlignment);
     }
   };
+  const { t } = useTranslation(["plugins"]);
 
   return (
     <>
@@ -81,7 +83,7 @@ function PluginsContent({
             }}
           >
             <Typography variant="body1">
-              No plugins to show (try refreshing)
+              {t("plugins:label.noPluginsToShow")}
             </Typography>
           </Card>
         </Grid>
@@ -89,11 +91,17 @@ function PluginsContent({
 
       {/* Plugins Grid */}
       {!loading && !!pluginsToShow.length && (
-        <Grid container spacing={cardView ? 4 : 2}>
+        <Grid container spacing={cardView ? 1 : 1}>
           {pluginsToShow.map((plugin, i) => (
             <Grid
               key={i}
-              size={{ xs: cardView ? 4 : 12 }}
+              size={{
+                xl: cardView ? 4 : 12,
+                lg: cardView ? 4 : 12,
+                md: cardView ? 6 : 12,
+                sm: 12,
+                xs: 12,
+              }}
               height={cardView ? "250px" : "auto"}
             >
               <PluginCard

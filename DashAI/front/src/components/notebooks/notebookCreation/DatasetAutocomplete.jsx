@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Autocomplete, TextField, Chip } from "@mui/material";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import { getDatasetInfo } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetAutocomplete({
   datasets,
@@ -12,6 +13,7 @@ export default function DatasetAutocomplete({
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [infoError, setInfoError] = useState(null);
   const [infosById, setInfosById] = useState({});
+  const { t } = useTranslation(["datasets", "common"]);
 
   // Fetch info for selected dataset (detail panel)
   useEffect(() => {
@@ -29,7 +31,8 @@ export default function DatasetAutocomplete({
         if (!cancelled) setDatasetInfo(info);
       } catch (e) {
         console.error("Failed to fetch dataset info:", e);
-        if (!cancelled) setInfoError("Failed to load dataset info");
+        if (!cancelled)
+          setInfoError(t("datasets:error.failedToLoadDatasetInfo"));
       } finally {
         if (!cancelled) setLoadingInfo(false);
       }
@@ -68,6 +71,7 @@ export default function DatasetAutocomplete({
     <Box width="100%">
       <Box sx={{ width: "100%", mx: "auto" }}>
         <Autocomplete
+          data-tour="models-dataset-selection"
           options={datasets}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -79,15 +83,16 @@ export default function DatasetAutocomplete({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Select a dataset"
+              label={t("datasets:label.selectDataset")}
               variant="outlined"
-              placeholder="Type to search datasets..."
+              placeholder={t("datasets:label.typeToSearchDatasets")}
             />
           )}
           renderOption={(props, option) => {
+            const { key, ...rootProps } = props;
             const info = infosById[option.id];
             return (
-              <Box component="li" {...props}>
+              <Box component="li" key={key} {...rootProps}>
                 <Box
                   sx={{
                     display: "flex",
@@ -100,11 +105,13 @@ export default function DatasetAutocomplete({
                     {option.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Created: {formatDate(option.created)}
+                    {t("common:created")}: {formatDate(option.created)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Rows: {info ? info.total_rows : "..."} | Columns:{" "}
-                    {info ? info.total_columns : "..."}
+                    {t("datasets:label.rowsColumnsInfo", {
+                      totalRows: info ? info.total_rows : "...",
+                      totalColumns: info ? info.total_columns : "...",
+                    })}
                   </Typography>
                 </Box>
               </Box>
@@ -124,18 +131,18 @@ export default function DatasetAutocomplete({
             }}
           >
             <Typography variant="h6" gutterBottom>
-              Selected Dataset
+              {t("datasets:label.selectedDataset")}
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="body2" fontWeight="medium">
-                  Name:
+                  {t("common:name")}:
                 </Typography>
                 <Chip label={selectedDataset.name} size="small" />
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="body2" fontWeight="medium">
-                  Created:
+                  {t("common:created")}:
                 </Typography>
                 <Typography variant="body2">
                   {formatDate(selectedDataset.created)}
@@ -143,12 +150,14 @@ export default function DatasetAutocomplete({
               </Box>
               {/* Single line for Rows | Columns */}
               <Typography variant="body2" fontWeight="medium">
-                Rows:{" "}
-                {loadingInfo ? "Loading..." : (datasetInfo?.total_rows ?? "-")}{" "}
-                | Columns:{" "}
-                {loadingInfo
-                  ? "Loading..."
-                  : (datasetInfo?.total_columns ?? "-")}
+                {t("datasets:label.rowsColumnsInfo", {
+                  totalRows: datasetInfo
+                    ? datasetInfo.total_rows
+                    : t("common:loading"),
+                  totalColumns: datasetInfo
+                    ? datasetInfo.total_columns
+                    : t("common:loading"),
+                })}
               </Typography>
               {infoError && (
                 <Typography variant="caption" color="error">

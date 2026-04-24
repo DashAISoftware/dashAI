@@ -16,6 +16,8 @@ import FormSchemaRenderFields from "./FormSchemaRenderFields";
  * @param {object} formSubmitRef a reference to the formik object
  * @param {function} setError function to set an error in the form
  * @param {object} errors object that contains the errors of the form
+ * @param {function} onValuesChange function to call when the form values change
+ * @param {bool} showBorder if true, the parameter container will have a border
  */
 function FormSchema({
   model,
@@ -28,17 +30,21 @@ function FormSchema({
   setError,
   errorsMessage,
   saveButtonText,
+  onValuesChange,
+  showBorder = true,
+  hideButtons = false,
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,
     initialValues,
     formSubmitRef,
     setError,
+    onValuesChange,
   });
 
   return (
     <>
-      <FormSchemaParameterContainer>
+      <FormSchemaParameterContainer showBorder={showBorder}>
         <FormSchemaRenderFields
           modelSchema={modelSchema}
           formik={formik}
@@ -50,14 +56,16 @@ function FormSchema({
         />
       </FormSchemaParameterContainer>
 
-      <FormSchemaButtonGroup
-        onCancel={onCancel}
-        onFormSubmit={onFormSubmit}
-        autoSave={autoSave}
-        formik={formik}
-        error={error}
-        saveButtonText={saveButtonText}
-      />
+      {!hideButtons && (
+        <FormSchemaButtonGroup
+          onCancel={onCancel}
+          onFormSubmit={onFormSubmit}
+          autoSave={autoSave}
+          formik={formik}
+          error={error}
+          saveButtonText={saveButtonText}
+        />
+      )}
     </>
   );
 }
@@ -73,6 +81,9 @@ FormSchema.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   saveButtonText: PropTypes.string,
+  onValuesChange: PropTypes.func,
+  showBorder: PropTypes.bool,
+  hideButtons: PropTypes.bool,
 };
 
 export default FormSchema;

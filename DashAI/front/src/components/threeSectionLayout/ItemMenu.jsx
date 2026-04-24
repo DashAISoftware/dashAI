@@ -9,11 +9,13 @@ import {
   styled,
   Box,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   color: theme.palette.error.main,
@@ -22,10 +24,19 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
+export default function ItemMenu({
+  itemId,
+  onInfo,
+  onDelete,
+  onEdit,
+  deleteConfirmationContent,
+  deleteConfirmationWarning,
+}) {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const open = Boolean(anchorEl);
+  const { t } = useTranslation(["common"]);
 
   const handleClick = (event) => {
     event.stopPropagation();
@@ -61,7 +72,7 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
         aria-expanded={open ? "true" : undefined}
         onClick={handleClick}
         size="small"
-        sx={{ color: "text.secondary" }}
+        sx={{ color: theme.palette.text.secondary }}
       >
         <MoreHorizIcon fontSize="small" />
       </IconButton>
@@ -104,7 +115,7 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
               <ListItemIcon>
                 <InfoIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText>Info</ListItemText>
+              <ListItemText>{t("common:info")}</ListItemText>
             </MenuItem>
           )}
           <MenuItem
@@ -116,7 +127,7 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
             <ListItemIcon>
               <EditIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
+            <ListItemText>{t("common:edit")}</ListItemText>
           </MenuItem>
           <Divider />
         </Box>
@@ -129,11 +140,13 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>{t("common:delete")}</ListItemText>
         </DeleteMenuItem>
       </Menu>
       {/* Confirmation Modal */}
       <DeleteConfirmationModal
+        content={deleteConfirmationContent}
+        warning={deleteConfirmationWarning}
         open={deleteModalOpen}
         onClose={(e) => {
           e.stopPropagation();

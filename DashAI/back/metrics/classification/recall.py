@@ -1,21 +1,57 @@
 """DashAI recall classification metric implementation."""
 
-import numpy as np
-from sklearn.metrics import recall_score
+from typing import TYPE_CHECKING, Optional
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
 )
 
+if TYPE_CHECKING:
+    import numpy as np
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
 
 class Recall(ClassificationMetric):
-    """Recall metric to classification tasks."""
+    """Fraction of actual positives that are correctly identified.
+
+    Recall (also called sensitivity or true positive rate) measures the
+    ability of the classifier to find all positive samples. It is the metric
+    of choice when the cost of false negatives is high — e.g. in medical
+    screening, missing a disease is more costly than a false alarm.
+
+    For binary tasks the standard binary recall is used. For multiclass tasks,
+    macro averaging (unweighted mean over all classes) is applied.
+
+    ::
+
+        Recall = TP / (TP + FN)
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html
+    """
+
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Fraction of actual positives correctly identified, "
+            "important when false negatives are costly."
+        ),
+        es=(
+            "Fracción de positivos reales correctamente identificados, "
+            "importante cuando los falsos negativos son costosos."
+        ),
+    )
 
     @staticmethod
     def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
     ) -> float:
         """Calculate recall between true labels and predicted labels.
 
@@ -41,6 +77,8 @@ class Recall(ClassificationMetric):
         # Use the provided multiclass parameter or determine it using is_multiclass
         if multiclass is None:
             multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        from sklearn.metrics import recall_score
 
         if multiclass:
             return recall_score(true_labels, pred_labels, average="macro")

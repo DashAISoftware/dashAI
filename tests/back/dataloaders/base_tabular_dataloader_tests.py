@@ -8,8 +8,8 @@ import pytest
 from datasets import DatasetDict
 from datasets.builder import DatasetGenerationError
 
-from DashAI.back.dataloaders import BaseDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, split_dataset
+from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 # TODO: Test no header, empty file, bad split folder structure.
 

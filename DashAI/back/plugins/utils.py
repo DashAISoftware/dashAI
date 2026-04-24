@@ -1,17 +1,48 @@
 import json
 import subprocess
 import sys
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import requests
 
 from DashAI.back.core.enums.plugin_tags import PluginTag
-from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 if sys.version_info < (3, 10):
     from importlib_metadata import entry_points
 else:
     from importlib.metadata import entry_points
+
+_PYPI_SIMPLE_JSON_ACCEPT = "application/vnd.pypi.simple.v1+json"
+_PYPI_SIMPLE_URL = "https://pypi.org/simple/"
+_REQUEST_TIMEOUT_SECONDS = 15
+
+
+def _get_pypi_project_status(plugin_name: str) -> str:
+    """
+    Retrieve PyPI project status marker using the Simple API project endpoint.
+
+    Returns
+    -------
+    str
+        One of: "active", "archived", "quarantined" (or other future values).
+        Defaults to "active" on missing marker.
+        Returns "unknown" on request/parse errors.
+    """
+    try:
+        response = requests.get(
+            f"{_PYPI_SIMPLE_URL}{plugin_name}/",
+            headers={"Accept": _PYPI_SIMPLE_JSON_ACCEPT},
+            timeout=_REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        data = response.json()
+        project_status = data.get("project-status") or {}
+        return (project_status.get("status") or "active").lower()
+    except Exception:
+        return "unknown"
 
 
 def _get_all_plugins() -> List[str]:
@@ -41,6 +72,7 @@ def _get_all_plugins() -> List[str]:
 
     else:
         print(f"Failed to retrieve packages. Status code: {response.status_code}")
+        packages = []
 
     return packages
 
@@ -118,6 +150,10 @@ def get_plugins_from_pypi() -> List[dict]:
 
     for plugin_name in plugins_names:
         try:
+            status = _get_pypi_project_status(plugin_name)
+            if status == "archived":
+                continue
+
             plugin_info = get_plugin_by_name_from_pypi(plugin_name)
             plugins.append(plugin_info)
         except ValueError as e:
@@ -216,7 +252,7 @@ def install_plugin(plugin_name: str) -> List[type]:
 
 
 def register_plugin_components(
-    plugins: List[type], component_registry: ComponentRegistry
+    plugins: List[type], component_registry: "ComponentRegistry"
 ):
     """
     Register the plugins in the component registry
@@ -258,7 +294,7 @@ def uninstall_plugin(
 
 def unregister_plugin_components(
     plugins: List[type],
-    component_registry: ComponentRegistry,
+    component_registry: "ComponentRegistry",
 ) -> List[type]:
     """
     Remove from component registry uninstalled plugins

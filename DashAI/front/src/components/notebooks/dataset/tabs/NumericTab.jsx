@@ -1,142 +1,349 @@
 import React from "react";
-import { Box, Typography, Card, CardContent, Alert } from "@mui/material";
+import { Box, Typography, CardContent, Alert } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
 import Plot from "react-plotly.js";
 import { StatBox } from "../StatBox";
 import { MetricRow } from "../MetricRow";
+import ExportableCard from "../ExportableCard";
+import { Trans, useTranslation } from "react-i18next";
 
-export const NumericTab = ({ numericStats }) => (
-  <Box display="flex" flexDirection="column" gap={4}>
-    {Object.entries(numericStats).map(([column, stats]) => (
-      <Card key={column} sx={{ borderRadius: 2 }}>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
-          {/* Title */}
-          <Box display="flex" alignItems="center" mb={2}>
-            <TrendingUpIcon sx={{ color: "primary.main", mr: 1 }} />
-            <Typography variant="h6" fontWeight="bold">
-              {column}
-            </Typography>
-          </Box>
+export const NumericTab = ({ numericStats }) => {
+  const { t } = useTranslation(["datasets"]);
+  const theme = useTheme();
 
-          {/* Summary Stats */}
-          <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
-            <Box flex="1 1 200px" minWidth="150px">
-              <StatBox label="Mean" value={stats.mean.toFixed(2)} />
-            </Box>
-            <Box flex="1 1 200px" minWidth="150px">
-              <StatBox label="Median" value={stats.median.toFixed(2)} />
-            </Box>
-            <Box flex="1 1 200px" minWidth="150px">
-              <StatBox label="Std Dev" value={stats.std.toFixed(2)} />
-            </Box>
-            <Box flex="1 1 200px" minWidth="150px">
-              <StatBox label="Unique" value={stats.n_unique} />
-            </Box>
-          </Box>
+  const toNumberOrNull = (value) => {
+    if (
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "")
+    ) {
+      return null;
+    }
 
-          {/* Two-column metrics */}
-          <Box display="flex" flexWrap="wrap" gap={4}>
-            {/* Distribution Metrics */}
-            <Box flex="1 1 300px" minWidth="250px">
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const formatNumber = (value, decimals = 2) => {
+    const parsed = toNumberOrNull(value);
+    return parsed === null ? "N/A" : parsed.toFixed(decimals);
+  };
+
+  return (
+    <Box display="flex" flexDirection="column" gap={4}>
+      {Object.entries(numericStats ?? {}).map(([column, stats]) => (
+        <ExportableCard
+          key={column}
+          filename={`numeric_${column}`}
+          exportData={{ column, ...stats }}
+          data-column-card={column}
+          sx={{ borderRadius: 2 }}
+        >
+          <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
+            {/* Title */}
+            <Box display="flex" alignItems="center" mb={2}>
+              <TrendingUpIcon sx={{ color: "primary.main", mr: 1 }} />
+              <Typography variant="h6" fontWeight="bold">
+                {column}
+              </Typography>
+            </Box>
+
+            {/* Summary Stats */}
+            <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+              <Box flex="1 1 200px" minWidth="150px">
+                <StatBox
+                  label={t("datasets:label.mean")}
+                  value={formatNumber(stats?.mean)}
+                />
+              </Box>
+              <Box flex="1 1 200px" minWidth="150px">
+                <StatBox
+                  label={t("datasets:label.median")}
+                  value={formatNumber(stats?.median)}
+                />
+              </Box>
+              <Box flex="1 1 200px" minWidth="150px">
+                <StatBox
+                  label={t("datasets:label.stdDev")}
+                  value={formatNumber(stats?.std)}
+                />
+              </Box>
+              <Box flex="1 1 200px" minWidth="150px">
+                <StatBox
+                  label={t("datasets:label.unique")}
+                  value={stats?.n_unique ?? "N/A"}
+                />
+              </Box>
+            </Box>
+
+            {/* Two-column metrics */}
+            <Box display="flex" flexWrap="wrap" gap={4}>
+              {/* Distribution Metrics */}
+              <Box flex="1 1 300px" minWidth="250px">
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="bold"
+                  color="text.primary"
+                  gutterBottom
+                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                >
+                  {t("datasets:label.distributionMetrics")}
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <MetricRow
+                    label={t("datasets:label.lowerBound")}
+                    value={formatNumber(stats?.lower_bound)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.q1")}
+                    value={formatNumber(stats?.q1)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.median")}
+                    value={formatNumber(stats?.median)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.q3")}
+                    value={formatNumber(stats?.q3)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.upperBound")}
+                    value={formatNumber(stats?.upper_bound)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.min")}
+                    value={formatNumber(stats?.min)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.max")}
+                    value={formatNumber(stats?.max)}
+                  />
+                </Box>
+              </Box>
+
+              {/* Shape Indicators */}
+              <Box flex="1 1 300px" minWidth="250px">
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="bold"
+                  color="text.primary"
+                  gutterBottom
+                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                >
+                  {t("datasets:label.shapeIndicators")}
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <MetricRow
+                    label={t("datasets:label.skewness")}
+                    value={formatNumber(stats?.skew, 3)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.kurtosis")}
+                    value={formatNumber(stats?.kurtosis, 3)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.outliers")}
+                    value={stats?.outliers_count ?? "N/A"}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.range")}
+                    value={(() => {
+                      const upperBound = toNumberOrNull(stats?.upper_bound);
+                      const lowerBound = toNumberOrNull(stats?.lower_bound);
+
+                      return upperBound !== null && lowerBound !== null
+                        ? (upperBound - lowerBound).toFixed(2)
+                        : "N/A";
+                    })()}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Horizontal Boxplot Visualization */}
+            <Box mt={4}>
               <Typography
                 variant="subtitle2"
                 color="text.secondary"
                 gutterBottom
               >
-                Distribution Metrics
+                {t("datasets:label.boxplot")}
               </Typography>
-              <Box display="flex" flexDirection="column" gap={1}>
-                <MetricRow label="Min" value={stats.min.toFixed(2)} />
-                <MetricRow label="Q1" value={stats.q1.toFixed(2)} />
-                <MetricRow
-                  label="Median (Q2)"
-                  value={stats.median.toFixed(2)}
-                />
-                <MetricRow label="Q3" value={stats.q3.toFixed(2)} />
-                <MetricRow label="Max" value={stats.max.toFixed(2)} />
-              </Box>
-            </Box>
+              {(() => {
+                const q1 = toNumberOrNull(stats?.q1);
+                const median = toNumberOrNull(stats?.median);
+                const q3 = toNumberOrNull(stats?.q3);
+                const lowerBound = toNumberOrNull(stats?.lower_bound);
+                const upperBound = toNumberOrNull(stats?.upper_bound);
+                const min = toNumberOrNull(stats?.min);
+                const max = toNumberOrNull(stats?.max);
 
-            {/* Shape Indicators */}
-            <Box flex="1 1 300px" minWidth="250px">
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                gutterBottom
-              >
-                Shape Indicators
-              </Typography>
-              <Box display="flex" flexDirection="column" gap={1}>
-                <MetricRow label="Skewness" value={stats.skew.toFixed(3)} />
-                <MetricRow label="Kurtosis" value={stats.kurtosis.toFixed(3)} />
-                <MetricRow label="Outliers" value={stats.outliers_count} />
-                <MetricRow
-                  label="Range"
-                  value={(stats.max - stats.min).toFixed(2)}
-                />
-              </Box>
-            </Box>
-          </Box>
+                const hasBoxplotData =
+                  q1 !== null &&
+                  median !== null &&
+                  q3 !== null &&
+                  lowerBound !== null &&
+                  upperBound !== null;
 
-          {/* Horizontal Boxplot Visualization */}
-          <Box mt={4}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Boxplot
-            </Typography>
-            <Plot
-              data={[
-                {
-                  x: [stats.min, stats.q1, stats.median, stats.q3, stats.max],
+                if (!hasBoxplotData) {
+                  return null;
+                }
+
+                const hasLowerOutlier = min !== null && min < lowerBound;
+                const hasUpperOutlier = max !== null && max > upperBound;
+
+                const boxTrace = {
+                  q1: [q1],
+                  median: [median],
+                  q3: [q3],
+                  lowerfence: [lowerBound],
+                  upperfence: [upperBound],
+                  y: [column],
                   type: "box",
                   name: column,
-                  orientation: "h", // ← rotated here
-                  boxpoints: "suspectedoutliers",
-                  marker: { color: "#8884d8" },
-                  line: { color: "#212121" },
-                  fillcolor: "#8884d8",
+                  orientation: "h",
+                  boxpoints: false,
+                  marker: { color: theme.palette.info.main },
+                  line: { color: theme.palette.text.secondary },
+                  fillcolor: theme.palette.info.main,
                   opacity: 0.6,
                   showlegend: false,
-                },
-              ]}
-              layout={{
-                paper_bgcolor: "transparent",
-                plot_bgcolor: "transparent",
-                font: { color: "#ddd" },
-                margin: { t: 10, b: 40, l: 40, r: 20 },
-                height: 220,
-                xaxis: {
-                  title: "",
-                  zeroline: false,
-                  gridcolor: "#444",
-                },
-                yaxis: {
-                  showticklabels: false,
-                },
-              }}
-              config={{
-                responsive: true,
-                displayModeBar: false,
-              }}
-              style={{ width: "100%", height: "100%" }}
-            />
-          </Box>
+                  hoverinfo: "skip",
+                };
 
-          {/* Skewness Warning */}
-          {stats.skew > 1 && (
-            <Alert
-              severity="warning"
-              icon={<InfoIcon fontSize="inherit" />}
-              sx={{ mt: 3 }}
-            >
-              <Typography variant="body2">
-                <strong>Right-skewed distribution:</strong> Consider applying a
-                log transformation.
-              </Typography>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-    ))}
-  </Box>
-);
+                const boxHoverTraces = [
+                  {
+                    x: upperBound,
+                    label: t("datasets:label.upperBound"),
+                  },
+                  { x: q3, label: t("datasets:label.q3") },
+                  { x: median, label: t("datasets:label.median") },
+                  { x: q1, label: t("datasets:label.q1") },
+                  {
+                    x: lowerBound,
+                    label: t("datasets:label.lowerBound"),
+                  },
+                ].map(({ x, label }) => ({
+                  x: [x],
+                  y: [column],
+                  type: "scatter",
+                  mode: "markers",
+                  marker: { opacity: 0, size: 10 },
+                  hovertemplate: `${label}: ${formatNumber(x)}<extra></extra>`,
+                  showlegend: false,
+                }));
+
+                const lowerOutlierTrace = hasLowerOutlier
+                  ? {
+                      x: [min],
+                      y: [column],
+                      type: "scatter",
+                      mode: "markers",
+                      marker: {
+                        color: theme.palette.warning.main,
+                        size: 8,
+                        symbol: "circle-open",
+                      },
+                      hovertemplate: `Min: ${formatNumber(min)}<extra></extra>`,
+                      showlegend: false,
+                    }
+                  : null;
+
+                const upperOutlierTrace = hasUpperOutlier
+                  ? {
+                      x: [max],
+                      y: [column],
+                      type: "scatter",
+                      mode: "markers",
+                      marker: {
+                        color: theme.palette.warning.main,
+                        size: 8,
+                        symbol: "circle-open",
+                      },
+                      hovertemplate: `Max: ${formatNumber(max)}<extra></extra>`,
+                      showlegend: false,
+                    }
+                  : null;
+
+                const plotData = [
+                  boxTrace,
+                  ...boxHoverTraces,
+                  lowerOutlierTrace,
+                  upperOutlierTrace,
+                ].filter(Boolean);
+
+                return (
+                  <Plot
+                    data={plotData}
+                    layout={{
+                      paper_bgcolor: "transparent",
+                      plot_bgcolor: "transparent",
+                      font: { color: theme.palette.text.primary },
+                      margin: { t: 10, b: 40, l: 40, r: 20 },
+                      height: 220,
+                      xaxis: {
+                        title: "",
+                        zeroline: false,
+                        gridcolor:
+                          theme.palette.mode === "dark"
+                            ? theme.palette.ui.borderLight
+                            : theme.palette.ui.border,
+                      },
+                      yaxis: {
+                        showticklabels: false,
+                      },
+                    }}
+                    config={{
+                      responsive: true,
+                      displayModeBar: false,
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                );
+              })()}
+            </Box>
+
+            {(stats?.outliers_count ?? 0) > 0 && (
+              <Alert
+                severity="warning"
+                icon={<InfoIcon fontSize="inherit" />}
+                sx={{ mt: 3 }}
+              >
+                <Typography variant="body2">
+                  {t("datasets:label.insightOutliers", {
+                    count: stats.outliers_count,
+                  })}
+                </Typography>
+              </Alert>
+            )}
+
+            {/* Skewness Warning */}
+            {(() => {
+              const skew = toNumberOrNull(stats?.skew);
+
+              return (
+                skew !== null &&
+                skew > 1 && (
+                  <Alert
+                    severity="warning"
+                    icon={<InfoIcon fontSize="inherit" />}
+                    sx={{ mt: 3 }}
+                  >
+                    <Typography variant="body2">
+                      <Trans i18nKey="datasets:label.rightSkewedWarning">
+                        <strong>Right-skewed distribution:</strong> Consider
+                        applying a log transformation.
+                      </Trans>
+                    </Typography>
+                  </Alert>
+                )
+              );
+            })()}
+          </CardContent>
+        </ExportableCard>
+      ))}
+    </Box>
+  );
+};

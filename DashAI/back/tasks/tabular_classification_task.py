@@ -1,43 +1,77 @@
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
-from datasets import ClassLabel, DatasetDict, Value
-
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.tasks.classification_task import ClassificationTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TabularClassificationTask(ClassificationTask):
-    """Base class for tabular classification tasks.
+    """Task for classifying structured tabular data into discrete categories.
 
-    Here you can change the methods provided by class Task.
+    Tabular classification predicts categorical labels from structured feature
+    tables (rows of observations, columns of features). It accepts numeric
+    (``Float``, ``Integer``) and categorical (``Categorical``) inputs, requires
+    a single categorical output column, and is compatible with all sklearn-based
+    and DashAI tabular classifier models.
     """
 
-    DESCRIPTION: str = """
-    Tabular classification in machine learning involves predicting categorical
-    labels for structured data organized in tabular form (rows and columns).
-    Models are trained to learn patterns and relationships in the data, enabling
-    accurate classification of new instances."""
-    DISPLAY_NAME: str = "Tabular Classification"
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Predict categorical labels from structured tabular data "
+            "(rows and columns) using trained classification models."
+        ),
+        es=(
+            "Predice etiquetas categóricas a partir de datos tabulares "
+            "estructurados (filas y columnas) usando modelos de clasificación."
+        ),
+    )
+    DISPLAY_NAME: str = MultilingualString(
+        en="Tabular Classification", es="Clasificación Tabular"
+    )
+    SCORING_PROFILES = {
+        "balanced": {
+            "description": "Balanced",
+            "weights": {"Accuracy": 0.3, "F1": 0.4, "ROCAUC": 0.3},
+        },
+        "detectPositives": {
+            "description": "Detect Positives",
+            "weights": {"Recall": 0.6, "F1": 0.3, "Precision": 0.1},
+        },
+        "avoidFalseAlarms": {
+            "description": "Avoid False Alarms",
+            "weights": {"Precision": 0.6, "F1": 0.3, "Recall": 0.1},
+        },
+        "probabilityQuality": {
+            "description": "Probability Quality",
+            "weights": {"ROCAUC": 0.5, "LogLoss": 0.5},
+        },
+    }
     metadata: dict = {
-        "inputs_types": [ClassLabel, Value],
-        "outputs_types": [ClassLabel],
+        "inputs_types": [Float, Integer, Categorical],
+        "outputs_types": [Categorical],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
     }
 
     def prepare_for_task(
-        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
-    ) -> DashAIDataset:
-        """Change the column types to suit the tabular classification task.
+        self,
+        dataset: Union["DatasetDict", "DashAIDataset"],
+        input_columns: List[str],
+        output_columns: List[str],
+    ) -> "DashAIDataset":
+        """Convert the dataset to DashAIDataset and check the columns types
 
         A copy of the dataset is created.
 
         Parameters
         ----------
-        datasetdict : Union[DatasetDict, DashAIDataset]
+        dataset : Union[DatasetDict, DashAIDataset]
             Dataset to be changed
 
         Returns
@@ -45,7 +79,7 @@ class TabularClassificationTask(ClassificationTask):
         DashAIDataset
             Dataset with the new types
         """
-        types = dict.fromkeys(outputs_columns, "Categorical")
-        datasetdict = to_dashai_dataset(datasetdict)
-        dataset = datasetdict.change_columns_type(types)
-        return dataset
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset

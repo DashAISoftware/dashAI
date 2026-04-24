@@ -1,8 +1,9 @@
 import api from "./api";
 import type { IRun } from "../types/run";
 
-export const getRuns = async (experimentId: string = ""): Promise<IRun[]> => {
-  const params = experimentId !== "" ? { experiment_id: experimentId } : {};
+export const getRuns = async (modelSessionId: string = ""): Promise<IRun[]> => {
+  const params =
+    modelSessionId !== "" ? { model_session_id: modelSessionId } : {};
   const response = await api.get<IRun[]>("/v1/run/", { params });
   return response.data;
 };
@@ -21,7 +22,7 @@ export const getHyperparameterPlot = async (
 };
 
 export const createRun = async (
-  experimentId: string,
+  modelSessionId: string,
   modelName: string,
   name: string,
   parameters: object,
@@ -35,7 +36,7 @@ export const createRun = async (
   description: string,
 ): Promise<IRun> => {
   const data = {
-    experiment_id: experimentId,
+    model_session_id: modelSessionId,
     model_name: modelName,
     name,
     parameters,
@@ -51,4 +52,44 @@ export const createRun = async (
 
   const response = await api.post<IRun>("/v1/run/", data);
   return response.data;
+};
+
+export const deleteRun = async (runId: string): Promise<void> => {
+  await api.delete<void>(`/v1/run/${runId}`);
+};
+
+export const updateRunParameters = async (
+  runId: string,
+  name?: string,
+  parameters?: object,
+  optimizer?: string,
+  optimizer_parameters?: object,
+  goal_metric?: string,
+): Promise<IRun> => {
+  const response = await api.patch<IRun>(`/v1/run/${runId}`, {
+    run_name: name,
+    parameters,
+    optimizer,
+    optimizer_parameters,
+    goal_metric,
+  });
+  return response.data;
+};
+
+export const resetRunById = async (runId: string): Promise<IRun> => {
+  const response = await api.patch<IRun>(`/v1/run/${runId}/reset`);
+  return response.data;
+};
+
+export const getRunOperationsCount = async (
+  runId: string,
+): Promise<{ explainers: number; predictions: number }> => {
+  const response = await api.get<{ explainers: number; predictions: number }>(
+    `/v1/run/${runId}/operations/count`,
+  );
+  return response.data;
+};
+
+export const deleteRunOperations = async (runId: string): Promise<void> => {
+  await api.delete<void>(`/v1/run/${runId}/operations`);
 };

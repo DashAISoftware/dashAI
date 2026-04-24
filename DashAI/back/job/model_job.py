@@ -1,28 +1,23 @@
-import gc
-import json
 import logging
-import os
-import pickle
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.attributes import flag_modified
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    load_dataset,
-    prepare_for_experiment,
-    select_columns,
-    split_dataset,
-)
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.metrics import BaseMetric
-from DashAI.back.models import BaseModel
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.optimizers import BaseOptimizer
-from DashAI.back.tasks import BaseTask
+from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -33,7 +28,7 @@ class ModelJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         run_id: int = self.kwargs["run_id"]
@@ -53,7 +48,7 @@ class ModelJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as error."""
         run_id: int = self.kwargs.get("run_id")
@@ -95,10 +90,18 @@ class ModelJob(BaseJob):
     def run(
         self,
     ) -> None:
+        import gc
+        import json
+        import os
+        import pickle
+
         from kink import di
 
-        from DashAI.back.api.api_v1.endpoints.components import (
-            _intersect_component_lists,
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            prepare_for_model_session,
+            select_columns,
+            split_dataset,
         )
 
         component_registry = di["component_registry"]
@@ -113,20 +116,20 @@ class ModelJob(BaseJob):
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
             try:
-                # Get the experiment, dataset, task, metrics and splits
-                experiment: Experiment = db.get(Experiment, run.experiment_id)
-                if not experiment:
+                # Get the model session, dataset, task, metrics and splits
+                model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+                if not model_session:
                     raise JobError(
-                        f"Experiment {run.experiment_id} does not exist in DB."
+                        f"Model session {run.model_session_id} does not exist in DB."
                     )
-                dataset: Dataset = db.get(Dataset, experiment.dataset_id)
+                dataset: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset:
                     raise JobError(
-                        f"Dataset {experiment.dataset_id} does not exist in DB."
+                        f"Dataset {model_session.dataset_id} does not exist in DB."
                     )
 
                 try:
-                    loaded_dataset: DashAIDataset = load_dataset(
+                    loaded_dataset: "DashAIDataset" = load_dataset(
                         f"{dataset.file_path}/dataset"
                     )
                 except Exception as e:
@@ -136,54 +139,55 @@ class ModelJob(BaseJob):
                     ) from e
 
                 try:
-                    task: BaseTask = component_registry[experiment.task_name]["class"]()
+                    task: BaseTask = component_registry[model_session.task_name][
+                        "class"
+                    ]()
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         (
-                            f"Unable to find Task with name {experiment.task_name} "
+                            f"Unable to find Task with name {model_session.task_name} "
                             "in registry"
                         ),
                     ) from e
 
                 try:
-                    # Get all the metrics
-                    components_by_type = component_registry.get_components_by_types(
-                        select="Metric"
-                    )
-                    all_metrics = {
-                        component_dict["name"]: component_dict
-                        for component_dict in components_by_type
-                    }
-                    # Get the intersection between the metrics and the task
-                    # related components
-                    selected_metrics = _intersect_component_lists(
-                        all_metrics,
-                        component_registry.get_related_components(experiment.task_name),
-                    )
-                    metrics: List[BaseMetric] = [
-                        metric["class"] for metric in selected_metrics.values()
+                    # Get metrics from model session
+                    train_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.train_metrics
                     ]
+                    validation_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.validation_metrics
+                    ]
+                    test_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.test_metrics
+                    ]
+
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         "Unable to find metrics associated with"
-                        f"Task {experiment.task_name} in registry",
+                        f"Task {model_session.task_name} in registry",
                     ) from e
 
                 try:
                     prepared_dataset = task.prepare_for_task(
-                        loaded_dataset, experiment.output_columns
+                        dataset=loaded_dataset,
+                        input_columns=model_session.input_columns,
+                        output_columns=model_session.output_columns,
                     )
                     n_labels = task.num_labels(
-                        prepared_dataset, experiment.output_columns[0]
+                        prepared_dataset, model_session.output_columns[0]
                     )
 
-                    splits = json.loads(experiment.splits)
-                    prepared_dataset, splits = prepare_for_experiment(
+                    splits = json.loads(model_session.splits)
+                    prepared_dataset, splits = prepare_for_model_session(
                         dataset=prepared_dataset,
                         splits=splits,
-                        output_columns=experiment.output_columns,
+                        output_columns=model_session.output_columns,
                     )
 
                     run.split_indexes = json.dumps(
@@ -196,8 +200,8 @@ class ModelJob(BaseJob):
 
                     x, y = select_columns(
                         prepared_dataset,
-                        experiment.input_columns,
-                        experiment.output_columns,
+                        model_session.input_columns,
+                        model_session.output_columns,
                     )
 
                     x = split_dataset(x)
@@ -207,7 +211,7 @@ class ModelJob(BaseJob):
                     log.exception(e)
                     raise JobError(
                         f"""Can not prepare Dataset {dataset.id}
-                        for Task {experiment.task_name}""",
+                        for Task {model_session.task_name}""",
                     ) from e
 
                 try:
@@ -219,7 +223,15 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     factory = ModelFactory(
-                        run_model_class, run.parameters, n_labels=n_labels
+                        run_model_class,
+                        run.parameters,
+                        run_id,
+                        x,
+                        y,
+                        train_metrics,
+                        validation_metrics,
+                        test_metrics,
+                        n_labels=n_labels,
                     )
                     model: BaseModel = factory.model
                     run_optimizable_parameters = factory.optimizable_parameters
@@ -231,7 +243,7 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     if run_optimizable_parameters:
-                        goal_metric = selected_metrics[run.goal_metric]
+                        goal_metric = component_registry[run.goal_metric]
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -263,7 +275,9 @@ class ModelJob(BaseJob):
                     # Hyperparameter Tunning
                     plot_paths = []
                     if not run_optimizable_parameters:
-                        model.fit(x["train"], y["train"])
+                        model.train(
+                            x["train"], y["train"], x["validation"], y["validation"]
+                        )
                     else:
                         optimizer.optimize(
                             model,
@@ -274,6 +288,17 @@ class ModelJob(BaseJob):
                             task,
                         )
                         model = optimizer.get_model()
+                        best_params = optimizer.get_best_params()
+
+                        old_parameters = run.parameters.copy()
+                        updated_parameters = factory.update_parameters(
+                            old_parameters, best_params
+                        )
+
+                        run.parameters = updated_parameters
+                        flag_modified(run, "parameters")
+                        db.commit()
+
                         # Generate hyperparameter plot
                         trials = optimizer.get_trials_values()
                         plot_filenames, plots = optimizer.create_plots(
@@ -307,17 +332,43 @@ class ModelJob(BaseJob):
                         f"Hyperparameter plot path saving failed {e}",
                     ) from e
 
+                # Calculate metrics at the end of training if not done already
                 try:
-                    model_metrics = factory.evaluate(x, y, metrics)
+                    last_train_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TRAIN", level="LAST")
+                        .first()
+                    )
+                    if not last_train_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TRAIN,
+                            level=LevelEnum.LAST,
+                        )
+                    last_val_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="VALIDATION", level="LAST")
+                        .first()
+                    )
+                    if not last_val_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.VALIDATION,
+                            level=LevelEnum.LAST,
+                        )
+                    last_test_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TEST", level="LAST")
+                        .first()
+                    )
+                    if not last_test_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TEST,
+                            level=LevelEnum.LAST,
+                        )
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        "Metrics calculation failed",
+                        f"Metric calculation failed {e}",
                     ) from e
-
-                run.train_metrics = model_metrics["train"]
-                run.validation_metrics = model_metrics["validation"]
-                run.test_metrics = model_metrics["test"]
 
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))

@@ -13,32 +13,75 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Integer
 
 
 class GenericUnivariateSelectSchema(BaseSchema):
+    """Schema for Generic Univariate Select hyperparameters."""
+
     mode: schema_field(
         enum_field(["percentile", "k_best", "fpr", "fdr", "fwe"]),
         "percentile",
-        "Select features according to a percentile of the highest scores.",
+        description=MultilingualString(
+            en="Select features according to a percentile of the highest scores.",
+            es=(
+                "Selecciona características según un percentil de las "
+                "puntuaciones más altas."
+            ),
+        ),
     )  # type: ignore
     param: schema_field(
         none_type(
             union_type(enum_field(["all"]), union_type(float_field(), int_field()))
         ),
         1e-5,
-        "Parameter of the mode.",
+        description=MultilingualString(
+            en="Parameter of the mode.",
+            es="Parámetro del modo.",
+        ),
     )  # type: ignore
 
 
 class GenericUnivariateSelect(
     FeatureSelectionConverter, SklearnWrapper, GenericUnivariateSelectOperation
 ):
-    """SciKit-Learn's GenericUnivariateSelect wrapper for DashAI."""
+    """Select features using a configurable univariate statistical test and mode.
+
+    Supports multiple selection modes: ``k_best``, ``percentile``, ``fpr``,
+    ``fdr``, and ``fwe``. The scoring function and mode are configurable.
+    Supervised: requires ``y`` at fit time.
+
+    Wraps scikit-learn's ``GenericUnivariateSelect``.
+    """
 
     SCHEMA = GenericUnivariateSelectSchema
-    DESCRIPTION = "Univariate feature selector with configurable strategy."
+    DESCRIPTION = MultilingualString(
+        en="Univariate feature selector with configurable strategy.",
+        es="Selector univariante de características con estrategia configurable.",
+    )
     SUPERVISED = True
-    DISPLAY_NAME = "Generic Univariate Select"
+    DISPLAY_NAME = MultilingualString(
+        en="Generic Univariate Select", es="Selección Univariante Genérica"
+    )
     IMAGE_PREVIEW = "generic_univariate_select.png"
-    metadata = {}
-    CATEGORY = "Feature Selection"
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
+        import pyarrow as pa
+
+        return Float(arrow_type=pa.float64())

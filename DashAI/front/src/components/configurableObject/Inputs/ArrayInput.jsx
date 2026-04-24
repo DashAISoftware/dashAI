@@ -7,9 +7,9 @@ import FormInputWrapper from "./FormInputWrapper";
 function ArrayInput({
   name,
   label,
-  value,
+  value = [],
   onChange,
-  error,
+  error = undefined,
   description,
   itemType,
   ...props
@@ -46,8 +46,7 @@ function ArrayInput({
           onChange={handleChange}
           autoComplete="off"
           error={!!error}
-          helperText={error || " "}
-          margin="dense"
+          helperText={error}
         />
       </FormControl>
     </FormInputWrapper>
@@ -62,11 +61,6 @@ ArrayInput.propTypes = {
   description: PropTypes.string.isRequired,
   error: PropTypes.string,
   itemType: PropTypes.string,
-};
-
-ArrayInput.defaultProps = {
-  value: [],
-  error: undefined,
 };
 
 export default ArrayInput;

@@ -1,66 +1,123 @@
-import io
-import json
+import hashlib
 import logging
-import os
-import shutil
-from typing import Any, Dict
+import time
+import zipfile
+from collections import OrderedDict
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any, Dict
 
 import pyarrow as pa
-import pyarrow.compute as pc
-import pyarrow.csv as csv
-import pyarrow.ipc as ipc
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.schemas import datasets_params as schemas
-from DashAI.back.core.enums.status import DatasetStatus
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    get_columns_spec,
-    get_dataset_info,
+from DashAI.back.api.api_v1.schemas.datasets_params import Dataset as DatasetSchema
+from DashAI.back.api.api_v1.schemas.datasets_params import (
+    DatasetColumnEncoderParams,
+    DatasetCreateParams,
+    DatasetRenameColumnParams,
+    DatasetUpdateParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, Experiment
+from DashAI.back.dependencies.database.models import Dataset, ModelSession
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm.session import sessionmaker
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# Server-side filtering and pagination
-@router.get("/filter/")
-async def filter_dataset_file(
+# ---------------------------------------------------------------------------
+# Cache for filtered + sorted PyArrow tables
+# ---------------------------------------------------------------------------
+_CACHE_MAX_SIZE = 20
+_CACHE_TTL_SECONDS = 300  # 5 minutes
+
+
+class _FilteredTableCache:
+    """LRU cache for filtered/sorted PyArrow tables with TTL eviction."""
+
+    def __init__(self, max_size: int = _CACHE_MAX_SIZE, ttl: int = _CACHE_TTL_SECONDS):
+        self._store: OrderedDict[str, tuple[float, pa.Table, int]] = OrderedDict()
+        self._max_size = max_size
+        self._ttl = ttl
+
+    @staticmethod
+    def _make_key(path: str, filter_model: str | None, sort_model: str | None) -> str:
+        raw = f"{path}|{filter_model or ''}|{sort_model or ''}"
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    def get(self, path: str, filter_model: str | None, sort_model: str | None):
+        key = self._make_key(path, filter_model, sort_model)
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        ts, table, total = entry
+        if time.time() - ts > self._ttl:
+            del self._store[key]
+            return None
+        self._store.move_to_end(key)
+        return table, total
+
+    def put(
+        self,
+        path: str,
+        filter_model: str | None,
+        sort_model: str | None,
+        table: pa.Table,
+        total: int,
+    ):
+        key = self._make_key(path, filter_model, sort_model)
+        self._store[key] = (time.time(), table, total)
+        self._store.move_to_end(key)
+        while len(self._store) > self._max_size:
+            self._store.popitem(last=False)
+
+    def invalidate(self):
+        """Invalidate all cache entries on dataset mutation."""
+        self._store.clear()
+
+
+_filtered_table_cache = _FilteredTableCache()
+
+
+def _load_and_filter_table(
     path: str,
-    page: int = 0,
-    page_size: int = 10,
-    filter_model: str = Query(None, alias="filterModel"),
-):
+    filter_model: str | None,
+    sort_model: str | None,
+) -> tuple[pa.Table, int, bool]:
+    """Load arrow file, apply filters and sorting.
+
+    Returns (table, total, was_filtered).
     """
-    Fetch filtered and paginated dataset rows based on the provided
-    filterModel from the frontend.
-    """
+
+    import json
+
+    import pyarrow as pa
+    import pyarrow.compute as pc
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+
     arrow_file_path = f"{path}/dataset/data.arrow"
-    rows = []
-    table = None
     with pa.memory_map(arrow_file_path, "r") as source:
         reader = ipc.RecordBatchFileReader(source)
         batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
         table = pa.Table.from_batches(batches)
 
-    # Parse filter_model if present
     filter_dict = None
     if filter_model:
-        logger.info(f"[FILTER DEBUG] filter_model param: {filter_model}")
         try:
             filter_dict = json.loads(filter_model)
-            logger.info(f"[FILTER DEBUG] filter_dict parsed: {filter_dict}")
-        except Exception as e:
-            logger.error(f"[FILTER DEBUG] Error parsing filter_model: {e}")
+        except Exception:
             filter_dict = None
 
-    # Apply filters if filter_model and items are provided
     if filter_dict and "items" in filter_dict:
         for item in filter_dict["items"]:
             col = item.get("field") or item.get("columnField")
@@ -90,8 +147,17 @@ async def filter_dataset_file(
                         return v
                     return v
 
-                if op == "contains" and val is not None:
-                    # Case-insensitive contains
+                if op == "equals" and val is not None:
+                    table = table.filter(pc.equal(table[col], cast_value(val)))
+                elif op == "lessThan" and val is not None:
+                    table = table.filter(pc.less(table[col], cast_value(val)))
+                elif op == "lessThanOrEqualTo" and val is not None:
+                    table = table.filter(pc.less_equal(table[col], cast_value(val)))
+                elif op == "greaterThan" and val is not None:
+                    table = table.filter(pc.greater(table[col], cast_value(val)))
+                elif op == "greaterThanOrEqualTo" and val is not None:
+                    table = table.filter(pc.greater_equal(table[col], cast_value(val)))
+                elif op == "contains" and val is not None:
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -99,7 +165,6 @@ async def filter_dataset_file(
                     mask = pc.match_substring(as_str, str(val).lower())
                     table = table.filter(mask)
                 elif op == "doesNotContain" and val is not None:
-                    # Case-insensitive doesNotContain
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -107,7 +172,6 @@ async def filter_dataset_file(
                     mask = pc.invert(pc.match_substring(as_str, str(val).lower()))
                     table = table.filter(mask)
                 elif op == "startsWith" and val is not None:
-                    # Case-insensitive startsWith
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
@@ -115,20 +179,11 @@ async def filter_dataset_file(
                     mask = pc.match_substring_regex(as_str, f"^{str(val).lower()}")
                     table = table.filter(mask)
                 elif op == "endsWith" and val is not None:
-                    # Case-insensitive endsWith
                     if not pa.types.is_string(col_type):
                         as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
                         as_str = pc.utf8_lower(table[col])
                     mask = pc.match_substring_regex(as_str, f"{str(val).lower()}$")
-                    table = table.filter(mask)
-                    table = table.filter(mask)
-                elif op == "endsWith" and val is not None:
-                    if not pa.types.is_string(col_type):
-                        as_str = pc.cast(table[col], pa.string())
-                        mask = pc.match_substring_regex(as_str, f"{val}$")
-                    else:
-                        mask = pc.match_substring_regex(table[col], f"{val}$")
                     table = table.filter(mask)
                 elif op == "isEmpty":
                     if pa.types.is_string(col_type):
@@ -152,35 +207,89 @@ async def filter_dataset_file(
                         else [v.strip() for v in str(val).split(",")]
                     )
                     casted_values = [cast_value(v) for v in values]
-                    mask = pc.in_list(table[col], pa.array(casted_values))
+                    mask = pc.is_in(table[col], value_set=pa.array(casted_values))
                     table = table.filter(mask)
+                elif (
+                    op == "between"
+                    and val is not None
+                    and isinstance(val, list)
+                    and len(val) == 2
+                ):
+                    min_val, max_val = val
+                    if min_val not in (None, ""):
+                        table = table.filter(
+                            pc.greater_equal(table[col], cast_value(min_val))
+                        )
+                    if max_val not in (None, ""):
+                        table = table.filter(
+                            pc.less_equal(table[col], cast_value(max_val))
+                        )
 
     filtered = (
         filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
     )
+
+    if sort_model:
+        try:
+            sort_list = json.loads(sort_model)
+            sort_keys = [
+                (item["id"], "descending" if item.get("desc") else "ascending")
+                for item in sort_list
+                if "id" in item
+            ]
+            if sort_keys:
+                table = table.sort_by(sort_keys)
+        except Exception as e:
+            logger.error("Error parsing sort_model: %s", e)
+
+    if filtered:
+        total = table.num_rows
+    else:
+        try:
+            total = get_dataset_info(f"{path}/dataset")["total_rows"]
+        except Exception:
+            total = table.num_rows
+
+    return table, total, bool(filtered)
+
+
+# Server-side filtering and pagination
+@router.get("/filter/")
+async def filter_dataset_file(
+    path: str,
+    page: int = 0,
+    page_size: int = 10,
+    filter_model: str = Query(None, alias="filterModel"),
+    sort_model: str = Query(None, alias="sortModel"),
+):
+    """
+    Fetch filtered and paginated dataset rows based on the provided
+    filterModel from the frontend. Uses an in-memory cache so that
+    pagination over the same filter+sort combination avoids re-reading
+    and re-filtering the Arrow file.
+    """
+    cached = _filtered_table_cache.get(path, filter_model, sort_model)
+    if cached is not None:
+        table, total = cached
+    else:
+        table, total, _ = _load_and_filter_table(path, filter_model, sort_model)
+        _filtered_table_cache.put(path, filter_model, sort_model, table, total)
+
     start = page * page_size
     paged_table = table.slice(start, page_size)
     rows = [
         {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
         for i in range(paged_table.num_rows)
     ]
-    if filtered:
-        total_for_pagination = table.num_rows
-    else:
-        try:
-            info = get_dataset_info(path)
-            total_for_pagination = info["total_rows"]
-        except Exception:
-            total_for_pagination = table.num_rows
 
-    return JSONResponse(content={"rows": rows, "total": total_for_pagination})
+    return JSONResponse(content={"rows": rows, "total": total})
 
 
-@router.post("/", response_model=schemas.Dataset, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=DatasetSchema, status_code=status.HTTP_201_CREATED)
 @inject
 async def create_dataset(
-    params: schemas.DatasetCreateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    params: DatasetCreateParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Create a new dataset entry in the database with NOT_STARTED status.
 
@@ -188,7 +297,7 @@ async def create_dataset(
     ----------
     params : DatasetCreateParams
         A schema containing the dataset creation parameters.
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
     Returns
@@ -235,13 +344,13 @@ async def create_dataset(
 @router.get("/")
 @inject
 async def get_datasets(
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve a list of the stored datasets in the database.
 
     Parameters
     ----------
-    session_factory : sessionmaker
+    session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
 
@@ -272,7 +381,7 @@ async def get_datasets(
 @inject
 async def get_dataset(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve the dataset associated with the provided ID.
 
@@ -314,7 +423,7 @@ async def get_dataset(
 @inject
 async def get_sample(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return a sample of 10 rows from the dataset with id dataset_id from the
     database.
@@ -326,12 +435,22 @@ async def get_sample(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     Dict
         A Dict with a sample of 10 rows
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -394,6 +513,11 @@ async def get_sample_by_file(
     Dict
         A Dict with a sample of 10 rows
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
     try:
         if not path:
             raise HTTPException(
@@ -445,6 +569,8 @@ async def get_info_by_file(
     JSON
         JSON with the specified dataset id.
     """
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+
     try:
         info = get_dataset_info(f"{path}/dataset")
     except exc.SQLAlchemyError as e:
@@ -460,7 +586,7 @@ async def get_info_by_file(
 @inject
 async def get_info(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return the dataset with id dataset_id from the database.
 
@@ -468,12 +594,18 @@ async def get_info(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     JSON
         JSON with the specified dataset id.
     """
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -499,24 +631,29 @@ async def get_info(
     return info
 
 
-@router.get("/{dataset_id}/experiments-exist")
+@router.get("/{dataset_id}/model-sessions-exist")
 @inject
-async def get_experiments_exist(
+async def get_model_sessions_exist(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Get a boolean indicating if there are experiments associated with the dataset.
+    """Get a boolean indicating if there are model sessions associated with the dataset.
 
     Parameters
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     bool
-        True if there are experiments associated with the dataset, False otherwise.
+        True if there are model sessions associated with the dataset, False otherwise.
     """
+    from DashAI.back.core.enums.status import DatasetStatus
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -532,13 +669,15 @@ async def get_experiments_exist(
                     detail="Dataset is not in finished state",
                 )
 
-            # Check if there are any experiments associated with the dataset
-            experiments_exist = (
-                db.query(Experiment).filter(Experiment.dataset_id == dataset_id).first()
+            # Check if there are any model sessions associated with the dataset
+            model_sessions_exist = (
+                db.query(ModelSession)
+                .filter(ModelSession.dataset_id == dataset_id)
+                .first()
                 is not None
             )
 
-            return experiments_exist
+            return model_sessions_exist
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -552,7 +691,7 @@ async def get_experiments_exist(
 @inject
 async def get_types(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Return the dataset with id dataset_id from the database.
 
@@ -560,12 +699,18 @@ async def get_types(
     ----------
     dataset_id : int
         id of the dataset to query.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
     Returns
     -------
     Dict
         Dict containing column names and types.
     """
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
@@ -611,6 +756,8 @@ async def get_types_by_file_path(
     Dict
         Dict containing column names and types.
     """
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
     try:
         if not path:
             raise HTTPException(
@@ -636,7 +783,7 @@ async def get_types_by_file_path(
 @inject
 async def copy_dataset(
     dataset: Dict[str, int],
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Copy an existing dataset to create a new one.
@@ -645,12 +792,22 @@ async def copy_dataset(
     ----------
     dataset_id : int
         ID of the dataset to copy.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+    config : Dict[str, Any]
+        A dictionary containing the application configuration, including the path
+        where datasets are stored.
 
     Returns
     -------
     Dataset
         The newly created dataset.
     """
+    import shutil
+
+    from DashAI.back.core.enums.status import DatasetStatus
+
     dataset_id = dataset["dataset_id"]
     logger.debug(f"Copying dataset with ID {dataset_id}.")
 
@@ -710,7 +867,7 @@ async def copy_dataset(
 @inject
 async def delete_dataset(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Delete the dataset associated with the provided ID from the database.
 
@@ -746,7 +903,11 @@ async def delete_dataset(
                 detail="Internal database error",
             ) from e
 
+    _filtered_table_cache.invalidate()
+
     try:
+        import shutil
+
         shutil.rmtree(dataset.file_path, ignore_errors=True)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -762,9 +923,8 @@ async def delete_dataset(
 @inject
 async def update_dataset(
     dataset_id: int,
-    params: schemas.DatasetUpdateParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: Dict[str, Any] = Depends(lambda: di["config"]),
+    params: DatasetUpdateParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Updates the name of a dataset with the provided ID.
 
@@ -832,6 +992,340 @@ async def update_dataset(
             ) from e
 
 
+@router.patch("/{dataset_id}/columns/rename")
+@inject
+async def rename_dataset_column(
+    dataset_id: int,
+    params: DatasetRenameColumnParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Rename a column in a dataset.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to update.
+    params : DatasetRenameColumnParams
+        Parameters containing old_name and new_name for the column.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Dict
+        A dictionary with a success message and updated column types.
+    """
+    import json
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
+    with session_factory() as db:
+        dataset = db.get(Dataset, dataset_id)
+        if dataset is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+
+        if dataset.status != DatasetStatus.FINISHED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Dataset is not in finished state or being modified",
+            )
+
+        # Lock the dataset to prevent concurrent modifications
+        try:
+            dataset.set_status_as_started()
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error locking dataset for modification",
+            ) from e
+
+        old_name = params.old_name.strip()
+        new_name = params.new_name.strip()
+        if not old_name or not new_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Column names cannot be empty",
+            )
+        if old_name == new_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="New column name must be different from old name",
+            )
+
+        dataset_path = f"{dataset.file_path}/dataset"
+        arrow_file_path = f"{dataset_path}/data.arrow"
+        try:
+            from DashAI.back.types.utils import (
+                get_types_from_arrow_metadata,
+                save_types_in_arrow_metadata,
+            )
+
+            with pa.OSFile(arrow_file_path, "rb") as source:
+                reader = ipc.open_file(source)
+                table = reader.read_all()
+            if old_name not in table.schema.names:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Column '{old_name}' not found in dataset",
+                )
+            if new_name in table.schema.names and new_name != old_name:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Column '{new_name}' already exists",
+                )
+
+            column_index = table.schema.get_field_index(old_name)
+            types_dict = get_types_from_arrow_metadata(table.schema)
+            new_fields = []
+            for i, field in enumerate(table.schema):
+                if i == column_index:
+                    new_fields.append(pa.field(new_name, field.type, field.nullable))
+                else:
+                    new_fields.append(field)
+
+            new_schema = pa.schema(new_fields)
+
+            renamed_table = pa.table(
+                {
+                    new_name if name == old_name else name: table[name]
+                    for name in table.schema.names
+                },
+                schema=new_schema,
+            )
+            if old_name in types_dict:
+                types_dict[new_name] = types_dict.pop(old_name)
+
+            types_serialized = {col: types_dict[col].to_string() for col in types_dict}
+            renamed_table = save_types_in_arrow_metadata(
+                renamed_table, types_serialized
+            )
+
+            with pa.OSFile(arrow_file_path, "wb") as sink:
+                writer = ipc.new_file(sink, renamed_table.schema)
+                writer.write_table(renamed_table)
+                writer.close()
+
+            _filtered_table_cache.invalidate()
+
+            splits_path = f"{dataset_path}/splits.json"
+            if os.path.exists(splits_path):
+                with open(splits_path, "r", encoding="utf-8") as f:
+                    splits_data = json.load(f)
+                # Update column_names in split file
+                splits_data["column_names"] = [
+                    new_name if name == old_name else name
+                    for name in splits_data["column_names"]
+                ]
+                # Update nan entries
+                splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
+
+                # Update general info
+                splits_data["general_info"]["dtypes"][new_name] = splits_data[
+                    "general_info"
+                ]["dtypes"].pop(old_name)
+
+                # Update quality info nan per ratio
+                splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
+                    splits_data["quality_info"]["nan_ratio_per_column"].pop(old_name)
+                )
+
+                # Update numeric_stats if column is numerical
+                if old_name in splits_data["numeric_stats"]:
+                    splits_data["numeric_stats"][new_name] = splits_data[
+                        "numeric_stats"
+                    ].pop(old_name)
+
+                    # Update correlations
+                    if "correlations" in splits_data:
+                        correlations = splits_data["correlations"]
+
+                        # Rename the main key if needed
+                        if old_name in correlations:
+                            correlations[new_name] = correlations.pop(old_name)
+
+                        # Rename inner keys
+                        for _, corr_values in correlations.items():
+                            if old_name in corr_values:
+                                corr_values[new_name] = corr_values.pop(old_name)
+
+                # Update categorical_stats columns if column is categorical
+                elif old_name in splits_data.get("categorical_stats", {}):
+                    splits_data["categorical_stats"][new_name] = splits_data[
+                        "categorical_stats"
+                    ].pop(old_name)
+
+                # Update text_stats columns if column is textual
+                elif old_name in splits_data.get("text_stats", {}):
+                    splits_data["text_stats"][new_name] = splits_data["text_stats"].pop(
+                        old_name
+                    )
+
+                with open(splits_path, "w", encoding="utf-8") as f:
+                    json.dump(
+                        splits_data,
+                        f,
+                        indent=2,
+                        sort_keys=True,
+                        ensure_ascii=False,
+                    )
+
+            dataset.last_modified = datetime.now(timezone.utc)
+            dataset.set_status_as_finished()
+            db.commit()
+            db.refresh(dataset)
+            updated_columns = get_columns_spec(dataset_path)
+            return {
+                "message": f"Column '{old_name}' renamed to '{new_name}' successfully",
+                "old_name": old_name,
+                "new_name": new_name,
+                "columns": updated_columns,
+            }
+        except HTTPException:
+            # Release the lock before re-raising
+            dataset.set_status_as_finished()
+            db.commit()
+            raise
+        except Exception as e:
+            # Release the lock and mark as finished on error
+            dataset.set_status_as_finished()
+            db.commit()
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error renaming column: {str(e)}",
+            ) from e
+
+
+@router.patch("/{dataset_id}/columns/{column_name}/encoder")
+@inject
+async def update_column_encoder(
+    dataset_id: int,
+    column_name: str,
+    params: DatasetColumnEncoderParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Update the encoder preference for a single Categorical column.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to update.
+    column_name : str
+        Name of the column to update.
+    params : DatasetColumnEncoderParams
+        Parameters containing the new encoder value.
+
+    Returns
+    -------
+    Dict
+        Updated column types dict (same shape as GET /types).
+    """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+    from DashAI.back.types.categorical import Categorical
+    from DashAI.back.types.utils import (
+        get_types_from_arrow_metadata,
+        save_types_in_arrow_metadata,
+    )
+
+    with session_factory() as db:
+        dataset = db.get(Dataset, dataset_id)
+        if dataset is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+
+        if dataset.status != DatasetStatus.FINISHED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Dataset is not in finished state",
+            )
+
+        try:
+            dataset.set_status_as_started()
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error locking dataset for modification",
+            ) from e
+
+        data_filepath = os.path.join(dataset.file_path, "dataset", "data.arrow")
+
+        try:
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = pa.ipc.open_file(source)
+                table = reader.read_all()
+                schema = reader.schema
+
+            if column_name not in table.schema.names:
+                dataset.set_status_as_finished()
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Column '{column_name}' not found in dataset",
+                )
+
+            types_dict = get_types_from_arrow_metadata(schema)
+
+            col_type = types_dict.get(column_name)
+            if not isinstance(col_type, Categorical):
+                dataset.set_status_as_finished()
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Column '{column_name}' is not a Categorical column",
+                )
+
+            col_type.encoder = params.encoder
+            types_serialized = {col: t.to_string() for col, t in types_dict.items()}
+
+            updated_table = save_types_in_arrow_metadata(table, types_serialized)
+            sink = pa.BufferOutputStream()
+            with ipc.new_file(sink, updated_table.schema) as writer:
+                writer.write_table(updated_table)
+
+            with open(data_filepath, "wb") as f:
+                f.write(sink.getvalue().to_pybytes())
+
+            dataset.set_status_as_finished()
+            db.commit()
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.exception(e)
+            try:
+                dataset.set_status_as_finished()
+                db.commit()
+            except Exception:
+                pass
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error updating encoder: {str(e)}",
+            ) from e
+
+        dataset_file_path = dataset.file_path
+
+    return get_columns_spec(os.path.join(dataset_file_path, "dataset"))
+
+
 @router.get("/file/")
 async def get_dataset_file(
     path: str,
@@ -854,6 +1348,10 @@ async def get_dataset_file(
     JSONResponse
         A JSON response containing the dataset rows and total row count.
     """
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
     arrow_file_path = f"{path}/dataset/data.arrow"
     rows = []
@@ -916,6 +1414,12 @@ async def export_dataset_as_csv(
     StreamingResponse
         A streaming response with the complete dataset in CSV format.
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.csv as csv
+    import pyarrow.ipc as ipc
+
     try:
         arrow_file_path = f"{path}/dataset/data.arrow"
 
@@ -927,6 +1431,8 @@ async def export_dataset_as_csv(
 
         # Read the complete Arrow file
         with pa.memory_map(arrow_file_path, "r") as source:
+            import io
+
             reader = ipc.RecordBatchFileReader(source)
 
             # Read all batches and combine them into a single table
@@ -975,7 +1481,7 @@ async def export_dataset_as_csv(
 @inject
 async def export_dataset_csv_by_id(
     dataset_id: int,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Export the entire dataset as a CSV file by dataset ID.
 
@@ -992,6 +1498,14 @@ async def export_dataset_csv_by_id(
     StreamingResponse
         A streaming response that provides the CSV file content.
     """
+    import os
+
+    import pyarrow as pa
+    import pyarrow.csv as csv
+    import pyarrow.ipc as ipc
+
+    from DashAI.back.core.enums.status import DatasetStatus
+
     logger.debug("Exporting dataset with id %s to CSV", dataset_id)
     with session_factory() as db:
         try:
@@ -1019,6 +1533,8 @@ async def export_dataset_csv_by_id(
 
             # Read the complete Arrow file
             with pa.memory_map(arrow_file_path, "r") as source:
+                import io
+
                 reader = ipc.RecordBatchFileReader(source)
 
                 # Read all batches and combine them into a single table
@@ -1061,3 +1577,266 @@ async def export_dataset_csv_by_id(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error exporting dataset as CSV",
             ) from e
+
+
+@router.post("/preview_with_types")
+@inject
+async def preview_with_types(
+    file: UploadFile = File(...),
+    params: str = Form(None),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """
+    Load preview AND infer types in a single call.
+
+    Parameters
+    ----------
+    file : UploadFile
+        The file uploaded by the user.
+    params : str
+        JSON string with parameters for the dataloader.
+    component_registry: ComponentRegistry
+        Registry that provides metadata and class references for the
+        components available in DashAI.
+
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - sample: First 10 rows of the dataset
+        - schema: Column types from Arrow
+        - inferred_types: Detailed type inference (DashAI types)
+        - preview_row_count: Number of rows used for inference
+    """
+    import contextlib
+    import json
+    import os
+    import shutil
+    import tempfile
+
+    import numpy as np
+    import pyarrow as pa
+
+    from DashAI.back.types.inf.type_inference import infer_types
+    from DashAI.back.types.utils import arrow_to_dashai_schema
+
+    try:
+        parsed_params = json.loads(params) if params else {}
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file.filename
+        ) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+
+        try:
+            inference_rows = parsed_params.get("inference_rows", 1000)
+            if file.filename.endswith(".zip"):
+                extract_dir = tempfile.mkdtemp()
+                try:
+                    with zipfile.ZipFile(tmp_file_path, "r") as zf:
+                        zf.extractall(extract_dir)
+
+                    supported_map = {
+                        ".csv": "CSVDataLoader",
+                        ".json": "JSONDataLoader",
+                        ".xlsx": "ExcelDataLoader",
+                        ".xls": "ExcelDataLoader",
+                    }
+                    dataloader_name = None
+                    matched_file = None
+                    for root, _, files in os.walk(extract_dir):
+                        for f in files:
+                            ext = os.path.splitext(f)[1].lower()
+                            if ext in supported_map:
+                                dataloader_name = supported_map[ext]
+                                matched_file = os.path.join(root, f)
+                                break
+                        if dataloader_name:
+                            break
+
+                    if dataloader_name is None:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=(
+                                "ZIP file does not contain any supported dataset files."
+                                "Supported inner files: .csv, .json, .xlsx, .xls"
+                            ),
+                        )
+
+                    if dataloader_name not in component_registry:
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=(
+                                f"Dataloader {dataloader_name} not found in registry."
+                            ),
+                        )
+
+                    dataloader = component_registry[dataloader_name]["class"]()
+
+                    if (
+                        dataloader_name == "CSVDataLoader"
+                        and "separator" not in parsed_params
+                    ):
+                        parsed_params["separator"] = ","
+                    if (
+                        dataloader_name == "JSONDataLoader"
+                        and "data_key" not in parsed_params
+                    ):
+                        parsed_params["data_key"] = None
+
+                    # load_preview using the matched inner file path
+                    loaded_dataset = dataloader.load_preview(
+                        filepath_or_buffer=matched_file,
+                        params=parsed_params,
+                        n_rows=inference_rows,
+                    )
+
+                finally:
+                    # cleanup extracted dir
+                    with contextlib.suppress(Exception):
+                        shutil.rmtree(extract_dir, ignore_errors=True)
+
+            else:
+                if file.filename.endswith(".csv"):
+                    dataloader_name = "CSVDataLoader"
+                    if "separator" not in parsed_params:
+                        parsed_params["separator"] = ","
+
+                elif file.filename.endswith(".xlsx") or file.filename.endswith(".xls"):
+                    dataloader_name = "ExcelDataLoader"
+
+                elif file.filename.endswith(".json"):
+                    dataloader_name = "JSONDataLoader"
+                    if "data_key" not in parsed_params:
+                        parsed_params["data_key"] = None
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Unsupported file type. Only CSV, Excel and JSON files are "
+                            "supported."
+                        ),
+                    )
+
+                if dataloader_name not in component_registry:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Dataloader {dataloader_name} not found in registry.",
+                    )
+
+                dataloader = component_registry[dataloader_name]["class"]()
+
+                loaded_dataset = dataloader.load_preview(
+                    filepath_or_buffer=tmp_file_path,
+                    params=parsed_params,
+                    n_rows=inference_rows,
+                )
+
+            sample_df = loaded_dataset.head(100)
+
+            table = pa.Table.from_pandas(loaded_dataset)
+            arrow_schema = arrow_to_dashai_schema(table)
+
+            methods = parsed_params.get("methods", ["DashAIPtype"])
+            inferred_types = {}
+
+            for method in methods:
+                method_types = infer_types(loaded_dataset, method=method)
+                inferred_types.update(method_types)
+
+            sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
+            sample = sample_df.to_dict(orient="records")
+
+            return {
+                "sample": sample,
+                "schema": arrow_schema,
+                "inferred_types": inferred_types,
+                "preview_row_count": len(loaded_dataset),
+            }
+
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load preview with types: {str(e)}",
+        ) from e
+
+
+@router.post("/validate_type_changes")
+@inject
+async def validate_type_changes(
+    file: UploadFile = File(...),
+    type_changes: str = Form(...),
+    params: str = Form(None),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """
+    Validate proposed type changes for dataset columns.
+    """
+    import json
+    import os
+    import tempfile
+
+    from DashAI.back.types.type_validation import validate_multiple_type_changes
+
+    try:
+        parsed_params = json.loads(params) if params else {}
+        parsed_type_changes = json.loads(type_changes)
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file.filename
+        ) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+
+        try:
+            if file.filename.endswith(".csv"):
+                dataloader_name = "CSVDataLoader"
+            elif file.filename.endswith((".xlsx", ".xls")):
+                dataloader_name = "ExcelDataLoader"
+            elif file.filename.endswith(".json"):
+                dataloader_name = "JSONDataLoader"
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Unsupported file type",
+                )
+
+            if dataloader_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Dataloader {dataloader_name} not found",
+                )
+
+            dataloader = component_registry[dataloader_name]["class"]()
+
+            sample_df = dataloader.load_preview(
+                filepath_or_buffer=tmp_file_path, params=parsed_params, n_rows=1000
+            )
+
+            all_valid, errors = validate_multiple_type_changes(
+                sample_df, parsed_type_changes
+            )
+
+            return {
+                "valid": all_valid,
+                "errors": errors,
+            }
+
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to validate type changes: {str(e)}",
+        ) from e

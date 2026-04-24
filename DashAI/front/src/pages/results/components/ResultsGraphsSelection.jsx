@@ -1,50 +1,46 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Button } from "@mui/material";
+import {
+  Box,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
+  const { t } = useTranslation(["models"]);
+  const theme = useTheme();
+
   return (
-    <Box p={2} mb={2}>
-      <Button
-        variant="text"
-        color={selectedChart === "radar" ? "primary" : "inherit"}
-        onClick={() => handleChangeChart("radar")}
-        style={{
-          borderBottom:
-            selectedChart === "radar"
-              ? "2px solid #00bebb"
-              : "2px solid #ffffff",
-          marginRight: "30px",
-          marginTop: "-15px",
-        }}
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={2}
+      px={2}
+      py={1}
+      sx={{ borderBottom: `1px solid ${theme.palette.ui.border}` }}
+    >
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ fontWeight: 600, letterSpacing: 0.5 }}
       >
-        Radar
-      </Button>
-      <Button
-        variant="text"
-        color={selectedChart === "bar" ? "primary" : "inherit"}
-        onClick={() => handleChangeChart("bar")}
-        style={{
-          borderBottom:
-            selectedChart === "bar" ? "2px solid #00bebb" : "2px solid #ffffff",
-          marginTop: "-15px",
+        {t("models:label.chartType", "Chart type")}
+      </Typography>
+
+      <ToggleButtonGroup
+        exclusive
+        value={selectedChart}
+        onChange={(_, v) => {
+          if (v) handleChangeChart(v);
         }}
+        size="small"
       >
-        Bar
-      </Button>
-      {/* <Button
-        variant="text"
-        color={selectedChart === "pie" ? "primary" : "inherit"}
-        onClick={() => handleChangeChart("pie")}
-        style={{
-          borderBottom:
-            selectedChart === "pie" ? "2px solid #00bebb" : "2px solid #ffffff",
-          marginLeft: "30px",
-          marginTop: "-15px",
-        }}
-      >
-        Pie
-      </Button> */}
+        <ToggleButton value="bar">{t("models:label.bar")}</ToggleButton>
+        <ToggleButton value="heatmap">{t("models:label.heatmap")}</ToggleButton>
+      </ToggleButtonGroup>
     </Box>
   );
 }

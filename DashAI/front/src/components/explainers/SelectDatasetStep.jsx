@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -9,9 +9,16 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 
 import {
   getDatasets as getDatasetsRequest,
@@ -19,36 +26,10 @@ import {
 } from "../../api/datasets";
 import { validateDataset as validateDatasetRequest } from "../../api/explainer";
 import { getRunById } from "../../api/run";
-import { getExperimentById } from "../../api/experiment";
+import { getModelSessionById } from "../../api/modelSession";
 import { formatDate } from "../../utils";
 import { SplitSelector } from "./SplitSelector";
 import NoteBox from "../notebooks/NoteBox";
-
-const columns = [
-  {
-    field: "name",
-    headerName: "Name",
-    minWidth: 250,
-    editable: false,
-  },
-  {
-    field: "created",
-    headerName: "Created",
-    minWidth: 200,
-    type: Date,
-    valueGetter: (value) => formatDate(value),
-
-    editable: false,
-  },
-  {
-    field: "last_modified",
-    headerName: "Last modified",
-    minWidth: 200,
-    type: Date,
-    valueGetter: (value) => formatDate(value),
-    editable: false,
-  },
-];
 
 export default function SelectDatasetStep({
   newExpl,
@@ -58,7 +39,6 @@ export default function SelectDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [datasets, setDatasets] = useState([]);
-  const [rowSelectedDataset, setRowSelectedDataset] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(false);
   const [isValidDataset, setIsValidDataset] = useState(false);
   const [requestError, setRequestError] = useState(false);
@@ -69,6 +49,31 @@ export default function SelectDatasetStep({
     validation: 0,
     all: 1,
   });
+  const { t, i18n } = useTranslation(["explainers", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        accessorKey: "created",
+        header: "Created",
+        Cell: ({ cell }) => formatDate(cell.getValue()),
+      },
+      {
+        accessorKey: "last_modified",
+        header: "Last modified",
+        Cell: ({ cell }) => formatDate(cell.getValue()),
+      },
+    ],
+    [],
+  );
 
   const getDatasets = async () => {
     setLoading(true);
@@ -76,7 +81,9 @@ export default function SelectDatasetStep({
       const datasets = await getDatasetsRequest();
       setDatasets(datasets);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the datasets list.");
+      enqueueSnackbar(t("explainers:error.fetchDatasets"), {
+        variant: "error",
+      });
       setRequestError(true);
       if (error.response) {
         console.error("Response error:", error.message);
@@ -98,10 +105,14 @@ export default function SelectDatasetStep({
       );
       setIsValidDataset(validation.dataset_status === "valid");
       if (validation.dataset_status === "invalid") {
-        enqueueSnackbar("The selected dataset is not valid.");
+        enqueueSnackbar(t("explainers:error.invalidDataset"), {
+          variant: "error",
+        });
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to validate the selected dataset.");
+      enqueueSnackbar(t("explainers:error.validateDataset"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -136,7 +147,7 @@ export default function SelectDatasetStep({
     if (newExpl.run_id) {
       try {
         const run = await getRunById(newExpl.run_id);
-        const experiment = await getExperimentById(run.experiment_id);
+        const experiment = await getModelSessionById(run.model_session_id);
         const splitsExperiment = JSON.parse(experiment.splits);
         setSplits((prev) => ({
           ...prev,
@@ -154,15 +165,41 @@ export default function SelectDatasetStep({
     getRuninfo();
   }, [newExpl.run_id]);
 
-  useEffect(() => {
-    if (rowSelectedDataset.length > 0) {
-      const selectedDatasetId = rowSelectedDataset[0];
-      const dataset = datasets.find(
-        (dataset) => dataset.id === selectedDatasetId,
-      );
-      setSelectedDatasetId(dataset.id);
-    }
-  }, [rowSelectedDataset]);
+  const handleRowClick = (row) => {
+    setSelectedDatasetId(row.original.id);
+  };
+
+  const datasetsTable = useMaterialReactTable({
+    columns,
+    data: datasets,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    enableRowSelection: false,
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => handleRowClick(row),
+      sx: {
+        cursor: "pointer",
+        ...(row.original.id === selectedDatasetId && {
+          backgroundColor: theme.palette.accent.amberDim,
+          borderLeft: `3px solid ${theme.palette.primary.main}`,
+          "&:hover td": {
+            backgroundColor: "transparent",
+          },
+        }),
+      },
+    }),
+    state: { isLoading: loading },
+    enableGlobalFilter: false,
+    enableColumnFilters: false,
+    enableSorting: true,
+    enablePagination: true,
+    enableTopToolbar: false,
+    muiPaginationProps: { showRowsPerPage: false },
+    initialState: {
+      pagination: { pageSize: 10, pageIndex: 0 },
+      density: "compact",
+    },
+    localization,
+  });
 
   useEffect(() => {
     if (selectedDatasetId) {
@@ -193,7 +230,7 @@ export default function SelectDatasetStep({
         sx={{ mb: 4 }}
       >
         <Typography variant="subtitle1" component="h3">
-          Select a dataset with instances to explain
+          {t("explainers:label.selectDatasetToExplain")}
         </Typography>
       </Grid>
 
@@ -202,37 +239,19 @@ export default function SelectDatasetStep({
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            <AlertTitle>There is no datasets available.</AlertTitle>
-            Go to{" "}
-            <Link component={RouterLink} to="/app/data">
-              data tab
-            </Link>{" "}
-            to upload one first.
+            <Trans i18nKey="explainers:label.noDatasetsAvailable">
+              <AlertTitle>There are no datasets available.</AlertTitle>
+              Go to
+              <Link component={RouterLink} to="/app/data?action=upload">
+                data tab
+              </Link>
+              to upload one first.
+            </Trans>
           </Alert>
-          <Typography></Typography>
         </React.Fragment>
       )}
       <Paper>
-        <DataGrid
-          rows={datasets}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
-              },
-            },
-          }}
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setRowSelectedDataset(newRowSelectionModel);
-          }}
-          rowSelectionModel={rowSelectedDataset}
-          density="compact"
-          pageSizeOptions={[10]}
-          loading={loading}
-          autoHeight
-          hideFooterSelectedRowCount
-        />
+        <MaterialReactTable table={datasetsTable} />
       </Paper>
 
       {selectedDatasetId && isValidDataset && (
@@ -244,11 +263,7 @@ export default function SelectDatasetStep({
               setNewExpl((prevExpl) => ({ ...prevExpl, scope }));
             }}
           />
-          <NoteBox
-            message={
-              "The dataset selected here will be used to compute the explanations. If you chose the same dataset that was used to train the model, you may want to use a sample of your test set instead. Keep in mind that some explainers can take a long time to generate explanations, depending on the number of instances selected."
-            }
-          />
+          <NoteBox message={t("explainers:label.datasetSelection")} />
         </>
       )}
     </React.Fragment>

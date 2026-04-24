@@ -9,6 +9,7 @@ import {
   generateYupSchema,
 } from "../../utils/schema";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component is a select input for the models of a parent model
@@ -20,6 +21,7 @@ import PropTypes from "prop-types";
 function FormSchemaModelSelect({ parent, selectedModel, onChange }) {
   const { models } = useModelParents({ parent });
   const { handleUpdateSchema } = useFormSchemaStore();
+  const { t } = useTranslation(["common"]);
 
   if (!models || !selectedModel) {
     return null;
@@ -40,12 +42,12 @@ function FormSchemaModelSelect({ parent, selectedModel, onChange }) {
     <FormControl sx={{ width: "auto" }}>
       <Input
         select
-        label="Select a model"
+        label={t("common:selectModel")}
         value={selectedModel}
         onChange={handleOnChange}
       >
-        {models?.map((model, index) => (
-          <MenuItem key={index} value={model.name}>
+        {models?.map((model) => (
+          <MenuItem key={model.name} value={model.name}>
             {model.name}
           </MenuItem>
         ))}

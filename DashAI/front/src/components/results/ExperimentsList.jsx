@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Typography, Divider } from "@mui/material";
-import { getExperiments as getExperimentsRequest } from "../../api/experiment";
+import { getModelSessions as getModelSessionsRequest } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
 import ItemSelector from "../custom/ItemSelector";
 
@@ -31,7 +31,7 @@ function ExperimentsList() {
   const getExperiments = async () => {
     setLoading(true);
     try {
-      const experiments = await getExperimentsRequest();
+      const experiments = await getModelSessionsRequest();
       setExperiments(experiments);
       // if there is an id in the url, then initially selects the experiment that corresponds to that id
       if (id !== undefined) {

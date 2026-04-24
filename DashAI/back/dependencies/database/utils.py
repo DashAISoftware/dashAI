@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 
 from fastapi import Depends
 from kink import di, inject
@@ -195,7 +197,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
     from kink import di
 
     from DashAI.back.dependencies.database.models import (
-        ConverterList,
+        Converter,
         Dataset,
         Explorer,
         GlobalExplainer,
@@ -263,16 +265,34 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "last_modified": local_explainer.last_modified,
             }
 
-        converter_list = (
-            db.query(ConverterList).filter(ConverterList.huey_id == huey_id).first()
-        )
-        if converter_list:
+        converter = db.query(Converter).filter(Converter.huey_id == huey_id).first()
+        if converter:
             return {
                 "entity_type": "converter",
-                "entity_id": converter_list.id,
-                "entity_name": converter_list.name,
-                "created_at": converter_list.created,
-                "last_modified": converter_list.last_modified,
+                "entity_id": converter.id,
+                "entity_name": converter.name,
+                "created_at": converter.created,
+                "last_modified": converter.last_modified,
             }
 
         return None
+
+
+def resolve_db_url(sqlite_file_path: Path) -> str:
+    """
+    Resolve database URL with the same priority as alembic:
+      1) env var DATABASE_URL
+      2) fallback to provided sqlite file path
+
+    This is mainly to use in tests, where we set the env var to a temp path.
+    """
+    # 1) environment variable
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+
+    if not str(sqlite_file_path).startswith("sqlite:///"):
+        return f"sqlite:///{sqlite_file_path}"
+
+    # 2) fallback to provided sqlite file path
+    return sqlite_file_path

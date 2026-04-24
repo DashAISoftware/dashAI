@@ -21,6 +21,8 @@ import {
   getSchema as getSchemaRequest,
 } from "../../../api/oldEndpoints";
 import { getComponents as getComponentsRequest } from "../../../api/component";
+import { useTranslation } from "react-i18next";
+
 /**
  * This component handles the case when a field in a form is itself another form (recursive parameter).
  * It allows the user to choose configurable objects of a specific class (indicated in the parent form's JSON)
@@ -35,7 +37,7 @@ function ClassInput({
   name,
   paramJsonSchema,
   setFieldValue,
-  formDefaultValues,
+  formDefaultValues = { emptyDefaultValues: true },
 }) {
   const modal = true;
   const [options, setOptions] = useState([]);
@@ -46,6 +48,7 @@ function ClassInput({
   const [paramSchema, setParamSchema] = useState({});
   const [defaultValues, setDefaultValues] = useState(formDefaultValues);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation(["common"]);
 
   const getOptions = async (parentClass) => {
     try {
@@ -177,7 +180,7 @@ function ClassInput({
 
         <DialogActions>
           <Button variant="outlined" onClick={handleClose} autoFocus>
-            Save
+            {t("common:save")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -199,10 +202,6 @@ ClassInput.propTypes = {
       PropTypes.object,
     ]),
   ),
-};
-
-ClassInput.defaultProps = {
-  formDefaultValues: { emptyDefaultValues: true },
 };
 
 export default ClassInput;

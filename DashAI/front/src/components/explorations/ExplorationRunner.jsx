@@ -2,7 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Box, ButtonGroup, Paper, Typography } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 
 import {
   PlayArrow as PlayArrowIcon,
@@ -18,6 +24,7 @@ import { getExplorersByExplorationId as getExplorersRequest } from "../../api/ex
 import { useExplorationsContext } from "./context";
 
 import { formatDate } from "../../utils";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component to run explorers from an exploration. It uses context to get the exploration data.
@@ -32,12 +39,27 @@ function ExplorationRunner({
   const { enqueueSnackbar } = useSnackbar();
   const { explorationData } = useExplorationsContext();
   const { id: explorationId, explorers } = explorationData;
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState(explorers);
-  const [rowSelectionModel, setRowSelectionModel] = useState(
-    explorers.map((explorer) => explorer.id),
+
+  const toMRT = (ids) =>
+    Object.fromEntries(ids.map((id) => [String(id), true]));
+  const fromMRT = (sel) =>
+    Object.keys(sel)
+      .filter((k) => sel[k])
+      .map(Number);
+
+  const [rowSelection, setRowSelection] = useState(
+    toMRT(explorers.map((explorer) => explorer.id)),
   ); // Select all explorers by default
+
+  const rowSelectionModel = fromMRT(rowSelection);
 
   const [explorerTypes, setExplorerTypes] = useState([]);
   const getExplorerTypes = () => {
@@ -79,7 +101,6 @@ function ExplorationRunner({
         getExplorers();
       })
       .catch((error) => {
-        console.log(error);
         enqueueSnackbar("Error while trying to start explorers", {
           variant: "error",
         });
@@ -93,7 +114,6 @@ function ExplorationRunner({
         setRows(explorers);
       })
       .catch((error) => {
-        console.log(error);
         enqueueSnackbar("Error while trying to fetch explorers", {
           variant: "error",
         });
@@ -145,50 +165,66 @@ function ExplorationRunner({
   const columns = useMemo(
     () => [
       {
-        field: "id",
-        headerName: "ID",
+        accessorKey: "id",
+        header: "ID",
       },
       {
-        field: "name",
-        headerName: "Name",
-        flex: 1,
+        accessorKey: "name",
+        header: "Name",
       },
       {
-        field: "type_display_name",
-        headerName: "Type",
-        minWidth: 200,
-        valueGetter: (params) => {
+        id: "type_display_name",
+        header: "Type",
+        accessorFn: (row) => {
           const explorerType = explorerTypes.find(
-            (explorer) => explorer.name === params.row.exploration_type,
+            (explorer) => explorer.name === row.exploration_type,
           );
           return explorerType?.metadata.display_name;
         },
       },
       {
-        field: "exploration_type",
-        headerName: "Component Name",
-        flex: 1,
+        accessorKey: "exploration_type",
+        header: "Component Name",
       },
       {
-        field: "status",
-        headerName: "Status Value",
-        flex: 1,
+        accessorKey: "status",
+        header: "Status Value",
       },
       {
-        field: "status_display",
-        headerName: "Status",
-        flex: 1,
-        valueGetter: (params) => ExplorerStatus[params.row.status],
+        id: "status_display",
+        header: "Status",
+        accessorFn: (row) => ExplorerStatus[row.status],
       },
       {
-        field: "last_modified",
-        headerName: "Last Modified",
-        flex: 1,
-        valueGetter: (value) => formatDate(value),
+        id: "last_modified",
+        header: "Last Modified",
+        accessorFn: (row) => formatDate(row.last_modified),
       },
     ],
     [explorerTypes],
   );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: rows,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: {
+      density: "compact",
+      columnVisibility: {
+        id: false,
+        exploration_type: false,
+        status: false,
+      },
+      sorting: [{ id: "last_modified", desc: true }],
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    state: { rowSelection, isLoading: loading },
+    getRowId: (row) => String(row.id),
+  });
 
   return (
     <Box
@@ -211,56 +247,7 @@ function ExplorationRunner({
         <Typography variant="subtitle1" component="h3" sx={{ pb: 1 }}>
           Select explorers to run
         </Typography>
-        <DataGrid
-          autoHeight
-          loading={loading}
-          rows={rows}
-          columns={columns}
-          checkboxSelection
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setRowSelectionModel(newRowSelectionModel);
-          }}
-          rowSelectionModel={rowSelectionModel}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 5,
-              },
-            },
-            columns: {
-              columnVisibilityModel: {
-                id: false,
-                exploration_type: false,
-                status: false,
-              },
-            },
-            sorting: {
-              sortModel: [
-                {
-                  field: "last_modified",
-                  sort: "desc",
-                },
-              ],
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          disableRowSelectionOnClick
-          slots={{
-            toolbar: GridToolbar,
-          }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              csvOptions: {
-                disableToolbarButton: true,
-              },
-              printOptions: {
-                disableToolbarButton: true,
-              },
-            },
-          }}
-          density="compact"
-        />
+        <MaterialReactTable table={table} />
       </Paper>
 
       <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>

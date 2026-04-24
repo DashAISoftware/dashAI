@@ -1,36 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Chip, Stack } from "@mui/material";
-import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
+import { Box, Typography } from "@mui/material";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
-
-const columns = [
-  {
-    field: "id",
-    headerName: "Index",
-  },
-  {
-    field: "columnName",
-    headerName: "Column Name",
-    flex: 1,
-  },
-  {
-    field: "valueType",
-    headerName: "Value Type",
-    flex: 0.5,
-  },
-  {
-    field: "dataType",
-    headerName: "Data Type",
-    flex: 0.5,
-  },
-  {
-    field: "order",
-    headerName: "Selected Order",
-    type: "number",
-    flex: 0.5,
-  },
-];
+import { Trans, useTranslation } from "react-i18next";
 
 /**
  * Generic column selection component that can be reused across the application
@@ -49,8 +28,8 @@ const columns = [
  * @param {Object} props
  * @param {Array} props.file_path - String path to the dataset file
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
- * @param {Array} props.allowedDtypes - Array of allowed data types (optional)
- * @param {Array} props.restrictedDtypes - Array of restricted data types (optional)
+ * @param {Array} props.allowedDtypes - Array of allowed dtype strings (optional)
+ * @param {Array} props.allowedTypes - Array of allowed semantic type names (optional)
  * @param {Function} props.onSelectionChange - Callback when selection changes (selectedColumns) (optional)
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
@@ -59,13 +38,56 @@ function ColumnSelector({
   file_path,
   inputCardinality = {},
   allowedDtypes = [],
-  restrictedDtypes = [],
+  allowedTypes = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
 }) {
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const { t, i18n } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
+
+  const toMRT = (ids) =>
+    Object.fromEntries(ids.map((id) => [String(id), true]));
+  const fromMRT = (sel) =>
+    Object.keys(sel)
+      .filter((k) => sel[k])
+      .map(Number);
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "id",
+        header: t("common:index"),
+        size: 60,
+      },
+      {
+        accessorKey: "columnName",
+        header: t("datasets:label.columnName"),
+        flex: 1,
+      },
+      {
+        accessorKey: "valueType",
+        header: t("datasets:label.valueType"),
+        flex: 0.5,
+      },
+      {
+        accessorKey: "dataType",
+        header: t("datasets:label.dataType"),
+        flex: 0.5,
+      },
+      {
+        accessorKey: "order",
+        header: t("datasets:label.selectedOrder"),
+        flex: 0.5,
+      },
+    ],
+    [t],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -79,8 +101,8 @@ function ColumnSelector({
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -128,20 +150,16 @@ function ColumnSelector({
   const getValidColumnIds = useCallback(() => {
     return rows
       .filter((row) => {
-        if (allowedDtypes.length > 0 && !allowedDtypes.includes("*")) {
-          if (!allowedDtypes.includes(row.dataType)) {
-            return false;
-          }
+        if (allowedTypes.length > 0 && !allowedTypes.includes(row.valueType)) {
+          return false;
         }
-        if (restrictedDtypes.length > 0) {
-          if (restrictedDtypes.includes(row.dataType)) {
-            return false;
-          }
+        if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
+          return false;
         }
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, restrictedDtypes]);
+  }, [rows, allowedDtypes, allowedTypes]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -196,9 +214,20 @@ function ColumnSelector({
       const isValid = isValidSelection(rowSelectionModel);
       onValidationChange(isValid);
     }
-  }, [rowSelectionModel, rows.length]);
+  }, [
+    rowSelectionModel,
+    rows,
+    isValidSelection,
+    onSelectionChange,
+    onValidationChange,
+  ]);
 
-  const handleSelection = (selection) => {
+  const handleSelection = (updaterOrValue) => {
+    const newMRTSelection =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(toMRT(rowSelectionModel))
+        : updaterOrValue;
+    let selection = fromMRT(newMRTSelection);
     if (inputCardinality.max && selection.length > inputCardinality.max) {
       selection = selection.slice(0, inputCardinality.max);
     }
@@ -211,132 +240,147 @@ function ColumnSelector({
     setRowSelectionModel(selection);
   };
 
+  const isTypeInvalid = useCallback(
+    (rowId) => !getValidColumnIds().includes(rowId),
+    [getValidColumnIds],
+  );
+
+  const columnSelectorTable = useMaterialReactTable({
+    columns,
+    data: rows,
+    muiTableBodyCellProps: ({ row }) => ({
+      sx: {
+        whiteSpace: "pre",
+        ...(isTypeInvalid(row.original.id) && {
+          color: theme.palette.text.disabled,
+          textDecoration: "line-through",
+          textDecorationColor: theme.palette.text.disabled,
+        }),
+      },
+    }),
+    enableRowSelection: (row) => isRowSelectable({ id: row.original.id }),
+    onRowSelectionChange: handleSelection,
+    state: { rowSelection: toMRT(rowSelectionModel) },
+    getRowId: (row) => String(row.id),
+    enableGlobalFilter: true,
+    enableColumnFilters: false,
+    enableColumnActions: false,
+    enableSorting: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
+    enablePagination: true,
+    muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
+    initialState: {
+      pagination: { pageSize: 5, pageIndex: 0 },
+      density: "compact",
+    },
+    mrtTheme: {
+      baseBackgroundColor: theme.palette.ui.panelDark,
+    },
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: { border: "1px solid", borderColor: "divider" },
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: isTypeInvalid(row.original.id)
+        ? {
+            backgroundColor: theme.palette.ui.rowDisabled,
+            opacity: 0.55,
+            cursor: "not-allowed",
+            pointerEvents: "none",
+          }
+        : {},
+    }),
+    localization,
+  });
+
   const valid = isValidSelection(rowSelectionModel);
 
   return (
     <Box>
-      {Object.keys(inputCardinality).length > 0 && (
-        <Box
+      {/* Column requirements */}
+      <Box
+        sx={{
+          mb: 1.5,
+          p: 1.5,
+          borderRadius: 2,
+          backgroundColor: theme.palette.ui.hover,
+          border: `1px solid ${theme.palette.ui.divider}`,
+          textAlign: "center",
+        }}
+      >
+        {Object.keys(inputCardinality).length > 0 && (
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+            {t("datasets:label.requiredColumns", {
+              exact: inputCardinality.exact,
+              min: inputCardinality.min || 0,
+              max: inputCardinality.max,
+              context: inputCardinality.exact
+                ? "exact"
+                : inputCardinality.max
+                  ? "range"
+                  : "min",
+            })}
+          </Typography>
+        )}
+
+        <Typography
+          variant="body2"
           sx={{
-            mb: 2,
-            p: 2,
-            borderRadius: 2,
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            textAlign: "center",
+            fontWeight: 700,
+            color: valid ? "success.main" : "error.main",
+            letterSpacing: 0.3,
+            mb: allowedTypes.length > 0 || allowedDtypes.length > 0 ? 1 : 0,
           }}
         >
-          {/* Column requirement info */}
-          <Typography
-            variant="body1"
-            sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
-          >
-            Required columns:
-            {inputCardinality.exact
-              ? ` exactly ${inputCardinality.exact}`
-              : inputCardinality.max
-                ? ` between ${inputCardinality.min || 0} and ${
-                    inputCardinality.max
-                  }`
-                : ` at least ${inputCardinality.min || 0}`}
-          </Typography>
+          {t("datasets:label.selectedColumns", {
+            count: rowSelectionModel.length,
+          })}{" "}
+          {valid ? "✓" : ""}
+        </Typography>
 
-          {/* Selected count */}
+        {/* Allowed value types (semantic) */}
+        {allowedTypes.length > 0 && (
           <Typography
-            variant="h6"
+            variant="body2"
             sx={{
-              fontWeight: 700,
-              color: valid ? "success.main" : "error.main",
-              letterSpacing: 0.3,
-              mb: allowedDtypes?.length > 0 ? 1 : 0,
+              color: "rgba(255, 255, 255, 0.5)",
+              fontStyle: "italic",
+              mt: 1,
             }}
           >
-            {`Selected ${rowSelectionModel.length} column${
-              rowSelectionModel.length !== 1 ? "s" : ""
-            }`}
+            <Trans i18nKey="datasets:label.allowedValueTypes">
+              Allowed types:
+              <Box
+                component="span"
+                sx={{ color: "secondary.main", fontWeight: 500 }}
+              >
+                {allowedTypes.join(", ")}
+              </Box>
+            </Trans>
           </Typography>
-
-          {/* Allowed data types */}
-          {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "rgba(255, 255, 255, 0.5)",
-                fontStyle: "italic",
-                mt: 1,
-              }}
+        )}
+        {/* Allowed data types */}
+        {allowedDtypes.length > 0 && (
+          <Typography
+            variant="caption"
+            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+          >
+            {t("common:allowedTypes")}:{" "}
+            <Box
+              component="span"
+              sx={{ color: "secondary.main", fontWeight: 500 }}
             >
-              Allowed data types:{" "}
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {allowedDtypes.join(", ")}
-              </Box>
-            </Typography>
-          )}
-          {/* Restricted data types */}
-          {restrictedDtypes?.length > 0 && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "rgba(255, 255, 255, 0.5)",
-                fontStyle: "italic",
-                mt: 1,
-              }}
-            >
-              Restricted data types:{" "}
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {restrictedDtypes.join(", ")}
-              </Box>
-            </Typography>
-          )}
-        </Box>
-      )}
-
-      {/* Data Grid */}
-      <DataGrid
-        data-tour="column-selector"
-        key={`${datasetColumns.length}-${inputCardinality.exact}-${inputCardinality.max}`}
-        autoHeight
-        rows={rows}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-        }}
-        disableColumnMenu
-        disableColumnFilter
-        disableColumnSelector
-        disableDensitySelector
-        pageSizeOptions={[5, 10, 20]}
-        checkboxSelection
-        onRowSelectionModelChange={handleSelection}
-        rowSelectionModel={rowSelectionModel}
-        isRowSelectable={isRowSelectable}
-        density="compact"
-        getRowClassName={(params) =>
-          isRowSelectable(params) === false ? "mui-row-disabled" : ""
-        }
-        sx={{
-          "& .mui-row-disabled": {
-            backgroundColor: "rgba(0, 0, 0, 0.12)",
-            color: "#777",
-          },
-        }}
-        slots={{
-          toolbar: () => (
-            <Box sx={{ p: 1 }}>
-              <GridToolbarQuickFilter />
+              {allowedDtypes.join(", ")}
             </Box>
-          ),
-        }}
+          </Typography>
+        )}
+      </Box>{" "}
+      {/* Data Grid */}
+      <MaterialReactTable
+        data-tour="column-selector"
+        table={columnSelectorTable}
       />
     </Box>
   );
@@ -350,7 +394,7 @@ ColumnSelector.propTypes = {
     exact: PropTypes.number,
   }),
   allowedDtypes: PropTypes.array,
-  restrictedDtypes: PropTypes.array,
+  allowedTypes: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };

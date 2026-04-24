@@ -9,7 +9,7 @@ export const copyDataset = async (formData: object): Promise<object> => {
 };
 
 export const getDatasets = async (): Promise<IDataset[]> => {
-  const response = await api.get<IDataset[]>(datasetEndpoint);
+  const response = await api.get<IDataset[]>(`${datasetEndpoint}/`);
   return response.data;
 };
 
@@ -55,9 +55,9 @@ export const getDatasetInfoByFilePath = async (
   return response.data;
 };
 
-export const getExperimentsExist = async (id: number): Promise<object> => {
-  const response = await api.get<object>(
-    `${datasetEndpoint}/${id}/experiments-exist`,
+export const getModelSessionsExist = async (id: number): Promise<object> => {
+  const response = await api.get(
+    `${datasetEndpoint}/${id}/model-sessions-exist`,
   );
   return response.data;
 };
@@ -79,9 +79,38 @@ export const updateDataset = async (
   return response.data;
 };
 
+export const renameDatasetColumn = async (
+  id: number,
+  oldName: string,
+  newName: string,
+): Promise<{
+  message: string;
+  old_name: string;
+  new_name: string;
+  columns: object;
+}> => {
+  const response = await api.patch(`${datasetEndpoint}/${id}/columns/rename`, {
+    old_name: oldName,
+    new_name: newName,
+  });
+  return response.data;
+};
+
+export const updateColumnEncoder = async (
+  id: number,
+  columnName: string,
+  encoder: "one_hot" | "label",
+): Promise<object> => {
+  const response = await api.patch(
+    `${datasetEndpoint}/${id}/columns/${columnName}/encoder`,
+    { encoder },
+  );
+  return response.data;
+};
+
 export const deleteDataset = async (id: string): Promise<object> => {
   const response = await api.delete(`${datasetEndpoint}/${id}`);
-  return response.data;
+  return response;
 };
 
 export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
@@ -106,11 +135,54 @@ export const exportDatasetCsvByPath = async (path: string): Promise<Blob> => {
   return response.data;
 };
 
+export const loadPreview = async (formData: FormData): Promise<object> => {
+  const response = await api.post(`${datasetEndpoint}/load_preview`, formData);
+  return response.data;
+};
+
+export const inferDataTypes = async (formData: FormData): Promise<object> => {
+  const response = await api.post(
+    `${datasetEndpoint}/infer_datatypes`,
+    formData,
+  );
+  return response.data;
+};
+
+export const previewWithTypes = async (
+  formData: FormData,
+): Promise<{
+  sample: Array<Record<string, any>>;
+  schema: Record<string, { type: string; dtype: string; encoding?: string }>;
+  inferred_types: Record<string, { type: string; dtype: string }>;
+  preview_row_count: number;
+}> => {
+  const response = await api.post(
+    `${datasetEndpoint}/preview_with_types`,
+    formData,
+  );
+  return response.data;
+};
+
+export const validateTypeChanges = async (
+  formData: FormData,
+): Promise<{
+  valid: boolean;
+  errors: Record<string, string>;
+  warnings: Record<string, string>;
+}> => {
+  const response = await api.post(
+    `${datasetEndpoint}/validate_type_changes`,
+    formData,
+  );
+  return response.data;
+};
+
 export const getDatasetFileFiltered = async (
   path: string,
   page = 0,
   pageSize = 5,
   filterModel?: object,
+  sortModel?: object[],
 ) => {
   const response = await api.get(`${datasetEndpoint}/filter/`, {
     params: {
@@ -118,6 +190,10 @@ export const getDatasetFileFiltered = async (
       page,
       page_size: pageSize,
       filterModel: filterModel ? JSON.stringify(filterModel) : undefined,
+      sortModel:
+        sortModel && sortModel.length > 0
+          ? JSON.stringify(sortModel)
+          : undefined,
     },
   });
   return response.data;

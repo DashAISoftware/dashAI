@@ -1,10 +1,15 @@
 """BLEU (bilingual evaluation understudy) metric implementation for DashAI."""
 
-import evaluate
-import numpy as np
+from typing import TYPE_CHECKING
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.metrics.base_metric import prepare_to_metric
+from DashAI.back.metrics.translation_metric import TranslationMetric
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Bleu(TranslationMetric):
@@ -15,13 +20,28 @@ class Bleu(TranslationMetric):
 
     References
     ----------
-    [1] https://en.wikipedia.org/wiki/BLEU
+    - [1] https://en.wikipedia.org/wiki/BLEU
     """
 
     MAXIMIZE: bool = True
+    DESCRIPTION = MultilingualString(
+        en=(
+            "BLEU (bilingual evaluation understudy) "
+            "measures similarity between generated and reference text "
+            "based on n-gram overlap."
+        ),
+        es=(
+            "BLEU (bilingual evaluation understudy) "
+            "mide la similitud entre el texto generado y el de referencia "
+            "basándose en la superposición de n-gramas."
+        ),
+    )
 
     @staticmethod
-    def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):
+    def score(
+        source_sentences: "DashAIDataset",
+        target_sentences: "np.ndarray",
+    ) -> float:
         """Calculate the BLEU score between source and target sentences.
 
         Parameters
@@ -36,9 +56,11 @@ class Bleu(TranslationMetric):
         float
             The calculated BLEU score ranging between 0 and 1.
         """
+        import evaluate
+
         metric = evaluate.load("bleu")
         source_sentences, target_sentences = prepare_to_metric(
-            source_sentences, target_sentences
+            source_sentences, target_sentences, "Bleu"
         )
         return metric.compute(
             references=source_sentences, predictions=target_sentences

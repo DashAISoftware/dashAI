@@ -1,0 +1,56 @@
+{
+  "button": {
+    "backToTaskSelection": "Back to Task Selection",
+    "createSession": "Create a session"
+  },
+  "error": {
+    "failedToCreateSession": "Failed to create session",
+    "failedToDeleteSession": "Failed to delete session",
+    "failedToFetchHistory": "Failed to fetch parameter history",
+    "failedToFetchMessages": "Failed to fetch messages",
+    "failedToFetchSessionInfo": "Failed to fetch session information",
+    "failedToFetchSessions": "Failed to fetch sessions",
+    "failedToFetchTasks": "Failed to fetch generative tasks",
+    "failedToUpdateSession": "Failed to update session",
+    "nameRequired": "Name is required",
+    "processError": "The process has failed. Deleting it... {{error}}",
+    "sessionNameEmpty": "Session name cannot be empty",
+    "sessionNameExists": "A session with this name already exists"
+  },
+  "label": {
+    "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
+    "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
+    "noDescriptionAvailable": "No description available",
+    "showLess": "Show less",
+    "readMore": "Read more",
+    "generativeModule": "Generative Module",
+    "nameYourSession": "Name your session",
+    "noSessionsFound": "No sessions found",
+    "parameterChangeEvent": "Parameters updated: <1></1>",
+    "parameterChangeHistory": "Parameter change history for the current session",
+    "searchSessions": "Search Sessions",
+    "selectGenerativeTask": "Select a generative task to start a new session",
+    "selectModel": "Select a model",
+    "selectModelAndConfigureParameters": "Select a model and configure its parameters.",
+    "selectSessionToViewParameters": "Select a session to view and edit its parameters.",
+    "sessionDescription": "Session Description",
+    "sessionInformation": "Session Information",
+    "sessionName": "Session Name",
+    "sessions": "Sessions",
+    "tourDisabledMessage": "Return to home to start the tour",
+    "typeYourMessage": "Type a message",
+    "untitledSession": "Untitled Session",
+    "attachImage": "Attach image",
+    "attachAudio": "Attach audio",
+    "attachVideo": "Attach video",
+    "attachMedia": "Attach media",
+    "attachMediaToContinue": "Attach media to continue",
+    "noInputAvailable": "No input available for this task"
+  },
+
+  "message": {
+    "sessionCreatedSuccess": "Session successfully created.",
+    "sessionDeleted": "Session deleted successfully",
+    "sessionUpdated": "Session updated successfully"
+  }
+}

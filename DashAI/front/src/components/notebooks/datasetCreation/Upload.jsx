@@ -1,30 +1,48 @@
-import React, { useState, useRef } from "react";
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
   Button,
   CircularProgress,
-  DialogContentText,
   Grid,
-  IconButton,
-  Paper,
   Typography,
+  useTheme,
 } from "@mui/material";
 
-import TextSnippetIcon from "@mui/icons-material/TextSnippet";
-import ClearIcon from "@mui/icons-material/Clear";
+import PreviewDataset from "./PreviewDataset";
+
+import { useSnackbar } from "notistack";
+import JSZip from "jszip";
+import { useTranslation } from "react-i18next";
 
 /**
  * Renders a drag and drop to upload a file (dataset).
  * The upload (send to API) doesn't happen here, this component just adds the file "uploaded" to the
  * newDataset state in the modal
  * @param {function} onFileUpload function to handle when the user "uploads" a dataset
+ * @param {File} initialFile optional initial file to display (when coming back from preview)
+ * @param {object} formValues current form values from the configuration form
+ * @param {function} onPreviewError callback to notify parent of preview errors
+ * @param {function} onTypesChanged callback to notify parent when column types change
+ * @param {function} onColumnRename callback to notify parent when columns are renamed
+ * @param {function} onPreviewLoaded callback to notify parent when preview is loaded
  */
-function Upload({ onFileUpload }) {
+function Upload({
+  onFileUpload,
+  initialFile = null,
+  formValues = {},
+  selectedDataloader = null,
+  onPreviewError,
+  onTypesChanged,
+  onColumnRename,
+  onPreviewLoaded,
+}) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
-  const [datasetState, setDatasetState] = useState(EMPTY);
+  const [datasetState, setDatasetState] = useState(
+    initialFile ? LOADED : EMPTY,
+  );
   const [dragActive, setDragActive] = useState(false);
-  const [fileOriginalName, setFileOriginalName] = useState("");
+  const [file, setFile] = useState(initialFile);
   const inputRef = useRef(null);
 
   const uploadDataset = async (file) => {
@@ -32,7 +50,95 @@ function Upload({ onFileUpload }) {
     const url = "";
     onFileUpload(file, url);
     setDatasetState(LOADED);
-    setFileOriginalName(file.name);
+    setFile(file);
+  };
+
+  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
+
+  // helper to extract allowed extensions from acceptAttr (returns lowercase extensions like ".csv")
+  const getAllowedExtensions = (accept) => {
+    if (!accept) return [];
+    const parts = accept.split(",").map((p) => p.trim().toLowerCase());
+    const exts = [];
+    for (const p of parts) {
+      if (p.startsWith(".")) exts.push(p);
+      else if (p.endsWith("/*")) {
+        // common mappings for wildcards when inspecting zips
+        const major = p.split("/")[0];
+        if (major === "image")
+          exts.push(".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp");
+      }
+      // ignore explicit mime types for zip-inspection
+    }
+    return exts;
+  };
+
+  // helper to check file against acceptAttr (allows extensions like .csv and types like image/*)
+  // for regular files it's synchronous; zip inspection is asynchronous and handled separately
+  const isAcceptedFile = (file) => {
+    if (!file) return false;
+    if (!acceptAttr) return true; // no restriction
+
+    const parts = acceptAttr.split(",").map((p) => p.trim().toLowerCase());
+    const name = (file.name || "").toLowerCase();
+    const type = (file.type || "").toLowerCase();
+
+    for (const part of parts) {
+      if (part.startsWith(".")) {
+        if (name.endsWith(part)) return true;
+      } else if (part.endsWith("/*")) {
+        // image/* etc. compare major type
+        const major = part.split("/")[0];
+        if (type.startsWith(major + "/")) return true;
+      } else {
+        // direct mime type
+        if (type === part) return true;
+      }
+    }
+
+    // if it's a zip but acceptAttr includes .zip, we defer to zip-inspection elsewhere
+    if (name.endsWith(".zip") && parts.includes(".zip")) return true;
+
+    return false;
+  };
+
+  // validate ZIP contents asynchronously: returns true if at least one file inside the zip
+  // matches one of the allowed internal extensions for the current dataloader
+  const validateZipContents = async (file) => {
+    try {
+      const allowedExts = getAllowedExtensions(acceptAttr);
+      if (!allowedExts || allowedExts.length === 0) {
+        // if no explicit allowed extensions, accept any zip
+        return true;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      let found = false;
+      zip.forEach((relativePath, zipEntry) => {
+        if (found) return; // short-circuit
+        if (zipEntry.dir) return; // skip directories
+        const lower = relativePath.toLowerCase();
+        for (const ext of allowedExts) {
+          if (lower.endsWith(ext)) {
+            found = true;
+            break;
+          }
+        }
+      });
+
+      return found;
+    } catch (err) {
+      // If zip can't be read, treat as invalid
+      enqueueSnackbar(t("datasets:error.loadingDatasetPreview"), {
+        variant: "error",
+      });
+      console.error("Error reading zip for validation:", err);
+      return false;
+    }
   };
 
   const handleDrag = (e) => {
@@ -47,150 +153,284 @@ function Upload({ onFileUpload }) {
     }
   };
 
-  const handleSelect = (e) => {
-    if (datasetState === EMPTY) {
-      uploadDataset(e.target.files[0]);
-    }
-  };
+  const handleSelect = async (e) => {
+    if (datasetState !== EMPTY) return;
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (datasetState === EMPTY) {
-      setDragActive(false);
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        uploadDataset(e.dataTransfer.files[0]);
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+
+    // fast check based on filename/mime
+    if (!isAcceptedFile(f)) {
+      enqueueSnackbar(t("datasets:error.fileTypeNotAllowed"), {
+        variant: "error",
+      });
+      // clear input so the same file can be selected again later
+      if (inputRef && inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    // if it's a zip, do a deeper inspection
+    const name = (f.name || "").toLowerCase();
+    if (name.endsWith(".zip")) {
+      const ok = await validateZipContents(f);
+      if (!ok) {
+        enqueueSnackbar(t("datasets:error.zipContentsNotCompatible"), {
+          variant: "error",
+        });
+        if (inputRef && inputRef.current) inputRef.current.value = "";
+        return;
       }
     }
+
+    uploadDataset(f);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (datasetState !== EMPTY) return;
+
+    setDragActive(false);
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+
+    if (!isAcceptedFile(f)) {
+      enqueueSnackbar(t("datasets:error.fileTypeNotAllowed"), {
+        variant: "error",
+      });
+      return;
+    }
+
+    const name = (f.name || "").toLowerCase();
+    if (name.endsWith(".zip")) {
+      const ok = await validateZipContents(f);
+      if (!ok) {
+        enqueueSnackbar(t("datasets:error.zipContentsNotCompatible"), {
+          variant: "error",
+        });
+        return;
+      }
+    }
+
+    uploadDataset(f);
   };
 
   const handleButtonClick = () => {
     inputRef.current.click();
   };
 
-  const handleDeleteDataset = () => {
+  const handleDeleteDataset = useCallback(() => {
     onFileUpload(null, "");
     setDatasetState(EMPTY);
-  };
+    setFile(null);
+  }, [onFileUpload]);
+
+  // memoize datasetData object so its reference stays stable across renders
+  const datasetDataMemo = useMemo(() => {
+    const params = {
+      ...formValues,
+      inference_rows:
+        formValues && formValues.inference_rows != null
+          ? formValues.inference_rows
+          : 1000,
+    };
+
+    return {
+      file,
+      params,
+    };
+  }, [file, formValues, selectedDataloader]);
+
+  const acceptAttr = useMemo(() => {
+    if (!selectedDataloader) return undefined;
+
+    let s = selectedDataloader;
+    if (typeof selectedDataloader === "object") {
+      s = selectedDataloader.name || selectedDataloader.display_name || "";
+    }
+    if (!s || typeof s !== "string") return undefined;
+    s = s.toLowerCase();
+    // CSV dataloader: accept .csv and .zip (zipped CSVs)
+    if (s.includes("csv")) return ".csv,.zip";
+    // JSON dataloader: accept .json and .zip
+    if (s.includes("json")) return ".json,.zip";
+    // Images or generic image loaders
+    if (s.includes("excel")) return ".xls,.xlsx,.zip";
+    // Default: no restriction
+    return undefined;
+  }, [selectedDataloader]);
 
   // renders content inside the drag and drop component depending on the state of the dataset
-  const stateContent = (state) => {
-    switch (state) {
-      case EMPTY:
-        return (
-          <React.Fragment>
-            <Grid>
-              <input
-                type="file"
-                ref={inputRef}
-                style={{ display: "none" }}
-                onChange={handleSelect}
-              />
-            </Grid>
-            {dragActive ? (
+  const stateContent = useCallback(
+    (state) => {
+      switch (state) {
+        case EMPTY:
+          return (
+            <React.Fragment>
               <Grid>
-                <Typography variant="subtitle1">
-                  Drop the files here ...
-                </Typography>
+                <input
+                  type="file"
+                  ref={inputRef}
+                  style={{ display: "none" }}
+                  onChange={handleSelect}
+                  {...(acceptAttr ? { accept: acceptAttr } : {})}
+                />
               </Grid>
-            ) : (
-              <React.Fragment>
+              {dragActive ? (
                 <Grid>
-                  <Typography variant="subtitle1">
-                    Drag and drop a file here, or
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
+                    {t("datasets:label.clickToUpload")}
                   </Typography>
                 </Grid>
-                <Grid>
-                  <Button variant="contained">Upload a file</Button>
-                </Grid>
-              </React.Fragment>
-            )}
-          </React.Fragment>
-        );
+              ) : (
+                <React.Fragment>
+                  <Grid>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
+                      {t("datasets:label.dragAndDropFileHere")}
+                    </Typography>
+                  </Grid>
+                  <Grid>
+                    <Button
+                      variant="contained"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleButtonClick();
+                      }}
+                    >
+                      {t("datasets:button.uploadFile")}
+                    </Button>
+                  </Grid>
+                </React.Fragment>
+              )}
+            </React.Fragment>
+          );
 
-      case LOADING:
-        return <CircularProgress color="inherit" />;
+        case LOADING:
+          return <CircularProgress color="inherit" />;
 
-      case LOADED:
-        return (
-          <React.Fragment>
-            <TextSnippetIcon sx={{ fontSize: "58px" }} />
-            <Typography variant="subtitle1" sx={{ color: "gray" }}>
-              {fileOriginalName}
-            </Typography>
-          </React.Fragment>
-        );
-    }
-  };
+        case LOADED:
+          return (
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <PreviewDataset
+                datasetData={datasetDataMemo}
+                onChangeDataset={(e) => {
+                  e.stopPropagation();
+                  handleDeleteDataset();
+                }}
+                onPreviewError={onPreviewError}
+                onTypesChanged={onTypesChanged}
+                onColumnRename={onColumnRename}
+                onPreviewLoaded={onPreviewLoaded}
+              />
+            </Box>
+          );
+      }
+    },
+    [
+      handleSelect,
+      datasetDataMemo,
+      onPreviewError,
+      handleDeleteDataset,
+      dragActive,
+      handleButtonClick,
+      acceptAttr,
+      onTypesChanged,
+    ],
+  );
 
   return (
-    <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
-      <Grid container direction="column" rowSpacing={3}>
-        {/* state text */}
-        <Grid sx={{ textAlign: "center" }}>
-          <DialogContentText>
-            {datasetState === EMPTY && "Upload your dataset"}
-            {datasetState === LOADING && "Loading..."}
-            {datasetState === LOADED && "Loaded"}
-            {datasetState === EMPTY && (
-              <Typography variant="body2" component="div">
-                If your dataset have splits, upload it as a zip file
-              </Typography>
-            )}
-          </DialogContentText>
-        </Grid>
-
-        {/* Drag and drop */}
-        <Grid>
-          <Box
-            sx={{
-              border: 1,
-              height: "33vh",
-              width: "100%",
-              borderRadius: 2,
-              cursor: datasetState === EMPTY ? "pointer" : "auto",
-              borderWidth: 1,
-              borderStyle: "dashed",
-              overflow: "auto",
-              position: "relative",
-            }}
-            data-tour="upload-area"
-            // blocks the upload of a new file if the file state is not empty
-            onClick={datasetState === EMPTY ? handleButtonClick : null}
-            onDragEnter={datasetState === EMPTY ? handleDrag : null}
-            onDragLeave={datasetState === EMPTY ? handleDrag : null}
-            onDragOver={datasetState === EMPTY ? handleDrag : null}
-            onDrop={datasetState === EMPTY ? handleDrop : null}
-          >
-            <Grid
-              container
-              rowSpacing={1}
-              direction="column"
-              alignItems="center"
-              justifyContent="center"
-              sx={{ height: "100%" }}
-            >
-              {/* delete uploaded dataset button */}
-              {datasetState === LOADED && (
-                <Grid sx={{ position: "absolute", right: 0, top: 0 }}>
-                  <IconButton onClick={handleDeleteDataset}>
-                    <ClearIcon />
-                  </IconButton>
-                </Grid>
-              )}
-
-              {/* Content inside the drag and drop that depends on the state */}
-              {stateContent(datasetState)}
-            </Grid>
-          </Box>
-        </Grid>
+    <Grid
+      container
+      direction="column"
+      rowSpacing={1}
+      sx={{ width: "100%", bgcolor: theme.palette.ui.box }}
+      data-tour="upload-area"
+    >
+      {/* state text */}
+      <Grid sx={{ textAlign: "center" }}>
+        <Box sx={{ color: theme.palette.text.primary }}>
+          {datasetState === EMPTY && t("datasets:label.uploadYourDataset")}
+          {datasetState === LOADING && t("datasets:label.datasetLoading")}
+          {datasetState === LOADED && t("datasets:label.datasetPreview")}
+          {datasetState === EMPTY && (
+            <Typography variant="body2" component="div">
+              {t("datasets:label.ifYourDatasetHaveSplits")}
+            </Typography>
+          )}
+        </Box>
       </Grid>
-    </Paper>
+
+      {/* Drag and drop */}
+      <Grid sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
+        <Box
+          sx={{
+            ...(datasetState === LOADED
+              ? {}
+              : {
+                  border: 1,
+                  borderWidth: 1,
+                  borderStyle: "dashed",
+                }),
+            ...(datasetState === LOADED
+              ? { minHeight: "33vh" }
+              : { height: "33vh" }),
+            width: datasetState === LOADED ? "100%" : "60%",
+            maxWidth: datasetState === LOADED ? "100%" : "600px",
+            borderRadius: 2,
+            cursor: datasetState === EMPTY ? "pointer" : "auto",
+            overflow: datasetState === LOADED ? "visible" : "auto",
+            position: "relative",
+            display: "flex",
+          }}
+          // blocks the upload of a new file if the file state is not empty
+          onClick={datasetState === EMPTY ? handleButtonClick : null}
+          onDragEnter={datasetState === EMPTY ? handleDrag : null}
+          onDragLeave={datasetState === EMPTY ? handleDrag : null}
+          onDragOver={datasetState === EMPTY ? handleDrag : null}
+          onDrop={datasetState === EMPTY ? handleDrop : null}
+        >
+          <Grid
+            container
+            rowSpacing={1}
+            direction="column"
+            alignItems="center"
+            justifyContent="center"
+            sx={{
+              height: datasetState === LOADED ? "auto" : "100%",
+              width: "100%",
+              flex: 1,
+            }}
+          >
+            {/* Content inside the drag and drop that depends on the state */}
+            {stateContent(datasetState)}
+          </Grid>
+        </Box>
+      </Grid>
+    </Grid>
   );
 }
 
 Upload.propTypes = {
   onFileUpload: PropTypes.func.isRequired,
+  initialFile: PropTypes.object,
+  formSubmitRef: PropTypes.object,
+  formValues: PropTypes.object,
+  selectedDataloader: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  onPreviewError: PropTypes.func,
+  onTypesChanged: PropTypes.func,
 };
 
 export default Upload;

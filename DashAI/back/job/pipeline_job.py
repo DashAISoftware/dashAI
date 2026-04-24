@@ -1,12 +1,15 @@
 import logging
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from kink import di
-from sqlalchemy.orm import Session
 
 from DashAI.back.dependencies.database.models import Pipeline
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+    from DashAI.back.dependencies.registry import ComponentRegistry
 
 log = logging.getLogger(__name__)
 
@@ -17,9 +20,9 @@ class PipelineJob(BaseJob):
 
     async def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+        component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> None:
-        db: Session = self.kwargs["db"]
+        db: "Session" = self.kwargs["db"]
         id: int = self.kwargs.get("id", None)
         pipeline: Pipeline = db.get(Pipeline, id)
         steps: List[Dict[str, Any]] = self.kwargs.get("steps", []) or pipeline.steps

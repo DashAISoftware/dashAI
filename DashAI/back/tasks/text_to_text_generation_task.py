@@ -1,26 +1,42 @@
 from typing import Any, List, Optional, Tuple
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class TextToTextGenerationTask(BaseGenerativeTask):
-    """Base class for image generation tasks.
+    """Task for open-ended text generation using large language models.
 
-    Here you can change the methods provided by class Task.
+    Text-to-text generation takes a natural-language prompt (user message) and
+    produces a natural-language response. The task maintains a conversation
+    history (``USE_HISTORY = True``) so that multi-turn chat interactions are
+    supported out of the box. Input and output are both plain strings, formatted
+    as OpenAI-style chat messages (``role``/``content`` dicts) before being
+    passed to the underlying LLM.
+
+    Compatible models include all DashAI LLM wrappers (Llama, Mistral, Mixtral,
+    Qwen, SmolLM) which implement the ``generate`` method.
     """
 
     metadata: dict = {
-        "inputs_types": [str],
-        "outputs_types": [str],
-        "inputs_cardinality": 1,
-        "outputs_cardinality": 1,
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"str": {"min": 1, "max": 1}},
     }
 
-    DISPLAY_NAME: str = "Text to Text Generation"
-    DESCRIPTION: str = (
-        "This task uses a large language model (LLM) "
-        "to generate text from a given prompt."
+    DISPLAY_NAME: MultilingualString = MultilingualString(
+        en="Text to Text", es="Texto a Texto"
+    )
+
+    DESCRIPTION: MultilingualString = MultilingualString(
+        en="""
+        This task uses a large language model (LLM)
+        to generate text from a given prompt.
+        """,
+        es="""
+        Esta tarea utiliza un modelo de lenguaje grande (LLM)
+        para generar texto a partir de un prompt dado.
+        """,
     )
 
     USE_HISTORY: bool = True
@@ -96,10 +112,21 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         output: List[Any],
         **kwargs: Any,
     ) -> List[Tuple[str, str]]:
-        """Process the output of a generative model.
+        """Convert raw model output to a storable (text, type) pair.
 
-        file_name (Str): Indicates the name of the file.
-        path (Str): Indicates the path where the output will be stored.
+        Parameters
+        ----------
+        output : list of Any
+            Raw output from the generative model. The first element is cast
+            to ``str`` and returned.
+        **kwargs : dict
+            Additional keyword arguments (e.g. ``file_name``, ``path``).
+            Currently unused; present for interface compatibility.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            A single-element list containing ``(str(output[0]), "str")``.
         """
 
         return [(str(output[0]), "str")]

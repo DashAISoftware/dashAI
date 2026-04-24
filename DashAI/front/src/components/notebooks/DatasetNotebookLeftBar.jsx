@@ -1,0 +1,227 @@
+import { useState, useEffect } from "react";
+import { Box, Divider, Typography } from "@mui/material";
+import StorageIcon from "@mui/icons-material/Storage";
+import DescriptionIcon from "@mui/icons-material/Description";
+import Footer from "../threeSectionLayout/Footer";
+import CollapsibleList from "../threeSectionLayout/CollapsibleList";
+import SearchBar from "../threeSectionLayout/SearchBar";
+import NewItemButton from "../threeSectionLayout/NewItemButton";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import InfoNotebookModal from "./notebook/InfoNotebookModal";
+import { useTranslation } from "react-i18next";
+
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+
+export default function DatasetsNotebooksLeftBar({ onToggle }) {
+  const {
+    datasets,
+    notebooks,
+    selectedDatasetId,
+    selectedNotebookId,
+    selectDataset,
+    selectNotebook,
+    clearSelectedNotebook,
+    setStep,
+    setSelectedOption,
+    clearSelectedDataset,
+    deleteDatasetById,
+    removeNotebooksByDatasetId,
+    editDataset,
+    editNotebook,
+    deleteNotebookById,
+    setRightBarContent,
+  } = useDatasetsAndNotebooks();
+
+  const [filteredDatasets, setFilteredDatasets] = useState(datasets);
+  const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
+  const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { t } = useTranslation(["datasets", "common"]);
+
+  useEffect(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    if (!q) {
+      setFilteredDatasets(datasets);
+      setFilteredNotebooks(notebooks);
+      return;
+    }
+
+    const match = (item) => (item?.name ?? "").toLowerCase().includes(q);
+
+    setFilteredDatasets(datasets.filter(match));
+    setFilteredNotebooks(notebooks.filter(match));
+  }, [searchQuery, datasets, notebooks]);
+
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const handleNotebookInfo = (notebookId) => {
+    const notebook = notebooks.find((n) => n.id === notebookId);
+    if (notebook) {
+      setSelectedInfoNotebook(notebook);
+    }
+  };
+
+  const getDatasetDeleteConfirmationContent = (dataset) =>
+    t(
+      "datasets:label.confirmDeleteDataset",
+      'Are you sure you want to delete the dataset "{{name}}"? This action cannot be undone.',
+      { name: dataset.name },
+    );
+
+  const getDatasetDeleteConfirmationWarning = () =>
+    t(
+      "datasets:label.confirmDeleteDatasetLinkedWarning",
+      "All notebooks and sessions linked to this dataset will also be deleted.",
+    );
+
+  const getNotebookDeleteConfirmationContent = (notebook) =>
+    t(
+      "datasets:label.confirmDeleteNotebook",
+      'Are you sure you want to delete the notebook "{{name}}"? This action cannot be undone.',
+      { name: notebook.name },
+    );
+
+  const getDatasetDescription = (dataset) => {
+    return (
+      dataset.description ||
+      `${dataset.total_rows} ${t("common:rows")}, ${dataset.total_columns} ${t(
+        "common:columns",
+      )}`
+    );
+  };
+
+  const getNotebookDescription = (notebook) => {
+    if (notebook.dataset_id && datasets.length > 0) {
+      const associatedDataset = datasets.find(
+        (dataset) => dataset.id === notebook.dataset_id,
+      );
+      return associatedDataset?.name
+        ? t("datasets:label.fromDataset", {
+            datasetName: associatedDataset.name,
+          })
+        : t("datasets:label.noDataset");
+    }
+    return notebook.description || "";
+  };
+
+  const onDatasetClick = (id) => {
+    selectDataset(id);
+    clearSelectedNotebook();
+    setStep(0);
+    setSelectedOption("dataset");
+    setRightBarContent(null);
+  };
+
+  const onNotebookClick = (id) => {
+    selectNotebook(id);
+    clearSelectedDataset();
+    setStep(0);
+    setSelectedOption("notebook");
+    setRightBarContent(null);
+  };
+
+  const onDatasetDelete = async (id) => {
+    const success = await deleteDatasetById(id);
+    if (!success) return;
+    if (id === selectedDatasetId) {
+      clearSelectedDataset();
+      setStep(0);
+      setSelectedOption(null);
+    }
+    removeNotebooksByDatasetId(id);
+  };
+
+  const onNotebookDelete = async (id) => {
+    const success = await deleteNotebookById(id);
+    if (!success) return;
+    if (id === selectedNotebookId) {
+      clearSelectedNotebook();
+      setStep(0);
+      setSelectedOption(null);
+    }
+  };
+
+  const handleNewSessionButton = () => {
+    clearSelectedDataset();
+    clearSelectedNotebook();
+    setStep(0);
+    setSelectedOption(null);
+  };
+
+  return (
+    <SideBar>
+      {/* Create new item button */}
+      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+        {selectedDatasetId || selectedNotebookId ? (
+          <NewItemButton
+            onClick={handleNewSessionButton}
+            title={t("datasets:button.newDatasetNotebook")}
+          />
+        ) : (
+          <Typography variant="body1" color="textSecondary">
+            {t("datasets:label.datasetModule")}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Search bar global */}
+      <Box px={2} pb={2} flex={"0 0 auto"}>
+        <SearchBar
+          placeholder={t("datasets:label.searchDatasetsNotebooks")}
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
+      </Box>
+
+      <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+
+      {/* Scrollable content */}
+      <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
+        <CollapsibleList
+          items={filteredDatasets}
+          selectedItemId={selectedDatasetId}
+          onItemClick={onDatasetClick}
+          onItemDelete={onDatasetDelete}
+          onItemEdit={editDataset}
+          defaultOpen={true}
+          title={t("datasets:label.availableDatasets")}
+          Icon={StorageIcon}
+          getItemDescription={getDatasetDescription}
+          getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
+          getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
+        />
+
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+
+        <CollapsibleList
+          items={filteredNotebooks}
+          selectedItemId={selectedNotebookId}
+          onItemClick={onNotebookClick}
+          onItemDelete={onNotebookDelete}
+          onItemEdit={editNotebook}
+          onItemInfo={handleNotebookInfo}
+          defaultOpen={true}
+          title={t("datasets:label.notebooks")}
+          Icon={DescriptionIcon}
+          datasets={datasets}
+          getItemDescription={getNotebookDescription}
+          getDeleteConfirmationContent={getNotebookDeleteConfirmationContent}
+        />
+      </Box>
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Notebook Info Modal */}
+      {selectedInfoNotebook && (
+        <InfoNotebookModal
+          notebookData={selectedInfoNotebook}
+          datasets={datasets}
+          open={!!selectedInfoNotebook}
+          onClose={() => setSelectedInfoNotebook(null)}
+        />
+      )}
+    </SideBar>
+  );
+}

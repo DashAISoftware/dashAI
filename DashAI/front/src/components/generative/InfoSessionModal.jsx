@@ -10,27 +10,16 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
+import { formatDate } from "../../utils";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 export default function InfoSessionModal({ sessionData, open, onClose }) {
-  // Format date for display
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      });
-    } catch (error) {
-      return dateString;
-    }
-  };
-
   // If no session data is provided, don't render anything
   if (!sessionData) return null;
+
+  const { t } = useTranslation(["generative", "common"]);
+  const theme = useTheme();
 
   return (
     <Modal
@@ -65,7 +54,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
         >
           <Box>
             <Typography variant="h6" component="h2">
-              Session Information
+              {t("generative:label.sessionInformation")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {sessionData.name}
@@ -90,13 +79,15 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
               sx={{ mb: 1 }}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Model:{" "}
-              <span style={{ color: "#fff" }}>{sessionData.model_name}</span>
+              {t("common:model")}:{" "}
+              <span style={{ color: theme.palette.text.primary }}>
+                {sessionData.model_name}
+              </span>
             </Typography>
           </Box>
 
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Parameters
+            {t("common:parameters")}:{" "}
           </Typography>
           <TableContainer
             component={Paper}
@@ -123,7 +114,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
           </TableContainer>
 
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Metadata
+            {t("common:metadata")}:
           </Typography>
           <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
             <Table size="small">
@@ -134,7 +125,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    ID
+                    {t("common:id")}
                   </TableCell>
                   <TableCell align="right">{sessionData.id}</TableCell>
                 </TableRow>
@@ -144,7 +135,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    Created
+                    {t("common:created")}
                   </TableCell>
                   <TableCell align="right">
                     {formatDate(sessionData.created)}
@@ -156,7 +147,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    Last Modified
+                    {t("common:lastModified")}
                   </TableCell>
                   <TableCell align="right">
                     {formatDate(sessionData.last_modified)}

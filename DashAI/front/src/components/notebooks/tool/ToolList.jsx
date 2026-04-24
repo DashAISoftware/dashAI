@@ -7,16 +7,20 @@ import {
   Typography,
   Chip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ToolListItem from "./ToolListItem";
 import ConfigureToolModal from "./ConfigureToolModal";
 import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
+import { useTranslation } from "react-i18next";
 
 export default function ToolList({ tools, notebook, FormComponent }) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
   const tourContext = useTourContext();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const grouped = useMemo(() => groupByCategory(tools), [tools]);
   const categories = useMemo(
@@ -27,8 +31,6 @@ export default function ToolList({ tools, notebook, FormComponent }) {
   const handleToolClick = (tool) => {
     setSelectedTool(tool);
     setOpen(true);
-    console.log("Clicked tool:", tool);
-    console.log("Tour context:", tourContext);
     if (tourContext && tourContext.run) {
       setTimeout(() => {
         tourContext.nextStep();
@@ -42,7 +44,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
         variant="body2"
         sx={{ color: "text.secondary", textAlign: "center", py: 2 }}
       >
-        No tools found matching your search.
+        {t("datasets:label.noToolsMatched")}
       </Typography>
     );
   }
@@ -64,7 +66,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
             disableGutters
             defaultExpanded
             sx={{
-              bgcolor: "rgb(31, 31, 31)",
+              bgcolor: theme.palette.ui.box,
               borderRadius: 1.5,
               overflow: "hidden",
               "&:before": { display: "none" },
@@ -90,7 +92,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
                 size="small"
                 label={list.length}
                 sx={{
-                  bgcolor: "rgb(43, 43, 43)",
+                  bgcolor: theme.palette.ui.disabled,
                   color: "text.secondary",
                   height: 20,
                 }}

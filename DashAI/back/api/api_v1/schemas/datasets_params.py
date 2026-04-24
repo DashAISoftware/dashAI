@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -26,6 +26,11 @@ class DatasetUpdateParams(BaseModel):
     name: str = None
 
 
+class DatasetRenameColumnParams(BaseModel):
+    old_name: str
+    new_name: str
+
+
 class DatasetUploadFromNotebookParams(BaseModel):
     name: str
 
@@ -42,3 +47,7 @@ class Dataset(BaseModel):
 class DatasetCreateParams(BaseModel):
     name: str
     notebook_id: Optional[int] = None
+
+
+class DatasetColumnEncoderParams(BaseModel):
+    encoder: Literal["one_hot", "label"]

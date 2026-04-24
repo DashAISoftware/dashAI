@@ -1,6 +1,6 @@
-import torch
-from datasets import Dataset, concatenate_datasets
-from transformers import AutoModel, AutoTokenizer
+"""HuggingFace embedding converter with lazy-loaded dependencies."""
+
+from typing import TYPE_CHECKING
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -8,10 +8,17 @@ from DashAI.back.converters.category.advanced_preprocessing import (
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float, Text
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class EmbeddingSchema(BaseSchema):
+    """Schema for Embedding converter hyperparameters."""
+
     model_name: schema_field(
         enum_field(
             [
@@ -32,27 +39,46 @@ class EmbeddingSchema(BaseSchema):
             ]
         ),
         "sentence-transformers/all-MiniLM-L6-v2",
-        "Name of the pre-trained model to use",
+        description=MultilingualString(
+            en="Name of the pre-trained model to use",
+            es="Nombre del modelo preentrenado a usar",
+        ),
     )  # type: ignore
 
     max_length: schema_field(
-        int_field(ge=1), 512, "Maximum sequence length for tokenization"
+        int_field(ge=1),
+        512,
+        description=MultilingualString(
+            en="Maximum sequence length for tokenization",
+            es="Longitud máxima de secuencia para la tokenización",
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
-        int_field(ge=1), 32, "Number of samples to process at once"
+        int_field(ge=1),
+        32,
+        description=MultilingualString(
+            en="Number of samples to process at once",
+            es="Número de muestras a procesar a la vez",
+        ),
     )  # type: ignore
 
     device: schema_field(
         enum_field(["cuda", "cpu"]),
         "cpu",
-        "Device to use for computation",
+        description=MultilingualString(
+            en="Device to use for computation",
+            es="Dispositivo a usar para el cómputo",
+        ),
     )  # type: ignore
 
     pooling_strategy: schema_field(
         enum_field(["mean", "cls", "max"]),
         "mean",
-        "Strategy to pool token embeddings into sentence embedding",
+        description=MultilingualString(
+            en="Strategy to pool token embeddings into sentence embedding",
+            es="Estrategia para agrupar embeddings de tokens en uno de oración",
+        ),
     )  # type: ignore
 
 
@@ -60,12 +86,38 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """HuggingFace embedding converter."""
 
     SCHEMA = EmbeddingSchema
-    DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
-    CATEGORY = "Advanced"
-    DISPLAY_NAME = "Embedding"
+    DESCRIPTION = MultilingualString(
+        en="Convert text to embeddings using HuggingFace transformer models.",
+        es="Convierte texto a embeddings usando modelos de HuggingFace.",
+    )
+    DISPLAY_NAME = MultilingualString(en="Embedding", es="Embedding")
     IMAGE_PREVIEW = "embedding.png"
 
+    metadata = {
+        "allowed_types": [Text],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
+        """Initialise the embedding converter and extract schema parameters.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace model ID for the sentence-transformer.
+                Default ``"sentence-transformers/all-MiniLM-L6-v2"``.
+            pooling_strategy : str, optional
+                How to aggregate token embeddings into a sentence vector.
+                Default ``"mean"``.
+            device : str, optional
+                Torch device string (e.g. ``"cpu"`` or ``"cuda:0"``).
+                Default ``"cpu"``.
+            max_length : int, optional
+                Maximum token sequence length. Default ``512``.
+            batch_size : int, optional
+                Number of examples per inference batch. Default ``32``.
+        """
         super().__init__(**kwargs)
         self.pooling_strategy = kwargs.get("pooling_strategy", "mean")
         self.model_name = kwargs.get(
@@ -77,19 +129,60 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.model = None
         self.tokenizer = None
 
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Return ``Float32`` as the output type for all embedding columns.
+
+        Parameters
+        ----------
+        column_name : str or None, optional
+            Name of the output column. Not used — all embedding columns
+            receive the same ``Float32`` type. Default ``None``.
+
+        Returns
+        -------
+        Float
+            A DashAI ``Float`` type backed by ``pyarrow.float32()``.
+        """
+        import pyarrow as pa
+
+        return Float(arrow_type=pa.float32())
+
     def _load_model(self):
         """Load the embedding model and tokenizer."""
+        from transformers import AutoModel, AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
         self.model.eval()
 
-    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
-        """Process a batch of text into embeddings."""
-        all_column_embeddings = []
+    def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
+        """Encode a batch of text columns into dense embedding vectors.
+
+        Each text column is passed through the transformer encoder; the
+        mean of the last hidden states is used as the sentence embedding.
+        Resulting float32 vectors are stored as separate ``Float`` columns.
+
+        Parameters
+        ----------
+        batch : DashAIDataset
+            A slice of the full dataset. Each column must contain string values.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset where each original text column is replaced by its
+            dense embedding vector column(s).
+        """
+        import pyarrow as pa
+        import torch
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+        result_table = batch.arrow_table
 
         for column in batch.column_names:
             # Get text data from dataset
-            texts = [row[column] for row in batch]
+            texts = [row[column] if row[column] is not None else "" for row in batch]
 
             # Tokenize
             encoded = self.tokenizer(
@@ -118,20 +211,11 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
             embeddings_np = embeddings.cpu().numpy()
 
-            # Create a dictionary with embedding columns
-            embedding_dict = {
-                f"{column}_embedding_{i}": embeddings_np[:, i].tolist()
-                for i in range(embeddings_np.shape[1])
-            }
+            # Append one column per embedding dimension
+            for i in range(embeddings_np.shape[1]):
+                result_table = result_table.append_column(
+                    f"emb_{column}_{i}",
+                    pa.array(embeddings_np[:, i].tolist(), type=pa.float32()),
+                )
 
-            # Create a HuggingFace Dataset and convert it to a PyArrow table
-            hf_dataset = Dataset.from_dict(embedding_dict)
-            arrow_table = hf_dataset.data.table
-
-            # Create a new dataset for this column's embeddings
-            column_dataset = DashAIDataset(arrow_table)
-            all_column_embeddings.append(column_dataset)
-
-        # Concatenate all column embeddings
-        concatenated_dataset = concatenate_datasets(all_column_embeddings)
-        return DashAIDataset(concatenated_dataset.data.table)
+        return DashAIDataset(result_table)

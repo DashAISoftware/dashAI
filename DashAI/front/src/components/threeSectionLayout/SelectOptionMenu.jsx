@@ -1,21 +1,28 @@
 import { useState } from "react";
-import { Box, Grid, Button } from "@mui/material";
+import { Box, Grid, Button, Alert, AlertTitle, Skeleton } from "@mui/material";
 import SearchBar from "./SearchBar";
 import CustomLayout from "../custom/CustomLayout";
 import OptionBox from "./OptionBox";
+import { useTranslation } from "react-i18next";
 
 export default function SelectOptionMenu({
-  goToNextStep,
   goToPrevStep = null,
   title,
   subtitle,
   options,
+  loading = false,
   searchBar = false,
+  showNoDatasetAlert = false,
+  onGoToDatasets = null,
+  goToNextStep = null,
+  dataTour = null,
+  dataTourTarget = null,
 }) {
   const [search, setSearch] = useState("");
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
+  const { t } = useTranslation(["common", "datasets"]);
 
   return (
     <CustomLayout title={title} subtitle={subtitle} padding={0}>
@@ -26,10 +33,28 @@ export default function SelectOptionMenu({
         flexDirection={"column"}
         justifyContent={"flex-start"}
       >
+        {showNoDatasetAlert && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <AlertTitle>{t("datasets:label.noDatasetsAvailable")}</AlertTitle>
+            {t("datasets:label.uploadDatasetBeforeCreatingSession")}
+            {onGoToDatasets && (
+              <Box sx={{ mt: 1 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={onGoToDatasets}
+                >
+                  {t("datasets:button.goToDatasets")}
+                </Button>
+              </Box>
+            )}
+          </Alert>
+        )}
+
         {searchBar && (
           <Box width={"450px"}>
             <SearchBar
-              placeholder="Search ..."
+              placeholder={t("common:searchPlaceholder", "Search ...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -44,22 +69,43 @@ export default function SelectOptionMenu({
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-          {filteredOptions.map((option, index) => {
-            const { name, display_name, description, Icon, ...otherProps } =
-              option;
+          {loading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <Grid
+                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  key={index}
+                >
+                  <Skeleton variant="rounded" height={100} />
+                </Grid>
+              ))
+            : null}
+          {!loading &&
+            filteredOptions.map((option, index) => {
+              const { name, display_name, description, Icon, ...otherProps } =
+                option;
 
-            return (
-              <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
-                <OptionBox
-                  optionName={display_name}
-                  description={description}
-                  onClick={() => goToNextStep(option.name)}
-                  Icon={Icon}
-                  {...otherProps}
-                />
-              </Grid>
-            );
-          })}
+              return (
+                <Grid
+                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  key={index}
+                >
+                  <OptionBox
+                    optionName={display_name}
+                    description={description}
+                    onClick={() => goToNextStep(option.name)}
+                    Icon={Icon}
+                    dataTour={
+                      dataTour && dataTourTarget && name === dataTourTarget
+                        ? dataTour
+                        : dataTour && !dataTourTarget
+                          ? dataTour
+                          : undefined
+                    }
+                    {...otherProps}
+                  />
+                </Grid>
+              );
+            })}
         </Grid>
       </Box>
 
@@ -67,12 +113,12 @@ export default function SelectOptionMenu({
         sx={{
           display: "flex",
           justifyContent: "flex-end",
-          mt: 2,
+          mt: 4,
         }}
       >
         {goToPrevStep && (
-          <Button variant="outlined" onClick={goToPrevStep} sx={{ mr: 1 }}>
-            Back
+          <Button variant="outlined" onClick={goToPrevStep}>
+            {t("common:back")}
           </Button>
         )}
       </Box>

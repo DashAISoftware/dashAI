@@ -1,0 +1,67 @@
+---
+title: Database Migrations
+sidebar_label: Database Migrations
+sidebar_position: 3
+---
+
+# Database Migrations
+
+DashAI uses **Alembic** for database schema migrations. Migrations run automatically on application startup.
+
+## Apply Migrations
+
+To run all pending migrations manually (from the `DashAI/` directory):
+
+```bash
+alembic upgrade head
+```
+
+## Create a New Migration
+
+After modifying SQLAlchemy models in `back/dependencies/database/`:
+
+```bash
+alembic revision --autogenerate -m "description of changes"
+```
+
+The generated migration file is saved in `alembic/versions/` and must be committed to the repository.
+
+:::tip
+Always review the auto-generated migration file before applying it. Alembic does not always detect complex changes (such as column renames or constraint changes) correctly.
+:::
+
+## Rollback
+
+Revert the most recent migration:
+
+```bash
+alembic downgrade -1
+```
+
+Revert to a specific revision:
+
+```bash
+alembic downgrade <revision_id>
+```
+
+## Check Status
+
+```bash
+# Current applied migration
+alembic current
+
+# Full migration history
+alembic history
+```
+
+## CI Checks
+
+The CI pipeline runs migration checks on every PR:
+
+- `alembic upgrade head` — verify the migration applies cleanly
+- `alembic downgrade -1` / `alembic upgrade head` — verify reversibility
+- Schema consistency check — verify the final schema matches the SQLAlchemy models
+
+## Database Location
+
+The main database is stored at `~/.DashAI/db.sqlite`. The job queue uses a separate database at `~/.DashAI/job_queue.db`.

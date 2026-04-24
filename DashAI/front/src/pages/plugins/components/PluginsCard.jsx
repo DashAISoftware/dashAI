@@ -1,28 +1,15 @@
 import React from "react";
-import {
-  Button,
-  Card,
-  CardActionArea,
-  CardActions,
-  CardHeader,
-  Typography,
-  Grid,
-} from "@mui/material";
+import { Box, Typography, ButtonBase, Tooltip, useTheme } from "@mui/material";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
-import PluginTags from "./PluginsTags";
 import usePluginsUpdate from "../hooks/usePluginsUpdate";
 import { PluginStatus } from "../../../types/plugin";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useTranslation } from "react-i18next";
+import { Extension as PluginIcon } from "@mui/icons-material";
 
-/**
- * Component for plugin card modal
- * @param {object} plugin Plugin to display
- * @param {boolean} cardView boolean true if uses cardView display and false if uses list display
- * @param {boolean} refreshPluginsFlag
- * @param {function} setRefreshPluginsFlag
- * @returns
- */
+const DESCRIPTION_MAX_LINES = 3;
+
 function PluginsCard({
   plugin,
   cardView,
@@ -31,6 +18,23 @@ function PluginsCard({
 }) {
   const navigate = useNavigate();
   const { category } = useParams();
+  const { t } = useTranslation(["plugins"]);
+  const theme = useTheme();
+
+  const accent = theme.palette.accent.coral;
+  const accentDim = theme.palette.accent.coralDim;
+  const accentBorder = theme.palette.accent.coralBorder;
+  const accentGlow = theme.palette.accent.coralGlow;
+
+  const descRef = React.useRef(null);
+  const [isTruncated, setIsTruncated] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight);
+    }
+  }, [plugin.summary, cardView]);
 
   const handlePluginClick = () => {
     navigate(`/app/plugins/${category}/details/${plugin.id}`);
@@ -44,103 +48,337 @@ function PluginsCard({
     },
   });
 
-  return (
-    <Card
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: cardView ? "column" : "row",
-        alignItems: cardView ? "stretch" : "center",
-      }}
-    >
-      <CardActionArea
-        sx={{
-          height: "-webkit-fill-available",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-start",
-        }}
-        onClick={handlePluginClick}
-      >
-        <CardHeader
-          title={
-            <Grid
-              container
-              display={"flex"}
-              flexDirection={cardView ? "column" : "row"}
-              alignItems={cardView ? "flex-start" : "center"}
-              columnGap={1}
-              spacing={1}
-            >
-              <Grid
-                sx={{
-                  width: cardView ? "100%" : "auto",
-                  textOverflow: "ellipsis",
-                  overflow: "hidden",
-                }}
-              >
-                <Typography noWrap variant="h6">
-                  {plugin.name.replace("dashai-", "")}
-                </Typography>
-              </Grid>
-              <Grid>
-                <Typography variant="body2">
-                  Version: {plugin.installed_version}
-                </Typography>
-              </Grid>
-              <Grid>
-                <PluginTags tags={plugin.tags} />
-              </Grid>
-            </Grid>
-          }
-          subheader={
-            <Typography
-              pt={1}
-              align="justify"
-              variant="body2"
-              sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: cardView ? "3" : "1",
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {plugin.summary}
-            </Typography>
-          }
-          sx={{
-            width: "100%",
-            "& .MuiCardHeader-content": {
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            },
-          }}
-        />
-      </CardActionArea>
+  const displayName = plugin.name.replace("dashai-", "");
+  const tags = plugin.tags.map((tag) => tag.name);
+  const version = plugin.installed_version
+    ? `v${plugin.installed_version}`
+    : null;
 
-      {plugin.status === PluginStatus.REGISTERED && (
-        <CardActions
+  if (!cardView) {
+    return (
+      <ButtonBase
+        onClick={handlePluginClick}
+        sx={{
+          width: "100%",
+          textAlign: "left",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          background: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: "4px",
+          padding: "14px 24px",
+          cursor: "pointer",
+          position: "relative",
+          overflow: "hidden",
+          transition: "border-color 0.2s, background 0.2s, transform 0.15s",
+          gap: 3,
+          "&:hover": {
+            borderColor: accentBorder,
+            background: accentGlow,
+          },
+        }}
+      >
+        <Box
           sx={{
-            justifyContent: cardView ? "flex-end" : "center",
+            width: 34,
+            height: 34,
+            borderRadius: "6px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: accentDim,
+            color: accent,
+            flexShrink: 0,
           }}
         >
-          {loading ? (
-            <Button size="medium" variant="outlined" disabled>
-              <CircularProgress size={24} />
-            </Button>
-          ) : (
-            <Button
-              onClick={() => updatePlugin()}
-              size="medium"
-              variant="outlined"
+          <PluginIcon sx={{ fontSize: 20 }} />
+        </Box>
+
+        <Typography
+          sx={{
+            ...theme.typography.cardTitle,
+            color: theme.palette.text.primary,
+            flexShrink: 0,
+          }}
+        >
+          {displayName}
+        </Typography>
+
+        {version && (
+          <Typography
+            sx={{
+              fontSize: "13px",
+              fontWeight: 300,
+              color: theme.palette.text.disabled,
+              flexShrink: 0,
+            }}
+          >
+            {version}
+          </Typography>
+        )}
+
+        <Typography
+          sx={{
+            fontSize: "14px",
+            fontWeight: 300,
+            color: theme.palette.text.secondary,
+            flexGrow: 1,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {plugin.summary}
+        </Typography>
+
+        <Box sx={{ display: "flex", gap: "5px", flexShrink: 0 }}>
+          {tags.map((tag) => (
+            <Box
+              key={tag}
+              sx={{
+                ...theme.typography.statusBadge,
+                border: `1px solid ${theme.palette.divider}`,
+                color: theme.palette.text.disabled,
+                px: "7px",
+                py: "2px",
+                borderRadius: "2px",
+                background: theme.palette.background.default,
+              }}
             >
-              Install
-            </Button>
+              {tag}
+            </Box>
+          ))}
+        </Box>
+
+        {plugin.status === PluginStatus.REGISTERED && (
+          <Box
+            component="span"
+            onClick={(e) => {
+              e.stopPropagation();
+              updatePlugin();
+            }}
+            sx={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: accent,
+              cursor: "pointer",
+              flexShrink: 0,
+              "&:hover": { textDecoration: "underline" },
+            }}
+          >
+            {loading ? (
+              <CircularProgress size={16} />
+            ) : (
+              t("plugins:button.install")
+            )}
+          </Box>
+        )}
+
+        <Box
+          className="card-arrow"
+          sx={{
+            fontSize: "18px",
+            color: theme.palette.text.disabled,
+            flexShrink: 0,
+            ml: 1,
+          }}
+        >
+          →
+        </Box>
+      </ButtonBase>
+    );
+  }
+
+  return (
+    <ButtonBase
+      onClick={handlePluginClick}
+      sx={{
+        width: "100%",
+        height: "100%",
+        textAlign: "left",
+        display: "flex",
+        flexDirection: "column",
+        background: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: "4px",
+        padding: "22px 24px",
+        cursor: "pointer",
+        position: "relative",
+        overflow: "hidden",
+        transition: "border-color 0.2s, background 0.2s, transform 0.15s",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: "10%",
+          right: "10%",
+          height: "1px",
+          background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+          opacity: 0,
+          transition: "opacity 0.25s",
+        },
+        "&:hover": {
+          transform: "translateY(-1px)",
+          borderColor: accentBorder,
+          background: accentGlow,
+        },
+        "&:hover::before": {
+          opacity: 1,
+        },
+        "&:hover .card-arrow": {
+          transform: "translateX(3px)",
+          color: accent,
+        },
+      }}
+    >
+      {/* Header: icon + version */}
+      <Box
+        sx={{
+          display: "flex",
+          mb: "14px",
+          width: "100%",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box
+          sx={{
+            width: 38,
+            height: 38,
+            borderRadius: "6px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: accentDim,
+            color: accent,
+            flexShrink: 0,
+          }}
+        >
+          <PluginIcon sx={{ fontSize: 25 }} />
+        </Box>
+
+        {version && (
+          <Typography
+            sx={{
+              fontSize: "13px",
+              fontWeight: 300,
+              color: theme.palette.text.disabled,
+            }}
+          >
+            {version}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Title */}
+      <Typography
+        noWrap
+        sx={{
+          ...theme.typography.cardTitle,
+          color: theme.palette.text.primary,
+          mb: "5px",
+          width: "100%",
+        }}
+      >
+        {displayName}
+      </Typography>
+
+      {/* Description */}
+      <Tooltip
+        title={isTruncated ? plugin.summary : ""}
+        arrow
+        enterDelay={300}
+        placement="bottom"
+      >
+        <Typography
+          ref={descRef}
+          sx={{
+            fontSize: "15px",
+            fontWeight: 300,
+            color: theme.palette.text.secondary,
+            lineHeight: 1.65,
+            flexGrow: 1,
+            width: "100%",
+            display: "-webkit-box",
+            WebkitLineClamp: DESCRIPTION_MAX_LINES,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {plugin.summary}
+        </Typography>
+      </Tooltip>
+
+      {/* Footer: tags + install/arrow */}
+      <Box
+        sx={{
+          mt: "16px",
+          pt: "14px",
+          borderTop: `1px solid ${theme.palette.ui.borderLight}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
+      >
+        <Box sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+          {tags.map((tag) => (
+            <Box
+              key={tag}
+              sx={{
+                ...theme.typography.statusBadge,
+                border: `1px solid ${theme.palette.divider}`,
+                color: theme.palette.text.disabled,
+                px: "7px",
+                py: "2px",
+                borderRadius: "2px",
+                background: theme.palette.background.default,
+              }}
+            >
+              {tag}
+            </Box>
+          ))}
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {plugin.status === PluginStatus.REGISTERED && (
+            <Box
+              component="span"
+              onClick={(e) => {
+                e.stopPropagation();
+                updatePlugin();
+              }}
+              sx={{
+                fontSize: "13px",
+                fontWeight: 500,
+                color: accent,
+                cursor: "pointer",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              {loading ? (
+                <CircularProgress size={16} />
+              ) : (
+                t("plugins:button.install")
+              )}
+            </Box>
           )}
-        </CardActions>
-      )}
-    </Card>
+          <Box
+            className="card-arrow"
+            sx={{
+              fontSize: "18px",
+              color: theme.palette.text.disabled,
+              transition: "color 0.15s, transform 0.15s",
+              flexShrink: 0,
+            }}
+          >
+            →
+          </Box>
+        </Box>
+      </Box>
+    </ButtonBase>
   );
 }
 

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import { useEffect, useState, useRef } from "react";
+import { Box, Typography, Button, IconButton, Divider } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
 import HistoryIcon from "@mui/icons-material/History";
@@ -11,19 +12,26 @@ import {
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import { useTranslation } from "react-i18next";
+import { useGenerative } from "./GenerativeContext";
+import { useTourContext } from "../tour/TourProvider";
 
-export default function ParamsBar({
-  selectedSessionId,
-  onParamsUpdate,
-  taskName,
-}) {
+export default function ParamsBar({ onToggle }) {
+  const {
+    selectedSessionId,
+    selectedTaskName: taskName,
+    setParamsVersion,
+  } = useGenerative();
   const [parameters, setParameters] = useState({});
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [history, setHistory] = useState([]);
 
   const [selectedModel, setSelectedModel] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
+  const { t } = useTranslation(["generative", "common"]);
+  const tourContext = useTourContext();
+  const hasAdvancedTourRef = useRef(false);
 
   const getHistory = () => {
     getHistoryBySessionId(selectedSessionId).then((response) => {
@@ -52,7 +60,7 @@ export default function ParamsBar({
         }
       });
     });
-  }, [selectedSessionId]);
+  }, [selectedSessionId, t]);
 
   useEffect(() => {
     if (selectedModel?.schema?.properties) {
@@ -60,6 +68,10 @@ export default function ParamsBar({
       setValidationSchema(buildYupSchema(processedProps));
     }
   }, [selectedModel]);
+
+  const onParamsUpdate = () => {
+    setParamsVersion((prev) => prev + 1);
+  };
 
   const handleUpdateParameters = async (updatedParams) => {
     try {
@@ -69,6 +81,26 @@ export default function ParamsBar({
       );
       setParameters(updatedSession.parameters);
       onParamsUpdate(updatedSession.parameters);
+
+      // Advance tour to chat input if tour is running
+      if (
+        tourContext?.run &&
+        tourContext?.stepIndex === 7 &&
+        !hasAdvancedTourRef.current
+      ) {
+        hasAdvancedTourRef.current = true;
+        const waitForElement = () => {
+          const element = document.querySelector('[data-tour="chat-input"]');
+          if (element) {
+            setTimeout(() => {
+              tourContext.nextStep();
+            }, 100);
+          } else {
+            setTimeout(waitForElement, 100);
+          }
+        };
+        setTimeout(waitForElement, 100);
+      }
     } catch (error) {
       console.error("Failed to update session parameters:", error);
     }
@@ -85,6 +117,8 @@ export default function ParamsBar({
     ? preprocessSchema(selectedModel.schema.properties)
     : {};
 
+  const theme = useTheme();
+
   return (
     <SideBar>
       <Box
@@ -99,15 +133,16 @@ export default function ParamsBar({
         <Box
           sx={{
             p: 2,
-            borderBottom: "1px solid #333",
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            height: 64,
+            justifyContent: "flex-start",
+            height: 70,
           }}
         >
-          <Typography variant="h6">Model Parameters</Typography>
+          <Typography variant="h6" color="text.primary">
+            {t("common:modelParameters")}
+          </Typography>
 
           {/* Parameter History Modal */}
           {selectedSessionId && (
@@ -130,10 +165,12 @@ export default function ParamsBar({
             </IconButton>
           )}
         </Box>
+        {/* Divider */}
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
         {selectedSessionId ? (
           <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
             <form onSubmit={formik.handleSubmit}>
-              <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
+              <Box sx={{ mr: 2, ml: 2, mb: 5 }}>
                 {/* Render the parameter fields */}
                 <FormSchemaRenderFields
                   modelSchema={processedProperties}
@@ -148,7 +185,7 @@ export default function ParamsBar({
                   onFormSubmit={formik.handleSubmit}
                   setError={(error) => console.error(error)}
                   errorsMessage={formik.errors || {}}
-                  spacing={0}
+                  spacing={1}
                 />
                 <Box
                   sx={{
@@ -166,7 +203,7 @@ export default function ParamsBar({
                     variant="contained"
                     disabled={!formik.dirty}
                   >
-                    EDIT
+                    {t("common:update")}
                   </Button>
                 </Box>
               </Box>
@@ -186,7 +223,7 @@ export default function ParamsBar({
               variant="body2"
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
-              Select a session to view and edit its parameters.
+              {t("generative:label.selectSessionToViewParameters")}
             </Typography>
           </Box>
         )}

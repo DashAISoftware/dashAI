@@ -1,0 +1,93 @@
+"""DashAI RoC AUC classification metric implementation."""
+
+from typing import TYPE_CHECKING, Optional
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.metrics.classification_metric import (
+    ClassificationMetric,
+    prepare_to_metric,
+)
+
+if TYPE_CHECKING:
+    import numpy as np
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class ROCAUC(ClassificationMetric):
+    """Area under the Receiver Operating Characteristic curve.
+
+    ROC AUC measures the classifier's ability to distinguish between classes
+    across all possible decision thresholds. The ROC curve plots the true
+    positive rate (recall) against the false positive rate, and the AUC
+    summarises the entire curve in a single scalar. A value of 0.5 indicates
+    no discriminative ability (random classifier); 1.0 is a perfect classifier.
+
+    For binary tasks, the probability of the positive class (column index 1)
+    is used. For multiclass tasks, a one-vs-rest (OvR) averaging strategy is
+    applied so that each class is treated as a binary problem in turn.
+
+    Unlike accuracy-based metrics, ROC AUC uses the raw probability outputs
+    from the model rather than hard class predictions, making it sensitive to
+    model calibration.
+
+    Range: [0, 1], higher is better (``MAXIMIZE = True``).
+
+    References
+    ----------
+    - [1] Fawcett, T. (2006). "An introduction to ROC analysis."
+           Pattern Recognition Letters, 27(8), 861-874.
+    - [2] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
+    """
+
+    DESCRIPTION = MultilingualString(
+        en=(
+            "The Receiver Operating Characteristic Area Under the Curve (RoC AUC) "
+            "is a performance measurement for classification problems at various "
+            "threshold settings. It represents the degree or measure "
+            "of separability between classes."
+        ),
+        es=(
+            "El Área Bajo la Curva ROC (RoC AUC) "
+            "es una medida de rendimiento para problemas de clasificación en varios "
+            "umbrales de decisión. Representa el grado de "
+            "separabilidad entre clases."
+        ),
+    )
+
+    @staticmethod
+    def score(
+        true_labels: "DashAIDataset",
+        probs_pred_labels: "np.ndarray",
+        multiclass: Optional[bool] = None,
+    ) -> float:
+        """Calculate RoC AUC score between true labels and predicted labels.
+
+        Parameters
+        ----------
+        true_labels : DashAIDataset
+            A DashAI dataset with labels.
+        probs_pred_labels : np.ndarray
+            A two-dimensional matrix in which each column represents a class
+            and the row values represent the probability that an example belongs
+            to the class associated with the column.
+        multiclass : bool, optional
+            Whether the task is a multiclass classification. If None, it will be
+            determined automatically from the number of unique labels.
+
+        Returns
+        -------
+        float
+            RoC AUC score between true labels and predicted labels
+        """
+        true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
+        # Use the provided multiclass parameter or determine it using is_multiclass
+        if multiclass is None:
+            multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        from sklearn.metrics import roc_auc_score
+
+        if multiclass:
+            return roc_auc_score(true_labels, probs_pred_labels, multi_class="ovr")
+        else:
+            return roc_auc_score(true_labels, probs_pred_labels[:, 1])
