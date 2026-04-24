@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TextField, Button, Box } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import { useTranslation } from "react-i18next";
@@ -45,6 +45,19 @@ export function MediaInput({
     onSendMessage(collectPayload());
     reset();
   };
+
+  useEffect(() => {
+    if (wantsText || isLoading) return;
+    const onKeyDown = (e) => {
+      if (e.key !== "Enter" || e.shiftKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      handleSend();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   return (
     <Box
