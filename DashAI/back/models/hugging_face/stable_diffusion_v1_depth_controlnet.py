@@ -239,7 +239,8 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_inference_steps = kwargs.get("num_inference_steps")
 
-        self.pipe.enable_model_cpu_offload()
+        if self.device != "cpu":
+            self.pipe.enable_model_cpu_offload()
 
     def generate(self, input: Tuple[Any, str]) -> List[Any]:
         """Generate output from a generative model.
