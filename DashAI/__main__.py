@@ -108,7 +108,7 @@ def _start_backend_server(
 
     uvicorn.run(
         app=app,
-        host="127.0.0.1",
+        host=os.environ.get("DASHAI_HOST", "127.0.0.1"),
         port=8000,
     )
 
