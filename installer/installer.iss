@@ -28,6 +28,4 @@ Name: "{commondesktop}\DashAI"; Filename: "{app}\DashAI-launcher-cpu.exe"; Tasks
 Name: "desktopicon"; Description: "Create a desktop icon"; Flags: unchecked
 
 [Run]
-Filename: "{app}\DashAI-launcher-cpu.exe"
-Description: "Launch DashAI"
-Flags: postinstall nowait skipifsilent
+Filename: "{app}\DashAI-launcher-cpu.exe"; Description: "Launch DashAI"; Flags: postinstall nowait skipifsilent

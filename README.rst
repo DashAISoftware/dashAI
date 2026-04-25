@@ -193,7 +193,7 @@ You can check all available options through the command:
 
 
 Database Migrations
-==================
+===================
 
 Migrations are managed through `Alembic <https://alembic.sqlalchemy.org/en/latest/>`_.
 
