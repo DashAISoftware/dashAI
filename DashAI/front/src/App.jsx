@@ -35,6 +35,16 @@ function App() {
           />
           <Route path="/app/data/upload/notebook" element={<DatasetsPage />} />
           <Route path="/app/models" element={<ModelsPage />} />
+          <Route path="/app/models/datasets/:id" element={<ModelsPage />} />
+          <Route path="/app/models/sessions/:id" element={<ModelsPage />} />
+          <Route
+            path="/app/models/sessions/new/:taskName"
+            element={<ModelsPage />}
+          />
+          <Route
+            path="/app/models/sessions/new/:taskName/prepare"
+            element={<ModelsPage />}
+          />
           <Route path="/app/generative" element={<Generative />} />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
           <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
