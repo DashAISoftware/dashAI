@@ -71,10 +71,21 @@ export default function ModelsContent() {
     if (path === "/app/models" || path === "/app/models/") {
       setSelectedSessionId(null);
       setSelectedTask(null);
-      selectDataset(null);
+      const preserved = location.state?.preselectedDatasetId;
+      if (preserved != null) {
+        selectDataset(preserved);
+      } else {
+        selectDataset(null);
+      }
       setStep(0);
     }
-  }, [location.pathname, params.id, params.taskName, tasks]);
+  }, [
+    location.pathname,
+    location.state?.preselectedDatasetId,
+    params.id,
+    params.taskName,
+    tasks,
+  ]);
 
   useEffect(() => {
     if (location.state?.openSessionId && sessions.length > 0) {

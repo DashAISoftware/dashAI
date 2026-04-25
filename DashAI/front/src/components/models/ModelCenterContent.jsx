@@ -71,7 +71,9 @@ export default function ModelsCenterContent() {
   };
 
   const handleNewSessionFromDataset = () => {
-    navigate("/app/models");
+    navigate("/app/models", {
+      state: { preselectedDatasetId: selectedDatasetId },
+    });
   };
 
   const handleBackToDataset = () => {
