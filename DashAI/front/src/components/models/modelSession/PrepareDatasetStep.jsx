@@ -52,11 +52,19 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     newExp.output_columns,
   );
 
+  // Holdout or cross-validation
+  const [divisionType, setDivisionType] = useState("holdout");
+
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState(42);
+
+  // Cross-Validation configuration states
+  const [cvType, setCvType] = useState("kfold");
+  const [numFolds, setNumFolds] = useState(5);
+  const [numRepeats, setNumRepeats] = useState(1);
 
   const defaultParitionsIndex = {
     train: [],
@@ -234,25 +242,36 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       output_columns: outputColumnNames,
     };
 
-    if (splitType === SPLIT_TYPES.MANUAL) {
+    if (divisionType === "holdout") {
+      if (splitType === SPLIT_TYPES.MANUAL) {
+        updatedExpData.splits = {
+          ...rowsPartitionsIndex,
+          splitType: splitType,
+        };
+      } else if (splitType === SPLIT_TYPES.RANDOM) {
+        updatedExpData.splits = {
+          ...rowsPartitionsPercentage,
+          shuffle: shuffle,
+          stratify: stratify,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+          splitType: splitType,
+        };
+      } else if (splitType === SPLIT_TYPES.PREDEFINED) {
+        updatedExpData.splits = {
+          ...datasetPartitionsIndex,
+          splitType: splitType,
+        };
+      }
+    } else if (divisionType === "crossValidation") {
       updatedExpData.splits = {
-        ...rowsPartitionsIndex,
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.RANDOM) {
-      updatedExpData.splits = {
-        ...rowsPartitionsPercentage,
-        shuffle: shuffle,
-        stratify: stratify,
+        cvType: cvType,
+        numFolds: numFolds,
+        numRepeats: numRepeats,
         seed: seed === "" || seed == null ? 42 : Number(seed),
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-      updatedExpData.splits = {
-        ...datasetPartitionsIndex,
-        splitType: splitType,
+        shuffle: shuffle,
       };
     }
+
     setNewExp(updatedExpData);
   };
 
@@ -301,6 +320,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     seed,
     inputColumnNames,
     outputColumnNames,
+    cvType,
+    numFolds,
+    numRepeats,
   ]);
 
   useEffect(() => {
@@ -465,6 +487,14 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             setStratify={setStratify}
             seed={seed}
             setSeed={setSeed}
+            divisionType={divisionType}
+            setDivisionType={setDivisionType}
+            cvType={cvType}
+            setCvType={setCvType}
+            numFolds={numFolds}
+            setNumFolds={setNumFolds}
+            numRepeats={numRepeats}
+            setNumRepeats={setNumRepeats}
           />
         </Grid>
       ) : (

@@ -13,22 +13,18 @@ class BaseFoldSplitter(BaseSplitter):
         self.n_splits = splits_data.get("n_splits", 5)
 
     @abstractmethod
-    def split_indexes(
-        self, total_rows, n_splits, shuffle, random_state=42, y_labels=None
-    ):
+    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
         raise NotImplementedError(
             "The split indexes method must be implemented by subclasses."
         )
 
     def split(self, x, y) -> Tuple[List[object], List[object], Dict]:
-        total_rows = len(x)
-
         folds = self.split_indexes(
-            total_rows=total_rows,
+            x=x,
+            y=y,
             n_splits=self.n_splits,
             shuffle=self.shuffle,
             random_state=self.random_state,
-            y_labels=self.prepare_y(y),
         )
 
         indices = {}
@@ -45,9 +41,9 @@ class BaseFoldSplitter(BaseSplitter):
             y_prepared.append(split_dataset_cv(y, indice, train_idx, test_idx))
 
         # Add the full dataset as the last fold for training on all data
-        indice = {"train_indexes": list(range(total_rows)), "test_indexes": []}
+        indice = {"train_indexes": list(range(len(x))), "test_indexes": []}
         indices["full_dataset"] = indice
-        x_prepared.append(split_dataset_cv(x, indice, list(range(total_rows)), []))
-        y_prepared.append(split_dataset_cv(y, indice, list(range(total_rows)), []))
+        x_prepared.append(split_dataset_cv(x, indice, list(range(len(x))), []))
+        y_prepared.append(split_dataset_cv(y, indice, list(range(len(x))), []))
 
         return x_prepared, y_prepared, indices

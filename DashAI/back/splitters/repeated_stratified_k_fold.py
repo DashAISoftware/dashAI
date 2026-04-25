@@ -1,12 +1,13 @@
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import RepeatedStratifiedKFold
 
 from .base_fold_splitter import BaseFoldSplitter
 
 
-class StratifiedKFoldSplitter(BaseFoldSplitter):
+class RepeatedStratifiedKFoldSplitter(BaseFoldSplitter):
     def __init__(self, splits_data, dataset, output_column):
         super().__init__(splits_data, dataset, output_column)
+        self.n_repeats = splits_data.get("n_repeats", 1)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
         """Generate lists with train and test indexes for each fold."""
@@ -15,11 +16,11 @@ class StratifiedKFoldSplitter(BaseFoldSplitter):
         try:
             y_labels = self.prepare_y(y)
 
-            kf = StratifiedKFold(
-                n_splits=n_splits, shuffle=shuffle, random_state=random_state
+            rskf = RepeatedStratifiedKFold(
+                n_splits=n_splits, n_repeats=self.n_repeats, random_state=random_state
             )
-            folds = list(kf.split(indexes, y=y_labels))
+            folds = list(rskf.split(indexes, y=y_labels))
         except ValueError as e:
-            raise ValueError(f"Error in StratifiedKFold splitting: {e}") from e
+            raise ValueError(f"Error in RepeatedStratifiedKFold splitting: {e}") from e
 
         return folds

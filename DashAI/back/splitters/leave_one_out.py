@@ -8,11 +8,9 @@ class LeaveOneOutSplitter(BaseFoldSplitter):
     def __init__(self, splits_data, dataset, output_column):
         super().__init__(splits_data, dataset, output_column)
 
-    def split_indexes(
-        self, total_rows, n_splits, shuffle, random_state=42, y_labels=None
-    ):
+    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
         """Generate lists with train and test indexes for each fold."""
-        indexes = np.arange(total_rows)
+        indexes = np.arange(len(x))
 
         try:
             loo = LeaveOneOut()

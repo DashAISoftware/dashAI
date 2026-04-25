@@ -36,6 +36,14 @@ function SplitDatasetRows({
   setStratify,
   seed,
   setSeed,
+  divisionType,
+  setDivisionType,
+  cvType,
+  setCvType,
+  numFolds,
+  setNumFolds,
+  numRepeats,
+  setNumRepeats,
 }) {
   const { t } = useTranslation(["experiments"]);
 
@@ -72,12 +80,6 @@ function SplitDatasetRows({
   const [randomSplitErrorText, setRandomSplitErrorText] = useState("");
   const [manualSplitError, setManualSplitError] = useState(false);
   const [manualSplitErrorText, setManualSplitErrorText] = useState("");
-  const [divisionType, setDivisionType] = useState("holdout");
-
-  // Cross-Validation configuration states
-  const [cvType, setCvType] = useState("kfold");
-  const [numFolds, setNumFolds] = useState(5);
-  const [numRepeats, setNumRepeats] = useState(1);
 
   const handleSplitTypeChange = (event) => {
     const newType = event.target.value;
@@ -701,6 +703,14 @@ SplitDatasetRows.propTypes = {
   setStratify: PropTypes.func.isRequired,
   seed: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   setSeed: PropTypes.func.isRequired,
+  divisionType: PropTypes.string.isRequired,
+  setDivisionType: PropTypes.func.isRequired,
+  cvType: PropTypes.string.isRequired,
+  setCvType: PropTypes.func.isRequired,
+  numFolds: PropTypes.number.isRequired,
+  setNumFolds: PropTypes.func.isRequired,
+  numRepeats: PropTypes.number.isRequired,
+  setNumRepeats: PropTypes.func.isRequired,
 };
 
 export default SplitDatasetRows;
