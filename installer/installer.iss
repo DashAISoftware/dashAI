@@ -9,7 +9,7 @@ AppPublisher=DashAI Software
 AppPublisherURL=https://dash-ai.com
 DefaultDirName={pf}\DashAI
 DefaultGroupName=DashAI
-OutputDir=installer
+OutputDir=.
 OutputBaseFilename=DashAI-Installer
 Compression=lzma
 SolidCompression=yes
@@ -18,7 +18,7 @@ SetupIconFile=DashAI.ico
 
 [Files]
 ; Copy all files from PyInstaller onedir output
-Source: "dist\DashAI-launcher-cpu\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "..\dist\DashAI-launcher-cpu\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
 Name: "{group}\DashAI"; Filename: "{app}\DashAI-launcher-cpu.exe"
