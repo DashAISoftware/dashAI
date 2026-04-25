@@ -14,7 +14,10 @@ class LeaveOneOutSplitter(BaseFoldSplitter):
         """Generate lists with train and test indexes for each fold."""
         indexes = np.arange(total_rows)
 
-        loo = LeaveOneOut()
-        folds = list(loo.split(indexes))
+        try:
+            loo = LeaveOneOut()
+            folds = list(loo.split(indexes))
+        except ValueError as e:
+            raise ValueError(f"Error in LeaveOneOut splitting: {e}") from e
 
         return folds

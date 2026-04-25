@@ -14,7 +14,14 @@ class KFoldSplitter(BaseFoldSplitter):
         """Generate lists with train and test indexes for each fold."""
         indexes = np.arange(total_rows)
 
-        kf = KFold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
-        folds = list(kf.split(indexes))
+        try:
+            kf = KFold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+            folds = list(kf.split(indexes))
+        except ValueError as e:
+            raise ValueError(
+                f"""Error in KFold splitting: {e}.
+                Check if n_splits is less than or equal
+                to the number of samples."""
+            ) from e
 
         return folds

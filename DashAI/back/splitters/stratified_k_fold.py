@@ -14,9 +14,15 @@ class StratifiedKFoldSplitter(BaseFoldSplitter):
         """Generate lists with train and test indexes for each fold."""
         indexes = np.arange(total_rows)
 
-        kf = StratifiedKFold(
-            n_splits=n_splits, shuffle=shuffle, random_state=random_state
-        )
-        folds = list(kf.split(indexes, y=y_labels))
+        try:
+            if y_labels is None:
+                raise ValueError("y_labels must be provided for StratifiedKFold.")
+
+            kf = StratifiedKFold(
+                n_splits=n_splits, shuffle=shuffle, random_state=random_state
+            )
+            folds = list(kf.split(indexes, y=y_labels))
+        except ValueError as e:
+            raise ValueError(f"Error in StratifiedKFold splitting: {e}") from e
 
         return folds
