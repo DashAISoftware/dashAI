@@ -250,16 +250,6 @@ function CreateSessionSteps({
   return (
     <>
       <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        <Box sx={{ p: 2 }}>
-          <Stepper activeStep={activeStep}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Box>
-
         <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
           {activeStep === 0 && (
             <SetNameAndDatasetStep
