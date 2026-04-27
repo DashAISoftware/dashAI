@@ -20,6 +20,43 @@ export default function DataBreadcrumbs() {
   const getBreadcrumbs = () => {
     const path = location.pathname;
 
+    if (path.startsWith("/app/data/datasets/new/configure")) {
+      return [
+        rootCrumb,
+        {
+          label: t("datasets:label.selectDataloader"),
+          path: "/app/data/datasets/new",
+        },
+        {
+          label: t("datasets:label.configureAndUpload"),
+          path: null,
+          current: true,
+        },
+      ];
+    }
+
+    if (path.startsWith("/app/data/datasets/new")) {
+      return [
+        rootCrumb,
+        {
+          label: t("datasets:label.selectDataloader"),
+          path: null,
+          current: true,
+        },
+      ];
+    }
+
+    if (path.startsWith("/app/data/notebooks/new")) {
+      return [
+        rootCrumb,
+        {
+          label: t("datasets:label.createNewNotebook"),
+          path: null,
+          current: true,
+        },
+      ];
+    }
+
     if (path.startsWith("/app/data/datasets/") && params.id) {
       const dataset = datasets.find((d) => d.id === Number(params.id));
       const name = dataset?.name ?? `#${params.id}`;
@@ -30,43 +67,6 @@ export default function DataBreadcrumbs() {
       const notebook = notebooks.find((n) => n.id === Number(params.id));
       const name = notebook?.name ?? `#${params.id}`;
       return [rootCrumb, { label: name, path: null, current: true }];
-    }
-
-    if (path.startsWith("/app/data/upload/dataset/configure")) {
-      return [
-        rootCrumb,
-        {
-          label: t("datasets:label.selectDataloader"),
-          path: "/app/data/upload/dataset",
-        },
-        {
-          label: t("datasets:label.configureAndUpload"),
-          path: null,
-          current: true,
-        },
-      ];
-    }
-
-    if (path.startsWith("/app/data/upload/dataset")) {
-      return [
-        rootCrumb,
-        {
-          label: t("datasets:label.selectDataloader"),
-          path: null,
-          current: true,
-        },
-      ];
-    }
-
-    if (path.startsWith("/app/data/upload/notebook")) {
-      return [
-        rootCrumb,
-        {
-          label: t("datasets:label.createNewNotebook"),
-          path: null,
-          current: true,
-        },
-      ];
     }
 
     return [{ ...rootCrumb, path: null, current: true }];

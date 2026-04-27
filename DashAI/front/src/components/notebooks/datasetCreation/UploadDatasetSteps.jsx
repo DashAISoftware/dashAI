@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
 
-const UPLOAD_BASE_PATH = "/app/data/upload/dataset";
+const UPLOAD_BASE_PATH = "/app/data/datasets/new";
 const UPLOAD_CONFIGURE_PATH = `${UPLOAD_BASE_PATH}/configure`;
 
 export default function UploadDatasetSteps({ backHome }) {

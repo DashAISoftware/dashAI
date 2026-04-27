@@ -42,6 +42,22 @@ export default function DatasetsContent() {
   useEffect(() => {
     const path = location.pathname;
 
+    if (path.startsWith("/app/data/datasets/new")) {
+      clearSelectedDataset();
+      clearSelectedNotebook();
+      setSelectedOption(OptionsEnum.DATASET);
+      setStep(1);
+      return;
+    }
+
+    if (path.startsWith("/app/data/notebooks/new")) {
+      clearSelectedDataset();
+      clearSelectedNotebook();
+      setSelectedOption(OptionsEnum.NOTEBOOK);
+      setStep(1);
+      return;
+    }
+
     if (path.startsWith("/app/data/datasets/") && params.id) {
       const id = Number(params.id);
       selectDataset(id);
@@ -59,22 +75,6 @@ export default function DatasetsContent() {
       setSelectedOption(OptionsEnum.NOTEBOOK);
       setStep(0);
       setRightBarContent(null);
-      return;
-    }
-
-    if (path.startsWith("/app/data/upload/dataset")) {
-      clearSelectedDataset();
-      clearSelectedNotebook();
-      setSelectedOption(OptionsEnum.DATASET);
-      setStep(1);
-      return;
-    }
-
-    if (path.startsWith("/app/data/upload/notebook")) {
-      clearSelectedDataset();
-      clearSelectedNotebook();
-      setSelectedOption(OptionsEnum.NOTEBOOK);
-      setStep(1);
       return;
     }
 

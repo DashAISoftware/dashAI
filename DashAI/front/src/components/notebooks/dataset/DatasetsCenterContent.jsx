@@ -40,7 +40,7 @@ export default function DatasetsCenterContent() {
     if (searchParams.get("action") === "upload") {
       searchParams.delete("action");
       setSearchParams(searchParams, { replace: true });
-      navigate("/app/data/upload/dataset");
+      navigate("/app/data/datasets/new");
     }
   }, [searchParams]);
 
@@ -50,7 +50,7 @@ export default function DatasetsCenterContent() {
   const goToNextStep = useCallback(
     (option) => {
       if (option === "dataset") {
-        navigate("/app/data/upload/dataset");
+        navigate("/app/data/datasets/new");
         if (tourContext?.run) {
           setTimeout(() => {
             tourContext.nextStep();
@@ -59,7 +59,7 @@ export default function DatasetsCenterContent() {
         return;
       }
 
-      navigate("/app/data/upload/notebook");
+      navigate("/app/data/notebooks/new");
     },
     [tourContext, navigate],
   );
@@ -70,7 +70,7 @@ export default function DatasetsCenterContent() {
   };
 
   const handleNewNotebookFromDataset = () => {
-    navigate("/app/data/upload/notebook", {
+    navigate("/app/data/notebooks/new", {
       state: { preselectedDatasetId: selectedDatasetId },
     });
   };
