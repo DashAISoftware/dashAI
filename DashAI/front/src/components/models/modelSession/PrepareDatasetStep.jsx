@@ -65,6 +65,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [cvType, setCvType] = useState("kfold");
   const [numFolds, setNumFolds] = useState(5);
   const [numRepeats, setNumRepeats] = useState(1);
+  const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
     train: [],
@@ -263,13 +264,39 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         };
       }
     } else if (divisionType === "crossValidation") {
-      updatedExpData.splits = {
-        cvType: cvType,
-        numFolds: numFolds,
-        numRepeats: numRepeats,
-        seed: seed === "" || seed == null ? 42 : Number(seed),
-        shuffle: shuffle,
-      };
+      if (cvType === "groupKFold" || cvType === "stratifiedGroupKFold") {
+        updatedExpData.splits = {
+          cvType: cvType,
+          numFolds: numFolds,
+          numRepeats: numRepeats,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+          shuffle: shuffle,
+          group_column: groupColumn,
+        };
+      } else if (
+        cvType === "repeatedKFold" ||
+        cvType === "repeatedStratifiedKfold"
+      ) {
+        updatedExpData.splits = {
+          cvType: cvType,
+          numFolds: numFolds,
+          numRepeats: numRepeats,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+          shuffle: shuffle,
+        };
+      } else if (cvType === "kFold" || cvType === "stratifiedKFold") {
+        updatedExpData.splits = {
+          cvType: cvType,
+          numFolds: numFolds,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+          shuffle: shuffle,
+        };
+      } else if (cvType === "leaveOneOut") {
+        updatedExpData.splits = {
+          cvType: cvType,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+        };
+      }
     }
 
     setNewExp(updatedExpData);
@@ -323,6 +350,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     cvType,
     numFolds,
     numRepeats,
+    groupColumn,
   ]);
 
   useEffect(() => {
@@ -495,6 +523,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             setNumFolds={setNumFolds}
             numRepeats={numRepeats}
             setNumRepeats={setNumRepeats}
+            groupColumn={groupColumn}
+            setGroupColumn={setGroupColumn}
+            outputColumnNames={outputColumnNames}
+            taskName={newExp.task_name}
           />
         </Grid>
       ) : (
