@@ -40,7 +40,7 @@ The following table provides a high-level summary of the most decisive criteria 
 | Users can extend the platform with custom models  |        ✓         |     ✓     |     ✓      |    ✓    |    ✓    |    ✓    |   **✓**    |
 | Users can integrate new Large Language Models     |        ✗         |     ✓     |     ✗      |    ✓    |    ✗    |    ✗    |   **✓**    |
 
-¹ 200+ refers to the total Model Garden catalog (LLMs + image + other); image-specific models are a smaller subset.  
+¹ 200+ refers to the total Model Garden catalog (LLMs + image + other); image-specific models are a smaller subset.
 ² Varies by AWS region and Bedrock availability; not a fixed count comparable to locally registered models.
 
 ---

@@ -40,7 +40,7 @@ La siguiente tabla ofrece un resumen de alto nivel de los criterios más decisiv
 | Los usuarios pueden extender la plataforma con modelos propios |        ✓         |     ✓     |     ✓      |    ✓    |    ✓    |    ✓    |    **✓**    |
 | Los usuarios pueden integrar nuevos LLMs                       |        ✗         |     ✓     |     ✗      |    ✓    |    ✗    |    ✗    |    **✓**    |
 
-¹ 200+ se refiere al catálogo total de Model Garden (LLMs + imagen + otros); los modelos específicos de imagen son un subconjunto menor.  
+¹ 200+ se refiere al catálogo total de Model Garden (LLMs + imagen + otros); los modelos específicos de imagen son un subconjunto menor.
 ² Varía según la región de AWS y la disponibilidad de Bedrock; no es un número fijo comparable con los modelos registrados localmente.
 
 ---
