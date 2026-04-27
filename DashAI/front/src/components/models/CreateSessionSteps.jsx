@@ -247,7 +247,7 @@ function CreateSessionSteps({
         <Box sx={{ p: 2 }}>
           <Stepper activeStep={activeStep}>
             {steps.map((label) => (
-              <Step key={label}>
+              <Step key={label} completed={false}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))}
