@@ -47,13 +47,13 @@ export default function GenerativeContent() {
     }
 
     if (path.startsWith("/app/generative/sessions/") && params.id) {
+      if (sessions.length === 0 || tasks.length === 0) return;
       const id = Number(params.id);
       const session = sessions.find((s) => s.id === id);
-      if (session) {
-        const task = tasks.find((tk) => tk.name === session.task_name);
-        setSelectedTaskName(session.task_name);
-        setSelectedDisplayName(task?.display_name ?? null);
-      }
+      if (!session) return;
+      const task = tasks.find((tk) => tk.name === session.task_name);
+      setSelectedTaskName(session.task_name);
+      setSelectedDisplayName(task?.display_name ?? null);
       setSelectedSessionId(id);
       setStepIndex(0);
       return;
