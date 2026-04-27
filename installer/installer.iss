@@ -4,7 +4,7 @@
 ; pyinstaller -D -n DashAI-launcher-cpu --clean --add-data "DashAI/front/build;DashAI/front/build" --add-data "%CONDA_PREFIX%\Lib\site-packages\transformers;transformers" --add-binary "%CONDA_PREFIX%\Lib\site-packages\llama_cpp\lib\*;llama_cpp/lib" --additional-hooks-dir=hooks DashAI/__main__.py
 [Setup]
 AppName=DashAI
-AppVersion=0.9.0
+AppVersion=0.9.1
 AppPublisher=DashAI Software
 AppPublisherURL=https://dash-ai.com
 DefaultDirName={pf}\DashAI
