@@ -81,10 +81,9 @@ class LogLoss(ClassificationMetric):
         Returns
         -------
         float
-            Log Loss score between true labels and predicted labels
+            Log Loss, lower is better.
         """
         from sklearn.metrics import log_loss
 
         true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
-
         return log_loss(true_labels, probs_pred_labels)

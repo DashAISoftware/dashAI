@@ -314,25 +314,25 @@ export default function PreviewDatasetTable({
                 columnName={displayName}
                 reason={columnType?.inference_reason}
               />
-
-              {columnType?.type === "Categorical" && columnType?.encoder && (
-                <Tooltip title={t("common:changeEncoder")} arrow>
-                  <span style={{ display: "inline-flex" }}>
-                    <Chip
-                      label={encoderLabel(columnType.encoder)}
-                      size="small"
-                      onClick={(e) => handleEncoderClick(e, field)}
-                      aria-label={t("common:encoder")}
-                      sx={{
-                        fontSize: "0.65rem",
-                        height: "18px",
-                        cursor: "pointer",
-                      }}
-                    />
-                  </span>
-                </Tooltip>
-              )}
             </Box>
+
+            {columnType?.type === "Categorical" && columnType?.encoder && (
+              <Tooltip title={t("common:changeEncoder")} arrow>
+                <span style={{ display: "inline-flex" }}>
+                  <Chip
+                    label={encoderLabel(columnType.encoder)}
+                    size="small"
+                    onClick={(e) => handleEncoderClick(e, field)}
+                    aria-label={t("common:encoder")}
+                    sx={{
+                      fontSize: "0.65rem",
+                      height: "18px",
+                      cursor: "pointer",
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
           </Box>
         ),
       };

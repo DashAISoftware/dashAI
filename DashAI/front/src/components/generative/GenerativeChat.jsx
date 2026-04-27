@@ -8,14 +8,13 @@ import {
   getProcessesBySessionId,
   deleteProcessById,
 } from "../../api/process";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
 import { useSnackbar } from "notistack";
-import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
@@ -27,8 +26,14 @@ export default function GenerativeChat() {
   const {
     selectedSessionId: sessionId,
     selectedTaskName: taskName,
+    tasks,
     paramsVersion,
   } = useGenerative();
+
+  const inputsCardinality = useMemo(() => {
+    const task = tasks?.find((t) => t.name === taskName);
+    return task?.metadata?.inputs ?? { str: 1 };
+  }, [tasks, taskName]);
 
   const [history, setHistory] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -206,7 +211,7 @@ export default function GenerativeChat() {
       gap={1}
       width={"100%"}
       height={"100%"}
-      //bgcolor={"background.box"}
+      sx={{ overflow: "hidden", minHeight: 0 }}
     >
       {/* Model display */}
       <Box
@@ -259,7 +264,8 @@ export default function GenerativeChat() {
         alignItems="flex-start"
         gap={1}
         width={"100%"}
-        height={"100%"}
+        flex={1}
+        minHeight={0}
         overflow={"auto"}
         mt={1}
         p={2}
@@ -323,21 +329,14 @@ export default function GenerativeChat() {
       </Box>
 
       {/* Chat input */}
-      {taskName === "ControlNetTask" ? (
-        <MediaInput
-          onSendMessage={(input) => {
-            handleSendMessage(input);
-          }}
-          isLoading={isLoadingMessage}
-        />
-      ) : (
-        <TextInput
-          onSendMessage={(input) => {
-            handleSendMessage(input);
-          }}
-          isLoading={isLoadingMessage}
-        />
-      )}
+      <MediaInput
+        key={sessionId}
+        onSendMessage={(input) => {
+          handleSendMessage(input);
+        }}
+        isLoading={isLoadingMessage}
+        inputsCardinality={inputsCardinality}
+      />
 
       {/* Session Info Modal */}
       {sessionInfo && (

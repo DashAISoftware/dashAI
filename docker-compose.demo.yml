@@ -1,0 +1,82 @@
+services:
+  dashai-1:
+    image: dashai:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - dashai-data-1:/root/.DashAI
+
+  dashai-2:
+    image: dashai:latest
+    ports:
+      - "8002:8000"
+    volumes:
+      - dashai-data-2:/root/.DashAI
+
+  dashai-3:
+    image: dashai:latest
+    ports:
+      - "8003:8000"
+    volumes:
+      - dashai-data-3:/root/.DashAI
+
+  dashai-4:
+    image: dashai:latest
+    ports:
+      - "8004:8000"
+    volumes:
+      - dashai-data-4:/root/.DashAI
+
+  dashai-5:
+    image: dashai:latest
+    ports:
+      - "8005:8000"
+    volumes:
+      - dashai-data-5:/root/.DashAI
+
+  dashai-6:
+    image: dashai:latest
+    ports:
+      - "8006:8000"
+    volumes:
+      - dashai-data-6:/root/.DashAI
+
+  dashai-7:
+    image: dashai:latest
+    ports:
+      - "8007:8000"
+    volumes:
+      - dashai-data-7:/root/.DashAI
+
+  dashai-8:
+    image: dashai:latest
+    ports:
+      - "8008:8000"
+    volumes:
+      - dashai-data-8:/root/.DashAI
+
+  dashai-9:
+    image: dashai:latest
+    ports:
+      - "8009:8000"
+    volumes:
+      - dashai-data-9:/root/.DashAI
+
+  dashai-10:
+    image: dashai:latest
+    ports:
+      - "8010:8000"
+    volumes:
+      - dashai-data-10:/root/.DashAI
+
+volumes:
+  dashai-data-1:
+  dashai-data-2:
+  dashai-data-3:
+  dashai-data-4:
+  dashai-data-5:
+  dashai-data-6:
+  dashai-data-7:
+  dashai-data-8:
+  dashai-data-9:
+  dashai-data-10:

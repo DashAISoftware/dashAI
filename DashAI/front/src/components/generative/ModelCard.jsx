@@ -1,10 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Link, Paper, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useTranslation } from "react-i18next";
 
 const DESCRIPTION_LINE_CLAMP = 3;
+const URL_SPLIT_REGEX = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]}])/g;
+const URL_TEST_REGEX = /^https?:\/\//;
+
+function renderDescription(text) {
+  return text.split(URL_SPLIT_REGEX).map((part, i) => {
+    if (URL_TEST_REGEX.test(part)) {
+      return (
+        <Link
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          sx={{ wordBreak: "break-all" }}
+        >
+          {part}
+        </Link>
+      );
+    }
+    return part;
+  });
+}
 
 export default function ModelCard({
   model,
@@ -92,7 +114,7 @@ export default function ModelCard({
         }}
       >
         {model.description
-          ? model.description
+          ? renderDescription(model.description)
           : t("generative:label.noDescriptionAvailable")}
       </Typography>
 

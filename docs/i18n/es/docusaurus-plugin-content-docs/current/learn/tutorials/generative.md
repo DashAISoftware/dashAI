@@ -17,11 +17,11 @@ Los modelos generativos son computacionalmente intensivos. Se recomienda encarec
 
 Al abrir el módulo Generativo, seleccionas un tipo de tarea que determina qué modelos están disponibles:
 
-| Tarea            | Descripción                                                                            |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| **TextToText**   | Genera texto a partir de un prompt de texto. Incluye LLMs como Qwen, Llama y otros.   |
-| **TextToImage**  | Genera imágenes a partir de una descripción de texto usando modelos como Stable Diffusion. |
-| **ImageToImage** | Transforma o modifica una imagen existente guiada por texto y una imagen de entrada.   |
+| Tarea           | Descripción                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| **TextToText**  | Genera texto a partir de un prompt de texto. Incluye LLMs como Qwen, Llama y otros.        |
+| **TextToImage** | Genera imágenes a partir de una descripción de texto usando modelos como Stable Diffusion. |
+| **ControlNet**  | Transforma o modifica una imagen existente guiada por texto y una imagen de entrada.       |
 
 ---
 
@@ -40,12 +40,12 @@ Se muestra una lista de modelos disponibles para la tarea seleccionada. Haz clic
 
 Cada modelo expone un conjunto de parámetros que controlan su comportamiento. Estos aparecen en un panel en el lado derecho de la pantalla. Los parámetros comunes incluyen:
 
-| Parámetro       | Descripción                                                                                                                                                                             |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Temperature** | Controla la aleatoriedad de la salida. Valores bajos (p. ej., 0.1) producen respuestas más deterministas y enfocadas. Valores altos (p. ej., 1.0+) producen salidas más variadas y creativas. |
-| **Max tokens**  | El número máximo de tokens (aproximadamente palabras o partes de palabras) que el modelo generará en una sola respuesta.                                                                |
+| Parámetro       | Descripción                                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Temperature** | Controla la aleatoriedad de la salida. Valores bajos (p. ej., 0.1) producen respuestas más deterministas y enfocadas. Valores altos (p. ej., 1.0+) producen salidas más variadas y creativas.    |
+| **Max tokens**  | El número máximo de tokens (aproximadamente palabras o partes de palabras) que el modelo generará en una sola respuesta.                                                                         |
 | **Top-p**       | Muestreo por núcleo — limita la generación al conjunto mínimo de tokens cuya probabilidad acumulada supera este valor. Funciona junto con temperature para controlar la diversidad de la salida. |
-| **Seed**        | Una semilla aleatoria fija para reproducibilidad. Establecer la misma semilla con los mismos parámetros producirá la misma salida.                                                      |
+| **Seed**        | Una semilla aleatoria fija para reproducibilidad. Establecer la misma semilla con los mismos parámetros producirá la misma salida.                                                               |
 
 Los parámetros varían según el modelo — no todos los modelos exponen todos los anteriores. Cada parámetro tiene un icono de ayuda **?** que muestra una descripción al pasar el cursor.
 
@@ -75,7 +75,7 @@ Una vez que la sesión esté lista, se abre la interfaz de interacción.
 El área principal de la sesión es la interfaz de interacción:
 
 - **TextToText** — un campo de entrada donde escribes un prompt y recibes la respuesta de texto del modelo. Cada intercambio se muestra como un hilo de conversación.
-- **TextToImage / ImageToImage** — un campo de entrada para el prompt de texto y, donde aplique, un área de carga de imágenes. La imagen generada se muestra en línea.
+- **TextToImage / ControlNet** — un campo de entrada para el prompt de texto y, donde aplique, un área de carga de imágenes. La imagen generada se muestra en línea.
 
 Envía tu entrada y espera a que el modelo genere una respuesta. El tiempo de generación depende del tamaño del modelo, la configuración de parámetros y tu hardware.
 
@@ -109,10 +109,10 @@ Todas las sesiones que has creado están listadas en el lado izquierdo de la sec
 
 ## Solución de Problemas
 
-| Síntoma                                           | Causa probable                                         | Solución                                                                                        |
-| ------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| La generación falla inmediatamente                | Memoria GPU insuficiente                               | Reduce las dimensiones de imagen o max tokens; cierra otras aplicaciones que usen la GPU        |
-| Error en dimensiones de imagen                    | Ancho o alto no divisible por 8                        | Ajusta las dimensiones al múltiplo de 8 más cercano (p. ej., 512, 768, 1024)                    |
-| El modelo tarda mucho en cargar                   | Primer uso, descargando pesos del modelo               | Espera a que se complete la descarga; las cargas posteriores serán más rápidas                  |
-| La salida siempre es idéntica                     | La semilla está fija y los parámetros no han cambiado  | Cambia la semilla o aumenta la temperature para obtener salidas variadas                        |
-| Los detalles del error no son visibles en la UI   | El modal de error muestra un mensaje genérico          | Abre la consola de desarrollador del navegador (F12) y revisa los registros para el error completo |
+| Síntoma                                         | Causa probable                                        | Solución                                                                                           |
+| ----------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| La generación falla inmediatamente              | Memoria GPU insuficiente                              | Reduce las dimensiones de imagen o max tokens; cierra otras aplicaciones que usen la GPU           |
+| Error en dimensiones de imagen                  | Ancho o alto no divisible por 8                       | Ajusta las dimensiones al múltiplo de 8 más cercano (p. ej., 512, 768, 1024)                       |
+| El modelo tarda mucho en cargar                 | Primer uso, descargando pesos del modelo              | Espera a que se complete la descarga; las cargas posteriores serán más rápidas                     |
+| La salida siempre es idéntica                   | La semilla está fija y los parámetros no han cambiado | Cambia la semilla o aumenta la temperature para obtener salidas variadas                           |
+| Los detalles del error no son visibles en la UI | El modal de error muestra un mensaje genérico         | Abre la consola de desarrollador del navegador (F12) y revisa los registros para el error completo |

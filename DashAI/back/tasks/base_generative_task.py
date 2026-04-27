@@ -36,36 +36,20 @@ class BaseGenerativeTask:
     def get_metadata(cls) -> Dict[str, Any]:
         """Return serialisable metadata for the current generative task.
 
-        Converts the ``inputs_types`` and ``outputs_types`` entries from class
-        objects to their string names so the result can be JSON-serialised by
-        the DashAI frontend.
-
-        Parameters
-        ----------
-        cls : type
-            The task class (injected automatically by Python for classmethods).
+        ``inputs`` and ``outputs`` are dicts mapping type name to per-type
+        cardinality (e.g. ``{"str": 1, "Image": 1}``) so the frontend can
+        render the correct number of inputs per modality.
 
         Returns
         -------
         Dict[str, Any]
-            Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
-            ``"inputs_cardinality"``, and ``"outputs_cardinality"``.
+            Dictionary with keys ``"inputs"`` and ``"outputs"``.
         """
         metadata = cls.metadata
-
-        # Extract class names
-        inputs_types = [input_type.__name__ for input_type in metadata["inputs_types"]]
-        outputs_types = [
-            output_type.__name__ for output_type in metadata["outputs_types"]
-        ]
-
-        parsed_metadata: dict = {
-            "inputs_types": inputs_types,
-            "outputs_types": outputs_types,
-            "inputs_cardinality": metadata["inputs_cardinality"],
-            "outputs_cardinality": metadata["outputs_cardinality"],
+        return {
+            "inputs": dict(metadata["inputs"]),
+            "outputs": dict(metadata["outputs"]),
         }
-        return parsed_metadata
 
     @abstractmethod
     def prepare_for_task(

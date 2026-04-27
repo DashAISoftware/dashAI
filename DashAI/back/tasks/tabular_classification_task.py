@@ -23,18 +23,12 @@ class TabularClassificationTask(ClassificationTask):
 
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Tabular classification in machine learning involves predicting "
-            "categorical labels for structured data organized in tabular form "
-            "(rows and columns). Models are trained to learn patterns and "
-            "relationships in the data, enabling accurate classification of "
-            "new instances."
+            "Predict categorical labels from structured tabular data "
+            "(rows and columns) using trained classification models."
         ),
         es=(
-            "La clasificación tabular en el aprendizaje automático implica "
-            "predecir etiquetas categóricas para datos estructurados "
-            "organizados en forma tabular (filas y columnas). Los modelos se "
-            "entrenan para aprender patrones y relaciones en los datos, "
-            ", lo que permite una clasificación precisa de nuevas instancias."
+            "Predice etiquetas categóricas a partir de datos tabulares "
+            "estructurados (filas y columnas) usando modelos de clasificación."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(

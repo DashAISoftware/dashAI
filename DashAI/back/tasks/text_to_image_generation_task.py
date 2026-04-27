@@ -2,8 +2,6 @@ import os
 import uuid
 from typing import Any, List, Tuple
 
-from PIL import Image
-
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -20,10 +18,8 @@ class TextToImageGenerationTask(BaseGenerativeTask):
     """
 
     metadata: dict = {
-        "inputs_types": [str],
-        "outputs_types": [Image.Image],
-        "inputs_cardinality": 1,
-        "outputs_cardinality": "n",
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"Image": {"min": 1, "max": "n"}},
     }
     DISPLAY_NAME: str = MultilingualString(en="Text to Image", es="Texto a Imagen")
     DESCRIPTION: str = MultilingualString(

@@ -57,7 +57,7 @@ export function FullscreenImageChat({ open, onClose, imageData }) {
           component="img"
           src={
             imageData
-              ? `${api.defaults.baseURL}/v1/generative-process/image/${imageData}`
+              ? `${api.defaults.baseURL}/v1/generative-process/file/${imageData}`
               : ""
           }
           alt="Fullscreen Image"

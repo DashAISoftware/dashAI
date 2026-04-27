@@ -74,6 +74,9 @@ jobs:
             exit 1
           fi
 
+      - name: Check distribution metadata
+        run: twine check dist/*
+
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
@@ -197,16 +200,85 @@ jobs:
           pip install -r requirements-cpu.txt
           pip install pyinstaller
           pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
-      - name: Build x86_64 executable
+          brew install create-dmg
+
+      - name: Build x86_64 App Bundle
         run: |
           pyinstaller --clean --noconfirm dashai.spec
-      - name: Sign x86_64 binary (ad-hoc)
+
+      - name: Sign App Bundle (ad-hoc)
         run: |
-          chmod +x dist/DashAI-launcher-cpu-x86_64
-          codesign --force --deep --sign - dist/DashAI-launcher-cpu-x86_64
-      - name: Upload x86_64 executable
+          codesign --force --deep --sign - dist/DashAI.app
+
+      - name: Create DMG
+        run: |
+          rm -f DashAI-macos-x86_64.dmg
+
+          create-dmg \
+            --volname "DashAI Installer" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --app-drop-link 600 185 \
+            --hide-extension "DashAI.app" \
+            --no-internet-enable \
+            "DashAI-macos-x86_64.dmg" \
+            "dist/DashAI.app"
+
+      - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DashAI-macos-x86_64
-          path: dist/DashAI-launcher-cpu-x86_64
+          name: DashAI-dmg-x86_64
+          path: DashAI-macos-x86_64.dmg
           retention-days: 1
+
+  # ============================================================
+  # 6. Publish installers to GitHub Release
+  # ============================================================
+  github-release:
+    needs:
+      - publish-pypi
+      - build-windows-executable
+      - build-macos-arm64
+      - build-macos-x86_64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from setup.py
+        id: version
+        run: |
+          VERSION=$(grep -m 1 '    version=' setup.py | sed -E 's/.*version="([^"]+)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: DashAI-windows-installer
+          path: artifacts/windows
+
+      - name: Download macOS ARM64 DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: DashAI-dmg-arm64
+          path: artifacts/macos-arm64
+
+      - name: Download macOS x86_64 DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: DashAI-dmg-x86_64
+          path: artifacts/macos-x86_64
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/windows/DashAI-Installer.exe
+            artifacts/macos-arm64/DashAI-macos-arm64.dmg
+            artifacts/macos-x86_64/DashAI-macos-x86_64.dmg
