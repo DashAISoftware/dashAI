@@ -1,6 +1,7 @@
 from typing import Any, List, Tuple, Optional, Dict
 from itertools import chain
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.dependencies.database.models import ProcessData
 
@@ -17,8 +18,18 @@ class RAGTask(BaseGenerativeTask):
         "outputs_cardinality": 2,
     }
 
-    DISPLAY_NAME: str = "Retrieval-Augmented Generation (RAG) Task"
-    DESCRIPTION: str = "This task generates a text response based on documents provided and chat."
+    DISPLAY_NAME: str = MultilingualString(
+        en="RAG Task",
+        es="Tarea RAG",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="""
+        This task generates a text response with an LLM model based on documents provided.
+        """,
+        es="""
+        Esta tarea genera una respuesta de texto con un modelo LLM basado en los documentos proporcionados.
+        """,
+    )
 
     USE_HISTORY: bool = True
 

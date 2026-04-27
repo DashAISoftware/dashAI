@@ -9,12 +9,14 @@ import {
   Image as TextToImageIcon,
   Tune as ControlNetIcon,
   AutoAwesome as DefaultGenerativeIcon,
+  TextSnippet as RAGIcon,
 } from "@mui/icons-material";
 
 const GENERATIVE_TASK_ICONS = {
   TextToTextGenerationTask: TextToTextIcon,
   TextToImageGenerationTask: TextToImageIcon,
   ControlNetTask: ControlNetIcon,
+  RAGTask: RAGIcon,
 };
 
 export default function SelectTaskMenu() {

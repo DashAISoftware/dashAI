@@ -53,7 +53,6 @@ export default function DocumentSelectionPhase({ onNext }) {
         display="flex"
         flexDirection="column"
         gap={3}
-        height="100%"
         width="100%"
       >
         {/* Header */}
@@ -103,22 +102,20 @@ export default function DocumentSelectionPhase({ onNext }) {
         </Box>
 
         {/* Document Selection */}
-        <Box display="flex" flexDirection="column" flexGrow={1} minHeight={0} gap={2}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Select Documents *
+        <Box display="flex" flexDirection="column" gap={1}>
+          <Typography variant="subtitle1">
+            Select Documents
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Upload new documents or select from existing ones to be used for RAG.
           </Typography>
 
           <Box
-            flexGrow={1}
-            minHeight={0}
             width="100%"
             sx={{
               display: "flex",
               flexDirection: "column",
-              overflow: "hidden",
+              minHeight: "500px",
             }}
           >
             <DocumentSelector

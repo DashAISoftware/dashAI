@@ -12,6 +12,7 @@ import useModelParents from "../../hooks/useModelParents";
 import { Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import FormSchemaFieldCard from "./FormSchemaFieldCard";
+import useSchema from "../../hooks/useSchema";
 
 /**
  * Renders a parent-model selector field as a card.

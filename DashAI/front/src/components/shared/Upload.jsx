@@ -145,7 +145,8 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
         borderRadius: 2,
         display: "flex",
         flexDirection: "column",
-        height: "100%",
+        width: "100%",
+        minHeight: "400px",
       }}
     >
       {/* state text */}
@@ -171,7 +172,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: 0,
+          minHeight: "300px",
         }}
         onClick={datasetState === EMPTY ? handleButtonClick : null}
         onDragEnter={datasetState === EMPTY ? handleDrag : null}
@@ -187,7 +188,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
           multiple={multiple}
         />
 
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
           {datasetState === EMPTY &&
             (dragActive ? (
               <Typography variant="subtitle1">

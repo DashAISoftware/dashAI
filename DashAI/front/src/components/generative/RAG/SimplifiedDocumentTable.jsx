@@ -1,16 +1,20 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  MRT_GlobalFilterTextField,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import {
   Box,
-  Checkbox,
   IconButton,
   Tooltip,
-  Typography,
-  Paper,
-  CircularProgress,
 } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { Visibility, Delete } from "@mui/icons-material";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../utils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
 
@@ -24,6 +28,12 @@ export default function SimplifiedDocumentTable({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
+  
+  const { i18n } = useTranslation(["common"]);
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const handleOpenPreview = async (doc) => {
     setPreviewDoc(doc);
@@ -45,173 +55,178 @@ export default function SimplifiedDocumentTable({
     setTxtContent("");
   };
 
+  const selectedIdSet = useMemo(
+    () => new Set(selectedIds.map((id) => String(id))),
+    [selectedIds],
+  );
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "file_name",
+        header: "Name",
+        size: 250,
+        Cell: ({ row }) => row.original.file_name,
+      },
+      {
+        accessorKey: "file_type",
+        header: "Type",
+        size: 80,
+        Cell: ({ row }) => row.original.file_type?.toUpperCase() || "-",
+      },
+      {
+        accessorKey: "created",
+        header: "Created",
+        size: 150,
+        Cell: ({ row }) => formatDate(row.original.created) || "-",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        size: 100,
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+            <Tooltip title="Preview">
+              <IconButton
+                size="small"
+                onClick={() => handleOpenPreview(row.original)}
+              >
+                <Visibility fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete">
+              <IconButton
+                size="small"
+                onClick={() => onRemove(row.original.id)}
+                color="error"
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [onRemove],
+  );
+
+  const rowSelection = useMemo(
+    () =>
+      documents.reduce((acc, doc) => {
+        acc[String(doc.id)] = selectedIdSet.has(String(doc.id));
+        return acc;
+      }, {}),
+    [documents, selectedIdSet],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: documents,
+    enableSelectAll: true,
+    enableRowSelection: true,
+    selectAllMode: "all",
+    enableColumnOrdering: false,
+    enableColumnActions: false,
+    enableColumnHiding: true,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enablePagination: true,
+    enableBottomToolbar: true,
+    enableTopToolbar: true,
+    enableGlobalFilter: true,
+    initialState: {
+      columnVisibility: {
+        file_type: false,
+        created: false,
+      },
+      pagination: {
+        pageIndex: 0,
+        pageSize: 5,
+      },
+    },
+    muiPaginationProps: {
+      rowsPerPageOptions: [5, 10, 25, 50],
+      showFirstButton: false,
+      showLastButton: false,
+    },
+    muiTablePaperProps: {
+      sx: {
+        boxShadow: "none",
+        borderRadius: 1,
+        display: "flex",
+        flexDirection: "column",
+      },
+    },
+    muiTableContainerProps: {
+      sx: {
+        maxHeight: "none",
+        flex: 1,
+      },
+    },
+    muiTableHeadCellProps: {
+      sx: {
+        fontWeight: 600,
+        backgroundColor: theme.palette.mode === "dark" 
+          ? theme.palette.action.hover 
+          : theme.palette.action.hover,
+      },
+    },
+    muiTableBodyCellProps: {
+      sx: {
+        padding: "8px 16px",
+      },
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: {
+        backgroundColor: selectedIdSet.has(String(row.original.id))
+          ? theme.palette.action.selected
+          : "inherit",
+        "&:hover": {
+          backgroundColor: theme.palette.action.hover,
+        },
+      },
+    }),
+    rowNumberDisplayMode: "hidden",
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <MRT_GlobalFilterTextField table={table} />
+      </Box>
+    ),
+    state: {
+      rowSelection,
+      isLoading,
+    },
+    onRowSelectionChange: (updater) => {
+      const nextRowSelection =
+        typeof updater === "function" ? updater(rowSelection) : updater;
+
+      const nextSelectedIdSet = new Set(
+        Object.entries(nextRowSelection)
+          .filter(([, isSelected]) => Boolean(isSelected))
+          .map(([rowId]) => String(rowId)),
+      );
+
+      // Diff current vs next and toggle only what's changed
+      documents.forEach((doc) => {
+        const idKey = String(doc.id);
+        const wasSelected = selectedIdSet.has(idKey);
+        const isSelectedNow = nextSelectedIdSet.has(idKey);
+        if (wasSelected !== isSelectedNow) {
+          onToggle(doc.id);
+        }
+      });
+    },
+    getRowId: (row) => String(row.id),
+    localization,
+  });
+
   return (
     <>
-      <Paper
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          width: "100%",
-          borderRadius: 2,
-          backgroundColor: "background.paper",
-          overflow: "hidden",
-        }}
-      >
-        {/* Header */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "50px 1fr 150px 120px",
-            gap: 2,
-            p: 2,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            backgroundColor: "action.hover",
-            fontWeight: 600,
-            flexShrink: 0,
-          }}
-        >
-          <Box>
-            <Checkbox
-              checked={
-                documents.length > 0 &&
-                selectedIds.length === documents.length
-              }
-              indeterminate={
-                selectedIds.length > 0 &&
-                selectedIds.length < documents.length
-              }
-              onChange={(e) => {
-                if (e.target.checked) {
-                  documents.forEach((doc) => {
-                    if (!selectedIds.includes(doc.id)) {
-                      onToggle(doc.id);
-                    }
-                  });
-                } else {
-                  selectedIds.forEach((id) => onToggle(id));
-                }
-              }}
-            />
-          </Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            Name
-          </Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            Added On
-          </Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-            Actions
-          </Typography>
-        </Box>
-
-        {/* Rows Container */}
-        <Box
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            minHeight: 0,
-            "&::-webkit-scrollbar": {
-              width: "8px",
-            },
-            "&::-webkit-scrollbar-track": {
-              backgroundColor: "#252836",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "#374151",
-              borderRadius: "4px",
-              "&:hover": {
-                backgroundColor: "#4a5568",
-              },
-            },
-          }}
-        >
-          {isLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : documents.length === 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                color: "text.secondary",
-              }}
-            >
-              <Typography>No documents available</Typography>
-            </Box>
-          ) : (
-            documents.map((doc) => (
-              <Box
-                key={doc.id}
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "50px 1fr 150px 120px",
-                  gap: 2,
-                  p: 2,
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                  alignItems: "center",
-                  backgroundColor: selectedIds.includes(doc.id)
-                    ? "action.selected"
-                    : "inherit",
-                  "&:hover": {
-                    backgroundColor: "action.hover",
-                  },
-                }}
-              >
-                <Checkbox
-                  checked={selectedIds.includes(doc.id)}
-                  onChange={() => onToggle(doc.id)}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {doc.file_name}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  {formatDate(doc.created)}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Tooltip title="Preview">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenPreview(doc)}
-                    >
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      onClick={() => onRemove(doc.id)}
-                      color="error"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-            ))
-          )}
-        </Box>
-      </Paper>
-
+      <Box sx={{ display: "flex", flexDirection: "column", width: "100%", minHeight: "400px" }}>
+        <MaterialReactTable table={table} />
+      </Box>
       <DocumentPreviewModal
         open={previewOpen}
         onClose={handleClosePreview}

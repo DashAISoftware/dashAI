@@ -236,12 +236,23 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         onClose={() => setUploadOpen(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            maxHeight: "80vh",
+            minHeight: "300px",
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
       >
-        <Upload
-          onFileUpload={handleFileUpload}
-          multiple={true}
-          emptyUploadText="Upload your document(s)"
-        />
+        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          <Upload
+            onFileUpload={handleFileUpload}
+            multiple={true}
+            emptyUploadText="Upload your document(s)"
+            sx={{ flex: 1 }}
+          />
+        </Box>
       </Dialog>
     </Box>
   );

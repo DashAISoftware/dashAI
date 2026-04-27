@@ -128,29 +128,32 @@ export default function DocumentSelector({
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
         gap: 2,
-        height: "100%",
         width: "100%",
       }}
     >
-      <SimplifiedDocumentTable
-        documents={documents.map((doc) => ({
-          ...doc,
-          preview: doc.file_url,
-          file_type: doc.file_name.split(".").pop().toLowerCase(),
-        }))}
-        selectedIds={selectedIds}
-        onToggle={handleToggleSelection}
-        onRemove={handleRemoveDocument}
-        isLoading={isLoading}
-      />
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <SimplifiedDocumentTable
+          documents={documents.map((doc) => ({
+            ...doc,
+            preview: doc.file_url,
+            file_type: doc.file_name.split(".").pop().toLowerCase(),
+          }))}
+          selectedIds={selectedIds}
+          onToggle={handleToggleSelection}
+          onRemove={handleRemoveDocument}
+          isLoading={isLoading}
+        />
+      </Box>
 
-      <Upload
-        key={uploadKey}
-        onFileUpload={handleFileUpload}
-        multiple={true}
-      />
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <Upload
+          key={uploadKey}
+          onFileUpload={handleFileUpload}
+          multiple={true}
+        />
+      </Box>
     </Box>
   );
 }
