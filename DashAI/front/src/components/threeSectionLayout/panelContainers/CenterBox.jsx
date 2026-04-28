@@ -10,10 +10,8 @@ export default function CenterBox({ children }) {
       height={"100%"}
       sx={{
         border: `0.1px solid ${theme.palette.divider}`,
-        bgcolor: "background.paper",
         borderTop: "none",
       }}
-      // borderRadius={2}
       overflow={"auto"}
       p={2}
     >
