@@ -50,14 +50,20 @@ export default function SimplifiedSessionSetup({
   const { enqueueSnackbar } = useSnackbar();
   const suggestedName = useMemo(() => {
     const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
+    console.log("Existing sessions passed to SimplifiedSessionSetup:", sessionsList);
+    
+    // Filter sessions by task name
+    const ragSessions = sessionsList.filter(s => s?.task_name === "RAGTask");
+    console.log("Existing RAG Sessions for Name Generation:", ragSessions);
+    
     const { defaultName } = generateSequentialName({
       base: "RAG_Session",
-      items: sessionsList,
+      items: ragSessions,
       getName: (session) => session?.name,
-      filter: (session) => session?.task_name === "RAGTask",
+      // The filter is already applied above for clarity
     });
 
-    return defaultName || "";
+    return defaultName || "RAG_Session_1";
   }, [existingSessions]);
 
   const lastSuggestedNameRef = useRef(suggestedName);

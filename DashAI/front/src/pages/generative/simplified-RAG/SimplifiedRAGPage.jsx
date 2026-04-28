@@ -33,10 +33,17 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedTaskName,
     setSelectedDisplayName,
     setStepIndex,
+    fetchSessions,
   } = generative;
 
   const currentSessions = sessions || contextSessions || [];
   const currentSetSessions = setSessions || setContextSessions;
+
+  useEffect(() => {
+    if (currentSessions.length === 0 && fetchSessions) {
+      fetchSessions();
+    }
+  }, []);
 
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
