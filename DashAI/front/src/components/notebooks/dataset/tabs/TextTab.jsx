@@ -34,22 +34,22 @@ export const TextTab = ({ textStats }) => {
           {
             label: t("datasets:label.min"),
             value: stats.min_length,
-            color: theme.palette.success.light,
+            color: theme.palette.chart.train,
           },
           {
             label: t("datasets:label.median"),
             value: stats.median_length,
-            color: theme.palette.info.main,
+            color: theme.palette.chart.test,
           },
           {
             label: t("datasets:label.avg"),
             value: stats.avg_length,
-            color: theme.palette.warning.main,
+            color: theme.palette.chart.validation,
           },
           {
             label: t("datasets:label.max"),
             value: stats.max_length,
-            color: theme.palette.error.main,
+            color: theme.palette.primary.main,
           },
         ];
 
