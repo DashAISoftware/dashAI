@@ -92,7 +92,6 @@ export default function DataloaderConfigBar({
       justifyContent="flex-start"
       overflow="auto"
       bgcolor="background.box"
-      borderRadius={2}
       pt={2}
       pb={2}
       data-tour="dataloader-config"

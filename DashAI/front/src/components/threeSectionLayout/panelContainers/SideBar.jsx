@@ -1,6 +1,9 @@
 import { Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export default function SideBar({ children }) {
+  const theme = useTheme();
+
   return (
     <Box
       width="100%"
@@ -12,9 +15,7 @@ export default function SideBar({ children }) {
       sx={{
         bgcolor: "background.box",
         color: "white",
-        borderTop: "0.1px solid",
-        borderBottom: "0.1px solid",
-        borderColor: "grey.600",
+        borderBottom: `0.1px solid ${theme.palette.divider}`,
       }}
     >
       {children}
