@@ -46,5 +46,60 @@
     "sessionCreatedSuccess": "Session successfully created.",
     "sessionDeleted": "Session deleted successfully",
     "sessionUpdated": "Session updated successfully"
+  },
+
+  "simplifiedRag": {
+    "rightPanel": {
+      "title": "RAG basics",
+      "subtitle": "Retrieval-Augmented Generation (RAG) helps the model answer using your documents.",
+      "howItWorksTitle": "How it works",
+      "howItWorks": {
+        "step1": "Select the documents you want the assistant to use.",
+        "step2": "Documents are split into smaller chunks (chunking) to make retrieval efficient.",
+        "step3": "A retriever finds the most relevant chunks for your question.",
+        "step4": "The LLM generates an answer using those chunks and the selected prompt template."
+      },
+      "settingsTitle": "What each setting does",
+      "settings": {
+        "documents": {
+          "title": "Documents",
+          "point1": "Your documents are the knowledge base: the assistant can only use what it can retrieve from them.",
+          "point2": "Upload clear, well-structured files (PDF, TXT, etc.) for best results.",
+          "point3": "Scanned PDFs (images) may have limited text extraction, so answers can be worse."
+        },
+        "chunking": {
+          "title": "Chunking",
+          "point1": "Chunking splits documents into smaller pieces that can be searched.",
+          "point2": "Too small chunks: retrieval can miss context and answers may feel fragmented.",
+          "point3": "Too large chunks: retrieval can bring extra noise and answers may be slower (more tokens).",
+          "point4": "Overlap helps keep context between chunks, but increases repetition."
+        },
+        "retriever": {
+          "title": "Retriever (Sparse vs Dense)",
+          "point1": "The retriever decides which chunks are sent to the LLM.",
+          "point2": "Sparse (keyword-based): great for exact terms like IDs, product names, or code; usually fast.",
+          "point3": "Sparse limitation: struggles with synonyms and heavily paraphrased questions.",
+          "point4": "Dense (semantic): better for natural language and paraphrases; searches by meaning.",
+          "point5": "Dense limitation: can return ‘similar’ but not exact matches, and may be slower."
+        },
+        "llm": {
+          "title": "Language Model (LLM)",
+          "point1": "The LLM writes the final answer using the retrieved chunks.",
+          "point2": "Larger models usually answer better, but can be slower and costlier.",
+          "point3": "If you need speed, start with a smaller model and iterate."
+        },
+        "prompt": {
+          "title": "Prompt template",
+          "point1": "Prompts control the tone, format, and what the model should focus on.",
+          "point2": "If answers are too long/short or lack structure, try another template or refine the prompt."
+        }
+      },
+      "tipsTitle": "Practical tips",
+      "tips": {
+        "tip1": "If answers miss context, try larger chunks or more overlap.",
+        "tip2": "If answers feel too generic, try smaller chunks or adjust the retriever model.",
+        "tip3": "Choose a prompt template that matches your domain and tone."
+      }
+    }
   }
 }

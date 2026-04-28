@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -6,21 +6,12 @@ import {
   ToggleButtonGroup,
   Button,
   CircularProgress,
-  TextField,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getRetrievalParadigm, getRetrieverComponents } from "../../../../api/rag";
+import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
-
-const getDescription = (desc, i18n) => {
-  if (!desc) return "";
-  if (typeof desc === "string") return desc;
-  if (typeof desc === "object" && (desc.en || desc.es)) {
-    return desc[i18n.language] || desc.en || desc.es || "";
-  }
-  return "";
-};
 
 const RETRIEVER_EXPLANATIONS = {
   "SparseRetriever": "Best for specific keyword and ID search. Useful for finding exact matches in documents.",
@@ -39,9 +30,30 @@ export default function RetrieverSection({
   const [selectedParadigm, setSelectedParadigm] = useState(null);
   const [retrievers, setRetrievers] = useState([]);
   const [selectedRetriever, setSelectedRetriever] = useState(null);
-  const [topK, setTopK] = useState(5);
+  const [topK, setTopK] = useState(retrieverModel?.params?.top_k || 5);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Sync topK when retrieverModel.params.top_k changes (e.g. from Advanced Modal)
+  useEffect(() => {
+    if (retrieverModel?.params?.top_k && retrieverModel.params.top_k !== topK) {
+      setTopK(retrieverModel.params.top_k);
+    }
+  }, [retrieverModel?.params?.top_k]);
+
+  // Check if current configuration is "advanced"
+  const isAdvanced = useMemo(() => {
+    if (!selectedRetriever || !retrieverModel?.params) return false;
+    
+    // Get default params for this component
+    const defaultParams = buildDefaultValuesFromSchemaProperties(selectedRetriever.schema?.properties || {});
+    
+    // Check if any param other than top_k is different from default
+    return Object.keys(retrieverModel.params).some(key => {
+      if (key === 'top_k') return false;
+      return JSON.stringify(retrieverModel.params[key]) !== JSON.stringify(defaultParams[key]);
+    });
+  }, [selectedRetriever, retrieverModel?.params]);
 
   // Load paradigms on mount
   useEffect(() => {
@@ -50,8 +62,14 @@ export default function RetrieverSection({
         const data = await getRetrievalParadigm();
         setParadigms(data || []);
         if (data && data.length > 0) {
-          const defaultParadigm = data.find((p) => p.name === "SparseRetriever") || data[0];
-          setSelectedParadigm(defaultParadigm);
+          if (retrieverModel?.component) {
+            // Paradigm name is usually the parent of the retriever or the retriever itself if it matches a paradigm name
+            // For now, let's try to find if the model component belongs to a paradigm
+            setSelectedParadigm(data.find(p => p.name === "SparseRetriever") || data[0]);
+          } else {
+            const defaultParadigm = data.find((p) => p.name === "SparseRetriever") || data[0];
+            setSelectedParadigm(defaultParadigm);
+          }
         }
       } catch (error) {
         console.error("Error loading retrieval paradigms:", error);
@@ -79,18 +97,24 @@ export default function RetrieverSection({
             r?.configurable_object !== false
         ) || [];
         
-        setRetrievers(filtered.length > 0 ? filtered : [selectedParadigm]);
+        const availableRetrievers = filtered.length > 0 ? filtered : [selectedParadigm];
+        setRetrievers(availableRetrievers);
         
-        // Try to restore previous selection
         if (retrieverModel?.component) {
-          const found = filtered.find((r) => r.name === retrieverModel.component);
+          const found = availableRetrievers.find((r) => r.name === retrieverModel.component);
           if (found) {
             setSelectedRetriever(found);
+            if (retrieverModel.params?.top_k) {
+              setTopK(retrieverModel.params.top_k);
+            }
+          } else {
+            selectDefaultRetriever(availableRetrievers);
           }
+        } else {
+          selectDefaultRetriever(availableRetrievers);
         }
       } catch (error) {
         console.error("Error loading retrievers:", error);
-        // Fallback: use the paradigm itself as a retriever option
         setRetrievers([selectedParadigm]);
       }
     };
@@ -98,32 +122,20 @@ export default function RetrieverSection({
     loadRetrievers();
   }, [selectedParadigm]);
 
+  const selectDefaultRetriever = (availableRetrievers) => {
+    const defaultRetriever = availableRetrievers[0];
+    setSelectedRetriever(defaultRetriever);
+    setRetrieverModel({
+      component: defaultRetriever.name,
+      params: { ...buildDefaultValuesFromSchemaProperties(defaultRetriever.schema?.properties || {}), top_k: topK },
+    });
+  };
 
   const handleParadigmChange = (event, newValue) => {
     if (newValue !== null) {
       const selected = paradigms.find((p) => p.name === newValue);
       setSelectedParadigm(selected);
       setSelectedRetriever(null);
-      if (selected) {
-        // Reset retriever model when paradigm changes
-        setRetrieverModel({
-          component: "",
-          params: { top_k: topK },
-        });
-      }
-    }
-  };
-
-  const handleRetrieverChange = (event, newValue) => {
-    if (newValue !== null) {
-      const selected = retrievers.find((r) => r.name === newValue);
-      setSelectedRetriever(selected);
-      if (selected) {
-        setRetrieverModel({
-          component: selected.name,
-          params: { top_k: topK },
-        });
-      }
     }
   };
 
@@ -131,12 +143,10 @@ export default function RetrieverSection({
     const value = parseInt(newValue);
     if (!isNaN(value) && value > 0) {
       setTopK(value);
-      if (selectedParadigm) {
-        setRetrieverModel((prev) => ({
-          ...prev,
-          params: { ...prev.params, top_k: value },
-        }));
-      }
+      setRetrieverModel((prev) => ({
+        ...prev,
+        params: { ...prev.params, top_k: value },
+      }));
     }
   };
 
@@ -156,11 +166,18 @@ export default function RetrieverSection({
           and return the most relevant chunks.
         </Typography>
 
-        {/* Paradigm Selection with Toggle Buttons */}
+        {/* Paradigm Selection */}
         <Box>
-          <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
-            Retrieval Paradigm
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Retrieval Paradigm
+            </Typography>
+            {isAdvanced && (
+              <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
+                ADVANCED CONFIGURATION APPLIED
+              </Typography>
+            )}
+          </Box>
           <ToggleButtonGroup
             value={selectedParadigm?.name || ""}
             exclusive
@@ -181,11 +198,11 @@ export default function RetrieverSection({
                   border: "1px solid",
                   borderColor: "divider",
                   "&.Mui-selected": {
-                    backgroundColor: "primary.main",
-                    color: "primary.contrastText",
-                    borderColor: "primary.main",
+                    backgroundColor: isAdvanced ? "warning.main" : "primary.main",
+                    color: isAdvanced ? "warning.contrastText" : "primary.contrastText",
+                    borderColor: isAdvanced ? "warning.main" : "primary.main",
                     "&:hover": {
-                      backgroundColor: "primary.dark",
+                      backgroundColor: isAdvanced ? "warning.dark" : "primary.dark",
                     },
                   },
                 }}
@@ -201,10 +218,8 @@ export default function RetrieverSection({
           </ToggleButtonGroup>
         </Box>
 
-        {/* Selected Configuration Info */}
         {selectedParadigm && (
           <Box display="flex" flexDirection="column" gap={2}>
-            {/* Top K Selector */}
             <Box>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                 Number of Results (Top K)
@@ -228,11 +243,11 @@ export default function RetrieverSection({
                       flex: 1,
                       py: 1.5,
                       "&.Mui-selected": {
-                        backgroundColor: "primary.main",
-                        color: "primary.contrastText",
-                        borderColor: "primary.main",
+                        backgroundColor: isAdvanced ? "warning.main" : "primary.main",
+                        color: isAdvanced ? "warning.contrastText" : "primary.contrastText",
+                        borderColor: isAdvanced ? "warning.main" : "primary.main",
                         "&:hover": {
-                          backgroundColor: "secondary.dark",
+                          backgroundColor: isAdvanced ? "warning.dark" : "primary.dark",
                         },
                       },
                     }}
@@ -245,7 +260,6 @@ export default function RetrieverSection({
           </Box>
         )}
 
-        {/* Advanced Configuration Button */}
         <Button
           variant="outlined"
           color="primary"
@@ -256,7 +270,6 @@ export default function RetrieverSection({
         </Button>
       </Box>
 
-      {/* Advanced Configuration Modal */}
       <RetrieverAdvancedModal
         open={showAdvanced}
         onClose={() => setShowAdvanced(false)}

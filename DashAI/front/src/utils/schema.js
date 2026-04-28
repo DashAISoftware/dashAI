@@ -17,7 +17,7 @@ export const generateYupSchema = (schemaObj) => {
   return { schema: Yup.object().shape(schema), initialValues };
 };
 
-const generateInitialValues = (subSchema) => {
+export const generateInitialValues = (subSchema) => {
   let initialValues = {};
 
   // Special case for optimizable fields

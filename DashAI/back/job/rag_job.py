@@ -23,7 +23,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
+from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineParametersError
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
 from DashAI.back.tasks.RAG_task import RAGTask
 
@@ -32,8 +32,15 @@ log = logging.getLogger(__name__)
 
     
 
-class GenerativeJob(BaseJob):
-    """GenerativeJob class to infer with generative models ."""
+class RAGJob(BaseJob):
+    """RAGJob class responsible for executing the RAG pipeline as a background job.
+    This class handles the entire lifecycle of a RAG generative process, including:
+    - Retrieving the generative process and session from the database
+    - Validating and instantiating the RAG pipeline components (chunking model, retriever model, generation model, prompt)
+    - Running the pipeline to generate output based on the input and context
+    - Processing and saving the output back to the database
+    - Updating the status of the generative process throughout the execution
+    """
 
     def set_status_as_delivered(self) -> None:
         """Set the status of the job as delivered."""
@@ -170,13 +177,13 @@ class GenerativeJob(BaseJob):
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise JobError("Internal database error") from e
+        
     def run_chunking_model(self, chunking_model: BaseChunkingModel, documents: List[Document]) -> Dict[int, List[RAGChunk]]:
         """Run chunking model to process documents."""
         try:
             chunked_documents = chunking_model.chunk_documents(documents)
         except Exception as e:
             raise JobError("Error during document chunking.") from e
-        try:
         return chunked_documents
 
     @inject
@@ -220,10 +227,10 @@ class GenerativeJob(BaseJob):
                 raise JobError("Error retrieving generative session.") from e
 
             try:
-                model_class = component_registry[generative_session.model_name]["class"]
+                model_class:RAGPipeline = component_registry[generative_session.model_name]["class"]
                 assert type(model_class) is RAGPipeline, "Only RAG models are supported"
                 params = generative_session.parameters
-                params = validate_params(params)
+                params = model_class.validate_params(params)
             except RAGPipelineParametersError as e:
                 log.exception(e)
                 generative_process.set_status_as_error()

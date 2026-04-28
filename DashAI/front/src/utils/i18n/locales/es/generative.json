@@ -46,5 +46,60 @@
     "sessionCreatedSuccess": "Sesión creada exitosamente.",
     "sessionDeleted": "Sesión eliminada exitosamente",
     "sessionUpdated": "Sesión actualizada exitosamente"
+  },
+
+  "simplifiedRag": {
+    "rightPanel": {
+      "title": "Conceptos básicos de RAG",
+      "subtitle": "La Generación Aumentada por Recuperación (RAG) ayuda al modelo a responder usando tus documentos.",
+      "howItWorksTitle": "Cómo funciona",
+      "howItWorks": {
+        "step1": "Selecciona los documentos que quieres que use el asistente.",
+        "step2": "Los documentos se dividen en fragmentos (chunking) para que la búsqueda sea eficiente.",
+        "step3": "Un recuperador (retriever) encuentra los fragmentos más relevantes para tu pregunta.",
+        "step4": "El LLM genera la respuesta usando esos fragmentos y la plantilla de prompt seleccionada."
+      },
+      "settingsTitle": "Qué hace cada configuración",
+      "settings": {
+        "documents": {
+          "title": "Documentos",
+          "point1": "Tus documentos son la base de conocimiento: el asistente sólo puede usar lo que logre recuperar de ellos.",
+          "point2": "Sube archivos claros y bien estructurados (PDF, TXT, etc.) para mejores resultados.",
+          "point3": "Los PDFs escaneados (imágenes) pueden tener una extracción de texto limitada y empeorar las respuestas."
+        },
+        "chunking": {
+          "title": "Chunking",
+          "point1": "El chunking divide los documentos en fragmentos más pequeños que se pueden buscar.",
+          "point2": "Chunks muy pequeños: se puede perder contexto y la respuesta puede quedar fragmentada.",
+          "point3": "Chunks muy grandes: puede entrar ruido y la respuesta puede ser más lenta (más tokens).",
+          "point4": "Más solapamiento (overlap) conserva contexto, pero aumenta la repetición."
+        },
+        "retriever": {
+          "title": "Retriever (Sparse vs Dense)",
+          "point1": "El retriever decide qué fragmentos se envían al LLM.",
+          "point2": "Sparse (por palabras clave): ideal para términos exactos como IDs, nombres de producto o código; suele ser rápido.",
+          "point3": "Limitación de sparse: le cuesta con sinónimos o preguntas muy parafraseadas.",
+          "point4": "Dense (semántico): mejor para lenguaje natural y parafraseos; busca por significado.",
+          "point5": "Limitación de dense: puede traer fragmentos ‘parecidos’ pero no exactos, y puede ser más lento."
+        },
+        "llm": {
+          "title": "Modelo de lenguaje (LLM)",
+          "point1": "El LLM redacta la respuesta final usando los fragmentos recuperados.",
+          "point2": "Modelos más grandes suelen responder mejor, pero pueden ser más lentos y costosos.",
+          "point3": "Si priorizas velocidad, empieza con uno más pequeño e itera."
+        },
+        "prompt": {
+          "title": "Plantilla de prompt",
+          "point1": "Los prompts controlan el tono, el formato y en qué debe fijarse el modelo.",
+          "point2": "Si las respuestas son muy largas/cortas o poco estructuradas, prueba otra plantilla o ajusta el prompt."
+        }
+      },
+      "tipsTitle": "Consejos prácticos",
+      "tips": {
+        "tip1": "Si a las respuestas les falta contexto, prueba fragmentos más grandes o más solapamiento.",
+        "tip2": "Si las respuestas son muy genéricas, prueba fragmentos más pequeños o ajusta el modelo recuperador.",
+        "tip3": "Elige una plantilla de prompt que encaje con tu dominio y tono."
+      }
+    }
   }
 }

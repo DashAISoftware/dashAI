@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
+  TextField,
   Typography,
-  Paper,
-  Divider,
   CircularProgress,
   Accordion,
   AccordionSummary,
@@ -12,12 +11,14 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
+import DocumentSelector from "../../../components/generative/RAG/DocumentSelector";
 import ChunkingSection from "./sections/ChunkingSection";
 import RetrieverSection from "./sections/RetrieverSection";
 import GeneratorSection from "./sections/GeneratorSection";
 import PromptSection from "./sections/PromptSection";
 import { useSnackbar } from "notistack";
 import { createRAGSession } from "../../../api/rag";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 
 const defaultSessionData = {
   name: "",
@@ -25,11 +26,8 @@ const defaultSessionData = {
   documents: [],
   parameters: {
     chunking_model: {
-      component: "SimpleChunker",
-      params: {
-        chunk_size: 500,
-        chunk_overlap: 50,
-      },
+      component: "",
+      params: {},
     },
     retriever_model: {
       component: "",
@@ -45,23 +43,89 @@ const defaultSessionData = {
 
 export default function SimplifiedSessionSetup({
   initialData,
-  onBack,
   onClose,
+  onSessionCreated,
+  existingSessions = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
+  const suggestedName = useMemo(() => {
+    const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
+    const { defaultName } = generateSequentialName({
+      base: "RAG_Session",
+      items: sessionsList,
+      getName: (session) => session?.name,
+      filter: (session) => session?.task_name === "RAGTask",
+    });
+
+    return defaultName || "";
+  }, [existingSessions]);
+
+  const lastSuggestedNameRef = useRef(suggestedName);
+  const [isNameTouched, setIsNameTouched] = useState(Boolean(initialData?.name));
   const [sessionData, setSessionData] = useState({
     ...defaultSessionData,
-    name: initialData?.name || "",
+    name: initialData?.name || suggestedName,
     description: initialData?.description || "",
     documents: initialData?.documents || [],
   });
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     chunking: true,
     retriever: true,
     generator: true,
     prompt: true,
   });
+
+  useEffect(() => {
+    if (initialData?.name) return;
+    if (isNameTouched) return;
+
+    setSessionData((prev) => {
+      const currentName = prev?.name || "";
+      const lastSuggested = lastSuggestedNameRef.current;
+
+      const shouldReplace =
+        currentName.trim() === "" || currentName === lastSuggested;
+      if (!shouldReplace) {
+        lastSuggestedNameRef.current = suggestedName;
+        return prev;
+      }
+
+      lastSuggestedNameRef.current = suggestedName;
+      return { ...prev, name: suggestedName };
+    });
+  }, [initialData?.name, isNameTouched, suggestedName]);
+
+  const handleSessionNameChange = (event) => {
+    const value = event.target.value;
+    setIsNameTouched(true);
+    setSessionData((prev) => ({
+      ...prev,
+      name: value,
+    }));
+
+    if (value.trim() === "") {
+      setNameError("Session name cannot be empty");
+    } else {
+      setNameError("");
+    }
+  };
+
+  const handleSessionDescriptionChange = (event) => {
+    const value = event.target.value;
+    setSessionData((prev) => ({
+      ...prev,
+      description: value,
+    }));
+  };
+
+  const handleDocumentSelectionChange = (selectedDocs) => {
+    setSessionData((prev) => ({
+      ...prev,
+      documents: selectedDocs.map((doc) => doc.id),
+    }));
+  };
 
   const updateChunkingModel = (model) => {
     setSessionData((prev) => ({
@@ -140,6 +204,31 @@ export default function SimplifiedSessionSetup({
     return true;
   };
 
+  const isConfigurationComplete = useMemo(() => {
+    const isNameValid = Boolean(sessionData.name?.trim());
+    const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
+    const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
+    const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
+    const isGeneratorValid = Boolean(sessionData.parameters.generator_model?.component);
+    const isPromptValid = sessionData.parameters.prompt_id !== null && sessionData.parameters.prompt_id !== undefined;
+
+    const complete = isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValid && isPromptValid;
+    
+    if (!complete) {
+      console.log("RAG Configuration Incomplete:", {
+        isNameValid,
+        areDocsValid,
+        isChunkingValid,
+        isRetrieverValid,
+        isGeneratorValid,
+        isPromptValid,
+        sessionData
+      });
+    }
+
+    return complete;
+  }, [sessionData]);
+
   const handleSave = async () => {
     if (!validateConfiguration()) {
       return;
@@ -161,9 +250,14 @@ export default function SimplifiedSessionSetup({
         },
       };
 
-      await createRAGSession(finalSessionData);
+      const createdSession = await createRAGSession(finalSessionData);
       enqueueSnackbar("RAG Session created successfully", { variant: "success" });
-      onClose();
+
+      if (onSessionCreated) {
+        onSessionCreated(createdSession);
+      } else {
+        onClose?.();
+      }
     } catch (error) {
       console.error("Error creating RAG session:", error);
       enqueueSnackbar(
@@ -180,113 +274,160 @@ export default function SimplifiedSessionSetup({
       <Box
         display="flex"
         flexDirection="column"
-        gap={2}
-        height="100%"
+        gap={3}
         width="100%"
       >
         {/* Header */}
         <Box>
           <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-            Create RAG Session - Step 2: Configuration
+            Create RAG Session
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Configure the components for your RAG session. Click "Open Advanced
-            Configuration" for fine-tuned control over each component.
+            Provide basic information, select documents, and configure the
+            components for your RAG session.
           </Typography>
         </Box>
 
-        {/* Configuration Sections - Scrollable */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflow: "auto",
-            pr: 1,
-            "&::-webkit-scrollbar": {
-              width: "8px",
-            },
-            "&::-webkit-scrollbar-track": {
-              backgroundColor: "action.hover",
-              borderRadius: "4px",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "primary.main",
-              borderRadius: "4px",
-            },
-          }}
-        >
+        {/* Session Details */}
+        <Box>
+          <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: 600 }}>
+            Session Details
+          </Typography>
+
           <Box display="flex" flexDirection="column" gap={2}>
-            {/* Chunking Section */}
-            <Accordion
-              expanded={expandedSections.chunking}
-              onChange={handleSectionChange("chunking")}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Chunking Strategy
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <ChunkingSection
-                  chunkingModel={sessionData.parameters.chunking_model}
-                  setChunkingModel={updateChunkingModel}
-                />
-              </AccordionDetails>
-            </Accordion>
+            <TextField
+              fullWidth
+              label="Session Name *"
+              variant="outlined"
+              value={sessionData.name}
+              onChange={handleSessionNameChange}
+              placeholder="e.g., Product Documentation RAG"
+              error={Boolean(nameError)}
+              helperText={nameError}
+              inputProps={{ maxLength: 256 }}
+              size="medium"
+              disabled={saving}
+            />
 
-            {/* Retriever Section */}
-            <Accordion
-              expanded={expandedSections.retriever}
-              onChange={handleSectionChange("retriever")}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Retriever Model
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <RetrieverSection
-                  retrieverModel={sessionData.parameters.retriever_model}
-                  setRetrieverModel={updateRetrieverModel}
-                />
-              </AccordionDetails>
-            </Accordion>
-
-            {/* Generator Section */}
-            <Accordion
-              expanded={expandedSections.generator}
-              onChange={handleSectionChange("generator")}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Language Model (LLM)
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <GeneratorSection
-                  generatorModel={sessionData.parameters.generator_model}
-                  setGeneratorModel={updateGeneratorModel}
-                />
-              </AccordionDetails>
-            </Accordion>
-
-            {/* Prompt Section */}
-            <Accordion
-              expanded={expandedSections.prompt}
-              onChange={handleSectionChange("prompt")}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Prompt Template
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <PromptSection
-                  promptId={sessionData.parameters.prompt_id}
-                  setPromptId={updatePromptId}
-                />
-              </AccordionDetails>
-            </Accordion>
+            <TextField
+              fullWidth
+              label="Description (Optional)"
+              variant="outlined"
+              value={sessionData.description}
+              onChange={handleSessionDescriptionChange}
+              placeholder="Describe the purpose of this RAG session..."
+              multiline
+              rows={3}
+              inputProps={{ maxLength: 512 }}
+              size="medium"
+              disabled={saving}
+            />
           </Box>
+        </Box>
+
+        {/* Document Selection */}
+        <Box display="flex" flexDirection="column" gap={1}>
+          <Typography variant="subtitle1">Select Documents</Typography>
+          <Typography variant="body2" color="textSecondary">
+            Upload new documents or select from existing ones to be used for RAG.
+          </Typography>
+
+          <Box
+            width="100%"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              minHeight: "500px",
+            }}
+          >
+            <DocumentSelector
+              selectedIds={[...sessionData.documents]}
+              onSelect={handleDocumentSelectionChange}
+            />
+          </Box>
+        </Box>
+
+        {/* Configuration Sections */}
+        <Box display="flex" flexDirection="column" gap={2}>
+          {/* Chunking Section */}
+          <Accordion
+            expanded={expandedSections.chunking}
+            onChange={handleSectionChange("chunking")}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Chunking Strategy
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <ChunkingSection
+                chunkingModel={sessionData.parameters.chunking_model}
+                setChunkingModel={updateChunkingModel}
+              />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Retriever Section */}
+          <Accordion
+            expanded={expandedSections.retriever}
+            onChange={handleSectionChange("retriever")}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Retriever Model
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <RetrieverSection
+                retrieverModel={sessionData.parameters.retriever_model}
+                setRetrieverModel={updateRetrieverModel}
+              />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Generator Section */}
+          <Accordion
+            expanded={expandedSections.generator}
+            onChange={handleSectionChange("generator")}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Language Model (LLM)
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <GeneratorSection
+                generatorModel={sessionData.parameters.generator_model}
+                setGeneratorModel={updateGeneratorModel}
+              />
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Prompt Section */}
+          <Accordion
+            expanded={expandedSections.prompt}
+            onChange={handleSectionChange("prompt")}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Prompt Template
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <PromptSection
+                promptId={sessionData.parameters.prompt_id}
+                setPromptId={updatePromptId}
+              />
+            </AccordionDetails>
+          </Accordion>
         </Box>
 
         {/* Action Buttons */}
@@ -299,14 +440,6 @@ export default function SimplifiedSessionSetup({
           <Button
             variant="outlined"
             color="inherit"
-            onClick={onBack}
-            disabled={saving}
-          >
-            Back
-          </Button>
-          <Button
-            variant="outlined"
-            color="inherit"
             onClick={onClose}
             disabled={saving}
           >
@@ -316,7 +449,7 @@ export default function SimplifiedSessionSetup({
             variant="contained"
             color="primary"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !isConfigurationComplete}
             sx={{ minWidth: 120 }}
           >
             {saving ? <CircularProgress size={20} /> : "Save Session"}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -19,8 +19,16 @@ export default function RetrieverAdvancedModal({
   setRetrieverModel,
 }) {
   const [stepValid, setStepValid] = useState(false);
+  const retrieverStepRef = useRef(null);
 
   const handleClose = () => {
+    onClose();
+  };
+
+  const handleSave = () => {
+    if (retrieverStepRef.current) {
+      retrieverStepRef.current.saveFormValues();
+    }
     onClose();
   };
 
@@ -55,6 +63,7 @@ export default function RetrieverAdvancedModal({
       <DialogContent dividers sx={{ minHeight: 400 }}>
         <FormSchemaProvider key={`retriever-advanced-${retrieverModel?.component}`}>
           <RetrieverConfigurationStep
+            ref={retrieverStepRef}
             retrieverModel={retrieverModel}
             setRetrieverModel={setRetrieverModel}
             setNextEnabled={setStepValid}
@@ -67,7 +76,7 @@ export default function RetrieverAdvancedModal({
           Close
         </Button>
         <Button
-          onClick={handleClose}
+          onClick={handleSave}
           variant="contained"
           color="primary"
           disabled={!stepValid}

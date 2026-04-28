@@ -1,6 +1,7 @@
-import { Box } from "@mui/material";
+import { Box, Button, Dialog } from "@mui/material";
 import { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
 import PropTypes from "prop-types";
+import AddIcon from "@mui/icons-material/AddCircleOutline";
 import SimplifiedDocumentTable from "./SimplifiedDocumentTable";
 import Upload from "../../shared/Upload";
 import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
@@ -13,6 +14,7 @@ export default function DocumentSelector({
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadKey, setUploadKey] = useState(0);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const previousSelectedIdsRef = useRef(initialSelectedIds);
 
@@ -120,6 +122,8 @@ export default function DocumentSelector({
         };
         await handleAddDocument(docToAdd);
       }
+
+      setUploadOpen(false);
     },
     [handleAddDocument],
   );
@@ -127,12 +131,25 @@ export default function DocumentSelector({
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+        display: "flex",
+        flexDirection: "column",
         gap: 2,
         width: "100%",
       }}
     >
+      <Box sx={{ width: "100%" }}>
+        <Button
+          variant="contained"
+          fullWidth
+          color="primary"
+          size="large"
+          startIcon={<AddIcon />}
+          onClick={() => setUploadOpen(true)}
+        >
+          Upload documents
+        </Button>
+      </Box>
+
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <SimplifiedDocumentTable
           documents={documents.map((doc) => ({
@@ -147,13 +164,29 @@ export default function DocumentSelector({
         />
       </Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <Upload
-          key={uploadKey}
-          onFileUpload={handleFileUpload}
-          multiple={true}
-        />
-      </Box>
+      <Dialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            maxHeight: "80vh",
+            minHeight: "300px",
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+      >
+        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          <Upload
+            key={uploadKey}
+            onFileUpload={handleFileUpload}
+            multiple={true}
+            emptyUploadText="Upload your document(s)"
+          />
+        </Box>
+      </Dialog>
     </Box>
   );
 }

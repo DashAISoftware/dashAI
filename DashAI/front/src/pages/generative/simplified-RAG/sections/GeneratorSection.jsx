@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -6,15 +6,11 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from "@mui/material";
-import WarningIcon from "@mui/icons-material/WarningOutlined";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getGeneratorComponents } from "../../../../api/rag";
+import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
 import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
 
 const getDescription = (desc, i18n) => {
@@ -26,51 +22,6 @@ const getDescription = (desc, i18n) => {
   return "";
 };
 
-// Hardcoded parameter counts for models (in billions)
-const MODEL_PARAMS = {
-  "GPT-4": 1000,
-  "GPT-3.5": 175,
-  "Claude": 100,
-  "Claude-2": 100,
-  "Llama-7B": 7,
-  "Llama-13B": 13,
-  "Llama-70B": 70,
-  "Mistral": 7,
-};
-
-// Model size options and memory requirements (in GB)
-const MODEL_SIZES = {
-  "GPT-4": [
-    { size: "small", params: "8B", memory: 16 },
-    { size: "base", params: "40B", memory: 80 },
-    { size: "large", params: "100B", memory: 200 },
-  ],
-  "GPT-3.5": [
-    { size: "small", params: "7B", memory: 14 },
-    { size: "base", params: "175B", memory: 350 },
-  ],
-  "Claude": [
-    { size: "small", params: "13B", memory: 26 },
-    { size: "base", params: "100B", memory: 200 },
-  ],
-  "Claude-2": [
-    { size: "base", params: "100B", memory: 200 },
-  ],
-  "Llama-7B": [
-    { size: "full", params: "7B", memory: 14 },
-  ],
-  "Llama-13B": [
-    { size: "full", params: "13B", memory: 26 },
-  ],
-  "Llama-70B": [
-    { size: "full", params: "70B", memory: 140 },
-  ],
-  "Mistral": [
-    { size: "small", params: "7B", memory: 14 },
-    { size: "large", params: "46B", memory: 92 },
-  ],
-};
-
 export default function GeneratorSection({
   generatorModel,
   setGeneratorModel,
@@ -78,9 +29,22 @@ export default function GeneratorSection({
   const { i18n } = useTranslation();
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Check if current configuration is "advanced"
+  const isAdvanced = useMemo(() => {
+    if (!selectedGenerator || !generatorModel?.params) return false;
+    
+    // Get default params for this component
+    const defaultParams = buildDefaultValuesFromSchemaProperties(selectedGenerator.schema?.properties || {});
+    
+    // Check if any param is different from default
+    // We stringify to handle objects/arrays comparison
+    return Object.keys(generatorModel.params).some(key => {
+      return JSON.stringify(generatorModel.params[key]) !== JSON.stringify(defaultParams[key]);
+    });
+  }, [selectedGenerator, generatorModel?.params]);
 
   useEffect(() => {
     const loadGenerators = async () => {
@@ -106,39 +70,13 @@ export default function GeneratorSection({
 
   const handleGeneratorChange = (event, newValue) => {
     setSelectedGenerator(newValue);
-    setSelectedSize(null); // Reset size when model changes
     if (newValue) {
+      const initialParams = buildDefaultValuesFromSchemaProperties(newValue.schema?.properties || {});
       setGeneratorModel({
         component: newValue.name,
-        params: {},
+        params: initialParams,
       });
     }
-  };
-
-  const handleSizeChange = (event) => {
-    const sizeName = event.target.value;
-    setSelectedSize(sizeName);
-    // Update generator model with size info
-    if (selectedGenerator) {
-      setGeneratorModel((prev) => ({
-        ...prev,
-        params: {
-          ...prev.params,
-          size: sizeName,
-        },
-      }));
-    }
-  };
-
-  const getAvailableSizes = () => {
-    if (!selectedGenerator) return [];
-    return MODEL_SIZES[selectedGenerator.name] || [];
-  };
-
-  const getSelectedSizeMemory = () => {
-    const sizes = getAvailableSizes();
-    if (!selectedSize || sizes.length === 0) return null;
-    return sizes.find((s) => s.size === selectedSize);
   };
 
   if (loading) {
@@ -159,9 +97,16 @@ export default function GeneratorSection({
 
         {/* Model Selection */}
         <Box>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-            Generator Model
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Generator Model
+            </Typography>
+            {isAdvanced && (
+              <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
+                ADVANCED CONFIGURATION APPLIED
+              </Typography>
+            )}
+          </Box>
           <Autocomplete
             options={generators}
             value={selectedGenerator}
@@ -173,6 +118,13 @@ export default function GeneratorSection({
                 {...params}
                 label="Select language model"
                 placeholder="e.g., GPT-4, Claude, Llama"
+                sx={{
+                  "& .MuiOutlinedInput-root": isAdvanced ? {
+                    "& fieldset": { borderColor: "warning.main" },
+                    "&:hover fieldset": { borderColor: "warning.dark" },
+                    "&.Mui-focused fieldset": { borderColor: "warning.main" },
+                  } : {}
+                }}
               />
             )}
             sx={{
@@ -183,31 +135,6 @@ export default function GeneratorSection({
           />
         </Box>
 
-        {/* Model Size Selection */}
-        {selectedGenerator && getAvailableSizes().length > 0 && (
-          <Box>
-            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-              Model Size
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel id="model-size-label">Select model size</InputLabel>
-              <Select
-                labelId="model-size-label"
-                id="model-size-select"
-                value={selectedSize || ""}
-                label="Select model size"
-                onChange={handleSizeChange}
-              >
-                {getAvailableSizes().map((sizeOption) => (
-                  <MenuItem key={sizeOption.size} value={sizeOption.size}>
-                    {sizeOption.size.charAt(0).toUpperCase() + sizeOption.size.slice(1)} - {sizeOption.params} parameters
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        )}
-
         {/* Selected Model Info */}
         {selectedGenerator && (
           <Box
@@ -215,7 +142,7 @@ export default function GeneratorSection({
               p: 2,
               backgroundColor: "action.hover",
               border: "1px solid",
-              borderColor: "divider",
+              borderColor: isAdvanced ? "warning.main" : "divider",
               borderRadius: 1,
             }}
           >
@@ -230,25 +157,6 @@ export default function GeneratorSection({
                 </>
               )}
             </Typography>
-
-            {/* Parameter count and warning */}
-            {MODEL_PARAMS[selectedGenerator.name] && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
-                <WarningIcon sx={{ fontSize: 18, color: "warning.main" }} />
-                <Typography variant="caption">
-                  <strong>{MODEL_PARAMS[selectedGenerator.name]}B parameters</strong> • Recommended for your hardware
-                </Typography>
-              </Box>
-            )}
-
-            {/* Memory requirement based on selected size */}
-            {getSelectedSizeMemory() && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" display="block" sx={{ color: "text.secondary" }}>
-                  With this size, the model execution could take approximately <strong>{getSelectedSizeMemory().memory} GB</strong> of memory.
-                </Typography>
-              </Box>
-            )}
           </Box>
         )}
 

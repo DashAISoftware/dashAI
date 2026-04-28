@@ -24,6 +24,12 @@ export default function GeneratorAdvancedModal({
     onClose();
   };
 
+  const handleSave = () => {
+    // For GeneratorConfigurationStep, it uses autoSave on FormSchema
+    // which calls setGeneratorModel on every change.
+    onClose();
+  };
+
   return (
     <Dialog
       open={open}
@@ -67,7 +73,7 @@ export default function GeneratorAdvancedModal({
           Close
         </Button>
         <Button
-          onClick={handleClose}
+          onClick={handleSave}
           variant="contained"
           color="primary"
           disabled={!stepValid}

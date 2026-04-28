@@ -11,24 +11,16 @@ navigate('/app/generative/simplified-rag')
 
 ## Flujo de Uso
 
-### Fase 1: Selección de Documentos y Básicos
+### Pantalla Única: Configuración Simplified RAG (Single Scroll)
 ```
-Pantalla: DocumentSelectionPhase
+Pantalla: SimplifiedSessionSetup
+
+Sección: Session Details
 ├─ Campo: Session Name * (requerido)
-├─ Campo: Description (opcional)
-├─ Selector: Select Documents * (reutiliza DocumentSelector existente)
-└─ Botones: Close | Back | Next
-```
+└─ Campo: Description (opcional)
 
-**Validación**: 
-- ✅ Nombre no vacío
-- ✅ Mínimo 1 documento seleccionado
-
----
-
-### Fase 2: Configuración de Componentes
-```
-Pantalla: SimplifiedSessionSetup (Single Scroll)
+Sección: Select Documents
+└─ Selector: DocumentSelector * (reutiliza DocumentSelector existente)
 
 ┌─ Accordion 1: Chunking Strategy ─────────────────┐
 │ Presets:                                          │
@@ -62,7 +54,7 @@ Pantalla: SimplifiedSessionSetup (Single Scroll)
 │ [↗ Open Advanced Configuration]                 │
 └──────────────────────────────────────────────────┘
 
-Botones: [Back] [Cancel] [Save Session]
+Botones: [Cancel] [Save Session]
 ```
 
 ---
@@ -71,7 +63,7 @@ Botones: [Back] [Cancel] [Save Session]
 
 ### ✨ Simplificada
 - UI clara con opciones preestablecidas
-- Menos pasos (2 fases en lugar de 5)
+- Menos pasos (1 pantalla en lugar de 5)
 - Información condensada
 
 ### 🔧 Configurable
@@ -90,7 +82,7 @@ Botones: [Back] [Cancel] [Save Session]
 ### 🎨 Responsive
 - Layout 3-panel igual que RAGHomePage
 - SessionBar a la izquierda
-- DocumentsBar a la derecha
+- Panel derecho con explicación básica de RAG (sin DocumentsBar)
 - Scroll central con secciones colapsibles
 
 ---
@@ -98,14 +90,6 @@ Botones: [Back] [Cancel] [Save Session]
 ## Flujo de Datos
 
 ```
-DocumentSelectionPhase
-  ↓
-  data: {
-    name: "My RAG Session",
-    description: "Optional description",
-    documents: [1, 2, 3]  // IDs
-  }
-  ↓
 SimplifiedSessionSetup
   ↓
   sessionData: {
@@ -140,7 +124,6 @@ SimplifiedSessionSetup
 - [ ] Rellenar nombre de sesión
 - [ ] Rellenar descripción (opcional)
 - [ ] Seleccionar documentos
-- [ ] Click "Next"
 - [ ] Verificar cada sección colapsible
 - [ ] Hacer click en "Open Advanced Configuration" de cada sección
 - [ ] Verificar que se abre el modal correcto
@@ -155,9 +138,9 @@ SimplifiedSessionSetup
 
 | Aspecto | Original Wizard | Simplified |
 |---------|-----------------|-----------|
-| Steps | 5 pasos separados | 2 fases |
+| Steps | 5 pasos separados | 1 pantalla |
 | Layout | Stepper/Dialog | Accordions/Scroll |
-| Documentos | Step 0 | Phase 1 |
+| Documentos | Step 0 | Sección "Select Documents" |
 | Chunking | Step 1 (wizard) | Sección 1 (accordion) |
 | Retriever | Step 2 (wizard) | Sección 2 (accordion) |
 | Generator | Step 3 (wizard) | Sección 3 (accordion) |
@@ -190,8 +173,7 @@ navigate('/app/generative/rag/sessions');
 ```
 /src/pages/generative/simplified-RAG/
 ├── SimplifiedRAGPage.jsx                    (página principal)
-├── DocumentSelectionPhase.jsx               (fase 1)
-├── SimplifiedSessionSetup.jsx               (fase 2)
+├── SimplifiedSessionSetup.jsx               (pantalla única)
 ├── sections/
 │   ├── ChunkingSection.jsx
 │   ├── RetrieverSection.jsx

@@ -23,6 +23,13 @@ export default function ChunkingAdvancedModal({
     onClose();
   };
 
+  const handleSave = () => {
+    // For ChunkingConfigurationStep, it uses autoSave on FormSchema
+    // which calls setChunkingModel on every change. 
+    // Just closing is enough as state is already updated in parent via props.
+    onClose();
+  };
+
   return (
     <Dialog
       open={open}
@@ -66,7 +73,7 @@ export default function ChunkingAdvancedModal({
           Close
         </Button>
         <Button
-          onClick={handleClose}
+          onClick={handleSave}
           variant="contained"
           color="primary"
           disabled={!stepValid}

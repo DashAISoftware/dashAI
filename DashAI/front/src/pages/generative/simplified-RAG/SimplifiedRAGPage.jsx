@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
@@ -6,7 +6,6 @@ import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
 import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel";
 import SessionBar from "../../../components/generative/SessionBar";
-import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
 import RAGSessionSummary from "../../../components/generative/RAG/RAGSessionSummary";
 import { removeSession } from "../../../api/session";
@@ -14,14 +13,16 @@ import { useGenerative } from "../../../components/generative/GenerativeContext"
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
-import DocumentSelectionPhase from "./DocumentSelectionPhase";
 import SimplifiedSessionSetup from "./SimplifiedSessionSetup";
+import SimplifiedRAGInfoBar from "../../../components/generative/RAG/SimplifiedRAGInfoBar";
 
 function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
   const location = useLocation();
   const threePanelLayout = useThreePanelLayout();
   const generative = useGenerative() ?? {};
+
+  const [showRagChat, setShowRagChat] = useState(false);
 
   const {
     sessions: contextSessions,
@@ -37,9 +38,11 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const currentSessions = sessions || contextSessions || [];
   const currentSetSessions = setSessions || setContextSessions;
 
-  // Phase management
-  const [currentPhase, setCurrentPhase] = useState("document-selection"); // "document-selection" or "setup"
-  const [sessionData, setSessionData] = useState(null);
+  const isRagSessionSelected =
+    selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
+
+  // Used to reset the setup form when the user starts over
+  const [setupKey, setSetupKey] = useState(0);
 
   const sessionSelectionState =
     location.state?.selectedSessionId != null ? location.state : null;
@@ -61,6 +64,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedTaskName?.(nextTaskName);
     setSelectedDisplayName?.(nextDisplayName);
     setStepIndex?.(0);
+    setShowRagChat(false);
 
     navigate(location.pathname, { replace: true, state: null });
   }, [
@@ -74,6 +78,16 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     location.pathname,
   ]);
 
+  useEffect(() => {
+    if (!isRagSessionSelected) {
+      setShowRagChat(false);
+    }
+  }, [isRagSessionSelected, globalSelectedSessionId]);
+
+  const handleStartRagChat = () => {
+    setShowRagChat(true);
+  };
+
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     if (onSessionSelect) {
       onSessionSelect(sessionId, taskName, taskDisplayName);
@@ -84,6 +98,18 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedTaskName?.(taskName);
     setSelectedDisplayName?.(taskDisplayName);
     setStepIndex?.(0);
+
+    if (taskName !== "RAGTask") {
+      navigate("/app/generative", {
+        replace: true,
+        state: {
+          selectedSessionId: sessionId,
+          taskName,
+          taskDisplayName,
+          fromSessionSelection: true,
+        },
+      });
+    }
   };
 
   const handleNewSessionButton = () => {
@@ -91,9 +117,8 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedTaskName?.("");
     setSelectedDisplayName?.(null);
     setStepIndex?.(0);
-    // Reset to document selection phase
-    setCurrentPhase("document-selection");
-    setSessionData(null);
+    setShowRagChat(false);
+    setSetupKey((prev) => prev + 1);
   };
 
   const handleSessionDelete = async (id) => {
@@ -104,32 +129,40 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     await removeSession(id);
   };
 
-  const handleDocumentsSelected = (data) => {
-    // data contains: name, description, documents
-    setSessionData(data);
-    setCurrentPhase("setup");
-  };
-
-  const handleBackFromSetup = () => {
-    setCurrentPhase("document-selection");
-    setSessionData(null);
-  };
-
   const handleCloseSetup = () => {
-    setCurrentPhase("document-selection");
-    setSessionData(null);
+    setSetupKey((prev) => prev + 1);
   };
 
-  const centerContent =
-    currentPhase === "document-selection" ? (
-      <DocumentSelectionPhase onNext={handleDocumentsSelected} />
+  const handleSessionCreated = (createdSession) => {
+    if (!createdSession?.id) return;
+
+    navigate("/app/generative/rag", {
+      state: {
+        selectedSessionId: createdSession.id,
+        taskName: "RAGTask",
+        taskDisplayName: "RAG",
+        fromSessionSelection: true,
+      },
+    });
+  };
+
+  const centerContent = isRagSessionSelected ? (
+    showRagChat ? (
+      <GenerativeChat />
     ) : (
-      <SimplifiedSessionSetup
-        initialData={sessionData}
-        onBack={handleBackFromSetup}
-        onClose={handleCloseSetup}
+      <RAGSessionSummary
+        sessionId={globalSelectedSessionId}
+        onStartChat={handleStartRagChat}
       />
-    );
+    )
+  ) : (
+    <SimplifiedSessionSetup
+      key={setupKey}
+      onClose={handleCloseSetup}
+      onSessionCreated={handleSessionCreated}
+      existingSessions={currentSessions}
+    />
+  );
 
   return (
     <FormSchemaProvider>
@@ -160,13 +193,11 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
                 borderRadius: 2,
                 minWidth: 0,
                 maxWidth: "100%",
-                overflow: "hidden",
+                overflow: "auto",
+                p: 2,
               }}
             >
-              <DocumentsBar
-                selectedSessionId={null}
-                taskName="RAGTask"
-              />
+              <SimplifiedRAGInfoBar />
             </Box>
           </RightPanel>
         </ModuleContainer>

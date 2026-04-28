@@ -56,5 +56,5 @@ class DefaultQnAGenerationPrompt(GenerationPrompt):
         """
         buffer = template
         buffer = buffer.replace("{input}", input)
-        buffer = buffer.replace("{chunks}", "\n".join(chunks))
+        buffer = buffer.replace("{chunks}", chunks)
         return buffer

@@ -90,16 +90,21 @@ export default function PromptSection({
       try {
         const data = await getRAGPrompts();
         setPrompts(data || []);
-        
-        // Try to restore previously selected prompt
-        if (promptId) {
-          const found = data?.find((p) => p.id === promptId);
-          if (found) {
-            setSelectedPrompt(found);
+
+        if (data && data.length > 0) {
+          if (promptId) {
+            const found = data.find((p) => p.id === promptId);
+            if (found) {
+              setSelectedPrompt(found);
+            }
+          } else {
+            // Select first prompt by default if none selected
+            setSelectedPrompt(data[0]);
+            setPromptId(data[0].id);
           }
         }
       } catch (error) {
-        console.error("Error loading prompts:", error);
+        console.error("Error loading RAG prompts:", error);
       } finally {
         setLoading(false);
       }
@@ -111,6 +116,8 @@ export default function PromptSection({
     setSelectedPrompt(newValue);
     if (newValue) {
       setPromptId(newValue.id);
+    } else {
+      setPromptId(null);
     }
   };
 
