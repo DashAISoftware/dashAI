@@ -63,7 +63,7 @@ const getTheme = (mode) => ({
       main: mode === "dark" ? "#ff8383" : "#d32f2f",
     },
     warning: {
-      main: mode === "dark" ? "#f1ae61" : "#ed6c02",
+      main: mode === "dark" ? "#fbc02d" : "#f9a825",
     },
     success: {
       main: "#43A047",
