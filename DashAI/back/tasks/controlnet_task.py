@@ -26,9 +26,7 @@ class ControlNetTask(BaseGenerativeTask):
         "outputs": {"Image": {"min": 1, "max": "n"}},
     }
 
-    DISPLAY_NAME: str = MultilingualString(
-        en="ControlNet Image Generation", es="Generación de Imágenes con ControlNet"
-    )
+    DISPLAY_NAME: str = MultilingualString(en="Image to Image", es="Imagen a Imagen")
     DESCRIPTION: str = MultilingualString(
         en="""
         This task generates images based on the
