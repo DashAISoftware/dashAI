@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
-import CustomLayout from "../../custom/CustomLayout";
+import { Box, Typography } from "@mui/material";
 import ComponentDetailsPanel from "../../custom/ComponentDetailsPanel";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
@@ -43,6 +43,17 @@ export default function UploadDatasetSteps({ backHome }) {
     }
 
     navigate(UPLOAD_BASE_PATH);
+  };
+
+  const getTitle = () => {
+    switch (step) {
+      case 0:
+        return t("datasets:label.selectDataloader");
+      case 1:
+        return t("datasets:label.uploadDataset");
+      default:
+        return t("datasets:label.createDataset");
+    }
   };
 
   const getSubtitle = () => {
@@ -105,11 +116,23 @@ export default function UploadDatasetSteps({ backHome }) {
   };
 
   return (
-    <CustomLayout
-      title={t("datasets:label.uploadDataset")}
-      subtitle={getSubtitle()}
-      padding={0}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
     >
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" component="h1">
+          {getTitle()}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {getSubtitle()}
+        </Typography>
+      </Box>
+
       {step === 0 && (
         <SelectDataloaderStep
           goToNextStep={goToNextStep}
@@ -130,6 +153,6 @@ export default function UploadDatasetSteps({ backHome }) {
           formHasErrors={error}
         />
       )}
-    </CustomLayout>
+    </Box>
   );
 }
