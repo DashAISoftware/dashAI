@@ -63,7 +63,7 @@ const getTheme = (mode) => ({
       main: mode === "dark" ? "#ff8383" : "#d32f2f",
     },
     warning: {
-      main: mode === "dark" ? "#f1ae61" : "#ed6c02",
+      main: mode === "dark" ? "#fbc02d" : "#f9a825",
     },
     success: {
       main: "#43A047",
@@ -104,19 +104,29 @@ const getTheme = (mode) => ({
 
     dataType: {
       numerical: "#00BEBB", // Numerical data (float)
-      integer: "#3e68ff", // Integer data
+      integer: "#5c6bc0", // Integer data
       categorical: "#9c27b0", // Categorical data
-      text: "#f1ae61", // Text/string data
-      boolean: "#43A047", // Boolean data
+      text: "#d4a054", // Text/string data
+      boolean: "#8bc34a", // Boolean data
       datetime: "#e91e63", // Date/time data
       image: "#6E86E8", // Image data
       default: "#757575", // Unknown or default type
     },
 
     chart: {
-      train: "#4caf50",
-      test: "#2196f3",
+      train: "#66bb6a",
+      test: "#42a5f5",
       validation: "#ff9800",
+      palette: [
+        "#66bb6a",
+        "#42a5f5",
+        "#ff9800",
+        "#ab47bc",
+        "#ef5350",
+        "#26a69a",
+        "#8d6e63",
+        "#78909c",
+      ],
     },
 
     ui:
