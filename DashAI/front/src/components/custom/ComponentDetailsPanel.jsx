@@ -15,109 +15,134 @@ function getDescription(component) {
 function ComponentDetailsPanel({ component, getIcon, extraSections }) {
   const { t } = useTranslation("custom");
 
-  if (!component || !component.name) {
-    return (
-      <Box
-        sx={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-        }}
-      >
-        <Typography variant="body2" color="text.secondary" textAlign="center">
-          {t("selectAnItemToShowInfo")}
-        </Typography>
-      </Box>
-    );
-  }
-
-  const icon = getIcon?.(component);
-  const tags = component.schema?.tags || component.metadata?.tags || [];
-
   return (
     <SideBar>
-      <Stack spacing={3} sx={{ p: 3 }}>
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          {icon && (
-            <Box
-              sx={{
-                p: 1.25,
-                borderRadius: 1,
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {icon}
-            </Box>
-          )}
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={600} noWrap>
-              {getLabel(component)}
-            </Typography>
-            {component.type && (
-              <Typography variant="caption" color="text.secondary">
-                {component.type}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
-
-        <Box>
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ letterSpacing: 1 }}
-          >
-            {t("description")}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
-            {getDescription(component) || t("noDescriptionAvailable")}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        {/* Title */}
+        <Box
+          sx={{
+            p: 2,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            height: 70,
+          }}
+        >
+          <Typography variant="h6" color="text.primary">
+            {t("componentDetails")}
           </Typography>
         </Box>
 
-        {tags.length > 0 && (
-          <Box>
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{ letterSpacing: 1 }}
-            >
-              {t("tags")}
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
+
+        {/* Content */}
+        {!component || !component.name ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 3,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              {t("selectAnItemToShowInfo")}
             </Typography>
-            <Stack
-              direction="row"
-              spacing={0.5}
-              flexWrap="wrap"
-              useFlexGap
-              sx={{ mt: 0.5 }}
-            >
-              {tags.map((tag) => (
-                <Chip key={tag} label={tag} size="small" variant="outlined" />
-              ))}
+          </Box>
+        ) : (
+          <Box sx={{ flex: 1, overflowY: "auto" }}>
+            <Stack spacing={3} sx={{ p: 3 }}>
+              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                {getIcon?.(component) && (
+                  <Box
+                    sx={{
+                      p: 1.25,
+                      borderRadius: 1,
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {getIcon(component)}
+                  </Box>
+                )}
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="subtitle1" fontWeight={600} noWrap>
+                    {getLabel(component)}
+                  </Typography>
+                  {component.type && (
+                    <Typography variant="caption" color="text.secondary">
+                      {component.type}
+                    </Typography>
+                  )}
+                </Box>
+              </Stack>
+
+              <Box>
+                <Typography
+                  variant="overline"
+                  color="text.secondary"
+                  sx={{ letterSpacing: 1 }}
+                >
+                  {t("description")}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
+                  {getDescription(component) || t("noDescriptionAvailable")}
+                </Typography>
+              </Box>
+
+              {(component.schema?.tags || component.metadata?.tags || []).length > 0 && (
+                <Box>
+                  <Typography
+                    variant="overline"
+                    color="text.secondary"
+                    sx={{ letterSpacing: 1 }}
+                  >
+                    {t("tags")}
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    flexWrap="wrap"
+                    useFlexGap
+                    sx={{ mt: 0.5 }}
+                  >
+                    {(component.schema?.tags || component.metadata?.tags).map((tag) => (
+                      <Chip key={tag} label={tag} size="small" variant="outlined" />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {extraSections &&
+                extraSections.map((section) => (
+                  <Box key={section.title}>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography
+                      variant="overline"
+                      color="text.secondary"
+                      sx={{ letterSpacing: 1 }}
+                    >
+                      {section.title}
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>{section.content}</Box>
+                  </Box>
+                ))}
             </Stack>
           </Box>
         )}
-
-        {extraSections &&
-          extraSections.map((section) => (
-            <Box key={section.title}>
-              <Divider sx={{ mb: 2 }} />
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                sx={{ letterSpacing: 1 }}
-              >
-                {section.title}
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>{section.content}</Box>
-            </Box>
-          ))}
-      </Stack>
+      </Box>
     </SideBar>
   );
 }
