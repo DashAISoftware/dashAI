@@ -162,6 +162,7 @@ cython_debug/
 
 # Temp test files
 tmp/
+None/
 
 # Vscode config files
 .vscode
