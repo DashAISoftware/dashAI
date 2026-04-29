@@ -177,6 +177,9 @@ class LinearSVCClassifier(
         super().__init__(**kwargs)
         self._calibrated = None
 
+    def __sklearn_is_fitted__(self) -> bool:
+        return self._calibrated is not None
+
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
         """Train using CalibratedClassifierCV to expose predict_proba.
 
@@ -238,4 +241,11 @@ class LinearSVCClassifier(
         elif isinstance(x_pred, pd.DataFrame):
             pass
 
+        from sklearn.exceptions import NotFittedError
+
+        if self._calibrated is None:
+            raise NotFittedError(
+                f"This {self.__class__.__name__} instance is not fitted yet. "
+                "Call 'train' with appropriate arguments before using this estimator."
+            )
         return self._calibrated.predict_proba(x_pred)
