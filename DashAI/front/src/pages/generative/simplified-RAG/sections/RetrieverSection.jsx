@@ -6,6 +6,7 @@ import {
   ToggleButtonGroup,
   Button,
   CircularProgress,
+  useTheme,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -25,6 +26,7 @@ export default function RetrieverSection({
   retrieverModel,
   setRetrieverModel,
 }) {
+  const theme = useTheme();
   const { i18n } = useTranslation();
   const [paradigms, setParadigms] = useState([]);
   const [selectedParadigm, setSelectedParadigm] = useState(null);
@@ -193,11 +195,13 @@ export default function RetrieverSection({
                   border: "1px solid",
                   borderColor: "divider",
                   "&.Mui-selected": {
-                    backgroundColor: isAdvanced ? "warning.main" : "primary.main",
-                    color: isAdvanced ? "warning.contrastText" : "primary.contrastText",
-                    borderColor: isAdvanced ? "warning.main" : "primary.main",
+                    color: theme.palette.primary.main,
+                    border: `1px solid ${theme.palette.accent.amberBorder}`,
+                    background: theme.palette.accent.amberDim,
+                    borderRadius: "2px",
                     "&:hover": {
-                      backgroundColor: isAdvanced ? "warning.dark" : "primary.dark",
+                      backgroundColor: theme.palette.primary.main,
+                      color: theme.palette.primary.contrastText,
                     },
                   },
                 }}
@@ -237,12 +241,16 @@ export default function RetrieverSection({
                     sx={{
                       flex: 1,
                       py: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
                       "&.Mui-selected": {
-                        backgroundColor: isAdvanced ? "warning.main" : "primary.main",
-                        color: isAdvanced ? "warning.contrastText" : "primary.contrastText",
-                        borderColor: isAdvanced ? "warning.main" : "primary.main",
+                        color: theme.palette.primary.main,
+                        border: `1px solid ${theme.palette.accent.amberBorder}`,
+                        background: theme.palette.accent.amberDim,
+                        borderRadius: "2px",
                         "&:hover": {
-                          backgroundColor: isAdvanced ? "warning.dark" : "primary.dark",
+                          backgroundColor: theme.palette.primary.main,
+                          color: theme.palette.primary.contrastText,
                         },
                       },
                     }}

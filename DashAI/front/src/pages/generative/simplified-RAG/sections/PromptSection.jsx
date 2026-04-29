@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -8,10 +8,12 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
+import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getRAGPrompts } from "../../../../api/rag";
 import PromptAdvancedModal from "../advanced/PromptAdvancedModal";
+import NewPromptModal from "../advanced/NewPromptModal";
 
 const getDescription = (desc, i18n) => {
   if (!desc) return "";
@@ -84,33 +86,38 @@ export default function PromptSection({
   const [prompts, setPrompts] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [newPromptModalOpen, setNewPromptModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadPrompts = async () => {
-      try {
-        const data = await getRAGPrompts();
-        setPrompts(data || []);
+  // Stable callback to load prompts
+  const loadPrompts = useCallback(async () => {
+    try {
+      const data = await getRAGPrompts();
+      setPrompts(data || []);
 
-        if (data && data.length > 0) {
-          if (promptId) {
-            const found = data.find((p) => p.id === promptId);
-            if (found) {
-              setSelectedPrompt(found);
-            }
-          } else {
-            // Select first prompt by default if none selected
-            setSelectedPrompt(data[0]);
-            setPromptId(data[0].id);
+      if (data && data.length > 0) {
+        if (promptId) {
+          const found = data.find((p) => p.id === promptId);
+          if (found) {
+            setSelectedPrompt(found);
           }
+        } else if (!selectedPrompt) {
+          // Select first prompt by default if none selected
+          setSelectedPrompt(data[0]);
+          setPromptId(data[0].id);
         }
-      } catch (error) {
-        console.error("Error loading RAG prompts:", error);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Error loading RAG prompts:", error);
+    }
+  }, [promptId, selectedPrompt, setPromptId]);
+
+  useEffect(() => {
+    const loadPromptsWithLoader = async () => {
+      await loadPrompts();
+      setLoading(false);
     };
-    loadPrompts();
+    loadPromptsWithLoader();
   }, []);
 
   useEffect(() => {
@@ -136,6 +143,25 @@ export default function PromptSection({
     }
   };
 
+  // Handle new prompt creation
+  const handlePromptCreated = useCallback(async (newPromptId) => {
+    // Reload prompts to get the new one
+    const updatedPrompts = await getRAGPrompts();
+    setPrompts(updatedPrompts || []);
+    
+    // Find and select the new prompt
+    const newPrompt = (updatedPrompts || []).find((p) => p.id === newPromptId);
+    if (newPrompt) {
+      setSelectedPrompt(newPrompt);
+      setPromptId(newPrompt.id);
+      const template = newPrompt.parameters?.template || '';
+      const tokenCount = Math.ceil(template.length / 4);
+      onTokenCountChange?.(tokenCount);
+    }
+    
+    setNewPromptModalOpen(false);
+  }, [setPromptId, onTokenCountChange]);
+
   if (loading) {
     return (
       <Paper sx={{ p: 3, backgroundColor: "background.paper" }}>
@@ -157,7 +183,7 @@ export default function PromptSection({
 
         {/* Prompt Selection */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+          <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
             Available Prompts
           </Typography>
           <Autocomplete
@@ -226,14 +252,14 @@ export default function PromptSection({
 
         {/* Advanced Configuration Button */}
         <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => setShowAdvanced(true)}
+          variant="contained"
           fullWidth
-          sx={{ mt: 2 }}
-          disabled={!selectedPrompt}
+          color="primary"
+          size="large"
+          startIcon={<AddIcon />}
+          onClick={() => setNewPromptModalOpen(true)}
         >
-          ↗ Open Advanced Configuration
+          New Prompt
         </Button>
       </Paper>
 
@@ -247,6 +273,14 @@ export default function PromptSection({
           setPromptId={setPromptId}
         />
       )}
+
+      {/* New Prompt Modal */}
+      <NewPromptModal
+        open={newPromptModalOpen}
+        handleClose={() => setNewPromptModalOpen(false)}
+        onPromptCreated={handlePromptCreated}
+        existingPrompts={prompts}
+      />
     </>
   );
 }

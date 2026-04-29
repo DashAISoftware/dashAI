@@ -8,6 +8,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Alert,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
@@ -73,6 +74,7 @@ export default function SimplifiedSessionSetup({
   });
   const [saving, setSaving] = useState(false);
   const [nameError, setNameError] = useState("");
+  const [isDuplicateName, setIsDuplicateName] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     chunking: true,
     retriever: true,
@@ -122,11 +124,23 @@ export default function SimplifiedSessionSetup({
       name: value,
     }));
 
+    // Validate empty name
     if (value.trim() === "") {
       setNameError("Session name cannot be empty");
-    } else {
-      setNameError("");
+      setIsDuplicateName(false);
+      return;
     }
+    setNameError("");
+
+    // Check for duplicate name
+    const trimmedValue = value.trim().toLowerCase();
+    const ragSessions = Array.isArray(existingSessions)
+      ? existingSessions.filter((s) => s?.task_name === "RAGTask")
+      : [];
+    const isDuplicate = ragSessions.some(
+      (session) => session?.name?.toLowerCase() === trimmedValue
+    );
+    setIsDuplicateName(isDuplicate);
   };
 
   const handleSessionDescriptionChange = (event) => {
@@ -196,6 +210,10 @@ export default function SimplifiedSessionSetup({
       enqueueSnackbar("Session name is required", { variant: "warning" });
       return false;
     }
+    if (isDuplicateName) {
+      enqueueSnackbar("Session name must be unique", { variant: "warning" });
+      return false;
+    }
     if (sessionData.documents.length === 0) {
       enqueueSnackbar("At least one document must be selected", {
         variant: "warning",
@@ -226,7 +244,7 @@ export default function SimplifiedSessionSetup({
   };
 
   const isConfigurationComplete = useMemo(() => {
-    const isNameValid = Boolean(sessionData.name?.trim());
+    const isNameValid = Boolean(sessionData.name?.trim()) && !isDuplicateName;
     const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
     const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
     const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
@@ -247,7 +265,7 @@ export default function SimplifiedSessionSetup({
     }
 
     return complete;
-  }, [sessionData, isGeneratorValidState]);
+  }, [sessionData, isGeneratorValidState, isDuplicateName]);
 
   const handleSave = async () => {
     if (!validateConfiguration()) {
@@ -322,12 +340,32 @@ export default function SimplifiedSessionSetup({
               value={sessionData.name}
               onChange={handleSessionNameChange}
               placeholder="e.g., Product Documentation RAG"
-              error={Boolean(nameError)}
-              helperText={nameError}
+              error={Boolean(nameError) || isDuplicateName}
+              helperText={nameError || (isDuplicateName ? "This session name already exists" : "")}
               inputProps={{ maxLength: 256 }}
               size="medium"
               disabled={saving}
             />
+
+            {isDuplicateName && (
+              <Alert
+                severity="warning"
+                sx={{
+                  p: 2,
+                  backgroundColor: "action.hover",
+                  border: "1px solid",
+                  borderColor: "warning.main",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <Typography variant="body2">
+                  A session with this name already exists. Please use a different name.
+                </Typography>
+              </Alert>
+            )}
 
             <TextField
               fullWidth

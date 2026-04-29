@@ -11,6 +11,7 @@ import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
+import { useTheme } from "@mui/material/styles";
 
 const CHUNKING_PRESETS = [
   {
@@ -49,6 +50,7 @@ export default function ChunkingSection({
   chunkingModel,
   setChunkingModel,
 }) {
+  const theme = useTheme();
   const [chunkers, setChunkers] = useState([]);
   const [selectedChunker, setSelectedChunker] = useState(null);
   const [selectedPreset, setSelectedPreset] = useState("paragraph");
@@ -178,11 +180,13 @@ export default function ChunkingSection({
                   border: "1px solid",
                   borderColor: "divider",
                   "&.Mui-selected": {
-                    backgroundColor: "primary.main",
-                    color: "primary.contrastText",
-                    borderColor: "primary.main",
+                    color: theme.palette.primary.main,
+                    border: `1px solid ${theme.palette.accent.amberBorder}`,
+                    background: theme.palette.accent.amberDim,
+                    borderRadius: "2px",
                     "&:hover": {
-                      backgroundColor: "primary.dark",
+                      backgroundColor: theme.palette.primary.main,
+                      color: theme.palette.primary.contrastText,
                     },
                   },
                 }}

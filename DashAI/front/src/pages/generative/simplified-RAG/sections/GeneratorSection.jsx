@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Alert,
   AlertTitle,
+  useTheme,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -32,6 +33,7 @@ export default function GeneratorSection({
   promptTokenCount = 0,
   setIsValid,
 }) {
+  const theme = useTheme();
   const { t, i18n } = useTranslation(["generative"]);
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
@@ -171,9 +173,9 @@ export default function GeneratorSection({
                 placeholder="e.g., GPT-4, Claude, Llama"
                 sx={{
                   "& .MuiOutlinedInput-root": isAdvanced ? {
-                    "& fieldset": { borderColor: "warning.main" },
-                    "&:hover fieldset": { borderColor: "warning.dark" },
-                    "&.Mui-focused fieldset": { borderColor: "warning.main" },
+                    "& fieldset": { borderColor: theme.palette.warning.main },
+                    "&:hover fieldset": { borderColor: theme.palette.warning.main },
+                    "&.Mui-focused fieldset": { borderColor: theme.palette.warning.main },
                   } : {}
                 }}
               />
