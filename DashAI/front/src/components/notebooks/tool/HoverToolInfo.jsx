@@ -87,6 +87,31 @@ export default function HoverToolInfo({
               fontWeight: 500,
             }}
           />
+
+          {hoveredTool.tags?.length > 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 0.5,
+                mt: 1.5,
+              }}
+            >
+              {hoveredTool.tags.map((tag) => (
+                <Chip
+                  key={tag}
+                  label={tag}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    height: 20,
+                    fontSize: "0.7rem",
+                    "& .MuiChip-label": { px: 0.75 },
+                  }}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
       )}
     </Popover>
