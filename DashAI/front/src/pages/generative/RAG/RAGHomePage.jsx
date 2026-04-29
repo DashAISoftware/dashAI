@@ -43,6 +43,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const threePanelLayout = useThreePanelLayout();
   const generative = useGenerative() ?? {};
   const [showRagChat, setShowRagChat] = useState(false);
+  const [activeRagChatSessionId, setActiveRagChatSessionId] = useState(null);
 
   const {
     sessions: contextSessions,
@@ -59,6 +60,8 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const currentSetSessions = setSessions || setContextSessions;
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
+  const isRagChatActive =
+    showRagChat && activeRagChatSessionId === globalSelectedSessionId;
 
   const sessionSelectionState =
     location.state?.selectedSessionId != null ? location.state : null;
@@ -81,6 +84,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
     setSelectedDisplayName?.(nextDisplayName);
     setStepIndex?.(0);
     setShowRagChat(false);
+    setActiveRagChatSessionId(null);
 
     navigate(location.pathname, { replace: true, state: null });
   }, [
@@ -97,11 +101,18 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   useEffect(() => {
     if (!isRagSessionSelected) {
       setShowRagChat(false);
+      setActiveRagChatSessionId(null);
     }
   }, [isRagSessionSelected, globalSelectedSessionId]);
 
+  useEffect(() => {
+    setShowRagChat(false);
+    setActiveRagChatSessionId(null);
+  }, [globalSelectedSessionId]);
+
   const handleStartRagChat = () => {
     setShowRagChat(true);
+    setActiveRagChatSessionId(globalSelectedSessionId);
   };
 
   const goToNextStep = (option) => {
@@ -118,6 +129,8 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
     setSelectedTaskName?.(taskName);
     setSelectedDisplayName?.(taskDisplayName);
     setStepIndex?.(0);
+    setShowRagChat(false);
+    setActiveRagChatSessionId(null);
 
     if (taskName !== "RAGTask") {
       navigate("/app/generative", {
@@ -138,6 +151,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
     setSelectedDisplayName?.(null);
     setStepIndex?.(0);
     setShowRagChat(false);
+    setActiveRagChatSessionId(null);
     navigate("/app/generative", { replace: true });
   };
 
@@ -172,7 +186,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   );
 
   const centerContent = isRagSessionSelected ? (
-    showRagChat ? (
+    isRagChatActive ? (
       <GenerativeChat />
     ) : (
       <RAGSessionSummary

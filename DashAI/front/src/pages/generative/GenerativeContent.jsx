@@ -92,13 +92,17 @@ export default function GenerativeContent() {
       return;
     }
 
-    if (
-      !isRagRoute &&
-      selectedTaskName === "RAGTask" &&
-      !selectedSessionId &&
-      stepIndex > 0
-    ) {
-      navigate("/app/generative/RAG", { replace: true });
+    if (!isRagRoute && selectedTaskName === "RAGTask") {
+      navigate("/app/generative/rag", {
+        replace: true,
+        state: selectedSessionId
+          ? {
+              selectedSessionId,
+              taskName: selectedTaskName,
+              taskDisplayName: selectedDisplayName ?? null,
+            }
+          : null,
+      });
     }
   }, [
     sessionSelectionState,

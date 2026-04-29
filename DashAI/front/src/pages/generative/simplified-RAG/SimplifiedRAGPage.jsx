@@ -14,6 +14,7 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
 import SimplifiedSessionSetup from "./SimplifiedSessionSetup";
+import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import SimplifiedRAGInfoBar from "../../../components/generative/RAG/SimplifiedRAGInfoBar";
 
 function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
@@ -23,6 +24,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const generative = useGenerative() ?? {};
 
   const [showRagChat, setShowRagChat] = useState(false);
+  const [activeRagChatSessionId, setActiveRagChatSessionId] = useState(null);
 
   const {
     sessions: contextSessions,
@@ -71,6 +73,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedDisplayName?.(nextDisplayName);
     setStepIndex?.(0);
     setShowRagChat(false);
+    setActiveRagChatSessionId(null);
 
     navigate(location.pathname, { replace: true, state: null });
   }, [
@@ -87,11 +90,18 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   useEffect(() => {
     if (!isRagSessionSelected) {
       setShowRagChat(false);
+      setActiveRagChatSessionId(null);
     }
   }, [isRagSessionSelected, globalSelectedSessionId]);
 
+  useEffect(() => {
+    setShowRagChat(false);
+    setActiveRagChatSessionId(null);
+  }, [globalSelectedSessionId]);
+
   const handleStartRagChat = () => {
     setShowRagChat(true);
+    setActiveRagChatSessionId(globalSelectedSessionId);
   };
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
@@ -104,6 +114,21 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedTaskName?.(taskName);
     setSelectedDisplayName?.(taskDisplayName);
     setStepIndex?.(0);
+    setShowRagChat(false);
+    setActiveRagChatSessionId(null);
+
+    if (taskName === "RAGTask") {
+      navigate("/app/generative/rag", {
+        replace: true,
+        state: {
+          selectedSessionId: sessionId,
+          taskName,
+          taskDisplayName,
+          fromSessionSelection: true,
+        },
+      });
+      return;
+    }
 
     if (taskName !== "RAGTask") {
       navigate("/app/generative", {
@@ -124,6 +149,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setSelectedDisplayName?.(null);
     setStepIndex?.(0);
     setShowRagChat(false);
+    setActiveRagChatSessionId(null);
     setSetupKey((prev) => prev + 1);
   };
 
@@ -142,6 +168,15 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const handleSessionCreated = (createdSession) => {
     if (!createdSession?.id) return;
 
+    currentSetSessions?.((prev) => {
+      const nextSessions = Array.isArray(prev) ? prev.slice() : [];
+      const exists = nextSessions.some((session) => session.id === createdSession.id);
+      if (!exists) {
+        nextSessions.unshift(createdSession);
+      }
+      return nextSessions;
+    });
+
     navigate("/app/generative/rag", {
       replace: true,
       state: {
@@ -154,7 +189,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   };
 
   const centerContent = isRagSessionSelected ? (
-    showRagChat ? (
+    isRagChatActive ? (
       <GenerativeChat />
     ) : (
       <RAGSessionSummary
@@ -204,7 +239,14 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
                 p: 2,
               }}
             >
-              <SimplifiedRAGInfoBar />
+              {isRagSessionSelected ? (
+                <DocumentsBar
+                  selectedSessionId={globalSelectedSessionId}
+                  taskName="RAGTask"
+                />
+              ) : (
+                <SimplifiedRAGInfoBar />
+              )}
             </Box>
           </RightPanel>
         </ModuleContainer>
