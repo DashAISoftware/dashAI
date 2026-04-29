@@ -38,7 +38,7 @@ export default function CreateSessionCenter() {
         height: "100%",
         width: "100%",
         minHeight: 0,
-        p: 3,
+        p: 2,
       }}
     >
       <GenerativeBreadcrumbs />

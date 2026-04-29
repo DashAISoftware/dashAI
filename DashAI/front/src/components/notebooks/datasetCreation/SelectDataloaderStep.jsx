@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import ComponentSelector from "../../custom/ComponentSelector";
-import { Grid } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
@@ -78,21 +78,25 @@ export default function SelectDataloaderStep({
     }
   }, [loading, tourContext]);
 
-  // fetches the available dataloaders
   useEffect(() => {
     getCompatibleDataloaders();
   }, [t]);
+
   return (
-    <Grid
-      container
-      direction="column"
-      justifyContent="space-around"
-      alignItems="stretch"
-      spacing={2}
-    >
-      {/* List of dataloaders */}
-      <Grid sx={{ minHeight: 480 }} data-tour="csv-dataloader-option">
-        {!loading && (
+    <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={2}>
+      <Box sx={{ flex: 1, minHeight: 0 }} data-tour="csv-dataloader-option">
+        {loading ? (
+          <Box
+            sx={{
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
           <ComponentSelector
             components={dataloaders}
             selected={selectedDataloader || null}
@@ -110,8 +114,9 @@ export default function SelectDataloaderStep({
             })}
           />
         )}
-      </Grid>
-      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={goToPrevStep}
           onFormSubmit={handleNext}
@@ -124,7 +129,7 @@ export default function SelectDataloaderStep({
           backButtonText={t("common:back")}
           dataTour="dataloader-step-next-button"
         />
-      </Grid>
-    </Grid>
+      </Box>
+    </Stack>
   );
 }
