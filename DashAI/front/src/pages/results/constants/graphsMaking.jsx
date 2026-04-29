@@ -1,13 +1,16 @@
 const getTraceColors = (theme) => [
   theme.palette.primary.main,
   theme.palette.secondary.main,
-  theme.palette.chart?.train || "#4caf50",
-  theme.palette.chart?.test || "#2196f3",
-  theme.palette.chart?.validation || "#ff9800",
-  theme.palette.success?.main || "#43A047",
-  theme.palette.info?.main || "#2196f3",
-  theme.palette.warning?.main || "#ed6c02",
-  theme.palette.error?.main || "#d32f2f",
+  ...(theme.palette.chart?.palette || [
+    "#66bb6a",
+    "#42a5f5",
+    "#ff9800",
+    "#ab47bc",
+    "#ef5350",
+    "#26a69a",
+    "#8d6e63",
+    "#78909c",
+  ]),
 ];
 
 /**

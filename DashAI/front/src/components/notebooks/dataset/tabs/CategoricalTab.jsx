@@ -128,13 +128,13 @@ export const CategoricalTab = ({ categoricalStats }) => {
                           <Cell
                             key={index}
                             fill={
-                              [
+                              (theme.palette.chart.palette ?? [
+                                theme.palette.chart.train,
+                                theme.palette.chart.test,
+                                theme.palette.chart.validation,
                                 theme.palette.secondary.main,
-                                theme.palette.info.main,
                                 theme.palette.primary.main,
-                                theme.palette.success.light,
-                                theme.palette.warning.main,
-                              ][index]
+                              ])[index]
                             }
                           />
                         ))}

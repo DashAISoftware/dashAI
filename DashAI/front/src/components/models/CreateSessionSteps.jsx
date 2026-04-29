@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Stepper, Step, StepLabel } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
@@ -20,7 +21,14 @@ function CreateSessionSteps({
   existingSessions = [],
   preselectedDatasetId = null,
 }) {
-  const [activeStep, setActiveStep] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const taskName = selectedTask?.name;
+  const baseSessionPath = taskName
+    ? `/app/models/sessions/new/${taskName}`
+    : "/app/models";
+  const preparePath = `${baseSessionPath}/prepare`;
+  const activeStep = location.pathname.startsWith(preparePath) ? 1 : 0;
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
   const tourContext = useTourContext();
@@ -109,7 +117,7 @@ function CreateSessionSteps({
           dataset: selectedDataset,
           task_name: selectedTask?.name || "",
         }));
-        setActiveStep(1);
+        navigate(preparePath);
         setNextEnabled(false);
 
         if (tourContext?.run && tourContext?.stepIndex === 6) {
@@ -176,7 +184,7 @@ function CreateSessionSteps({
     if (activeStep === 0) {
       backHome();
     } else {
-      setActiveStep(activeStep - 1);
+      navigate(baseSessionPath);
     }
   };
 
@@ -231,8 +239,6 @@ function CreateSessionSteps({
       if (handleSessionCreated) {
         handleSessionCreated(response);
       }
-
-      backHome();
     } catch (error) {
       enqueueSnackbar(t("models:error.createSession"), {
         variant: "error",
@@ -244,16 +250,6 @@ function CreateSessionSteps({
   return (
     <>
       <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        <Box sx={{ p: 2 }}>
-          <Stepper activeStep={activeStep}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </Box>
-
         <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
           {activeStep === 0 && (
             <SetNameAndDatasetStep

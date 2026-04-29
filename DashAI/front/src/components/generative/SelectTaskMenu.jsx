@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
@@ -17,14 +18,12 @@ const GENERATIVE_TASK_ICONS = {
 
 export default function SelectTaskMenu() {
   const { t } = useTranslation(["generative", "common"]);
-  const { tasks, setSelectedDisplayName, setSelectedTaskName, setStepIndex } =
-    useGenerative();
+  const navigate = useNavigate();
+  const { tasks } = useGenerative();
   const tourContext = useTourContext();
 
-  const goToNextStep = (taskName, displayName) => {
-    setSelectedDisplayName(displayName);
-    setSelectedTaskName(taskName);
-    setStepIndex(1);
+  const goToNextStep = (taskName) => {
+    navigate(`/app/generative/sessions/new/${taskName}`);
 
     if (tourContext?.run && tourContext?.stepIndex === 2) {
       const waitForElement = () => {
@@ -41,12 +40,7 @@ export default function SelectTaskMenu() {
 
   return (
     <SelectOptionMenu
-      goToNextStep={(taskName) =>
-        goToNextStep(
-          taskName,
-          tasks.find((t) => t.name === taskName).display_name,
-        )
-      }
+      goToNextStep={goToNextStep}
       title={t("generative:label.generativeModule")}
       subtitle={t("generative:label.selectGenerativeTask")}
       options={tasks.map((task) => ({

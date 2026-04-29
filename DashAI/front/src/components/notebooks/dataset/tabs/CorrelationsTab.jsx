@@ -61,9 +61,9 @@ const CorrelationsTab = ({ correlations }) => {
                 y: columns,
                 type: "heatmap",
                 colorscale: [
-                  [0, theme.palette.error.main],
+                  [0, "#e57373"],
                   [0.5, theme.palette.background.paper],
-                  [1, theme.palette.success.main],
+                  [1, "#81c784"],
                 ],
                 zmin: -1,
                 zmax: 1,

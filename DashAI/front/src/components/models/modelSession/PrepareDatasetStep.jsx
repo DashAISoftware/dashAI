@@ -347,9 +347,43 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   return (
     <React.Fragment>
+      {!infoLoading && datasetInfo.nan ? (
+        Object.values(datasetInfo.nan).some((v) => v > 0) ? (
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 1,
+              "& .MuiAlert-icon": { fontSize: 24 },
+              bgcolor: (theme) => `${theme.palette.warning.main}40`,
+              border: (theme) => `1px solid ${theme.palette.warning.main}`,
+            }}
+          >
+            <AlertTitle>
+              {t("experiments:label.missingValuesDetected")}
+            </AlertTitle>
+            <Grid container spacing={2}>
+              {Object.entries(datasetInfo.nan)
+                .filter(([_, count]) => count > 0)
+                .map(([col, count]) => (
+                  <Grid size={{ xs: 12 }} key={col}>
+                    - {col}: {count} {t("experiments:label.missingValues")}
+                  </Grid>
+                ))}
+            </Grid>
+            <p>{t("experiments:label.recommendPreprocessMissingValues")}</p>
+          </Alert>
+        ) : null
+      ) : null}
       <Alert
         severity={columnsAreValid ? "success" : "error"}
-        sx={{ mb: 1 }}
+        sx={{
+          mb: 1,
+          "& .MuiAlert-icon": { fontSize: 24 },
+          bgcolor: (theme) =>
+            `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
+          border: (theme) =>
+            `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
+        }}
         data-tour="models-validation-alert"
       >
         <AlertTitle>
@@ -415,25 +449,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Alert>
-      {!infoLoading && datasetInfo.nan ? (
-        Object.values(datasetInfo.nan).some((v) => v > 0) ? (
-          <Alert severity="warning" sx={{ mb: 1 }}>
-            <AlertTitle>
-              {t("experiments:label.missingValuesDetected")}
-            </AlertTitle>
-            <Grid container spacing={2}>
-              {Object.entries(datasetInfo.nan)
-                .filter(([_, count]) => count > 0)
-                .map(([col, count]) => (
-                  <Grid size={{ xs: 12 }} key={col}>
-                    - {col}: {count} {t("experiments:label.missingValues")}
-                  </Grid>
-                ))}
-            </Grid>
-            <p>{t("experiments:label.recommendPreprocessMissingValues")}</p>
-          </Alert>
-        ) : null
-      ) : null}
 
       {!infoLoading ? (
         <Grid container spacing={1}>
