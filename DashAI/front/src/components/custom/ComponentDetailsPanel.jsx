@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Stack, Typography, Chip, Divider } from "@mui/material";
+import { Box, Stack, Typography, Chip, Divider, Link } from "@mui/material";
 import * as MuiIcons from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -20,116 +20,163 @@ function getDescription(component) {
   return component.description ?? component.schema?.description ?? "";
 }
 
-function ComponentDetailsPanel({ component, getIcon, extraSections }) {
+const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/[^\s]+)/g;
+
+function DescriptionText({ text }) {
+  if (!text) return null;
+  const parts = [];
+  let last = 0;
+  let match;
+  URL_PATTERN.lastIndex = 0;
+  while ((match = URL_PATTERN.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    if (match[1]) {
+      parts.push(<Link key={match.index} href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</Link>);
+    } else {
+      parts.push(<Link key={match.index} href={match[0]} target="_blank" rel="noopener noreferrer">{match[0]}</Link>);
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+function ComponentDetailsPanel({ component, getIcon, extraSections, categoryKey = "type" }) {
   const { t } = useTranslation("custom");
 
-  if (!component || !component.name) {
-    return (
-      <Box
-        sx={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-        }}
-      >
-        <Typography variant="body2" color="text.secondary" textAlign="center">
-          {t("selectAnItemToShowInfo")}
-        </Typography>
-      </Box>
-    );
-  }
-
-  const icon = getIcon?.(component) ?? renderMuiIcon(component.icon);
-  const tags =
-    component.tags ||
-    component.schema?.tags ||
-    component.metadata?.tags ||
-    [];
+  const icon = getIcon?.(component) ?? renderMuiIcon(component?.icon);
+  const tags = component?.tags || component?.schema?.tags || component?.metadata?.tags || [];
 
   return (
     <SideBar>
-      <Stack spacing={3} sx={{ p: 3 }}>
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          {icon && (
-            <Box
-              sx={{
-                p: 1.25,
-                borderRadius: 1,
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {icon}
-            </Box>
-          )}
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={600} noWrap>
-              {getLabel(component)}
-            </Typography>
-            {component.type && (
-              <Typography variant="caption" color="text.secondary">
-                {component.type}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
-
-        <Box>
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ letterSpacing: 1 }}
-          >
-            {t("description")}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
-            {getDescription(component) || t("noDescriptionAvailable")}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        {/* Title */}
+        <Box
+          sx={{
+            p: 2,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            height: 70,
+          }}
+        >
+          <Typography variant="h6" color="text.primary">
+            {t("componentDetails")}
           </Typography>
         </Box>
 
-        {tags.length > 0 && (
-          <Box>
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{ letterSpacing: 1 }}
-            >
-              {t("tags")}
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
+
+        {/* Content */}
+        {!component || !component.name ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 3,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              {t("selectAnItemToShowInfo")}
             </Typography>
-            <Stack
-              direction="row"
-              spacing={0.5}
-              flexWrap="wrap"
-              useFlexGap
-              sx={{ mt: 0.5 }}
-            >
-              {tags.map((tag) => (
-                <Chip key={tag} label={tag} size="small" variant="outlined" />
-              ))}
+          </Box>
+        ) : (
+          <Box sx={{ flex: 1, overflowY: "auto" }}>
+            <Stack spacing={3} sx={{ p: 3 }}>
+              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                {icon && (
+                  <Box
+                    sx={{
+                      p: 1.25,
+                      borderRadius: 1,
+                      bgcolor: "primary.main",
+                      color: "primary.contrastText",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {icon}
+                  </Box>
+                )}
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="subtitle1" fontWeight={600} noWrap>
+                    {component.display_name || component.name}
+                  </Typography>
+                  {component[categoryKey] && (
+                    <Typography variant="caption" color="text.secondary">
+                      {component[categoryKey]}
+                    </Typography>
+                  )}
+                </Box>
+              </Stack>
+
+              <Box>
+                <Typography
+                  variant="overline"
+                  color="text.secondary"
+                  sx={{ letterSpacing: 1 }}
+                >
+                  {t("description")}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
+                  {getDescription(component)
+                    ? <DescriptionText text={getDescription(component)} />
+                    : t("noDescriptionAvailable")}
+                </Typography>
+              </Box>
+
+              {tags.length > 0 && (
+                <Box>
+                  <Typography
+                    variant="overline"
+                    color="text.secondary"
+                    sx={{ letterSpacing: 1 }}
+                  >
+                    {t("tags")}
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    flexWrap="wrap"
+                    useFlexGap
+                    sx={{ mt: 0.5 }}
+                  >
+                    {tags.map((tag) => (
+                      <Chip key={tag} label={tag} size="small" variant="outlined" />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {extraSections &&
+                extraSections.map((section) => (
+                  <Box key={section.title}>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography
+                      variant="overline"
+                      color="text.secondary"
+                      sx={{ letterSpacing: 1 }}
+                    >
+                      {section.title}
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>{section.content}</Box>
+                  </Box>
+                ))}
             </Stack>
           </Box>
         )}
-
-        {extraSections &&
-          extraSections.map((section) => (
-            <Box key={section.title}>
-              <Divider sx={{ mb: 2 }} />
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                sx={{ letterSpacing: 1 }}
-              >
-                {section.title}
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>{section.content}</Box>
-            </Box>
-          ))}
-      </Stack>
+      </Box>
     </SideBar>
   );
 }
@@ -144,6 +191,7 @@ ComponentDetailsPanel.propTypes = {
     metadata: PropTypes.object,
   }),
   getIcon: PropTypes.func,
+  categoryKey: PropTypes.string,
   extraSections: PropTypes.arrayOf(
     PropTypes.shape({
       title: PropTypes.string.isRequired,

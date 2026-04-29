@@ -7,6 +7,7 @@
   "tryAdjustingSearch": "Try adjusting your search or filters",
   "componentsAvailable_one": "{{count}} component available",
   "componentsAvailable_other": "{{count}} components available",
+  "componentDetails": "Component Details",
   "description": "Description",
   "tags": "Tags",
   "noDescriptionAvailable": "No description available."

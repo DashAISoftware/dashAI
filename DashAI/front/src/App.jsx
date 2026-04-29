@@ -46,11 +46,9 @@ function App() {
             element={<ModelsPage />}
           />
           <Route path="/app/generative" element={<Generative />} />
+          <Route path="/app/generative/sessions/new" element={<Generative />} />
+          <Route path="/app/generative/sessions/new/:modelName" element={<Generative />} />
           <Route path="/app/generative/sessions/:id" element={<Generative />} />
-          <Route
-            path="/app/generative/sessions/new/:taskName"
-            element={<Generative />}
-          />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
           <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
           <Route
