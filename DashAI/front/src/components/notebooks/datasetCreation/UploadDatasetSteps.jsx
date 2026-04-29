@@ -4,6 +4,7 @@ import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
 import CustomLayout from "../../custom/CustomLayout";
+import ComponentDetailsPanel from "../../custom/ComponentDetailsPanel";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
@@ -61,22 +62,33 @@ export default function UploadDatasetSteps({ backHome }) {
     }
   }, [step, selectedDataloader, navigate]);
 
+  // Clear right sidebar on unmount
+  useEffect(() => {
+    return () => {
+      if (setRightBarContent) setRightBarContent(null);
+    };
+  }, [setRightBarContent]);
+
   // Update the right sidebar based on current step
   useEffect(() => {
-    if (setRightBarContent) {
-      if (step === 1 && Object.entries(selectedDataloader).length !== 0) {
-        setRightBarContent(
-          <DataloaderConfigBar
-            selectedDataloader={selectedDataloader.name}
-            formSubmitRef={formSubmitRef}
-            setError={setError}
-            existingDatasets={datasets}
-            onValuesChange={setFormValues}
-          />,
-        );
-      } else {
-        setRightBarContent(null);
-      }
+    if (!setRightBarContent) return;
+
+    if (step === 0) {
+      setRightBarContent(
+        <ComponentDetailsPanel component={selectedDataloader} />,
+      );
+    } else if (step === 1 && Object.entries(selectedDataloader).length !== 0) {
+      setRightBarContent(
+        <DataloaderConfigBar
+          selectedDataloader={selectedDataloader.name}
+          formSubmitRef={formSubmitRef}
+          setError={setError}
+          existingDatasets={datasets}
+          onValuesChange={setFormValues}
+        />,
+      );
+    } else {
+      setRightBarContent(null);
     }
   }, [step, selectedDataloader, datasets, setRightBarContent]);
 

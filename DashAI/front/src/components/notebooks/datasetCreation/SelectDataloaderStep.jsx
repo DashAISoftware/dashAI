@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
+import ComponentSelector from "../../custom/ComponentSelector";
 import { Grid } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import { useTourContext } from "../../tour/TourProvider";
@@ -91,12 +91,12 @@ export default function SelectDataloaderStep({
       spacing={2}
     >
       {/* List of dataloaders */}
-      <Grid>
+      <Grid sx={{ minHeight: 480 }} data-tour="csv-dataloader-option">
         {!loading && (
-          <ItemSelectorWithInfo
-            itemsList={dataloaders}
-            selectedItem={selectedDataloader}
-            setSelectedItem={(item) => {
+          <ComponentSelector
+            components={dataloaders}
+            selected={selectedDataloader || null}
+            onSelect={(item) => {
               setSelectedDataloader(item);
               if (
                 tourContext?.run &&
@@ -105,7 +105,9 @@ export default function SelectDataloaderStep({
                 tourContext.nextStep();
               }
             }}
-            data-tour="csv-dataloader-option"
+            searchPlaceholder={t("datasets:searchDataloaders", {
+              defaultValue: "Search data loaders...",
+            })}
           />
         )}
       </Grid>
@@ -114,7 +116,7 @@ export default function SelectDataloaderStep({
           onCancel={goToPrevStep}
           onFormSubmit={handleNext}
           formik={{
-            errors: selectedDataloader.display_name
+            errors: selectedDataloader?.name
               ? {}
               : { dataloader: t("common:required") },
           }}

@@ -1,5 +1,13 @@
 {
   "inferenceMethods": "Métodos de Inferencia",
   "selectAnItemToShowInfo": "Seleccione un elemento para ver la descripción.",
-  "selectInferenceMethods": "Seleccione los métodos de inferencia que desea aplicar"
+  "selectInferenceMethods": "Seleccione los métodos de inferencia que desea aplicar",
+  "search": "Buscar",
+  "noItemsFound": "No se encontraron componentes",
+  "tryAdjustingSearch": "Intenta ajustar tu búsqueda o filtros",
+  "componentsAvailable_one": "{{count}} componente disponible",
+  "componentsAvailable_other": "{{count}} componentes disponibles",
+  "description": "Descripción",
+  "tags": "Etiquetas",
+  "noDescriptionAvailable": "No hay descripción disponible."
 }
