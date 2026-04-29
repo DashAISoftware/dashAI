@@ -88,12 +88,12 @@ class ROCAUC(ClassificationMetric):
         if len(np.unique(true_labels)) < 2:
             return float("nan")
 
-        if multiclass is None:
-            multiclass = ClassificationMetric.is_multiclass(true_labels)
-
         from sklearn.metrics import roc_auc_score
 
         n_classes = probs_pred_labels.shape[1]
+
+        if multiclass is None:
+            multiclass = n_classes > 2
         if multiclass:
             return roc_auc_score(
                 true_labels,
