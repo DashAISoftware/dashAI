@@ -41,7 +41,13 @@ export default function RetrieverAdvancedModal({
       PaperProps={{
         sx: {
           maxHeight: "90vh",
+          zIndex: 1300,
         },
+      }}
+      BackdropProps={{
+        sx: {
+          zIndex: 1299,
+        }
       }}
     >
       <DialogTitle

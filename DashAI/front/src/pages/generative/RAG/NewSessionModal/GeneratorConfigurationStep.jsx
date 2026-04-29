@@ -10,7 +10,7 @@ import {
   DialogContentText,
 } from "@mui/material";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import FormSchema from "../../../../components/shared/FormSchema";
+import RAGFormSchema from "../../simplified-RAG/components/RAGFormSchema";
 import { getGeneratorComponents } from "../../../../api/rag";
 import {
   buildDefaultValuesFromSchemaProperties,
@@ -101,7 +101,7 @@ export default function GeneratorConfigurationStep({
 
       {selectedGenerator && (
         <FormSchemaLayout>
-          <FormSchema
+          <RAGFormSchema
             key={`generator-form-${selectedGenerator.name}`}
             autoSave
             model={selectedGenerator.name}

@@ -10,7 +10,7 @@ import {
 import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import FormSchema from "../../../../components/shared/FormSchema";
+import RAGFormSchema from "../../simplified-RAG/components/RAGFormSchema";
 import {
   buildDefaultValuesFromSchemaProperties,
   getInitialModelParameters,
@@ -128,7 +128,7 @@ export default function ChunkingConfigurationStep({
 
       {selectedChunking && (
         <FormSchemaLayout>
-          <FormSchema
+          <RAGFormSchema
             key={`chunking-form-${selectedChunking.name}`}
             autoSave
             model={selectedChunking.name}

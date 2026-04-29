@@ -15,7 +15,7 @@ import {
   getRetrievalParadigm,
 } from "../../../../api/rag";
 
-import FormSchema from "../../../../components/shared/FormSchema";
+import RAGFormSchema from "../../simplified-RAG/components/RAGFormSchema";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
 import {
   FormSchemaProvider,
@@ -73,7 +73,7 @@ function AutoSaveFormSchema({
   return (
     <FormSchemaLayout>
       <FormSchemaInterceptor currentFormValuesRef={currentFormValuesRef} />
-      <FormSchema
+      <RAGFormSchema
         model={selectedRetriever.name}
         initialValues={initialValues}
         autoSave={true}
