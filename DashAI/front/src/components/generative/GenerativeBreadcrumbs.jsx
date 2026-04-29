@@ -13,17 +13,22 @@ export default function GenerativeBreadcrumbs() {
   const location = useLocation();
   const params = useParams();
   const { t } = useTranslation(["generative", "common"]);
-  const { tasks, sessions } = useGenerative();
+  const { sessions } = useGenerative();
 
   const rootCrumb = { label: t("common:generative"), path: "/app/generative" };
 
   const getBreadcrumbs = () => {
     const path = location.pathname;
 
-    if (path.startsWith("/app/generative/sessions/new/") && params.taskName) {
-      const task = tasks.find((tk) => tk.name === params.taskName);
-      const taskLabel = task?.display_name ?? params.taskName;
-      return [rootCrumb, { label: taskLabel, path: null, current: true }];
+    if (path.startsWith("/app/generative/sessions/new")) {
+      return [
+        rootCrumb,
+        {
+          label: t("generative:label.newSession"),
+          path: null,
+          current: true,
+        },
+      ];
     }
 
     if (path.startsWith("/app/generative/sessions/") && params.id) {
