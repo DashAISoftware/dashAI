@@ -26,6 +26,7 @@ class EncodingConverter(BaseConverter):
     CATEGORY = MultilingualString(en="Encoding", es="Codificación")
     ICON: Final[str] = Icon.Dns.value
     COLOR: Final[str] = "rgb(138, 43, 226)"
+    TAGS: Final[list] = ["encoding", "categorical", "preprocessing"]
     PREFIX: str = "encoded_"
 
     def transform(

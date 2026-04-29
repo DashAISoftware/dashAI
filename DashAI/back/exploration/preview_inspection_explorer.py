@@ -21,3 +21,4 @@ class PreviewInspectionExplorer(BaseExplorer):
     )
     ICON: Final[str] = Icon.TableChart.value
     COLOR: Final[str] = "rgb(52, 152, 219)"
+    TAGS: Final[list] = ["preview", "inspection", "raw"]

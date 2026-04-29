@@ -21,3 +21,4 @@ class AdvancedPreprocessingConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Psychology.value
     COLOR: Final[str] = "rgb(70, 130, 180)"
+    TAGS: Final[list] = ["preprocessing", "advanced", "feature-engineering"]

@@ -21,3 +21,4 @@ class RelationshipExplorer(BaseExplorer):
     )
     ICON: Final[str] = Icon.ScatterPlot.value
     COLOR: Final[str] = "rgb(46, 204, 113)"
+    TAGS: Final[list] = ["relationship", "bivariate", "correlation", "visualization"]

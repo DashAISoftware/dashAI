@@ -22,3 +22,4 @@ class FeatureSelectionConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.FilterList.value
     COLOR: Final[str] = "rgb(255, 206, 86)"
+    TAGS: Final[list] = ["feature-selection", "filter", "supervised"]

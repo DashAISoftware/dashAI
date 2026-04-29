@@ -21,3 +21,4 @@ class SamplingConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Casino.value
     COLOR: Final[str] = "rgb(255, 159, 64)"
+    TAGS: Final[list] = ["sampling", "class-balance", "imbalanced"]

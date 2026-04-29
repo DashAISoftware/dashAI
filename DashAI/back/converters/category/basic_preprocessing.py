@@ -21,3 +21,4 @@ class BasicPreprocessingConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Build.value
     COLOR: Final[str] = "rgb(60, 179, 113)"
+    TAGS: Final[list] = ["preprocessing", "basic", "imputation"]
