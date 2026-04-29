@@ -14,4 +14,3 @@ class LevelEnum(Enum):
     EPOCH = "epoch"
     FOLD = "fold"
     OUTER_FOLD = "outer_fold"
-    INNER_FOLD = "inner_fold"
