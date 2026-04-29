@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Stack, Typography, Chip, Divider } from "@mui/material";
+import { Box, Stack, Typography, Chip, Divider, Link } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 
@@ -12,7 +12,28 @@ function getDescription(component) {
   return component.description ?? component.schema?.description ?? "";
 }
 
-function ComponentDetailsPanel({ component, getIcon, extraSections }) {
+const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/[^\s]+)/g;
+
+function DescriptionText({ text }) {
+  if (!text) return null;
+  const parts = [];
+  let last = 0;
+  let match;
+  URL_PATTERN.lastIndex = 0;
+  while ((match = URL_PATTERN.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    if (match[1]) {
+      parts.push(<Link key={match.index} href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</Link>);
+    } else {
+      parts.push(<Link key={match.index} href={match[0]} target="_blank" rel="noopener noreferrer">{match[0]}</Link>);
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+function ComponentDetailsPanel({ component, getIcon, extraSections, categoryKey = "type" }) {
   const { t } = useTranslation("custom");
 
   return (
@@ -79,11 +100,11 @@ function ComponentDetailsPanel({ component, getIcon, extraSections }) {
                 )}
                 <Box sx={{ minWidth: 0 }}>
                   <Typography variant="subtitle1" fontWeight={600} noWrap>
-                    {getLabel(component)}
+                    {component.display_name || component.name}
                   </Typography>
-                  {component.type && (
+                  {component[categoryKey] && (
                     <Typography variant="caption" color="text.secondary">
-                      {component.type}
+                      {component[categoryKey]}
                     </Typography>
                   )}
                 </Box>
@@ -98,7 +119,9 @@ function ComponentDetailsPanel({ component, getIcon, extraSections }) {
                   {t("description")}
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
-                  {getDescription(component) || t("noDescriptionAvailable")}
+                  {getDescription(component)
+                    ? <DescriptionText text={getDescription(component)} />
+                    : t("noDescriptionAvailable")}
                 </Typography>
               </Box>
 
@@ -157,6 +180,7 @@ ComponentDetailsPanel.propTypes = {
     metadata: PropTypes.object,
   }),
   getIcon: PropTypes.func,
+  categoryKey: PropTypes.string,
   extraSections: PropTypes.arrayOf(
     PropTypes.shape({
       title: PropTypes.string.isRequired,

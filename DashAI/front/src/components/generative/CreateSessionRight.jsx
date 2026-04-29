@@ -10,7 +10,7 @@ export default function CreateSessionRight() {
   const { step, selectedModel, formik, processedProperties } = useCreateSession();
 
   if (step === 0) {
-    return <ComponentDetailsPanel component={selectedModel} />;
+    return <ComponentDetailsPanel component={selectedModel} categoryKey="task_display_name" />;
   }
 
   return (
