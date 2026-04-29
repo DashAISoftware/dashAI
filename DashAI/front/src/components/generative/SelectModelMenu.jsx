@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography } from "@mui/material";
 import { useFormik } from "formik";
 import { useSnackbar } from "notistack";
@@ -19,12 +20,11 @@ import ModelGrid from "./ModelGrid";
 import SessionForm from "./SessionForm";
 
 export default function SelectModelMenu() {
+  const navigate = useNavigate();
   const {
     selectedTaskName,
     selectedDisplayName,
-    setSelectedSessionId,
     sessions: existingSessions,
-    setStepIndex,
     setSessions,
   } = useGenerative();
 
@@ -93,8 +93,8 @@ export default function SelectModelMenu() {
           model_name: selectedModel?.name || "",
           parameters: values,
         });
-        setSelectedSessionId(createdSession.id);
         setSessions((prev) => [...prev, createdSession]);
+        navigate(`/app/generative/sessions/${createdSession.id}`);
         enqueueSnackbar(t("generative:message.sessionCreatedSuccess"), {
           variant: "success",
         });
@@ -206,7 +206,7 @@ export default function SelectModelMenu() {
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
           <Button
             variant="outlined"
-            onClick={() => setStepIndex(0)}
+            onClick={() => navigate("/app/generative")}
             sx={{ mr: 1 }}
           >
             {t("generative:button.backToTaskSelection")}
@@ -224,7 +224,7 @@ export default function SelectModelMenu() {
           nameError={nameError}
           nameErrorMessage={nameErrorMessage}
           onNameChange={handleNameInputChange}
-          onBack={() => setStepIndex(0)}
+          onBack={() => navigate("/app/generative")}
         />
       )}
     </Box>

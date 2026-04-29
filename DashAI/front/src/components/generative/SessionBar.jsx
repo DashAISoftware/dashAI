@@ -1,5 +1,6 @@
 import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
@@ -13,17 +14,9 @@ import { useGenerative } from "./GenerativeContext";
 
 export default function SessionBar({ onToggle }) {
   const theme = useTheme();
-  const {
-    tasks,
-    sessions,
-    selectedSessionId,
-    setSelectedTaskName,
-    setSelectedSessionId,
-    setSelectedDisplayName,
-    deleteSessionById,
-    setStepIndex,
-    editSession,
-  } = useGenerative();
+  const navigate = useNavigate();
+  const { tasks, sessions, selectedSessionId, deleteSessionById, editSession } =
+    useGenerative();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
@@ -84,20 +77,18 @@ export default function SessionBar({ onToggle }) {
   };
 
   const handleNewSessionButton = () => {
-    setSelectedSessionId(null);
-    setStepIndex(0);
-    setSelectedTaskName("");
+    navigate("/app/generative");
   };
 
   const handleSessionClick = (sessionId) => {
-    const session = sessions.find((s) => s.id === sessionId);
-    if (session) {
-      const displayName =
-        taskDisplayNameMap[session.task_name] || t("common:other");
-      //handleSessionClick(sessionId, session.task_name, displayName);
-      setSelectedTaskName(session.task_name);
-      setSelectedSessionId(sessionId);
-      setSelectedDisplayName(displayName);
+    navigate(`/app/generative/sessions/${sessionId}`);
+  };
+
+  const handleSessionDelete = async (id) => {
+    const wasSelected = id === selectedSessionId;
+    const ok = await deleteSessionById(id);
+    if (ok && wasSelected) {
+      navigate("/app/generative");
     }
   };
 
@@ -173,7 +164,7 @@ export default function SessionBar({ onToggle }) {
           groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={handleSessionClick}
-          onItemDelete={deleteSessionById}
+          onItemDelete={handleSessionDelete}
           onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
           title={t("common:generative")}

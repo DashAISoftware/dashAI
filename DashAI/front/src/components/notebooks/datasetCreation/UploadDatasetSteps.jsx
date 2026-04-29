@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
@@ -7,18 +8,20 @@ import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
 
+const UPLOAD_BASE_PATH = "/app/data/datasets/new";
+const UPLOAD_CONFIGURE_PATH = `${UPLOAD_BASE_PATH}/configure`;
+
 export default function UploadDatasetSteps({ backHome }) {
   const {
     datasets,
     addDatasetOptimistically,
-    setStep: setGlobalStep,
-    setSelectedOption,
-    clearSelectedNotebook,
     startDatasetPolling,
     setRightBarContent,
   } = useDatasetsAndNotebooks();
 
-  const [step, setStep] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const step = location.pathname.startsWith(UPLOAD_CONFIGURE_PATH) ? 1 : 0;
   const [selectedDataloader, setSelectedDataloader] = useState({});
   const [formValues, setFormValues] = useState({});
   const [error, setError] = useState(false);
@@ -29,7 +32,7 @@ export default function UploadDatasetSteps({ backHome }) {
   const formSubmitRef = useRef(null);
 
   const goToNextStep = () => {
-    setStep((prevStep) => prevStep + 1);
+    navigate(UPLOAD_CONFIGURE_PATH);
   };
 
   const goToPrevStep = () => {
@@ -38,7 +41,7 @@ export default function UploadDatasetSteps({ backHome }) {
       return;
     }
 
-    setStep((prevStep) => prevStep - 1);
+    navigate(UPLOAD_BASE_PATH);
   };
 
   const getSubtitle = () => {
@@ -51,6 +54,12 @@ export default function UploadDatasetSteps({ backHome }) {
         return t("datasets:label.configureDataset");
     }
   };
+
+  useEffect(() => {
+    if (step === 1 && Object.keys(selectedDataloader).length === 0) {
+      navigate(UPLOAD_BASE_PATH, { replace: true });
+    }
+  }, [step, selectedDataloader, navigate]);
 
   // Update the right sidebar based on current step
   useEffect(() => {
@@ -73,11 +82,9 @@ export default function UploadDatasetSteps({ backHome }) {
 
   const handleDatasetCreated = (newDataset, datasetJob) => {
     addDatasetOptimistically(newDataset);
-    setGlobalStep(0);
-    setSelectedOption("dataset");
-    clearSelectedNotebook();
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
+    navigate(`/app/data/datasets/${newDataset.id}`);
 
     if (tourContext?.run) {
       tourContext.stopTour();
