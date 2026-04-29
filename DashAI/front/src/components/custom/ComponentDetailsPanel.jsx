@@ -31,9 +31,27 @@ function DescriptionText({ text }) {
   while ((match = URL_PATTERN.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
     if (match[1]) {
-      parts.push(<Link key={match.index} href={match[3]} target="_blank" rel="noopener noreferrer">{match[2]}</Link>);
+      parts.push(
+        <Link
+          key={match.index}
+          href={match[3]}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {match[2]}
+        </Link>,
+      );
     } else {
-      parts.push(<Link key={match.index} href={match[0]} target="_blank" rel="noopener noreferrer">{match[0]}</Link>);
+      parts.push(
+        <Link
+          key={match.index}
+          href={match[0]}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {match[0]}
+        </Link>,
+      );
     }
     last = match.index + match[0].length;
   }
@@ -41,11 +59,20 @@ function DescriptionText({ text }) {
   return parts;
 }
 
-function ComponentDetailsPanel({ component, getIcon, extraSections, categoryKey = "type" }) {
+function ComponentDetailsPanel({
+  component,
+  getIcon,
+  extraSections,
+  categoryKey = "type",
+}) {
   const { t } = useTranslation("custom");
 
   const icon = getIcon?.(component) ?? renderMuiIcon(component?.icon);
-  const tags = component?.tags || component?.schema?.tags || component?.metadata?.tags || [];
+  const tags =
+    component?.tags ||
+    component?.schema?.tags ||
+    component?.metadata?.tags ||
+    [];
 
   return (
     <SideBar>
@@ -86,13 +113,17 @@ function ComponentDetailsPanel({ component, getIcon, extraSections, categoryKey 
               p: 3,
             }}
           >
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              textAlign="center"
+            >
               {t("selectAnItemToShowInfo")}
             </Typography>
           </Box>
         ) : (
           <Box sx={{ flex: 1, overflowY: "auto" }}>
-            <Stack spacing={3} sx={{ p: 3 }}>
+            <Stack spacing={2} sx={{ p: 2 }}>
               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                 {icon && (
                   <Box
@@ -130,13 +161,16 @@ function ComponentDetailsPanel({ component, getIcon, extraSections, categoryKey 
                   {t("description")}
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
-                  {getDescription(component)
-                    ? <DescriptionText text={getDescription(component)} />
-                    : t("noDescriptionAvailable")}
+                  {getDescription(component) ? (
+                    <DescriptionText text={getDescription(component)} />
+                  ) : (
+                    t("noDescriptionAvailable")
+                  )}
                 </Typography>
               </Box>
 
-              {tags.length > 0 && (
+              {(component.schema?.tags || component.metadata?.tags || [])
+                .length > 0 && (
                 <Box>
                   <Typography
                     variant="overline"
@@ -152,9 +186,16 @@ function ComponentDetailsPanel({ component, getIcon, extraSections, categoryKey 
                     useFlexGap
                     sx={{ mt: 0.5 }}
                   >
-                    {tags.map((tag) => (
-                      <Chip key={tag} label={tag} size="small" variant="outlined" />
-                    ))}
+                    {(component.schema?.tags || component.metadata?.tags).map(
+                      (tag) => (
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          variant="outlined"
+                        />
+                      ),
+                    )}
                   </Stack>
                 </Box>
               )}
