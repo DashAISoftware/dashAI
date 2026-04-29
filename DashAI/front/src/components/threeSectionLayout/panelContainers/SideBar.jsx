@@ -14,7 +14,6 @@ export default function SideBar({ children }) {
       justifyContent="space-between"
       sx={{
         bgcolor: "background.box",
-        color: "white",
         borderBottom: `0.1px solid ${theme.palette.divider}`,
       }}
     >
