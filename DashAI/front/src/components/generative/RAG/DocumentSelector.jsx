@@ -2,6 +2,7 @@ import { Box, Button, Dialog } from "@mui/material";
 import { useEffect, useState, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
+import { useTranslation } from "react-i18next";
 import SimplifiedDocumentTable from "./SimplifiedDocumentTable";
 import Upload from "../../shared/Upload";
 import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
@@ -10,6 +11,7 @@ export default function DocumentSelector({
   selectedIds: initialSelectedIds = [],
   onSelect,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [documents, setDocuments] = useState([]);
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,7 +162,7 @@ export default function DocumentSelector({
           startIcon={<AddIcon />}
           onClick={() => setUploadOpen(true)}
         >
-          Upload documents
+          {t("generative:simplifiedRag.documents.uploadButton")}
         </Button>
       </Box>
 
@@ -196,7 +198,7 @@ export default function DocumentSelector({
           <Upload
             onFileUpload={handleFileUpload}
             multiple={true}
-            emptyUploadText="Upload your document(s)"
+            emptyUploadText={t("generative:simplifiedRag.documents.emptyUploadText")}
           />
         </Box>
       </Dialog>

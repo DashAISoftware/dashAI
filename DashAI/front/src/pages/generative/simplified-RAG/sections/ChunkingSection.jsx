@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -8,49 +8,52 @@ import {
   CircularProgress,
 } from "@mui/material";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
 import { useTheme } from "@mui/material/styles";
-
-const CHUNKING_PRESETS = [
-  {
-    value: "small",
-    label: "Small Chunks",
-    description: "Fine-grained chunking (~256 tokens)",
-    config: { chunk_size: 256, chunk_overlap: 25 },
-  },
-  {
-    value: "paragraph",
-    label: "Paragraph Length",
-    description: "Standard paragraph-level chunking (~500 tokens)",
-    config: { chunk_size: 500, chunk_overlap: 50 },
-  },
-  {
-    value: "page",
-    label: "Page Chunk",
-    description: "Full page-level chunking (~2000 tokens)",
-    config: { chunk_size: 2000, chunk_overlap: 200 },
-  },
-  {
-    value: "large",
-    label: "Large Sections",
-    description: "Large section chunking (~4000 tokens)",
-    config: { chunk_size: 4000, chunk_overlap: 400 },
-  },
-];
-
-const CUSTOM_PRESET = {
-  value: "custom",
-  label: "Custom Chunking Model",
-  description: "Advanced configuration applied",
-};
 
 export default function ChunkingSection({
   chunkingModel,
   setChunkingModel,
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(["generative"]);
+
+  const CHUNKING_PRESETS = useMemo(() => [
+    {
+      value: "small",
+      label: t("generative:simplifiedRag.chunking.presets.small.label"),
+      description: t("generative:simplifiedRag.chunking.presets.small.description"),
+      config: { chunk_size: 256, chunk_overlap: 25 },
+    },
+    {
+      value: "paragraph",
+      label: t("generative:simplifiedRag.chunking.presets.paragraph.label"),
+      description: t("generative:simplifiedRag.chunking.presets.paragraph.description"),
+      config: { chunk_size: 500, chunk_overlap: 50 },
+    },
+    {
+      value: "page",
+      label: t("generative:simplifiedRag.chunking.presets.page.label"),
+      description: t("generative:simplifiedRag.chunking.presets.page.description"),
+      config: { chunk_size: 2000, chunk_overlap: 200 },
+    },
+    {
+      value: "large",
+      label: t("generative:simplifiedRag.chunking.presets.large.label"),
+      description: t("generative:simplifiedRag.chunking.presets.large.description"),
+      config: { chunk_size: 4000, chunk_overlap: 400 },
+    },
+  ], [t]);
+
+  const CUSTOM_PRESET = useMemo(() => ({
+    value: "custom",
+    label: t("generative:simplifiedRag.chunking.presets.custom.label"),
+    description: t("generative:simplifiedRag.chunking.presets.custom.description"),
+  }), [t]);
+
   const [chunkers, setChunkers] = useState([]);
   const [selectedChunker, setSelectedChunker] = useState(null);
   const [selectedPreset, setSelectedPreset] = useState("paragraph");
@@ -90,7 +93,7 @@ export default function ChunkingSection({
     if (chunkingModel?.params) {
       updatePresetFromParams(chunkingModel.params);
     }
-  }, [chunkingModel.params]);
+  }, [chunkingModel.params, CHUNKING_PRESETS]);
 
   const updatePresetFromParams = (params) => {
     const preset = CHUNKING_PRESETS.find(p => 
@@ -154,7 +157,7 @@ export default function ChunkingSection({
     <>
       <Box display="flex" flexDirection="column" gap={2} width="100%">
         <Typography variant="body2" color="textSecondary">
-          Select how your documents will be split into chunks for retrieval.
+          {t("generative:simplifiedRag.chunking.description")}
         </Typography>
 
         {/* Preset Options */}
@@ -166,7 +169,6 @@ export default function ChunkingSection({
           sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
         >
           {allPresets.map((preset) => {
-            const isCustom = preset.value === "custom";
             return (
               <ToggleButton
                 key={preset.value}
@@ -208,7 +210,7 @@ export default function ChunkingSection({
           fullWidth
           disabled={!selectedChunker}
         >
-          ↗ Open Advanced Configuration
+          ↗ {t("generative:simplifiedRag.chunking.advancedButton")}
         </Button>
       </Box>
 
@@ -224,6 +226,7 @@ export default function ChunkingSection({
     </>
   );
 }
+
 
 ChunkingSection.propTypes = {
   chunkingModel: PropTypes.object,

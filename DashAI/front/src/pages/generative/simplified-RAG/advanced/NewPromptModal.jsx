@@ -13,6 +13,7 @@ import {
   Box,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { generateSequentialName } from "../../../../utils/nameGenerator";
 import PlaceholdersList from "../../../../components/generative/RAG/PlaceholdersList";
 import { getCustomPrompts, createRAGPrompt } from "../../../../api/rag";
@@ -24,6 +25,7 @@ export default function NewPromptModal({
   existingPrompts = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["generative"]);
   const [promptTypes, setPromptTypes] = useState([]);
   const selectedPromptType = "CustomGenerationPrompt"; // Default to GenerationPrompt
   const [promptName, setPromptName] = useState("");
@@ -75,13 +77,13 @@ export default function NewPromptModal({
   const handleConfirmClose = useCallback(() => {
     if (hasUnsavedChanges) {
       const confirmed = window.confirm(
-        "You have unsaved changes. Are you sure you want to cancel?"
+        t("generative:simplifiedRag.newPrompt.unsavedChanges")
       );
       if (!confirmed) return;
     }
     setHasUnsavedChanges(false);
     handleClose();
-  }, [hasUnsavedChanges, handleClose]);
+  }, [hasUnsavedChanges, handleClose, t]);
 
   const handleSave = useCallback(async () => {
     try {
@@ -93,15 +95,15 @@ export default function NewPromptModal({
         },
       });
       if (result && result.id) {
-        enqueueSnackbar("Prompt created successfully!", { variant: "success" });
+        enqueueSnackbar(t("generative:simplifiedRag.newPrompt.success"), { variant: "success" });
         setHasUnsavedChanges(false);
         await onPromptCreated(result.id);
       }
     } catch (error) {
       console.error("Error creating prompt:", error);
-      enqueueSnackbar("Failed to create prompt", { variant: "error" });
+      enqueueSnackbar(t("generative:simplifiedRag.newPrompt.error"), { variant: "error" });
     }
-  }, [promptName, promptTemplate, selectedPromptType, onPromptCreated, enqueueSnackbar]);
+  }, [promptName, promptTemplate, selectedPromptType, onPromptCreated, enqueueSnackbar, t]);
 
   return (
     <Dialog
@@ -116,7 +118,7 @@ export default function NewPromptModal({
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid item>
             <Typography variant="h6" component="h2">
-              Create a new Prompt
+              {t("generative:simplifiedRag.newPrompt.title")}
             </Typography>
           </Grid>
           <Grid item>
@@ -129,22 +131,22 @@ export default function NewPromptModal({
       <DialogContent dividers>
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Prompt template defines how the chunks (pieces of documents) and chat messages are integrated to generate responses. Customize the prompt to tailor the behavior of your RAG sessions.
+            {t("generative:simplifiedRag.newPrompt.description")}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Use {`{chunks}`} to represent where the retrieved document chunks will be inserted, and {`{input}`} for the user message.
+            {t("generative:simplifiedRag.newPrompt.placeholdersInfo")}
           </Typography>
         </Box>
 
         <TextField
           fullWidth
-          label="Prompt Name"
+          label={t("generative:simplifiedRag.newPrompt.nameLabel")}
           value={promptName}
           onChange={handlePromptNameChange}
           sx={{ mt: 2, mb: 2 }}
           required
           error={!promptName.trim()}
-          helperText={!promptName.trim() ? "Prompt name is required" : ""}
+          helperText={!promptName.trim() ? t("generative:simplifiedRag.newPrompt.nameRequired") : ""}
           InputLabelProps={{ required: false }}
         />
 
@@ -167,8 +169,8 @@ export default function NewPromptModal({
 
         <TextField
           fullWidth
-          label="Prompt"
-          placeholder={`Here you can modify the prompt, for example:\nEach user message is added as {input}\nThe sources are added as {chunks}`}
+          label={t("generative:simplifiedRag.newPrompt.promptLabel")}
+          placeholder={t("generative:simplifiedRag.newPrompt.promptPlaceholder")}
           multiline
           minRows={6}
           value={promptTemplate}
@@ -178,15 +180,16 @@ export default function NewPromptModal({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleConfirmClose}>Cancel</Button>
+        <Button onClick={handleConfirmClose}>{t("generative:simplifiedRag.newPrompt.cancel")}</Button>
         <Button
           variant="contained"
           disabled={!canSave}
           onClick={handleSave}
         >
-          Save
+          {t("generative:simplifiedRag.newPrompt.save")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+

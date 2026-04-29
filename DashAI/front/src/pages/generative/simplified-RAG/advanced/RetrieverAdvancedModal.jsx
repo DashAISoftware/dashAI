@@ -8,6 +8,7 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import RetrieverConfigurationStep from "../../RAG/NewSessionModal/RetrieverConfigurationStep";
 
@@ -18,6 +19,7 @@ export default function RetrieverAdvancedModal({
   retrieverModel,
   setRetrieverModel,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
   const retrieverStepRef = useRef(null);
 
@@ -57,7 +59,7 @@ export default function RetrieverAdvancedModal({
           alignItems: "center",
         }}
       >
-        Advanced Retriever Configuration
+        {t("generative:simplifiedRag.advanced.retrieverTitle")}
         <IconButton
           onClick={handleClose}
           sx={{ color: "text.secondary" }}
@@ -79,7 +81,7 @@ export default function RetrieverAdvancedModal({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} color="inherit">
-          Close
+          {t("generative:simplifiedRag.advanced.close")}
         </Button>
         <Button
           onClick={handleSave}
@@ -87,9 +89,10 @@ export default function RetrieverAdvancedModal({
           color="primary"
           disabled={!stepValid}
         >
-          Save Changes
+          {t("generative:simplifiedRag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+

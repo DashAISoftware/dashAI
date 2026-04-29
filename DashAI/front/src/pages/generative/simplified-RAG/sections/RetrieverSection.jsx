@@ -14,12 +14,6 @@ import { getRetrievalParadigm, getRetrieverComponents } from "../../../../api/ra
 import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
 
-const RETRIEVER_EXPLANATIONS = {
-  "SparseRetriever": "Best for specific keyword and ID search. Useful for finding exact matches in documents.",
-  "DenseRetriever": "Contextual search that understands meaning. Great for finding semantically similar content but may miss specific keywords or IDs.",
-  "HybridRetriever": "Combines keyword and contextual search for balanced performance across different query types.",
-};
-
 const TOP_K_OPTIONS = [3, 5, 10, 15, 20];
 
 export default function RetrieverSection({
@@ -27,7 +21,8 @@ export default function RetrieverSection({
   setRetrieverModel,
 }) {
   const theme = useTheme();
-  const { i18n } = useTranslation();
+  const { t } = useTranslation(["generative"]);
+  
   const [paradigms, setParadigms] = useState([]);
   const [selectedParadigm, setSelectedParadigm] = useState(null);
   const [retrievers, setRetrievers] = useState([]);
@@ -159,19 +154,18 @@ export default function RetrieverSection({
     <>
       <Box display="flex" flexDirection="column" gap={2} width="100%">
         <Typography variant="body2" color="textSecondary">
-          Select your retrieval paradigm. The retriever will search through your documents
-          and return the most relevant chunks.
+          {t("generative:simplifiedRag.retriever.description")}
         </Typography>
 
         {/* Paradigm Selection */}
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Retrieval Paradigm
+              {t("generative:simplifiedRag.retriever.paradigmLabel")}
             </Typography>
             {isAdvanced && (
               <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                ADVANCED CONFIGURATION APPLIED
+                {t("generative:simplifiedRag.retriever.advancedApplied")}
               </Typography>
             )}
           </Box>
@@ -209,7 +203,7 @@ export default function RetrieverSection({
                 <Box display="flex" flexDirection="column" gap={0.5}>
                   <Typography variant="subtitle2">{paradigm.name}</Typography>
                   <Typography variant="caption">
-                    {RETRIEVER_EXPLANATIONS[paradigm.name] || "Custom retriever"}
+                    {t(`generative:simplifiedRag.retriever.explanations.${paradigm.name}`, { defaultValue: "Custom retriever" })}
                   </Typography>
                 </Box>
               </ToggleButton>
@@ -221,7 +215,7 @@ export default function RetrieverSection({
           <Box display="flex" flexDirection="column" gap={2}>
             <Box>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                Number of Results (Top K)
+                {t("generative:simplifiedRag.retriever.topKLabel")}
               </Typography>
               <ToggleButtonGroup
                 value={String(topK)}
@@ -269,7 +263,7 @@ export default function RetrieverSection({
           onClick={() => setShowAdvanced(true)}
           fullWidth
         >
-          ↗ Open Advanced Configuration
+          ↗ {t("generative:simplifiedRag.retriever.advancedButton")}
         </Button>
       </Box>
 
@@ -283,6 +277,7 @@ export default function RetrieverSection({
     </>
   );
 }
+
 
 RetrieverSection.propTypes = {
   retrieverModel: PropTypes.object,

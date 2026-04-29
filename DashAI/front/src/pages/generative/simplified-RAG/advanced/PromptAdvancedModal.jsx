@@ -11,6 +11,7 @@ import {
   Paper,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useTranslation } from "react-i18next";
 
 export default function PromptAdvancedModal({
   open,
@@ -19,6 +20,7 @@ export default function PromptAdvancedModal({
   promptId,
   setPromptId,
 }) {
+  const { t } = useTranslation(["generative"]);
   const handleClose = () => {
     onClose();
   };
@@ -48,7 +50,7 @@ export default function PromptAdvancedModal({
           alignItems: "center",
         }}
       >
-        Advanced Prompt Configuration
+        {t("generative:simplifiedRag.advanced.promptTitle")}
         <IconButton
           onClick={handleClose}
           sx={{ color: "text.secondary" }}
@@ -64,14 +66,14 @@ export default function PromptAdvancedModal({
               {selectedPrompt?.name}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              {selectedPrompt?.description || "No description available"}
+              {selectedPrompt?.description || t("generative:simplifiedRag.advanced.noDescription")}
             </Typography>
           </Paper>
 
           {selectedPrompt?.template && (
             <Paper sx={{ p: 2, backgroundColor: "background.default" }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                Prompt Template
+                {t("generative:simplifiedRag.advanced.promptTemplate")}
               </Typography>
               <Typography
                 variant="body2"
@@ -95,9 +97,7 @@ export default function PromptAdvancedModal({
 
           <Box sx={{ color: "text.secondary" }}>
             <Typography variant="caption">
-              Advanced configuration for prompts is typically managed through
-              the prompt templates interface. You can create custom prompts or
-              modify existing ones there.
+              {t("generative:simplifiedRag.advanced.promptInfo")}
             </Typography>
           </Box>
         </Box>
@@ -105,16 +105,17 @@ export default function PromptAdvancedModal({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} color="inherit">
-          Close
+          {t("generative:simplifiedRag.advanced.close")}
         </Button>
         <Button
           onClick={handleClose}
           variant="contained"
           color="primary"
         >
-          Done
+          {t("generative:simplifiedRag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+

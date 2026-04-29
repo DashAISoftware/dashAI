@@ -46,49 +46,28 @@ export default function GeneratorSection({
 
   const isAdvanced = useMemo(() => {
     if (!selectedGenerator || !generatorModel?.params || !initialModelParams) return false;
-    const defaultParams = buildDefaultValuesFromSchemaProperties(selectedGenerator.schema?.properties || {});
     return Object.keys(generatorModel.params).some(key => {
       return generatorModel.params[key] !== initialModelParams[key];
     });
   }, [selectedGenerator, generatorModel?.params, initialModelParams]);
 
   const contextStats = useMemo(() => {
-  // ---- estas variables DEBEN definirse antes de cualquier uso ----
-  if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
-    return { isValid: true, availableChars: 0 };
-  }
+    if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
+      return { isValid: true, availableTokens: 0 };
+    }
 
-  const contextWindow = generatorModel.params.context_window || DEFAULT_CONTEXT_WINDOW;
-  const maxTokens = generatorModel.params.max_tokens || DEFAULT_MAX_TOKENS;
-  const chunkTokens = chunkSize * topK;
-  const availableForMessage = contextWindow - chunkTokens - promptTokenCount - maxTokens;
-  const isValid = availableForMessage > 0;
+    const contextWindow = generatorModel.params.context_window || DEFAULT_CONTEXT_WINDOW;
+    const maxTokens = generatorModel.params.max_tokens || DEFAULT_MAX_TOKENS;
+    const chunkTokens = chunkSize * topK;
+    const availableForMessage = contextWindow - chunkTokens - promptTokenCount - maxTokens;
+    const isValid = availableForMessage > 0;
 
-  // Ahora sí podemos hacer logs usando las variables ya definidas
-  console.log("GeneratorSection cálculo completo =>", {
-    chunkSize,
-    topK,
-    contextWindow,
-    maxTokens,
-    promptTokenCount,
-    chunkTokens,
-    availableTokens: availableForMessage
-  });
-
-  console.log("Calculation Result:", {
-    contextWindow,
-    maxTokens,
-    chunkTokens,
-    promptTokenCount,
-    availableForMessage,
-    isValid
-  });
-
-  return {
-    isValid,
-    availableTokens: Math.max(0, Math.floor(availableForMessage))
-  };
+    return {
+      isValid,
+      availableTokens: Math.max(0, Math.floor(availableForMessage))
+    };
   }, [generatorModel?.params, generatorModel?.component, selectedGenerator, chunkSize, topK, promptTokenCount]);
+
   useEffect(() => {
     setIsValid(contextStats.isValid);
   }, [contextStats.isValid, setIsValid]);
@@ -144,19 +123,18 @@ export default function GeneratorSection({
     <>
       <Box display="flex" flexDirection="column" gap={2} width="100%">
         <Typography variant="body2" color="textSecondary">
-          Select the language model that will generate responses based on the
-          retrieved context and your prompts.
+          {t("generative:simplifiedRag.generator.description")}
         </Typography>
 
         {/* Model Selection */}
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Generator Model
+              {t("generative:simplifiedRag.generator.modelLabel")}
             </Typography>
             {isAdvanced && (
               <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                ADVANCED CONFIGURATION APPLIED
+                {t("generative:simplifiedRag.generator.advancedApplied")}
               </Typography>
             )}
           </Box>
@@ -169,8 +147,8 @@ export default function GeneratorSection({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Select language model"
-                placeholder="e.g., GPT-4, Claude, Llama"
+                label={t("generative:simplifiedRag.generator.selectModel")}
+                placeholder={t("generative:simplifiedRag.generator.selectModelPlaceholder")}
                 sx={{
                   "& .MuiOutlinedInput-root": isAdvanced ? {
                     "& fieldset": { borderColor: theme.palette.warning.main },
@@ -198,17 +176,17 @@ export default function GeneratorSection({
             }}
           >
             <Typography variant="body2">
-              <strong>Model:</strong> {selectedGenerator.name}
+              <strong>{t("generative:simplifiedRag.generator.modelInfo")}</strong> {selectedGenerator.name}
             </Typography>
             
             <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main", fontWeight: 500 }}>
-              {t("validation.contextSpace", { availableChars: contextStats.availableChars?.toLocaleString() })}
+              {t("generative:validation.contextSpace", { availableChars: contextStats.availableTokens?.toLocaleString() })}
             </Typography>
 
             {!contextStats.isValid && (
               <Alert severity="error" sx={{ mt: 1 }}>
-                <AlertTitle>{t("validation.insufficientContextTitle")}</AlertTitle>
-                {t("validation.insufficientContextDescription")}
+                <AlertTitle>{t("generative:validation.insufficientContextTitle")}</AlertTitle>
+                {t("generative:validation.insufficientContextDescription")}
               </Alert>
             )}
 
@@ -227,7 +205,7 @@ export default function GeneratorSection({
           fullWidth
           disabled={!selectedGenerator}
         >
-          ↗ Open Advanced Configuration
+          ↗ {t("generative:simplifiedRag.generator.advancedButton")}
         </Button>
       </Box>
 
@@ -243,6 +221,7 @@ export default function GeneratorSection({
     </>
   );
 }
+
 
 GeneratorSection.propTypes = {
   generatorModel: PropTypes.object,

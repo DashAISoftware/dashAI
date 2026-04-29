@@ -82,7 +82,7 @@ export default function PromptSection({
   setPromptId,
   onTokenCountChange,
 }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation(["generative"]);
   const [prompts, setPrompts] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -177,14 +177,13 @@ export default function PromptSection({
       <Paper sx={{ p: 3, backgroundColor: "background.paper" }}>
 
         <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-          Select a prompt template that defines how the retrieved context and
-          chat messages are combined to generate responses.
+          {t("generative:simplifiedRag.prompt.description")}
         </Typography>
 
         {/* Prompt Selection */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
-            Available Prompts
+            {t("generative:simplifiedRag.prompt.availablePrompts")}
           </Typography>
           <Autocomplete
             options={prompts}
@@ -195,8 +194,8 @@ export default function PromptSection({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Select prompt template"
-                placeholder="e.g., Default Prompt, Custom Instruction"
+                label={t("generative:simplifiedRag.prompt.selectTemplate")}
+                placeholder={t("generative:simplifiedRag.prompt.selectTemplatePlaceholder")}
               />
             )}
             sx={{
@@ -219,7 +218,7 @@ export default function PromptSection({
             }}
           >
             <Typography variant="body2" sx={{ mb: 2 }}>
-              <strong>Selected Prompt Template:</strong>
+              <strong>{t("generative:simplifiedRag.prompt.selectedTemplate")}</strong>
             </Typography>
             
             {/* Template Display with Highlighted Placeholders */}
@@ -259,7 +258,7 @@ export default function PromptSection({
           startIcon={<AddIcon />}
           onClick={() => setNewPromptModalOpen(true)}
         >
-          New Prompt
+          {t("generative:simplifiedRag.prompt.newPromptButton")}
         </Button>
       </Paper>
 
@@ -284,6 +283,7 @@ export default function PromptSection({
     </>
   );
 }
+
 
 PromptSection.propTypes = {
   promptId: PropTypes.number,

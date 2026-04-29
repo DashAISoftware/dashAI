@@ -8,6 +8,7 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import ChunkingConfigurationStep from "../../RAG/NewSessionModal/ChunkingConfigurationStep";
 
@@ -17,6 +18,7 @@ export default function ChunkingAdvancedModal({
   chunkingModel,
   setChunkingModel,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
 
   const handleClose = () => {
@@ -24,9 +26,6 @@ export default function ChunkingAdvancedModal({
   };
 
   const handleSave = () => {
-    // For ChunkingConfigurationStep, it uses autoSave on FormSchema
-    // which calls setChunkingModel on every change. 
-    // Just closing is enough as state is already updated in parent via props.
     onClose();
   };
 
@@ -55,7 +54,7 @@ export default function ChunkingAdvancedModal({
           alignItems: "center",
         }}
       >
-        Advanced Chunking Configuration
+        {t("generative:simplifiedRag.advanced.chunkingTitle")}
         <IconButton
           onClick={handleClose}
           sx={{ color: "text.secondary" }}
@@ -76,7 +75,7 @@ export default function ChunkingAdvancedModal({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} color="inherit">
-          Close
+          {t("generative:simplifiedRag.advanced.close")}
         </Button>
         <Button
           onClick={handleSave}
@@ -84,9 +83,10 @@ export default function ChunkingAdvancedModal({
           color="primary"
           disabled={!stepValid}
         >
-          Save Changes
+          {t("generative:simplifiedRag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+

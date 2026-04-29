@@ -47,6 +47,145 @@
     "sessionUpdated": "Session updated successfully"
   },
   "simplifiedRag": {
+    "setup": {
+      "title": "Create RAG Session",
+      "subtitle": "Provide basic information, select documents, and configure the components for your RAG session.",
+      "sessionDetails": "Session Details",
+      "sessionName": "Session Name *",
+      "sessionNamePlaceholder": "e.g., Product Documentation RAG",
+      "sessionNameDuplicate": "This session name already exists",
+      "sessionNameDuplicateAlert": "A session with this name already exists. Please use a different name.",
+      "description": "Description (Optional)",
+      "descriptionPlaceholder": "Describe the purpose of this RAG session...",
+      "selectDocuments": "Select Documents",
+      "selectDocumentsDescription": "Upload new documents or select from existing ones to be used for RAG.",
+      "chunkingStrategy": "Chunking Strategy",
+      "retrieverModel": "Retriever Model",
+      "promptTemplate": "Prompt Template",
+      "languageModel": "Language Model (LLM)",
+      "cancel": "Cancel",
+      "saveSession": "Save Session"
+    },
+    "validation": {
+      "nameRequired": "Session name is required",
+      "nameUnique": "Session name must be unique",
+      "documentsRequired": "At least one document must be selected",
+      "chunkingRequired": "Chunking model must be configured",
+      "retrieverRequired": "Retriever model must be configured",
+      "generatorRequired": "Generator model must be configured",
+      "generatorInvalid": "Generator configuration is invalid (check context window)",
+      "promptRequired": "Prompt template must be selected"
+    },
+    "messages": {
+      "success": "RAG Session created successfully"
+    },
+    "chunking": {
+      "description": "Select how your documents will be split into chunks for retrieval.",
+      "presets": {
+        "small": {
+          "label": "Small Chunks",
+          "description": "Fine-grained chunking (~256 tokens)"
+        },
+        "paragraph": {
+          "label": "Paragraph Length",
+          "description": "Standard paragraph-level chunking (~500 tokens)"
+        },
+        "page": {
+          "label": "Page Chunk",
+          "description": "Full page-level chunking (~2000 tokens)"
+        },
+        "large": {
+          "label": "Large Sections",
+          "description": "Large section chunking (~4000 tokens)"
+        },
+        "custom": {
+          "label": "Custom Chunking Model",
+          "description": "Advanced configuration applied"
+        }
+      },
+      "advancedButton": "Open Advanced Configuration"
+    },
+    "retriever": {
+      "description": "Select your retrieval paradigm. The retriever will search through your documents and return the most relevant chunks.",
+      "paradigmLabel": "Retrieval Paradigm",
+      "advancedApplied": "ADVANCED CONFIGURATION APPLIED",
+      "topKLabel": "Number of Results (Top K)",
+      "advancedButton": "Open Advanced Configuration",
+      "explanations": {
+        "SparseRetriever": "Best for specific keyword and ID search. Useful for finding exact matches in documents.",
+        "DenseRetriever": "Contextual search that understands meaning. Great for finding semantically similar content but may miss specific keywords or IDs.",
+        "HybridRetriever": "Combines keyword and contextual search for balanced performance across different query types."
+      }
+    },
+    "generator": {
+      "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",
+      "modelLabel": "Generator Model",
+      "advancedApplied": "ADVANCED CONFIGURATION APPLIED",
+      "selectModel": "Select language model",
+      "selectModelPlaceholder": "e.g., GPT-4, Claude, Llama",
+      "modelInfo": "Model:",
+      "advancedButton": "Open Advanced Configuration"
+    },
+    "prompt": {
+      "description": "Select a prompt template that defines how the retrieved context and chat messages are combined to generate responses.",
+      "availablePrompts": "Available Prompts",
+      "selectTemplate": "Select prompt template",
+      "selectTemplatePlaceholder": "e.g., Default Prompt, Custom Instruction",
+      "selectedTemplate": "Selected Prompt Template:",
+      "newPromptButton": "New Prompt"
+    },
+    "documents": {
+      "uploadButton": "Upload documents",
+      "emptyUploadText": "Upload your document(s)"
+    },
+    "summary": {
+      "title": "RAG Session",
+      "descriptionPlaceholder": "No description available",
+      "createdLabel": "Created",
+      "openChatButton": "Open RAG session chat",
+      "detailedConfig": "Detailed Configuration",
+      "chunkingModel": "Chunking Model",
+      "retrieverModel": "Retriever Model",
+      "generationModel": "Generation Model",
+      "promptSelected": "Prompt selected",
+      "promptName": "Name:",
+      "promptTemplate": "Template:",
+      "noPrompt": "No prompt configured",
+      "sessionNotFound": "Session not found",
+      "loading": "Loading session data...",
+      "apiKeyCopied": "API key copied to clipboard",
+      "failedToCopyApiKey": "Failed to copy API key",
+      "noParameters": "No parameters",
+      "viewDetails": "View Details",
+      "parameterDetails": "Parameter Details",
+      "completeConfig": "Complete parameter configuration:",
+      "close": "Close"
+    },
+    "newPrompt": {
+      "title": "Create a new Prompt",
+      "description": "Prompt template defines how the chunks (pieces of documents) and chat messages are integrated to generate responses. Customize the prompt to tailor the behavior of your RAG sessions.",
+      "placeholdersInfo": "Use {chunks} to represent where the retrieved document chunks will be inserted, and {input} for the user message.",
+      "nameLabel": "Prompt Name",
+      "nameRequired": "Prompt name is required",
+      "promptLabel": "Prompt",
+      "promptPlaceholder": "Here you can modify the prompt, for example:\nEach user message is added as {input}\nThe sources are added as {chunks}",
+      "cancel": "Cancel",
+      "save": "Save",
+      "unsavedChanges": "You have unsaved changes. Are you sure you want to cancel?",
+      "success": "Prompt created successfully!",
+      "error": "Failed to create prompt"
+    },
+    "advanced": {
+      "chunkingTitle": "Advanced Chunking Configuration",
+      "retrieverTitle": "Advanced Retriever Configuration",
+      "generatorTitle": "Advanced Generator Configuration",
+      "promptTitle": "Advanced Prompt Configuration",
+      "close": "Close",
+      "done": "Done",
+      "noDescription": "No description available",
+      "promptTemplate": "Prompt Template",
+      "promptInfo": "Advanced configuration for prompts is typically managed through the prompt templates interface. You can create custom prompts or modify existing ones there."
+    },
     "rightPanel": {
       "title": "RAG basics",
       "subtitle": "Retrieval-Augmented Generation (RAG) helps the model answer using your documents.",

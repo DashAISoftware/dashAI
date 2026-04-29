@@ -8,6 +8,7 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import GeneratorConfigurationStep from "../../RAG/NewSessionModal/GeneratorConfigurationStep";
 
@@ -18,6 +19,7 @@ export default function GeneratorAdvancedModal({
   generatorModel,
   setGeneratorModel,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
 
   const handleClose = () => {
@@ -25,8 +27,6 @@ export default function GeneratorAdvancedModal({
   };
 
   const handleSave = () => {
-    // For GeneratorConfigurationStep, it uses autoSave on FormSchema
-    // which calls setGeneratorModel on every change.
     onClose();
   };
 
@@ -55,7 +55,7 @@ export default function GeneratorAdvancedModal({
           alignItems: "center",
         }}
       >
-        Advanced Generator Configuration
+        {t("generative:simplifiedRag.advanced.generatorTitle")}
         <IconButton
           onClick={handleClose}
           sx={{ color: "text.secondary" }}
@@ -76,7 +76,7 @@ export default function GeneratorAdvancedModal({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} color="inherit">
-          Close
+          {t("generative:simplifiedRag.advanced.close")}
         </Button>
         <Button
           onClick={handleSave}
@@ -84,9 +84,10 @@ export default function GeneratorAdvancedModal({
           color="primary"
           disabled={!stepValid}
         >
-          Save Changes
+          {t("generative:simplifiedRag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+

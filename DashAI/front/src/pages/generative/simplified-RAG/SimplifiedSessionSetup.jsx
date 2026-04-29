@@ -18,6 +18,7 @@ import RetrieverSection from "./sections/RetrieverSection";
 import GeneratorSection from "./sections/GeneratorSection";
 import PromptSection from "./sections/PromptSection";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import { createRAGSession } from "../../../api/rag";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 
@@ -49,10 +50,12 @@ export default function SimplifiedSessionSetup({
   existingSessions = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["generative"]);
+
   const suggestedName = useMemo(() => {
     const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
     
-    // Filter sessions by task name
+    // Filter sessions by task name for the sequential suggestion
     const ragSessions = sessionsList.filter(s => s?.task_name === "RAGTask");
     
     const { defaultName } = generateSequentialName({
@@ -88,14 +91,9 @@ export default function SimplifiedSessionSetup({
   const chunkSize = sessionData.parameters.chunking_model?.params?.chunk_size || 0;
   const topK = sessionData.parameters.retriever_model?.params?.top_k || 0;
 
-  console.log('SimplifiedSessionSetup - valores actuales:', {
-  chunkSize,
-  topK,
-  chunking_model: sessionData.parameters.chunking_model,
-  retriever_model: sessionData.parameters.retriever_model,
-  });
   const [promptTokenCount, setPromptTokenCount] = useState(0);
 
+  // Update name if suggestedName changes and user hasn't touched the field
   useEffect(() => {
     if (initialData?.name) return;
     if (isNameTouched) return;
@@ -106,6 +104,7 @@ export default function SimplifiedSessionSetup({
 
       const shouldReplace =
         currentName.trim() === "" || currentName === lastSuggested;
+      
       if (!shouldReplace) {
         lastSuggestedNameRef.current = suggestedName;
         return prev;
@@ -115,6 +114,21 @@ export default function SimplifiedSessionSetup({
       return { ...prev, name: suggestedName };
     });
   }, [initialData?.name, isNameTouched, suggestedName]);
+
+  // Handle name duplicate check when existingSessions or name changes
+  useEffect(() => {
+    const trimmedValue = sessionData.name.trim().toLowerCase();
+    if (!trimmedValue) {
+      setIsDuplicateName(false);
+      return;
+    }
+
+    const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
+    const isDuplicate = sessionsList.some(
+      (session) => session?.name?.toLowerCase() === trimmedValue
+    );
+    setIsDuplicateName(isDuplicate);
+  }, [sessionData.name, existingSessions]);
 
   const handleSessionNameChange = (event) => {
     const value = event.target.value;
@@ -126,21 +140,10 @@ export default function SimplifiedSessionSetup({
 
     // Validate empty name
     if (value.trim() === "") {
-      setNameError("Session name cannot be empty");
-      setIsDuplicateName(false);
-      return;
+      setNameError(t("generative:simplifiedRag.validation.nameRequired"));
+    } else {
+      setNameError("");
     }
-    setNameError("");
-
-    // Check for duplicate name
-    const trimmedValue = value.trim().toLowerCase();
-    const ragSessions = Array.isArray(existingSessions)
-      ? existingSessions.filter((s) => s?.task_name === "RAGTask")
-      : [];
-    const isDuplicate = ragSessions.some(
-      (session) => session?.name?.toLowerCase() === trimmedValue
-    );
-    setIsDuplicateName(isDuplicate);
   };
 
   const handleSessionDescriptionChange = (event) => {
@@ -207,37 +210,37 @@ export default function SimplifiedSessionSetup({
 
   const validateConfiguration = () => {
     if (!sessionData.name.trim()) {
-      enqueueSnackbar("Session name is required", { variant: "warning" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.nameRequired"), { variant: "warning" });
       return false;
     }
     if (isDuplicateName) {
-      enqueueSnackbar("Session name must be unique", { variant: "warning" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.nameUnique"), { variant: "warning" });
       return false;
     }
     if (sessionData.documents.length === 0) {
-      enqueueSnackbar("At least one document must be selected", {
+      enqueueSnackbar(t("generative:simplifiedRag.validation.documentsRequired"), {
         variant: "warning",
       });
       return false;
     }
     if (!sessionData.parameters.chunking_model?.component) {
-      enqueueSnackbar("Chunking model must be configured", { variant: "warning" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.chunkingRequired"), { variant: "warning" });
       return false;
     }
     if (!sessionData.parameters.retriever_model?.component) {
-      enqueueSnackbar("Retriever model must be configured", { variant: "warning" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.retrieverRequired"), { variant: "warning" });
       return false;
     }
     if (!sessionData.parameters.generator_model?.component) {
-      enqueueSnackbar("Generator model must be configured", { variant: "warning" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.generatorRequired"), { variant: "warning" });
       return false;
     }
     if (!isGeneratorValidState) {
-      enqueueSnackbar("Generator configuration is invalid (check context window)", { variant: "error" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.generatorInvalid"), { variant: "error" });
       return false;
     }
     if (!sessionData.parameters.prompt_id) {
-      enqueueSnackbar("Prompt template must be selected", { variant: "warning" });
+      enqueueSnackbar(t("generative:simplifiedRag.validation.promptRequired"), { variant: "warning" });
       return false;
     }
     return true;
@@ -250,21 +253,7 @@ export default function SimplifiedSessionSetup({
     const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
     const isPromptValid = sessionData.parameters.prompt_id !== null && sessionData.parameters.prompt_id !== undefined;
 
-    const complete = isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isPromptValid;
-    
-    if (!complete) {
-      console.log("RAG Configuration Incomplete:", {
-        isNameValid,
-        areDocsValid,
-        isChunkingValid,
-        isRetrieverValid,
-        isGeneratorValid: isGeneratorValidState,
-        isPromptValid,
-        sessionData
-      });
-    }
-
-    return complete;
+    return isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isPromptValid;
   }, [sessionData, isGeneratorValidState, isDuplicateName]);
 
   const handleSave = async () => {
@@ -289,7 +278,7 @@ export default function SimplifiedSessionSetup({
       };
 
       const createdSession = await createRAGSession(finalSessionData);
-      enqueueSnackbar("RAG Session created successfully", { variant: "success" });
+      enqueueSnackbar(t("generative:simplifiedRag.messages.success"), { variant: "success" });
 
       if (onSessionCreated) {
         onSessionCreated(createdSession);
@@ -299,7 +288,7 @@ export default function SimplifiedSessionSetup({
     } catch (error) {
       console.error("Error creating RAG session:", error);
       enqueueSnackbar(
-        error.message || "Error creating RAG session",
+        error.message || t("generative:error.failedToCreateSession"),
         { variant: "error" }
       );
     } finally {
@@ -318,30 +307,29 @@ export default function SimplifiedSessionSetup({
         {/* Header */}
         <Box>
           <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-            Create RAG Session
+            {t("generative:simplifiedRag.setup.title")}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Provide basic information, select documents, and configure the
-            components for your RAG session.
+            {t("generative:simplifiedRag.setup.subtitle")}
           </Typography>
         </Box>
 
         {/* Session Details */}
         <Box>
           <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: 600 }}>
-            Session Details
+            {t("generative:simplifiedRag.setup.sessionDetails")}
           </Typography>
 
           <Box display="flex" flexDirection="column" gap={2}>
             <TextField
               fullWidth
-              label="Session Name *"
+              label={t("generative:simplifiedRag.setup.sessionName")}
               variant="outlined"
               value={sessionData.name}
               onChange={handleSessionNameChange}
-              placeholder="e.g., Product Documentation RAG"
+              placeholder={t("generative:simplifiedRag.setup.sessionNamePlaceholder")}
               error={Boolean(nameError) || isDuplicateName}
-              helperText={nameError || (isDuplicateName ? "This session name already exists" : "")}
+              helperText={nameError || (isDuplicateName ? t("generative:simplifiedRag.setup.sessionNameDuplicate") : "")}
               inputProps={{ maxLength: 256 }}
               size="medium"
               disabled={saving}
@@ -362,18 +350,18 @@ export default function SimplifiedSessionSetup({
                 }}
               >
                 <Typography variant="body2">
-                  A session with this name already exists. Please use a different name.
+                  {t("generative:simplifiedRag.setup.sessionNameDuplicateAlert")}
                 </Typography>
               </Alert>
             )}
 
             <TextField
               fullWidth
-              label="Description (Optional)"
+              label={t("generative:simplifiedRag.setup.description")}
               variant="outlined"
               value={sessionData.description}
               onChange={handleSessionDescriptionChange}
-              placeholder="Describe the purpose of this RAG session..."
+              placeholder={t("generative:simplifiedRag.setup.descriptionPlaceholder")}
               multiline
               rows={3}
               inputProps={{ maxLength: 512 }}
@@ -385,9 +373,9 @@ export default function SimplifiedSessionSetup({
 
         {/* Document Selection */}
         <Box display="flex" flexDirection="column" gap={1}>
-          <Typography variant="subtitle1">Select Documents</Typography>
+          <Typography variant="subtitle1">{t("generative:simplifiedRag.setup.selectDocuments")}</Typography>
           <Typography variant="body2" color="textSecondary">
-            Upload new documents or select from existing ones to be used for RAG.
+            {t("generative:simplifiedRag.setup.selectDocumentsDescription")}
           </Typography>
 
           <Box
@@ -414,7 +402,7 @@ export default function SimplifiedSessionSetup({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Chunking Strategy
+                {t("generative:simplifiedRag.setup.chunkingStrategy")}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -434,7 +422,7 @@ export default function SimplifiedSessionSetup({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Retriever Model
+                {t("generative:simplifiedRag.setup.retrieverModel")}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -454,7 +442,7 @@ export default function SimplifiedSessionSetup({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Prompt Template
+                {t("generative:simplifiedRag.setup.promptTemplate")}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -475,7 +463,7 @@ export default function SimplifiedSessionSetup({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Language Model (LLM)
+                {t("generative:simplifiedRag.setup.languageModel")}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -507,7 +495,7 @@ export default function SimplifiedSessionSetup({
             onClick={onClose}
             disabled={saving}
           >
-            Cancel
+            {t("generative:simplifiedRag.setup.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -516,7 +504,7 @@ export default function SimplifiedSessionSetup({
             disabled={saving || !isConfigurationComplete}
             sx={{ minWidth: 120 }}
           >
-            {saving ? <CircularProgress size={20} /> : "Save Session"}
+            {saving ? <CircularProgress size={20} /> : t("generative:simplifiedRag.setup.saveSession")}
           </Button>
         </Box>
       </Box>
