@@ -118,6 +118,7 @@ class ModelSession(Base):
     validation_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     test_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
 
+    evaluation_strategy: Mapped[str] = mapped_column(String, nullable=False)
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(

@@ -12,6 +12,7 @@ class ModelSessionParams(BaseModel):
     train_metrics: List[str]
     validation_metrics: List[str]
     test_metrics: List[str]
+    evaluation_strategy: str
     splits: str
 
 

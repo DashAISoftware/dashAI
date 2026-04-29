@@ -310,7 +310,7 @@ class ModelJob(BaseJob):
 
         try:
             # Get the splitter class from the registry and split the dataset
-            splitter_name = splits_data["splitter_name"]
+            splitter_name = splits_data.get("splitter_name", None)
             splitter: BaseSplitter = component_registry[splitter_name]["class"](
                 splits_data=splits_data,
             )
@@ -318,7 +318,7 @@ class ModelJob(BaseJob):
             log.exception(e)
             raise JobError(
                 f"""Unable to find Splitter with name
-                {model_session.splits.splitter_name} in registry.""",
+                {splitter_name} in registry.""",
             ) from e
 
         try:
@@ -327,7 +327,7 @@ class ModelJob(BaseJob):
             inner_splitter: BaseSplitter = None
 
             if inner_splits_data:
-                inner_splitter_name = inner_splits_data["splitter_name"]
+                inner_splitter_name = inner_splits_data.get("splitter_name", None)
                 inner_splitter: BaseSplitter = component_registry[inner_splitter_name][
                     "class"
                 ](
@@ -337,7 +337,7 @@ class ModelJob(BaseJob):
             log.exception(e)
             raise JobError(
                 f"""Unable to find inner Splitter with name
-                {inner_splits_data["splitter_name"]} in registry.""",
+                {inner_splitter_name} in registry.""",
             ) from e
 
         try:

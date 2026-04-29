@@ -66,6 +66,7 @@ function CreateSessionSteps({
     train_metrics: [],
     validation_metrics: [],
     test_metrics: [],
+    evaluation_strategy: "",
     splits: {},
     runs: [],
   });
@@ -75,6 +76,7 @@ function CreateSessionSteps({
   const steps = [
     t("models:label.selectDataset"),
     t("models:label.prepareDataset"),
+    t("models:label.selectEvaluationStrategy"),
   ];
 
   const { defaultName } = useMemo(() => {
@@ -216,6 +218,7 @@ function CreateSessionSteps({
         trainMetrics,
         validationMetrics,
         testMetrics,
+        newExp.evaluation_strategy,
         JSON.stringify(newExp.splits),
       );
 

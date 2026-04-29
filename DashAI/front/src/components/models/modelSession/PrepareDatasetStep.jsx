@@ -53,7 +53,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   );
 
   // Holdout or cross-validation
-  const [divisionType, setDivisionType] = useState("holdout");
+  const [evaluationStrategy, setEvaluationStrategy] = useState("holdout");
 
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
@@ -63,8 +63,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   // Cross-Validation configuration states
   const [cvType, setCvType] = useState("kfold");
-  const [numFolds, setNumFolds] = useState(5);
-  const [numRepeats, setNumRepeats] = useState(1);
+  const [numFolds, setNumFolds] = useState(2);
+  const [numRepeats, setNumRepeats] = useState(2);
   const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
@@ -241,9 +241,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       ...newExp,
       input_columns: inputColumnNames,
       output_columns: outputColumnNames,
+      evaluation_strategy: evaluationStrategy,
     };
 
-    if (divisionType === "holdout") {
+    if (evaluationStrategy === "holdout") {
       if (splitType === SPLIT_TYPES.MANUAL) {
         updatedExpData.splits = {
           ...rowsPartitionsIndex,
@@ -263,7 +264,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           splitType: splitType,
         };
       }
-    } else if (divisionType === "crossValidation") {
+    } else if (evaluationStrategy === "crossValidation") {
       if (cvType === "groupKFold" || cvType === "stratifiedGroupKFold") {
         updatedExpData.splits = {
           cvType: cvType,
@@ -351,6 +352,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     numFolds,
     numRepeats,
     groupColumn,
+    evaluationStrategy,
   ]);
 
   useEffect(() => {
@@ -515,8 +517,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             setStratify={setStratify}
             seed={seed}
             setSeed={setSeed}
-            divisionType={divisionType}
-            setDivisionType={setDivisionType}
+            evaluationStrategy={evaluationStrategy}
+            setEvaluationStrategy={setEvaluationStrategy}
             cvType={cvType}
             setCvType={setCvType}
             numFolds={numFolds}

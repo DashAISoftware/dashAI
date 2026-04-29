@@ -65,7 +65,7 @@
     "selectDatasetColumns": "Indique qué columnas del dataset se usarán como entrada y salida.",
     "selectDatasetTitle": "Seleccione un dataset para la tarea seleccionada",
     "selectHowToDivideDataset": "Seleccione cómo dividir el dataset en subconjuntos de entrenamiento, validación y prueba.",
-    "selectDivisionType": "Seleccione el tipo de división de datos",
+    "selectEvaluationStrategy": "Seleccione la estrategia de evaluación",
     "holdout": "Holdout",
     "crossValidation": "Validación Cruzada",
     "holdoutDescription": "Divide el dataset en conjuntos de entrenamiento, validación y prueba una sola vez",

@@ -230,6 +230,7 @@ async def create_model_session(
                 train_metrics=params.train_metrics,
                 validation_metrics=params.validation_metrics,
                 test_metrics=params.test_metrics,
+                evaluation_strategy=params.evaluation_strategy,
                 splits=params.splits,
             )
             db.add(model_session)

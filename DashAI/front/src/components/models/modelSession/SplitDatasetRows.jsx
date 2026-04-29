@@ -36,8 +36,8 @@ function SplitDatasetRows({
   setStratify,
   seed,
   setSeed,
-  divisionType,
-  setDivisionType,
+  evaluationStrategy,
+  setEvaluationStrategy,
   cvType,
   setCvType,
   numFolds,
@@ -375,18 +375,20 @@ function SplitDatasetRows({
 
   return (
     <React.Fragment>
-      {/* Division Type Selection */}
+      {/* Evaluation Strategy Selection */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
-            {t("experiments:label.selectDivisionType")}
+            {t("experiments:label.selectEvaluationStrategy")}
           </Typography>
         </Grid>
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: "flex", gap: 2 }}>
             <Button
-              variant={divisionType === "holdout" ? "contained" : "outlined"}
-              onClick={() => setDivisionType("holdout")}
+              variant={
+                evaluationStrategy === "holdout" ? "contained" : "outlined"
+              }
+              onClick={() => setEvaluationStrategy("holdout")}
               sx={{ flex: 1 }}
             >
               <Box
@@ -409,9 +411,11 @@ function SplitDatasetRows({
             </Button>
             <Button
               variant={
-                divisionType === "crossValidation" ? "contained" : "outlined"
+                evaluationStrategy === "crossValidation"
+                  ? "contained"
+                  : "outlined"
               }
-              onClick={() => setDivisionType("crossValidation")}
+              onClick={() => setEvaluationStrategy("crossValidation")}
               sx={{ flex: 1 }}
             >
               <Box
@@ -437,7 +441,7 @@ function SplitDatasetRows({
       </Grid>
 
       {/* Holdout Configuration */}
-      {divisionType === "holdout" && (
+      {evaluationStrategy === "holdout" && (
         <Box sx={{ mb: 4 }}>
           <Grid container spacing={1}>
             <Grid size={{ xs: 12 }}>
@@ -645,7 +649,7 @@ function SplitDatasetRows({
       )}
 
       {/* Cross-Validation Configuration */}
-      {divisionType === "crossValidation" && (
+      {evaluationStrategy === "crossValidation" && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
             {t("experiments:label.crossValidation")}
@@ -855,8 +859,8 @@ SplitDatasetRows.propTypes = {
   setStratify: PropTypes.func.isRequired,
   seed: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   setSeed: PropTypes.func.isRequired,
-  divisionType: PropTypes.string.isRequired,
-  setDivisionType: PropTypes.func.isRequired,
+  evaluationStrategy: PropTypes.string.isRequired,
+  setEvaluationStrategy: PropTypes.func.isRequired,
   cvType: PropTypes.string.isRequired,
   setCvType: PropTypes.func.isRequired,
   numFolds: PropTypes.number.isRequired,
