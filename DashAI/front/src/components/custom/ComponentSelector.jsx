@@ -17,7 +17,15 @@ import {
   ExpandMore as ExpandMoreIcon,
   Check as CheckIcon,
 } from "@mui/icons-material";
+import * as MuiIcons from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+
+function renderMuiIcon(iconName) {
+  if (!iconName) return null;
+  const Icon = MuiIcons[iconName];
+  if (!Icon) return null;
+  return <Icon fontSize="small" />;
+}
 
 const ALL_CATEGORY = "All";
 
@@ -194,7 +202,9 @@ function ComponentSelector({
                   >
                     {items.map((component) => {
                       const isSelected = selected?.name === component.name;
-                      const icon = getIcon?.(component);
+                      const icon =
+                        getIcon?.(component) ?? renderMuiIcon(component.icon);
+                      const tags = component.tags || [];
                       return (
                         <Paper
                           key={component.name}
@@ -260,6 +270,28 @@ function ComponentSelector({
                             >
                               {getDescription(component)}
                             </Typography>
+                            {tags.length > 0 && (
+                              <Stack
+                                direction="row"
+                                spacing={0.5}
+                                flexWrap="wrap"
+                                useFlexGap
+                                sx={{ mt: 1 }}
+                              >
+                                {tags.slice(0, 3).map((tag) => (
+                                  <Chip
+                                    key={tag}
+                                    label={tag}
+                                    size="small"
+                                    sx={{
+                                      height: 18,
+                                      fontSize: "0.65rem",
+                                      "& .MuiChip-label": { px: 0.75 },
+                                    }}
+                                  />
+                                ))}
+                              </Stack>
+                            )}
                           </Box>
                           {isSelected && (
                             <CheckIcon

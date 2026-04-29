@@ -80,6 +80,8 @@ COMPONENT1_DICT = {
     "description": None,
     "display_name": None,
     "color": None,
+    "tags": [],
+    "icon": None,
 }
 COMPONENT2_DICT = {
     "name": "Component2",
@@ -91,6 +93,8 @@ COMPONENT2_DICT = {
     "description": None,
     "display_name": None,
     "color": None,
+    "tags": [],
+    "icon": None,
 }
 SUBCOMPONENT1_DICT = {
     "name": "SubComponent1",
@@ -102,6 +106,8 @@ SUBCOMPONENT1_DICT = {
     "description": None,
     "display_name": None,
     "color": None,
+    "tags": [],
+    "icon": None,
 }
 COMPONENT3_DICT = {
     "name": "Component3",
@@ -113,6 +119,8 @@ COMPONENT3_DICT = {
     "description": "Some static component",
     "display_name": None,
     "color": None,
+    "tags": [],
+    "icon": None,
 }
 COMPONENT3_DICT_MS = COMPONENT3_DICT.copy()
 COMPONENT3_DICT_MS["description"] = MultilingualString(en="Some static component")
@@ -127,6 +135,8 @@ RELATED_COMPONENT1_DICT = {
     "description": None,
     "display_name": None,
     "color": None,
+    "tags": [],
+    "icon": None,
 }
 RELATED_COMPONENT2_DICT = {
     "name": "RelatedComponent2",
@@ -138,6 +148,8 @@ RELATED_COMPONENT2_DICT = {
     "description": None,
     "display_name": None,
     "color": None,
+    "tags": [],
+    "icon": None,
 }
 
 

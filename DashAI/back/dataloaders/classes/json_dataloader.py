@@ -96,6 +96,8 @@ class JSONDataLoader(BaseDataLoader):
         en="JSON Data Loader",
         es="Cargador de Datos JSON",
     )
+    ICON: str = "DataObject"
+    TAGS: list[str] = ["tabular", "structured", ".json"]
 
     def _check_params(self, params: Dict[str, Any]) -> None:
         """Validate JSON dataloader parameters before loading.

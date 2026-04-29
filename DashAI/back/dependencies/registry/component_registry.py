@@ -30,6 +30,8 @@ class ComponentRegistry:
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
         "color": "...",  # A color associated to the component.
+        "tags": [...],  # List of search/filter tags from class attribute TAGS.
+        "icon": "...",  # MUI icon name from class attribute ICON.
     }
     ```
 
@@ -208,6 +210,22 @@ class ComponentRegistry:
             if isinstance(display_name, str):
                 new_component.DISPLAY_NAME = MultilingualString(en=display_name)
 
+        tags = getattr(new_component, "TAGS", None)
+        if tags is None:
+            tags = []
+        elif not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
+            raise TypeError(
+                f"Component {new_component.__name__}.TAGS must be a list[str], "
+                f"got {tags!r}."
+            )
+
+        icon = getattr(new_component, "ICON", None)
+        if icon is not None and not isinstance(icon, str):
+            raise TypeError(
+                f"Component {new_component.__name__}.ICON must be a string "
+                f"(MUI icon name), got {icon!r}."
+            )
+
         new_register_component = {
             "name": new_component.__name__,
             "type": base_type,
@@ -218,6 +236,8 @@ class ComponentRegistry:
             "description": getattr(new_component, "DESCRIPTION", None),
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
             "color": getattr(new_component, "COLOR", None),
+            "tags": tags,
+            "icon": icon,
         }
 
         if base_type not in self._registry:

@@ -10,4 +10,6 @@ export interface IComponent {
   description: string;
   display_name?: string;
   color?: string;
+  tags?: string[];
+  icon?: string;
 }

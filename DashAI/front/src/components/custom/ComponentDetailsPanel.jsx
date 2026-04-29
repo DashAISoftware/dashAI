@@ -1,8 +1,16 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Typography, Chip, Divider } from "@mui/material";
+import * as MuiIcons from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+
+function renderMuiIcon(iconName) {
+  if (!iconName) return null;
+  const Icon = MuiIcons[iconName];
+  if (!Icon) return null;
+  return <Icon />;
+}
 
 function getLabel(component) {
   return component.display_name || component.name;
@@ -33,8 +41,12 @@ function ComponentDetailsPanel({ component, getIcon, extraSections }) {
     );
   }
 
-  const icon = getIcon?.(component);
-  const tags = component.schema?.tags || component.metadata?.tags || [];
+  const icon = getIcon?.(component) ?? renderMuiIcon(component.icon);
+  const tags =
+    component.tags ||
+    component.schema?.tags ||
+    component.metadata?.tags ||
+    [];
 
   return (
     <SideBar>

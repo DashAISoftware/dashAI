@@ -248,6 +248,8 @@ class CSVDataLoader(BaseDataLoader):
         en="CSV Data Loader",
         es="Cargador de Datos CSV",
     )
+    ICON: str = "TableChart"
+    TAGS: list[str] = ["tabular", "spreadsheet", "csv"]
 
     def _check_params(
         self,

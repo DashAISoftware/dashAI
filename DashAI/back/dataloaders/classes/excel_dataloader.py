@@ -226,6 +226,8 @@ class ExcelDataLoader(BaseDataLoader):
         en="Excel Data Loader",
         es="Cargador de Datos Excel",
     )
+    ICON: str = "BorderAll"
+    TAGS: list[str] = ["tabular", "spreadsheet", ".xlsx", ".xls"]
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Convert schema parameters into a dict suitable for ``pandas.read_excel``.
