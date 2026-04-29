@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
   IconButton,
   List,
   ListItem,
-  ListItemButton,
   Divider,
   Dialog,
   DialogTitle,
@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 
 const DocumentReferencesModal = ({ open, onClose, document, chunks, onOpenReference }) => {
+  const { t } = useTranslation('generative');
   if (!document || !chunks) return null;
 
   const getDocumentTitle = (docId, chunks) => {
@@ -28,7 +29,7 @@ const DocumentReferencesModal = ({ open, onClose, document, chunks, onOpenRefere
     if (firstChunk.document_name) return firstChunk.document_name;
     if (firstChunk.title) return firstChunk.title;
     if (firstChunk.name) return firstChunk.name;
-    return `Document ${docId}`;
+    return t('documentReferences.fallbackTitle', { id: docId, defaultValue: `Document ${docId}` });
   };
 
   const handleCopyChunk = async (chunkText) => {
@@ -73,7 +74,7 @@ const DocumentReferencesModal = ({ open, onClose, document, chunks, onOpenRefere
 
       <DialogContent dividers sx={{ p: 0 }}>
         <Typography variant="body2" sx={{ p: 2, pb: 1, color: 'text.secondary' }}>
-          This document provided {chunks.length} chunk{chunks.length > 1 ? 's' : ''} for this response:
+          {t('documentReferences.chunksCount', { count: chunks.length })}
         </Typography>
         
         <List dense disablePadding>
@@ -107,8 +108,8 @@ const DocumentReferencesModal = ({ open, onClose, document, chunks, onOpenRefere
                         }}
                       />
                       {chunk.document_position 
-                        ? `Chunk ${chunk.document_position}`
-                        : `Chunk ${index + 1}`
+                        ? t('documentReferences.chunkLabel', { position: chunk.document_position })
+                        : t('documentReferences.chunkLabel', { position: index + 1 })
                       }
                     </Typography>
                     
@@ -154,7 +155,7 @@ const DocumentReferencesModal = ({ open, onClose, document, chunks, onOpenRefere
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} variant="contained">
-          Close
+          {t('documentReferences.close')}
         </Button>
       </DialogActions>
     </Dialog>

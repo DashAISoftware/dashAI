@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Box, Typography, Button, Dialog, IconButton, Tooltip } from "@mui/material";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
 import ViewListIcon from "@mui/icons-material/ViewList";
@@ -10,6 +11,7 @@ import { useSnackbar } from "notistack";
 import { getSessionDocuments, addDocument, loadDocuments } from "../../../api/rag";
 
 export default function DocumentsBar({ selectedSessionId, taskName, onDocumentChange }) {
+  const { t } = useTranslation("generative");
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
@@ -46,7 +48,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         setDocuments(transformedDocuments);
         setFilteredDocuments(transformedDocuments);
       } catch (error) {
-        enqueueSnackbar("Failed to fetch documents", {
+        enqueueSnackbar(t("documentsBar.failedFetch"), {
           variant: "error",
         });
         console.error("Failed to fetch documents:", error);
@@ -54,7 +56,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
     };
 
     fetchDocuments();
-  }, [selectedSessionId, enqueueSnackbar]);
+  }, [selectedSessionId, enqueueSnackbar, t]);
 
   // Filter documents based on search query
   useEffect(() => {
@@ -103,7 +105,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
       }
       
       enqueueSnackbar(
-        `Successfully uploaded ${fileList.length} document${fileList.length > 1 ? 's' : ''}`,
+        t("documentsBar.successUpload", { count: fileList.length }),
         { variant: "success" }
       );
       
@@ -112,7 +114,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         onDocumentChange();
       }
     } catch (error) {
-      enqueueSnackbar("Failed to upload document(s)", {
+      enqueueSnackbar(t("documentsBar.failedUpload"), {
         variant: "error",
       });
       console.error("Failed to upload document:", error);
@@ -139,11 +141,10 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
     >
       {/* Header */}
       <Box sx={{ p: 2, flexShrink: 0 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>Documents</Typography>
+        <Typography variant="h6" sx={{ mb: 1 }}>{t("documentsBar.title")}</Typography>
         <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
-          {filteredDocuments.length} document
-          {filteredDocuments.length !== 1 ? "s" : ""}
-          {selectedSessionId ? ` in current session` : ` available`}
+          {t("documentsBar.documentCount", { count: filteredDocuments.length })}
+          {selectedSessionId ? t("documentsBar.inCurrentSession") : t("documentsBar.available")}
         </Typography>
       </Box>
       {/* Add documents button - only show when no session is selected */}
@@ -156,7 +157,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
             startIcon={<AddIcon />}
             onClick={() => setUploadOpen(true)}
           >
-            Add documents
+            {t("documentsBar.addDocuments")}
           </Button>
         </Box>
       )}
@@ -169,12 +170,12 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onClear={() => setSearchQuery("")}
-                placeholder="Search documents"
+                placeholder={t("documentsBar.searchPlaceholder")}
               />
             </Box>
             {/* Detailed view icon - only show when no session is selected */}
             {!selectedSessionId && (
-              <Tooltip title="See detailed view" placement="top">
+              <Tooltip title={t("documentsBar.detailedView")} placement="top">
                 <IconButton
                   size="medium"
                   onClick={handleDetailedView}
@@ -221,10 +222,10 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
               {searchQuery
-                ? "No documents found"
+                ? t("documentsBar.noDocumentsFound")
                 : selectedSessionId
-                ? "No documents in this session"
-                : "No documents available"}
+                ? t("documentsBar.noDocumentsInSession")
+                : t("documentsBar.noDocumentsAvailable")}
             </Typography>
           </Box>
         )}
@@ -249,7 +250,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
           <Upload
             onFileUpload={handleFileUpload}
             multiple={true}
-            emptyUploadText="Upload your document(s)"
+            emptyUploadText={t("documentsBar.uploadDocuments")}
             sx={{ flex: 1 }}
           />
         </Box>

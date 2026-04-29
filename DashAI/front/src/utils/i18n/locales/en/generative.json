@@ -243,5 +243,38 @@
     "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
     "insufficientContextTitle": "Insufficient Context Window",
     "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window."
+  },
+  "documentReferences": {
+    "modalTitle": "Document References",
+    "fallbackTitle": "Document {{id}}",
+    "chunksCount_one": "This document provided {{count}} chunk for this response:",
+    "chunksCount_other": "This document provided {{count}} chunks for this response:",
+    "chunkLabel": "Chunk {{position}}",
+    "close": "Close"
+  },
+  "sourcesDisplay": {
+    "viewSources": "View message sources",
+    "provided": "provided",
+    "chunk_one": "chunk",
+    "chunk_other": "chunks",
+    "viewChunks": "View Chunks"
+  },
+  "documentsBar": {
+    "title": "Documents",
+    "documentCount_one": "{{count}} document",
+    "documentCount_other": "{{count}} documents",
+    "inCurrentSession": " in current session",
+    "available": " available",
+    "addDocuments": "Add documents",
+    "searchPlaceholder": "Search documents",
+    "detailedView": "See detailed view",
+    "noDocumentsFound": "No documents found",
+    "noDocumentsInSession": "No documents in this session",
+    "noDocumentsAvailable": "No documents available",
+    "uploadDocuments": "Upload your document(s)",
+    "failedFetch": "Failed to fetch documents",
+    "successUpload_one": "Successfully uploaded {{count}} document",
+    "successUpload_other": "Successfully uploaded {{count}} documents",
+    "failedUpload": "Failed to upload document(s)"
   }
 }

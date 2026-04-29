@@ -1,39 +1,33 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
-  Chip,
   Collapse,
   IconButton,
   List,
   ListItem,
-  ListItemButton,
-  ListItemText,
   Badge,
-  Tooltip,
   Divider,
-  ListSubheader,
   Button,
 } from '@mui/material';
 import {
   ExpandMore,
   ExpandLess,
   Source as SourceIcon,
-  Article as ArticleIcon,
   Description as DescriptionIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import DocumentReferencesModal from './DocumentReferencesModal';
 
 const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
+  const { t } = useTranslation('generative');
   const [expanded, setExpanded] = useState(false);
   const [documentModalOpen, setDocumentModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [selectedChunks, setSelectedChunks] = useState([]);
   const referenceEntries = Object.entries(references);
   const sourceCount = referenceEntries.length;
-
-  console.log("SourcesDisplay - references prop:", references);
 
   const handleToggleExpanded = () => {
     setExpanded(!expanded);
@@ -71,7 +65,7 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
     if (firstChunk.name) return firstChunk.name;
     
     // Fallback to generic title
-    return `Document ${docId}`;
+    return t('sourcesDisplay.fallbackTitle', { id: docId, defaultValue: `Document ${docId}` });
   };
 
   return (
@@ -103,7 +97,7 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <SourceIcon fontSize="small" color="primary" />
           <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-            View message sources
+            {t('sourcesDisplay.viewSources')}
           </Typography>
           <Badge 
             badgeContent={sourceCount} 
@@ -137,20 +131,40 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     backgroundColor: "background.box",
-
+                    gap: 2
                 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <DescriptionIcon fontSize="small" color="primary" />
-                    <Typography variant="body2">
-                      <Typography component="span" sx={{ fontWeight: 'bold' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    minWidth: 0,
+                    flex: 1
+                  }}>
+                    <DescriptionIcon fontSize="small" color="primary" sx={{ flexShrink: 0 }} />
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      
+                      {/* Línea 1: nombre */}
+                      <Typography 
+                        variant="body2"
+                        sx={{
+                          fontWeight: 'bold',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
                         {getDocumentTitle(docId, chunks)}
                       </Typography>
-                      {' '}provided{' '}
-                      <Typography component="span" sx={{ fontWeight: 'bold' }}>
-                        {chunks.length}
+
+                      {/* Línea 2: metadata */}
+                      <Typography variant="caption" color="text.secondary">
+                        {t('sourcesDisplay.provided')}{' '}
+                        <strong>{chunks.length}</strong>{' '}
+                        {t('sourcesDisplay.chunk', { count: chunks.length })}
                       </Typography>
-                      {' '}chunk{chunks.length > 1 ? 's' : ''}
-                    </Typography>
+
+                    </Box>
                   </Box>
                   
                   <Button
@@ -162,9 +176,12 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
                       fontSize: '0.75rem',
                       py: 0.5,
                       px: 1,
+                      whiteSpace: 'nowrap',
+                      minWidth: '140px',
+                      flexShrink: 0
                     }}
                   >
-                    View Chunks
+                    {t('sourcesDisplay.viewChunks')}
                   </Button>
                 </Box>
               </ListItem>
