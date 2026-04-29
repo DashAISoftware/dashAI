@@ -68,6 +68,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     )
     IMAGE_PREVIEW = "parallel_cordinates.png"
 
+    TAGS = ["multivariate", "numeric"]
     SCHEMA = ParallelCordinatesSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

@@ -25,6 +25,7 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     ``transform`` is called.
     """
 
+    TAGS = ["column-management", "preprocessing"]
     SCHEMA = ColumnRemoverSchema
     DESCRIPTION = MultilingualString(
         en="Removes the columns selected in scope from the dataset.",

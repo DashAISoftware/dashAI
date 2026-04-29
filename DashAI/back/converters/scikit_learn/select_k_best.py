@@ -61,6 +61,7 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html
     """
 
+    TAGS = ["feature-selection", "supervised", "univariate"]
     SCHEMA = SelectKBestSchema
     DESCRIPTION = MultilingualString(
         en="Select features according to the k highest scores.",

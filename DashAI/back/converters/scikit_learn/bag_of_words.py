@@ -99,6 +99,7 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         Retrieval. McGraw-Hill.
     """
 
+    TAGS = ["text", "encoding", "sparse"]
     SCHEMA = BagOfWordsConverterSchema
     DISPLAY_NAME = MultilingualString(en="Bag of Words", es="Bolsa de Palabras")
     IMAGE_PREVIEW = "bag_of_words.png"

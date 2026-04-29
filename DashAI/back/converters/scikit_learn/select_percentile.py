@@ -59,6 +59,7 @@ class SelectPercentile(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectPercentile.html
     """
 
+    TAGS = ["feature-selection", "supervised", "percentile"]
     SCHEMA = SelectPercentileSchema
     DESCRIPTION = MultilingualString(
         en="Select features according to a percentile of the highest scores.",

@@ -57,6 +57,7 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.Normalizer.html
     """
 
+    TAGS = ["scaling", "normalization", "numeric"]
     SCHEMA = NormalizerSchema
     DESCRIPTION = MultilingualString(
         en="Normalize samples individually to unit norm.",

@@ -71,6 +71,7 @@ class RandomUnderSamplerConverter(
     - [1]https://imbalanced-learn.org/stable/references/generated/imblearn.under_sampling.RandomUnderSampler.html
     """
 
+    TAGS = ["class-balance", "undersampling"]
     SCHEMA = RUSchema
     DESCRIPTION = MultilingualString(
         en="Randomly remove samples from the majority class to balance the dataset.",

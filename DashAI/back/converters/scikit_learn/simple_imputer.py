@@ -99,6 +99,7 @@ class SimpleImputer(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
     """
 
+    TAGS = ["imputation", "missing-data", "mixed"]
     SCHEMA = SimpleImputerSchema
     DESCRIPTION = MultilingualString(
         en=(

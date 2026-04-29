@@ -56,6 +56,7 @@ class GenericUnivariateSelect(
     Wraps scikit-learn's ``GenericUnivariateSelect``.
     """
 
+    TAGS = ["feature-selection", "supervised", "univariate"]
     SCHEMA = GenericUnivariateSelectSchema
     DESCRIPTION = MultilingualString(
         en="Univariate feature selector with configurable strategy.",

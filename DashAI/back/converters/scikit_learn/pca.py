@@ -170,6 +170,7 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         417-441.
     """
 
+    TAGS = ["dim-reduction", "unsupervised", "linear"]
     SCHEMA = PCASchema
     DESCRIPTION = MultilingualString(
         en=(

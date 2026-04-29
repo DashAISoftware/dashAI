@@ -22,4 +22,3 @@ class MultidimensionalExplorer(BaseExplorer):
     )
     ICON: Final[str] = Icon.Timeline.value
     COLOR: Final[str] = "rgb(241, 196, 15)"
-    TAGS: Final[list] = ["multidimensional", "categorical", "visualization"]

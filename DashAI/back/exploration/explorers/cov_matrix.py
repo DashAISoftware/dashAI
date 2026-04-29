@@ -122,6 +122,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
     )
     IMAGE_PREVIEW = "covariance_matrix.png"
 
+    TAGS = ["covariance", "statistics", "multivariate", "numeric"]
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

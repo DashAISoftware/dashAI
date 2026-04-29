@@ -69,6 +69,7 @@ class StandardScaler(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
     """
 
+    TAGS = ["scaling", "numeric", "gaussian"]
     SCHEMA = StandardScalerSchema
     DESCRIPTION = MultilingualString(
         en=("Standardize features by removing the mean and scaling to unit variance."),

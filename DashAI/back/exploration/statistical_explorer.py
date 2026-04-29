@@ -21,4 +21,3 @@ class StatisticalExplorer(BaseExplorer):
     )
     ICON: Final[str] = Icon.Functions.value
     COLOR: Final[str] = "rgb(231, 76, 60)"
-    TAGS: Final[list] = ["statistics", "summary", "numeric"]

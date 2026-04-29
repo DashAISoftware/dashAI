@@ -124,6 +124,7 @@ class TruncatedSVD(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
+    TAGS = ["dim-reduction", "unsupervised", "linear", "sparse"]
     SCHEMA = TruncatedSVDSchema
     DESCRIPTION = MultilingualString(
         en=(

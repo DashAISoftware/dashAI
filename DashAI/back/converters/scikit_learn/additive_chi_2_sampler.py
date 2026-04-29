@@ -47,6 +47,7 @@ class AdditiveChi2Sampler(
     scikit-learn's ``AdditiveChi2Sampler``.
     """
 
+    TAGS = ["kernel", "nonlinear", "numeric"]
     SCHEMA = AdditiveChi2SamplerSchema
     DESCRIPTION = MultilingualString(
         en=(

@@ -40,6 +40,7 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     as ``"None"``, ``"nan"``, ``"N/A"`` are also treated as missing.
     """
 
+    TAGS = ["missing-data", "removal", "preprocessing"]
     SCHEMA = NanRemoverSchema
     DESCRIPTION = MultilingualString(
         en=(

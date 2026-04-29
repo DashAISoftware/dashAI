@@ -21,4 +21,3 @@ class DistributionExplorer(BaseExplorer):
     )
     ICON: Final[str] = Icon.BarChart.value
     COLOR: Final[str] = "rgb(155, 89, 182)"
-    TAGS: Final[list] = ["distribution", "univariate", "visualization"]

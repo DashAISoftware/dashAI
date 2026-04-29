@@ -80,6 +80,7 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     - [3] https://imbalanced-learn.org/stable/references/generated/imblearn.combine.SMOTEENN.html
     """
 
+    TAGS = ["class-balance", "hybrid", "synthetic"]
     SCHEMA = SMOTEENNSchema
     DESCRIPTION = MultilingualString(
         en=("SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."),

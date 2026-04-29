@@ -62,6 +62,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFwe.html
     """
 
+    TAGS = ["feature-selection", "supervised", "statistical"]
     SCHEMA = SelectFweSchema
     DESCRIPTION = MultilingualString(
         en="Filter: Select features according to a family-wise error rate test.",

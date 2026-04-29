@@ -86,6 +86,7 @@ class IncrementalPCA(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.IncrementalPCA.html
     """
 
+    TAGS = ["dim-reduction", "unsupervised", "linear"]
     SCHEMA = IncrementalPCASchema
     DESCRIPTION = MultilingualString(
         en=(

@@ -113,6 +113,7 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OrdinalEncoder.html
     """
 
+    TAGS = ["encoding", "categorical", "ordinal"]
     SCHEMA = OrdinalEncoderSchema
     DESCRIPTION = MultilingualString(
         en="Encode categorical features as an integer array.",

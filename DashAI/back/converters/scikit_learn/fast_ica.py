@@ -166,6 +166,7 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
         Algorithms and Applications." Neural Networks, 13(4-5), 411-430.
     """
 
+    TAGS = ["dim-reduction", "unsupervised", "linear"]
     SCHEMA = FastICASchema
     DESCRIPTION = MultilingualString(
         en="FastICA: a fast algorithm for Independent Component Analysis.",

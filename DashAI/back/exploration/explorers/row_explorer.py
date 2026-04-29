@@ -86,6 +86,7 @@ class RowExplorer(PreviewInspectionExplorer):
     )
     IMAGE_PREVIEW = "row_explorer.png"
 
+    TAGS = ["preview", "raw", "mixed"]
     SCHEMA = RowExplorerSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [],

@@ -117,6 +117,7 @@ class ECDFPlotExplorer(DistributionExplorer):
     )
     IMAGE_PREVIEW = "ecdf_plot.png"
 
+    TAGS = ["distribution", "univariate", "numeric"]
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

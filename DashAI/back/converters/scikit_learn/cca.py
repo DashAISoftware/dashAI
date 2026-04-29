@@ -99,6 +99,7 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
         Biometrika, 28(3/4), 321-377.
     """
 
+    TAGS = ["dim-reduction", "supervised", "linear"]
     SCHEMA = CCASchema
     DESCRIPTION = MultilingualString(
         en="Canonical Correlation Analysis, also known as 'Mode B' PLS.",

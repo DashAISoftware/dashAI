@@ -89,6 +89,7 @@ class BoxPlotExplorer(DistributionExplorer):
     )
     IMAGE_PREVIEW = "box_plot.png"
 
+    TAGS = ["distribution", "outliers", "univariate", "numeric"]
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

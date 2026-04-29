@@ -51,6 +51,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     to ``Integer``.
     """
 
+    TAGS = ["text", "cleaning", "preprocessing"]
     SCHEMA = CharacterReplacerSchema
     DESCRIPTION = MultilingualString(
         en=(

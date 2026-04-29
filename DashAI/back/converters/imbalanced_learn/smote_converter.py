@@ -76,6 +76,7 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
     - [2] https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html
     """
 
+    TAGS = ["class-balance", "oversampling", "synthetic"]
     SCHEMA = SMOTESchema
     DESCRIPTION = MultilingualString(
         en="SMOTE: Synthetic Minority Over-sampling Technique.",

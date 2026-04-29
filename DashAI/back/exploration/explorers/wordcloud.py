@@ -83,6 +83,7 @@ class WordcloudExplorer(DistributionExplorer):
     )
     IMAGE_PREVIEW = "wordcloud.png"
 
+    TAGS = ["text", "frequency", "visualization"]
     SCHEMA = WordcloudSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Text],

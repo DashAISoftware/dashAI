@@ -90,6 +90,7 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.KNNImputer.html
     """
 
+    TAGS = ["imputation", "missing-data", "nonlinear"]
     SCHEMA = KNNImputerSchema
     DESCRIPTION = MultilingualString(
         en=("Imputation for completing missing values using k-Nearest Neighbors."),

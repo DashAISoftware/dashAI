@@ -42,6 +42,7 @@ class MaxAbsScaler(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
     """
 
+    TAGS = ["scaling", "numeric", "sparse"]
     SCHEMA = MaxAbsScalerSchema
     DESCRIPTION = MultilingualString(
         en="Scale each feature by its maximum absolute value.",

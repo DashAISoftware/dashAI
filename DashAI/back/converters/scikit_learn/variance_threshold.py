@@ -64,6 +64,7 @@ class VarianceThreshold(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.VarianceThreshold.html
     """
 
+    TAGS = ["feature-selection", "unsupervised", "low-variance"]
     SCHEMA = VarianceThresholdSchema
     DESCRIPTION = MultilingualString(
         en="Feature selector that removes all low-variance features.",

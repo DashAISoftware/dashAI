@@ -89,6 +89,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         es="Muestra una matriz de dispersión de columnas seleccionadas.",
     )
 
+    TAGS = ["correlation", "multivariate", "numeric"]
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

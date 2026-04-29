@@ -100,6 +100,7 @@ class SkewedChi2Sampler(
         Machines. Advances in Neural Information Processing Systems, 20.
     """
 
+    TAGS = ["kernel", "nonlinear", "numeric"]
     SCHEMA = SkewedChi2SamplerSchema
     DESCRIPTION = MultilingualString(
         en=(

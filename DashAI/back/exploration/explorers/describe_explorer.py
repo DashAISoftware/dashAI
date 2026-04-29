@@ -113,6 +113,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
     )
     IMAGE_PREVIEW = "describe_explorer.png"
 
+    TAGS = ["summary", "statistics", "mixed"]
     SCHEMA = DescribeExplorerSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [],

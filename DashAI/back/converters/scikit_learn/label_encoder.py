@@ -41,6 +41,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
     """
 
+    TAGS = ["encoding", "categorical", "supervised"]
     SCHEMA = LabelEncoderSchema
     DESCRIPTION = MultilingualString(
         en="Encode target labels with value between 0 and n_classes-1.",

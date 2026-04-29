@@ -115,6 +115,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     )
     IMAGE_PREVIEW = "multi_column_box_plot.png"
 
+    TAGS = ["distribution", "outliers", "grouped", "numeric"]
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

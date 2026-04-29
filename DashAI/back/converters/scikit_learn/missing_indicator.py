@@ -44,6 +44,7 @@ class MissingIndicator(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.MissingIndicator.html
     """
 
+    TAGS = ["missing-data", "mixed"]
     SCHEMA = MissingIndicatorSchema
     DESCRIPTION = MultilingualString(
         en="Binary indicators for missing values.",

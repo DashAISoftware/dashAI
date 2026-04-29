@@ -139,6 +139,7 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
         Systems 13 (NIPS 2000), 682-688.
     """
 
+    TAGS = ["kernel", "nonlinear", "dim-reduction"]
     SCHEMA = NystroemSchema
     DESCRIPTION = MultilingualString(
         en=(

@@ -106,6 +106,7 @@ class PolynomialFeatures(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
     """
 
+    TAGS = ["feature-engineering", "polynomial", "numeric"]
     SCHEMA = PolynomialFeaturesSchema
     DESCRIPTION = MultilingualString(
         en=(

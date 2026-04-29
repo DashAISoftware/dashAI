@@ -35,6 +35,7 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     Wraps scikit-learn's ``Binarizer``.
     """
 
+    TAGS = ["encoding", "threshold", "numeric"]
     SCHEMA = BinarizerSchema
     DESCRIPTION = MultilingualString(
         en=("Binarize data (set feature values to 0 or 1) according to a threshold."),

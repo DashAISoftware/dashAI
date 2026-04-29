@@ -132,6 +132,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
     )
     IMAGE_PREVIEW = "correlation_matrix.png"
 
+    TAGS = ["correlation", "statistics", "multivariate", "numeric"]
     SCHEMA = CorrelationMatrixExplorerSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

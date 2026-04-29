@@ -88,6 +88,7 @@ class ScatterPlotExplorer(RelationshipExplorer):
     )
     IMAGE_PREVIEW = "scatter_plot.png"
 
+    TAGS = ["correlation", "bivariate", "numeric"]
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer],

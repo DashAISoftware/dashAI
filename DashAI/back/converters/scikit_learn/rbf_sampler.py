@@ -89,6 +89,7 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
         Machines. Advances in Neural Information Processing Systems, 20.
     """
 
+    TAGS = ["kernel", "nonlinear", "numeric"]
     SCHEMA = RBFSamplerSchema
     DESCRIPTION = MultilingualString(
         en=(

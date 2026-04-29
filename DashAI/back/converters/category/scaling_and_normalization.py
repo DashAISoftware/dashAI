@@ -21,4 +21,3 @@ class ScalingAndNormalizationConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.TrendingUp.value
     COLOR: Final[str] = "rgb(255, 165, 0)"
-    TAGS: Final[list] = ["scaling", "normalization", "preprocessing"]

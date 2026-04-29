@@ -57,6 +57,7 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFpr.html
     """
 
+    TAGS = ["feature-selection", "supervised", "statistical"]
     SCHEMA = SelectFprSchema
     DESCRIPTION = MultilingualString(
         en="Filter: Select features according to a false positive rate test.",

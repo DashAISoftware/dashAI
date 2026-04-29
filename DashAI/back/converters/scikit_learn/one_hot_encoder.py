@@ -116,6 +116,7 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
     """
 
+    TAGS = ["encoding", "categorical", "sparse"]
     SCHEMA = OneHotEncoderSchema
     DESCRIPTION = MultilingualString(
         en="Encode categorical integer features as a one-hot numeric array.",

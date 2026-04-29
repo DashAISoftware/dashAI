@@ -85,6 +85,7 @@ class EmbeddingSchema(BaseSchema):
 class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """HuggingFace embedding converter."""
 
+    TAGS = ["text", "embedding", "transformer"]
     SCHEMA = EmbeddingSchema
     DESCRIPTION = MultilingualString(
         en="Convert text to embeddings using HuggingFace transformer models.",

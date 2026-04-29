@@ -68,6 +68,7 @@ class TokenizerSchema(BaseSchema):
 class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """Converter that tokenizes text and stores each token ID in a separate column."""
 
+    TAGS = ["text", "tokenization", "transformer"]
     SCHEMA = TokenizerSchema
     DESCRIPTION = MultilingualString(
         en=(

@@ -142,6 +142,7 @@ class HistogramPlotExplorer(DistributionExplorer):
     )
     IMAGE_PREVIEW = "histogram_plot.png"
 
+    TAGS = ["distribution", "univariate", "numeric"]
     SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [],

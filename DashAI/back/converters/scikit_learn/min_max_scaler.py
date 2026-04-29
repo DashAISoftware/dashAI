@@ -70,6 +70,7 @@ class MinMaxScaler(
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html
     """
 
+    TAGS = ["scaling", "numeric", "range-bounded"]
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = MultilingualString(
         en="Transform features by scaling each feature to a given range.",

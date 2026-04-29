@@ -79,6 +79,7 @@ class DensityHeatmapExplorer(RelationshipExplorer):
     )
     IMAGE_PREVIEW = "density_heatmap.png"
 
+    TAGS = ["distribution", "bivariate", "numeric"]
     SCHEMA = DensityHeatmapSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [],

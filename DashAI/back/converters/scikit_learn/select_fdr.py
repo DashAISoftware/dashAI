@@ -60,6 +60,7 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectFdr.html
     """
 
+    TAGS = ["feature-selection", "supervised", "statistical"]
     SCHEMA = SelectFdrSchema
     DESCRIPTION = MultilingualString(
         en="Filter: Select features according to a false discovery rate test.",

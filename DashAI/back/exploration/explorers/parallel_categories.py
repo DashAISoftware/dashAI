@@ -69,6 +69,7 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     )
     IMAGE_PREVIEW = "parallel_categories.png"
 
+    TAGS = ["multivariate", "categorical"]
     SCHEMA = ParallelCategoriesSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Categorical],

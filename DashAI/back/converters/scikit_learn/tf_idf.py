@@ -110,6 +110,7 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         Retrieval. McGraw-Hill.
     """
 
+    TAGS = ["text", "encoding", "sparse"]
     SCHEMA = TFIDFConverterSchema
     DISPLAY_NAME = MultilingualString(en="TF-IDF", es="TF-IDF")
     IMAGE_PREVIEW = "tf_idf.png"
