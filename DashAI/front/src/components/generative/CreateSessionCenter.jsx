@@ -23,7 +23,6 @@ export default function CreateSessionCenter() {
     submitting,
     handleNext,
     handleBack,
-    handleCancel,
     handleCreate,
   } = useCreateSession();
 
@@ -117,13 +116,8 @@ export default function CreateSessionCenter() {
           gap: 1,
         }}
       >
-        {step === 1 && (
-          <Button variant="outlined" onClick={handleBack} disabled={submitting}>
-            {t("common:back")}
-          </Button>
-        )}
-        <Button variant="text" onClick={handleCancel} disabled={submitting}>
-          {t("common:cancel")}
+        <Button variant="outlined" onClick={handleBack} disabled={submitting}>
+          {t("common:back")}
         </Button>
         {step === 0 ? (
           <Button

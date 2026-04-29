@@ -7,6 +7,7 @@ import Box from "@mui/material/Box";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
+import { useCreateSession } from "./CreateSessionContext";
 
 export default function GenerativeBreadcrumbs() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function GenerativeBreadcrumbs() {
   const params = useParams();
   const { t } = useTranslation(["generative", "common"]);
   const { sessions } = useGenerative();
+  const createSession = useCreateSession();
 
   const rootCrumb = { label: t("common:generative"), path: "/app/generative" };
 
@@ -21,14 +23,21 @@ export default function GenerativeBreadcrumbs() {
     const path = location.pathname;
 
     if (path.startsWith("/app/generative/sessions/new")) {
-      return [
+      const modelNameParam = params.modelName;
+      const selectedModel = createSession?.selectedModel;
+      const modelLabel = selectedModel?.display_name || modelNameParam;
+      const crumbs = [
         rootCrumb,
         {
           label: t("generative:label.newSession"),
-          path: null,
-          current: true,
+          path: modelNameParam ? "/app/generative/sessions/new" : null,
+          current: !modelNameParam,
         },
       ];
+      if (modelNameParam) {
+        crumbs.push({ label: modelLabel, path: null, current: true });
+      }
+      return crumbs;
     }
 
     if (path.startsWith("/app/generative/sessions/") && params.id) {

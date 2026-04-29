@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useFormik } from "formik";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,7 @@ export const useCreateSession = () => useContext(CreateSessionContext);
 
 export function CreateSessionProvider({ children }) {
   const navigate = useNavigate();
+  const { modelName } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "common"]);
   const {
@@ -36,7 +37,7 @@ export function CreateSessionProvider({ children }) {
     setSessions,
   } = useGenerative();
 
-  const [step, setStep] = useState(0);
+  const step = modelName ? 1 : 0;
   const [models, setModels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(true);
   const [selectedModel, setSelectedModel] = useState(null);
@@ -182,6 +183,13 @@ export function CreateSessionProvider({ children }) {
     [],
   );
 
+  // Sync selectedModel from URL param on first load (e.g. direct navigation / back-forward)
+  useEffect(() => {
+    if (!modelName || models.length === 0 || selectedModel) return;
+    const match = models.find((m) => m.name === modelName);
+    if (match) handleSelectModel(match);
+  }, [modelName, models]);
+
   // Once defaultName is known and formik.name is empty, fill it in
   useEffect(() => {
     if (!selectedModel) return;
@@ -191,15 +199,13 @@ export function CreateSessionProvider({ children }) {
   }, [defaultName, selectedModel]);
 
   const handleNext = () => {
-    if (step === 0 && selectedModel) setStep(1);
+    if (step === 0 && selectedModel)
+      navigate(`/app/generative/sessions/new/${selectedModel.name}`);
   };
 
   const handleBack = () => {
-    if (step === 1) setStep(0);
-  };
-
-  const handleCancel = () => {
-    navigate("/app/generative");
+    if (step === 1) navigate("/app/generative/sessions/new");
+    else navigate("/app/generative");
   };
 
   const handleCreate = () => {
@@ -217,7 +223,6 @@ export function CreateSessionProvider({ children }) {
     submitting,
     handleNext,
     handleBack,
-    handleCancel,
     handleCreate,
   };
 
