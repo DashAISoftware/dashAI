@@ -1,0 +1,45 @@
+"""DashAI implementation of ALBERT model for English text classification."""
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.hugging_face.base_text_classification_transformer import (
+    HuggingFaceTextClassificationTransformer,
+)
+from DashAI.back.models.hugging_face.distilbert_transformer import (
+    DistilBertTransformerSchema,
+)
+
+
+class AlbertTransformer(HuggingFaceTextClassificationTransformer):
+    """Pre-trained ALBERT model for efficient English text classification.
+
+    ALBERT (A Lite BERT) reduces BERT's parameters via cross-layer parameter
+    sharing and factorised embedding parametrisation, making it significantly
+    smaller and faster while retaining high accuracy. Requires the
+    ``sentencepiece`` package for its tokeniser.
+
+    References
+    ----------
+    - [1] Lan, Z. et al. (2020). "ALBERT: A Lite BERT for Self-supervised
+           Learning of Language Representations." ICLR 2020.
+    - [2] https://huggingface.co/albert-base-v2
+    """
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="ALBERT Transformer",
+        es="Transformer ALBERT",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Parameter-efficient BERT variant for English text classification. "
+            "Downloads weights from Hugging Face on first use (internet required)."
+        ),
+        es=(
+            "Variante de BERT eficiente en parámetros para clasificación en inglés. "
+            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+    )
+    COLOR: str = "#00838F"
+    ICON: str = "Speed"
+    SCHEMA = DistilBertTransformerSchema
+    MODEL_NAME: str = "albert-base-v2"
+    TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_albert"
