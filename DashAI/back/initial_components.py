@@ -131,6 +131,7 @@ from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Tran
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.electra_transformer import ElectraTransformer
 from DashAI.back.models.hugging_face.llama_model import LlamaModel
+from DashAI.back.models.hugging_face.m2m100_transformer import M2M100Transformer
 from DashAI.back.models.hugging_face.minilm_transformer import MiniLMTransformer
 from DashAI.back.models.hugging_face.mistral_model import MistralModel
 from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
@@ -139,11 +140,23 @@ from DashAI.back.models.hugging_face.multilingual_bert_transformer import (
     MultilingualBertTransformer,
 )
 from DashAI.back.models.hugging_face.nllb_transformer import NllbTransformer
+from DashAI.back.models.hugging_face.opus_mt_en_de_transformer import (
+    OpusMtEnDeTransformer,
+)
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
+from DashAI.back.models.hugging_face.opus_mt_en_fr_transformer import (
+    OpusMtEnFrTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_en_pt_transformer import (
+    OpusMtEnPtTransformer,
+)
 from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
     OpusMtEsENTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
+    OpusMtFrEnTransformer,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
@@ -174,6 +187,7 @@ from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
 from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
     StableDiffusionXLModel,
 )
+from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
 from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
 from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
@@ -313,6 +327,7 @@ def get_initial_components():
         LinearSVR,
         LlamaModel,
         LogisticRegression,
+        M2M100Transformer,
         MiniLMTransformer,
         MistralModel,
         MixtralModel,
@@ -321,8 +336,12 @@ def get_initial_components():
         MLPRegression,
         ModernBertTransformer,
         NllbTransformer,
+        OpusMtEnDeTransformer,
         OpusMtEnESTransformer,
+        OpusMtEnFrTransformer,
+        OpusMtEnPtTransformer,
         OpusMtEsENTransformer,
+        OpusMtFrEnTransformer,
         PixArtSigmaModel,
         QwenModel,
         RandomForestClassifier,
@@ -342,6 +361,7 @@ def get_initial_components():
         StableDiffusionXLV1ControlNet,
         SVC,
         SVR,
+        T5SmallTransformer,
         TfIdfLogRegTextClassificationModel,
         TongyiZImageModel,
         XlmRobertaTransformer,
