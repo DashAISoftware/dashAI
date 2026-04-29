@@ -48,7 +48,6 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
 
-  // Used to reset the setup form when the user starts over
   const [setupKey, setSetupKey] = useState(0);
 
   const sessionSelectionState =
@@ -144,6 +143,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     if (!createdSession?.id) return;
 
     navigate("/app/generative/rag", {
+      replace: true,
       state: {
         selectedSessionId: createdSession.id,
         taskName: "RAGTask",

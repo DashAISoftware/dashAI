@@ -34,28 +34,23 @@ export default function RetrieverSection({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Sync topK when retrieverModel.params.top_k changes (e.g. from Advanced Modal)
   useEffect(() => {
     if (retrieverModel?.params?.top_k && retrieverModel.params.top_k !== topK) {
       setTopK(retrieverModel.params.top_k);
     }
   }, [retrieverModel?.params?.top_k]);
 
-  // Check if current configuration is "advanced"
   const isAdvanced = useMemo(() => {
     if (!selectedRetriever || !retrieverModel?.params) return false;
     
-    // Get default params for this component
     const defaultParams = buildDefaultValuesFromSchemaProperties(selectedRetriever.schema?.properties || {});
     
-    // Check if any param other than top_k is different from default
     return Object.keys(retrieverModel.params).some(key => {
       if (key === 'top_k') return false;
       return JSON.stringify(retrieverModel.params[key]) !== JSON.stringify(defaultParams[key]);
     });
   }, [selectedRetriever, retrieverModel?.params]);
 
-  // Load paradigms on mount
   useEffect(() => {
     const loadParadigms = async () => {
       try {
@@ -63,8 +58,6 @@ export default function RetrieverSection({
         setParadigms(data || []);
         if (data && data.length > 0) {
           if (retrieverModel?.component) {
-            // Paradigm name is usually the parent of the retriever or the retriever itself if it matches a paradigm name
-            // For now, let's try to find if the model component belongs to a paradigm
             setSelectedParadigm(data.find(p => p.name === "SparseRetriever") || data[0]);
           } else {
             const defaultParadigm = data.find((p) => p.name === "SparseRetriever") || data[0];
@@ -80,7 +73,6 @@ export default function RetrieverSection({
     loadParadigms();
   }, []);
 
-  // Load retrievers when paradigm changes
   useEffect(() => {
     if (!selectedParadigm) {
       setRetrievers([]);
@@ -140,14 +132,17 @@ export default function RetrieverSection({
   };
 
   const handleTopKChange = (newValue) => {
-    const value = parseInt(newValue);
-    if (!isNaN(value) && value > 0) {
-      setTopK(value);
-      setRetrieverModel((prev) => ({
-        ...prev,
-        params: { ...prev.params, top_k: value },
-      }));
-    }
+  const value = parseInt(newValue);
+  if (!isNaN(value) && value > 0) {
+    setTopK(value);
+    setRetrieverModel({
+      ...retrieverModel,
+      params: {
+        ...(retrieverModel?.params || {}),
+        top_k: value,
+      },
+    });
+  }
   };
 
   if (loading) {

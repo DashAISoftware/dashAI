@@ -6,6 +6,8 @@ import {
   TextField,
   Button,
   CircularProgress,
+  Alert,
+  AlertTitle,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -25,26 +27,69 @@ const getDescription = (desc, i18n) => {
 export default function GeneratorSection({
   generatorModel,
   setGeneratorModel,
+  chunkSize = 0,
+  topK = 0,
+  promptTokenCount = 0,
+  setIsValid,
 }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation(["generative"]);
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
+  const DEFAULT_CONTEXT_WINDOW = 10000;
+  const DEFAULT_MAX_TOKENS = 1000;
+  const [initialModelParams, setInitialModelParams] = useState(null);
 
-  // Check if current configuration is "advanced"
+
   const isAdvanced = useMemo(() => {
-    if (!selectedGenerator || !generatorModel?.params) return false;
-    
-    // Get default params for this component
+    if (!selectedGenerator || !generatorModel?.params || !initialModelParams) return false;
     const defaultParams = buildDefaultValuesFromSchemaProperties(selectedGenerator.schema?.properties || {});
-    
-    // Check if any param is different from default
-    // We stringify to handle objects/arrays comparison
     return Object.keys(generatorModel.params).some(key => {
-      return JSON.stringify(generatorModel.params[key]) !== JSON.stringify(defaultParams[key]);
+      return generatorModel.params[key] !== initialModelParams[key];
     });
-  }, [selectedGenerator, generatorModel?.params]);
+  }, [selectedGenerator, generatorModel?.params, initialModelParams]);
+
+  const contextStats = useMemo(() => {
+  // ---- estas variables DEBEN definirse antes de cualquier uso ----
+  if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
+    return { isValid: true, availableChars: 0 };
+  }
+
+  const contextWindow = generatorModel.params.context_window || DEFAULT_CONTEXT_WINDOW;
+  const maxTokens = generatorModel.params.max_tokens || DEFAULT_MAX_TOKENS;
+  const chunkTokens = chunkSize * topK;
+  const availableForMessage = contextWindow - chunkTokens - promptTokenCount - maxTokens;
+  const isValid = availableForMessage > 0;
+
+  // Ahora sí podemos hacer logs usando las variables ya definidas
+  console.log("GeneratorSection cálculo completo =>", {
+    chunkSize,
+    topK,
+    contextWindow,
+    maxTokens,
+    promptTokenCount,
+    chunkTokens,
+    availableTokens: availableForMessage
+  });
+
+  console.log("Calculation Result:", {
+    contextWindow,
+    maxTokens,
+    chunkTokens,
+    promptTokenCount,
+    availableForMessage,
+    isValid
+  });
+
+  return {
+    isValid,
+    availableTokens: Math.max(0, Math.floor(availableForMessage))
+  };
+  }, [generatorModel?.params, generatorModel?.component, selectedGenerator, chunkSize, topK, promptTokenCount]);
+  useEffect(() => {
+    setIsValid(contextStats.isValid);
+  }, [contextStats.isValid, setIsValid]);
 
   useEffect(() => {
     const loadGenerators = async () => {
@@ -52,12 +97,9 @@ export default function GeneratorSection({
         const data = await getGeneratorComponents();
         setGenerators(data || []);
         
-        // Try to restore previously selected generator
         if (generatorModel?.component) {
           const found = data?.find((g) => g.name === generatorModel.component);
-          if (found) {
-            setSelectedGenerator(found);
-          }
+          if (found) setSelectedGenerator(found);
         }
       } catch (error) {
         console.error("Error loading generators:", error);
@@ -72,10 +114,19 @@ export default function GeneratorSection({
     setSelectedGenerator(newValue);
     if (newValue) {
       const initialParams = buildDefaultValuesFromSchemaProperties(newValue.schema?.properties || {});
+      const overriddenParams = {
+        ...initialParams,
+        max_tokens: DEFAULT_MAX_TOKENS,
+        context_window: DEFAULT_CONTEXT_WINDOW,
+      };
+      setInitialModelParams({...overriddenParams});
+
       setGeneratorModel({
         component: newValue.name,
-        params: initialParams,
+        params: {...overriddenParams},
       });
+    } else {
+      setInitialModelParams(null);
     }
   };
 
@@ -127,40 +178,46 @@ export default function GeneratorSection({
                 }}
               />
             )}
-            sx={{
-              "& .MuiAutocomplete-option": {
-                fontSize: "0.875rem",
-              },
-            }}
           />
         </Box>
 
-        {/* Selected Model Info */}
-        {selectedGenerator && (
+        {/* Selected Model Info & Context Message */}
+        {selectedGenerator && generatorModel?.params && (
           <Box
             sx={{
               p: 2,
               backgroundColor: "action.hover",
               border: "1px solid",
-              borderColor: isAdvanced ? "warning.main" : "divider",
+              borderColor: contextStats.isValid ? (isAdvanced ? "warning.main" : "divider") : "error.main",
               borderRadius: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1
             }}
           >
             <Typography variant="body2">
               <strong>Model:</strong> {selectedGenerator.name}
-              {getDescription(selectedGenerator.description, i18n) && (
-                <>
-                  <br />
-                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    {getDescription(selectedGenerator.description, i18n)}
-                  </Typography>
-                </>
-              )}
             </Typography>
+            
+            <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main", fontWeight: 500 }}>
+              {t("validation.contextSpace", { availableChars: contextStats.availableChars?.toLocaleString() })}
+            </Typography>
+
+            {!contextStats.isValid && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                <AlertTitle>{t("validation.insufficientContextTitle")}</AlertTitle>
+                {t("validation.insufficientContextDescription")}
+              </Alert>
+            )}
+
+            {getDescription(selectedGenerator.description, i18n) && (
+              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                {getDescription(selectedGenerator.description, i18n)}
+              </Typography>
+            )}
           </Box>
         )}
 
-        {/* Advanced Configuration Button */}
         <Button
           variant="outlined"
           color="primary"
@@ -172,7 +229,6 @@ export default function GeneratorSection({
         </Button>
       </Box>
 
-      {/* Advanced Configuration Modal */}
       {selectedGenerator && (
         <GeneratorAdvancedModal
           open={showAdvanced}
@@ -189,4 +245,7 @@ export default function GeneratorSection({
 GeneratorSection.propTypes = {
   generatorModel: PropTypes.object,
   setGeneratorModel: PropTypes.func.isRequired,
+  chunkSize: PropTypes.number,
+  topK: PropTypes.number,
+  setIsValid: PropTypes.func.isRequired,
 };

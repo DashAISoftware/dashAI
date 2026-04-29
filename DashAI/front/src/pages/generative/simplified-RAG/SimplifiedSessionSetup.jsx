@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -50,17 +50,14 @@ export default function SimplifiedSessionSetup({
   const { enqueueSnackbar } = useSnackbar();
   const suggestedName = useMemo(() => {
     const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
-    console.log("Existing sessions passed to SimplifiedSessionSetup:", sessionsList);
     
     // Filter sessions by task name
     const ragSessions = sessionsList.filter(s => s?.task_name === "RAGTask");
-    console.log("Existing RAG Sessions for Name Generation:", ragSessions);
     
     const { defaultName } = generateSequentialName({
       base: "RAG_Session",
       items: ragSessions,
       getName: (session) => session?.name,
-      // The filter is already applied above for clarity
     });
 
     return defaultName || "RAG_Session_1";
@@ -82,6 +79,20 @@ export default function SimplifiedSessionSetup({
     generator: true,
     prompt: true,
   });
+
+  const [isGeneratorValidState, setIsGeneratorValidState] = useState(false);
+
+  // Directly derive values from state to ensure reactivity
+  const chunkSize = sessionData.parameters.chunking_model?.params?.chunk_size || 0;
+  const topK = sessionData.parameters.retriever_model?.params?.top_k || 0;
+
+  console.log('SimplifiedSessionSetup - valores actuales:', {
+  chunkSize,
+  topK,
+  chunking_model: sessionData.parameters.chunking_model,
+  retriever_model: sessionData.parameters.retriever_model,
+  });
+  const [promptTokenCount, setPromptTokenCount] = useState(0);
 
   useEffect(() => {
     if (initialData?.name) return;
@@ -126,19 +137,19 @@ export default function SimplifiedSessionSetup({
     }));
   };
 
-  const handleDocumentSelectionChange = (selectedDocs) => {
+  const handleDocumentSelectionChange = useCallback((selectedDocs) => {
     setSessionData((prev) => ({
       ...prev,
       documents: selectedDocs.map((doc) => doc.id),
     }));
-  };
+  }, []);
 
   const updateChunkingModel = (model) => {
     setSessionData((prev) => ({
       ...prev,
       parameters: {
         ...prev.parameters,
-        chunking_model: model,
+        chunking_model: { ...model },
       },
     }));
   };
@@ -148,7 +159,7 @@ export default function SimplifiedSessionSetup({
       ...prev,
       parameters: {
         ...prev.parameters,
-        retriever_model: model,
+        retriever_model: { ...model },
       },
     }));
   };
@@ -158,7 +169,7 @@ export default function SimplifiedSessionSetup({
       ...prev,
       parameters: {
         ...prev.parameters,
-        generator_model: model,
+        generator_model: { ...model },
       },
     }));
   };
@@ -203,6 +214,10 @@ export default function SimplifiedSessionSetup({
       enqueueSnackbar("Generator model must be configured", { variant: "warning" });
       return false;
     }
+    if (!isGeneratorValidState) {
+      enqueueSnackbar("Generator configuration is invalid (check context window)", { variant: "error" });
+      return false;
+    }
     if (!sessionData.parameters.prompt_id) {
       enqueueSnackbar("Prompt template must be selected", { variant: "warning" });
       return false;
@@ -215,10 +230,9 @@ export default function SimplifiedSessionSetup({
     const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
     const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
     const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
-    const isGeneratorValid = Boolean(sessionData.parameters.generator_model?.component);
     const isPromptValid = sessionData.parameters.prompt_id !== null && sessionData.parameters.prompt_id !== undefined;
 
-    const complete = isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValid && isPromptValid;
+    const complete = isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isPromptValid;
     
     if (!complete) {
       console.log("RAG Configuration Incomplete:", {
@@ -226,14 +240,14 @@ export default function SimplifiedSessionSetup({
         areDocsValid,
         isChunkingValid,
         isRetrieverValid,
-        isGeneratorValid,
+        isGeneratorValid: isGeneratorValidState,
         isPromptValid,
         sessionData
       });
     }
 
     return complete;
-  }, [sessionData]);
+  }, [sessionData, isGeneratorValidState]);
 
   const handleSave = async () => {
     if (!validateConfiguration()) {
@@ -347,7 +361,7 @@ export default function SimplifiedSessionSetup({
             }}
           >
             <DocumentSelector
-              selectedIds={[...sessionData.documents]}
+              selectedIds={sessionData.documents}
               onSelect={handleDocumentSelectionChange}
             />
           </Box>
@@ -395,26 +409,6 @@ export default function SimplifiedSessionSetup({
             </AccordionDetails>
           </Accordion>
 
-          {/* Generator Section */}
-          <Accordion
-            expanded={expandedSections.generator}
-            onChange={handleSectionChange("generator")}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                Language Model (LLM)
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
-              <GeneratorSection
-                generatorModel={sessionData.parameters.generator_model}
-                setGeneratorModel={updateGeneratorModel}
-              />
-            </AccordionDetails>
-          </Accordion>
-
           {/* Prompt Section */}
           <Accordion
             expanded={expandedSections.prompt}
@@ -431,9 +425,35 @@ export default function SimplifiedSessionSetup({
               <PromptSection
                 promptId={sessionData.parameters.prompt_id}
                 setPromptId={updatePromptId}
+                onTokenCountChange={setPromptTokenCount}
               />
             </AccordionDetails>
           </Accordion>
+
+          {/* Generator Section */}
+          <Accordion
+            expanded={expandedSections.generator}
+            onChange={handleSectionChange("generator")}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Language Model (LLM)
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <GeneratorSection
+                generatorModel={sessionData.parameters.generator_model}
+                setGeneratorModel={updateGeneratorModel}
+                chunkSize={chunkSize}
+                topK={topK}
+                promptTokenCount={promptTokenCount}
+                setIsValid={setIsGeneratorValidState}
+              />
+            </AccordionDetails>
+          </Accordion>
+
         </Box>
 
         {/* Action Buttons */}

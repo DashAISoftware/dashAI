@@ -41,13 +41,11 @@
     "typeYourMessage": "Escribe un mensaje",
     "untitledSession": "Sesión Sin Título"
   },
-
   "message": {
     "sessionCreatedSuccess": "Sesión creada exitosamente.",
     "sessionDeleted": "Sesión eliminada exitosamente",
     "sessionUpdated": "Sesión actualizada exitosamente"
   },
-
   "simplifiedRag": {
     "rightPanel": {
       "title": "Conceptos básicos de RAG",
@@ -101,5 +99,10 @@
         "tip3": "Elige una plantilla de prompt que encaje con tu dominio y tono."
       }
     }
+  },
+  "validation": {
+    "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} carácteres para tu mensaje.",
+    "insufficientContextTitle": "Ventana de contexto insuficiente",
+    "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de Tamaño de Fragmento y Top K. Por favor, reduce el Tamaño de Fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande."
   }
 }

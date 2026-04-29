@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, TextField } from "@mui/material";
 import DocumentSelector from "../../../../components/generative/RAG/DocumentSelector";
@@ -18,10 +18,10 @@ export default function DocumentSelectionStep({
     setNextEnabled(hasSelectedDocuments && validSessionName);
   }, [propDocumentIds, sessionName]);
 
-  const handleDocumentSelectionChange = (selectedDocs) => {
+  const handleDocumentSelectionChange = useCallback((selectedDocs) => {
     const selectedIds = selectedDocs.map((doc) => doc.id);
     setDocuments(selectedIds);
-  };
+  }, [setDocuments]);
 
   const handleSessionNameChange = (event) => {
     setSesssionName(event.target.value);

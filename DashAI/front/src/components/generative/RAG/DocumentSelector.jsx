@@ -1,5 +1,5 @@
 import { Box, Button, Dialog } from "@mui/material";
-import { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
+import { useEffect, useState, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
 import SimplifiedDocumentTable from "./SimplifiedDocumentTable";
@@ -13,10 +13,12 @@ export default function DocumentSelector({
   const [documents, setDocuments] = useState([]);
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
   const [isLoading, setIsLoading] = useState(true);
-  const [uploadKey, setUploadKey] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
 
-  const previousSelectedIdsRef = useRef(initialSelectedIds);
+  const previousSelectedIdsRef = useRef(JSON.stringify([...initialSelectedIds].map(String).sort()));
+
+  const getNormalizedIdsKey = (ids) =>
+    JSON.stringify([...ids].map(String).sort());
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -42,25 +44,21 @@ export default function DocumentSelector({
 
   useEffect(() => {
     // Sync selectedIds with incoming initialSelectedIds only if they're different
-    if (
-      JSON.stringify(selectedIds.sort()) !==
-      JSON.stringify(initialSelectedIds.sort())
-    ) {
-      setSelectedIds(initialSelectedIds);
+    if (getNormalizedIdsKey(selectedIds) !== getNormalizedIdsKey(initialSelectedIds)) {
+      setSelectedIds([...initialSelectedIds]);
     }
   }, [initialSelectedIds]);
 
   useEffect(() => {
     // Only notify parent when selectedIds actually change
-    if (
-      JSON.stringify(selectedIds.sort()) !==
-      JSON.stringify(previousSelectedIdsRef.current.sort())
-    ) {
+    const currentKey = getNormalizedIdsKey(selectedIds);
+    if (currentKey !== previousSelectedIdsRef.current) {
+      const selectedIdSet = new Set(selectedIds.map(String));
       const selectedDocs = documents.filter((doc) =>
-        selectedIds.includes(doc.id),
+        selectedIdSet.has(String(doc.id)),
       );
-      onSelect(selectedDocs);
-      previousSelectedIdsRef.current = [...selectedIds]; // Create a new array
+      onSelect?.(selectedDocs);
+      previousSelectedIdsRef.current = currentKey;
     }
   }, [selectedIds, documents, onSelect]);
 
@@ -84,9 +82,6 @@ export default function DocumentSelector({
   const handleAddDocument = useCallback(async (newDoc) => {
     try {
       const savedDoc = await addDocument(newDoc);
-      setDocuments((prev) => [savedDoc, ...prev]);
-      setSelectedIds((prev) => [...prev, savedDoc.id]);
-      setUploadKey((prev) => prev + 1);
       return savedDoc;
     } catch (error) {
       console.error("Failed to add document:", error);
@@ -111,6 +106,7 @@ export default function DocumentSelector({
       console.log("Files to upload at handleFileUpload:", files);
 
       const fileList = Array.isArray(files) ? files : [files];
+      const uploadedDocuments = [];
 
       for (const file of fileList) {
         const docToAdd = {
@@ -120,7 +116,25 @@ export default function DocumentSelector({
             source: url || "local_upload",
           },
         };
-        await handleAddDocument(docToAdd);
+        const savedDoc = await handleAddDocument(docToAdd);
+        if (savedDoc) {
+          uploadedDocuments.push(savedDoc);
+        }
+      }
+
+      if (uploadedDocuments.length > 0) {
+        setDocuments((prev) => {
+          const nextDocs = [...uploadedDocuments, ...prev];
+          return nextDocs.filter(
+            (doc, index, array) =>
+              index === array.findIndex((candidate) => candidate.id === doc.id),
+          );
+        });
+        setSelectedIds((prev) => {
+          const nextSelected = new Set(prev.map(String));
+          uploadedDocuments.forEach((doc) => nextSelected.add(String(doc.id)));
+          return Array.from(nextSelected);
+        });
       }
 
       setUploadOpen(false);
@@ -180,7 +194,6 @@ export default function DocumentSelector({
       >
         <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
           <Upload
-            key={uploadKey}
             onFileUpload={handleFileUpload}
             multiple={true}
             emptyUploadText="Upload your document(s)"

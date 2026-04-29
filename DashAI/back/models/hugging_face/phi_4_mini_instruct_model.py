@@ -64,7 +64,7 @@ class Phi4MiniInstructSchema(BaseSchema):
                 "Phi-4-mini-instruct.Q8_0.gguf",
             ]
         ),
-        placeholder="Phi-4-mini-instruct.BF16.gguf",
+        placeholder="Phi-4-mini-instruct.Q8_0.gguf",
         description=MultilingualString(
             en=(
                 "The specific Phi 4 Mini Instruct model quantization to use. Options "

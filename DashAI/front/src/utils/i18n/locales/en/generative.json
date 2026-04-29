@@ -41,13 +41,11 @@
     "typeYourMessage": "Type a message",
     "untitledSession": "Untitled Session"
   },
-
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",
     "sessionDeleted": "Session deleted successfully",
     "sessionUpdated": "Session updated successfully"
   },
-
   "simplifiedRag": {
     "rightPanel": {
       "title": "RAG basics",
@@ -101,5 +99,10 @@
         "tip3": "Choose a prompt template that matches your domain and tone."
       }
     }
+  },
+  "validation": {
+    "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
+    "insufficientContextTitle": "Insufficient Context Window",
+    "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window."
   }
 }

@@ -78,6 +78,7 @@ const renderTemplateWithHighlights = (template) => {
 export default function PromptSection({
   promptId,
   setPromptId,
+  onTokenCountChange,
 }) {
   const { i18n } = useTranslation();
   const [prompts, setPrompts] = useState([]);
@@ -112,12 +113,26 @@ export default function PromptSection({
     loadPrompts();
   }, []);
 
+  useEffect(() => {
+    if (selectedPrompt && onTokenCountChange) {
+      const template = selectedPrompt.parameters?.template || '';
+      const tokenCount = Math.ceil(template.length / 4);
+      onTokenCountChange(tokenCount);
+    } else if (!selectedPrompt && onTokenCountChange) {
+      onTokenCountChange(0);
+    }
+  }, [selectedPrompt, onTokenCountChange]);
+
   const handlePromptChange = (event, newValue) => {
     setSelectedPrompt(newValue);
     if (newValue) {
       setPromptId(newValue.id);
+      const template = newValue.parameters?.template || '';
+      const tokenCount = Math.ceil(template.length / 4);  // Estimación simple
+      onTokenCountChange?.(tokenCount);  // Notificar al padre
     } else {
       setPromptId(null);
+      onTokenCountChange?.(0);
     }
   };
 
