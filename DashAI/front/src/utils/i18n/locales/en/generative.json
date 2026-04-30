@@ -55,7 +55,8 @@
     "attachVideo": "Attach video",
     "attachMedia": "Attach media",
     "attachMediaToContinue": "Attach media to continue",
-    "noInputAvailable": "No input available for this task"
+    "noInputAvailable": "No input available for this task",
+    "selectModelCrumb": "Select Model"
   },
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",
