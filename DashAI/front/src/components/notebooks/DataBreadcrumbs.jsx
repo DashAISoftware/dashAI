@@ -13,14 +13,17 @@ export default function DataBreadcrumbs() {
   const location = useLocation();
   const params = useParams();
   const { t } = useTranslation(["datasets", "common"]);
-  const { datasets, notebooks } = useDatasetsAndNotebooks();
+  const { datasets, notebooks, uploadDataloader } = useDatasetsAndNotebooks();
 
   const rootCrumb = { label: t("common:datasets"), path: "/app/data" };
 
   const getBreadcrumbs = () => {
     const path = location.pathname;
 
-    if (path.startsWith("/app/data/datasets/new/configure")) {
+    if (path.startsWith("/app/data/datasets/new/") && params.dataloaderName) {
+      const dataloaderLabel = uploadDataloader
+        ? uploadDataloader.display_name || uploadDataloader.name
+        : params.dataloaderName;
       return [
         rootCrumb,
         {
@@ -28,7 +31,7 @@ export default function DataBreadcrumbs() {
           path: "/app/data/datasets/new",
         },
         {
-          label: t("datasets:label.configureAndUpload"),
+          label: dataloaderLabel,
           path: null,
           current: true,
         },

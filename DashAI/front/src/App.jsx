@@ -28,7 +28,7 @@ function App() {
           <Route path="/app/data/" element={<DatasetsPage />} />
           <Route path="/app/data/datasets/new" element={<DatasetsPage />} />
           <Route
-            path="/app/data/datasets/new/configure"
+            path="/app/data/datasets/new/:dataloaderName"
             element={<DatasetsPage />}
           />
           <Route path="/app/data/datasets/:id" element={<DatasetsPage />} />
