@@ -70,6 +70,7 @@
     "selectDataset": "Select dataset",
     "selectDatasetColumns": "Indicate which columns of the dataset will be used as input and output.",
     "selectDatasetTitle": "Select a dataset for the selected task",
+    "splitType": "Split type",
     "selectHowToDivideDataset": "Select how to divide the dataset into training, validation and test subsets.",
     "selectInputOutputColumnsDescription": "Select column names from the lists.",
     "selectMetrics": "Select metrics",
