@@ -173,7 +173,7 @@ export default function UploadNotebookSteps({
         helperText={formik.errors.description}
         sx={{ mb: 2 }}
       />
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={backHome}
           onFormSubmit={formik.handleSubmit}

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Grid, CircularProgress } from "@mui/material";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { Box, Button, Grid } from "@mui/material";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
@@ -176,7 +175,15 @@ export default function ConfigureAndUploadDatasetStep({
   ]);
 
   return (
-    <Grid sx={{ width: "100%", height: "100%" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
       <Grid
         container
         direction="column"
@@ -184,6 +191,9 @@ export default function ConfigureAndUploadDatasetStep({
         alignItems="stretch"
         spacing={2}
         sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
           width: "100%",
           backgroundColor: theme.palette.background.box,
           padding: 2,
@@ -202,25 +212,31 @@ export default function ConfigureAndUploadDatasetStep({
         />
       </Grid>
 
-      {/* Form buttons */}
-      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-        {uploading ? (
-          <CircularProgress />
-        ) : (
-          <FormSchemaButtonGroup
-            onCancel={goToPrevStep}
-            onFormSubmit={submitNewDataset}
-            formik={{
-              errors: uploadEnabled
-                ? {}
-                : { dataset: t("datasets:error.requiredFieldsMissing") },
-            }}
-            saveButtonText={t("common:upload")}
-            backButtonText={t("common:back")}
-            dataTour="dataset-step-upload-button"
-          />
-        )}
-      </Grid>
-    </Grid>
+      <Box
+        sx={{
+          mt: 2,
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" onClick={goToPrevStep}>
+          {t("common:back")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={submitNewDataset}
+          disabled={!uploadEnabled}
+          data-tour="dataset-step-upload-button"
+          loading={uploading}
+        >
+          {t("common:upload")}
+        </Button>
+      </Box>
+    </Box>
   );
 }
