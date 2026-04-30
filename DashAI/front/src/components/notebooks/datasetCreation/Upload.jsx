@@ -356,7 +356,12 @@ function Upload({
       container
       direction="column"
       rowSpacing={1}
-      sx={{ width: "100%", bgcolor: theme.palette.ui.box }}
+      sx={{
+        width: "100%",
+        bgcolor: theme.palette.ui.box,
+        p: 2,
+        borderRadius: 2,
+      }}
       data-tour="upload-area"
     >
       {/* state text */}
