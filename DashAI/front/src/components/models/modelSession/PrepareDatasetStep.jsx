@@ -21,6 +21,7 @@ import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
+import { useModels } from "../ModelsContext";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing
@@ -29,6 +30,7 @@ import { Trans } from "react-i18next";
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
  */
 function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
+  const { setSessionRightContent } = useModels();
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
@@ -308,6 +310,40 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     getTaskRequirements();
   }, []);
 
+  // Push SplitDatasetRows into the right bar
+  useEffect(() => {
+    if (infoLoading) return;
+    setSessionRightContent(
+      <SplitDatasetRows
+        datasetInfo={datasetInfo}
+        rowsPartitionsIndex={rowsPartitionsIndex}
+        setRowsPartitionsIndex={setRowsPartitionsIndex}
+        rowsPartitionsPercentage={rowsPartitionsPercentage}
+        setRowsPartitionsPercentage={setRowsPartitionsPercentage}
+        setSplitsReady={setSplitsReady}
+        splitType={splitType}
+        setSplitType={setSplitType}
+        SPLIT_TYPES={SPLIT_TYPES}
+        shuffle={shuffle}
+        setShuffle={setShuffle}
+        stratify={stratify}
+        setStratify={setStratify}
+        seed={seed}
+        setSeed={setSeed}
+      />,
+    );
+    return () => setSessionRightContent(null);
+  }, [
+    infoLoading,
+    datasetInfo,
+    rowsPartitionsIndex,
+    rowsPartitionsPercentage,
+    splitType,
+    shuffle,
+    stratify,
+    seed,
+  ]);
+
   const renderTypesAsChips = (typesList) => {
     if (!typesList || typesList.length === 0) {
       return <span>{t("common:any")}</span>;
@@ -447,24 +483,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             disabled={
               infoLoading || (datasetInfo.column_names || []).length === 0
             }
-          />
-
-          <SplitDatasetRows
-            datasetInfo={datasetInfo}
-            rowsPartitionsIndex={rowsPartitionsIndex}
-            setRowsPartitionsIndex={setRowsPartitionsIndex}
-            rowsPartitionsPercentage={rowsPartitionsPercentage}
-            setRowsPartitionsPercentage={setRowsPartitionsPercentage}
-            setSplitsReady={setSplitsReady}
-            splitType={splitType}
-            setSplitType={setSplitType}
-            SPLIT_TYPES={SPLIT_TYPES}
-            shuffle={shuffle}
-            setShuffle={setShuffle}
-            stratify={stratify}
-            setStratify={setStratify}
-            seed={seed}
-            setSeed={setSeed}
           />
         </Grid>
       ) : (

@@ -1,13 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Box, Stepper, Step, StepLabel } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
-import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
@@ -79,11 +78,6 @@ function CreateSessionSteps({
   });
 
   const [nextEnabled, setNextEnabled] = useState(false);
-
-  const steps = [
-    t("models:label.selectDataset"),
-    t("models:label.prepareDataset"),
-  ];
 
   const { defaultName } = useMemo(() => {
     if (!selectedTask) {
@@ -247,67 +241,92 @@ function CreateSessionSteps({
     }
   };
 
-  return (
-    <>
-      <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-          {activeStep === 0 && (
-            <SetNameAndDatasetStep
-              formik={formik}
-              selectedDataset={selectedDataset}
-              setSelectedDataset={handleDatasetChange}
-              datasets={datasets}
-              nameError={nameError}
-              selectedTask={selectedTask}
-              onDatasetChange={handleDatasetChange}
-            />
-          )}
-          {activeStep === 1 && (
-            <PrepareDatasetStep
-              newExp={newExp}
-              setNewExp={setNewExp}
-              setNextEnabled={setNextEnabled}
-            />
-          )}
-        </Box>
+  const getTitle = () =>
+    activeStep === 0
+      ? t("models:label.selectDataset")
+      : t("models:label.prepareDataset");
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
-          <FormSchemaButtonGroup
-            onCancel={handleBack}
-            onFormSubmit={formik.handleSubmit}
-            dataTour="models-next-button"
-            formik={{
-              errors: {
-                ...(nameError ? { name: nameError } : {}),
-                ...(selectedDataset || activeStep === 1
-                  ? {}
-                  : { dataset: t("models:error.datasetRequired") }),
-                ...(!isNextEnabled && activeStep === 1
-                  ? { validation: t("models:error.completeRequiredFields") }
-                  : {}),
-              },
-            }}
-            saveButtonText={
-              activeStep === steps.length - 1
-                ? t("models:button.createSession")
-                : t("common:next")
-            }
-            backButtonText={t("common:back")}
-          />
-        </Box>
+  const getSubtitle = () =>
+    activeStep === 0
+      ? t("models:label.selectDatasetForSession")
+      : t("models:label.divideColumnsAndSplits");
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" component="h1">
+          {getTitle()}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {getSubtitle()}
+        </Typography>
       </Box>
 
       <Box
         sx={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          zIndex: 1000,
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          pt: 1,
         }}
-      ></Box>
-    </>
+      >
+        {activeStep === 0 && (
+          <SetNameAndDatasetStep
+            formik={formik}
+            selectedDataset={selectedDataset}
+            setSelectedDataset={handleDatasetChange}
+            datasets={datasets}
+            nameError={nameError}
+            selectedTask={selectedTask}
+            onDatasetChange={handleDatasetChange}
+          />
+        )}
+        {activeStep === 1 && (
+          <PrepareDatasetStep
+            newExp={newExp}
+            setNewExp={setNewExp}
+            setNextEnabled={setNextEnabled}
+          />
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          mt: 2,
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" onClick={handleBack}>
+          {t("common:back")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={formik.handleSubmit}
+          disabled={!isNextEnabled}
+          data-tour="models-next-button"
+        >
+          {activeStep === 0
+            ? t("common:next")
+            : t("models:button.createSession")}
+        </Button>
+      </Box>
+    </Box>
   );
 }
+
 CreateSessionSteps.propTypes = {
   backHome: PropTypes.func.isRequired,
   selectedTask: PropTypes.object.isRequired,
