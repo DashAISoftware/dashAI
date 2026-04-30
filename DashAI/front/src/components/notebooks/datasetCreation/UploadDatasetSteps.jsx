@@ -26,7 +26,7 @@ export default function UploadDatasetSteps({ backHome }) {
   const { dataloaderName } = useParams();
   const step = dataloaderName ? 1 : 0;
 
-  const [selectedDataloader, setSelectedDataloader] = useState({});
+  const [selectedDataloader, setSelectedDataloader] = useState();
   const [dataloaders, setDataloaders] = useState([]);
   const [loadingDataloaders, setLoadingDataloaders] = useState(true);
   const [formValues, setFormValues] = useState({});
@@ -42,7 +42,9 @@ export default function UploadDatasetSteps({ backHome }) {
     async function fetchDataloaders() {
       setLoadingDataloaders(true);
       try {
-        const list = await getComponentsRequest({ selectTypes: ["DataLoader"] });
+        const list = await getComponentsRequest({
+          selectTypes: ["DataLoader"],
+        });
         setDataloaders(list);
       } catch (error) {
         enqueueSnackbar(t("datasets:error.fetchingDataloaders"), {
@@ -57,7 +59,8 @@ export default function UploadDatasetSteps({ backHome }) {
 
   // Sync selected dataloader from URL param, or redirect if unknown
   useEffect(() => {
-    if (!dataloaderName || loadingDataloaders || dataloaders.length === 0) return;
+    if (!dataloaderName || loadingDataloaders || dataloaders.length === 0)
+      return;
     const match = dataloaders.find((d) => d.name === dataloaderName);
     if (match) {
       setSelectedDataloader(match);
@@ -103,11 +106,7 @@ export default function UploadDatasetSteps({ backHome }) {
   // Sync selected dataloader to context so DataBreadcrumbs can show display_name
   useEffect(() => {
     if (setUploadDataloader) {
-      setUploadDataloader(
-        selectedDataloader && Object.keys(selectedDataloader).length > 0
-          ? selectedDataloader
-          : null,
-      );
+      setUploadDataloader(selectedDataloader?.name ? selectedDataloader : null);
     }
   }, [selectedDataloader, setUploadDataloader]);
 
@@ -127,7 +126,7 @@ export default function UploadDatasetSteps({ backHome }) {
       setRightBarContent(
         <ComponentDetailsPanel component={selectedDataloader} />,
       );
-    } else if (step === 1 && Object.entries(selectedDataloader).length !== 0) {
+    } else if (step === 1 && selectedDataloader?.name) {
       setRightBarContent(
         <DataloaderConfigBar
           selectedDataloader={selectedDataloader.name}
@@ -182,7 +181,7 @@ export default function UploadDatasetSteps({ backHome }) {
           loadingDataloaders={loadingDataloaders}
         />
       )}
-      {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
+      {step === 1 && selectedDataloader?.name && (
         <ConfigureAndUploadDatasetStep
           goToPrevStep={goToPrevStep}
           selectedDataloader={selectedDataloader}
