@@ -29,7 +29,7 @@
     "createNewSessionDescription": "Elige un modelo, configura sus parámetros y empieza a conversar.",
     "configureSession": "Configurar sesión",
     "modelHasNoParameters": "Este modelo no tiene parámetros configurables.",
-    "nameAndDescribeYourSession": "Nombra tu sesión. Ajusta los parámetros a la derecha.",
+    "nameAndDescribeYourSession": "Nombra tu sesión. Ajusta los parámetros a la derecha. Puedes cambiarlos en cualquier momento durante la sesión.",
     "nameYourSession": "Nombre su sesión",
     "newSession": "Nueva Sesión",
     "pickAModelGroupedByTask": "Elige un modelo. Los modelos están agrupados por tarea.",
@@ -55,9 +55,9 @@
     "attachVideo": "Adjuntar video",
     "attachMedia": "Adjuntar medio",
     "attachMediaToContinue": "Adjunta medios para continuar",
-    "noInputAvailable": "No hay entrada disponible para esta tarea"
+    "noInputAvailable": "No hay entrada disponible para esta tarea",
+    "selectModelCrumb": "Select Model"
   },
-
   "message": {
     "sessionCreatedSuccess": "Sesión creada exitosamente.",
     "sessionDeleted": "Sesión eliminada exitosamente",

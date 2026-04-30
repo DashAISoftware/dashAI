@@ -29,7 +29,7 @@
     "createNewSessionDescription": "Pick a model, configure its parameters, and start chatting.",
     "configureSession": "Configure session",
     "modelHasNoParameters": "This model has no configurable parameters.",
-    "nameAndDescribeYourSession": "Name your session. Tweak parameters on the right.",
+    "nameAndDescribeYourSession": "Name your session. Tweak parameters on the right. You can change them at any time during the session.",
     "nameYourSession": "Name your session",
     "newSession": "New Session",
     "pickAModelGroupedByTask": "Pick a model. Models are grouped by task.",
@@ -55,9 +55,9 @@
     "attachVideo": "Attach video",
     "attachMedia": "Attach media",
     "attachMediaToContinue": "Attach media to continue",
-    "noInputAvailable": "No input available for this task"
+    "noInputAvailable": "No input available for this task",
+    "selectModelCrumb": "Select Model"
   },
-
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",
     "sessionDeleted": "Session deleted successfully",

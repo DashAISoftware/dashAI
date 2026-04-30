@@ -31,11 +31,7 @@ export function CreateSessionProvider({ children }) {
   const { modelName } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "common"]);
-  const {
-    tasks,
-    sessions: existingSessions,
-    setSessions,
-  } = useGenerative();
+  const { tasks, sessions: existingSessions, setSessions } = useGenerative();
 
   const step = modelName ? 1 : 0;
   const [models, setModels] = useState([]);
@@ -43,7 +39,8 @@ export function CreateSessionProvider({ children }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load all generative models grouped by their compatible task
+  // Load all generative models grouped by their compatible task.
+  // Re-fetches when language changes so display_name/description are translated.
   useEffect(() => {
     if (!tasks || tasks.length === 0) return;
     let cancelled = false;
@@ -86,17 +83,6 @@ export function CreateSessionProvider({ children }) {
       cancelled = true;
     };
   }, [tasks, enqueueSnackbar, t]);
-
-  const defaultName = useMemo(() => {
-    if (!selectedModel?.task_name) return "";
-    const { defaultName: name } = generateSequentialName({
-      base: `${formatTaskNameForSession(selectedModel.task_name)}_Session`,
-      items: existingSessions,
-      getName: (session) => session.name,
-      filter: (session) => session.task_name === selectedModel.task_name,
-    });
-    return name;
-  }, [selectedModel, existingSessions]);
 
   const processedProperties = useMemo(
     () =>
@@ -144,7 +130,10 @@ export function CreateSessionProvider({ children }) {
       } catch (error) {
         console.error("Error creating session:", error);
         const detail = error?.response?.data?.detail || "";
-        if (error?.response?.status === 409 || detail.includes("already exists")) {
+        if (
+          error?.response?.status === 409 ||
+          detail.includes("already exists")
+        ) {
           enqueueSnackbar(t("generative:error.sessionNameExists"), {
             variant: "error",
           });
@@ -159,7 +148,10 @@ export function CreateSessionProvider({ children }) {
     },
   });
 
-  // When a model is selected, seed formik with its parameter defaults + name
+  // When a model is selected, seed formik with its parameter defaults and a
+  // freshly computed default session name. Computing the name here (rather than
+  // in an effect) avoids the render-ordering race where the "fill empty name"
+  // effect fires before resetForm has cleared the previous model's name.
   const handleSelectModel = useCallback(
     (model) => {
       setSelectedModel(model);
@@ -170,33 +162,30 @@ export function CreateSessionProvider({ children }) {
         acc[key] = props[key].placeholder ?? "";
         return acc;
       }, {});
+      const { defaultName } = generateSequentialName({
+        base: `${formatTaskNameForSession(model.task_name)}_Session`,
+        items: existingSessions,
+        getName: (session) => session.name,
+        filter: (session) => session.task_name === model.task_name,
+      });
       formik.resetForm({
         values: {
-          name: formik.values.name && formik.values.name.length > 0
-            ? formik.values.name
-            : "",
-          description: formik.values.description || "",
+          name: defaultName,
+          description: "",
           ...paramDefaults,
         },
       });
     },
-    [],
+    [existingSessions],
   );
 
-  // Sync selectedModel from URL param on first load (e.g. direct navigation / back-forward)
+  // Sync selectedModel from URL param on load and after language-triggered
+  // model refetch so display_name / description reflect the active language.
   useEffect(() => {
-    if (!modelName || models.length === 0 || selectedModel) return;
+    if (!modelName || models.length === 0) return;
     const match = models.find((m) => m.name === modelName);
     if (match) handleSelectModel(match);
   }, [modelName, models]);
-
-  // Once defaultName is known and formik.name is empty, fill it in
-  useEffect(() => {
-    if (!selectedModel) return;
-    if (!formik.values.name && defaultName) {
-      formik.setFieldValue("name", defaultName);
-    }
-  }, [defaultName, selectedModel]);
 
   const handleNext = () => {
     if (step === 0 && selectedModel)

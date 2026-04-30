@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
-import { useSnackbar } from "notistack";
-import { getComponents as getComponentsRequest } from "../../../api/component";
+import { useEffect } from "react";
 import ComponentSelector from "../../custom/ComponentSelector";
-import { Box, CircularProgress, Stack } from "@mui/material";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { Box, Button, CircularProgress, Stack } from "@mui/material";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
@@ -13,41 +10,19 @@ import { useTranslation } from "react-i18next";
  * @param {function} goToPrevStep - Function to navigate back to the previous step in the dataset creation flow.
  * @param {object} selectedDataloader - The currently selected dataloader
  * @param {function} setSelectedDataloader - Function to update the selected dataloader
+ * @param {Array} dataloaders - List of available dataloaders (fetched by parent)
+ * @param {boolean} loadingDataloaders - Whether dataloaders are still loading
  */
 export default function SelectDataloaderStep({
   goToNextStep,
   goToPrevStep,
   selectedDataloader,
   setSelectedDataloader,
+  dataloaders = [],
+  loadingDataloaders = false,
 }) {
   const tourContext = useTourContext();
-  const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
-  const [dataloaders, setDataloaders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  async function getCompatibleDataloaders() {
-    setLoading(true);
-    try {
-      const dataloaders = await getComponentsRequest({
-        selectTypes: ["DataLoader"],
-      });
-      setDataloaders(dataloaders);
-    } catch (error) {
-      enqueueSnackbar(t("datasets:error.fetchingDataloaders"), {
-        variant: "error",
-      });
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const handleNext = () => {
     if (tourContext?.run) {
@@ -65,7 +40,7 @@ export default function SelectDataloaderStep({
   };
 
   useEffect(() => {
-    if (!loading && tourContext?.run) {
+    if (!loadingDataloaders && tourContext?.run) {
       setTimeout(() => {
         const cards = document.querySelectorAll('[role="button"]');
         cards.forEach((card) => {
@@ -76,16 +51,12 @@ export default function SelectDataloaderStep({
         });
       }, 100);
     }
-  }, [loading, tourContext]);
-
-  useEffect(() => {
-    getCompatibleDataloaders();
-  }, [t]);
+  }, [loadingDataloaders, tourContext]);
 
   return (
     <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={2}>
       <Box sx={{ flex: 1, minHeight: 0 }} data-tour="csv-dataloader-option">
-        {loading ? (
+        {loadingDataloaders ? (
           <Box
             sx={{
               height: "100%",
@@ -116,19 +87,28 @@ export default function SelectDataloaderStep({
         )}
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <FormSchemaButtonGroup
-          onCancel={goToPrevStep}
-          onFormSubmit={handleNext}
-          formik={{
-            errors: selectedDataloader?.name
-              ? {}
-              : { dataloader: t("common:required") },
-          }}
-          saveButtonText={t("common:next")}
-          backButtonText={t("common:back")}
-          dataTour="dataloader-step-next-button"
-        />
+      <Box
+        sx={{
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" onClick={goToPrevStep}>
+          {t("common:back")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleNext}
+          disabled={!selectedDataloader?.name}
+          data-tour="dataloader-step-next-button"
+        >
+          {t("common:next")}
+        </Button>
       </Box>
     </Stack>
   );

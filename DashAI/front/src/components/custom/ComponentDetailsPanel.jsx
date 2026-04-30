@@ -4,6 +4,7 @@ import { Box, Stack, Typography, Chip, Divider, Link } from "@mui/material";
 import * as MuiIcons from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import { useTheme } from "@mui/material/styles";
 
 function renderMuiIcon(iconName) {
   if (!iconName) return null;
@@ -20,7 +21,8 @@ function getDescription(component) {
   return component.description ?? component.schema?.description ?? "";
 }
 
-const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/[^\s]+)/g;
+const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/\S+)/g;
+const TRAILING_PUNCT = /[.,;:!?)\]>'"]+$/;
 
 function DescriptionText({ text }) {
   if (!text) return null;
@@ -31,6 +33,7 @@ function DescriptionText({ text }) {
   while ((match = URL_PATTERN.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
     if (match[1]) {
+      // Markdown link [label](url) — closing ) already excluded by the pattern
       parts.push(
         <Link
           key={match.index}
@@ -42,16 +45,21 @@ function DescriptionText({ text }) {
         </Link>,
       );
     } else {
+      // Bare URL — strip trailing punctuation that belongs to surrounding prose
+      const rawUrl = match[0];
+      const cleanUrl = rawUrl.replace(TRAILING_PUNCT, "");
+      const trailing = rawUrl.slice(cleanUrl.length);
       parts.push(
         <Link
           key={match.index}
-          href={match[0]}
+          href={cleanUrl}
           target="_blank"
           rel="noopener noreferrer"
         >
-          {match[0]}
+          {cleanUrl}
         </Link>,
       );
+      if (trailing) parts.push(trailing);
     }
     last = match.index + match[0].length;
   }
@@ -66,6 +74,7 @@ function ComponentDetailsPanel({
   categoryKey = "type",
 }) {
   const { t } = useTranslation("custom");
+  const theme = useTheme();
 
   const icon = getIcon?.(component) ?? renderMuiIcon(component?.icon);
   const tags =
@@ -89,18 +98,17 @@ function ComponentDetailsPanel({
         <Box
           sx={{
             p: 2,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            height: 70,
+            height: 64,
           }}
         >
           <Typography variant="h6" color="text.primary">
             {t("componentDetails")}
           </Typography>
         </Box>
-
-        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
         {/* Content */}
         {!component || !component.name ? (

@@ -1,4 +1,4 @@
-import { Button, ButtonGroup } from "@mui/material";
+import { Button, Box } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 
@@ -25,11 +25,21 @@ function FormSchemaButtonGroup({
     (isCreateExplorer
       ? "create-explorer-button"
       : isCreateConverter
-        ? "create-converter-button"
-        : undefined);
+      ? "create-converter-button"
+      : undefined);
 
   return (
-    <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
+    <Box
+      size="large"
+      sx={{
+        mt: 2,
+        pt: 2,
+        flexShrink: 0,
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 1,
+      }}
+    >
       {onCancel && (
         <Button variant="outlined" onClick={onCancel}>
           {finalBackText}
@@ -45,7 +55,7 @@ function FormSchemaButtonGroup({
           {finalSaveText}
         </Button>
       )}
-    </ButtonGroup>
+    </Box>
   );
 }
 
