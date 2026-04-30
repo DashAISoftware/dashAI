@@ -12,7 +12,8 @@ function getDescription(component) {
   return component.description ?? component.schema?.description ?? "";
 }
 
-const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/[^\s]+)/g;
+const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/\S+)/g;
+const TRAILING_PUNCT = /[.,;:!?)\]>'"]+$/;
 
 function DescriptionText({ text }) {
   if (!text) return null;
@@ -23,6 +24,7 @@ function DescriptionText({ text }) {
   while ((match = URL_PATTERN.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
     if (match[1]) {
+      // Markdown link [label](url) — closing ) already excluded by the pattern
       parts.push(
         <Link
           key={match.index}
@@ -34,16 +36,21 @@ function DescriptionText({ text }) {
         </Link>,
       );
     } else {
+      // Bare URL — strip trailing punctuation that belongs to surrounding prose
+      const rawUrl = match[0];
+      const cleanUrl = rawUrl.replace(TRAILING_PUNCT, "");
+      const trailing = rawUrl.slice(cleanUrl.length);
       parts.push(
         <Link
           key={match.index}
-          href={match[0]}
+          href={cleanUrl}
           target="_blank"
           rel="noopener noreferrer"
         >
-          {match[0]}
+          {cleanUrl}
         </Link>,
       );
+      if (trailing) parts.push(trailing);
     }
     last = match.index + match[0].length;
   }
