@@ -240,10 +240,13 @@ function SplitDatasetRows({
           }}
         >
           <Typography variant="body2" fontWeight={600}>
-            {t("experiments:label.selectHowToDivideDataset")}
+            {t("experiments:label.splitType")}
           </Typography>
         </Box>
-        <Box sx={{ px: 2, py: 1 }}>
+        <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
+            {t("experiments:label.selectHowToDivideDataset")}
+          </Typography>
           <ToggleButtonGroup
             value={splitType}
             exclusive

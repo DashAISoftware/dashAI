@@ -70,6 +70,7 @@
     "selectDataset": "Seleccionar dataset",
     "selectDatasetColumns": "Indique qué columnas del dataset se usarán como entrada y salida.",
     "selectDatasetTitle": "Seleccione un dataset para la tarea seleccionada",
+    "splitType": "Tipo de partición",
     "selectHowToDivideDataset": "Seleccione cómo dividir el dataset en subconjuntos de entrenamiento, validación y prueba.",
     "selectInputOutputColumnsDescription": "Seleccione nombres de columnas de las listas.",
     "selectMetrics": "Seleccionar métricas",
