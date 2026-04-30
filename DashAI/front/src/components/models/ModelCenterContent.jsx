@@ -93,7 +93,7 @@ export default function ModelsCenterContent() {
             flexDirection: "column",
             width: "100%",
             height: "100%",
-            overflow: "auto",
+            overflow: "hidden",
             px: 2,
             pt: 2,
           }}
