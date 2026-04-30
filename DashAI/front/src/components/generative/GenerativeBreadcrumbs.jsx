@@ -29,7 +29,7 @@ export default function GenerativeBreadcrumbs() {
       const crumbs = [
         rootCrumb,
         {
-          label: t("generative:label.newSession"),
+          label: t("generative:label.selectModelCrumb"),
           path: modelNameParam ? "/app/generative/sessions/new" : null,
           current: !modelNameParam,
         },

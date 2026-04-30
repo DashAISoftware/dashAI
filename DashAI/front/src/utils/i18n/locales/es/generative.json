@@ -55,7 +55,8 @@
     "attachVideo": "Adjuntar video",
     "attachMedia": "Adjuntar medio",
     "attachMediaToContinue": "Adjunta medios para continuar",
-    "noInputAvailable": "No hay entrada disponible para esta tarea"
+    "noInputAvailable": "No hay entrada disponible para esta tarea",
+    "selectModelCrumb": "Select Model"
   },
   "message": {
     "sessionCreatedSuccess": "Sesión creada exitosamente.",

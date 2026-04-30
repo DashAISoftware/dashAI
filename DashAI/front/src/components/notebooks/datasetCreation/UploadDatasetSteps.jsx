@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
+import DatasetBreadcrumbs from "./DatasetBreadcrumbs";
 import { Box, Typography } from "@mui/material";
 import ComponentDetailsPanel from "../../custom/ComponentDetailsPanel";
 import { useTranslation } from "react-i18next";
@@ -124,6 +125,7 @@ export default function UploadDatasetSteps({ backHome }) {
         minHeight: 0,
       }}
     >
+      <DatasetBreadcrumbs selectedDataloader={selectedDataloader?.name ? selectedDataloader : null} />
       <Box sx={{ mb: 2 }}>
         <Typography variant="h5" component="h1">
           {getTitle()}
