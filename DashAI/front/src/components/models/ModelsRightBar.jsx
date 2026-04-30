@@ -32,6 +32,7 @@ export default function ModelsRightBar({ onToggle }) {
     closeConfig,
     datasetInfo,
     setDatasetTab,
+    sessionRightContent,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -101,6 +102,26 @@ export default function ModelsRightBar({ onToggle }) {
       setTimeout(waitForElement, 300);
     }
   };
+
+  if (sessionRightContent) {
+    return (
+      <SideBar>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            height: "100%",
+            width: "100%",
+          }}
+        >
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+            {sessionRightContent}
+          </Box>
+        </Box>
+      </SideBar>
+    );
+  }
 
   return (
     <SideBar>
