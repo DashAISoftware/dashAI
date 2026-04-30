@@ -33,8 +33,8 @@ function getLabel(component) {
   return component.display_name || component.name;
 }
 
-function getDescription(component) {
-  return component.description ?? component.schema?.description ?? "";
+function getDescription(component, fallback = "") {
+  return component.description ?? fallback;
 }
 
 function ComponentSelector({
@@ -82,7 +82,7 @@ function ComponentSelector({
       if (!matchesCategory) return false;
       if (q === "") return true;
       const label = getLabel(c).toLowerCase();
-      const desc = getDescription(c).toLowerCase();
+      const desc = getDescription(c, t("noDescriptionAvailable")).toLowerCase();
       return label.includes(q) || desc.includes(q);
     });
   }, [components, search, activeCategory, categoryKey]);
@@ -268,7 +268,10 @@ function ComponentSelector({
                                 mt: 0.5,
                               }}
                             >
-                              {getDescription(component)}
+                              {getDescription(
+                                component,
+                                t("noDescriptionAvailable"),
+                              )}
                             </Typography>
                             {tags.length > 0 && (
                               <Stack
