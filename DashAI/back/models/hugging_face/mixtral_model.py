@@ -206,6 +206,7 @@ class MixtralModel(TextToTextGenerationTaskModel):
 
     SCHEMA = MixtralSchema
     COLOR: str = "#4a148c"
+    TAGS: list = ["llama.cpp", "Mistral AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="Mixtral Model",
         es="Modelo Mixtral",

@@ -173,6 +173,7 @@ class SD15DepthControlNetModel(BaseControlNetModel):
 
     SCHEMA = SD15DepthControlNetSchema
     COLOR: str = "#4e342e"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 Depth ControlNet",
         es="SD 1.5 ControlNet de Profundidad",

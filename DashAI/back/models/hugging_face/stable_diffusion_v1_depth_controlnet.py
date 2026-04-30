@@ -147,6 +147,7 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
 
     SCHEMA = StableDiffusionXLV1ControlNetSchema
     COLOR: str = "#e65100"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL V1 ControlNet",
         es="Stable Diffusion XL V1 ControlNet",

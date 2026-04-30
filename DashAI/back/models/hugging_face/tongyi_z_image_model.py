@@ -211,6 +211,7 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
 
     SCHEMA = TongyiZImageSchema
     COLOR: str = "#e65100"
+    TAGS: list = ["diffusers", "Alibaba Cloud"]
     DISPLAY_NAME: str = MultilingualString(
         en="Tongyi Z-Image",
         es="Tongyi Z-Image",

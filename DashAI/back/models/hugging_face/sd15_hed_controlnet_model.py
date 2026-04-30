@@ -122,6 +122,7 @@ class SD15HEDControlNetModel(BaseControlNetModel):
 
     SCHEMA = SD15HEDControlNetSchema
     COLOR: str = "#006064"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 HED ControlNet",
         es="SD 1.5 ControlNet HED",

@@ -184,6 +184,7 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
 
     SCHEMA = SDXLCannyControlNetSchema
     COLOR: str = "#1a237e"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Canny ControlNet",
         es="SDXL ControlNet Canny",

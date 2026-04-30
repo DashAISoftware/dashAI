@@ -194,6 +194,7 @@ class LlamaModel(TextToTextGenerationTaskModel):
 
     SCHEMA = LlamaSchema
     COLOR: str = "#1a237e"
+    TAGS: list = ["llama.cpp", "Meta AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="Llama Model",
         es="Modelo Llama",

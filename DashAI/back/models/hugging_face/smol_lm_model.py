@@ -187,6 +187,7 @@ class SmolLMModel(TextToTextGenerationTaskModel):
 
     SCHEMA = SmolLMSchema
     COLOR: str = "#00695c"
+    TAGS: list = ["llama.cpp", "Hugging Face"]
     DISPLAY_NAME: str = MultilingualString(
         en="SmolLM Model",
         es="Modelo SmolLM",

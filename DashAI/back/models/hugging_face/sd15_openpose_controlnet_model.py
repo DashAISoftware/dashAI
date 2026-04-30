@@ -118,6 +118,7 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
 
     SCHEMA = SD15OpenPoseControlNetSchema
     COLOR: str = "#880e4f"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 OpenPose ControlNet",
         es="SD 1.5 ControlNet OpenPose",

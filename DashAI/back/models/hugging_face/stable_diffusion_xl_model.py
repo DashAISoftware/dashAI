@@ -234,6 +234,7 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
 
     SCHEMA = StableDiffusionXLSchema
     COLOR: str = "#0d47a1"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL",
         es="Stable Diffusion XL",

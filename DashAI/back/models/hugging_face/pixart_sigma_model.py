@@ -224,6 +224,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
 
     SCHEMA = PixArtSigmaSchema
     COLOR: str = "#6a1b9a"
+    TAGS: list = ["diffusers", "PixArt"]
     DISPLAY_NAME: str = MultilingualString(
         en="PixArt-Sigma",
         es="PixArt-Sigma",

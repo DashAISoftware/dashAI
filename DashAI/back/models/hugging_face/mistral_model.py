@@ -170,6 +170,7 @@ class MistralModel(TextToTextGenerationTaskModel):
 
     SCHEMA = MistralSchema
     COLOR: str = "#ff6f00"
+    TAGS: list = ["llama.cpp", "Mistral AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="Mistral Model",
         es="Modelo Mistral",

@@ -193,6 +193,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
 
     SCHEMA = SDXLTurboSchema
     COLOR: str = "#b71c1c"
+    TAGS: list = ["diffusers", "Stability AI"]
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Turbo",
         es="SDXL Turbo",

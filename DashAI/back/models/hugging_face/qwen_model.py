@@ -184,6 +184,7 @@ class QwenModel(TextToTextGenerationTaskModel):
 
     SCHEMA = QwenSchema
     COLOR: str = "#2e7d32"
+    TAGS: list = ["llama.cpp", "Alibaba Cloud"]
     DISPLAY_NAME: str = MultilingualString(
         en="Qwen Model",
         es="Modelo Qwen",
