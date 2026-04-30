@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import ComponentDetailsPanel from "../custom/ComponentDetailsPanel";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
+import { useTheme } from "@mui/material/styles";
 import { useCreateSession } from "./CreateSessionContext";
 
 export default function CreateSessionRight() {
   const { t } = useTranslation(["generative", "common"]);
+  const theme = useTheme();
   const { step, selectedModel, formik, processedProperties } =
     useCreateSession();
 
@@ -21,68 +23,53 @@ export default function CreateSessionRight() {
 
   return (
     <SideBar>
+      {/* Title */}
       <Box
         sx={{
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.ui.border}`,
+          flexShrink: 0,
           display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          height: "100%",
-          width: "100%",
+          alignItems: "center",
+          height: 64,
         }}
       >
-        {/* Title */}
+        <Typography variant="h6" color="text.primary">
+          {t("common:modelParameters")}
+        </Typography>
+      </Box>
+
+      {/* Content */}
+      {Object.keys(processedProperties).length === 0 ? (
         <Box
           sx={{
-            p: 2,
-            flexShrink: 0,
+            flex: 1,
             display: "flex",
             alignItems: "center",
-            height: 64,
+            justifyContent: "center",
+            p: 2,
           }}
         >
-          <Typography variant="h6" color="text.primary">
-            {t("common:modelParameters")}
+          <Typography variant="body2" color="text.secondary" textAlign="center">
+            {t("generative:label.modelHasNoParameters")}
           </Typography>
         </Box>
-
-        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
-
-        {/* Content */}
-        {Object.keys(processedProperties).length === 0 ? (
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: 2,
+      ) : (
+        <Box sx={{ flex: 1, overflowY: "auto", pt: 2, px: 2, pb: 5 }}>
+          <FormSchemaRenderFields
+            modelSchema={processedProperties}
+            formik={formik}
+            autoSave={false}
+            handleUpdateSchema={(updatedValues) => {
+              formik.setValues((prev) => ({ ...prev, ...updatedValues }));
             }}
-          >
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              textAlign="center"
-            >
-              {t("generative:label.modelHasNoParameters")}
-            </Typography>
-          </Box>
-        ) : (
-          <Box sx={{ flex: 1, overflowY: "auto", pt: 2, px: 2, pb: 5 }}>
-            <FormSchemaRenderFields
-              modelSchema={processedProperties}
-              formik={formik}
-              autoSave={false}
-              handleUpdateSchema={(updatedValues) => {
-                formik.setValues((prev) => ({ ...prev, ...updatedValues }));
-              }}
-              onFormSubmit={formik.handleSubmit}
-              setError={(error) => console.error(error)}
-              errorsMessage={formik.errors || {}}
-              spacing={2}
-            />
-          </Box>
-        )}
-      </Box>
+            onFormSubmit={formik.handleSubmit}
+            setError={(error) => console.error(error)}
+            errorsMessage={formik.errors || {}}
+            spacing={2}
+          />
+        </Box>
+      )}
     </SideBar>
   );
 }

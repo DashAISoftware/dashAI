@@ -208,7 +208,6 @@ export default function GenerativeChat() {
       flexDirection="column"
       justifyContent="flex-start"
       alignItems="center"
-      gap={1}
       width={"100%"}
       height={"100%"}
       sx={{ overflow: "hidden", minHeight: 0 }}
@@ -223,7 +222,6 @@ export default function GenerativeChat() {
           alignItems: "center",
           borderRadius: 1,
           opacity: 0.5,
-          mb: 0.8,
         }}
       >
         <Box
@@ -233,6 +231,8 @@ export default function GenerativeChat() {
           justifyContent="space-between"
           gap={0.5}
           width={"100%"}
+          height={"32px"}
+          mb={2}
         >
           <Typography>
             {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
@@ -254,7 +254,7 @@ export default function GenerativeChat() {
         </Box>
       </Box>
 
-      <Divider sx={{ width: "100%" }} />
+      <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
       {/* Chat display */}
       <Box

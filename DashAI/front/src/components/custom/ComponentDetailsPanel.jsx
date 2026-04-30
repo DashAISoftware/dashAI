@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Stack, Typography, Chip, Divider, Link } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import { useTheme } from "@mui/material/styles";
 
 function getLabel(component) {
   return component.display_name || component.name;
@@ -65,6 +66,7 @@ function ComponentDetailsPanel({
   categoryKey = "type",
 }) {
   const { t } = useTranslation("custom");
+  const theme = useTheme();
 
   return (
     <SideBar>
@@ -81,6 +83,7 @@ function ComponentDetailsPanel({
         <Box
           sx={{
             p: 2,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
@@ -91,8 +94,6 @@ function ComponentDetailsPanel({
             {t("componentDetails")}
           </Typography>
         </Box>
-
-        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
         {/* Content */}
         {!component || !component.name ? (
