@@ -7,10 +7,16 @@ import { useCreateSession } from "./CreateSessionContext";
 
 export default function CreateSessionRight() {
   const { t } = useTranslation(["generative", "common"]);
-  const { step, selectedModel, formik, processedProperties } = useCreateSession();
+  const { step, selectedModel, formik, processedProperties } =
+    useCreateSession();
 
   if (step === 0) {
-    return <ComponentDetailsPanel component={selectedModel} categoryKey="task_display_name" />;
+    return (
+      <ComponentDetailsPanel
+        component={selectedModel}
+        categoryKey="task_display_name"
+      />
+    );
   }
 
   return (
@@ -31,7 +37,7 @@ export default function CreateSessionRight() {
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            height: 70,
+            height: 64,
           }}
         >
           <Typography variant="h6" color="text.primary">

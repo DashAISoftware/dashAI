@@ -137,7 +137,7 @@ export default function ParamsBar({ onToggle }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-start",
-            height: 70,
+            height: 64,
           }}
         >
           <Typography variant="h6" color="text.primary">

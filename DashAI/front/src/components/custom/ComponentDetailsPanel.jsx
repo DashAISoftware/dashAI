@@ -84,7 +84,7 @@ function ComponentDetailsPanel({
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            height: 70,
+            height: 64,
           }}
         >
           <Typography variant="h6" color="text.primary">
