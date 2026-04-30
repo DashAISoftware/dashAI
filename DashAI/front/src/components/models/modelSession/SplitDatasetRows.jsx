@@ -4,6 +4,7 @@ import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
   Grid,
   TextField,
+  Stack,
   Typography,
   FormControlLabel,
   Radio,
@@ -245,7 +246,7 @@ function SplitDatasetRows({
   ]);
 
   return (
-    <React.Fragment>
+    <Stack>
       <Grid container spacing={1}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
@@ -444,7 +445,7 @@ function SplitDatasetRows({
           </>
         )}
       </RadioGroup>
-    </React.Fragment>
+    </Stack>
   );
 }
 
