@@ -195,9 +195,6 @@ export default function ConfigureAndUploadDatasetStep({
           minHeight: 0,
           overflowY: "auto",
           width: "100%",
-          backgroundColor: theme.palette.background.box,
-          padding: 2,
-          borderRadius: 2,
         }}
       >
         <Upload
