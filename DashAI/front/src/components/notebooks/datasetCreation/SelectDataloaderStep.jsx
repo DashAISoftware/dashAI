@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import ComponentSelector from "../../custom/ComponentSelector";
-import { Box, CircularProgress, Stack } from "@mui/material";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { Box, Button, CircularProgress, Stack } from "@mui/material";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
@@ -116,19 +115,28 @@ export default function SelectDataloaderStep({
         )}
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <FormSchemaButtonGroup
-          onCancel={goToPrevStep}
-          onFormSubmit={handleNext}
-          formik={{
-            errors: selectedDataloader?.name
-              ? {}
-              : { dataloader: t("common:required") },
-          }}
-          saveButtonText={t("common:next")}
-          backButtonText={t("common:back")}
-          dataTour="dataloader-step-next-button"
-        />
+      <Box
+        sx={{
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" onClick={goToPrevStep}>
+          {t("common:back")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleNext}
+          disabled={!selectedDataloader?.name}
+          data-tour="dataloader-step-next-button"
+        >
+          {t("common:next")}
+        </Button>
       </Box>
     </Stack>
   );

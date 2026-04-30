@@ -56,7 +56,14 @@ export default function CreateSessionCenter() {
       </Box>
 
       <Box
-        sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+          pt: 1,
+        }}
       >
         {step === 0 ? (
           loadingModels ? (
