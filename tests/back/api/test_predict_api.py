@@ -207,6 +207,7 @@ def create_model_session(client: TestClient, dataset: Dataset):
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
+            evaluation_strategy="holdout",
             splits=json.dumps(
                 {
                     "train": 0.5,
