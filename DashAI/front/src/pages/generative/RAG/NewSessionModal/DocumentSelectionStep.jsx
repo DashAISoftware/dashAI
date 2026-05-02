@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, TextField } from "@mui/material";
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { ViewList as ViewListIcon } from '@mui/icons-material';
+import { useNavigate } from "react-router-dom";
 import DocumentSelector from "../../../../components/generative/RAG/DocumentSelector";
 
 export default function DocumentSelectionStep({
@@ -12,6 +16,8 @@ export default function DocumentSelectionStep({
   sessionDescription,
   setSessionDescription,
 }) {
+  const navigate = useNavigate();
+  const goToDocumentsDetail = () => navigate('/app/generative/rag/documents');
   useEffect(() => {
     const hasSelectedDocuments = propDocumentIds && propDocumentIds.length > 0;
     const validSessionName = sessionName.trim() !== "";
@@ -67,10 +73,19 @@ export default function DocumentSelectionStep({
         />
       </Box>
 
-      <Typography variant="h6">Select Documents</Typography>
-      <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-        Upload new documents or select from existing ones to be used for RAG.
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h6">Select Documents</Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            Upload new documents or select from existing ones to be used for RAG.
+          </Typography>
+        </Box>
+        <Tooltip title="Ver documentos">
+          <IconButton size="small" onClick={goToDocumentsDetail}>
+            <ViewListIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <Box flexGrow={1}>
         <DocumentSelector

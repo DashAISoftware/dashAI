@@ -174,6 +174,7 @@ export default function PromptSelectionTable({
         <DataGrid
           rows={promptRows}
           columns={columns}
+          hideFooter
           initialState={{
             pagination: {
               paginationModel: {
@@ -184,8 +185,6 @@ export default function PromptSelectionTable({
           pageSizeOptions={[5, 10, 25, 50]}
           autoHeight
           loading={loading}
-          rowSelectionModel={rowSelectionModel}
-          onRowSelectionModelChange={onRowSelectionModelChange}
         />
         <TemplateModal
           open={modalOpen}

@@ -2,13 +2,19 @@ import { useEffect, useState } from "react";
 import PromptSelectionTable from "../../../../components/generative/RAG/PromptSelectionTable";
 import { getRAGPrompts } from "../../../../api/rag";
 import { Stack } from "@mui/system";
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { ViewList as ViewListIcon } from '@mui/icons-material';
+import { useNavigate } from "react-router-dom";
 
 export default function PromptConfigurationStep({
   setNextEnabled,
   sessionData,
   setSessionData,
 }) {
+  const navigate = useNavigate();
+  const goToPromptsDetail = () => navigate('/app/generative/rag/prompts');
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPromptId, setSelectedPromptId] = useState([]);
@@ -39,7 +45,14 @@ export default function PromptConfigurationStep({
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Select a Prompt Template or create a new one</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">Select a Prompt Template or create a new one</Typography>
+        <Tooltip title="Ver prompts">
+          <IconButton size="small" onClick={goToPromptsDetail}>
+            <ViewListIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
       <Typography variant="body2">Prompt templates define how the chunks (pieces of documents) and chat messages are integrated to generate responses. You can select an existing prompt template or create a new one to customize the behavior of your RAG session.</Typography>
       <PromptSelectionTable
         prompts={prompts}

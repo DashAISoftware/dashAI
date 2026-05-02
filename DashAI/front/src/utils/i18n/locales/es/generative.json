@@ -129,6 +129,8 @@
     "prompt": {
       "description": "Selecciona una plantilla de prompt que define cómo se combinan el contexto recuperado y los mensajes del chat para generar respuestas.",
       "availablePrompts": "Plantillas Disponibles",
+      "openPrompts": "Abrir biblioteca de prompts",
+      "promptLabel": "Prompt",
       "selectTemplate": "Seleccionar plantilla de prompt",
       "selectTemplatePlaceholder": "ej. Prompt por Defecto, Instrucción Personalizada",
       "selectedTemplate": "Plantilla de Prompt Seleccionada:",

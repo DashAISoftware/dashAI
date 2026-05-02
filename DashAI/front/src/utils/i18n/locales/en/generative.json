@@ -129,6 +129,8 @@
     "prompt": {
       "description": "Select a prompt template that defines how the retrieved context and chat messages are combined to generate responses.",
       "availablePrompts": "Available Prompts",
+      "openPrompts": "Open prompt library",
+      "promptLabel": "Prompt",
       "selectTemplate": "Select prompt template",
       "selectTemplatePlaceholder": "e.g., Default Prompt, Custom Instruction",
       "selectedTemplate": "Selected Prompt Template:",

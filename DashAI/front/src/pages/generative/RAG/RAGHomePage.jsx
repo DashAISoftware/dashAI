@@ -11,6 +11,7 @@ import SessionBar from "../../../components/generative/SessionBar";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
 import RAGSessionSummary from "../../../components/generative/RAG/RAGSessionSummary";
+import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
 import { removeSession } from "../../../api/session";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
@@ -60,8 +61,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
   const currentSetSessions = setSessions || setContextSessions;
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
-  const isRagChatActive =
-    showRagChat && activeRagChatSessionId === globalSelectedSessionId;
+  const isRagChatActive = showRagChat && activeRagChatSessionId === globalSelectedSessionId;
 
   const sessionSelectionState =
     location.state?.selectedSessionId != null ? location.state : null;
@@ -202,15 +202,38 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         <LeftPanel data-tour="sessions-left-panel">
-          <SessionBar
-            sessions={currentSessions}
-            selectedSessionId={globalSelectedSessionId}
-            handleSessionClick={handleSessionClick}
-            handleNewSessionButton={handleNewSessionButton}
-            handleSessionDelete={handleSessionDelete}
-            stepIndex={0}
-            onToggle={threePanelLayout.handleToggleLeft}
-          />
+          {isRagChatActive ? (
+            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+              <Box sx={{ flex: "0 0 60%", minHeight: 0 }}>
+                <DocumentsBar
+                  selectedSessionId={globalSelectedSessionId}
+                  taskName="RAGTask"
+                />
+              </Box>
+
+              <Box sx={{ flex: "0 0 40%", overflow: "auto", minHeight: 0 }}>
+                <SessionBar
+                  sessions={currentSessions}
+                  selectedSessionId={globalSelectedSessionId}
+                  handleSessionClick={handleSessionClick}
+                  handleNewSessionButton={handleNewSessionButton}
+                  handleSessionDelete={handleSessionDelete}
+                  stepIndex={0}
+                  onToggle={threePanelLayout.handleToggleLeft}
+                />
+              </Box>
+            </Box>
+          ) : (
+            <SessionBar
+              sessions={currentSessions}
+              selectedSessionId={globalSelectedSessionId}
+              handleSessionClick={handleSessionClick}
+              handleNewSessionButton={handleNewSessionButton}
+              handleSessionDelete={handleSessionDelete}
+              stepIndex={0}
+              onToggle={threePanelLayout.handleToggleLeft}
+            />
+          )}
         </LeftPanel>
 
         <CenterPanel data-tour="task-gallery">
@@ -229,11 +252,14 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
               overflow: "hidden",
             }}
           >
-            <DocumentsBar
-              selectedSessionId={isRagSessionSelected ? globalSelectedSessionId : null}
-              taskName="RAGTask"
-              key={`rag-docs-${isRagSessionSelected ? globalSelectedSessionId : "all"}`}
-            />
+            {isRagChatActive ? (
+              <RAGParamsPanel selectedSessionId={globalSelectedSessionId} />
+            ) : (
+              // During configuration we do not show DocumentsBar — keep previous behavior (no docs visible)
+              <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* Placeholder: keep it empty to match prior configuration view */}
+              </Box>
+            )}
           </Box>
         </RightPanel>
       </ModuleContainer>

@@ -19,6 +19,10 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
+  const goToDocumentsDetail = () => {
+    navigate("/app/generative/rag/documents");
+  };
+
   // Fetch documents for the selected RAG session or all documents
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -141,8 +145,15 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
     >
       {/* Header */}
       <Box sx={{ p: 2, flexShrink: 0 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>{t("documentsBar.title")}</Typography>
-        <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6">{t("documentsBar.title")}</Typography>
+          <Tooltip title={t("documentsBar.detailedView")}>
+            <IconButton size="small" onClick={goToDocumentsDetail}>
+              <ViewListIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+        <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)", mt: 1 }}>
           {t("documentsBar.documentCount", { count: filteredDocuments.length })}
           {selectedSessionId ? t("documentsBar.inCurrentSession") : t("documentsBar.available")}
         </Typography>

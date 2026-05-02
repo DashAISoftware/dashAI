@@ -16,6 +16,7 @@ import { FormSchemaProvider } from "../../../contexts/schema";
 import SimplifiedSessionSetup from "./SimplifiedSessionSetup";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import SimplifiedRAGInfoBar from "../../../components/generative/RAG/SimplifiedRAGInfoBar";
+import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
 
 function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
 
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
+  const isRagChatActive = showRagChat && activeRagChatSessionId === globalSelectedSessionId;
 
   const [setupKey, setSetupKey] = useState(0);
 
@@ -211,15 +213,38 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
       <ThreePanelLayoutContext.Provider value={threePanelLayout}>
         <ModuleContainer>
           <LeftPanel data-tour="sessions-left-panel">
-            <SessionBar
-              sessions={currentSessions}
-              selectedSessionId={globalSelectedSessionId}
-              handleSessionClick={handleSessionClick}
-              handleNewSessionButton={handleNewSessionButton}
-              handleSessionDelete={handleSessionDelete}
-              stepIndex={0}
-              onToggle={threePanelLayout.handleToggleLeft}
-            />
+            {isRagChatActive ? (
+              <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+                <Box sx={{ flex: "0 0 60%", minHeight: 0 }}>
+                  <DocumentsBar
+                    selectedSessionId={globalSelectedSessionId}
+                    taskName="RAGTask"
+                  />
+                </Box>
+
+                <Box sx={{ flex: "0 0 40%", overflow: "auto", minHeight: 0 }}>
+                  <SessionBar
+                    sessions={currentSessions}
+                    selectedSessionId={globalSelectedSessionId}
+                    handleSessionClick={handleSessionClick}
+                    handleNewSessionButton={handleNewSessionButton}
+                    handleSessionDelete={handleSessionDelete}
+                    stepIndex={0}
+                    onToggle={threePanelLayout.handleToggleLeft}
+                  />
+                </Box>
+              </Box>
+            ) : (
+              <SessionBar
+                sessions={currentSessions}
+                selectedSessionId={globalSelectedSessionId}
+                handleSessionClick={handleSessionClick}
+                handleNewSessionButton={handleNewSessionButton}
+                handleSessionDelete={handleSessionDelete}
+                stepIndex={0}
+                onToggle={threePanelLayout.handleToggleLeft}
+              />
+            )}
           </LeftPanel>
 
           <CenterPanel data-tour="task-gallery">
@@ -239,7 +264,9 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
                 p: 2,
               }}
             >
-              {isRagSessionSelected ? (
+              {isRagChatActive ? (
+                <RAGParamsPanel selectedSessionId={globalSelectedSessionId} />
+              ) : isRagSessionSelected ? (
                 <DocumentsBar
                   selectedSessionId={globalSelectedSessionId}
                   taskName="RAGTask"

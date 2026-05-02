@@ -8,7 +8,10 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
-import { AddCircleOutline as AddIcon } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { ViewList as ViewListIcon, AddCircleOutline as AddIcon } from "@mui/icons-material";
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getRAGPrompts } from "../../../../api/rag";
@@ -82,6 +85,8 @@ export default function PromptSection({
   setPromptId,
   onTokenCountChange,
 }) {
+  const navigate = useNavigate();
+  const goToPromptsDetail = () => navigate('/app/generative/rag/prompts');
   const { t, i18n } = useTranslation(["generative"]);
   const [prompts, setPrompts] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
@@ -176,9 +181,19 @@ export default function PromptSection({
     <>
       <Paper sx={{ p: 3, backgroundColor: "background.paper" }}>
 
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-          {t("generative:simplifiedRag.prompt.description")}
-        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Prompt</Typography>
+            <Tooltip title={t("generative:simplifiedRag.prompt.openPrompts")}>
+              <IconButton size="small" onClick={goToPromptsDetail}>
+                <ViewListIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+            {t("generative:simplifiedRag.prompt.description")}
+          </Typography>
+        </Box>
 
         {/* Prompt Selection */}
         <Box sx={{ mb: 3 }}>
