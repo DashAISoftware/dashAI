@@ -98,7 +98,7 @@ def _load_images_from_directory(data_dir: str, n_sample=None):
                         {
                             "image": {
                                 "bytes": buf.getvalue(),
-                                "format": fmt,
+                                "path": fname,
                             },
                             "label": class_name,
                         }

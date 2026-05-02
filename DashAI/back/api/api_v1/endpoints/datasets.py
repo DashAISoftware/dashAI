@@ -1605,8 +1605,12 @@ async def export_dataset_as_csv(
                             val = arr_col[i].as_py()
                             if isinstance(val, dict) and val.get("bytes"):
                                 img_bytes = val["bytes"]
-                                fmt = (val.get("format", "PNG") or "PNG").lower()
-                                ext = "jpg" if fmt == "jpeg" else fmt
+                                raw_ext = (
+                                    os.path.splitext(val.get("path") or "")[1]
+                                    .lstrip(".")
+                                    .lower()
+                                )
+                                ext = raw_ext if raw_ext else "png"
                             elif isinstance(val, bytes) and val:
                                 img_bytes = val
                                 ext = "png"
@@ -1783,10 +1787,14 @@ async def export_dataset_csv_by_id(
                                 struct_val = struct_col[i].as_py()
                                 if struct_val and struct_val.get("bytes"):
                                     img_bytes = struct_val["bytes"]
-                                    fmt = (
-                                        struct_val.get("format", "PNG") or "PNG"
-                                    ).lower()
-                                    ext = "jpg" if fmt == "jpeg" else fmt
+                                    raw_ext = (
+                                        os.path.splitext(struct_val.get("path") or "")[
+                                            1
+                                        ]
+                                        .lstrip(".")
+                                        .lower()
+                                    )
+                                    ext = raw_ext if raw_ext else "png"
                                     fname = f"images/{col}_{i}.{ext}"
                                     zf.writestr(fname, img_bytes)
                                     image_filenames[col].append(fname)
@@ -1967,10 +1975,10 @@ async def preview_with_types(
                         os.unlink(tmp_file_path)
 
                         schema = {
-                            "image": {"type": "Image", "dtype": "string"},
+                            "image": {"type": "Image", "dtype": "struct"},
                         }
                         inferred_types = {
-                            "image": {"type": "Image", "dtype": "string"},
+                            "image": {"type": "Image", "dtype": "struct"},
                         }
                         if has_labels:
                             schema["label"] = {
