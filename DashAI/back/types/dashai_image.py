@@ -14,7 +14,7 @@ class DashAIImage(DashAIDataType):
     Attributes
     ----------
     dtype : str
-        The data type of the image, default is "struct" (Arrow struct<bytes: binary, format: string>).
+        The data type of the image, default is "struct" (Arrow struct<bytes: binary, path: string>).
     base_path : Optional[str]
         An optional base path for images.
     """

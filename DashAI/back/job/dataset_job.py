@@ -174,7 +174,7 @@ class DatasetJob(BaseJob):
                         n_sample=n_sample,
                     )
 
-                    if "inferred_types" in params:
+                    if params.get("inferred_types"):
                         schema = params["inferred_types"]
                     elif new_dataset.types:
                         schema = {
@@ -185,7 +185,6 @@ class DatasetJob(BaseJob):
                         schema = infer_types(
                             new_dataset.to_pandas(), method="DashAIPtype"
                         )
-
                     if "column_renames" in params:
                         renames = params["column_renames"]
                         original_names = new_dataset.arrow_table.schema.names
