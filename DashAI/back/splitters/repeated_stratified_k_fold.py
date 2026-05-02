@@ -1,10 +1,10 @@
 import numpy as np
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-from .base_fold_splitter import BaseFoldSplitter
+from .fold_splitter import FoldSplitter
 
 
-class RepeatedStratifiedKFoldSplitter(BaseFoldSplitter):
+class RepeatedStratifiedKFoldSplitter(FoldSplitter):
     def __init__(self, splits_data, dataset, output_column):
         super().__init__(splits_data, dataset, output_column)
         self.n_repeats = splits_data.get("n_repeats", 1)

@@ -66,6 +66,10 @@ from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
+# Evaluation Strategies
+from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
+
 # Explainers
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
 from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
@@ -205,6 +209,18 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
+from DashAI.back.splitters.group_k_fold import GroupKFoldSplitter
+
+# Splitters
+from DashAI.back.splitters.holdout import HoldoutSplitter
+from DashAI.back.splitters.k_fold import KFoldSplitter
+from DashAI.back.splitters.leave_one_out import LeaveOneOutSplitter
+from DashAI.back.splitters.repeated_k_fold import RepeatedKFoldSplitter
+from DashAI.back.splitters.repeated_stratified_k_fold import (
+    RepeatedStratifiedKFoldSplitter,
+)
+from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSplitter
+from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
@@ -372,6 +388,18 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
+        # Splitters
+        HoldoutSplitter,
+        KFoldSplitter,
+        StratifiedKFoldSplitter,
+        StratifiedGroupKFoldSplitter,
+        RepeatedStratifiedKFoldSplitter,
+        GroupKFoldSplitter,
+        LeaveOneOutSplitter,
+        RepeatedKFoldSplitter,
+        # Evaluation Strategies
+        CrossValidationEvaluationStrategy,
+        HoldoutEvaluationStrategy,
     ]
 
     # Obtener plugins instalados

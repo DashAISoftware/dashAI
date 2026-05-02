@@ -1,3 +1,5 @@
+from typing import Final
+
 from DashAI.back.dependencies.database.models import Run
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
@@ -5,6 +7,8 @@ from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
 class BaseEvaluationStrategy:
+    TYPE: Final[str] = "EvaluationStrategy"
+
     def __init__(
         self,
         model: BaseModel,

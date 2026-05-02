@@ -1,10 +1,10 @@
 import numpy as np
 from sklearn.model_selection import KFold
 
-from .base_splitter import BaseFoldSplitter
+from .fold_splitter import FoldSplitter
 
 
-class KFoldSplitter(BaseFoldSplitter):
+class KFoldSplitter(FoldSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
 

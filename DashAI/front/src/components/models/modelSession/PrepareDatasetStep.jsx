@@ -53,7 +53,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   );
 
   // Holdout or cross-validation
-  const [evaluationStrategy, setEvaluationStrategy] = useState("holdout");
+  const [evaluationStrategy, setEvaluationStrategy] = useState(
+    "HoldoutEvaluationStrategy",
+  );
 
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
@@ -62,7 +64,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [seed, setSeed] = useState(42);
 
   // Cross-Validation configuration states
-  const [cvType, setCvType] = useState("kfold");
+  const [cvType, setCvType] = useState("KFold");
   const [numFolds, setNumFolds] = useState(2);
   const [numRepeats, setNumRepeats] = useState(2);
   const [groupColumn, setGroupColumn] = useState("");
@@ -244,10 +246,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       evaluation_strategy: evaluationStrategy,
     };
 
-    if (evaluationStrategy === "holdout") {
+    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
       if (splitType === SPLIT_TYPES.MANUAL) {
         updatedExpData.splits = {
           ...rowsPartitionsIndex,
+          splitter_name: "HoldoutSplitter",
           splitType: splitType,
         };
       } else if (splitType === SPLIT_TYPES.RANDOM) {
@@ -256,18 +259,20 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           shuffle: shuffle,
           stratify: stratify,
           seed: seed === "" || seed == null ? 42 : Number(seed),
+          splitter_name: "HoldoutSplitter",
           splitType: splitType,
         };
       } else if (splitType === SPLIT_TYPES.PREDEFINED) {
         updatedExpData.splits = {
           ...datasetPartitionsIndex,
+          splitter_name: "HoldoutSplitter",
           splitType: splitType,
         };
       }
-    } else if (evaluationStrategy === "crossValidation") {
-      if (cvType === "groupKFold" || cvType === "stratifiedGroupKFold") {
+    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
+      if (cvType === "GroupKFold" || cvType === "StratifiedGroupKFold") {
         updatedExpData.splits = {
-          cvType: cvType,
+          splitter_name: cvType + "Splitter",
           numFolds: numFolds,
           numRepeats: numRepeats,
           seed: seed === "" || seed == null ? 42 : Number(seed),
@@ -275,26 +280,26 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           group_column: groupColumn,
         };
       } else if (
-        cvType === "repeatedKFold" ||
-        cvType === "repeatedStratifiedKfold"
+        cvType === "RepeatedKFold" ||
+        cvType === "RepeatedStratifiedKfold"
       ) {
         updatedExpData.splits = {
-          cvType: cvType,
+          splitter_name: cvType + "Splitter",
           numFolds: numFolds,
           numRepeats: numRepeats,
           seed: seed === "" || seed == null ? 42 : Number(seed),
           shuffle: shuffle,
         };
-      } else if (cvType === "kFold" || cvType === "stratifiedKFold") {
+      } else if (cvType === "KFold" || cvType === "StratifiedKFold") {
         updatedExpData.splits = {
-          cvType: cvType,
+          splitter_name: cvType + "Splitter",
           numFolds: numFolds,
           seed: seed === "" || seed == null ? 42 : Number(seed),
           shuffle: shuffle,
         };
-      } else if (cvType === "leaveOneOut") {
+      } else if (cvType === "LeaveOneOut") {
         updatedExpData.splits = {
-          cvType: cvType,
+          splitter_name: cvType + "Splitter",
           seed: seed === "" || seed == null ? 42 : Number(seed),
         };
       }

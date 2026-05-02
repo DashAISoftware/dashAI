@@ -7,7 +7,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset_cv
 from .base_splitter import BaseSplitter
 
 
-class BaseFoldSplitter(BaseSplitter):
+class FoldSplitter(BaseSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)

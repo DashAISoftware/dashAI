@@ -9,9 +9,9 @@ class HoldoutSplitter(BaseSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
         # actualmente están como "train", "test" y "val"
-        self.train_size = splits_data.get("train_size", None)
-        self.test_size = splits_data.get("test_size", None)
-        self.val_size = splits_data.get("val_size", None)
+        self.train_size = splits_data.get("train", None)
+        self.test_size = splits_data.get("test", None)
+        self.val_size = splits_data.get("validation", None)
         self.splitted_indexes = splits_data.get("splitted_indexes", {})
         self.stratify = splits_data.get("stratify", False)
 

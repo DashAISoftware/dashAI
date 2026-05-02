@@ -1,10 +1,10 @@
 import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold
 
-from .base_fold_splitter import BaseFoldSplitter
+from .fold_splitter import FoldSplitter
 
 
-class StratifiedGroupKFoldSplitter(BaseFoldSplitter):
+class StratifiedGroupKFoldSplitter(FoldSplitter):
     def __init__(self, splits_data, dataset, output_column):
         super().__init__(splits_data, dataset, output_column)
         self.groups = splits_data.get("groups", None)

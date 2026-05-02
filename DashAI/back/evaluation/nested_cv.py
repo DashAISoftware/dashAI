@@ -4,7 +4,7 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Run
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
 from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.splitters.base_fold_splitter import BaseFoldSplitter
+from DashAI.back.splitters.fold_splitter import FoldSplitter
 
 
 class NestedCrossValidationStrategy(CrossValidationEvaluationStrategy):
@@ -12,7 +12,7 @@ class NestedCrossValidationStrategy(CrossValidationEvaluationStrategy):
         self, model, optimizer, run_optimizable_parameters, goal_metric, **kwargs
     ):
         super().__init__(model, optimizer, run_optimizable_parameters, goal_metric)
-        self.inner_splitter: BaseFoldSplitter = kwargs.get("inner_splitter")
+        self.inner_splitter: FoldSplitter = kwargs.get("inner_splitter")
 
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
         plot_paths = []

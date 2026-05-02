@@ -55,48 +55,48 @@ function SplitDatasetRows({
   const getAllowedCvTypes = () => {
     if (!taskName)
       return [
-        "kfold",
-        "stratifiedKfold",
-        "repeatedKfold",
-        "repeatedStratifiedKfold",
-        "groupKfold",
-        "stratifiedGroupKfold",
-        "leaveOneOut",
+        "KFold",
+        "StratifiedKFold",
+        "RepeatedKFold",
+        "RepeatedStratifiedKFold",
+        "GroupKFold",
+        "StratifiedGroupKFold",
+        "LeaveOneOut",
       ];
 
     // For regression tasks: only allow non-stratified CV types
     if (taskName.toLowerCase().includes("regression")) {
       return [
-        "kfold",
-        "repeatedKfold",
-        "groupKfold",
-        "repeatedGroupKfold",
-        "leaveOneOut",
+        "KFold",
+        "RepeatedKFold",
+        "GroupKFold",
+        "RepeatedGroupKFold",
+        "LeaveOneOut",
       ];
     }
 
     // For classification tasks (tabular or text): allow all CV types
     if (taskName.toLowerCase().includes("classification")) {
       return [
-        "kfold",
-        "stratifiedKfold",
-        "repeatedKfold",
-        "repeatedStratifiedKfold",
-        "groupKfold",
-        "stratifiedGroupKfold",
-        "leaveOneOut",
+        "KFold",
+        "StratifiedKFold",
+        "RepeatedKFold",
+        "RepeatedStratifiedKFold",
+        "GroupKFold",
+        "StratifiedGroupKFold",
+        "LeaveOneOut",
       ];
     }
 
     // Default: all CV types
     return [
-      "kfold",
-      "stratifiedKfold",
-      "repeatedKfold",
-      "repeatedStratifiedKfold",
-      "groupKfold",
-      "stratifiedGroupKfold",
-      "leaveOneOut",
+      "KFold",
+      "StratifiedKFold",
+      "RepeatedKFold",
+      "RepeatedStratifiedKFold",
+      "GroupKFold",
+      "StratifiedGroupKFold",
+      "LeaveOneOut",
     ];
   };
 
@@ -283,9 +283,9 @@ function SplitDatasetRows({
   const handleCvTypeChange = (event) => {
     setCvType(event.target.value);
     if (
-      event.target.value === "stratifiedKfold" ||
-      event.target.value === "repeatedStratifiedKfold" ||
-      event.target.value === "stratifiedGroupKfold"
+      event.target.value === "StratifiedKFold" ||
+      event.target.value === "RepeatedStratifiedKFold" ||
+      event.target.value === "StratifiedGroupKFold"
     ) {
       setStratify(true);
     } else {
@@ -386,9 +386,11 @@ function SplitDatasetRows({
           <Box sx={{ display: "flex", gap: 2 }}>
             <Button
               variant={
-                evaluationStrategy === "holdout" ? "contained" : "outlined"
+                evaluationStrategy === "HoldoutEvaluationStrategy"
+                  ? "contained"
+                  : "outlined"
               }
-              onClick={() => setEvaluationStrategy("holdout")}
+              onClick={() => setEvaluationStrategy("HoldoutEvaluationStrategy")}
               sx={{ flex: 1 }}
             >
               <Box
@@ -411,11 +413,13 @@ function SplitDatasetRows({
             </Button>
             <Button
               variant={
-                evaluationStrategy === "crossValidation"
+                evaluationStrategy === "CrossValidationEvaluationStrategy"
                   ? "contained"
                   : "outlined"
               }
-              onClick={() => setEvaluationStrategy("crossValidation")}
+              onClick={() =>
+                setEvaluationStrategy("CrossValidationEvaluationStrategy")
+              }
               sx={{ flex: 1 }}
             >
               <Box
@@ -441,7 +445,7 @@ function SplitDatasetRows({
       </Grid>
 
       {/* Holdout Configuration */}
-      {evaluationStrategy === "holdout" && (
+      {evaluationStrategy === "HoldoutEvaluationStrategy" && (
         <Box sx={{ mb: 4 }}>
           <Grid container spacing={1}>
             <Grid size={{ xs: 12 }}>
@@ -649,7 +653,7 @@ function SplitDatasetRows({
       )}
 
       {/* Cross-Validation Configuration */}
-      {evaluationStrategy === "crossValidation" && (
+      {evaluationStrategy === "CrossValidationEvaluationStrategy" && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
             {t("experiments:label.crossValidation")}
@@ -665,38 +669,38 @@ function SplitDatasetRows({
                   onChange={handleCvTypeChange}
                   label={t("experiments:label.cvType")}
                 >
-                  {allowedCvTypes.includes("kfold") && (
-                    <MenuItem value="kfold">
+                  {allowedCvTypes.includes("KFold") && (
+                    <MenuItem value="KFold">
                       {t("experiments:label.kfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("stratifiedKfold") && (
-                    <MenuItem value="stratifiedKfold">
+                  {allowedCvTypes.includes("StratifiedKFold") && (
+                    <MenuItem value="StratifiedKFold">
                       {t("experiments:label.stratifiedKfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("repeatedKfold") && (
-                    <MenuItem value="repeatedKfold">
+                  {allowedCvTypes.includes("RepeatedFold") && (
+                    <MenuItem value="RepeatedFold">
                       {t("experiments:label.repeatedKfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("repeatedStratifiedKfold") && (
-                    <MenuItem value="repeatedStratifiedKfold">
+                  {allowedCvTypes.includes("RepeatedStratifiedKFold") && (
+                    <MenuItem value="RepeatedStratifiedKFold">
                       {t("experiments:label.repeatedStratifiedKfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("groupKfold") && (
-                    <MenuItem value="groupKfold">
+                  {allowedCvTypes.includes("GroupKFold") && (
+                    <MenuItem value="GroupKFold">
                       {t("experiments:label.groupKfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("stratifiedGroupKfold") && (
-                    <MenuItem value="stratifiedGroupKfold">
+                  {allowedCvTypes.includes("StratifiedGroupKFold") && (
+                    <MenuItem value="StratifiedGroupKFold">
                       {t("experiments:label.stratifiedGroupKfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("leaveOneOut") && (
-                    <MenuItem value="leaveOneOut">
+                  {allowedCvTypes.includes("LeaveOneOut") && (
+                    <MenuItem value="LeaveOneOut">
                       {t("experiments:label.leaveOneOut")}
                     </MenuItem>
                   )}
@@ -705,7 +709,7 @@ function SplitDatasetRows({
             </Grid>
 
             {/* Group Column - only for GroupKFold or StratifiedGroupKFold */}
-            {(cvType === "groupKfold" || cvType === "stratifiedGroupKfold") && (
+            {(cvType === "GroupKFold" || cvType === "StratifiedGroupKFold") && (
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>{t("experiments:label.groupColumn")}</InputLabel>
@@ -728,7 +732,7 @@ function SplitDatasetRows({
             )}
 
             {/* Number of Folds - shown for all except LeaveOneOut */}
-            {cvType !== "leaveOneOut" && (
+            {cvType !== "LeaveOneOut" && (
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -745,8 +749,8 @@ function SplitDatasetRows({
             )}
 
             {/* Number of Repeats - only for RepeatedKFold */}
-            {(cvType === "repeatedKfold" ||
-              cvType === "repeatedStratifiedKfold") && (
+            {(cvType === "RepeatedKFold" ||
+              cvType === "RepeatedStratifiedKFold") && (
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -763,9 +767,9 @@ function SplitDatasetRows({
             )}
 
             {/* Shuffle option */}
-            {cvType !== "leaveOneOut" &&
-              cvType !== "repeatedKfold" &&
-              cvType !== "repeatedStratifiedKfold" && (
+            {cvType !== "LeaveOneOut" &&
+              cvType !== "RepeatedKFold" &&
+              cvType !== "RepeatedStratifiedKFold" && (
                 <Grid size={{ xs: 12 }}>
                   <BooleanInput
                     name="shuffle"
@@ -805,19 +809,19 @@ function SplitDatasetRows({
                   Configuración Actual:
                 </Typography>
                 <Typography variant="body2">
-                  {cvType === "kfold" &&
+                  {cvType === "KFold" &&
                     `K-Fold con ${numFolds} pliegues${shuffle ? " (barajeado)" : ""}`}
-                  {cvType === "stratifiedKfold" &&
+                  {cvType === "StratifiedKFold" &&
                     `K-Fold Estratificado con ${numFolds} pliegues${shuffle ? " (barajeado)" : ""}`}
-                  {cvType === "repeatedKfold" &&
+                  {cvType === "RepeatedKFold" &&
                     `K-Fold Repetido: ${numFolds} pliegues × ${numRepeats} repeticiones`}
-                  {cvType === "repeatedStratifiedKfold" &&
+                  {cvType === "RepeatedStratifiedKFold" &&
                     `K-Fold Estratificado Repetido: ${numFolds} pliegues × ${numRepeats} repeticiones`}
-                  {cvType === "groupKfold" &&
+                  {cvType === "GroupKFold" &&
                     `Group K-Fold con ${numFolds} pliegues, usando la columna de grupos "${groupColumn}"${shuffle ? " (barajeado)" : ""}`}
-                  {cvType === "stratifiedGroupKfold" &&
+                  {cvType === "StratifiedGroupKFold" &&
                     `Group K-Fold Estratificado con ${numFolds} pliegues, usando la columna de grupos "${groupColumn}"${shuffle ? " (barajeado)" : ""}`}
-                  {cvType === "leaveOneOut" &&
+                  {cvType === "LeaveOneOut" &&
                     `Leave-One-Out (n-1 splits, donde n es el tamaño del dataset)`}
                 </Typography>
               </Box>
