@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
 
-from sklearn.naive_bayes import abstractmethod
+from abc import abstractmethod
 
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset_cv
 
@@ -19,6 +19,12 @@ class FoldSplitter(BaseSplitter):
         )
 
     def split(self, x, y) -> Tuple[List[object], List[object], Dict]:
+        if len(x) < self.n_splits:
+            raise ValueError(
+                f"""Number of splits (n_splits={self.n_splits}) cannot be 
+                greater than the number of samples ({len(x)})."""
+            )
+        
         folds = self.split_indexes(
             x=x,
             y=y,

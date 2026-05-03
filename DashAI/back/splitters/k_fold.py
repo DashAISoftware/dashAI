@@ -13,7 +13,11 @@ class KFoldSplitter(FoldSplitter):
         indexes = np.arange(len(x))
 
         try:
-            kf = KFold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+            kf = KFold(
+                n_splits=n_splits, 
+                shuffle=shuffle, 
+                random_state=random_state if shuffle else None
+            )
             folds = list(kf.split(indexes))
         except ValueError as e:
             raise ValueError(

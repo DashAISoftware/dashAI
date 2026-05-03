@@ -3,7 +3,7 @@ from typing import Final
 
 from beartype.typing import Dict, List, Tuple, Union
 
-from DashAI.back.converters.scikit_learn.label_encoder import LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 
 
 class BaseSplitter:
@@ -21,8 +21,21 @@ class BaseSplitter:
         raise NotImplementedError("The split method must be implemented by subclasses.")
 
     def prepare_y(self, y):
+        if y is None:
+            raise ValueError(
+                "Target variable 'y' cannot be None for stratified splitting."
+            ) from e
+        
         if all(isinstance(v, int) for v in y):
             return y
+        
+        # Caso Dataset (HuggingFace / DashAIDataset)
+        if hasattr(y, "column_names"):
+            if len(y.column_names) != 1:
+                raise ValueError("y debe tener exactamente una columna") from e
+
+            col = y.column_names[0]
+            y = y[col]
 
         try:
             return LabelEncoder().fit_transform(y)

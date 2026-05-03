@@ -122,16 +122,12 @@ class ModelJob(BaseJob):
                 try:
                     # Get splits from the splitter
                     splitter: BaseSplitter = preparation_results["splitter"]
-                    print("SPLITTER", splitter)
                     # Get the dataset splits between input columns and output column
                     X, Y = preparation_results["X"], preparation_results["Y"]
-                    print("X", X)
-                    print("Y", Y)
 
                     # Get x,y but now splitted with train, validation and test indexes
                     # each one, and the indexes used for the splits
                     x, y, splits = splitter.split(X, Y)
-                    print("SPLITS", splits)
 
                     # save the obtained splits into the database
                     run.split_indexes = json.dumps(splits)
