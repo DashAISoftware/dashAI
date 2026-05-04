@@ -44,7 +44,7 @@ export default function DataloaderConfigBar({
   // Handler for when inference_rows changes - merge with schema values
   const handleInferenceRowsChange = useCallback(
     (val) => {
-      const numeric = val ? Number(val) : undefined;
+      const numeric = val ? Math.max(2, Number(val)) : 2;
       setInferenceRows(numeric);
       if (onValuesChange) {
         onValuesChange({ ...schemaValuesRef.current, inference_rows: numeric });
@@ -93,35 +93,41 @@ export default function DataloaderConfigBar({
         </Typography>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: "auto" }}>
-        <Box sx={{ px: 2, pt: 2, pb: 2 }}>
-          <Box sx={{ pb: 1 }}>
-            <FormSchemaFieldCard
-              label={t("datasets:label.inferenceRows")}
-              description={t("datasets:label.inferenceRowsDescription")}
-            >
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pt: 1, pb: 2 }}>
+        <Box
+          sx={{
+            pb: 1,
+          }}
+        >
+          <FormSchemaFieldCard
+            label={t("datasets:label.inferenceRows")}
+            description={t("datasets:label.inferenceRowsDescription")}
+          >
+            <FormInputWrapper>
               <InputWithDebounce
                 name="inference_rows"
                 value={inferenceRows}
                 onChange={handleInferenceRowsChange}
                 type="number"
+                variant="outlined"
                 size="small"
                 fullWidth
+                slotProps={{ input: { min: 2 } }}
               />
-            </FormSchemaFieldCard>
-          </Box>
-          <FormSchemaContainer>
-            <FormSchema
-              autoSave
-              model={selectedDataloader}
-              formSubmitRef={formSubmitRef}
-              setError={setError}
-              initialValues={{}}
-              onValuesChange={handleFormSchemaValuesChange}
-              showBorder={false}
-            />
-          </FormSchemaContainer>
+            </FormInputWrapper>
+          </FormSchemaFieldCard>
         </Box>
+        <FormSchemaContainer>
+          <FormSchema
+            autoSave
+            model={selectedDataloader}
+            formSubmitRef={formSubmitRef}
+            setError={setError}
+            initialValues={{}}
+            onValuesChange={handleFormSchemaValuesChange}
+            showBorder={false}
+          />
+        </FormSchemaContainer>
       </Box>
     </SideBar>
   );
