@@ -11,6 +11,7 @@ import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
+import { useModels } from "./ModelsContext";
 
 function CreateSessionSteps({
   backHome,
@@ -24,6 +25,7 @@ function CreateSessionSteps({
   const { t } = useTranslation(["models", "common"]);
   const tourContext = useTourContext();
   const hasAdvancedTourRef = useRef(false);
+  const { setSessionRightContent } = useModels();
 
   const [selectedDataset, setSelectedDataset] = useState(
     preselectedDatasetId
@@ -106,6 +108,26 @@ function CreateSessionSteps({
       formik.setFieldValue("name", defaultName);
     }
   }, [selectedTask, defaultName, formik]);
+
+  useEffect(() => {
+    if (selectedDataset) return;
+    setSessionRightContent(
+      <Box
+        sx={{
+          display: "flex",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 2,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          {t("models:label.selectDatasetFirst")}
+        </Typography>
+      </Box>,
+    );
+    return () => setSessionRightContent(null);
+  }, [selectedDataset]);
 
   const getNameError = () => {
     const currentName = formik.values.name.trim();

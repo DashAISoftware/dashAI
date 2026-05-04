@@ -316,9 +316,23 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     getTaskRequirements();
   }, []);
 
-  // Push SplitDatasetRows into the right bar
+  // Push SplitDatasetRows (or loading spinner) into the right bar
   useEffect(() => {
-    if (infoLoading) return;
+    if (infoLoading) {
+      setSessionRightContent(
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <CircularProgress size={32} />
+        </Box>,
+      );
+      return () => setSessionRightContent(null);
+    }
     setSessionRightContent(
       <SplitDatasetRows
         datasetInfo={datasetInfo}

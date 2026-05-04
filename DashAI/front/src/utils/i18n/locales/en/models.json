@@ -117,7 +117,7 @@
     "predictionsCount_other": "• <1>{{count}}</1> predictions",
     "divideColumnsAndSplits": "Divide columns and configure dataset splits",
     "prepareDataset": "Prepare Dataset",
-    "selectDatasetFirst": "Select a dataset first",
+    "selectDatasetFirst": "Select a dataset to configure its input and output columns and define how to split the rows into training, validation and test sets.",
     "retrainConfirmDetails": "Are you sure you want to re-train run \"<1>{{runName}}</1>\"?",
     "retrainModel": "Re-train Model?",
     "retrainWillDeleteOperations": "This run has existing operations that will be deleted",
