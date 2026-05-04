@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Card, CardContent, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -9,6 +9,7 @@ import {
   YAxis,
   Tooltip,
   Bar,
+  Cell,
 } from "recharts";
 import DatasetTable from "../DatasetTable";
 import ExportableCard from "../ExportableCard";
@@ -27,6 +28,7 @@ const OverviewTab = ({
   const { t } = useTranslation(["datasets", "common"]);
 
   const theme = useTheme();
+  const [activeBarIndex, setActiveBarIndex] = useState(null);
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
     missing: count,
@@ -134,6 +136,7 @@ const OverviewTab = ({
                   />
                   <YAxis />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: theme.palette.background.paper,
                       borderRadius: 4,
@@ -144,9 +147,26 @@ const OverviewTab = ({
                   />
                   <Bar
                     dataKey="missing"
-                    fill="rgba(136, 132, 216, 0.7)"
+                    fill="#8884d8"
                     name={t("common:missing")}
-                  />
+                    activeBar={false}
+                    onMouseEnter={(_, index) => setActiveBarIndex(index)}
+                    onMouseLeave={() => setActiveBarIndex(null)}
+                  >
+                    {missingData.map((_, index) => (
+                      <Cell
+                        key={index}
+                        fill="#8884d8"
+                        fillOpacity={
+                          index === activeBarIndex
+                            ? 1
+                            : activeBarIndex !== null
+                              ? 0.5
+                              : 0.7
+                        }
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </Box>
