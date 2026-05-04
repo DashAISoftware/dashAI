@@ -108,16 +108,20 @@ export default function ModelsRightBar({ onToggle }) {
       <SideBar>
         <Box
           sx={{
+            p: 2,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
+            flexShrink: 0,
+            height: 64,
             display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            height: "100%",
-            width: "100%",
+            alignItems: "center",
           }}
         >
-          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-            {sessionRightContent}
-          </Box>
+          <Typography variant="h6" color="text.primary">
+            {t("models:label.configureSession")}
+          </Typography>
+        </Box>
+        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+          {sessionRightContent}
         </Box>
       </SideBar>
     );

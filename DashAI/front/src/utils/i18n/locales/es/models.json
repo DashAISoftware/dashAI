@@ -66,6 +66,7 @@
     "chooseTaskForSessionWithDataset": "Elija la tarea de aprendizaje automático para su sesión con el dataset \"{{datasetName}}\".",
     "configureModel": "Configurar Modelo",
     "configureOptimizer": "Configurar Optimizador",
+    "configureSession": "Configurar Sesión",
     "configureTasksTrainCompareModels": "Configure tareas, entrene y compare modelos en sesiones organizadas. Seleccione una tarea para comenzar su flujo de trabajo de modelado.",
     "customMetrics": "Métricas Personalizadas",
     "datasetPredictions": "Predicciones de Dataset",
