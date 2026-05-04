@@ -16,10 +16,20 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_indexes,
     to_dashai_dataset,
 )
+from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
+from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
+from DashAI.back.models.scikit_learn.extra_trees_classifier import ExtraTreesClassifier
+from DashAI.back.models.scikit_learn.gaussian_nb import GaussianNB
+from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
+    GradientBoostingClassifier,
+)
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
+from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
+from DashAI.back.models.scikit_learn.mlp_classifier import MLPClassifier
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
+from DashAI.back.models.scikit_learn.sgd_classifier import SGDClassifier
 from DashAI.back.models.scikit_learn.svc import SVC
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata
@@ -119,6 +129,65 @@ def fixture_model_params() -> dict:
             "tol": 0.001,
             "verbose": False,
         },
+        "gradient_boosting": {
+            "loss": "log_loss",
+            "learning_rate": 0.1,
+            "n_estimators": 5,
+            "max_depth": 2,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "subsample": 1.0,
+            "random_state": 42,
+        },
+        "extra_trees": {
+            "n_estimators": 5,
+            "max_depth": None,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "bootstrap": False,
+            "random_state": 42,
+        },
+        "adaboost": {
+            "n_estimators": 5,
+            "learning_rate": 1.0,
+            "random_state": 42,
+        },
+        "bagging": {
+            "n_estimators": 5,
+            "max_samples": 1.0,
+            "max_features": 1.0,
+            "bootstrap": True,
+            "bootstrap_features": False,
+            "random_state": 42,
+        },
+        "gaussian_nb": {
+            "var_smoothing": 1e-9,
+        },
+        "mlp": {
+            "hidden_layer_size": 10,
+            "activation": "relu",
+            "solver": "adam",
+            "alpha": 0.0001,
+            "learning_rate_init": 0.001,
+            "max_iter": 50,
+            "random_state": 42,
+        },
+        "linear_svc": {
+            "C": 1.0,
+            "loss": "squared_hinge",
+            "max_iter": 100,
+            "tol": 1e-4,
+            "fit_intercept": True,
+            "random_state": 42,
+        },
+        "sgd": {
+            "loss": "hinge",
+            "alpha": 0.0001,
+            "max_iter": 100,
+            "tol": 1e-3,
+            "learning_rate": "optimal",
+            "random_state": 42,
+        },
     }
 
 
@@ -205,3 +274,134 @@ def test_get_schema_from_model_class():
         assert model_schema["type"] == "object"
         assert "properties" in model_schema
         assert isinstance(model_schema["properties"], dict)
+
+
+def test_check_is_fitted_new_classifiers(
+    divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
+):
+    gb_model = GradientBoostingClassifier(**model_params["gradient_boosting"])
+    gb_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    et_model = ExtraTreesClassifier(**model_params["extra_trees"])
+    et_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    ab_model = AdaBoostClassifier(**model_params["adaboost"])
+    ab_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    bag_model = BaggingClassifier(**model_params["bagging"])
+    bag_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    gnb_model = GaussianNB(**model_params["gaussian_nb"])
+    gnb_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    mlp_model = MLPClassifier(**model_params["mlp"])
+    mlp_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    lsvc_model = LinearSVCClassifier(**model_params["linear_svc"])
+    lsvc_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    sgd_model = SGDClassifier(**model_params["sgd"])
+    sgd_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+
+    try:
+        check_is_fitted(gb_model)
+        check_is_fitted(et_model)
+        check_is_fitted(ab_model)
+        check_is_fitted(bag_model)
+        check_is_fitted(gnb_model)
+        check_is_fitted(mlp_model)
+        check_is_fitted(lsvc_model)
+        check_is_fitted(sgd_model)
+    except Exception as e:
+        pytest.fail(
+            f"Unexpected error in test_check_is_fitted_new_classifiers: {repr(e)}"
+        )
+
+
+def test_predict_new_classifiers(
+    divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
+):
+    gb_model = GradientBoostingClassifier(**model_params["gradient_boosting"])
+    gb_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_gb = gb_model.predict(divided_dataset[0]["test"])
+
+    et_model = ExtraTreesClassifier(**model_params["extra_trees"])
+    et_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_et = et_model.predict(divided_dataset[0]["test"])
+
+    ab_model = AdaBoostClassifier(**model_params["adaboost"])
+    ab_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_ab = ab_model.predict(divided_dataset[0]["test"])
+
+    bag_model = BaggingClassifier(**model_params["bagging"])
+    bag_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_bag = bag_model.predict(divided_dataset[0]["test"])
+
+    gnb_model = GaussianNB(**model_params["gaussian_nb"])
+    gnb_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_gnb = gnb_model.predict(divided_dataset[0]["test"])
+
+    mlp_model = MLPClassifier(**model_params["mlp"])
+    mlp_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_mlp = mlp_model.predict(divided_dataset[0]["test"])
+
+    lsvc_model = LinearSVCClassifier(**model_params["linear_svc"])
+    lsvc_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_lsvc = lsvc_model.predict(divided_dataset[0]["test"])
+
+    sgd_model = SGDClassifier(**model_params["sgd"])
+    sgd_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    y_pred_sgd = sgd_model.predict(divided_dataset[0]["test"])
+
+    n_test = divided_dataset[0]["test"].num_rows
+    for y_pred in (
+        y_pred_gb,
+        y_pred_et,
+        y_pred_ab,
+        y_pred_bag,
+        y_pred_gnb,
+        y_pred_mlp,
+        y_pred_lsvc,
+        y_pred_sgd,
+    ):
+        assert isinstance(y_pred, np.ndarray)
+        assert len(y_pred) == n_test
+
+
+def test_not_fitted_new_classifiers(
+    divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
+):
+    with pytest.raises(NotFittedError):
+        GradientBoostingClassifier(**model_params["gradient_boosting"]).predict(
+            divided_dataset[0]["test"]
+        )
+
+    with pytest.raises(NotFittedError):
+        LinearSVCClassifier(**model_params["linear_svc"]).predict(
+            divided_dataset[0]["test"]
+        )
+
+    with pytest.raises(NotFittedError):
+        SGDClassifier(**model_params["sgd"]).predict(divided_dataset[0]["test"])
+
+
+def test_get_schema_from_new_classifier_classes():
+    new_models = (
+        GradientBoostingClassifier,
+        ExtraTreesClassifier,
+        AdaBoostClassifier,
+        BaggingClassifier,
+        GaussianNB,
+        MLPClassifier,
+        LinearSVCClassifier,
+        SGDClassifier,
+    )
+    for model_cls in new_models:
+        schema = model_cls.get_schema()
+        assert isinstance(schema, dict), f"{model_cls.__name__} schema is not a dict"
+        assert schema.get("type") == "object", (
+            f"{model_cls.__name__} schema type != object"
+        )
+        assert isinstance(schema.get("properties"), dict), (
+            f"{model_cls.__name__} schema has no properties dict"
+        )
