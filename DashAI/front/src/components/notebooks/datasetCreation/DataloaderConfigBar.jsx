@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useCallback, useRef, useState } from "react";
 import { useTheme } from "@mui/material/styles";
@@ -6,6 +6,8 @@ import FormSchema from "../../shared/FormSchema";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import FormInputWrapper from "../../configurableObject/Inputs/FormInputWrapper";
 import InputWithDebounce from "../../shared/InputWithDebounce";
+import { generateSequentialName } from "../../../utils/nameGenerator";
+import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
 import { useTranslation } from "react-i18next";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
 
@@ -91,34 +93,35 @@ export default function DataloaderConfigBar({
         </Typography>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pt: 2, pb: 2 }}>
-        <FormInputWrapper
-          description={t("datasets:label.inferenceRowsDescription")}
-        >
-          <InputWithDebounce
-            variant="outlined"
-            label={t("datasets:label.inferenceRows")}
-            name="inference_rows"
-            value={inferenceRows}
-            onChange={handleInferenceRowsChange}
-            type="number"
-            helperText=" "
-            margin="dense"
-            inputProps={{ min: 1 }}
-          />
-        </FormInputWrapper>
-
-        <FormSchemaContainer>
-          <FormSchema
-            autoSave
-            model={selectedDataloader}
-            formSubmitRef={formSubmitRef}
-            setError={setError}
-            initialValues={{}}
-            onValuesChange={handleFormSchemaValuesChange}
-            showBorder={false}
-          />
-        </FormSchemaContainer>
+      <Box sx={{ flex: 1, overflowY: "auto" }}>
+        <Box sx={{ px: 2, pt: 2, pb: 2 }}>
+          <Box sx={{ pb: 1 }}>
+            <FormSchemaFieldCard
+              label={t("datasets:label.inferenceRows")}
+              description={t("datasets:label.inferenceRowsDescription")}
+            >
+              <InputWithDebounce
+                name="inference_rows"
+                value={inferenceRows}
+                onChange={handleInferenceRowsChange}
+                type="number"
+                size="small"
+                fullWidth
+              />
+            </FormSchemaFieldCard>
+          </Box>
+          <FormSchemaContainer>
+            <FormSchema
+              autoSave
+              model={selectedDataloader}
+              formSubmitRef={formSubmitRef}
+              setError={setError}
+              initialValues={{}}
+              onValuesChange={handleFormSchemaValuesChange}
+              showBorder={false}
+            />
+          </FormSchemaContainer>
+        </Box>
       </Box>
     </SideBar>
   );
