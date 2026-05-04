@@ -194,6 +194,8 @@ function CreateSessionSteps({
         variant: "success",
       });
 
+      formik.resetForm();
+
       if (tourContext?.run) {
         tourContext.stopTour();
         sessionStorage.setItem("startModelsSessionTour", "true");
