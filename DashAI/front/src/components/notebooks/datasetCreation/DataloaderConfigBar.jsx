@@ -103,7 +103,7 @@ export default function DataloaderConfigBar({
             label={t("datasets:label.inferenceRows")}
             description={t("datasets:label.inferenceRowsDescription")}
           >
-            <FormInputWrapper>
+            <Box sx={{ pt: 0.75 }}>
               <InputWithDebounce
                 name="inference_rows"
                 value={inferenceRows}
@@ -114,7 +114,7 @@ export default function DataloaderConfigBar({
                 fullWidth
                 slotProps={{ input: { min: 2 } }}
               />
-            </FormInputWrapper>
+            </Box>
           </FormSchemaFieldCard>
         </Box>
         <FormSchemaContainer>
