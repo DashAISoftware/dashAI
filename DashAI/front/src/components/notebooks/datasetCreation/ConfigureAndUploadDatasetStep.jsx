@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Box, Button, Grid, TextField } from "@mui/material";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
@@ -26,6 +26,7 @@ export default function ConfigureAndUploadDatasetStep({
     [existingDatasets],
   );
   const [datasetName, setDatasetName] = useState("");
+  const lastAutoFilledRef = useRef(null);
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
@@ -40,8 +41,10 @@ export default function ConfigureAndUploadDatasetStep({
   const theme = useTheme();
 
   useEffect(() => {
-    if (defaultName && !datasetName) {
+    if (!defaultName) return;
+    if (!datasetName || datasetName === lastAutoFilledRef.current) {
       setDatasetName(defaultName);
+      lastAutoFilledRef.current = defaultName;
     }
   }, [defaultName]);
 
@@ -196,6 +199,16 @@ export default function ConfigureAndUploadDatasetStep({
         minHeight: 0,
       }}
     >
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          label={t("datasets:label.datasetName")}
+          value={datasetName}
+          onChange={(e) => setDatasetName(e.target.value)}
+          fullWidth
+          size="small"
+        />
+      </Box>
+
       <Grid
         container
         direction="column"
@@ -209,15 +222,6 @@ export default function ConfigureAndUploadDatasetStep({
           width: "100%",
         }}
       >
-        <Grid size={{ xs: 12 }}>
-          <TextField
-            label={t("datasets:label.datasetName")}
-            value={datasetName}
-            onChange={(e) => setDatasetName(e.target.value)}
-            fullWidth
-            size="small"
-          />
-        </Grid>
         <Upload
           onFileUpload={handleFileUpload}
           formSubmitRef={formSubmitRef}
