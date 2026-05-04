@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
  * Splits card shell — same Paper/header visual as FormSchemaFieldCard but WITHOUT
  * the label-hiding CSS so Train / Validation / Test TextField labels stay visible.
  */
-function SplitsCard({ label, errorMessage, children }) {
+function SplitsCard({ label, description, errorMessage, children }) {
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
       <Box
@@ -39,18 +39,18 @@ function SplitsCard({ label, errorMessage, children }) {
           {label}
         </Typography>
       </Box>
-      <Box sx={{ px: 2, pt: 0.5, pb: errorMessage ? 0.5 : 1 }}>
+      <Box sx={{ px: 2, pt: 0.5, pb: description || errorMessage ? 0.5 : 1 }}>
         {children}
       </Box>
-      {errorMessage && (
+      {(description || errorMessage) && (
         <Box sx={{ px: 2, pb: 0.5 }}>
           <Typography
             component="span"
             variant="caption"
-            color="error.main"
+            color={errorMessage ? "error.main" : "text.disabled"}
             sx={{ display: "block", lineHeight: 1.5 }}
           >
-            {errorMessage}
+            {errorMessage ?? description}
           </Typography>
         </Box>
       )}
@@ -78,8 +78,12 @@ function SplitDatasetRows({
   const { t } = useTranslation(["experiments", "common"]);
 
   const totalRows = datasetInfo.total_rows;
-  const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(2);
-  const validationDatasetPercentage = (datasetInfo.val_size / totalRows).toFixed(2);
+  const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
+    2,
+  );
+  const validationDatasetPercentage = (
+    datasetInfo.val_size / totalRows
+  ).toFixed(2);
   const testDatasetPercentage = (datasetInfo.test_size / totalRows).toFixed(2);
 
   const hasPredefinedSplits =
@@ -106,9 +110,15 @@ function SplitDatasetRows({
       const newSplit = { train: 0.6, test: 0.2, validation: 0.2 };
       setRowsPartitionsPercentage(newSplit);
       const hasZero = newSplit.train === 0;
-      const sumsToOne = checkSplit(newSplit.train, newSplit.validation, newSplit.test);
+      const sumsToOne = checkSplit(
+        newSplit.train,
+        newSplit.validation,
+        newSplit.test,
+      );
       if (hasZero) {
-        setRandomSplitErrorText(t("experiments:error.trainSplitMustBeGreaterThanZero"));
+        setRandomSplitErrorText(
+          t("experiments:error.trainSplitMustBeGreaterThanZero"),
+        );
         setRandomSplitError(true);
       } else if (!sumsToOne) {
         setRandomSplitErrorText(t("experiments:error.splitsMustSumToOne"));
@@ -120,7 +130,9 @@ function SplitDatasetRows({
     if (newType === SPLIT_TYPES.MANUAL) {
       const newIndex = { train: [], test: [], validation: [] };
       setRowsPartitionsIndex(newIndex);
-      setManualSplitErrorText(t("experiments:error.trainSplitMustHaveAtLeastOneRow"));
+      setManualSplitErrorText(
+        t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
+      );
       setManualSplitError(true);
     }
   };
@@ -135,7 +147,9 @@ function SplitDatasetRows({
         const updatedIndex = { ...rowsPartitionsIndex, [id]: rowsIndex };
         setRowsPartitionsIndex(updatedIndex);
         if (updatedIndex.train.length === 0) {
-          setManualSplitErrorText(t("experiments:error.trainSplitMustHaveAtLeastOneRow"));
+          setManualSplitErrorText(
+            t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
+          );
           setManualSplitError(true);
         } else {
           setManualSplitError(false);
@@ -149,9 +163,15 @@ function SplitDatasetRows({
       const newSplit = { ...rowsPartitionsPercentage, [id]: numValue };
       setRowsPartitionsPercentage(newSplit);
       const hasZero = newSplit.train === 0;
-      const sumsToOne = checkSplit(newSplit.train, newSplit.validation, newSplit.test);
+      const sumsToOne = checkSplit(
+        newSplit.train,
+        newSplit.validation,
+        newSplit.test,
+      );
       if (hasZero) {
-        setRandomSplitErrorText(t("experiments:error.trainSplitMustBeGreaterThanZero"));
+        setRandomSplitErrorText(
+          t("experiments:error.trainSplitMustBeGreaterThanZero"),
+        );
         setRandomSplitError(true);
       } else if (!sumsToOne) {
         setRandomSplitErrorText(t("experiments:error.splitsMustSumToOne"));
@@ -244,9 +264,6 @@ function SplitDatasetRows({
           </Typography>
         </Box>
         <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
-            {t("experiments:label.selectHowToDivideDataset")}
-          </Typography>
           <ToggleButtonGroup
             value={splitType}
             exclusive
@@ -265,12 +282,22 @@ function SplitDatasetRows({
               </ToggleButton>
             ))}
           </ToggleButtonGroup>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mb: 0.75 }}
+          >
+            {t("experiments:label.selectHowToDivideDataset")}
+          </Typography>
         </Box>
       </Paper>
 
       {/* Predefined */}
       {splitType === SPLIT_TYPES.PREDEFINED && (
-        <SplitsCard label={t("experiments:label.splits")}>
+        <SplitsCard
+          label={t("experiments:label.splits")}
+          description={t("experiments:label.splitsDescription")}
+        >
           <Grid container spacing={1}>
             {[
               { id: "train", value: trainDatasetPercentage },
@@ -287,7 +314,9 @@ function SplitDatasetRows({
                   disabled
                   slotProps={{ inputLabel: { shrink: true } }}
                   sx={{
-                    "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "#999" },
+                    "& .MuiInputBase-input.Mui-disabled": {
+                      WebkitTextFillColor: "#999",
+                    },
                     "& .MuiInputLabel-root.Mui-disabled": { color: "#bbb" },
                   }}
                 />
@@ -302,6 +331,7 @@ function SplitDatasetRows({
         <>
           <SplitsCard
             label={t("experiments:label.splits")}
+            description={t("experiments:label.splitsDescription")}
             errorMessage={randomSplitError ? randomSplitErrorText : undefined}
           >
             <Grid container spacing={1}>
@@ -374,6 +404,7 @@ function SplitDatasetRows({
       {splitType === SPLIT_TYPES.MANUAL && (
         <SplitsCard
           label={t("experiments:label.rowIndexes")}
+          description={t("experiments:label.rowIndexesDescription")}
           errorMessage={manualSplitError ? manualSplitErrorText : undefined}
         >
           <Grid container spacing={1}>
