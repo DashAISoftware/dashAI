@@ -89,7 +89,9 @@ class HyperOptOptimizer(BaseOptimizer):
 
         return search_space
 
-    def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
+    def optimize(
+        self, model, input_dataset, output_dataset, parameters, metric, strategy
+    ):
         """
         Optimization process
 
@@ -99,7 +101,7 @@ class HyperOptOptimizer(BaseOptimizer):
             output_dataset (dict): dict with validation dataset
             parameters (dict): dict with the information to create the search space
             metric (class): class for the metric to optimize
-            task (string): Name of the current task
+            strategy (function): function to evaluate the model (e.g. cross-validation)
 
         Returns
         -------

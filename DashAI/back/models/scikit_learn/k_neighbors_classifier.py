@@ -57,8 +57,8 @@ class KNeighborsClassifierSchema(BaseSchema):
         enum_field(enum=["auto", "ball_tree", "kd_tree", "brute"]),
         placeholder="auto",
         description=MultilingualString(
-            en=("The parameter must be 'auto', 'ball_tree', 'kd_tree', or 'brute'."),
-            es=("El parámetro debe ser 'auto', 'ball_tree', 'kd_tree' o 'brute'.",),
+            en="The parameter must be 'auto', 'ball_tree', 'kd_tree', or 'brute'.",
+            es="El parámetro debe ser 'auto', 'ball_tree', 'kd_tree' o 'brute'.",
         ),
         alias=MultilingualString(en="Algorithm", es="Algoritmo"),
     )  # type: ignore

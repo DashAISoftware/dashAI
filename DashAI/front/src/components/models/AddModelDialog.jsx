@@ -45,7 +45,7 @@ function AddModelDialog({
   const [name, setName] = useState("");
   const [selectedModel, setSelectedModel] = useState(preselectedModel || "");
   const [modelParameters, setModelParameters] = useState({});
-  const [selectedOptimizer, setSelectedOptimizer] = useState("OptunaOptimizer");
+  const [selectedOptimizer, setSelectedOptimizer] = useState("");
   const [optimizerParameters, setOptimizerParameters] = useState({});
   const [loading, setLoading] = useState(false);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
@@ -132,7 +132,7 @@ function AddModelDialog({
       setName("");
       setSelectedModel("");
       setModelParameters({});
-      setSelectedOptimizer("OptunaOptimizer");
+      setSelectedOptimizer("");
       setOptimizerParameters({});
       setGoalMetric("");
       setHasUserTouchedName(false);
@@ -182,6 +182,9 @@ function AddModelDialog({
   const handleBack = () => {
     if (activeStep > 0) {
       setActiveStep(activeStep - 1);
+      setSelectedOptimizer("");
+      setOptimizerParameters({});
+      setGoalMetric("");
     }
   };
 
