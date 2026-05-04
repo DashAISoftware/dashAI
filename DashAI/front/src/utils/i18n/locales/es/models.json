@@ -117,7 +117,7 @@
     "predictionsCount_other": "• <1>{{count}}</1> predicciones",
     "divideColumnsAndSplits": "Divide columnas y configura las particiones del dataset",
     "prepareDataset": "Preparar Dataset",
-    "selectDatasetFirst": "Selecciona un dataset para configurar sus columnas de entrada y salida y definir cómo dividir las filas en conjuntos de entrenamiento, validación y prueba.",
+    "selectDatasetFirst": "Selecciona un dataset para configurar sus columnas y particiones de filas.",
     "retrainConfirmDetails": "¿Está seguro de que desea re-entrenar la ejecución \"<1>{{runName}}</1>\"?",
     "retrainModel": "¿Re-entrenar Modelo?",
     "retrainWillDeleteOperations": "Esta ejecución tiene operaciones existentes que serán eliminadas",
