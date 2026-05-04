@@ -69,7 +69,11 @@ export default function SelectDataloaderStep({
           </Box>
         ) : (
           <ComponentSelector
-            components={dataloaders}
+            components={dataloaders.map((d) => ({
+              ...d,
+              category: d.metadata?.category,
+            }))}
+            categoryKey="category"
             selected={selectedDataloader || null}
             onSelect={(item) => {
               setSelectedDataloader(item);
