@@ -63,17 +63,9 @@ def _filter_by_language(
         if isinstance(value, MultilingualString):
             return value.get(lang_code)
 
-        # If it's a dictionary, check if it's a serialized MultilingualString
+        # If it's a dictionary, recursively process it
         elif isinstance(value, dict):
-            # Check if this dict looks like a serialized MultilingualString
-            # (has only 'en' and/or 'es' keys)
-            keys = set(value.keys())
-            if keys.issubset({"en", "es"}):
-                # This looks like a MultilingualString dict - extract the language value
-                return value.get(lang_code, value.get("en"))
-            else:
-                # Regular dict - recursively process all values
-                return {k: process_value(v) for k, v in value.items()}
+            return {k: process_value(v) for k, v in value.items()}
 
         # If it's a list, recursively process each item
         elif isinstance(value, list):
