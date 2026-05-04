@@ -33,7 +33,7 @@ export default function ModelGrid({
             model.color ?? MODEL_COLORS[globalIndex % MODEL_COLORS.length];
           return (
             <Grid
-              size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+              size={{ xl: 4, lg: 4, md: 6, sm: 12, xs: 12 }}
               key={model.name}
             >
               <ModelCard
