@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Typography, TextField, Box, Button } from "@mui/material";
 import { useFormik } from "formik";
 import DatasetAutocomplete from "./DatasetAutocomplete";
@@ -31,6 +31,8 @@ export default function UploadNotebookSteps({
     );
     return `Notebook_${maxId + 1}`;
   }, [existingNotebooks]);
+
+  const lastAutoFilledRef = useRef(null);
 
   const formik = useFormik({
     initialValues: {
@@ -72,8 +74,11 @@ export default function UploadNotebookSteps({
   });
 
   useEffect(() => {
-    if (defaultName && !formik.values.name.trim()) {
+    if (!defaultName) return;
+    const currentName = formik.values.name.trim();
+    if (!currentName || currentName === lastAutoFilledRef.current) {
       formik.setFieldValue("name", defaultName);
+      lastAutoFilledRef.current = defaultName;
     }
   }, [defaultName]);
 
