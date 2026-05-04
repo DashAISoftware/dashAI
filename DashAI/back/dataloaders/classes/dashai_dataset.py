@@ -665,6 +665,37 @@ class DashAIDataset(Dataset):
 
         return DashAIDataset(table=subset_table, splits=self.splits, types=subset_types)
 
+    def __getitem__(self, key):
+        result = super().__getitem__(key)
+        if not isinstance(result, dict):
+            return result
+
+        from DashAI.back.types.dashai_image import DashAIImage
+
+        image_cols = [
+            c
+            for c, t in self._types.items()
+            if isinstance(t, DashAIImage) and c in result
+        ]
+        if not image_cols:
+            return result
+
+        if isinstance(key, int):
+            for col in image_cols:
+                if isinstance(result[col], dict):
+                    result[col] = DashAIImage(
+                        bytes=result[col].get("bytes"), path=result[col].get("path")
+                    )
+        elif isinstance(key, slice):
+            for col in image_cols:
+                result[col] = [
+                    DashAIImage(bytes=v.get("bytes"), path=v.get("path"))
+                    if isinstance(v, dict)
+                    else v
+                    for v in result[col]
+                ]
+        return result
+
     @beartype
     def select(self, *args, **kwargs) -> "DashAIDataset":
         """

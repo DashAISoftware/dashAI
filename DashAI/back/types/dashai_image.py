@@ -1,40 +1,51 @@
-# flake8: noqa
-# Not implemented yet
-from dataclasses import dataclass
-from typing import Optional
+"""DashAI Image type."""
+
+from __future__ import annotations
+
+import io
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, ClassVar, Optional
+
+import pyarrow as pa
 
 from DashAI.back.types.dashai_data_type import DashAIDataType
+
+if TYPE_CHECKING:
+    import numpy as np
+    from PIL import Image as PILImage
 
 
 @dataclass
 class DashAIImage(DashAIDataType):
-    """
-    Represents an image data type in DashAI.
+    """Image type for DashAI datasets.
 
-    Attributes
-    ----------
-    dtype : str
-        The data type of the image, default is "struct" (Arrow struct<bytes: binary, path: string>).
-    base_path : Optional[str]
-        An optional base path for images.
+    Serves dual roles:
+    - Column type descriptor: ``DashAIImage()`` — bytes/path are None.
+    - Data instance returned by ``DashAIDataset.__getitem__``:
+      ``DashAIImage(bytes=b"...", path="cat.jpg")``.
     """
+
+    pa_type: ClassVar[pa.DataType] = pa.struct(
+        {"bytes": pa.binary(), "path": pa.string()}
+    )
 
     dtype: str = "struct"
-    base_path: Optional[str] = None
+    bytes: Optional[bytes] = field(default=None, repr=False)
+    path: Optional[str] = field(default=None, repr=False)
 
-    def __init__(self, dtype: str = "struct"):
-        self.dtype = dtype
-
-    def to_string(self):
-        """
-        Convert the DashAIImage type to a string representation.
-
-        Returns
-        -------
-        dict
-            A dictionary representation of the DashAIImage type.
-        """
-        if self.base_path:
-            return {"type": "Image", "dtype": self.dtype, "base_path": self.base_path}
-
+    def to_string(self) -> dict:
         return {"type": "Image", "dtype": self.dtype}
+
+    def to_pil(self) -> "PILImage":
+        """Decode image bytes to a PIL Image."""
+        from PIL import Image as PILImage
+
+        if self.bytes is None:
+            raise ValueError("No image bytes available.")
+        return PILImage.open(io.BytesIO(self.bytes))
+
+    def to_numpy(self) -> "np.ndarray":
+        """Decode image bytes to a NumPy array (H x W x C, uint8)."""
+        import numpy as np
+
+        return np.array(self.to_pil())

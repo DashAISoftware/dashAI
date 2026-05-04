@@ -1,6 +1,5 @@
 """MLP-based image classifier for DashAI."""
 
-import datasets
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -68,11 +67,11 @@ class MLPImageClassifierSchema(BaseSchema):
 
 
 class _ImageDataset(torch.utils.data.Dataset):
-    """Torch Dataset wrapper for HuggingFace image datasets."""
+    """Torch Dataset wrapper for DashAI image datasets."""
 
-    def __init__(self, hf_dataset: datasets.Dataset, has_labels: bool = True):
-        self.dataset = hf_dataset
-        self.has_labels = has_labels
+    def __init__(self, x_dataset, y_dataset=None):
+        self.x_dataset = x_dataset
+        self.y_dataset = y_dataset
         self.transforms = transforms.Compose(
             [
                 transforms.Resize((30, 30)),
@@ -80,40 +79,21 @@ class _ImageDataset(torch.utils.data.Dataset):
             ]
         )
 
-        column_names = list(self.dataset.features.keys())
-        self.image_col_name = column_names[0]
+        self.image_col_name = list(x_dataset.features.keys())[0]
         self.label_col_name = (
-            column_names[1] if has_labels and len(column_names) > 1 else None
+            list(y_dataset.features.keys())[0] if y_dataset is not None else None
         )
 
-        # Create label to index mapping if labels exist
         self.label_to_idx = {}
         self.idx_to_label = {}
         if self.label_col_name:
-            unique_labels = sorted(set(self.dataset[self.label_col_name]))
+            unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
             self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
             self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
 
-        pil_image = self._get_pil_image(self.dataset[0][self.image_col_name])
-        self.tensor_shape = self.transforms(pil_image).shape
-
-    @staticmethod
-    def _get_pil_image(img_data):
-        """Convert image data (dict with bytes or PIL.Image) to PIL.Image."""
-        import io
-
-        from PIL import Image
-
-        if isinstance(img_data, dict) and "bytes" in img_data:
-            buffer = io.BytesIO(img_data["bytes"])
-            return Image.open(buffer)
-        elif isinstance(img_data, bytes):
-            buffer = io.BytesIO(img_data)
-            return Image.open(buffer)
-        elif hasattr(img_data, "format"):
-            return img_data
-        else:
-            raise TypeError(f"Unsupported image data type: {type(img_data)}")
+        self.tensor_shape = self.transforms(
+            self.x_dataset[0][self.image_col_name].to_pil()
+        ).shape
 
     def num_classes(self):
         if self.label_col_name is None:
@@ -121,15 +101,13 @@ class _ImageDataset(torch.utils.data.Dataset):
         return len(self.label_to_idx)
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.x_dataset)
 
     def __getitem__(self, idx):
-        pil_image = self._get_pil_image(self.dataset[idx][self.image_col_name])
-        image = self.transforms(pil_image)
+        image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
         if self.label_col_name is None:
             return image
-        # Convert label string to index
-        label_str = self.dataset[idx][self.label_col_name]
+        label_str = self.y_dataset[idx][self.label_col_name]
         label_idx = self.label_to_idx[label_str]
         return image, label_idx
 
@@ -247,16 +225,7 @@ class MLPImageClassifier(BaseModel):
         MLPImageClassifier
             The trained model instance.
         """
-        image_col = list(x_train.features.keys())[0]
-        label_col = list(y_train.features.keys())[0]
-
-        hf_dataset = datasets.Dataset.from_dict(
-            {
-                "image": x_train[image_col],
-                "label": y_train[label_col],
-            }
-        )
-        image_dataset = _ImageDataset(hf_dataset, has_labels=True)
+        image_dataset = _ImageDataset(x_train, y_dataset=y_train)
 
         self.input_dim = (
             image_dataset.tensor_shape[0]
@@ -306,9 +275,7 @@ class MLPImageClassifier(BaseModel):
         list of lists
             List of predicted probabilities for each class for each image.
         """
-        image_col = list(x.features.keys())[0]
-        hf_dataset = datasets.Dataset.from_dict({"image": x[image_col]})
-        image_dataset = _ImageDataset(hf_dataset, has_labels=False)
+        image_dataset = _ImageDataset(x, y_dataset=None)
         test_loader = torch.utils.data.DataLoader(
             image_dataset,
             batch_size=32,
