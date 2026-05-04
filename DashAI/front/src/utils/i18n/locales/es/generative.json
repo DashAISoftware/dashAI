@@ -25,7 +25,7 @@
     "showLess": "Mostrar menos",
     "readMore": "Leer más",
     "generativeModule": "Módulo Generativo",
-    "createNewSession": "Crear una nueva sesión",
+    "createNewSession": "Crear una Nueva Sesión",
     "createNewSessionDescription": "Elige un modelo, configura sus parámetros y empieza a conversar.",
     "configureSession": "Configurar sesión",
     "modelHasNoParameters": "Este modelo no tiene parámetros configurables.",

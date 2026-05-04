@@ -25,7 +25,7 @@
     "showLess": "Show less",
     "readMore": "Read more",
     "generativeModule": "Generative Module",
-    "createNewSession": "Create a new session",
+    "createNewSession": "Create a New Session",
     "createNewSessionDescription": "Pick a model, configure its parameters, and start chatting.",
     "configureSession": "Configure session",
     "modelHasNoParameters": "This model has no configurable parameters.",
