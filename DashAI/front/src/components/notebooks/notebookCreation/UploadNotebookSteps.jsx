@@ -4,7 +4,6 @@ import { useFormik } from "formik";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
-import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
@@ -25,17 +24,13 @@ export default function UploadNotebookSteps({
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
 
-  const { defaultName } = useMemo(() => {
-    if (!selectedDataset) {
-      return { defaultName: "" };
-    }
-
-    return generateSequentialName({
-      base: `Notebook_${selectedDataset.name}`,
-      items: existingNotebooks,
-      filter: (notebook) => notebook.dataset_id === selectedDataset.id,
-    });
-  }, [selectedDataset, existingNotebooks]);
+  const defaultName = useMemo(() => {
+    const maxId = existingNotebooks.reduce(
+      (max, nb) => Math.max(max, nb.id ?? 0),
+      0,
+    );
+    return `Notebook_${maxId + 1}`;
+  }, [existingNotebooks]);
 
   const formik = useFormik({
     initialValues: {
@@ -77,32 +72,12 @@ export default function UploadNotebookSteps({
   });
 
   useEffect(() => {
-    if (selectedDataset && defaultName && !formik.values.name.trim()) {
-      formik.setValues({
-        name: defaultName,
-        description: formik.values.description,
-      });
+    if (defaultName && !formik.values.name.trim()) {
+      formik.setFieldValue("name", defaultName);
     }
-  }, [
-    selectedDataset,
-    defaultName,
-    formik.values.name,
-    formik.values.description,
-  ]);
+  }, [defaultName]);
 
-  const getNameError = () => {
-    if (!selectedDataset) {
-      return null;
-    }
-
-    const currentName = formik.values.name.trim();
-    if (!currentName) {
-      return t("common:nameRequired");
-    }
-    return null;
-  };
-
-  const nameError = getNameError();
+  const nameError = formik.values.name.trim() ? null : t("common:nameRequired");
   const isValid = selectedDataset && !nameError;
 
   return (
@@ -140,12 +115,6 @@ export default function UploadNotebookSteps({
           message={t("datasets:label.notebookCreationNote")}
         />
 
-        <DatasetAutocomplete
-          datasets={datasets}
-          selectedDataset={selectedDataset}
-          setSelectedDataset={setSelectedDataset}
-        />
-
         <TextField
           fullWidth
           label={t("datasets:label.notebookName")}
@@ -153,15 +122,10 @@ export default function UploadNotebookSteps({
           value={formik.values.name}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          error={Boolean(selectedDataset && formik.touched.name && nameError)}
-          helperText={selectedDataset && formik.touched.name ? nameError : ""}
-          disabled={!selectedDataset}
-          placeholder={
-            !selectedDataset
-              ? t("datasets:label.selectDatasetFirst")
-              : t("datasets:label.notebookName")
-          }
+          error={Boolean(formik.touched.name && nameError)}
+          helperText={formik.touched.name ? nameError : ""}
         />
+
         <TextField
           fullWidth
           multiline
@@ -175,6 +139,12 @@ export default function UploadNotebookSteps({
             formik.touched.description && formik.errors.description,
           )}
           helperText={formik.touched.description && formik.errors.description}
+        />
+
+        <DatasetAutocomplete
+          datasets={datasets}
+          selectedDataset={selectedDataset}
+          setSelectedDataset={setSelectedDataset}
         />
       </Box>
 
