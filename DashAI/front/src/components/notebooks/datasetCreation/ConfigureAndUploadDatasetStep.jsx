@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Button, Grid } from "@mui/material";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Box, Button, Grid, TextField } from "@mui/material";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { forceRefreshNow } from "../../../utils/jobPoller";
 import { useTourContext } from "../../tour/TourProvider";
-
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -19,7 +19,13 @@ export default function ConfigureAndUploadDatasetStep({
   formValues,
   onPreviewError,
   formHasErrors,
+  existingDatasets = [],
 }) {
+  const { defaultName } = useMemo(
+    () => generateSequentialName({ base: "Dataset", items: existingDatasets }),
+    [existingDatasets],
+  );
+  const [datasetName, setDatasetName] = useState("");
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
@@ -32,6 +38,12 @@ export default function ConfigureAndUploadDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
   const theme = useTheme();
+
+  useEffect(() => {
+    if (defaultName && !datasetName) {
+      setDatasetName(defaultName);
+    }
+  }, [defaultName]);
 
   useEffect(() => {
     if (onPreviewError) {
@@ -66,7 +78,7 @@ export default function ConfigureAndUploadDatasetStep({
       // Merge values coming from the form schema and the onValuesChange callback
       const params = { ...refValues, ...(formValues || {}) };
 
-      const name = params.name || datasetFileToUpload.file.name;
+      const name = datasetName.trim() || datasetFileToUpload.file.name;
       params["name"] = name;
 
       // Ensure dataloader is passed as a string (backend expects the dataloader name)
@@ -197,6 +209,15 @@ export default function ConfigureAndUploadDatasetStep({
           width: "100%",
         }}
       >
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            label={t("datasets:label.datasetName")}
+            value={datasetName}
+            onChange={(e) => setDatasetName(e.target.value)}
+            fullWidth
+            size="small"
+          />
+        </Grid>
         <Upload
           onFileUpload={handleFileUpload}
           formSubmitRef={formSubmitRef}

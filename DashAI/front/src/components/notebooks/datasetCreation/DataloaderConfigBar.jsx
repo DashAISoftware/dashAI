@@ -1,9 +1,8 @@
 import { Box, Typography } from "@mui/material";
 import PropTypes from "prop-types";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
-import { generateSequentialName } from "../../../utils/nameGenerator";
 import FormInputWrapper from "../../configurableObject/Inputs/FormInputWrapper";
 import InputWithDebounce from "../../shared/InputWithDebounce";
 import { useTranslation } from "react-i18next";
@@ -23,22 +22,12 @@ export default function DataloaderConfigBar({
   selectedDataloader,
   formSubmitRef,
   setError,
-  existingDatasets = [],
   onValuesChange,
 }) {
   const [inferenceRows, setInferenceRows] = useState(1000);
   // Track FormSchema values separately so we can merge with inference_rows
   const schemaValuesRef = useRef({});
   const { t } = useTranslation(["common", "datasets"]);
-
-  const { defaultName } = useMemo(
-    () =>
-      generateSequentialName({
-        base: "Dataset",
-        items: existingDatasets,
-      }),
-    [existingDatasets],
-  );
 
   // Handler for when FormSchema values change - merge with inference_rows
   const handleFormSchemaValuesChange = useCallback(() => {
@@ -158,7 +147,7 @@ export default function DataloaderConfigBar({
               model={selectedDataloader}
               formSubmitRef={formSubmitRef}
               setError={setError}
-              initialValues={{ name: defaultName }}
+              initialValues={{}}
               onValuesChange={handleFormSchemaValuesChange}
               showBorder={false}
             />
@@ -173,6 +162,5 @@ DataloaderConfigBar.propTypes = {
   selectedDataloader: PropTypes.string,
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
   setError: PropTypes.func,
-  existingDatasets: PropTypes.array,
   onValuesChange: PropTypes.func,
 };

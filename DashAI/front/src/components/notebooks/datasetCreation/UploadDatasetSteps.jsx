@@ -132,7 +132,6 @@ export default function UploadDatasetSteps({ backHome }) {
           selectedDataloader={selectedDataloader.name}
           formSubmitRef={formSubmitRef}
           setError={setError}
-          existingDatasets={datasets}
           onValuesChange={setFormValues}
         />,
       );
@@ -191,6 +190,7 @@ export default function UploadDatasetSteps({ backHome }) {
           formValues={formValues}
           onPreviewError={setPreviewError}
           formHasErrors={error}
+          existingDatasets={datasets}
         />
       )}
     </Box>
