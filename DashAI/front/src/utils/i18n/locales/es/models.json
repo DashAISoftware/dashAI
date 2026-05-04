@@ -95,6 +95,7 @@
     "modelComparison": "Comparación de Modelos",
     "modelsModule": "Módulo de Modelos",
     "nameYourSession": "Nombre su Sesión",
+    "selectDatasetAndPrepare": "Nombra tu sesión, selecciona un dataset y configura sus columnas y particiones.",
     "noCompatibleModelsFound": "No se encontraron modelos compatibles",
     "noDatasetPredictionsYet": "Aún no hay predicciones de dataset",
     "noGlobalExplainersYet": "Aún no hay explicadores globales",

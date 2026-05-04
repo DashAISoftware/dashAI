@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { useLocation, useNavigate } from "react-router-dom";
 import { Box, Button, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
+import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
@@ -20,14 +20,6 @@ function CreateSessionSteps({
   existingSessions = [],
   preselectedDatasetId = null,
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const taskName = selectedTask?.name;
-  const baseSessionPath = taskName
-    ? `/app/models/sessions/new/${taskName}`
-    : "/app/models";
-  const preparePath = `${baseSessionPath}/prepare`;
-  const activeStep = location.pathname.startsWith(preparePath) ? 1 : 0;
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
   const tourContext = useTourContext();
@@ -39,8 +31,24 @@ function CreateSessionSteps({
       : null,
   );
 
+  const [newExp, setNewExp] = useState({
+    name: "",
+    dataset: null,
+    task_name: selectedTask?.name || "",
+    input_columns: [],
+    output_columns: [],
+    train_metrics: [],
+    validation_metrics: [],
+    test_metrics: [],
+    splits: {},
+    runs: [],
+  });
+
+  const [nextEnabled, setNextEnabled] = useState(false);
+
   const handleDatasetChange = (newDataset) => {
     setSelectedDataset(newDataset);
+    setNewExp((prev) => ({ ...prev, dataset: newDataset }));
     if (
       tourContext?.run &&
       tourContext?.stepIndex === 5 &&
@@ -63,21 +71,6 @@ function CreateSessionSteps({
       setTimeout(waitForElement, 200);
     }
   };
-
-  const [newExp, setNewExp] = useState({
-    name: "",
-    dataset: null,
-    task_name: selectedTask?.name || "",
-    input_columns: [],
-    output_columns: [],
-    train_metrics: [],
-    validation_metrics: [],
-    test_metrics: [],
-    splits: {},
-    runs: [],
-  });
-
-  const [nextEnabled, setNextEnabled] = useState(false);
 
   const { defaultName } = useMemo(() => {
     if (!selectedTask) {
@@ -104,34 +97,7 @@ function CreateSessionSteps({
     },
     enableReinitialize: true,
     onSubmit: async (values) => {
-      if (activeStep === 0) {
-        setNewExp((prev) => ({
-          ...prev,
-          name: values.name.trim(),
-          dataset: selectedDataset,
-          task_name: selectedTask?.name || "",
-        }));
-        navigate(preparePath);
-        setNextEnabled(false);
-
-        if (tourContext?.run && tourContext?.stepIndex === 6) {
-          const waitForElement = () => {
-            const element = document.querySelector(
-              '[data-tour="models-validation-alert"]',
-            );
-            if (element) {
-              setTimeout(() => {
-                tourContext.nextStep();
-              }, 100);
-            } else {
-              setTimeout(waitForElement, 100);
-            }
-          };
-          setTimeout(waitForElement, 300);
-        }
-      } else if (activeStep === 1) {
-        await createSession();
-      }
+      await createSession(values.name.trim());
     },
   });
 
@@ -141,23 +107,10 @@ function CreateSessionSteps({
     }
   }, [selectedTask, defaultName, formik]);
 
-  const isNextEnabled = (() => {
-    if (activeStep === 0) {
-      const isNameValid = formik.values.name.trim().length >= 4;
-      const isDatasetValid = selectedDataset !== null;
-      return isNameValid && isDatasetValid;
-    }
-    return nextEnabled;
-  })();
-
   const getNameError = () => {
-    if (!selectedDataset) {
-      return null;
-    }
-
     const currentName = formik.values.name.trim();
-    if (!currentName) {
-      return t("models:error.nameRequired");
+    if (!currentName || currentName.length < 4) {
+      return null;
     }
 
     const nameExists = existingSessions.some(
@@ -174,15 +127,13 @@ function CreateSessionSteps({
 
   const nameError = getNameError();
 
-  const handleBack = () => {
-    if (activeStep === 0) {
-      backHome();
-    } else {
-      navigate(baseSessionPath);
-    }
-  };
+  const isNextEnabled =
+    formik.values.name.trim().length >= 4 &&
+    !nameError &&
+    selectedDataset !== null &&
+    nextEnabled;
 
-  const createSession = async () => {
+  const createSession = async (sessionName) => {
     try {
       setNextEnabled(false);
 
@@ -205,19 +156,15 @@ function CreateSessionSteps({
       const hasTest =
         newExp.splits.test !== undefined && newExp.splits.test !== 0;
 
-      const trainMetrics = hasTrain ? allMetricNames : [];
-      const validationMetrics = hasValidation ? allMetricNames : [];
-      const testMetrics = hasTest ? allMetricNames : [];
-
       const response = await createModelSession(
-        newExp.dataset.id,
-        newExp.task_name,
-        newExp.name,
+        selectedDataset.id,
+        selectedTask?.name || newExp.task_name,
+        sessionName,
         newExp.input_columns,
         newExp.output_columns,
-        trainMetrics,
-        validationMetrics,
-        testMetrics,
+        hasTrain ? allMetricNames : [],
+        hasValidation ? allMetricNames : [],
+        hasTest ? allMetricNames : [],
         JSON.stringify(newExp.splits),
       );
 
@@ -241,16 +188,6 @@ function CreateSessionSteps({
     }
   };
 
-  const getTitle = () =>
-    activeStep === 0
-      ? t("models:label.selectDataset")
-      : t("models:label.prepareDataset");
-
-  const getSubtitle = () =>
-    activeStep === 0
-      ? t("models:label.selectDatasetForSession")
-      : t("models:label.divideColumnsAndSplits");
-
   return (
     <Box
       sx={{
@@ -262,10 +199,10 @@ function CreateSessionSteps({
     >
       <Box sx={{ mb: 2 }}>
         <Typography variant="h5" component="h1">
-          {getTitle()}
+          {t("models:label.prepareDataset")}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {getSubtitle()}
+          {t("models:label.selectDatasetAndPrepare")}
         </Typography>
       </Box>
 
@@ -275,24 +212,23 @@ function CreateSessionSteps({
           minHeight: 0,
           overflowY: "auto",
           pt: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
         }}
       >
-        {activeStep === 0 && (
-          <SetNameAndDatasetStep
-            formik={formik}
-            selectedDataset={selectedDataset}
-            setSelectedDataset={handleDatasetChange}
-            datasets={datasets}
-            nameError={nameError}
-            selectedTask={selectedTask}
-            onDatasetChange={handleDatasetChange}
-          />
-        )}
-        {activeStep === 1 && (
+        <SetNameAndDatasetStep formik={formik} nameError={nameError} />
+        <DatasetAutocomplete
+          datasets={datasets}
+          selectedDataset={selectedDataset}
+          setSelectedDataset={handleDatasetChange}
+        />
+        {selectedDataset && (
           <PrepareDatasetStep
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
+            dataset={selectedDataset}
           />
         )}
       </Box>
@@ -309,7 +245,7 @@ function CreateSessionSteps({
           gap: 1,
         }}
       >
-        <Button variant="outlined" onClick={handleBack}>
+        <Button variant="outlined" onClick={backHome}>
           {t("common:back")}
         </Button>
         <Button
@@ -318,9 +254,7 @@ function CreateSessionSteps({
           disabled={!isNextEnabled}
           data-tour="models-next-button"
         >
-          {activeStep === 0
-            ? t("common:next")
-            : t("models:button.createSession")}
+          {t("models:button.createSession")}
         </Button>
       </Box>
     </Box>

@@ -95,6 +95,7 @@
     "modelComparison": "Model Comparison",
     "modelsModule": "Models Module",
     "nameYourSession": "Name Your Session",
+    "selectDatasetAndPrepare": "Name your session, select a dataset and configure its columns and splits.",
     "noCompatibleModelsFound": "No compatible models found",
     "noDatasetPredictionsYet": "No dataset predictions yet",
     "noGlobalExplainersYet": "No global explainers yet",
