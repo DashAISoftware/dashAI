@@ -77,7 +77,7 @@ export default function DataloaderConfigBar({
   }
 
   return (
-    <SideBar>
+    <SideBar data-tour="dataloader-config">
       <Box
         sx={{
           p: 2,

@@ -60,12 +60,10 @@ function CreateSessionSteps({
       hasAdvancedTourRef.current = true;
       const waitForElement = () => {
         const element = document.querySelector(
-          '[data-tour="models-next-button"]',
+          '[data-tour="models-validation-alert"]',
         );
         if (element) {
-          setTimeout(() => {
-            tourContext.nextStep();
-          }, 100);
+          tourContext.nextStep();
         } else {
           setTimeout(waitForElement, 100);
         }
