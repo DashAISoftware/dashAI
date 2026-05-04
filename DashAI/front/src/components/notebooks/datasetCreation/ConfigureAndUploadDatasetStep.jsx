@@ -205,7 +205,6 @@ export default function ConfigureAndUploadDatasetStep({
           value={datasetName}
           onChange={(e) => setDatasetName(e.target.value)}
           fullWidth
-          size="small"
         />
       </Box>
 
