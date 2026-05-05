@@ -50,13 +50,12 @@ class TextClassificationTask(ClassificationTask):
 
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Assign predefined labels to text inputs using NLP models. "
-            "Common uses: sentiment analysis, spam detection, intent recognition."
+            "Classify text into predefined categories. "
+            "E.g.: sentiment, spam, intent detection."
         ),
         es=(
-            "Asigna etiquetas predefinidas a textos mediante modelos de PLN. "
-            "Usos comunes: análisis de sentimientos, detección de spam, "
-            "reconocimiento de intenciones."
+            "Clasifica textos en categorías predefinidas. "
+            "Ej.: sentimiento, spam, intención."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(
