@@ -1,6 +1,6 @@
 """Base classes for DashAI dataset sources."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Final
 
@@ -45,7 +45,7 @@ class DatasetEntry:
     source: str
 
 
-class BaseDatasetSource(ConfigObject):
+class BaseDatasetSource(ConfigObject, ABC):
     """Abstract base class for all DashAI dataset sources.
 
     Subclasses connect to external dataset repositories (HuggingFace Hub,
@@ -75,7 +75,7 @@ class BaseDatasetSource(ConfigObject):
         list[DatasetEntry]
             Matching datasets from this source.
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "pd.DataFrame":
@@ -93,7 +93,7 @@ class BaseDatasetSource(ConfigObject):
         pd.DataFrame
             Sample rows as a pandas DataFrame.
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def fetch_full(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
@@ -112,7 +112,7 @@ class BaseDatasetSource(ConfigObject):
             ``(local_file_path, dataloader_name)`` — path to the downloaded
             file and the DashAI DataLoader class name to use for loading it.
         """
-        raise NotImplementedError
+        ...
 
     @abstractmethod
     def get_download_url(self, dataset_id: str) -> str:
@@ -128,4 +128,4 @@ class BaseDatasetSource(ConfigObject):
         str
             Direct download URL.
         """
-        raise NotImplementedError
+        ...

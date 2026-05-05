@@ -1,6 +1,5 @@
 """Tests for BaseDatasetSource and DatasetEntry."""
 import pytest
-from dataclasses import asdict
 from DashAI.back.dataset_sources.base_dataset_source import DatasetEntry, BaseDatasetSource
 
 
@@ -96,3 +95,11 @@ def test_concrete_source_get_download_url():
     source = ConcreteSource()
     url = source.get_download_url("owner/name")
     assert url == "https://example.com/download/owner/name"
+
+
+def test_incomplete_subclass_cannot_be_instantiated():
+    from abc import ABC
+    class Incomplete(BaseDatasetSource, ABC):
+        pass
+    with pytest.raises(TypeError):
+        Incomplete()
