@@ -191,10 +191,11 @@ class DatasetJob(BaseJob):
                             file_path_hub,
                             dataloader_name,
                         )
+                        hub_loader_params = {"separator": ","} if dataloader_name == "CSVDataLoader" else {}
                         new_dataset = dataloader.load_data(
                             filepath_or_buffer=file_path_hub,
                             temp_path=hub_temp,
-                            params={},
+                            params=hub_loader_params,
                             n_sample=None,
                         )
                     else:
