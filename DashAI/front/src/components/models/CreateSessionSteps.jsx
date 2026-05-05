@@ -250,7 +250,7 @@ function CreateSessionSteps({
   return (
     <>
       <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+        <Box sx={{ flexGrow: 1, p: 2 }}>
           {activeStep === 0 && (
             <SetNameAndDatasetStep
               formik={formik}
