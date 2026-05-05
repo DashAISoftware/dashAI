@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { getDownloadUrl } from "../../api/hub";
+import { getDatasetInfo, getDownloadUrl } from "../../api/hub";
 import ImportDatasetDialog from "./ImportDatasetDialog";
 
 /**
@@ -27,6 +27,18 @@ export default function DatasetDetail({ dataset, sourceName, onImported }) {
   const { t } = useTranslation(["hub"]);
   const theme = useTheme();
   const [importOpen, setImportOpen] = useState(false);
+  const [extraInfo, setExtraInfo] = useState(null);
+
+  useEffect(() => {
+    if (!dataset || !sourceName) {
+      setExtraInfo(null);
+      return;
+    }
+    setExtraInfo(null);
+    getDatasetInfo(sourceName, dataset.id)
+      .then((info) => setExtraInfo(info))
+      .catch(() => setExtraInfo({}));
+  }, [dataset?.id, sourceName]);
 
   if (!dataset) {
     return (
@@ -108,9 +120,9 @@ export default function DatasetDetail({ dataset, sourceName, onImported }) {
       </Box>
 
       <Box sx={{ p: 2, flex: 1 }}>
-        {dataset.description && (
+        {(extraInfo?.description || dataset.description) && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {dataset.description}
+            {extraInfo?.description || dataset.description}
           </Typography>
         )}
 
@@ -128,7 +140,7 @@ export default function DatasetDetail({ dataset, sourceName, onImported }) {
             </Box>
           )}
 
-          {dataset.tags?.length > 0 && (
+          {((extraInfo?.tags ?? dataset.tags)?.length > 0) && (
             <Box>
               <Typography
                 variant="caption"
@@ -139,7 +151,7 @@ export default function DatasetDetail({ dataset, sourceName, onImported }) {
                 {t("hub:tags")}
               </Typography>
               <Stack direction="row" flexWrap="wrap" gap={0.5} useFlexGap>
-                {dataset.tags.map((tag) => (
+                {(extraInfo?.tags ?? dataset.tags).map((tag) => (
                   <Chip key={tag} label={tag} size="small" variant="outlined" />
                 ))}
               </Stack>

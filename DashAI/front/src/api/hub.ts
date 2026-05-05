@@ -44,6 +44,17 @@ export const searchDatasets = async (
   return response.data;
 };
 
+export const getDatasetInfo = async (
+  sourceName: string,
+  datasetId: string,
+): Promise<{ id?: string; description?: string; tags?: string[] }> => {
+  const encodedId = encodeURIComponent(datasetId);
+  const response = await api.get<{ id?: string; description?: string; tags?: string[] }>(
+    `${hubEndpoint}/${sourceName}/${encodedId}/info`,
+  );
+  return response.data;
+};
+
 export const getDownloadUrl = async (
   sourceName: string,
   datasetId: string,

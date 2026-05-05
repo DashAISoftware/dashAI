@@ -3,7 +3,6 @@
 import io
 import logging
 import os
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Final
 
 import httpx
@@ -116,24 +115,16 @@ class OpenMLDatasetSource(BaseDatasetSource):
             if not raw_items:
                 return []
 
-            # Fetch descriptions and tags for all results in parallel
-            with ThreadPoolExecutor(max_workers=min(len(raw_items), 10)) as executor:
-                detail_futures = [
-                    executor.submit(_fetch_openml_details, str(item["did"]))
-                    for item in raw_items
-                ]
-                details_list = [f.result() for f in detail_futures]
-
             entries = []
-            for item, details in zip(raw_items, details_list):
+            for item in raw_items:
                 did = str(item.get("did", ""))
                 qualities = item.get("quality", [])
                 entries.append(
                     DatasetEntry(
                         id=did,
                         name=item.get("name", ""),
-                        description=details["description"],
-                        tags=details["tags"],
+                        description="",
+                        tags=[],
                         size_bytes=None,
                         row_count=_parse_quality(qualities, "NumberOfInstances"),
                         url=f"https://www.openml.org/d/{did}",
@@ -144,6 +135,33 @@ class OpenMLDatasetSource(BaseDatasetSource):
         except Exception:
             log.exception("Error searching OpenML datasets")
             return []
+
+    def get_info(self, dataset_id: str) -> "DatasetEntry | None":
+        """Return full metadata for a single OpenML dataset including description and tags.
+
+        Parameters
+        ----------
+        dataset_id : str
+            OpenML dataset ID (integer as string).
+
+        Returns
+        -------
+        DatasetEntry or None
+            Full metadata, or None on error.
+        """
+        details = _fetch_openml_details(dataset_id)
+        if not details["description"] and not details["tags"]:
+            return None
+        return DatasetEntry(
+            id=dataset_id,
+            name="",
+            description=details["description"],
+            tags=details["tags"],
+            size_bytes=None,
+            row_count=None,
+            url=f"https://www.openml.org/d/{dataset_id}",
+            source=self.__class__.__name__,
+        )
 
     def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "pd.DataFrame":
         """Download and parse sample rows from an OpenML dataset ARFF file.

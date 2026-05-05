@@ -130,6 +130,40 @@ async def search_datasets(
     ]
 
 
+@router.get("/{source_name}/{dataset_id:path}/info")
+async def get_dataset_info(
+    source_name: str,
+    dataset_id: str,
+    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+) -> Dict[str, Any]:
+    """Return full metadata for a single dataset (description, tags, etc.).
+
+    Parameters
+    ----------
+    source_name : str
+        Registered DatasetSource class name.
+    dataset_id : str
+        Source-specific dataset identifier (URL-encoded).
+    registry : ComponentRegistry
+        Injected component registry.
+
+    Returns
+    -------
+    dict
+        DatasetEntry fields, or empty dict if the source has no enrichment.
+    """
+    source = _get_source(source_name, registry)
+    decoded_id = unquote(dataset_id)
+    entry = source.get_info(decoded_id)
+    if entry is None:
+        return {}
+    return {
+        "id": entry.id,
+        "description": entry.description,
+        "tags": entry.tags,
+    }
+
+
 @router.get("/{source_name}/{dataset_id:path}/download-url")
 async def get_download_url(
     source_name: str,

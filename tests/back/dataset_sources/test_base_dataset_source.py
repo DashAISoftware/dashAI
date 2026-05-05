@@ -203,11 +203,7 @@ def test_openml_search_returns_dataset_entries():
             ]
         }
     }
-    mock_details = {"description": "The Iris dataset", "tags": ["study_14", "uci"]}
-
-    with patch("httpx.get", return_value=mock_list), \
-         patch("DashAI.back.dataset_sources.openml_dataset_source._fetch_openml_details",
-               return_value=mock_details):
+    with patch("httpx.get", return_value=mock_list):
         source = OpenMLDatasetSource()
         results = source.search("iris", limit=5)
 
@@ -215,8 +211,8 @@ def test_openml_search_returns_dataset_entries():
     assert results[0].id == "61"
     assert results[0].name == "iris"
     assert results[0].row_count == 150
-    assert results[0].description == "The Iris dataset"
-    assert "study_14" in results[0].tags
+    assert results[0].description == ""
+    assert results[0].tags == []
     assert results[0].source == "OpenMLDatasetSource"
     assert results[0].url == "https://www.openml.org/d/61"
 

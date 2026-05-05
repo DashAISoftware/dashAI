@@ -79,6 +79,25 @@ class BaseDatasetSource(ConfigObject, ABC):
         """
         ...
 
+    def get_info(self, dataset_id: str) -> DatasetEntry | None:
+        """Return full metadata for a single dataset, including description and tags.
+
+        The default implementation returns None (no enrichment).
+        Sources that require extra requests to retrieve description/tags
+        should override this method.
+
+        Parameters
+        ----------
+        dataset_id : str
+            Source-specific dataset identifier.
+
+        Returns
+        -------
+        DatasetEntry or None
+            Full metadata entry, or None if not available.
+        """
+        return None
+
     @abstractmethod
     def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "pd.DataFrame":
         """Download a sample of rows without fetching the full dataset.
