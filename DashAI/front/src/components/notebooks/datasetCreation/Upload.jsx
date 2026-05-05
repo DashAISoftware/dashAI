@@ -2,12 +2,12 @@ import React, { useCallback, useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
-  Button,
   CircularProgress,
   Grid,
   Typography,
   useTheme,
 } from "@mui/material";
+import SecondaryButton from "../../shared/SecondaryButton";
 
 import PreviewDataset from "./PreviewDataset";
 
@@ -296,15 +296,14 @@ function Upload({
                     </Typography>
                   </Grid>
                   <Grid>
-                    <Button
-                      variant="contained"
+                    <SecondaryButton
                       onClick={(e) => {
                         e.stopPropagation();
                         handleButtonClick();
                       }}
                     >
                       {t("datasets:button.uploadFile")}
-                    </Button>
+                    </SecondaryButton>
                   </Grid>
                 </React.Fragment>
               )}
