@@ -108,6 +108,7 @@ function ConfigureExplainerStep({
                 }}
                 setError={setError}
                 formSubmitRef={formSubmitRef}
+                hideButtons
               />
             </FormSchemaLayout>
           </Stack>

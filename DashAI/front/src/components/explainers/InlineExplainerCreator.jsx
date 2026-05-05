@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
-  Button,
-  ButtonGroup,
   Collapse,
   Paper,
   Step,
@@ -11,7 +9,7 @@ import {
   Stepper,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 
@@ -22,8 +20,6 @@ import {
 } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
-import TimestampWrapper from "../shared/TimestampWrapper";
-import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
 import SelectDatasetStep from "./SelectDatasetStep";
@@ -356,32 +352,19 @@ export default function InlineExplainerCreator({
           )}
         </Box>
 
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton} disabled={isLoading}>
-            {activeStep === 0 ? t("common:cancel") : t("common:back")}
-          </Button>
-          <TimestampWrapper
-            eventName={
-              activeStep === steps.length - 1
-                ? isLocal
-                  ? TIMESTAMP_KEYS.explainer.submitLocal
-                  : TIMESTAMP_KEYS.explainer.submitGlobal
-                : null
-            }
-          >
-            <LoadingButton
-              onClick={handleNextButton}
-              variant="contained"
-              color="primary"
-              disabled={!nextEnabled || isLoading}
-              loading={isLoading}
-            >
-              {activeStep === steps.length - 1
-                ? t("common:save")
-                : t("common:next")}
-            </LoadingButton>
-          </TimestampWrapper>
-        </ButtonGroup>
+        <FormSchemaButtonGroup
+          onCancel={handleBackButton}
+          onFormSubmit={handleNextButton}
+          error={!nextEnabled || isLoading}
+          backButtonText={
+            activeStep === 0 ? t("common:cancel") : t("common:back")
+          }
+          saveButtonText={
+            activeStep === steps.length - 1
+              ? t("common:save")
+              : t("common:next")
+          }
+        />
       </Paper>
     </Collapse>
   );
