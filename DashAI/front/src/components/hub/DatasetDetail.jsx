@@ -23,7 +23,7 @@ import ImportDatasetDialog from "./ImportDatasetDialog";
  * @param {string|null} sourceName - Active DatasetSource class name.
  * @param {function} onImported - Called after a successful import.
  */
-export default function DatasetDetail({ dataset, sourceName, onImported }) {
+export default function DatasetDetail({ dataset, sourceName, compatibleComponents = [], onImported }) {
   const { t } = useTranslation(["hub"]);
   const theme = useTheme();
   const [importOpen, setImportOpen] = useState(false);
@@ -165,6 +165,7 @@ export default function DatasetDetail({ dataset, sourceName, onImported }) {
         onClose={() => setImportOpen(false)}
         sourceName={sourceName}
         dataset={dataset}
+        compatibleComponents={compatibleComponents}
         onImported={onImported}
       />
     </Box>

@@ -7,6 +7,14 @@ export interface DatasetSourceInfo {
   type: string;
   display_name: string;
   description: string;
+  compatible_components: string[];
+}
+
+export interface ComponentInfo {
+  name: string;
+  display_name: string;
+  description: string;
+  schema: Record<string, unknown>;
 }
 
 export interface DatasetEntry {
@@ -90,5 +98,12 @@ export const importHubDataset = async (
     `${hubEndpoint}/${sourceName}/${encodedId}/import`,
     { dataset_id: dashaiDatasetId, params },
   );
+  return response.data;
+};
+
+export const getComponentInfo = async (
+  componentName: string,
+): Promise<ComponentInfo> => {
+  const response = await api.get<ComponentInfo>(`/v1/components/${componentName}/`);
   return response.data;
 };

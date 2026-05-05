@@ -18,5 +18,10 @@
   "importSuccess": "Dataset importado exitosamente.",
   "importError": "Error al importar el dataset.",
   "previewError": "Error al cargar la vista previa.",
-  "selectDatasetToPreview": "Selecciona un dataset para ver los detalles."
+  "selectDatasetToPreview": "Selecciona un dataset para ver los detalles.",
+  "stepFormat": "Formato",
+  "stepParameters": "Parámetros",
+  "stepPreview": "Vista previa",
+  "selectFormatDescription": "Selecciona el formato del archivo que corresponde a este dataset.",
+  "noParameters": "No se requieren parámetros adicionales."
 }

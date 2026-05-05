@@ -31,6 +31,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         en="Browse and import public datasets from HuggingFace Hub.",
         es="Navega e importa datasets públicos desde HuggingFace Hub.",
     )
+    COMPATIBLE_COMPONENTS: Final = ["CSVDataLoader"]
 
     def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
         """Return public HuggingFace datasets matching a query.

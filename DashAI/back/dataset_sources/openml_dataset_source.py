@@ -80,6 +80,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
         en="Browse and import public datasets from OpenML.",
         es="Navega e importa datasets públicos desde OpenML.",
     )
+    COMPATIBLE_COMPONENTS: Final = ["CSVDataLoader"]
 
     def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
         """Return active OpenML datasets matching a name query.

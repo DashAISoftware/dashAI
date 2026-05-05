@@ -18,5 +18,10 @@
   "importSuccess": "Dataset imported successfully.",
   "importError": "Failed to import dataset.",
   "previewError": "Failed to load dataset preview.",
-  "selectDatasetToPreview": "Select a dataset to see details."
+  "selectDatasetToPreview": "Select a dataset to see details.",
+  "stepFormat": "Format",
+  "stepParameters": "Parameters",
+  "stepPreview": "Preview",
+  "selectFormatDescription": "Select the file format that matches this dataset.",
+  "noParameters": "No additional parameters required."
 }

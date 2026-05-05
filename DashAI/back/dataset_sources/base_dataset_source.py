@@ -56,6 +56,7 @@ class BaseDatasetSource(ConfigObject, ABC):
     TYPE: Final[str] = "DatasetSource"
     DISPLAY_NAME: Final = MultilingualString(en="", es="")
     DESCRIPTION: Final = MultilingualString(en="", es="")
+    COMPATIBLE_COMPONENTS: Final[list[str]] = []
 
     @abstractmethod
     def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:

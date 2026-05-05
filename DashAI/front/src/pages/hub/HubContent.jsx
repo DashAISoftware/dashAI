@@ -14,8 +14,10 @@ export default function HubContent() {
   const [selectedSource, setSelectedSource] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState(null);
 
-  const handleSelectSource = (sourceName) => {
-    setSelectedSource(sourceName);
+  const sourceName = selectedSource?.name ?? null;
+
+  const handleSelectSource = (source) => {
+    setSelectedSource(source);
     setSelectedDataset(null);
   };
 
@@ -28,14 +30,14 @@ export default function HubContent() {
       <ModuleContainer>
         <LeftPanel>
           <HubLeftBar
-            selectedSource={selectedSource}
+            selectedSource={sourceName}
             onSelectSource={handleSelectSource}
           />
         </LeftPanel>
 
         <CenterPanel>
           <DatasetGrid
-            sourceName={selectedSource}
+            sourceName={sourceName}
             selectedDataset={selectedDataset}
             onSelectDataset={setSelectedDataset}
           />
@@ -44,7 +46,8 @@ export default function HubContent() {
         <RightPanel toggleButtonTop="50%">
           <DatasetDetail
             dataset={selectedDataset}
-            sourceName={selectedSource}
+            sourceName={sourceName}
+            compatibleComponents={selectedSource?.compatible_components ?? []}
             onImported={handleImported}
           />
         </RightPanel>

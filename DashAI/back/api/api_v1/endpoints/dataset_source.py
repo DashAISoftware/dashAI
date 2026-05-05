@@ -80,6 +80,7 @@ async def list_sources(
             "type": "DatasetSource",
             "display_name": _resolve_string(info.get("display_name"), name),
             "description": _resolve_string(info.get("description"), ""),
+            "compatible_components": info["class"].COMPATIBLE_COMPONENTS,
         }
         for name, info in sources.items()
     ]

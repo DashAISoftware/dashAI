@@ -64,7 +64,7 @@ export default function HubLeftBar({ selectedSource, onSelectSource }) {
             <ListItemButton
               key={source.name}
               selected={selectedSource === source.name}
-              onClick={() => onSelectSource(source.name)}
+              onClick={() => onSelectSource(source)}
               sx={{
                 "&.Mui-selected": {
                   bgcolor: "action.selected",
