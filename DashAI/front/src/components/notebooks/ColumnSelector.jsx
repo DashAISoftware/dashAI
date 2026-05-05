@@ -194,6 +194,15 @@ function ColumnSelector({
     [getValidColumnIds, rowSelectionModel, inputCardinality],
   );
 
+  const handleSelectAllRows = useCallback(() => {
+    const validIds = getValidColumnIds();
+    const allValidSelected =
+      validIds.length > 0 &&
+      validIds.every((id) => rowSelectionModel.includes(id));
+
+    handleSelection(allValidSelected ? {} : toMRT(validIds));
+  }, [getValidColumnIds, rowSelectionModel]);
+
   // Effect to update selection data and validation whenever rowSelectionModel changes
   useEffect(() => {
     if (rows.length > 0) {
@@ -292,6 +301,15 @@ function ColumnSelector({
           }
         : {},
     }),
+    muiSelectAllCheckboxProps: () => ({
+      checked:
+        getValidColumnIds().length > 0 &&
+        getValidColumnIds().every((id) => rowSelectionModel.includes(id)),
+      indeterminate:
+        rowSelectionModel.length > 0 &&
+        rowSelectionModel.length < getValidColumnIds().length,
+      onChange: handleSelectAllRows,
+    }),
     localization,
   });
 
@@ -319,8 +337,8 @@ function ColumnSelector({
               context: inputCardinality.exact
                 ? "exact"
                 : inputCardinality.max
-                  ? "range"
-                  : "min",
+                ? "range"
+                : "min",
             })}
           </Typography>
         )}
