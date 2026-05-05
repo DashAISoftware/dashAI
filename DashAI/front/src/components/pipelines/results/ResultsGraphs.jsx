@@ -95,7 +95,10 @@ function PipelineResultsGraphs({ metrics }) {
         const numericValues = [];
         ["train", "validation", "test"].forEach((split) => {
           metricNames.forEach((metric) => {
-            numericValues.push(metrics[split][metric]);
+            const metricData = metrics[split][metric];
+            // Handle both old format (direct number) and new format (object with value and std_value)
+            const value = metricData?.value ?? metricData;
+            numericValues.push(value);
           });
         });
 

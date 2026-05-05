@@ -96,6 +96,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             # Promediar y guardar como level=LAST
             for (split, name), values in metrics_by_split_name.items():
                 avg_value = np.mean(values)
+                std_value = np.std(values) if len(values) > 1 else 0.0
 
                 # Buscar si ya existe una métrica LAST con este nombre
                 existing = (
@@ -107,8 +108,9 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 )
 
                 if existing:
-                    # Actualizar con el promedio
+                    # Actualizar con el promedio y desviación estándar
                     existing.value = avg_value
+                    existing.std_value = std_value
                 else:
                     # Crear nueva métrica
                     db.add(
@@ -118,6 +120,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                             level=LevelEnum.LAST,
                             name=name,
                             value=avg_value,
+                            std_value=std_value,
                             step=0,
                         )
                     )

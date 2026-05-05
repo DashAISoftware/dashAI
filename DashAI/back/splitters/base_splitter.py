@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Final
 
 from beartype.typing import Dict, List, Tuple, Union
-
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -24,15 +23,15 @@ class BaseSplitter:
         if y is None:
             raise ValueError(
                 "Target variable 'y' cannot be None for stratified splitting."
-            ) from e
-        
+            )
+
         if all(isinstance(v, int) for v in y):
             return y
-        
+
         # Caso Dataset (HuggingFace / DashAIDataset)
         if hasattr(y, "column_names"):
             if len(y.column_names) != 1:
-                raise ValueError("y debe tener exactamente una columna") from e
+                raise ValueError("y debe tener exactamente una columna")
 
             col = y.column_names[0]
             y = y[col]

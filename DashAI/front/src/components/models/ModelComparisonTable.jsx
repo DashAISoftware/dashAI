@@ -187,7 +187,12 @@ function ModelComparisonTable({
             run[metricsKey]?.[metricName] !== undefined &&
             run[metricsKey]?.[metricName] !== null,
         )
-        .map((run) => Number(run[metricsKey][metricName]))
+        .map((run) => {
+          const metricData = run[metricsKey][metricName];
+          // Handle direct number or object with value and std_value
+          const value = metricData?.value ?? metricData;
+          return Number(value);
+        })
         .filter((v) => !isNaN(v));
 
       if (values.length > 0) {
@@ -221,7 +226,8 @@ function ModelComparisonTable({
 
       return {
         id: metricField,
-        accessorFn: (row) => row[metricsKey]?.[metricName],
+        accessorFn: (row) =>
+          row[metricsKey]?.[metricName]?.value ?? row[metricsKey]?.[metricName],
         header: `${metricName} ${directionArrow}`.trim(),
         size: 120,
         Header: () => (
@@ -248,7 +254,10 @@ function ModelComparisonTable({
           const isRunning = status === 1 || status === 2;
 
           if (isRunning) return "-";
-          const val = cell.getValue();
+
+          const metricData = row.original[metricsKey]?.[metricName];
+          const val = metricData?.value ?? metricData;
+
           if (val === null || val === undefined) return "-";
 
           const value = Number(val);
@@ -258,20 +267,46 @@ function ModelComparisonTable({
           const isBest =
             bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
 
+          // Get std_value if available
+          const stdValue = metricData?.std_value;
+          const stdFormatted =
+            stdValue !== null && stdValue !== undefined
+              ? `±${Number(stdValue).toFixed(4)}`
+              : "";
+
+          const tooltipTitle = stdFormatted
+            ? `${formatted} ${stdFormatted}`
+            : formatted;
+
           return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              {isBest && (
-                <Tooltip title={t("models:label.bestModel")} placement="top">
-                  <Box
-                    component="span"
-                    sx={{ color: "warning.main", lineHeight: 1 }}
-                  >
-                    ★
-                  </Box>
-                </Tooltip>
-              )}
-              {formatted}
-            </Box>
+            <Tooltip title={tooltipTitle} placement="top" arrow>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {isBest && (
+                  <Tooltip title={t("models:label.bestModel")} placement="top">
+                    <Box
+                      component="span"
+                      sx={{ color: "warning.main", lineHeight: 1 }}
+                    >
+                      ★
+                    </Box>
+                  </Tooltip>
+                )}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box>{formatted}</Box>
+                  {stdFormatted && (
+                    <Box sx={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                      {stdFormatted}
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            </Tooltip>
           );
         },
       };

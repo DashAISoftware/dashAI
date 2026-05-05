@@ -261,6 +261,7 @@ class Metric(Base):
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[float] = mapped_column(Float, nullable=False)
+    std_value: Mapped[float] = mapped_column(Float, nullable=True)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
     fold_index: Mapped[int] = mapped_column(Integer, nullable=True)
     inner_fold_index: Mapped[int] = mapped_column(Integer, nullable=True)

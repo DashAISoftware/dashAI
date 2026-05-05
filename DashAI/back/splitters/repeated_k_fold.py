@@ -5,8 +5,8 @@ from .fold_splitter import FoldSplitter
 
 
 class RepeatedKFoldSplitter(FoldSplitter):
-    def __init__(self, splits_data, dataset, output_column):
-        super().__init__(splits_data, dataset, output_column)
+    def __init__(self, splits_data):
+        super().__init__(splits_data)
         self.n_repeats = splits_data.get("n_repeats", 1)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):

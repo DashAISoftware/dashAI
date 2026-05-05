@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Grid, Typography } from "@mui/material";
+import { Grid, Typography, Tooltip } from "@mui/material";
 
 import ResultsTabMetricsToggle from "../../../pages/results/components/ResultsTabMetricsToggle";
 
@@ -36,18 +36,49 @@ function PipelineResultsMetrics({ metricsData = {} }) {
             No metrics available for {displaySet.replace("_metrics", "")} set.
           </Typography>
         ) : (
-          Object.entries(currentMetrics).map(([metricName, value]) => (
-            <Grid container key={metricName}>
-              <Grid size={{ xs: 1 }}>
-                <Typography variant="body1">{metricName}</Typography>
-              </Grid>
-              <Grid size={{ xs: 1 }}>
-                <Typography variant="body1" align="right">
-                  {typeof value === "number" ? value.toFixed(4) : value}
-                </Typography>
-              </Grid>
-            </Grid>
-          ))
+          Object.entries(currentMetrics).map(([metricName, metricData]) => {
+            // Handle both old format (direct number) and new format (object with value and std_value)
+            const value = metricData?.value ?? metricData;
+            const stdValue = metricData?.std_value;
+
+            const formattedValue =
+              typeof value === "number" ? value.toFixed(4) : value;
+            const formattedStd =
+              stdValue !== null && stdValue !== undefined
+                ? `±${Number(stdValue).toFixed(4)}`
+                : null;
+
+            const tooltipTitle = formattedStd
+              ? `${formattedValue} ${formattedStd}`
+              : formattedValue;
+
+            return (
+              <Tooltip
+                key={metricName}
+                title={tooltipTitle}
+                placement="top"
+                arrow
+              >
+                <Grid container>
+                  <Grid size={{ xs: 1 }}>
+                    <Typography variant="body1">{metricName}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 1 }}>
+                    <Grid container direction="column" alignItems="flex-end">
+                      <Typography variant="body1" align="right">
+                        {formattedValue}
+                      </Typography>
+                      {formattedStd && (
+                        <Typography variant="caption" color="text.secondary">
+                          {formattedStd}
+                        </Typography>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Tooltip>
+            );
+          })
         )}
       </Grid>
     </Grid>

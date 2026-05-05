@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Divider, Paper, Typography } from "@mui/material";
+import { Box, Divider, Paper, Typography, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export default function MetricsCard({ title, metrics }) {
@@ -12,19 +12,49 @@ export default function MetricsCard({ title, metrics }) {
       </Typography>
       <Divider sx={{ mb: 2 }} />
       {metrics && Object.keys(metrics).length > 0 ? (
-        Object.entries(metrics).map(([key, value]) => (
-          <Box
-            key={key}
-            sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {key}:
-            </Typography>
-            <Typography variant="body2" fontWeight="medium">
-              {value.toFixed(4)}
-            </Typography>
-          </Box>
-        ))
+        Object.entries(metrics).map(([key, metricData]) => {
+          // Handle both old format (direct number) and new format (object with value and std_value)
+          const value = metricData?.value ?? metricData;
+          const stdValue = metricData?.std_value;
+
+          const formattedValue = Number(value).toFixed(4);
+          const formattedStd =
+            stdValue !== null && stdValue !== undefined
+              ? `±${Number(stdValue).toFixed(4)}`
+              : null;
+
+          const tooltipTitle = formattedStd
+            ? `${formattedValue} ${formattedStd}`
+            : formattedValue;
+
+          return (
+            <Tooltip key={key} title={tooltipTitle} placement="top" arrow>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {key}:
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                  }}
+                >
+                  <Typography variant="body2" fontWeight="medium">
+                    {formattedValue}
+                  </Typography>
+                  {formattedStd && (
+                    <Typography variant="caption" color="text.secondary">
+                      {formattedStd}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Tooltip>
+          );
+        })
       ) : (
         <Typography variant="body2" color="text.secondary">
           {t("models:label.noMetricsAvailable")}

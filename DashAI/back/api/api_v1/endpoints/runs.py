@@ -43,7 +43,8 @@ def get_metrics_for_run(db, run_id: int):
     Returns
     -------
     dict
-        A dictionary containing train, validation, and test metrics for the run.
+        A dictionary containing train, validation, and test metrics for the run,
+        each metric includes 'value' and 'std_value' (standard deviation).
     """
     metrics = (
         db.query(Metric)
@@ -66,9 +67,11 @@ def get_metrics_for_run(db, run_id: int):
         if response[split_key] is None:
             response[split_key] = {}
 
-        # In the new schema, we store 'value'.
-        # For 'LAST' level, we just want the latest name: value pair.
-        response[split_key][metric.name] = metric.value
+        # Store both value and standard deviation
+        response[split_key][metric.name] = {
+            "value": metric.value,
+            "std_value": metric.std_value,
+        }
 
     return response
 
