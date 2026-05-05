@@ -190,12 +190,12 @@ Metrics are only available after training is complete. If a model shows
 ### EXPLAINABILITY
 
 Shows global and local explainers attached to this model. See the
-[Explainability](./explainability) page for details.
+[Explainability](/learn/tutorials/Models/explainability) page for details.
 
 ### PREDICTIONS
 
 Shows dataset predictions and manual predictions generated from this model. See the
-[Predictions](./predictions) page for details.
+[Predictions](/learn/tutorials/Models/predictions) page for details.
 
 ### HYPERPARAMETERS
 
