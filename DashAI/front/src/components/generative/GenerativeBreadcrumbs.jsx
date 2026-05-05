@@ -7,23 +7,37 @@ import Box from "@mui/material/Box";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
+import { useCreateSession } from "./CreateSessionContext";
 
 export default function GenerativeBreadcrumbs() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
   const { t } = useTranslation(["generative", "common"]);
-  const { tasks, sessions } = useGenerative();
+  const { sessions } = useGenerative();
+  const createSession = useCreateSession();
 
   const rootCrumb = { label: t("common:generative"), path: "/app/generative" };
 
   const getBreadcrumbs = () => {
     const path = location.pathname;
 
-    if (path.startsWith("/app/generative/sessions/new/") && params.taskName) {
-      const task = tasks.find((tk) => tk.name === params.taskName);
-      const taskLabel = task?.display_name ?? params.taskName;
-      return [rootCrumb, { label: taskLabel, path: null, current: true }];
+    if (path.startsWith("/app/generative/sessions/new")) {
+      const modelNameParam = params.modelName;
+      const selectedModel = createSession?.selectedModel;
+      const modelLabel = selectedModel?.display_name || modelNameParam;
+      const crumbs = [
+        rootCrumb,
+        {
+          label: t("generative:label.selectModelCrumb"),
+          path: modelNameParam ? "/app/generative/sessions/new" : null,
+          current: !modelNameParam,
+        },
+      ];
+      if (modelNameParam) {
+        crumbs.push({ label: modelLabel, path: null, current: true });
+      }
+      return crumbs;
     }
 
     if (path.startsWith("/app/generative/sessions/") && params.id) {

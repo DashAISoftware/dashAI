@@ -19,21 +19,6 @@ class JSONDataloaderSchema(BaseSchema):
     ``None``, the entire JSON value is interpreted as the record list.
     """
 
-    name: schema_field(
-        string_field(),
-        "",
-        description=MultilingualString(
-            en=(
-                "Custom name to register your dataset. If no name is specified, "
-                "the name of the uploaded file will be used."
-            ),
-            es=(
-                "Nombre personalizado para registrar su dataset. Si no se especifica "
-                "un nombre, se usará el nombre del archivo subido."
-            ),
-        ),
-        alias=MultilingualString(en="Name", es="Nombre"),
-    )  # type: ignore
     data_key: schema_field(
         none_type(string_field()),
         placeholder="data",

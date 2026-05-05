@@ -32,6 +32,7 @@ export default function ModelsRightBar({ onToggle }) {
     closeConfig,
     datasetInfo,
     setDatasetTab,
+    sessionRightContent,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -101,6 +102,30 @@ export default function ModelsRightBar({ onToggle }) {
       setTimeout(waitForElement, 300);
     }
   };
+
+  if (sessionRightContent) {
+    return (
+      <SideBar>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
+            flexShrink: 0,
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" color="text.primary">
+            {t("models:label.configureSession")}
+          </Typography>
+        </Box>
+        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+          {sessionRightContent}
+        </Box>
+      </SideBar>
+    );
+  }
 
   return (
     <SideBar>
