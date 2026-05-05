@@ -162,17 +162,54 @@ class DatasetJob(BaseJob):
                         )
 
                 else:
-                    parsed_params = parse_params(DatasetParams, json.dumps(params))
-                    dataloader = component_registry[parsed_params.dataloader]["class"]()
-                    log.debug("Storing dataset in %s", folder_path)
-                    new_dataset = dataloader.load_data(
-                        filepath_or_buffer=(
-                            str(file_path) if file_path is not None else url
-                        ),
-                        temp_path=str(temp_dir),
-                        params=parsed_params.model_dump(),
-                        n_sample=n_sample,
-                    )
+                    source_name = self.kwargs.get("source_name")
+
+                    if source_name:
+                        # --- Hub import path ---
+                        import tempfile
+                        hub_temp = tempfile.mkdtemp()
+                        temp_dir = hub_temp  # ensures finally block cleans it up
+
+                        dataset_source_id = self.kwargs.get("dataset_source_id", "")
+                        sources = component_registry._registry.get("DatasetSource", {})
+                        if source_name not in sources:
+                            raise JobError(
+                                f"DatasetSource '{source_name}' not found in registry."
+                            )
+                        source = sources[source_name]["class"]()
+                        file_path_hub, dataloader_name = source.fetch_full(
+                            dataset_source_id, hub_temp
+                        )
+                        dl_registry = component_registry._registry.get("DataLoader", {})
+                        if dataloader_name not in dl_registry:
+                            raise JobError(
+                                f"DataLoader '{dataloader_name}' not found in registry."
+                            )
+                        dataloader = dl_registry[dataloader_name]["class"]()
+                        log.debug(
+                            "Loading hub dataset from %s using %s",
+                            file_path_hub,
+                            dataloader_name,
+                        )
+                        new_dataset = dataloader.load_data(
+                            filepath_or_buffer=file_path_hub,
+                            temp_path=hub_temp,
+                            params={},
+                            n_sample=None,
+                        )
+                    else:
+                        # --- File / URL upload path (unchanged) ---
+                        parsed_params = parse_params(DatasetParams, json.dumps(params))
+                        dataloader = component_registry[parsed_params.dataloader]["class"]()
+                        log.debug("Storing dataset in %s", folder_path)
+                        new_dataset = dataloader.load_data(
+                            filepath_or_buffer=(
+                                str(file_path) if file_path is not None else url
+                            ),
+                            temp_path=str(temp_dir),
+                            params=parsed_params.model_dump(),
+                            n_sample=n_sample,
+                        )
 
                     if "inferred_types" in params:
                         schema = params["inferred_types"]

@@ -1,9 +1,37 @@
 """Tests for the dataset_source API endpoints."""
+import os
+from typing import Any, Dict
+
 import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataset_sources.base_dataset_source import BaseDatasetSource, DatasetEntry
+from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 from DashAI.back.dependencies.registry import ComponentRegistry
+
+
+class MockDataLoader(BaseDataLoader):
+    """Minimal DataLoader for testing the hub import path."""
+
+    name = "MockDataLoader"
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def load_data(
+        self,
+        filepath_or_buffer: str,
+        temp_path: str,
+        params: Dict[str, Any],
+        n_sample=None,
+    ):
+        import pandas as pd
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
+        df = pd.read_csv(filepath_or_buffer)
+        return to_dashai_dataset(df)
 
 
 class MockDatasetSource(BaseDatasetSource):
@@ -31,7 +59,10 @@ class MockDatasetSource(BaseDatasetSource):
         return pd.DataFrame({"col_a": [1, 2, 3], "col_b": ["x", "y", "z"]})
 
     def fetch_full(self, dataset_id, temp_path):
-        return ("/tmp/mock.csv", "CSVDataLoader")
+        csv_path = os.path.join(temp_path, "mock.csv")
+        with open(csv_path, "w") as f:
+            f.write("col_a,col_b\n1,x\n2,y\n3,z\n")
+        return (csv_path, "MockDataLoader")
 
     def get_download_url(self, dataset_id):
         return f"https://mock.example.com/{dataset_id}"
@@ -44,7 +75,7 @@ class MockDatasetSource(BaseDatasetSource):
 @pytest.fixture(autouse=True, name="test_registry_hub")
 def setup_test_registry(client, monkeypatch):
     container = client.app.container
-    test_registry = ComponentRegistry(initial_components=[MockDatasetSource])
+    test_registry = ComponentRegistry(initial_components=[MockDatasetSource, MockDataLoader])
     monkeypatch.setitem(container._services, "component_registry", test_registry)
     return test_registry
 
@@ -99,3 +130,30 @@ def test_get_preview(client: TestClient):
     assert "inferred_types" in data
     assert "preview_row_count" in data
     assert len(data["sample"]) == 3
+
+
+def test_import_endpoint_creates_dataset_and_job(client: TestClient):
+    """POST import creates a Dataset record and enqueues a DatasetJob."""
+    create_resp = client.post("/api/v1/dataset/", json={"name": "hub_import_test"})
+    assert create_resp.status_code == 201
+    dataset_id = create_resp.json()["id"]
+
+    response = client.post(
+        "/api/v1/dataset-source/MockDatasetSource/mock%2Fdataset/import",
+        json={
+            "dataset_id": dataset_id,
+            "params": {},
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert "job_id" in data
+    assert data["dataset_id"] == dataset_id
+
+
+def test_import_endpoint_unknown_source(client: TestClient):
+    response = client.post(
+        "/api/v1/dataset-source/Unknown/some%2Fdataset/import",
+        json={"dataset_id": 999, "params": {}},
+    )
+    assert response.status_code == 404

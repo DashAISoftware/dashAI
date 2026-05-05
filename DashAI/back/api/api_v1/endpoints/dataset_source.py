@@ -7,6 +7,7 @@ from urllib.parse import unquote
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from kink import di
+from pydantic import BaseModel
 
 from DashAI.back.types.inf.type_inference import infer_types
 
@@ -189,3 +190,66 @@ async def preview_dataset(
         "inferred_types": inferred,
         "preview_row_count": len(df),
     }
+
+
+class ImportRequest(BaseModel):
+    """Request body for the dataset import endpoint.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of a pre-created Dataset DB record to populate.
+    params : dict
+        Parameters including ``inferred_types`` and ``column_renames``.
+    """
+
+    dataset_id: int
+    params: Dict[str, Any] = {}
+
+
+@router.post("/{source_name}/{dataset_id:path}/import", status_code=status.HTTP_201_CREATED)
+async def import_dataset(
+    source_name: str,
+    dataset_id: str,
+    body: ImportRequest,
+    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue=Depends(lambda: di["job_queue"]),
+) -> Dict[str, Any]:
+    """Enqueue a DatasetJob to import a dataset from an external source.
+
+    Parameters
+    ----------
+    source_name : str
+        Registered DatasetSource class name.
+    dataset_id : str
+        Source-specific dataset identifier (URL-encoded).
+    body : ImportRequest
+        Contains the DashAI dataset_id and params.
+    registry : ComponentRegistry
+        Injected component registry.
+    job_queue : BaseJobQueue
+        Injected job queue.
+
+    Returns
+    -------
+    dict
+        ``{"job_id": int, "dataset_id": int}`` — the enqueued job and dataset IDs.
+    """
+    from DashAI.back.job.dataset_job import DatasetJob
+
+    _get_source(source_name, registry)  # validates source exists, raises 404 if not
+
+    job = DatasetJob(
+        kwargs={
+            "dataset_id": body.dataset_id,
+            "source_name": source_name,
+            "dataset_source_id": unquote(dataset_id),
+            "params": body.params,
+        }
+    )
+    job.set_status_as_delivered()
+    result = job_queue.put(job)
+    # huey.api.Result has .id (task UUID string); plain int in other modes
+    job_id = getattr(result, "id", result)
+
+    return {"job_id": job_id, "dataset_id": body.dataset_id}
