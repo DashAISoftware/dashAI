@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
+import { Box, Typography, Button } from "@mui/material";
 import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { useTourContext } from "../../tour/TourProvider";
@@ -12,7 +12,9 @@ export default function ParameterStepExplorer({
   setStep,
 }) {
   const tourContext = useTourContext();
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
+  const submitRef = useRef(null);
+  const [hasError, setHasError] = useState(false);
 
   const handleSave = async (params) => {
     await handleSaveExplorer(params);
@@ -25,44 +27,60 @@ export default function ParameterStepExplorer({
 
   useEffect(() => {
     if (tourContext?.run) {
-      // Advance tour once this component is mounted and visible
       const timeout = setTimeout(() => {
         tourContext.nextStep();
-        const button = document.querySelector(
-          '[data-tour="create-explorer-button"]',
-        );
-        if (button) {
-          button.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
-          });
-        }
       }, 300);
-
       return () => clearTimeout(timeout);
     }
   }, []);
 
   return (
-    <Box flex={1} data-tour="explorer-parameters">
-      <Typography
-        variant="h6"
-        sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+    <Box
+      sx={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}
+      data-tour="explorer-parameters"
+    >
+      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+        >
+          {t("datasets:label.configureParametersStep", { step: 2 })}
+        </Typography>
+        <FormSchemaContainer>
+          <FormSchemaWithSelectedModel
+            onFormSubmit={handleSave}
+            modelToConfigure={explorer}
+            initialValues={initialParams}
+            onCancel={() => setStep(0)}
+            saveButtonText={t("datasets:button.createExplorer")}
+            hideButtons={true}
+            formSubmitRef={submitRef}
+            onErrorChange={setHasError}
+          />
+        </FormSchemaContainer>
+      </Box>
+
+      <Box
+        sx={{
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+          pt: 1,
+        }}
       >
-        {t("datasets:label.configureParametersStep", {
-          step: 2,
-        })}
-      </Typography>
-      <FormSchemaContainer>
-        <FormSchemaWithSelectedModel
-          onFormSubmit={handleSave}
-          modelToConfigure={explorer}
-          initialValues={initialParams}
-          onCancel={() => setStep(0)}
-          saveButtonText={t("datasets:button.createExplorer")}
-        />
-      </FormSchemaContainer>
+        <Button variant="outlined" onClick={() => setStep(0)}>
+          {t("common:back")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => submitRef.current?.()}
+          disabled={hasError}
+          data-tour="create-explorer-button"
+        >
+          {t("datasets:button.createExplorer")}
+        </Button>
+      </Box>
     </Box>
   );
 }

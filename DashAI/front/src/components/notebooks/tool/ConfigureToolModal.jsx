@@ -148,7 +148,7 @@ export default function ConfigureToolModal({
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            overflow: "auto",
+            overflow: "hidden",
             p: 2,
             borderRight: "1px solid",
             borderColor: theme.palette.ui.borderDark,

@@ -22,6 +22,8 @@ function FormSchemaWithSelectedModel({
   saveButtonText,
   hideButtons,
   onValuesChange = () => {},
+  formSubmitRef,
+  onErrorChange,
 }) {
   const {
     formValues,
@@ -30,6 +32,7 @@ function FormSchemaWithSelectedModel({
     valuesByProperties,
     removeLastProperty,
     setErrorForm,
+    errorForm,
   } = useFormSchemaStore();
 
   const [selectedModel, setSelectedModel] = useState(
@@ -60,6 +63,18 @@ function FormSchemaWithSelectedModel({
       setSelectedModel(modelToConfigure);
     }
   }, [propertyData.model, propertyData.params, modelToConfigure]);
+
+  useEffect(() => {
+    if (formSubmitRef) {
+      formSubmitRef.current = () => onFormSubmit(formValues);
+    }
+  }, [formValues, onFormSubmit, formSubmitRef]);
+
+  useEffect(() => {
+    if (onErrorChange) {
+      onErrorChange(errorForm);
+    }
+  }, [errorForm, onErrorChange]);
 
   return (
     <Stack spacing={2} sx={{ py: 2 }}>
@@ -102,6 +117,8 @@ FormSchemaWithSelectedModel.propTypes = {
   saveButtonText: PropTypes.string,
   hideButtons: PropTypes.bool,
   onValuesChange: PropTypes.func,
+  formSubmitRef: PropTypes.object,
+  onErrorChange: PropTypes.func,
 };
 
 export default FormSchemaWithSelectedModel;
