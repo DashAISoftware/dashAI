@@ -168,47 +168,45 @@ export default function ParamsBar({ onToggle }) {
         {/* Divider */}
         <Divider sx={{ width: "100%", bgcolor: "divider" }} />
         {selectedSessionId ? (
-          <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
-            <form onSubmit={formik.handleSubmit}>
-              <Box sx={{ mr: 2, ml: 2, mb: 5 }}>
-                {/* Render the parameter fields */}
-                <FormSchemaRenderFields
-                  modelSchema={processedProperties}
-                  formik={formik}
-                  autoSave={false}
-                  handleUpdateSchema={(updatedValues) => {
-                    formik.setValues((prevValues) => ({
-                      ...prevValues,
-                      ...updatedValues,
-                    }));
-                  }}
-                  onFormSubmit={formik.handleSubmit}
-                  setError={(error) => console.error(error)}
-                  errorsMessage={formik.errors || {}}
-                  spacing={1}
-                />
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    mt: 2,
-                    position: "sticky",
-                    bottom: 0,
-                    backgroundColor: "background.box",
-                    pb: 2,
-                  }}
-                >
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={!formik.dirty}
-                  >
-                    {t("common:update")}
-                  </Button>
+          <>
+            <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
+              <form onSubmit={formik.handleSubmit}>
+                <Box sx={{ mr: 2, ml: 2 }}>
+                  <FormSchemaRenderFields
+                    modelSchema={processedProperties}
+                    formik={formik}
+                    autoSave={false}
+                    handleUpdateSchema={(updatedValues) => {
+                      formik.setValues((prevValues) => ({
+                        ...prevValues,
+                        ...updatedValues,
+                      }));
+                    }}
+                    onFormSubmit={formik.handleSubmit}
+                    setError={(error) => console.error(error)}
+                    errorsMessage={formik.errors || {}}
+                    spacing={1}
+                  />
                 </Box>
-              </Box>
-            </form>
-          </Box>
+              </form>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                p: 2,
+                flexShrink: 0,
+              }}
+            >
+              <Button
+                variant="contained"
+                disabled={!formik.dirty}
+                onClick={formik.handleSubmit}
+              >
+                {t("common:update")}
+              </Button>
+            </Box>
+          </>
         ) : (
           <Box
             sx={{
