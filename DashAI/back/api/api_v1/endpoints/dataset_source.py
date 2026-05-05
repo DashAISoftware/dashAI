@@ -9,6 +9,7 @@ from fastapi.exceptions import HTTPException
 from kink import di
 from pydantic import BaseModel
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.inf.type_inference import infer_types
 
 if TYPE_CHECKING:
@@ -16,6 +17,15 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _resolve_string(value: Any, default: str) -> str:
+    """Return the English text from a MultilingualString, or the value itself if plain str."""
+    if isinstance(value, MultilingualString):
+        return value.en
+    if isinstance(value, str):
+        return value
+    return default
 
 
 def _get_source(source_name: str, registry: "ComponentRegistry"):
@@ -68,8 +78,8 @@ async def list_sources(
         {
             "name": name,
             "type": "DatasetSource",
-            "display_name": str(getattr(info["class"], "DISPLAY_NAME", name)),
-            "description": str(getattr(info["class"], "DESCRIPTION", "")),
+            "display_name": _resolve_string(info.get("display_name"), name),
+            "description": _resolve_string(info.get("description"), ""),
         }
         for name, info in sources.items()
     ]
