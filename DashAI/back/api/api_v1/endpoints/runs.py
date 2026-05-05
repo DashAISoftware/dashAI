@@ -227,6 +227,8 @@ async def get_run_by_id(
             run.train_metrics = metrics["train_metrics"]
             run.validation_metrics = metrics["validation_metrics"]
             run.test_metrics = metrics["test_metrics"]
+            # Add evaluation strategy
+            run.evaluation_strategy = run.model_session.evaluation_strategy
 
         except exc.SQLAlchemyError as e:
             log.exception(e)

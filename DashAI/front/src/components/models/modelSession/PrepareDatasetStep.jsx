@@ -27,8 +27,16 @@ import { Trans } from "react-i18next";
  * @param {object} newExp object that contains the Experiment Modal state
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
+ * @param {string} evaluationStrategy the evaluation strategy selected for the experiment, either holdout or cross-validation
+ * @param {function} setEvaluationStrategy function to update the evaluation strategy in the parent component (CreateSessionSteps)
  */
-function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
+function PrepareDatasetStep({
+  newExp,
+  setNewExp,
+  setNextEnabled,
+  evaluationStrategy,
+  setEvaluationStrategy,
+}) {
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
@@ -50,11 +58,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   );
   const [outputColumnNames, setOutputColumnNames] = useState(
     newExp.output_columns,
-  );
-
-  // Holdout or cross-validation
-  const [evaluationStrategy, setEvaluationStrategy] = useState(
-    "HoldoutEvaluationStrategy",
   );
 
   const [columnsReady, setColumnsReady] = useState(false);

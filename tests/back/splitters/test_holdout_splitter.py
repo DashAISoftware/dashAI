@@ -1,17 +1,24 @@
-import pytest
-import pandas as pd
+from pathlib import Path
 
+import pandas as pd
+import pytest
+
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    select_columns,
+    to_dashai_dataset,
+    transform_dataset_with_schema,
+)
 from DashAI.back.splitters.holdout import HoldoutSplitter
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset, select_columns, transform_dataset_with_schema
 
 
 # ---------- FIXTURE ----------
 @pytest.fixture
 def sample_data():
-    test_df = pd.read_csv("tests\\back\\splitters\\iris.csv")
+    ruta = Path("tests") / "back" / "splitters" / "iris.csv"
+    test_df = pd.read_csv(ruta)
 
     dataset = to_dashai_dataset(test_df)
-    
+
     schema = {
         "SepalLengthCm": {"type": "Float", "dtype": "float64"},
         "SepalWidthCm": {"type": "Float", "dtype": "float64"},
@@ -19,13 +26,18 @@ def sample_data():
         "PetalWidthCm": {"type": "Float", "dtype": "float64"},
         "Species": {"type": "Categorical", "dtype": "string"},
     }
-    
+
     dataset = transform_dataset_with_schema(dataset, schema)
-    
+
     X, y = select_columns(
-        dataset, 
-        input_columns=["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"],
-        output_columns=["Species"]
+        dataset,
+        input_columns=[
+            "SepalLengthCm",
+            "SepalWidthCm",
+            "PetalLengthCm",
+            "PetalWidthCm",
+        ],
+        output_columns=["Species"],
     )
     return X, y
 
@@ -34,13 +46,15 @@ def sample_data():
 def test_holdout_sizes(sample_data):
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.7,
-        "test": 0.2,
-        "validation": 0.1,
-        "random_state": 42,
-        "shuffle": True
-    })
+    splitter = HoldoutSplitter(
+        {
+            "train": 0.7,
+            "test": 0.2,
+            "validation": 0.1,
+            "random_state": 42,
+            "shuffle": True,
+        }
+    )
 
     x_split, y_split, indices = splitter.split(X, y)
 
@@ -53,18 +67,14 @@ def test_holdout_sizes(sample_data):
 def test_no_data_loss(sample_data):
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.7,
-        "test": 0.2,
-        "validation": 0.1
-    })
+    splitter = HoldoutSplitter({"train": 0.7, "test": 0.2, "validation": 0.1})
 
     _, _, indices = splitter.split(X, y)
 
     total = (
-        len(indices["train_indexes"]) +
-        len(indices["test_indexes"]) +
-        len(indices["val_indexes"])
+        len(indices["train_indexes"])
+        + len(indices["test_indexes"])
+        + len(indices["val_indexes"])
     )
 
     assert total == len(X)
@@ -74,18 +84,12 @@ def test_no_data_loss(sample_data):
 def test_no_duplicate_indices(sample_data):
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.7,
-        "test": 0.2,
-        "validation": 0.1
-    })
+    splitter = HoldoutSplitter({"train": 0.7, "test": 0.2, "validation": 0.1})
 
     _, _, indices = splitter.split(X, y)
 
     all_indices = (
-        indices["train_indexes"] +
-        indices["test_indexes"] +
-        indices["val_indexes"]
+        indices["train_indexes"] + indices["test_indexes"] + indices["val_indexes"]
     )
 
     assert len(all_indices) == len(set(all_indices))
@@ -95,11 +99,7 @@ def test_no_duplicate_indices(sample_data):
 def test_no_empty_splits(sample_data):
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.7,
-        "test": 0.2,
-        "validation": 0.1
-    })
+    splitter = HoldoutSplitter({"train": 0.7, "test": 0.2, "validation": 0.1})
 
     x_split, _, _ = splitter.split(X, y)
 
@@ -112,12 +112,7 @@ def test_no_empty_splits(sample_data):
 def test_reproducibility(sample_data):
     X, y = sample_data
 
-    config = {
-        "train": 0.7,
-        "test": 0.2,
-        "validation": 0.1,
-        "random_state": 42
-    }
+    config = {"train": 0.7, "test": 0.2, "validation": 0.1, "random_state": 42}
 
     splitter1 = HoldoutSplitter(config)
     splitter2 = HoldoutSplitter(config)
@@ -134,12 +129,9 @@ def test_stratification(sample_data):
 
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.7,
-        "test": 0.2,
-        "validation": 0.1,
-        "stratify": True
-    })
+    splitter = HoldoutSplitter(
+        {"train": 0.7, "test": 0.2, "validation": 0.1, "stratify": True}
+    )
 
     _, y_split, _ = splitter.split(X, y)
 
@@ -165,11 +157,7 @@ def test_stratification(sample_data):
 def test_no_test_split(sample_data):
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.8,
-        "test": 0.0,
-        "validation": 0.2
-    })
+    splitter = HoldoutSplitter({"train": 0.8, "test": 0.0, "validation": 0.2})
 
     x_split, _, _ = splitter.split(X, y)
 
@@ -180,11 +168,7 @@ def test_no_test_split(sample_data):
 def test_no_validation_split(sample_data):
     X, y = sample_data
 
-    splitter = HoldoutSplitter({
-        "train": 0.8,
-        "test": 0.2,
-        "validation": 0.0
-    })
+    splitter = HoldoutSplitter({"train": 0.8, "test": 0.2, "validation": 0.0})
 
     x_split, _, _ = splitter.split(X, y)
 

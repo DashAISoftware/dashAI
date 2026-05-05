@@ -57,6 +57,11 @@ function CreateSessionSteps({
     }
   };
 
+  // Holdout or cross-validation
+  const [evaluationStrategy, setEvaluationStrategy] = useState(
+    "HoldoutEvaluationStrategy",
+  );
+
   const [newExp, setNewExp] = useState({
     name: "",
     dataset: null,
@@ -198,12 +203,14 @@ function CreateSessionSteps({
       }
 
       const hasTrain =
-        newExp.splits.train !== undefined && newExp.splits.train !== 0;
+        (newExp.splits.train !== undefined && newExp.splits.train !== 0) ||
+        evaluationStrategy === "CrossValidationEvaluationStrategy";
       const hasValidation =
         newExp.splits.validation !== undefined &&
         newExp.splits.validation !== 0;
       const hasTest =
-        newExp.splits.test !== undefined && newExp.splits.test !== 0;
+        (newExp.splits.test !== undefined && newExp.splits.test !== 0) ||
+        evaluationStrategy === "CrossValidationEvaluationStrategy";
 
       const trainMetrics = hasTrain ? allMetricNames : [];
       const validationMetrics = hasValidation ? allMetricNames : [];
@@ -274,6 +281,8 @@ function CreateSessionSteps({
               newExp={newExp}
               setNewExp={setNewExp}
               setNextEnabled={setNextEnabled}
+              evaluationStrategy={evaluationStrategy}
+              setEvaluationStrategy={setEvaluationStrategy}
             />
           )}
         </Box>
