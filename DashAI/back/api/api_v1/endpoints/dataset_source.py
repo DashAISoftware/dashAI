@@ -90,6 +90,7 @@ async def search_datasets(
     source_name: str,
     q: str = Query(default="", description="Search query"),
     limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> List[Dict[str, Any]]:
     """Search for datasets in a registered source.
@@ -102,6 +103,8 @@ async def search_datasets(
         Search query string.
     limit : int
         Maximum number of results (1-100).
+    offset : int
+        Number of results to skip (for pagination).
     registry : ComponentRegistry
         Injected component registry.
 
@@ -111,7 +114,7 @@ async def search_datasets(
         List of DatasetEntry dicts.
     """
     source = _get_source(source_name, registry)
-    results = source.search(q, limit=limit)
+    results = source.search(q, limit=limit, offset=offset)
     return [
         {
             "id": e.id,
@@ -191,6 +194,12 @@ async def preview_dataset(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Failed to fetch preview from source: {exc}",
         ) from exc
+
+    if df.empty:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Source returned no data for dataset '{decoded_id}'.",
+        )
 
     inferred = infer_types(df, method="DashAIPtype")
     sample = df.to_dict(orient="records")

@@ -35,10 +35,11 @@ export const searchDatasets = async (
   sourceName: string,
   query: string,
   limit = 20,
+  offset = 0,
 ): Promise<DatasetEntry[]> => {
   const response = await api.get<DatasetEntry[]>(
     `${hubEndpoint}/${sourceName}/search`,
-    { params: { q: query, limit } },
+    { params: { q: query, limit, offset } },
   );
   return response.data;
 };

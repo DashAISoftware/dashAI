@@ -58,7 +58,7 @@ class BaseDatasetSource(ConfigObject, ABC):
     DESCRIPTION: Final = MultilingualString(en="", es="")
 
     @abstractmethod
-    def search(self, query: str, limit: int = 20, **filters: Any) -> list[DatasetEntry]:
+    def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
         """Return datasets matching a query string.
 
         Parameters
@@ -67,6 +67,8 @@ class BaseDatasetSource(ConfigObject, ABC):
             Free-text search string.
         limit : int, optional
             Maximum number of results, by default 20.
+        offset : int, optional
+            Number of results to skip (for pagination), by default 0.
         **filters : Any
             Source-specific filter keyword arguments.
 

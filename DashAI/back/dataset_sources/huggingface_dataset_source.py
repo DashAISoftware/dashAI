@@ -12,6 +12,7 @@ from DashAI.back.dataset_sources.base_dataset_source import BaseDatasetSource, D
 log = logging.getLogger(__name__)
 
 _HF_API = "https://huggingface.co/api/datasets"
+_HF_SPLITS_API = "https://datasets-server.huggingface.co/splits"
 _HF_ROWS_API = "https://datasets-server.huggingface.co/first-rows"
 
 
@@ -31,7 +32,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         es="Navega e importa datasets públicos desde HuggingFace Hub.",
     )
 
-    def search(self, query: str, limit: int = 20, **filters: Any) -> list[DatasetEntry]:
+    def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
         """Return public HuggingFace datasets matching a query.
 
         Parameters
@@ -40,6 +41,8 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             Search string passed to the HuggingFace datasets API.
         limit : int, optional
             Maximum number of results, by default 20.
+        offset : int, optional
+            Number of results to skip (for pagination), by default 0.
         **filters : Any
             Unused; reserved for future tag/task filters.
 
@@ -51,7 +54,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         try:
             resp = httpx.get(
                 _HF_API,
-                params={"search": query, "limit": limit, "full": "True"},
+                params={"search": query, "limit": limit, "offset": offset, "full": "True"},
                 timeout=15,
             )
             if resp.status_code != 200:
@@ -95,12 +98,31 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         import pandas as pd
 
         try:
+            # Discover available configs and splits — don't assume "default"/"train"
+            splits_resp = httpx.get(
+                _HF_SPLITS_API,
+                params={"dataset": dataset_id},
+                timeout=20,
+            )
+            if splits_resp.status_code != 200:
+                log.warning(
+                    "HuggingFace splits API returned %s for %s",
+                    splits_resp.status_code,
+                    dataset_id,
+                )
+                return pd.DataFrame()
+
+            splits = splits_resp.json().get("splits", [])
+            if not splits:
+                return pd.DataFrame()
+
+            first = splits[0]
             resp = httpx.get(
                 _HF_ROWS_API,
                 params={
                     "dataset": dataset_id,
-                    "config": "default",
-                    "split": "train",
+                    "config": first["config"],
+                    "split": first["split"],
                     "offset": 0,
                     "length": min(n_rows, 100),
                 },

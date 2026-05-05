@@ -3,6 +3,7 @@
 import io
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Final
 
 import httpx
@@ -39,6 +40,33 @@ def _parse_quality(qualities: list[dict], name: str) -> int | None:
     return None
 
 
+def _fetch_openml_details(dataset_id: str) -> dict:
+    """Fetch description and tags for a single OpenML dataset.
+
+    Parameters
+    ----------
+    dataset_id : str
+        OpenML dataset ID (integer as string).
+
+    Returns
+    -------
+    dict
+        ``{"description": str, "tags": list[str]}`` — empty strings/lists on error.
+    """
+    try:
+        resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=10)
+        if resp.status_code == 200:
+            desc = resp.json()["data_set_description"]
+            tag_raw = desc.get("tag", [])
+            return {
+                "description": desc.get("description") or "",
+                "tags": [tag_raw] if isinstance(tag_raw, str) else (tag_raw or []),
+            }
+    except Exception:
+        log.debug("Could not fetch details for OpenML dataset %s", dataset_id)
+    return {"description": "", "tags": []}
+
+
 class OpenMLDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from OpenML.
 
@@ -54,7 +82,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
         es="Navega e importa datasets públicos desde OpenML.",
     )
 
-    def search(self, query: str, limit: int = 20, **filters: Any) -> list[DatasetEntry]:
+    def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
         """Return active OpenML datasets matching a name query.
 
         Parameters
@@ -63,37 +91,49 @@ class OpenMLDatasetSource(BaseDatasetSource):
             Dataset name search string.
         limit : int, optional
             Maximum number of results, by default 20.
+        offset : int, optional
+            Number of results to skip (for pagination), by default 0.
         **filters : Any
             Unused; reserved for future filters.
 
         Returns
         -------
         list[DatasetEntry]
-            Matching datasets. Returns empty list on API error.
+            Matching datasets with descriptions and tags fetched in parallel.
+            Returns empty list on API error.
         """
         try:
             resp = httpx.get(
                 f"{_OPENML_API}/data/list",
-                params={"data_name": query, "limit": limit, "status": "active"},
+                params={"data_name": query, "limit": limit, "offset": offset, "status": "active"},
                 timeout=15,
             )
             if resp.status_code != 200:
                 log.warning("OpenML API returned %s", resp.status_code)
                 return []
 
-            items = resp.json().get("data", {}).get("dataset", [])
+            raw_items = resp.json().get("data", {}).get("dataset", [])
+            if not raw_items:
+                return []
+
+            # Fetch descriptions and tags for all results in parallel
+            with ThreadPoolExecutor(max_workers=min(len(raw_items), 10)) as executor:
+                detail_futures = [
+                    executor.submit(_fetch_openml_details, str(item["did"]))
+                    for item in raw_items
+                ]
+                details_list = [f.result() for f in detail_futures]
+
             entries = []
-            for item in items:
+            for item, details in zip(raw_items, details_list):
                 did = str(item.get("did", ""))
                 qualities = item.get("quality", [])
-                tag_raw = item.get("tag", [])
-                tags = [tag_raw] if isinstance(tag_raw, str) else tag_raw
                 entries.append(
                     DatasetEntry(
                         id=did,
                         name=item.get("name", ""),
-                        description=item.get("description") or "",
-                        tags=tags,
+                        description=details["description"],
+                        tags=details["tags"],
                         size_bytes=None,
                         row_count=_parse_quality(qualities, "NumberOfInstances"),
                         url=f"https://www.openml.org/d/{did}",

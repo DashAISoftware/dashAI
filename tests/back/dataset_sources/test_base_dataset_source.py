@@ -156,9 +156,15 @@ def test_hf_get_download_url():
 def test_hf_fetch_preview_returns_dataframe():
     import pandas as pd
 
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
+    splits_response = MagicMock()
+    splits_response.status_code = 200
+    splits_response.json.return_value = {
+        "splits": [{"dataset": "stanfordnlp/imdb", "config": "plain_text", "split": "train"}]
+    }
+
+    rows_response = MagicMock()
+    rows_response.status_code = 200
+    rows_response.json.return_value = {
         "features": [{"name": "text"}, {"name": "label"}],
         "rows": [
             {"row": {"text": "good movie", "label": 1}},
@@ -166,7 +172,7 @@ def test_hf_fetch_preview_returns_dataframe():
         ],
     }
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("httpx.get", side_effect=[splits_response, rows_response]):
         source = HuggingFaceDatasetSource()
         df = source.fetch_preview("stanfordnlp/imdb", n_rows=2)
 
@@ -183,24 +189,25 @@ def test_openml_source_has_correct_type():
 
 
 def test_openml_search_returns_dataset_entries():
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
+    mock_list = MagicMock()
+    mock_list.status_code = 200
+    mock_list.json.return_value = {
         "data": {
             "dataset": [
                 {
                     "did": 61,
                     "name": "iris",
-                    "description": "The Iris dataset",
-                    "tag": ["study_14", "uci"],
                     "file_id": 22044555,
                     "quality": [{"name": "NumberOfInstances", "value": "150"}],
                 }
             ]
         }
     }
+    mock_details = {"description": "The Iris dataset", "tags": ["study_14", "uci"]}
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("httpx.get", return_value=mock_list), \
+         patch("DashAI.back.dataset_sources.openml_dataset_source._fetch_openml_details",
+               return_value=mock_details):
         source = OpenMLDatasetSource()
         results = source.search("iris", limit=5)
 
@@ -208,6 +215,8 @@ def test_openml_search_returns_dataset_entries():
     assert results[0].id == "61"
     assert results[0].name == "iris"
     assert results[0].row_count == 150
+    assert results[0].description == "The Iris dataset"
+    assert "study_14" in results[0].tags
     assert results[0].source == "OpenMLDatasetSource"
     assert results[0].url == "https://www.openml.org/d/61"
 
