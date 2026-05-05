@@ -93,20 +93,22 @@ export default function ModelsCenterContent() {
             flexDirection: "column",
             width: "100%",
             height: "100%",
-            overflow: "auto",
+            overflow: "hidden",
             px: 2,
             pt: 2,
           }}
         >
           <ModelsBreadcrumbs />
-          <CreateSessionSteps
-            backHome={handleBackToTaskSelection}
-            selectedTask={selectedTask}
-            datasets={datasets}
-            handleSessionCreated={handleSessionCreated}
-            existingSessions={sessions}
-            preselectedDatasetId={selectedDatasetId}
-          />
+          <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+            <CreateSessionSteps
+              backHome={handleBackToTaskSelection}
+              selectedTask={selectedTask}
+              datasets={datasets}
+              handleSessionCreated={handleSessionCreated}
+              existingSessions={sessions}
+              preselectedDatasetId={selectedDatasetId}
+            />
+          </Box>
         </Box>
       ) : step === 2 && selectedDatasetId ? (
         <DatasetVisualization
