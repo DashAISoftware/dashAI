@@ -337,8 +337,8 @@ function ColumnSelector({
               context: inputCardinality.exact
                 ? "exact"
                 : inputCardinality.max
-                ? "range"
-                : "min",
+                  ? "range"
+                  : "min",
             })}
           </Typography>
         )}
