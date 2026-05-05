@@ -176,55 +176,53 @@ export default function SelectModelMenu() {
       width="100%"
       flexDirection="column"
       justifyContent="flex-start"
-      overflow="auto"
-      pl={5}
-      pr={5}
     >
-      <Typography
-        variant="h5"
-        component="h2"
-        sx={{ whiteSpace: "normal", wordBreak: "break-word", mt: 2, mb: 2 }}
-      >
-        {selectedDisplayName}:{" "}
-        {t("generative:label.selectModelAndConfigureParameters")}
-      </Typography>
+      <Box sx={{ flexGrow: 1, overflow: "auto", pl: 5, pr: 5 }}>
+        <Typography
+          variant="h5"
+          component="h2"
+          sx={{ whiteSpace: "normal", wordBreak: "break-word", mt: 2, mb: 2 }}
+        >
+          {selectedDisplayName}:{" "}
+          {t("generative:label.selectModelAndConfigureParameters")}
+        </Typography>
 
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-        {t("generative:label.selectModel")}
-      </Typography>
+        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+          {t("generative:label.selectModel")}
+        </Typography>
 
-      <ModelGrid
-        models={relatedComponents}
-        selectedModelName={selectedModel?.name}
-        page={page}
-        onSelect={handleModelSelect}
-        onPageChange={setPage}
-      />
-
-      <Box sx={{ mb: 2 }} />
-
-      {!selectedModel && (
-        <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end" }}>
-          <FormSchemaButtonGroup
-            onCancel={() => navigate("/app/generative")}
-            onFormSubmit={() => {}}
-            error={true}
-            saveButtonText={t("generative:button.createSession")}
-            backButtonText={t("generative:button.backToTaskSelection")}
-          />
-        </Box>
-      )}
-
-      {selectedModel?.schema && (
-        <SessionForm
-          formik={formik}
-          processedProperties={processedProperties}
-          nameError={nameError}
-          nameErrorMessage={nameErrorMessage}
-          onNameChange={handleNameInputChange}
-          onBack={() => navigate("/app/generative")}
+        <ModelGrid
+          models={relatedComponents}
+          selectedModelName={selectedModel?.name}
+          page={page}
+          onSelect={handleModelSelect}
+          onPageChange={setPage}
         />
-      )}
+
+        <Box sx={{ mb: 2 }} />
+
+        {selectedModel?.schema && (
+          <SessionForm
+            formik={formik}
+            processedProperties={processedProperties}
+            nameError={nameError}
+            nameErrorMessage={nameErrorMessage}
+            onNameChange={handleNameInputChange}
+          />
+        )}
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+        <FormSchemaButtonGroup
+          onCancel={() => navigate("/app/generative")}
+          onFormSubmit={selectedModel?.schema ? formik.handleSubmit : () => {}}
+          error={!selectedModel ? true : nameError}
+          formik={selectedModel?.schema ? formik : undefined}
+          saveButtonText={t("generative:button.createSession")}
+          backButtonText={t("generative:button.backToTaskSelection")}
+          dataTour="create-session-button"
+        />
+      </Box>
     </Box>
   );
 }

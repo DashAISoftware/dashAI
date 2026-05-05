@@ -92,13 +92,15 @@ export default function GenerativeContent() {
                 flexDirection: "column",
                 width: "100%",
                 height: "100%",
-                overflow: "auto",
+                overflow: "hidden",
                 px: 2,
                 pt: 2,
               }}
             >
               <GenerativeBreadcrumbs />
-              <SelectModelMenu />
+              <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+                <SelectModelMenu />
+              </Box>
             </Box>
           )}
         </CenterPanel>
