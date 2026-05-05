@@ -235,7 +235,7 @@ def test_openml_fetch_preview_returns_dataframe():
     info_response = MagicMock()
     info_response.status_code = 200
     info_response.json.return_value = {
-        "data_set_description": {"file_id": "22044555"}
+        "data_set_description": {"file_id": "22044555", "url": "https://openml.org/data/v1/download/22044555/iris.arff"}
     }
 
     arff_content = b"""@relation iris

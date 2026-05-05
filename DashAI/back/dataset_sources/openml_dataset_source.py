@@ -13,7 +13,6 @@ from DashAI.back.dataset_sources.base_dataset_source import BaseDatasetSource, D
 log = logging.getLogger(__name__)
 
 _OPENML_API = "https://www.openml.org/api/v1/json"
-_OPENML_DATA = "https://data.openml.org/data/v1/download"
 
 
 def _parse_quality(qualities: list[dict], name: str) -> int | None:
@@ -132,11 +131,8 @@ class OpenMLDatasetSource(BaseDatasetSource):
             if info_resp.status_code != 200:
                 return pd.DataFrame()
 
-            file_id = info_resp.json()["data_set_description"]["file_id"]
-            file_resp = httpx.get(
-                f"{_OPENML_DATA}/{file_id}",
-                timeout=60,
-            )
+            arff_url = info_resp.json()["data_set_description"]["url"]
+            file_resp = httpx.get(arff_url, timeout=60, follow_redirects=True)
             if file_resp.status_code != 200:
                 return pd.DataFrame()
 
@@ -170,9 +166,9 @@ class OpenMLDatasetSource(BaseDatasetSource):
 
         info_resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=15)
         info_resp.raise_for_status()
-        file_id = info_resp.json()["data_set_description"]["file_id"]
+        arff_url = info_resp.json()["data_set_description"]["url"]
 
-        file_resp = httpx.get(f"{_OPENML_DATA}/{file_id}", timeout=120)
+        file_resp = httpx.get(arff_url, timeout=120, follow_redirects=True)
         file_resp.raise_for_status()
 
         arff_text = file_resp.content.decode("utf-8", errors="replace")
