@@ -352,19 +352,21 @@ export default function InlineExplainerCreator({
           )}
         </Box>
 
-        <FormSchemaButtonGroup
-          onCancel={handleBackButton}
-          onFormSubmit={handleNextButton}
-          error={!nextEnabled || isLoading}
-          backButtonText={
-            activeStep === 0 ? t("common:cancel") : t("common:back")
-          }
-          saveButtonText={
-            activeStep === steps.length - 1
-              ? t("common:save")
-              : t("common:next")
-          }
-        />
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <FormSchemaButtonGroup
+            onCancel={handleBackButton}
+            onFormSubmit={handleNextButton}
+            error={!nextEnabled || isLoading}
+            backButtonText={
+              activeStep === 0 ? t("common:cancel") : t("common:back")
+            }
+            saveButtonText={
+              activeStep === steps.length - 1
+                ? t("common:save")
+                : t("common:next")
+            }
+          />
+        </Box>
       </Paper>
     </Collapse>
   );
