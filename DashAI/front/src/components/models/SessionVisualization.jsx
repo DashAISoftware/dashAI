@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -38,6 +38,17 @@ export default function SessionVisualization() {
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
   const [tableCollapsed, setTableCollapsed] = useState(false);
+  const tableButtonRef = useRef(null);
+  const graphsButtonRef = useRef(null);
+  const [toggleBtnWidth, setToggleBtnWidth] = useState(null);
+
+  useLayoutEffect(() => {
+    const w = Math.max(
+      tableButtonRef.current?.scrollWidth ?? 0,
+      graphsButtonRef.current?.scrollWidth ?? 0,
+    );
+    if (w > 0) setToggleBtnWidth(w);
+  }, []);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
@@ -292,17 +303,37 @@ export default function SessionVisualization() {
               {/* Toggle between Table and Graphs */}
               <ButtonGroup size="small" variant="outlined">
                 <Button
+                  ref={tableButtonRef}
                   variant={showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(true)}
                   startIcon={<TableChart />}
+                  style={
+                    toggleBtnWidth
+                      ? {
+                          minWidth: `${toggleBtnWidth}px`,
+                          width: `${toggleBtnWidth}px`,
+                          whiteSpace: "nowrap",
+                        }
+                      : { whiteSpace: "nowrap" }
+                  }
                 >
                   {t("common:table")}
                 </Button>
                 <Button
+                  ref={graphsButtonRef}
                   data-tour="graphs-button"
                   variant={!showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}
+                  style={
+                    toggleBtnWidth
+                      ? {
+                          minWidth: `${toggleBtnWidth}px`,
+                          width: `${toggleBtnWidth}px`,
+                          whiteSpace: "nowrap",
+                        }
+                      : { whiteSpace: "nowrap" }
+                  }
                 >
                   {t("common:graphs")}
                 </Button>
