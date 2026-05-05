@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Box, CircularProgress } from "@mui/material";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
 import CustomLayout from "../../custom/CustomLayout";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
@@ -26,13 +28,27 @@ export default function UploadDatasetSteps({ backHome }) {
   const [formValues, setFormValues] = useState({});
   const [error, setError] = useState(false);
   const [previewError, setPreviewError] = useState(false);
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
+  const uploadActionRef = useRef(null);
+  const [step1ButtonState, setStep1ButtonState] = useState({
+    enabled: false,
+    uploading: false,
+  });
   const tourContext = useTourContext();
 
   const formSubmitRef = useRef(null);
 
   const goToNextStep = () => {
     navigate(UPLOAD_CONFIGURE_PATH);
+    if (tourContext?.run) {
+      const observer = new MutationObserver(() => {
+        if (document.querySelector('[data-tour="upload-area"]')) {
+          observer.disconnect();
+          tourContext.nextStep();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
   };
 
   const goToPrevStep = () => {
@@ -93,31 +109,69 @@ export default function UploadDatasetSteps({ backHome }) {
   };
 
   return (
-    <CustomLayout
-      title={t("datasets:label.uploadDataset")}
-      subtitle={getSubtitle()}
-      padding={0}
-    >
-      {step === 0 && (
-        <SelectDataloaderStep
-          goToNextStep={goToNextStep}
-          goToPrevStep={goToPrevStep}
-          selectedDataloader={selectedDataloader}
-          setSelectedDataloader={setSelectedDataloader}
-        />
-      )}
-      {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
-        <ConfigureAndUploadDatasetStep
-          goToPrevStep={goToPrevStep}
-          selectedDataloader={selectedDataloader}
-          backHome={backHome}
-          handleDatasetCreated={handleDatasetCreated}
-          formSubmitRef={formSubmitRef}
-          formValues={formValues}
-          onPreviewError={setPreviewError}
-          formHasErrors={error}
-        />
-      )}
-    </CustomLayout>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <Box sx={{ flexGrow: 1, overflow: "auto" }}>
+        <CustomLayout
+          title={t("datasets:label.uploadDataset")}
+          subtitle={getSubtitle()}
+          padding={0}
+        >
+          {step === 0 && (
+            <SelectDataloaderStep
+              selectedDataloader={selectedDataloader}
+              setSelectedDataloader={setSelectedDataloader}
+            />
+          )}
+          {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
+            <ConfigureAndUploadDatasetStep
+              goToPrevStep={goToPrevStep}
+              selectedDataloader={selectedDataloader}
+              backHome={backHome}
+              handleDatasetCreated={handleDatasetCreated}
+              formSubmitRef={formSubmitRef}
+              formValues={formValues}
+              onPreviewError={setPreviewError}
+              formHasErrors={error}
+              onButtonStateChange={setStep1ButtonState}
+              uploadActionRef={uploadActionRef}
+            />
+          )}
+        </CustomLayout>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+        {step === 0 && (
+          <FormSchemaButtonGroup
+            onCancel={goToPrevStep}
+            onFormSubmit={goToNextStep}
+            formik={{
+              errors: selectedDataloader.display_name
+                ? {}
+                : { dataloader: t("common:required") },
+            }}
+            saveButtonText={t("common:next")}
+            backButtonText={t("common:back")}
+            dataTour="dataloader-step-next-button"
+          />
+        )}
+        {step === 1 &&
+          (step1ButtonState.uploading ? (
+            <CircularProgress />
+          ) : (
+            <FormSchemaButtonGroup
+              onCancel={goToPrevStep}
+              onFormSubmit={() => uploadActionRef.current?.()}
+              formik={{
+                errors: step1ButtonState.enabled
+                  ? {}
+                  : { dataset: t("datasets:error.requiredFieldsMissing") },
+              }}
+              saveButtonText={t("common:upload")}
+              backButtonText={t("common:back")}
+              dataTour="dataset-step-upload-button"
+            />
+          ))}
+      </Box>
+    </Box>
   );
 }

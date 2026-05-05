@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Typography, TextField, Box } from "@mui/material";
 import { useFormik } from "formik";
-import CustomLayout from "../../custom/CustomLayout";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
@@ -107,73 +106,69 @@ export default function UploadNotebookSteps({
   const nameError = getNameError();
 
   return (
-    <CustomLayout
-      title={t("datasets:label.createNewNotebook")}
-      subtitle={""}
-      padding={0}
-    >
-      <NoteBox
-        className="notebook-note-box"
-        data-tour="notebook-note-box"
-        message={t("datasets:label.notebookCreationNote")}
-      />
-      <Typography
-        variant="h6"
-        sx={{
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-          mb: 2,
-        }}
-      >
-        {t("datasets:label.selectDatasetForNotebook")}
-      </Typography>
-      <DatasetAutocomplete
-        datasets={datasets}
-        selectedDataset={selectedDataset}
-        setSelectedDataset={setSelectedDataset}
-      />
-      <Typography
-        variant="h6"
-        sx={{
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-          my: 2,
-        }}
-      >
-        {t("datasets:label.nameYourNotebook")}
-      </Typography>
-      {/* Notebook name */}
-      <TextField
-        fullWidth
-        label={t("datasets:label.notebookName")}
-        name="name"
-        value={formik.values.name}
-        onChange={formik.handleChange}
-        error={Boolean(selectedDataset && nameError)}
-        helperText={selectedDataset ? nameError : ""}
-        sx={{ mb: 2 }}
-        disabled={!selectedDataset}
-        placeholder={
-          !selectedDataset
-            ? t("datasets:label.selectDatasetFirst")
-            : t("datasets:label.notebookName")
-        }
-        slotProps={{
-          inputLabel: { shrink: true },
-        }}
-      />
-      {/* Notebook description */}
-      <TextField
-        fullWidth
-        label={t("datasets:label.notebookDescription")}
-        name="description"
-        value={formik.values.description}
-        onChange={formik.handleChange}
-        error={Boolean(formik.errors.description)}
-        helperText={formik.errors.description}
-        sx={{ mb: 2 }}
-      />
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <Box sx={{ flexGrow: 1, p: 2, overflow: "auto" }}>
+        <NoteBox
+          className="notebook-note-box"
+          data-tour="notebook-note-box"
+          message={t("datasets:label.notebookCreationNote")}
+        />
+        <Typography
+          variant="h6"
+          sx={{
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            mb: 2,
+          }}
+        >
+          {t("datasets:label.selectDatasetForNotebook")}
+        </Typography>
+        <DatasetAutocomplete
+          datasets={datasets}
+          selectedDataset={selectedDataset}
+          setSelectedDataset={setSelectedDataset}
+        />
+        <Typography
+          variant="h6"
+          sx={{
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            my: 2,
+          }}
+        >
+          {t("datasets:label.nameYourNotebook")}
+        </Typography>
+        <TextField
+          fullWidth
+          label={t("datasets:label.notebookName")}
+          name="name"
+          value={formik.values.name}
+          onChange={formik.handleChange}
+          error={Boolean(selectedDataset && nameError)}
+          helperText={selectedDataset ? nameError : ""}
+          sx={{ mb: 2 }}
+          disabled={!selectedDataset}
+          placeholder={
+            !selectedDataset
+              ? t("datasets:label.selectDatasetFirst")
+              : t("datasets:label.notebookName")
+          }
+          slotProps={{
+            inputLabel: { shrink: true },
+          }}
+        />
+        <TextField
+          fullWidth
+          label={t("datasets:label.notebookDescription")}
+          name="description"
+          value={formik.values.description}
+          onChange={formik.handleChange}
+          error={Boolean(formik.errors.description)}
+          helperText={formik.errors.description}
+          sx={{ mb: 2 }}
+        />
+      </Box>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
         <FormSchemaButtonGroup
           onCancel={backHome}
           onFormSubmit={formik.handleSubmit}
@@ -190,6 +185,6 @@ export default function UploadNotebookSteps({
           dataTour="create-notebook-button"
         />
       </Box>
-    </CustomLayout>
+    </Box>
   );
 }

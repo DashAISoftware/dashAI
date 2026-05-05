@@ -103,19 +103,21 @@ export default function DatasetsCenterContent() {
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          overflow: "auto",
+          overflow: "hidden",
           px: 2,
           pt: 2,
         }}
       >
         <DataBreadcrumbs />
-        <UploadDatasetSteps
-          backHome={() => {
-            fetchDatasets();
-            setRightBarContent(null);
-            navigate("/app/data");
-          }}
-        />
+        <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+          <UploadDatasetSteps
+            backHome={() => {
+              fetchDatasets();
+              setRightBarContent(null);
+              navigate("/app/data");
+            }}
+          />
+        </Box>
       </Box>
     );
   }
@@ -127,22 +129,24 @@ export default function DatasetsCenterContent() {
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          overflow: "auto",
+          overflow: "hidden",
           px: 2,
           pt: 2,
         }}
       >
         <DataBreadcrumbs />
-        <UploadNotebookSteps
-          backHome={() => {
-            fetchNotebooks();
-            navigate("/app/data");
-          }}
-          datasets={datasets}
-          handleNotebookCreated={handleNotebookCreated}
-          existingNotebooks={notebooks}
-          preselectedDatasetId={preselectedDatasetIdFromState}
-        />
+        <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+          <UploadNotebookSteps
+            backHome={() => {
+              fetchNotebooks();
+              navigate("/app/data");
+            }}
+            datasets={datasets}
+            handleNotebookCreated={handleNotebookCreated}
+            existingNotebooks={notebooks}
+            preselectedDatasetId={preselectedDatasetIdFromState}
+          />
+        </Box>
       </Box>
     );
   }

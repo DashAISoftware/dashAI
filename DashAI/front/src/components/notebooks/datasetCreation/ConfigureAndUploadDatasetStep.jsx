@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Grid, CircularProgress } from "@mui/material";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { useState, useEffect, useCallback } from "react";
+import { Grid } from "@mui/material";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
@@ -20,6 +19,8 @@ export default function ConfigureAndUploadDatasetStep({
   formValues,
   onPreviewError,
   formHasErrors,
+  onButtonStateChange,
+  uploadActionRef,
 }) {
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -31,7 +32,7 @@ export default function ConfigureAndUploadDatasetStep({
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["common", "datasets"]);
+  const { t } = useTranslation(["datasets"]);
   const theme = useTheme();
 
   useEffect(() => {
@@ -175,6 +176,18 @@ export default function ConfigureAndUploadDatasetStep({
     formValues,
   ]);
 
+  useEffect(() => {
+    if (onButtonStateChange) {
+      onButtonStateChange({ enabled: uploadEnabled, uploading });
+    }
+  }, [uploadEnabled, uploading, onButtonStateChange]);
+
+  useEffect(() => {
+    if (uploadActionRef) {
+      uploadActionRef.current = submitNewDataset;
+    }
+  }, [submitNewDataset, uploadActionRef]);
+
   return (
     <Grid sx={{ width: "100%", height: "100%" }}>
       <Grid
@@ -200,26 +213,6 @@ export default function ConfigureAndUploadDatasetStep({
           onTypesChanged={handleTypesChanged}
           onPreviewLoaded={handlePreviewLoaded}
         />
-      </Grid>
-
-      {/* Form buttons */}
-      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-        {uploading ? (
-          <CircularProgress />
-        ) : (
-          <FormSchemaButtonGroup
-            onCancel={goToPrevStep}
-            onFormSubmit={submitNewDataset}
-            formik={{
-              errors: uploadEnabled
-                ? {}
-                : { dataset: t("datasets:error.requiredFieldsMissing") },
-            }}
-            saveButtonText={t("common:upload")}
-            backButtonText={t("common:back")}
-            dataTour="dataset-step-upload-button"
-          />
-        )}
       </Grid>
     </Grid>
   );
