@@ -279,9 +279,9 @@ function ColumnSelector({
     enableFullScreenToggle: false,
     enableHiding: false,
     enablePagination: true,
-    muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
+    muiPaginationProps: { rowsPerPageOptions: [10, 15, 20] },
     initialState: {
-      pagination: { pageSize: 5, pageIndex: 0 },
+      pagination: { pageSize: 10, pageIndex: 0 },
       density: "compact",
     },
     mrtTheme: {
