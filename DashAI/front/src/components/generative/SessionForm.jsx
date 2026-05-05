@@ -79,7 +79,7 @@ export default function SessionForm({
           />
         </Box>
 
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
           <FormSchemaButtonGroup
             onCancel={onBack}
             onFormSubmit={formik.handleSubmit}
@@ -88,7 +88,6 @@ export default function SessionForm({
             saveButtonText={t("generative:button.createSession")}
             backButtonText={t("generative:button.backToTaskSelection")}
             dataTour="create-session-button"
-            justifyContent="flex-start"
           />
         </Box>
       </Box>

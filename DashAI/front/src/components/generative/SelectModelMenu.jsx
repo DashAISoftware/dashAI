@@ -204,14 +204,13 @@ export default function SelectModelMenu() {
       <Box sx={{ mb: 2 }} />
 
       {!selectedModel && (
-        <Box sx={{ mt: 1 }}>
+        <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end" }}>
           <FormSchemaButtonGroup
             onCancel={() => navigate("/app/generative")}
             onFormSubmit={() => {}}
             error={true}
             saveButtonText={t("generative:button.createSession")}
             backButtonText={t("generative:button.backToTaskSelection")}
-            justifyContent="flex-start"
           />
         </Box>
       )}
