@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
  * @param {function} onTypesChanged - Callback to notify parent when column types change
  * @param {function} onColumnRename - Callback to notify parent when columns are renamed (oldName, newName)
  * @param {function} onPreviewLoaded - Callback to notify parent when preview is loaded
+ * @param {object} initialData - Pre-fetched preview data; when provided, skips the previewWithTypes API call
  */
 function PreviewDataset({
   datasetData,
@@ -24,6 +25,7 @@ function PreviewDataset({
   onTypesChanged,
   onColumnRename,
   onPreviewLoaded,
+  initialData = null,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -51,6 +53,17 @@ function PreviewDataset({
   }, [loading, error, onPreviewLoaded]);
 
   useEffect(() => {
+    if (initialData) {
+      setPreviewData(initialData);
+      setColumnTypes(initialData.inferred_types);
+      if (onTypesChangedRef.current) {
+        onTypesChangedRef.current(initialData.inferred_types);
+      }
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     const loadPreview = async () => {
       if (!datasetData) {
         setError(t("datasets:error.noDatasetDataAvailable"));
@@ -92,7 +105,7 @@ function PreviewDataset({
     // Re-run preview when the file changes OR when params change. We stringify params to
     // create a stable dependency so changes to configuration in the right sidebar
     // trigger a new preview request.
-  }, [datasetData?.file, JSON.stringify(datasetData?.params || {})]);
+  }, [initialData, datasetData?.file, JSON.stringify(datasetData?.params || {})]);
 
   const handleTypeChange = useCallback(
     (typeChanges) => {
@@ -232,48 +245,50 @@ function PreviewDataset({
               width: "100%",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                gap: 2,
-                mb: 2,
-                flexShrink: 0,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                {t("datasets:label.showingRowsInference", {
-                  sampleLength: previewData.sample.length,
-                  previewRowCount: previewData.preview_row_count,
-                })}
-                <br />
-                {t("datasets:label.changeColumnTypesInfo")}
-              </Typography>
-
-              <Button
-                variant="contained"
-                size="small"
-                onClick={onChangeDataset}
+            {!initialData && (
+              <Box
                 sx={{
-                  fontSize: "0.7rem",
-                  px: 1.5,
-                  py: 0.5,
-                  textTransform: "uppercase",
-                  minWidth: "auto",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 2,
+                  mb: 2,
                   flexShrink: 0,
                 }}
               >
-                {t("datasets:button.reUploadDataset")}
-              </Button>
-            </Box>
+                <Typography variant="body2" color="text.secondary">
+                  {t("datasets:label.showingRowsInference", {
+                    sampleLength: previewData.sample.length,
+                    previewRowCount: previewData.preview_row_count,
+                  })}
+                  <br />
+                  {t("datasets:label.changeColumnTypesInfo")}
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={onChangeDataset}
+                  sx={{
+                    fontSize: "0.7rem",
+                    px: 1.5,
+                    py: 0.5,
+                    textTransform: "uppercase",
+                    minWidth: "auto",
+                    flexShrink: 0,
+                  }}
+                >
+                  {t("datasets:button.reUploadDataset")}
+                </Button>
+              </Box>
+            )}
 
             <Box sx={{ width: "100%" }}>
               <PreviewDatasetTable
                 rows={previewData.sample}
                 columnTypes={columnTypes}
-                file={datasetData.file}
-                params={datasetData.params}
+                file={datasetData?.file ?? null}
+                params={datasetData?.params ?? {}}
                 onTypeChange={handleTypeChange}
                 onColumnRename={handleColumnRename}
                 onEncoderChange={handleEncoderChange}
@@ -292,6 +307,12 @@ PreviewDataset.propTypes = {
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
   onColumnRename: PropTypes.func,
+  onPreviewLoaded: PropTypes.func,
+  initialData: PropTypes.shape({
+    sample: PropTypes.array.isRequired,
+    inferred_types: PropTypes.object.isRequired,
+    preview_row_count: PropTypes.number,
+  }),
 };
 
 export default PreviewDataset;
