@@ -13,6 +13,7 @@ import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
+import HubContent from "./pages/hub/HubContent";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
               <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
           </Route>
+          <Route path="/app/hub" element={<HubContent />} />
         </Routes>
         <JobQueueWidget />
       </BrowserRouter>
