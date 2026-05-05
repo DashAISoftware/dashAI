@@ -66,6 +66,10 @@ from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
+# Dataset Sources
+from DashAI.back.dataset_sources.huggingface_dataset_source import HuggingFaceDatasetSource
+from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+
 # Explainers
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
 from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
@@ -280,6 +284,9 @@ def get_initial_components():
         CSVDataLoader,
         JSONDataLoader,
         ExcelDataLoader,
+        # Dataset Sources
+        HuggingFaceDatasetSource,
+        OpenMLDatasetSource,
         # Metrics
         F1,
         Accuracy,
