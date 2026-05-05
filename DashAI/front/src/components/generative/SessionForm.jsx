@@ -1,5 +1,6 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { Box, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
 
 export default function SessionForm({
@@ -78,17 +79,17 @@ export default function SessionForm({
           />
         </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <Button variant="outlined" onClick={onBack} sx={{ mr: 1 }}>
-            {t("generative:button.backToTaskSelection")}
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            data-tour="create-session-button"
-          >
-            {t("generative:button.createSession")}
-          </Button>
+        <Box sx={{ mt: 2 }}>
+          <FormSchemaButtonGroup
+            onCancel={onBack}
+            onFormSubmit={formik.handleSubmit}
+            formik={formik}
+            error={nameError}
+            saveButtonText={t("generative:button.createSession")}
+            backButtonText={t("generative:button.backToTaskSelection")}
+            dataTour="create-session-button"
+            justifyContent="flex-start"
+          />
         </Box>
       </Box>
     </form>

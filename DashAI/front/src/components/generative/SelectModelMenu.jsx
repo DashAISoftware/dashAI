@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useFormik } from "formik";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
@@ -16,6 +16,7 @@ import {
 } from "./utils";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useGenerative } from "./GenerativeContext";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import ModelGrid from "./ModelGrid";
 import SessionForm from "./SessionForm";
 
@@ -203,17 +204,15 @@ export default function SelectModelMenu() {
       <Box sx={{ mb: 2 }} />
 
       {!selectedModel && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
-          <Button
-            variant="outlined"
-            onClick={() => navigate("/app/generative")}
-            sx={{ mr: 1 }}
-          >
-            {t("generative:button.backToTaskSelection")}
-          </Button>
-          <Button variant="contained" disabled>
-            {t("generative:button.createSession")}
-          </Button>
+        <Box sx={{ mt: 1 }}>
+          <FormSchemaButtonGroup
+            onCancel={() => navigate("/app/generative")}
+            onFormSubmit={() => {}}
+            error={true}
+            saveButtonText={t("generative:button.createSession")}
+            backButtonText={t("generative:button.backToTaskSelection")}
+            justifyContent="flex-start"
+          />
         </Box>
       )}
 
