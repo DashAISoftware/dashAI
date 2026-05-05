@@ -173,3 +173,85 @@ def test_hf_fetch_preview_returns_dataframe():
     assert isinstance(df, pd.DataFrame)
     assert list(df.columns) == ["text", "label"]
     assert len(df) == 2
+
+
+from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+
+
+def test_openml_source_has_correct_type():
+    assert OpenMLDatasetSource.TYPE == "DatasetSource"
+
+
+def test_openml_search_returns_dataset_entries():
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "data": {
+            "dataset": [
+                {
+                    "did": 61,
+                    "name": "iris",
+                    "description": "The Iris dataset",
+                    "tag": ["study_14", "uci"],
+                    "file_id": 22044555,
+                    "quality": [{"name": "NumberOfInstances", "value": "150"}],
+                }
+            ]
+        }
+    }
+
+    with patch("httpx.get", return_value=mock_response):
+        source = OpenMLDatasetSource()
+        results = source.search("iris", limit=5)
+
+    assert len(results) == 1
+    assert results[0].id == "61"
+    assert results[0].name == "iris"
+    assert results[0].row_count == 150
+    assert results[0].source == "OpenMLDatasetSource"
+    assert results[0].url == "https://www.openml.org/d/61"
+
+
+def test_openml_search_handles_http_error():
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+
+    with patch("httpx.get", return_value=mock_response):
+        source = OpenMLDatasetSource()
+        results = source.search("iris")
+
+    assert results == []
+
+
+def test_openml_get_download_url():
+    source = OpenMLDatasetSource()
+    url = source.get_download_url("61")
+    assert url == "https://www.openml.org/d/61"
+
+
+def test_openml_fetch_preview_returns_dataframe():
+    import pandas as pd
+
+    info_response = MagicMock()
+    info_response.status_code = 200
+    info_response.json.return_value = {
+        "data_set_description": {"file_id": "22044555"}
+    }
+
+    arff_content = b"""@relation iris
+@attribute sepalLength numeric
+@attribute class {Iris-setosa,Iris-versicolor}
+@data
+5.1,Iris-setosa
+4.9,Iris-versicolor
+"""
+    file_response = MagicMock()
+    file_response.status_code = 200
+    file_response.content = arff_content
+
+    with patch("httpx.get", side_effect=[info_response, file_response]):
+        source = OpenMLDatasetSource()
+        df = source.fetch_preview("61", n_rows=2)
+
+    assert isinstance(df, pd.DataFrame)
+    assert "sepalLength" in df.columns
