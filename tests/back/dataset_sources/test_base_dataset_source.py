@@ -103,3 +103,73 @@ def test_incomplete_subclass_cannot_be_instantiated():
         pass
     with pytest.raises(TypeError):
         Incomplete()
+
+
+from unittest.mock import patch, MagicMock
+from DashAI.back.dataset_sources.huggingface_dataset_source import HuggingFaceDatasetSource
+
+
+def test_hf_source_has_correct_type():
+    assert HuggingFaceDatasetSource.TYPE == "DatasetSource"
+
+
+def test_hf_search_returns_dataset_entries():
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = [
+        {
+            "id": "stanfordnlp/imdb",
+            "description": "IMDB movie review sentiment",
+            "tags": ["text-classification"],
+            "cardData": {"size_categories": ["10K<n<100K"]},
+            "downloads": 5000,
+        }
+    ]
+
+    with patch("httpx.get", return_value=mock_response):
+        source = HuggingFaceDatasetSource()
+        results = source.search("imdb", limit=5)
+
+    assert len(results) == 1
+    assert results[0].id == "stanfordnlp/imdb"
+    assert results[0].source == "HuggingFaceDatasetSource"
+    assert results[0].url == "https://huggingface.co/datasets/stanfordnlp/imdb"
+
+
+def test_hf_search_handles_http_error(caplog):
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+
+    with patch("httpx.get", return_value=mock_response):
+        source = HuggingFaceDatasetSource()
+        results = source.search("anything")
+
+    assert results == []
+
+
+def test_hf_get_download_url():
+    source = HuggingFaceDatasetSource()
+    url = source.get_download_url("owner/dataset")
+    assert url == "https://huggingface.co/datasets/owner/dataset"
+
+
+def test_hf_fetch_preview_returns_dataframe():
+    import pandas as pd
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "features": [{"name": "text"}, {"name": "label"}],
+        "rows": [
+            {"row": {"text": "good movie", "label": 1}},
+            {"row": {"text": "bad movie", "label": 0}},
+        ],
+    }
+
+    with patch("httpx.get", return_value=mock_response):
+        source = HuggingFaceDatasetSource()
+        df = source.fetch_preview("stanfordnlp/imdb", n_rows=2)
+
+    assert isinstance(df, pd.DataFrame)
+    assert list(df.columns) == ["text", "label"]
+    assert len(df) == 2
