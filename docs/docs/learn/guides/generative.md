@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Module Guide: Generative AI
 
-The Generative module provides a no-code interface for interacting with generative AI models — text generation, image synthesis, and image-to-image transformation. Unlike the Models module which is built around structured training and evaluation, the Generative module is oriented around interactive experimentation: you configure a model, create a session, and interact with the model in real time while adjusting parameters and observing their effect.
+The Generative module provides a no-code interface for interacting with generative AI models — text generation, image synthesis, and ControlNet-conditioned image generation. Unlike the Models module which is built around structured training and evaluation, the Generative module is oriented around interactive experimentation: you configure a model, create a session, and interact with the model in real time while adjusting parameters and observing their effect.
 
 ---
 

@@ -62,7 +62,7 @@ const sidebars = {
         "deep-dive/dashai-dataset",
       ],
     },
-    "deep-dive/papers",
+    "deep-dive/benchmark",
     "deep-dive/replicability",
   ],
 

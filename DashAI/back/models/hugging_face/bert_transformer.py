@@ -1,0 +1,45 @@
+"""DashAI implementation of BERT model for English text classification."""
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.hugging_face.base_text_classification_transformer import (
+    HuggingFaceTextClassificationTransformer,
+)
+from DashAI.back.models.hugging_face.distilbert_transformer import (
+    DistilBertTransformerSchema,
+)
+
+
+class BertTransformer(HuggingFaceTextClassificationTransformer):
+    """Pre-trained BERT model for English text classification.
+
+    BERT (Bidirectional Encoder Representations from Transformers) pre-trains deep
+    bidirectional representations by jointly conditioning on both left and right
+    context in all layers. Fine-tuned BERT achieves strong results on a wide range
+    of text classification tasks.
+
+    References
+    ----------
+    - [1] Devlin, J. et al. (2019). "BERT: Pre-training of Deep Bidirectional
+           Transformers for Language Understanding." NAACL 2019.
+    - [2] https://huggingface.co/bert-base-uncased
+    """
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="BERT Transformer",
+        es="Transformer BERT",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Bidirectional BERT model for English text classification. "
+            "Downloads weights from Hugging Face on first use (internet required)."
+        ),
+        es=(
+            "Modelo BERT bidireccional para clasificación de texto en inglés. "
+            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+    )
+    COLOR: str = "#1565C0"
+    ICON: str = "Psychology"
+    SCHEMA = DistilBertTransformerSchema
+    MODEL_NAME: str = "bert-base-uncased"
+    TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_bert"

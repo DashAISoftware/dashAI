@@ -39,7 +39,13 @@
     "sessions": "Sessions",
     "tourDisabledMessage": "Return to home to start the tour",
     "typeYourMessage": "Type a message",
-    "untitledSession": "Untitled Session"
+    "untitledSession": "Untitled Session",
+    "attachImage": "Attach image",
+    "attachAudio": "Attach audio",
+    "attachVideo": "Attach video",
+    "attachMedia": "Attach media",
+    "attachMediaToContinue": "Attach media to continue",
+    "noInputAvailable": "No input available for this task"
   },
 
   "message": {

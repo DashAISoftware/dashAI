@@ -22,6 +22,25 @@ class TextClassificationTask(ClassificationTask):
     a predicted class label for each sample.
     """
 
+    SCORING_PROFILES = {
+        "text_balanced": {
+            "description": "Balanced",
+            "weights": {"Accuracy": 0.3, "F1": 0.4, "ROCAUC": 0.3},
+        },
+        "text_detectPositives": {
+            "description": "Detect Positives",
+            "weights": {"Recall": 0.6, "F1": 0.3, "Precision": 0.1},
+        },
+        "text_avoidFalseAlarms": {
+            "description": "Avoid False Alarms",
+            "weights": {"Precision": 0.6, "F1": 0.3, "Recall": 0.1},
+        },
+        "text_probabilityQuality": {
+            "description": "Probability Quality",
+            "weights": {"ROCAUC": 0.5, "LogLoss": 0.5},
+        },
+    }
+
     metadata: dict = {
         "inputs_types": [Text],
         "outputs_types": [Categorical],
@@ -31,20 +50,13 @@ class TextClassificationTask(ClassificationTask):
 
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Text classification is a Natural Language Processing (NLP) task "
-            "that assigns a predefined label to a text input. "
-            "It requires one text input column and one categorical output column. "
-            "Common use cases include sentiment analysis, spam detection, "
-            "and intent recognition."
+            "Assign predefined labels to text inputs using NLP models. "
+            "Common uses: sentiment analysis, spam detection, intent recognition."
         ),
         es=(
-            "La clasificación de texto es una tarea de Procesamiento de "
-            "Lenguaje Natural (PLN) que asigna una etiqueta predefinida a una "
-            "entrada de texto. "
-            "Requiere una columna de entrada de tipo texto y una columna de "
-            "salida categórica. "
-            "Los casos de uso más comunes incluyen análisis de sentimientos, "
-            "detección de spam y reconocimiento de intenciones."
+            "Asigna etiquetas predefinidas a textos mediante modelos de PLN. "
+            "Usos comunes: análisis de sentimientos, detección de spam, "
+            "reconocimiento de intenciones."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -18,19 +19,13 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     notebooks,
     selectedDatasetId,
     selectedNotebookId,
-    selectDataset,
-    selectNotebook,
-    clearSelectedNotebook,
-    setStep,
-    setSelectedOption,
-    clearSelectedDataset,
     deleteDatasetById,
     removeNotebooksByDatasetId,
     editDataset,
     editNotebook,
     deleteNotebookById,
-    setRightBarContent,
   } = useDatasetsAndNotebooks();
+  const navigate = useNavigate();
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
@@ -106,28 +101,18 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
   };
 
   const onDatasetClick = (id) => {
-    selectDataset(id);
-    clearSelectedNotebook();
-    setStep(0);
-    setSelectedOption("dataset");
-    setRightBarContent(null);
+    navigate(`/app/data/datasets/${id}`);
   };
 
   const onNotebookClick = (id) => {
-    selectNotebook(id);
-    clearSelectedDataset();
-    setStep(0);
-    setSelectedOption("notebook");
-    setRightBarContent(null);
+    navigate(`/app/data/notebooks/${id}`);
   };
 
   const onDatasetDelete = async (id) => {
     const success = await deleteDatasetById(id);
     if (!success) return;
     if (id === selectedDatasetId) {
-      clearSelectedDataset();
-      setStep(0);
-      setSelectedOption(null);
+      navigate("/app/data");
     }
     removeNotebooksByDatasetId(id);
   };
@@ -136,17 +121,12 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     const success = await deleteNotebookById(id);
     if (!success) return;
     if (id === selectedNotebookId) {
-      clearSelectedNotebook();
-      setStep(0);
-      setSelectedOption(null);
+      navigate("/app/data");
     }
   };
 
   const handleNewSessionButton = () => {
-    clearSelectedDataset();
-    clearSelectedNotebook();
-    setStep(0);
-    setSelectedOption(null);
+    navigate("/app/data");
   };
 
   return (

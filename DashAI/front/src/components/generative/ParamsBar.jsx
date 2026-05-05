@@ -140,7 +140,9 @@ export default function ParamsBar({ onToggle }) {
             height: 70,
           }}
         >
-          <Typography variant="h6">{t("common:modelParameters")}</Typography>
+          <Typography variant="h6" color="text.primary">
+            {t("common:modelParameters")}
+          </Typography>
 
           {/* Parameter History Modal */}
           {selectedSessionId && (

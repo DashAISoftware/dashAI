@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -32,6 +33,7 @@ export default function ModelsLeftBar({ onToggle }) {
     editDataset,
     editSession,
   } = useModels();
+  const navigate = useNavigate();
 
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -164,28 +166,20 @@ export default function ModelsLeftBar({ onToggle }) {
     : {};
 
   const onDatasetClick = (datasetId) => {
-    selectDataset(datasetId);
-    setSelectedSessionId(null);
-    setSelectedTask(null);
-    setStep(2); // Use a different step to show DatasetVisualization
+    navigate(`/app/models/datasets/${datasetId}`);
   };
 
   const onSessionDelete = async (id) => {
     const success = await deleteSessionById(id);
     if (!success) return;
     if (id === selectedSessionId) {
-      setSelectedSessionId(null);
-      setSelectedSession(null);
-      setStep(0);
-      setSelectedTask(null);
+      navigate("/app/models");
     }
   };
 
   const onDatasetDelete = (id) => {
     if (id === selectedDatasetId) {
-      selectDataset(null);
-      setStep(0);
-      setSelectedTask(null);
+      navigate("/app/models");
     }
 
     replaceDatasets((prevDatasets) =>
@@ -204,9 +198,7 @@ export default function ModelsLeftBar({ onToggle }) {
             session.id === selectedSessionId && session.dataset_id === id,
         )
       ) {
-        setSelectedSessionId(null);
-        setStep(0);
-        setSelectedTask(null);
+        navigate("/app/models");
       }
 
       return filteredSessions;
@@ -216,15 +208,11 @@ export default function ModelsLeftBar({ onToggle }) {
   };
 
   const onSessionClick = (sessionId) => {
-    setSelectedSessionId(sessionId);
-    selectDataset(null);
+    navigate(`/app/models/sessions/${sessionId}`);
   };
 
   const handleNewSessionButton = () => {
-    setSelectedSessionId(null);
-    selectDataset(null);
-    setSelectedTask(null);
-    setStep(0);
+    navigate("/app/models");
   };
 
   return (

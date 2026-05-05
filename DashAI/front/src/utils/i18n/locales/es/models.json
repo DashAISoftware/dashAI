@@ -42,6 +42,7 @@
     "failedToStartRun": "Error al iniciar la ejecución {{runName}}",
     "failedToUpdateSession": "Error al actualizar la sesión",
     "fetchingModels": "Error al obtener modelos compatibles",
+    "metricMetadataFetch": "No se pudieron cargar los metadatos de métricas. Los colores del mapa de calor pueden no reflejar correctamente la dirección de las métricas.",
     "nameRequired": "Se requiere un nombre",
     "noModelSelected": "No se seleccionó ningún modelo",
     "preparingRunsTable": "Error al preparar la tabla de ejecuciones",
@@ -61,6 +62,7 @@
     "confirmDeleteSession": "¿Seguro que quieres eliminar la sesión \"{{name}}\"? Esta acción no se puede deshacer.",
     "availableModels": "Modelos Disponibles",
     "bar": "Barra",
+    "heatmap": "Mapa de calor",
     "chooseTaskForSessionWithDataset": "Elija la tarea de aprendizaje automático para su sesión con el dataset \"{{datasetName}}\".",
     "configureModel": "Configurar Modelo",
     "configureOptimizer": "Configurar Optimizador",
@@ -112,7 +114,6 @@
     "predictionsCount_one": "• <1>{{count}}</1> predicción",
     "predictionsCount_other": "• <1>{{count}}</1> predicciones",
     "prepareDataset": "Preparar Dataset",
-    "radar": "Radar",
     "retrainConfirmDetails": "¿Está seguro de que desea re-entrenar la ejecución \"<1>{{runName}}</1>\"?",
     "retrainModel": "¿Re-entrenar Modelo?",
     "retrainWillDeleteOperations": "Esta ejecución tiene operaciones existentes que serán eliminadas",
@@ -161,7 +162,11 @@
     "profile_regression_fit": "Ajuste del Modelo",
     "profile_regression_error": "Error Balanceado",
     "profile_translation_quality": "Calidad de Traducción",
-    "profile_translation_balanced": "Traducción Balanceada"
+    "profile_translation_balanced": "Traducción Balanceada",
+    "profile_text_balanced": "Equilibrio",
+    "profile_text_detectPositives": "Detectar Positivos",
+    "profile_text_avoidFalseAlarms": "Evitar Falsas Alarmas",
+    "profile_text_probabilityQuality": "Calidad de Probabilidades"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

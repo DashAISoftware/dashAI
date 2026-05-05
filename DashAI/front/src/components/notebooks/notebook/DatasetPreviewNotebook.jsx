@@ -53,22 +53,6 @@ export default function DatasetPreviewNotebook({
   } = useDatasetsAndNotebooks();
 
   const theme = useTheme();
-  if (!notebook) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress color="primary" />
-        <Typography>{t("common:loading")}...</Typography>
-      </Box>
-    );
-  }
-
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
@@ -141,6 +125,22 @@ export default function DatasetPreviewNotebook({
       .then(setColumnTypes)
       .catch(() => {});
   }, [notebook?.file_path]);
+
+  if (!notebook) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}...</Typography>
+      </Box>
+    );
+  }
 
   const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
     if (!jobId) return;

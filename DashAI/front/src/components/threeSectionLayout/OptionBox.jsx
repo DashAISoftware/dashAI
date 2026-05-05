@@ -1,4 +1,7 @@
-import { Box, Typography, ButtonBase, useTheme } from "@mui/material";
+import { useRef, useState, useEffect } from "react";
+import { Box, Typography, ButtonBase, Tooltip, useTheme } from "@mui/material";
+
+const DESCRIPTION_MAX_LINES = 3;
 
 export default function OptionBox({
   optionName,
@@ -9,6 +12,15 @@ export default function OptionBox({
   dataTour,
   ...otherProps
 }) {
+  const descRef = useRef(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight);
+    }
+  }, [description]);
   const theme = useTheme();
   const accent = theme.palette.accent.amber;
   const accentDim = theme.palette.accent.amberDim;
@@ -21,7 +33,7 @@ export default function OptionBox({
       onClick={onClick}
       sx={{
         width: "100%",
-        height: "100%",
+        height: 250,
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
@@ -93,18 +105,31 @@ export default function OptionBox({
       </Typography>
 
       {/* Description */}
-      <Typography
-        sx={{
-          fontSize: "15px",
-          fontWeight: 300,
-          color: theme.palette.text.secondary,
-          lineHeight: 1.65,
-          flexGrow: 1,
-          width: "100%",
-        }}
+      <Tooltip
+        title={isTruncated ? description : ""}
+        arrow
+        enterDelay={300}
+        placement="bottom"
       >
-        {description}
-      </Typography>
+        <Typography
+          ref={descRef}
+          sx={{
+            fontSize: "15px",
+            fontWeight: 300,
+            color: theme.palette.text.secondary,
+            lineHeight: 1.65,
+            flexGrow: 1,
+            width: "100%",
+            display: "-webkit-box",
+            WebkitLineClamp: DESCRIPTION_MAX_LINES,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {description}
+        </Typography>
+      </Tooltip>
 
       {/* Footer: chips + arrow */}
       <Box
