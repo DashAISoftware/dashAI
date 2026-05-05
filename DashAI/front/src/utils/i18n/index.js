@@ -35,6 +35,8 @@ import pluginsEN from "./locales/en/plugins.json";
 import pluginsES from "./locales/es/plugins.json";
 import generativeTourEN from "./locales/en/generativeTour.json";
 import generativeTourES from "./locales/es/generativeTour.json";
+import hubEN from "./locales/en/hub.json";
+import hubES from "./locales/es/hub.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -58,6 +60,7 @@ const resources = {
     modelsTour: modelsTourEN,
     modelsSessionTour: modelsSessionTourEN,
     generativeTour: generativeTourEN,
+    hub: hubEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -77,6 +80,7 @@ const resources = {
     modelsTour: modelsTourES,
     modelsSessionTour: modelsSessionTourES,
     generativeTour: generativeTourES,
+    hub: hubES,
   },
 };
 
@@ -106,6 +110,7 @@ i18n
       "modelsSessionTour",
       "plugins",
       "generativeTour",
+      "hub",
     ],
     defaultNS: "common",
 

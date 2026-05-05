@@ -1,0 +1,22 @@
+{
+  "title": "Hub de Datasets",
+  "searchPlaceholder": "Buscar datasets...",
+  "noSourceSelected": "Selecciona una fuente a la izquierda para explorar datasets.",
+  "noResults": "No se encontraron datasets. Prueba otro término de búsqueda.",
+  "loadingDatasets": "Cargando datasets...",
+  "loadingSources": "Cargando fuentes...",
+  "rows": "filas",
+  "tags": "Etiquetas",
+  "source": "Fuente",
+  "size": "Tamaño",
+  "viewOnSource": "Ver en la fuente",
+  "addToDashAI": "Agregar a DashAI",
+  "download": "Descargar",
+  "importDataset": "Importar Dataset",
+  "datasetName": "Nombre del dataset",
+  "importing": "Importando...",
+  "importSuccess": "Dataset importado exitosamente.",
+  "importError": "Error al importar el dataset.",
+  "previewError": "Error al cargar la vista previa.",
+  "selectDatasetToPreview": "Selecciona un dataset para ver los detalles."
+}
