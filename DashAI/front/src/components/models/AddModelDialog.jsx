@@ -25,6 +25,7 @@ import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
@@ -381,28 +382,32 @@ function AddModelDialog({
       </DialogContent>
 
       <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-        <Button onClick={handleClose} disabled={loading}>
-          {t("common:cancel")}
-        </Button>
         {activeStep > 0 && (
-          <Button onClick={handleBack} disabled={loading}>
-            {t("common:back")}
+          <Button onClick={handleClose} disabled={loading}>
+            {t("common:cancel")}
           </Button>
         )}
-        <Button
-          data-tour="add-model-button"
-          onClick={handleNext}
-          variant="contained"
-          disabled={
-            loading ||
-            (activeStep === 0 && !isStep1Valid) ||
-            (activeStep === 1 && !isStep2Valid)
+        <FormSchemaButtonGroup
+          onCancel={activeStep > 0 ? handleBack : handleClose}
+          onFormSubmit={handleNext}
+          formik={{
+            errors:
+              loading ||
+              (activeStep === 0 && !isStep1Valid) ||
+              (activeStep === 1 && !isStep2Valid)
+                ? { invalid: true }
+                : {},
+          }}
+          saveButtonText={
+            activeStep === steps.length - 1
+              ? t("common:addModel")
+              : t("common:next")
           }
-        >
-          {activeStep === steps.length - 1
-            ? t("common:addModel")
-            : t("common:next")}
-        </Button>
+          backButtonText={
+            activeStep > 0 ? t("common:back") : t("common:cancel")
+          }
+          dataTour="add-model-button"
+        />
       </DialogActions>
     </Dialog>
   );
