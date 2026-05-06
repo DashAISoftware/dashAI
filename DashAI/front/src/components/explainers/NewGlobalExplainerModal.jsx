@@ -8,7 +8,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  ButtonGroup,
   Stepper,
   Step,
   StepButton,
@@ -347,27 +346,25 @@ export default function NewGlobalExplainerModal({
       </DialogContent>
       {/* Actions - Back and Next */}
       <DialogActions>
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton}>
-            {activeStep === 0 ? t("common:close") : t("common:back")}
-          </Button>
-          <TimestampWrapper
-            eventName={
-              activeStep === 1 ? TIMESTAMP_KEYS.explainer.submitGlobal : null
-            }
+        <Button variant="outlined" onClick={handleBackButton}>
+          {activeStep === 0 ? t("common:close") : t("common:back")}
+        </Button>
+        <TimestampWrapper
+          eventName={
+            activeStep === 1 ? TIMESTAMP_KEYS.explainer.submitGlobal : null
+          }
+        >
+          <LoadingButton
+            onClick={handleNextButton}
+            autoFocus
+            variant="contained"
+            color="primary"
+            disabled={!nextEnabled}
+            loading={isLoading}
           >
-            <LoadingButton
-              onClick={handleNextButton}
-              autoFocus
-              variant="contained"
-              color="primary"
-              disabled={!nextEnabled}
-              loading={isLoading}
-            >
-              {activeStep === 1 ? t("common:save") : t("common:next")}
-            </LoadingButton>
-          </TimestampWrapper>
-        </ButtonGroup>
+            {activeStep === 1 ? t("common:save") : t("common:next")}
+          </LoadingButton>
+        </TimestampWrapper>
       </DialogActions>
     </Dialog>
   );

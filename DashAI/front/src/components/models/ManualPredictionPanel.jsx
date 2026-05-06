@@ -233,6 +233,7 @@ export default function ManualPredictionPanel({
           mt: 2,
           flexWrap: "wrap",
           alignItems: "center",
+          justifyContent: "flex-end",
         }}
       >
         <Button
