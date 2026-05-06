@@ -38,7 +38,7 @@ function FormSchemaDialog({
         },
       }}
     >
-      <FormSchemaContainer>
+      <FormSchemaContainer key={modelToConfigure}>
         <DialogTitle>
           <FormSchemaHeader
             title={t("common:modelToConfig", { model: modelToConfigure })}
