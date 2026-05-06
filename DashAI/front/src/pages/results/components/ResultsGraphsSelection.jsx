@@ -40,6 +40,12 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
       >
         <ToggleButton value="bar">{t("models:label.bar")}</ToggleButton>
         <ToggleButton value="radar">{t("models:label.radar")}</ToggleButton>
+        <ToggleButton
+          value="fold_metrics"
+          title="Cross-Validation Fold Metrics"
+        >
+          Fold Metrics
+        </ToggleButton>
       </ToggleButtonGroup>
     </Box>
   );
