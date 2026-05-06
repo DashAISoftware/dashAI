@@ -167,6 +167,7 @@ class DatasetJob(BaseJob):
                     if source_name:
                         # --- Hub import path ---
                         import tempfile
+
                         hub_temp = tempfile.mkdtemp()
                         temp_dir = hub_temp  # ensures finally block cleans it up
 
@@ -177,19 +178,31 @@ class DatasetJob(BaseJob):
                                 f"DatasetSource '{source_name}' not found in registry."
                             )
                         source = sources[source_name]["class"]()
-                        file_path_hub, dataloader_name = source.fetch_full(
+                        file_path_hub, source_dataloader_name = source.fetch_full(
                             dataset_source_id, hub_temp
                         )
-                        dl_registry = component_registry._registry.get("DataLoader", {})
-                        if dataloader_name not in dl_registry:
+                        selected_dataloader = (
+                            params.get("dataloader") or source_dataloader_name
+                        )
+                        compatible = getattr(source, "COMPATIBLE_COMPONENTS", [])
+                        if (
+                            params.get("dataloader")
+                            and compatible
+                            and selected_dataloader not in compatible
+                        ):
                             raise JobError(
-                                f"DataLoader '{dataloader_name}' not found in registry."
+                                "Selected DataLoader is not compatible with this source."
                             )
-                        dataloader = dl_registry[dataloader_name]["class"]()
+                        dl_registry = component_registry._registry.get("DataLoader", {})
+                        if selected_dataloader not in dl_registry:
+                            raise JobError(
+                                f"DataLoader '{selected_dataloader}' not found in registry."
+                            )
+                        dataloader = dl_registry[selected_dataloader]["class"]()
                         log.debug(
                             "Loading hub dataset from %s using %s",
                             file_path_hub,
-                            dataloader_name,
+                            selected_dataloader,
                         )
                         hub_loader_params = params.get("dataloader_params", {})
                         new_dataset = dataloader.load_data(
@@ -201,7 +214,9 @@ class DatasetJob(BaseJob):
                     else:
                         # --- File / URL upload path (unchanged) ---
                         parsed_params = parse_params(DatasetParams, json.dumps(params))
-                        dataloader = component_registry[parsed_params.dataloader]["class"]()
+                        dataloader = component_registry[parsed_params.dataloader][
+                            "class"
+                        ]()
                         log.debug("Storing dataset in %s", folder_path)
                         new_dataset = dataloader.load_data(
                             filepath_or_buffer=(
