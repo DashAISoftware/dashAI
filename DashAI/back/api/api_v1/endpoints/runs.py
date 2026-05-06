@@ -46,9 +46,15 @@ def get_metrics_for_run(db, run_id: int):
         A dictionary containing train, validation, and test metrics for the run,
         each metric includes 'value' and 'std_value' (standard deviation).
     """
-    metrics = (
+    final_metrics = (
         db.query(Metric)
         .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
+        .all()
+    )
+
+    fold_metrics = (
+        db.query(Metric)
+        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.FOLD)
         .all()
     )
 
@@ -60,18 +66,32 @@ def get_metrics_for_run(db, run_id: int):
     }
 
     # Group metrics by split
-    for metric in metrics:
+    for m in final_metrics:
         # Determine the key in the response dictionary
-        split_key = f"{metric.split.name.lower()}_metrics"
+        split_key = f"{m.split.name.lower()}_metrics"
 
         if response[split_key] is None:
             response[split_key] = {}
 
         # Store both value and standard deviation
-        response[split_key][metric.name] = {
-            "value": metric.value,
-            "std_value": metric.std_value,
+        response[split_key][m.name] = {
+            "value": m.value,
+            "std_value": m.std_value,
+            "fold_values": [],
         }
+
+    for m in fold_metrics:
+        split_key = f"{m.split.name.lower()}_metrics"
+
+        # Si no existe
+        if m.name not in response[split_key]:
+            response[split_key][m.name] = {
+                "value": None,
+                "std_value": None,
+                "fold_values": [],
+            }
+
+        response[split_key][m.name]["fold_values"].append(m.value)
 
     return response
 
@@ -242,11 +262,10 @@ async def get_run_by_id(
         return run
 
 
-@router.get("/{run_id}/fold-metrics")
+@router.get("/{run_id}/folds_metrics")
 @inject
 async def get_fold_metrics(
     run_id: int,
-    metric_split: Literal["train", "validation", "test"] = Query("test"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Retrieve fold-level metrics for cross-validation visualization.
@@ -255,8 +274,6 @@ async def get_fold_metrics(
     ----------
     run_id : int
         ID of the run to retrieve fold metrics for.
-    metric_split : str, optional
-        Which metrics to use: "train", "validation", or "test", by default "test".
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
 
@@ -264,21 +281,13 @@ async def get_fold_metrics(
     -------
     dict
         A dictionary mapping metric names to lists of fold values.
-        Format: {"accuracy": [0.92, 0.94, 0.91, 0.93], ...}
+        Format: {"train": {"accuracy": [0.92, 0.94, 0.91, 0.93]}, ...}
 
     Raises
     ------
     HTTPException
         If the run is not found or has no fold metrics.
     """
-    from DashAI.back.core.enums.metrics import SplitEnum
-
-    split_map = {
-        "train": SplitEnum.TRAIN,
-        "validation": SplitEnum.VALIDATION,
-        "test": SplitEnum.TEST,
-    }
-    split_enum = split_map.get(metric_split, SplitEnum.TEST)
 
     with session_factory() as db:
         try:
@@ -292,12 +301,7 @@ async def get_fold_metrics(
             # Get all fold-level metrics for this run and split
             fold_metrics = (
                 db.query(Metric)
-                .filter(
-                    Metric.run_id == run_id,
-                    Metric.level == LevelEnum.FOLD,
-                    Metric.split == split_enum,
-                )
-                .order_by(Metric.name, Metric.fold_index)
+                .filter(Metric.run_id == run_id, Metric.level == LevelEnum.FOLD)
                 .all()
             )
 
@@ -307,18 +311,19 @@ async def get_fold_metrics(
                     detail="No fold metrics found for this run",
                 )
 
-            # Group values by metric name
-            metrics_by_name = {}
+            # Agrupar métricas por (split, nombre)
+            metrics_by_split_name = {"train": {}, "test": {}}
+
             for metric in fold_metrics:
-                if metric.name not in metrics_by_name:
-                    metrics_by_name[metric.name] = []
-                metrics_by_name[metric.name].append(metric.value)
+                metric_split = metric.split.name.lower()
+                metric_name = metric.name
+                metric_value = metric.value
 
-            # Sort fold values for each metric (to maintain order)
-            for metric_name in metrics_by_name:
-                metrics_by_name[metric_name].sort()
+                if metric_name not in metrics_by_split_name[metric_split]:
+                    metrics_by_split_name[metric_split][metric_name] = []
+                metrics_by_split_name[metric_split][metric_name].append(metric_value)
 
-            return metrics_by_name
+            return metrics_by_split_name
 
         except exc.SQLAlchemyError as e:
             log.exception(e)

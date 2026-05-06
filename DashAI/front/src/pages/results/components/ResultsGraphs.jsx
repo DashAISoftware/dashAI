@@ -77,6 +77,7 @@ function ResultsGraphs({
 
       finishedRuns.forEach((run, idx) => {
         const metricsObj = run[metricsKey] ?? {};
+        console.log("run", run);
         const values = selectedMetrics.map((m) => {
           const v = metricsObj[m]["value"] ?? metricsObj[m];
           if (v === undefined || v === null) return null;

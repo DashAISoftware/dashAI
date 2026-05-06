@@ -276,8 +276,7 @@ function PrepareDatasetStep({
       if (cvType === "GroupKFold" || cvType === "StratifiedGroupKFold") {
         updatedExpData.splits = {
           splitter_name: cvType + "Splitter",
-          numFolds: numFolds,
-          numRepeats: numRepeats,
+          n_splits: numFolds,
           seed: seed === "" || seed == null ? 42 : Number(seed),
           shuffle: shuffle,
           group_column: groupColumn,
@@ -288,15 +287,15 @@ function PrepareDatasetStep({
       ) {
         updatedExpData.splits = {
           splitter_name: cvType + "Splitter",
-          numFolds: numFolds,
-          numRepeats: numRepeats,
+          n_splits: numFolds,
+          n_repeats: numRepeats,
           seed: seed === "" || seed == null ? 42 : Number(seed),
           shuffle: shuffle,
         };
       } else if (cvType === "KFold" || cvType === "StratifiedKFold") {
         updatedExpData.splits = {
           splitter_name: cvType + "Splitter",
-          numFolds: numFolds,
+          n_splits: numFolds,
           seed: seed === "" || seed == null ? 42 : Number(seed),
           shuffle: shuffle,
         };

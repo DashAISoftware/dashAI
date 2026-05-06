@@ -7,7 +7,7 @@ from .fold_splitter import FoldSplitter
 class GroupKFoldSplitter(FoldSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
-        self.groups = splits_data.get("groups", None)
+        self.group_column = splits_data.get("group_column", None)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
         """Generate lists with train and test indexes for each fold."""
@@ -22,7 +22,7 @@ class GroupKFoldSplitter(FoldSplitter):
                     to a pandas DataFrame for GroupKFold splitting: {e}"""
                 ) from e
 
-            dataset_df_groups = dataset_df[self.groups]
+            dataset_df_groups = dataset_df[self.group_column]
 
             gkf = GroupKFold(n_splits=n_splits)
             folds = list(gkf.split(indexes, groups=dataset_df_groups))

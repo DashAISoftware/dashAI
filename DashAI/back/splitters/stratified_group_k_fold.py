@@ -7,7 +7,7 @@ from .fold_splitter import FoldSplitter
 class StratifiedGroupKFoldSplitter(FoldSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
-        self.groups = splits_data.get("groups", None)
+        self.group_column = splits_data.get("group_column", None)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
         """Generate lists with train and test indexes for each fold."""
@@ -30,7 +30,7 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
                     StratifiedGroupKFold splitting: {e}"""
                 ) from e
 
-            dataset_df_groups = dataset_df[self.groups]
+            dataset_df_groups = dataset_df[self.group_column]
 
             sgkf = StratifiedGroupKFold(
                 n_splits=n_splits, shuffle=shuffle, random_state=random_state
