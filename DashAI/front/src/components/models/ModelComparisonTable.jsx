@@ -315,17 +315,21 @@ function ModelComparisonTable({
         const isBest = bestScore !== null && Math.abs(score - bestScore) < 1e-6;
 
         const tooltipContent = (
-          <Box sx={{ fontSize: "0.75rem", lineHeight: 1.6 }}>
-            <Box sx={{ fontWeight: "bold", mb: 0.5 }}>
+          <Typography variant="body2" component="div" sx={{ lineHeight: 1.6 }}>
+            <Typography
+              variant="body2"
+              component="div"
+              sx={{ fontWeight: "bold", mb: 0.5 }}
+            >
               {t("models:label.score")}: {score.toFixed(1)}/100
-            </Box>
+            </Typography>
             {breakdown.map(({ metric_name, value, normalized_weight }, i) => (
-              <Box key={metric_name}>
+              <Typography variant="body2" component="div" key={metric_name}>
                 {i === 0 ? "=" : "+"} {metric_name} ({value.toFixed(4)}) ×{" "}
                 {(normalized_weight * 100).toFixed(0)}%
-              </Box>
+              </Typography>
             ))}
-          </Box>
+          </Typography>
         );
 
         return (

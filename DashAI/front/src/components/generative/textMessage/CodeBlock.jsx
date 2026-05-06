@@ -31,7 +31,7 @@ export function CodeBlock({ language, children }) {
           bgcolor: isDark ? "grey.900" : "grey.200",
         }}
       >
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <Typography variant="code" sx={{ color: "text.secondary" }}>
           {language || "code"}
         </Typography>
         <CopyButton text={code} />
