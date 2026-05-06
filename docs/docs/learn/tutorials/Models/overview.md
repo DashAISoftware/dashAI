@@ -77,11 +77,11 @@ Other tasks have their own corresponding model catalogs.
 
 This section is divided into the following pages:
 
-- **[Train a Model](./train)** — How to create a session, configure input/output columns,
+- **[Train a Model](/learn/tutorials/Models/train)** — How to create a session, configure input/output columns,
   define data splits, add models, set hyperparameters, and run training.
-- **[Predictions](./predictions)** — How to generate predictions using trained models,
+- **[Predictions](/learn/tutorials/Models/predictions)** — How to generate predictions using trained models,
   both from a full dataset and from manually entered data.
-- **[Explainability](./explainability)** — How to use global and local explainers to
+- **[Explainability](/learn/tutorials/Models/explainability)** — How to use global and local explainers to
   understand model behavior.
-- **[Model Comparison](./comparison)** — How to compare metrics across models using
+- **[Model Comparison](/learn/tutorials/Models/comparison)** — How to compare metrics across models using
   tables and charts.

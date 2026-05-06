@@ -10,7 +10,7 @@ sidebar_position: 9
 
 `DashAIDataset` es el primitivo central de datos de DashAI. Extiende la clase `Dataset` de HuggingFace con dos responsabilidades adicionales:
 
-- **Metadatos de tipo semántico** — un diccionario `_types` (`Dict[str, DashAIDataType]`) que mapea cada nombre de columna a su tipo semántico DashAI (ver [Tipos Semánticos](./semantic-types)). Estos metadatos se persisten dentro del esquema Apache Arrow para sobrevivir ciclos de guardado/carga.
+- **Metadatos de tipo semántico** — un diccionario `_types` (`Dict[str, DashAIDataType]`) que mapea cada nombre de columna a su tipo semántico DashAI (ver [Tipos Semánticos](/deep-dive/semantic-types)). Estos metadatos se persisten dentro del esquema Apache Arrow para sobrevivir ciclos de guardado/carga.
 - **Metadatos de splits** — un diccionario `splits` que registra qué índices de fila pertenecen a qué split (`train`, `test`, `validation`), junto con estadísticas agregadas calculadas durante la carga del dataset.
 
 Cada pieza de datos que fluye por DashAI — carga, transformaciones en el notebook, entrenamiento de modelos, predicciones — se representa como un `DashAIDataset`.

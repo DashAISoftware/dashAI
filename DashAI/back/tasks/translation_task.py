@@ -42,14 +42,8 @@ class TranslationTask(BaseTask):
         "outputs_cardinality": 1,
     }
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Convert text from one language to another while "
-            "preserving meaning and context."
-        ),
-        es=(
-            "Convierte texto de un idioma a otro preservando "
-            "el significado y el contexto."
-        ),
+        en="Convert text from one language to another preserving meaning.",
+        es="Convierte texto de un idioma a otro preservando el significado.",
     )
 
     DISPLAY_NAME: str = MultilingualString(en="Translation", es="Traducción")

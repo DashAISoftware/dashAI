@@ -31,12 +31,15 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
         placeholder="spa_Latn",
         description=MultilingualString(
             en=(
-                "Source language code for NLLB tokenizer. "
-                "Example: spa_Latn for Spanish."
+                "Source language code for NLLB tokenizer (e.g. spa_Latn for Spanish, "
+                "eng_Latn for English). It uses BCP-47 language tags in the format"
+                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
             ),
             es=(
-                "Código de idioma de origen para el tokenizer NLLB. "
-                "Ejemplo: spa_Latn para español."
+                "Código de idioma de origen para el tokenizer NLLB (ej. spa_Latn para "
+                "español, eng_Latn para inglés). Utiliza etiquetas de idioma BCP-47 "
+                "en el formato "
+                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
             ),
         ),
         alias=MultilingualString(en="Source language", es="Idioma de origen"),
@@ -46,12 +49,15 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
         placeholder="eng_Latn",
         description=MultilingualString(
             en=(
-                "Target language code for NLLB generation. "
-                "Example: eng_Latn for English."
+                "Target language code for NLLB generation (e.g. eng_Latn for English, "
+                "fra_Latn for French). It uses BCP-47 language tags in the format "
+                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
             ),
             es=(
-                "Código de idioma destino para la generación NLLB. "
-                "Ejemplo: eng_Latn para inglés."
+                "Código de idioma destino para la generación NLLB (ej. eng_Latn para "
+                "inglés, fra_Latn para francés). Utiliza etiquetas de idioma BCP-47 "
+                "en el formato "
+                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
             ),
         ),
         alias=MultilingualString(en="Target language", es="Idioma destino"),

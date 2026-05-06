@@ -4,12 +4,12 @@
 ; pyinstaller -D -n DashAI-launcher-cpu --clean --add-data "DashAI/front/build;DashAI/front/build" --add-data "%CONDA_PREFIX%\Lib\site-packages\transformers;transformers" --add-binary "%CONDA_PREFIX%\Lib\site-packages\llama_cpp\lib\*;llama_cpp/lib" --additional-hooks-dir=hooks DashAI/__main__.py
 [Setup]
 AppName=DashAI
-AppVersion=0.9.0
+AppVersion=0.9.2
 AppPublisher=DashAI Software
 AppPublisherURL=https://dash-ai.com
 DefaultDirName={pf}\DashAI
 DefaultGroupName=DashAI
-OutputDir=installer
+OutputDir=.
 OutputBaseFilename=DashAI-Installer
 Compression=lzma
 SolidCompression=yes
@@ -18,7 +18,7 @@ SetupIconFile=DashAI.ico
 
 [Files]
 ; Copy all files from PyInstaller onedir output
-Source: "dist\DashAI-launcher-cpu\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "..\dist\DashAI-launcher-cpu\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
 Name: "{group}\DashAI"; Filename: "{app}\DashAI-launcher-cpu.exe"
