@@ -57,9 +57,11 @@ export const getDatasetInfo = async (
   datasetId: string,
 ): Promise<{ id?: string; description?: string; tags?: string[] }> => {
   const encodedId = encodeURIComponent(datasetId);
-  const response = await api.get<{ id?: string; description?: string; tags?: string[] }>(
-    `${hubEndpoint}/${sourceName}/${encodedId}/info`,
-  );
+  const response = await api.get<{
+    id?: string;
+    description?: string;
+    tags?: string[];
+  }>(`${hubEndpoint}/${sourceName}/${encodedId}/info`);
   return response.data;
 };
 
@@ -78,12 +80,20 @@ export const previewHubDataset = async (
   sourceName: string,
   datasetId: string,
   nRows = 100,
+  dataloader?: string,
+  params?: Record<string, unknown>,
 ): Promise<DatasetPreview> => {
   const encodedId = encodeURIComponent(datasetId);
-  const response = await api.get<DatasetPreview>(
-    `${hubEndpoint}/${sourceName}/${encodedId}/preview`,
-    { params: { n_rows: nRows } },
-  );
+  const response =
+    dataloader || params
+      ? await api.post<DatasetPreview>(
+          `${hubEndpoint}/${sourceName}/${encodedId}/preview`,
+          { dataloader, params: params ?? {}, n_rows: nRows },
+        )
+      : await api.get<DatasetPreview>(
+          `${hubEndpoint}/${sourceName}/${encodedId}/preview`,
+          { params: { n_rows: nRows } },
+        );
   return response.data;
 };
 
@@ -104,6 +114,8 @@ export const importHubDataset = async (
 export const getComponentInfo = async (
   componentName: string,
 ): Promise<ComponentInfo> => {
-  const response = await api.get<ComponentInfo>(`/v1/components/${componentName}/`);
+  const response = await api.get<ComponentInfo>(
+    `/v1/component/${componentName}/`,
+  );
   return response.data;
 };

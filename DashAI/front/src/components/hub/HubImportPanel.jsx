@@ -118,7 +118,7 @@ export default function HubImportPanel({
       : 100;
 
     previewDebounceRef.current = setTimeout(() => {
-      previewHubDataset(sourceName, dataset.id, effectiveRows)
+      previewHubDataset(sourceName, dataset.id, effectiveRows, selectedValue?.name, formValues)
         .then((data) => {
           if (!isMounted) return;
           setPreviewData(data);
