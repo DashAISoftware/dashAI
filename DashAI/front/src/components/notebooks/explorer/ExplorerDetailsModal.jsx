@@ -193,7 +193,7 @@ export default function ExplorerDetailsModal({
                   <Typography variant="sectionLabel" color="text.secondary">
                     {t("common:created")}
                   </Typography>
-                  <Typography variant="caption" color="text.primary">
+                  <Typography variant="code" color="text.primary">
                     {formatDate(explorer.created)}
                   </Typography>
                 </Box>

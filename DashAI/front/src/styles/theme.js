@@ -181,11 +181,12 @@ const getTheme = (mode) => ({
     subtitle2: { fontSize: "16px", fontWeight: 400 }, // Texto destacado
     body1: { fontSize: "14px", fontWeight: 400, lineHeight: 1.6 }, // Cuerpo / párrafos
     body2: { fontSize: "12px", fontWeight: 400, lineHeight: 1.5 }, // Texto auxiliar / labels
-    caption: {
+    caption: { fontSize: "12px", fontWeight: 400 }, // Información secundaria, captions
+    code: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "12px",
       fontWeight: 400,
-    }, // Información secundaria, captions, code
+    }, // Code snippets, valores técnicos
 
     // --- VARIANTES UI FUNCIONALES ---
     navItem: { fontSize: "12px", fontWeight: 400 }, // Sidebar links/Navigation
