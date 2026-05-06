@@ -216,6 +216,7 @@ class CSVDataLoader(BaseDataLoader):
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = CSVDataloaderSchema
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".csv", ".zip"})
 
     DESCRIPTION: str = MultilingualString(
         en=(

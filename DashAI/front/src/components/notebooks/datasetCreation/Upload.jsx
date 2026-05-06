@@ -227,12 +227,19 @@ function Upload({
 
   // memoize datasetData object so its reference stays stable across renders
   const datasetDataMemo = useMemo(() => {
+    let dataloaderName = selectedDataloader;
+    if (selectedDataloader && typeof selectedDataloader === "object") {
+      dataloaderName =
+        selectedDataloader.name || selectedDataloader.display_name || null;
+    }
+
     const params = {
       ...formValues,
       inference_rows:
         formValues && formValues.inference_rows != null
           ? formValues.inference_rows
           : 1000,
+      ...(dataloaderName ? { dataloader_name: dataloaderName } : {}),
     };
 
     return {
@@ -244,20 +251,13 @@ function Upload({
   const acceptAttr = useMemo(() => {
     if (!selectedDataloader) return undefined;
 
-    let s = selectedDataloader;
-    if (typeof selectedDataloader === "object") {
-      s = selectedDataloader.name || selectedDataloader.display_name || "";
-    }
-    if (!s || typeof s !== "string") return undefined;
-    s = s.toLowerCase();
-    // CSV dataloader: accept .csv and .zip (zipped CSVs)
-    if (s.includes("csv")) return ".csv,.zip";
-    // JSON dataloader: accept .json and .zip
-    if (s.includes("json")) return ".json,.zip";
-    // Images or generic image loaders
-    if (s.includes("excel")) return ".xls,.xlsx,.zip";
-    // Default: no restriction
-    return undefined;
+    const extensions =
+      typeof selectedDataloader === "object"
+        ? selectedDataloader.metadata?.supported_extensions
+        : undefined;
+
+    if (!extensions || extensions.length === 0) return undefined;
+    return extensions.join(",");
   }, [selectedDataloader]);
 
   // renders content inside the drag and drop component depending on the state of the dataset

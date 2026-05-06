@@ -57,6 +57,7 @@ class JSONDataLoader(BaseDataLoader):
     are validated before loading to provide early failure feedback.
     """
 
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".json", ".zip"})
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",

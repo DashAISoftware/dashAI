@@ -23,11 +23,13 @@ class BaseDataLoader(ConfigObject):
         en="File Uploading",
         es="Carga de Archivos",
     )
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset()
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         return {
             "category": cls.CATEGORY if cls.CATEGORY else "File Uploading",
+            "supported_extensions": sorted(cls.SUPPORTED_EXTENSIONS),
         }
 
     @abstractmethod
