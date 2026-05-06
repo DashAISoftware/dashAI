@@ -22,6 +22,17 @@
   "stepFormat": "Format",
   "stepParameters": "Parameters",
   "stepPreview": "Preview",
+  "stepDataloader": "DataLoader",
+  "stepPreviewParameters": "Preview & Parameters",
   "selectFormatDescription": "Select the file format that matches this dataset.",
-  "noParameters": "No additional parameters required."
+  "selectDataloaderDescription": "Select the DataLoader to use for this dataset.",
+  "noParameters": "No additional parameters required.",
+  "noCompatibleDataloaders": "No compatible DataLoaders available for this source.",
+  "stepDataloaderTitle": "Select DataLoader",
+  "stepDataloaderSubtitle": "Choose how this dataset will be loaded.",
+  "stepPreviewTitle": "Preview and configure",
+  "stepPreviewSubtitle": "Review the preview and adjust parameters in the right panel.",
+  "previewParameters": "Preview and parameters",
+  "previewRows": "Preview rows",
+  "previewRowsDescription": "Number of rows to sample for preview."
 }
