@@ -14,19 +14,17 @@ import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getDatasetInfo, getDownloadUrl } from "../../api/hub";
-import ImportDatasetDialog from "./ImportDatasetDialog";
 
 /**
  * Right panel — detailed view of a selected Hub dataset with action buttons.
  *
  * @param {object|null} dataset - Selected DatasetEntry, or null if none.
  * @param {string|null} sourceName - Active DatasetSource class name.
- * @param {function} onImported - Called after a successful import.
+ * @param {function} onStartImport - Called when user clicks "Add to DashAI".
  */
-export default function DatasetDetail({ dataset, sourceName, compatibleComponents = [], onImported }) {
+export default function DatasetDetail({ dataset, sourceName, onStartImport }) {
   const { t } = useTranslation(["hub"]);
   const theme = useTheme();
-  const [importOpen, setImportOpen] = useState(false);
   const [extraInfo, setExtraInfo] = useState(null);
 
   useEffect(() => {
@@ -94,7 +92,7 @@ export default function DatasetDetail({ dataset, sourceName, compatibleComponent
             variant="contained"
             size="small"
             startIcon={<AddIcon />}
-            onClick={() => setImportOpen(true)}
+            onClick={() => onStartImport?.()}
           >
             {t("hub:addToDashAI")}
           </Button>
@@ -140,7 +138,7 @@ export default function DatasetDetail({ dataset, sourceName, compatibleComponent
             </Box>
           )}
 
-          {((extraInfo?.tags ?? dataset.tags)?.length > 0) && (
+          {(extraInfo?.tags ?? dataset.tags)?.length > 0 && (
             <Box>
               <Typography
                 variant="caption"
@@ -159,15 +157,6 @@ export default function DatasetDetail({ dataset, sourceName, compatibleComponent
           )}
         </Stack>
       </Box>
-
-      <ImportDatasetDialog
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        sourceName={sourceName}
-        dataset={dataset}
-        compatibleComponents={compatibleComponents}
-        onImported={onImported}
-      />
     </Box>
   );
 }
