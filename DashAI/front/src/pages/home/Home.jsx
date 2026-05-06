@@ -268,18 +268,15 @@ function Home() {
                   : theme.palette.background.box,
             }}
           >
-            <Typography
-              sx={{
-                color: theme.palette.text.primary,
-                ...theme.typography.pageTitle,
-              }}
-            >
+            <Typography variant="h3" sx={{ color: theme.palette.text.primary }}>
               {t("home:label.welcomeDashboardAI")}
             </Typography>
             <Typography
+              variant="body2"
               sx={{
                 color: theme.palette.text.disabled,
-                ...theme.typography.description,
+                fontWeight: 300,
+                lineHeight: 1.65,
                 mt: "3px",
               }}
             >

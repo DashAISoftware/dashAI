@@ -87,9 +87,8 @@ function ResponsiveAppBar() {
           }}
         >
           <Typography
+            variant="h5"
             sx={{
-              fontSize: 16,
-              fontWeight: 600,
               letterSpacing: "0.02em",
               color: theme.palette.text.primary,
               lineHeight: 1,

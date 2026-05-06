@@ -207,12 +207,13 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                           ? theme.palette.grey[900]
                           : theme.palette.grey[100],
                       p: 2,
-                      fontSize: "0.875rem",
                       overflow: "auto",
                       maxHeight: "200px",
                     }}
                   >
-                    {displayJob.error_msg}
+                    <Typography variant="body1">
+                      {displayJob.error_msg}
+                    </Typography>
                   </Paper>
                 </Box>
               </Grid>

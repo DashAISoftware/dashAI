@@ -193,13 +193,7 @@ export default function ExplorerDetailsModal({
                   <Typography variant="sectionLabel" color="text.secondary">
                     {t("common:created")}
                   </Typography>
-                  <Typography
-                    sx={{
-                      fontFamily: '"IBM Plex Mono", monospace',
-                      fontSize: "0.78rem",
-                    }}
-                    color="text.primary"
-                  >
+                  <Typography variant="caption" color="text.primary">
                     {formatDate(explorer.created)}
                   </Typography>
                 </Box>

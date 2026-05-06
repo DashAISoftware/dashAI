@@ -36,7 +36,7 @@ export const CustomTooltip = ({
           lineHeight: "1.6",
           color: "#333",
           "& h3": {
-            fontSize: "18px",
+            fontSize: "22px",
             fontWeight: "bold",
             marginBottom: "8px",
             marginTop: 0,
@@ -136,8 +136,8 @@ export const CustomTooltip = ({
               {continuous && (
                 <Typography
                   component="span"
+                  variant="body2"
                   sx={{
-                    fontSize: "12px",
                     opacity: 0.8,
                     ml: 0.5,
                   }}
