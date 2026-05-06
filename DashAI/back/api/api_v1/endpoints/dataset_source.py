@@ -246,6 +246,108 @@ async def preview_dataset(
     }
 
 
+class PreviewRequest(BaseModel):
+    """Request body for previewing a dataset with dataloader params.
+
+    Parameters
+    ----------
+    dataloader : str | None
+        Name of the DataLoader to use for parsing the file.
+    params : dict
+        DataLoader parameters (e.g., separator for CSV).
+    n_rows : int
+        Number of rows to sample (1-500).
+    """
+
+    dataloader: str | None = None
+    params: Dict[str, Any] = {}
+    n_rows: int = 100
+
+
+@router.post("/{source_name}/{dataset_id:path}/preview")
+async def preview_dataset_with_params(
+    source_name: str,
+    dataset_id: str,
+    body: PreviewRequest,
+    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+) -> Dict[str, Any]:
+    """Fetch a sample preview using a DataLoader and params.
+
+    Parameters
+    ----------
+    source_name : str
+        Registered DatasetSource class name.
+    dataset_id : str
+        Source-specific dataset identifier (URL-encoded).
+    body : PreviewRequest
+        DataLoader name, params, and row count.
+    registry : ComponentRegistry
+        Injected component registry.
+
+    Returns
+    -------
+    dict
+        ``{"sample": [...], "inferred_types": {...}, "preview_row_count": int}``.
+    """
+    import tempfile
+
+    source = _get_source(source_name, registry)
+    decoded_id = unquote(dataset_id)
+    n_rows = max(1, min(body.n_rows, 500))
+
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path, default_dataloader = source.fetch_full(decoded_id, temp_dir)
+            dataloader_name = body.dataloader or default_dataloader
+            dl_registry = registry._registry.get("DataLoader", {})
+            if dataloader_name not in dl_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"DataLoader '{dataloader_name}' not found.",
+                )
+
+            dataloader = dl_registry[dataloader_name]["class"]()
+            params = body.params or {}
+
+            if hasattr(dataloader, "load_preview"):
+                df = dataloader.load_preview(
+                    filepath_or_buffer=file_path,
+                    params=params,
+                    n_rows=n_rows,
+                )
+            else:
+                dataset = dataloader.load_data(
+                    filepath_or_buffer=file_path,
+                    temp_path=temp_dir,
+                    params=params,
+                    n_sample=n_rows,
+                )
+                df = dataset.to_pandas().head(n_rows)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        log.exception("Error fetching preview for %s/%s", source_name, decoded_id)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to fetch preview from source: {exc}",
+        ) from exc
+
+    if df.empty:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Source returned no data for dataset '{decoded_id}'.",
+        )
+
+    inferred = infer_types(df, method="DashAIPtype")
+    sample = df.to_dict(orient="records")
+
+    return {
+        "sample": sample,
+        "inferred_types": inferred,
+        "preview_row_count": len(df),
+    }
+
+
 class ImportRequest(BaseModel):
     """Request body for the dataset import endpoint.
 
@@ -261,7 +363,9 @@ class ImportRequest(BaseModel):
     params: Dict[str, Any] = {}
 
 
-@router.post("/{source_name}/{dataset_id:path}/import", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{source_name}/{dataset_id:path}/import", status_code=status.HTTP_201_CREATED
+)
 async def import_dataset(
     source_name: str,
     dataset_id: str,
