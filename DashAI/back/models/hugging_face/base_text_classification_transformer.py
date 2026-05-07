@@ -30,6 +30,10 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
     - Training via ``transformers.Trainer`` with DashAI metric callbacks.
     - Inference returning per-class probability matrices.
     - Save/load utilities that preserve custom training parameters.
+
+    .. note::
+        Requires internet access on first use to download pre-trained weights
+        from the Hugging Face Hub.
     """
 
     MODEL_NAME: str = ""

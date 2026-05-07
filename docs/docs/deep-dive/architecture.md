@@ -46,13 +46,13 @@ so that API endpoints can receive them automatically.
 
 ## Further Reading
 
-| Topic                                                | Page                                     |
-| ---------------------------------------------------- | ---------------------------------------- |
-| REST API structure, router map, dependency injection | [API](./api)                             |
-| Component types, registry, and configurable objects  | [Components](./components)               |
-| SQLite schema, ORM tables, and data storage          | [Database](./database)                   |
-| Huey job queue and job types                         | [Job System](./job-system)               |
-| Notebook sessions, explorers, and converters         | [Notebook](./notebook)                   |
-| End-to-end training and exploration walkthroughs     | [Workflow Examples](./workflow-examples) |
-| Column semantic types and inference                  | [Semantic Types](./semantic-types)       |
-| Core dataset primitive, splits, and data lifecycle   | [DashAIDataset](./dashai-dataset)        |
+| Topic                                                | Page                                              |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| REST API structure, router map, dependency injection | [API](/deep-dive/api)                             |
+| Component types, registry, and configurable objects  | [Components](/deep-dive/components)               |
+| SQLite schema, ORM tables, and data storage          | [Database](/deep-dive/database)                   |
+| Huey job queue and job types                         | [Job System](/deep-dive/job-system)               |
+| Notebook sessions, explorers, and converters         | [Notebook](/deep-dive/notebook)                   |
+| End-to-end training and exploration walkthroughs     | [Workflow Examples](/deep-dive/workflow-examples) |
+| Column semantic types and inference                  | [Semantic Types](/deep-dive/semantic-types)       |
+| Core dataset primitive, splits, and data lifecycle   | [DashAIDataset](/deep-dive/dashai-dataset)        |

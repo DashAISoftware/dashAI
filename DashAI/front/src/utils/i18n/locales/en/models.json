@@ -166,7 +166,11 @@
     "profile_regression_fit": "Model Fit",
     "profile_regression_error": "Error Balanced",
     "profile_translation_quality": "Translation Quality",
-    "profile_translation_balanced": "Translation Balanced"
+    "profile_translation_balanced": "Translation Balanced",
+    "profile_text_balanced": "Balanced",
+    "profile_text_detectPositives": "Detect Positives",
+    "profile_text_avoidFalseAlarms": "Avoid False Alarms",
+    "profile_text_probabilityQuality": "Probability Quality"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

@@ -19,13 +19,14 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.3.0",
+    version="0.9.3",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
         "state-of-the-art AI models."
     ),
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     url="https://github.com/DashAISoftware/DashAI",
     project_urls={
         "Documentation": "https://dash-ai.com/",
@@ -38,17 +39,19 @@ setup(
     include_package_data=True,
     python_requires=">=3.10",
     install_requires=requirements,
-    test_require=test_requirements,
+    tests_require=test_requirements,
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     entry_points={
         "console_scripts": [
-            "dashai = DashAI.runner:main",
-            "DashAI = DashAI.runner:main",
+            "dashai = DashAI.__main__:run",
+            "DashAI = DashAI.__main__:run",
         ]
     },
 )

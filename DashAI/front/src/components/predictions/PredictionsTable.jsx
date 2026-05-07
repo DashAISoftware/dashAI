@@ -92,7 +92,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
             <Typography
               variant="body2"
               fontWeight={600}
-              sx={{ lineHeight: 1.1, fontSize: "0.75rem" }}
+              sx={{ lineHeight: 1.1 }}
             >
               {t("prediction:label.manualInput")}
             </Typography>

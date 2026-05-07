@@ -216,5 +216,7 @@
   "expand": "Expandir",
   "optimize": "Optimizar",
   "viewMore": "Ver más",
-  "viewLess": "Ver menos"
+  "viewLess": "Ver menos",
+  "switchToDarkMode": "Cambiar a modo oscuro",
+  "switchToLightMode": "Cambiar a modo claro"
 }
