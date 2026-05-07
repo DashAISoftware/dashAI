@@ -128,3 +128,38 @@ class TestArrowDataloader(BaseTabularDataLoaderTester):
             dataset_path=test_datasets_path / self.data_type_name / dataset_path,
             params=params,
         )
+
+    @pytest.mark.parametrize(
+        ("dataset_path", "params", "nrows", "ncols"),
+        [
+            ("iris/flat.zip", {}, 150, 5),
+            ("wine/flat.zip", {}, 178, 14),
+            ("diabetes/flat.zip", {}, 442, 11),
+        ],
+        ids=[
+            "test_load_arrow_iris_from_flat_zip",
+            "test_load_arrow_wine_from_flat_zip",
+            "test_load_arrow_diabetes_from_flat_zip",
+        ],
+    )
+    def test_load_data_from_flat_zip(
+        self,
+        test_datasets_path: pathlib.Path,
+        dataset_path: str,
+        params: Dict[str, Any],
+        nrows: int,
+        ncols: int,
+    ):
+        loader = self.dataloader_cls()
+        dataset = loader.load_data(
+            filepath_or_buffer=str(
+                test_datasets_path / self.data_type_name / dataset_path
+            ),
+            temp_path="tests/back/dataloaders",
+            params=params,
+        )
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+        assert isinstance(dataset, DashAIDataset)
+        assert dataset.num_rows == nrows
+        assert dataset.num_columns == ncols

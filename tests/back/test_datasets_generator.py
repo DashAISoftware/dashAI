@@ -486,3 +486,13 @@ class ArrowTestDatasetGenerator:
         self._write_arrow(test, base_path / "split" / "test" / "test.arrow")
         self._write_arrow(val, base_path / "split" / "val" / "val.arrow")
         shutil.make_archive(str(base_path / "split"), "zip", base_path / "split")
+
+        # flat ZIP: multiple .arrow files, no train/test/val structure
+        os.makedirs(base_path / "flat", exist_ok=True)
+        n = 3
+        for i in range(n):
+            start, end = _get_batch_indexes(df, n, i)
+            self._write_arrow(
+                df.iloc[start:end], base_path / "flat" / f"part_{i}.arrow"
+            )
+        shutil.make_archive(str(base_path / "flat"), "zip", base_path / "flat")

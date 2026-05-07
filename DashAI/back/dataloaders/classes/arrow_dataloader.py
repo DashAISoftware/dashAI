@@ -125,7 +125,8 @@ class ArrowDataLoader(BaseDataLoader):
         Parameters
         ----------
         filepath_or_buffer : str
-            Path or URL to an Arrow IPC file or a ZIP archive with split folders.
+            Path or URL to an Arrow IPC file, or a ZIP archive containing either
+            train/test/val split folders or a flat collection of .arrow files.
         temp_path : str
             Temporary directory for file extraction.
         params : Dict[str, Any]
@@ -159,36 +160,55 @@ class ArrowDataLoader(BaseDataLoader):
             val_files = glob.glob(prepared_path[0] + "/val/*") + glob.glob(
                 prepared_path[0] + "/validation/*"
             )
+            flat_files = sorted(
+                f
+                for f in glob.glob(prepared_path[0] + "/*")
+                if f.lower().endswith(".arrow")
+            )
             try:
-                train_df = pd.concat(
-                    [
-                        self._read_arrow_file(f, columns=columns)
-                        for f in sorted(train_files)
-                    ]
-                )
-                test_df = pd.concat(
-                    [
-                        self._read_arrow_file(f, columns=columns)
-                        for f in sorted(test_files)
-                    ]
-                )
-                val_df = pd.concat(
-                    [
-                        self._read_arrow_file(f, columns=columns)
-                        for f in sorted(val_files)
-                    ]
-                )
-                if n_sample is not None:
-                    train_df = train_df.head(n_sample)
-                    test_df = test_df.head(n_sample)
-                    val_df = val_df.head(n_sample)
-                dataset_dict = DatasetDict(
-                    {
-                        "train": Dataset.from_pandas(train_df, preserve_index=False),
-                        "test": Dataset.from_pandas(test_df, preserve_index=False),
-                        "validation": Dataset.from_pandas(val_df, preserve_index=False),
-                    }
-                )
+                if flat_files and not train_files and not test_files and not val_files:
+                    flat_df = pd.concat(
+                        [self._read_arrow_file(f, columns=columns) for f in flat_files]
+                    )
+                    if n_sample is not None:
+                        flat_df = flat_df.head(n_sample)
+                    dataset_dict = DatasetDict(
+                        {"train": Dataset.from_pandas(flat_df, preserve_index=False)}
+                    )
+                else:
+                    train_df = pd.concat(
+                        [
+                            self._read_arrow_file(f, columns=columns)
+                            for f in sorted(train_files)
+                        ]
+                    )
+                    test_df = pd.concat(
+                        [
+                            self._read_arrow_file(f, columns=columns)
+                            for f in sorted(test_files)
+                        ]
+                    )
+                    val_df = pd.concat(
+                        [
+                            self._read_arrow_file(f, columns=columns)
+                            for f in sorted(val_files)
+                        ]
+                    )
+                    if n_sample is not None:
+                        train_df = train_df.head(n_sample)
+                        test_df = test_df.head(n_sample)
+                        val_df = val_df.head(n_sample)
+                    dataset_dict = DatasetDict(
+                        {
+                            "train": Dataset.from_pandas(
+                                train_df, preserve_index=False
+                            ),
+                            "test": Dataset.from_pandas(test_df, preserve_index=False),
+                            "validation": Dataset.from_pandas(
+                                val_df, preserve_index=False
+                            ),
+                        }
+                    )
             finally:
                 shutil.rmtree(prepared_path[0])
         return to_dashai_dataset(dataset_dict)
