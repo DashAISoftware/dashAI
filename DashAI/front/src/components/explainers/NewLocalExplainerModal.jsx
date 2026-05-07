@@ -300,7 +300,7 @@ export default function NewLocalExplainerModal({
               {steps.map((step, index) => (
                 <Step
                   key={`${step.name}`}
-                  completed={activeStep > index}
+                  completed={false}
                   disabled={activeStep < index}
                 >
                   <StepButton color="inherit" onClick={handleStepButton(index)}>

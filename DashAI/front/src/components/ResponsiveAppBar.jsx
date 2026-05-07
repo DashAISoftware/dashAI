@@ -13,8 +13,9 @@ import HomeIcon from "@mui/icons-material/HomeOutlined";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "./LanguageSelector";
 import { ColorModeContext } from "../contexts/ThemeContext";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import Tooltip from "@mui/material/Tooltip";
 import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 import NavbarTourButton from "./tour/NavbarTourButton";
 
@@ -41,8 +42,8 @@ function ResponsiveAppBar() {
 
   const iconBtnSx = React.useMemo(
     () => ({
-      width: 28,
-      height: 28,
+      width: 32,
+      height: 32,
       borderRadius: "4px",
       border: `1px solid ${theme.palette.divider}`,
       color: theme.palette.text.secondary,
@@ -86,9 +87,8 @@ function ResponsiveAppBar() {
           }}
         >
           <Typography
+            variant="h5"
             sx={{
-              fontSize: 16,
-              fontWeight: 600,
               letterSpacing: "0.02em",
               color: theme.palette.text.primary,
               lineHeight: 1,
@@ -238,17 +238,25 @@ function ResponsiveAppBar() {
           <LanguageSelector />
           <HardwareMonitorButton />
           <NavbarTourButton />
-          <IconButton
-            onClick={colorMode.toggleColorMode}
-            aria-label="toggle theme"
-            sx={iconBtnSx}
+          <Tooltip
+            title={
+              theme.palette.mode === "dark"
+                ? t("common:switchToLightMode")
+                : t("common:switchToDarkMode")
+            }
           >
-            {theme.palette.mode === "dark" ? (
-              <Brightness7Icon sx={{ fontSize: 16 }} />
-            ) : (
-              <Brightness4Icon sx={{ fontSize: 16 }} />
-            )}
-          </IconButton>
+            <IconButton
+              onClick={colorMode.toggleColorMode}
+              aria-label="toggle theme"
+              sx={iconBtnSx}
+            >
+              {theme.palette.mode === "dark" ? (
+                <LightModeOutlinedIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+              )}
+            </IconButton>
+          </Tooltip>
         </Box>
       </Toolbar>
     </AppBar>

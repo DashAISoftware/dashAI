@@ -79,8 +79,8 @@ export default function CollapsibleList({
         <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
 
         <Typography
+          variant="h5"
           sx={{
-            ...theme.typography.cardTitle,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -92,7 +92,9 @@ export default function CollapsibleList({
           {title}
         </Typography>
 
-        <Box
+        <Typography
+          variant="body2"
+          component="div"
           sx={{
             mr: 1,
             bgcolor: theme.palette.ui.scrollbar,
@@ -103,11 +105,10 @@ export default function CollapsibleList({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 12,
           }}
         >
           {count}
-        </Box>
+        </Typography>
 
         {open ? (
           <KeyboardArrowDownIcon

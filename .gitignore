@@ -200,3 +200,5 @@ docs/node_modules/
 # Re-include docs content section named "build" (not a build output)
 !docs/docs/build/
 !docs/docs/build/**
+!docs/i18n/**/build/
+!docs/i18n/**/build/**

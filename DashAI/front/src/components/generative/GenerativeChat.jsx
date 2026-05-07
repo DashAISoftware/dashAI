@@ -297,7 +297,7 @@ export default function GenerativeChat() {
               mt={1}
             >
               {message.type === "history" ? (
-                <Typography sx={{ fontSize: "0.875rem", opacity: 0.8 }}>
+                <Typography variant="body1" sx={{ opacity: 0.8 }}>
                   <Trans i18nKey="generative:label.parameterChangeEvent">
                     Parameters updated: <span>{message.changedMessage}</span>
                   </Trans>

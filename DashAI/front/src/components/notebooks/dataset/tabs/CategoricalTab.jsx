@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, CardContent } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 export const CategoricalTab = ({ categoricalStats }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
+  const [activeIndices, setActiveIndices] = useState({});
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
@@ -85,6 +86,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       />
                       <YAxis />
                       <Tooltip
+                        cursor={false}
                         contentStyle={{
                           backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
@@ -95,9 +97,39 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       />
                       <Bar
                         dataKey="count"
-                        fill="rgba(136, 132, 216, 0.7)"
+                        fill="#8884d8"
                         name={t("common:count")}
-                      />
+                        activeBar={false}
+                        onMouseEnter={(_, index) =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: index,
+                          }))
+                        }
+                        onMouseLeave={() =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: null,
+                          }))
+                        }
+                      >
+                        {stats.top_5.map((_, index) => {
+                          const activeIndex = activeIndices[column] ?? null;
+                          return (
+                            <Cell
+                              key={index}
+                              fill="#8884d8"
+                              fillOpacity={
+                                index === activeIndex
+                                  ? 1
+                                  : activeIndex !== null
+                                    ? 0.5
+                                    : 0.7
+                              }
+                            />
+                          );
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>

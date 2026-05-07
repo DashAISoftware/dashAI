@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 export const TextTab = ({ textStats }) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
+  const [activeIndices, setActiveIndices] = useState({});
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(textStats).map(([column, stats]) => {
@@ -139,11 +140,11 @@ export const TextTab = ({ textStats }) => {
               <Box display="flex" flexWrap="wrap" gap={4}>
                 <Box flex="1 1 300px" minWidth="250px">
                   <Typography
-                    variant="subtitle2"
+                    variant="body1"
                     fontWeight="bold"
                     color="text.primary"
                     gutterBottom
-                    sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                    sx={{ textTransform: "uppercase" }}
                   >
                     {t("datasets:label.lengthMetrics")}
                   </Typography>
@@ -196,6 +197,7 @@ export const TextTab = ({ textStats }) => {
                       <XAxis dataKey="label" />
                       <YAxis />
                       <RechartsTooltip
+                        cursor={false}
                         contentStyle={{
                           backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
@@ -206,9 +208,39 @@ export const TextTab = ({ textStats }) => {
                       />
                       <Bar
                         dataKey="value"
-                        fill="rgba(136, 132, 216, 0.7)"
+                        fill="#8884d8"
                         name={t("common:value")}
-                      />
+                        activeBar={false}
+                        onMouseEnter={(_, index) =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: index,
+                          }))
+                        }
+                        onMouseLeave={() =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: null,
+                          }))
+                        }
+                      >
+                        {lengthData.map((entry, index) => {
+                          const activeIndex = activeIndices[column] ?? null;
+                          return (
+                            <Cell
+                              key={index}
+                              fill="#8884d8"
+                              fillOpacity={
+                                index === activeIndex
+                                  ? 1
+                                  : activeIndex !== null
+                                    ? 0.5
+                                    : 0.7
+                              }
+                            />
+                          );
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>

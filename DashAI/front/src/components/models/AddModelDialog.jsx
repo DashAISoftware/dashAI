@@ -294,7 +294,7 @@ function AddModelDialog({
       <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
         <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
           {steps.map((label) => (
-            <Step key={label}>
+            <Step key={label} completed={false}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}

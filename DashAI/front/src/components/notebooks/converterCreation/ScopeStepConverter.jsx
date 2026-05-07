@@ -104,12 +104,6 @@ export default function ScopeStepConverter({
         }}
       >
         <Typography
-          variant="h6"
-          sx={{ fontWeight: 700, color: theme.palette.primary.main, mb: 0.5 }}
-        >
-          {t("datasets:label.selectScopeStep", { step: 1 })}
-        </Typography>
-        <Typography
           variant="body2"
           sx={{ color: theme.palette.text.primary, mb: 0.5 }}
         >
