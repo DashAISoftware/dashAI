@@ -110,6 +110,7 @@ export default function ScopeStepConverter({
         {/* Scope selection UI */}
         <ColumnSelector
           file_path={notebook.file_path}
+          tool={tool}
           allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
           onSelectionChange={(columnsInfo) => {
