@@ -29,6 +29,7 @@ export default function SessionVisualization() {
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
+  const [expandedRunId, setExpandedRunId] = useState(null);
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
   const sessionTourContext = useTourContext();
@@ -320,14 +321,20 @@ export default function SessionVisualization() {
                   onTrain={onTrain}
                   onViewDetails={handleViewDetails}
                   onDelete={onDeleteRun}
-                  onRowClick={handleRowClick}
+                  onRowClick={(runId) => {
+                    handleRowClick(runId);
+                    setExpandedRunId(runId);
+                  }}
                   metricSplit={metricSplit}
+                  selectedRunId={expandedRunId}
                 />
               ) : (
                 <ResultsGraphs
                   runs={runs}
                   selectedSplit={metricSplit}
                   onSplitChange={setMetricSplit}
+                  expandedRunId={expandedRunId}
+                  onExpandRunChart={setExpandedRunId}
                 />
               )}
             </Box>

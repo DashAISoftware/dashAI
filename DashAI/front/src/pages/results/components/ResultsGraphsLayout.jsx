@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 import ResultsGraphsSelection from "./ResultsGraphsSelection";
 import ResultsGraphsParameters from "./ResultsGraphsParameters";
 import ResultsGraphsPlot from "./ResultsGraphsPlot";
+import FoldMetricsChart from "../../../components/models/FoldMetricsChart";
 
 function ResultsGraphsLayout({
   selectedChart,
@@ -15,7 +16,23 @@ function ResultsGraphsLayout({
   handleSelectAll,
   handleClearAll,
   chartData,
+  expandedRunId = null,
+  onExpandRunChart = undefined,
+  selectedSplit = "test",
+  runs = [],
 }) {
+  // Get metrics from the expanded run
+  const expandedRun = expandedRunId
+    ? runs.find((r) => r.id === expandedRunId)
+    : null;
+  const metrics = expandedRun
+    ? Object.keys(expandedRun[`${selectedSplit}_metrics`] || {}).map(
+        (name) => ({ name, metadata: {} }),
+      )
+    : [];
+  const isCrossValidation =
+    runs[0]?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+  console.log("Run", runs[0]); // Debug log to check evaluation strategy
   return (
     <Box
       display="flex"
@@ -28,23 +45,46 @@ function ResultsGraphsLayout({
       <ResultsGraphsSelection
         selectedChart={selectedChart}
         handleChangeChart={handleChangeChart}
+        isCv={isCrossValidation}
       />
 
       <Box display="flex" flex={1} width="100%">
-        {/* Metric filter sidebar */}
-        <ResultsGraphsParameters
-          currentMetrics={currentMetrics}
-          selectedMetrics={selectedMetrics}
-          handleToggleMetric={handleToggleMetric}
-          handleSelectAll={handleSelectAll}
-          handleClearAll={handleClearAll}
-        />
+        {/* Show FoldMetricsChart when selected */}
+        {selectedChart === "fold_metrics" ? (
+          <Box sx={{ width: "100%", p: 2, overflow: "auto" }}>
+            {expandedRunId ? (
+              <FoldMetricsChart
+                runId={expandedRunId}
+                metricSplit={selectedSplit}
+                metrics={metrics}
+              />
+            ) : (
+              <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
+                <Typography variant="body2">
+                  Select a run from the table to view its cross-validation fold
+                  metrics
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        ) : (
+          <>
+            {/* Metric filter sidebar */}
+            <ResultsGraphsParameters
+              currentMetrics={currentMetrics}
+              selectedMetrics={selectedMetrics}
+              handleToggleMetric={handleToggleMetric}
+              handleSelectAll={handleSelectAll}
+              handleClearAll={handleClearAll}
+            />
 
-        {/* Plotly chart area */}
-        <ResultsGraphsPlot
-          selectedChart={selectedChart}
-          chartData={chartData}
-        />
+            {/* Plotly chart area */}
+            <ResultsGraphsPlot
+              selectedChart={selectedChart}
+              chartData={chartData}
+            />
+          </>
+        )}
       </Box>
     </Box>
   );
@@ -59,6 +99,10 @@ ResultsGraphsLayout.propTypes = {
   handleSelectAll: PropTypes.func.isRequired,
   handleClearAll: PropTypes.func.isRequired,
   chartData: PropTypes.object.isRequired,
+  expandedRunId: PropTypes.number,
+  onExpandRunChart: PropTypes.func,
+  selectedSplit: PropTypes.string,
+  runs: PropTypes.array,
 };
 
 export default ResultsGraphsLayout;

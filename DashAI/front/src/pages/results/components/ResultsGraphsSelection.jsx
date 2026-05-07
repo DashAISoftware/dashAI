@@ -9,7 +9,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
-function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
+function ResultsGraphsSelection({ selectedChart, handleChangeChart, isCv }) {
   const { t } = useTranslation(["models"]);
   const theme = useTheme();
 
@@ -40,12 +40,14 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
       >
         <ToggleButton value="bar">{t("models:label.bar")}</ToggleButton>
         <ToggleButton value="radar">{t("models:label.radar")}</ToggleButton>
-        <ToggleButton
-          value="fold_metrics"
-          title="Cross-Validation Fold Metrics"
-        >
-          Fold Metrics
-        </ToggleButton>
+        {isCv && (
+          <ToggleButton
+            value="fold_metrics"
+            title="Cross-Validation Fold Metrics"
+          >
+            Fold Metrics
+          </ToggleButton>
+        )}
       </ToggleButtonGroup>
     </Box>
   );
@@ -54,6 +56,7 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
 ResultsGraphsSelection.propTypes = {
   selectedChart: PropTypes.string.isRequired,
   handleChangeChart: PropTypes.func.isRequired,
+  isCv: PropTypes.bool,
 };
 
 export default ResultsGraphsSelection;

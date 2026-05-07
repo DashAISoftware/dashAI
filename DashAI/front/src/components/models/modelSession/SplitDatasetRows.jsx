@@ -679,8 +679,8 @@ function SplitDatasetRows({
                       {t("experiments:label.stratifiedKfold")}
                     </MenuItem>
                   )}
-                  {allowedCvTypes.includes("RepeatedFold") && (
-                    <MenuItem value="RepeatedFold">
+                  {allowedCvTypes.includes("RepeatedKFold") && (
+                    <MenuItem value="RepeatedKFold">
                       {t("experiments:label.repeatedKfold")}
                     </MenuItem>
                   )}
@@ -742,8 +742,8 @@ function SplitDatasetRows({
                   value={numFolds}
                   onChange={handleNumFoldsChange}
                   onBlur={handleOnBlurNumFolds}
-                  inputProps={{ min: 2, max: 10 }}
-                  helperText="Mínimo 2, máximo 10"
+                  inputProps={{ min: 2, max: 20 }}
+                  helperText="Mínimo 2, máximo 20"
                 />
               </Grid>
             )}

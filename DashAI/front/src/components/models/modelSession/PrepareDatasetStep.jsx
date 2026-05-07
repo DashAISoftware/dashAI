@@ -283,7 +283,7 @@ function PrepareDatasetStep({
         };
       } else if (
         cvType === "RepeatedKFold" ||
-        cvType === "RepeatedStratifiedKfold"
+        cvType === "RepeatedStratifiedKFold"
       ) {
         updatedExpData.splits = {
           splitter_name: cvType + "Splitter",

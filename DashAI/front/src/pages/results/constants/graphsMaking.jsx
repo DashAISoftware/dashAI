@@ -23,7 +23,6 @@ const getTraceColors = (theme) => [
 function graphsMaking(graphsToView, run, metrics, values, runIndex, theme) {
   graphsToView.radar = graphsToView.radar || [];
   graphsToView.bar = graphsToView.bar || [];
-  console.log("run", run);
 
   const colors = getTraceColors(theme);
   const color = colors[runIndex % colors.length];

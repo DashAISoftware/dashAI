@@ -81,7 +81,6 @@ function CreateSessionSteps({
   const steps = [
     t("models:label.selectDataset"),
     t("models:label.prepareDataset"),
-    t("models:label.selectEvaluationStrategy"),
   ];
 
   const { defaultName } = useMemo(() => {

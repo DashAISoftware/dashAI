@@ -13,6 +13,8 @@ function ResultsGraphs({
   runs,
   selectedSplit: splitProp = undefined,
   onSplitChange = undefined,
+  expandedRunId = null,
+  onExpandRunChart = undefined,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -77,7 +79,6 @@ function ResultsGraphs({
 
       finishedRuns.forEach((run, idx) => {
         const metricsObj = run[metricsKey] ?? {};
-        console.log("run", run);
         const values = selectedMetrics.map((m) => {
           const v = metricsObj[m]["value"] ?? metricsObj[m];
           if (v === undefined || v === null) return null;
@@ -145,6 +146,10 @@ function ResultsGraphs({
       handleSelectAll={handleSelectAll}
       handleClearAll={handleClearAll}
       chartData={chartData}
+      expandedRunId={expandedRunId}
+      onExpandRunChart={onExpandRunChart}
+      selectedSplit={selectedSplit}
+      runs={runs}
     />
   );
 }
@@ -153,6 +158,8 @@ ResultsGraphs.propTypes = {
   runs: PropTypes.array.isRequired,
   selectedSplit: PropTypes.string,
   onSplitChange: PropTypes.func,
+  expandedRunId: PropTypes.number,
+  onExpandRunChart: PropTypes.func,
 };
 
 export default ResultsGraphs;

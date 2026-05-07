@@ -34,6 +34,7 @@ function ModelComparisonTable({
   onDelete,
   onRowClick,
   metricSplit = "test",
+  selectedRunId = null,
 }) {
   const [models, setModels] = useState([]);
   const [metrics, setMetrics] = useState([]);
@@ -519,7 +520,17 @@ function ModelComparisonTable({
           onRowClick(row.original.id);
         }
       },
-      sx: { cursor: onRowClick ? "pointer" : "default" },
+      sx: {
+        cursor: onRowClick ? "pointer" : "default",
+        backgroundColor:
+          selectedRunId === row.original.id
+            ? theme.palette.action.hover
+            : "inherit",
+        transition: "background-color 0.2s ease",
+        "&:hover": {
+          backgroundColor: theme.palette.action.hover,
+        },
+      },
     }),
   });
 
@@ -611,6 +622,7 @@ ModelComparisonTable.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
   metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
+  selectedRunId: PropTypes.number,
 };
 
 export default ModelComparisonTable;
