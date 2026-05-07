@@ -146,7 +146,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-cpu.txt
           pip install pyinstaller pywebview
-          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
           brew install create-dmg
 
       - name: Build ARM64 App Bundle
@@ -199,7 +198,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-cpu.txt
           pip install pyinstaller pywebview
-          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
           brew install create-dmg
 
       - name: Build x86_64 App Bundle
