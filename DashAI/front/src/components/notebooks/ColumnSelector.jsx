@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -36,6 +36,7 @@ import { Trans, useTranslation } from "react-i18next";
  */
 function ColumnSelector({
   file_path,
+  tool,
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
@@ -337,8 +338,8 @@ function ColumnSelector({
               context: inputCardinality.exact
                 ? "exact"
                 : inputCardinality.max
-                  ? "range"
-                  : "min",
+                ? "range"
+                : "min",
             })}
           </Typography>
         )}
@@ -394,7 +395,26 @@ function ColumnSelector({
             </Box>
           </Typography>
         )}
-      </Box>{" "}
+      </Box>
+
+      {tool?.metadata?.changes_row_count && (
+        <Alert
+          severity="warning"
+          sx={{
+            "& .MuiAlert-icon": { fontSize: 24 },
+            bgcolor: (theme) => `${theme.palette.warning.main}40`,
+            border: (theme) => `1px solid ${theme.palette.warning.main}`,
+            "& \t.MuiAlert-message": {
+              display: "flex",
+              alignItems: "center",
+            },
+            mb: 1.5,
+          }}
+        >
+          {t("datasets:message.changesRowCountWarning")}
+        </Alert>
+      )}
+
       {/* Data Grid */}
       <MaterialReactTable
         data-tour="column-selector"
@@ -406,6 +426,11 @@ function ColumnSelector({
 
 ColumnSelector.propTypes = {
   file_path: PropTypes.string.isRequired,
+  tool: PropTypes.shape({
+    metadata: PropTypes.shape({
+      changes_row_count: PropTypes.bool,
+    }),
+  }),
   inputCardinality: PropTypes.shape({
     min: PropTypes.number,
     max: PropTypes.number,
