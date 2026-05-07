@@ -438,3 +438,51 @@ class ExcelTestDatasetGenerator:
             "zip",
             base_path / "bad_split",
         )
+
+
+class ArrowTestDatasetGenerator:
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        dataset_name: str,
+        ouptut_path: pathlib.Path,
+        random_state: int,
+    ) -> None:
+        base_path = pathlib.Path(ouptut_path) / "arrow" / dataset_name
+        os.makedirs(base_path, exist_ok=True)
+
+        self._generate_common_cases(base_path=base_path, df=df)
+        self._generate_bad_formats(base_path=base_path)
+        self._generate_splits(base_path=base_path, df=df, random_state=random_state)
+
+    @staticmethod
+    def _write_arrow(df: pd.DataFrame, filepath: pathlib.Path):
+        import pyarrow as pa
+        import pyarrow.ipc as ipc
+
+        table = pa.Table.from_pandas(df, preserve_index=False)
+        with ipc.new_file(str(filepath), table.schema) as writer:
+            writer.write_table(table)
+
+    def _generate_common_cases(self, base_path: pathlib.Path, df: pd.DataFrame):
+        self._write_arrow(df, base_path / "basic.arrow")
+
+    def _generate_bad_formats(self, base_path: pathlib.Path):
+        with open(base_path / "bad_format.arrow", "wb") as file:
+            file.write(b"not a valid arrow file #$%&--")
+        with open(base_path / "empty_file.arrow", "w") as file:
+            file.write("")
+
+    def _generate_splits(
+        self, base_path: pathlib.Path, df: pd.DataFrame, random_state: int
+    ):
+        os.makedirs(base_path / "split" / "train", exist_ok=True)
+        os.makedirs(base_path / "split" / "test", exist_ok=True)
+        os.makedirs(base_path / "split" / "val", exist_ok=True)
+
+        train, test, val = _get_test_splits(df, random_state)
+
+        self._write_arrow(train, base_path / "split" / "train" / "train.arrow")
+        self._write_arrow(test, base_path / "split" / "test" / "test.arrow")
+        self._write_arrow(val, base_path / "split" / "val" / "val.arrow")
+        shutil.make_archive(str(base_path / "split"), "zip", base_path / "split")
