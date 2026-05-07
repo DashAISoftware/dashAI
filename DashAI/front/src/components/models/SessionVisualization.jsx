@@ -13,6 +13,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import {
   PlayArrow,
   TableChart,
@@ -33,6 +34,7 @@ import { useTourContext } from "../tour/TourProvider";
 export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
+  const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
@@ -54,7 +56,13 @@ export default function SessionVisualization() {
     operationsCount,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
   } = useModels();
+
+  const theme = useTheme();
+  const glowStart = alpha(theme.palette.primary.main, 0.65);
+  const glowMid = alpha(theme.palette.primary.main, 0.2);
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -111,6 +119,24 @@ export default function SessionVisualization() {
       }, 1000);
     }
   }, [sessionTourContext]);
+
+  // Scroll to and highlight a newly added run card
+  useEffect(() => {
+    if (!lastAddedRunId) return;
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(`run-card-${lastAddedRunId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      setHighlightedRunId(lastAddedRunId);
+      clearLastAddedRunId();
+    }, 100);
+    const clearTimer = setTimeout(() => setHighlightedRunId(null), 4100);
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [lastAddedRunId]);
 
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
@@ -444,7 +470,20 @@ export default function SessionVisualization() {
                   }
                   sx={{
                     scrollMarginTop: "20px",
-                    transition: "all 0.3s ease",
+                    transition: "transform 0.3s ease",
+                    "@keyframes newRunHighlight": {
+                      "0%": {
+                        boxShadow: `0 0 0 3px ${glowStart}, 0 0 24px 8px ${glowMid}`,
+                      },
+                      "65%": {
+                        boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.15)}`,
+                      },
+                      "100%": { boxShadow: "none" },
+                    },
+                    animation:
+                      highlightedRunId === run.id
+                        ? "newRunHighlight 4s ease-out forwards"
+                        : "none",
                     ...(selectedRunId === run.id && {
                       transform: "scale(1.02)",
                       boxShadow: 3,

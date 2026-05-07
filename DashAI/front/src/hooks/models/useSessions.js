@@ -30,6 +30,7 @@ export function useSessions({ t }) {
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
   const [operationsCount, setOperationsCount] = useState(null);
+  const [lastAddedRunId, setLastAddedRunId] = useState(null);
 
   // -------- actions --------
 
@@ -207,10 +208,13 @@ export function useSessions({ t }) {
 
   const onRunCreated = (newRun) => {
     setRuns((prev) => [...prev, newRun]);
+    setLastAddedRunId(newRun.id);
     enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
       variant: "success",
     });
   };
+
+  const clearLastAddedRunId = useCallback(() => setLastAddedRunId(null), []);
 
   const onTrainRun = async (run) => {
     try {
@@ -308,5 +312,7 @@ export function useSessions({ t }) {
     onDeleteRun,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
   };
 }
