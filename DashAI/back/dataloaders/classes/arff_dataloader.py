@@ -27,7 +27,7 @@ class ARFFDataLoader(BaseDataLoader):
     multi-file uploads via ZIP archives containing train/test/val split folders.
     """
 
-    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".arff"})
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".arff", ".zip"})
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ARFFDataloaderSchema
 
