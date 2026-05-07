@@ -130,9 +130,6 @@ export default function DatasetAutocomplete({
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" gutterBottom>
-              {t("datasets:label.selectedDataset")}
-            </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="body2" fontWeight="medium">

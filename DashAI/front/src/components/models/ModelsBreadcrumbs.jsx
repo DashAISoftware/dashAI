@@ -37,22 +37,6 @@ export default function ModelsBreadcrumbs() {
     if (path.startsWith("/app/models/sessions/new/") && params.taskName) {
       const task = tasks.find((tk) => tk.name === params.taskName);
       const taskLabel = taskDisplayName(task) ?? params.taskName;
-
-      if (path.endsWith("/prepare")) {
-        return [
-          rootCrumb,
-          {
-            label: taskLabel,
-            path: `/app/models/sessions/new/${params.taskName}`,
-          },
-          {
-            label: t("models:label.prepareDataset"),
-            path: null,
-            current: true,
-          },
-        ];
-      }
-
       return [
         rootCrumb,
         {

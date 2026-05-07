@@ -1,4 +1,4 @@
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import {
   MEDIA_KINDS,
@@ -38,12 +38,12 @@ export function MediaOnlyPlaceholder({
     >
       {hasAnyMedia ? (
         <>
-          <Box sx={{ fontSize: "0.875rem" }}>
+          <Typography variant="body1">
             {t(
               "generative:label.attachMediaToContinue",
               "Attach media to continue",
             )}
-          </Box>
+          </Typography>
           <Stack direction="row" spacing={1}>
             {MEDIA_ORDER.map((kind) => {
               const { icon, tooltipKey } = MEDIA_KINDS[kind];
@@ -65,12 +65,12 @@ export function MediaOnlyPlaceholder({
           </Stack>
         </>
       ) : (
-        <Box sx={{ fontSize: "0.875rem" }}>
+        <Typography variant="body1">
           {t(
             "generative:label.noInputAvailable",
             "No input available for this task",
           )}
-        </Box>
+        </Typography>
       )}
     </Box>
   );

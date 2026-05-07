@@ -22,13 +22,10 @@ class TabularClassificationTask(ClassificationTask):
     """
 
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Predict categorical labels from structured tabular data "
-            "(rows and columns) using trained classification models."
-        ),
+        en="Predict categorical labels from tabular data (rows and columns).",
         es=(
             "Predice etiquetas categóricas a partir de datos tabulares "
-            "estructurados (filas y columnas) usando modelos de clasificación."
+            "(filas y columnas)."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(

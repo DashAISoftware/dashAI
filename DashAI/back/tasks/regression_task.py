@@ -23,14 +23,8 @@ class RegressionTask(BaseTask):
     """
 
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Predict continuous numeric values from structured tabular data "
-            "using trained regression models."
-        ),
-        es=(
-            "Predice valores numéricos continuos a partir de datos tabulares "
-            "estructurados usando modelos de regresión."
-        ),
+        en="Predict continuous numeric values from tabular data.",
+        es="Predice valores numéricos continuos a partir de datos tabulares.",
     )
     DISPLAY_NAME: str = MultilingualString(en="Regression", es="Regresión")
 

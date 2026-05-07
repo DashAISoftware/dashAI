@@ -9,8 +9,8 @@ sidebar_label: Developing a Plugin
 
 Before developing a plugin, ensure you understand:
 
-1. **[What is a Plugin?](./overview)** — High-level overview of plugin concepts and capabilities
-2. **[Plugin Structure](./structure)** — How plugins are organized and what DashAI requires
+1. **[What is a Plugin?](/build/plugin-development/overview)** — High-level overview of plugin concepts and capabilities
+2. **[Plugin Structure](/build/plugin-development/structure)** — How plugins are organized and what DashAI requires
 
 ---
 
@@ -82,7 +82,7 @@ class MyCustomModel(TabularClassificationModel):
 1. Create the plugin folder inside the `plugins` directory (if using Option 2 above)
 2. Write your Python classes extending appropriate DashAI base classes
 3. Create any required JSON configuration files
-4. Add the `pyproject.toml` with proper entry points (see [Plugin Structure](./structure))
+4. Add the `pyproject.toml` with proper entry points (see [Plugin Structure](/build/plugin-development/structure))
 5. Write a README describing your plugin
 
 ---
@@ -93,7 +93,7 @@ class MyCustomModel(TabularClassificationModel):
 
 Study working examples to understand best practices:
 
-- **[Real-world example](./overview):** `dashai-phi-model-package` adds Microsoft Phi models
+- **[Real-world example](/build/plugin-development/overview):** `dashai-phi-model-package` adds Microsoft Phi models
 - **Community plugins:** [pypi.org/search/?q=dashai](https://pypi.org/search/?q=dashai)
 
 ### Test Your Plugin During Development

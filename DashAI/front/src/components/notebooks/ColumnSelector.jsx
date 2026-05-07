@@ -194,6 +194,15 @@ function ColumnSelector({
     [getValidColumnIds, rowSelectionModel, inputCardinality],
   );
 
+  const handleSelectAllRows = useCallback(() => {
+    const validIds = getValidColumnIds();
+    const allValidSelected =
+      validIds.length > 0 &&
+      validIds.every((id) => rowSelectionModel.includes(id));
+
+    handleSelection(allValidSelected ? {} : toMRT(validIds));
+  }, [getValidColumnIds, rowSelectionModel]);
+
   // Effect to update selection data and validation whenever rowSelectionModel changes
   useEffect(() => {
     if (rows.length > 0) {
@@ -270,9 +279,9 @@ function ColumnSelector({
     enableFullScreenToggle: false,
     enableHiding: false,
     enablePagination: true,
-    muiPaginationProps: { rowsPerPageOptions: [5, 10, 20] },
+    muiPaginationProps: { rowsPerPageOptions: [10, 15, 20] },
     initialState: {
-      pagination: { pageSize: 5, pageIndex: 0 },
+      pagination: { pageSize: 10, pageIndex: 0 },
       density: "compact",
     },
     mrtTheme: {
@@ -291,6 +300,15 @@ function ColumnSelector({
             pointerEvents: "none",
           }
         : {},
+    }),
+    muiSelectAllCheckboxProps: () => ({
+      checked:
+        getValidColumnIds().length > 0 &&
+        getValidColumnIds().every((id) => rowSelectionModel.includes(id)),
+      indeterminate:
+        rowSelectionModel.length > 0 &&
+        rowSelectionModel.length < getValidColumnIds().length,
+      onChange: handleSelectAllRows,
     }),
     localization,
   });
