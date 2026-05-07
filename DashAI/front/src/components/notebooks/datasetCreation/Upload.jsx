@@ -154,7 +154,7 @@ function Upload({
   };
 
   const handleSelect = async (e) => {
-    if (datasetState !== EMPTY) return;
+    if (datasetState !== EMPTY && datasetState !== LOADED) return;
 
     const f = e.target.files && e.target.files[0];
     if (!f) return;
@@ -267,15 +267,6 @@ function Upload({
         case EMPTY:
           return (
             <React.Fragment>
-              <Grid>
-                <input
-                  type="file"
-                  ref={inputRef}
-                  style={{ display: "none" }}
-                  onChange={handleSelect}
-                  {...(acceptAttr ? { accept: acceptAttr } : {})}
-                />
-              </Grid>
               {dragActive ? (
                 <Grid>
                   <Typography
@@ -328,7 +319,7 @@ function Upload({
                 datasetData={datasetDataMemo}
                 onChangeDataset={(e) => {
                   e.stopPropagation();
-                  handleDeleteDataset();
+                  inputRef.current?.click();
                 }}
                 onPreviewError={onPreviewError}
                 onTypesChanged={onTypesChanged}
@@ -377,6 +368,14 @@ function Upload({
           )}
         </Box>
       </Grid>
+
+      <input
+        type="file"
+        ref={inputRef}
+        style={{ display: "none" }}
+        onChange={handleSelect}
+        {...(acceptAttr ? { accept: acceptAttr } : {})}
+      />
 
       {/* Drag and drop */}
       <Grid sx={{ width: "100%", display: "flex", justifyContent: "center" }}>

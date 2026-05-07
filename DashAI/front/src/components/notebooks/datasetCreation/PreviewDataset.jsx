@@ -261,8 +261,24 @@ function PreviewDataset({
               </Typography>
 
               <Tooltip title={t("datasets:button.reUploadDataset")}>
-                <IconButton onClick={onChangeDataset} sx={{ flexShrink: 0 }}>
-                  <UploadFileIcon color="primary" />
+                <IconButton
+                  onClick={onChangeDataset}
+                  size="small"
+                  sx={{
+                    flexShrink: 0,
+                    border: `1px solid ${theme.palette.action.disabled}`,
+                    borderRadius: 2,
+                    color: "text.secondary",
+                    padding: "4px",
+                    transition: "color 0.2s, border-color 0.2s",
+                    "&:hover": {
+                      backgroundColor: "transparent",
+                      color: "primary.main",
+                      borderColor: theme.palette.primary.main,
+                    },
+                  }}
+                >
+                  <UploadFileIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Box>
