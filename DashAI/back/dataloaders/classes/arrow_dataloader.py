@@ -100,13 +100,29 @@ class ArrowDataLoader(BaseDataLoader):
         datasets.builder.DatasetGenerationError
             If the file cannot be parsed as valid Arrow IPC.
         """
+        import io
+
         from datasets.builder import DatasetGenerationError
 
         try:
             import pyarrow.ipc as ipc
 
-            with ipc.open_file(filepath) as reader:
-                table = reader.read_all()
+            # Read into memory first so pyarrow holds no file handle —
+            # avoids Windows PermissionError when the caller deletes the temp file.
+            with open(filepath, "rb") as fh:
+                buf = io.BytesIO(fh.read())
+
+            # Arrow has two IPC wire formats: file (random-access) and stream
+            # (sequential). HuggingFace cache files use stream format; user
+            # exports usually use file format. Try file first, then stream.
+            try:
+                with ipc.open_file(buf) as reader:
+                    table = reader.read_all()
+            except Exception:
+                buf.seek(0)
+                with ipc.open_stream(buf) as reader:
+                    table = reader.read_all()
+
             if columns:
                 table = table.select(columns)
             return table.to_pandas()
