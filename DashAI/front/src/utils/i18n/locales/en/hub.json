@@ -50,5 +50,7 @@
   "stepFileSubtitle": "Choose the file to import from the downloaded dataset.",
   "noFilesFound": "No files found in this download.",
   "sources": "Sources",
-  "fromSource": "From {{source}}"
+  "fromSource": "From {{source}}",
+  "selectSourceSubtitle": "Select a source to browse and import datasets.",
+  "searchDownloads": "Search downloads..."
 }

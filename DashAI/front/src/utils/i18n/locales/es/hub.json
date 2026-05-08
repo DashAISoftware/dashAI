@@ -50,5 +50,7 @@
   "stepFileSubtitle": "Elige el archivo a importar del dataset descargado.",
   "noFilesFound": "No se encontraron archivos en esta descarga.",
   "sources": "Fuentes",
-  "fromSource": "De {{source}}"
+  "fromSource": "De {{source}}",
+  "selectSourceSubtitle": "Selecciona una fuente para explorar e importar datasets.",
+  "searchDownloads": "Buscar descargas..."
 }

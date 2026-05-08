@@ -1,23 +1,14 @@
-import { useEffect, useState } from "react";
-import {
-  Box,
-  CircularProgress,
-  Collapse,
-  Divider,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { useState } from "react";
+import { Box, Collapse, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import StorageIcon from "@mui/icons-material/Storage";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { getDatasetSources } from "../../api/hub";
 import Footer from "../threeSectionLayout/Footer";
+import SearchBar from "../threeSectionLayout/SearchBar";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 
 function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
@@ -79,142 +70,60 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
 }
 
 /**
- * Left sidebar for the Hub module.
+ * Left sidebar for the Hub module — shows downloaded datasets only.
  *
- * @param {string|null} selectedSource - Currently active source name.
- * @param {function} onSelectSource - Called with full source object when user clicks.
  * @param {Array} downloads - List of HubDownload records to show.
  * @param {function} onDeleteDownload - Called with download id when user deletes.
  * @param {function} onImportDownload - Called with download record when user clicks Add.
  */
-export default function HubLeftBar({
-  selectedSource,
-  onSelectSource,
-  downloads = [],
-  onDeleteDownload,
-  onImportDownload,
-}) {
+export default function HubLeftBar({ downloads = [], onDeleteDownload, onImportDownload }) {
   const { t } = useTranslation(["hub", "common"]);
   const theme = useTheme();
-  const [sources, setSources] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [downloadsOpen, setDownloadsOpen] = useState(true);
 
-  useEffect(() => {
-    getDatasetSources()
-      .then(setSources)
-      .catch(() => setSources([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const filteredDownloads = downloads.filter((dl) =>
+    dl.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <SideBar>
-      <Box sx={{ px: 2, py: 1.5, flexShrink: 0 }}>
+      <Box
+        sx={{
+          px: 2,
+          height: "64px",
+          display: "flex",
+          alignItems: "center",
+          flexShrink: 0,
+        }}
+      >
         <Typography variant="body1" color="textSecondary">
           {t("hub:title")}
         </Typography>
       </Box>
 
+      <Box px={2} pb={2} sx={{ flexShrink: 0 }}>
+        <SearchBar
+          placeholder={t("hub:searchDownloads", "Search downloads...")}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </Box>
+
       <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
-      <Box
-        display="flex"
-        flexDirection="column"
-        flex={1}
-        minHeight={0}
-        sx={{ overflowY: "auto" }}
-      >
-        {/* Sources section */}
-        <Box sx={{ px: 2, pt: 2 }}>
-          {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", pt: 2 }}>
-              <CircularProgress size={20} />
-            </Box>
-          ) : (
-            <>
-              <SectionHeader
-                icon={CloudDownloadIcon}
-                title={t("hub:sources")}
-                count={sources.length}
-                open={sourcesOpen}
-                onToggle={() => setSourcesOpen((v) => !v)}
-              />
-              <Collapse in={sourcesOpen} timeout="auto">
-                <Box pl={2}>
-                  {sources.length === 0 ? (
-                    <Typography
-                      sx={{
-                        color: "text.primary",
-                        opacity: 0.5,
-                        textAlign: "center",
-                        p: 2,
-                      }}
-                    >
-                      {t("common:noItemsAvailable", "No items available.")}
-                    </Typography>
-                  ) : (
-                    sources.map((source) => (
-                      <Box
-                        key={source.name}
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          py: 0.75,
-                          px: 1,
-                          borderRadius: 1,
-                          cursor: "pointer",
-                          bgcolor:
-                            selectedSource === source.name
-                              ? theme.palette.action.selected
-                              : "transparent",
-                          borderLeft:
-                            selectedSource === source.name
-                              ? `3px solid ${theme.palette.primary.main}`
-                              : "3px solid transparent",
-                          "&:hover": {
-                            bgcolor:
-                              selectedSource === source.name
-                                ? theme.palette.action.selected
-                                : theme.palette.action.hover,
-                          },
-                        }}
-                        onClick={() => onSelectSource(source)}
-                      >
-                        <Typography variant="body1" color="text.primary" noWrap>
-                          {source.display_name || source.name}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          noWrap
-                          sx={{ pl: 1 }}
-                        >
-                          {source.description}
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
-                </Box>
-              </Collapse>
-            </>
-          )}
-        </Box>
-
-        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto", my: 1 }} />
-
-        {/* Downloads section */}
-        <Box sx={{ px: 2, pb: 2 }}>
+      <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
+        <Box sx={{ px: 2, pt: 2, pb: 2 }}>
           <SectionHeader
             icon={StorageIcon}
             title={t("hub:downloadedDatasets")}
-            count={downloads.length}
+            count={filteredDownloads.length}
             open={downloadsOpen}
             onToggle={() => setDownloadsOpen((v) => !v)}
           />
           <Collapse in={downloadsOpen} timeout="auto">
             <Box pl={2}>
-              {downloads.length === 0 ? (
+              {filteredDownloads.length === 0 ? (
                 <Typography
                   sx={{
                     color: "text.primary",
@@ -226,7 +135,7 @@ export default function HubLeftBar({
                   {t("common:noItemsAvailable", "No items available.")}
                 </Typography>
               ) : (
-                downloads.map((dl) => (
+                filteredDownloads.map((dl) => (
                   <Box
                     key={dl.id}
                     sx={{
