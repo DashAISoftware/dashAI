@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import {
   renameDatasetColumn,
   updateColumnEncoder,
+  exportDatasetCsvByPath,
 } from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
 
@@ -445,51 +446,31 @@ export default function DatasetTable({
   const handleExportFilteredRows = useCallback(async () => {
     if (rowCount === 0) return;
     try {
-      let rows;
-      if (allFilteredData) {
-        rows = allFilteredData;
-      } else {
-        const muiFormattedFilters = buildFilterModel();
-        const response = await fetchPage(
-          0,
-          rowCount,
-          muiFormattedFilters,
-          sorting,
-        );
-        rows = response?.rows ?? [];
-      }
-      if (rows.length === 0) return;
-
-      const headers = Object.keys(rows[0]).filter((k) => k !== "id");
-      const csvRows = [headers.join(",")];
-      for (const row of rows) {
-        csvRows.push(
-          headers
-            .map((h) => {
-              const val = row[h] ?? "";
-              const str = String(val);
-              return str.includes(",") ||
-                str.includes('"') ||
-                str.includes("\n")
-                ? `"${str.replace(/"/g, '""')}"`
-                : str;
-            })
-            .join(","),
-        );
-      }
-      const blob = new Blob([csvRows.join("\n")], {
-        type: "text/csv;charset=utf-8;",
-      });
+      const hasFilters = columnFilters.length > 0;
+      const currentFilterModel = hasFilters ? buildFilterModel() : undefined;
+      const currentSortModel = sorting.length > 0 ? sorting : undefined;
+      const blob = await exportDatasetCsvByPath(
+        datasetPath,
+        currentFilterModel,
+        currentSortModel,
+      );
+      const isZip =
+        blob.type === "application/zip" ||
+        blob.type === "application/octet-stream";
+      const ext = isZip ? "zip" : "csv";
+      const filename = hasFilters
+        ? `dataset_filtered.${ext}`
+        : `dataset.${ext}`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "dataset_filtered.csv";
+      link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error exporting filtered data:", error);
+      console.error("Error exporting data:", error);
     }
-  }, [rowCount, allFilteredData, buildFilterModel, sorting, fetchPage]);
+  }, [rowCount, datasetPath, buildFilterModel, columnFilters, sorting]);
 
   const table = useMaterialReactTable({
     columns,
