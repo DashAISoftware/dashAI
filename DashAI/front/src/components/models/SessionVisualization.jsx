@@ -3,14 +3,14 @@ import {
   Box,
   Typography,
   Stack,
-  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Divider,
   Button,
   ButtonGroup,
   ToggleButtonGroup,
   ToggleButton,
-  Collapse,
-  IconButton,
   Tooltip,
 } from "@mui/material";
 import {
@@ -18,7 +18,6 @@ import {
   TableChart,
   BarChart,
   ExpandMore,
-  ExpandLess,
 } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
@@ -157,12 +156,12 @@ export default function SessionVisualization() {
 
   const handleMouseMove = React.useCallback((e) => {
     if (isResizing.current) {
-      const container = document.querySelector("[data-session-viz]");
-      if (container) {
-        const containerRect = container.getBoundingClientRect();
-        const newHeight = e.clientY - containerRect.top;
+      const details = document.querySelector("[data-accordion-details]");
+      if (details) {
+        const detailsRect = details.getBoundingClientRect();
+        const newHeight = e.clientY - detailsRect.top;
         const minHeight = 150;
-        const maxHeight = containerRect.height * 0.8;
+        const maxHeight = window.innerHeight * 0.7;
         const clampedHeight = Math.max(
           minHeight,
           Math.min(maxHeight, newHeight),
@@ -223,166 +222,162 @@ export default function SessionVisualization() {
         }}
       >
         {/* Sticky Comparison Table */}
-        <Paper
+        <Accordion
           data-tour="model-comparison-panel"
+          expanded={!tableCollapsed}
+          onChange={() => setTableCollapsed((v) => !v)}
+          disableGutters
+          elevation={1}
           sx={{
-            height: tableCollapsed ? "auto" : `${tableHeight}px`,
             flexShrink: 0,
             borderBottom: "1px solid",
             borderColor: "divider",
-            p: 2,
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
+            borderRadius: "4px",
+            "&:before": { display: "none" },
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-              flexShrink: 0,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <AccordionSummary
+            expandIcon={
               <Tooltip
                 title={
                   tableCollapsed ? t("common:expand") : t("common:collapse")
                 }
               >
-                <IconButton
-                  size="small"
-                  onClick={() => setTableCollapsed((v) => !v)}
-                >
-                  {tableCollapsed ? <ExpandMore /> : <ExpandLess />}
-                </IconButton>
+                <ExpandMore />
               </Tooltip>
+            }
+            sx={{
+              "& .MuiAccordionSummary-content": { my: "8px", mr: 1 },
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
               <Typography variant="h6" color="text.primary">
                 {t("models:label.modelComparison")}
               </Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {/* Metric Split Selector — controls both table and graph views */}
-              {(hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
-                <ToggleButtonGroup
-                  value={metricSplit}
-                  exclusive
-                  onChange={(e, newValue) => {
-                    if (newValue !== null) setMetricSplit(newValue);
-                  }}
-                  size="small"
-                >
-                  {hasTrainMetrics && (
-                    <ToggleButton value="train">
-                      {t("common:train")}
-                    </ToggleButton>
-                  )}
-                  {hasValidationMetrics && (
-                    <ToggleButton value="validation">
-                      {t("common:validation")}
-                    </ToggleButton>
-                  )}
-                  {hasTestMetrics && (
-                    <ToggleButton value="test">{t("common:test")}</ToggleButton>
-                  )}
-                </ToggleButtonGroup>
-              )}
+              <Box
+                sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Metric Split Selector — controls both table and graph views */}
+                {(hasTrainMetrics ||
+                  hasValidationMetrics ||
+                  hasTestMetrics) && (
+                  <ToggleButtonGroup
+                    value={metricSplit}
+                    exclusive
+                    onChange={(e, newValue) => {
+                      if (newValue !== null) setMetricSplit(newValue);
+                    }}
+                    size="small"
+                  >
+                    {hasTrainMetrics && (
+                      <ToggleButton value="train">
+                        {t("common:train")}
+                      </ToggleButton>
+                    )}
+                    {hasValidationMetrics && (
+                      <ToggleButton value="validation">
+                        {t("common:validation")}
+                      </ToggleButton>
+                    )}
+                    {hasTestMetrics && (
+                      <ToggleButton value="test">
+                        {t("common:test")}
+                      </ToggleButton>
+                    )}
+                  </ToggleButtonGroup>
+                )}
 
-              {/* Toggle between Table and Graphs */}
-              <ButtonGroup size="small" variant="outlined">
-                <Button
-                  variant={showTable ? "contained" : "outlined"}
-                  onClick={() => handleToggleView(true)}
-                  startIcon={<TableChart />}
-                >
-                  {t("common:table")}
-                </Button>
-                <Button
-                  data-tour="graphs-button"
-                  variant={!showTable ? "contained" : "outlined"}
-                  onClick={() => handleToggleView(false)}
-                  startIcon={<BarChart />}
-                >
-                  {t("common:graphs")}
-                </Button>
-              </ButtonGroup>
+                {/* Toggle between Table and Graphs */}
+                <ButtonGroup size="small" variant="outlined">
+                  <Button
+                    variant={showTable ? "contained" : "outlined"}
+                    onClick={() => handleToggleView(true)}
+                    startIcon={<TableChart />}
+                  >
+                    {t("common:table")}
+                  </Button>
+                  <Button
+                    data-tour="graphs-button"
+                    variant={!showTable ? "contained" : "outlined"}
+                    onClick={() => handleToggleView(false)}
+                    startIcon={<BarChart />}
+                  >
+                    {t("common:graphs")}
+                  </Button>
+                </ButtonGroup>
 
-              {/* Run All Button */}
-              {runs.length > 0 &&
-                runs.some((r) => r.status === 0) && ( // Not Started
+                {/* Run All Button */}
+                {runs.length > 0 && runs.some((r) => r.status === 0) && (
                   <Button
                     variant="contained"
                     size="small"
                     startIcon={<PlayArrow />}
                     onClick={() => {
-                      const notStartedRuns = runs.filter((r) => r.status === 0); // Not Started
+                      const notStartedRuns = runs.filter((r) => r.status === 0);
                       notStartedRuns.forEach((run) => onTrain(run));
                     }}
                   >
                     {t("models:button.runAll")}
                   </Button>
                 )}
+              </Box>
             </Box>
-          </Box>
-          <Box
+          </AccordionSummary>
+
+          <AccordionDetails
+            data-accordion-details
             sx={{
-              flex: 1,
-              minHeight: 0,
+              p: 2,
+              pt: 0,
+              height: `${tableHeight}px`,
               overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
+              position: "relative",
             }}
           >
-            <Collapse
-              in={!tableCollapsed}
-              unmountOnExit
-              sx={{
-                flex: 1,
-                minHeight: 0,
-                "& .MuiCollapse-wrapper": { height: "100%" },
-                "& .MuiCollapse-wrapperInner": { height: "100%" },
-              }}
-            >
-              {runs.length === 0 ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {t("models:label.noRunsYet")}
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ height: "100%", overflow: "auto" }}>
-                  {showTable ? (
-                    <ModelComparisonTable
-                      runs={runs}
-                      session={session}
-                      onTrain={onTrain}
-                      onViewDetails={handleViewDetails}
-                      onDelete={onDeleteRun}
-                      onRowClick={handleRowClick}
-                      metricSplit={metricSplit}
-                    />
-                  ) : (
-                    <ResultsGraphs
-                      runs={runs}
-                      selectedSplit={metricSplit}
-                      onSplitChange={setMetricSplit}
-                    />
-                  )}
-                </Box>
-              )}
-            </Collapse>
-          </Box>
+            {runs.length === 0 ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {t("models:label.noRunsYet")}
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ height: "100%", overflow: "auto" }}>
+                {showTable ? (
+                  <ModelComparisonTable
+                    runs={runs}
+                    session={session}
+                    onTrain={onTrain}
+                    onViewDetails={handleViewDetails}
+                    onDelete={onDeleteRun}
+                    onRowClick={handleRowClick}
+                    metricSplit={metricSplit}
+                  />
+                ) : (
+                  <ResultsGraphs
+                    runs={runs}
+                    selectedSplit={metricSplit}
+                    onSplitChange={setMetricSplit}
+                  />
+                )}
+              </Box>
+            )}
 
-          {/* Resize Handle */}
-          {!tableCollapsed && (
+            {/* Resize Handle */}
             <Box
               onMouseDown={() => {
                 isResizing.current = true;
@@ -391,21 +386,19 @@ export default function SessionVisualization() {
               }}
               sx={{
                 position: "absolute",
-                bottom: -2,
+                bottom: 0,
                 left: 0,
                 right: 0,
                 height: "5px",
                 cursor: "row-resize",
                 bgcolor: "transparent",
                 transition: "background-color 0.2s ease",
-                "&:hover": {
-                  bgcolor: "primary.main",
-                },
+                "&:hover": { bgcolor: "primary.main" },
                 zIndex: 10,
               }}
             />
-          )}
-        </Paper>
+          </AccordionDetails>
+        </Accordion>
 
         <Divider sx={{ my: 1, mt: 1 }} />
 
