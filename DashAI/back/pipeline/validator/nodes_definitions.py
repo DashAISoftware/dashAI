@@ -7,7 +7,7 @@ class NodeDefinition(BaseModel):
     type: str
     name: str
     icon: str
-    requiresConfiguration: bool  # noqa: N815
+    requiresConfiguration: bool
     source: bool
     target: bool
     predecessors: List[str]
@@ -15,7 +15,9 @@ class NodeDefinition(BaseModel):
     description: str
     input: Optional[str] = None
     output: Optional[str] = None
-    configType: str  # noqa: N815
+    sourceHandles: int = 1
+    maxOutputs: Optional[int] = None
+    configType: str
 
 
 NODES: List[NodeDefinition] = [
@@ -32,6 +34,8 @@ NODES: List[NodeDefinition] = [
             "Loads a dataset stored in the system to be used in the pipeline."
         ),
         output="Dataset object",
+        sourceHandles=2,
+        maxOutputs=2,
         configType="custom",
     ),
     NodeDefinition(
@@ -65,6 +69,8 @@ NODES: List[NodeDefinition] = [
         ),
         input="Dataset object",
         output="Split dataset subsets",
+        sourceHandles=2,
+        maxOutputs=2,
         configType="custom",
     ),
     NodeDefinition(
@@ -82,6 +88,8 @@ NODES: List[NodeDefinition] = [
         ),
         input="Split dataset subsets",
         output="Trained model object",
+        sourceHandles=2,
+        maxOutputs=2,
         configType="custom",
     ),
     NodeDefinition(
