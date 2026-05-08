@@ -1,5 +1,6 @@
 """OpenML dataset source for DashAI."""
 
+import contextlib
 import io
 import logging
 import os
@@ -8,35 +9,15 @@ from typing import Any, Final
 import httpx
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataset_sources.base_dataset_source import BaseDatasetSource, DatasetEntry
+from DashAI.back.dataset_sources.base_dataset_source import (
+    BaseDatasetSource,
+    DatasetEntry,
+)
 
 log = logging.getLogger(__name__)
 
 _OPENML_API = "https://www.openml.org/api/v1/json"
-
-
-def _parse_quality(qualities: list[dict], name: str) -> int | None:
-    """Extract a numeric quality value by name from an OpenML quality list.
-
-    Parameters
-    ----------
-    qualities : list[dict]
-        List of ``{"name": str, "value": str}`` dicts from OpenML API.
-    name : str
-        Quality name to look up (e.g. ``"NumberOfInstances"``).
-
-    Returns
-    -------
-    int or None
-        Parsed integer value, or None if not found or not numeric.
-    """
-    for q in qualities:
-        if q.get("name") == name:
-            try:
-                return int(float(q["value"]))
-            except (ValueError, KeyError):
-                return None
-    return None
+_OPENML_ES = "https://www.openml.org/es/data/data/_search"
 
 
 def _fetch_openml_details(dataset_id: str) -> dict:
@@ -69,7 +50,7 @@ def _fetch_openml_details(dataset_id: str) -> dict:
 class OpenMLDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from OpenML.
 
-    Uses the OpenML public REST API — no authentication required.
+    Uses the OpenML Elasticsearch API — no authentication required.
     """
 
     DISPLAY_NAME: Final = MultilingualString(
@@ -82,7 +63,9 @@ class OpenMLDatasetSource(BaseDatasetSource):
     )
     COMPATIBLE_COMPONENTS: Final = ["CSVDataLoader"]
 
-    def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
+    def search(
+        self, query: str, limit: int = 20, offset: int = 0, **filters: Any
+    ) -> list[DatasetEntry]:
         """Return active OpenML datasets matching a name query.
 
         Parameters
@@ -99,35 +82,66 @@ class OpenMLDatasetSource(BaseDatasetSource):
         Returns
         -------
         list[DatasetEntry]
-            Matching datasets with descriptions and tags fetched in parallel.
+            Matching datasets, including descriptions from the ES response.
             Returns empty list on API error.
         """
         try:
-            resp = httpx.get(
-                f"{_OPENML_API}/data/list",
-                params={"data_name": query, "limit": limit, "offset": offset, "status": "active"},
+            must_clause: dict[str, Any] = (
+                {"multi_match": {"query": query, "fields": ["name^3", "description"]}}
+                if query
+                else {"match_all": {}}
+            )
+            body: dict[str, Any] = {
+                "from": offset,
+                "size": limit,
+                "query": {
+                    "bool": {
+                        "must": must_clause,
+                        "filter": [{"term": {"status": "active"}}],
+                        "should": [{"term": {"visibility": "public"}}],
+                        "minimum_should_match": 1,
+                    }
+                },
+                "_source": [
+                    "data_id",
+                    "name",
+                    "description",
+                    "qualities.NumberOfInstances",
+                    "tag",
+                    "status",
+                ],
+                "sort": {"runs": {"order": "desc"}},
+            }
+            resp = httpx.post(
+                _OPENML_ES,
+                params={"type": "data"},
+                json=body,
                 timeout=15,
             )
             if resp.status_code != 200:
-                log.warning("OpenML API returned %s", resp.status_code)
+                log.warning("OpenML ES API returned %s", resp.status_code)
                 return []
 
-            raw_items = resp.json().get("data", {}).get("dataset", [])
-            if not raw_items:
-                return []
-
+            hits = resp.json().get("hits", {}).get("hits", [])
             entries = []
-            for item in raw_items:
-                did = str(item.get("did", ""))
-                qualities = item.get("quality", [])
+            for hit in hits:
+                src = hit.get("_source", {})
+                did = str(src.get("data_id", ""))
+                tag_raw = src.get("tag", [])
+                tags = [tag_raw] if isinstance(tag_raw, str) else list(tag_raw or [])
+                row_count: int | None = None
+                qualities = src.get("qualities", {})
+                if qualities.get("NumberOfInstances") is not None:
+                    with contextlib.suppress(ValueError, TypeError):
+                        row_count = int(float(qualities["NumberOfInstances"]))
                 entries.append(
                     DatasetEntry(
                         id=did,
-                        name=item.get("name", ""),
-                        description="",
-                        tags=[],
+                        name=src.get("name", ""),
+                        description=src.get("description", "") or "",
+                        tags=tags,
                         size_bytes=None,
-                        row_count=_parse_quality(qualities, "NumberOfInstances"),
+                        row_count=row_count,
                         url=f"https://www.openml.org/d/{did}",
                         source=self.__class__.__name__,
                     )
@@ -138,7 +152,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             return []
 
     def get_info(self, dataset_id: str) -> "DatasetEntry | None":
-        """Return full metadata for a single OpenML dataset including description and tags.
+        """Return full metadata for a single OpenML dataset (description + tags).
 
         Parameters
         ----------
@@ -164,7 +178,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             source=self.__class__.__name__,
         )
 
-    def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "pd.DataFrame":
+    def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "Any":
         """Download and parse sample rows from an OpenML dataset ARFF file.
 
         Parameters
@@ -197,10 +211,10 @@ class OpenMLDatasetSource(BaseDatasetSource):
 
             arff_text = file_resp.content.decode("utf-8", errors="replace")
             data, meta = scipy_arff.loadarff(io.StringIO(arff_text))
-            df = pd.DataFrame(data)
-            for col in df.select_dtypes(include=["object"]).columns:
-                df[col] = df[col].str.decode("utf-8", errors="replace")
-            return df.head(n_rows)
+            result = pd.DataFrame(data)
+            for col in result.select_dtypes(include=["object"]).columns:
+                result[col] = result[col].str.decode("utf-8", errors="replace")
+            return result.head(n_rows)
         except Exception:
             log.exception("Error fetching OpenML preview for dataset %s", dataset_id)
             return pd.DataFrame()
@@ -232,12 +246,12 @@ class OpenMLDatasetSource(BaseDatasetSource):
 
         arff_text = file_resp.content.decode("utf-8", errors="replace")
         data, _ = scipy_arff.loadarff(io.StringIO(arff_text))
-        df = pd.DataFrame(data)
-        for col in df.select_dtypes(include=["object"]).columns:
-            df[col] = df[col].str.decode("utf-8", errors="replace")
+        result = pd.DataFrame(data)
+        for col in result.select_dtypes(include=["object"]).columns:
+            result[col] = result[col].str.decode("utf-8", errors="replace")
 
         out_path = os.path.join(temp_path, f"openml_{dataset_id}.csv")
-        df.to_csv(out_path, index=False)
+        result.to_csv(out_path, index=False)
         return (out_path, "CSVDataLoader")
 
     def get_download_url(self, dataset_id: str) -> str:

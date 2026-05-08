@@ -1,6 +1,17 @@
 """Tests for BaseDatasetSource and DatasetEntry."""
+
+from unittest.mock import MagicMock, patch
+
 import pytest
-from DashAI.back.dataset_sources.base_dataset_source import DatasetEntry, BaseDatasetSource
+
+from DashAI.back.dataset_sources.base_dataset_source import (
+    BaseDatasetSource,
+    DatasetEntry,
+)
+from DashAI.back.dataset_sources.huggingface_dataset_source import (
+    HuggingFaceDatasetSource,
+)
+from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
 
 
 class ConcreteSource(BaseDatasetSource):
@@ -23,6 +34,7 @@ class ConcreteSource(BaseDatasetSource):
 
     def fetch_preview(self, dataset_id, n_rows=100):
         import pandas as pd
+
         return pd.DataFrame({"col_a": [1, 2], "col_b": ["x", "y"]})
 
     def fetch_full(self, dataset_id, temp_path):
@@ -78,10 +90,11 @@ def test_concrete_source_search_returns_entries():
 
 def test_concrete_source_fetch_preview_returns_dataframe():
     import pandas as pd
+
     source = ConcreteSource()
-    df = source.fetch_preview("test/dataset", n_rows=2)
-    assert isinstance(df, pd.DataFrame)
-    assert list(df.columns) == ["col_a", "col_b"]
+    result = source.fetch_preview("test/dataset", n_rows=2)
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns) == ["col_a", "col_b"]
 
 
 def test_concrete_source_fetch_full_returns_path_and_dataloader():
@@ -99,14 +112,12 @@ def test_concrete_source_get_download_url():
 
 def test_incomplete_subclass_cannot_be_instantiated():
     from abc import ABC
+
     class Incomplete(BaseDatasetSource, ABC):
         pass
+
     with pytest.raises(TypeError):
         Incomplete()
-
-
-from unittest.mock import patch, MagicMock
-from DashAI.back.dataset_sources.huggingface_dataset_source import HuggingFaceDatasetSource
 
 
 def test_hf_source_has_correct_type():
@@ -159,7 +170,9 @@ def test_hf_fetch_preview_returns_dataframe():
     splits_response = MagicMock()
     splits_response.status_code = 200
     splits_response.json.return_value = {
-        "splits": [{"dataset": "stanfordnlp/imdb", "config": "plain_text", "split": "train"}]
+        "splits": [
+            {"dataset": "stanfordnlp/imdb", "config": "plain_text", "split": "train"}
+        ]
     }
 
     rows_response = MagicMock()
@@ -174,14 +187,11 @@ def test_hf_fetch_preview_returns_dataframe():
 
     with patch("httpx.get", side_effect=[splits_response, rows_response]):
         source = HuggingFaceDatasetSource()
-        df = source.fetch_preview("stanfordnlp/imdb", n_rows=2)
+        result = source.fetch_preview("stanfordnlp/imdb", n_rows=2)
 
-    assert isinstance(df, pd.DataFrame)
-    assert list(df.columns) == ["text", "label"]
-    assert len(df) == 2
-
-
-from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+    assert isinstance(result, pd.DataFrame)
+    assert list(result.columns) == ["text", "label"]
+    assert len(result) == 2
 
 
 def test_openml_source_has_correct_type():
@@ -189,21 +199,27 @@ def test_openml_source_has_correct_type():
 
 
 def test_openml_search_returns_dataset_entries():
-    mock_list = MagicMock()
-    mock_list.status_code = 200
-    mock_list.json.return_value = {
-        "data": {
-            "dataset": [
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "hits": {
+            "total": 1,
+            "hits": [
                 {
-                    "did": 61,
-                    "name": "iris",
-                    "file_id": 22044555,
-                    "quality": [{"name": "NumberOfInstances", "value": "150"}],
+                    "_id": "61",
+                    "_source": {
+                        "data_id": 61,
+                        "name": "iris",
+                        "description": "Iris flower dataset.",
+                        "qualities": {"NumberOfInstances": 150},
+                        "tag": ["study_14", "uci"],
+                    },
                 }
-            ]
+            ],
         }
     }
-    with patch("httpx.get", return_value=mock_list):
+
+    with patch("httpx.post", return_value=mock_resp):
         source = OpenMLDatasetSource()
         results = source.search("iris", limit=5)
 
@@ -211,17 +227,48 @@ def test_openml_search_returns_dataset_entries():
     assert results[0].id == "61"
     assert results[0].name == "iris"
     assert results[0].row_count == 150
-    assert results[0].description == ""
-    assert results[0].tags == []
+    assert results[0].description == "Iris flower dataset."
+    assert results[0].tags == ["study_14", "uci"]
     assert results[0].source == "OpenMLDatasetSource"
     assert results[0].url == "https://www.openml.org/d/61"
+
+
+def test_openml_search_empty_query_uses_match_all():
+    """Empty query should use match_all (not multi_match) in ES body."""
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"hits": {"total": 0, "hits": []}}
+
+    with patch("httpx.post", return_value=mock_resp) as mock_post:
+        source = OpenMLDatasetSource()
+        source.search("", limit=20, offset=0)
+
+    sent_body = mock_post.call_args[1]["json"]
+    must_clause = sent_body["query"]["bool"]["must"]
+    assert "match_all" in must_clause
+    assert "multi_match" not in must_clause
+
+
+def test_openml_search_uses_from_for_pagination():
+    """offset param maps to ES 'from' field for pagination."""
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"hits": {"total": 0, "hits": []}}
+
+    with patch("httpx.post", return_value=mock_resp) as mock_post:
+        source = OpenMLDatasetSource()
+        source.search("iris", limit=10, offset=20)
+
+    sent_body = mock_post.call_args[1]["json"]
+    assert sent_body["from"] == 20
+    assert sent_body["size"] == 10
 
 
 def test_openml_search_handles_http_error():
     mock_response = MagicMock()
     mock_response.status_code = 500
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("httpx.post", return_value=mock_response):
         source = OpenMLDatasetSource()
         results = source.search("iris")
 
@@ -240,7 +287,10 @@ def test_openml_fetch_preview_returns_dataframe():
     info_response = MagicMock()
     info_response.status_code = 200
     info_response.json.return_value = {
-        "data_set_description": {"file_id": "22044555", "url": "https://openml.org/data/v1/download/22044555/iris.arff"}
+        "data_set_description": {
+            "file_id": "22044555",
+            "url": "https://openml.org/data/v1/download/22044555/iris.arff",
+        }
     }
 
     arff_content = b"""@relation iris
@@ -256,7 +306,7 @@ def test_openml_fetch_preview_returns_dataframe():
 
     with patch("httpx.get", side_effect=[info_response, file_response]):
         source = OpenMLDatasetSource()
-        df = source.fetch_preview("61", n_rows=2)
+        result = source.fetch_preview("61", n_rows=2)
 
-    assert isinstance(df, pd.DataFrame)
-    assert "sepalLength" in df.columns
+    assert isinstance(result, pd.DataFrame)
+    assert "sepalLength" in result.columns
