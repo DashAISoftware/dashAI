@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,6 +25,7 @@ from DashAI.back.core.enums.status import (
     DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
+    HubDownloadStatus,
     PluginStatus,
     PredictionStatus,
     RunStatus,
@@ -716,3 +718,33 @@ class Explorer(Base):
             self.delivery_time = None
             self.start_time = None
             self.end_time = None
+
+
+class HubDownload(Base):
+    __tablename__ = "hub_download"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_name: Mapped[str] = mapped_column(String, nullable=False)
+    dataset_id: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    local_path: Mapped[str] = mapped_column(String, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(HubDownloadStatus),
+        nullable=False,
+        default=HubDownloadStatus.DOWNLOADING,
+    )
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_name",
+            "dataset_id",
+            name="uq_hub_download_source_dataset",
+        ),
+    )

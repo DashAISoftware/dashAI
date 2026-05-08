@@ -53,3 +53,9 @@ class PredictionStatus(Enum):
     STARTED = 2
     FINISHED = 3
     ERROR = 4
+
+
+class HubDownloadStatus(Enum):
+    DOWNLOADING = "downloading"
+    READY = "ready"
+    ERROR = "error"
