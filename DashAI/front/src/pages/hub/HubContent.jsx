@@ -201,7 +201,6 @@ export default function HubContent() {
               sourceName={
                 importDownload ? importDownload.source_name : sourceName
               }
-              compatibleComponents={selectedSource?.compatible_components ?? []}
               hubDownload={importDownload}
               step={importStep}
               onStepChange={setImportStep}

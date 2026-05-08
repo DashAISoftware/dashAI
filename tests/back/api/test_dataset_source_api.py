@@ -1,12 +1,16 @@
 """Tests for the dataset_source API endpoints."""
+
 import os
 from typing import Any, Dict
 
 import pytest
 from fastapi.testclient import TestClient
 
-from DashAI.back.dataset_sources.base_dataset_source import BaseDatasetSource, DatasetEntry
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+from DashAI.back.dataset_sources.base_dataset_source import (
+    BaseDatasetSource,
+    DatasetEntry,
+)
 from DashAI.back.dependencies.registry import ComponentRegistry
 
 
@@ -30,8 +34,8 @@ class MockDataLoader(BaseDataLoader):
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
-        df = pd.read_csv(filepath_or_buffer)
-        return to_dashai_dataset(df)
+        dataset_df = pd.read_csv(filepath_or_buffer)
+        return to_dashai_dataset(dataset_df)
 
 
 class MockDatasetSource(BaseDatasetSource):
@@ -54,11 +58,7 @@ class MockDatasetSource(BaseDatasetSource):
             )
         ]
 
-    def fetch_preview(self, dataset_id, n_rows=100):
-        import pandas as pd
-        return pd.DataFrame({"col_a": [1, 2, 3], "col_b": ["x", "y", "z"]})
-
-    def fetch_full(self, dataset_id, temp_path):
+    def download_dataset(self, dataset_id, temp_path):
         csv_path = os.path.join(temp_path, "mock.csv")
         with open(csv_path, "w") as f:
             f.write("col_a,col_b\n1,x\n2,y\n3,z\n")
@@ -75,7 +75,9 @@ class MockDatasetSource(BaseDatasetSource):
 @pytest.fixture(autouse=True, name="test_registry_hub")
 def setup_test_registry(client, monkeypatch):
     container = client.app.container
-    test_registry = ComponentRegistry(initial_components=[MockDatasetSource, MockDataLoader])
+    test_registry = ComponentRegistry(
+        initial_components=[MockDatasetSource, MockDataLoader]
+    )
     monkeypatch.setitem(container._services, "component_registry", test_registry)
     return test_registry
 
@@ -87,10 +89,13 @@ def test_list_sources(client: TestClient):
     assert len(data) == 1
     assert data[0]["name"] == "MockDatasetSource"
     assert data[0]["type"] == "DatasetSource"
+    assert "compatible_components" not in data[0]
 
 
 def test_search_returns_entries(client: TestClient):
-    response = client.get("/api/v1/dataset-source/MockDatasetSource/search?q=test&limit=5")
+    response = client.get(
+        "/api/v1/dataset-source/MockDatasetSource/search?q=test&limit=5"
+    )
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
@@ -110,7 +115,9 @@ def test_search_unknown_source(client: TestClient):
 
 
 def test_get_download_url(client: TestClient):
-    response = client.get("/api/v1/dataset-source/MockDatasetSource/mock%2Fdataset/download-url")
+    response = client.get(
+        "/api/v1/dataset-source/MockDatasetSource/mock%2Fdataset/download-url"
+    )
     assert response.status_code == 200
     assert response.json() == {"url": "https://mock.example.com/mock/dataset"}
 
@@ -120,9 +127,10 @@ def test_get_download_url_unknown_source(client: TestClient):
     assert response.status_code == 404
 
 
-def test_get_preview(client: TestClient):
-    response = client.get(
-        "/api/v1/dataset-source/MockDatasetSource/mock%2Fdataset/preview?n_rows=3"
+def test_post_preview_with_dataloader(client: TestClient):
+    response = client.post(
+        "/api/v1/dataset-source/MockDatasetSource/mock%2Fdataset/preview",
+        json={"dataloader": "MockDataLoader", "params": {}, "n_rows": 3},
     )
     assert response.status_code == 200
     data = response.json()

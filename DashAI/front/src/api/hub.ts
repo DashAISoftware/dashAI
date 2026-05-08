@@ -7,14 +7,6 @@ export interface DatasetSourceInfo {
   type: string;
   display_name: string;
   description: string;
-  compatible_components: string[];
-}
-
-export interface ComponentInfo {
-  name: string;
-  display_name: string;
-  description: string;
-  schema: Record<string, unknown>;
 }
 
 export interface DatasetEntry {
@@ -82,18 +74,20 @@ export const previewHubDataset = async (
   nRows = 100,
   dataloader?: string,
   params?: Record<string, unknown>,
+  hubDownloadId?: number,
+  selectedFile?: string,
 ): Promise<DatasetPreview> => {
   const encodedId = encodeURIComponent(datasetId);
-  const response =
-    dataloader || params
-      ? await api.post<DatasetPreview>(
-          `${hubEndpoint}/${sourceName}/${encodedId}/preview`,
-          { dataloader, params: params ?? {}, n_rows: nRows },
-        )
-      : await api.get<DatasetPreview>(
-          `${hubEndpoint}/${sourceName}/${encodedId}/preview`,
-          { params: { n_rows: nRows } },
-        );
+  const response = await api.post<DatasetPreview>(
+    `${hubEndpoint}/${sourceName}/${encodedId}/preview`,
+    {
+      dataloader,
+      params: params ?? {},
+      n_rows: nRows,
+      hub_download_id: hubDownloadId ?? null,
+      selected_file: selectedFile ?? null,
+    },
+  );
   return response.data;
 };
 
@@ -107,15 +101,6 @@ export const importHubDataset = async (
   const response = await api.post<{ job_id: string; dataset_id: number }>(
     `${hubEndpoint}/${sourceName}/${encodedId}/import`,
     { dataset_id: dashaiDatasetId, params },
-  );
-  return response.data;
-};
-
-export const getComponentInfo = async (
-  componentName: string,
-): Promise<ComponentInfo> => {
-  const response = await api.get<ComponentInfo>(
-    `/v1/component/${componentName}/`,
   );
   return response.data;
 };

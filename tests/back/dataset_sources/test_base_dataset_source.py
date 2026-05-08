@@ -32,12 +32,7 @@ class ConcreteSource(BaseDatasetSource):
             )
         ]
 
-    def fetch_preview(self, dataset_id, n_rows=100):
-        import pandas as pd
-
-        return pd.DataFrame({"col_a": [1, 2], "col_b": ["x", "y"]})
-
-    def fetch_full(self, dataset_id, temp_path):
+    def download_dataset(self, dataset_id, temp_path):
         return ("/tmp/file.csv", "CSVDataLoader")
 
     def get_download_url(self, dataset_id):
@@ -88,18 +83,9 @@ def test_concrete_source_search_returns_entries():
     assert results[0].id == "test/dataset"
 
 
-def test_concrete_source_fetch_preview_returns_dataframe():
-    import pandas as pd
-
+def test_concrete_source_download_dataset_returns_path_and_dataloader():
     source = ConcreteSource()
-    result = source.fetch_preview("test/dataset", n_rows=2)
-    assert isinstance(result, pd.DataFrame)
-    assert list(result.columns) == ["col_a", "col_b"]
-
-
-def test_concrete_source_fetch_full_returns_path_and_dataloader():
-    source = ConcreteSource()
-    path, dataloader_name = source.fetch_full("test/dataset", "/tmp")
+    path, dataloader_name = source.download_dataset("test/dataset", "/tmp")
     assert path == "/tmp/file.csv"
     assert dataloader_name == "CSVDataLoader"
 
@@ -162,36 +148,6 @@ def test_hf_get_download_url():
     source = HuggingFaceDatasetSource()
     url = source.get_download_url("owner/dataset")
     assert url == "https://huggingface.co/datasets/owner/dataset"
-
-
-def test_hf_fetch_preview_returns_dataframe():
-    import pandas as pd
-
-    splits_response = MagicMock()
-    splits_response.status_code = 200
-    splits_response.json.return_value = {
-        "splits": [
-            {"dataset": "stanfordnlp/imdb", "config": "plain_text", "split": "train"}
-        ]
-    }
-
-    rows_response = MagicMock()
-    rows_response.status_code = 200
-    rows_response.json.return_value = {
-        "features": [{"name": "text"}, {"name": "label"}],
-        "rows": [
-            {"row": {"text": "good movie", "label": 1}},
-            {"row": {"text": "bad movie", "label": 0}},
-        ],
-    }
-
-    with patch("httpx.get", side_effect=[splits_response, rows_response]):
-        source = HuggingFaceDatasetSource()
-        result = source.fetch_preview("stanfordnlp/imdb", n_rows=2)
-
-    assert isinstance(result, pd.DataFrame)
-    assert list(result.columns) == ["text", "label"]
-    assert len(result) == 2
 
 
 def test_openml_source_has_correct_type():
@@ -281,7 +237,7 @@ def test_openml_get_download_url():
     assert url == "https://www.openml.org/d/61"
 
 
-def test_openml_fetch_preview_returns_dataframe():
+def test_openml_download_dataset_returns_csv(tmp_path):
     import pandas as pd
 
     info_response = MagicMock()
@@ -303,10 +259,14 @@ def test_openml_fetch_preview_returns_dataframe():
     file_response = MagicMock()
     file_response.status_code = 200
     file_response.content = arff_content
+    file_response.raise_for_status = MagicMock()
+
+    info_response.raise_for_status = MagicMock()
 
     with patch("httpx.get", side_effect=[info_response, file_response]):
         source = OpenMLDatasetSource()
-        result = source.fetch_preview("61", n_rows=2)
+        csv_path, dataloader_name = source.download_dataset("61", str(tmp_path))
 
-    assert isinstance(result, pd.DataFrame)
+    assert dataloader_name == "CSVDataLoader"
+    result = pd.read_csv(csv_path)
     assert "sepalLength" in result.columns

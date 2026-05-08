@@ -1,6 +1,7 @@
 """Dataset source API endpoints."""
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List
 from urllib.parse import unquote
 
@@ -20,7 +21,7 @@ router = APIRouter()
 
 
 def _resolve_string(value: Any, default: str) -> str:
-    """Return the English text from a MultilingualString, or the value itself if plain str."""
+    """Return English text from MultilingualString, or the value if plain str."""
     if isinstance(value, MultilingualString):
         return value.en
     if isinstance(value, str):
@@ -80,7 +81,6 @@ async def list_sources(
             "type": "DatasetSource",
             "display_name": _resolve_string(info.get("display_name"), name),
             "description": _resolve_string(info.get("description"), ""),
-            "compatible_components": info["class"].COMPATIBLE_COMPONENTS,
         }
         for name, info in sources.items()
     ]
@@ -192,60 +192,6 @@ async def get_download_url(
     return {"url": url}
 
 
-@router.get("/{source_name}/{dataset_id:path}/preview")
-async def preview_dataset(
-    source_name: str,
-    dataset_id: str,
-    n_rows: int = Query(default=100, ge=1, le=500),
-    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-) -> Dict[str, Any]:
-    """Fetch a sample preview of a dataset with inferred DashAI column types.
-
-    Parameters
-    ----------
-    source_name : str
-        Registered DatasetSource class name.
-    dataset_id : str
-        Source-specific dataset identifier (URL-encoded).
-    n_rows : int
-        Number of sample rows (1-500).
-    registry : ComponentRegistry
-        Injected component registry.
-
-    Returns
-    -------
-    dict
-        ``{"sample": [...], "inferred_types": {...}, "preview_row_count": int}``
-        matching the format expected by the PreviewDataset frontend component.
-    """
-    source = _get_source(source_name, registry)
-    decoded_id = unquote(dataset_id)
-
-    try:
-        df = source.fetch_preview(decoded_id, n_rows=n_rows)
-    except Exception as exc:
-        log.exception("Error fetching preview for %s/%s", source_name, decoded_id)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to fetch preview from source: {exc}",
-        ) from exc
-
-    if df.empty:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Source returned no data for dataset '{decoded_id}'.",
-        )
-
-    inferred = infer_types(df, method="DashAIPtype")
-    sample = df.to_dict(orient="records")
-
-    return {
-        "sample": sample,
-        "inferred_types": inferred,
-        "preview_row_count": len(df),
-    }
-
-
 class PreviewRequest(BaseModel):
     """Request body for previewing a dataset with dataloader params.
 
@@ -257,11 +203,17 @@ class PreviewRequest(BaseModel):
         DataLoader parameters (e.g., separator for CSV).
     n_rows : int
         Number of rows to sample (1-500).
+    hub_download_id : int | None
+        If set, use this pre-downloaded local file instead of fetching from source.
+    selected_file : str | None
+        Relative filename inside the hub download directory.
     """
 
     dataloader: str | None = None
     params: Dict[str, Any] = {}
     n_rows: int = 100
+    hub_download_id: int | None = None
+    selected_file: str | None = None
 
 
 @router.post("/{source_name}/{dataset_id:path}/preview")
@@ -270,8 +222,12 @@ async def preview_dataset_with_params(
     dataset_id: str,
     body: PreviewRequest,
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory=Depends(lambda: di["session_factory"]),
 ) -> Dict[str, Any]:
     """Fetch a sample preview using a DataLoader and params.
+
+    If ``hub_download_id`` is provided the already-downloaded local file is
+    used directly — no re-download from the source occurs.
 
     Parameters
     ----------
@@ -280,9 +236,11 @@ async def preview_dataset_with_params(
     dataset_id : str
         Source-specific dataset identifier (URL-encoded).
     body : PreviewRequest
-        DataLoader name, params, and row count.
+        DataLoader name, params, row count, and optional hub_download_id.
     registry : ComponentRegistry
         Injected component registry.
+    session_factory
+        Injected DB session factory (used when hub_download_id is set).
 
     Returns
     -------
@@ -294,35 +252,73 @@ async def preview_dataset_with_params(
     source = _get_source(source_name, registry)
     decoded_id = unquote(dataset_id)
     n_rows = max(1, min(body.n_rows, 500))
+    temp_dir_obj = None
 
     try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            file_path, default_dataloader = source.fetch_full(decoded_id, temp_dir)
-            dataloader_name = body.dataloader or default_dataloader
-            dl_registry = registry._registry.get("DataLoader", {})
-            if dataloader_name not in dl_registry:
+        if body.hub_download_id is not None:
+            from DashAI.back.core.enums.status import HubDownloadStatus
+            from DashAI.back.dependencies.database.models import HubDownload
+
+            with session_factory() as db:
+                hub_row = db.get(HubDownload, body.hub_download_id)
+            if hub_row is None or hub_row.status != HubDownloadStatus.READY:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"DataLoader '{dataloader_name}' not found.",
+                    detail="Hub download not ready or not found.",
                 )
-
-            dataloader = dl_registry[dataloader_name]["class"]()
-            params = body.params or {}
-
-            if hasattr(dataloader, "load_preview"):
-                df = dataloader.load_preview(
-                    filepath_or_buffer=file_path,
-                    params=params,
-                    n_rows=n_rows,
-                )
+            if body.selected_file:
+                file_path = str(Path(hub_row.local_path) / body.selected_file)
             else:
-                dataset = dataloader.load_data(
-                    filepath_or_buffer=file_path,
-                    temp_path=temp_dir,
-                    params=params,
-                    n_sample=n_rows,
+                files = sorted(
+                    str(p) for p in Path(hub_row.local_path).rglob("*") if p.is_file()
                 )
-                df = dataset.to_pandas().head(n_rows)
+                if not files:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="No files found in hub download directory.",
+                    )
+                file_path = files[0]
+            work_dir = str(Path(file_path).parent)
+            dataloader_name = body.dataloader
+            if not dataloader_name:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="dataloader is required when using hub_download_id.",
+                )
+        else:
+            temp_dir_obj = tempfile.TemporaryDirectory()
+            temp_dir = temp_dir_obj.name
+            file_path, default_dataloader = source.download_dataset(
+                decoded_id, temp_dir
+            )
+            dataloader_name = body.dataloader or default_dataloader
+            work_dir = temp_dir
+
+        dl_registry = registry._registry.get("DataLoader", {})
+        if dataloader_name not in dl_registry:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"DataLoader '{dataloader_name}' not found.",
+            )
+
+        dataloader = dl_registry[dataloader_name]["class"]()
+        params = body.params or {}
+
+        try:
+            preview_df = dataloader.load_preview(
+                filepath_or_buffer=file_path,
+                params=params,
+                n_rows=n_rows,
+            )
+        except NotImplementedError:
+            dataset = dataloader.load_data(
+                filepath_or_buffer=file_path,
+                temp_path=work_dir,
+                params=params,
+                n_sample=n_rows,
+            )
+            preview_df = dataset.to_pandas().head(n_rows)
+
     except HTTPException:
         raise
     except Exception as exc:
@@ -331,20 +327,23 @@ async def preview_dataset_with_params(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Failed to fetch preview from source: {exc}",
         ) from exc
+    finally:
+        if temp_dir_obj is not None:
+            temp_dir_obj.cleanup()
 
-    if df.empty:
+    if preview_df.empty:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Source returned no data for dataset '{decoded_id}'.",
         )
 
-    inferred = infer_types(df, method="DashAIPtype")
-    sample = df.to_dict(orient="records")
+    inferred = infer_types(preview_df, method="DashAIPtype")
+    sample = preview_df.to_dict(orient="records")
 
     return {
         "sample": sample,
         "inferred_types": inferred,
-        "preview_row_count": len(df),
+        "preview_row_count": len(preview_df),
     }
 
 

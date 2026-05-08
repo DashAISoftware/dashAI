@@ -2,13 +2,10 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Final
+from typing import Any, Final
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.utils import MultilingualString
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 
 @dataclass
@@ -56,10 +53,11 @@ class BaseDatasetSource(ConfigObject, ABC):
     TYPE: Final[str] = "DatasetSource"
     DISPLAY_NAME: Final = MultilingualString(en="", es="")
     DESCRIPTION: Final = MultilingualString(en="", es="")
-    COMPATIBLE_COMPONENTS: Final[list[str]] = []
 
     @abstractmethod
-    def search(self, query: str, limit: int = 20, offset: int = 0, **filters: Any) -> list[DatasetEntry]:
+    def search(
+        self, query: str, limit: int = 20, offset: int = 0, **filters: Any
+    ) -> list[DatasetEntry]:
         """Return datasets matching a query string.
 
         Parameters
@@ -100,26 +98,8 @@ class BaseDatasetSource(ConfigObject, ABC):
         return None
 
     @abstractmethod
-    def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "pd.DataFrame":
-        """Download a sample of rows without fetching the full dataset.
-
-        Parameters
-        ----------
-        dataset_id : str
-            Source-specific dataset identifier.
-        n_rows : int, optional
-            Number of sample rows to retrieve, by default 100.
-
-        Returns
-        -------
-        pd.DataFrame
-            Sample rows as a pandas DataFrame.
-        """
-        ...
-
-    @abstractmethod
-    def fetch_full(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
-        """Download the full dataset to a local temp directory.
+    def download_dataset(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
+        """Download the full dataset to a local directory.
 
         Parameters
         ----------

@@ -212,23 +212,13 @@ class DatasetJob(BaseJob):
                             hub_temp = tempfile.mkdtemp()
                             temp_dir = hub_temp  # ensures finally block cleans it up
                             hub_work_dir = hub_temp
-                            file_path_hub, source_dataloader_name = source.fetch_full(
-                                dataset_source_id, hub_temp
+                            file_path_hub, source_dataloader_name = (
+                                source.download_dataset(dataset_source_id, hub_temp)
                             )
 
                         selected_dataloader = (
                             params.get("dataloader") or source_dataloader_name
                         )
-                        compatible = getattr(source, "COMPATIBLE_COMPONENTS", [])
-                        if (
-                            params.get("dataloader")
-                            and compatible
-                            and selected_dataloader not in compatible
-                        ):
-                            raise JobError(
-                                "Selected DataLoader is not compatible"
-                                " with this source."
-                            )
                         _reg = component_registry._registry
                         dl_registry = _reg.get("DataLoader", {})
                         if selected_dataloader not in dl_registry:

@@ -19,11 +19,11 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { createDataset } from "../../api/datasets";
 import {
-  getComponentInfo,
   importHubDataset,
   listHubDownloadFiles,
   previewHubDataset,
 } from "../../api/hub";
+import { getComponents } from "../../api/component";
 import ComponentSelector from "../custom/ComponentSelector";
 import PreviewDataset from "../notebooks/datasetCreation/PreviewDataset";
 
@@ -36,7 +36,6 @@ import PreviewDataset from "../notebooks/datasetCreation/PreviewDataset";
 export default function HubImportPanel({
   dataset,
   sourceName,
-  compatibleComponents = [],
   hubDownload = null,
   step,
   onStepChange,
@@ -79,6 +78,26 @@ export default function HubImportPanel({
   const [importing, setImporting] = useState(false);
   const previewDebounceRef = useRef(null);
 
+  // Load all DataLoaders once on mount
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingDataloaders(true);
+    getComponents({ selectTypes: ["DataLoader"] })
+      .then((infos) => {
+        if (!isMounted) return;
+        setDataloaders(infos);
+      })
+      .catch(() => {
+        if (isMounted) setDataloaders([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingDataloaders(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Reset when dataset/source changes
   useEffect(() => {
     if (!dataset || !sourceName) return;
@@ -86,7 +105,6 @@ export default function HubImportPanel({
     setName(dataset.name || "");
     setLocalSelectedLoader(null);
     onSelectedLoaderChange?.(null);
-    setDataloaders([]);
     setPreviewData(null);
     setPreviewError(false);
     setColumnTypes({});
@@ -117,38 +135,6 @@ export default function HubImportPanel({
     };
   }, [hasFileStep, stepValue, hubDownload?.id]);
 
-  // Load dataloader metadata
-  useEffect(() => {
-    if (!compatibleComponents.length) {
-      setDataloaders([]);
-      setLocalSelectedLoader(null);
-      onSelectedLoaderChange?.(null);
-      return;
-    }
-
-    let isMounted = true;
-    setLoadingDataloaders(true);
-    Promise.all(compatibleComponents.map(getComponentInfo))
-      .then((infos) => {
-        if (!isMounted) return;
-        setDataloaders(infos);
-        if (infos.length === 1) {
-          setLocalSelectedLoader(infos[0]);
-          onSelectedLoaderChange?.(infos[0]);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setDataloaders([]);
-      })
-      .finally(() => {
-        if (isMounted) setLoadingDataloaders(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [compatibleComponents]);
-
   // Preview
   useEffect(() => {
     if (stepValue !== previewStep || !dataset || !sourceName) return;
@@ -172,6 +158,8 @@ export default function HubImportPanel({
         effectiveRows,
         selectedValue?.name,
         formValues,
+        hubDownload?.id,
+        selectedFile ?? undefined,
       )
         .then((data) => {
           if (!isMounted) return;
@@ -196,6 +184,8 @@ export default function HubImportPanel({
     dataset?.id,
     sourceName,
     selectedValue?.name,
+    hubDownload?.id,
+    selectedFile,
     JSON.stringify(formValues || {}),
   ]);
 
@@ -365,7 +355,7 @@ export default function HubImportPanel({
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                 <CircularProgress />
               </Box>
-            ) : compatibleComponents.length === 0 ? (
+            ) : dataloaders.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 {t("hub:noCompatibleDataloaders")}
               </Typography>

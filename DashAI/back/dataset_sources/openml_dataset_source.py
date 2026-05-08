@@ -61,7 +61,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
         en="Browse and import public datasets from OpenML.",
         es="Navega e importa datasets públicos desde OpenML.",
     )
-    COMPATIBLE_COMPONENTS: Final = ["CSVDataLoader"]
 
     def search(
         self, query: str, limit: int = 20, offset: int = 0, **filters: Any
@@ -178,48 +177,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             source=self.__class__.__name__,
         )
 
-    def fetch_preview(self, dataset_id: str, n_rows: int = 100) -> "Any":
-        """Download and parse sample rows from an OpenML dataset ARFF file.
-
-        Parameters
-        ----------
-        dataset_id : str
-            OpenML dataset ID (integer as string, e.g. ``"61"``).
-        n_rows : int, optional
-            Maximum rows to return, by default 100.
-
-        Returns
-        -------
-        pd.DataFrame
-            Sample rows. Returns empty DataFrame on error.
-        """
-        import pandas as pd
-        from scipy.io import arff as scipy_arff
-
-        try:
-            info_resp = httpx.get(
-                f"{_OPENML_API}/data/{dataset_id}",
-                timeout=15,
-            )
-            if info_resp.status_code != 200:
-                return pd.DataFrame()
-
-            arff_url = info_resp.json()["data_set_description"]["url"]
-            file_resp = httpx.get(arff_url, timeout=60, follow_redirects=True)
-            if file_resp.status_code != 200:
-                return pd.DataFrame()
-
-            arff_text = file_resp.content.decode("utf-8", errors="replace")
-            data, meta = scipy_arff.loadarff(io.StringIO(arff_text))
-            result = pd.DataFrame(data)
-            for col in result.select_dtypes(include=["object"]).columns:
-                result[col] = result[col].str.decode("utf-8", errors="replace")
-            return result.head(n_rows)
-        except Exception:
-            log.exception("Error fetching OpenML preview for dataset %s", dataset_id)
-            return pd.DataFrame()
-
-    def fetch_full(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
+    def download_dataset(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
         """Download the full OpenML dataset as CSV.
 
         Parameters

@@ -75,7 +75,7 @@ class HubDownloadJob(BaseJob):
 
             download_dir.mkdir(parents=True, exist_ok=True)
             source = sources[source_name]["class"]()
-            file_path, _ = source.fetch_full(dataset_source_id, str(download_dir))
+            file_path, _ = source.download_dataset(dataset_source_id, str(download_dir))
             log.debug("Hub dataset '%s' downloaded to %s", dataset_source_id, file_path)
 
             with session_factory() as db:
