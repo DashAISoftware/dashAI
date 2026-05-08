@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-export function useThreePanelLayout() {
+export function useThreePanelLayout(options = {}) {
+  const { initialLeftWidth = 20, initialRightWidth = 20 } = options;
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
-  const [leftBarWidth, setLeftBarWidth] = useState(20);
-  const [rightBarWidth, setRightBarWidth] = useState(20);
+  const [leftBarWidth, setLeftBarWidth] = useState(initialLeftWidth);
+  const [rightBarWidth, setRightBarWidth] = useState(initialRightWidth);
 
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);
