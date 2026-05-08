@@ -32,8 +32,11 @@ export default function FormExplorerSection({
     },
   });
 
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    setExplorersAndConverters,
+    setLastAddedItemId,
+  } = useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -54,6 +57,7 @@ export default function FormExplorerSection({
       );
       const data = { ...created, type: "explorer" };
       setExplorersAndConverters((prev) => [...prev, data]);
+      setLastAddedItemId(data.id);
 
       const response = await enqueueExplorerJob(created.id);
 

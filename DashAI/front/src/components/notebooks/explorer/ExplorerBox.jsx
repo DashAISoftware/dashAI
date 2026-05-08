@@ -9,7 +9,7 @@ import {
   CircularProgress,
   Button,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
@@ -23,6 +23,7 @@ export default function ExplorerBox({
   explorer,
   handleExplorerDeleteClick,
   onStatusChange,
+  isHighlighted = false,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -88,6 +89,20 @@ export default function ExplorerBox({
         bgcolor: theme.palette.background.box,
         borderRadius: 2,
         height: "100%",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes explorerHighlight": {
+          "0%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "65%": {
+            boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.15)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "explorerHighlight 4s ease-out forwards"
+          : "none",
       }}
       className="explorer-box"
     >

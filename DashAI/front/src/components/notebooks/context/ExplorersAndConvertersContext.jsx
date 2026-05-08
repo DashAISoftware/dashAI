@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 
 const ExplorersAndConvertersContext = createContext();
 
@@ -7,10 +7,15 @@ export const useExplorersAndConverters = () =>
 
 export const ExplorersAndConvertersProvider = ({ children }) => {
   const [explorersAndConverters, setExplorersAndConverters] = useState([]);
+  const [lastAddedItemId, setLastAddedItemId] = useState(null);
+  const clearLastAddedItemId = useCallback(() => setLastAddedItemId(null), []);
 
   const value = {
     explorersAndConverters,
     setExplorersAndConverters,
+    lastAddedItemId,
+    setLastAddedItemId,
+    clearLastAddedItemId,
   };
 
   return (
