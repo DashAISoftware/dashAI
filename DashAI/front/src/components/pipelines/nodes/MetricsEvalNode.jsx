@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   Box,
   Button,
+  Chip,
   DialogContent,
   Typography,
   TextField,
@@ -73,37 +74,76 @@ const MetricsEvalNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   };
 
   return (
-    <DialogContent>
+    <DialogContent
+      sx={{
+        width: { xs: "100%", md: 760 },
+        maxWidth: "100%",
+      }}
+    >
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-            Metric Evaluation
-          </Typography>
+          <Grid container spacing={1.5} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                Metric Evaluation
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                label="Metrics"
+                select
+                fullWidth
+                value={metrics}
+                onChange={(e) => setMetrics(e.target.value)}
+                margin="normal"
+                disabled={!task}
+                slotProps={{
+                  select: {
+                    multiple: true,
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          maxHeight: 420,
+                          minWidth: 560,
+                        },
+                      },
+                    },
+                    renderValue: (selected) => (
+                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                        {selected.map((metricName) => (
+                          <Chip key={metricName} label={metricName} size="small" />
+                        ))}
+                      </Box>
+                    ),
+                  },
+                }}
+                sx={{
+                  minWidth: { xs: "100%", md: 560 },
+                  "& .MuiInputBase-root": {
+                    minHeight: 58,
+                  },
+                  "& .MuiSelect-select": {
+                    minHeight: "56px",
+                    display: "flex",
+                    alignItems: "center",
+                  },
+                }}
+              >
+                {availableMetrics.map((metric) => (
+                  <MenuItem key={metric.name} value={metric.name}>
+                    {metric.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
+
           {!task && (
             <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
               ⚠️ Connect a Task &amp; Model node first so compatible metrics can
               be listed.
             </Typography>
           )}
-        </Grid>
-
-        <Grid item xs={12}>
-          <TextField
-            label="Metrics"
-            select
-            fullWidth
-            value={metrics}
-            onChange={(e) => setMetrics(e.target.value)}
-            margin="normal"
-            disabled={!task}
-            slotProps={{ select: { multiple: true } }}
-          >
-            {availableMetrics.map((metric) => (
-              <MenuItem key={metric.name} value={metric.name}>
-                {metric.name}
-              </MenuItem>
-            ))}
-          </TextField>
         </Grid>
       </Grid>
 

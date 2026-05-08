@@ -253,7 +253,12 @@ const TaskAndModelNode = ({
 
   return (
     <>
-      <DialogContent>
+      <DialogContent
+        sx={{
+          width: { xs: "100%", md: 760 },
+          maxWidth: "100%",
+        }}
+      >
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -261,7 +266,6 @@ const TaskAndModelNode = ({
             </Typography>
           </Grid>
 
-          {/* Warnings when no compatible tasks */}
           {validTasks.length === 0 &&
             Object.keys(validationErrors).length > 0 && (
               <Grid item xs={12}>
@@ -283,37 +287,73 @@ const TaskAndModelNode = ({
               </Grid>
             )}
 
-          {/* Task selector */}
           <Grid item xs={12}>
-            <TextField
-              label="Task"
-              select
-              fullWidth
-              value={task}
-              onChange={(e) => {
-                setTask(e.target.value);
-                setModel("");
-                setModelParams({});
-              }}
-              margin="normal"
-              disabled={validTasks.length === 0}
-            >
-              {availableTasks.map((taskObj) => (
-                <MenuItem
-                  key={taskObj.name}
-                  value={taskObj.name}
-                  disabled={!validTasks.includes(taskObj.name)}
+            <Grid container spacing={1.5} alignItems="center">
+              <Grid item xs={11}>
+                <TextField
+                  label="Task"
+                  select
+                  fullWidth
+                  value={task}
+                  onChange={(e) => {
+                    setTask(e.target.value);
+                    setModel("");
+                    setModelParams({});
+                  }}
+                  margin="normal"
+                  disabled={validTasks.length === 0}
+                  slotProps={{
+                    select: {
+                      MenuProps: {
+                        PaperProps: {
+                          sx: {
+                            maxHeight: 420,
+                            minWidth: 560,
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  sx={{
+                    minWidth: { xs: "100%", md: 560 },
+                    "& .MuiInputBase-root": {
+                      minHeight: 58,
+                    },
+                    "& .MuiSelect-select": {
+                      whiteSpace: "normal",
+                      minHeight: "1.4375em !important",
+                      display: "flex",
+                      alignItems: "center",
+                    },
+                  }}
                 >
-                  {taskObj.name}
-                </MenuItem>
-              ))}
-            </TextField>
+                  {availableTasks.map((taskObj) => (
+                    <MenuItem
+                      key={taskObj.name}
+                      value={taskObj.name}
+                      disabled={!validTasks.includes(taskObj.name)}
+                    >
+                      {taskObj.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={1}>
+                <IconButton
+                  onClick={() => setOpenSettings(true)}
+                  disabled={!model}
+                  aria-label="model settings"
+                  sx={{ mt: "8px", ml: { xs: 0, md: 0.5 } }}
+                >
+                  <SettingsIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
           </Grid>
 
-          {/* Model selector + settings */}
           <Grid item xs={12}>
-            <Grid container spacing={1} alignItems="center">
-              <Grid item xs>
+            <Grid container spacing={1.5} alignItems="center">
+              <Grid item xs={11}>
                 <TextField
                   label="Model"
                   select
@@ -322,6 +362,30 @@ const TaskAndModelNode = ({
                   onChange={(e) => setModel(e.target.value)}
                   margin="normal"
                   disabled={!task}
+                  slotProps={{
+                    select: {
+                      MenuProps: {
+                        PaperProps: {
+                          sx: {
+                            maxHeight: 420,
+                            minWidth: 560,
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  sx={{
+                    minWidth: { xs: "100%", md: 560 },
+                    "& .MuiInputBase-root": {
+                      minHeight: 58,
+                    },
+                    "& .MuiSelect-select": {
+                      whiteSpace: "normal",
+                      minHeight: "1.4375em !important",
+                      display: "flex",
+                      alignItems: "center",
+                    },
+                  }}
                 >
                   {availableModels.map((m) => (
                     <MenuItem key={m.name} value={m.name}>
@@ -330,16 +394,7 @@ const TaskAndModelNode = ({
                   ))}
                 </TextField>
               </Grid>
-              <Grid item>
-                <IconButton
-                  onClick={() => setOpenSettings(true)}
-                  disabled={!model}
-                  aria-label="model settings"
-                  sx={{ mt: "8px" }}
-                >
-                  <SettingsIcon />
-                </IconButton>
-              </Grid>
+              <Grid item xs={1} />
             </Grid>
           </Grid>
         </Grid>
