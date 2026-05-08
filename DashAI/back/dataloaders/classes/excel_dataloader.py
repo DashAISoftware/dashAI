@@ -27,21 +27,6 @@ class ExcelDataloaderSchema(BaseSchema):
     leaving the sheet field empty selects the first sheet.
     """
 
-    name: schema_field(
-        string_field(),
-        "",
-        description=MultilingualString(
-            en=(
-                "Custom name to register your dataset. If no name is specified, "
-                "the name of the uploaded file will be used."
-            ),
-            es=(
-                "Nombre personalizado para registrar su dataset. Si no se especifica "
-                "un nombre, se usará el nombre del archivo subido."
-            ),
-        ),
-        alias=MultilingualString(en="Name", es="Nombre"),
-    )  # type: ignore
     sheet: schema_field(
         union_type(int_field(ge=0), string_field()),
         placeholder=0,

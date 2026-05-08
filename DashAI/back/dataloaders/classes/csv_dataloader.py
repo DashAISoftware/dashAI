@@ -30,21 +30,6 @@ class CSVDataloaderSchema(BaseSchema):
     ``pandas.read_csv``.
     """
 
-    name: schema_field(
-        string_field(),
-        "",
-        description=MultilingualString(
-            en=(
-                "Custom name to register your dataset. If no name is specified, "
-                "the name of the uploaded file will be used."
-            ),
-            es=(
-                "Nombre personalizado para registrar su dataset. Si no se especifica "
-                "un nombre, se usará el nombre del archivo subido."
-            ),
-        ),
-        alias=MultilingualString(en="Name", es="Nombre"),
-    )  # type: ignore
     separator: schema_field(
         enum_field([",", ";", "blank space", "tab"]),
         ",",

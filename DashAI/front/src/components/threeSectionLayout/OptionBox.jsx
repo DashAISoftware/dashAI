@@ -94,8 +94,8 @@ export default function OptionBox({
 
       {/* Title */}
       <Typography
+        variant="h5"
         sx={{
-          ...theme.typography.cardTitle,
           color: theme.palette.text.primary,
           mb: "5px",
           width: "100%",
@@ -113,8 +113,8 @@ export default function OptionBox({
       >
         <Typography
           ref={descRef}
+          variant="body1"
           sx={{
-            fontSize: "15px",
             fontWeight: 300,
             color: theme.palette.text.secondary,
             lineHeight: 1.65,
@@ -161,10 +161,11 @@ export default function OptionBox({
             </Box>
           ))}
         </Box>
-        <Box
+        <Typography
+          component="span"
+          variant="h2"
           className="card-arrow"
           sx={{
-            fontSize: "18px",
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
@@ -172,7 +173,7 @@ export default function OptionBox({
           }}
         >
           →
-        </Box>
+        </Typography>
       </Box>
     </ButtonBase>
   );

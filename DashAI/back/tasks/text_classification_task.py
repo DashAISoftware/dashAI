@@ -22,6 +22,25 @@ class TextClassificationTask(ClassificationTask):
     a predicted class label for each sample.
     """
 
+    SCORING_PROFILES = {
+        "text_balanced": {
+            "description": "Balanced",
+            "weights": {"Accuracy": 0.3, "F1": 0.4, "ROCAUC": 0.3},
+        },
+        "text_detectPositives": {
+            "description": "Detect Positives",
+            "weights": {"Recall": 0.6, "F1": 0.3, "Precision": 0.1},
+        },
+        "text_avoidFalseAlarms": {
+            "description": "Avoid False Alarms",
+            "weights": {"Precision": 0.6, "F1": 0.3, "Recall": 0.1},
+        },
+        "text_probabilityQuality": {
+            "description": "Probability Quality",
+            "weights": {"ROCAUC": 0.5, "LogLoss": 0.5},
+        },
+    }
+
     metadata: dict = {
         "inputs_types": [Text],
         "outputs_types": [Categorical],
@@ -31,13 +50,12 @@ class TextClassificationTask(ClassificationTask):
 
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Assign predefined labels to text inputs using NLP models. "
-            "Common uses: sentiment analysis, spam detection, intent recognition."
+            "Classify text into predefined categories. "
+            "E.g.: sentiment, spam, intent detection."
         ),
         es=(
-            "Asigna etiquetas predefinidas a textos mediante modelos de PLN. "
-            "Usos comunes: análisis de sentimientos, detección de spam, "
-            "reconocimiento de intenciones."
+            "Clasifica textos en categorías predefinidas. "
+            "Ej.: sentimiento, spam, intención."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(

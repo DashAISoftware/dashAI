@@ -86,4 +86,8 @@ class LogLoss(ClassificationMetric):
         from sklearn.metrics import log_loss
 
         true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
-        return log_loss(true_labels, probs_pred_labels)
+        # Pass all expected class indices so log_loss works even when a split
+        # happens to contain only one class (e.g. small validation sets).
+        n_classes = probs_pred_labels.shape[1]
+        labels = list(range(n_classes))
+        return log_loss(true_labels, probs_pred_labels, labels=labels)

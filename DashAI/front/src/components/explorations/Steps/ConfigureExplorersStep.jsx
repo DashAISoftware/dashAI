@@ -37,8 +37,8 @@ const renderOption = (props, option, _, ownerState) => {
       title={
         <Typography
           component="span"
-          variant="inherit"
-          sx={{ whiteSpace: "pre-line", fontSize: "0.9rem" }}
+          variant="body1"
+          sx={{ whiteSpace: "pre-line" }}
         >
           {option.tooltip}
         </Typography>

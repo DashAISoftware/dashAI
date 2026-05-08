@@ -14,6 +14,8 @@ export default function useSchema({ modelName = null } = {}) {
   const { t } = useTranslation();
 
   useEffect(() => {
+    setModel(null);
+
     const getModel = async () => {
       try {
         setLoading(true);

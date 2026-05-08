@@ -52,18 +52,18 @@ Cada tarea impone requisitos de tipo específicos. Para Clasificación Tabular, 
 
 Define cómo DashAI divide el dataset en subconjuntos de entrenamiento, validación y prueba. Hay tres opciones disponibles:
 
-| Opción                               | Descripción                                                                                                                                    |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Use predefined splits**            | Usa divisiones train/validación/test ya definidas en el archivo del dataset. Solo disponible si el dataset fue cargado con estructura pre-dividida. |
-| **Random split by proportion**       | Asigna filas aleatoriamente a cada subconjunto según las proporciones que especifiques. El valor por defecto es Train: 0.6, Validation: 0.2, Test: 0.2. |
-| **Manual split by row indices**      | Especifica manualmente los índices de fila de inicio y fin para cada subconjunto.                                                              |
+| Opción                          | Descripción                                                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use predefined splits**       | Usa divisiones train/validación/test ya definidas en el archivo del dataset. Solo disponible si el dataset fue cargado con estructura pre-dividida.     |
+| **Random split by proportion**  | Asigna filas aleatoriamente a cada subconjunto según las proporciones que especifiques. El valor por defecto es Train: 0.6, Validation: 0.2, Test: 0.2. |
+| **Manual split by row indices** | Especifica manualmente los índices de fila de inicio y fin para cada subconjunto.                                                                       |
 
 Al usar **Random split**, hay tres opciones adicionales disponibles:
 
-| Opción       | Descripción                                                                                                                               |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Shuffle**  | Mezcla aleatoriamente las filas antes de dividir. Recomendado para evitar sesgo de orden en los datos. Habilitado por defecto.             |
-| **Stratify** | Asegura que cada división preserve las mismas proporciones de clases que el dataset completo. Útil para datasets desbalanceados. |
+| Opción       | Descripción                                                                                                                                                            |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Shuffle**  | Mezcla aleatoriamente las filas antes de dividir. Recomendado para evitar sesgo de orden en los datos. Habilitado por defecto.                                         |
+| **Stratify** | Asegura que cada división preserve las mismas proporciones de clases que el dataset completo. Útil para datasets desbalanceados.                                       |
 | **Seed**     | Una semilla aleatoria fija para reproducibilidad. El valor por defecto es `42`. Establece un valor específico para asegurar que siempre se produzca la misma división. |
 
 Haz clic en **CREATE SESSION** para finalizar la configuración. La sesión se abre inmediatamente.
@@ -120,12 +120,12 @@ Una tabla resumen que muestra todos los modelos en la sesión con columnas:
 
 Cada modelo tiene una tarjeta expandible que muestra su nombre, algoritmo, insignia de estado actual y botones de acción:
 
-| Botón            | Descripción                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| **EDIT**         | Reabre el modal de configuración para cambiar el nombre del modelo o los hiperparámetros.     |
-| **TRAIN**        | Inicia el entrenamiento de este modelo. Cambia a **RE-TRAIN** después de la primera ejecución. |
-| **Insignia de estado** | Muestra el estado actual: **Not Started**, **Finalizado** o **Error**.                  |
-| 🗑               | Elimina el modelo de la sesión.                                                               |
+| Botón                  | Descripción                                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| **EDIT**               | Reabre el modal de configuración para cambiar el nombre del modelo o los hiperparámetros.      |
+| **TRAIN**              | Inicia el entrenamiento de este modelo. Cambia a **RE-TRAIN** después de la primera ejecución. |
+| **Insignia de estado** | Muestra el estado actual: **Not Started**, **Finalizado** o **Error**.                         |
+| 🗑                     | Elimina el modelo de la sesión.                                                                |
 
 **Para entrenar un modelo individual:** haz clic en **TRAIN** en su tarjeta.
 
@@ -151,11 +151,11 @@ Las métricas solo están disponibles después de que el entrenamiento está com
 
 ### EXPLAINABILITY
 
-Muestra los explicadores globales y locales adjuntos a este modelo. Consulta la página [Explicabilidad](./explainability) para más detalles.
+Muestra los explicadores globales y locales adjuntos a este modelo. Consulta la página [Explicabilidad](/learn/tutorials/Models/explainability) para más detalles.
 
 ### PREDICTIONS
 
-Muestra las predicciones de dataset y las predicciones manuales generadas desde este modelo. Consulta la página [Predicciones](./predictions) para más detalles.
+Muestra las predicciones de dataset y las predicciones manuales generadas desde este modelo. Consulta la página [Predicciones](/learn/tutorials/Models/predictions) para más detalles.
 
 ### HYPERPARAMETERS
 
@@ -172,10 +172,10 @@ Muestra los valores exactos de hiperparámetros usados en la última ejecución 
 
 ## Solución de Problemas
 
-| Síntoma                                           | Causa probable                                        | Solución                                                                            |
-| ------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| El banner de compatibilidad muestra una advertencia | Los tipos de columnas no coinciden con los requisitos de la tarea | Revisa los tipos de columnas en el Explorador de Datasets y vuelve a cargar si es necesario |
-| El botón NEXT no está activo en la configuración de sesión | Los campos requeridos están vacíos           | Asegúrate de que se seleccionó un dataset y se ingresó un nombre de sesión          |
-| El modelo muestra insignia **Error** después del entrenamiento | Valores de hiperparámetros inválidos o problema con los datos | Haz clic en **EDIT** para revisar los parámetros, o revisa la Job Queue para detalles del error |
-| No hay métricas disponibles después del entrenamiento | Modelo entrenado con datos incompatibles           | Revisa la selección de columnas de entrada/salida y vuelve a entrenar                |
-| RUN ALL no es visible                             | No se han añadido modelos todavía                     | Añade al menos un modelo antes de usar RUN ALL                                      |
+| Síntoma                                                        | Causa probable                                                    | Solución                                                                                        |
+| -------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| El banner de compatibilidad muestra una advertencia            | Los tipos de columnas no coinciden con los requisitos de la tarea | Revisa los tipos de columnas en el Explorador de Datasets y vuelve a cargar si es necesario     |
+| El botón NEXT no está activo en la configuración de sesión     | Los campos requeridos están vacíos                                | Asegúrate de que se seleccionó un dataset y se ingresó un nombre de sesión                      |
+| El modelo muestra insignia **Error** después del entrenamiento | Valores de hiperparámetros inválidos o problema con los datos     | Haz clic en **EDIT** para revisar los parámetros, o revisa la Job Queue para detalles del error |
+| No hay métricas disponibles después del entrenamiento          | Modelo entrenado con datos incompatibles                          | Revisa la selección de columnas de entrada/salida y vuelve a entrenar                           |
+| RUN ALL no es visible                                          | No se han añadido modelos todavía                                 | Añade al menos un modelo antes de usar RUN ALL                                                  |

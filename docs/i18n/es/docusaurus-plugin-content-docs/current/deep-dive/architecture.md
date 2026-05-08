@@ -31,13 +31,13 @@ La inyección de dependencias es gestionada por **Kink**. El contenedor DI (`bac
 
 ## Lecturas Adicionales
 
-| Tema                                                                | Página                                              |
-| ------------------------------------------------------------------- | --------------------------------------------------- |
-| Estructura de la API REST, mapa de rutas, inyección de dependencias | [API](./api)                                        |
-| Tipos de componentes, registro y objetos configurables              | [Componentes](./components)                         |
-| Esquema SQLite, tablas ORM y almacenamiento de datos                | [Base de Datos](./database)                         |
-| Cola de trabajos Huey y tipos de trabajos                           | [Sistema de Trabajos](./job-system)                 |
-| Sesiones de Notebook, exploradores y converters                     | [Notebook](./notebook)                              |
-| Recorridos completos de entrenamiento y exploración                 | [Ejemplos de Flujo de Trabajo](./workflow-examples) |
-| Tipos semánticos de columnas e inferencia                           | [Tipos Semánticos](./semantic-types)                |
-| Primitivo central de datos, splits y ciclo de vida del dato         | [DashAIDataset](./dashai-dataset)                   |
+| Tema                                                                | Página                                                       |
+| ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Estructura de la API REST, mapa de rutas, inyección de dependencias | [API](/deep-dive/api)                                        |
+| Tipos de componentes, registro y objetos configurables              | [Componentes](/deep-dive/components)                         |
+| Esquema SQLite, tablas ORM y almacenamiento de datos                | [Base de Datos](/deep-dive/database)                         |
+| Cola de trabajos Huey y tipos de trabajos                           | [Sistema de Trabajos](/deep-dive/job-system)                 |
+| Sesiones de Notebook, exploradores y converters                     | [Notebook](/deep-dive/notebook)                              |
+| Recorridos completos de entrenamiento y exploración                 | [Ejemplos de Flujo de Trabajo](/deep-dive/workflow-examples) |
+| Tipos semánticos de columnas e inferencia                           | [Tipos Semánticos](/deep-dive/semantic-types)                |
+| Primitivo central de datos, splits y ciclo de vida del dato         | [DashAIDataset](/deep-dive/dashai-dataset)                   |

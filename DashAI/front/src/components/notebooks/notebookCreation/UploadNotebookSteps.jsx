@@ -1,12 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
-import { Typography, TextField, Box } from "@mui/material";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Typography, TextField, Box, Button } from "@mui/material";
 import { useFormik } from "formik";
-import CustomLayout from "../../custom/CustomLayout";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
-import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
@@ -27,17 +24,15 @@ export default function UploadNotebookSteps({
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
 
-  const { defaultName } = useMemo(() => {
-    if (!selectedDataset) {
-      return { defaultName: "" };
-    }
+  const defaultName = useMemo(() => {
+    const maxId = existingNotebooks.reduce(
+      (max, nb) => Math.max(max, nb.id ?? 0),
+      0,
+    );
+    return `Notebook_${maxId + 1}`;
+  }, [existingNotebooks]);
 
-    return generateSequentialName({
-      base: `Notebook_${selectedDataset.name}`,
-      items: existingNotebooks,
-      filter: (notebook) => notebook.dataset_id === selectedDataset.id,
-    });
-  }, [selectedDataset, existingNotebooks]);
+  const lastAutoFilledRef = useRef(null);
 
   const formik = useFormik({
     initialValues: {
@@ -79,117 +74,109 @@ export default function UploadNotebookSteps({
   });
 
   useEffect(() => {
-    if (selectedDataset && defaultName && !formik.values.name.trim()) {
-      formik.setValues({
-        name: defaultName,
-        description: formik.values.description,
-      });
-    }
-  }, [
-    selectedDataset,
-    defaultName,
-    formik.values.name,
-    formik.values.description,
-  ]);
-
-  const getNameError = () => {
-    if (!selectedDataset) {
-      return null;
-    }
-
+    if (!defaultName) return;
     const currentName = formik.values.name.trim();
-    if (!currentName) {
-      return t("common:nameRequired");
+    if (!currentName || currentName === lastAutoFilledRef.current) {
+      formik.setFieldValue("name", defaultName);
+      lastAutoFilledRef.current = defaultName;
     }
-    return null;
-  };
+  }, [defaultName]);
 
-  const nameError = getNameError();
+  const nameError = formik.values.name.trim() ? null : t("common:nameRequired");
+  const isValid = selectedDataset && !nameError;
 
   return (
-    <CustomLayout
-      title={t("datasets:label.createNewNotebook")}
-      subtitle={""}
-      padding={0}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
     >
-      <NoteBox
-        className="notebook-note-box"
-        data-tour="notebook-note-box"
-        message={t("datasets:label.notebookCreationNote")}
-      />
-      <Typography
-        variant="h6"
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" component="h1">
+          {t("datasets:label.createNewNotebook")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t("datasets:label.createNewNotebookDescription")}
+        </Typography>
+      </Box>
+
+      <Box
         sx={{
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-          mb: 2,
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          pt: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
         }}
       >
-        {t("datasets:label.selectDatasetForNotebook")}
-      </Typography>
-      <DatasetAutocomplete
-        datasets={datasets}
-        selectedDataset={selectedDataset}
-        setSelectedDataset={setSelectedDataset}
-      />
-      <Typography
-        variant="h6"
-        sx={{
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-          my: 2,
-        }}
-      >
-        {t("datasets:label.nameYourNotebook")}
-      </Typography>
-      {/* Notebook name */}
-      <TextField
-        fullWidth
-        label={t("datasets:label.notebookName")}
-        name="name"
-        value={formik.values.name}
-        onChange={formik.handleChange}
-        error={Boolean(selectedDataset && nameError)}
-        helperText={selectedDataset ? nameError : ""}
-        sx={{ mb: 2 }}
-        disabled={!selectedDataset}
-        placeholder={
-          !selectedDataset
-            ? t("datasets:label.selectDatasetFirst")
-            : t("datasets:label.notebookName")
-        }
-        slotProps={{
-          inputLabel: { shrink: true },
-        }}
-      />
-      {/* Notebook description */}
-      <TextField
-        fullWidth
-        label={t("datasets:label.notebookDescription")}
-        name="description"
-        value={formik.values.description}
-        onChange={formik.handleChange}
-        error={Boolean(formik.errors.description)}
-        helperText={formik.errors.description}
-        sx={{ mb: 2 }}
-      />
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-        <FormSchemaButtonGroup
-          onCancel={backHome}
-          onFormSubmit={formik.handleSubmit}
-          formik={{
-            errors: {
-              ...(nameError ? { name: nameError } : {}),
-              ...(selectedDataset
-                ? {}
-                : { dataset: t("datasets:error.datasetRequired") }),
-            },
-          }}
-          saveButtonText={t("datasets:button.createNotebook")}
-          backButtonText={t("common:back")}
-          dataTour="create-notebook-button"
+        <NoteBox
+          className="notebook-note-box"
+          data-tour="notebook-note-box"
+          message={t("datasets:label.notebookCreationNote")}
+        />
+
+        <TextField
+          fullWidth
+          label={t("datasets:label.notebookName")}
+          name="name"
+          value={formik.values.name}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={Boolean(formik.touched.name && nameError)}
+          helperText={formik.touched.name ? nameError : ""}
+        />
+
+        <TextField
+          fullWidth
+          multiline
+          minRows={3}
+          label={t("datasets:label.notebookDescription")}
+          name="description"
+          value={formik.values.description}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={Boolean(
+            formik.touched.description && formik.errors.description,
+          )}
+          helperText={formik.touched.description && formik.errors.description}
+        />
+
+        <DatasetAutocomplete
+          datasets={datasets}
+          selectedDataset={selectedDataset}
+          setSelectedDataset={setSelectedDataset}
         />
       </Box>
-    </CustomLayout>
+
+      <Box
+        sx={{
+          mt: 2,
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        <Button variant="outlined" onClick={backHome}>
+          {t("common:back")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={formik.handleSubmit}
+          disabled={!isValid}
+          data-tour="create-notebook-button"
+        >
+          {t("datasets:button.createNotebook")}
+        </Button>
+      </Box>
+    </Box>
   );
 }

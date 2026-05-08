@@ -81,7 +81,7 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/*
+        run: twine upload --skip-existing dist/*
 
   # ============================================================
   # 3. Build Windows Executable
@@ -145,8 +145,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-cpu.txt
-          pip install pyinstaller
-          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+          pip install pyinstaller pywebview
           brew install create-dmg
 
       - name: Build ARM64 App Bundle
@@ -198,8 +197,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-cpu.txt
-          pip install pyinstaller
-          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+          pip install pyinstaller pywebview
           brew install create-dmg
 
       - name: Build x86_64 App Bundle
@@ -271,6 +269,14 @@ jobs:
           name: DashAI-dmg-x86_64
           path: artifacts/macos-x86_64
 
+      - name: Stage release files with OS/arch tags
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          mkdir -p release
+          cp "artifacts/windows/DashAI-Installer.exe"         "release/DashAI-${V}-x64-windows.exe"
+          cp "artifacts/macos-arm64/DashAI-macos-arm64.dmg"   "release/DashAI-${V}-arm-osx.dmg"
+          cp "artifacts/macos-x86_64/DashAI-macos-x86_64.dmg" "release/DashAI-${V}-x64-osx.dmg"
+
       - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -279,6 +285,6 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            artifacts/windows/DashAI-Installer.exe
-            artifacts/macos-arm64/DashAI-macos-arm64.dmg
-            artifacts/macos-x86_64/DashAI-macos-x86_64.dmg
+            release/DashAI-${{ steps.version.outputs.version }}-x64-windows.exe
+            release/DashAI-${{ steps.version.outputs.version }}-arm-osx.dmg
+            release/DashAI-${{ steps.version.outputs.version }}-x64-osx.dmg

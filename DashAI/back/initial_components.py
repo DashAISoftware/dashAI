@@ -122,21 +122,46 @@ from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
+
+# Models
+from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
+from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
+from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
+from DashAI.back.models.hugging_face.beto_transformer import BetoTransformer
 from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Transformer
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
+from DashAI.back.models.hugging_face.electra_transformer import ElectraTransformer
 from DashAI.back.models.hugging_face.llama_model import LlamaModel
+from DashAI.back.models.hugging_face.m2m100_transformer import M2M100Transformer
+from DashAI.back.models.hugging_face.minilm_transformer import MiniLMTransformer
 from DashAI.back.models.hugging_face.mistral_model import MistralModel
 from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
+from DashAI.back.models.hugging_face.multilingual_bert_transformer import (
+    MultilingualBertTransformer,
+)
 from DashAI.back.models.hugging_face.nllb_transformer import NllbTransformer
+from DashAI.back.models.hugging_face.opus_mt_en_de_transformer import (
+    OpusMtEnDeTransformer,
+)
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_en_fr_transformer import (
+    OpusMtEnFrTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_en_pt_transformer import (
+    OpusMtEnPtTransformer,
 )
 from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
     OpusMtEsENTransformer,
 )
+from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
+    OpusMtFrEnTransformer,
+)
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.hugging_face.roberta_transformer import RobertaTransformer
 from DashAI.back.models.hugging_face.sd15_depth_controlnet_model import (
     SD15DepthControlNetModel,
 )
@@ -163,27 +188,53 @@ from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
 from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
     StableDiffusionXLModel,
 )
+from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
 from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
-
-# Models
+from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
+    XlmRobertaTransformer,
+)
+from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
+from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
+from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
+from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
+    BayesianRidgeRegression,
+)
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
+from DashAI.back.models.scikit_learn.decision_tree_regression import (
+    DecisionTreeRegression,
+)
 from DashAI.back.models.scikit_learn.dummy_classifier import DummyClassifier
+from DashAI.back.models.scikit_learn.elastic_net_regression import ElasticNetRegression
+from DashAI.back.models.scikit_learn.extra_trees_classifier import ExtraTreesClassifier
+from DashAI.back.models.scikit_learn.extra_trees_regression import ExtraTreesRegression
+from DashAI.back.models.scikit_learn.gaussian_nb import GaussianNB
+from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
+    GradientBoostingClassifier,
+)
 from DashAI.back.models.scikit_learn.gradient_boosting_regression import (
     GradientBoostingR,
 )
 from DashAI.back.models.scikit_learn.hist_gradient_boosting_classifier import (
     HistGradientBoostingClassifier,
 )
+from DashAI.back.models.scikit_learn.hist_gradient_boosting_regression import (
+    HistGradientBoostingRegression,
+)
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
+from DashAI.back.models.scikit_learn.k_neighbors_regression import KNeighborsRegression
+from DashAI.back.models.scikit_learn.lasso_regression import LassoRegression
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
+from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
 from DashAI.back.models.scikit_learn.logistic_regression import LogisticRegression
+from DashAI.back.models.scikit_learn.mlp_classifier import MLPClassifier
 from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
@@ -192,7 +243,12 @@ from DashAI.back.models.scikit_learn.random_forest_regression import (
     RandomForestRegression,
 )
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
+from DashAI.back.models.scikit_learn.sgd_classifier import SGDClassifier
 from DashAI.back.models.scikit_learn.svc import SVC
+from DashAI.back.models.scikit_learn.svr import SVR
+from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
+    TfIdfLogRegTextClassificationModel,
+)
 
 # Optimizers
 from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
@@ -244,42 +300,76 @@ def get_initial_components():
         ControlNetTask,
         ImageClassificationTask,
         # Models
-        SVC,
+        AdaBoostClassifier,
+        AlbertTransformer,
+        AdaBoostRegression,
+        BaggingClassifier,
+        BagOfWordsTextClassificationModel,
+        BertTransformer,
+        BertinTransformer,
+        BetoTransformer,
+        BayesianRidgeRegression,
+        DebertaV3Transformer,
         DecisionTreeClassifier,
+        DecisionTreeRegression,
+        DistilBertTransformer,
         DummyClassifier,
+        ElasticNetRegression,
+        ElectraTransformer,
+        ExtraTreesClassifier,
+        ExtraTreesRegression,
+        GaussianNB,
+        GradientBoostingClassifier,
         GradientBoostingR,
         HistGradientBoostingClassifier,
+        HistGradientBoostingRegression,
         KNeighborsClassifier,
-        QwenModel,
+        KNeighborsRegression,
+        LassoRegression,
+        LinearRegression,
+        LinearSVCClassifier,
+        LinearSVR,
         LlamaModel,
+        LogisticRegression,
+        M2M100Transformer,
+        MiniLMTransformer,
         MistralModel,
         MixtralModel,
+        MultilingualBertTransformer,
+        MLPClassifier,
+        MLPRegression,
+        ModernBertTransformer,
+        NllbTransformer,
+        OpusMtEnDeTransformer,
+        OpusMtEnESTransformer,
+        OpusMtEnFrTransformer,
+        OpusMtEnPtTransformer,
+        OpusMtEsENTransformer,
+        OpusMtFrEnTransformer,
+        PixArtSigmaModel,
+        QwenModel,
+        RandomForestClassifier,
+        RobertaTransformer,
+        RandomForestRegression,
+        RidgeRegression,
+        SD15DepthControlNetModel,
+        SD15HEDControlNetModel,
+        SD15OpenPoseControlNetModel,
+        SDXLCannyControlNetModel,
+        SDXLTurboModel,
+        SGDClassifier,
         SmolLMModel,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
         StableDiffusionXLModel,
-        SDXLTurboModel,
-        PixArtSigmaModel,
-        TongyiZImageModel,
         StableDiffusionXLV1ControlNet,
-        SD15DepthControlNetModel,
-        SD15OpenPoseControlNetModel,
-        SD15HEDControlNetModel,
-        SDXLCannyControlNetModel,
-        LogisticRegression,
-        MLPRegression,
-        RandomForestClassifier,
-        RandomForestRegression,
-        DistilBertTransformer,
-        ModernBertTransformer,
-        DebertaV3Transformer,
-        OpusMtEnESTransformer,
-        OpusMtEsENTransformer,
-        NllbTransformer,
-        BagOfWordsTextClassificationModel,
-        RidgeRegression,
-        LinearSVR,
-        LinearRegression,
+        SVC,
+        SVR,
+        T5SmallTransformer,
+        TfIdfLogRegTextClassificationModel,
+        TongyiZImageModel,
+        XlmRobertaTransformer,
+        XlnetTransformer,
         MLPImageClassifier,
         # Dataloaders
         CSVDataLoader,

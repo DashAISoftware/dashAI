@@ -270,11 +270,10 @@ export default function PreviewDatasetTable({
             ) : (
               <Tooltip title={t("common:renameColumn")} arrow>
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   onDoubleClick={() => handleStartEdit(field)}
                   sx={{
                     fontWeight: 600,
-                    fontSize: "0.875rem",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     "&:hover": {

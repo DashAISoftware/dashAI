@@ -44,15 +44,15 @@ La exportación completa de la pipeline (una "receta" portátil que captura toda
 :::
 
 :::info ¿Qué es un Notebook?
-Un Notebook en DashAI es una sesión de trabajo con una copia mutable de un dataset. Agrupa Exploradores (visualizaciones) y Converters (transformaciones) aplicados a esa copia. El dataset original nunca se modifica. Consulta [Diseño del Sistema → Notebook](./notebook) para más detalles.
+Un Notebook en DashAI es una sesión de trabajo con una copia mutable de un dataset. Agrupa Exploradores (visualizaciones) y Converters (transformaciones) aplicados a esa copia. El dataset original nunca se modifica. Consulta [Diseño del Sistema → Notebook](/deep-dive/notebook) para más detalles.
 :::
 
 ## Detalles del Almacenamiento de Datos
 
-| Artefacto             | Ubicación de almacenamiento                                                                          |
-| --------------------- | ---------------------------------------------------------------------------------------------------- |
-| Datasets    | Archivos Apache Arrow IPC en `~/.DashAI/`                                                            |
-| Modelos entrenados    | Archivos pickle/joblib en `~/.DashAI/runs/{run_id}/`                                                 |
-| Gráficos de optimización | Objetos Plotly serializados junto a la ejecución                                                  |
-| Métricas              | Tabla `Metric` en `db.sqlite`                                                                        |
+| Artefacto                 | Ubicación de almacenamiento                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Datasets                  | Archivos Apache Arrow IPC en `~/.DashAI/`                                                            |
+| Modelos entrenados        | Archivos pickle/joblib en `~/.DashAI/runs/{run_id}/`                                                 |
+| Gráficos de optimización  | Objetos Plotly serializados junto a la ejecución                                                     |
+| Métricas                  | Tabla `Metric` en `db.sqlite`                                                                        |
 | Resultados de exploración | Imágenes PNG generadas por Exploradores dentro de un Notebook, referenciadas por la tabla `Explorer` |

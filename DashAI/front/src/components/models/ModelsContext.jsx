@@ -76,6 +76,7 @@ export function ModelsProvider({ children }) {
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
+  const [sessionRightContent, setSessionRightContent] = useState(null);
 
   const selectModel = useCallback((model) => {
     setSelectedModel(model);
@@ -152,6 +153,8 @@ export function ModelsProvider({ children }) {
     setDatasetInfo,
     datasetTab,
     setDatasetTab,
+    sessionRightContent,
+    setSessionRightContent,
   };
 
   return (
