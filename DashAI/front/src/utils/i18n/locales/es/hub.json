@@ -48,5 +48,7 @@
   "statusError": "Error",
   "stepFileTitle": "Seleccionar Archivo",
   "stepFileSubtitle": "Elige el archivo a importar del dataset descargado.",
-  "noFilesFound": "No se encontraron archivos en esta descarga."
+  "noFilesFound": "No se encontraron archivos en esta descarga.",
+  "sources": "Fuentes",
+  "fromSource": "De {{source}}"
 }

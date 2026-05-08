@@ -1,4 +1,5 @@
 import api from "./api";
+import type { HubDownload } from "./hub";
 
 export const isQueueEmpty = async (): Promise<boolean> => {
   const response = await api.get<{ is_empty: boolean }>("/v1/job/is_empty");
@@ -232,6 +233,19 @@ export const enqueuePipelineJob = async (
     headers: {
       "Content-Type": "multipart/form-data",
     },
+  });
+  return response.data;
+};
+
+export const enqueueHubDownloadJob = async (
+  source_name: string,
+  dataset_id: string,
+  name: string,
+): Promise<HubDownload> => {
+  const response = await api.post<HubDownload>("/v1/hub-download/", {
+    source_name,
+    dataset_id,
+    name,
   });
   return response.data;
 };

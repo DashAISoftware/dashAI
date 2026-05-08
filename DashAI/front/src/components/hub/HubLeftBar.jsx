@@ -2,20 +2,81 @@ import { useEffect, useState } from "react";
 import {
   Box,
   CircularProgress,
+  Collapse,
   Divider,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemSecondaryAction,
-  ListItemText,
   Tooltip,
   Typography,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import DeleteIcon from "@mui/icons-material/Delete";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import StorageIcon from "@mui/icons-material/Storage";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getDatasetSources } from "../../api/hub";
+import Footer from "../threeSectionLayout/Footer";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+
+function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
+  const theme = useTheme();
+  return (
+    <Box
+      display="flex"
+      alignItems="center"
+      sx={{
+        cursor: "pointer",
+        py: 0.5,
+        px: 1,
+        borderRadius: 1,
+        "&:hover": { bgcolor: theme.palette.ui?.hover ?? theme.palette.action.hover },
+      }}
+      onClick={onToggle}
+    >
+      <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
+      <Typography
+        variant="h5"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          flex: 1,
+        }}
+        color="text.primary"
+      >
+        {title}
+      </Typography>
+      <Typography
+        variant="body2"
+        component="div"
+        sx={{
+          mr: 1,
+          bgcolor: theme.palette.ui?.scrollbar ?? theme.palette.divider,
+          color: theme.palette.text.primary,
+          borderRadius: "50%",
+          width: 20,
+          height: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {count}
+      </Typography>
+      {open ? (
+        <KeyboardArrowDownIcon
+          sx={{ fontSize: 20, color: theme.palette.primary.main }}
+        />
+      ) : (
+        <KeyboardArrowRightIcon
+          sx={{ fontSize: 20, color: theme.palette.primary.main }}
+        />
+      )}
+    </Box>
+  );
+}
 
 /**
  * Left sidebar for the Hub module.
@@ -33,10 +94,12 @@ export default function HubLeftBar({
   onDeleteDownload,
   onImportDownload,
 }) {
-  const { t } = useTranslation(["hub"]);
+  const { t } = useTranslation(["hub", "common"]);
   const theme = useTheme();
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [downloadsOpen, setDownloadsOpen] = useState(true);
 
   useEffect(() => {
     getDatasetSources()
@@ -46,125 +109,191 @@ export default function HubLeftBar({
   }, []);
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "background.box",
-        borderRight: `1px solid ${theme.palette.divider}`,
-        overflowY: "auto",
-      }}
-    >
-      <Box
-        sx={{
-          px: 2,
-          py: 1.5,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          flexShrink: 0,
-        }}
-      >
-        <Typography variant="subtitle2" color="text.secondary">
+    <SideBar>
+      <Box sx={{ px: 2, py: 1.5, flexShrink: 0 }}>
+        <Typography variant="body1" color="textSecondary">
           {t("hub:title")}
         </Typography>
       </Box>
 
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", pt: 4 }}>
-          <CircularProgress size={24} />
-        </Box>
-      ) : (
-        <List disablePadding>
-          {sources.map((source) => (
-            <ListItemButton
-              key={source.name}
-              selected={selectedSource === source.name}
-              onClick={() => onSelectSource(source)}
-              sx={{
-                "&.Mui-selected": {
-                  bgcolor: "action.selected",
-                  borderLeft: `3px solid ${theme.palette.primary.main}`,
-                },
-                "&.Mui-selected:hover": { bgcolor: "action.selected" },
-              }}
-            >
-              <ListItemText
-                primary={source.display_name || source.name}
-                secondary={source.description}
-                secondaryTypographyProps={{
-                  noWrap: true,
-                  variant: "caption",
-                }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      )}
+      <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
-      {downloads.length > 0 && (
-        <>
-          <Divider />
-          <Box
-            sx={{
-              px: 2,
-              py: 1,
-              flexShrink: 0,
-            }}
-          >
-            <Typography variant="subtitle2" color="text.secondary">
-              {t("hub:downloadedDatasets")}
-            </Typography>
-          </Box>
-          <List disablePadding>
-            {downloads.map((dl) => (
-              <ListItemButton key={dl.id} disableRipple sx={{ pr: 9 }}>
-                <ListItemText
-                  primary={dl.name}
-                  secondary={
-                    dl.status === "downloading"
-                      ? t("hub:statusDownloading")
-                      : dl.status === "error"
-                        ? t("hub:statusError")
-                        : t("hub:statusReady")
-                  }
-                  secondaryTypographyProps={{
-                    noWrap: true,
-                    variant: "caption",
-                    color:
-                      dl.status === "error"
-                        ? "error"
-                        : dl.status === "ready"
-                          ? "success.main"
-                          : "text.secondary",
-                  }}
-                />
-                <ListItemSecondaryAction>
-                  {dl.status === "ready" && (
-                    <Tooltip title={t("hub:addToDashAI")}>
-                      <IconButton
-                        size="small"
-                        onClick={() => onImportDownload?.(dl)}
-                      >
-                        <AddIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Tooltip title={t("common:delete")}>
-                    <IconButton
-                      size="small"
-                      onClick={() => onDeleteDownload?.(dl.id)}
-                      disabled={dl.status === "downloading"}
+      <Box
+        display="flex"
+        flexDirection="column"
+        flex={1}
+        minHeight={0}
+        sx={{ overflowY: "auto" }}
+      >
+        {/* Sources section */}
+        <Box sx={{ px: 2, pt: 2 }}>
+          {loading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", pt: 2 }}>
+              <CircularProgress size={20} />
+            </Box>
+          ) : (
+            <>
+              <SectionHeader
+                icon={CloudDownloadIcon}
+                title={t("hub:sources")}
+                count={sources.length}
+                open={sourcesOpen}
+                onToggle={() => setSourcesOpen((v) => !v)}
+              />
+              <Collapse in={sourcesOpen} timeout="auto">
+                <Box pl={2}>
+                  {sources.length === 0 ? (
+                    <Typography
+                      sx={{
+                        color: "text.primary",
+                        opacity: 0.5,
+                        textAlign: "center",
+                        p: 2,
+                      }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </ListItemSecondaryAction>
-              </ListItemButton>
-            ))}
-          </List>
-        </>
-      )}
-    </Box>
+                      {t("common:noItemsAvailable", "No items available.")}
+                    </Typography>
+                  ) : (
+                    sources.map((source) => (
+                      <Box
+                        key={source.name}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          py: 0.75,
+                          px: 1,
+                          borderRadius: 1,
+                          cursor: "pointer",
+                          bgcolor:
+                            selectedSource === source.name
+                              ? theme.palette.action.selected
+                              : "transparent",
+                          borderLeft:
+                            selectedSource === source.name
+                              ? `3px solid ${theme.palette.primary.main}`
+                              : "3px solid transparent",
+                          "&:hover": {
+                            bgcolor:
+                              selectedSource === source.name
+                                ? theme.palette.action.selected
+                                : theme.palette.action.hover,
+                          },
+                        }}
+                        onClick={() => onSelectSource(source)}
+                      >
+                        <Typography variant="body1" color="text.primary" noWrap>
+                          {source.display_name || source.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                          sx={{ pl: 1 }}
+                        >
+                          {source.description}
+                        </Typography>
+                      </Box>
+                    ))
+                  )}
+                </Box>
+              </Collapse>
+            </>
+          )}
+        </Box>
+
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto", my: 1 }} />
+
+        {/* Downloads section */}
+        <Box sx={{ px: 2, pb: 2 }}>
+          <SectionHeader
+            icon={StorageIcon}
+            title={t("hub:downloadedDatasets")}
+            count={downloads.length}
+            open={downloadsOpen}
+            onToggle={() => setDownloadsOpen((v) => !v)}
+          />
+          <Collapse in={downloadsOpen} timeout="auto">
+            <Box pl={2}>
+              {downloads.length === 0 ? (
+                <Typography
+                  sx={{
+                    color: "text.primary",
+                    opacity: 0.5,
+                    textAlign: "center",
+                    p: 2,
+                  }}
+                >
+                  {t("common:noItemsAvailable", "No items available.")}
+                </Typography>
+              ) : (
+                downloads.map((dl) => (
+                  <Box
+                    key={dl.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                      minHeight: "50px",
+                      py: 0.5,
+                      px: 1,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body1" color="text.primary" noWrap>
+                        {dl.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{ pl: 1 }}
+                        color={
+                          dl.status === "error"
+                            ? "error"
+                            : dl.status === "ready"
+                              ? "success.main"
+                              : "text.secondary"
+                        }
+                      >
+                        {t("hub:fromSource", { source: dl.source_name })}
+                        {" · "}
+                        {dl.status === "downloading"
+                          ? t("hub:statusDownloading")
+                          : dl.status === "error"
+                            ? t("hub:statusError")
+                            : t("hub:statusReady")}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", flexShrink: 0 }}>
+                      {dl.status === "ready" && (
+                        <Tooltip title={t("hub:addToDashAI")}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onImportDownload?.(dl)}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      <Tooltip title={t("common:delete")}>
+                        <IconButton
+                          size="small"
+                          onClick={() => onDeleteDownload?.(dl.id)}
+                          disabled={dl.status === "downloading"}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Collapse>
+        </Box>
+      </Box>
+
+      <Footer />
+    </SideBar>
   );
 }

@@ -134,19 +134,6 @@ export const getHubDownload = async (id: number): Promise<HubDownload> => {
   return response.data;
 };
 
-export const createHubDownload = async (
-  source_name: string,
-  dataset_id: string,
-  name: string,
-): Promise<HubDownload> => {
-  const response = await api.post<HubDownload>(`${hubDownloadEndpoint}/`, {
-    source_name,
-    dataset_id,
-    name,
-  });
-  return response.data;
-};
-
 export const deleteHubDownload = async (id: number): Promise<void> => {
   await api.delete(`${hubDownloadEndpoint}/${id}`);
 };

@@ -12,11 +12,11 @@ import HubImportPanel from "../../components/hub/HubImportPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
 import {
-  createHubDownload,
   deleteHubDownload,
   getHubDownload,
   listHubDownloads,
 } from "../../api/hub";
+import { enqueueHubDownloadJob } from "../../api/job";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -93,7 +93,7 @@ export default function HubContent() {
     if (!selectedDataset || !sourceName) return;
     setDownloadLoading(true);
     try {
-      const row = await createHubDownload(
+      const row = await enqueueHubDownloadJob(
         sourceName,
         selectedDataset.id,
         selectedDataset.name,

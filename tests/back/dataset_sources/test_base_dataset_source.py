@@ -237,9 +237,7 @@ def test_openml_get_download_url():
     assert url == "https://www.openml.org/d/61"
 
 
-def test_openml_download_dataset_returns_csv(tmp_path):
-    import pandas as pd
-
+def test_openml_download_dataset_returns_arff(tmp_path):
     info_response = MagicMock()
     info_response.status_code = 200
     info_response.json.return_value = {
@@ -265,8 +263,9 @@ def test_openml_download_dataset_returns_csv(tmp_path):
 
     with patch("httpx.get", side_effect=[info_response, file_response]):
         source = OpenMLDatasetSource()
-        csv_path, dataloader_name = source.download_dataset("61", str(tmp_path))
+        arff_path, dataloader_name = source.download_dataset("61", str(tmp_path))
 
-    assert dataloader_name == "CSVDataLoader"
-    result = pd.read_csv(csv_path)
-    assert "sepalLength" in result.columns
+    assert dataloader_name == "ARFFDataLoader"
+    assert arff_path.endswith(".arff")
+    with open(arff_path, "rb") as fh:
+        assert b"sepalLength" in fh.read()

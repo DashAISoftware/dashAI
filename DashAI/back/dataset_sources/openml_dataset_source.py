@@ -1,7 +1,6 @@
 """OpenML dataset source for DashAI."""
 
 import contextlib
-import io
 import logging
 import os
 from typing import Any, Final
@@ -178,7 +177,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
         )
 
     def download_dataset(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
-        """Download the full OpenML dataset as CSV.
+        """Download the raw ARFF file for an OpenML dataset.
 
         Parameters
         ----------
@@ -190,11 +189,8 @@ class OpenMLDatasetSource(BaseDatasetSource):
         Returns
         -------
         tuple[str, str]
-            ``(csv_file_path, "CSVDataLoader")``.
+            ``(arff_file_path, "ARFFDataLoader")``.
         """
-        import pandas as pd
-        from scipy.io import arff as scipy_arff
-
         info_resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=15)
         info_resp.raise_for_status()
         arff_url = info_resp.json()["data_set_description"]["url"]
@@ -202,15 +198,10 @@ class OpenMLDatasetSource(BaseDatasetSource):
         file_resp = httpx.get(arff_url, timeout=120, follow_redirects=True)
         file_resp.raise_for_status()
 
-        arff_text = file_resp.content.decode("utf-8", errors="replace")
-        data, _ = scipy_arff.loadarff(io.StringIO(arff_text))
-        result = pd.DataFrame(data)
-        for col in result.select_dtypes(include=["object"]).columns:
-            result[col] = result[col].str.decode("utf-8", errors="replace")
-
-        out_path = os.path.join(temp_path, f"openml_{dataset_id}.csv")
-        result.to_csv(out_path, index=False)
-        return (out_path, "CSVDataLoader")
+        out_path = os.path.join(temp_path, f"openml_{dataset_id}.arff")
+        with open(out_path, "wb") as f:
+            f.write(file_resp.content)
+        return (out_path, "ARFFDataLoader")
 
     def get_download_url(self, dataset_id: str) -> str:
         """Return the OpenML dataset page URL.
