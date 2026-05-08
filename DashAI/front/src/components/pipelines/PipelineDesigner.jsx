@@ -101,6 +101,8 @@ function PipelineDesigner({
           errors: nodeErrors,
           source: nodeInfo?.source || false,
           target: nodeInfo?.target || false,
+          sourceHandles: nodeInfo?.sourceHandles || 1,
+          targetHandles: nodeInfo?.targetHandles || 1,
           canvasMode,
           onDelete: () => {
             setNodes((nds) => nds.filter((n) => n.id !== nodeId));

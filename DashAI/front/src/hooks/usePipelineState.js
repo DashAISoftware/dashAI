@@ -12,6 +12,34 @@ import { getPipelineById, getPipelines } from "../api/pipeline";
 import { generateSequentialName } from "../utils/nameGenerator";
 import RunPipeline from "../components/pipelines/Run";
 
+const TWO_OUTPUT_NODE_TYPES = new Set([
+  "DataSelector",
+  "SplitData",
+  "TaskAndModel",
+]);
+
+const TWO_INPUT_NODE_TYPES = new Set(["MetricsEval"]);
+
+const normalizeNodeHandles = (nodes = []) =>
+  nodes.map((node) => {
+    const shouldNormalizeSource = TWO_OUTPUT_NODE_TYPES.has(node.type);
+    const shouldNormalizeTarget = TWO_INPUT_NODE_TYPES.has(node.type);
+
+    if (!shouldNormalizeSource && !shouldNormalizeTarget) {
+      return node;
+    }
+
+    return {
+      ...node,
+      ...(shouldNormalizeSource
+        ? { sourceHandles: Math.max(2, Number(node.sourceHandles) || 0) }
+        : {}),
+      ...(shouldNormalizeTarget
+        ? { targetHandles: Math.max(2, Number(node.targetHandles) || 0) }
+        : {}),
+    };
+  });
+
 export function usePipelineState(pipelineId, location, navigate) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -68,7 +96,7 @@ export function usePipelineState(pipelineId, location, navigate) {
   // Load node types and available nodes
   useEffect(() => {
     const fetchData = async () => {
-      const nodes = await getNodeTypes();
+      const nodes = normalizeNodeHandles(await getNodeTypes());
       setAvailableNodes(nodes);
       buildNodeHelp(nodes);
     };
@@ -119,7 +147,7 @@ export function usePipelineState(pipelineId, location, navigate) {
         const pipeline = await getPipelineById(pipelineId);
 
         // Get node types to assign source/target properties
-        const nodeTypes = await getNodeTypes();
+        const nodeTypes = normalizeNodeHandles(await getNodeTypes());
 
         const loadedNodes = pipeline.steps.map((step, idx) => {
           const nodeInfo = nodeTypes.find((n) => n.type === step.type);
@@ -131,6 +159,8 @@ export function usePipelineState(pipelineId, location, navigate) {
               label: step.label,
               source: nodeInfo?.source || false,
               target: nodeInfo?.target || false,
+              sourceHandles: nodeInfo?.sourceHandles || 1,
+              targetHandles: nodeInfo?.targetHandles || 1,
               onDelete: () => {
                 setNodes((nds) => nds.filter((n) => n.id !== step.id));
                 setNodeData((prev) => {
@@ -174,6 +204,24 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [pipelineId]);
 
+  // Reset editor when switching to new pipeline route
+  useEffect(() => {
+    if (!pipelineId) {
+      setNodes([]);
+      setEdges([]);
+      setNodeData({});
+      setSelectedNode(null);
+      setResultId(null);
+      setValidationErrors({});
+      setHoveredNode(null);
+      setNodeHelp({});
+      setNodeIdCounter(0);
+      setUserHasModifiedName(false);
+      setPipelineName("undefined");
+      setActiveTab("flow");
+    }
+  }, [pipelineId]);
+
   // Validate pipeline
   useEffect(() => {
     const validate = async () => {
@@ -203,6 +251,8 @@ export function usePipelineState(pipelineId, location, navigate) {
             name: nodeInfo?.name || node.type,
             source: nodeInfo?.source || false,
             target: nodeInfo?.target || false,
+            sourceHandles: nodeInfo?.sourceHandles || 1,
+            targetHandles: nodeInfo?.targetHandles || 1,
             type: nodeInfo?.type || node.type,
             configType: nodeInfo?.configType,
             configSchema: nodeInfo?.configSchema || null,

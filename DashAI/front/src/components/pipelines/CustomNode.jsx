@@ -33,8 +33,6 @@ const CustomNode = ({ data, isConnectable }) => {
   const isDisabled =
     data.errors?.some((err) => err.includes("already exists")) ?? false;
 
-  // Light canvas mode: white nodes, yellow borders, black text
-  // Dark canvas mode: theme-aware colors
   const borderColor = isLightCanvas
     ? data.notConfigured && !isDisabled
       ? "2px solid #f9a825"
@@ -67,6 +65,40 @@ const CustomNode = ({ data, isConnectable }) => {
   const handleDisabledColor = isLightCanvas
     ? "#cccccc"
     : theme.palette.ui.border;
+  const sourceHandles = Math.max(1, Number(data.sourceHandles) || 1);
+  const targetHandles = Math.max(1, Number(data.targetHandles) || 1);
+
+  const getSourceHandleStyle = (index) => {
+    if (sourceHandles === 1) {
+      return {
+        top: "50%",
+        transform: "translateY(-50%)",
+      };
+    }
+
+    const spacing = sourceHandles + 1;
+    const top = ((index + 1) / spacing) * 100;
+    return {
+      top: `${top}%`,
+      transform: "translateY(-50%)",
+    };
+  };
+
+  const getTargetHandleStyle = (index) => {
+    if (targetHandles === 1) {
+      return {
+        top: "50%",
+        transform: "translateY(-50%)",
+      };
+    }
+
+    const spacing = targetHandles + 1;
+    const top = ((index + 1) / spacing) * 100;
+    return {
+      top: `${top}%`,
+      transform: "translateY(-50%)",
+    };
+  };
 
   const nodeContent = (
     <Box
@@ -107,39 +139,47 @@ const CustomNode = ({ data, isConnectable }) => {
         </IconButton>
       )}
 
-      {data.target && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{
-            background: isDisabled
-              ? handleDisabledColor
-              : data.hasError
-                ? theme.palette.error.main
-                : handleColor,
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-          }}
-          isConnectable={!isDisabled && isConnectable}
-        />
-      )}
+      {data.target &&
+        Array.from({ length: targetHandles }).map((_, index) => (
+          <Handle
+            key={`target-${index}`}
+            id={index === 0 ? undefined : `target-${index}`}
+            type="target"
+            position={Position.Left}
+            style={{
+              ...getTargetHandleStyle(index),
+              background: isDisabled
+                ? handleDisabledColor
+                : data.hasError
+                  ? theme.palette.error.main
+                  : handleColor,
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+            }}
+            isConnectable={!isDisabled && isConnectable}
+          />
+        ))}
 
       <IconComponent sx={{ fontSize: 25, color: iconColor }} />
 
-      {data.source && (
-        <Handle
-          type="source"
-          position={Position.Right}
-          style={{
-            background: isDisabled ? handleDisabledColor : handleColor,
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-          }}
-          isConnectable={!isDisabled && isConnectable}
-        />
-      )}
+      {data.source &&
+        Array.from({ length: sourceHandles }).map((_, index) => (
+          <Handle
+            key={`source-${index}`}
+            id={index === 0 ? undefined : `source-${index}`}
+            type="source"
+            position={Position.Right}
+            style={{
+              ...getSourceHandleStyle(index),
+              background: isDisabled ? handleDisabledColor : handleColor,
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+            }}
+            isConnectable={!isDisabled && isConnectable}
+          />
+        ))}
     </Box>
   );
 
