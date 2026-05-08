@@ -21,13 +21,97 @@ import ResultsExploration from "./ResultsExploration";
 
 const POLL_INTERVAL_MS = 3000;
 
+function normalizeNodeResults(raw, valueKey = null) {
+  if (!raw) {
+    return [];
+  }
+
+  if (typeof raw === "string") {
+    return valueKey
+      ? [{ node_id: "legacy", [valueKey]: raw }]
+      : [{ node_id: "legacy", value: raw }];
+  }
+
+  if (typeof raw !== "object") {
+    return [];
+  }
+
+  const entries = Object.entries(raw);
+  if (entries.length === 0) {
+    return [];
+  }
+
+  const looksGrouped = entries.every(
+    ([, value]) => value && typeof value === "object" && !Array.isArray(value),
+  );
+
+  if (looksGrouped) {
+    return entries.map(([nodeId, value]) => ({
+      node_id: value.node_id || nodeId,
+      ...value,
+    }));
+  }
+
+  return [{ node_id: "legacy", ...raw }];
+}
+
+function buildBranchResults({ trainEntries, taskEntries, metricsEntries, predictionEntries }) {
+  const branches = new Map();
+
+  const ensureBranch = (branchKey) => {
+    if (!branches.has(branchKey)) {
+      branches.set(branchKey, {
+        branchKey,
+        modelName: "-",
+        taskName: "-",
+        datasetName: "Unknown Dataset",
+        parameters: null,
+        metrics: null,
+        prediction: null,
+      });
+    }
+    return branches.get(branchKey);
+  };
+
+  [...trainEntries, ...taskEntries].forEach((entry, idx) => {
+    const branchKey = entry.model_node_id || entry.node_id || `train-${idx}`;
+    const branch = ensureBranch(branchKey);
+
+    branch.modelName = entry.model || entry.info || branch.modelName;
+    branch.taskName = entry.task || branch.task_name || branch.taskName;
+    branch.datasetName = entry.dataset_name || branch.datasetName;
+    branch.parameters = entry.parameters ?? branch.parameters;
+  });
+
+  metricsEntries.forEach((entry, idx) => {
+    const branchKey = entry.model_node_id || entry.node_id || `metrics-${idx}`;
+    const branch = ensureBranch(branchKey);
+
+    branch.datasetName = entry.dataset_name || branch.datasetName;
+    branch.modelName = entry.model_name || branch.modelName;
+    branch.taskName = entry.task_name || branch.taskName;
+    branch.metrics = entry.results || branch.metrics;
+  });
+
+  predictionEntries.forEach((entry, idx) => {
+    const branchKey = entry.model_node_id || entry.node_id || `prediction-${idx}`;
+    const branch = ensureBranch(branchKey);
+
+    branch.datasetName = entry.dataset_name || branch.datasetName;
+    branch.modelName = entry.model_name || branch.modelName;
+    branch.taskName = entry.task_name || branch.taskName;
+    branch.prediction = entry.prediction || branch.prediction;
+  });
+
+  return Array.from(branches.values());
+}
+
 function PipelineResults({ pipelineId, onClose }) {
   const [results, setResults] = useState(null);
   const [trainTab, setTrainTab] = useState(0);
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef(null);
 
-  /** Returns true when the pipeline has at least one result section populated. */
   const hasAnyResult = useCallback((data) => {
     if (!data) return false;
     const hasExpl =
@@ -49,10 +133,8 @@ function PipelineResults({ pipelineId, onClose }) {
         if (cancelled) return;
         setResults(response);
 
-        // If results are not yet available, start polling
         if (!hasAnyResult(response)) {
           setPolling(true);
-          // Clear any previous interval before setting a new one
           if (pollingRef.current) clearInterval(pollingRef.current);
           pollingRef.current = setInterval(async () => {
             try {
@@ -95,31 +177,26 @@ function PipelineResults({ pipelineId, onClose }) {
     return <Typography>Loading results...</Typography>;
   }
 
+  const taskEntries = normalizeNodeResults(results.task_and_model);
+  const trainEntries = normalizeNodeResults(results.train);
+  const metricsEntries = normalizeNodeResults(results.metrics_result);
+  const predictionEntries = normalizeNodeResults(results.prediction, "prediction");
+
+  const branchResults = buildBranchResults({
+    trainEntries,
+    taskEntries,
+    metricsEntries,
+    predictionEntries,
+  });
+
   const hasExploration =
     results.exploration && results.exploration !== "No exploration data";
-  const hasTrain = results.train && Object.keys(results.train).length > 0;
-  // Atomized nodes: task_and_model + metrics_result
-  const hasAtomizedTrain =
-    (results.task_and_model &&
-      Object.keys(results.task_and_model).length > 0) ||
-    (results.metrics_result && Object.keys(results.metrics_result).length > 0);
+  const hasTrain =
+    branchResults.filter((branch) => branch.parameters || branch.metrics).length > 0;
   const hasPrediction =
-    results.prediction && results.prediction !== "No prediction data";
+    branchResults.filter((branch) => !!branch.prediction).length > 0;
 
-  // Derive unified values from whichever format is available
-  const trainModelName = hasTrain
-    ? results.train.info
-    : (results.task_and_model?.model ?? "-");
-  const trainParameters = hasTrain
-    ? results.train.parameters
-    : (results.task_and_model?.parameters ?? null);
-  const trainMetrics = hasTrain
-    ? results.train.metrics
-    : (results.metrics_result?.results ?? null);
-
-  const paramData = { parameters: trainParameters };
-
-  if (!hasExploration && !hasTrain && !hasAtomizedTrain && !hasPrediction) {
+  if (!hasExploration && !hasTrain && !hasPrediction) {
     return (
       <Box sx={{ p: 2 }}>
         {onClose && (
@@ -162,50 +239,68 @@ function PipelineResults({ pipelineId, onClose }) {
         </Accordion>
       )}
 
-      {(hasTrain || hasAtomizedTrain) && (
+      {hasTrain && (
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography variant="h6">Train</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
-            <Box mx={10} my={2}>
-              <Paper sx={{ width: "100%" }}>
-                <Tabs
-                  value={trainTab}
-                  onChange={handleTabChange}
-                  variant="scrollable"
-                >
-                  <Tab label="Info" />
-                  <Tab label="Parameters" />
-                  <Tab label="Metrics" />
-                  <Tab label="Graphs" />
-                </Tabs>
-                <Box sx={{ p: 3 }}>
-                  {trainTab === 0 && (
-                    <Box>
-                      <Typography variant="subtitle1">Model Name</Typography>
-                      <Typography variant="p" sx={{ color: "gray" }}>
-                        {trainModelName}
-                      </Typography>
-                    </Box>
-                  )}
-                  {trainTab === 1 && (
-                    <Box>
-                      <ResultsTabParameters runData={paramData} />
-                    </Box>
-                  )}
-                  {trainTab === 2 && (
-                    <Box>
-                      <PipelineResultsMetrics metricsData={trainMetrics} />
-                    </Box>
-                  )}
-                  {trainTab === 3 && (
-                    <Box>
-                      <PipelineResultsGraphs metrics={trainMetrics} />
-                    </Box>
-                  )}
-                </Box>
-              </Paper>
+            <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
+              {branchResults
+                .filter((branch) => branch.parameters || branch.metrics)
+                .map((branch, branchIndex) => {
+                  const paramData = { parameters: branch.parameters };
+
+                  return (
+                    <Paper sx={{ width: "100%" }} key={branch.branchKey}>
+                      <Box sx={{ px: 3, pt: 2, pb: 1 }}>
+                        <Typography variant="subtitle1">
+                          Path {branchIndex + 1} | Dataset: {branch.datasetName}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "gray" }}>
+                          {branch.taskName} | {branch.modelName}
+                        </Typography>
+                      </Box>
+
+                      <Tabs
+                        value={trainTab}
+                        onChange={handleTabChange}
+                        variant="scrollable"
+                      >
+                        <Tab label="Info" />
+                        <Tab label="Parameters" />
+                        <Tab label="Metrics" />
+                        <Tab label="Graphs" />
+                      </Tabs>
+
+                      <Box sx={{ p: 3 }}>
+                        {trainTab === 0 && (
+                          <Box>
+                            <Typography variant="subtitle1">Model Name</Typography>
+                            <Typography variant="p" sx={{ color: "gray" }}>
+                              {branch.modelName}
+                            </Typography>
+                          </Box>
+                        )}
+                        {trainTab === 1 && (
+                          <Box>
+                            <ResultsTabParameters runData={paramData} />
+                          </Box>
+                        )}
+                        {trainTab === 2 && (
+                          <Box>
+                            <PipelineResultsMetrics metricsData={branch.metrics} />
+                          </Box>
+                        )}
+                        {trainTab === 3 && (
+                          <Box>
+                            <PipelineResultsGraphs metrics={branch.metrics} />
+                          </Box>
+                        )}
+                      </Box>
+                    </Paper>
+                  );
+                })}
             </Box>
           </AccordionDetails>
         </Accordion>
@@ -217,8 +312,20 @@ function PipelineResults({ pipelineId, onClose }) {
             <Typography variant="h6">Prediction</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
-            <Box mx={10} my={2}>
-              <PipelineResultsPrediction prediction={results.prediction} />
+            <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
+              {branchResults
+                .filter((branch) => !!branch.prediction)
+                .map((branch, branchIndex) => (
+                  <Box key={branch.branchKey}>
+                    <Typography variant="subtitle1">
+                      Path {branchIndex + 1} | Dataset: {branch.datasetName}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "gray", mb: 1 }}>
+                      {branch.taskName} | {branch.modelName}
+                    </Typography>
+                    <PipelineResultsPrediction prediction={branch.prediction} />
+                  </Box>
+                ))}
             </Box>
           </AccordionDetails>
         </Accordion>

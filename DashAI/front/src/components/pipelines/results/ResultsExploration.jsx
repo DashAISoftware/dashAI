@@ -172,9 +172,35 @@ function Results({ pipelineId }) {
     return null;
   };
 
+  const normalizeGroupedResults = (results) => {
+    if (!results || typeof results !== "object") {
+      return {};
+    }
+
+    const entries = Object.entries(results);
+    if (entries.length === 0) {
+      return {};
+    }
+
+    const alreadyGrouped = entries.every(([, value]) => Array.isArray(value));
+    if (alreadyGrouped) {
+      return results;
+    }
+
+    return {
+      "Unknown Dataset": entries.map(([explorationId, result]) => ({
+        ...result,
+        exploration_id: explorationId,
+        node_id: "legacy",
+      })),
+    };
+  };
+
   if (!explorationResults) {
     return <Typography variant="body2">Loading...</Typography>;
   }
+
+  const groupedResults = normalizeGroupedResults(explorationResults);
 
   return (
     <Box
@@ -186,17 +212,28 @@ function Results({ pipelineId }) {
         padding: 2,
       }}
     >
-      {Object.entries(explorationResults).map(
-        ([explorationName, result], i) => (
-          <Box key={explorationName} sx={{ width: "100%", minWidth: "800px" }}>
-            <Typography gutterBottom variant="h6" color={"GrayText"}>
-              {i}: {result.exploration_type}
-              {result.name ? ` | ${result.name}` : ""}
-            </Typography>
-            {renderVisualizer(result.results.type, result.results)}
-          </Box>
-        ),
-      )}
+      {Object.entries(groupedResults).map(([datasetName, datasetResults]) => (
+        <Box key={datasetName} sx={{ width: "100%", minWidth: "800px" }}>
+          <Typography variant="h5" gutterBottom>
+            {datasetName}
+          </Typography>
+
+          {datasetResults.map((result, i) => (
+            <Box
+              key={`${result.node_id}-${result.exploration_id}`}
+              sx={{ width: "100%", minWidth: "800px", mb: 4 }}
+            >
+              <Typography gutterBottom variant="h6" color={"GrayText"}>
+                {i + 1}: {result.exploration_type}
+                {result.name ? ` | ${result.name}` : ""}
+              </Typography>
+              {result.results
+                ? renderVisualizer(result.results.type, result.results)
+                : null}
+            </Box>
+          ))}
+        </Box>
+      ))}
     </Box>
   );
 }
