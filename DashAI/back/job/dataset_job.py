@@ -168,19 +168,54 @@ class DatasetJob(BaseJob):
                         # --- Hub import path ---
                         import tempfile
 
-                        hub_temp = tempfile.mkdtemp()
-                        temp_dir = hub_temp  # ensures finally block cleans it up
+                        from DashAI.back.core.enums.status import HubDownloadStatus
+                        from DashAI.back.dependencies.database.models import (
+                            HubDownload,
+                        )
 
                         dataset_source_id = self.kwargs.get("dataset_source_id", "")
+                        hub_download_id = params.get("hub_download_id")
+                        selected_file = params.get("selected_file")
+
                         sources = component_registry._registry.get("DatasetSource", {})
                         if source_name not in sources:
                             raise JobError(
                                 f"DatasetSource '{source_name}' not found in registry."
                             )
                         source = sources[source_name]["class"]()
-                        file_path_hub, source_dataloader_name = source.fetch_full(
-                            dataset_source_id, hub_temp
-                        )
+
+                        if hub_download_id is not None:
+                            # Use pre-downloaded cached file — do not clean up temp_dir
+                            with session_factory() as db:
+                                hub_row = db.get(HubDownload, hub_download_id)
+                            if (
+                                hub_row is None
+                                or hub_row.status != HubDownloadStatus.READY
+                            ):
+                                raise JobError(
+                                    f"HubDownload {hub_download_id} is not ready."
+                                )
+                            hub_work_dir = hub_row.local_path
+                            if selected_file:
+                                file_path_hub = str(Path(hub_work_dir) / selected_file)
+                            else:
+                                files = sorted(
+                                    str(p)
+                                    for p in Path(hub_work_dir).rglob("*")
+                                    if p.is_file()
+                                )
+                                if not files:
+                                    raise JobError("Hub download directory is empty.")
+                                file_path_hub = files[0]
+                            source_dataloader_name = params.get("dataloader", "")
+                        else:
+                            hub_temp = tempfile.mkdtemp()
+                            temp_dir = hub_temp  # ensures finally block cleans it up
+                            hub_work_dir = hub_temp
+                            file_path_hub, source_dataloader_name = source.fetch_full(
+                                dataset_source_id, hub_temp
+                            )
+
                         selected_dataloader = (
                             params.get("dataloader") or source_dataloader_name
                         )
@@ -191,12 +226,15 @@ class DatasetJob(BaseJob):
                             and selected_dataloader not in compatible
                         ):
                             raise JobError(
-                                "Selected DataLoader is not compatible with this source."
+                                "Selected DataLoader is not compatible"
+                                " with this source."
                             )
-                        dl_registry = component_registry._registry.get("DataLoader", {})
+                        _reg = component_registry._registry
+                        dl_registry = _reg.get("DataLoader", {})
                         if selected_dataloader not in dl_registry:
                             raise JobError(
-                                f"DataLoader '{selected_dataloader}' not found in registry."
+                                f"DataLoader '{selected_dataloader}'"
+                                " not found in registry."
                             )
                         dataloader = dl_registry[selected_dataloader]["class"]()
                         log.debug(
@@ -207,7 +245,7 @@ class DatasetJob(BaseJob):
                         hub_loader_params = params.get("dataloader_params", {})
                         new_dataset = dataloader.load_data(
                             filepath_or_buffer=file_path_hub,
-                            temp_path=hub_temp,
+                            temp_path=hub_work_dir,
                             params=hub_loader_params,
                             n_sample=None,
                         )
