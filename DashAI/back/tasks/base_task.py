@@ -401,11 +401,18 @@ class BaseTask:
                             f"File type '{detected_type}' doesn't match "
                             f"expected type '{expected_type}'"
                         )
-                    row[col_name] = data
+                    if detected_type == "image":
+                        # Store in the same struct format used by the image dataloader
+                        # so DashAIDataset.__getitem__ can wrap it in DashAIImage.
+                        fname = getattr(value, "filename", None) or ""
+                        row[col_name] = {"bytes": data, "path": fname}
+                    else:
+                        row[col_name] = data
 
                 # File saved to disk by job queue
                 elif isinstance(value, dict) and "__image_file__" in value:
-                    with open(value["__image_file__"], "rb") as f:
+                    file_path_on_disk = value["__image_file__"]
+                    with open(file_path_on_disk, "rb") as f:
                         file_bytes = f.read()
                     data, detected_type = get_bytes_with_type_filetype(file_bytes)
                     expected_type = column_spec.get("type", "")
@@ -415,7 +422,15 @@ class BaseTask:
                             f"File type '{detected_type}' doesn't match "
                             f"expected type '{expected_type}'"
                         )
-                    row[col_name] = data
+                    if detected_type == "image":
+                        import os
+
+                        row[col_name] = {
+                            "bytes": data,
+                            "path": os.path.basename(file_path_on_disk),
+                        }
+                    else:
+                        row[col_name] = data
 
                 # Primitive value
                 else:

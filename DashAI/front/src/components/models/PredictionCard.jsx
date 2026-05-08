@@ -115,11 +115,8 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
 
   const handleDownload = async () => {
     try {
-      const data = await exportDatasetCsvByPath(prediction.results_path);
-      const isZip = data.type === "application/zip";
-      const blob = new Blob([data], {
-        type: isZip ? "application/zip" : "text/csv;charset=utf-8;",
-      });
+      const blob = await exportDatasetCsvByPath(prediction.results_path);
+      const isZip = blob.type === "application/zip";
       const ext = isZip ? "zip" : "csv";
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
