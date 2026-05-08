@@ -21,7 +21,11 @@ const PAGE_SIZE = 20;
  * @param {object|null} selectedDataset - Currently selected DatasetEntry.
  * @param {function} onSelectDataset - Called with a DatasetEntry when a card is clicked.
  */
-export default function DatasetGrid({ sourceName, selectedDataset, onSelectDataset }) {
+export default function DatasetGrid({
+  sourceName,
+  selectedDataset,
+  onSelectDataset,
+}) {
   const { t } = useTranslation(["hub", "common"]);
   const [query, setQuery] = useState("");
   const [datasets, setDatasets] = useState([]);
@@ -39,7 +43,15 @@ export default function DatasetGrid({ sourceName, selectedDataset, onSelectDatas
 
       searchDatasets(sourceName, q, PAGE_SIZE, pageOffset)
         .then((results) => {
-          setDatasets((prev) => (append ? [...prev, ...results] : results));
+          setDatasets((prev) =>
+            append
+              ? [
+                  ...new Map(
+                    [...prev, ...results].map((d) => [d.id, d]),
+                  ).values(),
+                ]
+              : results,
+          );
           setHasMore(results.length === PAGE_SIZE);
         })
         .catch(() => {
@@ -131,7 +143,15 @@ export default function DatasetGrid({ sourceName, selectedDataset, onSelectDatas
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
+          }}
+        >
           <Box
             sx={{
               display: "grid",
