@@ -7,27 +7,27 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 import { useTranslation } from "react-i18next";
 import { searchDatasets } from "../../api/hub";
 import DatasetCard from "./DatasetCard";
+import HubBreadcrumbs from "./HubBreadcrumbs";
 
 const PAGE_SIZE = 20;
 
 /**
- * Center panel — debounced search bar + paginated grid of DatasetCard components.
+ * Center panel — breadcrumbs, debounced search bar, and paginated grid of DatasetCard components.
  *
  * @param {string|null} sourceName - Active DatasetSource class name.
+ * @param {string} sourceDisplayName - Human-readable source name for breadcrumbs.
  * @param {object|null} selectedDataset - Currently selected DatasetEntry.
  * @param {function} onSelectDataset - Called with a DatasetEntry when a card is clicked.
- * @param {function|null} onBack - If provided, shows a back button to return to source list.
  */
 export default function DatasetGrid({
   sourceName,
+  sourceDisplayName,
   selectedDataset,
   onSelectDataset,
-  onBack = null,
 }) {
   const { t } = useTranslation(["hub", "common"]);
   const [query, setQuery] = useState("");
@@ -118,18 +118,7 @@ export default function DatasetGrid({
         gap: 2,
       }}
     >
-      {onBack && (
-        <Box>
-          <Button
-            size="small"
-            startIcon={<ArrowBackIcon />}
-            onClick={onBack}
-            sx={{ textTransform: "none" }}
-          >
-            {t("common:back")}
-          </Button>
-        </Box>
-      )}
+      <HubBreadcrumbs sourceDisplayName={sourceDisplayName || sourceName} />
 
       <TextField
         size="small"

@@ -63,6 +63,7 @@ function App() {
             </Route>
           </Route>
           <Route path="/app/hub" element={<HubContent />} />
+          <Route path="/app/hub/:sourceName" element={<HubContent />} />
         </Routes>
         <JobQueueWidget />
       </BrowserRouter>

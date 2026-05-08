@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import HubIcon from "@mui/icons-material/Hub";
 import ScienceIcon from "@mui/icons-material/Science";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
@@ -33,11 +34,12 @@ const SOURCE_ICONS = {
 
 export default function HubContent() {
   const { t } = useTranslation(["hub"]);
+  const navigate = useNavigate();
+  const { sourceName: sourceNameParam } = useParams();
   const threePanelLayout = useThreePanelLayout({ storageKey: "hub" });
 
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);
-  const [selectedSource, setSelectedSource] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [importMode, setImportMode] = useState(false);
   const [importStep, setImportStep] = useState(0);
@@ -52,7 +54,10 @@ export default function HubContent() {
 
   const pollTimerRef = useRef(null);
 
-  const sourceName = selectedSource?.name ?? null;
+  // Derive selected source from URL param + loaded sources list
+  const selectedSource = sources.find((s) => s.name === sourceNameParam) ?? null;
+  const sourceDisplayName =
+    selectedSource?.display_name || selectedSource?.name || sourceNameParam;
 
   useEffect(() => {
     getDatasetSources()
@@ -60,6 +65,17 @@ export default function HubContent() {
       .catch(() => setSources([]))
       .finally(() => setSourcesLoading(false));
   }, []);
+
+  // Reset dataset selection when source changes
+  useEffect(() => {
+    setSelectedDataset(null);
+    setImportMode(false);
+    setImportStep(0);
+    setSelectedDataloader(null);
+    setFormValues({});
+    setFormHasErrors(false);
+    setImportDownload(null);
+  }, [sourceNameParam]);
 
   useEffect(() => {
     listHubDownloads()
@@ -101,24 +117,24 @@ export default function HubContent() {
 
   const getDownloadForDataset = useCallback(
     (ds) => {
-      if (!ds || !sourceName) return null;
-      return downloads[`${sourceName}::${ds.id}`] ?? null;
+      if (!ds || !sourceNameParam) return null;
+      return downloads[`${sourceNameParam}::${ds.id}`] ?? null;
     },
-    [downloads, sourceName],
+    [downloads, sourceNameParam],
   );
 
   const handleStartDownload = async () => {
-    if (!selectedDataset || !sourceName) return;
+    if (!selectedDataset || !sourceNameParam) return;
     setDownloadLoading(true);
     try {
       const row = await enqueueHubDownloadJob(
-        sourceName,
+        sourceNameParam,
         selectedDataset.id,
         selectedDataset.name,
       );
       setDownloads((prev) => ({
         ...prev,
-        [`${sourceName}::${selectedDataset.id}`]: row,
+        [`${sourceNameParam}::${selectedDataset.id}`]: row,
       }));
     } catch {
       // error shown via download status
@@ -152,14 +168,7 @@ export default function HubContent() {
   };
 
   const handleSelectSource = (source) => {
-    setSelectedSource(source);
-    setSelectedDataset(null);
-    setImportMode(false);
-    setImportStep(0);
-    setSelectedDataloader(null);
-    setFormValues({});
-    setFormHasErrors(false);
-    setImportDownload(null);
+    navigate(`/app/hub/${source.name}`);
   };
 
   const handleImported = () => {
@@ -199,6 +208,10 @@ export default function HubContent() {
     Icon: SOURCE_ICONS[source.name] ?? CloudDownloadIcon,
   }));
 
+  const importSourceName = importDownload
+    ? importDownload.source_name
+    : sourceNameParam;
+
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
@@ -215,15 +228,10 @@ export default function HubContent() {
             <HubImportPanel
               dataset={
                 importDownload
-                  ? {
-                      id: importDownload.dataset_id,
-                      name: importDownload.name,
-                    }
+                  ? { id: importDownload.dataset_id, name: importDownload.name }
                   : selectedDataset
               }
-              sourceName={
-                importDownload ? importDownload.source_name : sourceName
-              }
+              sourceName={importSourceName}
               hubDownload={importDownload}
               step={importStep}
               onStepChange={setImportStep}
@@ -234,12 +242,12 @@ export default function HubContent() {
               onCancel={handleExitImport}
               onImported={handleImported}
             />
-          ) : selectedSource ? (
+          ) : sourceNameParam ? (
             <DatasetGrid
-              sourceName={sourceName}
+              sourceName={sourceNameParam}
+              sourceDisplayName={sourceDisplayName}
               selectedDataset={selectedDataset}
               onSelectDataset={setSelectedDataset}
-              onBack={() => setSelectedSource(null)}
             />
           ) : (
             <SelectOptionMenu
@@ -270,7 +278,7 @@ export default function HubContent() {
           ) : (
             <DatasetDetail
               dataset={selectedDataset}
-              sourceName={sourceName}
+              sourceName={sourceNameParam}
               download={getDownloadForDataset(selectedDataset)}
               downloadLoading={downloadLoading}
               onStartDownload={handleStartDownload}
