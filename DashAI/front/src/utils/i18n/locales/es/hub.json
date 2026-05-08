@@ -52,5 +52,6 @@
   "sources": "Fuentes",
   "fromSource": "De {{source}}",
   "selectSourceSubtitle": "Selecciona una fuente para explorar e importar datasets.",
-  "searchDownloads": "Buscar descargas..."
+  "searchDownloads": "Buscar descargas...",
+  "datasetDetails": "Detalles del Dataset"
 }

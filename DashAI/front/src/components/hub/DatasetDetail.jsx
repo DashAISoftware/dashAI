@@ -18,6 +18,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getDatasetInfo } from "../../api/hub";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 
 /**
  * Right panel — detailed view of a selected Hub dataset with action buttons.
@@ -51,25 +52,6 @@ export default function DatasetDetail({
       .then((info) => setExtraInfo(info))
       .catch(() => setExtraInfo({}));
   }, [dataset?.id, sourceName]);
-
-  if (!dataset) {
-    return (
-      <Box
-        sx={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          p: 3,
-          bgcolor: "background.box",
-        }}
-      >
-        <Typography variant="body2" color="text.secondary" textAlign="center">
-          {t("hub:selectDatasetToPreview")}
-        </Typography>
-      </Box>
-    );
-  }
 
   const renderActionButton = () => {
     if (downloadLoading) {
@@ -152,90 +134,124 @@ export default function DatasetDetail({
   };
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "background.box",
-        overflowY: "auto",
-      }}
-    >
+    <SideBar>
+      {/* Title */}
       <Box
         sx={{
           p: 2,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          borderBottom: `1px solid ${theme.palette.ui.border}`,
           flexShrink: 0,
+          height: 64,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <Typography variant="h6" fontWeight={600} gutterBottom>
-          {dataset.name}
+        <Typography variant="h6" color="text.primary">
+          {t("hub:datasetDetails")}
         </Typography>
+      </Box>
 
-        <Stack direction="row" spacing={1} mb={1.5} flexWrap="wrap" useFlexGap>
-          {renderActionButton()}
-          {download?.status === "ready" && (
-            <Chip
-              icon={<CheckCircleIcon />}
-              label={t("hub:downloaded")}
-              size="small"
-              color="success"
-              variant="outlined"
-            />
-          )}
-        </Stack>
-
-        <Link
-          href={dataset.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="caption"
-          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+      {/* Content */}
+      {!dataset ? (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 3,
+          }}
         >
-          {t("hub:viewOnSource")} <OpenInNewIcon sx={{ fontSize: 12 }} />
-        </Link>
-      </Box>
-
-      <Box sx={{ p: 2, flex: 1 }}>
-        {(extraInfo?.description || dataset.description) && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {extraInfo?.description || dataset.description}
+          <Typography variant="body2" color="text.secondary" textAlign="center">
+            {t("hub:selectDatasetToPreview")}
           </Typography>
-        )}
+        </Box>
+      ) : (
+        <Box sx={{ flex: 1, overflowY: "auto" }}>
+          <Box
+            sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}
+          >
+            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+              {dataset.name}
+            </Typography>
 
-        <Divider sx={{ mb: 1.5 }} />
+            <Stack
+              direction="row"
+              spacing={1}
+              mb={1.5}
+              flexWrap="wrap"
+              useFlexGap
+            >
+              {renderActionButton()}
+              {download?.status === "ready" && (
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label={t("hub:downloaded")}
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              )}
+            </Stack>
 
-        <Stack spacing={1}>
-          {dataset.row_count != null && (
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                {t("hub:rows")}
-              </Typography>
-              <Typography variant="body2">
-                {dataset.row_count.toLocaleString()}
-              </Typography>
-            </Box>
-          )}
+            <Link
+              href={dataset.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="caption"
+              sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+            >
+              {t("hub:viewOnSource")} <OpenInNewIcon sx={{ fontSize: 12 }} />
+            </Link>
+          </Box>
 
-          {(extraInfo?.tags ?? dataset.tags)?.length > 0 && (
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                mb={0.5}
-              >
-                {t("hub:tags")}
+          <Box sx={{ p: 2 }}>
+            {(extraInfo?.description || dataset.description) && (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {extraInfo?.description || dataset.description}
               </Typography>
-              <Stack direction="row" flexWrap="wrap" gap={0.5} useFlexGap>
-                {(extraInfo?.tags ?? dataset.tags).map((tag) => (
-                  <Chip key={tag} label={tag} size="small" variant="outlined" />
-                ))}
-              </Stack>
-            </Box>
-          )}
-        </Stack>
-      </Box>
-    </Box>
+            )}
+
+            <Divider sx={{ mb: 1.5 }} />
+
+            <Stack spacing={1}>
+              {dataset.row_count != null && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("hub:rows")}
+                  </Typography>
+                  <Typography variant="body2">
+                    {dataset.row_count.toLocaleString()}
+                  </Typography>
+                </Box>
+              )}
+
+              {(extraInfo?.tags ?? dataset.tags)?.length > 0 && (
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                    mb={0.5}
+                  >
+                    {t("hub:tags")}
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" gap={0.5} useFlexGap>
+                    {(extraInfo?.tags ?? dataset.tags).map((tag) => (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        variant="outlined"
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+          </Box>
+        </Box>
+      )}
+    </SideBar>
   );
 }

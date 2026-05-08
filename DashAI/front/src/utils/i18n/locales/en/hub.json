@@ -52,5 +52,6 @@
   "sources": "Sources",
   "fromSource": "From {{source}}",
   "selectSourceSubtitle": "Select a source to browse and import datasets.",
-  "searchDownloads": "Search downloads..."
+  "searchDownloads": "Search downloads...",
+  "datasetDetails": "Dataset Details"
 }
