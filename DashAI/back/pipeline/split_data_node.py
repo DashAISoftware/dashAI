@@ -82,11 +82,18 @@ class SplitData(BaseJob):
             )
         except Exception as e:
             log.exception(e)
+            dataset_name = context.get("dataset_name", "<unknown>")
+            try:
+                total_columns = len(list(dataset.features.keys()))
+            except Exception:
+                total_columns = "<unknown>"
             raise JobError(
-                "Cannot resolve column names from the dataset.",
+                "Cannot resolve column names from the dataset. "
+                f"dataset_name={dataset_name}, total_columns={total_columns}, "
+                f"input_columns={self.input_columns}, "
+                f"output_columns={self.output_columns}",
             ) from e
 
-        # Populate context for downstream nodes
         context["input_columns"] = input_columns_names
         context["output_columns"] = output_columns_names
         context["input_columns_idx"] = self.input_columns

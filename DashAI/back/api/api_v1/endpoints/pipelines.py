@@ -280,9 +280,46 @@ async def get_pipeline_dataexploration_results(
             detail="Pipeline has no valid Data Exploration step",
         )
 
-    results = {}
+    grouped_results = {}
+    steps = pipeline.steps or []
+    edges = pipeline.edges or []
 
-    for exploration_id, exploration_info in dataexploration.items():
+    step_map = {
+        step.get("id"): step
+        for step in steps
+        if isinstance(step, dict) and step.get("id")
+    }
+    predecessor_map = {}
+    for edge in edges:
+        source = edge.get("source") if isinstance(edge, dict) else None
+        target = edge.get("target") if isinstance(edge, dict) else None
+        if source and target:
+            predecessor_map.setdefault(target, []).append(source)
+
+    def resolve_dataset_name_from_graph(node_id: str | None) -> str | None:
+        if not node_id:
+            return None
+
+        current = node_id
+        visited = set()
+        while current and current not in visited:
+            visited.add(current)
+            step = step_map.get(current)
+            if isinstance(step, dict) and step.get("type") == "DataSelector":
+                config = step.get("config") or {}
+                return config.get("name")
+
+            predecessors = predecessor_map.get(current) or []
+            current = predecessors[0] if predecessors else None
+
+        return None
+
+    def append_result(
+        dataset_name: str,
+        node_id: str,
+        exploration_id: str,
+        exploration_info: dict,
+    ) -> None:
         exploration_type = exploration_info["exploration_type"]
         exploration_path = exploration_info["path"]
         parameters = exploration_info.get("parameters", {})
@@ -302,11 +339,15 @@ async def get_pipeline_dataexploration_results(
                 exploration_path=exploration_path,
                 options={},
             )
-            results[exploration_id] = {
-                "exploration_type": exploration_type,
-                "results": result,
-                "name": name,
-            }
+            grouped_results.setdefault(dataset_name, []).append(
+                {
+                    "node_id": node_id,
+                    "exploration_id": exploration_id,
+                    "exploration_type": exploration_type,
+                    "results": result,
+                    "name": name,
+                }
+            )
         except Exception as e:
             logger.exception(e)
             raise HTTPException(
@@ -314,7 +355,54 @@ async def get_pipeline_dataexploration_results(
                 detail=(f"Error while getting results for '{exploration_type}'"),
             ) from e
 
-    return results
+    for node_or_exploration_id, node_or_exploration_info in dataexploration.items():
+        if not isinstance(node_or_exploration_info, dict):
+            continue
+
+        if "explorations" in node_or_exploration_info:
+            inferred_dataset_name = resolve_dataset_name_from_graph(
+                node_or_exploration_id
+            )
+            dataset_name = (
+                node_or_exploration_info.get("dataset_name")
+                or inferred_dataset_name
+                or "Unknown Dataset"
+            )
+            node_explorations = node_or_exploration_info.get("explorations") or {}
+            if not isinstance(node_explorations, dict):
+                continue
+
+            for exploration_id, exploration_info in node_explorations.items():
+                if not isinstance(exploration_info, dict):
+                    continue
+                append_result(
+                    dataset_name=dataset_name,
+                    node_id=node_or_exploration_id,
+                    exploration_id=exploration_id,
+                    exploration_info=exploration_info,
+                )
+            continue
+
+        dataexploration_nodes = [
+            step
+            for step in steps
+            if isinstance(step, dict) and step.get("type") == "DataExploration"
+        ]
+        inferred_legacy_node_id = (
+            dataexploration_nodes[-1].get("id") if dataexploration_nodes else "legacy"
+        )
+        inferred_legacy_dataset_name = (
+            resolve_dataset_name_from_graph(inferred_legacy_node_id)
+            or "Unknown Dataset"
+        )
+        append_result(
+            dataset_name=inferred_legacy_dataset_name,
+            node_id=inferred_legacy_node_id or "legacy",
+            exploration_id=node_or_exploration_id,
+            exploration_info=node_or_exploration_info,
+        )
+
+    return grouped_results
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

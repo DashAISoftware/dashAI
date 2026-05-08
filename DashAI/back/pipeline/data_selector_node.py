@@ -46,7 +46,8 @@ class DataSelector(BaseJob):
 
         from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 
-        context["dataset_name"] = self.kwargs["name"]
+        dataset_name = self.kwargs["name"]
+        context["dataset_name"] = dataset_name
         dataset_dir = Path(self.kwargs["file_path"])
         data_path = dataset_dir / "dataset/data.arrow"
 
@@ -63,4 +64,5 @@ class DataSelector(BaseJob):
 
         return {
             "dataset": loaded_dataset,
+            "dataset_name": dataset_name,
         }

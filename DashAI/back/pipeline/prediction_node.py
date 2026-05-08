@@ -43,25 +43,46 @@ class Prediction(BaseJob):
 
         loaded_dataset = context["dataset"]
         model = context["model_class"]
-        model_path = context["model_path"]
-        trained_model: BaseModel = model.load(model_path)
         config = di["config"]
+
+        sqlite_local = config["LOCAL_PATH"]
+        pipeline_id = context.get("pipeline_id")
+        model_node_id = context.get("model_node_id")
+
+        model_path = context["model_path"]
+        if pipeline_id is not None and model_node_id:
+            node_model_path = os.path.join(
+                sqlite_local,
+                "pipelines",
+                "train",
+                str(pipeline_id),
+                str(model_node_id),
+                "model",
+            )
+            if os.path.exists(node_model_path):
+                model_path = node_model_path
+
+        try:
+            trained_model: BaseModel = model.load(model_path)
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                "Failed to load trained model for Prediction. "
+                f"model_name={context.get('model_name')}, "
+                f"model_path={model_path}, "
+                f"model_node_id={model_node_id}, "
+                f"pipeline_id={pipeline_id}"
+            ) from e
 
         try:
             prepared_dataset = loaded_dataset.select_columns(context["input_columns"])
             y_pred_proba = np.array(trained_model.predict(prepared_dataset))
 
-            # Check if it's classification (2D array with probabilities)
-            # or regression (1D array)
             if isinstance(y_pred_proba[0], str):
-                # Text/categorical predictions
                 y_pred = y_pred_proba
             elif y_pred_proba.ndim == 2:
-                # Classification: multi-class probabilities,
-                # get class with highest probability
                 y_pred = np.argmax(y_pred_proba, axis=1)
             else:
-                # Regression: predictions are already the final values
                 y_pred = y_pred_proba
 
         except ValueError as ve:
@@ -77,7 +98,6 @@ class Prediction(BaseJob):
             ) from e
 
         try:
-            sqlite_local = config["LOCAL_PATH"]
             path = os.path.join(sqlite_local, "pipelines", "predictions")
             os.makedirs(path, exist_ok=True)
             existing_ids = []

@@ -61,12 +61,17 @@ class DataExploration(BaseJob):
             from pathlib import Path
 
             pipeline_id = context.get("pipeline_id")
+            node_id = context.get("_node_id", "DataExploration")
             loaded_dataset = context.get("dataset")
 
             settings = DefaultSettings()
             sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
             base_path = (
-                Path(sqlite_local) / "pipelines" / "exploration" / str(pipeline_id)
+                Path(sqlite_local)
+                / "pipelines"
+                / "exploration"
+                / str(pipeline_id)
+                / str(node_id)
             )
             base_path.mkdir(parents=True, exist_ok=True)
 

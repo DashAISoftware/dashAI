@@ -219,7 +219,13 @@ class Train(BaseJob):
             sqlite_local = config["LOCAL_PATH"]
             path = os.path.join(sqlite_local, "pipelines", "train")
             os.makedirs(path, exist_ok=True)
-            model_path = os.path.join(path, str(pipeline_id))
+
+            node_id = context.get("_node_id", "Train")
+            pipeline_path = os.path.join(path, str(pipeline_id))
+            os.makedirs(pipeline_path, exist_ok=True)
+            model_path = os.path.join(pipeline_path, str(node_id), "model")
+
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
             model.save(model_path)
             context["model_path"] = model_path
         except Exception as e:

@@ -191,6 +191,8 @@ class TaskAndModel(BaseJob):
             train_root = os.path.join(sqlite_local, "pipelines", "train")
             os.makedirs(train_root, exist_ok=True)
 
+            node_id = context.get("_node_id", "TaskAndModel")
+
             path = os.path.join(train_root, str(pipeline_id))
 
             # Backward-compatibility: older runs may have saved a file in
@@ -201,7 +203,10 @@ class TaskAndModel(BaseJob):
                 os.remove(path)
 
             os.makedirs(path, exist_ok=True)
-            model_path = os.path.join(path, "model")
+
+            node_path = os.path.join(path, str(node_id))
+            os.makedirs(node_path, exist_ok=True)
+            model_path = os.path.join(node_path, "model")
 
             # Ensure clean overwrite when retraining same pipeline id.
             if os.path.isdir(model_path):
