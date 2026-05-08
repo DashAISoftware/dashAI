@@ -3,26 +3,40 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
   Link,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import DownloadIcon from "@mui/icons-material/Download";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
 import AddIcon from "@mui/icons-material/Add";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { getDatasetInfo, getDownloadUrl } from "../../api/hub";
+import { getDatasetInfo } from "../../api/hub";
 
 /**
  * Right panel — detailed view of a selected Hub dataset with action buttons.
  *
  * @param {object|null} dataset - Selected DatasetEntry, or null if none.
  * @param {string|null} sourceName - Active DatasetSource class name.
- * @param {function} onStartImport - Called when user clicks "Add to DashAI".
+ * @param {object|null} download - HubDownload record for this dataset (if any).
+ * @param {boolean} downloadLoading - True while the download record is being created.
+ * @param {function} onStartDownload - Called when user clicks "Download to DashAI".
+ * @param {function} onStartImport - Called when download is ready and user clicks "Add to DashAI".
  */
-export default function DatasetDetail({ dataset, sourceName, onStartImport }) {
+export default function DatasetDetail({
+  dataset,
+  sourceName,
+  download = null,
+  downloadLoading = false,
+  onStartDownload,
+  onStartImport,
+}) {
   const { t } = useTranslation(["hub"]);
   const theme = useTheme();
   const [extraInfo, setExtraInfo] = useState(null);
@@ -57,13 +71,84 @@ export default function DatasetDetail({ dataset, sourceName, onStartImport }) {
     );
   }
 
-  const handleDownload = async () => {
-    try {
-      const url = await getDownloadUrl(sourceName, dataset.id);
-      window.location.href = url;
-    } catch {
-      // silently fail — source page link is still available
+  const renderActionButton = () => {
+    if (downloadLoading) {
+      return (
+        <Button
+          variant="contained"
+          size="small"
+          disabled
+          startIcon={<CircularProgress size={14} />}
+        >
+          {t("hub:startingDownload")}
+        </Button>
+      );
     }
+
+    if (!download) {
+      return (
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<CloudDownloadIcon />}
+          onClick={() => onStartDownload?.()}
+        >
+          {t("hub:downloadToDashAI")}
+        </Button>
+      );
+    }
+
+    if (download.status === "downloading") {
+      return (
+        <Button
+          variant="contained"
+          size="small"
+          disabled
+          startIcon={<CircularProgress size={14} />}
+        >
+          {t("hub:downloading")}
+        </Button>
+      );
+    }
+
+    if (download.status === "error") {
+      return (
+        <Stack direction="row" spacing={1}>
+          <Tooltip title={download.error_message || t("hub:downloadError")}>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<ErrorIcon />}
+              disabled
+            >
+              {t("hub:downloadFailed")}
+            </Button>
+          </Tooltip>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<CloudDownloadIcon />}
+            onClick={() => onStartDownload?.()}
+          >
+            {t("hub:retry")}
+          </Button>
+        </Stack>
+      );
+    }
+
+    // READY
+    return (
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<AddIcon />}
+        color="success"
+        onClick={() => onStartImport?.()}
+      >
+        {t("hub:addToDashAI")}
+      </Button>
+    );
   };
 
   return (
@@ -87,23 +172,17 @@ export default function DatasetDetail({ dataset, sourceName, onStartImport }) {
           {dataset.name}
         </Typography>
 
-        <Stack direction="row" spacing={1} mb={1.5}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={() => onStartImport?.()}
-          >
-            {t("hub:addToDashAI")}
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownload}
-          >
-            {t("hub:download")}
-          </Button>
+        <Stack direction="row" spacing={1} mb={1.5} flexWrap="wrap" useFlexGap>
+          {renderActionButton()}
+          {download?.status === "ready" && (
+            <Chip
+              icon={<CheckCircleIcon />}
+              label={t("hub:downloaded")}
+              size="small"
+              color="success"
+              variant="outlined"
+            />
+          )}
         </Stack>
 
         <Link

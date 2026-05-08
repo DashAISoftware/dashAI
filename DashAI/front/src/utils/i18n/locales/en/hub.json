@@ -34,5 +34,19 @@
   "stepPreviewSubtitle": "Review the preview and adjust parameters in the right panel.",
   "previewParameters": "Preview and parameters",
   "previewRows": "Preview rows",
-  "previewRowsDescription": "Number of rows to sample for preview."
+  "previewRowsDescription": "Number of rows to sample for preview.",
+  "downloadToDashAI": "Download to DashAI",
+  "startingDownload": "Starting download...",
+  "downloading": "Downloading...",
+  "downloaded": "Downloaded",
+  "downloadFailed": "Download failed",
+  "downloadError": "An error occurred while downloading.",
+  "retry": "Retry",
+  "downloadedDatasets": "Downloaded Datasets",
+  "statusDownloading": "Downloading...",
+  "statusReady": "Ready",
+  "statusError": "Error",
+  "stepFileTitle": "Select File",
+  "stepFileSubtitle": "Choose the file to import from the downloaded dataset.",
+  "noFilesFound": "No files found in this download."
 }

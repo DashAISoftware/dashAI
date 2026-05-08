@@ -119,3 +119,56 @@ export const getComponentInfo = async (
   );
   return response.data;
 };
+
+// ---- Hub Downloads ----
+
+const hubDownloadEndpoint = "/v1/hub-download";
+
+export type HubDownloadStatus = "downloading" | "ready" | "error";
+
+export interface HubDownload {
+  id: number;
+  source_name: string;
+  dataset_id: string;
+  name: string;
+  local_path: string | null;
+  status: HubDownloadStatus;
+  error_message: string | null;
+  created: string | null;
+  last_modified: string | null;
+  job_id?: string;
+}
+
+export const listHubDownloads = async (): Promise<HubDownload[]> => {
+  const response = await api.get<HubDownload[]>(`${hubDownloadEndpoint}/`);
+  return response.data;
+};
+
+export const getHubDownload = async (id: number): Promise<HubDownload> => {
+  const response = await api.get<HubDownload>(`${hubDownloadEndpoint}/${id}`);
+  return response.data;
+};
+
+export const createHubDownload = async (
+  source_name: string,
+  dataset_id: string,
+  name: string,
+): Promise<HubDownload> => {
+  const response = await api.post<HubDownload>(`${hubDownloadEndpoint}/`, {
+    source_name,
+    dataset_id,
+    name,
+  });
+  return response.data;
+};
+
+export const deleteHubDownload = async (id: number): Promise<void> => {
+  await api.delete(`${hubDownloadEndpoint}/${id}`);
+};
+
+export const listHubDownloadFiles = async (id: number): Promise<string[]> => {
+  const response = await api.get<string[]>(
+    `${hubDownloadEndpoint}/${id}/files`,
+  );
+  return response.data;
+};

@@ -34,5 +34,19 @@
   "stepPreviewSubtitle": "Revisa la vista previa y ajusta los parametros en el panel derecho.",
   "previewParameters": "Vista previa y parámetros",
   "previewRows": "Filas de vista previa",
-  "previewRowsDescription": "Número de filas para muestrear en la vista previa."
+  "previewRowsDescription": "Número de filas para muestrear en la vista previa.",
+  "downloadToDashAI": "Descargar a DashAI",
+  "startingDownload": "Iniciando descarga...",
+  "downloading": "Descargando...",
+  "downloaded": "Descargado",
+  "downloadFailed": "Descarga fallida",
+  "downloadError": "Ocurrió un error al descargar.",
+  "retry": "Reintentar",
+  "downloadedDatasets": "Datasets Descargados",
+  "statusDownloading": "Descargando...",
+  "statusReady": "Listo",
+  "statusError": "Error",
+  "stepFileTitle": "Seleccionar Archivo",
+  "stepFileSubtitle": "Elige el archivo a importar del dataset descargado.",
+  "noFilesFound": "No se encontraron archivos en esta descarga."
 }

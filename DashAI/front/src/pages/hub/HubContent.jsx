@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
@@ -11,6 +11,14 @@ import DatasetDetail from "../../components/hub/DatasetDetail";
 import HubImportPanel from "../../components/hub/HubImportPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
+import {
+  createHubDownload,
+  deleteHubDownload,
+  getHubDownload,
+  listHubDownloads,
+} from "../../api/hub";
+
+const POLL_INTERVAL_MS = 3000;
 
 export default function HubContent() {
   const threePanelLayout = useThreePanelLayout({ storageKey: "hub" });
@@ -23,7 +31,107 @@ export default function HubContent() {
   const [formHasErrors, setFormHasErrors] = useState(false);
   const formSubmitRef = useRef(null);
 
+  // downloads: map of dataset_id -> HubDownload record
+  const [downloads, setDownloads] = useState({});
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  // download used in the current import flow (from left-bar "Add" button)
+  const [importDownload, setImportDownload] = useState(null);
+
+  const pollTimerRef = useRef(null);
+
   const sourceName = selectedSource?.name ?? null;
+
+  // Load all existing downloads on mount
+  useEffect(() => {
+    listHubDownloads()
+      .then((rows) => {
+        const map = {};
+        for (const r of rows) map[`${r.source_name}::${r.dataset_id}`] = r;
+        setDownloads(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Poll in-progress downloads
+  useEffect(() => {
+    const inProgress = Object.values(downloads).filter(
+      (d) => d.status === "downloading",
+    );
+    if (inProgress.length === 0) {
+      clearInterval(pollTimerRef.current);
+      return;
+    }
+
+    pollTimerRef.current = setInterval(async () => {
+      const updates = await Promise.allSettled(
+        inProgress.map((d) => getHubDownload(d.id)),
+      );
+      setDownloads((prev) => {
+        const next = { ...prev };
+        for (const res of updates) {
+          if (res.status === "fulfilled") {
+            const r = res.value;
+            next[`${r.source_name}::${r.dataset_id}`] = r;
+          }
+        }
+        return next;
+      });
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(pollTimerRef.current);
+  }, [downloads]);
+
+  const getDownloadForDataset = useCallback(
+    (ds) => {
+      if (!ds || !sourceName) return null;
+      return downloads[`${sourceName}::${ds.id}`] ?? null;
+    },
+    [downloads, sourceName],
+  );
+
+  const handleStartDownload = async () => {
+    if (!selectedDataset || !sourceName) return;
+    setDownloadLoading(true);
+    try {
+      const row = await createHubDownload(
+        sourceName,
+        selectedDataset.id,
+        selectedDataset.name,
+      );
+      setDownloads((prev) => ({
+        ...prev,
+        [`${sourceName}::${selectedDataset.id}`]: row,
+      }));
+    } catch {
+      // error shown via download status
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
+
+  const handleDeleteDownload = async (downloadId) => {
+    try {
+      await deleteHubDownload(downloadId);
+      setDownloads((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(next)) {
+          if (next[key].id === downloadId) delete next[key];
+        }
+        return next;
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleImportDownload = (dl) => {
+    setImportDownload(dl);
+    setImportMode(true);
+    setImportStep(0);
+    setSelectedDataloader(null);
+    setFormValues({});
+    setFormHasErrors(false);
+  };
 
   const handleSelectSource = (source) => {
     setSelectedSource(source);
@@ -33,6 +141,7 @@ export default function HubContent() {
     setSelectedDataloader(null);
     setFormValues({});
     setFormHasErrors(false);
+    setImportDownload(null);
   };
 
   const handleImported = () => {
@@ -42,9 +151,11 @@ export default function HubContent() {
     setSelectedDataloader(null);
     setFormValues({});
     setFormHasErrors(false);
+    setImportDownload(null);
   };
 
   const handleStartImport = () => {
+    setImportDownload(getDownloadForDataset(selectedDataset));
     setImportMode(true);
     setImportStep(0);
     setSelectedDataloader(null);
@@ -58,7 +169,10 @@ export default function HubContent() {
     setSelectedDataloader(null);
     setFormValues({});
     setFormHasErrors(false);
+    setImportDownload(null);
   };
+
+  const downloadsList = Object.values(downloads);
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -67,15 +181,28 @@ export default function HubContent() {
           <HubLeftBar
             selectedSource={sourceName}
             onSelectSource={handleSelectSource}
+            downloads={downloadsList}
+            onDeleteDownload={handleDeleteDownload}
+            onImportDownload={handleImportDownload}
           />
         </LeftPanel>
 
         <CenterPanel>
           {importMode ? (
             <HubImportPanel
-              dataset={selectedDataset}
-              sourceName={sourceName}
+              dataset={
+                importDownload
+                  ? {
+                      id: importDownload.dataset_id,
+                      name: importDownload.name,
+                    }
+                  : selectedDataset
+              }
+              sourceName={
+                importDownload ? importDownload.source_name : sourceName
+              }
               compatibleComponents={selectedSource?.compatible_components ?? []}
+              hubDownload={importDownload}
               step={importStep}
               onStepChange={setImportStep}
               selectedLoader={selectedDataloader}
@@ -110,6 +237,9 @@ export default function HubContent() {
             <DatasetDetail
               dataset={selectedDataset}
               sourceName={sourceName}
+              download={getDownloadForDataset(selectedDataset)}
+              downloadLoading={downloadLoading}
+              onStartDownload={handleStartDownload}
               onStartImport={handleStartImport}
             />
           )}

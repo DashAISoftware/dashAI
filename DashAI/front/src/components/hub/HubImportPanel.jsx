@@ -6,10 +6,14 @@ import {
   CircularProgress,
   IconButton,
   Link,
+  List,
+  ListItemButton,
+  ListItemText,
   TextField,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -17,15 +21,23 @@ import { createDataset } from "../../api/datasets";
 import {
   getComponentInfo,
   importHubDataset,
+  listHubDownloadFiles,
   previewHubDataset,
 } from "../../api/hub";
 import ComponentSelector from "../custom/ComponentSelector";
 import PreviewDataset from "../notebooks/datasetCreation/PreviewDataset";
 
+/**
+ * Full-page import panel for Hub datasets.
+ *
+ * Without hubDownload: step 0 = dataloader, step 1 = preview
+ * With hubDownload:    step 0 = file select, step 1 = dataloader, step 2 = preview
+ */
 export default function HubImportPanel({
   dataset,
   sourceName,
   compatibleComponents = [],
+  hubDownload = null,
   step,
   onStepChange,
   selectedLoader,
@@ -44,8 +56,19 @@ export default function HubImportPanel({
   const setStepValue = onStepChange ?? setLocalStep;
   const selectedValue = selectedLoader ?? localSelectedLoader;
 
+  // Whether hub download flow adds an extra file-select step at position 0
+  const hasFileStep = hubDownload != null;
+  // Adjusted step indices for dataloader / preview
+  const dataloaderStep = hasFileStep ? 1 : 0;
+  const previewStep = hasFileStep ? 2 : 1;
+
   const [dataloaders, setDataloaders] = useState([]);
   const [loadingDataloaders, setLoadingDataloaders] = useState(false);
+
+  // File picker state
+  const [files, setFiles] = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const [name, setName] = useState("");
   const [previewData, setPreviewData] = useState(null);
@@ -56,6 +79,7 @@ export default function HubImportPanel({
   const [importing, setImporting] = useState(false);
   const previewDebounceRef = useRef(null);
 
+  // Reset when dataset/source changes
   useEffect(() => {
     if (!dataset || !sourceName) return;
     setStepValue(0);
@@ -67,8 +91,33 @@ export default function HubImportPanel({
     setPreviewError(false);
     setColumnTypes({});
     setColumnRenames({});
+    setSelectedFile(null);
+    setFiles([]);
   }, [dataset?.id, sourceName, onSelectedLoaderChange, setStepValue]);
 
+  // Load files when entering file-select step
+  useEffect(() => {
+    if (!hasFileStep || stepValue !== 0 || !hubDownload) return;
+    let isMounted = true;
+    setLoadingFiles(true);
+    listHubDownloadFiles(hubDownload.id)
+      .then((f) => {
+        if (!isMounted) return;
+        setFiles(f);
+        if (f.length === 1) setSelectedFile(f[0]);
+      })
+      .catch(() => {
+        if (isMounted) setFiles([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingFiles(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [hasFileStep, stepValue, hubDownload?.id]);
+
+  // Load dataloader metadata
   useEffect(() => {
     if (!compatibleComponents.length) {
       setDataloaders([]);
@@ -100,13 +149,12 @@ export default function HubImportPanel({
     };
   }, [compatibleComponents]);
 
+  // Preview
   useEffect(() => {
-    if (stepValue !== 1 || !dataset || !sourceName) return;
+    if (stepValue !== previewStep || !dataset || !sourceName) return;
 
     let isMounted = true;
-    if (previewDebounceRef.current) {
-      clearTimeout(previewDebounceRef.current);
-    }
+    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
 
     setPreviewData(null);
     setPreviewLoading(true);
@@ -118,7 +166,13 @@ export default function HubImportPanel({
       : 100;
 
     previewDebounceRef.current = setTimeout(() => {
-      previewHubDataset(sourceName, dataset.id, effectiveRows, selectedValue?.name, formValues)
+      previewHubDataset(
+        sourceName,
+        dataset.id,
+        effectiveRows,
+        selectedValue?.name,
+        formValues,
+      )
         .then((data) => {
           if (!isMounted) return;
           setPreviewData(data);
@@ -134,12 +188,11 @@ export default function HubImportPanel({
 
     return () => {
       isMounted = false;
-      if (previewDebounceRef.current) {
-        clearTimeout(previewDebounceRef.current);
-      }
+      if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
     };
   }, [
     stepValue,
+    previewStep,
     dataset?.id,
     sourceName,
     selectedValue?.name,
@@ -155,12 +208,17 @@ export default function HubImportPanel({
     setImporting(true);
     try {
       const created = await createDataset(name.trim());
-      await importHubDataset(sourceName, dataset.id, created.id, {
+      const importParams = {
         dataloader: selectedValue.name,
         dataloader_params: formValues,
         inferred_types: columnTypes,
         column_renames: columnRenames,
-      });
+      };
+      if (hubDownload) {
+        importParams.hub_download_id = hubDownload.id;
+        if (selectedFile) importParams.selected_file = selectedFile;
+      }
+      await importHubDataset(sourceName, dataset.id, created.id, importParams);
       enqueueSnackbar(t("hub:importSuccess"), { variant: "success" });
       onImported?.();
     } catch {
@@ -170,7 +228,10 @@ export default function HubImportPanel({
     }
   };
 
-  const canProceed = !!selectedValue?.name;
+  const canProceedFromFile =
+    hasFileStep && stepValue === 0 ? !!selectedFile : true;
+  const canProceed =
+    stepValue === dataloaderStep ? !!selectedValue?.name : canProceedFromFile;
   const canImport =
     !!selectedValue?.name &&
     !!name.trim() &&
@@ -179,6 +240,9 @@ export default function HubImportPanel({
     !!previewData &&
     !formHasErrors &&
     !importing;
+
+  const handleBack = () => setStepValue((s) => s - 1);
+  const handleNext = () => setStepValue((s) => s + 1);
 
   return (
     <Box
@@ -231,7 +295,54 @@ export default function HubImportPanel({
       </Box>
 
       <Box sx={{ p: 2, flex: 1, overflowY: "auto" }}>
-        {stepValue === 0 && (
+        {/* Step 0 (with hubDownload): file selector */}
+        {hasFileStep && stepValue === 0 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box>
+              <Typography variant="h5" component="h1">
+                {t("hub:stepFileTitle")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("hub:stepFileSubtitle")}
+              </Typography>
+            </Box>
+
+            {loadingFiles ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : files.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                {t("hub:noFilesFound")}
+              </Typography>
+            ) : (
+              <List disablePadding>
+                {files.map((f) => (
+                  <ListItemButton
+                    key={f}
+                    selected={selectedFile === f}
+                    onClick={() => setSelectedFile(f)}
+                    sx={{ borderRadius: 1, mb: 0.5 }}
+                  >
+                    <InsertDriveFileIcon
+                      sx={{ mr: 1, fontSize: 18, color: "text.secondary" }}
+                    />
+                    <ListItemText
+                      primary={f}
+                      primaryTypographyProps={{
+                        variant: "body2",
+                        fontFamily: "monospace",
+                      }}
+                    />
+                  </ListItemButton>
+                ))}
+              </List>
+            )}
+          </Box>
+        )}
+
+        {/* Dataloader step */}
+        {stepValue === dataloaderStep && (
           <Box
             sx={{
               display: "flex",
@@ -276,7 +387,8 @@ export default function HubImportPanel({
           </Box>
         )}
 
-        {stepValue === 1 && (
+        {/* Preview step */}
+        {stepValue === previewStep && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
               <Typography variant="h5" component="h1">
@@ -329,15 +441,15 @@ export default function HubImportPanel({
             {t("common:cancel")}
           </Button>
         ) : (
-          <Button variant="outlined" onClick={() => setStepValue(0)}>
+          <Button variant="outlined" onClick={handleBack}>
             {t("common:back")}
           </Button>
         )}
 
-        {stepValue === 0 ? (
+        {stepValue < previewStep ? (
           <Button
             variant="contained"
-            onClick={() => setStepValue(1)}
+            onClick={handleNext}
             disabled={!canProceed}
           >
             {t("common:next")}
