@@ -6,9 +6,17 @@ import {
   Box,
   TextField,
   Tooltip,
+  Chip,
+  Menu,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { TypeChangeValidator } from "./TypeChangeValidator";
+import InferenceReasonPopover from "../dataset/InferenceReasonPopover";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 
@@ -26,16 +34,19 @@ const TYPE_TO_DEFAULT_DTYPE = {
   // Boolean: "bool",  // Boolean is always Categorical
 };
 
+const ENCODER_OPTIONS = ["one_hot", "label"];
+
 /**
  * Table component to display dataset preview with inferred types in column headers.
  *
  * @param {Array} rows - Array of row objects to display
  * @param {Object} columnTypes - Object mapping column names to their inferred types
- *                                (e.g., { columnName: { type: "Categorical", dtype: "string" } })
+ *                                (e.g., { columnName: { type: "Categorical", dtype: "string", encoder: "one_hot" } })
  * @param {File} file - The uploaded file (needed for validation)
  * @param {Object} params - Dataloader parameters (needed for validation)
  * @param {Function} onTypeChange - Callback when types are successfully changed
  * @param {Function} onColumnRename - Callback when a column is renamed (oldName, newName) => void
+ * @param {Function} onEncoderChange - Callback when encoder changes (columnName, encoder) => void
  */
 export default function PreviewDatasetTable({
   rows,
@@ -44,14 +55,45 @@ export default function PreviewDatasetTable({
   params,
   onTypeChange,
   onColumnRename,
+  onEncoderChange,
 }) {
-  const { t } = useTranslation(["common"]);
+  const { t, i18n } = useTranslation(["common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
   const [editingColumn, setEditingColumn] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [columnNames, setColumnNames] = useState({});
+  const [encoderAnchor, setEncoderAnchor] = useState(null);
+  const [encoderAnchorColumn, setEncoderAnchorColumn] = useState(null);
+
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
+
+  const encoderLabel = (enc) => {
+    if (enc === "one_hot") return t("common:encoderOneHot");
+    if (enc === "label") return t("common:encoderLabel");
+    return enc;
+  };
+
+  const handleEncoderClick = (e, columnName) => {
+    e.stopPropagation();
+    setEncoderAnchor(e.currentTarget);
+    setEncoderAnchorColumn(columnName);
+  };
+
+  const handleEncoderClose = () => {
+    setEncoderAnchor(null);
+    setEncoderAnchorColumn(null);
+  };
+
+  const handleEncoderSelect = (newEncoder) => {
+    if (encoderAnchorColumn && onEncoderChange) {
+      onEncoderChange(encoderAnchorColumn, newEncoder);
+    }
+    handleEncoderClose();
+  };
 
   const handleTypeChangeRequest = (columnName, newType) => {
     const currentType = columnTypes[columnName]?.type;
@@ -60,7 +102,13 @@ export default function PreviewDatasetTable({
       return;
     }
 
-    const newDtype = TYPE_TO_DEFAULT_DTYPE[newType] || "string";
+    const currentDtype = columnTypes[columnName]?.dtype;
+    // For Categorical, preserve the column's actual dtype so label encoding
+    // uses the correct numeric type rather than defaulting to string.
+    const newDtype =
+      newType === "Categorical" && currentDtype
+        ? currentDtype
+        : TYPE_TO_DEFAULT_DTYPE[newType] || "string";
 
     setPendingChanges({
       [columnName]: {
@@ -162,13 +210,13 @@ export default function PreviewDatasetTable({
       const displayName = columnNames[field] || field;
 
       return {
-        field,
-        headerName: displayName,
-        minWidth: 150,
-        flex: 1,
-        sortable: false,
-        disableColumnMenu: true,
-        renderHeader: () => (
+        accessorKey: field,
+        header: displayName,
+        minSize: 150,
+        grow: 1,
+        enableSorting: false,
+        enableColumnActions: false,
+        Header: () => (
           <Box
             sx={{
               display: "flex",
@@ -197,11 +245,10 @@ export default function PreviewDatasetTable({
             ) : (
               <Tooltip title={t("common:renameColumn")} arrow>
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   onDoubleClick={() => handleStartEdit(field)}
                   sx={{
                     fontWeight: 600,
-                    fontSize: "0.875rem",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     "&:hover": {
@@ -215,58 +262,97 @@ export default function PreviewDatasetTable({
               </Tooltip>
             )}
 
-            <Select
-              value={columnType?.type || "Text"}
-              onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
-              size="small"
-              disabled={editingColumn === field}
-              sx={{
-                fontSize: "0.75rem",
-                minWidth: 120,
-                "& .MuiSelect-select": {
-                  paddingY: 0.5,
-                  paddingX: 1,
-                },
-              }}
-            >
-              <MenuItem value="Integer">Integer</MenuItem>
-              <MenuItem value="Float">Float</MenuItem>
-              <MenuItem value="Text">Text</MenuItem>
-              <MenuItem value="Categorical">Categorical</MenuItem>
-            </Select>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Select
+                value={columnType?.type || "Text"}
+                onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
+                size="small"
+                disabled={editingColumn === field}
+                sx={{
+                  fontSize: "0.75rem",
+                  minWidth: 120,
+                  "& .MuiSelect-select": {
+                    paddingY: 0.5,
+                    paddingX: 1,
+                  },
+                }}
+              >
+                <MenuItem value="Integer">Integer</MenuItem>
+                <MenuItem value="Float">Float</MenuItem>
+                <MenuItem value="Text">Text</MenuItem>
+                <MenuItem value="Categorical">Categorical</MenuItem>
+              </Select>
+
+              <InferenceReasonPopover
+                columnName={displayName}
+                reason={columnType?.inference_reason}
+              />
+            </Box>
+
+            {columnType?.type === "Categorical" && columnType?.encoder && (
+              <Tooltip title={t("common:changeEncoder")} arrow>
+                <span style={{ display: "inline-flex" }}>
+                  <Chip
+                    label={encoderLabel(columnType.encoder)}
+                    size="small"
+                    onClick={(e) => handleEncoderClick(e, field)}
+                    aria-label={t("common:encoder")}
+                    sx={{
+                      fontSize: "0.65rem",
+                      height: "18px",
+                      cursor: "pointer",
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
           </Box>
         ),
       };
     });
-  }, [rows, columnTypes, columnNames, editingColumn, editValue, t]);
+  }, [
+    rows,
+    columnTypes,
+    columnNames,
+    editingColumn,
+    editValue,
+    encoderAnchorColumn,
+    t,
+  ]);
 
-  const rowsWithIds = useMemo(() => {
-    if (!rows) return [];
-    return rows.map((row, index) => ({
-      id: row.id !== undefined ? row.id : index,
-      ...row,
-    }));
-  }, [rows]);
+  const table = useMaterialReactTable({
+    columns,
+    data: rows ?? [],
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    localization,
+    initialState: {
+      density: "compact",
+      pagination: { pageSize: 5, pageIndex: 0 },
+    },
+    muiTablePaperProps: { elevation: 0 },
+    paginationDisplayMode: "pages",
+  });
 
   return (
     <>
-      <DataGrid
-        rows={rowsWithIds}
-        columns={columns}
-        autoHeight
-        density="compact"
-        disableRowSelectionOnClick
-        initialState={{
-          pagination: { paginationModel: { pageSize: 5 } },
-        }}
-        pageSizeOptions={[5, 10, 25]}
-        columnHeaderHeight={100}
-        sx={{
-          "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "rgba(0, 0, 0, 0.02)",
-          },
-        }}
-      />
+      <MaterialReactTable table={table} />
+
+      <Menu
+        anchorEl={encoderAnchor}
+        open={Boolean(encoderAnchor)}
+        onClose={handleEncoderClose}
+      >
+        {ENCODER_OPTIONS.map((enc) => (
+          <MenuItem
+            key={enc}
+            selected={enc === columnTypes[encoderAnchorColumn]?.encoder}
+            onClick={() => handleEncoderSelect(enc)}
+            sx={{ fontSize: "0.85rem" }}
+          >
+            {encoderLabel(enc)}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <TypeChangeValidator
         open={showValidator}

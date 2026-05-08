@@ -41,6 +41,18 @@ export default function ColumnInsights({
             }),
           });
         }
+
+        if (stats.outliers_count > 0) {
+          items.push({
+            column,
+            tab: TAB_NUMERIC,
+            tag: t("datasets:label.insightTagOutliers"),
+            color: "warning",
+            message: t("datasets:label.insightOutliers", {
+              count: stats.outliers_count,
+            }),
+          });
+        }
       });
     }
 
@@ -108,7 +120,7 @@ export default function ColumnInsights({
           fontSize="small"
           sx={{ color: theme.palette.warning.main }}
         />
-        <Typography variant="subtitle2" fontWeight="bold">
+        <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
           {t("datasets:label.columnInsights")}
         </Typography>
         <Chip

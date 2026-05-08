@@ -1,11 +1,52 @@
 import { useCallback, useMemo } from "react";
 import FormSchemaField from "./FormSchemaField";
+import FormSchemaFieldCard from "./FormSchemaFieldCard";
 import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
 import FormSchemaFieldWithOptimizers from "./FormSchemaFieldWithOptimizers";
 import FormSchemaFieldWithParent from "./FormSchemaFieldWithParent";
 import { getModelFromSubform } from "../../utils/schema";
 import { Stack } from "@mui/material";
+import PropTypes from "prop-types";
+
+// Extracted to its own component so useMemo is called at the top level (Rules of Hooks)
+function SubFieldItem({
+  objName,
+  subField,
+  value,
+  error,
+  handleChange,
+  setError,
+  fieldSubschema,
+}) {
+  const subFieldObj = useMemo(
+    () => ({
+      value: value?.[subField],
+      error: error?.[subField],
+      onChange: handleChange(objName, subField),
+    }),
+    [value, error, objName, subField, handleChange],
+  );
+
+  return (
+    <FormSchemaField
+      objName={`${objName}.${subField}`}
+      setError={setError}
+      paramJsonSchema={fieldSubschema}
+      field={subFieldObj}
+    />
+  );
+}
+
+SubFieldItem.propTypes = {
+  objName: PropTypes.string.isRequired,
+  subField: PropTypes.string.isRequired,
+  value: PropTypes.any,
+  error: PropTypes.any,
+  handleChange: PropTypes.func.isRequired,
+  setError: PropTypes.func,
+  fieldSubschema: PropTypes.object.isRequired,
+};
 
 function FormSchemaRenderFields({
   modelSchema,
@@ -15,11 +56,10 @@ function FormSchemaRenderFields({
   onFormSubmit,
   setError,
   errorsMessage,
-  spacing = 2,
+  spacing = 1,
 }) {
   if (!modelSchema) return null;
 
-  // Handler to update formik values and trigger schema update
   const handleChange = useCallback(
     (name, subName) => (value) => {
       const fieldPath = subName ? `${name}.${subName}` : name;
@@ -49,6 +89,7 @@ function FormSchemaRenderFields({
       };
 
       if ("anyOf" in fieldSchema) {
+        // FormSchemaFieldWithOptions renders its own card
         fields.push(
           <FormSchemaFieldWithOptions
             key={objName}
@@ -62,6 +103,7 @@ function FormSchemaRenderFields({
           />,
         );
       } else if (isOptimizable) {
+        // FormSchemaFieldWithOptimizers renders its own card
         fields.push(
           <FormSchemaFieldWithOptimizers
             key={objName}
@@ -72,6 +114,7 @@ function FormSchemaRenderFields({
         );
       } else if (fieldSchema.type === "object") {
         if (Boolean(fieldSchema?.parent)) {
+          // FormSchemaFieldWithParent renders its own card
           fields.push(
             <FormSchemaFieldWithParent
               key={objName}
@@ -83,6 +126,7 @@ function FormSchemaRenderFields({
             />,
           );
         } else {
+          // FormSchemaFieldWithCollapse renders its own card
           fields.push(
             <FormSchemaFieldWithCollapse
               key={objName}
@@ -92,41 +136,36 @@ function FormSchemaRenderFields({
               errorMessage={errorsMessage?.[objName]?.message}
             >
               {fieldSchema?.properties &&
-                Object.keys(fieldSchema.properties).map((subField) => {
-                  const fieldSubschema = fieldSchema.properties[subField];
-                  const subValue = value?.[subField];
-                  const subError = error?.[subField];
-
-                  const subFieldObj = useMemo(
-                    () => ({
-                      value: subValue,
-                      error: subError,
-                      onChange: handleChange(objName, subField),
-                    }),
-                    [subValue, subError, objName, subField, handleChange],
-                  );
-
-                  return (
-                    <FormSchemaField
-                      key={`${objName}.${subField}`}
-                      objName={`${objName}.${subField}`}
-                      setError={setError}
-                      paramJsonSchema={fieldSubschema}
-                      field={subFieldObj}
-                    />
-                  );
-                })}
+                Object.keys(fieldSchema.properties).map((subField) => (
+                  <SubFieldItem
+                    key={`${objName}.${subField}`}
+                    objName={objName}
+                    subField={subField}
+                    value={value}
+                    error={error}
+                    handleChange={handleChange}
+                    setError={setError}
+                    fieldSubschema={fieldSchema.properties[subField]}
+                  />
+                ))}
             </FormSchemaFieldWithCollapse>,
           );
         }
       } else {
+        // Simple scalar fields — wrap in a card here
         fields.push(
-          <FormSchemaField
+          <FormSchemaFieldCard
             key={objName}
-            objName={objName}
-            paramJsonSchema={fieldSchema}
-            field={baseField}
-          />,
+            label={fieldSchema.title}
+            paramKey={objName}
+            description={fieldSchema.description}
+          >
+            <FormSchemaField
+              objName={objName}
+              paramJsonSchema={fieldSchema}
+              field={baseField}
+            />
+          </FormSchemaFieldCard>,
         );
       }
     }
@@ -143,5 +182,16 @@ function FormSchemaRenderFields({
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }
+
+FormSchemaRenderFields.propTypes = {
+  modelSchema: PropTypes.object,
+  formik: PropTypes.object.isRequired,
+  autoSave: PropTypes.bool,
+  handleUpdateSchema: PropTypes.func.isRequired,
+  onFormSubmit: PropTypes.func,
+  setError: PropTypes.func,
+  errorsMessage: PropTypes.object,
+  spacing: PropTypes.number,
+};
 
 export default FormSchemaRenderFields;

@@ -4,7 +4,18 @@ import ItemMenu from "./ItemMenu";
 import { useTheme } from "@mui/material/styles";
 
 const ItemBox = forwardRef(function ItemBox(
-  { isSelected, name, description, id, onClick, onDelete, onEdit, onInfo },
+  {
+    isSelected,
+    name,
+    description,
+    id,
+    onClick,
+    onDelete,
+    onEdit,
+    onInfo,
+    deleteConfirmationContent,
+    deleteConfirmationWarning,
+  },
   ref,
 ) {
   const [isEditing, setIsEditing] = useState(false);
@@ -124,20 +135,15 @@ const ItemBox = forwardRef(function ItemBox(
               }}
             />
           ) : (
-            <Typography
-              variant="body2"
-              color="text.primary"
-              noWrap
-              sx={{ fontSize: 14 }}
-            >
+            <Typography variant="body1" color="text.primary" noWrap>
               {editedName}
             </Typography>
           )}
           <Typography
-            variant="caption"
+            variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ fontSize: 10, pl: 1 }}
+            sx={{ pl: 1 }}
           >
             {description ? description : ""}
           </Typography>
@@ -148,6 +154,8 @@ const ItemBox = forwardRef(function ItemBox(
         onInfo={onInfo}
         onDelete={onDelete}
         onEdit={handleEdit}
+        deleteConfirmationContent={deleteConfirmationContent}
+        deleteConfirmationWarning={deleteConfirmationWarning}
       />
     </Box>
   );

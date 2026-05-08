@@ -6,10 +6,16 @@ from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class SelectPercentileSchema(BaseSchema):
+    """Configuration schema for the SelectPercentile converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.feature_selection.SelectPercentile``.
+    """
+
     percentile: schema_field(
         int_field(ge=1, le=100),
         10,
@@ -23,7 +29,35 @@ class SelectPercentileSchema(BaseSchema):
 class SelectPercentile(
     FeatureSelectionConverter, SklearnWrapper, SelectPercentileOperation
 ):
-    """SciKit-Learn's SelectPercentile wrapper for DashAI."""
+    """Select the top percentile of features by a univariate statistical test.
+
+    SelectPercentile applies the same univariate scoring approach as
+    ``SelectKBest`` but expresses the number of features to retain as a
+    percentage of all available features rather than as an absolute count.
+    Each feature is scored independently against the target using a chosen
+    statistical function, and the top ``percentile`` percent are kept.
+
+    This makes the selector robust to datasets with varying numbers of input
+    features, since the number of retained features scales automatically with
+    the input dimensionality. It is particularly convenient for grid search
+    experiments where the feature set size may change across cross-validation
+    folds or preprocessing stages.
+
+    Key properties:
+
+    - Supervised: requires the target array ``y`` at fit time.
+    - ``percentile`` is an integer in [1, 100]; setting it to 100 passes all
+      features through unchanged.
+    - Uses the same family of scoring functions as ``SelectKBest``
+      (``f_classif``, ``chi2``, ``mutual_info_classif``, etc.).
+    - Feature ranking is univariate and does not capture interactions.
+
+    Wraps scikit-learn's ``SelectPercentile``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectPercentile.html
+    """
 
     SCHEMA = SelectPercentileSchema
     DESCRIPTION = MultilingualString(
@@ -38,21 +72,33 @@ class SelectPercentile(
         en="Select Percentile", es="Seleccionar Percentil"
     )
     IMAGE_PREVIEW = "select_percentile.png"
-    metadata = {}
+    metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for selected features."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
 
     def __init__(self, **kwargs):
-        if callable(self._get_tags):
-            original_get_tags = self._get_tags
-            self._get_tags = lambda *a, **k: {
-                **original_get_tags(*a, **k),
-                "requires_y": True,
-            }
-        else:
-            self._get_tags = {**self._get_tags, "requires_y": True}
+        """Initialize the SelectPercentile converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         super().__init__(**kwargs)

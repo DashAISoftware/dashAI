@@ -1,17 +1,30 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
+import {
+  Button,
+  Grid,
+  Paper,
+  Typography,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import {
   AddCircleOutline as AddIcon,
   Update as UpdateIcon,
 } from "@mui/icons-material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 import { getPipelines, deletePipeline } from "../../api/pipeline";
 import { formatDate } from "../../utils";
 import { Visibility as ViewIcon } from "@mui/icons-material";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import DeleteItemModal from "../../components/custom/DeleteItemModal";
 
@@ -24,6 +37,11 @@ function PipelinesTable({
   const [pipelines, setPipelines] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const fetchPipelines = async () => {
     setLoading(true);
@@ -63,43 +81,66 @@ function PipelinesTable({
   const columns = useMemo(
     () => [
       {
-        field: "name",
-        headerName: "Name",
-        minWidth: 250,
-        editable: false,
+        accessorKey: "name",
+        header: "Name",
+        minSize: 250,
       },
       {
-        field: "created",
-        headerName: "Created",
-        minWidth: 150,
-        valueGetter: (value) => formatDate(value),
+        accessorKey: "created",
+        header: "Created",
+        minSize: 150,
+        accessorFn: (row) => formatDate(row.created),
       },
       {
-        field: "last_modified",
-        headerName: "Edited",
-        minWidth: 150,
-        valueGetter: (value) => formatDate(value),
+        accessorKey: "last_modified",
+        header: "Edited",
+        minSize: 150,
+        accessorFn: (row) => formatDate(row.last_modified),
       },
       {
-        field: "actions",
-        type: "actions",
-        minWidth: 160,
-        getActions: (params) => [
-          <GridActionsCellItem
-            key="view"
-            icon={<ViewIcon />}
-            label="View"
-            onClick={() => navigate(`/app/pipelines/${params.id}`)}
-          />,
-          <DeleteItemModal
-            key="delete-button"
-            deleteFromTable={() => handleDelete(params.id)}
-          />,
-        ],
+        id: "actions",
+        header: "Actions",
+        minSize: 160,
+        Cell: ({ row }) => (
+          <Grid container spacing={0.5} sx={{ py: 0.5 }}>
+            <Grid>
+              <Tooltip title="View">
+                <IconButton
+                  size="small"
+                  onClick={() => navigate(`/app/pipelines/${row.original.id}`)}
+                >
+                  <ViewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+            <Grid>
+              <DeleteItemModal
+                deleteFromTable={() => handleDelete(row.original.id)}
+              />
+            </Grid>
+          </Grid>
+        ),
       },
     ],
-    [],
+    [navigate],
   );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: pipelines,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: {
+      density: "compact",
+      sorting: [{ id: "last_modified", desc: true }],
+      pagination: { pageSize: 5 },
+    },
+    enableGlobalFilter: true,
+    state: { isLoading: loading },
+    pageSizeOptions: [5, 10],
+  });
 
   return (
     <Paper sx={{ py: 4, px: 6 }}>
@@ -134,24 +175,8 @@ function PipelinesTable({
         </Grid>
       </Grid>
 
-      <DataGrid
-        rows={pipelines}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 5 },
-          },
-        }}
-        sortModel={[{ field: "last_modified", sort: "desc" }]}
-        autoHeight
-        pageSizeOptions={[5, 10]}
-        disableRowSelectionOnClick
-        loading={loading}
-        slots={{
-          toolbar: GridToolbar,
-          loadingOverlay: LinearProgress,
-        }}
-      />
+      {loading && <LinearProgress />}
+      <MaterialReactTable table={table} />
     </Paper>
   );
 }

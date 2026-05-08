@@ -16,7 +16,15 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class TongyiZImageSchema(BaseSchema):
-    """Schema for Tongyi Z-Image generation."""
+    """Configuration schema for Tongyi Z-Image text-to-image generation.
+
+    Configures the checkpoint variant (``model_name``), prompt conditioning
+    (``negative_prompt``), denoising schedule (``num_inference_steps``),
+    classifier-free guidance strength (``guidance_scale``), output dimensions
+    (``width``, ``height``), reproducibility (``seed``), hardware target
+    (``device``), and batch size (``num_images_per_prompt``) for
+    ``TongyiZImageModel``.
+    """
 
     model_name: schema_field(
         enum_field(enum=["Tongyi-MAI/Z-Image", "Tongyi-MAI/Z-Image-Turbo"]),
@@ -187,7 +195,19 @@ class TongyiZImageSchema(BaseSchema):
 
 
 class TongyiZImageModel(TextToImageGenerationTaskModel):
-    """Tongyi Z-Image model for high-quality text-to-image generation."""
+    """Tongyi Z-Image S3-DiT model for high-quality text-to-image generation.
+
+    Wraps Alibaba's 6B-parameter Tongyi Z-Image pipeline. The model uses a
+    novel Sparse Spatial-Spectral Diffusion Transformer (S3-DiT) architecture
+    that processes image tokens in both spatial and spectral domains for
+    efficient high-fidelity generation. It outperforms previous open-source
+    state-of-the-art models while being more parameter-efficient, and excels
+    at photorealism, diverse artistic styles, and accurate text rendering.
+
+    References
+    ----------
+    - [1] https://huggingface.co/Tongyi-MAI/Z-Image
+    """
 
     SCHEMA = TongyiZImageSchema
     COLOR: str = "#e65100"

@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
-  Card,
   CardContent,
   Chip,
   Alert,
@@ -22,11 +21,13 @@ import {
 } from "recharts";
 import { StatBox } from "../StatBox";
 import { MetricRow } from "../MetricRow";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 export const TextTab = ({ textStats }) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
+  const [activeIndices, setActiveIndices] = useState({});
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(textStats).map(([column, stats]) => {
@@ -34,22 +35,22 @@ export const TextTab = ({ textStats }) => {
           {
             label: t("datasets:label.min"),
             value: stats.min_length,
-            color: theme.palette.success.light,
+            color: theme.palette.chart.train,
           },
           {
             label: t("datasets:label.median"),
             value: stats.median_length,
-            color: theme.palette.info.main,
+            color: theme.palette.chart.test,
           },
           {
             label: t("datasets:label.avg"),
             value: stats.avg_length,
-            color: theme.palette.warning.main,
+            color: theme.palette.chart.validation,
           },
           {
             label: t("datasets:label.max"),
             value: stats.max_length,
-            color: theme.palette.error.main,
+            color: theme.palette.primary.main,
           },
         ];
 
@@ -58,7 +59,13 @@ export const TextTab = ({ textStats }) => {
           : null;
 
         return (
-          <Card key={column} data-column-card={column} sx={{ borderRadius: 2 }}>
+          <ExportableCard
+            key={column}
+            filename={`text_${column}`}
+            exportData={{ column, ...stats }}
+            data-column-card={column}
+            sx={{ borderRadius: 2 }}
+          >
             <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
               {/* Title */}
               <Box display="flex" alignItems="center" mb={2}>
@@ -133,11 +140,11 @@ export const TextTab = ({ textStats }) => {
               <Box display="flex" flexWrap="wrap" gap={4}>
                 <Box flex="1 1 300px" minWidth="250px">
                   <Typography
-                    variant="subtitle2"
+                    variant="body1"
                     fontWeight="bold"
                     color="text.primary"
                     gutterBottom
-                    sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                    sx={{ textTransform: "uppercase" }}
                   >
                     {t("datasets:label.lengthMetrics")}
                   </Typography>
@@ -190,6 +197,7 @@ export const TextTab = ({ textStats }) => {
                       <XAxis dataKey="label" />
                       <YAxis />
                       <RechartsTooltip
+                        cursor={false}
                         contentStyle={{
                           backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
@@ -200,15 +208,45 @@ export const TextTab = ({ textStats }) => {
                       />
                       <Bar
                         dataKey="value"
-                        fill="rgba(136, 132, 216, 0.7)"
+                        fill="#8884d8"
                         name={t("common:value")}
-                      />
+                        activeBar={false}
+                        onMouseEnter={(_, index) =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: index,
+                          }))
+                        }
+                        onMouseLeave={() =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: null,
+                          }))
+                        }
+                      >
+                        {lengthData.map((entry, index) => {
+                          const activeIndex = activeIndices[column] ?? null;
+                          return (
+                            <Cell
+                              key={index}
+                              fill="#8884d8"
+                              fillOpacity={
+                                index === activeIndex
+                                  ? 1
+                                  : activeIndex !== null
+                                    ? 0.5
+                                    : 0.7
+                              }
+                            />
+                          );
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
               </Box>
             </CardContent>
-          </Card>
+          </ExportableCard>
         );
       })}
     </Box>

@@ -95,21 +95,20 @@ export default function ColorscaleSelector({ value, onChange }) {
     <Box
       sx={{
         bgcolor: theme.palette.ui.panelDark,
-        p: 2,
+        p: 1.5,
         borderBottom: `1px solid ${theme.palette.ui.borderLight}`,
       }}
     >
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         <Box>
           <Typography
-            variant="subtitle2"
+            variant="body2"
             color="text.secondary"
             sx={{
               fontWeight: 600,
               textTransform: "uppercase",
-              fontSize: "0.75rem",
               letterSpacing: "0.5px",
-              mb: 1.5,
+              mb: 1,
             }}
           >
             {t("datasets:label.colorscaleMode")}
@@ -155,14 +154,13 @@ export default function ColorscaleSelector({ value, onChange }) {
           /* -------- PRESET MODE ---------- */
           <Box>
             <Typography
-              variant="subtitle2"
+              variant="body2"
               color="text.secondary"
               sx={{
                 fontWeight: 600,
                 textTransform: "uppercase",
-                fontSize: "0.75rem",
                 letterSpacing: "0.5px",
-                mb: 1.5,
+                mb: 1,
               }}
             >
               {t("datasets:label.selectColorscale")}
@@ -208,14 +206,13 @@ export default function ColorscaleSelector({ value, onChange }) {
           /* -------- ARRAY MODE ---------- */
           <Box>
             <Typography
-              variant="subtitle2"
+              variant="body2"
               color="text.secondary"
               sx={{
                 fontWeight: 600,
                 textTransform: "uppercase",
-                fontSize: "0.75rem",
                 letterSpacing: "0.5px",
-                mb: 1.5,
+                mb: 1,
               }}
             >
               {t("datasets:label.colorStops")}
@@ -262,7 +259,9 @@ export default function ColorscaleSelector({ value, onChange }) {
                       sx={{ width: "100%" }}
                     >
                       {/* Stop Index Label */}
-                      <Box
+                      <Typography
+                        variant="body1"
+                        component="div"
                         sx={{
                           minWidth: 32,
                           height: 32,
@@ -275,12 +274,11 @@ export default function ColorscaleSelector({ value, onChange }) {
                           alignItems: "center",
                           justifyContent: "center",
                           fontWeight: 600,
-                          fontSize: "0.875rem",
                           color: theme.palette.primary.main,
                         }}
                       >
                         {i + 1}
-                      </Box>
+                      </Typography>
 
                       <TextField
                         label={t("datasets:label.position")}

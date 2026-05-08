@@ -31,14 +31,18 @@ export default function HardwareMonitorButton() {
           onClick={handleClick}
           aria-label={t("common:hardwareMonitor.title")}
           sx={{
-            ml: 1,
-            color:
-              theme.palette.mode === "dark"
-                ? "inherit"
-                : theme.palette.text.primary,
+            width: 32,
+            height: 32,
+            borderRadius: "4px",
+            border: `1px solid ${theme.palette.divider}`,
+            color: theme.palette.text.secondary,
+            "&:hover": {
+              background: theme.palette.ui.hover,
+              color: theme.palette.text.primary,
+            },
           }}
         >
-          <MonitorHeartIcon />
+          <MonitorHeartIcon sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
       <Popover

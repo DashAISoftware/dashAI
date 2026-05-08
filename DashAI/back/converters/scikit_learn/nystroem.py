@@ -17,10 +17,16 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class NystroemSchema(BaseSchema):
+    """Configuration schema for the Nystroem converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.kernel_approximation.Nystroem``.
+    """
+
     kernel: schema_field(
         none_type(string_field()),
         "rbf",
@@ -97,7 +103,41 @@ class NystroemSchema(BaseSchema):
 
 
 class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperation):
-    """Scikit-learn's Nystroem wrapper for DashAI."""
+    """Approximate a kernel feature map using the Nystroem method.
+
+    The Nystroem method constructs an explicit low-dimensional feature map
+    `phi(x)` that approximates an arbitrary kernel `k(x, x') = <phi(x), phi(x')>`,
+    enabling the use of kernel methods with linear-complexity training algorithms.
+    It works by sub-sampling ``n_components`` landmark points from the training
+    data, evaluating the kernel between all training samples and these landmarks,
+    and then normalising the resulting matrix using the Cholesky factor of the
+    kernel matrix evaluated on the landmarks alone.
+
+    The approximation quality improves with ``n_components``: as
+    n_components → n_samples the approximation becomes exact. In practice a
+    small number of landmarks (e.g. a few hundred) is often sufficient.
+    Combining Nystroem with a linear model (e.g. SGDClassifier) provides a
+    scalable alternative to kernel SVMs for large datasets.
+
+    Key properties:
+
+    - Supports any kernel available in scikit-learn (RBF, polynomial, sigmoid,
+      chi2, linear, etc.) as well as callable kernels via ``kernel_params``.
+    - Unsupervised: no labels required at fit time.
+    - Output dimensionality equals ``n_components``, which is independent of
+      the number of input features.
+    - The ``gamma``, ``coef0``, and ``degree`` parameters are passed directly
+      to the chosen kernel function.
+
+    Wraps scikit-learn's ``Nystroem``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.kernel_approximation.Nystroem.html
+    - [2] Williams, C. K. I. & Seeger, M. (2001). "Using the Nyström method to
+        speed up kernel machines." Advances in Neural Information Processing
+        Systems 13 (NIPS 2000), 682-688.
+    """
 
     SCHEMA = NystroemSchema
     DESCRIPTION = MultilingualString(
@@ -117,7 +157,20 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
     )
     IMAGE_PREVIEW = "nystroem.png"
 
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
+        """Initialize the Nystroem converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         self.kernel_params = kwargs.pop("kernel_params", None)
         if self.kernel_params is not None:
             self.kernel_params = parse_string_to_dict(self.kernel_params)
@@ -131,7 +184,19 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for transformed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

@@ -29,8 +29,8 @@ export default function ScopeStepConverter({
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
+  const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
-  const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
   const { t } = useTranslation(["common", "datasets"]);
 
   const handleSubmit = () => {
@@ -101,20 +101,17 @@ export default function ScopeStepConverter({
           gap: 1,
         }}
       >
-        <Typography variant="subtitle2" gutterBottom>
-          {t("datasets:label.selectScopeStep", { step: 1 })}
-        </Typography>
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.secondary }}
+          sx={{ color: theme.palette.text.primary, mb: 0.5 }}
         >
           {t("datasets:label.selectScopeDescriptionColumns")}
         </Typography>
         {/* Scope selection UI */}
         <ColumnSelector
           file_path={notebook.file_path}
+          allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
-          restrictedDtypes={restrictedDtypes}
           onSelectionChange={(columnsInfo) => {
             const processedColumns = columnsInfo.map((col) => ({
               idx: col.id + 1,

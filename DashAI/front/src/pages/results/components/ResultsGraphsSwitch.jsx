@@ -10,7 +10,7 @@ function ResultsGraphsSwitch({ showCustomMetrics, handleToggleMetrics }) {
   return (
     <Box mb={2} display="flex" justifyContent="flex-start" width="100%">
       <Box display="flex" alignItems="center">
-        <Typography variant="subtitle2" style={{ fontSize: "0.8rem" }}>
+        <Typography variant="body1">
           {t("models:label.generalMetrics")}
         </Typography>
       </Box>
@@ -29,7 +29,7 @@ function ResultsGraphsSwitch({ showCustomMetrics, handleToggleMetrics }) {
         />
       </Box>
       <Box display="flex" alignItems="center">
-        <Typography variant="subtitle2" style={{ fontSize: "0.8rem" }}>
+        <Typography variant="body1">
           {t("models:label.customMetrics")}
         </Typography>
       </Box>

@@ -101,11 +101,24 @@ function PreviewDataset({
 
         Object.keys(typeChanges).forEach((columnName) => {
           const change = typeChanges[columnName];
-          updatedTypes[columnName] = {
-            ...updatedTypes[columnName],
+          const prev = updatedTypes[columnName] || {};
+          const updated = {
+            ...prev,
             type: change.new_type,
             dtype: change.new_dtype,
           };
+          // When changing to Categorical, set a default encoder if not already present
+          if (change.new_type === "Categorical" && !updated.encoder) {
+            updated.encoder =
+              change.new_dtype === "int64" || change.new_dtype === "float64"
+                ? "label"
+                : "one_hot";
+          }
+          // When changing away from Categorical, drop encoder
+          if (change.new_type !== "Categorical") {
+            delete updated.encoder;
+          }
+          updatedTypes[columnName] = updated;
         });
 
         if (onTypesChangedRef.current) {
@@ -121,6 +134,19 @@ function PreviewDataset({
     },
     [enqueueSnackbar, onTypesChanged],
   );
+
+  const handleEncoderChange = useCallback((columnName, newEncoder) => {
+    setColumnTypes((prevTypes) => {
+      const updatedTypes = {
+        ...prevTypes,
+        [columnName]: { ...prevTypes[columnName], encoder: newEncoder },
+      };
+      if (onTypesChangedRef.current) {
+        onTypesChangedRef.current(updatedTypes);
+      }
+      return updatedTypes;
+    });
+  }, []);
 
   const handleColumnRename = useCallback(
     (oldName, newName) => {
@@ -250,6 +276,7 @@ function PreviewDataset({
                 params={datasetData.params}
                 onTypeChange={handleTypeChange}
                 onColumnRename={handleColumnRename}
+                onEncoderChange={handleEncoderChange}
               />
             </Box>
           </Box>

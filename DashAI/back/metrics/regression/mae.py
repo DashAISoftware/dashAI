@@ -2,22 +2,51 @@
 
 from typing import TYPE_CHECKING
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class MAE(RegressionMetric):
-    """Mean Absolute Error metric for regression tasks."""
+    """Average of absolute differences between predicted and true values.
 
-    DESCRIPTION: str = (
-        "Average of absolute differences between predicted and actual values, "
-        "provides a clear measure of prediction accuracy."
+    Mean Absolute Error (MAE) is the simplest regression error metric: it
+    computes the mean of the absolute residuals. Unlike MSE or RMSE, MAE
+    treats all errors equally regardless of magnitude, making it more robust
+    to outliers. Its value is expressed in the same unit as the target
+    variable, which aids interpretability.
+
+    ::
+
+        MAE(y, ŷ) = (1/N) · Σᵢ |yᵢ - ŷᵢ|
+
+    Range: [0, +∞), lower is better (``MAXIMIZE = False``).
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html
+    """
+
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Average of absolute differences between predicted and actual values, "
+            "provides a clear measure of prediction accuracy."
+        ),
+        es=(
+            "Promedio de las diferencias absolutas entre valores predichos y reales, "
+            "proporciona una medida clara de la precisión de predicción."
+        ),
     )
 
     @staticmethod
-    def score(true_values: "DashAIDataset", pred_values) -> float:
+    def score(
+        true_values: "DashAIDataset",
+        pred_values: "np.ndarray",
+    ) -> float:
         """Calculate the MAE between true values and predicted values.
 
         Parameters

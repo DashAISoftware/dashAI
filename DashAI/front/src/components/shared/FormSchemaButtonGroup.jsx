@@ -1,5 +1,6 @@
-import { Button, ButtonGroup } from "@mui/material";
-import { t } from "i18next";
+import { Button, Box } from "@mui/material";
+import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 
 function FormSchemaButtonGroup({
   onCancel,
@@ -7,10 +8,14 @@ function FormSchemaButtonGroup({
   autoSave,
   formik,
   error,
-  saveButtonText = t("common:save"),
-  backButtonText = t("common:back"),
+  saveButtonText,
+  backButtonText,
   dataTour,
 }) {
+  const { t } = useTranslation(["common", "datasets"]);
+  const finalSaveText = saveButtonText ?? t("common:save");
+  const finalBackText = backButtonText ?? t("common:back");
+
   const isCreateExplorer =
     saveButtonText === t("datasets:button.createExplorer");
   const isCreateConverter =
@@ -24,10 +29,20 @@ function FormSchemaButtonGroup({
         : undefined);
 
   return (
-    <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
+    <Box
+      size="large"
+      sx={{
+        mt: 2,
+        pt: 2,
+        flexShrink: 0,
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 1,
+      }}
+    >
       {onCancel && (
         <Button variant="outlined" onClick={onCancel}>
-          {backButtonText}
+          {finalBackText}
         </Button>
       )}
       {!autoSave && (
@@ -37,11 +52,22 @@ function FormSchemaButtonGroup({
           disabled={Object.keys(formik?.errors ?? {}).length > 0 || error}
           data-tour={finalDataTour}
         >
-          {saveButtonText}
+          {finalSaveText}
         </Button>
       )}
-    </ButtonGroup>
+    </Box>
   );
 }
+
+FormSchemaButtonGroup.propTypes = {
+  onCancel: PropTypes.func,
+  onFormSubmit: PropTypes.func,
+  autoSave: PropTypes.bool,
+  formik: PropTypes.object,
+  error: PropTypes.bool,
+  saveButtonText: PropTypes.string,
+  backButtonText: PropTypes.string,
+  dataTour: PropTypes.string,
+};
 
 export default FormSchemaButtonGroup;

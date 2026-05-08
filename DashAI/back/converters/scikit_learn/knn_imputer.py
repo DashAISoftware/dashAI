@@ -13,10 +13,18 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class KNNImputerSchema(BaseSchema):
+    """Schema for configuring the KNNImputer converter.
+
+    Wraps ``sklearn.impute.KNNImputer`` and exposes the number of neighbours,
+    distance weighting, distance metric, copy behaviour, indicator stacking,
+    and empty-feature handling as schema fields validated before being
+    forwarded to the underlying scikit-learn estimator.
+    """
+
     n_neighbors: schema_field(
         int_field(ge=1),
         5,
@@ -41,15 +49,6 @@ class KNNImputerSchema(BaseSchema):
             es="La métrica a usar para la imputación.",
         ),
     )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="If True, a copy of X will be created.",
-            es="Si es True, se creará una copia de X.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
     add_indicator: schema_field(
         bool_field(),
         False,
@@ -69,7 +68,27 @@ class KNNImputerSchema(BaseSchema):
 
 
 class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperation):
-    """Scikit-learn's KNNImputer wrapper for DashAI."""
+    """Fill missing values by averaging over the K nearest complete neighbours.
+
+    For each sample that contains missing entries, the ``n_neighbors`` nearest
+    complete samples (those without any missing value in the imputed feature)
+    are located using the ``nan_euclidean`` distance, which handles partially
+    observed vectors by ignoring the missing dimensions during distance
+    computation. The imputed value is then either the uniform mean or the
+    distance-weighted mean of those neighbours, depending on the ``weights``
+    parameter.
+
+    Unlike ``SimpleImputer``, which computes a single global statistic per
+    column, KNN imputation is instance-based and preserves the local
+    correlation structure of the data. All output columns are typed as
+    ``Float64`` in DashAI.
+
+    Wraps ``sklearn.impute.KNNImputer``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.impute.KNNImputer.html
+    """
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = MultilingualString(
@@ -82,11 +101,36 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     DISPLAY_NAME = MultilingualString(en="KNN Imputer", es="Imputador KNN")
     IMAGE_PREVIEW = "knn_imputer.png"
 
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
+        """Initialize the KNNImputer converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. Forwarded to the underlying scikit-learn class.
+        """
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for imputed data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { IconButton, Tooltip } from "@mui/material";
 import FormSchemaDialog from "../shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import { useTranslation } from "react-i18next";
@@ -23,12 +23,18 @@ function EditOptimizerDialog({
 
   return (
     <React.Fragment>
-      <GridActionsCellItem
-        key="edit-button"
-        icon={<SettingsIcon />}
-        label={t("edit")}
-        onClick={() => setOpen(true)}
-      />
+      <Tooltip title={t("edit")}>
+        <span>
+          <IconButton
+            key="edit-button"
+            size="small"
+            aria-label={t("edit")}
+            onClick={() => setOpen(true)}
+          >
+            <SettingsIcon />
+          </IconButton>
+        </span>
+      </Tooltip>
 
       <FormSchemaDialog
         modelToConfigure={optimizerToConfigure}

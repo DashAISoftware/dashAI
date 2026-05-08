@@ -12,30 +12,43 @@ if TYPE_CHECKING:
 
 
 class TabularClassificationTask(ClassificationTask):
-    """Base class for tabular classification tasks.
+    """Task for classifying structured tabular data into discrete categories.
 
-    Here you can change the methods provided by class Task.
+    Tabular classification predicts categorical labels from structured feature
+    tables (rows of observations, columns of features). It accepts numeric
+    (``Float``, ``Integer``) and categorical (``Categorical``) inputs, requires
+    a single categorical output column, and is compatible with all sklearn-based
+    and DashAI tabular classifier models.
     """
 
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Tabular classification in machine learning involves predicting "
-            "categorical labels for structured data organized in tabular form "
-            "(rows and columns). Models are trained to learn patterns and "
-            "relationships in the data, enabling accurate classification of "
-            "new instances."
-        ),
+        en="Predict categorical labels from tabular data (rows and columns).",
         es=(
-            "La clasificación tabular en el aprendizaje automático implica "
-            "predecir etiquetas categóricas para datos estructurados "
-            "organizados en forma tabular (filas y columnas). Los modelos se "
-            "entrenan para aprender patrones y relaciones en los datos, "
-            ", lo que permite una clasificación precisa de nuevas instancias."
+            "Predice etiquetas categóricas a partir de datos tabulares "
+            "(filas y columnas)."
         ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Tabular Classification", es="Clasificación Tabular"
     )
+    SCORING_PROFILES = {
+        "balanced": {
+            "description": "Balanced",
+            "weights": {"Accuracy": 0.3, "F1": 0.4, "ROCAUC": 0.3},
+        },
+        "detectPositives": {
+            "description": "Detect Positives",
+            "weights": {"Recall": 0.6, "F1": 0.3, "Precision": 0.1},
+        },
+        "avoidFalseAlarms": {
+            "description": "Avoid False Alarms",
+            "weights": {"Precision": 0.6, "F1": 0.3, "Recall": 0.1},
+        },
+        "probabilityQuality": {
+            "description": "Probability Quality",
+            "weights": {"ROCAUC": 0.5, "LogLoss": 0.5},
+        },
+    }
     metadata: dict = {
         "inputs_types": [Float, Integer, Categorical],
         "outputs_types": [Categorical],

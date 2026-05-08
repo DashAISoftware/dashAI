@@ -12,7 +12,34 @@ if TYPE_CHECKING:
 
 
 class TextClassificationTask(ClassificationTask):
-    """Base class for Text Classification Task."""
+    """Task for classifying a single text column into discrete categories.
+
+    Text classification takes one input column of type ``Text`` and maps it to
+    one categorical output column. The task covers any NLP scenario where a
+    raw or pre-processed text sequence must be assigned to one of a fixed set
+    of labels, such as sentiment analysis, spam detection, topic labelling, and
+    intent recognition. Compatible models consume the text directly and output
+    a predicted class label for each sample.
+    """
+
+    SCORING_PROFILES = {
+        "text_balanced": {
+            "description": "Balanced",
+            "weights": {"Accuracy": 0.3, "F1": 0.4, "ROCAUC": 0.3},
+        },
+        "text_detectPositives": {
+            "description": "Detect Positives",
+            "weights": {"Recall": 0.6, "F1": 0.3, "Precision": 0.1},
+        },
+        "text_avoidFalseAlarms": {
+            "description": "Avoid False Alarms",
+            "weights": {"Precision": 0.6, "F1": 0.3, "Recall": 0.1},
+        },
+        "text_probabilityQuality": {
+            "description": "Probability Quality",
+            "weights": {"ROCAUC": 0.5, "LogLoss": 0.5},
+        },
+    }
 
     metadata: dict = {
         "inputs_types": [Text],
@@ -22,19 +49,14 @@ class TextClassificationTask(ClassificationTask):
     }
 
     DESCRIPTION: str = MultilingualString(
-        en="""
-    Text classification is an essential Natural Language Processing (NLP) task that
-    involves automatically assigning pre-defined categories or labels to text documents
-    based on their content. It serves as the foundation for applications like sentiment
-    analysis, spam filtering, topic classification, and document categorization.
-    """,
-        es="""
-    La clasificación de texto es una tarea esencial del Procesamiento de Lenguaje
-    Natural (PLN) que implica asignar automáticamente categorías o etiquetas
-    predefinidas a documentos de texto según su contenido. Sirve como base para
-    aplicaciones como el análisis de sentimientos, el filtrado de spam,
-    la clasificación de temas y la categorización de documentos.
-    """,
+        en=(
+            "Classify text into predefined categories. "
+            "E.g.: sentiment, spam, intent detection."
+        ),
+        es=(
+            "Clasifica textos en categorías predefinidas. "
+            "Ej.: sentimiento, spam, intención."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Text Classification", es="Clasificación de Texto"

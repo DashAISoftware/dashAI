@@ -48,6 +48,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW); // "datasets" or "notebooks"
 
   const [rightBarContent, setRightBarContent] = useState(null);
+  const [uploadDataloader, setUploadDataloader] = useState(null);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
 
@@ -88,6 +89,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     setDatasetInfo,
     datasetTab,
     setDatasetTab,
+    uploadDataloader,
+    setUploadDataloader,
   };
 
   return (

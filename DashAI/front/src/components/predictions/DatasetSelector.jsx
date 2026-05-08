@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -11,7 +11,11 @@ import {
   Chip,
 } from "@mui/material";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
-import { getDatasetFile } from "../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetFileFiltered,
+  getDatasetTypesByFilePath,
+} from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 function DatasetSelector({
@@ -21,14 +25,28 @@ function DatasetSelector({
   setSelectedDataset,
 }) {
   const { t } = useTranslation(["prediction", "common"]);
+  const [columnTypes, setColumnTypes] = useState({});
+
+  useEffect(() => {
+    if (!selectedDataset?.file_path) return;
+    getDatasetTypesByFilePath(selectedDataset.file_path)
+      .then(setColumnTypes)
+      .catch(() => {});
+  }, [selectedDataset?.file_path]);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(
-        selectedDataset.file_path,
-        page,
-        pageSize,
-      );
+    async (page, pageSize, filterModel, sortModel) => {
+      const hasFilters =
+        filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
+      const data = hasFilters
+        ? await getDatasetFileFiltered(
+            selectedDataset.file_path,
+            page,
+            pageSize,
+            filterModel,
+            sortModel,
+          )
+        : await getDatasetFile(selectedDataset.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [selectedDataset],
@@ -56,9 +74,9 @@ function DatasetSelector({
       {selectedDataset && (
         <>
           <Alert severity="info" sx={{ mt: 2 }}>
-            <Box sx={{ fontWeight: 600, mb: 1, fontSize: "1rem" }}>
+            <Typography variant="h5" sx={{ mb: 1 }}>
               {t("prediction:label.predictionInfo")}
-            </Box>
+            </Typography>
 
             <Box sx={{ mb: 1 }}>
               <strong>{t("prediction:label.inputColumns")}:</strong>
@@ -90,10 +108,8 @@ function DatasetSelector({
             <DatasetTable
               fetchPage={fetchDatasetPage}
               initialPageSize={10}
-              autoHeight={true}
               datasetPath={selectedDataset.file_path}
-              sx={{ mt: 2 }}
-              slots={{ toolbar: null }}
+              columnTypes={columnTypes}
             />
           </Paper>
         </>

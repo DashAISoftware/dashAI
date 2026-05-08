@@ -1,0 +1,11 @@
+.git/
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+node_modules/
+DashAI/front/.pnp.cjs
+DashAI/front/.pnp.loader.mjs
+DashAI/front/node_modules/
+DashAI/front/build/

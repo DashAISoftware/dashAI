@@ -16,7 +16,15 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 
 
 class StableDiffusionSchema(BaseSchema):
-    """Schema for Stable Diffusion V3 image generation."""
+    """Configuration schema for Stable Diffusion V3 text-to-image generation.
+
+    Configures the checkpoint variant (``model_name``), HuggingFace access key
+    (``huggingface_key``), prompt conditioning (``negative_prompt``),
+    denoising schedule (``num_inference_steps``), prompt adherence
+    (``guidance_scale``), output dimensions (``width``, ``height``),
+    reproducibility (``seed``), hardware target (``device``), and batch size
+    (``num_images_per_prompt``) for ``StableDiffusionV3Model``.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -233,7 +241,26 @@ class StableDiffusionSchema(BaseSchema):
 
 
 class StableDiffusionV3Model(TextToImageGenerationTaskModel):
-    """Wrapper model for all Stable Diffusion 3.x models from stability.ai."""
+    """Multimodal Diffusion Transformer model for high-quality text-to-image generation.
+
+    Wraps the Stable Diffusion 3 and 3.5 family of checkpoints from
+    Stability AI. These models use a Multimodal Diffusion Transformer (MMDiT)
+    architecture that jointly processes text and image tokens, delivering
+    significantly improved prompt adherence, typography, and overall image
+    quality compared to U-Net-based predecessors.
+
+    Four variants are supported: SD3 Medium (2B), SD3.5 Medium (2B, improved),
+    SD3.5 Large (8B, best quality), and SD3.5 Large Turbo (distilled, 4-8
+    steps). All produce images natively at 1024 x 1024 px. Access to these
+    gated models requires a HuggingFace API key.
+
+    References
+    ----------
+    - [1] Esser et al., "Scaling Rectified Flow Transformers for
+           High-Resolution Image Synthesis", 2024.
+           https://arxiv.org/abs/2403.03206
+    - [2] https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers
+    """
 
     SCHEMA = StableDiffusionSchema
     COLOR: str = "#6a1b9a"

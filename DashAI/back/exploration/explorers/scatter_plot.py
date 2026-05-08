@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -19,6 +20,13 @@ if TYPE_CHECKING:
 
 
 class ScatterPlotSchema(BaseExplorerSchema):
+    """Schema for ScatterPlotExplorer hyperparameters.
+
+    Configures the two axis columns plus optional visual channels: ``color_group``
+    for categorical colour encoding, ``simbol_group`` for marker-shape encoding,
+    and ``point_size`` for size-encoding by a third numeric variable.
+    """
+
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -55,9 +63,16 @@ class ScatterPlotSchema(BaseExplorerSchema):
 
 
 class ScatterPlotExplorer(RelationshipExplorer):
-    """
-    ScatterPlotExplorer is an explorer that returns a scatter plot
-    of selected columns of a dataset.
+    """Display a two-dimensional scatter plot to explore relationships between columns.
+
+    Renders each dataset row as a point in a 2-D plane defined by two selected
+    numeric columns. Additional visual channels (colour, marker symbol, point size)
+    can be mapped to further columns to reveal clustering, class separation, or a
+    third quantitative dimension without requiring a higher-dimensional plot.
+
+    A scatter plot is the primary tool for detecting linear and non-linear
+    correlations between two variables and for spotting outliers, heteroscedasticity,
+    or discrete groupings in the joint distribution.
     """
 
     DISPLAY_NAME = MultilingualString(en="Scatter Plot", es="Gráfico de Dispersión")
@@ -75,12 +90,25 @@ class ScatterPlotExplorer(RelationshipExplorer):
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["int64", "float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
         "input_cardinality": {"exact": 2},
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the ScatterPlotExplorer with optional grouping columns.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            color_group (str or int, optional): Column name or index to
+            color-code data points. Defaults to None.
+            simbol_group (str or int, optional): Column name or index to
+            assign point symbols. Defaults to None.
+            point_size (str or int, optional): Column name or index to
+            set the size of each point. Defaults to None.
+        """
         self.color_column = kwargs.get("color_group")
         self.simbol_column = kwargs.get("simbol_group")
         self.size_column = kwargs.get("point_size")
@@ -89,6 +117,24 @@ class ScatterPlotExplorer(RelationshipExplorer):
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend column selection to include optional grouping columns.
+
+        Appends color, symbol, and size columns to the selection list if they
+        are configured and not already present.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset.
+        columns : List[Dict[str, Any]]
+            Explicitly selected column descriptors.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset containing the selected columns plus any
+            optional grouping columns.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -131,6 +177,21 @@ class ScatterPlotExplorer(RelationshipExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly scatter plot for two selected columns.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The prepared dataset with the required columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive scatter plot figure.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -162,6 +223,29 @@ class ScatterPlotExplorer(RelationshipExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the scatter plot figure to disk (JSON content, ``.pickle`` extension).
+
+        Notes
+        -----
+        Despite the ``.pickle`` file extension, the file is written using
+        ``write_json`` and contains JSON-serialized Plotly figure data.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -174,6 +258,22 @@ class ScatterPlotExplorer(RelationshipExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved scatter plot for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         from plotly.io import read_json
 
         resultType = "plotly_json"

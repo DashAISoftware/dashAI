@@ -17,10 +17,16 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class PCASchema(BaseSchema):
+    """Configuration schema for the PCA converter.
+
+    Defines and validates the hyperparameters passed to
+    ``sklearn.decomposition.PCA``.
+    """
+
     n_components: schema_field(
         none_type(
             union_type(
@@ -36,21 +42,6 @@ class PCASchema(BaseSchema):
                 "todas las componentes."
             ),
         ),
-    )  # type: ignore
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en=(
-                "If False, data passed to fit are overwritten. Use "
-                "fit_transform(X) instead of fit(X).transform(X)."
-            ),
-            es=(
-                "Si es False, los datos pasados a fit se sobrescriben. Usa "
-                "fit_transform(X) en lugar de fit(X).transform(X)."
-            ),
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
     whiten: schema_field(
         bool_field(),
@@ -142,7 +133,42 @@ class PCASchema(BaseSchema):
 
 
 class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
-    """Scikit-learn's PCA wrapper for DashAI."""
+    """Reduce dimensionality using Principal Component Analysis (PCA).
+
+    PCA finds a set of orthogonal axes (principal components) that successively
+    capture the greatest amount of variance in the data. Given a centered data
+    matrix X of shape (n_samples, n_features), the method computes the
+    eigen-decomposition of the covariance matrix X^T X / (n-1), retaining only
+    the top ``n_components`` eigenvectors. The data are then projected onto this
+    lower-dimensional subspace.
+
+    PCA is well suited for preprocessing high-dimensional continuous data before
+    applying machine learning models, for visualisation of multivariate datasets,
+    and for noise reduction. The ``whiten`` option rescales each component to
+    unit variance, which can improve the performance of downstream estimators that
+    assume spherical features (e.g. RBF-kernel SVMs).
+
+    Key properties:
+
+    - Linear, unsupervised transformation.
+    - Components are ordered by descending explained variance.
+    - Setting ``n_components`` to a float in (0, 1) automatically selects the
+      number of components needed to explain that fraction of total variance.
+    - ``n_components='mle'`` uses Minka's MLE to estimate the intrinsic
+      dimensionality of the data.
+    - Supports full, randomized, and ARPACK solvers for scalability.
+
+    Wraps scikit-learn's ``PCA``.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    - [2] Pearson, K. (1901). "On lines and planes of closest fit to systems of
+        points in space." Philosophical Magazine, 2(11), 559-572.
+    - [3] Hotelling, H. (1933). "Analysis of a complex of statistical variables
+        into principal components." Journal of Educational Psychology, 24(6),
+        417-441.
+    """
 
     SCHEMA = PCASchema
     DESCRIPTION = MultilingualString(
@@ -166,9 +192,25 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         es="Análisis de Componentes Principales (PCA)",
     )
     IMAGE_PREVIEW = "pca.png"
-    metadata = {}
+
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
 
     def __init__(self, **kwargs):
+        """Initialize the PCA converter.
+
+        Handles the ``"RandomState"`` sentinel for ``random_state`` by converting
+        it to a new ``numpy.RandomState`` instance at initialization time.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching ``PCASchema`` fields.
+            If ``random_state`` is ``"RandomState"``, a fresh ``numpy.RandomState``
+            instance is created automatically.
+        """
         self.random_state = kwargs.pop("random_state", None)
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
@@ -177,7 +219,19 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for PCA components."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

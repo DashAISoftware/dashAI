@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -19,6 +20,13 @@ if TYPE_CHECKING:
 
 
 class ParallelCordinatesSchema(BaseExplorerSchema):
+    """Schema for ParallelCordinatesExplorer hyperparameters.
+
+    Configures the optional colour dimension used to colour-code lines in the
+    parallel coordinates plot. All numeric columns to be displayed are selected
+    via the base schema's column-selection mechanism.
+    """
+
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
@@ -31,9 +39,17 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
 
 
 class ParallelCordinatesExplorer(MultidimensionalExplorer):
-    """
-    Parallel Cordinates Explorer is a class that generates a parallel cordinates plot
-    for a given dataset.
+    """Visualise multi-dimensional numeric data as a parallel coordinates plot.
+
+    Each row in the dataset is drawn as a polyline that passes through a series
+    of parallel vertical axes, one per selected numeric column. The position of
+    each line segment on an axis encodes the value of the corresponding feature
+    for that sample. Lines can be coloured by a separate column to reveal class
+    separation or clustering structure across all dimensions simultaneously.
+
+    Parallel coordinates are particularly effective for identifying correlated
+    features, detecting outliers, and exploring high-dimensional datasets where
+    a scatter matrix would become too large to interpret.
     """
 
     DISPLAY_NAME = MultilingualString(
@@ -54,18 +70,42 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
 
     SCHEMA = ParallelCordinatesSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["float64", "float32", "int64"],
-        "restricted_dtypes": [],
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
         "input_cardinality": {"min": 2},
     }
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the ParallelCordinatesExplorer with an optional color column.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments. Recognized keys:
+            color_column (str or int, optional): Column name or index used
+            to color each line. Defaults to None.
+        """
         self.color_column: Union[str, int, None] = kwargs.get("color_column")
         super().__init__(**kwargs)
 
     def prepare_dataset(
         self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
     ) -> "DashAIDataset":
+        """Extend column selection to include the optional color column.
+
+        Parameters
+        ----------
+        loaded_dataset : DashAIDataset
+            The full dataset.
+        columns : List[Dict[str, Any]]
+            Explicitly selected column descriptors.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset containing the selected columns plus the
+            optional color column.
+        """
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -84,6 +124,25 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
+        """Generate a Plotly parallel coordinates plot for the selected columns.
+
+        Each line in the plot represents one data row, crossing a vertical axis
+        for each selected feature. Useful for visualizing patterns across many
+        numeric dimensions simultaneously.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The prepared dataset with at least two columns.
+        explorer_info : Explorer
+            Explorer record with column names and optional
+            display name.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            An interactive parallel coordinates figure.
+        """
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -108,6 +167,24 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
         save_path: "Path",
         result: Any,
     ) -> str:
+        """Save the parallel coordinates figure to a JSON file on disk.
+
+        Parameters
+        ----------
+        __notebook_info__ : Notebook
+            The notebook database record (unused).
+        explorer_info : Explorer
+            The explorer record used for filename generation.
+        save_path : Path
+            Directory where the file will be saved.
+        result : Any
+            The Plotly figure returned by `launch_exploration`.
+
+        Returns
+        -------
+        str
+            The path of the saved JSON file as a POSIX string.
+        """
         import os
         from pathlib import Path
 
@@ -120,6 +197,22 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Load and return the saved parallel coordinates plot for the frontend.
+
+        Parameters
+        ----------
+        exploration_path : str
+            Path to the JSON file saved by `save_notebook`.
+        options : Dict[str, Any]
+            Rendering options from the frontend (unused).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with keys ``"data"`` (JSON-serialized
+            Plotly figure), ``"type"`` (``"plotly_json"``), and
+            ``"config"`` (empty dict).
+        """
         import plotly.io as pio
 
         resultType = "plotly_json"

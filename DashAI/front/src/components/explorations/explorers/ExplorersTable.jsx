@@ -1,8 +1,15 @@
 import React, { useCallback } from "react";
 import PropTypes from "prop-types";
 
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { Grid, Paper, Typography } from "@mui/material";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
+import { MRT_Localization_ES } from "material-react-table/locales/es";
+import { MRT_Localization_EN } from "material-react-table/locales/en";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
+import { Box, Grid, Paper, Typography } from "@mui/material";
 
 import DeleteItemModal from "../../custom/DeleteItemModal";
 import EditParametersDialog from "./EditParametersDialog";
@@ -18,6 +25,11 @@ function ExplorersTable({ explorerTypes = [] }) {
   const { explorationData, setExplorationData, datasetColumns } =
     useExplorationsContext();
   const { explorers } = explorationData;
+  const { i18n } = useTranslation();
+  const theme = useTheme();
+  const localization = i18n.language.startsWith("es")
+    ? MRT_Localization_ES
+    : MRT_Localization_EN;
 
   const handleDeleteExplorer = useCallback(
     (id) => {
@@ -61,59 +73,56 @@ function ExplorersTable({ explorerTypes = [] }) {
   const columns = React.useMemo(
     () => [
       {
-        field: "name",
-        headerName: "Name",
-        minWidth: 200,
-        flex: 1,
+        accessorKey: "name",
+        header: "Name",
+        minSize: 200,
+        grow: 1,
       },
       {
-        field: "label",
-        headerName: "Type",
-        minWidth: 200,
-        flex: 1,
-        valueGetter: (value, row) => {
-          const actualRow = value && value.row ? value.row : row;
-          if (!actualRow) return "";
+        id: "label",
+        header: "Type",
+        minSize: 200,
+        grow: 1,
+        accessorFn: (row) => {
           const explorerType = explorerTypes.find(
-            (explorer) => explorer.type === actualRow.exploration_type,
+            (explorer) => explorer.type === row.exploration_type,
           );
-          return explorerType?.label || actualRow.exploration_type || "";
+          return explorerType ? explorerType.label : "";
         },
       },
       {
-        field: "exploration_type",
-        headerName: "Component Name",
-        minWidth: 200,
-        flex: 1,
+        accessorKey: "exploration_type",
+        header: "Component Name",
+        minSize: 200,
+        grow: 1,
       },
       {
-        field: "actions",
-        headerName: "Actions",
-        type: "actions",
-        minWidth: 100,
-        flex: 0.5,
-        getActions: (params) => [
-          <EditColumnsDialog
-            key="edit-columns"
-            datasetColumns={datasetColumns}
-            updateValue={handleUpdateColumns(params.id)}
-            initialValues={params.row.columns}
-            explorerType={explorerTypes.find(
-              (explorer) => explorer.type === params.row.exploration_type,
-            )}
-          />,
-
-          <EditParametersDialog
-            key="edit-component"
-            componentToConfigure={params.row.exploration_type}
-            updateParameters={handleUpdateParameters(params.id)}
-            paramsInitialValues={params.row.parameters}
-          />,
-          <DeleteItemModal
-            key="delete-component"
-            deleteFromTable={() => handleDeleteExplorer(params.id)}
-          />,
-        ],
+        id: "actions",
+        header: "Actions",
+        minSize: 100,
+        grow: 0.5,
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <EditColumnsDialog
+              datasetColumns={datasetColumns}
+              updateValue={handleUpdateColumns(row.original.id)}
+              initialValues={row.original.columns}
+              explorerType={explorerTypes.find(
+                (explorer) => explorer.type === row.original.exploration_type,
+              )}
+            />
+            <EditParametersDialog
+              componentToConfigure={row.original.exploration_type}
+              updateParameters={handleUpdateParameters(row.original.id)}
+              paramsInitialValues={row.original.parameters}
+            />
+            <DeleteItemModal
+              deleteFromTable={() => handleDeleteExplorer(row.original.id)}
+            />
+          </Box>
+        ),
       },
     ],
     [
@@ -124,6 +133,20 @@ function ExplorersTable({ explorerTypes = [] }) {
       handleUpdateParameters,
     ],
   );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: explorers,
+    muiTableBodyCellProps: { sx: { whiteSpace: "pre" } },
+    mrtTheme: { baseBackgroundColor: theme.palette.ui.panelDark },
+    muiTablePaperProps: { elevation: 0 },
+    localization,
+    initialState: {
+      density: "compact",
+      columnVisibility: { exploration_type: false },
+    },
+    enableGlobalFilter: true,
+  });
 
   return (
     <Paper sx={{ py: 1, px: 2 }}>
@@ -141,34 +164,7 @@ function ExplorersTable({ explorerTypes = [] }) {
       </Grid>
 
       {/* Models Table */}
-      <DataGrid
-        slots={{
-          toolbar: GridToolbar,
-        }}
-        slotProps={{
-          toolbar: {
-            showQuickFilter: true,
-          },
-        }}
-        rows={explorers}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-          columns: {
-            columnVisibilityModel: {
-              exploration_type: false,
-            },
-          },
-        }}
-        pageSizeOptions={[5, 10]}
-        density="compact"
-        autoHeight
-        disableRowSelectionOnClick
-      />
+      <MaterialReactTable table={table} />
     </Paper>
   );
 }

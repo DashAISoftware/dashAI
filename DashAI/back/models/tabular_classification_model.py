@@ -1,4 +1,8 @@
 class TabularClassificationModel:
-    """Class for models associated to TabularClassificationTask."""
+    """Base mixin for models that perform tabular classification tasks.
+
+    Concrete tabular classification models should extend this class alongside
+    a model implementation class. Compatible with ``TabularClassificationTask``.
+    """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]

@@ -15,9 +15,9 @@ const SingleSelectChipGroup = ({ options, onChange, selected }) => {
   };
 
   return (
-    <Grid container spacing={1}>
+    <Grid container spacing={1} role="group" aria-label="type selector">
       {options.map((option, index) => (
-        <Grid key={"option-" + option.key + "-" + index}>
+        <Grid key={"option-" + option.key + "-" + index} size="auto">
           <Chip
             label={option.label}
             sx={{ borderRadius: 2 }}

@@ -1,74 +1,101 @@
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { FormControlLabel, Switch, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import OptimizeIntegerInput from "../configurableObject/Inputs/IntegerInputOptimize";
 import OptimizeNumberInput from "../configurableObject/Inputs/NumberInputOptimize";
+import FormSchemaFieldCard from "./FormSchemaFieldCard";
 
 /**
- * This function takes JSON object that describes a configurable object
- * and dynamically generates a form by mapping the type of each parameter
- * to the corresponding Input component defined in the Inputs folder.
- * @param {string} objName name of the configurable object
- * @param {object} paramJsonSchema the json object to map into an input
- * @param {object} field object that contains the value of the parameter and a function to set the value
- * @param {string} error error message to display
- *
+ * Renders an optimizable numeric field (integer or number) inside a FormSchemaFieldCard.
+ * The optimize toggle lives in the card header; the input body shows fixed value or
+ * lower/upper bounds depending on the switch state.
  */
-function FormSchemaFieldWithOptimizers({
-  objName,
-  paramJsonSchema,
-  field,
-  setError,
-  error,
-}) {
+function FormSchemaFieldWithOptimizers({ objName, paramJsonSchema, field }) {
   const { type } = paramJsonSchema;
+  const { t } = useTranslation(["common"]);
 
-  const handleSetError = (error) => {
-    setErrorField(error);
-    setError && setError(Boolean(error));
+  const canOptimize = paramJsonSchema?.placeholder?.optimize !== undefined;
+
+  const initialOptimize =
+    field?.value?.optimize ?? paramJsonSchema?.placeholder?.optimize ?? false;
+  const [switchState, setSwitchState] = useState(initialOptimize);
+
+  useEffect(() => {
+    setSwitchState(
+      field?.value?.optimize ?? paramJsonSchema?.placeholder?.optimize ?? false,
+    );
+  }, [field?.value?.optimize, paramJsonSchema?.placeholder?.optimize]);
+
+  const handleSwitchChange = () => {
+    const toggled = !switchState;
+    setSwitchState(toggled);
+    const placeholder = paramJsonSchema?.placeholder;
+    const hasError = field?.error !== undefined;
+    field.onChange({
+      fixed_value: hasError
+        ? (placeholder?.fixed_value ?? null)
+        : (field?.value?.fixed_value ?? null),
+      lower_bound: hasError
+        ? (placeholder?.lower_bound ?? null)
+        : (field?.value?.lower_bound ?? null),
+      upper_bound: hasError
+        ? (placeholder?.upper_bound ?? null)
+        : (field?.value?.upper_bound ?? null),
+      optimize: toggled,
+    });
   };
 
-  const optimize = paramJsonSchema?.placeholder?.optimize;
-
-  const onChange = (value) => {};
-
-  // Props that are common to almost all form inputs
+  const optimizeToggle = canOptimize ? (
+    <FormControlLabel
+      label={
+        <Typography variant="caption" color="text.secondary">
+          {t("common:optimize")}
+        </Typography>
+      }
+      labelPlacement="start"
+      control={
+        <Switch
+          size="small"
+          checked={switchState}
+          onChange={handleSwitchChange}
+        />
+      }
+      sx={{ mr: 0, gap: 0.5 }}
+    />
+  ) : null;
 
   const commonProps = {
     name: objName,
     value: field?.value,
     label: paramJsonSchema.title,
     onChange: field?.onChange,
-    error: field?.error || error || undefined,
+    error: field?.error || undefined,
     description: paramJsonSchema?.description,
+    placeholder: paramJsonSchema?.placeholder,
+    externalSwitchState: switchState,
   };
 
-  if (!objName) {
-    return null;
-  }
-
-  switch (type) {
-    case "integer":
-      return (
-        <OptimizeIntegerInput
-          {...commonProps}
-          placeholder={paramJsonSchema.placeholder}
-        />
-      );
-    case "number":
-      return (
-        <OptimizeNumberInput
-          {...commonProps}
-          placeholder={paramJsonSchema.placeholder}
-        />
-      );
-  }
+  return (
+    <FormSchemaFieldCard
+      label={paramJsonSchema.title}
+      paramKey={objName}
+      description={paramJsonSchema?.description}
+      headerRight={optimizeToggle}
+    >
+      {type === "integer" ? (
+        <OptimizeIntegerInput {...commonProps} />
+      ) : (
+        <OptimizeNumberInput {...commonProps} />
+      )}
+    </FormSchemaFieldCard>
+  );
 }
 
 FormSchemaFieldWithOptimizers.propTypes = {
   objName: PropTypes.string,
   paramJsonSchema: PropTypes.object,
   field: PropTypes.object,
-  error: PropTypes.string,
 };
 
 export default FormSchemaFieldWithOptimizers;

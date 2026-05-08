@@ -16,9 +16,19 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 
 class OrdinalEncoderSchema(BaseSchema):
+    """Schema for OrdinalEncoder hyperparameters.
+
+    Configures the category ordering, output dtype, unknown-value handling,
+    and infrequent-category grouping for sklearn's ``OrdinalEncoder``. The
+    ``handle_unknown`` field determines whether an unseen category at
+    transform time raises an error or is replaced by a sentinel value
+    specified in ``unknown_value``.
+    """
+
     categories: schema_field(
         string_field(),
         "auto",
@@ -28,8 +38,8 @@ class OrdinalEncoderSchema(BaseSchema):
         ),
     )  # type: ignore
     dtype: schema_field(
-        enum_field(["np.int32", "np.int64", "np.float32", "np.float64"]),
-        "np.float64",
+        enum_field(["int32", "int64"]),
+        "int64",
         description=MultilingualString(
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
@@ -78,7 +88,30 @@ class OrdinalEncoderSchema(BaseSchema):
 
 
 class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation):
-    """Scikit-learn's OrdinalEncoder wrapper for DashAI."""
+    """Encode categorical feature columns as integer ordinal codes.
+
+    For each input feature column every unique category value is mapped to a
+    contiguous integer starting at 0. Given categories ``["cold", "warm",
+    "hot"]`` sorted alphabetically the default mapping would be
+    ``cold -> 0``, ``hot -> 1``, ``warm -> 2``; a custom category list can
+    be supplied to impose a domain-specific order.
+
+    Unlike ``OneHotEncoder``, ordinal encoding produces a single output
+    column per input column and implicitly encodes a numerical order between
+    the categories. This makes it appropriate when:
+
+    * The categories have a meaningful rank (e.g. education level, severity
+      score, shirt size).
+    * The downstream model can exploit ordinal structure (e.g. tree-based
+      models such as gradient-boosted trees or random forests).
+
+    For unordered nominal categories, ``OneHotEncoder`` is typically
+    preferred because ordinal codes introduce a spurious ordering.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OrdinalEncoder.html
+    """
 
     SCHEMA = OrdinalEncoderSchema
     DESCRIPTION = MultilingualString(
@@ -88,12 +121,25 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     DISPLAY_NAME = MultilingualString(en="Ordinal Encoder", es="Codificador Ordinal")
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
+    PREFIX = "oe_"
+
     metadata = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_types": [Categorical],
+        "allowed_dtypes": [],
     }
 
     def __init__(self, **kwargs):
+        """Initialize the OrdinalEncoder converter.
+
+        Parameters
+        ----------
+        **kwargs
+            Configuration keyword arguments matching the converter's
+            schema fields. ``dtype``, ``unknown_value``, and
+            ``min_frequency`` string values are cast to their corresponding
+            NumPy or Python types before being forwarded to the underlying
+            scikit-learn class.
+        """
         self.dtype = kwargs.pop("dtype", "np.float64")
         self.dtype = cast_string_to_type(self.dtype)
         kwargs["dtype"] = self.dtype
@@ -111,12 +157,24 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """
-        Returns Categorical type with encoded values.
-        After fitting, categories are encoded as integers.
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A placeholder ``Integer`` type with the same dtype
+            as the encoder's output. The actual categories will
+            be set by sklearn_wrapper's transform method.
+
         """
         import pyarrow as pa
 
         # Return a placeholder categorical type
         # The actual categories will be set by sklearn_wrapper's transform method
-        return Categorical(values=pa.array(["0", "1"]))
+        return Integer(arrow_type=pa.from_numpy_dtype(self.dtype))

@@ -251,6 +251,7 @@ export default function InlineExplainerCreator({
 
       await enqueueExplainerJob(response.id);
       await loadExistingExplainers();
+      if (onCreated) onCreated();
       return true;
     } catch (error) {
       enqueueSnackbar(
@@ -314,7 +315,7 @@ export default function InlineExplainerCreator({
             {steps.map((step, index) => (
               <Step
                 key={step.name}
-                completed={activeStep > index}
+                completed={false}
                 disabled={activeStep < index}
               >
                 <StepButton color="inherit" onClick={handleStepButton(index)}>

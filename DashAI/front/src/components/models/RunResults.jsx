@@ -82,6 +82,16 @@ export default function RunResults({
     fetchOperations();
   }, [fetchOperations, explainerRefreshTrigger]);
 
+  const hasRunningExplainers =
+    globalExplainers.some((e) => e.status === 1 || e.status === 2) ||
+    localExplainers.some((e) => e.status === 1 || e.status === 2);
+
+  useEffect(() => {
+    if (!hasRunningExplainers) return;
+    const interval = setInterval(fetchOperations, 3000);
+    return () => clearInterval(interval);
+  }, [hasRunningExplainers, fetchOperations]);
+
   useEffect(() => {
     const handleOpenDialog = (event) => {
       if (event.detail.runId === run.id) {

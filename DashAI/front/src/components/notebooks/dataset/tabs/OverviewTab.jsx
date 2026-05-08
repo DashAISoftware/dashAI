@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Card, CardContent, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -9,14 +9,17 @@ import {
   YAxis,
   Tooltip,
   Bar,
+  Cell,
 } from "recharts";
-import MrtDatasetTable from "../MrtDatasetTable";
+import DatasetTable from "../DatasetTable";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../../utils";
 
 const OverviewTab = ({
   dataset,
   dtypes,
+  columnTypes,
   nan,
   total_rows,
   fetchDatasetPage,
@@ -25,6 +28,7 @@ const OverviewTab = ({
   const { t } = useTranslation(["datasets", "common"]);
 
   const theme = useTheme();
+  const [activeBarIndex, setActiveBarIndex] = useState(null);
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
     missing: count,
@@ -74,7 +78,7 @@ const OverviewTab = ({
               ))}
             </Box>
           </Box>
-          <MrtDatasetTable
+          <DatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
             initialPageSize={10}
@@ -82,19 +86,27 @@ const OverviewTab = ({
             datasetId={dataset.id}
             onEditColumn={onEditColumnName}
             editableColumns={true}
-            columnTypes={dtypes}
+            columnTypes={
+              columnTypes && Object.keys(columnTypes).length > 0
+                ? columnTypes
+                : dtypes
+            }
           />
         </CardContent>
       </Card>
       {/* Missing Values Overview — only shown when there are missing values */}
       {missingData.some((data) => data.missing > 0) && (
-        <Card data-section="missing-values-overview">
+        <ExportableCard
+          filename="missing_values_overview"
+          exportData={missingData}
+          data-section="missing-values-overview"
+        >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                gap: 1,
                 mb: 1,
               }}
             >
@@ -102,7 +114,10 @@ const OverviewTab = ({
                 {t("datasets:label.missingValuesOverview")}
               </Typography>
               <Chip
-                label={`Total: ${Object.values(nan).reduce((sum, v) => sum + v, 0)}`}
+                label={`Total: ${Object.values(nan).reduce(
+                  (sum, v) => sum + v,
+                  0,
+                )}`}
                 size="small"
                 variant="outlined"
                 sx={{ fontWeight: "bold" }}
@@ -110,11 +125,18 @@ const OverviewTab = ({
             </Box>
             <Box sx={{ width: "100%", height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={missingData}>
+                <BarChart data={missingData} margin={{ bottom: 120 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="column" />
+                  <XAxis
+                    dataKey="column"
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
+                  />
                   <YAxis />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: theme.palette.background.paper,
                       borderRadius: 4,
@@ -125,14 +147,31 @@ const OverviewTab = ({
                   />
                   <Bar
                     dataKey="missing"
-                    fill="rgba(136, 132, 216, 0.7)"
+                    fill="#8884d8"
                     name={t("common:missing")}
-                  />
+                    activeBar={false}
+                    onMouseEnter={(_, index) => setActiveBarIndex(index)}
+                    onMouseLeave={() => setActiveBarIndex(null)}
+                  >
+                    {missingData.map((_, index) => (
+                      <Cell
+                        key={index}
+                        fill="#8884d8"
+                        fillOpacity={
+                          index === activeBarIndex
+                            ? 1
+                            : activeBarIndex !== null
+                              ? 0.5
+                              : 0.7
+                        }
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </Box>
           </CardContent>
-        </Card>
+        </ExportableCard>
       )}
     </Box>
   );

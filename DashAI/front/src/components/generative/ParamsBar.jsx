@@ -14,7 +14,6 @@ import {
 import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
-import { ChevronRight } from "@mui/icons-material";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
 
@@ -124,124 +123,108 @@ export default function ParamsBar({ onToggle }) {
     <SideBar>
       <Box
         sx={{
+          p: 2,
+          borderBottom: `1px solid ${theme.palette.ui.border}`,
+          flexShrink: 0,
           display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          height: "100%",
-          width: "100%",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          height: 64,
         }}
       >
-        <Box
-          sx={{
-            p: 2,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            height: 70,
-          }}
-        >
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronRight />
-          </IconButton>
-          <Typography variant="h6">{t("common:modelParameters")}</Typography>
+        <Typography variant="h6" color="text.primary">
+          {t("common:modelParameters")}
+        </Typography>
 
-          {/* Parameter History Modal */}
-          {selectedSessionId && (
-            <IconButton
-              onClick={() => {
-                getHistory();
-                setHistoryInfoVisible(true);
-              }}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <HistoryIcon
-                sx={{
-                  color: "primary.main",
-                }}
-              />
-            </IconButton>
-          )}
-        </Box>
-        {/* Divider */}
-        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
-        {selectedSessionId ? (
-          <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
-            <form onSubmit={formik.handleSubmit}>
-              <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
-                {/* Render the parameter fields */}
-                <FormSchemaRenderFields
-                  modelSchema={processedProperties}
-                  formik={formik}
-                  autoSave={false}
-                  handleUpdateSchema={(updatedValues) => {
-                    formik.setValues((prevValues) => ({
-                      ...prevValues,
-                      ...updatedValues,
-                    }));
-                  }}
-                  onFormSubmit={formik.handleSubmit}
-                  setError={(error) => console.error(error)}
-                  errorsMessage={formik.errors || {}}
-                  spacing={0}
-                />
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    mt: 2,
-                    position: "sticky",
-                    bottom: 0,
-                    backgroundColor: "background.box",
-                    pb: 2,
-                  }}
-                >
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={!formik.dirty}
-                  >
-                    {t("common:update")}
-                  </Button>
-                </Box>
-              </Box>
-            </form>
-          </Box>
-        ) : (
-          <Box
+        {/* Parameter History Modal */}
+        {selectedSessionId && (
+          <IconButton
+            onClick={() => {
+              getHistory();
+              setHistoryInfoVisible(true);
+            }}
             sx={{
-              flex: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              p: 2,
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
-            >
-              {t("generative:label.selectSessionToViewParameters")}
-            </Typography>
-          </Box>
+            <HistoryIcon
+              sx={{
+                color: "primary.main",
+              }}
+            />
+          </IconButton>
         )}
-
-        {/* Parameter History Modal */}
-        <ParameterHistoryModal
-          historyChanges={history}
-          open={historyInfoVisible}
-          taskName={taskName}
-          setOpen={setHistoryInfoVisible}
-        />
       </Box>
+
+      {selectedSessionId ? (
+        <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
+          <form onSubmit={formik.handleSubmit}>
+            <Box sx={{ mr: 2, ml: 2 }}>
+              {/* Render the parameter fields */}
+              <FormSchemaRenderFields
+                modelSchema={processedProperties}
+                formik={formik}
+                autoSave={false}
+                handleUpdateSchema={(updatedValues) => {
+                  formik.setValues((prevValues) => ({
+                    ...prevValues,
+                    ...updatedValues,
+                  }));
+                }}
+                onFormSubmit={formik.handleSubmit}
+                setError={(error) => console.error(error)}
+                errorsMessage={formik.errors || {}}
+                spacing={1}
+              />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  py: 2,
+                  position: "sticky",
+                  bottom: 0,
+                  backgroundColor: "background.box",
+                }}
+              >
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={!formik.dirty}
+                >
+                  {t("common:update")}
+                </Button>
+              </Box>
+            </Box>
+          </form>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 2,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: "text.secondary", textAlign: "center" }}
+          >
+            {t("generative:label.selectSessionToViewParameters")}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Parameter History Modal */}
+      <ParameterHistoryModal
+        historyChanges={history}
+        open={historyInfoVisible}
+        taskName={taskName}
+        setOpen={setHistoryInfoVisible}
+      />
     </SideBar>
   );
 }

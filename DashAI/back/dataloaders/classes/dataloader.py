@@ -5,6 +5,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Final
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.utils import MultilingualString
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,16 @@ class BaseDataLoader(ConfigObject):
     """Abstract class with base methods for DashAI dataloaders."""
 
     TYPE: Final[str] = "DataLoader"
+    CATEGORY: Final = MultilingualString(
+        en="File Uploading",
+        es="Carga de Archivos",
+    )
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        return {
+            "category": cls.CATEGORY if cls.CATEGORY else "File Uploading",
+        }
 
     @abstractmethod
     def load_data(
@@ -79,18 +90,25 @@ class BaseDataLoader(ConfigObject):
         )
 
     def prepare_files(self, file_path: str, temp_path: str) -> str:
-        """Prepare the files to load the data.
+        """Resolve a file path or URL into a local path suitable for loading.
 
-        Args:
-            file_path (str): Path of the file to be prepared.
-            temp_path (str): Temporary path where the files will be extracted.
+        Downloads and extracts remote URLs via ``DownloadManager``, extracts
+        ZIP archives to a temporary directory, or returns local file paths
+        unchanged. The returned tuple distinguishes between directory results
+        (multi-file or extracted archives) and single-file results.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to a local file, a ZIP archive, or an HTTP(S) URL.
+        temp_path : str
+            Temporary directory used for extraction of ZIP or URL downloads.
 
         Returns
         -------
-
-            path (str): Path of the files prepared.
-            type_path (str): Type of the path.
-
+        tuple of (str, str)
+            ``(path, type_path)`` where ``type_path`` is ``"dir"`` for
+            extracted archives/URLs or ``"file"`` for plain local files.
         """
         from datasets.download.download_manager import DownloadManager
 
@@ -108,14 +126,21 @@ class BaseDataLoader(ConfigObject):
             return (file_path, "file")
 
     def extract_files(self, file_path: str, temp_path: str) -> str:
-        """Extract the files to load the data in a DataDict later.
+        """Extract a ZIP archive into a subdirectory of ``temp_path``.
 
-        Args:
-            temp_path (str): Path where dataset will be saved.
-            file_path (str): Path of the file to be extracted.
+        Parameters
+        ----------
+        file_path : str
+            Path to the ZIP archive to extract.
+        temp_path : str
+            Base temporary directory; extraction target is
+            ``<temp_path>/files/``.
+
         Returns
         -------
-            str: Path of the files extracted.
+        str
+            Path of the directory containing the extracted files
+            (``<temp_path>/files/``).
         """
         import os
         import zipfile

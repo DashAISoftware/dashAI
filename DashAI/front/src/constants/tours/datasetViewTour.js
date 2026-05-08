@@ -53,6 +53,21 @@ export const datasetViewTourSteps = [
     disableBackButton: true,
   },
   {
+    target: '[data-tour="models-dataset-selection"]',
+    content: (
+      <Trans i18nKey="datasetsTour:notebookDatasetSelection">
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+    disableOverlayClose: true,
+    disableBackButton: true,
+  },
+  {
     target: '[data-tour="create-notebook-button"]',
     content: (
       <Trans i18nKey="datasetsTour:finishProcess">

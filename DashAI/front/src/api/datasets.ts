@@ -96,6 +96,18 @@ export const renameDatasetColumn = async (
   return response.data;
 };
 
+export const updateColumnEncoder = async (
+  id: number,
+  columnName: string,
+  encoder: "one_hot" | "label",
+): Promise<object> => {
+  const response = await api.patch(
+    `${datasetEndpoint}/${id}/columns/${columnName}/encoder`,
+    { encoder },
+  );
+  return response.data;
+};
+
 export const deleteDataset = async (id: string): Promise<object> => {
   const response = await api.delete(`${datasetEndpoint}/${id}`);
   return response;

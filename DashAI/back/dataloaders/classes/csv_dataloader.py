@@ -21,21 +21,15 @@ if TYPE_CHECKING:
 
 
 class CSVDataloaderSchema(BaseSchema):
-    name: schema_field(
-        string_field(),
-        "",
-        description=MultilingualString(
-            en=(
-                "Custom name to register your dataset. If no name is specified, "
-                "the name of the uploaded file will be used."
-            ),
-            es=(
-                "Nombre personalizado para registrar su dataset. Si no se especifica "
-                "un nombre, se usará el nombre del archivo subido."
-            ),
-        ),
-        alias=MultilingualString(en="Name", es="Nombre"),
-    )  # type: ignore
+    """Schema for CSVDataLoader hyperparameters.
+
+    Configures the field separator, header row index, columns to import,
+    row-skipping and sampling parameters, and the dataset split ratios.
+    The separator can be specified as an exact character or as the aliases
+    ``"blank space"`` or ``"tab"`` which are normalised before passing to
+    ``pandas.read_csv``.
+    """
+
     separator: schema_field(
         enum_field([",", ";", "blank space", "tab"]),
         ",",
@@ -207,7 +201,18 @@ class CSVDataloaderSchema(BaseSchema):
 
 
 class CSVDataLoader(BaseDataLoader):
-    """Data loader for tabular data in CSV files."""
+    """Data loader that ingests tabular data from CSV files into DashAI datasets.
+
+    Reads one or more CSV files, optionally samples rows, and splits the result
+    into train/validation/test ``DashAIDataset`` splits according to the ratios
+    specified in the schema. The separator is normalised from human-readable
+    aliases (``"blank space"``, ``"tab"``) to Python character literals before
+    delegating to ``pandas.read_csv``.
+
+    Handles multi-file uploads by concatenating all CSVs before splitting,
+    and supports header detection, column selection, and row skipping via the
+    ``CSVDataloaderSchema`` parameters.
+    """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = CSVDataloaderSchema
@@ -233,6 +238,29 @@ class CSVDataLoader(BaseDataLoader):
         self,
         params: Dict[str, Any],
     ) -> Dict[str, Any]:
+        """Validate and normalise CSV dataloader parameters before loading.
+
+        Converts human-readable separator names (``"blank space"``, ``"tab"``)
+        to their Python equivalents and copies recognised keys into a clean
+        parameter dictionary suitable for ``pandas.read_csv``.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            Raw parameter dictionary.  Must contain ``"separator"`` (str).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Normalised parameter dict with pandas-compatible keys.
+
+        Raises
+        ------
+        ValueError
+            If ``"separator"`` is not present in ``params``.
+        TypeError
+            If ``separator`` is not a string after name resolution.
+        """
         if "separator" not in params:
             raise ValueError(
                 "Error trying to load the CSV dataset: "
@@ -331,6 +359,7 @@ class CSVDataLoader(BaseDataLoader):
                 data_files=prepared_path[0],
                 **clean_params,
                 streaming=bool(n_sample),
+                cache_dir=temp_path,
             )
         else:
             dataset = load_dataset(
@@ -338,6 +367,7 @@ class CSVDataLoader(BaseDataLoader):
                 data_dir=prepared_path[0],
                 **clean_params,
                 streaming=bool(n_sample),
+                cache_dir=temp_path,
             )
             shutil.rmtree(prepared_path[0])
         if n_sample:

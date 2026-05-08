@@ -14,10 +14,16 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
-export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
+export const QualityAlerts = ({
+  qualityInfo,
+  generalInfo,
+  missingValues,
+  onNavigateTab,
+}) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets"]);
-  const { setDatasetTab } = useDatasetsAndNotebooks();
+  const context = useDatasetsAndNotebooks();
+  const setDatasetTab = onNavigateTab ?? context?.setDatasetTab ?? (() => {});
 
   const handleNavigate = useCallback(
     (section) => {
@@ -102,12 +108,12 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
       sx={{
         boxShadow: "none",
         border: (theme) =>
-          `1px solid ${hasIssues ? theme.palette.warning.main : theme.palette.success.main}40`,
+          `1px solid ${hasIssues ? theme.palette.warning.main : theme.palette.success.main}`,
         borderRadius: "8px !important",
         bgcolor: (theme) =>
           hasIssues
-            ? `${theme.palette.warning.main}08`
-            : `${theme.palette.success.main}08`,
+            ? `${theme.palette.warning.main}40`
+            : `${theme.palette.success.main}40`,
         "&::before": { display: "none" },
         "&.Mui-expanded": { margin: 0 },
       }}
@@ -122,9 +128,9 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {hasIssues ? (
-            <WarningAmberIcon color="warning" fontSize="small" />
+            <WarningAmberIcon color="warning" sx={{ fontSize: 24 }} />
           ) : (
-            <CheckCircleOutlineIcon color="success" fontSize="small" />
+            <CheckCircleOutlineIcon color="success" sx={{ fontSize: 24 }} />
           )}
           <Typography variant="subtitle2" fontWeight="bold">
             {t("datasets:label.dataQualitySummary")}

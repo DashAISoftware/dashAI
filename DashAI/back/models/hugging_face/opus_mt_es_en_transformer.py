@@ -1,0 +1,50 @@
+"""OpusMtEsENTransformer model for Spanish-to-English translation."""
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.hugging_face.base_opus_mt_transformer import (
+    OpusMtTransformerMixin,
+)
+from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
+    OpusMtEnESTransformerSchema,
+)
+
+
+class OpusMtEsENTransformerSchema(OpusMtEnESTransformerSchema):
+    """Schema for the Spanish-to-English Opus-MT model.
+
+    Inherits all fields from ``OpusMtEnESTransformerSchema``.
+    """
+
+
+class OpusMtEsENTransformer(OpusMtTransformerMixin):
+    """Pre-trained transformer for Spanish-to-English translation.
+
+    Fine-tunes the Helsinki-NLP ``opus-mt-es-en`` checkpoint, a MarianMT
+    seq2seq model trained on parallel Spanish-English corpora from the OPUS
+    collection. Supports direct translation without pivot languages.
+
+    References
+    ----------
+    - [1] https://huggingface.co/Helsinki-NLP/opus-mt-es-en
+    - [2] https://opus.nlpl.eu/
+    """
+
+    MODEL_NAME: str = "Helsinki-NLP/opus-mt-es-en"
+    TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_opus-mt-es-en"
+    SCHEMA = OpusMtEsENTransformerSchema
+    DISPLAY_NAME: str = MultilingualString(
+        en="Opus MT Es-En Transformer",
+        es="Transformer Opus MT Es-En",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Pre-trained transformer for Spanish-English translation. "
+            "Downloads weights from Hugging Face on first use (internet required)."
+        ),
+        es=(
+            "Transformer pre-entrenado para traducción español-inglés. "
+            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+    )
+    COLOR: str = "#FF8A65"
+    ICON: str = "Translate"

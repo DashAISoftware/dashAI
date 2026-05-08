@@ -4,29 +4,43 @@ from DashAI.back.converters.category.scaling_and_normalization import (
     ScalingAndNormalizationConverter,
 )
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import bool_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
+from DashAI.back.types.value_types import Float, Integer
 
 
 class MaxAbsScalerSchema(BaseSchema):
-    use_copy: schema_field(
-        bool_field(),
-        True,
-        description=MultilingualString(
-            en="Set to False to perform inplace scaling.",
-            es="Ponlo en False para realizar el escalado in situ.",
-        ),
-        alias=MultilingualString(en="copy", es="copiar"),
-    )  # type: ignore
+    """Schema for MaxAbsScaler hyperparameters.
+
+    ``MaxAbsScaler`` has no configurable hyperparameters in DashAI: it always
+    maps each feature to [-1, 1] by dividing by the per-feature maximum
+    absolute value.
+    """
 
 
 class MaxAbsScaler(
     ScalingAndNormalizationConverter, SklearnWrapper, MaxAbsScalerOperation
 ):
-    """Scikit-learn's MaxAbsScaler wrapper for DashAI."""
+    """Scale each feature by its maximum absolute value to the range [-1, 1].
+
+    For each feature column the transformation is::
+
+        x_scaled = x / max(|x|)
+
+    where ``max(|x|)`` is the largest absolute value observed in that column
+    during fitting. The result always lies in [-1, 1].
+
+    Because this scaler neither centers nor shifts the data, it preserves any
+    existing zero entries, making it the preferred choice for sparse matrices
+    (e.g. TF-IDF or count-vectorized text). It is also appropriate when the
+    data is already known to be centered at zero and only the scale needs to
+    be adjusted.
+
+    References
+    ----------
+    - [1] https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
+    """
 
     SCHEMA = MaxAbsScalerSchema
     DESCRIPTION = MultilingualString(
@@ -36,8 +50,25 @@ class MaxAbsScaler(
     DISPLAY_NAME = MultilingualString(en="Max Abs Scaler", es="Escalador Max Abs")
     IMAGE_PREVIEW = "max_abs_scaler.png"
 
+    metadata = {
+        "allowed_types": [Float, Integer],
+        "allowed_dtypes": [],
+    }
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Returns Float64 as the output type for scaled data."""
+        """Return the DashAI data type produced by this converter for a column.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            Not used; all output columns share the
+            same type. Defaults to None.
+
+        Returns
+        -------
+        DashAIDataType
+            A Float type backed by ``pyarrow.float64()``.
+        """
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())

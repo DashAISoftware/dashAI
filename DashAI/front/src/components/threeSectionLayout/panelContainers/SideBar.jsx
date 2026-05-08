@@ -1,21 +1,21 @@
 import { Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
-export default function SideBar({ children }) {
+export default function SideBar({ children, ...props }) {
+  const theme = useTheme();
+
   return (
     <Box
       width="100%"
       height="100%"
-      // borderRadius={2}
       display="flex"
       flexDirection="column"
       justifyContent="space-between"
       sx={{
         bgcolor: "background.box",
-        color: "white",
-        borderTop: "0.1px solid",
-        borderBottom: "0.1px solid",
-        borderColor: "grey.600",
+        borderBottom: `0.1px solid ${theme.palette.divider}`,
       }}
+      {...props}
     >
       {children}
     </Box>

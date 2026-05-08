@@ -1,44 +1,100 @@
-import React, { useState } from "react";
-
-import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
-
-import JsonDisplayer from "../../../shared/JsonDisplayer";
+import React from "react";
+import {
+  Box,
+  Chip,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import { getColorByColumnType } from "../../../../utils";
 
-/**
- * Component that displays the columns associated with an object.
- * @param {object} data object that contains all the necesary info
- */
 function Columns({ data }) {
-  const [displayMode, setDisplayMode] = useState("nested-list");
+  const theme = useTheme();
   const { t } = useTranslation(["common"]);
 
-  return (
-    <Grid container direction="column">
-      {/* Toggle to select the mode of displaying the JSON object. */}
-      <Grid>
-        <ToggleButtonGroup
-          value={displayMode}
-          exclusive
-          onChange={(event, newMode) => {
-            if (newMode !== null) {
-              setDisplayMode(newMode);
-            }
-          }}
-          sx={{ float: "right" }}
-        >
-          <ToggleButton value="nested-list">{t("common:list")}</ToggleButton>
-          <ToggleButton value="json">{t("common:json")}</ToggleButton>
-        </ToggleButtonGroup>
-      </Grid>
+  // columns can be an array [{columnName, dataType, ...}] or a plain object {name: type}
+  const rows = Array.isArray(data)
+    ? data.map((col) => ({
+        name: col.columnName ?? col.name ?? String(col),
+        type: col.dataType ?? col.valueType ?? col.type ?? null,
+      }))
+    : data
+      ? Object.entries(data).map(([name, colInfo]) => ({
+          name,
+          type: colInfo && typeof colInfo === "object" ? colInfo.type : colInfo,
+        }))
+      : [];
 
-      {/* JSON object display */}
-      <JsonDisplayer
-        displayMode={displayMode}
-        name={t("common:columns")}
-        data={data}
-      />
-    </Grid>
+  return (
+    <Box>
+      <Typography variant="sectionLabel" sx={{ color: "text.secondary" }}>
+        {t("common:columns")}
+      </Typography>
+      <Divider sx={{ mt: 1, mb: 1, borderColor: "ui.borderLight" }} />
+      <Table size="small">
+        <TableBody>
+          {rows.map(({ name, type }) => (
+            <TableRow
+              key={name}
+              sx={{ "&:last-child td": { borderBottom: 0 } }}
+            >
+              <TableCell
+                sx={{
+                  borderColor: "ui.borderLight",
+                  py: 0.75,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: '"IBM Plex Mono", monospace',
+                    color: "text.secondary",
+                  }}
+                >
+                  {name}
+                </Typography>
+              </TableCell>
+              <TableCell
+                align="right"
+                sx={{ borderColor: "ui.borderLight", py: 0.75 }}
+              >
+                {type ? (
+                  <Chip
+                    label={type}
+                    size="small"
+                    sx={{
+                      backgroundColor: getColorByColumnType(type, theme),
+                      color: "#fff",
+                      fontFamily: '"IBM Plex Mono", monospace',
+                      fontSize: "0.7rem",
+                      height: 20,
+                    }}
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.disabled">
+                    —
+                  </Typography>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+          {rows.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={2} sx={{ borderBottom: 0 }}>
+                <Typography variant="body2" color="text.disabled">
+                  {t("common:noItemsAvailable")}
+                </Typography>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Box>
   );
 }
 

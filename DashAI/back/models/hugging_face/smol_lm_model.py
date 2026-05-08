@@ -24,7 +24,13 @@ SMOLLM_FILENAME_MAP = {
 
 
 class SmolLMSchema(BaseSchema):
-    """Schema for SmolLM2 model."""
+    """Schema for SmolLM2 model hyperparameters.
+
+    Configures the SmolLM2 Instruct checkpoint variant (360M or 1.7B), generation
+    length, sampling temperature, frequency penalty, context window, and target
+    device. The GGUF filename is resolved automatically from ``SMOLLM_FILENAME_MAP``:
+    Q4_K_M quantization for 1.7B and Q8_0 quantization for 360M.
+    """
 
     model_name: schema_field(
         enum_field(
@@ -152,7 +158,32 @@ class SmolLMSchema(BaseSchema):
 
 
 class SmolLMModel(TextToTextGenerationTaskModel):
-    """SmolLM2 model for lightweight text generation using llama.cpp library."""
+    """SmolLM2 Instruct model for on-device text generation via llama.cpp.
+
+    SmolLM2 is a family of compact, instruction-tuned language models developed by
+    Hugging Face TB, designed for efficient on-device and edge deployment. Unlike
+    larger language models, SmolLM2 achieves competitive benchmark results at very
+    small parameter counts by training on high-quality synthetic datasets including
+    cosmopedia-v2, FineWeb-Edu, and StackEdu.
+
+    The DashAI integration exposes the 360M and 1.7B Instruct variants. The 360M
+    model requires under 300 MB of RAM and runs comfortably on modest CPU hardware;
+    the 1.7B model delivers higher-quality responses while remaining deployable
+    without a GPU.
+
+    Models are loaded as GGUF quantized checkpoints via ``llama-cpp-python``. The
+    quantization level is variant-dependent: Q8_0 for 360M (higher fidelity at small
+    size) and Q4_K_M for 1.7B (balanced quality/size trade-off). The filename is
+    resolved automatically from ``SMOLLM_FILENAME_MAP``.
+
+    References
+    ----------
+    - [1] Allal, L.B. et al. (2024). "SmolLM2 — with great data, comes great
+           performance." Hugging Face Blog.
+           https://huggingface.co/blog/smollm2
+    - [2] https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF
+    - [3] https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF
+    """
 
     SCHEMA = SmolLMSchema
     COLOR: str = "#00695c"
@@ -182,6 +213,38 @@ class SmolLMModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
+        """Download and initialise a SmolLM2 Instruct GGUF model via llama.cpp.
+
+        The model weights are fetched from HuggingFace Hub using
+        ``Llama.from_pretrained`` and kept in memory for repeated calls to
+        ``generate``. The GGUF filename is resolved from ``SMOLLM_FILENAME_MAP``
+        (Q4_K_M for 1.7B, Q8_0 for 360M).
+
+        Parameters
+        ----------
+        **kwargs : dict
+            model_name : str, optional
+                HuggingFace repo ID for the GGUF checkpoint.
+                Defaults to ``"HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF"``.
+            max_tokens : int, optional
+                Maximum number of new tokens to generate per call. Default 100.
+            temperature : float, optional
+                Sampling temperature in [0.0, 1.0]. Default 0.7.
+            frequency_penalty : float, optional
+                Token-frequency penalty in [0.0, 2.0]. Default 0.1.
+            context_window : int, optional
+                Total token budget (prompt + response) for a single forward
+                pass. Default 512.
+            device : str, optional
+                Target device from ``LLAMA_DEVICE_ENUM``. Any value whose
+                index is >= 0 enables full GPU offload (``n_gpu_layers=-1``);
+                ``"CPU"`` runs fully in RAM.
+
+        Raises
+        ------
+        RuntimeError
+            If ``llama-cpp-python`` is not installed.
+        """
         try:
             from llama_cpp import Llama
         except ImportError as e:
@@ -212,6 +275,21 @@ class SmolLMModel(TextToTextGenerationTaskModel):
         )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        """Generate a reply for the given chat prompt.
+
+        Parameters
+        ----------
+        prompt : list of dict
+            Conversation history in OpenAI chat format. Each dict must contain
+            at least ``"role"`` (``"system"``, ``"user"``, or ``"assistant"``)
+            and ``"content"`` (the message text).
+
+        Returns
+        -------
+        list of str
+            A single-element list containing the model's reply text, extracted
+            from ``choices[0]["message"]["content"]``.
+        """
         output = self.model.create_chat_completion(
             messages=prompt,
             max_tokens=self.max_tokens,

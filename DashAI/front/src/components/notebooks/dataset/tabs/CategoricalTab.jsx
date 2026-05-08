@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography, Card, CardContent } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Typography, CardContent } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {
@@ -15,16 +15,23 @@ import {
   Cell,
 } from "recharts";
 import { StatBox } from "../StatBox";
+import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
 export const CategoricalTab = ({ categoricalStats }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
+  const [activeIndices, setActiveIndices] = useState({});
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(categoricalStats).map(([column, stats]) => (
-        <Card key={column} sx={{ borderRadius: 2 }}>
+        <ExportableCard
+          key={column}
+          filename={`categorical_${column}`}
+          exportData={{ column, ...stats }}
+          sx={{ borderRadius: 2 }}
+        >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Header */}
             <Box display="flex" alignItems="center" mb={2}>
@@ -79,6 +86,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       />
                       <YAxis />
                       <Tooltip
+                        cursor={false}
                         contentStyle={{
                           backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
@@ -89,9 +97,39 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       />
                       <Bar
                         dataKey="count"
-                        fill="rgba(136, 132, 216, 0.7)"
+                        fill="#8884d8"
                         name={t("common:count")}
-                      />
+                        activeBar={false}
+                        onMouseEnter={(_, index) =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: index,
+                          }))
+                        }
+                        onMouseLeave={() =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: null,
+                          }))
+                        }
+                      >
+                        {stats.top_5.map((_, index) => {
+                          const activeIndex = activeIndices[column] ?? null;
+                          return (
+                            <Cell
+                              key={index}
+                              fill="#8884d8"
+                              fillOpacity={
+                                index === activeIndex
+                                  ? 1
+                                  : activeIndex !== null
+                                    ? 0.5
+                                    : 0.7
+                              }
+                            />
+                          );
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
@@ -122,13 +160,13 @@ export const CategoricalTab = ({ categoricalStats }) => {
                           <Cell
                             key={index}
                             fill={
-                              [
+                              (theme.palette.chart.palette ?? [
+                                theme.palette.chart.train,
+                                theme.palette.chart.test,
+                                theme.palette.chart.validation,
                                 theme.palette.secondary.main,
-                                theme.palette.info.main,
                                 theme.palette.primary.main,
-                                theme.palette.success.light,
-                                theme.palette.warning.main,
-                              ][index]
+                              ])[index]
                             }
                           />
                         ))}
@@ -148,7 +186,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
               </Box>
             </Box>
           </CardContent>
-        </Card>
+        </ExportableCard>
       ))}
     </Box>
   );

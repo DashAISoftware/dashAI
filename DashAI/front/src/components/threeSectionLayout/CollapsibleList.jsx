@@ -18,6 +18,8 @@ export default function CollapsibleList({
   title = t("common:availableItems", "Available Items"),
   Icon = FolderIcon,
   getItemDescription,
+  getDeleteConfirmationContent,
+  getDeleteConfirmationWarning,
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
@@ -77,9 +79,8 @@ export default function CollapsibleList({
         <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
 
         <Typography
+          variant="h5"
           sx={{
-            fontSize: "0.95rem",
-            fontWeight: 600,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -91,7 +92,9 @@ export default function CollapsibleList({
           {title}
         </Typography>
 
-        <Box
+        <Typography
+          variant="body2"
+          component="div"
           sx={{
             mr: 1,
             bgcolor: theme.palette.ui.scrollbar,
@@ -102,11 +105,10 @@ export default function CollapsibleList({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 12,
           }}
         >
           {count}
-        </Box>
+        </Typography>
 
         {open ? (
           <KeyboardArrowDownIcon
@@ -119,7 +121,7 @@ export default function CollapsibleList({
         )}
       </Box>
 
-      {/* Lista colapsable */}
+      {/* Collapsible list */}
       <Collapse
         in={open}
         timeout="auto"
@@ -153,6 +155,16 @@ export default function CollapsibleList({
                 onDelete={() => onItemDelete(ds.id)}
                 onEdit={(name) => onItemEdit(ds.id, name)}
                 onInfo={onItemInfo ? () => onItemInfo(ds.id) : undefined}
+                deleteConfirmationContent={
+                  getDeleteConfirmationContent
+                    ? getDeleteConfirmationContent(ds)
+                    : undefined
+                }
+                deleteConfirmationWarning={
+                  getDeleteConfirmationWarning
+                    ? getDeleteConfirmationWarning(ds)
+                    : undefined
+                }
               />
             ))
           ) : (

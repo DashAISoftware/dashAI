@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Box, Divider, Typography, IconButton } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { ChevronLeft } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
 import Footer from "../threeSectionLayout/Footer";
-import BarHeader from "../threeSectionLayout/BarHeader";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
@@ -34,6 +33,7 @@ export default function ModelsLeftBar({ onToggle }) {
     editDataset,
     editSession,
   } = useModels();
+  const navigate = useNavigate();
 
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,6 +105,26 @@ export default function ModelsLeftBar({ onToggle }) {
     [sessions],
   );
 
+  const getDatasetDeleteConfirmationContent = (dataset) =>
+    t(
+      "datasets:label.confirmDeleteDataset",
+      'Are you sure you want to delete the dataset "{{name}}"? This action cannot be undone.',
+      { name: dataset.name },
+    );
+
+  const getDatasetDeleteConfirmationWarning = () =>
+    t(
+      "datasets:label.confirmDeleteDatasetLinkedWarning",
+      "All notebooks and sessions linked to this dataset will also be deleted.",
+    );
+
+  const getSessionDeleteConfirmationContent = (session) =>
+    t(
+      "models:label.confirmDeleteSession",
+      'Are you sure you want to delete the session "{{name}}"? This action cannot be undone.',
+      { name: session.name },
+    );
+
   const getDatasetDescription = (dataset) => {
     return t("datasets:label.datasetDescription", {
       rows: dataset.total_rows || 0,
@@ -146,28 +166,20 @@ export default function ModelsLeftBar({ onToggle }) {
     : {};
 
   const onDatasetClick = (datasetId) => {
-    selectDataset(datasetId);
-    setSelectedSessionId(null);
-    setSelectedTask(null);
-    setStep(2); // Use a different step to show DatasetVisualization
+    navigate(`/app/models/datasets/${datasetId}`);
   };
 
   const onSessionDelete = async (id) => {
     const success = await deleteSessionById(id);
     if (!success) return;
     if (id === selectedSessionId) {
-      setSelectedSessionId(null);
-      setSelectedSession(null);
-      setStep(0);
-      setSelectedTask(null);
+      navigate("/app/models");
     }
   };
 
   const onDatasetDelete = (id) => {
     if (id === selectedDatasetId) {
-      selectDataset(null);
-      setStep(0);
-      setSelectedTask(null);
+      navigate("/app/models");
     }
 
     replaceDatasets((prevDatasets) =>
@@ -186,9 +198,7 @@ export default function ModelsLeftBar({ onToggle }) {
             session.id === selectedSessionId && session.dataset_id === id,
         )
       ) {
-        setSelectedSessionId(null);
-        setStep(0);
-        setSelectedTask(null);
+        navigate("/app/models");
       }
 
       return filteredSessions;
@@ -198,38 +208,15 @@ export default function ModelsLeftBar({ onToggle }) {
   };
 
   const onSessionClick = (sessionId) => {
-    setSelectedSessionId(sessionId);
+    navigate(`/app/models/sessions/${sessionId}`);
   };
 
   const handleNewSessionButton = () => {
-    setSelectedSessionId(null);
-    selectDataset(null);
-    setSelectedTask(null);
-    setStep(0);
+    navigate("/app/models");
   };
 
   return (
     <SideBar>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          pr: 2,
-        }}
-      >
-        <BarHeader />
-        <IconButton
-          size="small"
-          onClick={onToggle}
-          sx={{ color: "text.secondary" }}
-        >
-          <ChevronLeft />
-        </IconButton>
-      </Box>
-      <Divider sx={{ width: "100%", bgcolor: theme.palette.ui.borderDark }} />
-
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (
@@ -269,6 +256,8 @@ export default function ModelsLeftBar({ onToggle }) {
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
+          getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
+          getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
         />
 
         <Divider
@@ -289,6 +278,7 @@ export default function ModelsLeftBar({ onToggle }) {
           title={t("common:sessions")}
           Icon={Biotech}
           getItemDescription={getSessionDescription}
+          getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
           initialOpenGroups={openSections}
         />
       </Box>

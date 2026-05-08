@@ -37,13 +37,13 @@ function SelectInput({
     <FormInputWrapper name={name} description={description}>
       <Input
         select
+        size="small"
         name={name}
         label={label}
         value={value !== null ? value : ""}
         onChange={handleChange}
         error={error !== undefined}
-        helperText={error || " "}
-        margin="dense"
+        helperText={error}
       >
         {allOptions.map((option, index) => (
           <MenuItem key={option} value={option}>

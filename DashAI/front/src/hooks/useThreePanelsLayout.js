@@ -1,11 +1,55 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-export function useThreePanelLayout(options = {}) {
-  const { initialLeftWidth = 20, initialRightWidth = 20 } = options;
-  const [leftBarVisible, setLeftBarVisible] = useState(true);
-  const [rightBarVisible, setRightBarVisible] = useState(true);
-  const [leftBarWidth, setLeftBarWidth] = useState(initialLeftWidth);
-  const [rightBarWidth, setRightBarWidth] = useState(initialRightWidth);
+const DEFAULT_LAYOUT = {
+  leftBarVisible: true,
+  rightBarVisible: true,
+  leftBarWidth: 20,
+  rightBarWidth: 20,
+};
+
+const readPersisted = (storageKey) => {
+  if (!storageKey) return DEFAULT_LAYOUT;
+  try {
+    const raw = localStorage.getItem(`layout:${storageKey}`);
+    if (!raw) return DEFAULT_LAYOUT;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_LAYOUT, ...parsed };
+  } catch {
+    return DEFAULT_LAYOUT;
+  }
+};
+
+export function useThreePanelLayout({ storageKey } = {}) {
+  const initial = readPersisted(storageKey);
+  const [leftBarVisible, setLeftBarVisible] = useState(initial.leftBarVisible);
+  const [rightBarVisible, setRightBarVisible] = useState(
+    initial.rightBarVisible,
+  );
+  const [leftBarWidth, setLeftBarWidth] = useState(initial.leftBarWidth);
+  const [rightBarWidth, setRightBarWidth] = useState(initial.rightBarWidth);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      localStorage.setItem(
+        `layout:${storageKey}`,
+        JSON.stringify({
+          leftBarVisible,
+          rightBarVisible,
+          leftBarWidth,
+          rightBarWidth,
+        }),
+      );
+    } catch {
+      // ignore quota / disabled storage
+    }
+  }, [
+    storageKey,
+    leftBarVisible,
+    rightBarVisible,
+    leftBarWidth,
+    rightBarWidth,
+  ]);
 
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);

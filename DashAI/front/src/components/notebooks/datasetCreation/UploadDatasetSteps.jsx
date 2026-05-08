@@ -1,35 +1,76 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
-import CustomLayout from "../../custom/CustomLayout";
+import { Box, Typography } from "@mui/material";
+import ComponentDetailsPanel from "../../custom/ComponentDetailsPanel";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
+import { getComponents as getComponentsRequest } from "../../../api/component";
+import { useSnackbar } from "notistack";
+
+const UPLOAD_BASE_PATH = "/app/data/datasets/new";
 
 export default function UploadDatasetSteps({ backHome }) {
   const {
     datasets,
     addDatasetOptimistically,
-    setStep: setGlobalStep,
-    setSelectedOption,
-    clearSelectedNotebook,
     startDatasetPolling,
     setRightBarContent,
+    setUploadDataloader,
   } = useDatasetsAndNotebooks();
 
-  const [step, setStep] = useState(0);
-  const [selectedDataloader, setSelectedDataloader] = useState({});
+  const navigate = useNavigate();
+  const { dataloaderName } = useParams();
+  const step = dataloaderName ? 1 : 0;
+
+  const [selectedDataloader, setSelectedDataloader] = useState();
+  const [dataloaders, setDataloaders] = useState([]);
+  const [loadingDataloaders, setLoadingDataloaders] = useState(true);
   const [formValues, setFormValues] = useState({});
   const [error, setError] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const { t } = useTranslation(["datasets"]);
+  const { enqueueSnackbar } = useSnackbar();
   const tourContext = useTourContext();
 
   const formSubmitRef = useRef(null);
 
+  useEffect(() => {
+    async function fetchDataloaders() {
+      setLoadingDataloaders(true);
+      try {
+        const list = await getComponentsRequest({
+          selectTypes: ["DataLoader"],
+        });
+        setDataloaders(list);
+      } catch (error) {
+        enqueueSnackbar(t("datasets:error.fetchingDataloaders"), {
+          variant: "error",
+        });
+      } finally {
+        setLoadingDataloaders(false);
+      }
+    }
+    fetchDataloaders();
+  }, [t]);
+
+  // Sync selected dataloader from URL param, or redirect if unknown
+  useEffect(() => {
+    if (!dataloaderName || loadingDataloaders || dataloaders.length === 0)
+      return;
+    const match = dataloaders.find((d) => d.name === dataloaderName);
+    if (match) {
+      setSelectedDataloader(match);
+    } else {
+      navigate(UPLOAD_BASE_PATH, { replace: true });
+    }
+  }, [dataloaderName, loadingDataloaders, dataloaders, navigate]);
+
   const goToNextStep = () => {
-    setStep((prevStep) => prevStep + 1);
+    navigate(`${UPLOAD_BASE_PATH}/${selectedDataloader.name}`);
   };
 
   const goToPrevStep = () => {
@@ -37,8 +78,18 @@ export default function UploadDatasetSteps({ backHome }) {
       backHome();
       return;
     }
+    navigate(UPLOAD_BASE_PATH);
+  };
 
-    setStep((prevStep) => prevStep - 1);
+  const getTitle = () => {
+    switch (step) {
+      case 0:
+        return t("datasets:label.selectDataloader");
+      case 1:
+        return t("datasets:label.uploadDataset");
+      default:
+        return t("datasets:label.createDataset");
+    }
   };
 
   const getSubtitle = () => {
@@ -52,32 +103,48 @@ export default function UploadDatasetSteps({ backHome }) {
     }
   };
 
+  // Sync selected dataloader to context so DataBreadcrumbs can show display_name
+  useEffect(() => {
+    if (setUploadDataloader) {
+      setUploadDataloader(selectedDataloader?.name ? selectedDataloader : null);
+    }
+  }, [selectedDataloader, setUploadDataloader]);
+
+  // Clear right sidebar and dataloader on unmount
+  useEffect(() => {
+    return () => {
+      if (setRightBarContent) setRightBarContent(null);
+      if (setUploadDataloader) setUploadDataloader(null);
+    };
+  }, [setRightBarContent, setUploadDataloader]);
+
   // Update the right sidebar based on current step
   useEffect(() => {
-    if (setRightBarContent) {
-      if (step === 1 && Object.entries(selectedDataloader).length !== 0) {
-        setRightBarContent(
-          <DataloaderConfigBar
-            selectedDataloader={selectedDataloader.name}
-            formSubmitRef={formSubmitRef}
-            setError={setError}
-            existingDatasets={datasets}
-            onValuesChange={setFormValues}
-          />,
-        );
-      } else {
-        setRightBarContent(null);
-      }
+    if (!setRightBarContent) return;
+
+    if (step === 0) {
+      setRightBarContent(
+        <ComponentDetailsPanel component={selectedDataloader} />,
+      );
+    } else if (step === 1 && selectedDataloader?.name) {
+      setRightBarContent(
+        <DataloaderConfigBar
+          selectedDataloader={selectedDataloader.name}
+          formSubmitRef={formSubmitRef}
+          setError={setError}
+          onValuesChange={setFormValues}
+        />,
+      );
+    } else {
+      setRightBarContent(null);
     }
   }, [step, selectedDataloader, datasets, setRightBarContent]);
 
   const handleDatasetCreated = (newDataset, datasetJob) => {
     addDatasetOptimistically(newDataset);
-    setGlobalStep(0);
-    setSelectedOption("dataset");
-    clearSelectedNotebook();
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
+    navigate(`/app/data/datasets/${newDataset.id}`);
 
     if (tourContext?.run) {
       tourContext.stopTour();
@@ -86,20 +153,34 @@ export default function UploadDatasetSteps({ backHome }) {
   };
 
   return (
-    <CustomLayout
-      title={t("datasets:label.uploadDataset")}
-      subtitle={getSubtitle()}
-      padding={0}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
     >
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" component="h1">
+          {getTitle()}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {getSubtitle()}
+        </Typography>
+      </Box>
+
       {step === 0 && (
         <SelectDataloaderStep
           goToNextStep={goToNextStep}
           goToPrevStep={goToPrevStep}
           selectedDataloader={selectedDataloader}
           setSelectedDataloader={setSelectedDataloader}
+          dataloaders={dataloaders}
+          loadingDataloaders={loadingDataloaders}
         />
       )}
-      {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
+      {step === 1 && selectedDataloader?.name && (
         <ConfigureAndUploadDatasetStep
           goToPrevStep={goToPrevStep}
           selectedDataloader={selectedDataloader}
@@ -109,8 +190,9 @@ export default function UploadDatasetSteps({ backHome }) {
           formValues={formValues}
           onPreviewError={setPreviewError}
           formHasErrors={error}
+          existingDatasets={datasets}
         />
       )}
-    </CustomLayout>
+    </Box>
   );
 }

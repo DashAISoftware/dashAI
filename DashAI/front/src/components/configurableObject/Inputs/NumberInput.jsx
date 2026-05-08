@@ -31,14 +31,14 @@ function NumberInput({
     <FormInputWrapper name={name} description={description}>
       <InputWithDebounce
         variant="outlined"
+        size="small"
         label={label}
         name={name}
         value={value !== null ? value : ""}
         onChange={handleChange}
         type="number"
         error={error !== undefined}
-        helperText={error || " "}
-        margin="dense"
+        helperText={error}
       />
     </FormInputWrapper>
   );

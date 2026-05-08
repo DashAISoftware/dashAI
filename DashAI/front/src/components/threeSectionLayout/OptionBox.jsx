@@ -1,81 +1,180 @@
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { useRef, useState, useEffect } from "react";
+import { Box, Typography, ButtonBase, Tooltip, useTheme } from "@mui/material";
+
+const DESCRIPTION_MAX_LINES = 3;
 
 export default function OptionBox({
   optionName,
   description,
   onClick,
   Icon = null,
+  chips = [],
   dataTour,
   ...otherProps
 }) {
+  const descRef = useRef(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight);
+    }
+  }, [description]);
   const theme = useTheme();
-  const matches = useMediaQuery(theme.breakpoints.up("md"));
+  const accent = theme.palette.accent.amber;
+  const accentDim = theme.palette.accent.amberDim;
+  const accentBorder = theme.palette.accent.amberBorder;
+  const accentGlow = theme.palette.accent.amberGlow;
 
   return (
-    <Button
+    <ButtonBase
       data-tour={dataTour}
       onClick={onClick}
       sx={{
-        p: 0,
-        m: 1,
         width: "100%",
-        height: "100%",
+        height: 250,
         textAlign: "left",
-        textTransform: "none",
-        borderRadius: 2,
+        display: "flex",
+        flexDirection: "column",
+        background: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: "4px",
+        padding: "22px 24px",
+        cursor: "pointer",
+        position: "relative",
+        overflow: "hidden",
+        transition: "border-color 0.2s, background 0.2s, transform 0.15s",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: "10%",
+          right: "10%",
+          height: "1px",
+          background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+          opacity: 0,
+          transition: "opacity 0.25s",
+        },
+        "&:hover": {
+          transform: "translateY(-1px)",
+          borderColor: accentBorder,
+          background: accentGlow,
+        },
+        "&:hover::before": {
+          opacity: 1,
+        },
+        "&:hover .card-arrow": {
+          transform: "translateX(3px)",
+          color: accent,
+        },
       }}
       {...otherProps}
     >
-      <Paper
-        elevation={2}
+      {/* Header: icon */}
+      {Icon && (
+        <Box sx={{ display: "flex", mb: "14px", width: "100%" }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: accentDim,
+              color: accent,
+              flexShrink: 0,
+            }}
+          >
+            <Icon sx={{ fontSize: 25 }} />
+          </Box>
+        </Box>
+      )}
+
+      {/* Title */}
+      <Typography
+        variant="h5"
         sx={{
-          p: 2,
+          color: theme.palette.text.primary,
+          mb: "5px",
           width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: matches ? "row" : "column",
-          alignItems: "center",
-          justifyContent: matches ? "space-between" : "center",
-          textAlign: matches ? "left" : "center",
-          "&:hover": {
-            backgroundColor: theme.palette.action.hover,
-          },
         }}
       >
-        {Icon && (
-          <Box md={3}>
-            <Icon color="primary" fontSize="large" sx={{ width: "100%" }} />
-          </Box>
-        )}
-        <Box
+        {optionName}
+      </Typography>
+
+      {/* Description */}
+      <Tooltip
+        title={isTruncated ? description : ""}
+        arrow
+        enterDelay={300}
+        placement="bottom"
+      >
+        <Typography
+          ref={descRef}
+          variant="body1"
           sx={{
+            fontWeight: 300,
+            color: theme.palette.text.secondary,
+            lineHeight: 1.65,
+            flexGrow: 1,
             width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-evenly",
-            alignItems: matches ? "flex-start" : "center",
-            gap: 1,
+            display: "-webkit-box",
+            WebkitLineClamp: DESCRIPTION_MAX_LINES,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
-          <Typography variant="h6" sx={{ mb: 1, color: "text.primary" }}>
-            {optionName}
-          </Typography>
-          <Typography
-            variant="body2"
-            component="p"
-            sx={{ color: "text.secondary" }}
-          >
-            {description}
-          </Typography>
+          {description}
+        </Typography>
+      </Tooltip>
+
+      {/* Footer: chips + arrow */}
+      <Box
+        sx={{
+          mt: "16px",
+          pt: "14px",
+          borderTop: `1px solid ${theme.palette.ui.borderLight}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
+      >
+        <Box sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+          {chips.map((chip) => (
+            <Box
+              key={chip}
+              sx={{
+                ...theme.typography.statusBadge,
+                border: `1px solid ${theme.palette.divider}`,
+                color: theme.palette.text.disabled,
+                px: "7px",
+                py: "2px",
+                borderRadius: "2px",
+                background: theme.palette.background.default,
+              }}
+            >
+              {chip}
+            </Box>
+          ))}
         </Box>
-      </Paper>
-    </Button>
+        <Typography
+          component="span"
+          variant="h2"
+          className="card-arrow"
+          sx={{
+            color: theme.palette.text.disabled,
+            transition: "color 0.15s, transform 0.15s",
+            flexShrink: 0,
+            ml: 1,
+          }}
+        >
+          →
+        </Typography>
+      </Box>
+    </ButtonBase>
   );
 }

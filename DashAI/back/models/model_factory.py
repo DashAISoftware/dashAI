@@ -37,6 +37,33 @@ class ModelFactory:
         test_metrics: list[BaseMetric] = None,
         n_labels=None,
     ):
+        """Initialise the factory, instantiate the model, and attach runtime state.
+
+        Parameters
+        ----------
+        model : type
+            A DashAI model class (not an instance) to instantiate with the
+            extracted fixed parameters.
+        params : dict
+            Nested parameter dictionary as produced by the DashAI UI, containing
+            ``fixed_value`` and optional ``optimizable`` sub-keys.
+        run_id : id, optional
+            Identifier of the associated experiment run. Default is ``None``.
+        x_data : dict, optional
+            Dataset splits for model input (``{"train": ..., "test": ...}``).
+            Default is ``None``.
+        y_data : dict, optional
+            Dataset splits for model targets. Default is ``None``.
+        train_metrics : list[BaseMetric], optional
+            Metric instances to evaluate on the training split. Default is ``None``.
+        validation_metrics : list[BaseMetric], optional
+            Metric instances to evaluate on the validation split. Default is ``None``.
+        test_metrics : list[BaseMetric], optional
+            Metric instances to evaluate on the test split. Default is ``None``.
+        n_labels : int, optional
+            Number of unique class labels; used to determine whether the task is
+            binary or multiclass. Default is ``None``.
+        """
         self.model, self.fixed_parameters, self.optimizable_parameters = (
             self._extract_parameters(model, params)
         )
@@ -216,6 +243,22 @@ class ModelFactory:
         """
 
         def recursive_update(params, param_name, new_value):
+            """Recursively set ``fixed_value`` for a named parameter in a nested dict.
+
+            Parameters
+            ----------
+            params : dict
+                Nested parameter dictionary to search.
+            param_name : str
+                The key whose ``fixed_value`` should be updated.
+            new_value : Any
+                The new value to assign.
+
+            Returns
+            -------
+            bool
+                ``True`` if the parameter was found and updated; ``False`` otherwise.
+            """
             for key, val in params.items():
                 if isinstance(val, dict):
                     if key == param_name and "fixed_value" in val:

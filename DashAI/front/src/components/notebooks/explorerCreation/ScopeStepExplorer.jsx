@@ -14,19 +14,14 @@ export default function ScopeStepExplorer({
 }) {
   const theme = useTheme();
   const [isSelectionValid, setIsSelectionValid] = useState(false);
+  const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
-  const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
 
   const handleSubmit = () => {
     nextStep();
-    if (tourContext && tourContext.run) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 500);
-    }
   };
 
   return (
@@ -42,15 +37,9 @@ export default function ScopeStepExplorer({
     >
       {/* Content */}
       <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
-        <Typography variant="subtitle2" gutterBottom>
-          {t("datasets:label.selectScopeStep", {
-            step: 1,
-          })}
-        </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ color: theme.palette.text.secondary, mb: 1 }}
+          sx={{ color: theme.palette.text.primary, mb: 1.5 }}
         >
           {t("datasets:label.selectColumnsForExplorerScope")}
         </Typography>
@@ -58,8 +47,8 @@ export default function ScopeStepExplorer({
         <ColumnSelector
           file_path={notebook.file_path}
           inputCardinality={inputCardinality}
+          allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
-          restrictedDtypes={restrictedDtypes}
           onSelectionChange={(selected) => setScopeColumns(selected)}
           onValidationChange={(isValid) => setIsSelectionValid(isValid)}
         />
