@@ -81,15 +81,13 @@ class LogLoss(ClassificationMetric):
         Returns
         -------
         float
-            Log Loss score between true labels and predicted labels
+            Log Loss, lower is better.
         """
-        import numpy as np
         from sklearn.metrics import log_loss
 
-        true_labels_array, _ = prepare_to_metric(true_labels, probs_pred_labels)
-
-        # Get all possible classes from the probability matrix (columns = classes)
-        # This ensures sklearn doesn't complain about missing classes in a fold
-        all_classes = np.arange(probs_pred_labels.shape[1])
-
-        return log_loss(true_labels_array, probs_pred_labels, labels=all_classes)
+        true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
+        # Pass all expected class indices so log_loss works even when a split
+        # happens to contain only one class (e.g. small validation sets).
+        n_classes = probs_pred_labels.shape[1]
+        labels = list(range(n_classes))
+        return log_loss(true_labels, probs_pred_labels, labels=labels)

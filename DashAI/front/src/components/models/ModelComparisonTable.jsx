@@ -317,7 +317,6 @@ function ModelComparisonTable({
   const data = useMemo(() => runs, [runs]);
 
   const columns = useMemo(() => {
-    // ── Score column ────────────────────────────────────────────────────
     const scoreColumn = {
       id: "score",
       header: t("models:label.score"),
@@ -352,17 +351,21 @@ function ModelComparisonTable({
         const isBest = bestScore !== null && Math.abs(score - bestScore) < 1e-6;
 
         const tooltipContent = (
-          <Box sx={{ fontSize: "0.75rem", lineHeight: 1.6 }}>
-            <Box sx={{ fontWeight: "bold", mb: 0.5 }}>
+          <Typography variant="body2" component="div" sx={{ lineHeight: 1.6 }}>
+            <Typography
+              variant="body2"
+              component="div"
+              sx={{ fontWeight: "bold", mb: 0.5 }}
+            >
               {t("models:label.score")}: {score.toFixed(1)}/100
-            </Box>
+            </Typography>
             {breakdown.map(({ metric_name, value, normalized_weight }, i) => (
-              <Box key={metric_name}>
+              <Typography variant="body2" component="div" key={metric_name}>
                 {i === 0 ? "=" : "+"} {metric_name} ({value.toFixed(4)}) ×{" "}
                 {(normalized_weight * 100).toFixed(0)}%
-              </Box>
+              </Typography>
             ))}
-          </Box>
+          </Typography>
         );
 
         return (
@@ -392,18 +395,44 @@ function ModelComparisonTable({
       {
         accessorKey: "name",
         header: t("common:modelName"),
-        minSize: 150,
-        grow: 1,
+        size: 120,
+        Cell: ({ cell }) => (
+          <Tooltip title={cell.getValue()} placement="top" arrow>
+            <Box
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                width: "120px",
+              }}
+            >
+              {cell.getValue()}
+            </Box>
+          </Tooltip>
+        ),
       },
       {
         accessorKey: "model_name",
         header: t("common:model"),
-        minSize: 150,
-        grow: 1,
+        size: 120,
         accessorFn: (row) => {
           const model = models.find((m) => m.name === row.model_name);
           return model?.display_name || row.model_name;
         },
+        Cell: ({ cell }) => (
+          <Tooltip title={cell.getValue()} placement="top" arrow>
+            <Box
+              sx={{
+                width: "120px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {cell.getValue()}
+            </Box>
+          </Tooltip>
+        ),
       },
       scoreColumn,
       ...getMetricColumns(),

@@ -242,7 +242,7 @@ export default function SelectDatasetStep({
             <Trans i18nKey="explainers:label.noDatasetsAvailable">
               <AlertTitle>There are no datasets available.</AlertTitle>
               Go to
-              <Link component={RouterLink} to="/app/data">
+              <Link component={RouterLink} to="/app/data?action=upload">
                 data tab
               </Link>
               to upload one first.

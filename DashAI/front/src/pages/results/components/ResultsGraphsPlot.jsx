@@ -8,7 +8,9 @@ function ResultsGraphsPlot({ selectedChart, chartData }) {
   const { t } = useTranslation(["models"]);
 
   const traceData =
-    selectedChart === "radar" ? (chartData.radar ?? []) : (chartData.bar ?? []);
+    selectedChart === "heatmap"
+      ? (chartData.heatmap ?? [])
+      : (chartData.bar ?? []);
 
   const hasData = traceData.length > 0;
 
@@ -45,7 +47,11 @@ function ResultsGraphsPlot({ selectedChart, chartData }) {
         }}
         useResizeHandler
         style={{ width: "100%", height: "100%" }}
-        config={{ responsive: true, displayModeBar: false }}
+        config={{
+          responsive: true,
+          displayModeBar: false,
+          staticPlot: selectedChart === "heatmap",
+        }}
       />
     </Box>
   );

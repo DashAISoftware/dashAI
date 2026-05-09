@@ -9,8 +9,17 @@ import {
   ButtonGroup,
   ToggleButtonGroup,
   ToggleButton,
+  Collapse,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
+import {
+  PlayArrow,
+  TableChart,
+  BarChart,
+  ExpandMore,
+  ExpandLess,
+} from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
@@ -28,6 +37,7 @@ export default function SessionVisualization() {
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
+  const [tableCollapsed, setTableCollapsed] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const [expandedRunId, setExpandedRunId] = useState(null);
   const isResizing = React.useRef(false);
@@ -217,12 +227,14 @@ export default function SessionVisualization() {
         <Paper
           data-tour="model-comparison-panel"
           sx={{
-            height: `${tableHeight}px`,
+            height: tableCollapsed ? "auto" : `${tableHeight}px`,
             flexShrink: 0,
             borderBottom: "1px solid",
             borderColor: "divider",
             p: 2,
             position: "relative",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <Box
@@ -231,11 +243,26 @@ export default function SessionVisualization() {
               justifyContent: "space-between",
               alignItems: "center",
               mb: 2,
+              flexShrink: 0,
             }}
           >
-            <Typography variant="h6" color="text.primary">
-              {t("models:label.modelComparison")}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Tooltip
+                title={
+                  tableCollapsed ? t("common:expand") : t("common:collapse")
+                }
+              >
+                <IconButton
+                  size="small"
+                  onClick={() => setTableCollapsed((v) => !v)}
+                >
+                  {tableCollapsed ? <ExpandMore /> : <ExpandLess />}
+                </IconButton>
+              </Tooltip>
+              <Typography variant="h6" color="text.primary">
+                {t("models:label.modelComparison")}
+              </Typography>
+            </Box>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {/* Metric Split Selector — controls both table and graph views */}
               {(hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
@@ -299,69 +326,92 @@ export default function SessionVisualization() {
                 )}
             </Box>
           </Box>
-          {runs.length === 0 ? (
-            <Box
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Collapse
+              in={!tableCollapsed}
+              unmountOnExit
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "calc(100% - 40px)",
+                flex: 1,
+                minHeight: 0,
+                "& .MuiCollapse-wrapper": { height: "100%" },
+                "& .MuiCollapse-wrapperInner": { height: "100%" },
               }}
             >
-              <Typography variant="body2" color="text.secondary">
-                {t("models:label.noRunsYet")}
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ height: "calc(100% - 40px)", overflow: "auto" }}>
-              {showTable ? (
-                <ModelComparisonTable
-                  runs={runs}
-                  session={session}
-                  onTrain={onTrain}
-                  onViewDetails={handleViewDetails}
-                  onDelete={onDeleteRun}
-                  onRowClick={(runId) => {
-                    handleRowClick(runId);
-                    setExpandedRunId(runId);
+              {runs.length === 0 ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
                   }}
-                  metricSplit={metricSplit}
-                  selectedRunId={expandedRunId}
-                />
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    {t("models:label.noRunsYet")}
+                  </Typography>
+                </Box>
               ) : (
-                <ResultsGraphs
-                  runs={runs}
-                  selectedSplit={metricSplit}
-                  onSplitChange={setMetricSplit}
-                  expandedRunId={expandedRunId}
-                  onExpandRunChart={setExpandedRunId}
-                />
+                <Box sx={{ height: "100%", overflow: "auto" }}>
+                  {showTable ? (
+                    <ModelComparisonTable
+                      runs={runs}
+                      session={session}
+                      onTrain={onTrain}
+                      onViewDetails={handleViewDetails}
+                      onDelete={onDeleteRun}
+                      onRowClick={(runId) => {
+                        handleRowClick(runId);
+                        setExpandedRunId(runId);
+                      }}
+                      metricSplit={metricSplit}
+                      selectedRunId={expandedRunId}
+                    />
+                  ) : (
+                    <ResultsGraphs
+                      runs={runs}
+                      selectedSplit={metricSplit}
+                      onSplitChange={setMetricSplit}
+                      expandedRunId={expandedRunId}
+                      onExpandRunChart={setExpandedRunId}
+                    />
+                  )}
+                </Box>
               )}
-            </Box>
-          )}
+            </Collapse>
+          </Box>
 
           {/* Resize Handle */}
-          <Box
-            onMouseDown={() => {
-              isResizing.current = true;
-              document.body.style.cursor = "row-resize";
-              document.body.style.userSelect = "none";
-            }}
-            sx={{
-              position: "absolute",
-              bottom: -2,
-              left: 0,
-              right: 0,
-              height: "5px",
-              cursor: "row-resize",
-              bgcolor: "transparent",
-              transition: "background-color 0.2s ease",
-              "&:hover": {
-                bgcolor: "primary.main",
-              },
-              zIndex: 10,
-            }}
-          />
+          {!tableCollapsed && (
+            <Box
+              onMouseDown={() => {
+                isResizing.current = true;
+                document.body.style.cursor = "row-resize";
+                document.body.style.userSelect = "none";
+              }}
+              sx={{
+                position: "absolute",
+                bottom: -2,
+                left: 0,
+                right: 0,
+                height: "5px",
+                cursor: "row-resize",
+                bgcolor: "transparent",
+                transition: "background-color 0.2s ease",
+                "&:hover": {
+                  bgcolor: "primary.main",
+                },
+                zIndex: 10,
+              }}
+            />
+          )}
         </Paper>
 
         <Divider sx={{ my: 1, mt: 1 }} />

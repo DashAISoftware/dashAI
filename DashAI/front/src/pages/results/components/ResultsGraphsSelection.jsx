@@ -39,7 +39,7 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart, isCv }) {
         size="small"
       >
         <ToggleButton value="bar">{t("models:label.bar")}</ToggleButton>
-        <ToggleButton value="radar">{t("models:label.radar")}</ToggleButton>
+        <ToggleButton value="heatmap">{t("models:label.heatmap")}</ToggleButton>
         {isCv && (
           <ToggleButton
             value="fold_metrics"

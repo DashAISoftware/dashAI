@@ -108,7 +108,7 @@ def _start_backend_server(
 
     uvicorn.run(
         app=app,
-        host="127.0.0.1",
+        host=os.environ.get("DASHAI_HOST", "127.0.0.1"),
         port=8000,
     )
 
@@ -265,8 +265,6 @@ def main(
         ),
     ] = False,
 ) -> None:
-    import threading
-
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
     logger = logging.getLogger(__name__)
     logger.info("Starting DashAI application.")

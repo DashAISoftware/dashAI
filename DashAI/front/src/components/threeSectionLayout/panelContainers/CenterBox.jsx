@@ -1,16 +1,17 @@
 import { Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export default function CenterBox({ children }) {
+  const theme = useTheme();
+
   return (
     <Box
       width={"100%"}
       height={"100%"}
       sx={{
-        border: "0.1px solid",
-        borderColor: "grey.600",
-        // bgcolor: "background.paper",
+        border: `0.1px solid ${theme.palette.divider}`,
+        borderTop: "none",
       }}
-      // borderRadius={2}
       overflow={"auto"}
       p={2}
     >

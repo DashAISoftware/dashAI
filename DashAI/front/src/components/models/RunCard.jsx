@@ -408,14 +408,7 @@ function RunCard({
               >
                 <Button
                   variant="contained"
-                  color={
-                    run.status === 3 &&
-                    operationsCount &&
-                    (operationsCount.explainers > 0 ||
-                      operationsCount.predictions > 0)
-                      ? "warning"
-                      : "primary"
-                  }
+                  color="primary"
                   size="small"
                   startIcon={<PlayArrow />}
                   onClick={() => onTrain(run, operationsCount)}

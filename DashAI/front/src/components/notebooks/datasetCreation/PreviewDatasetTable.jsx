@@ -245,11 +245,10 @@ export default function PreviewDatasetTable({
             ) : (
               <Tooltip title={t("common:renameColumn")} arrow>
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   onDoubleClick={() => handleStartEdit(field)}
                   sx={{
                     fontWeight: 600,
-                    fontSize: "0.875rem",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     "&:hover": {
@@ -288,25 +287,25 @@ export default function PreviewDatasetTable({
                 columnName={displayName}
                 reason={columnType?.inference_reason}
               />
-
-              {columnType?.type === "Categorical" && columnType?.encoder && (
-                <Tooltip title={t("common:changeEncoder")} arrow>
-                  <span style={{ display: "inline-flex" }}>
-                    <Chip
-                      label={encoderLabel(columnType.encoder)}
-                      size="small"
-                      onClick={(e) => handleEncoderClick(e, field)}
-                      aria-label={t("common:encoder")}
-                      sx={{
-                        fontSize: "0.65rem",
-                        height: "18px",
-                        cursor: "pointer",
-                      }}
-                    />
-                  </span>
-                </Tooltip>
-              )}
             </Box>
+
+            {columnType?.type === "Categorical" && columnType?.encoder && (
+              <Tooltip title={t("common:changeEncoder")} arrow>
+                <span style={{ display: "inline-flex" }}>
+                  <Chip
+                    label={encoderLabel(columnType.encoder)}
+                    size="small"
+                    onClick={(e) => handleEncoderClick(e, field)}
+                    aria-label={t("common:encoder")}
+                    sx={{
+                      fontSize: "0.65rem",
+                      height: "18px",
+                      cursor: "pointer",
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
           </Box>
         ),
       };

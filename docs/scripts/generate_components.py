@@ -528,7 +528,7 @@ def _render_component_mdx(info) -> str:
             comp_type = class_lookup.get(comp)
             if comp_type:
                 comp_dir = _type_to_dir(comp_type)
-                lines.append(f"- [`{comp}`](../{comp_dir}/{comp})")
+                lines.append(f"- [`{comp}`](/components/{comp_dir}/{comp})")
             else:
                 lines.append(f"- `{comp}`")
         lines.append("")

@@ -60,7 +60,7 @@ export default function ParameterStepConverter({
         variant="h6"
         sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
       >
-        {t("datasets:label.configureParametersStep", { step: 2 })}
+        {t("datasets:label.configureParameters")}
       </Typography>
       <FormSchemaContainer>
         <FormSchemaWithSelectedModel
