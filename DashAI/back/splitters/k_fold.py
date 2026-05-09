@@ -14,9 +14,9 @@ class KFoldSplitter(FoldSplitter):
 
         try:
             kf = KFold(
-                n_splits=n_splits, 
-                shuffle=shuffle, 
-                random_state=random_state if shuffle else None
+                n_splits=n_splits,
+                shuffle=shuffle,
+                random_state=random_state if shuffle else None,
             )
             folds = list(kf.split(indexes))
         except ValueError as e:

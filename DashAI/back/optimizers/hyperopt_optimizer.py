@@ -1,4 +1,3 @@
-from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -71,7 +70,7 @@ class HyperOptOptimizer(BaseOptimizer):
 
         Returns
         -------
-            search_space: Dict with the information for the search space .
+            search_space: Dict with the information for the search space.
         """
         from hyperopt import hp
 
@@ -85,6 +84,10 @@ class HyperOptOptimizer(BaseOptimizer):
             elif dtype == "number":
                 search_space[hyperparameter] = hp.uniform(
                     hyperparameter, values[0], values[1]
+                )
+            else:
+                raise ValueError(
+                    f"Unsupported parameter type for {hyperparameter} : {dtype}"
                 )
 
         return search_space
@@ -105,7 +108,7 @@ class HyperOptOptimizer(BaseOptimizer):
 
         Returns
         -------
-            None
+            tuple: (best_model, best_params)
         """
         import importlib
 
@@ -116,6 +119,7 @@ class HyperOptOptimizer(BaseOptimizer):
         self.output_dataset = output_dataset
         self.parameters = parameters
         self.metric = metric["class"]
+        self._maximize = metric["metadata"]["maximize"]
 
         sampler = importlib.import_module(f"hyperopt.{self.sampler}").suggest
 
@@ -126,24 +130,19 @@ class HyperOptOptimizer(BaseOptimizer):
         def objective(params):
             for param_name, value in params.items():
                 obj, key = param_mapping[param_name]
+                # hp.quniform returns floats; cast to int for integer parameters
+                dtype = next(d for _, k, _, d in self.parameters if k == param_name)
+                if dtype == "integer":
+                    value = int(value)
                 setattr(obj, key, value)
 
-            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
-            y_pred = self.model.predict(input_dataset["validation"])
-
-            # Calculate metric for train and validation data each trial
-            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
-            self.model.calculate_metrics(
-                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            # Delegate evaluation entirely to strategy, identical to Optuna
+            score = strategy(
+                self.model, self.input_dataset, self.output_dataset, self.metric
             )
 
-            output_dataset_transformed = self.model.prepare_output(
-                output_dataset["validation"], is_fit=False
-            )
-
-            score = self.metric.score(output_dataset_transformed, y_pred)
-
-            return -score if metric["metadata"]["maximize"] else score
+            # fmin always minimizes, so negate when the metric should be maximized
+            return -score if self._maximize else score
 
         trials = Trials()
         fmin(
@@ -155,6 +154,16 @@ class HyperOptOptimizer(BaseOptimizer):
         )
         self.trials = trials
 
+        # Apply best parameters to model, mirroring Optuna's post-study setattr loop
+        best_params = self.get_best_params()
+        best_model = self.model
+        for hyperparameter, value in best_params.items():
+            setattr(best_model, hyperparameter, value)
+
+        self.model = best_model
+
+        return best_model, best_params
+
     def get_model(self):
         return self.model
 
@@ -163,12 +172,22 @@ class HyperOptOptimizer(BaseOptimizer):
         for trial in self.trials:
             if trial["result"]["status"] == "ok":
                 params = {key: val[0] for key, val in trial["misc"]["vals"].items()}
-                trials.append({"params": params, "value": trial["result"]["loss"]})
+                # Restore the original sign so the reported value matches the
+                # actual metric score, consistent with Optuna's trial.value
+                raw_loss = trial["result"]["loss"]
+                value = -raw_loss if self._maximize else raw_loss
+                trials.append({"params": params, "value": value})
         return trials
 
     def get_best_params(self):
         """Return the best parameters found during optimization."""
         best_trial = min(
-            self.trials, key=lambda t: t["result"].get("loss", float("inf"))
+            self.trials,
+            key=lambda t: t["result"].get("loss", float("inf")),
         )
-        return {key: val[0] for key, val in best_trial["misc"]["vals"].items()}
+        params = {key: val[0] for key, val in best_trial["misc"]["vals"].items()}
+        # Cast integer parameters back to int (hp.quniform returns floats)
+        for _, hyperparameter, _, dtype in self.parameters:
+            if dtype == "integer" and hyperparameter in params:
+                params[hyperparameter] = int(params[hyperparameter])
+        return params

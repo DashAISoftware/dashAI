@@ -155,6 +155,7 @@ class Run(Base):
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
+    nested: Mapped[JSON] = mapped_column(JSON, nullable=True)
     plot_history_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_slice_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_contour_path: Mapped[str] = mapped_column(String, nullable=True)
