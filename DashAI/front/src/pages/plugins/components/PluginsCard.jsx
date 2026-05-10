@@ -236,7 +236,7 @@ function PluginsCard({
       <Box
         sx={{
           display: "flex",
-          mb: 14,
+          mb: 3,
           width: "100%",
           alignItems: "center",
           justifyContent: "space-between",
@@ -314,8 +314,8 @@ function PluginsCard({
       {/* Footer: tags + install/arrow */}
       <Box
         sx={{
-          mt: 16,
-          pt: 14,
+          mt: 4,
+          pt: 3,
           borderTop: `1px solid ${theme.palette.ui.borderLight}`,
           display: "flex",
           alignItems: "center",

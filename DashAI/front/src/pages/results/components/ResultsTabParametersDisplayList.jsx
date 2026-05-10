@@ -56,9 +56,9 @@ function ResultsTabParametersDisplayList({ name, value }) {
   return (
     <ListItem>
       <ListItemText
-        primary={<Typography variant="p">{name + ":"}</Typography>}
+        primary={<Typography variant="body2">{name + ":"}</Typography>}
         secondary={
-          <Typography variant="p" sx={{ ml: 4, color: "gray" }}>
+          <Typography variant="body2" sx={{ ml: 2, color: "gray" }}>
             {typeof value === "boolean" ? String(value) : value}
           </Typography>
         }

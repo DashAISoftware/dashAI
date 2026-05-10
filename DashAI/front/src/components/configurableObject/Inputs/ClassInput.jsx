@@ -146,7 +146,7 @@ function ClassInput({
       </IconButton>
 
       {/* Option 1: Collapsible component that contains the subform */}
-      <Collapse in={open} sx={{ mt: 2, display: modal ? "none" : "show" }}>
+      <Collapse in={open} sx={{ mt: 2, display: modal ? "none" : "block" }}>
         <Paper variant="outlined" sx={{ p: 4 }}>
           {!loading && (
             <Subform
