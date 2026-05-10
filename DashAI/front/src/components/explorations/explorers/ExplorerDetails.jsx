@@ -65,7 +65,7 @@ function ExplorerDetails({
         Close details
       </Button>
 
-      <Paper sx={{ mt: 2 }} elevation={0}>
+      <Paper sx={{ mt: 4 }} elevation={0}>
         <Tabs
           value={currentTab}
           onChange={handleTabChange}
@@ -83,7 +83,7 @@ function ExplorerDetails({
           ))}
         </Tabs>
 
-        <Box sx={{ p: 3, height: "100%" }}>
+        <Box sx={{ p: 6, height: "100%" }}>
           {currentTab === 0 && <TabInfo data={explorerData} />}
           {currentTab === 1 && <TabColumns data={explorerData.columns} />}
           {currentTab === 2 && <TabParameters data={explorerData.parameters} />}

@@ -81,7 +81,7 @@ function ConfigureExplainerStep({
       direction="row"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={3}
+      spacing={6}
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="h5" component="h3">
@@ -92,9 +92,9 @@ function ConfigureExplainerStep({
       <Grid size={{ xs: 12, md: 6 }}>
         <Paper
           variant="outlined"
-          sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
+          sx={{ p: 8, maxHeight: "55vh", overflow: "auto" }}
         >
-          <Stack spacing={3}>
+          <Stack spacing={6}>
             <DialogContentText>
               {t("explainers:label.explainerConfiguration")}
             </DialogContentText>

@@ -272,7 +272,7 @@ export default function DatasetPreviewNotebook({
           <Typography variant="h6">
             {t("datasets:label.datasetPreviewFor", { name: getDatasetName() })}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button
               variant="contained"
               size="small"
@@ -288,8 +288,8 @@ export default function DatasetPreviewNotebook({
               }}
               sx={{
                 fontSize: "0.7rem",
-                px: 1.5,
-                py: 0.5,
+                px: 3,
+                py: 1,
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
@@ -299,7 +299,7 @@ export default function DatasetPreviewNotebook({
             </Button>
             <IconButton
               size="small"
-              sx={{ color: "primary.main", ml: 1 }}
+              sx={{ color: "primary.main", ml: 2 }}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowNotebookHistoryModal(true);

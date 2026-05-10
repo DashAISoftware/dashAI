@@ -91,7 +91,7 @@ function PluginsContent({
 
       {/* Plugins Grid */}
       {!loading && !!pluginsToShow.length && (
-        <Grid container spacing={cardView ? 1 : 1}>
+        <Grid container spacing={cardView ? 8 : 8}>
           {pluginsToShow.map((plugin, i) => (
             <Grid
               key={i}

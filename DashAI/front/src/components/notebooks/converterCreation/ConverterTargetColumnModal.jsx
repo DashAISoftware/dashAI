@@ -158,7 +158,7 @@ const ConverterTargetColumnModal = ({
         variant="outlined"
         size="small"
         sx={{
-          mr: 1,
+          mr: 2,
           color: classColumnInitialValue === null ? "error.main" : "inherit",
           borderColor:
             classColumnInitialValue === null ? "error.main" : "inherit",
@@ -192,22 +192,22 @@ const ConverterTargetColumnModal = ({
               <IconButton onClick={() => setOpen(false)}>
                 <ArrowBackOutlined />
               </IconButton>
-              <Typography variant="h5" sx={{ ml: 2 }}>
+              <Typography variant="h5" sx={{ ml: 4 }}>
                 {t("datasets:button.setColumn")}
               </Typography>
             </Box>
           </DialogTitle>
           <DialogContent>
             <Box sx={{ height: "100%", width: "100%" }}>
-              <Stack spacing={4} sx={{ py: 2 }}>
+              <Stack spacing={8} sx={{ py: 4 }}>
                 <Box>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 4 }}>
                     {t("datasets:label.classTargetColumn")}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 4 }}
                   >
                     {t("datasets:label.selectTargetColumnDescription")}
                   </Typography>
@@ -216,8 +216,8 @@ const ConverterTargetColumnModal = ({
               </Stack>
             </Box>
           </DialogContent>
-          <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
-            <Button onClick={() => setOpen(false)} sx={{ mr: 2 }}>
+          <Box sx={{ p: 4, display: "flex", justifyContent: "flex-end" }}>
+            <Button onClick={() => setOpen(false)} sx={{ mr: 4 }}>
               {t("common:back")}
             </Button>
             <Button

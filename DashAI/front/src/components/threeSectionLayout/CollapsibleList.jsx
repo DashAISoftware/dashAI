@@ -54,13 +54,13 @@ export default function CollapsibleList({
       flexDirection="column"
       // height="100%"
       // width="100%"
-      pb={1}
+      pb={4}
       sx={{
         overflowY: "hidden",
         flex: 1,
-        pl: 2,
-        pr: 2,
-        pt: 2,
+        pl: 4,
+        pr: 4,
+        pt: 4,
       }}
     >
       {/* Header de la carpeta */}
@@ -69,14 +69,14 @@ export default function CollapsibleList({
         alignItems="center"
         sx={{
           cursor: "pointer",
-          py: 0.5,
-          px: 1,
+          py: 2,
+          px: 4,
           borderRadius: 1,
           "&:hover": { bgcolor: theme.palette.ui.hover },
         }}
         onClick={() => setOpen((v) => !v)}
       >
-        <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
+        <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 4 }} />
 
         <Typography
           sx={{
@@ -94,7 +94,7 @@ export default function CollapsibleList({
 
         <Box
           sx={{
-            mr: 1,
+            mr: 4,
             bgcolor: theme.palette.ui.scrollbar,
             color: theme.palette.text.primary,
             borderRadius: "50%",
@@ -136,7 +136,7 @@ export default function CollapsibleList({
           overflowY: "auto",
         }}
       >
-        <Box pl={2}>
+        <Box pl={4}>
           {items?.length ? (
             items.map((ds, index) => (
               <ItemBox
@@ -172,7 +172,7 @@ export default function CollapsibleList({
                 color: theme.palette.text.primary,
                 opacity: 0.5,
                 textAlign: "center",
-                p: 2,
+                p: 8,
               }}
             >
               {t("common:noItemsAvailable", "No items available.")}

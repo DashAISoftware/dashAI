@@ -163,14 +163,14 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   return (
     <>
       <Card elevation={2} sx={{ width: "100%" }}>
-        <CardContent sx={{ pb: 1 }}>
+        <CardContent sx={{ pb: 2 }}>
           {/* Header with status and dataset info */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "start",
-              mb: 1,
+              mb: 2,
             }}
           >
             <Box sx={{ flex: 1 }}>
@@ -189,8 +189,8 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 0.5,
-                    mt: 0.5,
+                    gap: 1,
+                    mt: 1,
                   }}
                 >
                   <DatasetIcon
@@ -214,7 +214,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
 
           {/* Expandable Results */}
           {isFinished && (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 4 }}>
               <Button
                 size="small"
                 onClick={() => setExpanded(!expanded)}
@@ -227,11 +227,11 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
               </Button>
 
               <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 4 }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ mb: 1, display: "block" }}
+                    sx={{ mb: 2, display: "block" }}
                   >
                     {t("prediction:label.resultsPreview")}
                   </Typography>
@@ -252,13 +252,13 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
           {isRunning && (
             <Box
               sx={{
-                py: 2,
+                py: 4,
                 textAlign: "center",
                 color: "text.secondary",
               }}
             >
               <CircularProgress size={24} />
-              <Typography variant="body2" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ mt: 2 }}>
                 {t("prediction:label.predictionInProgress")}
               </Typography>
             </Box>

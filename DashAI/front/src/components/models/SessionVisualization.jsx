@@ -197,13 +197,13 @@ export default function SessionVisualization() {
             height: "100%",
             justifyContent: "center",
             alignItems: "center",
-            p: 4,
+            p: 8,
           }}
         >
           <Typography variant="h5" color="text.secondary">
             {t("models:label.noSessionSelected")}
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 4 }}>
             {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
@@ -230,7 +230,7 @@ export default function SessionVisualization() {
             flexShrink: 0,
             borderBottom: "1px solid",
             borderColor: "divider",
-            p: 2,
+            p: 4,
             position: "relative",
             display: "flex",
             flexDirection: "column",
@@ -241,11 +241,11 @@ export default function SessionVisualization() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mb: 2,
+              mb: 4,
               flexShrink: 0,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Tooltip
                 title={
                   tableCollapsed ? t("common:expand") : t("common:collapse")
@@ -262,7 +262,7 @@ export default function SessionVisualization() {
                 {t("models:label.modelComparison")}
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <Box sx={{ display: "flex", gap: 4, alignItems: "center" }}>
               {/* Metric Split Selector — controls both table and graph views */}
               {(hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
                 <ToggleButtonGroup
@@ -407,7 +407,7 @@ export default function SessionVisualization() {
           )}
         </Paper>
 
-        <Divider sx={{ my: 1, mt: 1 }} />
+        <Divider sx={{ my: 2, mt: 2 }} />
 
         {/* Scrollable Run Cards */}
         <Box
@@ -415,7 +415,7 @@ export default function SessionVisualization() {
           sx={{
             flex: 1,
             overflow: "auto",
-            p: 2,
+            p: 4,
           }}
         >
           {runs.length === 0 ? (
@@ -432,7 +432,7 @@ export default function SessionVisualization() {
               </Typography>
             </Box>
           ) : (
-            <Stack spacing={2}>
+            <Stack spacing={4}>
               {sortedRuns.map((run, index) => (
                 <Box
                   key={run.id}

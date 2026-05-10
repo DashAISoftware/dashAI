@@ -162,7 +162,7 @@ export default function RunResults({
 
   return (
     <Box id={`run-results-${run.id}`}>
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Button
           size="small"
           onClick={() => setResultsVisible(!resultsVisible)}
@@ -173,13 +173,13 @@ export default function RunResults({
             ? t("models:label.hideResults")
             : t("models:label.showResults")}
           {isFinished && (
-            <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
+            <Chip label={totalOperations} size="small" sx={{ ml: 2 }} />
           )}
         </Button>
       </Box>
 
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
@@ -188,7 +188,7 @@ export default function RunResults({
             <Tab label={t("models:label.liveMetrics")} />
             <Tab
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <span>{t("models:label.explainability")}</span>
                   {isFinished && (
                     <Chip
@@ -203,7 +203,7 @@ export default function RunResults({
             />
             <Tab
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <span>{t("models:label.predictions")}</span>
                   {isFinished && (
                     <Chip
@@ -224,21 +224,21 @@ export default function RunResults({
         </Box>
 
         {activeTab === 0 && (
-          <Box sx={{ py: 2 }}>
+          <Box sx={{ py: 4 }}>
             <LiveMetricsChart run={run} />
           </Box>
         )}
 
         {activeTab === 1 && isFinished && (
-          <Box sx={{ py: 2, width: "100%" }}>
-            <Grid container spacing={2} alignItems="stretch">
+          <Box sx={{ py: 4, width: "100%" }}>
+            <Grid container spacing={4} alignItems="stretch">
               <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 1,
-                    p: 2,
+                    p: 4,
                     height: "100%",
                     minHeight: 180,
                   }}
@@ -248,10 +248,10 @@ export default function RunResults({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      mb: 2,
+                      mb: 4,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <Typography variant="body1" fontWeight="medium">
                         {t("models:label.globalExplainers")}
                       </Typography>
@@ -262,7 +262,7 @@ export default function RunResults({
                       />
                     </Box>
                   </Box>
-                  <Stack spacing={2}>
+                  <Stack spacing={4}>
                     <Box sx={{ width: "100%" }}>
                       <TimestampWrapper
                         eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
@@ -295,7 +295,7 @@ export default function RunResults({
                         variant="body2"
                         color="text.secondary"
                         align="center"
-                        sx={{ py: 3 }}
+                        sx={{ py: 6 }}
                       >
                         {t("models:label.noGlobalExplainersYet")}
                       </Typography>
@@ -320,7 +320,7 @@ export default function RunResults({
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 1,
-                    p: 2,
+                    p: 4,
                     height: "100%",
                     minHeight: 180,
                   }}
@@ -330,10 +330,10 @@ export default function RunResults({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      mb: 2,
+                      mb: 4,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <Typography variant="body1" fontWeight="medium">
                         {t("models:label.localExplainers")}
                       </Typography>
@@ -344,7 +344,7 @@ export default function RunResults({
                       />
                     </Box>
                   </Box>
-                  <Stack spacing={2}>
+                  <Stack spacing={4}>
                     <Box sx={{ width: "100%" }}>
                       <TimestampWrapper
                         eventName={TIMESTAMP_KEYS.explainer.configureLocal}
@@ -377,7 +377,7 @@ export default function RunResults({
                         variant="body2"
                         color="text.secondary"
                         align="center"
-                        sx={{ py: 3 }}
+                        sx={{ py: 6 }}
                       >
                         {t("models:label.noLocalExplainersYet")}
                       </Typography>
@@ -400,15 +400,15 @@ export default function RunResults({
         )}
 
         {activeTab === 2 && isFinished && (
-          <Box sx={{ py: 2 }}>
-            <Grid container spacing={2}>
+          <Box sx={{ py: 4 }}>
+            <Grid container spacing={4}>
               <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 1,
-                    p: 2,
+                    p: 4,
                     height: "100%",
                   }}
                 >
@@ -417,10 +417,10 @@ export default function RunResults({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      mb: 2,
+                      mb: 4,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <Typography variant="body1" fontWeight="medium">
                         {t("models:label.datasetPredictions")}
                       </Typography>
@@ -431,7 +431,7 @@ export default function RunResults({
                       />
                     </Box>
                   </Box>
-                  <Stack spacing={2}>
+                  <Stack spacing={4}>
                     {!showDatasetPanel && (
                       <Button
                         variant="outlined"
@@ -450,7 +450,7 @@ export default function RunResults({
                           border: 1,
                           borderColor: "primary.main",
                           borderRadius: 1,
-                          p: 2,
+                          p: 4,
                           bgcolor: "background.default",
                         }}
                       >
@@ -472,7 +472,7 @@ export default function RunResults({
                             variant="body2"
                             color="text.secondary"
                             align="center"
-                            sx={{ py: 3 }}
+                            sx={{ py: 6 }}
                           >
                             {t("models:label.noDatasetPredictionsYet")}
                           </Typography>
@@ -497,7 +497,7 @@ export default function RunResults({
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 1,
-                    p: 2,
+                    p: 4,
                     height: "100%",
                   }}
                 >
@@ -506,10 +506,10 @@ export default function RunResults({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      mb: 2,
+                      mb: 4,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                       <Typography variant="body1" fontWeight="medium">
                         {t("models:label.manualPredictions")}
                       </Typography>
@@ -520,7 +520,7 @@ export default function RunResults({
                       />
                     </Box>
                   </Box>
-                  <Stack spacing={2}>
+                  <Stack spacing={4}>
                     {!showManualPanel && (
                       <Button
                         variant="outlined"
@@ -539,7 +539,7 @@ export default function RunResults({
                           border: 1,
                           borderColor: "primary.main",
                           borderRadius: 1,
-                          p: 2,
+                          p: 4,
                           bgcolor: "background.default",
                         }}
                       >
@@ -561,7 +561,7 @@ export default function RunResults({
                             variant="body2"
                             color="text.secondary"
                             align="center"
-                            sx={{ py: 3 }}
+                            sx={{ py: 6 }}
                           >
                             {t("models:label.noManualPredictionsYet")}
                           </Typography>
@@ -584,7 +584,7 @@ export default function RunResults({
         )}
 
         {activeTab === 3 && isFinished && optimizables > 0 && (
-          <Box sx={{ py: 2 }}>
+          <Box sx={{ py: 4 }}>
             <HyperparameterPlots run={run} />
           </Box>
         )}

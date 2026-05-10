@@ -302,9 +302,9 @@ export default function InlineExplainerCreator({
 
   return (
     <Collapse in={open} timeout="auto" unmountOnExit>
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" component="h3" sx={{ mb: 1 }}>
+      <Paper variant="outlined" sx={{ p: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
             {t(
               isLocal
                 ? "explainers:label.newLocalExplainer"
@@ -326,7 +326,7 @@ export default function InlineExplainerCreator({
           </Stepper>
         </Box>
 
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 4 }}>
           {activeStep === 0 && (
             <SetNameAndExplainerStep
               newExpl={newExpl}

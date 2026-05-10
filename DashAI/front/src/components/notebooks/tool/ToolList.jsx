@@ -42,7 +42,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
     return (
       <Typography
         variant="body2"
-        sx={{ color: "text.secondary", textAlign: "center", py: 2 }}
+        sx={{ color: "text.secondary", textAlign: "center", py: 4 }}
       >
         {t("datasets:label.noToolsMatched")}
       </Typography>
@@ -54,7 +54,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: 1.5,
+        gap: 3,
         minWidth: 0,
       }}
     >
@@ -75,13 +75,13 @@ export default function ToolList({ tools, notebook, FormComponent }) {
             <AccordionSummary
               expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />}
               sx={{
-                px: 1.5,
-                py: 1,
+                px: 3,
+                py: 2,
                 minHeight: "auto",
                 "& .MuiAccordionSummary-content": {
                   alignItems: "center",
-                  gap: 1,
-                  my: 1,
+                  gap: 2,
+                  my: 2,
                 },
               }}
             >
@@ -98,12 +98,12 @@ export default function ToolList({ tools, notebook, FormComponent }) {
                 }}
               />
             </AccordionSummary>
-            <AccordionDetails sx={{ px: 1.5, pb: 1.5 }}>
+            <AccordionDetails sx={{ px: 3, pb: 3 }}>
               <Box
                 sx={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 1.5,
+                  gap: 3,
                 }}
               >
                 {list

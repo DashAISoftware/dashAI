@@ -136,7 +136,7 @@ function OptimizationTable({ newExp, setNewExp }) {
           }
 
           return (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <EditOptimizerDialog
                 optimizerToConfigure={row.original.optimizer_name}
                 updateParameters={handleUpdateParameters(row.original.id)}
@@ -162,14 +162,14 @@ function OptimizationTable({ newExp, setNewExp }) {
   });
 
   return (
-    <Paper sx={{ py: 1, px: 2 }}>
+    <Paper sx={{ py: 4, px: 8 }}>
       {/* Title */}
       <Grid
         container
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        sx={{ mb: 8 }}
       >
         <Typography variant="subtitle1" component="h3">
           {t("experiments:label.modelsInExperiment")}

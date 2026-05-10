@@ -25,7 +25,7 @@ const RowItem = React.memo(function RowItem({
   return (
     <Box
       sx={{
-        my: 2,
+        my: 4,
         height: "370px",
       }}
     >

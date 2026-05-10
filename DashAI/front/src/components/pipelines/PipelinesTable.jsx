@@ -102,7 +102,7 @@ function PipelinesTable({
         header: "Actions",
         minSize: 160,
         Cell: ({ row }) => (
-          <Grid container spacing={0.5} sx={{ py: 0.5 }}>
+          <Grid container spacing={1} sx={{ py: 1 }}>
             <Grid>
               <Tooltip title="View">
                 <IconButton
@@ -152,7 +152,7 @@ function PipelinesTable({
       >
         <Typography variant="h5">Current Pipelines</Typography>
         <Grid>
-          <Grid container spacing={2}>
+          <Grid container spacing={4}>
             <Grid>
               <Button
                 variant="contained"

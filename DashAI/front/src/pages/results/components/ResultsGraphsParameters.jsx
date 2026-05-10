@@ -33,12 +33,12 @@ function ResultsGraphsParameters({
       }}
     >
       {/* ── Metric checkboxes ── */}
-      <Box sx={{ p: 1.5, flex: 1, overflowY: "auto" }}>
+      <Box sx={{ p: 6, flex: 1, overflowY: "auto" }}>
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
-          mb={0.5}
+          mb={2}
         >
           <Typography
             variant="caption"
@@ -55,7 +55,7 @@ function ResultsGraphsParameters({
               disabled={currentMetrics.length === 0}
               sx={{
                 minWidth: 0,
-                px: 0.75,
+                px: 3,
                 py: 0,
                 fontSize: "0.65rem",
                 lineHeight: 1.5,
@@ -69,7 +69,7 @@ function ResultsGraphsParameters({
               disabled={selectedMetrics.length === 0}
               sx={{
                 minWidth: 0,
-                px: 0.75,
+                px: 3,
                 py: 0,
                 fontSize: "0.65rem",
                 lineHeight: 1.5,
@@ -96,7 +96,7 @@ function ResultsGraphsParameters({
                 />
               }
               label={<Typography variant="body2">{metric}</Typography>}
-              sx={{ display: "flex", m: 0, py: 0.25 }}
+              sx={{ display: "flex", m: 0, py: 1 }}
             />
           ))
         )}

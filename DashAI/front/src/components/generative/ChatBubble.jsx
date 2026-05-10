@@ -17,7 +17,7 @@ export function ChatBubble({
         flexDirection: "row",
         alignItems: "flex-start",
         justifyContent: isUser ? "flex-end" : "flex-start",
-        mb: 2,
+        mb: 4,
         width: "100%",
       }}
     >
@@ -28,8 +28,8 @@ export function ChatBubble({
           <Box
             component="span"
             sx={{
-              ml: 1,
-              mb: 0.5,
+              ml: 2,
+              mb: 1,
               display: "block",
               fontSize: "0.75rem",
               color: "text.secondary",

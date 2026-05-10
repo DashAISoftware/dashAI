@@ -72,7 +72,7 @@ function PluginsCard({
           position: "relative",
           overflow: "hidden",
           transition: "border-color 0.2s, background 0.2s, transform 0.15s",
-          gap: 3,
+          gap: 12,
           "&:hover": {
             borderColor: accentBorder,
             background: accentGlow,
@@ -181,7 +181,7 @@ function PluginsCard({
             fontSize: "18px",
             color: theme.palette.text.disabled,
             flexShrink: 0,
-            ml: 1,
+            ml: 8,
           }}
         >
           →
@@ -236,7 +236,7 @@ function PluginsCard({
       <Box
         sx={{
           display: "flex",
-          mb: "14px",
+          mb: 14,
           width: "100%",
           alignItems: "center",
           justifyContent: "space-between",
@@ -277,7 +277,7 @@ function PluginsCard({
         sx={{
           ...theme.typography.cardTitle,
           color: theme.palette.text.primary,
-          mb: "5px",
+          mb: 6,
           width: "100%",
         }}
       >
@@ -314,8 +314,8 @@ function PluginsCard({
       {/* Footer: tags + install/arrow */}
       <Box
         sx={{
-          mt: "16px",
-          pt: "14px",
+          mt: 16,
+          pt: 14,
           borderTop: `1px solid ${theme.palette.ui.borderLight}`,
           display: "flex",
           alignItems: "center",
@@ -342,7 +342,7 @@ function PluginsCard({
           ))}
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 8 }}>
           {plugin.status === PluginStatus.REGISTERED && (
             <Box
               component="span"

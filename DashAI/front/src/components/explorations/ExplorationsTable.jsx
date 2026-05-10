@@ -161,7 +161,7 @@ function ExplorationsTable({
         enableSorting: false,
         enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <EditExplorationAction
               onAction={() => handleSelectExploration(row.original)}
             />
@@ -199,7 +199,7 @@ function ExplorationsTable({
   return (
     <Box sx={{ height: "100%", width: "100%" }}>
       <Paper
-        sx={{ px: 3, py: 2 }}
+        sx={{ px: 6, py: 4 }}
         // solves a mui problem related to putting datagrid inside another datagrid
         onClick={(event) => {
           event.target = document.body;

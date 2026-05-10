@@ -38,11 +38,11 @@ export default function CreateSessionCenter() {
         height: "100%",
         width: "100%",
         minHeight: 0,
-        p: 2,
+        p: 4,
       }}
     >
       <GenerativeBreadcrumbs />
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography variant="h5" component="h2">
           {step === 0
             ? t("generative:label.selectModel")
@@ -62,7 +62,7 @@ export default function CreateSessionCenter() {
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
-          pt: 1,
+          pt: 2,
         }}
       >
         {step === 0 ? (
@@ -87,7 +87,7 @@ export default function CreateSessionCenter() {
             />
           )
         ) : (
-          <Stack spacing={2} sx={{ maxWidth: "100%" }}>
+          <Stack spacing={4} sx={{ maxWidth: "100%" }}>
             <TextField
               fullWidth
               label={t("generative:label.sessionName")}
@@ -114,13 +114,13 @@ export default function CreateSessionCenter() {
 
       <Box
         sx={{
-          mt: 2,
-          pt: 2,
+          mt: 4,
+          pt: 4,
           borderTop: 1,
           borderColor: "divider",
           display: "flex",
           justifyContent: "flex-end",
-          gap: 1,
+          gap: 2,
         }}
       >
         <Button variant="outlined" onClick={handleBack} disabled={submitting}>

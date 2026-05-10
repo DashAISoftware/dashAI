@@ -63,7 +63,7 @@ function SplitsParams({
     <React.Fragment>
       {/* splits configuration form that can be hidden or shown as needed. */}
       <Collapse in={!hideSection}>
-        <Divider sx={{ mt: 2, mb: 2 }} />
+        <Divider sx={{ mt: 4, mb: 4 }} />
         <Typography variant="p">Splits configuration</Typography>
         {showSplitsError && (
           <Typography variant="caption" component="p" color="error">

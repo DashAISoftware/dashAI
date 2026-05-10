@@ -35,7 +35,7 @@ function Columns({ data }) {
       <Typography variant="sectionLabel" sx={{ color: "text.secondary" }}>
         {t("common:columns")}
       </Typography>
-      <Divider sx={{ mt: 1, mb: 1, borderColor: "ui.borderLight" }} />
+      <Divider sx={{ mt: 2, mb: 2, borderColor: "ui.borderLight" }} />
       <Table size="small">
         <TableBody>
           {rows.map(({ name, type }) => (
@@ -49,14 +49,14 @@ function Columns({ data }) {
                   fontSize: "0.8rem",
                   color: "text.secondary",
                   borderColor: "ui.borderLight",
-                  py: 0.75,
+                  py: 3,
                 }}
               >
                 {name}
               </TableCell>
               <TableCell
                 align="right"
-                sx={{ borderColor: "ui.borderLight", py: 0.75 }}
+                sx={{ borderColor: "ui.borderLight", py: 2 }}
               >
                 {type ? (
                   <Chip

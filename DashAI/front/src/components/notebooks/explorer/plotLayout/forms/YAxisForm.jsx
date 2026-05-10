@@ -33,7 +33,7 @@ export default function YAxisForm({
   const tickvalsArray = Array.isArray(data[0]?.y) ? data[0].y : [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Title */}
       <SectionLabel>
         {t("datasets:label.axisTitle", { axis: "Y" })}

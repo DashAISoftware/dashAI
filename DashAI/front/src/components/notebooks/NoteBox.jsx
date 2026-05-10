@@ -10,7 +10,7 @@ export default function NoteBox({ message, className = "", ...props }) {
       className={className}
       {...props}
       sx={{
-        p: 2,
+        p: 4,
         bgcolor: theme.palette.background.box,
         borderRadius: 1,
         border: `1px solid ${theme.palette.ui.divider}`,
@@ -18,7 +18,7 @@ export default function NoteBox({ message, className = "", ...props }) {
     >
       <Typography
         variant="subtitle2"
-        sx={{ color: theme.palette.primary.main, mb: 1 }}
+        sx={{ color: theme.palette.primary.main, mb: 2 }}
       >
         {t("common:note")}
       </Typography>

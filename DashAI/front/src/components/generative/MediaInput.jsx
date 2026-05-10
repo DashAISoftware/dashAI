@@ -75,7 +75,7 @@ export function MediaInput({
         onRemove={removeFile}
       />
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         {wantsText ? (
           <TextField
             fullWidth
@@ -108,7 +108,7 @@ export function MediaInput({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 1,
+            gap: 2,
             alignItems: "center",
             position: "relative",
           }}

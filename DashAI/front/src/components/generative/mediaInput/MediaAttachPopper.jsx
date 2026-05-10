@@ -76,7 +76,7 @@ export function MediaAttachPopper({
               }}
             >
               <ClickAwayListener onClickAway={() => setOpen(false)}>
-                <Stack direction="column" spacing={1.25}>
+                <Stack direction="column" spacing={2.5}>
                   {MEDIA_ORDER.map((kind) => {
                     const { icon, tooltipKey } = MEDIA_KINDS[kind];
                     const enabled = isActive(inputsCardinality[kind]);

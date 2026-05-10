@@ -121,11 +121,11 @@ function SetNameAndExplainerStep({
       direction="row"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={2}
+      spacing={4}
     >
       {/* Set Name subcomponent */}
       <Grid size={{ xs: 12 }}>
-        <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" component="h3" sx={{ mb: 6 }}>
           {t("explainers:label.selectExplainerAndName")}
         </Typography>
 
@@ -136,7 +136,7 @@ function SetNameAndExplainerStep({
           fullWidth
           onChange={handleNameInputChange}
           autoComplete="off"
-          sx={{ mb: 2 }}
+          sx={{ mb: 4 }}
           error={explNameError || explNameExistsError}
           helperText={
             explNameExistsError

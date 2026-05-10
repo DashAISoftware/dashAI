@@ -86,10 +86,10 @@ function PlotlyJsonVisualizer({ data }) {
             <Typography
               variant="caption"
               sx={{
-                mr: 1,
+                mr: 2,
                 color: "rgba(0,0,0,0.6)",
                 bgcolor: "rgba(255,255,255,0.9)",
-                px: 1,
+                px: 2,
                 borderRadius: 1,
                 border: "1px solid rgba(0,0,0,0.1)",
               }}

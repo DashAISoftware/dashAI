@@ -86,7 +86,7 @@ export const CustomTooltip = ({
             </Button>
           )}
         </Box>{" "}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {!isLastStep && (
             <Button
               {...skipProps}
@@ -129,7 +129,7 @@ export const CustomTooltip = ({
                   backgroundColor: theme.palette.primary.dark,
                 },
                 display: "flex",
-                gap: 1,
+                gap: 2,
               }}
             >
               {isLastStep ? t("common:finish") : t("common:next")}
@@ -139,7 +139,7 @@ export const CustomTooltip = ({
                   sx={{
                     fontSize: "12px",
                     opacity: 0.8,
-                    ml: 0.5,
+                    ml: 1,
                   }}
                 >
                   ({index + 1}/{size})

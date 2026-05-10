@@ -123,7 +123,7 @@ export default function ParamsBar({ onToggle }) {
     <SideBar>
       <Box
         sx={{
-          p: 2,
+          p: 4,
           borderBottom: `1px solid ${theme.palette.ui.border}`,
           flexShrink: 0,
           display: "flex",
@@ -159,9 +159,9 @@ export default function ParamsBar({ onToggle }) {
       </Box>
 
       {selectedSessionId ? (
-        <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
+        <Box sx={{ flex: 1, overflowY: "auto", pt: 4 }}>
           <form onSubmit={formik.handleSubmit}>
-            <Box sx={{ mr: 2, ml: 2 }}>
+            <Box sx={{ mr: 4, ml: 4 }}>
               {/* Render the parameter fields */}
               <FormSchemaRenderFields
                 modelSchema={processedProperties}
@@ -176,13 +176,13 @@ export default function ParamsBar({ onToggle }) {
                 onFormSubmit={formik.handleSubmit}
                 setError={(error) => console.error(error)}
                 errorsMessage={formik.errors || {}}
-                spacing={1}
+                spacing={2}
               />
               <Box
                 sx={{
                   display: "flex",
                   justifyContent: "flex-end",
-                  py: 2,
+                  py: 4,
                   position: "sticky",
                   bottom: 0,
                   backgroundColor: "background.box",
@@ -206,7 +206,7 @@ export default function ParamsBar({ onToggle }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            p: 2,
+            p: 4,
           }}
         >
           <Typography

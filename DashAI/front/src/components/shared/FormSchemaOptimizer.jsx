@@ -93,11 +93,11 @@ function FormSchemaFieldOptimizer({
 
   return (
     <>
-      <Box display="flex" gap={2}>
+      <Box display="flex" gap={4}>
         <Box flex={1}>
           <FormSchemaField {...fieldProps} error={errorField} />
         </Box>
-        <Box pt={2.5}>
+        <Box pt={5}>
           {selectedType && (
             <SingleSelectChipGroup
               options={options.map(({ type }) => ({

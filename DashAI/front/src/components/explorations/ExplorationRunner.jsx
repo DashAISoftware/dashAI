@@ -234,17 +234,17 @@ function ExplorationRunner({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        gap: 2,
+        gap: 4,
       }}
     >
       <Paper
-        sx={{ display: "flex", flexDirection: "column", px: 3, py: 2 }}
+        sx={{ display: "flex", flexDirection: "column", px: 6, py: 4 }}
         // solves a mui problem related to putting datagrid inside another datagrid
         onClick={(event) => {
           event.target = document.body;
         }}
       >
-        <Typography variant="subtitle1" component="h3" sx={{ pb: 1 }}>
+        <Typography variant="subtitle1" component="h3" sx={{ pb: 2 }}>
           Select explorers to run
         </Typography>
         <MaterialReactTable table={table} />

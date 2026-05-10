@@ -323,7 +323,7 @@ export function LiveMetricsChart({ run }) {
         </FormControl>
       </Box>
 
-      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
+      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 4 }}>
         <Tab label={t("models:label.train")} value="TRAIN" />
         <Tab label={t("models:label.validation")} value="VALIDATION" />
         <Tab label={t("models:label.test")} value="TEST" />

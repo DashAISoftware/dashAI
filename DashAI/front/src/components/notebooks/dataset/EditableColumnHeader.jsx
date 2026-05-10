@@ -142,7 +142,7 @@ export default function EditableColumnHeader({
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          gap: 0.5,
+          gap: 1,
         }}
       >
         <TextField
@@ -158,7 +158,7 @@ export default function EditableColumnHeader({
             width: "100%",
             "& .MuiInputBase-input": {
               fontSize: "0.875rem",
-              paddingY: 0.5,
+              paddingY: 1,
               textAlign: "center",
             },
           }}
@@ -190,7 +190,7 @@ export default function EditableColumnHeader({
         flexDirection: "column",
         alignItems: "center",
         width: "100%",
-        gap: 0.5,
+        gap: 1,
         textAlign: "center",
       }}
     >

@@ -125,7 +125,7 @@ function NewPipeline() {
                 nodeHelp={nodeHelp}
               />
 
-              <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#f5f5f5" }}>
+              <Box sx={{ flexGrow: 1, p: 8, backgroundColor: "#f5f5f5" }}>
                 <PipelineToolbar
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}
@@ -195,7 +195,7 @@ function NewPipeline() {
             </Box>
           </>
         ) : (
-          <Box sx={{ p: 2 }}>
+          <Box sx={{ p: 8 }}>
             {resultId ? (
               <PipelineResults pipelineId={resultId} />
             ) : (

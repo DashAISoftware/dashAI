@@ -29,7 +29,7 @@ export const TextTab = ({ textStats }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const [activeIndices, setActiveIndices] = useState({});
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
+    <Box display="flex" flexDirection="column" gap={8}>
       {Object.entries(textStats).map(([column, stats]) => {
         const lengthData = [
           {
@@ -68,8 +68,8 @@ export const TextTab = ({ textStats }) => {
           >
             <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
               {/* Title */}
-              <Box display="flex" alignItems="center" mb={2}>
-                <TextFieldsIcon sx={{ color: "primary.main", mr: 1 }} />
+              <Box display="flex" alignItems="center" mb={4}>
+                <TextFieldsIcon sx={{ color: "primary.main", mr: 2 }} />
                 <Typography variant="h6" fontWeight="bold">
                   {column}
                 </Typography>
@@ -82,7 +82,7 @@ export const TextTab = ({ textStats }) => {
                       })}
                       size="small"
                       sx={{
-                        ml: 2,
+                        ml: 4,
                         bgcolor:
                           uniquePercentage > 90
                             ? theme.palette.success.main
@@ -98,13 +98,13 @@ export const TextTab = ({ textStats }) => {
               </Box>
 
               {parseFloat(uniquePercentage) <= 30 && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
+                <Alert severity="warning" sx={{ mb: 6 }}>
                   {t("datasets:label.lowUniquenessWarning")}
                 </Alert>
               )}
 
               {/* Summary Stats (StatBoxes) */}
-              <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+              <Box display="flex" flexWrap="wrap" gap={4} mb={6}>
                 <Box flex="1 1 200px" minWidth="150px">
                   <StatBox
                     label={t("datasets:label.avgLength")}
@@ -137,7 +137,7 @@ export const TextTab = ({ textStats }) => {
               </Box>
 
               {/* Two-column metric grouping */}
-              <Box display="flex" flexWrap="wrap" gap={4}>
+              <Box display="flex" flexWrap="wrap" gap={8}>
                 <Box flex="1 1 300px" minWidth="250px">
                   <Typography
                     variant="subtitle2"
@@ -149,9 +149,9 @@ export const TextTab = ({ textStats }) => {
                     {t("datasets:label.lengthMetrics")}
                   </Typography>
 
-                  <Box display="flex" gap={4}>
+                  <Box display="flex" gap={8}>
                     {/* Column 1 */}
-                    <Box display="flex" flexDirection="column" gap={1} flex="1">
+                    <Box display="flex" flexDirection="column" gap={2} flex="1">
                       <MetricRow
                         label={t("datasets:label.minLength")}
                         value={stats.min_length}
@@ -167,7 +167,7 @@ export const TextTab = ({ textStats }) => {
                     </Box>
 
                     {/* Column 2 */}
-                    <Box display="flex" flexDirection="column" gap={1} flex="1">
+                    <Box display="flex" flexDirection="column" gap={2} flex="1">
                       <MetricRow
                         label={t("datasets:label.maxLength")}
                         value={stats.max_length}
@@ -182,7 +182,7 @@ export const TextTab = ({ textStats }) => {
               </Box>
 
               {/* Plot: Length Distribution */}
-              <Box mt={4}>
+              <Box mt={8}>
                 <Typography
                   variant="subtitle2"
                   color="text.secondary"

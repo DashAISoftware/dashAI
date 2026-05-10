@@ -13,8 +13,8 @@ export function HeaderBox({ title, value, IconComponent, iconColor, bgColor }) {
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        gap: 2,
-        p: 2,
+        gap: 4,
+        p: 4,
         boxShadow: 3,
         overflow: "hidden",
       }}
@@ -51,7 +51,7 @@ export function HeaderBox({ title, value, IconComponent, iconColor, bgColor }) {
               overflow: "hidden",
               whiteSpace: "nowrap",
               width: "100%",
-              mt: 0.25,
+              mt: 1,
             }}
           >
             {value}

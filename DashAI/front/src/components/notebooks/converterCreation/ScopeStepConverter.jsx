@@ -87,7 +87,7 @@ export default function ScopeStepConverter({
         flexDirection: "column",
         flexGrow: 1,
         height: "100%",
-        gap: 1,
+        gap: 2,
       }}
       data-tour="column-selector-converter-container"
     >
@@ -98,12 +98,12 @@ export default function ScopeStepConverter({
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          gap: 1,
+          gap: 2,
         }}
       >
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.primary, mb: 0.5 }}
+          sx={{ color: theme.palette.text.primary, mb: 1 }}
         >
           {t("datasets:label.selectScopeDescriptionColumns")}
         </Typography>
@@ -145,8 +145,8 @@ export default function ScopeStepConverter({
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 1,
-          mb: 4,
+          gap: 2,
+          mb: 8,
         }}
       >
         {supervised && (

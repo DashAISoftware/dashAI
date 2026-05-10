@@ -6,7 +6,7 @@ function SetNameAndDatasetStep({ formik, nameError }) {
   const { t } = useTranslation(["models"]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <TextField
         id="session-name"
         label={t("models:label.sessionName")}

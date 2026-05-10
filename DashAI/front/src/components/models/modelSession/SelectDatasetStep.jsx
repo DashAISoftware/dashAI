@@ -138,7 +138,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 4 }}
+        sx={{ mb: 8 }}
       >
         <Typography variant="subtitle1" component="h3">
           {t("experiments:label.selectDatasetTitle")}
@@ -149,7 +149,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
             <AlertTitle>
               {t("experiments:label.noDatasetsAvailable")}
             </AlertTitle>

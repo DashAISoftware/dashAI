@@ -142,7 +142,7 @@ function PipelineResultsGraphs({ metrics }) {
   return (
     <>
       {filteredDataProcess.length === 0 ? (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert severity="warning" sx={{ mb: 4 }}>
           <AlertTitle>No metric data available</AlertTitle>
           Please provide valid metrics to render the graphs.
         </Alert>

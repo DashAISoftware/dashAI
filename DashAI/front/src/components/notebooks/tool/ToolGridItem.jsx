@@ -116,9 +116,9 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           </Box>
 
           {/* Content */}
-          <Box sx={{ p: 1.5 }}>
+          <Box sx={{ p: 3 }}>
             {/* Icon and Badges */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
               <Box
                 sx={{
                   display: "flex",
@@ -126,7 +126,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                   justifyContent: "center",
                   width: 28,
                   height: 28,
-                  p: 2,
+                  p: 4,
                   borderRadius: 0.75,
                   bgcolor: disabled
                     ? theme.palette.ui.disabled
@@ -154,7 +154,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                   ? theme.palette.text.disabled
                   : theme.palette.text.primary,
                 fontWeight: 500,
-                mb: 0.5,
+                mb: 1,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 display: "-webkit-box",

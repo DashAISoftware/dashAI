@@ -95,7 +95,7 @@ export function SaveDatasetModal({
         </IconButton>
       </DialogTitle>
       <DialogContent data-tour="save-dataset-modal-notebook">
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 6, mt: 2 }}>
           <NoteBox
             message={t("datasets:label.newDatasetCreatedWithTransformations")}
           />
@@ -122,7 +122,7 @@ export function SaveDatasetModal({
             )}
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
             <FormSchemaButtonGroup
               onCancel={handleClose}
               onFormSubmit={handleSubmit}

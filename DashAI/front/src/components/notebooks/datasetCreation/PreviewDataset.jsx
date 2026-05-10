@@ -164,7 +164,7 @@ function PreviewDataset({
         boxShadow: "none",
       }}
     >
-      <Grid sx={{ p: 4 }}>
+      <Grid sx={{ p: 8 }}>
         {loading && (
           <Box
             sx={{
@@ -237,8 +237,8 @@ function PreviewDataset({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "flex-start",
-                gap: 2,
-                mb: 2,
+                gap: 4,
+                mb: 4,
                 flexShrink: 0,
               }}
             >
@@ -257,8 +257,8 @@ function PreviewDataset({
                 onClick={onChangeDataset}
                 sx={{
                   fontSize: "0.7rem",
-                  px: 1.5,
-                  py: 0.5,
+                  px: 3,
+                  py: 1,
                   textTransform: "uppercase",
                   minWidth: "auto",
                   flexShrink: 0,

@@ -214,7 +214,7 @@ function ExplorationEditor({ open = true, handleCloseDialog = () => {} }) {
                   variant="h6"
                   component="h3"
                   align={matches ? "center" : "left"}
-                  sx={{ mb: { sm: 2, md: 0 } }}
+                  sx={{ mb: { sm: 8, md: 0 } }}
                 >
                   {explorationMode.title}
                 </Typography>

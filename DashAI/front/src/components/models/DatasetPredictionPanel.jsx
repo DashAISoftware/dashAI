@@ -154,7 +154,7 @@ export default function DatasetPredictionPanel({
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress size={28} />
       </Box>
     );
@@ -173,7 +173,7 @@ export default function DatasetPredictionPanel({
         setSelectedDataset={setSelectedDataset}
       />
 
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
         <Button
           variant="contained"
           size="small"

@@ -246,12 +246,12 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     >
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
-        <Grid container direction={"row"} alignItems={"center"} spacing={1}>
+        <Grid container direction={"row"} alignItems={"center"} spacing={2}>
           <Grid size={{ xs: 12, md: 3 }}>
             <Typography
               variant="h6"
               component={"h3"}
-              sx={{ mb: { sm: 2, md: 0 } }}
+              sx={{ mb: { sm: 4, md: 0 } }}
             >
               New dataset
             </Typography>

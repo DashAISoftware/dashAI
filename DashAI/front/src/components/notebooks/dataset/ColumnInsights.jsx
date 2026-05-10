@@ -111,9 +111,9 @@ export default function ColumnInsights({
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1,
-          px: 2,
-          py: 1.5,
+          gap: 4,
+          px: 8,
+          py: 6,
         }}
       >
         <LightbulbOutlinedIcon
@@ -132,7 +132,7 @@ export default function ColumnInsights({
       </Box>
 
       {insights.length === 0 ? (
-        <Box sx={{ px: 2, pb: 2 }}>
+        <Box sx={{ px: 8, pb: 8 }}>
           <Typography variant="caption" color="text.secondary">
             {t("datasets:label.insightEmptyMessage")}
           </Typography>
@@ -143,9 +143,9 @@ export default function ColumnInsights({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 1.5,
-            px: 2,
-            pb: 2,
+            gap: 6,
+            px: 8,
+            pb: 8,
           }}
         >
           {insights.map((insight, index) => {
@@ -155,7 +155,7 @@ export default function ColumnInsights({
                 key={`${insight.column}-${insight.tag}-${index}`}
                 onClick={() => handleClick(insight)}
                 sx={{
-                  p: 1.5,
+                  p: 6,
                   borderRadius: 1.5,
                   bgcolor: `${palette.main}15`,
                   border: `1px solid ${palette.main}30`,
@@ -172,8 +172,8 @@ export default function ColumnInsights({
                     display: "flex",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: 1,
-                    mb: 0.5,
+                    gap: 4,
+                    mb: 2,
                   }}
                 >
                   <Typography

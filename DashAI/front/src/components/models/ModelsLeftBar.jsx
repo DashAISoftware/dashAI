@@ -218,7 +218,7 @@ export default function ModelsLeftBar({ onToggle }) {
   return (
     <SideBar>
       {/* Create new item button */}
-      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+      <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
@@ -232,7 +232,7 @@ export default function ModelsLeftBar({ onToggle }) {
       </Box>
 
       {/* Search bar global */}
-      <Box px={2} pb={2} flex={"0 0 auto"}>
+      <Box px={4} pb={4} flex={"0 0 auto"}>
         <SearchBar
           placeholder={t("models:label.searchDatasetsSessions")}
           value={searchQuery}

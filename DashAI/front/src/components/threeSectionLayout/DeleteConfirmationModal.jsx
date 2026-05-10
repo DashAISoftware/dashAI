@@ -46,7 +46,7 @@ export default function DeleteConfirmationModal({
             )}
         </DialogContentText>
         {warning && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="warning" sx={{ mt: 4 }}>
             {warning}
           </Alert>
         )}

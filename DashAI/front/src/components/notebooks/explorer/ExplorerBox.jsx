@@ -104,10 +104,10 @@ export default function ExplorerBox({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
+            mb: 4,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Analytics
               sx={{ color: theme.palette.primary.main, fontSize: 20 }}
             />
@@ -115,7 +115,7 @@ export default function ExplorerBox({
               {explorerComponent.display_name}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={getExplorerStatus(statusLabel, t)}
               color={statusLabel === 3 ? "primary" : "default"} // Finished
@@ -188,7 +188,7 @@ export default function ExplorerBox({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              p: 2,
+              p: 4,
             }}
           >
             <Typography
@@ -209,7 +209,7 @@ export default function ExplorerBox({
               justifyContent: "center",
             }}
           >
-            <CircularProgress size={24} sx={{ mr: 1 }} />
+            <CircularProgress size={24} sx={{ mr: 2 }} />
             <Typography>{t("common:processing")}</Typography>
           </Box>
         )}

@@ -111,8 +111,8 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   });
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Grid container spacing={2}>
+    <Paper sx={{ p: 6 }}>
+      <Grid container spacing={4}>
         <Grid
           size={{ xs: 12 }}
           container

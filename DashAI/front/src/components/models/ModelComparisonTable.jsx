@@ -236,7 +236,7 @@ function ModelComparisonTable({
             >
               {metricName}
               {directionArrow && (
-                <Box component="span" sx={{ ml: 0.5, opacity: 0.7 }}>
+                <Box component="span" sx={{ ml: 1, opacity: 0.7 }}>
                   {directionArrow}
                 </Box>
               )}
@@ -259,7 +259,7 @@ function ModelComparisonTable({
             bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
 
           return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {isBest && (
                 <Tooltip title={t("models:label.bestModel")} placement="top">
                   <Box
@@ -316,7 +316,7 @@ function ModelComparisonTable({
 
         const tooltipContent = (
           <Box sx={{ fontSize: "0.75rem", lineHeight: 1.6 }}>
-            <Box sx={{ fontWeight: "bold", mb: 0.5 }}>
+            <Box sx={{ fontWeight: "bold", mb: 1 }}>
               {t("models:label.score")}: {score.toFixed(1)}/100
             </Box>
             {breakdown.map(({ metric_name, value, normalized_weight }, i) => (
@@ -334,7 +334,7 @@ function ModelComparisonTable({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 0.5,
+                gap: 1,
                 cursor: "help",
                 fontWeight: "bold",
               }}
@@ -411,7 +411,7 @@ function ModelComparisonTable({
             row.original.status === 1 || row.original.status === 2;
 
           return (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Tooltip title={t("common:train")}>
                 <span>
                   <IconButton
@@ -500,8 +500,8 @@ function ModelComparisonTable({
     enablePagination: false,
     enableTopToolbar: false,
     enableBottomToolbar: false,
-    muiTableBodyCellProps: { sx: { py: 0.25, whiteSpace: "pre" } },
-    muiTableHeadCellProps: { sx: { py: 0.5 } },
+    muiTableBodyCellProps: { sx: { py: 1, whiteSpace: "pre" } },
+    muiTableHeadCellProps: { sx: { py: 1 } },
     state: { columnOrder },
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
@@ -532,8 +532,8 @@ function ModelComparisonTable({
       {/* Profile selector */}
       <Box
         sx={{
-          px: 1.5,
-          py: 0.5,
+          px: 3,
+          py: 1,
           display: "flex",
           alignItems: "center",
           gap: 1,

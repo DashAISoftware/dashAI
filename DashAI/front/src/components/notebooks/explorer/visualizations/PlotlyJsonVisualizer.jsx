@@ -189,7 +189,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
         zIndex: 2,
         display: "flex",
         alignItems: "center",
-        gap: 0.5,
+        gap: 1,
       }}
     >
       {!compact && (

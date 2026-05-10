@@ -350,7 +350,7 @@ export default function MrtDatasetTableInfScroll({
     },
     muiToolbarAlertBannerProps: undefined,
     renderBottomToolbarCustomActions: () => (
-      <Typography variant="body2" sx={{ p: 1 }}>
+      <Typography variant="body2" sx={{ p: 2 }}>
         {totalFetched} / {rowCount} {t("common:rows")}
       </Typography>
     ),

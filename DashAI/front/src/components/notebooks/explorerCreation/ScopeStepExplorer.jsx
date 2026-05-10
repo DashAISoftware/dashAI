@@ -31,7 +31,7 @@ export default function ScopeStepExplorer({
         flexDirection: "column",
         flexGrow: 1,
         height: "100%",
-        gap: 1,
+        gap: 2,
       }}
       data-tour="column-selector-explorer-container"
     >
@@ -39,7 +39,7 @@ export default function ScopeStepExplorer({
       <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.primary, mb: 1.5 }}
+          sx={{ color: theme.palette.text.primary, mb: 3 }}
         >
           {t("datasets:label.selectColumnsForExplorerScope")}
         </Typography>
@@ -61,7 +61,7 @@ export default function ScopeStepExplorer({
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 1,
+          gap: 2,
         }}
       >
         <FormSchemaButtonGroup

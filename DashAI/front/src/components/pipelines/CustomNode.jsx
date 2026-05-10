@@ -123,7 +123,7 @@ const CustomNode = ({ data, isConnectable }) => {
       }}
     >
       <Typography
-        sx={{ fontSize: 11, mb: 0.5, color: theme.palette.text.primary }}
+        sx={{ fontSize: 11, mb: 1, color: theme.palette.text.primary }}
       >
         {data.name || data.label}
       </Typography>

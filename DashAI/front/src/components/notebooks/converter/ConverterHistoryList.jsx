@@ -35,7 +35,7 @@ export default function ConverterHistoryList({
                 width: "100%",
               }}
             >
-              <Transform color="primary" sx={{ mr: 2 }} />
+              <Transform color="primary" sx={{ mr: 4 }} />
               <ListItemText
                 primary={converter.converter}
                 secondary={scopeText}
@@ -44,7 +44,7 @@ export default function ConverterHistoryList({
               <IconButton
                 onClick={() => onConverterDelete(converter)}
                 size="small"
-                sx={{ ml: 1 }}
+                sx={{ ml: 2 }}
                 color="error"
               >
                 <Delete />

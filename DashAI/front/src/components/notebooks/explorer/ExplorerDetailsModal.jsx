@@ -122,7 +122,7 @@ export default function ExplorerDetailsModal({
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          gap: 2,
           flexShrink: 0,
           bgcolor: "background.paper",
         }}
@@ -176,16 +176,16 @@ export default function ExplorerDetailsModal({
         <Box sx={{ flex: 1, overflow: "hidden", position: "relative" }}>
           {/* Details tab */}
           {currentTab === 1 && (
-            <Box sx={{ p: 2.5, height: "100%", overflowY: "auto" }}>
+            <Box sx={{ p: 5, height: "100%", overflowY: "auto" }}>
               {/* Metadata strip */}
               {explorer.created && (
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
-                    mb: 2,
-                    pb: 1.5,
+                    gap: 2,
+                    mb: 4,
+                    pb: 3,
                     borderBottom: "1px solid",
                     borderColor: "ui.borderLight",
                   }}
@@ -209,7 +209,7 @@ export default function ExplorerDetailsModal({
               <Box
                 sx={{
                   display: "flex",
-                  gap: 3,
+                  gap: 6,
                   alignItems: "flex-start",
                   flexWrap: "wrap",
                 }}
@@ -253,7 +253,7 @@ export default function ExplorerDetailsModal({
                     justifyContent: "center",
                     alignItems: "center",
                     overflow: { xs: "visible", xl: "auto" },
-                    p: 2,
+                    p: 4,
                   }}
                 >
                   <TabResults
@@ -270,7 +270,7 @@ export default function ExplorerDetailsModal({
                       width: { xs: "100%", xl: "50%" },
                       flexShrink: 0,
                       overflowY: { xs: "visible", xl: "auto" },
-                      mt: { xs: 2, xl: 0 },
+                      mt: { xs: 4, xl: 0 },
                     }}
                   >
                     <PlotLayoutForm

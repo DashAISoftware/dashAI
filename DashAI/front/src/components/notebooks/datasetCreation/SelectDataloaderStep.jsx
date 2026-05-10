@@ -54,7 +54,7 @@ export default function SelectDataloaderStep({
   }, [loadingDataloaders, tourContext]);
 
   return (
-    <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={2}>
+    <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={4}>
       <Box sx={{ flex: 1, minHeight: 0 }} data-tour="csv-dataloader-option">
         {loadingDataloaders ? (
           <Box
@@ -93,13 +93,13 @@ export default function SelectDataloaderStep({
 
       <Box
         sx={{
-          pt: 2,
+          pt: 4,
           borderTop: 1,
           borderColor: "divider",
           flexShrink: 0,
           display: "flex",
           justifyContent: "flex-end",
-          gap: 1,
+          gap: 2,
         }}
       >
         <Button variant="outlined" onClick={goToPrevStep}>

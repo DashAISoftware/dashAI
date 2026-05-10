@@ -73,20 +73,20 @@ export default function SessionHistoryModal({
             alignItems="center"
             justifyContent="space-between"
           >
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="h6">Change History</Typography>
               <Chip
                 label={taskName}
                 variant="outlined"
                 size="small"
-                sx={{ ml: 1 }}
+                sx={{ ml: 2 }}
               />
             </Box>
             <IconButton onClick={handleClose} size="small">
               <CloseIcon />
             </IconButton>
           </Box>
-          <Typography variant="body2" color="text.secondary" mt={1}>
+          <Typography variant="body2" color="text.secondary" mt={2}>
             {t("generative:label.parameterChangeHistory")}
           </Typography>
         </DialogTitle>
@@ -98,7 +98,7 @@ export default function SessionHistoryModal({
               expanded={expanded === event.id}
               onChange={handleChange(event.id)}
               sx={{
-                mb: 1,
+                mb: 2,
                 bgcolor: "background.paper",
                 "&:before": {
                   display: "none",
@@ -119,7 +119,7 @@ export default function SessionHistoryModal({
                     display: "flex",
                     flexDirection: { xs: "column", sm: "row" },
                     alignItems: { xs: "flex-start", sm: "center" },
-                    gap: { xs: 0.5, sm: 2 },
+                    gap: { xs: 1, sm: 4 },
                     width: "100%",
                   }}
                 >
@@ -137,8 +137,8 @@ export default function SessionHistoryModal({
                   />
                 </Box>
               </AccordionSummary>
-              <AccordionDetails sx={{ pt: 1, pb: 2 }}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <AccordionDetails sx={{ pt: 2, pb: 4 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   {event.changes.map((change, index) => (
                     <Card
                       key={`${event.id}-change-${index}`}
@@ -150,8 +150,8 @@ export default function SessionHistoryModal({
                     >
                       <CardContent
                         sx={{
-                          p: 2,
-                          "&:last-child": { pb: 2 },
+                          p: 4,
+                          "&:last-child": { pb: 4 },
                           overflowX: "auto",
                         }}
                       >
@@ -162,7 +162,7 @@ export default function SessionHistoryModal({
                               xs: "1fr",
                               sm: "1fr auto auto",
                             },
-                            gap: 2,
+                            gap: 4,
                             alignItems: "center",
                           }}
                         >
@@ -173,7 +173,7 @@ export default function SessionHistoryModal({
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 1,
+                              gap: 2,
                             }}
                           >
                             <Typography variant="body2" color="text.secondary">
@@ -189,7 +189,7 @@ export default function SessionHistoryModal({
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 1,
+                              gap: 2,
                             }}
                           >
                             <Typography variant="body2" color="text.secondary">

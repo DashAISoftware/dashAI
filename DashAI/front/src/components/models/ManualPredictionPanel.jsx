@@ -207,7 +207,7 @@ export default function ManualPredictionPanel({
 
   if (!modelSession || !sample || Object.keys(types).length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
         {t("prediction:label.noExperimentDataAvailable")}
       </Typography>
     );
@@ -229,8 +229,8 @@ export default function ManualPredictionPanel({
       <Box
         sx={{
           display: "flex",
-          gap: 1,
-          mt: 2,
+          gap: 2,
+          mt: 4,
           flexWrap: "wrap",
           alignItems: "center",
         }}
@@ -281,14 +281,14 @@ export default function ManualPredictionPanel({
 
       {/* Inline preview results table */}
       {previewResults && (
-        <Box sx={{ mt: 3 }}>
-          <Divider sx={{ mb: 2 }} />
+        <Box sx={{ mt: 6 }}>
+          <Divider sx={{ mb: 4 }} />
           <Typography
             variant="caption"
             fontWeight="medium"
             color="text.secondary"
             sx={{
-              mb: 1,
+              mb: 2,
               display: "block",
               textTransform: "uppercase",
               letterSpacing: 0.5,

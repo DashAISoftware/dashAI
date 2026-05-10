@@ -219,7 +219,7 @@ const ConverterTable = ({
               deleteFromTable={createDeleteHandler(row.original.id)}
             />,
           ].filter(Boolean);
-          return <Box sx={{ display: "flex", gap: 0.5 }}>{actions}</Box>;
+          return <Box sx={{ display: "flex", gap: 1 }}>{actions}</Box>;
         },
       },
     ],

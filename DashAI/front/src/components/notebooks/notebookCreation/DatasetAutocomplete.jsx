@@ -98,7 +98,7 @@ export default function DatasetAutocomplete({
                     display: "flex",
                     flexDirection: "column",
                     width: "100%",
-                    gap: 0.25,
+                    gap: 1,
                   }}
                 >
                   <Typography variant="body1" fontWeight="medium">
@@ -117,27 +117,27 @@ export default function DatasetAutocomplete({
               </Box>
             );
           }}
-          sx={{ mb: 3 }}
+          sx={{ mb: 6 }}
         />
 
         {selectedDataset && (
           <Box
             sx={{
-              mt: 3,
-              p: 3,
+              mt: 6,
+              p: 6,
               border: 1,
               borderColor: "divider",
               borderRadius: 2,
             }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Typography variant="body2" fontWeight="medium">
                   {t("common:name")}:
                 </Typography>
                 <Chip label={selectedDataset.name} size="small" />
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Typography variant="body2" fontWeight="medium">
                   {t("common:created")}:
                 </Typography>

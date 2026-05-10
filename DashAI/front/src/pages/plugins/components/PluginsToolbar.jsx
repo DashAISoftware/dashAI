@@ -35,8 +35,8 @@ function PluginsToolbar({
   ];
 
   return (
-    <Grid container justifyContent={"space-between"} paddingBottom={2}>
-      <Grid container size={{ xs: 8 }} spacing={2}>
+    <Grid container justifyContent={"space-between"} paddingBottom={4}>
+      <Grid container size={{ xs: 8 }} spacing={4}>
         <Grid size={{ xs: 8 }}>
           <TextField
             id="input-with-icon-textfield"
@@ -83,7 +83,7 @@ function PluginsToolbar({
       <Grid
         container
         size={{ xs: 4 }}
-        spacing={2}
+        spacing={4}
         display={"flex"}
         alignItems={"center"}
         justifyContent={"flex-end"}

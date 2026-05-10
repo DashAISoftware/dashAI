@@ -71,7 +71,7 @@ function ResponsiveAppBar() {
       }}
     >
       <Toolbar
-        sx={{ px: { xs: 1, sm: 2, md: 3 }, minHeight: 52, gap: 0, minWidth: 0 }}
+        sx={{ px: { xs: 2, sm: 4, md: 6 }, minHeight: 52, gap: 0, minWidth: 0 }}
       >
         {/* Logo */}
         <Box
@@ -80,9 +80,9 @@ function ResponsiveAppBar() {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 2,
             textDecoration: "none",
-            mr: { xs: 1, sm: 2 },
+            mr: { xs: 2, sm: 4 },
             flexShrink: 0,
           }}
         >
@@ -108,8 +108,8 @@ function ResponsiveAppBar() {
               border: `1px solid ${theme.palette.accent.amberBorder}`,
               background: theme.palette.accent.amberDim,
               borderRadius: "2px",
-              px: "7px",
-              py: "2px",
+              px: 2,
+              py: 1,
               lineHeight: 1.4,
             }}
           >
@@ -181,7 +181,7 @@ function ResponsiveAppBar() {
             component={RouterLink}
             to="/app"
             disableRipple
-            sx={{ ...iconBtnSx, mr: 1, alignSelf: "center" }}
+            sx={{ ...iconBtnSx, mr: 2, alignSelf: "center" }}
             aria-label="home"
           >
             <HomeIcon sx={{ fontSize: 16 }} />
@@ -197,7 +197,7 @@ function ResponsiveAppBar() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  px: "18px",
+                  px: 4,
                   height: "100%",
                   textDecoration: "none",
                   ...theme.typography.tabLabel,
@@ -232,7 +232,7 @@ function ResponsiveAppBar() {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: { xs: 0.5, sm: 1 },
+            gap: { xs: 1, sm: 2 },
             flexShrink: 0,
           }}
         >

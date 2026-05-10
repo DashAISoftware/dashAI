@@ -101,7 +101,7 @@ function ComponentSelector({
   const handleSelect = (component) => onSelect?.(component);
 
   return (
-    <Stack direction="column" sx={{ height: "100%", minHeight: 0 }} spacing={2}>
+    <Stack direction="column" sx={{ height: "100%", minHeight: 0 }} spacing={4}>
       <TextField
         size="small"
         fullWidth
@@ -126,7 +126,7 @@ function ComponentSelector({
         }}
       />
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
         {categories.map((cat) => {
           const isActive = activeCategory === cat;
           const count = cat === ALL_CATEGORY ? components.length : counts[cat];
@@ -144,8 +144,8 @@ function ComponentSelector({
         })}
       </Stack>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 1 }}>
-        <Stack spacing={1.5}>
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 2 }}>
+        <Stack spacing={3}>
           {Object.entries(grouped).map(([cat, items]) => {
             const isOpen = expanded.has(cat);
             return (
@@ -156,13 +156,13 @@ function ComponentSelector({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    py: 1,
+                    py: 2,
                     cursor: "pointer",
                     color: "text.secondary",
                     "&:hover": { color: "text.primary" },
                   }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={2} alignItems="center">
                     <Typography
                       variant="overline"
                       sx={{ letterSpacing: 1, fontWeight: 600 }}
@@ -183,13 +183,13 @@ function ComponentSelector({
                   <Box
                     sx={{
                       display: "grid",
-                      gap: 1,
+                      gap: 2,
                       gridTemplateColumns: {
                         xs: "1fr",
                         md: "repeat(2, 1fr)",
                         xl: "repeat(3, 1fr)",
                       },
-                      pt: 1,
+                      pt: 2,
                     }}
                   >
                     {items.map((component) => {
@@ -201,9 +201,9 @@ function ComponentSelector({
                           elevation={0}
                           onClick={() => handleSelect(component)}
                           sx={{
-                            p: 1.5,
+                            p: 3,
                             display: "flex",
-                            gap: 1.5,
+                            gap: 3,
                             alignItems: "flex-start",
                             cursor: "pointer",
                             border: 1,
@@ -222,7 +222,7 @@ function ComponentSelector({
                           {icon && (
                             <Box
                               sx={{
-                                p: 1,
+                                p: 2,
                                 borderRadius: 1,
                                 bgcolor: isSelected
                                   ? "primary.main"
@@ -255,7 +255,7 @@ function ComponentSelector({
                                 WebkitLineClamp: 2,
                                 WebkitBoxOrient: "vertical",
                                 overflow: "hidden",
-                                mt: 0.5,
+                                mt: 1,
                               }}
                             >
                               {getDescription(
@@ -268,7 +268,7 @@ function ComponentSelector({
                             <CheckIcon
                               fontSize="small"
                               color="primary"
-                              sx={{ flexShrink: 0, mt: 0.5 }}
+                              sx={{ flexShrink: 0, mt: 1 }}
                             />
                           )}
                         </Paper>
@@ -284,11 +284,11 @@ function ComponentSelector({
             <Box
               sx={{
                 textAlign: "center",
-                py: 6,
+                py: 12,
                 color: "text.secondary",
               }}
             >
-              <SearchIcon sx={{ fontSize: 48, opacity: 0.4, mb: 1 }} />
+              <SearchIcon sx={{ fontSize: 48, opacity: 0.4, mb: 2 }} />
               <Typography variant="body2">
                 {emptyText ?? t("noItemsFound")}
               </Typography>
@@ -302,7 +302,7 @@ function ComponentSelector({
 
       <Box
         sx={{
-          pt: 1.5,
+          pt: 3,
           borderTop: 1,
           borderColor: "divider",
           display: "flex",

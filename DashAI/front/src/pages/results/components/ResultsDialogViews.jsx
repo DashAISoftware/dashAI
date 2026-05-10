@@ -12,14 +12,14 @@ function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
   const theme = useTheme();
   return (
     <Grid container direction="column" alignItems="center">
-      <Grid container justifyContent="flex-start" sx={{ mt: 2, mb: 1 }}>
-        <Grid sx={{ ml: 2 }}>
+      <Grid container justifyContent="flex-start" sx={{ mt: 4, mb: 4 }}>
+        <Grid sx={{ ml: 4 }}>
           <Typography variant="body1">
             {t("models:label.viewResultsAs")}
           </Typography>
         </Grid>
       </Grid>
-      <Grid sx={{ my: 1 }} data-tour="exp-results-view-tabs">
+      <Grid sx={{ my: 4 }} data-tour="exp-results-view-tabs">
         <Grid container justifyContent="center">
           <TimestampWrapper eventName={TIMESTAMP_KEYS.experiments.viewGraphs}>
             <Button

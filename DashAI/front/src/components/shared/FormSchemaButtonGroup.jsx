@@ -32,12 +32,12 @@ function FormSchemaButtonGroup({
     <Box
       size="large"
       sx={{
-        mt: 2,
-        pt: 2,
+        mt: 4,
+        pt: 4,
         flexShrink: 0,
         display: "flex",
         justifyContent: "flex-end",
-        gap: 1,
+        gap: 2,
       }}
     >
       {onCancel && (

@@ -293,7 +293,7 @@ function RunCard({
     <Card
       elevation={2}
       sx={{
-        mb: 2,
+        mb: 4,
         borderLeft: "4px solid",
         borderLeftColor:
           run.status === 3 // Finished
@@ -311,11 +311,11 @@ function RunCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
-            gap: 1,
+            mb: 4,
+            gap: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
             <Tooltip
               title={
                 expanded
@@ -342,7 +342,7 @@ function RunCard({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -357,7 +357,7 @@ function RunCard({
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {isEditing && (
               <>
                 <Button
@@ -453,11 +453,11 @@ function RunCard({
         </Box>
 
         {metrics && Object.keys(metrics).length > 0 && (
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle2" gutterBottom>
               {t("common:metrics")}
             </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {Object.entries(metrics).map(([metric, values]) => {
                 const avgValue =
                   values.reduce((sum, val) => sum + val, 0) / values.length;
@@ -482,7 +482,7 @@ function RunCard({
         {run.description && (
           <Typography
             variant="body2"
-            sx={{ color: theme.palette.text.secondary, mb: 2 }}
+            sx={{ color: theme.palette.text.secondary, mb: 4 }}
           >
             {run.description}
           </Typography>
@@ -491,17 +491,17 @@ function RunCard({
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box
             sx={{
-              mt: 2,
+              mt: 4,
               ...(isEditing && {
                 maxHeight: "500px",
                 overflowY: "auto",
                 overflowX: "hidden",
-                pr: 1,
+                pr: 2,
               }),
             }}
           >
             {isEditing ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <Alert severity="info">
                   {t("models:message.editingParametersWarning")}
                 </Alert>
@@ -517,7 +517,7 @@ function RunCard({
 
                 {run.model_name && (
                   <Box>
-                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 4 }}>
                       {t("common:modelParameters")}
                     </Typography>
                     <FormSchemaContainer>
@@ -535,7 +535,7 @@ function RunCard({
 
                 {hasOptimizableParams && (
                   <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                    sx={{ display: "flex", flexDirection: "column", gap: 4 }}
                   >
                     <Divider />
                     <Typography variant="subtitle2">
@@ -546,7 +546,7 @@ function RunCard({
                     </Alert>
 
                     <Box>
-                      <Typography variant="body2" sx={{ mb: 1 }}>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
                         {t("models:label.goalMetric")} *
                       </Typography>
                       <ModelsTableSelectMetric
@@ -566,7 +566,7 @@ function RunCard({
 
                     {editedOptimizer && (
                       <Box>
-                        <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 4 }}>
                           {t("common:optimizerParameters")}
                         </Typography>
                         <FormSchemaContainer>
@@ -589,9 +589,9 @@ function RunCard({
                 <Box
                   sx={{
                     display: "flex",
-                    gap: 2,
+                    gap: 4,
                     justifyContent: "flex-end",
-                    mt: 2,
+                    mt: 4,
                   }}
                 >
                   <Button
@@ -615,7 +615,7 @@ function RunCard({
             ) : (
               <Box>
                 {run.parameters && Object.keys(run.parameters).length > 0 && (
-                  <Box sx={{ mb: 3 }}>
+                  <Box sx={{ mb: 6 }}>
                     <Typography variant="subtitle2" gutterBottom>
                       {t("common:modelParameters")}
                     </Typography>
@@ -678,7 +678,7 @@ function RunCard({
                 )}
 
                 {run.goal_metric && (
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{ mt: 4 }}>
                     <Typography
                       variant="body2"
                       sx={{ color: theme.palette.text.secondary }}
@@ -693,7 +693,7 @@ function RunCard({
           </Box>
         </Collapse>
 
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: 4 }}>
           <RunResults
             run={run}
             session={session}

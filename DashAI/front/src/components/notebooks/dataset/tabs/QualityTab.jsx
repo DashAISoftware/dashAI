@@ -10,26 +10,26 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
 
   const theme = useTheme();
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
+    <Box display="flex" flexDirection="column" gap={8}>
       {/* Data Quality Summary */}
       <ExportableCard filename="quality_summary" exportData={qualityInfo}>
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
-          <Typography variant="h6" fontWeight="bold" mb={2}>
+          <Typography variant="h6" fontWeight="bold" mb={4}>
             {t("datasets:label.dataQualitySummary")}
           </Typography>
 
-          <Box display="flex" flexWrap="wrap" gap={4}>
+          <Box display="flex" flexWrap="wrap" gap={8}>
             {/* Left Column - Issues Found */}
             <Box flex="1 1 400px" minWidth="300px">
               <Typography
                 variant="subtitle1"
                 fontWeight={600}
                 color="text.secondary"
-                mb={2}
+                mb={4}
               >
                 {t("datasets:label.issuesFound")}
               </Typography>
-              <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" flexDirection="column" gap={4}>
                 <IssueCard
                   title={t("datasets:label.constantColumns")}
                   count={qualityInfo.constant_columns.length}
@@ -57,7 +57,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                 variant="subtitle1"
                 fontWeight={600}
                 color="text.secondary"
-                mb={2}
+                mb={4}
               >
                 {t("datasets:label.missingDataPatterns")}
               </Typography>
@@ -68,11 +68,11 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                   {t("datasets:label.noMissingValues")}
                 </Alert>
               ) : (
-                <Box display="flex" flexDirection="column" gap={2}>
+                <Box display="flex" flexDirection="column" gap={4}>
                   <Paper
                     variant="outlined"
                     sx={{
-                      p: 2,
+                      p: 4,
                       bgcolor: theme.palette.ui.disabled,
                       borderRadius: 2,
                     }}
@@ -96,7 +96,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                   <Paper
                     variant="outlined"
                     sx={{
-                      p: 2,
+                      p: 4,
                       bgcolor: theme.palette.ui.disabled,
                       borderRadius: 2,
                     }}
@@ -131,11 +131,11 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
         )}
       >
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
-          <Typography variant="h6" fontWeight="bold" mb={2}>
+          <Typography variant="h6" fontWeight="bold" mb={4}>
             {t("datasets:label.missingDataByColumn")}
           </Typography>
 
-          <Box display="flex" flexDirection="column" gap={1}>
+          <Box display="flex" flexDirection="column" gap={2}>
             {Object.values(qualityInfo.nan_ratio_per_column).every(
               (ratio) => ratio === 0,
             ) ? (
@@ -160,7 +160,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                       </Typography>
                     </Box>
 
-                    <Box flex={1} mx={2}>
+                    <Box flex={1} mx={4}>
                       <Box
                         sx={{
                           height: 12,

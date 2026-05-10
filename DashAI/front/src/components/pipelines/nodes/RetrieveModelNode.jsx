@@ -134,8 +134,8 @@ function RetrieveModelNode({
   });
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Grid container spacing={2}>
+    <Paper sx={{ p: 6 }}>
+      <Grid container spacing={4}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="h6">Select a trained model</Typography>
           <Typography variant="body2" color="textSecondary">

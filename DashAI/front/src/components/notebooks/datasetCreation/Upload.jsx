@@ -355,11 +355,11 @@ function Upload({
     <Grid
       container
       direction="column"
-      rowSpacing={1}
+      rowSpacing={4}
       sx={{
         width: "100%",
         bgcolor: theme.palette.ui.box,
-        p: 2,
+        p: 8,
         borderRadius: 2,
       }}
       data-tour="upload-area"
@@ -409,7 +409,7 @@ function Upload({
         >
           <Grid
             container
-            rowSpacing={1}
+            rowSpacing={4}
             direction="column"
             alignItems="center"
             justifyContent="center"

@@ -53,7 +53,7 @@ function DatasetSelector({
   );
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 6 }}>
       <FormControl fullWidth>
         <InputLabel>{t("prediction:label.selectDataset")}</InputLabel>
         <Select
@@ -73,14 +73,14 @@ function DatasetSelector({
       </FormControl>
       {selectedDataset && (
         <>
-          <Alert severity="info" sx={{ mt: 2 }}>
-            <Box sx={{ fontWeight: 600, mb: 1, fontSize: "1rem" }}>
+          <Alert severity="info" sx={{ mt: 4 }}>
+            <Box sx={{ fontWeight: 600, mb: 2, fontSize: "1rem" }}>
               {t("prediction:label.predictionInfo")}
             </Box>
 
-            <Box sx={{ mb: 1 }}>
+            <Box sx={{ mb: 2 }}>
               <strong>{t("prediction:label.inputColumns")}:</strong>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 1 }}>
                 {experiment.input_columns.map((col) => (
                   <Chip
                     key={col}
@@ -99,7 +99,7 @@ function DatasetSelector({
                 label={experiment.output_columns[0]}
                 size="small"
                 color="primary"
-                sx={{ ml: 1, fontSize: "0.75rem" }}
+                sx={{ ml: 2, fontSize: "0.75rem" }}
               />
             </Box>
           </Alert>

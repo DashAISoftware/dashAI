@@ -12,7 +12,7 @@ export default function NewItemButton({
       sx={{
         bgcolor: "primary.main",
         borderRadius: 1,
-        px: 2,
+        px: 4,
         py: 0,
         display: "flex",
         flexDirection: "row",

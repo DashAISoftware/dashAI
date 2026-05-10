@@ -103,7 +103,7 @@ function ExplorersTable({ explorerTypes = [] }) {
         enableSorting: false,
         enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <EditColumnsDialog
               datasetColumns={datasetColumns}
               updateValue={handleUpdateColumns(row.original.id)}
@@ -148,14 +148,14 @@ function ExplorersTable({ explorerTypes = [] }) {
   });
 
   return (
-    <Paper sx={{ py: 1, px: 2 }}>
+    <Paper sx={{ py: 2, px: 4 }}>
       {/* Title */}
       <Grid
         container
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        sx={{ mb: 4 }}
       >
         <Typography variant="subtitle1" component="h3">
           Current explorers in the exploration

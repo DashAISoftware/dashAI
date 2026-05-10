@@ -94,8 +94,8 @@ export default function ModelsCenterContent() {
             width: "100%",
             height: "100%",
             overflow: "hidden",
-            px: 2,
-            pt: 2,
+            px: 4,
+            pt: 4,
           }}
         >
           <ModelsBreadcrumbs />
