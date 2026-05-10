@@ -221,9 +221,7 @@ export const modelsTourSteps = [
           <p>
             <strong></strong>
           </p>
-          <p
-            style={{ marginTop: "10px", fontSize: "0.9em", color: "#666" }}
-          ></p>
+          <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}></p>
         </div>
       </Trans>
     ),

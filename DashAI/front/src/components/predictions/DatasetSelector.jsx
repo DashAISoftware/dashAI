@@ -74,9 +74,9 @@ function DatasetSelector({
       {selectedDataset && (
         <>
           <Alert severity="info" sx={{ mt: 4 }}>
-            <Box sx={{ fontWeight: 600, mb: 2, fontSize: "1rem" }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
               {t("prediction:label.predictionInfo")}
-            </Box>
+            </Typography>
 
             <Box sx={{ mb: 2 }}>
               <strong>{t("prediction:label.inputColumns")}:</strong>

@@ -83,11 +83,11 @@ export const NumericTab = ({ numericStats }) => {
               {/* Distribution Metrics */}
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   fontWeight="bold"
                   color="text.primary"
                   gutterBottom
-                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                  sx={{ textTransform: "uppercase" }}
                 >
                   {t("datasets:label.distributionMetrics")}
                 </Typography>
@@ -126,11 +126,11 @@ export const NumericTab = ({ numericStats }) => {
               {/* Shape Indicators */}
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   fontWeight="bold"
                   color="text.primary"
                   gutterBottom
-                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                  sx={{ textTransform: "uppercase" }}
                 >
                   {t("datasets:label.shapeIndicators")}
                 </Typography>

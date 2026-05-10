@@ -36,24 +36,29 @@ function Parameters({ data }) {
             <TableRow key={key} sx={{ "&:last-child td": { borderBottom: 0 } }}>
               <TableCell
                 sx={{
-                  fontFamily: '"IBM Plex Mono", monospace',
-                  fontSize: "0.8rem",
-                  color: "text.secondary",
                   borderColor: "ui.borderLight",
                   py: 3,
                 }}
               >
-                {key}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: '"IBM Plex Mono", monospace',
+                    color: "text.secondary",
+                  }}
+                >
+                  {key}
+                </Typography>
               </TableCell>
               <TableCell
                 sx={{
-                  fontSize: "0.8rem",
-                  color: "text.primary",
                   borderColor: "ui.borderLight",
                   py: 3,
                 }}
               >
-                {formatValue(value)}
+                <Typography variant="body2" color="text.primary">
+                  {formatValue(value)}
+                </Typography>
               </TableCell>
             </TableRow>
           ))}

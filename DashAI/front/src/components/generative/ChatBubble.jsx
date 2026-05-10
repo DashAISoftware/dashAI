@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { ChatAvatar } from "./ChatAvatar";
 import { ChatTimestamp } from "./ChatTimeStamp";
 import { MessageContent } from "./MessageContent";
@@ -25,18 +25,18 @@ export function ChatBubble({
 
       <Box sx={{ maxWidth: "80%" }}>
         {!isUser && sender && (
-          <Box
+          <Typography
+            variant="body2"
             component="span"
             sx={{
               ml: 2,
               mb: 1,
               display: "block",
-              fontSize: "0.75rem",
               color: "text.secondary",
             }}
           >
             {sender}
-          </Box>
+          </Typography>
         )}
 
         <MessageContent

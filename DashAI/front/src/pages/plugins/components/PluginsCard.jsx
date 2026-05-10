@@ -97,7 +97,7 @@ function PluginsCard({
 
         <Typography
           sx={{
-            ...theme.typography.cardTitle,
+            ...theme.typography.h5,
             color: theme.palette.text.primary,
             flexShrink: 0,
           }}
@@ -107,8 +107,8 @@ function PluginsCard({
 
         {version && (
           <Typography
+            variant="body1"
             sx={{
-              fontSize: "13px",
               fontWeight: 300,
               color: theme.palette.text.disabled,
               flexShrink: 0,
@@ -119,8 +119,8 @@ function PluginsCard({
         )}
 
         <Typography
+          variant="body1"
           sx={{
-            fontSize: "14px",
             fontWeight: 300,
             color: theme.palette.text.secondary,
             flexGrow: 1,
@@ -260,8 +260,8 @@ function PluginsCard({
 
         {version && (
           <Typography
+            variant="body1"
             sx={{
-              fontSize: "13px",
               fontWeight: 300,
               color: theme.palette.text.disabled,
             }}
@@ -275,7 +275,7 @@ function PluginsCard({
       <Typography
         noWrap
         sx={{
-          ...theme.typography.cardTitle,
+          ...theme.typography.h5,
           color: theme.palette.text.primary,
           mb: 6,
           width: "100%",
@@ -292,9 +292,9 @@ function PluginsCard({
         placement="bottom"
       >
         <Typography
+          variant="subtitle2"
           ref={descRef}
           sx={{
-            fontSize: "15px",
             fontWeight: 300,
             color: theme.palette.text.secondary,
             lineHeight: 1.65,

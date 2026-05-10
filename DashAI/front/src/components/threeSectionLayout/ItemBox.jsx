@@ -135,20 +135,15 @@ const ItemBox = forwardRef(function ItemBox(
               }}
             />
           ) : (
-            <Typography
-              variant="body2"
-              color="text.primary"
-              noWrap
-              sx={{ fontSize: 14 }}
-            >
+            <Typography variant="body1" color="text.primary" noWrap>
               {editedName}
             </Typography>
           )}
           <Typography
-            variant="caption"
+            variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ fontSize: 10, pl: 1 }}
+            sx={{ pl: 1 }}
           >
             {description ? description : ""}
           </Typography>

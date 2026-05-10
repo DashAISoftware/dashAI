@@ -45,14 +45,19 @@ function Columns({ data }) {
             >
               <TableCell
                 sx={{
-                  fontFamily: '"IBM Plex Mono", monospace',
-                  fontSize: "0.8rem",
-                  color: "text.secondary",
                   borderColor: "ui.borderLight",
                   py: 3,
                 }}
               >
-                {name}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: '"IBM Plex Mono", monospace',
+                    color: "text.secondary",
+                  }}
+                >
+                  {name}
+                </Typography>
               </TableCell>
               <TableCell
                 align="right"

@@ -140,11 +140,11 @@ export const TextTab = ({ textStats }) => {
               <Box display="flex" flexWrap="wrap" gap={8}>
                 <Box flex="1 1 300px" minWidth="250px">
                   <Typography
-                    variant="subtitle2"
+                    variant="body1"
                     fontWeight="bold"
                     color="text.primary"
                     gutterBottom
-                    sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                    sx={{ textTransform: "uppercase" }}
                   >
                     {t("datasets:label.lengthMetrics")}
                   </Typography>

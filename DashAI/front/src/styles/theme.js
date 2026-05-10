@@ -188,57 +188,49 @@ const getTheme = (mode) => ({
   typography: {
     fontFamily: '"IBM Plex Sans", sans-serif',
 
-    // --- SANS SERIF ---
-    pageTitle: {
-      fontSize: "18px",
-      fontWeight: 600,
-      letterSpacing: "-0.01em",
-    }, // Main titles
+    // --- ESCALA DE TITULARES ---
+    h1: { fontSize: "28px", fontWeight: 700, letterSpacing: "-0.01em" },
+    h2: { fontSize: "22px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h3: { fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h4: { fontSize: "17px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h5: { fontSize: "16px", fontWeight: 600 },
+    h6: { fontSize: "14px", fontWeight: 600 },
 
-    cardTitle: {
-      fontSize: "15px",
-      fontWeight: 600,
-      letterSpacing: "-0.01em",
-    }, // Module/Card titles
-
-    navItem: {
-      fontSize: "12.5px",
-      fontWeight: 400,
-    }, // Sidebar links/Navigation
-
-    description: {
+    // --- ESCALA DE CUERPO ---
+    subtitle1: { fontSize: "17px", fontWeight: 400 }, // Parámetros principales
+    subtitle2: { fontSize: "16px", fontWeight: 400 }, // Texto destacado
+    body1: { fontSize: "14px", fontWeight: 400, lineHeight: 1.6 }, // Cuerpo / párrafos
+    body2: { fontSize: "12px", fontWeight: 400, lineHeight: 1.5 }, // Texto auxiliar / labels
+    caption: { fontSize: "12px", fontWeight: 400 }, // Información secundaria, captions
+    code: {
+      fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "12px",
-      fontWeight: 300,
-      lineHeight: 1.65,
-      color: "rgba(171, 178, 191, 0.45)",
-    }, // Explanatory text
+      fontWeight: 400,
+    }, // Code snippets, valores técnicos
 
-    // --- MONOSPACE ---
+    // --- VARIANTES UI FUNCIONALES ---
+    navItem: { fontSize: "12px", fontWeight: 400 }, // Sidebar links/Navigation
     tabLabel: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "10px",
       letterSpacing: "0.12em",
       textTransform: "uppercase",
     }, // Navigation tabs
-
     sectionLabel: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "9px",
       letterSpacing: "0.2em",
       textTransform: "uppercase",
     }, // Sidebar section headers
-
     statusBadge: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "8.5px",
       letterSpacing: "0.12em",
       textTransform: "uppercase",
     },
-
-    // Others
     button: {
-      fontSize: "15px",
-      fontWeight: 400,
+      fontSize: "14px",
+      fontWeight: 500,
       letterSpacing: "-0.01em",
       textTransform: "uppercase",
     },

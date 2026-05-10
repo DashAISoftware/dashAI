@@ -102,7 +102,7 @@ export default function GroupedCollapsibleList({
         )}
         <Typography
           sx={{
-            ...theme.typography.cardTitle,
+            ...theme.typography.h5,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -113,7 +113,9 @@ export default function GroupedCollapsibleList({
         >
           {title}
         </Typography>
-        <Box
+        <Typography
+          variant="body2"
+          component="div"
           sx={{
             bgcolor: theme.palette.ui.scrollbar,
             color: theme.palette.text.primary,
@@ -123,11 +125,10 @@ export default function GroupedCollapsibleList({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 12,
           }}
         >
           {totalCount}
-        </Box>
+        </Typography>
       </Box>
 
       {/* Groups - Scrollable */}
@@ -176,7 +177,7 @@ export default function GroupedCollapsibleList({
               <Typography
                 sx={{
                   ml: 4,
-                  ...theme.typography.cardTitle,
+                  ...theme.typography.h5,
                   textTransform: "capitalize",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -188,7 +189,9 @@ export default function GroupedCollapsibleList({
               >
                 {groupName}
               </Typography>
-              <Box
+              <Typography
+                variant="body2"
+                component="div"
                 sx={{
                   ml: 4,
                   bgcolor: theme.palette.ui.scrollbar,
@@ -199,11 +202,10 @@ export default function GroupedCollapsibleList({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 12,
                 }}
               >
                 {items?.length || 0}
-              </Box>
+              </Typography>
             </Box>
 
             {/* Group Items */}

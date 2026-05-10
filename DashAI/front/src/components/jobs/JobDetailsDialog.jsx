@@ -212,7 +212,9 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                       maxHeight: "200px",
                     }}
                   >
-                    {displayJob.error_msg}
+                    <Typography variant="body1">
+                      {displayJob.error_msg}
+                    </Typography>
                   </Paper>
                 </Box>
               </Grid>

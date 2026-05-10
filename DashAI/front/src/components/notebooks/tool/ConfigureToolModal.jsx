@@ -121,7 +121,7 @@ export default function ConfigureToolModal({
         <Box sx={{ flex: 1 }}>
           <Stepper activeStep={step}>
             {steps.map((label) => (
-              <Step key={label}>
+              <Step key={label} completed={false}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))}
