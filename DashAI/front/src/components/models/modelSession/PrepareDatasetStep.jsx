@@ -410,6 +410,18 @@ function PrepareDatasetStep({
         setStratify={setStratify}
         seed={seed}
         setSeed={setSeed}
+        evaluationStrategy={evaluationStrategy}
+        setEvaluationStrategy={setEvaluationStrategy}
+        cvType={cvType}
+        setCvType={setCvType}
+        numFolds={numFolds}
+        setNumFolds={setNumFolds}
+        numRepeats={numRepeats}
+        setNumRepeats={setNumRepeats}
+        groupColumn={groupColumn}
+        setGroupColumn={setGroupColumn}
+        outputColumnNames={outputColumnNames}
+        taskName={newExp.task_name}
       />,
     );
     return () => setSessionRightContent(null);
@@ -422,6 +434,12 @@ function PrepareDatasetStep({
     shuffle,
     stratify,
     seed,
+    evaluationStrategy,
+    cvType,
+    numFolds,
+    numRepeats,
+    groupColumn,
+    outputColumnNames,
   ]);
 
   const renderTypesAsChips = (typesList) => {

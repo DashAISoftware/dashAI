@@ -12,8 +12,6 @@ import {
   ToggleButtonGroup,
   Typography,
   Button,
-  Box,
-  Paper,
   Select,
   MenuItem,
   FormControl,
@@ -319,6 +317,21 @@ function SplitDatasetRows({
     }
   };
 
+  // Check if current cvType is a repeated CV type
+  const isRepeatedCvType = () => {
+    return cvType?.includes("Repeated");
+  };
+
+  // Check if current cvType is a grouping CV type
+  const isGroupingCvType = () => {
+    return cvType?.includes("Group");
+  };
+
+  // Check if LeaveOneOut
+  const isLeaveOneOut = () => {
+    return cvType === "LeaveOneOut";
+  };
+
   useEffect(() => {
     if (hasPredefinedSplits) {
       setSplitType(SPLIT_TYPES.PREDEFINED);
@@ -342,6 +355,8 @@ function SplitDatasetRows({
       rowsPartitionsPercentage.train > 0
     ) {
       setSplitsReady(true);
+    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
+      setSplitsReady(true);
     } else {
       setSplitsReady(false);
     }
@@ -351,6 +366,7 @@ function SplitDatasetRows({
     randomSplitError,
     manualSplitError,
     splitType,
+    evaluationStrategy,
   ]);
 
   const splitOptions = [
@@ -376,9 +392,10 @@ function SplitDatasetRows({
     }
   }, [allowedCvTypes, cvType, setCvType]);
 
+  console.log("rendering evaluation strategy:", evaluationStrategy);
   return (
     <Stack spacing={1} data-tour="exp-dataset-splits">
-      {/* Split type selector */}
+      {/* Evaluation Strategy Selector */}
       <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
         <Box
           sx={{
@@ -389,129 +406,316 @@ function SplitDatasetRows({
           }}
         >
           <Typography variant="body2" fontWeight={600}>
-            {t("experiments:label.splitType")}
+            {t("experiments:label.evaluationStrategy")}
           </Typography>
         </Box>
         <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
           <ToggleButtonGroup
-            value={splitType}
-            exclusive
-            onChange={handleSplitTypeChange}
+            value={evaluationStrategy}
+            exclusive={true}
+            onChange={(_, value) => {
+              console.log("onChange fired, value:", value);
+              value && setEvaluationStrategy(value);
+            }}
             fullWidth
             size="small"
           >
-            {splitOptions.map((opt) => (
-              <ToggleButton
-                key={opt.value}
-                value={opt.value}
-                disabled={opt.disabled}
-                sx={{ textTransform: "none", fontSize: "0.8rem" }}
-              >
-                {opt.label}
-              </ToggleButton>
-            ))}
+            <ToggleButton
+              value="HoldoutEvaluationStrategy"
+              sx={{ textTransform: "none", fontSize: "0.8rem" }}
+            >
+              Holdout
+            </ToggleButton>
+            <ToggleButton
+              value="CrossValidationEvaluationStrategy"
+              sx={{ textTransform: "none", fontSize: "0.8rem" }}
+            >
+              Cross-Validation
+            </ToggleButton>
           </ToggleButtonGroup>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mb: 0.75 }}
-          >
-            {t("experiments:label.selectHowToDivideDataset")}
-          </Typography>
         </Box>
       </Paper>
 
-      {/* Predefined */}
-      {splitType === SPLIT_TYPES.PREDEFINED && (
-        <SplitsCard
-          label={t("experiments:label.splits")}
-          description={t("experiments:label.splitsDescription")}
-        >
-          <Grid container spacing={1}>
-            {[
-              { id: "train", value: trainDatasetPercentage },
-              { id: "validation", value: validationDatasetPercentage },
-              { id: "test", value: testDatasetPercentage },
-            ].map(({ id, value }) => (
-              <Grid key={id} size={{ xs: 4 }}>
+      {/* HOLDOUT SECTION */}
+      {evaluationStrategy === "HoldoutEvaluationStrategy" && (
+        <>
+          {/* Split type selector */}
+          <Paper
+            variant="outlined"
+            sx={{ borderRadius: 2, overflow: "hidden" }}
+          >
+            <Box
+              sx={{
+                px: 2,
+                py: 0.75,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="body2" fontWeight={600}>
+                {t("experiments:label.splitType")}
+              </Typography>
+            </Box>
+            <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
+              <ToggleButtonGroup
+                value={splitType}
+                exclusive
+                onChange={handleSplitTypeChange}
+                fullWidth
+                size="small"
+              >
+                {splitOptions.map((opt) => (
+                  <ToggleButton
+                    key={opt.value}
+                    value={opt.value}
+                    disabled={opt.disabled}
+                    sx={{ textTransform: "none", fontSize: "0.8rem" }}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.75 }}
+              >
+                {t("experiments:label.selectHowToDivideDataset")}
+              </Typography>
+            </Box>
+          </Paper>
+
+          {/* Predefined */}
+          {splitType === SPLIT_TYPES.PREDEFINED && (
+            <SplitsCard
+              label={t("experiments:label.splits")}
+              description={t("experiments:label.splitsDescription")}
+            >
+              <Grid container spacing={1}>
+                {[
+                  { id: "train", value: trainDatasetPercentage },
+                  { id: "validation", value: validationDatasetPercentage },
+                  { id: "test", value: testDatasetPercentage },
+                ].map(({ id, value }) => (
+                  <Grid key={id} size={{ xs: 4 }}>
+                    <TextField
+                      label={t(`common:${id}`)}
+                      value={value}
+                      type="number"
+                      size="small"
+                      fullWidth
+                      disabled
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      sx={{
+                        "& .MuiInputBase-input.Mui-disabled": {
+                          WebkitTextFillColor: "#999",
+                        },
+                        "& .MuiInputLabel-root.Mui-disabled": { color: "#bbb" },
+                      }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </SplitsCard>
+          )}
+
+          {/* Random */}
+          {splitType === SPLIT_TYPES.RANDOM && (
+            <>
+              <SplitsCard
+                label={t("experiments:label.splits")}
+                description={t("experiments:label.splitsDescription")}
+                errorMessage={
+                  randomSplitError ? randomSplitErrorText : undefined
+                }
+              >
+                <Grid container spacing={1}>
+                  {splitFields.map(({ id, label }) => (
+                    <Grid key={id} size={{ xs: 4 }}>
+                      <TextField
+                        id={id}
+                        label={label}
+                        value={rowsPartitionsPercentage[id]}
+                        type="number"
+                        size="small"
+                        fullWidth
+                        error={randomSplitError}
+                        onChange={handleRowsChange}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </SplitsCard>
+
+              <FormSchemaFieldCard
+                label={t("experiments:label.shuffle")}
+                description={t("experiments:label.shuffleDescription")}
+              >
+                <BooleanInput
+                  name="shuffle"
+                  value={shuffle}
+                  label={t("experiments:label.shuffle")}
+                  onChange={handleShuffleChange}
+                  description={t("experiments:label.shuffleDescription")}
+                />
+              </FormSchemaFieldCard>
+
+              <FormSchemaFieldCard
+                label={t("experiments:label.stratify")}
+                description={
+                  !shuffle
+                    ? t("experiments:label.stratifyRequiresShuffle")
+                    : t("experiments:label.stratifyDescription")
+                }
+              >
+                <BooleanInput
+                  name="stratify"
+                  value={stratify}
+                  label={t("experiments:label.stratify")}
+                  onChange={handleStratifyChange}
+                  description={t("experiments:label.stratifyDescription")}
+                />
+              </FormSchemaFieldCard>
+
+              <FormSchemaFieldCard
+                label={t("experiments:label.seed")}
+                description={t("experiments:label.enterSeedValue")}
+              >
                 <TextField
-                  label={t(`common:${id}`)}
-                  value={value}
+                  id="seed"
+                  label={t("experiments:label.seed")}
+                  value={seed}
+                  onChange={handleSeedChange}
                   type="number"
                   size="small"
                   fullWidth
-                  disabled
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{
-                    "& .MuiInputBase-input.Mui-disabled": {
-                      WebkitTextFillColor: "#999",
-                    },
-                    "& .MuiInputLabel-root.Mui-disabled": { color: "#bbb" },
-                  }}
                 />
+              </FormSchemaFieldCard>
+            </>
+          )}
+
+          {/* Manual */}
+          {splitType === SPLIT_TYPES.MANUAL && (
+            <SplitsCard
+              label={t("experiments:label.rowIndexes")}
+              description={t("experiments:label.rowIndexesDescription")}
+              errorMessage={manualSplitError ? manualSplitErrorText : undefined}
+            >
+              <Grid container spacing={1}>
+                {splitFields.map(({ id, label }) => (
+                  <Grid key={id} size={{ xs: 4 }}>
+                    <TextField
+                      id={id}
+                      label={label}
+                      size="small"
+                      fullWidth
+                      error={manualSplitError}
+                      onChange={handleRowsChange}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
-        </SplitsCard>
+            </SplitsCard>
+          )}
+        </>
       )}
 
-      {/* Random */}
-      {splitType === SPLIT_TYPES.RANDOM && (
+      {/* CROSS-VALIDATION SECTION */}
+      {evaluationStrategy === "CrossValidationEvaluationStrategy" && (
         <>
-          <SplitsCard
-            label={t("experiments:label.splits")}
-            description={t("experiments:label.splitsDescription")}
-            errorMessage={randomSplitError ? randomSplitErrorText : undefined}
-          >
-            <Grid container spacing={1}>
-              {splitFields.map(({ id, label }) => (
-                <Grid key={id} size={{ xs: 4 }}>
-                  <TextField
-                    id={id}
-                    label={label}
-                    value={rowsPartitionsPercentage[id]}
-                    type="number"
-                    size="small"
-                    fullWidth
-                    error={randomSplitError}
-                    onChange={handleRowsChange}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  />
-                </Grid>
+          {/* CV Type Selector */}
+          <FormControl fullWidth>
+            <InputLabel>{t("experiments:label.cvType")}</InputLabel>
+            <Select
+              value={cvType}
+              onChange={handleCvTypeChange}
+              label={t("experiments:label.cvType")}
+            >
+              {allowedCvTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
               ))}
-            </Grid>
-          </SplitsCard>
+            </Select>
+          </FormControl>
 
-          <FormSchemaFieldCard
-            label={t("experiments:label.shuffle")}
-            description={t("experiments:label.shuffleDescription")}
-          >
-            <BooleanInput
-              name="shuffle"
-              value={shuffle}
+          {/* Number of Folds - not for LeaveOneOut */}
+          {!isLeaveOneOut() && (
+            <FormSchemaFieldCard
+              label={t("experiments:label.numFolds")}
+              description={t("experiments:label.numFoldsDescription")}
+            >
+              <TextField
+                id="numFolds"
+                label={t("experiments:label.numFolds")}
+                value={numFolds}
+                onChange={handleNumFoldsChange}
+                onBlur={handleOnBlurNumFolds}
+                type="number"
+                size="small"
+                fullWidth
+                inputProps={{ min: 2, max: 20 }}
+              />
+            </FormSchemaFieldCard>
+          )}
+
+          {/* Number of Repeats - only for Repeated CV types */}
+          {isRepeatedCvType() && (
+            <FormSchemaFieldCard
+              label={t("experiments:label.numRepeats")}
+              description={t("experiments:label.numRepeatsDescription")}
+            >
+              <TextField
+                id="numRepeats"
+                label={t("experiments:label.numRepeats")}
+                value={numRepeats}
+                onChange={handleNumRepeatsChange}
+                onBlur={handleOnBlurNumRepeats}
+                type="number"
+                size="small"
+                fullWidth
+                inputProps={{ min: 2, max: 10 }}
+              />
+            </FormSchemaFieldCard>
+          )}
+
+          {/* Group Column - only for GroupKFold types */}
+          {isGroupingCvType() && (
+            <FormControl fullWidth>
+              <InputLabel>{t("experiments:label.groupColumn")}</InputLabel>
+              <Select
+                value={groupColumn || ""}
+                onChange={handleGroupColumnChange}
+                label={t("experiments:label.groupColumn")}
+              >
+                {outputColumnNames?.map((col) => (
+                  <MenuItem key={col} value={col}>
+                    {col}
+                  </MenuItem>
+                )) || []}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Shuffle - only if NOT a repeated CV type */}
+          {!isRepeatedCvType() && (
+            <FormSchemaFieldCard
               label={t("experiments:label.shuffle")}
-              onChange={handleShuffleChange}
               description={t("experiments:label.shuffleDescription")}
-            />
-          </FormSchemaFieldCard>
+            >
+              <BooleanInput
+                name="shuffle"
+                value={shuffle}
+                label={t("experiments:label.shuffle")}
+                onChange={handleShuffleChange}
+                description={t("experiments:label.shuffleDescription")}
+              />
+            </FormSchemaFieldCard>
+          )}
 
-          <FormSchemaFieldCard
-            label={t("experiments:label.stratify")}
-            description={
-              !shuffle
-                ? t("experiments:label.stratifyRequiresShuffle")
-                : t("experiments:label.stratifyDescription")
-            }
-          >
-            <BooleanInput
-              name="stratify"
-              value={stratify}
-              label={t("experiments:label.stratify")}
-              onChange={handleStratifyChange}
-              description={t("experiments:label.stratifyDescription")}
-            />
-          </FormSchemaFieldCard>
-
+          {/* Seed */}
           <FormSchemaFieldCard
             label={t("experiments:label.seed")}
             description={t("experiments:label.enterSeedValue")}
@@ -521,37 +725,13 @@ function SplitDatasetRows({
               label={t("experiments:label.seed")}
               value={seed}
               onChange={handleSeedChange}
+              onBlur={handleOnBlurSeed}
               type="number"
               size="small"
               fullWidth
             />
           </FormSchemaFieldCard>
         </>
-      )}
-
-      {/* Manual */}
-      {splitType === SPLIT_TYPES.MANUAL && (
-        <SplitsCard
-          label={t("experiments:label.rowIndexes")}
-          description={t("experiments:label.rowIndexesDescription")}
-          errorMessage={manualSplitError ? manualSplitErrorText : undefined}
-        >
-          <Grid container spacing={1}>
-            {splitFields.map(({ id, label }) => (
-              <Grid key={id} size={{ xs: 4 }}>
-                <TextField
-                  id={id}
-                  label={label}
-                  size="small"
-                  fullWidth
-                  error={manualSplitError}
-                  onChange={handleRowsChange}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        </SplitsCard>
       )}
     </Stack>
   );
