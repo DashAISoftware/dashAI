@@ -202,18 +202,3 @@ class OpenMLDatasetSource(BaseDatasetSource):
         with open(out_path, "wb") as f:
             f.write(file_resp.content)
         return out_path
-
-    def get_download_url(self, dataset_id: str) -> str:
-        """Return the OpenML dataset page URL.
-
-        Parameters
-        ----------
-        dataset_id : str
-            OpenML dataset ID.
-
-        Returns
-        -------
-        str
-            URL to the dataset page on openml.org.
-        """
-        return f"https://www.openml.org/d/{dataset_id}"

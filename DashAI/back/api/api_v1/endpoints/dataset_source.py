@@ -165,33 +165,6 @@ async def get_dataset_info(
     }
 
 
-@router.get("/{source_name}/{dataset_id:path}/download-url")
-async def get_download_url(
-    source_name: str,
-    dataset_id: str,
-    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-) -> Dict[str, str]:
-    """Return the direct download URL for a dataset.
-
-    Parameters
-    ----------
-    source_name : str
-        Registered DatasetSource class name.
-    dataset_id : str
-        Source-specific dataset identifier (URL-encoded).
-    registry : ComponentRegistry
-        Injected component registry.
-
-    Returns
-    -------
-    dict
-        ``{"url": "<download_url>"}``.
-    """
-    source = _get_source(source_name, registry)
-    url = source.get_download_url(unquote(dataset_id))
-    return {"url": url}
-
-
 class PreviewRequest(BaseModel):
     """Request body for previewing a dataset with dataloader params.
 

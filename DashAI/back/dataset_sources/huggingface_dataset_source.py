@@ -112,18 +112,3 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         out_path = os.path.join(temp_path, f"{dataset_id.replace('/', '_')}.csv")
         dataset_df.to_csv(out_path, index=False)
         return out_path
-
-    def get_download_url(self, dataset_id: str) -> str:
-        """Return the HuggingFace Hub page URL for the dataset.
-
-        Parameters
-        ----------
-        dataset_id : str
-            HuggingFace dataset identifier.
-
-        Returns
-        -------
-        str
-            URL to the dataset page on huggingface.co.
-        """
-        return f"https://huggingface.co/datasets/{dataset_id}"

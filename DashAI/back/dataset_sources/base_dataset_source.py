@@ -114,19 +114,3 @@ class BaseDatasetSource(ConfigObject, ABC):
             Path to the downloaded file inside ``temp_path``.
         """
         ...
-
-    @abstractmethod
-    def get_download_url(self, dataset_id: str) -> str:
-        """Return a direct URL the browser can use to download the dataset.
-
-        Parameters
-        ----------
-        dataset_id : str
-            Source-specific dataset identifier.
-
-        Returns
-        -------
-        str
-            Direct download URL.
-        """
-        ...

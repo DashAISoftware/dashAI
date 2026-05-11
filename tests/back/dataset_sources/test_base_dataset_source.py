@@ -35,9 +35,6 @@ class ConcreteSource(BaseDatasetSource):
     def download_dataset(self, dataset_id, temp_path):
         return "/tmp/file.csv"
 
-    def get_download_url(self, dataset_id):
-        return f"https://example.com/download/{dataset_id}"
-
 
 def test_dataset_entry_fields():
     entry = DatasetEntry(
@@ -89,12 +86,6 @@ def test_concrete_source_download_dataset_returns_path():
     assert path == "/tmp/file.csv"
 
 
-def test_concrete_source_get_download_url():
-    source = ConcreteSource()
-    url = source.get_download_url("owner/name")
-    assert url == "https://example.com/download/owner/name"
-
-
 def test_incomplete_subclass_cannot_be_instantiated():
     from abc import ABC
 
@@ -141,12 +132,6 @@ def test_hf_search_handles_http_error(caplog):
         results = source.search("anything")
 
     assert results == []
-
-
-def test_hf_get_download_url():
-    source = HuggingFaceDatasetSource()
-    url = source.get_download_url("owner/dataset")
-    assert url == "https://huggingface.co/datasets/owner/dataset"
 
 
 def test_openml_source_has_correct_type():
@@ -228,12 +213,6 @@ def test_openml_search_handles_http_error():
         results = source.search("iris")
 
     assert results == []
-
-
-def test_openml_get_download_url():
-    source = OpenMLDatasetSource()
-    url = source.get_download_url("61")
-    assert url == "https://www.openml.org/d/61"
 
 
 def test_openml_download_dataset_returns_arff(tmp_path):

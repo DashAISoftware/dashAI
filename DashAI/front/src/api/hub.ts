@@ -57,17 +57,6 @@ export const getDatasetInfo = async (
   return response.data;
 };
 
-export const getDownloadUrl = async (
-  sourceName: string,
-  datasetId: string,
-): Promise<string> => {
-  const encodedId = encodeURIComponent(datasetId);
-  const response = await api.get<{ url: string }>(
-    `${hubEndpoint}/${sourceName}/${encodedId}/download-url`,
-  );
-  return response.data.url;
-};
-
 export const previewHubDataset = async (
   sourceName: string,
   datasetId: string,
