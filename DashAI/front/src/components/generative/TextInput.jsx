@@ -13,11 +13,14 @@ export function TextInput({ onSendMessage, isLoading }) {
   };
 
   return (
-    <Box display="flex" alignItems="center" gap={2} width={"100%"}>
+    <Box display="flex" alignItems="flex-end" gap={2} width={"100%"}>
       <TextField
         fullWidth
         variant="outlined"
         label={t("generative:label.typeYourMessage")}
+        multiline
+        minRows={3}
+        maxRows={6}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         disabled={isLoading}

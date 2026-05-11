@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
 import { useSnackbar } from "notistack";
-import { getRAGSession, updateRAGSession } from "../../../api/rag";
+import {
+  getRAGSession,
+  updateGenerativeSessionParams,
+} from "../../../api/rag";
 import PromptSection from "../../../pages/generative/simplified-RAG/sections/PromptSection";
 import GeneratorSection from "../../../pages/generative/simplified-RAG/sections/GeneratorSection";
 
@@ -45,7 +48,7 @@ export default function RAGParamsPanel({ selectedSessionId }) {
     };
 
     try {
-      await updateRAGSession(selectedSessionId, payload);
+      await updateGenerativeSessionParams(selectedSessionId, payload.parameters);
       enqueueSnackbar("RAG parameters updated", { variant: "success" });
     } catch (err) {
       console.error("Failed to update RAG session:", err);

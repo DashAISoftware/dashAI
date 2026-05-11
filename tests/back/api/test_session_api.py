@@ -1,6 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.dependencies.database.models import (
+    GenerativeSession,
+    GenerativeSessionParameterHistory,
+)
+
 
 @pytest.fixture(scope="module", name="response_1")
 def create_session_1(client: TestClient):
@@ -158,6 +163,76 @@ def test_get_all_sessions(
     session_ids = {session["id"] for session in data}
     assert response_1.json()["id"] in session_ids, "Session 1 not found in all sessions"
     assert response_3.json()["id"] in session_ids, "Session 3 not found in all sessions"
+
+
+def test_update_generative_session_params_merges_and_logs_history(client: TestClient):
+    """Test updating RAG parameters through the dedicated endpoint."""
+    session_factory = client.app.container["session_factory"]
+
+    initial_parameters = {
+        "documents": [1, 2],
+        "chunking_model": {"component": "CharacterChunkModel", "params": {"size": 256}},
+        "retriever_model": {"component": "TFIDFRetriever", "params": {"top_k": 5}},
+        "generation_model": {
+            "component": "QwenModel",
+            "params": {"temperature": 0.7, "max_tokens": 128},
+        },
+        "prompt_id": 1,
+    }
+
+    with session_factory() as db:
+        session = GenerativeSession(
+            task_name="RAGTask",
+            model_name="RAGPipeline",
+            parameters=initial_parameters,
+            name="rag-session-update-test",
+            description=None,
+        )
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        session_id = session.id
+        original_last_modified = session.last_modified
+
+    response = client.put(
+        f"/api/v1/generative-session/{session_id}/parameters",
+        json={
+            "prompt_id": 2,
+            "generation_model": {
+                "component": "QwenModel",
+                "params": {"temperature": 0.2, "max_tokens": 256},
+            },
+        },
+    )
+
+    assert response.status_code == 200, "Failed to update RAG session parameters"
+    data = response.json()
+    assert data["id"] == session_id
+    assert data["parameters"]["documents"] == [1, 2]
+    assert data["parameters"]["chunking_model"] == {
+        "component": "CharacterChunkModel",
+        "params": {"size": 256},
+    }
+    assert data["parameters"]["generation_model"] == {
+        "component": "QwenModel",
+        "params": {"temperature": 0.2, "max_tokens": 256},
+    }
+    assert data["parameters"]["prompt_id"] == 2
+
+    with session_factory() as db:
+        updated_session = db.get(GenerativeSession, session_id)
+        assert updated_session is not None
+        assert updated_session.parameters["documents"] == [1, 2]
+        assert updated_session.parameters["prompt_id"] == 2
+        assert updated_session.last_modified >= original_last_modified
+
+        history_entries = (
+            db.query(GenerativeSessionParameterHistory)
+            .filter(GenerativeSessionParameterHistory.session_id == session_id)
+            .all()
+        )
+        assert len(history_entries) == 1
+        assert history_entries[0].parameters["prompt_id"] == 2
 
 
 def test_create_session_with_invalid_task(response_4):

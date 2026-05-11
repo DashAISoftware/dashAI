@@ -15,6 +15,7 @@ import {
   buildDefaultValuesFromSchemaProperties,
   getInitialModelParameters,
 } from "./ragFormDefaults";
+import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 
 export default function ChunkingConfigurationStep({
   chunkingModel,
@@ -26,20 +27,33 @@ export default function ChunkingConfigurationStep({
   const [error, setError] = useState(null);
 
   const formInitialValues = useMemo(
-    () =>
-      getInitialModelParameters({
+    () => {
+      const modelName = getModelFromSubform(chunkingModel);
+      const params = getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
+      const vals = getInitialModelParameters({
         selectedModel: selectedChunking,
-        currentModelName: chunkingModel?.component,
-        currentParams: chunkingModel?.params,
-      }),
-    [selectedChunking, chunkingModel?.component, chunkingModel?.params],
+        currentModelName: modelName,
+        currentParams: params,
+      });
+      console.log("[ChunkingConfigStep] formInitialValues:", { 
+        modelName, 
+        params, 
+        selectedChunking: selectedChunking?.name,
+        vals
+      });
+      return vals;
+    },
+    [selectedChunking, chunkingModel],
   );
 
   useEffect(() => {
     let isMounted = true;
     const fetchChunkingModels = async () => {
       const data = await getChunkingComponents();
-      if (isMounted) setChunkingOptions(data || []);
+      if (isMounted) {
+        setChunkingOptions(data || []);
+        console.log("[ChunkingConfigStep] Fetched chunking options:", data);
+      }
     };
     fetchChunkingModels();
     return () => {
@@ -50,16 +64,26 @@ export default function ChunkingConfigurationStep({
   // If parent gives a preselected chunking model, sync it
   useEffect(() => {
     if (!chunkingOptions.length) return;
-    if (chunkingModel?.component) {
+    const modelName = getModelFromSubform(chunkingModel);
+    console.log("[ChunkingConfigStep] Syncing selectedChunking:", {
+      modelName,
+      chunkingModel,
+      chunkingOptions: chunkingOptions.map(c => c.name),
+    });
+    if (modelName) {
       const found = chunkingOptions.find(
-        (c) => c.name === chunkingModel.component,
+        (c) => c.name === modelName,
       );
-      if (found) setSelectedChunking(found);
+      if (found) {
+        console.log("[ChunkingConfigStep] Found chunking model:", found.name);
+        setSelectedChunking(found);
+        setNextEnabled(true);
+      }
+    } else {
+      setNextEnabled(false);
     }
-    // Enable next when there is a selection
-    setNextEnabled(!!chunkingModel?.component);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chunkingOptions, chunkingModel?.component]);
+  }, [chunkingOptions, chunkingModel]);
 
   const handleChunkingSelectionChange = (event, newValue) => {
     setSelectedChunking(newValue);

@@ -117,7 +117,7 @@ export function MediaInput({
           fullWidth
           multiline
           minRows={3}
-          maxRows={3}
+          maxRows={6}
           placeholder={t("generative:label.typeYourMessage")}
           value={text}
           onChange={(e) => setText(e.target.value)}

@@ -3112,6 +3112,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/x-data-grid@npm:^8.27.2":
+  version: 8.28.2
+  resolution: "@mui/x-data-grid@npm:8.28.2"
+  dependencies:
+    "@babel/runtime": ^7.28.4
+    "@mui/utils": ^7.3.5
+    "@mui/x-internals": 8.26.0
+    "@mui/x-virtualizer": 0.3.4
+    clsx: ^2.1.1
+    prop-types: ^15.8.1
+    use-sync-external-store: ^1.6.0
+  peerDependencies:
+    "@emotion/react": ^11.9.0
+    "@emotion/styled": ^11.8.1
+    "@mui/material": ^5.15.14 || ^6.0.0 || ^7.0.0
+    "@mui/system": ^5.15.14 || ^6.0.0 || ^7.0.0
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@emotion/react":
+      optional: true
+    "@emotion/styled":
+      optional: true
+  checksum: 27e65f40281e94602fc4c3a04df5e6a81c3b82fa7a72453a70b5526d9b986470a56815c4dadcdb77bfc7d80bee4fbcc4bfa515920e22cc443918458ccdc63019
+  languageName: node
+  linkType: hard
+
 "@mui/x-date-pickers@npm:^8.27.2":
   version: 8.27.2
   resolution: "@mui/x-date-pickers@npm:8.27.2"
@@ -3171,6 +3198,20 @@ __metadata:
   peerDependencies:
     react: ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 153b84993c6365f51748be041c5fda27942bae9bec2e9324c64055d1df1a46c387dc703544e1b006a4d59c34aa9b9227b65a07ef37e4e0ae9dd73b3e7af5b4d1
+  languageName: node
+  linkType: hard
+
+"@mui/x-virtualizer@npm:0.3.4":
+  version: 0.3.4
+  resolution: "@mui/x-virtualizer@npm:0.3.4"
+  dependencies:
+    "@babel/runtime": ^7.28.4
+    "@mui/utils": ^7.3.5
+    "@mui/x-internals": 8.26.0
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: a94ae0d8bdaaec90396b985d7514d44f257b5b94da17ffb1204b516bd689dd99e960aa458279b47711859bdd26c908ed8748684481e7224cae3346f77cd991f0
   languageName: node
   linkType: hard
 
@@ -6268,11 +6309,11 @@ __metadata:
   linkType: hard
 
 "baseline-browser-mapping@npm:^2.8.9":
-  version: 2.8.14
-  resolution: "baseline-browser-mapping@npm:2.8.14"
+  version: 2.10.27
+  resolution: "baseline-browser-mapping@npm:2.10.27"
   bin:
-    baseline-browser-mapping: dist/cli.js
-  checksum: 422a3c25169ef6ffb89d2fab297f92c72496e0e87bcff6c7af3fbe917a9ee4ca3092ea8bd0ca128d915b2c1b2a0c7921edacdefb701e347d87158f2fa5b2bb1a
+    baseline-browser-mapping: dist/cli.cjs
+  checksum: 7b89ecfcf34132b11a8f07249e21ede07363f02136f61b9750d953da22e376002a0a8f01163dfeb57ec7cee9eb32569f24113659f692b194125d89c64ea8156d
   languageName: node
   linkType: hard
 
@@ -6586,9 +6627,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001702, caniuse-lite@npm:^1.0.30001746":
-  version: 1.0.30001749
-  resolution: "caniuse-lite@npm:1.0.30001749"
-  checksum: 0a2692a7d51e4f4cecd2e8714e1d3d9982479fb59fa2fc8d6a462844bb7f5243ffe0bc94b25a1ff944f63bb2372ff5f6d01ef422729ca3c262975f1b91d78c07
+  version: 1.0.30001791
+  resolution: "caniuse-lite@npm:1.0.30001791"
+  checksum: 9b2f55d51b85abbb270a0d58c28b8e799ccb8fd5ef017179db3d328c8fead4f1738d95a354e75169af31c0424ffb1b691533722522ff280d4aab05d0fe4eddbd
   languageName: node
   linkType: hard
 
@@ -7962,6 +8003,7 @@ __metadata:
     "@mui/material": ^7
     "@mui/system": ^7
     "@mui/utils": ^7
+    "@mui/x-data-grid": ^8.27.2
     "@mui/x-date-pickers": ^8.27.2
     "@stylistic/eslint-plugin-js": ^1.7.2
     "@tanstack/react-table": ^8.21.3

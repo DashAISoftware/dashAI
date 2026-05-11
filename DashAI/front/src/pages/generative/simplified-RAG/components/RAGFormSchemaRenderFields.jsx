@@ -4,6 +4,7 @@ import FormSchemaFieldWithOptions from "../../../../components/shared/FormSchema
 import FormSchemaFieldWithCollapse from "../../../../components/shared/FormSchemaFieldWithCollapse";
 import FormSchemaFieldWithOptimizers from "../../../../components/shared/FormSchemaFieldWithOptimizers";
 import FormSchemaField from "../../../../components/shared/FormSchemaField";
+import FormSchemaFieldCard from "../../../../components/shared/FormSchemaFieldCard";
 import { getModelFromSubform } from "../../../../utils/schema";
 import { Stack } from "@mui/material";
 import PropTypes from "prop-types";
@@ -149,6 +150,22 @@ function RAGFormSchemaRenderFields({
             </FormSchemaFieldWithCollapse>
           );
         }
+      } else {
+        // Simple scalar fields — wrap in a card here
+        fields.push(
+          <FormSchemaFieldCard
+            key={objName}
+            label={fieldSchema.title}
+            paramKey={objName}
+            description={fieldSchema.description}
+          >
+            <FormSchemaField
+              objName={objName}
+              paramJsonSchema={fieldSchema}
+              field={baseField}
+            />
+          </FormSchemaFieldCard>,
+        );
       }
     }
     return fields;

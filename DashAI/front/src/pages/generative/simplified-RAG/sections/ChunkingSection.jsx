@@ -11,6 +11,7 @@ import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
+import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
 import { useTheme } from "@mui/material/styles";
 
@@ -67,11 +68,14 @@ export default function ChunkingSection({
         setChunkers(data || []);
         
         if (data && data.length > 0) {
-          if (chunkingModel?.component) {
-            const found = data.find((c) => c.name === chunkingModel.component);
+          const modelName = getModelFromSubform(chunkingModel);
+          const params = getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
+
+          if (modelName) {
+            const found = data.find((c) => c.name === modelName);
             if (found) {
               setSelectedChunker(found);
-              updatePresetFromParams(chunkingModel.params);
+              updatePresetFromParams(params);
             } else {
               selectDefaultChunker(data);
             }
@@ -90,10 +94,11 @@ export default function ChunkingSection({
 
   // Update preset when chunkingModel.params changes (e.g. from Advanced Modal)
   useEffect(() => {
-    if (chunkingModel?.params) {
-      updatePresetFromParams(chunkingModel.params);
+    const params = getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
+    if (params) {
+      updatePresetFromParams(params);
     }
-  }, [chunkingModel.params, CHUNKING_PRESETS]);
+  }, [chunkingModel, CHUNKING_PRESETS]);
 
   const updatePresetFromParams = (params) => {
     const preset = CHUNKING_PRESETS.find(p => 

@@ -11,6 +11,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import ChunkingConfigurationStep from "../../RAG/NewSessionModal/ChunkingConfigurationStep";
+import { getModelFromSubform } from "../../../../utils/schema";
 
 export default function ChunkingAdvancedModal({
   open,
@@ -20,6 +21,7 @@ export default function ChunkingAdvancedModal({
 }) {
   const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
+  const modelName = getModelFromSubform(chunkingModel);
 
   const handleClose = () => {
     onClose();
@@ -64,7 +66,7 @@ export default function ChunkingAdvancedModal({
       </DialogTitle>
 
       <DialogContent dividers sx={{ minHeight: 400 }}>
-        <FormSchemaProvider key={`chunking-advanced-${chunkingModel?.component}`}>
+        <FormSchemaProvider key={`chunking-advanced-${modelName}`}>
           <ChunkingConfigurationStep
             chunkingModel={chunkingModel}
             setChunkingModel={setChunkingModel}

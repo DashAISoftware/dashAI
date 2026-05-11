@@ -1,5 +1,7 @@
 import logging
+import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,6 +16,12 @@ from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
+    RAGChunkingModel,
+    RAGDenseRetriever,
+    RAGEmbeddingMatrix,
+    RAGEmbeddingModel,
+    RAGPrompt,
+    RAGSparseRetriever,
     ProcessData,
 )
 from DashAI.back.tasks.RAG_task import RAGTask
@@ -26,6 +34,205 @@ if TYPE_CHECKING:
 
 router = APIRouter()
 log = logging.getLogger(__name__)
+
+
+def _delete_path(path_value: str | None) -> None:
+    if not path_value:
+        return
+    path = Path(path_value)
+    if path.exists():
+        shutil.rmtree(path, ignore_errors=True)
+
+
+def _other_sessions_with_same_config(
+    db,
+    session_id: int,
+    expected_parameters: dict,
+    *,
+    keys: tuple[str, ...],
+) -> bool:
+    """Return True when any other session matches all keys in `keys`.
+
+    This avoids generator/list comprehensions for clarity.
+    """
+    other_sessions = (
+        db.query(GenerativeSession)
+        .filter(GenerativeSession.id != session_id)
+        .all()
+    )
+
+    for other_session in other_sessions:
+        other_parameters = other_session.parameters or {}
+        all_keys_match = True
+        for key in keys:
+            if other_parameters.get(key) != expected_parameters.get(key):
+                all_keys_match = False
+                break
+        if all_keys_match:
+            return True
+
+    return False
+
+
+def _cleanup_orphaned_rag_resources(
+    db,
+    session_id: int,
+    old_parameters: dict,
+    new_parameters: dict | None = None,
+) -> None:
+    if not old_parameters:
+        return
+
+    def _component_changed(key: str) -> bool:
+        if new_parameters is None:
+            return True
+        return old_parameters.get(key) != new_parameters.get(key)
+
+    other_sessions = (
+        db.query(GenerativeSession)
+        .filter(GenerativeSession.id != session_id)
+        .all()
+    )
+
+    # Clean up session-scoped prompt if no other session references it
+    old_prompt_id = old_parameters.get("prompt_id")
+    if old_prompt_id is not None:
+        found_in_other = False
+        for other_session in other_sessions:
+            other_params = other_session.parameters or {}
+            if other_params.get("prompt_id") == old_prompt_id:
+                found_in_other = True
+                break
+        if not found_in_other:
+            old_prompt = db.get(RAGPrompt, old_prompt_id)
+            if old_prompt is not None and f" - session {session_id}" in (old_prompt.name or ""):
+                db.delete(old_prompt)
+
+    chunking_model_params = old_parameters.get("chunking_model")
+    if not chunking_model_params:
+        chunking_model_params = {}
+
+    should_cleanup_chunking = (
+        bool(chunking_model_params)
+        and _component_changed("chunking_model")
+        and not _other_sessions_with_same_config(
+            db, session_id, old_parameters, keys=("documents", "chunking_model")
+        )
+    )
+
+    if should_cleanup_chunking:
+        chunking_models = (
+            db.query(RAGChunkingModel)
+            .filter(
+                RAGChunkingModel.class_name == chunking_model_params.get("component"),
+                RAGChunkingModel.parameters == chunking_model_params.get("params"),
+            )
+            .all()
+        )
+        for chunking_model in chunking_models:
+            db.delete(chunking_model)
+
+    retriever_model_params = old_parameters.get("retriever_model")
+    if not retriever_model_params:
+        retriever_model_params = {}
+
+    should_cleanup_retriever = (
+        bool(retriever_model_params)
+        and _component_changed("retriever_model")
+        and not _other_sessions_with_same_config(
+            db, session_id, old_parameters, keys=("documents", "chunking_model", "retriever_model")
+        )
+    )
+
+    if should_cleanup_retriever:
+        documents_ids = old_parameters.get("documents") or []
+        documents_ids = sorted(documents_ids)
+
+        # Find chunking model instance (if any)
+        chunking_model = (
+            db.query(RAGChunkingModel)
+            .filter(
+                RAGChunkingModel.class_name == retriever_model_params.get("component"),
+                RAGChunkingModel.parameters == retriever_model_params.get("params"),
+            )
+            .first()
+        )
+        chunking_model_id = chunking_model.id if chunking_model else None
+
+        retriever_params = retriever_model_params.get("params", {})
+
+        # Check for dense retriever with embedded encoding model
+        if "encoding_model" in retriever_params:
+            retriever_payload = retriever_params
+
+            # Extract nested encoding model properties step-by-step for clarity
+            encoding_model_prop = retriever_payload.get("encoding_model", {})
+            encoding_properties = encoding_model_prop.get("properties", {})
+            encoding_params = encoding_properties.get("params", {})
+            encoding_comp = encoding_params.get("comp", {})
+
+            embedding_model = (
+                db.query(RAGEmbeddingModel)
+                .filter(
+                    RAGEmbeddingModel.class_name == encoding_comp.get("component"),
+                    RAGEmbeddingModel.parameters == encoding_comp.get("params"),
+                )
+                .first()
+            )
+            embedding_model_id = embedding_model.id if embedding_model else None
+
+            if embedding_model_id is not None and chunking_model_id is not None:
+                embedding_matrices = (
+                    db.query(RAGEmbeddingMatrix)
+                    .filter(
+                        RAGEmbeddingMatrix.chunking_model_id == chunking_model_id,
+                        RAGEmbeddingMatrix.embedding_model_id == embedding_model_id,
+                        RAGEmbeddingMatrix.document_id.in_(documents_ids),
+                    )
+                    .all()
+                )
+
+                # Remove storage folders and collect ids explicitly
+                matrix_ids = []
+                for matrix in embedding_matrices:
+                    _delete_path(matrix.storage_folder)
+                    matrix_ids.append(matrix.id)
+
+                if matrix_ids:
+                    db.query(RAGEmbeddingMatrix).filter(
+                        RAGEmbeddingMatrix.id.in_(matrix_ids)
+                    ).delete(synchronize_session=False)
+
+                if embedding_model is not None:
+                    db.delete(embedding_model)
+
+                dense_retrievers = (
+                    db.query(RAGDenseRetriever)
+                    .filter(
+                        RAGDenseRetriever.class_name == retriever_model_params.get("component"),
+                        RAGDenseRetriever.parameters == retriever_payload,
+                        RAGDenseRetriever.chunking_model_id == chunking_model_id,
+                        RAGDenseRetriever.document_ids == documents_ids,
+                    )
+                    .all()
+                )
+                for dense_retriever in dense_retrievers:
+                    db.delete(dense_retriever)
+        else:
+            retriever_payload = retriever_params
+            sparse_retrievers = (
+                db.query(RAGSparseRetriever)
+                .filter(
+                    RAGSparseRetriever.class_name == retriever_model_params.get("component"),
+                    RAGSparseRetriever.parameters == retriever_payload,
+                    RAGSparseRetriever.chunking_model_id == chunking_model_id,
+                    RAGSparseRetriever.documents_ids == documents_ids,
+                )
+                .all()
+            )
+            for sparse_retriever in sparse_retrievers:
+                _delete_path(sparse_retriever.storage_folder)
+                db.delete(sparse_retriever)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -279,6 +486,8 @@ async def delete_generative_session(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
+            old_parameters = dict(session.parameters or {})
+
             # Delete all the processes associated with the session
             processes = (
                 db.query(GenerativeProcess)
@@ -308,6 +517,7 @@ async def delete_generative_session(
                 db.delete(entry)
             # Finally, delete the session itself
             db.delete(session)
+            _cleanup_orphaned_rag_resources(db, session_id, old_parameters)
             db.commit()
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -460,7 +670,18 @@ async def update_generative_session_params(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
-            updated_parameters = {**session.parameters, **new_params}
+            old_parameters = dict(session.parameters or {})
+            updated_parameters = {**old_parameters, **new_params}
+
+            from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
+
+            try:
+                RAGPipeline.SCHEMA.model_validate(updated_parameters)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid parameters for RAG session {session_id}: {e}",
+                ) from e
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
@@ -472,11 +693,15 @@ async def update_generative_session_params(
             session.parameters = updated_parameters
             session.last_modified = datetime.now()
 
+            _cleanup_orphaned_rag_resources(db, session_id, old_parameters, updated_parameters)
             db.commit()
             db.refresh(session)
 
             return {"id": session.id, "parameters": session.parameters}
+        except HTTPException:
+            raise
         except exc.SQLAlchemyError as e:
+            db.rollback()
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -528,16 +753,18 @@ async def get_generative_session_parameters_history(
                 .all()
             )
 
-            # Convert the objects to dictionaries
-            return [
-                {
-                    "id": entry.id,
-                    "session_id": entry.session_id,
-                    "parameters": entry.parameters,
-                    "modified_at": entry.modified_at,
-                }
-                for entry in parameters_history
-            ]
+            # Convert the objects to dictionaries (explicit loop for clarity)
+            history_list = []
+            for entry in parameters_history:
+                history_list.append(
+                    {
+                        "id": entry.id,
+                        "session_id": entry.session_id,
+                        "parameters": entry.parameters,
+                        "modified_at": entry.modified_at,
+                    }
+                )
+            return history_list
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -592,13 +819,18 @@ async def get_parameter_history_entry(
                 .all()
             )
 
-            parameters_history = [p.__dict__ for p in parameters_history]
+            params_history_dicts = []
+            for p in parameters_history:
+                params_history_dicts.append(dict(p.__dict__))
 
             events = []
-            prev_params = parameters_history[0]["parameters"]
+            if not params_history_dicts:
+                return []
 
-            for i in range(1, len(parameters_history)):
-                curr = parameters_history[i]
+            prev_params = params_history_dicts[0]["parameters"]
+
+            for i in range(1, len(params_history_dicts)):
+                curr = params_history_dicts[i]
                 curr_params = curr["parameters"]
                 changes = []
 
@@ -614,13 +846,11 @@ async def get_parameter_history_entry(
                             }
                         )
 
-                events.append(
-                    {
-                        "id": curr["id"],
-                        "timestamp": curr["modified_at"],
-                        "changes": changes,
-                    }
-                )
+                events.append({
+                    "id": curr["id"],
+                    "timestamp": curr["modified_at"],
+                    "changes": changes,
+                })
                 prev_params = curr_params
 
             return events
