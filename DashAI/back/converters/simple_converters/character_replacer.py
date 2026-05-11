@@ -253,16 +253,6 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             splits=x.splits,
         )
 
-    def changes_row_count(self) -> bool:
-        """Return ``False`` because this converter never adds or removes rows.
-
-        Returns
-        -------
-        bool
-            Always ``False``.
-        """
-        return False
-
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the default output type for a transformed column.
 
