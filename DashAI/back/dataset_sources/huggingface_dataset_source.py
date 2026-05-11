@@ -162,6 +162,9 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the full dataset using the HuggingFace datasets library.
 
+        For multi-config datasets, all configs are downloaded and concatenated
+        into a single CSV file.
+
         Parameters
         ----------
         dataset_id : str
@@ -174,12 +177,47 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         str
             Path to the exported CSV file inside ``temp_path``.
         """
+        import pandas as pd
+        from datasets import get_dataset_config_names
         from datasets import load_dataset as hf_load
 
-        dataset = hf_load(dataset_id, cache_dir=temp_path, trust_remote_code=False)
-        split = "train" if "train" in dataset else list(dataset.keys())[0]
-        dataset_df = dataset[split].to_pandas()
+        def _load_split(ds) -> pd.DataFrame:
+            split = "train" if "train" in ds else list(ds.keys())[0]
+            return ds[split].to_pandas()
 
         out_path = os.path.join(temp_path, f"{dataset_id.replace('/', '_')}.csv")
-        dataset_df.to_csv(out_path, index=False)
+
+        try:
+            dataset = hf_load(dataset_id, cache_dir=temp_path, trust_remote_code=False)
+            _load_split(dataset).to_csv(out_path, index=False)
+            return out_path
+        except ValueError as exc:
+            if "Config name is missing" not in str(exc):
+                raise
+
+        configs = get_dataset_config_names(dataset_id)
+        log.debug("%s has %d configs, downloading all", dataset_id, len(configs))
+        dfs = []
+        for config in configs:
+            try:
+                ds = hf_load(
+                    dataset_id,
+                    config,
+                    cache_dir=temp_path,
+                    trust_remote_code=False,
+                )
+                dfs.append(_load_split(ds))
+            except Exception:
+                log.warning(
+                    "Skipping config '%s' for %s — could not load",
+                    config,
+                    dataset_id,
+                )
+
+        if not dfs:
+            raise RuntimeError(
+                f"No configs could be loaded for dataset '{dataset_id}'."
+            )
+
+        pd.concat(dfs, ignore_index=True).to_csv(out_path, index=False)
         return out_path
