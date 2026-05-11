@@ -156,13 +156,7 @@ export default function HubLeftBar({ downloads = [], onDeleteDownload, onImportD
                         variant="body2"
                         noWrap
                         sx={{ pl: 1 }}
-                        color={
-                          dl.status === "error"
-                            ? "error"
-                            : dl.status === "ready"
-                              ? "success.main"
-                              : "text.secondary"
-                        }
+                        color="text.secondary"
                       >
                         {t("hub:fromSource", { source: dl.source_name })}
                         {" · "}
