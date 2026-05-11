@@ -97,21 +97,20 @@ def test_hf_source_has_correct_type():
 
 
 def test_hf_search_returns_dataset_entries():
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = [
+    search_resp = MagicMock()
+    search_resp.status_code = 200
+    search_resp.json.return_value = [
         {
             "id": "stanfordnlp/imdb",
             "description": "IMDB movie review sentiment",
             "tags": ["text-classification"],
-            "cardData": {
-                "dataset_info": {"download_size": 18157506, "dataset_size": 20098482},
-            },
-            "downloads": 5000,
         }
     ]
+    treesize_resp = MagicMock()
+    treesize_resp.status_code = 200
+    treesize_resp.json.return_value = {"path": "/", "size": 83455823}
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("httpx.get", side_effect=[search_resp, treesize_resp]):
         source = HuggingFaceDatasetSource()
         results = source.search("imdb", limit=5)
 
@@ -119,40 +118,19 @@ def test_hf_search_returns_dataset_entries():
     assert results[0].id == "stanfordnlp/imdb"
     assert results[0].source == "HuggingFaceDatasetSource"
     assert results[0].url == "https://huggingface.co/datasets/stanfordnlp/imdb"
-    assert results[0].size_bytes == 18157506
+    assert results[0].size_bytes == 83455823
 
 
-def test_hf_search_size_bytes_falls_back_to_used_storage():
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = [
-        {
-            "id": "owner/repo",
-            "description": "",
-            "tags": [],
-            "usedStorage": 5242880,
-        }
+def test_hf_search_size_bytes_none_when_treesize_fails():
+    search_resp = MagicMock()
+    search_resp.status_code = 200
+    search_resp.json.return_value = [
+        {"id": "owner/repo", "description": "", "tags": []}
     ]
+    treesize_resp = MagicMock()
+    treesize_resp.status_code = 404
 
-    with patch("httpx.get", return_value=mock_response):
-        source = HuggingFaceDatasetSource()
-        results = source.search("repo")
-
-    assert results[0].size_bytes == 5242880
-
-
-def test_hf_search_size_bytes_none_when_missing():
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = [
-        {
-            "id": "owner/repo",
-            "description": "",
-            "tags": [],
-        }
-    ]
-
-    with patch("httpx.get", return_value=mock_response):
+    with patch("httpx.get", side_effect=[search_resp, treesize_resp]):
         source = HuggingFaceDatasetSource()
         results = source.search("repo")
 

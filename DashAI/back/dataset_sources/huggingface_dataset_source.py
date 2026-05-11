@@ -1,8 +1,8 @@
 """HuggingFace Hub dataset source for DashAI."""
 
-import contextlib
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Final
 
 import httpx
@@ -16,6 +16,36 @@ from DashAI.back.dataset_sources.base_dataset_source import (
 log = logging.getLogger(__name__)
 
 _HF_API = "https://huggingface.co/api/datasets"
+
+
+def _fetch_hf_treesize(dataset_id: str) -> tuple[str, int | None]:
+    """Fetch total repository size for a HuggingFace dataset via the treesize API.
+
+    Parameters
+    ----------
+    dataset_id : str
+        HuggingFace dataset identifier in ``"namespace/repo"`` form.
+
+    Returns
+    -------
+    tuple[str, int | None]
+        ``(dataset_id, size_in_bytes)`` — size is None on any error.
+    """
+    if "/" not in dataset_id:
+        return dataset_id, None
+    try:
+        namespace, repo = dataset_id.split("/", 1)
+        resp = httpx.get(
+            f"{_HF_API}/{namespace}/{repo}/treesize/main",
+            timeout=5,
+        )
+        if resp.status_code == 200:
+            raw = resp.json().get("size")
+            if raw is not None:
+                return dataset_id, int(raw)
+    except Exception:
+        log.debug("Could not fetch treesize for %s", dataset_id)
+    return dataset_id, None
 
 
 class HuggingFaceDatasetSource(BaseDatasetSource):
@@ -70,28 +100,29 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
                 log.warning("HuggingFace API returned %s", resp.status_code)
                 return []
 
-            entries = []
-            for item in resp.json():
-                size_bytes: int | None = None
-                card_data = item.get("cardData") or {}
-                dataset_info = card_data.get("dataset_info") or {}
-                if isinstance(dataset_info, list):
-                    dataset_info = dataset_info[0] if dataset_info else {}
-                raw_size = dataset_info.get("download_size") or item.get("usedStorage")
-                if raw_size is not None:
-                    with contextlib.suppress(ValueError, TypeError):
-                        size_bytes = int(raw_size)
-                entries.append(
-                    DatasetEntry(
-                        id=item.get("id", ""),
-                        name=item.get("id", "").split("/")[-1],
-                        description=item.get("description") or "",
-                        tags=item.get("tags", []),
-                        size_bytes=size_bytes,
-                        url=f"https://huggingface.co/datasets/{item.get('id', '')}",
-                        source=self.__class__.__name__,
-                    )
+            entries = [
+                DatasetEntry(
+                    id=item.get("id", ""),
+                    name=item.get("id", "").split("/")[-1],
+                    description=item.get("description") or "",
+                    tags=item.get("tags", []),
+                    size_bytes=None,
+                    url=f"https://huggingface.co/datasets/{item.get('id', '')}",
+                    source=self.__class__.__name__,
                 )
+                for item in resp.json()
+            ]
+
+            if entries:
+                max_workers = min(len(entries), 10)
+                with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                    futures = {
+                        pool.submit(_fetch_hf_treesize, e.id): e for e in entries
+                    }
+                    for future in as_completed(futures):
+                        _, size = future.result()
+                        futures[future].size_bytes = size
+
             return entries
         except Exception:
             log.exception("Error searching HuggingFace datasets")
