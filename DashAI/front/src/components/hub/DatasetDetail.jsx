@@ -42,6 +42,14 @@ export default function DatasetDetail({
   const theme = useTheme();
   const [extraInfo, setExtraInfo] = useState(null);
 
+  const formatSize = (bytes) => {
+    if (!bytes) return null;
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+    return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+  };
+
   useEffect(() => {
     if (!dataset || !sourceName) {
       setExtraInfo(null);
@@ -222,6 +230,17 @@ export default function DatasetDetail({
                   </Typography>
                   <Typography variant="body2">
                     {dataset.row_count.toLocaleString()}
+                  </Typography>
+                </Box>
+              )}
+
+              {(extraInfo?.size_bytes ?? dataset.size_bytes) != null && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("hub:size")}
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatSize(extraInfo?.size_bytes ?? dataset.size_bytes)}
                   </Typography>
                 </Box>
               )}
