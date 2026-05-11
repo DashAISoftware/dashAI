@@ -15,6 +15,8 @@ export default function RAGParamsPanel({ selectedSessionId }) {
   const [generatorModel, setGeneratorModel] = useState({ component: null, params: {} });
   const [loading, setLoading] = useState(false);
   const [isValid, setIsValid] = useState(true);
+  const [savedVersion, setSavedVersion] = useState(0);
+  const originalParamsRef = React.useRef(null);
 
   useEffect(() => {
     if (!selectedSessionId) return;
@@ -27,6 +29,14 @@ export default function RAGParamsPanel({ selectedSessionId }) {
           component: params.generation_model?.component || null,
           params: params.generation_model?.params || {},
         });
+        // Store original parameters snapshot
+        originalParamsRef.current = {
+          prompt_id: params.prompt_id || null,
+          generation_model: {
+            component: params.generation_model?.component || null,
+            params: params.generation_model?.params || {},
+          },
+        };
       })
       .catch((err) => {
         console.error("Failed to load RAG session:", err);
@@ -35,8 +45,18 @@ export default function RAGParamsPanel({ selectedSessionId }) {
       .finally(() => setLoading(false));
   }, [selectedSessionId, enqueueSnackbar]);
 
+  // Detect if parameters have changed
+  const hasParamChanges = React.useMemo(() => {
+    if (!originalParamsRef.current) return false;
+    const original = originalParamsRef.current;
+    const hasPromptIdChanged = original.prompt_id !== promptId;
+    const hasComponentChanged = original.generation_model.component !== generatorModel.component;
+    const hasParamsChanged = JSON.stringify(original.generation_model.params) !== JSON.stringify(generatorModel.params);
+    return hasPromptIdChanged || hasComponentChanged || hasParamsChanged;
+  }, [promptId, generatorModel, savedVersion]);
+
   const handleSave = async () => {
-    if (!selectedSessionId) return;
+    if (!selectedSessionId || !hasParamChanges) return;
     const payload = {
       parameters: {
         prompt_id: promptId,
@@ -50,6 +70,9 @@ export default function RAGParamsPanel({ selectedSessionId }) {
     try {
       await updateGenerativeSessionParams(selectedSessionId, payload.parameters);
       enqueueSnackbar("RAG parameters updated", { variant: "success" });
+      // Update the snapshot after successful save and trigger recalculation
+      originalParamsRef.current = payload.parameters;
+      setSavedVersion((v) => v + 1);
     } catch (err) {
       console.error("Failed to update RAG session:", err);
       enqueueSnackbar("Failed to update RAG parameters", { variant: "error" });
@@ -79,7 +102,11 @@ export default function RAGParamsPanel({ selectedSessionId }) {
         </Box>
 
         <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end", pt: 1 }}>
-          <Button variant="contained" onClick={handleSave} disabled={loading || !isValid || !selectedSessionId}>
+          <Button 
+            variant="contained" 
+            onClick={handleSave} 
+            disabled={loading || !isValid || !selectedSessionId || !hasParamChanges}
+          >
             Save
           </Button>
         </Box>

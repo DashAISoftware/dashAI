@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { 
   Box, 
   Typography, 
   Button, 
-  Paper, 
   Chip, 
   Grid, 
   Card, 
@@ -13,12 +12,11 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Collapse
+  Collapse,
+  TextField
 } from "@mui/material";
 import ChatIcon from "@mui/icons-material/Chat";
-import DescriptionIcon from "@mui/icons-material/Description";
 import SettingsIcon from "@mui/icons-material/Settings";
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -26,10 +24,12 @@ import ContentCutIcon from "@mui/icons-material/ContentCut";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 import BoltIcon from "@mui/icons-material/Bolt";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { getGenerativeSession } from "../../../api/generativeTask";
-import { getRAGPrompts } from "../../../api/rag";
+import { updateGenerativeSession, getSessions } from "../../../api/session";
 import RAGBreadcrumbs from "./RAGBreadcrumbs";
 
 export default function RAGSessionSummary({
@@ -38,16 +38,21 @@ export default function RAGSessionSummary({
 }) {
   const { t } = useTranslation(["generative"]);
   const [sessionData, setSessionData] = useState(null);
-  const [promptData, setPromptData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingName, setEditingName] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [editingDescription, setEditingDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     chunking: false,
     retriever: false,
     generation: false
   });
   const { enqueueSnackbar } = useSnackbar();
+  const originalMetadataRef = useRef({ name: "", description: "" });
 
   // Toggle function for collapsible sections
   const toggleSection = (section) => {
@@ -55,6 +60,90 @@ export default function RAGSessionSummary({
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  const hasMetadataChanges = useMemo(() => {
+    const normalizedName = (editingName || "").trim();
+    const normalizedDescription = editingDescription || "";
+    const originalName = originalMetadataRef.current.name || "";
+    const originalDescription = originalMetadataRef.current.description || "";
+
+    return normalizedName !== originalName || normalizedDescription !== originalDescription;
+  }, [editingDescription, editingName]);
+
+  // Toggle edit mode
+  const handleToggleEditMode = () => {
+    if (!isEditing && sessionData) {
+      // Entering edit mode - load current values
+      const currentName = sessionData.name || "";
+      const currentDescription = sessionData.description || "";
+      originalMetadataRef.current = {
+        name: currentName,
+        description: currentDescription,
+      };
+      setEditingName(currentName);
+      setEditingDescription(currentDescription);
+      setNameError("");
+    }
+    setIsEditing(!isEditing);
+  };
+
+  // Save session metadata
+  const handleSaveMetadata = async () => {
+    if (!sessionData) return;
+    if (!hasMetadataChanges || isSaving) return;
+
+    const newName = (editingName || "").trim();
+    if (!newName) {
+      setNameError("El nombre de la sesión no puede estar vacío.");
+      enqueueSnackbar("El nombre de la sesión no puede estar vacío.", { variant: "error" });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      // Validate uniqueness: no other session (different id) should have the same name
+      const allSessions = await getSessions();
+      const duplicate = allSessions.find((s) => s.name === newName && s.id !== sessionData.id);
+      if (duplicate) {
+        setNameError("Ya existe otra sesión con ese nombre.");
+        enqueueSnackbar("Ya existe otra sesión con ese nombre.", { variant: "error" });
+        setIsSaving(false);
+        return;
+      }
+
+      await updateGenerativeSession({
+        id: String(sessionData.id),
+        formData: {
+          name: newName,
+          description: editingDescription,
+        },
+      });
+
+      // Update local state
+      setSessionData({
+        ...sessionData,
+        name: newName,
+        description: editingDescription,
+      });
+      originalMetadataRef.current = {
+        name: newName,
+        description: editingDescription || "",
+      };
+
+      setIsEditing(false);
+      enqueueSnackbar(t("generative:simplifiedRag.summary.sessionUpdated"), {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar(t("generative:simplifiedRag.summary.failedToUpdateSession"), {
+        variant: "error",
+      });
+      console.error("Failed to update session metadata:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Helper function to determine if a parameter should be shown inline or in modal
@@ -201,7 +290,7 @@ export default function RAGSessionSummary({
         }}
         onClick={() => toggleSection(sectionKey)}
       >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, backgroundColor: 'background.box' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2">{icon}</Typography>
           <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
             {title}: <Typography component="span" color="text.primary">{component}</Typography>
@@ -220,7 +309,7 @@ export default function RAGSessionSummary({
 
       {/* Parameters List */}
       <Collapse in={expandedSections[sectionKey]} timeout="auto">
-          <Box sx={{ p: 2, pt: 1, backgroundColor: 'background.box' }}>
+        <Box sx={{ p: 2, pt: 1, backgroundColor: 'background.box' }}>
           {renderParametersList(params, componentName)}
         </Box>
       </Collapse>
@@ -233,17 +322,8 @@ export default function RAGSessionSummary({
 
       try {
         setLoading(true);
-        
-        // Fetch session data
         const session = await getGenerativeSession(sessionId);
         setSessionData(session);
-
-        // Fetch prompt data if prompt_id exists
-        if (session.parameters?.prompt_id) {
-          const prompts = await getRAGPrompts();
-          const prompt = prompts.find(p => p.id === session.parameters.prompt_id);
-          setPromptData(prompt);
-        }
       } catch (error) {
         enqueueSnackbar(t("generative:error.failedToFetchSessionInfo"), {
           variant: "error",
@@ -300,167 +380,185 @@ export default function RAGSessionSummary({
     >
       {/* RAG Breadcrumbs */}
       <RAGBreadcrumbs sessionName={sessionData?.name} />
+
       {/* Header */}
       <Box 
         display="flex" 
         width="100%"
         justifyContent="space-between"
-        alignItems="center"
+        alignItems="flex-start"
         paddingBottom={2}
-        >
-        <Box flexGrow={1} mr={2}>
-          <Typography variant="h4" gutterBottom>
-            {sessionData.name}
-          </Typography>
-          <Typography variant="body1" color="text.secondary" mb={2}>
-            {sessionData.description || t("generative:simplifiedRag.summary.descriptionPlaceholder")}
-          </Typography>
-          <Box display="flex" gap={1}>
-            <Chip 
-              label={t("generative:simplifiedRag.summary.title")} 
-              color="text.secondary" 
-              variant="outlined"
-              size="small"
-              sx={{ color: 'text.secondary' }}
-            />
-            <Chip 
-              label={`${t("generative:simplifiedRag.summary.createdLabel")} ${new Date(sessionData.created).toLocaleDateString()}`}
-              variant="outlined"
-              size="small"
-              color="text.secondary"
-              sx={{ color: 'text.secondary' }}
-            />
-          </Box>
+        gap={2}
+      >
+        {/* Left: Session Info (Editable/Readable) */}
+        <Box flexGrow={1} display="flex" flexDirection="column">
+          {isEditing ? (
+            <Box display="flex" flexDirection="column" gap={2}>
+              <TextField
+                fullWidth
+                label={t("generative:simplifiedRag.summary.sessionName")}
+                value={editingName}
+                onChange={(e) => {
+                  setEditingName(e.target.value);
+                  // clear inline error while typing
+                  if (nameError) setNameError("");
+                }}
+                error={Boolean(nameError)}
+                helperText={nameError}
+                variant="outlined"
+                size="small"
+              />
+              <TextField
+                fullWidth
+                label={t("generative:simplifiedRag.summary.sessionDescription")}
+                value={editingDescription}
+                onChange={(e) => setEditingDescription(e.target.value)}
+                variant="outlined"
+                size="small"
+                multiline
+                rows={2}
+              />
+            </Box>
+          ) : (
+            <>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography variant="h4" gutterBottom sx={{ mr: 1 }}>
+                  {sessionData.name}
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={handleToggleEditMode}
+                  sx={{ color: 'text.secondary' }}
+                  aria-label={t("generative:simplifiedRag.summary.edit")}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <Typography variant="body1" color="text.secondary" mb={2}>
+                {sessionData.description || t("generative:simplifiedRag.summary.descriptionPlaceholder")}
+              </Typography>
+              <Box display="flex" gap={1}>
+                <Chip 
+                  label={t("generative:simplifiedRag.summary.title")} 
+                  color="text.secondary" 
+                  variant="outlined"
+                  size="small"
+                  sx={{ color: 'text.secondary' }}
+                />
+                <Chip 
+                  label={`${t("generative:simplifiedRag.summary.createdLabel")} ${new Date(sessionData.created).toLocaleDateString()}`}
+                  variant="outlined"
+                  size="small"
+                  color="text.secondary"
+                  sx={{ color: 'text.secondary' }}
+                />
+              </Box>
+            </>
+          )}
         </Box>
-        
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<ChatIcon />}
-          onClick={onStartChat}
-          sx={{
-            py: 1.5,
-            px: 4,
-            fontSize: '1rem',
-            fontWeight: 600,
-            borderRadius: 2,
-            boxShadow: 3,
-            textTransform: 'none',
-            '&:hover': {
-              boxShadow: 6,
-              transform: 'translateY(-1px)',
-            },
-            transition: 'all 0.2s ease-in-out'
-          }}
-        >
-          {t("generative:simplifiedRag.summary.openChatButton")}
-        </Button>
+
+        {/* Right: Action Buttons */}
+        <Box display="flex" flexDirection="column" gap={1} alignItems="flex-end">
+          {isEditing ? (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSaveMetadata}
+                disabled={isSaving || !hasMetadataChanges}
+                aria-label={t("generative:simplifiedRag.summary.save")}
+                sx={{ minWidth: 40, width: 40, height: 40, padding: 0 }}
+              >
+                <SaveIcon fontSize="small" />
+              </Button>
+              <IconButton
+                size="small"
+                onClick={handleToggleEditMode}
+                disabled={isSaving}
+                aria-label={t("generative:simplifiedRag.summary.cancel")}
+                sx={{ color: 'text.secondary' }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </>
+          ) : (
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<ChatIcon />}
+              onClick={onStartChat}
+              sx={{
+                py: 1.5,
+                px: 4,
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderRadius: 2,
+                boxShadow: 3,
+                textTransform: 'none',
+                '&:hover': {
+                  boxShadow: 6,
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              {t("generative:simplifiedRag.summary.openChatButton")}
+            </Button>
+          )}
+            {/* edit button moved next to session name */}
+        </Box>
       </Box>
 
       {/* Main Content Grid */}
-      <Grid container spacing={3} sx={{ flex: 1 }}>
+      <Grid container spacing={3} sx={{ width: '100%' }}>
         {/* Detailed Configuration - Collapsible Cards */}
-    <Grid item  sx ={{ backgroundColor: 'background.box', width: '100%'}}>
-            <Card sx={{ height: '100%', backgroundColor: 'background.box' }}>
-              <CardContent>
-            <Box display="flex" alignItems="center" mb={3}>
-              <SettingsIcon sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="h6">
-                {t("generative:simplifiedRag.summary.detailedConfig")}
-              </Typography>
-            </Box>
-            
-            {/* Chunking Model */}
-            {parameters.chunking_model && (
-              <CollapsibleParameterCard
-                icon={<ContentCutIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                title={t("generative:simplifiedRag.summary.chunkingModel")}
-                component={parameters.chunking_model.component}
-                params={parameters.chunking_model.params}
-                sectionKey="chunking"
-                componentName={t("generative:simplifiedRag.summary.chunkingModel")}
-              />
-            )}
-
-            {/* Retriever Model */}
-            {parameters.retriever_model && (
-              <CollapsibleParameterCard
-                icon={<LeaderboardIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                title={t("generative:simplifiedRag.summary.retrieverModel")}
-                component={parameters.retriever_model.component}
-                params={parameters.retriever_model.params}
-                sectionKey="retriever"
-                componentName={t("generative:simplifiedRag.summary.retrieverModel")}
-              />
-            )}
-
-            {/* Generation Model */}
-            {parameters.generation_model && (
-              <CollapsibleParameterCard
-                icon={<BoltIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                title={t("generative:simplifiedRag.summary.generationModel")}
-                component={parameters.generation_model.component}
-                params={parameters.generation_model.params}
-                sectionKey="generation"
-                componentName={t("generative:simplifiedRag.summary.generationModel")}
-              />
-            )}
-              </CardContent>
-            </Card>
-        </Grid>
-
-        {/* Prompt Configuration */}
-        <Grid item width="100%">
-          <Paper elevation={1} sx={{ p: 3, backgroundColor: 'background.box' }}>
-            <Box display="flex" alignItems="center" mb={2}>
-                <AutoFixHighIcon sx={{ mr: 1, color: 'primary.main' }} />
+        <Grid item sx={{ backgroundColor: 'background.box', width: '100%' }}>
+          <Card sx={{ backgroundColor: 'background.box' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={3}>
+                <SettingsIcon sx={{ mr: 1, color: 'primary.main' }} />
                 <Typography variant="h6">
-                  {t("generative:simplifiedRag.summary.promptSelected")}
+                  {t("generative:simplifiedRag.summary.detailedConfig")}
                 </Typography>
               </Box>
-            
-            {promptData ? (
-              <Box>
-                <Typography variant="body1">
-                  <span style={{ color: 'text.secondary'}}>
-                    {t("generative:simplifiedRag.summary.promptName")} 
-                </span>
-                <span style={{ color: 'text.primary'}}>
-                    &nbsp;{promptData.name}
-                </span>
-                </Typography>
-                {promptData.parameters?.template && (
-                  <Box>
-                    <Typography variant="body1" fontWeight="medium" mb={1} color="text.secondary">
-                      {t("generative:simplifiedRag.summary.promptTemplate")}
-                    </Typography>
-                    <Box
-                      component="pre"
-                      sx={{
-                        fontSize: 'body1',
-                        bgcolor: 'background.box',
-                        color: 'text.secondary',
-                        p: 2,
-                        borderRadius: 1,
-                        overflow: 'auto',
-                        maxHeight: '200px',
-                        whiteSpace: 'pre-wrap',
-                        border: '1px solid',
-                        borderColor: 'grey.300',
-                        fontFamily: 'monospace'
-                      }}
-                    >
-                      {promptData.parameters.template}
-                    </Box>
-                  </Box>
-                )}
-              </Box>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                {t("generative:simplifiedRag.summary.noPrompt")}
-              </Typography>
-            )}
-          </Paper>
+              
+              {/* Chunking Model */}
+              {parameters.chunking_model && (
+                <CollapsibleParameterCard
+                  icon={<ContentCutIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+                  title={t("generative:simplifiedRag.summary.chunkingModel")}
+                  component={parameters.chunking_model.component}
+                  params={parameters.chunking_model.params}
+                  sectionKey="chunking"
+                  componentName={t("generative:simplifiedRag.summary.chunkingModel")}
+                />
+              )}
+
+              {/* Retriever Model */}
+              {parameters.retriever_model && (
+                <CollapsibleParameterCard
+                  icon={<LeaderboardIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+                  title={t("generative:simplifiedRag.summary.retrieverModel")}
+                  component={parameters.retriever_model.component}
+                  params={parameters.retriever_model.params}
+                  sectionKey="retriever"
+                  componentName={t("generative:simplifiedRag.summary.retrieverModel")}
+                />
+              )}
+
+              {/* Generation Model */}
+              {parameters.generation_model && (
+                <CollapsibleParameterCard
+                  icon={<BoltIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+                  title={t("generative:simplifiedRag.summary.generationModel")}
+                  component={parameters.generation_model.component}
+                  params={parameters.generation_model.params}
+                  sectionKey="generation"
+                  componentName={t("generative:simplifiedRag.summary.generationModel")}
+                />
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 

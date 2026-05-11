@@ -90,6 +90,7 @@ function RAGDocumentsPage() {
           handleNewSessionButton={handleNewSessionButton}
           handleSessionDelete={handleSessionDelete}
           stepIndex={0}
+          showSearch={false}
         />
       </Box>
 

@@ -8,7 +8,7 @@ import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
-import DocumentsBar from "../../components/generative/RAG/DocumentsBar";
+import RAGDocumentsPanel from "../../components/generative/RAG/RAGDocumentsPanel";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useTourContext } from "../../components/tour/TourProvider";
@@ -144,9 +144,9 @@ export default function GenerativeContent() {
 
         <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
           {selectedSessionId && selectedTaskName === "RAGTask" ? (
-            <DocumentsBar
+            <RAGDocumentsPanel
               selectedSessionId={selectedSessionId}
-              taskName="RAGTask"
+              isRagChatActive={true}
             />
           ) : (
             <ParamsBar onToggle={threePanelLayout.handleToggleRight} />

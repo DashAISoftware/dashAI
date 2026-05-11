@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
+  Card,
+  CardContent,
   Autocomplete,
   TextField,
   Button,
@@ -9,12 +11,17 @@ import {
   Alert,
   AlertTitle,
   useTheme,
+  IconButton,
+  Tooltip,
+  Collapse,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getGeneratorComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
 import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
+import InfoIcon from "@mui/icons-material/Info";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const getDescription = (desc, i18n) => {
   if (!desc) return "";
@@ -39,6 +46,8 @@ export default function GeneratorSection({
   const [selectedGenerator, setSelectedGenerator] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showDescription, setShowDescription] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const DEFAULT_CONTEXT_WINDOW = 10000;
   const DEFAULT_MAX_TOKENS = 1000;
   const [initialModelParams, setInitialModelParams] = useState(null);
@@ -142,93 +151,133 @@ export default function GeneratorSection({
 
   return (
     <>
-      <Box display="flex" flexDirection="column" gap={2} width="100%">
-        <Typography variant="body2" color="textSecondary">
-          {t("generative:simplifiedRag.generator.description")}
-        </Typography>
+      <Card sx={{ width: '100%', backgroundColor: 'background.paper' }}>
+        <CardContent>
+          <Box display="flex" flexDirection="column" gap={2} width="100%">
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {t("generative:simplifiedRag.generator.modelLabel")}
+              </Typography>
+              <Box>
+                <Tooltip title={t("generative:simplifiedRag.generator.description")}> 
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowDescription((s) => !s)}
+                    aria-label="generator-info"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={isExpanded ? (t("generative:simplifiedRag.prompt.collapse") || "Collapse") : (t("generative:simplifiedRag.prompt.expand") || "Expand")}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setIsExpanded((s) => !s)}
+                    aria-label="toggle-generator-card"
+                  >
+                    <ExpandMoreIcon
+                      fontSize="small"
+                      sx={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+                    />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
 
-        {/* Model Selection */}
-        <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {t("generative:simplifiedRag.generator.modelLabel")}
-            </Typography>
-            {isAdvanced && (
-              <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                {t("generative:simplifiedRag.generator.advancedApplied")}
+            {showDescription && (
+              <Typography variant="body2" color="textSecondary">
+                {t("generative:simplifiedRag.generator.description")}
               </Typography>
             )}
-          </Box>
-          <Autocomplete
-            options={generators}
-            value={selectedGenerator}
-            onChange={handleGeneratorChange}
-            getOptionLabel={(option) => option.name || ""}
-            isOptionEqualToValue={(option, value) => option?.name === value?.name}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label={t("generative:simplifiedRag.generator.selectModel")}
-                placeholder={t("generative:simplifiedRag.generator.selectModelPlaceholder")}
-                sx={{
-                  "& .MuiOutlinedInput-root": isAdvanced ? {
-                    "& fieldset": { borderColor: theme.palette.warning.main },
-                    "&:hover fieldset": { borderColor: theme.palette.warning.main },
-                    "&.Mui-focused fieldset": { borderColor: theme.palette.warning.main },
-                  } : {}
-                }}
+
+            {/* Model Selection */}
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {t("generative:simplifiedRag.generator.modelLabel")}
+                </Typography>
+                {isAdvanced && (
+                  <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
+                    {t("generative:simplifiedRag.generator.advancedApplied")}
+                  </Typography>
+                )}
+              </Box>
+              <Autocomplete
+                options={generators}
+                value={selectedGenerator}
+                onChange={handleGeneratorChange}
+                getOptionLabel={(option) => option.name || ""}
+                isOptionEqualToValue={(option, value) => option?.name === value?.name}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={t("generative:simplifiedRag.generator.selectModel")}
+                    placeholder={t("generative:simplifiedRag.generator.selectModelPlaceholder")}
+                    sx={{
+                      "& .MuiOutlinedInput-root": isAdvanced ? {
+                        "& fieldset": { borderColor: theme.palette.warning.main },
+                        "&:hover fieldset": { borderColor: theme.palette.warning.main },
+                        "&.Mui-focused fieldset": { borderColor: theme.palette.warning.main },
+                      } : {}
+                    }}
+                  />
+                )}
               />
-            )}
-          />
-        </Box>
+            </Box>
 
-        {/* Selected Model Info & Context Message */}
-        {selectedGenerator && generatorModel?.params && (
-          <Box
-            sx={{
-              p: 2,
-              backgroundColor: "action.hover",
-              border: "1px solid",
-              borderColor: contextStats.isValid ? (isAdvanced ? "warning.main" : "divider") : "error.main",
-              borderRadius: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1
-            }}
-          >
-            <Typography variant="body2">
-              <strong>{t("generative:simplifiedRag.generator.modelInfo")}</strong> {selectedGenerator.name}
-            </Typography>
-            
-            <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main", fontWeight: 500 }}>
-              {t("generative:validation.contextSpace", { availableChars: contextStats.availableTokens?.toLocaleString() })}
-            </Typography>
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              <Box display="flex" flexDirection="column" gap={2} width="100%">
+                {/* Selected Model Info & Context Message */}
+                {selectedGenerator && generatorModel?.params && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      backgroundColor: "action.hover",
+                      border: "1px solid",
+                      borderColor: contextStats.isValid ? (isAdvanced ? "warning.main" : "divider") : "error.main",
+                      borderRadius: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1
+                    }}
+                  >
+                    <Typography variant="body2">
+                      <strong>{t("generative:simplifiedRag.generator.modelInfo")}</strong> {selectedGenerator.name}
+                    </Typography>
+                    
+                    <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main", fontWeight: 500 }}>
+                      {t("generative:validation.contextSpace", { availableChars: contextStats.availableTokens?.toLocaleString() })}
+                    </Typography>
 
-            {!contextStats.isValid && (
-              <Alert severity="error" sx={{ mt: 1 }}>
-                <AlertTitle>{t("generative:validation.insufficientContextTitle")}</AlertTitle>
-                {t("generative:validation.insufficientContextDescription")}
-              </Alert>
-            )}
+                    {!contextStats.isValid && (
+                      <Alert severity="error" sx={{ mt: 1 }}>
+                        <AlertTitle>{t("generative:validation.insufficientContextTitle")}</AlertTitle>
+                        {t("generative:validation.insufficientContextDescription")}
+                      </Alert>
+                    )}
 
-            {getDescription(selectedGenerator.description, i18n) && (
-              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                {getDescription(selectedGenerator.description, i18n)}
-              </Typography>
-            )}
+                    {getDescription(selectedGenerator.description, i18n) && (
+                      <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                        {getDescription(selectedGenerator.description, i18n)}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setShowAdvanced(true)}
+                  fullWidth
+                  disabled={!selectedGenerator}
+                >
+                  ↗ {t("generative:simplifiedRag.generator.advancedButton")}
+                </Button>
+              </Box>
+            </Collapse>
           </Box>
-        )}
-
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => setShowAdvanced(true)}
-          fullWidth
-          disabled={!selectedGenerator}
-        >
-          ↗ {t("generative:simplifiedRag.generator.advancedButton")}
-        </Button>
-      </Box>
+        </CardContent>
+      </Card>
 
       {selectedGenerator && (
         <GeneratorAdvancedModal

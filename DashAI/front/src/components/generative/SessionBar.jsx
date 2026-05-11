@@ -19,6 +19,7 @@ export default function SessionBar({
   handleSessionClick: handleSessionClickProp,
   handleNewSessionButton: handleNewSessionButtonProp,
   handleSessionDelete: handleSessionDeleteProp,
+  showSearch = true,
 }) {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -195,13 +196,15 @@ export default function SessionBar({
         </Box>
 
         {/* Search Bar */}
-        <Box px={2} pb={2} flex={"0 0 auto"}>
-          <SearchBar
-            placeholder={t("generative:label.searchSessions")}
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-        </Box>
+        {showSearch && (
+          <Box px={2} pb={2} flex={"0 0 auto"}>
+            <SearchBar
+              placeholder={t("generative:label.searchSessions")}
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </Box>
+        )}
 
         <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 

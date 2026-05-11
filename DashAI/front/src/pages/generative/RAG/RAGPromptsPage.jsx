@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import SessionBar from "../../../components/generative/SessionBar";
 import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
-import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
+import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPanel";
 import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
 import { getSessions, removeSession } from "../../../api/session";
 import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
@@ -67,6 +67,7 @@ function RAGPromptsPage() {
           handleNewSessionButton={handleNewSessionButton}
           handleSessionDelete={handleSessionDelete}
           stepIndex={0}
+          showSearch={false}
         />
       </Box>
 
@@ -101,11 +102,10 @@ function RAGPromptsPage() {
             overflow: "hidden"
           }}
         >
-          <DocumentsBar
+          <RAGDocumentsPanel
             selectedSessionId={null}
-            taskName="RAGTask"
+            isRagChatActive={false}
             onDocumentChange={handleDocumentChange}
-            key={`documents-prompts-${documentRefreshTrigger}`}
           />
         </Box>
       </Box>

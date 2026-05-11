@@ -8,7 +8,7 @@ import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel
 import SelectOptionMenu from "../../../components/threeSectionLayout/SelectOptionMenu";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import SessionBar from "../../../components/generative/SessionBar";
-import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
+import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPanel";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
 import RAGSessionSummary from "../../../components/generative/RAG/RAGSessionSummary";
 import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
@@ -202,12 +202,12 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         <LeftPanel data-tour="sessions-left-panel">
-          {isRagChatActive ? (
+          {isRagSessionSelected ? (
             <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
               <Box sx={{ flex: "0 0 60%", minHeight: 0 }}>
-                <DocumentsBar
+                <RAGDocumentsPanel
                   selectedSessionId={globalSelectedSessionId}
-                  taskName="RAGTask"
+                  isRagChatActive={isRagChatActive}
                 />
               </Box>
 
@@ -220,6 +220,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
                   handleSessionDelete={handleSessionDelete}
                   stepIndex={0}
                   onToggle={threePanelLayout.handleToggleLeft}
+                  showSearch={false}
                 />
               </Box>
             </Box>
@@ -232,6 +233,7 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
               handleSessionDelete={handleSessionDelete}
               stepIndex={0}
               onToggle={threePanelLayout.handleToggleLeft}
+              showSearch={false}
             />
           )}
         </LeftPanel>
@@ -252,14 +254,9 @@ function RAGHomePage({ onSessionSelect, sessions, setSessions }) {
               overflow: "hidden",
             }}
           >
-            {isRagChatActive ? (
+            {isRagSessionSelected ? (
               <RAGParamsPanel selectedSessionId={globalSelectedSessionId} />
-            ) : (
-              // During configuration we do not show DocumentsBar — keep previous behavior (no docs visible)
-              <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {/* Placeholder: keep it empty to match prior configuration view */}
-              </Box>
-            )}
+            ) : null}
           </Box>
         </RightPanel>
       </ModuleContainer>

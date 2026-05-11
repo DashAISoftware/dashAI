@@ -4,7 +4,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import SessionBar from "../../../components/generative/SessionBar";
 import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
-import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
+import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPanel";
 import NewSessionModal from "./NewSessionModal/NewSessionModal";
 import RAGSessionsTable from "./RAGSessionsTable";
 import { FormSchemaProvider } from "../../../contexts/schema";
@@ -111,6 +111,7 @@ function RAGSessionsPage() {
             handleNewSessionButton={handleNewSessionButton}
             handleSessionDelete={handleSessionDelete}
             stepIndex={0}
+            showSearch={false}
           />
         </Box>
 
@@ -166,11 +167,10 @@ function RAGSessionsPage() {
               overflow: "hidden"
             }}
           >
-            <DocumentsBar
+            <RAGDocumentsPanel
               selectedSessionId={null}
-              taskName="RAGTask"
+              isRagChatActive={false}
               onDocumentChange={handleDocumentChange}
-              key={`documents-sessions-${documentRefreshTrigger}`}
             />
           </Box>
         </Box>

@@ -10,7 +10,7 @@ import Upload from "../../shared/Upload";
 import { useSnackbar } from "notistack";
 import { getSessionDocuments, addDocument, loadDocuments } from "../../../api/rag";
 
-export default function DocumentsBar({ selectedSessionId, taskName, onDocumentChange }) {
+export default function DocumentsBar({ selectedSessionId, taskName, onDocumentChange, showSearch = true }) {
   const { t } = useTranslation("generative");
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState([]);
@@ -173,7 +173,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         </Box>
       )}
       {/* Search bar - only show when documents are available */}
-      {documents.length >= 1 && (
+      {showSearch && documents.length >= 1 && (
         <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ flex: 1 }}>

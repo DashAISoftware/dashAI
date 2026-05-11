@@ -14,7 +14,7 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
 import SimplifiedSessionSetup from "./SimplifiedSessionSetup";
-import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
+import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPanel";
 import SimplifiedRAGInfoBar from "../../../components/generative/RAG/SimplifiedRAGInfoBar";
 import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
 
@@ -213,12 +213,12 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
       <ThreePanelLayoutContext.Provider value={threePanelLayout}>
         <ModuleContainer>
           <LeftPanel data-tour="sessions-left-panel">
-            {isRagChatActive ? (
+            {isRagSessionSelected ? (
               <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
                 <Box sx={{ flex: "0 0 60%", minHeight: 0 }}>
-                  <DocumentsBar
+                  <RAGDocumentsPanel
                     selectedSessionId={globalSelectedSessionId}
-                    taskName="RAGTask"
+                    isRagChatActive={isRagChatActive}
                   />
                 </Box>
 
@@ -231,6 +231,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
                     handleSessionDelete={handleSessionDelete}
                     stepIndex={0}
                     onToggle={threePanelLayout.handleToggleLeft}
+                    showSearch={false}
                   />
                 </Box>
               </Box>
@@ -243,6 +244,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
                 handleSessionDelete={handleSessionDelete}
                 stepIndex={0}
                 onToggle={threePanelLayout.handleToggleLeft}
+                showSearch={false}
               />
             )}
           </LeftPanel>
@@ -264,13 +266,8 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
                 p: 2,
               }}
             >
-              {isRagChatActive ? (
+              {isRagSessionSelected ? (
                 <RAGParamsPanel selectedSessionId={globalSelectedSessionId} />
-              ) : isRagSessionSelected ? (
-                <DocumentsBar
-                  selectedSessionId={globalSelectedSessionId}
-                  taskName="RAGTask"
-                />
               ) : (
                 <SimplifiedRAGInfoBar />
               )}
