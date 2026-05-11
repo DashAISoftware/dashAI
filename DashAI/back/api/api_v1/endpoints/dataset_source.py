@@ -123,7 +123,6 @@ async def search_datasets(
             "description": e.description,
             "tags": e.tags,
             "size_bytes": e.size_bytes,
-            "row_count": e.row_count,
             "url": e.url,
             "source": e.source,
         }
