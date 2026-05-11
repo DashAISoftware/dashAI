@@ -120,13 +120,7 @@ export default function FoldMetricsChart({
             themeColors[index % themeColors.length],
         },
         hovertemplate:
-          "<b>%{fullData.name}</b><br>" +
-          "Min: %{y}<br>" +
-          "Q1: %{q1}<br>" +
-          "Median: %{median}<br>" +
-          "Q3: %{q3}<br>" +
-          "Max: %{y}<br>" +
-          "<extra></extra>",
+          "<b>%{fullData.name}</b><br>Value: %{y:.4f}<extra></extra>",
       });
     });
 

@@ -168,7 +168,7 @@ function CreateSessionSteps({
       try {
         const metricsData = await getComponents({
           selectTypes: ["Metric"],
-          relatedComponent: newExp.task_nam,
+          relatedComponent: newExp.task_name,
         });
         allMetricNames = metricsData.map((metric) => metric.name);
       } catch (error) {
@@ -182,7 +182,8 @@ function CreateSessionSteps({
         newExp.splits.validation !== undefined &&
         newExp.splits.validation !== 0;
       const hasTest =
-        newExp.splits.test !== undefined && newExp.splits.test !== 0;
+        (newExp.splits.test !== undefined && newExp.splits.test !== 0) ||
+        evaluationStrategy === "CrossValidationEvaluationStrategy";
 
       const response = await createModelSession(
         selectedDataset.id,

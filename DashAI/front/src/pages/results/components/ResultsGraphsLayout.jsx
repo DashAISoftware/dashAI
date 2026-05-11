@@ -17,7 +17,6 @@ function ResultsGraphsLayout({
   handleClearAll,
   chartData,
   expandedRunId = null,
-  onExpandRunChart = undefined,
   selectedSplit = "test",
   runs = [],
 }) {
@@ -32,7 +31,6 @@ function ResultsGraphsLayout({
     : [];
   const isCrossValidation =
     runs[0]?.evaluation_strategy === "CrossValidationEvaluationStrategy";
-  console.log("Run", runs[0]); // Debug log to check evaluation strategy
   return (
     <Box
       display="flex"
@@ -100,7 +98,6 @@ ResultsGraphsLayout.propTypes = {
   handleClearAll: PropTypes.func.isRequired,
   chartData: PropTypes.object.isRequired,
   expandedRunId: PropTypes.number,
-  onExpandRunChart: PropTypes.func,
   selectedSplit: PropTypes.string,
   runs: PropTypes.array,
 };

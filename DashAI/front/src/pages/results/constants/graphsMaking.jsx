@@ -77,9 +77,11 @@ function heatmapMaking(
   const zRaw = finishedRuns.map((run) => {
     const metricsObj = run[metricsKey] ?? {};
     return metrics.map((m) => {
-      const v = metricsObj[m];
-      if (v === undefined || v === null) return null;
-      if (Array.isArray(v)) return v[v.length - 1]?.value ?? null;
+      const raw = metricsObj[m];
+      if (raw === undefined || raw === null) return null;
+      if (Array.isArray(raw)) return raw[raw.length - 1]?.value ?? null;
+      // Mismo patrón que ResultsGraphs.jsx: objeto {value: n} o número plano
+      const v = raw?.value ?? raw;
       return typeof v === "number" ? v : null;
     });
   });

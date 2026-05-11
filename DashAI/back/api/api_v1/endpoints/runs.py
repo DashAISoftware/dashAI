@@ -59,20 +59,18 @@ def get_metrics_for_run(db, run_id: int):
         .all()
     )
 
-    # Initialize the response structure
+    # Initialize the response structure with empty dicts instead of None
+    # to prevent issues when fold metrics are present but last metrics are not
     response = {
-        "train_metrics": None,
-        "validation_metrics": None,
-        "test_metrics": None,
+        "train_metrics": {},
+        "validation_metrics": {},
+        "test_metrics": {},
     }
 
     # Group metrics by split
     for m in final_metrics:
         # Determine the key in the response dictionary
         split_key = f"{m.split.name.lower()}_metrics"
-
-        if response[split_key] is None:
-            response[split_key] = {}
 
         # Store both value and standard deviation
         response[split_key][m.name] = {
