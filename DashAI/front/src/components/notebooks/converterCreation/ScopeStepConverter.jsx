@@ -24,6 +24,7 @@ export default function ScopeStepConverter({
   setColumns,
   notebook,
   nextStep,
+  hideButtons = false,
 }) {
   const theme = useTheme();
   const [datasetInfo, setDatasetInfo] = useState(0);
@@ -85,16 +86,17 @@ export default function ScopeStepConverter({
       sx={{
         display: "flex",
         flexDirection: "column",
-        flexGrow: 1,
+        flex: 1,
         height: "100%",
-        gap: 1,
+        minHeight: 0,
       }}
       data-tour="column-selector-converter-container"
     >
       {/* Content */}
       <Box
         sx={{
-          flexGrow: 1,
+          flex: 1,
+          minHeight: 0,
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
@@ -110,6 +112,7 @@ export default function ScopeStepConverter({
         {/* Scope selection UI */}
         <ColumnSelector
           file_path={notebook.file_path}
+          tool={tool}
           allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
           onSelectionChange={(columnsInfo) => {
@@ -143,10 +146,9 @@ export default function ScopeStepConverter({
         sx={{
           flexShrink: 0,
           display: "flex",
-          alignItems: "center",
           justifyContent: "flex-end",
           gap: 1,
-          mb: 4,
+          pt: 1,
         }}
       >
         {supervised && (
@@ -175,20 +177,19 @@ export default function ScopeStepConverter({
             notebook={notebook}
           />
         )}
-
-        <FormSchemaButtonGroup
-          onFormSubmit={handleSubmit}
-          error={
-            !isColumnSelectionValid || (supervised ? !targetColumn : false)
-          }
-          saveButtonText={
-            Object.values(tool.schema.properties).length > 0
-              ? t("common:next")
-              : t("common:save")
-          }
-          data-tour="converter-scope-next-button"
-        />
       </Box>
+
+      {/* Buttons */}
+      <FormSchemaButtonGroup
+        onFormSubmit={handleSubmit}
+        error={!isColumnSelectionValid || (supervised ? !targetColumn : false)}
+        saveButtonText={
+          Object.values(tool.schema.properties).length > 0
+            ? t("common:next")
+            : t("common:save")
+        }
+        data-tour="converter-scope-next-button"
+      />
     </Box>
   );
 }

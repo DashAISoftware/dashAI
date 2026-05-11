@@ -173,7 +173,14 @@ export default function DatasetPredictionPanel({
         setSelectedDataset={setSelectedDataset}
       />
 
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
+        }}
+      >
         <Button
           variant="contained"
           size="small"

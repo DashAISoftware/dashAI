@@ -369,6 +369,7 @@
   },
   "message": {
     "columnTypesUpdated": "Column types updated successfully",
+    "changesRowCountWarning": "This converter modifies the number of rows in the dataset (adds or removes rows). Note that only the selected columns will be kept. Any columns not included in the scope will be removed from the dataset.",
     "converterCreated": "Converter {{name}} created successfully",
     "converterProcessed": "Converter {{name}} processed successfully",
     "datasetCreationStarted": "Dataset creation started",

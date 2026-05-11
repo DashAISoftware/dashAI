@@ -1805,7 +1805,25 @@ async def preview_with_types(
 
         try:
             inference_rows = parsed_params.get("inference_rows", 1000)
+            dataloader_name = parsed_params.get("dataloader_name")
+
+            if not dataloader_name:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="dataloader_name is required in params.",
+                )
+
+            if dataloader_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Dataloader {dataloader_name} not found in registry.",
+                )
+
+            dataloader_cls = component_registry[dataloader_name]["class"]
+            dataloader = dataloader_cls()
+
             if file.filename.endswith(".zip"):
+                allowed_exts = dataloader_cls.SUPPORTED_EXTENSIONS
                 extract_dir = tempfile.mkdtemp()
                 try:
                     with zipfile.ZipFile(tmp_file_path, "r") as zf:
@@ -1820,13 +1838,6 @@ async def preview_with_types(
                         ".tiff",
                         ".webp",
                     }
-                    supported_map = {
-                        ".csv": "CSVDataLoader",
-                        ".json": "JSONDataLoader",
-                        ".xlsx": "ExcelDataLoader",
-                        ".xls": "ExcelDataLoader",
-                    }
-                    dataloader_name = None
                     matched_file = None
                     has_images = False
                     for root, dirs, files in os.walk(extract_dir):
@@ -1839,16 +1850,15 @@ async def preview_with_types(
                             if f.startswith("."):
                                 continue
                             ext = os.path.splitext(f)[1].lower()
-                            if ext in supported_map:
-                                dataloader_name = supported_map[ext]
+                            if ext in allowed_exts:
                                 matched_file = os.path.join(root, f)
                                 break
                             if ext in image_extensions:
                                 has_images = True
-                        if dataloader_name:
+                        if matched_file:
                             break
 
-                    if dataloader_name is None and has_images:
+                    if matched_file is None and has_images:
                         sample_rows, total_images, has_labels = (
                             _build_image_preview_sample(
                                 extract_dir, image_extensions, max_rows=5
@@ -1882,37 +1892,15 @@ async def preview_with_types(
                             "types_inferred": False,
                         }
 
-                    if dataloader_name is None:
+                    if matched_file is None:
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail=(
-                                "ZIP file does not contain any supported dataset files."
-                                "Supported inner files: .csv, .json, .xlsx, .xls"
+                                f"ZIP does not contain any file supported by "
+                                f"{dataloader_name}."
                             ),
                         )
 
-                    if dataloader_name not in component_registry:
-                        raise HTTPException(
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=(
-                                f"Dataloader {dataloader_name} not found in registry."
-                            ),
-                        )
-
-                    dataloader = component_registry[dataloader_name]["class"]()
-
-                    if (
-                        dataloader_name == "CSVDataLoader"
-                        and "separator" not in parsed_params
-                    ):
-                        parsed_params["separator"] = ","
-                    if (
-                        dataloader_name == "JSONDataLoader"
-                        and "data_key" not in parsed_params
-                    ):
-                        parsed_params["data_key"] = None
-
-                    # load_preview using the matched inner file path
                     loaded_dataset = dataloader.load_preview(
                         filepath_or_buffer=matched_file,
                         params=parsed_params,
@@ -1920,40 +1908,10 @@ async def preview_with_types(
                     )
 
                 finally:
-                    # cleanup extracted dir
                     with contextlib.suppress(Exception):
                         shutil.rmtree(extract_dir, ignore_errors=True)
 
             else:
-                if file.filename.endswith(".csv"):
-                    dataloader_name = "CSVDataLoader"
-                    if "separator" not in parsed_params:
-                        parsed_params["separator"] = ","
-
-                elif file.filename.endswith(".xlsx") or file.filename.endswith(".xls"):
-                    dataloader_name = "ExcelDataLoader"
-
-                elif file.filename.endswith(".json"):
-                    dataloader_name = "JSONDataLoader"
-                    if "data_key" not in parsed_params:
-                        parsed_params["data_key"] = None
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=(
-                            "Unsupported file type. Only CSV, Excel and JSON files are "
-                            "supported."
-                        ),
-                    )
-
-                if dataloader_name not in component_registry:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail=f"Dataloader {dataloader_name} not found in registry.",
-                    )
-
-                dataloader = component_registry[dataloader_name]["class"]()
-
                 loaded_dataset = dataloader.load_preview(
                     filepath_or_buffer=tmp_file_path,
                     params=parsed_params,
@@ -2024,16 +1982,12 @@ async def validate_type_changes(
             tmp_file_path = tmp_file.name
 
         try:
-            if file.filename.endswith(".csv"):
-                dataloader_name = "CSVDataLoader"
-            elif file.filename.endswith((".xlsx", ".xls")):
-                dataloader_name = "ExcelDataLoader"
-            elif file.filename.endswith(".json"):
-                dataloader_name = "JSONDataLoader"
-            else:
+            dataloader_name = parsed_params.get("dataloader_name")
+
+            if not dataloader_name:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Unsupported file type",
+                    detail="dataloader_name is required in params.",
                 )
 
             if dataloader_name not in component_registry:

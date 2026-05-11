@@ -62,6 +62,7 @@ from DashAI.back.converters.simple_converters.column_remover import ColumnRemove
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 
 # DataLoaders
+from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
@@ -372,10 +373,11 @@ def get_initial_components():
         XlnetTransformer,
         MLPImageClassifier,
         # Dataloaders
+        ARFFDataLoader,
         CSVDataLoader,
-        JSONDataLoader,
         ExcelDataLoader,
         ImageDataLoader,
+        JSONDataLoader,
         # Metrics
         F1,
         Accuracy,

@@ -375,6 +375,7 @@
   },
   "message": {
     "columnTypesUpdated": "Tipos de columnas actualizados exitosamente",
+    "changesRowCountWarning": "Este convertidor modifica la cantidad de filas del dataset (agrega o elimina filas). Ten en cuenta que solo se conservarán las columnas seleccionadas. Las columnas no incluidas en el alcance serán eliminadas del dataset.",
     "converterCreated": "Convertidor {{name}} creado exitosamente",
     "converterProcessed": "Convertidor {{name}} procesado exitosamente",
     "datasetCreationStarted": "Creación de dataset iniciada",
