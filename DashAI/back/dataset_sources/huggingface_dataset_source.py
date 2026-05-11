@@ -2,8 +2,10 @@
 
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Final
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 
@@ -11,11 +13,33 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataset_sources.base_dataset_source import (
     BaseDatasetSource,
     DatasetEntry,
+    SearchPage,
 )
 
 log = logging.getLogger(__name__)
 
 _HF_API = "https://huggingface.co/api/datasets"
+
+
+def _extract_next_cursor(link_header: str) -> str | None:
+    """Extract the cursor value from a HuggingFace Link response header.
+
+    Parameters
+    ----------
+    link_header : str
+        Value of the ``Link`` HTTP response header.
+
+    Returns
+    -------
+    str or None
+        The cursor token, or ``None`` if no next page is indicated.
+    """
+    match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
+    if not match:
+        return None
+    params = parse_qs(urlparse(match.group(1)).query)
+    cursors = params.get("cursor", [])
+    return cursors[0] if cursors else None
 
 
 def _fetch_hf_treesize(dataset_id: str) -> tuple[str, int | None]:
@@ -52,7 +76,8 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from HuggingFace Hub.
 
     Uses the HuggingFace public REST API — no authentication required for
-    public datasets.
+    public datasets.  Pagination is cursor-based (the HF API ignores numeric
+    offsets); the cursor is extracted from the ``Link`` response header.
     """
 
     DISPLAY_NAME: Final = MultilingualString(
@@ -65,8 +90,12 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
     )
 
     def search(
-        self, query: str, limit: int = 20, offset: int = 0, **filters: Any
-    ) -> list[DatasetEntry]:
+        self,
+        query: str,
+        limit: int = 20,
+        cursor: str | None = None,
+        **filters: Any,
+    ) -> SearchPage:
         """Return public HuggingFace datasets matching a query.
 
         Parameters
@@ -75,30 +104,32 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             Search string passed to the HuggingFace datasets API.
         limit : int, optional
             Maximum number of results, by default 20.
-        offset : int, optional
-            Number of results to skip (for pagination), by default 0.
+        cursor : str or None, optional
+            Pagination cursor returned by the previous call.  ``None`` fetches
+            the first page.
         **filters : Any
             Unused; reserved for future tag/task filters.
 
         Returns
         -------
-        list[DatasetEntry]
-            Matching datasets. Returns empty list on API error.
+        SearchPage
+            Matching datasets and cursor for the next page (or ``None``).
         """
         try:
-            resp = httpx.get(
-                _HF_API,
-                params={
-                    "search": query,
-                    "limit": limit,
-                    "offset": offset,
-                    "full": "True",
-                },
-                timeout=15,
-            )
+            params: dict[str, Any] = {
+                "search": query,
+                "limit": limit,
+                "full": "True",
+            }
+            if cursor:
+                params["cursor"] = cursor
+
+            resp = httpx.get(_HF_API, params=params, timeout=15)
             if resp.status_code != 200:
                 log.warning("HuggingFace API returned %s", resp.status_code)
-                return []
+                return SearchPage()
+
+            next_cursor = _extract_next_cursor(resp.headers.get("Link", ""))
 
             entries = [
                 DatasetEntry(
@@ -123,10 +154,10 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
                         _, size = future.result()
                         futures[future].size_bytes = size
 
-            return entries
+            return SearchPage(entries=entries, next_cursor=next_cursor)
         except Exception:
             log.exception("Error searching HuggingFace datasets")
-            return []
+            return SearchPage()
 
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the full dataset using the HuggingFace datasets library.

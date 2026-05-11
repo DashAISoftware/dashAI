@@ -32,20 +32,20 @@ export default function DatasetGrid({
   const { t } = useTranslation(["hub", "common"]);
   const [query, setQuery] = useState("");
   const [datasets, setDatasets] = useState([]);
-  const [offset, setOffset] = useState(0);
+  const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const debounceRef = useRef(null);
 
   const loadPage = useCallback(
-    (q, pageOffset, append) => {
+    (q, cursor, append) => {
       if (!sourceName) return;
       if (append) setLoadingMore(true);
       else setLoading(true);
 
-      searchDatasets(sourceName, q, PAGE_SIZE, pageOffset)
-        .then((results) => {
+      searchDatasets(sourceName, q, PAGE_SIZE, cursor)
+        .then(({ results, next_cursor }) => {
           setDatasets((prev) =>
             append
               ? [
@@ -55,10 +55,12 @@ export default function DatasetGrid({
                 ]
               : results,
           );
-          setHasMore(results.length === PAGE_SIZE);
+          setNextCursor(next_cursor);
+          setHasMore(next_cursor !== null);
         })
         .catch(() => {
           if (!append) setDatasets([]);
+          setNextCursor(null);
           setHasMore(false);
         })
         .finally(() => {
@@ -71,24 +73,22 @@ export default function DatasetGrid({
 
   useEffect(() => {
     setDatasets([]);
-    setOffset(0);
+    setNextCursor(null);
     setQuery("");
     setHasMore(false);
-    if (sourceName) loadPage("", 0, false);
+    if (sourceName) loadPage("", null, false);
   }, [sourceName]);
 
   const handleQueryChange = (e) => {
     const val = e.target.value;
     setQuery(val);
-    setOffset(0);
+    setNextCursor(null);
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => loadPage(val, 0, false), 400);
+    debounceRef.current = setTimeout(() => loadPage(val, null, false), 400);
   };
 
   const handleLoadMore = () => {
-    const next = offset + PAGE_SIZE;
-    setOffset(next);
-    loadPage(query, next, true);
+    loadPage(query, nextCursor, true);
   };
 
   if (!sourceName) {

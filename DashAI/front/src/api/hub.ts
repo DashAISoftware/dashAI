@@ -15,9 +15,13 @@ export interface DatasetEntry {
   description: string;
   tags: string[];
   size_bytes: number | null;
-  row_count: number | null;
   url: string;
   source: string;
+}
+
+export interface DatasetSearchPage {
+  results: DatasetEntry[];
+  next_cursor: string | null;
 }
 
 export interface DatasetPreview {
@@ -35,11 +39,11 @@ export const searchDatasets = async (
   sourceName: string,
   query: string,
   limit = 20,
-  offset = 0,
-): Promise<DatasetEntry[]> => {
-  const response = await api.get<DatasetEntry[]>(
+  cursor: string | null = null,
+): Promise<DatasetSearchPage> => {
+  const response = await api.get<DatasetSearchPage>(
     `${hubEndpoint}/${sourceName}/search`,
-    { params: { q: query, limit, offset } },
+    { params: { q: query, limit, cursor: cursor ?? "" } },
   );
   return response.data;
 };

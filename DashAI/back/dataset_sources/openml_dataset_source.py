@@ -10,6 +10,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataset_sources.base_dataset_source import (
     BaseDatasetSource,
     DatasetEntry,
+    SearchPage,
 )
 
 log = logging.getLogger(__name__)
@@ -61,8 +62,12 @@ class OpenMLDatasetSource(BaseDatasetSource):
     )
 
     def search(
-        self, query: str, limit: int = 20, offset: int = 0, **filters: Any
-    ) -> list[DatasetEntry]:
+        self,
+        query: str,
+        limit: int = 20,
+        cursor: str | None = None,
+        **filters: Any,
+    ) -> SearchPage:
         """Return active OpenML datasets matching a name query.
 
         Parameters
@@ -71,18 +76,19 @@ class OpenMLDatasetSource(BaseDatasetSource):
             Dataset name search string.
         limit : int, optional
             Maximum number of results, by default 20.
-        offset : int, optional
-            Number of results to skip (for pagination), by default 0.
+        cursor : str or None, optional
+            Opaque pagination token (encodes the numeric offset).  ``None``
+            fetches the first page.
         **filters : Any
             Unused; reserved for future filters.
 
         Returns
         -------
-        list[DatasetEntry]
-            Matching datasets, including descriptions from the ES response.
-            Returns empty list on API error.
+        SearchPage
+            Matching datasets and cursor for the next page (or ``None``).
         """
         try:
+            offset = int(cursor) if cursor else 0
             must_clause: dict[str, Any] = (
                 {"multi_match": {"query": query, "fields": ["name^3", "description"]}}
                 if query
@@ -116,7 +122,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             )
             if resp.status_code != 200:
                 log.warning("OpenML ES API returned %s", resp.status_code)
-                return []
+                return SearchPage()
 
             hits = resp.json().get("hits", {}).get("hits", [])
             entries = []
@@ -136,10 +142,11 @@ class OpenMLDatasetSource(BaseDatasetSource):
                         source=self.__class__.__name__,
                     )
                 )
-            return entries
+            next_cursor = str(offset + limit) if len(entries) == limit else None
+            return SearchPage(entries=entries, next_cursor=next_cursor)
         except Exception:
             log.exception("Error searching OpenML datasets")
-            return []
+            return SearchPage()
 
     def get_info(self, dataset_id: str) -> "DatasetEntry | None":
         """Return full metadata for a single OpenML dataset (description + tags).

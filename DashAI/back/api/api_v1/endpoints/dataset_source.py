@@ -91,9 +91,9 @@ async def search_datasets(
     source_name: str,
     q: str = Query(default="", description="Search query"),
     limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    cursor: str = Query(default="", description="Pagination cursor from previous page"),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """Search for datasets in a registered source.
 
     Parameters
@@ -104,30 +104,34 @@ async def search_datasets(
         Search query string.
     limit : int
         Maximum number of results (1-100).
-    offset : int
-        Number of results to skip (for pagination).
+    cursor : str
+        Opaque pagination token returned by the previous call.  Empty string
+        means first page.
     registry : ComponentRegistry
         Injected component registry.
 
     Returns
     -------
-    list[dict]
-        List of DatasetEntry dicts.
+    dict
+        ``{"results": [...], "next_cursor": str | null}``
     """
     source = _get_source(source_name, registry)
-    results = source.search(q, limit=limit, offset=offset)
-    return [
-        {
-            "id": e.id,
-            "name": e.name,
-            "description": e.description,
-            "tags": e.tags,
-            "size_bytes": e.size_bytes,
-            "url": e.url,
-            "source": e.source,
-        }
-        for e in results
-    ]
+    page = source.search(q, limit=limit, cursor=cursor or None)
+    return {
+        "results": [
+            {
+                "id": e.id,
+                "name": e.name,
+                "description": e.description,
+                "tags": e.tags,
+                "size_bytes": e.size_bytes,
+                "url": e.url,
+                "source": e.source,
+            }
+            for e in page.entries
+        ],
+        "next_cursor": page.next_cursor,
+    }
 
 
 @router.get("/{source_name}/{dataset_id:path}/info")

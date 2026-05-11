@@ -1,7 +1,7 @@
 """Base classes for DashAI dataset sources."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Final
 
 from DashAI.back.config_object import ConfigObject
@@ -39,6 +39,23 @@ class DatasetEntry:
     source: str
 
 
+@dataclass
+class SearchPage:
+    """Result of a paginated dataset search.
+
+    Parameters
+    ----------
+    entries : list[DatasetEntry]
+        Datasets returned by this page.
+    next_cursor : str or None
+        Opaque token to pass to the next ``search()`` call to get the following
+        page.  ``None`` means there are no further results.
+    """
+
+    entries: list[DatasetEntry] = field(default_factory=list)
+    next_cursor: str | None = None
+
+
 class BaseDatasetSource(ConfigObject, ABC):
     """Abstract base class for all DashAI dataset sources.
 
@@ -53,8 +70,12 @@ class BaseDatasetSource(ConfigObject, ABC):
 
     @abstractmethod
     def search(
-        self, query: str, limit: int = 20, offset: int = 0, **filters: Any
-    ) -> list[DatasetEntry]:
+        self,
+        query: str,
+        limit: int = 20,
+        cursor: str | None = None,
+        **filters: Any,
+    ) -> SearchPage:
         """Return datasets matching a query string.
 
         Parameters
@@ -63,15 +84,16 @@ class BaseDatasetSource(ConfigObject, ABC):
             Free-text search string.
         limit : int, optional
             Maximum number of results, by default 20.
-        offset : int, optional
-            Number of results to skip (for pagination), by default 0.
+        cursor : str or None, optional
+            Opaque pagination token returned by the previous call.  Pass
+            ``None`` (default) to fetch the first page.
         **filters : Any
             Source-specific filter keyword arguments.
 
         Returns
         -------
-        list[DatasetEntry]
-            Matching datasets from this source.
+        SearchPage
+            Matching datasets and an optional cursor for the next page.
         """
         ...
 
