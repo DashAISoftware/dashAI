@@ -43,12 +43,15 @@ export function useHardwareMonitor(enabled) {
 
     clearReconnectTimeout();
 
-    const apiUrl = process.env.REACT_APP_API_URL || `${window.location.origin}`;
+    const wsOrigin = new URL(
+      process.env.REACT_APP_API_URL || "/",
+      window.location.origin,
+    ).origin;
     let wsUrl;
     try {
-      wsUrl = new URL("api/v1/hardware/ws", apiUrl);
+      wsUrl = new URL("/api/v1/hardware/ws", wsOrigin);
     } catch (e) {
-      console.error("Invalid WebSocket base URL:", apiUrl);
+      console.error("Invalid WebSocket base URL:", wsOrigin);
       return;
     }
 
