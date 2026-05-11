@@ -6,7 +6,6 @@ from typing import Any, Dict
 from beartype import beartype
 from datasets import Dataset
 
-from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -17,14 +16,7 @@ from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 
 class ImageDataLoaderSchema(BaseSchema):
-    name: schema_field(
-        none_type(string_field()),
-        "",
-        (
-            "Custom name to register your dataset. If no name is specified, "
-            "the name of the uploaded file will be used."
-        ),
-    )  # type: ignore
+    pass
 
 
 IMAGE_EXTENSIONS = {
@@ -142,7 +134,7 @@ class ImageDataLoader(BaseDataLoader):
         self,
         filepath_or_buffer: str,
         temp_path: str,
-        params: Dict[str, Any],
+        _params: Dict[str, Any],
         n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load an image dataset.
