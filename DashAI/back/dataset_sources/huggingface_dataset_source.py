@@ -84,7 +84,6 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
                         description=item.get("description") or "",
                         tags=item.get("tags", []),
                         size_bytes=size_bytes,
-                        row_count=None,
                         url=f"https://huggingface.co/datasets/{item.get('id', '')}",
                         source=self.__class__.__name__,
                     )

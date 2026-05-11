@@ -1,6 +1,5 @@
 import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
-import { useTranslation } from "react-i18next";
 
 /**
  * Card displaying a single dataset from the Hub.
@@ -10,8 +9,6 @@ import { useTranslation } from "react-i18next";
  * @param {function} onSelect - Called when the card is clicked.
  */
 export default function DatasetCard({ dataset, selected, onSelect }) {
-  const { t } = useTranslation(["hub"]);
-
   const formatSize = (bytes) => {
     if (!bytes) return null;
     if (bytes < 1024) return `${bytes} B`;
@@ -62,15 +59,14 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
         ))}
       </Stack>
 
-      <Stack direction="row" spacing={1} alignItems="center">
-        <StorageIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-        <Typography variant="caption" color="text.disabled">
-          {dataset.row_count
-            ? `${dataset.row_count.toLocaleString()} ${t("hub:rows")}`
-            : "—"}
-          {dataset.size_bytes ? ` · ${formatSize(dataset.size_bytes)}` : ""}
-        </Typography>
-      </Stack>
+      {dataset.size_bytes != null && (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <StorageIcon sx={{ fontSize: 14, color: "text.disabled" }} />
+          <Typography variant="caption" color="text.disabled">
+            {formatSize(dataset.size_bytes)}
+          </Typography>
+        </Stack>
+      )}
     </Paper>
   );
 }

@@ -24,8 +24,6 @@ class DatasetEntry:
         List of topic/task tags.
     size_bytes : int or None
         Total compressed size in bytes, or None if unknown.
-    row_count : int or None
-        Number of rows, or None if unknown.
     url : str
         Link to the dataset page on the source website.
     source : str
@@ -37,7 +35,6 @@ class DatasetEntry:
     description: str
     tags: list[str]
     size_bytes: int | None
-    row_count: int | None
     url: str
     source: str
 

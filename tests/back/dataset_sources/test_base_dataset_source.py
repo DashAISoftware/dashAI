@@ -26,7 +26,6 @@ class ConcreteSource(BaseDatasetSource):
                 description="A test dataset",
                 tags=["tabular"],
                 size_bytes=1024,
-                row_count=100,
                 url="https://example.com/test",
                 source="ConcreteSource",
             )
@@ -43,7 +42,6 @@ def test_dataset_entry_fields():
         description="desc",
         tags=["nlp"],
         size_bytes=2048,
-        row_count=500,
         url="https://example.com",
         source="HuggingFaceDatasetSource",
     )
@@ -60,12 +58,10 @@ def test_dataset_entry_optional_fields():
         description="",
         tags=[],
         size_bytes=None,
-        row_count=None,
         url="",
         source="",
     )
     assert entry.size_bytes is None
-    assert entry.row_count is None
 
 
 def test_concrete_source_has_type():
@@ -171,7 +167,6 @@ def test_openml_search_returns_dataset_entries():
                         "data_id": 61,
                         "name": "iris",
                         "description": "Iris flower dataset.",
-                        "qualities": {"NumberOfInstances": 150},
                         "file_size": 25000,
                         "tag": ["study_14", "uci"],
                     },
@@ -187,7 +182,6 @@ def test_openml_search_returns_dataset_entries():
     assert len(results) == 1
     assert results[0].id == "61"
     assert results[0].name == "iris"
-    assert results[0].row_count == 150
     assert results[0].size_bytes == 25000
     assert results[0].description == "Iris flower dataset."
     assert results[0].tags == ["study_14", "uci"]
@@ -207,7 +201,6 @@ def test_openml_search_size_bytes_none_when_missing():
                         "data_id": 1,
                         "name": "no-size",
                         "description": "",
-                        "qualities": {},
                         "tag": [],
                     },
                 }

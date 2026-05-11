@@ -223,17 +223,6 @@ export default function DatasetDetail({
             <Divider sx={{ mb: 1.5 }} />
 
             <Stack spacing={1}>
-              {dataset.row_count != null && (
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("hub:rows")}
-                  </Typography>
-                  <Typography variant="body2">
-                    {dataset.row_count.toLocaleString()}
-                  </Typography>
-                </Box>
-              )}
-
               {(extraInfo?.size_bytes ?? dataset.size_bytes) != null && (
                 <Box>
                   <Typography variant="caption" color="text.secondary">

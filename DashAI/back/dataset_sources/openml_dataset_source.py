@@ -110,7 +110,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
                     "data_id",
                     "name",
                     "description",
-                    "qualities.NumberOfInstances",
                     "file_size",
                     "tag",
                     "status",
@@ -134,11 +133,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
                 did = str(src.get("data_id", ""))
                 tag_raw = src.get("tag", [])
                 tags = [tag_raw] if isinstance(tag_raw, str) else list(tag_raw or [])
-                row_count: int | None = None
-                qualities = src.get("qualities", {})
-                if qualities.get("NumberOfInstances") is not None:
-                    with contextlib.suppress(ValueError, TypeError):
-                        row_count = int(float(qualities["NumberOfInstances"]))
                 size_bytes: int | None = None
                 with contextlib.suppress(ValueError, TypeError):
                     if src.get("file_size") is not None:
@@ -150,7 +144,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
                         description=src.get("description", "") or "",
                         tags=tags,
                         size_bytes=size_bytes,
-                        row_count=row_count,
                         url=f"https://www.openml.org/d/{did}",
                         source=self.__class__.__name__,
                     )
@@ -182,7 +175,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
             description=details["description"],
             tags=details["tags"],
             size_bytes=details["size_bytes"],
-            row_count=None,
             url=f"https://www.openml.org/d/{dataset_id}",
             source=self.__class__.__name__,
         )
