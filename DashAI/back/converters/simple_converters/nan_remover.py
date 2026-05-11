@@ -41,6 +41,7 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = NanRemoverSchema
+    CHANGES_ROW_COUNT = True
     DESCRIPTION = MultilingualString(
         en=(
             "Removes the rows with NaN values from the dataset. Keep in mind that "
@@ -177,16 +178,6 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         }
 
         return to_dashai_dataset(cleaned_dataset, types=preserved_types)
-
-    def changes_row_count(self) -> bool:
-        """Return ``True`` because this converter removes rows with null values.
-
-        Returns
-        -------
-        bool
-            Always ``True``.
-        """
-        return True
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the preserved type for a column, or a Text placeholder.

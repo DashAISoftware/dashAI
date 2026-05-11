@@ -23,6 +23,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     """
 
     SUPERVISED = True
+    CHANGES_ROW_COUNT = True
 
     def __init__(self, **kwargs):
         """Initialise the imbalanced-learn wrapper and reset internal state.
@@ -37,16 +38,6 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         self._resampled_table = None
         self.original_X_column_names_: list = []
         self.original_target_column_name_: str = ""
-
-    def changes_row_count(self) -> bool:
-        """Return ``True`` because all samplers add or remove rows.
-
-        Returns
-        -------
-        bool
-            Always ``True``.
-        """
-        return True
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Not implemented; type preservation is handled in ``transform``.
