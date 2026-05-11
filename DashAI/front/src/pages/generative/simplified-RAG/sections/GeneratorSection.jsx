@@ -77,11 +77,6 @@ export default function GeneratorSection({
       try {
         const data = await getGeneratorComponents();
         setGenerators(data || []);
-        
-        if (generatorModel?.component) {
-          const found = data?.find((g) => g.name === generatorModel.component);
-          if (found) setSelectedGenerator(found);
-        }
       } catch (error) {
         console.error("Error loading generators:", error);
       } finally {
@@ -90,6 +85,32 @@ export default function GeneratorSection({
     };
     loadGenerators();
   }, []);
+
+  useEffect(() => {
+    if (!generators.length) return;
+
+    if (!generatorModel?.component) {
+      setSelectedGenerator(null);
+      setInitialModelParams(null);
+      return;
+    }
+
+    const foundGenerator = generators.find((generator) => {
+      return generator.name === generatorModel.component;
+    });
+
+    if (!foundGenerator) return;
+
+    const selectedGeneratorName = selectedGenerator?.name || null;
+    const currentGeneratorName = generatorModel.component;
+
+    if (selectedGeneratorName === currentGeneratorName) {
+      return;
+    }
+
+    setSelectedGenerator(foundGenerator);
+    setInitialModelParams({ ...generatorModel.params });
+  }, [generators, generatorModel?.component, generatorModel?.params, initialModelParams]);
 
   const handleGeneratorChange = (event, newValue) => {
     setSelectedGenerator(newValue);

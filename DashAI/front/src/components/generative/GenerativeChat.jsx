@@ -279,8 +279,8 @@ export default function GenerativeChat() {
               whiteSpace: "pre-wrap",
             }}
           >
-            {change.parameter}: {change.oldValue}{" "}
-            <ArrowRightAltIcon fontSize="small" /> {change.newValue}{" "}
+              {change.parameter}: {formatHistoryValue(change.oldValue)}{" "}
+              <ArrowRightAltIcon fontSize="small" /> {formatHistoryValue(change.newValue)}{" "}
           </span>
         )),
       };
@@ -292,6 +292,34 @@ export default function GenerativeChat() {
     );
     setMessagesWithHistory(combinedMessages);
   }, [messages, history]);
+
+  const formatHistoryValue = (value) => {
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+
+    if (typeof value === "object") {
+      if (value.component) {
+        return value.component;
+      }
+
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return String(value);
+      }
+    }
+
+    return String(value);
+  };
 
   return (
     <Box
