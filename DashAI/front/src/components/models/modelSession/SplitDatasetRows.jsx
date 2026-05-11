@@ -89,7 +89,7 @@ function SplitDatasetRows({
   setNumRepeats,
   groupColumn,
   setGroupColumn,
-  outputColumnNames,
+  inputColumnNames,
   taskName,
 }) {
   const { t } = useTranslation(["experiments", "common"]);
@@ -406,7 +406,7 @@ function SplitDatasetRows({
           }}
         >
           <Typography variant="body2" fontWeight={600}>
-            {t("experiments:label.evaluationStrategy")}
+            {t("experiments:label.selectEvaluationStrategy")}
           </Typography>
         </Box>
         <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
@@ -690,7 +690,7 @@ function SplitDatasetRows({
                 onChange={handleGroupColumnChange}
                 label={t("experiments:label.groupColumn")}
               >
-                {outputColumnNames?.map((col) => (
+                {inputColumnNames?.map((col) => (
                   <MenuItem key={col} value={col}>
                     {col}
                   </MenuItem>
@@ -763,7 +763,7 @@ SplitDatasetRows.propTypes = {
   setNumRepeats: PropTypes.func.isRequired,
   groupColumn: PropTypes.string,
   setGroupColumn: PropTypes.func.isRequired,
-  outputColumnNames: PropTypes.arrayOf(PropTypes.string),
+  inputColumnNames: PropTypes.arrayOf(PropTypes.string),
   taskName: PropTypes.string,
 };
 

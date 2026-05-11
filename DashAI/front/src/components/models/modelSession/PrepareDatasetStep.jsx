@@ -420,7 +420,7 @@ function PrepareDatasetStep({
         setNumRepeats={setNumRepeats}
         groupColumn={groupColumn}
         setGroupColumn={setGroupColumn}
-        outputColumnNames={outputColumnNames}
+        inputColumnNames={inputColumnNames}
         taskName={newExp.task_name}
       />,
     );
@@ -439,7 +439,7 @@ function PrepareDatasetStep({
     numFolds,
     numRepeats,
     groupColumn,
-    outputColumnNames,
+    inputColumnNames,
   ]);
 
   const renderTypesAsChips = (typesList) => {
