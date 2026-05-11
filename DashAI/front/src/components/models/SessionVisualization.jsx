@@ -274,17 +274,19 @@ export default function SessionVisualization() {
                   size="small"
                 >
                   {hasTrainMetrics && (
-                    <ToggleButton value="train">
+                    <ToggleButton value="train" sx={{ width: 120 }}>
                       {t("common:train")}
                     </ToggleButton>
                   )}
                   {hasValidationMetrics && (
-                    <ToggleButton value="validation">
+                    <ToggleButton value="validation" sx={{ width: 120 }}>
                       {t("common:validation")}
                     </ToggleButton>
                   )}
                   {hasTestMetrics && (
-                    <ToggleButton value="test">{t("common:test")}</ToggleButton>
+                    <ToggleButton value="test" sx={{ width: 120 }}>
+                      {t("common:test")}
+                    </ToggleButton>
                   )}
                 </ToggleButtonGroup>
               )}
@@ -295,6 +297,7 @@ export default function SessionVisualization() {
                   variant={showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(true)}
                   startIcon={<TableChart />}
+                  sx={{ width: 110 }}
                 >
                   {t("common:table")}
                 </Button>
@@ -303,6 +306,7 @@ export default function SessionVisualization() {
                   variant={!showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}
+                  sx={{ width: 110 }}
                 >
                   {t("common:graphs")}
                 </Button>

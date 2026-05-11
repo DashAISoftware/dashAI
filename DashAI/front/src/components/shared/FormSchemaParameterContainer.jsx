@@ -16,7 +16,8 @@ function FormSchemaParameterContainer({ children, showBorder = true }) {
       <Box
         sx={{
           overflowY: "auto",
-          height: "auto",
+          flex: 1,
+          minHeight: 0,
           width: "inherit",
           transition: "opacity 0.3s ease",
         }}
@@ -30,7 +31,8 @@ function FormSchemaParameterContainer({ children, showBorder = true }) {
     <Box
       sx={{
         overflowY: "auto",
-        height: "auto",
+        flex: 1,
+        minHeight: 0,
         width: "inherit",
         transition: "opacity 0.3s ease",
       }}

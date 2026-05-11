@@ -194,6 +194,7 @@ class ExcelDataLoader(BaseDataLoader):
     Handles multi-file uploads by concatenating all workbooks before splitting.
     """
 
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".xlsx", ".xls", ".zip"})
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ExcelDataloaderSchema
 

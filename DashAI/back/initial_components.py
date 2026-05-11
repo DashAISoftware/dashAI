@@ -62,12 +62,15 @@ from DashAI.back.converters.simple_converters.column_remover import ColumnRemove
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 
 # DataLoaders
+from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
 # Dataset Sources
-from DashAI.back.dataset_sources.huggingface_dataset_source import HuggingFaceDatasetSource
+from DashAI.back.dataset_sources.huggingface_dataset_source import (
+    HuggingFaceDatasetSource,
+)
 from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
 
 # Explainers
@@ -371,9 +374,10 @@ def get_initial_components():
         XlmRobertaTransformer,
         XlnetTransformer,
         # Dataloaders
+        ARFFDataLoader,
         CSVDataLoader,
-        JSONDataLoader,
         ExcelDataLoader,
+        JSONDataLoader,
         # Dataset Sources
         HuggingFaceDatasetSource,
         OpenMLDatasetSource,
