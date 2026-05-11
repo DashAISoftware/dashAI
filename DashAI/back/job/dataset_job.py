@@ -166,59 +166,39 @@ class DatasetJob(BaseJob):
 
                     if source_name:
                         # --- Hub import path ---
-                        import tempfile
-
                         from DashAI.back.core.enums.status import HubDownloadStatus
                         from DashAI.back.dependencies.database.models import (
                             HubDownload,
                         )
 
-                        dataset_source_id = self.kwargs.get("dataset_source_id", "")
                         hub_download_id = params.get("hub_download_id")
                         selected_file = params.get("selected_file")
 
-                        sources = component_registry._registry.get("DatasetSource", {})
-                        if source_name not in sources:
+                        if hub_download_id is None:
                             raise JobError(
-                                f"DatasetSource '{source_name}' not found in registry."
+                                "hub_download_id is required for hub imports."
                             )
-                        source = sources[source_name]["class"]()
 
-                        if hub_download_id is not None:
-                            # Use pre-downloaded cached file — do not clean up temp_dir
-                            with session_factory() as db:
-                                hub_row = db.get(HubDownload, hub_download_id)
-                            if (
-                                hub_row is None
-                                or hub_row.status != HubDownloadStatus.READY
-                            ):
-                                raise JobError(
-                                    f"HubDownload {hub_download_id} is not ready."
-                                )
-                            hub_work_dir = hub_row.local_path
-                            if selected_file:
-                                file_path_hub = str(Path(hub_work_dir) / selected_file)
-                            else:
-                                files = sorted(
-                                    str(p)
-                                    for p in Path(hub_work_dir).rglob("*")
-                                    if p.is_file()
-                                )
-                                if not files:
-                                    raise JobError("Hub download directory is empty.")
-                                file_path_hub = files[0]
-                            source_dataloader_name = params.get("dataloader", "")
+                        with session_factory() as db:
+                            hub_row = db.get(HubDownload, hub_download_id)
+                        if hub_row is None or hub_row.status != HubDownloadStatus.READY:
+                            raise JobError(
+                                f"HubDownload {hub_download_id} is not ready."
+                            )
+                        hub_work_dir = hub_row.local_path
+                        if selected_file:
+                            file_path_hub = str(Path(hub_work_dir) / selected_file)
                         else:
-                            hub_temp = tempfile.mkdtemp()
-                            temp_dir = hub_temp  # ensures finally block cleans it up
-                            hub_work_dir = hub_temp
-                            file_path_hub, source_dataloader_name = (
-                                source.download_dataset(dataset_source_id, hub_temp)
+                            files = sorted(
+                                str(p)
+                                for p in Path(hub_work_dir).rglob("*")
+                                if p.is_file()
                             )
+                            if not files:
+                                raise JobError("Hub download directory is empty.")
+                            file_path_hub = files[0]
 
-                        selected_dataloader = (
-                            params.get("dataloader") or source_dataloader_name
-                        )
+                        selected_dataloader = params.get("dataloader", "")
                         _reg = component_registry._registry
                         dl_registry = _reg.get("DataLoader", {})
                         if selected_dataloader not in dl_registry:

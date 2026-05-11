@@ -98,7 +98,7 @@ class BaseDatasetSource(ConfigObject, ABC):
         return None
 
     @abstractmethod
-    def download_dataset(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
+    def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the full dataset to a local directory.
 
         Parameters
@@ -110,9 +110,8 @@ class BaseDatasetSource(ConfigObject, ABC):
 
         Returns
         -------
-        tuple[str, str]
-            ``(local_file_path, dataloader_name)`` — path to the downloaded
-            file and the DashAI DataLoader class name to use for loading it.
+        str
+            Path to the downloaded file inside ``temp_path``.
         """
         ...
 

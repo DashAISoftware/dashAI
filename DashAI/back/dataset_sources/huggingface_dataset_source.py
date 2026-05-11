@@ -88,7 +88,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             log.exception("Error searching HuggingFace datasets")
             return []
 
-    def download_dataset(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
+    def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the full dataset using the HuggingFace datasets library.
 
         Parameters
@@ -100,9 +100,8 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
 
         Returns
         -------
-        tuple[str, str]
-            ``(csv_file_path, "CSVDataLoader")`` — path to the exported CSV
-            and the name of the DataLoader to use.
+        str
+            Path to the exported CSV file inside ``temp_path``.
         """
         from datasets import load_dataset as hf_load
 
@@ -112,7 +111,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
 
         out_path = os.path.join(temp_path, f"{dataset_id.replace('/', '_')}.csv")
         dataset_df.to_csv(out_path, index=False)
-        return (out_path, "CSVDataLoader")
+        return out_path
 
     def get_download_url(self, dataset_id: str) -> str:
         """Return the HuggingFace Hub page URL for the dataset.

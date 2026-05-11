@@ -33,7 +33,7 @@ class ConcreteSource(BaseDatasetSource):
         ]
 
     def download_dataset(self, dataset_id, temp_path):
-        return ("/tmp/file.csv", "CSVDataLoader")
+        return "/tmp/file.csv"
 
     def get_download_url(self, dataset_id):
         return f"https://example.com/download/{dataset_id}"
@@ -83,11 +83,10 @@ def test_concrete_source_search_returns_entries():
     assert results[0].id == "test/dataset"
 
 
-def test_concrete_source_download_dataset_returns_path_and_dataloader():
+def test_concrete_source_download_dataset_returns_path():
     source = ConcreteSource()
-    path, dataloader_name = source.download_dataset("test/dataset", "/tmp")
+    path = source.download_dataset("test/dataset", "/tmp")
     assert path == "/tmp/file.csv"
-    assert dataloader_name == "CSVDataLoader"
 
 
 def test_concrete_source_get_download_url():
@@ -263,9 +262,8 @@ def test_openml_download_dataset_returns_arff(tmp_path):
 
     with patch("httpx.get", side_effect=[info_response, file_response]):
         source = OpenMLDatasetSource()
-        arff_path, dataloader_name = source.download_dataset("61", str(tmp_path))
+        arff_path = source.download_dataset("61", str(tmp_path))
 
-    assert dataloader_name == "ARFFDataLoader"
     assert arff_path.endswith(".arff")
     with open(arff_path, "rb") as fh:
         assert b"sepalLength" in fh.read()

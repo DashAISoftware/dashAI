@@ -176,7 +176,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             source=self.__class__.__name__,
         )
 
-    def download_dataset(self, dataset_id: str, temp_path: str) -> tuple[str, str]:
+    def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the raw ARFF file for an OpenML dataset.
 
         Parameters
@@ -188,8 +188,8 @@ class OpenMLDatasetSource(BaseDatasetSource):
 
         Returns
         -------
-        tuple[str, str]
-            ``(arff_file_path, "ARFFDataLoader")``.
+        str
+            Path to the downloaded ARFF file inside ``temp_path``.
         """
         info_resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=15)
         info_resp.raise_for_status()
@@ -201,7 +201,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
         out_path = os.path.join(temp_path, f"openml_{dataset_id}.arff")
         with open(out_path, "wb") as f:
             f.write(file_resp.content)
-        return (out_path, "ARFFDataLoader")
+        return out_path
 
     def get_download_url(self, dataset_id: str) -> str:
         """Return the OpenML dataset page URL.

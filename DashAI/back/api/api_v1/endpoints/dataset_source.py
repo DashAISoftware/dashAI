@@ -247,52 +247,46 @@ async def preview_dataset_with_params(
     dict
         ``{"sample": [...], "inferred_types": {...}, "preview_row_count": int}``.
     """
-    import tempfile
-
-    source = _get_source(source_name, registry)
+    _get_source(source_name, registry)  # validate source exists
     decoded_id = unquote(dataset_id)
     n_rows = max(1, min(body.n_rows, 500))
-    temp_dir_obj = None
 
     try:
-        if body.hub_download_id is not None:
-            from DashAI.back.core.enums.status import HubDownloadStatus
-            from DashAI.back.dependencies.database.models import HubDownload
+        if body.hub_download_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="hub_download_id is required.",
+            )
 
-            with session_factory() as db:
-                hub_row = db.get(HubDownload, body.hub_download_id)
-            if hub_row is None or hub_row.status != HubDownloadStatus.READY:
+        from DashAI.back.core.enums.status import HubDownloadStatus
+        from DashAI.back.dependencies.database.models import HubDownload
+
+        with session_factory() as db:
+            hub_row = db.get(HubDownload, body.hub_download_id)
+        if hub_row is None or hub_row.status != HubDownloadStatus.READY:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Hub download not ready or not found.",
+            )
+        if body.selected_file:
+            file_path = str(Path(hub_row.local_path) / body.selected_file)
+        else:
+            files = sorted(
+                str(p) for p in Path(hub_row.local_path).rglob("*") if p.is_file()
+            )
+            if not files:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Hub download not ready or not found.",
+                    detail="No files found in hub download directory.",
                 )
-            if body.selected_file:
-                file_path = str(Path(hub_row.local_path) / body.selected_file)
-            else:
-                files = sorted(
-                    str(p) for p in Path(hub_row.local_path).rglob("*") if p.is_file()
-                )
-                if not files:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="No files found in hub download directory.",
-                    )
-                file_path = files[0]
-            work_dir = str(Path(file_path).parent)
-            dataloader_name = body.dataloader
-            if not dataloader_name:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="dataloader is required when using hub_download_id.",
-                )
-        else:
-            temp_dir_obj = tempfile.TemporaryDirectory()
-            temp_dir = temp_dir_obj.name
-            file_path, default_dataloader = source.download_dataset(
-                decoded_id, temp_dir
+            file_path = files[0]
+        work_dir = str(Path(file_path).parent)
+        dataloader_name = body.dataloader
+        if not dataloader_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="dataloader is required.",
             )
-            dataloader_name = body.dataloader or default_dataloader
-            work_dir = temp_dir
 
         dl_registry = registry._registry.get("DataLoader", {})
         if dataloader_name not in dl_registry:
@@ -327,9 +321,6 @@ async def preview_dataset_with_params(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Failed to fetch preview from source: {exc}",
         ) from exc
-    finally:
-        if temp_dir_obj is not None:
-            temp_dir_obj.cleanup()
 
     if preview_df.empty:
         raise HTTPException(
