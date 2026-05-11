@@ -382,7 +382,7 @@ class ConverterJob(BaseJob):
                             f"Error transforming data with {converter_name}: {e}"
                         ) from e
 
-                    if converter_instance.changes_row_count():
+                    if type(converter_instance).CHANGES_ROW_COUNT:
                         loaded_dataset = transformed_dataset
                     else:
                         loaded_dataset = _rebuild_dataset_with_transformed_columns(
