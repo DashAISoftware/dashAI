@@ -1,5 +1,6 @@
 """HuggingFace Hub dataset source for DashAI."""
 
+import contextlib
 import logging
 import os
 from typing import Any, Final
@@ -71,13 +72,18 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
 
             entries = []
             for item in resp.json():
+                size_bytes: int | None = None
+                raw_size = item.get("usedStorage")
+                if raw_size is not None:
+                    with contextlib.suppress(ValueError, TypeError):
+                        size_bytes = int(raw_size)
                 entries.append(
                     DatasetEntry(
                         id=item.get("id", ""),
                         name=item.get("id", "").split("/")[-1],
                         description=item.get("description") or "",
                         tags=item.get("tags", []),
-                        size_bytes=None,
+                        size_bytes=size_bytes,
                         row_count=None,
                         url=f"https://huggingface.co/datasets/{item.get('id', '')}",
                         source=self.__class__.__name__,
