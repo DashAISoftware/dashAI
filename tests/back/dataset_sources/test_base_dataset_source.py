@@ -104,8 +104,9 @@ def test_hf_search_returns_dataset_entries():
             "id": "stanfordnlp/imdb",
             "description": "IMDB movie review sentiment",
             "tags": ["text-classification"],
-            "cardData": {"size_categories": ["10K<n<100K"]},
-            "usedStorage": 5242880,
+            "cardData": {
+                "dataset_info": {"download_size": 18157506, "dataset_size": 20098482},
+            },
             "downloads": 5000,
         }
     ]
@@ -118,6 +119,25 @@ def test_hf_search_returns_dataset_entries():
     assert results[0].id == "stanfordnlp/imdb"
     assert results[0].source == "HuggingFaceDatasetSource"
     assert results[0].url == "https://huggingface.co/datasets/stanfordnlp/imdb"
+    assert results[0].size_bytes == 18157506
+
+
+def test_hf_search_size_bytes_falls_back_to_used_storage():
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = [
+        {
+            "id": "owner/repo",
+            "description": "",
+            "tags": [],
+            "usedStorage": 5242880,
+        }
+    ]
+
+    with patch("httpx.get", return_value=mock_response):
+        source = HuggingFaceDatasetSource()
+        results = source.search("repo")
+
     assert results[0].size_bytes == 5242880
 
 
@@ -167,7 +187,6 @@ def test_openml_search_returns_dataset_entries():
                         "data_id": 61,
                         "name": "iris",
                         "description": "Iris flower dataset.",
-                        "file_size": 25000,
                         "tag": ["study_14", "uci"],
                     },
                 }
@@ -182,37 +201,11 @@ def test_openml_search_returns_dataset_entries():
     assert len(results) == 1
     assert results[0].id == "61"
     assert results[0].name == "iris"
-    assert results[0].size_bytes == 25000
+    assert results[0].size_bytes is None
     assert results[0].description == "Iris flower dataset."
     assert results[0].tags == ["study_14", "uci"]
     assert results[0].source == "OpenMLDatasetSource"
     assert results[0].url == "https://www.openml.org/d/61"
-
-
-def test_openml_search_size_bytes_none_when_missing():
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "hits": {
-            "hits": [
-                {
-                    "_id": "1",
-                    "_source": {
-                        "data_id": 1,
-                        "name": "no-size",
-                        "description": "",
-                        "tag": [],
-                    },
-                }
-            ]
-        }
-    }
-
-    with patch("httpx.post", return_value=mock_resp):
-        source = OpenMLDatasetSource()
-        results = source.search("no-size")
-
-    assert results[0].size_bytes is None
 
 
 def test_openml_search_empty_query_uses_match_all():
@@ -255,25 +248,6 @@ def test_openml_search_handles_http_error():
         results = source.search("iris")
 
     assert results == []
-
-
-def test_openml_get_info_returns_size_bytes():
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "data_set_description": {
-            "description": "Iris flowers.",
-            "tag": ["uci"],
-            "file_size": 4608,
-        }
-    }
-
-    with patch("httpx.get", return_value=mock_resp):
-        source = OpenMLDatasetSource()
-        entry = source.get_info("61")
-
-    assert entry is not None
-    assert entry.size_bytes == 4608
 
 
 def test_openml_download_dataset_returns_arff(tmp_path):

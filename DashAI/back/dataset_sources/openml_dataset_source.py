@@ -1,6 +1,5 @@
 """OpenML dataset source for DashAI."""
 
-import contextlib
 import logging
 import os
 from typing import Any, Final
@@ -20,7 +19,7 @@ _OPENML_ES = "https://www.openml.org/es/data/data/_search"
 
 
 def _fetch_openml_details(dataset_id: str) -> dict:
-    """Fetch description, tags, and file size for a single OpenML dataset.
+    """Fetch description and tags for a single OpenML dataset.
 
     Parameters
     ----------
@@ -30,26 +29,20 @@ def _fetch_openml_details(dataset_id: str) -> dict:
     Returns
     -------
     dict
-        ``{"description": str, "tags": list[str], "size_bytes": int | None}``
-        — empty strings/lists and None on error.
+        ``{"description": str, "tags": list[str]}`` — empty strings/lists on error.
     """
     try:
         resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=10)
         if resp.status_code == 200:
             desc = resp.json()["data_set_description"]
             tag_raw = desc.get("tag", [])
-            size_bytes: int | None = None
-            with contextlib.suppress(ValueError, TypeError):
-                if desc.get("file_size") is not None:
-                    size_bytes = int(desc["file_size"])
             return {
                 "description": desc.get("description") or "",
                 "tags": [tag_raw] if isinstance(tag_raw, str) else (tag_raw or []),
-                "size_bytes": size_bytes,
             }
     except Exception:
         log.debug("Could not fetch details for OpenML dataset %s", dataset_id)
-    return {"description": "", "tags": [], "size_bytes": None}
+    return {"description": "", "tags": []}
 
 
 class OpenMLDatasetSource(BaseDatasetSource):
@@ -110,7 +103,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
                     "data_id",
                     "name",
                     "description",
-                    "file_size",
                     "tag",
                     "status",
                 ],
@@ -133,17 +125,13 @@ class OpenMLDatasetSource(BaseDatasetSource):
                 did = str(src.get("data_id", ""))
                 tag_raw = src.get("tag", [])
                 tags = [tag_raw] if isinstance(tag_raw, str) else list(tag_raw or [])
-                size_bytes: int | None = None
-                with contextlib.suppress(ValueError, TypeError):
-                    if src.get("file_size") is not None:
-                        size_bytes = int(src["file_size"])
                 entries.append(
                     DatasetEntry(
                         id=did,
                         name=src.get("name", ""),
                         description=src.get("description", "") or "",
                         tags=tags,
-                        size_bytes=size_bytes,
+                        size_bytes=None,
                         url=f"https://www.openml.org/d/{did}",
                         source=self.__class__.__name__,
                     )
@@ -174,7 +162,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             name="",
             description=details["description"],
             tags=details["tags"],
-            size_bytes=details["size_bytes"],
+            size_bytes=None,
             url=f"https://www.openml.org/d/{dataset_id}",
             source=self.__class__.__name__,
         )

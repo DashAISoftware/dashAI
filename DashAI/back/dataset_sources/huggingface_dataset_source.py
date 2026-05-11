@@ -73,7 +73,11 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             entries = []
             for item in resp.json():
                 size_bytes: int | None = None
-                raw_size = item.get("usedStorage")
+                card_data = item.get("cardData") or {}
+                dataset_info = card_data.get("dataset_info") or {}
+                if isinstance(dataset_info, list):
+                    dataset_info = dataset_info[0] if dataset_info else {}
+                raw_size = dataset_info.get("download_size") or item.get("usedStorage")
                 if raw_size is not None:
                     with contextlib.suppress(ValueError, TypeError):
                         size_bytes = int(raw_size)
