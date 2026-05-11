@@ -74,6 +74,7 @@ def create_app(
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
     _create_path_if_not_exists(config["NOTEBOOK_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
+    _create_path_if_not_exists(config["DATAFILE_PATH"])
 
     logger.debug("3. Creating app container and setting up dependency injection.")
     container = build_container(config=config)

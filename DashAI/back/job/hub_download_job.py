@@ -65,8 +65,7 @@ class HubDownloadJob(BaseJob):
         source_name: str = self.kwargs["source_name"]
         dataset_source_id: str = self.kwargs["dataset_source_id"]
 
-        hub_downloads_base: Path = config["LOCAL_PATH"] / "hub_downloads"
-        download_dir: Path = hub_downloads_base / str(hub_download_id)
+        download_dir: Path = config["DATAFILE_PATH"] / str(hub_download_id)
 
         try:
             sources = component_registry._registry.get("DatasetSource", {})

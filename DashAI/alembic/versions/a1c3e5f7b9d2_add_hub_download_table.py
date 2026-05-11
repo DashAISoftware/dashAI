@@ -1,4 +1,4 @@
-"""Add hub_download table
+"""Add datafile table
 
 Revision ID: a1c3e5f7b9d2
 Revises: b4f9e70098e7
@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.create_table(
-        "hub_download",
+        "datafile",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("source_name", sa.String(), nullable=False),
         sa.Column("dataset_id", sa.String(), nullable=False),
@@ -34,15 +34,15 @@ def upgrade() -> None:
         sa.Column("error_message", sa.String(), nullable=True),
         sa.Column("created", sa.DateTime(), nullable=True),
         sa.Column("last_modified", sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_hub_download")),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_datafile")),
         sa.UniqueConstraint(
             "source_name",
             "dataset_id",
-            name="uq_hub_download_source_dataset",
+            name="uq_datafile_source_dataset",
         ),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("hub_download")
+    op.drop_table("datafile")
     op.execute("DROP TYPE IF EXISTS hubdownloadstatus")

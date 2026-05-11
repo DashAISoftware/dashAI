@@ -721,7 +721,7 @@ class Explorer(Base):
 
 
 class HubDownload(Base):
-    __tablename__ = "hub_download"
+    __tablename__ = "datafile"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     source_name: Mapped[str] = mapped_column(String, nullable=False)
@@ -745,6 +745,6 @@ class HubDownload(Base):
         UniqueConstraint(
             "source_name",
             "dataset_id",
-            name="uq_hub_download_source_dataset",
+            name="uq_datafile_source_dataset",
         ),
     )
