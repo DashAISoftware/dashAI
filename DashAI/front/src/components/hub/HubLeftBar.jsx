@@ -7,7 +7,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
@@ -159,7 +158,15 @@ export default function HubLeftBar({
                       py: 0.5,
                       px: 1,
                       borderRadius: 1,
+                      cursor: dl.status === "ready" ? "pointer" : "default",
+                      "&:hover":
+                        dl.status === "ready"
+                          ? { bgcolor: (theme) => theme.palette.action.hover }
+                          : {},
                     }}
+                    onClick={() =>
+                      dl.status === "ready" && onImportDownload?.(dl)
+                    }
                   >
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body1" color="text.primary" noWrap>
@@ -181,16 +188,6 @@ export default function HubLeftBar({
                       </Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexShrink: 0 }}>
-                      {dl.status === "ready" && (
-                        <Tooltip title={t("hub:addToDashAI")}>
-                          <IconButton
-                            size="small"
-                            onClick={() => onImportDownload?.(dl)}
-                          >
-                            <AddIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
                       <Tooltip title={t("common:delete")}>
                         <IconButton
                           size="small"
