@@ -32,9 +32,16 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
         display: "flex",
         flexDirection: "column",
         gap: 0.75,
+        height: 160,
+        overflow: "hidden",
+        minWidth: 0,
       }}
     >
-      <Typography variant="subtitle2" fontWeight={600} noWrap>
+      <Typography
+        variant="subtitle2"
+        fontWeight={600}
+        sx={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+      >
         {dataset.name}
       </Typography>
 
@@ -47,6 +54,8 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
+            wordBreak: "break-word",
+            overflowWrap: "break-word",
           }}
         >
           {dataset.description}
@@ -58,6 +67,8 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
           <Chip key={tag} label={tag} size="small" variant="outlined" />
         ))}
       </Stack>
+
+      <Box sx={{ flexGrow: 1 }} />
 
       {dataset.size_bytes != null && (
         <Stack direction="row" spacing={1} alignItems="center">
