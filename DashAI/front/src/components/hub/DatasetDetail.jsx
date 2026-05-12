@@ -133,7 +133,6 @@ export default function DatasetDetail({
         variant="contained"
         size="small"
         startIcon={<AddIcon />}
-        color="success"
         onClick={() => onStartImport?.()}
       >
         {t("hub:addToDashAI")}
