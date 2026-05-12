@@ -1,14 +1,15 @@
 import React from "react";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 
 const ARROW = 8;
 
-function getArrowSx(placement, bg) {
+function getArrowSx(placement, bg, borderColor) {
   if (!placement || placement === "center" || placement === "auto") return null;
+  const border = `1px solid ${borderColor}`;
   const base = {
     position: "absolute",
     width: ARROW * 2,
@@ -18,13 +19,37 @@ function getArrowSx(placement, bg) {
     zIndex: 0,
   };
   if (placement.startsWith("top"))
-    return { ...base, bottom: -ARROW, left: `calc(50% - ${ARROW}px)` };
+    return {
+      ...base,
+      bottom: -ARROW,
+      left: `calc(50% - ${ARROW}px)`,
+      borderBottom: border,
+      borderRight: border,
+    };
   if (placement.startsWith("bottom"))
-    return { ...base, top: -ARROW, left: `calc(50% - ${ARROW}px)` };
+    return {
+      ...base,
+      top: -ARROW,
+      left: `calc(50% - ${ARROW}px)`,
+      borderTop: border,
+      borderLeft: border,
+    };
   if (placement.startsWith("left"))
-    return { ...base, right: -ARROW, top: `calc(50% - ${ARROW}px)` };
+    return {
+      ...base,
+      right: -ARROW,
+      top: `calc(50% - ${ARROW}px)`,
+      borderTop: border,
+      borderRight: border,
+    };
   if (placement.startsWith("right"))
-    return { ...base, left: -ARROW, top: `calc(50% - ${ARROW}px)` };
+    return {
+      ...base,
+      left: -ARROW,
+      top: `calc(50% - ${ARROW}px)`,
+      borderBottom: border,
+      borderLeft: border,
+    };
   return null;
 }
 
@@ -44,7 +69,8 @@ export const CustomTooltip = ({
   const isInteractive = step.isInteractive;
 
   const bg = theme.palette.background.paper;
-  const arrowSx = getArrowSx(step.placement, bg);
+  const borderColor = alpha(theme.palette.primary.main, 0.5);
+  const arrowSx = getArrowSx(step.placement, bg, borderColor);
 
   return (
     <Box
@@ -52,8 +78,8 @@ export const CustomTooltip = ({
       sx={{
         backgroundColor: bg,
         borderRadius: "8px",
-        border: `1px solid ${theme.palette.ui.borderMed}`,
-        filter: "drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4))",
+        border: `1px solid ${borderColor}`,
+        filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
         maxWidth: "30ch",
         padding: "20px",
         position: "relative",
