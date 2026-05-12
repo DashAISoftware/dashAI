@@ -51,7 +51,7 @@
   "stepFileSubtitle": "Elige el archivo a importar de la descarga.",
   "noFilesFound": "No se encontraron archivos en esta descarga.",
   "sources": "Fuentes",
-  "fromSource": "De {{source}}",
+  "fromSource": "de {{source}}",
   "selectSourceSubtitle": "Selecciona una fuente para explorar e importar datafiles.",
   "searchDownloads": "Buscar datafiles...",
   "datasetDetails": "Detalles del Datafile",
