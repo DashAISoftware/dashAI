@@ -81,7 +81,7 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "bottom",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
