@@ -66,7 +66,7 @@ export const notebookTourSteps = [
     isInteractive: true,
   },
   {
-    target: '[data-tour="column-selector-explorer-container"]',
+    target: '[data-tour="column-selector"]',
     content: (
       <Trans i18nKey="notebookTour:selectColumns">
         <div>
@@ -123,7 +123,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlayClose: true,
-    disableOverlay: true,
+    disableOverlay: false,
     hideFooter: true,
     disableScrolling: true,
     isInteractive: true,
@@ -204,7 +204,7 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "left",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
@@ -248,7 +248,7 @@ export const notebookTourSteps = [
     isInteractive: true,
   },
   {
-    target: '[data-tour="column-selector-converter-container"]',
+    target: '[data-tour="column-selector"]',
     content: (
       <Trans i18nKey="notebookTour:selectColumnsClean">
         <div>
@@ -260,7 +260,7 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "left",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
@@ -307,17 +307,18 @@ export const notebookTourSteps = [
             <li></li>
             <li></li>
           </ul>
-          <div
+          <p
             style={{
-              backgroundColor: "#f0f9ff",
-              border: "1px solid #bae6fd",
+              backgroundColor: "#1b2f26",
+              color: "white",
+              padding: "8px",
               borderRadius: "4px",
-              padding: "8px 12px",
-              marginTop: "15px",
+              marginTop: "10px",
+              borderLeft: "3px solid #4caf50",
             }}
           >
-            <p style={{ margin: "0", fontWeight: "bold" }}></p>
-          </div>
+            <strong></strong>
+          </p>
         </div>
       </Trans>
     ),

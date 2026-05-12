@@ -416,10 +416,9 @@ function ColumnSelector({
       )}
 
       {/* Data Grid */}
-      <MaterialReactTable
-        data-tour="column-selector"
-        table={columnSelectorTable}
-      />
+      <Box data-tour="column-selector">
+        <MaterialReactTable table={columnSelectorTable} />
+      </Box>
     </Box>
   );
 }
