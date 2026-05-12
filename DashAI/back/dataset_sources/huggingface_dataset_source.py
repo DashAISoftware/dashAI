@@ -182,7 +182,9 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             return out_path
         except ValueError as exc:
             if "Config name is missing" not in str(exc):
-                raise
+                raise RuntimeError(
+                    f"Cannot load dataset '{dataset_id}': {exc}"
+                ) from exc
 
         configs = get_dataset_config_names(dataset_id)
         log.debug("%s has %d configs, downloading all", dataset_id, len(configs))

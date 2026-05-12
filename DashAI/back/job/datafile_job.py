@@ -91,18 +91,21 @@ class DatafileJob(BaseJob):
 
             log.debug("Datafile download job %d completed.", datafile_id)
 
-        except JobError as e:
-            log.error("Datafile download job %d failed: %s", datafile_id, e)
-            self.kwargs["_error_message"] = str(e)
+        except Exception as e:
+            err_msg = str(e)
+            log.error("Datafile download job %d failed: %s", datafile_id, err_msg)
+            self.kwargs["_error_message"] = err_msg
             with session_factory() as db:
                 row = db.get(Datafile, datafile_id)
                 if row is not None:
                     row.status = DatafileStatus.ERROR
-                    row.error_message = str(e)
+                    row.error_message = err_msg
                     try:
                         db.commit()
                     except exc.SQLAlchemyError as db_err:
                         log.exception(db_err)
             if download_dir.exists():
                 shutil.rmtree(download_dir, ignore_errors=True)
-            raise
+            if isinstance(e, JobError):
+                raise
+            raise JobError(err_msg) from e
