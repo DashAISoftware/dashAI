@@ -1,4 +1,5 @@
 import { Box, Chip, Divider, Link, Stack, Typography } from "@mui/material";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -58,9 +59,21 @@ export default function DatafileInfoPanel({ datafile }) {
           <Box
             sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}
           >
-            <Typography variant="subtitle1" fontWeight={600}>
+            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               {datafile.name}
             </Typography>
+
+            {datafile.source_url && (
+              <Link
+                href={datafile.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="caption"
+                sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+              >
+                {t("hub:viewOnSource")} <OpenInNewIcon sx={{ fontSize: 12 }} />
+              </Link>
+            )}
           </Box>
 
           <Box sx={{ p: 2 }}>
@@ -79,24 +92,6 @@ export default function DatafileInfoPanel({ datafile }) {
                 </Typography>
                 <Typography variant="body2">{datafile.source_name}</Typography>
               </Box>
-
-              {datafile.source_url && (
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("hub:viewOnSource")}
-                  </Typography>
-                  <Typography variant="body2">
-                    <Link
-                      href={datafile.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      underline="hover"
-                    >
-                      {datafile.source_url}
-                    </Link>
-                  </Typography>
-                </Box>
-              )}
 
               <Box>
                 <Typography variant="caption" color="text.secondary">

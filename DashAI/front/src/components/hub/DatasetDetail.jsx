@@ -259,6 +259,10 @@ export default function DatasetDetail({
                         label={tag}
                         size="small"
                         variant="outlined"
+                        sx={{
+                          ...theme.typography.statusBadge,
+                          border: `1px solid ${theme.palette.divider}`,
+                        }}
                       />
                     ))}
                   </Stack>
