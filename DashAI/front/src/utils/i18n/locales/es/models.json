@@ -170,7 +170,14 @@
     "profile_text_balanced": "Equilibrio",
     "profile_text_detectPositives": "Detectar Positivos",
     "profile_text_avoidFalseAlarms": "Evitar Falsas Alarmas",
-    "profile_text_probabilityQuality": "Calidad de Probabilidades"
+    "profile_text_probabilityQuality": "Calidad de Probabilidades",
+    "nestedCrossValidation": "Validación Cruzada Anidada",
+    "outerSplitterInherited": "Configuración del splitter inicial de la sesión heredada para el bucle externo de validación cruzada anidada",
+    "innerLoopConfiguration": "Configure la particion de datos para el bucle interno de validación cruzada anidada",
+    "outerSplitter": "Splitter para el bucle externo",
+    "outerFolds": "Número de folds",
+    "innerSplitter": "Splitter para el bucle interno",
+    "innerFolds": "Número de folds"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
@@ -209,6 +216,9 @@
     "runUpdatedSuccess": "Ejecución \"{{runName}}\" actualizada correctamente. Estado cambiado a No Iniciado.",
     "runStartedSuccessfully": "Ejecución {{runId}} iniciada exitosamente",
     "sessionCreatedSuccess": "Sesión creada exitosamente.",
-    "sessionUpdated": "Sesión actualizada exitosamente"
+    "sessionUpdated": "Sesión actualizada exitosamente",
+    "nestedCVEnabled": "Los datos se dividen en dos niveles: uno para ajustar los hiperparámetros y otro para evaluar el modelo final. Al mantenerlos separados, el score obtenido refleja mejor cómo se comportará el modelo con datos nuevos.",
+    "nestedCVDisabled": "Por cada combinación probada, el modelo se entrena usando validación cruzada y se reporta el promedio del score entre los folds. La combinación con el mejor score es la seleccionada.",
+    "innerFoldsOutOfRange": "Para la validación cruzada anidada, el número de folds internos debe estar entre 2 y {{max}} y ser menor o igual que el número de folds externos ({{outerNSplits}}). Por favor ajuste el número de folds internos."
   }
 }

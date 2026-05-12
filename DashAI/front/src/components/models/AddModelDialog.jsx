@@ -20,12 +20,18 @@ import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
 import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSelectOptimizer";
 import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
+import NestedCVSelector from "./modelSession/NestedCVSelector";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
+
+const DEFAULT_INNER_CONFIG = {
+  splitterType: null, // null means: derive from outer splitter on mount
+  nSplits: null,
+};
 
 /**
  * Dialog for adding a new model run to a session
@@ -51,6 +57,8 @@ function AddModelDialog({
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
+  const [useNestedCV, setUseNestedCV] = useState(false);
+  const [innerConfig, setInnerConfig] = useState(DEFAULT_INNER_CONFIG);
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
@@ -64,6 +72,28 @@ function AddModelDialog({
   });
 
   const tourContext = useTourContext();
+
+  const outerSplit = useMemo(() => {
+    try {
+      const splits = session?.splits ? JSON.parse(session.splits) : null;
+      console.log("Parsed session splits:", splits);
+      const formattedSplitterName = splits.splitter_name.replace(
+        "Splitter",
+        "",
+      );
+      return { ...splits, splitter_name: formattedSplitterName };
+    } catch {
+      return null;
+    }
+  }, [session?.splits]);
+
+  // Derive outer splitter type from session to set a smart default for inner splitter
+  useEffect(() => {
+    if (outerSplit && innerConfig.splitterType === null) {
+      const outerType = outerSplit.splitter_name;
+      setInnerConfig((prev) => ({ ...prev, splitterType: outerType }));
+    }
+  }, [outerSplit]);
 
   useEffect(() => {
     if (open && selectedModel) {
@@ -137,6 +167,8 @@ function AddModelDialog({
       setGoalMetric("");
       setHasUserTouchedName(false);
       setHasLoadedInitialParams(false);
+      setUseNestedCV(false);
+      setInnerConfig(DEFAULT_INNER_CONFIG);
     }, 100);
     onClose();
   };
@@ -185,6 +217,8 @@ function AddModelDialog({
       setSelectedOptimizer("");
       setOptimizerParameters({});
       setGoalMetric("");
+      setUseNestedCV(false);
+      setInnerConfig(DEFAULT_INNER_CONFIG);
     }
   };
 
@@ -205,6 +239,9 @@ function AddModelDialog({
         "",
         goalMetric || "",
         "",
+        useNestedCV
+          ? { enabled: true, inner_splitter: innerConfig }
+          : { enabled: false },
       );
 
       enqueueSnackbar(t("models:message.runCreatedSuccess", { name }), {
@@ -362,6 +399,17 @@ function AddModelDialog({
               handleSelectedOptimizer={handleOptimizerSelected}
             />
 
+            {session.evaluation_strategy ===
+              "CrossValidationEvaluationStrategy" && (
+              <NestedCVSelector
+                useNestedCV={useNestedCV}
+                onChange={setUseNestedCV}
+                innerConfig={innerConfig}
+                onInnerConfigChange={setInnerConfig}
+                outerSplit={outerSplit}
+              />
+            )}
+
             {selectedOptimizer && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
@@ -418,6 +466,7 @@ AddModelDialog.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
+    splits: PropTypes.object,
   }),
   preselectedModel: PropTypes.string,
   existingRuns: PropTypes.array,

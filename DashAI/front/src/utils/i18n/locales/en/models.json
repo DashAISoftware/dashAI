@@ -170,7 +170,14 @@
     "profile_text_balanced": "Balanced",
     "profile_text_detectPositives": "Detect Positives",
     "profile_text_avoidFalseAlarms": "Avoid False Alarms",
-    "profile_text_probabilityQuality": "Probability Quality"
+    "profile_text_probabilityQuality": "Probability Quality",
+    "nestedCrossValidation": "Nested Cross-Validation",
+    "outerSplitterInherited": "Inherit session's initial splitter configuration for nested cross-validation outer loop",
+    "innerLoopConfiguration": "Configure data splitting for nested cross-validation inner loop",
+    "outerSplitter": "Outer loop splitter",
+    "outerFolds": "Number of folds",
+    "innerSplitter": "Inner loop splitter",
+    "innerFolds": "Number of folds"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
@@ -208,6 +215,9 @@
     "runUpdatedSuccess": "Run \"{{runName}}\" updated successfully. Status changed to Not Started.",
     "runStartedSuccessfully": "Run {{runId}} started successfully",
     "sessionCreatedSuccess": "Session successfully created.",
-    "sessionUpdated": "Session updated successfully"
+    "sessionUpdated": "Session updated successfully",
+    "nestedCVEnabled": "Hyperparameters are tuned and evaluated on separate data splits, giving a more reliable performance estimate.",
+    "nestedCVDisabled": "For each tested combination, the model is trained using cross-validation and the average score across folds is reported. The combination with the best score is selected.",
+    "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and {{max}} and lower or equal to the number of outer folds ({{outerNSplits}}). Please adjust the number of inner folds."
   }
 }
