@@ -134,7 +134,7 @@ class ImageDataLoader(BaseDataLoader):
         self,
         filepath_or_buffer: str,
         temp_path: str,
-        _params: Dict[str, Any],
+        params: Dict[str, Any],  # noqa: ARG002
         n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load an image dataset.
