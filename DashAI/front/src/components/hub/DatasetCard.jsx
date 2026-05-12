@@ -1,5 +1,4 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
-import StorageIcon from "@mui/icons-material/Storage";
+import { Box, Paper, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 /**
@@ -11,13 +10,6 @@ import { useTheme } from "@mui/material/styles";
  */
 export default function DatasetCard({ dataset, selected, onSelect }) {
   const theme = useTheme();
-  const formatSize = (bytes) => {
-    if (!bytes) return null;
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
-    return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
-  };
 
   return (
     <Paper
@@ -85,15 +77,6 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
           </Box>
         ))}
       </Box>
-
-      {dataset.size_bytes != null && (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <StorageIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-          <Typography variant="caption" color="text.disabled">
-            {formatSize(dataset.size_bytes)}
-          </Typography>
-        </Stack>
-      )}
     </Paper>
   );
 }

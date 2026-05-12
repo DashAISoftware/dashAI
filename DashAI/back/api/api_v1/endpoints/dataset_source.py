@@ -165,6 +165,7 @@ async def get_dataset_info(
         "id": entry.id,
         "description": entry.description,
         "tags": entry.tags,
+        "size_bytes": entry.size_bytes,
     }
 
 

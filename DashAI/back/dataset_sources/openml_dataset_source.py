@@ -19,33 +19,6 @@ _OPENML_API = "https://www.openml.org/api/v1/json"
 _OPENML_ES = "https://www.openml.org/es/data/data/_search"
 
 
-def _fetch_openml_details(dataset_id: str) -> dict:
-    """Fetch description and tags for a single OpenML dataset.
-
-    Parameters
-    ----------
-    dataset_id : str
-        OpenML dataset ID (integer as string).
-
-    Returns
-    -------
-    dict
-        ``{"description": str, "tags": list[str]}`` — empty strings/lists on error.
-    """
-    try:
-        resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=10)
-        if resp.status_code == 200:
-            desc = resp.json()["data_set_description"]
-            tag_raw = desc.get("tag", [])
-            return {
-                "description": desc.get("description") or "",
-                "tags": [tag_raw] if isinstance(tag_raw, str) else (tag_raw or []),
-            }
-    except Exception:
-        log.debug("Could not fetch details for OpenML dataset %s", dataset_id)
-    return {"description": "", "tags": []}
-
-
 class OpenMLDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from OpenML.
 
@@ -108,9 +81,12 @@ class OpenMLDatasetSource(BaseDatasetSource):
                 "_source": [
                     "data_id",
                     "name",
+                    "version",
+                    "format",
                     "description",
-                    "tag",
                     "status",
+                    "date",
+                    "tags",
                 ],
                 "sort": {"runs": {"order": "desc"}},
             }
@@ -129,8 +105,8 @@ class OpenMLDatasetSource(BaseDatasetSource):
             for hit in hits:
                 src = hit.get("_source", {})
                 did = str(src.get("data_id", ""))
-                tag_raw = src.get("tag", [])
-                tags = [tag_raw] if isinstance(tag_raw, str) else list(tag_raw or [])
+                tag_raw = src.get("tags", [])
+                tags = [tag["tag"] for tag in tag_raw if tag["uploader"] > "0"]
                 entries.append(
                     DatasetEntry(
                         id=did,
@@ -149,7 +125,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             return SearchPage()
 
     def get_info(self, dataset_id: str) -> "DatasetEntry | None":
-        """Return full metadata for a single OpenML dataset (description + tags).
+        """Return full metadata for a single OpenML dataset, including size.
 
         Parameters
         ----------
@@ -159,20 +135,28 @@ class OpenMLDatasetSource(BaseDatasetSource):
         Returns
         -------
         DatasetEntry or None
-            Full metadata, or None on error.
+            Full metadata entry, or None on error.
         """
-        details = _fetch_openml_details(dataset_id)
-        if not details["description"] and not details["tags"]:
+        try:
+            resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=10)
+            if resp.status_code != 200:
+                return None
+            desc = resp.json()["data_set_description"]
+            tag_raw = desc.get("tag", [])
+            tags = [tag["tag"] for tag in tag_raw if tag["uploader"] > "0"]
+            raw_size = desc.get("file_size")
+            return DatasetEntry(
+                id=dataset_id,
+                name=desc.get("name", ""),
+                description=desc.get("description") or "",
+                tags=tags,
+                size_bytes=int(raw_size) if raw_size is not None else None,
+                url=f"https://www.openml.org/d/{dataset_id}",
+                source=self.__class__.__name__,
+            )
+        except Exception:
+            log.debug("Could not fetch info for OpenML dataset %s", dataset_id)
             return None
-        return DatasetEntry(
-            id=dataset_id,
-            name="",
-            description=details["description"],
-            tags=details["tags"],
-            size_bytes=None,
-            url=f"https://www.openml.org/d/{dataset_id}",
-            source=self.__class__.__name__,
-        )
 
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the raw ARFF file for an OpenML dataset.

@@ -115,11 +115,8 @@ def test_hf_search_returns_dataset_entries():
             "tags": ["text-classification"],
         }
     ]
-    treesize_resp = MagicMock()
-    treesize_resp.status_code = 200
-    treesize_resp.json.return_value = {"path": "/", "size": 83455823}
 
-    with patch("httpx.get", side_effect=[search_resp, treesize_resp]):
+    with patch("httpx.get", return_value=search_resp):
         source = HuggingFaceDatasetSource()
         page = source.search("imdb", limit=5)
 
@@ -128,8 +125,48 @@ def test_hf_search_returns_dataset_entries():
     assert page.entries[0].id == "stanfordnlp/imdb"
     assert page.entries[0].source == "HuggingFaceDatasetSource"
     assert page.entries[0].url == "https://huggingface.co/datasets/stanfordnlp/imdb"
-    assert page.entries[0].size_bytes == 83455823
+    assert page.entries[0].size_bytes is None
     assert page.next_cursor == "abc123"
+
+
+def test_hf_get_info_returns_size_bytes():
+    mock_item = MagicMock()
+    mock_item.description = "IMDB movie review sentiment"
+    mock_item.tags = ["text-classification"]
+    mock_item.used_storage = 83455823
+
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.dataset_info.return_value = mock_item
+        source = HuggingFaceDatasetSource()
+        entry = source.get_info("stanfordnlp/imdb")
+
+    assert entry is not None
+    assert entry.id == "stanfordnlp/imdb"
+    assert entry.size_bytes == 83455823
+
+
+def test_hf_get_info_returns_none_on_error():
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.dataset_info.side_effect = Exception("not found")
+        source = HuggingFaceDatasetSource()
+        entry = source.get_info("owner/repo")
+
+    assert entry is None
+
+
+def test_hf_get_info_size_none_when_used_storage_absent():
+    mock_item = MagicMock()
+    mock_item.description = ""
+    mock_item.tags = []
+    mock_item.used_storage = None
+
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.dataset_info.return_value = mock_item
+        source = HuggingFaceDatasetSource()
+        entry = source.get_info("owner/repo")
+
+    assert entry is not None
+    assert entry.size_bytes is None
 
 
 def test_hf_search_uses_cursor_for_next_page():
@@ -139,10 +176,8 @@ def test_hf_search_uses_cursor_for_next_page():
     search_resp.json.return_value = [
         {"id": "owner/repo", "description": "", "tags": []}
     ]
-    treesize_resp = MagicMock()
-    treesize_resp.status_code = 404
 
-    with patch("httpx.get", side_effect=[search_resp, treesize_resp]) as mock_get:
+    with patch("httpx.get", return_value=search_resp) as mock_get:
         source = HuggingFaceDatasetSource()
         source.search("repo", cursor="prev_cursor")
 
@@ -150,17 +185,15 @@ def test_hf_search_uses_cursor_for_next_page():
     assert search_call_kwargs.get("cursor") == "prev_cursor"
 
 
-def test_hf_search_size_bytes_none_when_treesize_fails():
+def test_hf_search_size_bytes_none_when_card_data_absent():
     search_resp = MagicMock()
     search_resp.status_code = 200
     search_resp.headers = {}
     search_resp.json.return_value = [
         {"id": "owner/repo", "description": "", "tags": []}
     ]
-    treesize_resp = MagicMock()
-    treesize_resp.status_code = 404
 
-    with patch("httpx.get", side_effect=[search_resp, treesize_resp]):
+    with patch("httpx.get", return_value=search_resp):
         source = HuggingFaceDatasetSource()
         page = source.search("repo")
 
@@ -197,7 +230,10 @@ def test_openml_search_returns_dataset_entries():
                         "data_id": 61,
                         "name": "iris",
                         "description": "Iris flower dataset.",
-                        "tag": ["study_14", "uci"],
+                        "tags": [
+                            {"tag": "study_14", "uploader": "1"},
+                            {"tag": "uci", "uploader": "1"},
+                        ],
                     },
                 }
             ],
@@ -264,7 +300,7 @@ def test_openml_search_next_cursor_set_when_full_page():
                         "data_id": i,
                         "name": f"ds{i}",
                         "description": "",
-                        "tag": [],
+                        "tags": [],
                     },
                 }
                 for i in range(5)
@@ -292,7 +328,7 @@ def test_openml_search_next_cursor_none_when_partial_page():
                         "data_id": 1,
                         "name": "only",
                         "description": "",
-                        "tag": [],
+                        "tags": [],
                     },
                 }
             ]
@@ -316,6 +352,64 @@ def test_openml_search_handles_http_error():
 
     assert page.entries == []
     assert page.next_cursor is None
+
+
+def test_openml_get_info_returns_entry_with_size():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "data_set_description": {
+            "name": "iris",
+            "description": "Iris flower dataset.",
+            "tag": [
+                {"tag": "study_14", "uploader": "1"},
+                {"tag": "uci", "uploader": "1"},
+            ],
+            "file_size": "43445",
+        }
+    }
+
+    with patch("httpx.get", return_value=mock_resp):
+        source = OpenMLDatasetSource()
+        entry = source.get_info("61")
+
+    assert entry is not None
+    assert entry.id == "61"
+    assert entry.name == "iris"
+    assert entry.description == "Iris flower dataset."
+    assert entry.tags == ["study_14", "uci"]
+    assert entry.size_bytes == 43445
+    assert entry.url == "https://www.openml.org/d/61"
+
+
+def test_openml_get_info_returns_none_on_error():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 404
+
+    with patch("httpx.get", return_value=mock_resp):
+        source = OpenMLDatasetSource()
+        entry = source.get_info("99999")
+
+    assert entry is None
+
+
+def test_openml_get_info_size_none_when_file_size_absent():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "data_set_description": {
+            "name": "iris",
+            "description": "",
+            "tag": [],
+        }
+    }
+
+    with patch("httpx.get", return_value=mock_resp):
+        source = OpenMLDatasetSource()
+        entry = source.get_info("61")
+
+    assert entry is not None
+    assert entry.size_bytes is None
 
 
 def test_openml_download_dataset_returns_arff(tmp_path):

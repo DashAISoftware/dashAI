@@ -3,7 +3,6 @@
 import logging
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Final
 from urllib.parse import parse_qs, urlparse
 
@@ -40,36 +39,6 @@ def _extract_next_cursor(link_header: str) -> str | None:
     params = parse_qs(urlparse(match.group(1)).query)
     cursors = params.get("cursor", [])
     return cursors[0] if cursors else None
-
-
-def _fetch_hf_treesize(dataset_id: str) -> tuple[str, int | None]:
-    """Fetch total repository size for a HuggingFace dataset via the treesize API.
-
-    Parameters
-    ----------
-    dataset_id : str
-        HuggingFace dataset identifier in ``"namespace/repo"`` form.
-
-    Returns
-    -------
-    tuple[str, int | None]
-        ``(dataset_id, size_in_bytes)`` — size is None on any error.
-    """
-    if "/" not in dataset_id:
-        return dataset_id, None
-    try:
-        namespace, repo = dataset_id.split("/", 1)
-        resp = httpx.get(
-            f"{_HF_API}/{namespace}/{repo}/treesize/main",
-            timeout=5,
-        )
-        if resp.status_code == 200:
-            raw = resp.json().get("size")
-            if raw is not None:
-                return dataset_id, int(raw)
-    except Exception:
-        log.debug("Could not fetch treesize for %s", dataset_id)
-    return dataset_id, None
 
 
 class HuggingFaceDatasetSource(BaseDatasetSource):
@@ -144,20 +113,40 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
                 for item in resp.json()
             ]
 
-            if entries:
-                max_workers = min(len(entries), 10)
-                with ThreadPoolExecutor(max_workers=max_workers) as pool:
-                    futures = {
-                        pool.submit(_fetch_hf_treesize, e.id): e for e in entries
-                    }
-                    for future in as_completed(futures):
-                        _, size = future.result()
-                        futures[future].size_bytes = size
-
             return SearchPage(entries=entries, next_cursor=next_cursor)
         except Exception:
             log.exception("Error searching HuggingFace datasets")
             return SearchPage()
+
+    def get_info(self, dataset_id: str) -> "DatasetEntry | None":
+        """Return full metadata for a single HuggingFace dataset, including size.
+
+        Parameters
+        ----------
+        dataset_id : str
+            HuggingFace dataset identifier in ``"namespace/repo"`` form.
+
+        Returns
+        -------
+        DatasetEntry or None
+            Full metadata entry, or None on error.
+        """
+        try:
+            from huggingface_hub import HfApi
+
+            item = HfApi().dataset_info(dataset_id)
+            return DatasetEntry(
+                id=dataset_id,
+                name=dataset_id.split("/")[-1],
+                description=item.description or "",
+                tags=list(item.tags or []),
+                size_bytes=item.used_storage,
+                url=f"https://huggingface.co/datasets/{dataset_id}",
+                source=self.__class__.__name__,
+            )
+        except Exception:
+            log.debug("Could not fetch info for HuggingFace dataset %s", dataset_id)
+            return None
 
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the full dataset using the HuggingFace datasets library.
