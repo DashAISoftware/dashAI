@@ -67,7 +67,7 @@ export default function HubContent() {
       .then(setSources)
       .catch(() => setSources([]))
       .finally(() => setSourcesLoading(false));
-  }, []);
+  }, [t]);
 
   // Reset dataset selection when source changes
   useEffect(() => {
