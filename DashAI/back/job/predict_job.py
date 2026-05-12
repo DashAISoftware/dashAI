@@ -49,11 +49,14 @@ def _build_preview_rows(
     """Build JSON-safe tabular rows for manual preview responses."""
     columns = list(input_columns) + [output_col]
 
+    def _to_native(v: Any) -> Any:
+        return v.item() if hasattr(v, "item") else v
+
     rows: List[List] = []
     input_data = prepared_dataset.to_dict()
     for i in range(len(y_pred)):
-        row = [input_data[col][i] for col in input_columns]
-        row.append(y_pred[i])
+        row = [_to_native(input_data[col][i]) for col in input_columns]
+        row.append(_to_native(y_pred[i]))
         rows.append(row)
 
     columns_json = jsonable_encoder(columns)
