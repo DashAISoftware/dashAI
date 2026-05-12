@@ -124,40 +124,6 @@ class OpenMLDatasetSource(BaseDatasetSource):
             log.exception("Error searching OpenML datasets")
             return SearchPage()
 
-    def get_info(self, dataset_id: str) -> "DatasetEntry | None":
-        """Return full metadata for a single OpenML dataset, including size.
-
-        Parameters
-        ----------
-        dataset_id : str
-            OpenML dataset ID (integer as string).
-
-        Returns
-        -------
-        DatasetEntry or None
-            Full metadata entry, or None on error.
-        """
-        try:
-            resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=10)
-            if resp.status_code != 200:
-                return None
-            desc = resp.json()["data_set_description"]
-            tag_raw = desc.get("tag", [])
-            tags = [tag["tag"] for tag in tag_raw if tag["uploader"] > "0"]
-            raw_size = desc.get("file_size")
-            return DatasetEntry(
-                id=dataset_id,
-                name=desc.get("name", ""),
-                description=desc.get("description") or "",
-                tags=tags,
-                size_bytes=int(raw_size) if raw_size is not None else None,
-                url=f"https://www.openml.org/d/{dataset_id}",
-                source=self.__class__.__name__,
-            )
-        except Exception:
-            log.debug("Could not fetch info for OpenML dataset %s", dataset_id)
-            return None
-
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
         """Download the raw ARFF file for an OpenML dataset.
 

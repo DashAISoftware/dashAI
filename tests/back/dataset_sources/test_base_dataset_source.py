@@ -354,64 +354,6 @@ def test_openml_search_handles_http_error():
     assert page.next_cursor is None
 
 
-def test_openml_get_info_returns_entry_with_size():
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "data_set_description": {
-            "name": "iris",
-            "description": "Iris flower dataset.",
-            "tag": [
-                {"tag": "study_14", "uploader": "1"},
-                {"tag": "uci", "uploader": "1"},
-            ],
-            "file_size": "43445",
-        }
-    }
-
-    with patch("httpx.get", return_value=mock_resp):
-        source = OpenMLDatasetSource()
-        entry = source.get_info("61")
-
-    assert entry is not None
-    assert entry.id == "61"
-    assert entry.name == "iris"
-    assert entry.description == "Iris flower dataset."
-    assert entry.tags == ["study_14", "uci"]
-    assert entry.size_bytes == 43445
-    assert entry.url == "https://www.openml.org/d/61"
-
-
-def test_openml_get_info_returns_none_on_error():
-    mock_resp = MagicMock()
-    mock_resp.status_code = 404
-
-    with patch("httpx.get", return_value=mock_resp):
-        source = OpenMLDatasetSource()
-        entry = source.get_info("99999")
-
-    assert entry is None
-
-
-def test_openml_get_info_size_none_when_file_size_absent():
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "data_set_description": {
-            "name": "iris",
-            "description": "",
-            "tag": [],
-        }
-    }
-
-    with patch("httpx.get", return_value=mock_resp):
-        source = OpenMLDatasetSource()
-        entry = source.get_info("61")
-
-    assert entry is not None
-    assert entry.size_bytes is None
-
-
 def test_openml_download_dataset_returns_arff(tmp_path):
     info_response = MagicMock()
     info_response.status_code = 200
