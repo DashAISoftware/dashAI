@@ -106,9 +106,10 @@ export default function HubContent() {
             [`${updated.source_name}::${updated.dataset_id}`]: updated,
           }));
           if (isError) {
-            enqueueSnackbar(t("hub:downloadFailed") + `: ${d.name}`, {
-              variant: "error",
-            });
+            enqueueSnackbar(
+              `${t("hub:downloadFailed")}: ${d.name} - ${t("hub:checkQueue")}`,
+              { variant: "error" },
+            );
           } else {
             enqueueSnackbar(t("hub:downloaded") + `: ${d.name}`, {
               variant: "success",
