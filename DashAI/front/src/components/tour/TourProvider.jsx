@@ -134,6 +134,8 @@ export const TourProvider = ({
         scrollOffset={100}
         floaterProps={{
           disableFlip: true,
+          hideArrow: true,
+          offset: 10,
         }}
       />
       {children}

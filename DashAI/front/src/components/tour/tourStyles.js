@@ -7,7 +7,7 @@ export const tourStyles = {
     primaryColor: "#ef9f27",
     spotlightShadow: "0 0 15px rgba(0, 0, 0, 0.5)",
     textColor: "#333",
-    width: 380,
+    width: 280,
     zIndex: 10000,
   },
   beacon: {
