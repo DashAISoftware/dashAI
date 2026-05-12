@@ -1,7 +1,13 @@
 import { useState } from "react";
 import {
   Box,
+  Button,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   IconButton,
   Tooltip,
@@ -93,10 +99,16 @@ export default function HubLeftBar({
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [downloadsOpen, setDownloadsOpen] = useState(true);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const filteredDownloads = downloads.filter((dl) =>
     dl.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const handleDeleteConfirm = () => {
+    onDeleteDownload?.(pendingDeleteId);
+    setPendingDeleteId(null);
+  };
 
   return (
     <SideBar>
@@ -189,13 +201,21 @@ export default function HubLeftBar({
                     </Box>
                     <Box sx={{ display: "flex", flexShrink: 0 }}>
                       <Tooltip title={t("common:delete")}>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDeleteDownload?.(dl.id)}
-                          disabled={dl.status === "downloading"}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                        <span>
+                          <IconButton
+                            size="small"
+                            color={
+                              dl.status === "downloading" ? "default" : "error"
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPendingDeleteId(dl.id);
+                            }}
+                            disabled={dl.status === "downloading"}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                     </Box>
                   </Box>
@@ -207,6 +227,26 @@ export default function HubLeftBar({
       </Box>
 
       <Footer />
+
+      <Dialog
+        open={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+      >
+        <DialogTitle>{t("common:confirmDeletion")}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t("common:confirmDeletionMessage")}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingDeleteId(null)} color="text.primary">
+            {t("common:cancel")}
+          </Button>
+          <Button color="error" onClick={handleDeleteConfirm}>
+            {t("common:delete")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </SideBar>
   );
 }
