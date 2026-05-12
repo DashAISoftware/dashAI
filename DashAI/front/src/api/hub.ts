@@ -1,6 +1,7 @@
 import api from "./api";
 
 const hubEndpoint = "/v1/dataset-source";
+const componentEndpoint = "/v1/component";
 
 export interface DatasetSourceInfo {
   name: string;
@@ -31,7 +32,9 @@ export interface DatasetPreview {
 }
 
 export const getDatasetSources = async (): Promise<DatasetSourceInfo[]> => {
-  const response = await api.get<DatasetSourceInfo[]>(`${hubEndpoint}/`);
+  const response = await api.get<DatasetSourceInfo[]>(`${componentEndpoint}/`, {
+    params: { select_types: "DatasetSource" },
+  });
   return response.data;
 };
 
