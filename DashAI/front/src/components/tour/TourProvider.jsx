@@ -163,7 +163,7 @@ export const TourProvider = ({
         floaterProps={{
           disableFlip: true,
           hideArrow: true,
-          offset: 10,
+          offset: 18,
         }}
       />
       {children}

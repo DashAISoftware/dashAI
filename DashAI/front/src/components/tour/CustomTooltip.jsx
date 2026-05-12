@@ -72,6 +72,15 @@ export const CustomTooltip = ({
   const borderColor = alpha(theme.palette.primary.main, 0.5);
   const arrowSx = getArrowSx(step.placement, bg, borderColor);
 
+  const getMarginSx = () => {
+    if (!step.placement) return {};
+    if (step.placement.startsWith("top")) return { marginBottom: "7px" };
+    if (step.placement.startsWith("bottom")) return { marginTop: "7px" };
+    if (step.placement.startsWith("left")) return { marginRight: "7px" };
+    if (step.placement.startsWith("right")) return { marginLeft: "7px" };
+    return {};
+  };
+
   return (
     <Box
       {...tooltipProps}
@@ -85,6 +94,7 @@ export const CustomTooltip = ({
         position: "relative",
         overflow: "visible",
         zIndex: 1,
+        ...getMarginSx(),
       }}
     >
       {arrowSx && <Box sx={arrowSx} />}
