@@ -23,9 +23,8 @@ import {
   listHubDownloads,
 } from "../../api/hub";
 import { enqueueHubDownloadJob } from "../../api/job";
+import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
-
-const POLL_INTERVAL_MS = 3000;
 
 const SOURCE_ICONS = {
   HuggingFaceDatasetSource: HubIcon,
@@ -52,10 +51,11 @@ export default function HubContent() {
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [importDownload, setImportDownload] = useState(null);
 
-  const pollTimerRef = useRef(null);
+  const watchedJobsRef = useRef(new Set());
 
   // Derive selected source from URL param + loaded sources list
-  const selectedSource = sources.find((s) => s.name === sourceNameParam) ?? null;
+  const selectedSource =
+    sources.find((s) => s.name === sourceNameParam) ?? null;
   const sourceDisplayName =
     selectedSource?.display_name || selectedSource?.name || sourceNameParam;
 
@@ -88,31 +88,30 @@ export default function HubContent() {
   }, []);
 
   useEffect(() => {
-    const inProgress = Object.values(downloads).filter(
-      (d) => d.status === "downloading",
+    const downloading = Object.values(downloads).filter(
+      (d) => d.status === "downloading" && d.job_id,
     );
-    if (inProgress.length === 0) {
-      clearInterval(pollTimerRef.current);
-      return;
-    }
 
-    pollTimerRef.current = setInterval(async () => {
-      const updates = await Promise.allSettled(
-        inProgress.map((d) => getHubDownload(d.id)),
-      );
-      setDownloads((prev) => {
-        const next = { ...prev };
-        for (const res of updates) {
-          if (res.status === "fulfilled") {
-            const r = res.value;
-            next[`${r.source_name}::${r.dataset_id}`] = r;
-          }
+    for (const d of downloading) {
+      if (watchedJobsRef.current.has(d.job_id)) continue;
+      watchedJobsRef.current.add(d.job_id);
+
+      const refresh = async () => {
+        try {
+          const updated = await getHubDownload(d.id);
+          setDownloads((prev) => ({
+            ...prev,
+            [`${updated.source_name}::${updated.dataset_id}`]: updated,
+          }));
+        } catch {
+          // ignore
+        } finally {
+          watchedJobsRef.current.delete(d.job_id);
         }
-        return next;
-      });
-    }, POLL_INTERVAL_MS);
+      };
 
-    return () => clearInterval(pollTimerRef.current);
+      startJobPolling(d.job_id, refresh, refresh);
+    }
   }, [downloads]);
 
   const getDownloadForDataset = useCallback(
