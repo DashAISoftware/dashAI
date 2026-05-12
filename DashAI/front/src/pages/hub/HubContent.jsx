@@ -25,6 +25,7 @@ import {
 import { enqueueHubDownloadJob } from "../../api/job";
 import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
 const SOURCE_ICONS = {
   HuggingFaceDatasetSource: HubIcon,
@@ -33,6 +34,7 @@ const SOURCE_ICONS = {
 
 export default function HubContent() {
   const { t } = useTranslation(["hub"]);
+  const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const { sourceName: sourceNameParam } = useParams();
   const threePanelLayout = useThreePanelLayout({ storageKey: "hub" });
@@ -96,13 +98,22 @@ export default function HubContent() {
       if (watchedJobsRef.current.has(d.job_id)) continue;
       watchedJobsRef.current.add(d.job_id);
 
-      const refresh = async () => {
+      const onDone = async (isError) => {
         try {
           const updated = await getHubDownload(d.id);
           setDownloads((prev) => ({
             ...prev,
             [`${updated.source_name}::${updated.dataset_id}`]: updated,
           }));
+          if (isError) {
+            enqueueSnackbar(t("hub:downloadFailed") + `: ${d.name}`, {
+              variant: "error",
+            });
+          } else {
+            enqueueSnackbar(t("hub:downloaded") + `: ${d.name}`, {
+              variant: "success",
+            });
+          }
         } catch {
           // ignore
         } finally {
@@ -110,7 +121,11 @@ export default function HubContent() {
         }
       };
 
-      startJobPolling(d.job_id, refresh, refresh);
+      startJobPolling(
+        d.job_id,
+        () => onDone(false),
+        () => onDone(true),
+      );
     }
   }, [downloads]);
 
