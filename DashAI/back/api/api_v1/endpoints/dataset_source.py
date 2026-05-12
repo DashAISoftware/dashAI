@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict
 from urllib.parse import unquote
 
 from fastapi import APIRouter, Depends, Query, status
@@ -10,7 +10,6 @@ from fastapi.exceptions import HTTPException
 from kink import di
 from pydantic import BaseModel
 
-from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.inf.type_inference import infer_types
 
 if TYPE_CHECKING:
@@ -18,15 +17,6 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 router = APIRouter()
-
-
-def _resolve_string(value: Any, default: str) -> str:
-    """Return English text from MultilingualString, or the value if plain str."""
-    if isinstance(value, MultilingualString):
-        return value.en
-    if isinstance(value, str):
-        return value
-    return default
 
 
 def _get_source(source_name: str, registry: "ComponentRegistry"):
@@ -56,34 +46,6 @@ def _get_source(source_name: str, registry: "ComponentRegistry"):
             detail=f"DatasetSource '{source_name}' not found.",
         )
     return sources[source_name]["class"]()
-
-
-@router.get("/", response_model=List[Dict[str, Any]])
-async def list_sources(
-    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-) -> List[Dict[str, Any]]:
-    """Return all registered DatasetSource components.
-
-    Parameters
-    ----------
-    registry : ComponentRegistry
-        Injected component registry.
-
-    Returns
-    -------
-    list[dict]
-        List of source metadata dicts with name, type, display_name, description.
-    """
-    sources = registry._registry.get("DatasetSource", {})
-    return [
-        {
-            "name": name,
-            "type": "DatasetSource",
-            "display_name": _resolve_string(info.get("display_name"), name),
-            "description": _resolve_string(info.get("description"), ""),
-        }
-        for name, info in sources.items()
-    ]
 
 
 @router.get("/{source_name}/search")
