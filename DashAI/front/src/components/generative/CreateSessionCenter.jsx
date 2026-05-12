@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   CircularProgress,
   Stack,
   TextField,
@@ -10,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import ComponentSelector from "../custom/ComponentSelector";
 import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
 import { useCreateSession } from "./CreateSessionContext";
+import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);
@@ -112,40 +112,17 @@ export default function CreateSessionCenter() {
         )}
       </Box>
 
-      <Box
-        sx={{
-          mt: 4,
-          pt: 4,
-          borderTop: 1,
-          borderColor: "divider",
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 2,
-        }}
-      >
-        <Button variant="outlined" onClick={handleBack} disabled={submitting}>
-          {t("common:back")}
-        </Button>
-        {step === 0 ? (
-          <Button
-            variant="contained"
-            onClick={handleNext}
-            disabled={!canGoNext}
-          >
-            {t("common:next")}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!canCreate}
-          >
-            {submitting
-              ? t("common:saving")
-              : t("generative:button.createSession")}
-          </Button>
-        )}
-      </Box>
+      <StepperNavigationFooter
+        onBack={handleBack}
+        onNext={step === 0 ? handleNext : handleCreate}
+        backDisabled={submitting}
+        nextDisabled={step === 0 ? !canGoNext : !canCreate}
+        nextLabel={
+          step === 0 ? t("common:next") : t("generative:button.createSession")
+        }
+        loading={submitting}
+        variant={step === 0 ? "next" : "save"}
+      />
     </Box>
   );
 }

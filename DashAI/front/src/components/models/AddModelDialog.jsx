@@ -381,11 +381,11 @@ function AddModelDialog({
       </DialogContent>
 
       <DialogActions sx={{ p: 4, bgcolor: "background.paper" }}>
-        <Button onClick={handleClose} disabled={loading}>
+        <Button variant="outlined" onClick={handleClose} disabled={loading}>
           {t("common:cancel")}
         </Button>
         {activeStep > 0 && (
-          <Button onClick={handleBack} disabled={loading}>
+          <Button variant="outlined" onClick={handleBack} disabled={loading}>
             {t("common:back")}
           </Button>
         )}

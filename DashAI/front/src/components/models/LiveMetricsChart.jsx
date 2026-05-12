@@ -86,12 +86,15 @@ export function LiveMetricsChart({ run }) {
       };
     }
 
-    const apiUrl = process.env.REACT_APP_API_URL || `${window.location.origin}`;
+    const wsOrigin = new URL(
+      process.env.REACT_APP_API_URL || "/",
+      window.location.origin,
+    ).origin;
     let wsUrl;
     try {
-      wsUrl = new URL(`/api/v1/metrics/ws/${run.id}`, apiUrl);
+      wsUrl = new URL(`/api/v1/metrics/ws/${run.id}`, wsOrigin);
     } catch (e) {
-      console.error("Invalid WebSocket base URL:", apiUrl, e);
+      console.error("Invalid WebSocket base URL:", wsOrigin, e);
       return;
     }
     if (wsUrl.protocol === "http:") {

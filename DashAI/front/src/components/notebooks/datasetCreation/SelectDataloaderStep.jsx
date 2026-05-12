@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import ComponentSelector from "../../custom/ComponentSelector";
-import { Box, Button, CircularProgress, Stack } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 
 /**
  * This component renders a selector for available dataloaders
@@ -91,29 +92,11 @@ export default function SelectDataloaderStep({
         )}
       </Box>
 
-      <Box
-        sx={{
-          pt: 4,
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 2,
-        }}
-      >
-        <Button variant="outlined" onClick={goToPrevStep}>
-          {t("common:back")}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleNext}
-          disabled={!selectedDataloader?.name}
-          data-tour="dataloader-step-next-button"
-        >
-          {t("common:next")}
-        </Button>
-      </Box>
+      <StepperNavigationFooter
+        onBack={goToPrevStep}
+        onNext={handleNext}
+        nextDisabled={!selectedDataloader?.name}
+      />
     </Stack>
   );
 }

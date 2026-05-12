@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Box,
   Button,
-  ButtonGroup,
   Collapse,
   Paper,
   Step,
@@ -356,8 +355,14 @@ export default function InlineExplainerCreator({
           )}
         </Box>
 
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton} disabled={isLoading}>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}
+        >
+          <Button
+            variant="outlined"
+            onClick={handleBackButton}
+            disabled={isLoading}
+          >
             {activeStep === 0 ? t("common:cancel") : t("common:back")}
           </Button>
           <TimestampWrapper
@@ -381,7 +386,7 @@ export default function InlineExplainerCreator({
                 : t("common:next")}
             </LoadingButton>
           </TimestampWrapper>
-        </ButtonGroup>
+        </Box>
       </Paper>
     </Collapse>
   );

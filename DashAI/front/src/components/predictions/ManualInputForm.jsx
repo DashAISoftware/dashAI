@@ -104,6 +104,20 @@ export default function ManualInputForm({
         {t("prediction:label.provideManualInput")}
       </Typography>
 
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button
+          startIcon={<AddCircleOutline />}
+          variant="outlined"
+          onClick={handleAddRow}
+          sx={{
+            textTransform: "none",
+            fontWeight: 500,
+          }}
+        >
+          {t("common:addRow")}
+        </Button>
+      </Box>
+
       <TableContainer
         component={Paper}
         sx={{
@@ -213,20 +227,6 @@ export default function ManualInputForm({
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4, gap: 2 }}>
-        <Button
-          startIcon={<AddCircleOutline />}
-          variant="outlined"
-          onClick={handleAddRow}
-          sx={{
-            textTransform: "none",
-            fontWeight: 500,
-          }}
-        >
-          {t("common:addRow")}
-        </Button>
-      </Box>
     </Box>
   );
 }

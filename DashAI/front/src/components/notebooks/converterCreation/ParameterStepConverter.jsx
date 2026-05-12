@@ -10,6 +10,7 @@ export default function ParameterStepConverter({
   initialParams,
   handleSaveConverter,
   setStep,
+  hideButtons = false,
 }) {
   const tourContext = useTourContext();
   const { t } = useTranslation(["common", "datasets"]);
@@ -55,7 +56,15 @@ export default function ParameterStepConverter({
   }, [tourContext?.stepIndex, tourContext?.run]);
 
   return (
-    <Box flex={1} data-tour="converter-parameters">
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+      data-tour="converter-parameters"
+    >
       <Typography
         variant="h6"
         sx={{ fontWeight: 700, color: "primary.main", mb: 2 }}
@@ -69,6 +78,7 @@ export default function ParameterStepConverter({
           initialValues={initialParams}
           onCancel={() => setStep(0)}
           saveButtonText={t("datasets:button.createConverter")}
+          hideButtons={hideButtons}
         />
       </FormSchemaContainer>
     </Box>

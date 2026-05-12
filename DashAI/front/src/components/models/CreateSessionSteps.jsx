@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
@@ -12,6 +12,7 @@ import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
+import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 
 function CreateSessionSteps({
   backHome,
@@ -255,30 +256,12 @@ function CreateSessionSteps({
         )}
       </Box>
 
-      <Box
-        sx={{
-          mt: 4,
-          pt: 4,
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 2,
-        }}
-      >
-        <Button variant="outlined" onClick={backHome}>
-          {t("common:back")}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={formik.handleSubmit}
-          disabled={!isNextEnabled}
-          data-tour="models-next-button"
-        >
-          {t("models:button.createSession")}
-        </Button>
-      </Box>
+      <StepperNavigationFooter
+        onBack={backHome}
+        onNext={formik.handleSubmit}
+        nextDisabled={!isNextEnabled}
+        nextLabel={t("models:button.createSession")}
+      />
     </Box>
   );
 }

@@ -62,7 +62,16 @@ function FormSchemaWithSelectedModel({
   }, [propertyData.model, propertyData.params, modelToConfigure]);
 
   return (
-    <Stack spacing={4} sx={{ py: 4 }}>
+    <Stack
+      spacing={4}
+      sx={{
+        pt: 4,
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {Boolean(propertyData?.parent) && (
         <>
           <FormSchemaBreadScrumbs />
