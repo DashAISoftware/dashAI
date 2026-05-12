@@ -180,16 +180,16 @@ class PreviewRequest(BaseModel):
         DataLoader parameters (e.g., separator for CSV).
     n_rows : int
         Number of rows to sample (1-500).
-    hub_download_id : int | None
+    datafile_id : int | None
         If set, use this pre-downloaded local file instead of fetching from source.
     selected_file : str | None
-        Relative filename inside the hub download directory.
+        Relative filename inside the datafile directory.
     """
 
     dataloader: str | None = None
     params: Dict[str, Any] = {}
     n_rows: int = 100
-    hub_download_id: int | None = None
+    datafile_id: int | None = None
     selected_file: str | None = None
 
 
@@ -213,11 +213,11 @@ async def preview_dataset_with_params(
     dataset_id : str
         Source-specific dataset identifier (URL-encoded).
     body : PreviewRequest
-        DataLoader name, params, row count, and optional hub_download_id.
+        DataLoader name, params, row count, and optional datafile_id.
     registry : ComponentRegistry
         Injected component registry.
     session_factory
-        Injected DB session factory (used when hub_download_id is set).
+        Injected DB session factory (used when datafile_id is set).
 
     Returns
     -------
@@ -229,18 +229,18 @@ async def preview_dataset_with_params(
     n_rows = max(1, min(body.n_rows, 500))
 
     try:
-        if body.hub_download_id is None:
+        if body.datafile_id is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="hub_download_id is required.",
+                detail="datafile_id is required.",
             )
 
-        from DashAI.back.core.enums.status import HubDownloadStatus
-        from DashAI.back.dependencies.database.models import HubDownload
+        from DashAI.back.core.enums.status import DatafileStatus
+        from DashAI.back.dependencies.database.models import Datafile
 
         with session_factory() as db:
-            hub_row = db.get(HubDownload, body.hub_download_id)
-        if hub_row is None or hub_row.status != HubDownloadStatus.READY:
+            hub_row = db.get(Datafile, body.datafile_id)
+        if hub_row is None or hub_row.status != DatafileStatus.READY:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Hub download not ready or not found.",

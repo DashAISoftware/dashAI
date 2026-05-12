@@ -166,25 +166,21 @@ class DatasetJob(BaseJob):
 
                     if source_name:
                         # --- Hub import path ---
-                        from DashAI.back.core.enums.status import HubDownloadStatus
+                        from DashAI.back.core.enums.status import DatafileStatus
                         from DashAI.back.dependencies.database.models import (
-                            HubDownload,
+                            Datafile,
                         )
 
-                        hub_download_id = params.get("hub_download_id")
+                        datafile_id = params.get("datafile_id")
                         selected_file = params.get("selected_file")
 
-                        if hub_download_id is None:
-                            raise JobError(
-                                "hub_download_id is required for hub imports."
-                            )
+                        if datafile_id is None:
+                            raise JobError("datafile_id is required for hub imports.")
 
                         with session_factory() as db:
-                            hub_row = db.get(HubDownload, hub_download_id)
-                        if hub_row is None or hub_row.status != HubDownloadStatus.READY:
-                            raise JobError(
-                                f"HubDownload {hub_download_id} is not ready."
-                            )
+                            hub_row = db.get(Datafile, datafile_id)
+                        if hub_row is None or hub_row.status != DatafileStatus.READY:
+                            raise JobError(f"Datafile {datafile_id} is not ready.")
                         hub_work_dir = hub_row.local_path
                         if selected_file:
                             file_path_hub = str(Path(hub_work_dir) / selected_file)

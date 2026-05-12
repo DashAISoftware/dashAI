@@ -17,12 +17,12 @@ import HubImportPanel from "../../components/hub/HubImportPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
 import {
-  deleteHubDownload,
+  deleteDatafile,
   getDatasetSources,
-  getHubDownload,
-  listHubDownloads,
+  getDatafile,
+  listDatafiles,
 } from "../../api/hub";
-import { enqueueHubDownloadJob } from "../../api/job";
+import { enqueueDatafileJob } from "../../api/job";
 import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
@@ -80,7 +80,7 @@ export default function HubContent() {
   }, [sourceNameParam]);
 
   useEffect(() => {
-    listHubDownloads()
+    listDatafiles()
       .then((rows) => {
         const map = {};
         for (const r of rows) map[`${r.source_name}::${r.dataset_id}`] = r;
@@ -100,7 +100,7 @@ export default function HubContent() {
 
       const onDone = async (isError) => {
         try {
-          const updated = await getHubDownload(d.id);
+          const updated = await getDatafile(d.id);
           setDownloads((prev) => ({
             ...prev,
             [`${updated.source_name}::${updated.dataset_id}`]: updated,
@@ -141,7 +141,7 @@ export default function HubContent() {
     if (!selectedDataset || !sourceNameParam) return;
     setDownloadLoading(true);
     try {
-      const row = await enqueueHubDownloadJob(
+      const row = await enqueueDatafileJob(
         sourceNameParam,
         selectedDataset.id,
         selectedDataset.name,
@@ -159,7 +159,7 @@ export default function HubContent() {
 
   const handleDeleteDownload = async (downloadId) => {
     try {
-      await deleteHubDownload(downloadId);
+      await deleteDatafile(downloadId);
       setDownloads((prev) => {
         const next = { ...prev };
         for (const key of Object.keys(next)) {
@@ -246,7 +246,7 @@ export default function HubContent() {
                   : selectedDataset
               }
               sourceName={importSourceName}
-              hubDownload={importDownload}
+              datafile={importDownload}
               step={importStep}
               onStepChange={setImportStep}
               selectedLoader={selectedDataloader}

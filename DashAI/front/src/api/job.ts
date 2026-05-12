@@ -1,5 +1,5 @@
 import api from "./api";
-import type { HubDownload } from "./hub";
+import type { Datafile } from "./hub";
 
 export const isQueueEmpty = async (): Promise<boolean> => {
   const response = await api.get<{ is_empty: boolean }>("/v1/job/is_empty");
@@ -237,12 +237,12 @@ export const enqueuePipelineJob = async (
   return response.data;
 };
 
-export const enqueueHubDownloadJob = async (
+export const enqueueDatafileJob = async (
   source_name: string,
   dataset_id: string,
   name: string,
-): Promise<HubDownload> => {
-  const response = await api.post<HubDownload>("/v1/hub-download/", {
+): Promise<Datafile> => {
+  const response = await api.post<Datafile>("/v1/datafile/", {
     source_name,
     dataset_id,
     name,

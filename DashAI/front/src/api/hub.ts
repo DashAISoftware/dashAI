@@ -77,7 +77,7 @@ export const previewHubDataset = async (
       dataloader,
       params: params ?? {},
       n_rows: nRows,
-      hub_download_id: hubDownloadId ?? null,
+      datafile_id: hubDownloadId ?? null,
       selected_file: selectedFile ?? null,
     },
   );
@@ -98,42 +98,40 @@ export const importHubDataset = async (
   return response.data;
 };
 
-// ---- Hub Downloads ----
+// ---- Datafiles ----
 
-const hubDownloadEndpoint = "/v1/hub-download";
+const datafileEndpoint = "/v1/datafile";
 
-export type HubDownloadStatus = "downloading" | "ready" | "error";
+export type DatafileStatus = "downloading" | "ready" | "error";
 
-export interface HubDownload {
+export interface Datafile {
   id: number;
   source_name: string;
   dataset_id: string;
   name: string;
   local_path: string | null;
-  status: HubDownloadStatus;
+  status: DatafileStatus;
   error_message: string | null;
   created: string | null;
   last_modified: string | null;
   job_id?: string;
 }
 
-export const listHubDownloads = async (): Promise<HubDownload[]> => {
-  const response = await api.get<HubDownload[]>(`${hubDownloadEndpoint}/`);
+export const listDatafiles = async (): Promise<Datafile[]> => {
+  const response = await api.get<Datafile[]>(`${datafileEndpoint}/`);
   return response.data;
 };
 
-export const getHubDownload = async (id: number): Promise<HubDownload> => {
-  const response = await api.get<HubDownload>(`${hubDownloadEndpoint}/${id}`);
+export const getDatafile = async (id: number): Promise<Datafile> => {
+  const response = await api.get<Datafile>(`${datafileEndpoint}/${id}`);
   return response.data;
 };
 
-export const deleteHubDownload = async (id: number): Promise<void> => {
-  await api.delete(`${hubDownloadEndpoint}/${id}`);
+export const deleteDatafile = async (id: number): Promise<void> => {
+  await api.delete(`${datafileEndpoint}/${id}`);
 };
 
-export const listHubDownloadFiles = async (id: number): Promise<string[]> => {
-  const response = await api.get<string[]>(
-    `${hubDownloadEndpoint}/${id}/files`,
-  );
+export const listDatafileFiles = async (id: number): Promise<string[]> => {
+  const response = await api.get<string[]>(`${datafileEndpoint}/${id}/files`);
   return response.data;
 };

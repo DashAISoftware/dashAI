@@ -26,7 +26,7 @@ import LoadingDots from "../shared/LoadingDots";
  *
  * @param {object|null} dataset - Selected DatasetEntry, or null if none.
  * @param {string|null} sourceName - Active DatasetSource class name.
- * @param {object|null} download - HubDownload record for this dataset (if any).
+ * @param {object|null} download - Datafile record for this dataset (if any).
  * @param {boolean} downloadLoading - True while the download record is being created.
  * @param {function} onStartDownload - Called when user clicks "Download to DashAI".
  * @param {function} onStartImport - Called when download is ready and user clicks "Add to DashAI".

@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Box, Collapse, Divider, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Collapse,
+  Divider,
+  IconButton,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -22,7 +29,9 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
         py: 0.5,
         px: 1,
         borderRadius: 1,
-        "&:hover": { bgcolor: theme.palette.ui?.hover ?? theme.palette.action.hover },
+        "&:hover": {
+          bgcolor: theme.palette.ui?.hover ?? theme.palette.action.hover,
+        },
       }}
       onClick={onToggle}
     >
@@ -72,11 +81,15 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
 /**
  * Left sidebar for the Hub module — shows downloaded datasets only.
  *
- * @param {Array} downloads - List of HubDownload records to show.
+ * @param {Array} downloads - List of Datafile records to show.
  * @param {function} onDeleteDownload - Called with download id when user deletes.
  * @param {function} onImportDownload - Called with download record when user clicks Add.
  */
-export default function HubLeftBar({ downloads = [], onDeleteDownload, onImportDownload }) {
+export default function HubLeftBar({
+  downloads = [],
+  onDeleteDownload,
+  onImportDownload,
+}) {
   const { t } = useTranslation(["hub", "common"]);
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");

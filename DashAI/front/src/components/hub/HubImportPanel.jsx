@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { createDataset } from "../../api/datasets";
 import {
   importHubDataset,
-  listHubDownloadFiles,
+  listDatafileFiles,
   previewHubDataset,
 } from "../../api/hub";
 import { getComponents } from "../../api/component";
@@ -30,13 +30,13 @@ import PreviewDataset from "../notebooks/datasetCreation/PreviewDataset";
 /**
  * Full-page import panel for Hub datasets.
  *
- * Without hubDownload: step 0 = dataloader, step 1 = preview
- * With hubDownload:    step 0 = file select, step 1 = dataloader, step 2 = preview
+ * Without datafile: step 0 = dataloader, step 1 = preview
+ * With datafile:    step 0 = file select, step 1 = dataloader, step 2 = preview
  */
 export default function HubImportPanel({
   dataset,
   sourceName,
-  hubDownload = null,
+  datafile = null,
   step,
   onStepChange,
   selectedLoader,
@@ -55,8 +55,8 @@ export default function HubImportPanel({
   const setStepValue = onStepChange ?? setLocalStep;
   const selectedValue = selectedLoader ?? localSelectedLoader;
 
-  // Whether hub download flow adds an extra file-select step at position 0
-  const hasFileStep = hubDownload != null;
+  // Whether datafile flow adds an extra file-select step at position 0
+  const hasFileStep = datafile != null;
   // Adjusted step indices for dataloader / preview
   const dataloaderStep = hasFileStep ? 1 : 0;
   const previewStep = hasFileStep ? 2 : 1;
@@ -115,10 +115,10 @@ export default function HubImportPanel({
 
   // Load files when entering file-select step
   useEffect(() => {
-    if (!hasFileStep || stepValue !== 0 || !hubDownload) return;
+    if (!hasFileStep || stepValue !== 0 || !datafile) return;
     let isMounted = true;
     setLoadingFiles(true);
-    listHubDownloadFiles(hubDownload.id)
+    listDatafileFiles(datafile.id)
       .then((f) => {
         if (!isMounted) return;
         setFiles(f);
@@ -133,7 +133,7 @@ export default function HubImportPanel({
     return () => {
       isMounted = false;
     };
-  }, [hasFileStep, stepValue, hubDownload?.id]);
+  }, [hasFileStep, stepValue, datafile?.id]);
 
   // Preview
   useEffect(() => {
@@ -158,7 +158,7 @@ export default function HubImportPanel({
         effectiveRows,
         selectedValue?.name,
         formValues,
-        hubDownload?.id,
+        datafile?.id,
         selectedFile ?? undefined,
       )
         .then((data) => {
@@ -184,7 +184,7 @@ export default function HubImportPanel({
     dataset?.id,
     sourceName,
     selectedValue?.name,
-    hubDownload?.id,
+    datafile?.id,
     selectedFile,
     JSON.stringify(formValues || {}),
   ]);
@@ -204,8 +204,8 @@ export default function HubImportPanel({
         inferred_types: columnTypes,
         column_renames: columnRenames,
       };
-      if (hubDownload) {
-        importParams.hub_download_id = hubDownload.id;
+      if (datafile) {
+        importParams.datafile_id = datafile.id;
         if (selectedFile) importParams.selected_file = selectedFile;
       }
       await importHubDataset(sourceName, dataset.id, created.id, importParams);

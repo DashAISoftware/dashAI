@@ -22,10 +22,10 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
     ConverterStatus,
+    DatafileStatus,
     DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
-    HubDownloadStatus,
     PluginStatus,
     PredictionStatus,
     RunStatus,
@@ -720,7 +720,7 @@ class Explorer(Base):
             self.end_time = None
 
 
-class HubDownload(Base):
+class Datafile(Base):
     __tablename__ = "datafile"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -729,9 +729,9 @@ class HubDownload(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     local_path: Mapped[str] = mapped_column(String, nullable=True)
     status: Mapped[Enum] = mapped_column(
-        Enum(HubDownloadStatus),
+        Enum(DatafileStatus),
         nullable=False,
-        default=HubDownloadStatus.DOWNLOADING,
+        default=DatafileStatus.DOWNLOADING,
     )
     error_message: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)

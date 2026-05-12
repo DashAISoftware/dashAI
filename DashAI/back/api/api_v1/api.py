@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from DashAI.back.api.api_v1.endpoints.components import router as components
 from DashAI.back.api.api_v1.endpoints.converters import router as converters
+from DashAI.back.api.api_v1.endpoints.datafile import router as datafile_router
 from DashAI.back.api.api_v1.endpoints.dataset_source import router as dataset_source
 from DashAI.back.api.api_v1.endpoints.datasets import router as datasets
 from DashAI.back.api.api_v1.endpoints.explainers import router as explainers
@@ -13,7 +14,6 @@ from DashAI.back.api.api_v1.endpoints.generative_session import (
     router as generative_session,
 )
 from DashAI.back.api.api_v1.endpoints.hardware import router as hardware
-from DashAI.back.api.api_v1.endpoints.hub_download import router as hub_download
 from DashAI.back.api.api_v1.endpoints.jobs import router as jobs
 from DashAI.back.api.api_v1.endpoints.metrics import router as metrics
 from DashAI.back.api.api_v1.endpoints.model_sessions import router as model_sessions
@@ -43,4 +43,4 @@ api_router_v1.include_router(metrics, prefix="/metrics")
 api_router_v1.include_router(hardware, prefix="/hardware")
 api_router_v1.include_router(scoring, prefix="/scoring")
 api_router_v1.include_router(dataset_source, prefix="/dataset-source")
-api_router_v1.include_router(hub_download, prefix="/hub-download")
+api_router_v1.include_router(datafile_router, prefix="/datafile")

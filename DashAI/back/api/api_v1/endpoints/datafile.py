@@ -1,4 +1,4 @@
-"""Hub download management endpoints."""
+"""Datafile management endpoints."""
 
 import logging
 import os
@@ -11,8 +11,8 @@ from kink import di
 from pydantic import BaseModel
 from sqlalchemy import exc
 
-from DashAI.back.core.enums.status import HubDownloadStatus
-from DashAI.back.dependencies.database.models import HubDownload
+from DashAI.back.core.enums.status import DatafileStatus
+from DashAI.back.dependencies.database.models import Datafile
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _row_to_dict(row: HubDownload) -> Dict[str, Any]:
+def _row_to_dict(row: Datafile) -> Dict[str, Any]:
     return {
         "id": row.id,
         "source_name": row.source_name,
@@ -47,9 +47,9 @@ class CreateDownloadRequest(BaseModel):
 async def list_downloads(
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ) -> List[Dict[str, Any]]:
-    """Return all hub download records."""
+    """Return all datafile records."""
     with session_factory() as db:
-        rows = db.query(HubDownload).order_by(HubDownload.created.desc()).all()
+        rows = db.query(Datafile).order_by(Datafile.created.desc()).all()
         return [_row_to_dict(r) for r in rows]
 
 
@@ -60,12 +60,12 @@ async def create_download(
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
     job_queue=Depends(lambda: di["job_queue"]),
 ) -> Dict[str, Any]:
-    """Create a HubDownload record and enqueue the download job.
+    """Create a Datafile record and enqueue the download job.
 
     If a record for (source_name, dataset_id) already exists and its status is
     READY, it is returned immediately without re-downloading.
     """
-    from DashAI.back.job.hub_download_job import HubDownloadJob
+    from DashAI.back.job.datafile_job import DatafileJob
 
     sources = registry._registry.get("DatasetSource", {})
     if body.source_name not in sources:
@@ -76,20 +76,20 @@ async def create_download(
 
     with session_factory() as db:
         existing = (
-            db.query(HubDownload)
+            db.query(Datafile)
             .filter(
-                HubDownload.source_name == body.source_name,
-                HubDownload.dataset_id == body.dataset_id,
+                Datafile.source_name == body.source_name,
+                Datafile.dataset_id == body.dataset_id,
             )
             .first()
         )
         if existing is not None:
-            if existing.status == HubDownloadStatus.READY:
+            if existing.status == DatafileStatus.READY:
                 return _row_to_dict(existing)
-            if existing.status == HubDownloadStatus.DOWNLOADING:
+            if existing.status == DatafileStatus.DOWNLOADING:
                 return _row_to_dict(existing)
             # ERROR — allow retry: reset to downloading
-            existing.status = HubDownloadStatus.DOWNLOADING
+            existing.status = DatafileStatus.DOWNLOADING
             existing.error_message = None
             existing.local_path = None
             existing.name = body.name
@@ -104,11 +104,11 @@ async def create_download(
                 ) from e
             row = existing
         else:
-            row = HubDownload(
+            row = Datafile(
                 source_name=body.source_name,
                 dataset_id=body.dataset_id,
                 name=body.name,
-                status=HubDownloadStatus.DOWNLOADING,
+                status=DatafileStatus.DOWNLOADING,
             )
             db.add(row)
             try:
@@ -121,12 +121,12 @@ async def create_download(
                     detail="DB error creating download record.",
                 ) from e
 
-        hub_download_id = row.id
+        datafile_id = row.id
         result_dict = _row_to_dict(row)
 
-    job = HubDownloadJob(
+    job = DatafileJob(
         kwargs={
-            "hub_download_id": hub_download_id,
+            "datafile_id": datafile_id,
             "source_name": body.source_name,
             "dataset_source_id": body.dataset_id,
         }
@@ -137,36 +137,36 @@ async def create_download(
     return result_dict
 
 
-@router.get("/{hub_download_id}", response_model=Dict[str, Any])
+@router.get("/{datafile_id}", response_model=Dict[str, Any])
 async def get_download(
-    hub_download_id: int,
+    datafile_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ) -> Dict[str, Any]:
-    """Return a single hub download record by id."""
+    """Return a single datafile record by id."""
     with session_factory() as db:
-        row = db.get(HubDownload, hub_download_id)
+        row = db.get(Datafile, datafile_id)
         if row is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"HubDownload {hub_download_id} not found.",
+                detail=f"Datafile {datafile_id} not found.",
             )
         return _row_to_dict(row)
 
 
-@router.delete("/{hub_download_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{datafile_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_download(
-    hub_download_id: int,
+    datafile_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ) -> None:
-    """Delete a hub download record and its cached files."""
+    """Delete a datafile record and its cached files."""
     import shutil
 
     with session_factory() as db:
-        row = db.get(HubDownload, hub_download_id)
+        row = db.get(Datafile, datafile_id)
         if row is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"HubDownload {hub_download_id} not found.",
+                detail=f"Datafile {datafile_id} not found.",
             )
         local_path = row.local_path
         try:
@@ -183,20 +183,20 @@ async def delete_download(
         shutil.rmtree(local_path, ignore_errors=True)
 
 
-@router.get("/{hub_download_id}/files", response_model=List[str])
+@router.get("/{datafile_id}/files", response_model=List[str])
 async def list_files(
-    hub_download_id: int,
+    datafile_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ) -> List[str]:
-    """Return the list of files in a ready hub download directory."""
+    """Return the list of files in a ready datafile directory."""
     with session_factory() as db:
-        row = db.get(HubDownload, hub_download_id)
+        row = db.get(Datafile, datafile_id)
         if row is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"HubDownload {hub_download_id} not found.",
+                detail=f"Datafile {datafile_id} not found.",
             )
-        if row.status != HubDownloadStatus.READY or not row.local_path:
+        if row.status != DatafileStatus.READY or not row.local_path:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Download is not ready yet.",

@@ -55,7 +55,7 @@ class PredictionStatus(Enum):
     ERROR = 4
 
 
-class HubDownloadStatus(Enum):
+class DatafileStatus(Enum):
     DOWNLOADING = "downloading"
     READY = "ready"
     ERROR = "error"
