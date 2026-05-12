@@ -14,6 +14,7 @@ import HubLeftBar from "../../components/hub/HubLeftBar";
 import DatasetGrid from "../../components/hub/DatasetGrid";
 import DatasetDetail from "../../components/hub/DatasetDetail";
 import HubImportPanel from "../../components/hub/HubImportPanel";
+import DatafileInfoPanel from "../../components/hub/DatafileInfoPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
 import {
@@ -146,6 +147,9 @@ export default function HubContent() {
         sourceNameParam,
         selectedDataset.id,
         selectedDataset.name,
+        selectedDataset.description ?? "",
+        selectedDataset.tags ?? [],
+        selectedDataset.url ?? "",
       );
       setDownloads((prev) => ({
         ...prev,
@@ -281,7 +285,11 @@ export default function HubContent() {
         <RightPanel toggleButtonTop="50%">
           {importMode ? (
             importStep === 0 ? (
-              <ComponentDetailsPanel component={selectedDataloader} />
+              importDownload ? (
+                <DatafileInfoPanel datafile={importDownload} />
+              ) : (
+                <ComponentDetailsPanel component={selectedDataloader} />
+              )
             ) : (
               <DataloaderConfigBar
                 selectedDataloader={selectedDataloader?.name}

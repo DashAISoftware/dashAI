@@ -1,5 +1,6 @@
 """Job for downloading a dataset from an external hub source."""
 
+import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -83,6 +84,12 @@ class DatafileJob(BaseJob):
                     raise JobError(f"Datafile row {datafile_id} not found.")
                 row.status = DatafileStatus.READY
                 row.local_path = str(download_dir)
+                size_bytes = sum(
+                    f.stat().st_size for f in download_dir.rglob("*") if f.is_file()
+                )
+                row.size_bytes = size_bytes
+                row.description = self.kwargs.get("description", "")
+                row.tags = json.dumps(self.kwargs.get("tags", []))
                 try:
                     db.commit()
                 except exc.SQLAlchemyError as e:

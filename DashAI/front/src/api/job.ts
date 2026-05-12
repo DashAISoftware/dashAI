@@ -241,11 +241,17 @@ export const enqueueDatafileJob = async (
   source_name: string,
   dataset_id: string,
   name: string,
+  description: string = "",
+  tags: string[] = [],
+  source_url: string = "",
 ): Promise<Datafile> => {
   const response = await api.post<Datafile>("/v1/datafile/", {
     source_name,
     dataset_id,
     name,
+    description,
+    tags,
+    source_url,
   });
   return response.data;
 };

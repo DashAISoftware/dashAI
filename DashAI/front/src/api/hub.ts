@@ -112,6 +112,10 @@ export interface Datafile {
   local_path: string | null;
   status: DatafileStatus;
   error_message: string | null;
+  size_bytes: number | null;
+  description: string;
+  tags: string[];
+  source_url: string | null;
   created: string | null;
   last_modified: string | null;
   job_id?: string;

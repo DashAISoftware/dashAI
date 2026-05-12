@@ -1,10 +1,11 @@
 import logging
 import pathlib
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     DateTime,
     Enum,
@@ -13,6 +14,7 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
@@ -734,6 +736,10 @@ class Datafile(Base):
         default=DatafileStatus.DOWNLOADING,
     )
     error_message: Mapped[str] = mapped_column(String, nullable=True)
+    size_bytes: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array
+    source_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,

@@ -1,5 +1,6 @@
 """Datafile management endpoints."""
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -32,6 +33,10 @@ def _row_to_dict(row: Datafile) -> Dict[str, Any]:
         "local_path": row.local_path,
         "status": row.status.value,
         "error_message": row.error_message,
+        "size_bytes": row.size_bytes,
+        "description": row.description,
+        "tags": json.loads(row.tags) if row.tags else [],
+        "source_url": row.source_url,
         "created": row.created.isoformat() if row.created else None,
         "last_modified": row.last_modified.isoformat() if row.last_modified else None,
     }
@@ -41,6 +46,9 @@ class CreateDownloadRequest(BaseModel):
     source_name: str
     dataset_id: str
     name: str
+    description: str = ""
+    tags: list[str] = []
+    source_url: str = ""
 
 
 @router.get("/", response_model=List[Dict[str, Any]])
@@ -93,6 +101,9 @@ async def create_download(
             existing.error_message = None
             existing.local_path = None
             existing.name = body.name
+            existing.description = body.description
+            existing.tags = json.dumps(body.tags)
+            existing.source_url = body.source_url or None
             try:
                 db.commit()
                 db.refresh(existing)
@@ -108,6 +119,9 @@ async def create_download(
                 source_name=body.source_name,
                 dataset_id=body.dataset_id,
                 name=body.name,
+                description=body.description,
+                tags=json.dumps(body.tags),
+                source_url=body.source_url or None,
                 status=DatafileStatus.DOWNLOADING,
             )
             db.add(row)
@@ -129,6 +143,8 @@ async def create_download(
             "datafile_id": datafile_id,
             "source_name": body.source_name,
             "dataset_source_id": body.dataset_id,
+            "description": body.description,
+            "tags": body.tags,
         }
     )
     job_result = job_queue.put(job)
