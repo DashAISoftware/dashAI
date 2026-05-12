@@ -1,5 +1,6 @@
-import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
+import { useTheme } from "@mui/material/styles";
 
 /**
  * Card displaying a single dataset from the Hub.
@@ -9,6 +10,7 @@ import StorageIcon from "@mui/icons-material/Storage";
  * @param {function} onSelect - Called when the card is clicked.
  */
 export default function DatasetCard({ dataset, selected, onSelect }) {
+  const theme = useTheme();
   const formatSize = (bytes) => {
     if (!bytes) return null;
     if (bytes < 1024) return `${bytes} B`;
@@ -32,7 +34,7 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
         display: "flex",
         flexDirection: "column",
         gap: 0.75,
-        height: 160,
+        height: 200,
         overflow: "hidden",
         minWidth: 0,
       }}
@@ -62,13 +64,27 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
         </Typography>
       )}
 
-      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-        {dataset.tags?.slice(0, 3).map((tag) => (
-          <Chip key={tag} label={tag} size="small" variant="outlined" />
-        ))}
-      </Stack>
-
       <Box sx={{ flexGrow: 1 }} />
+
+      <Box sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+        {dataset.tags?.slice(0, 3).map((tag) => (
+          <Box
+            key={tag}
+            sx={{
+              ...theme.typography.statusBadge,
+              lineHeight: 1,
+              border: `1px solid ${theme.palette.divider}`,
+              color: theme.palette.text.disabled,
+              px: "7px",
+              py: "2px",
+              borderRadius: "2px",
+              background: theme.palette.background.default,
+            }}
+          >
+            {tag}
+          </Box>
+        ))}
+      </Box>
 
       {dataset.size_bytes != null && (
         <Stack direction="row" spacing={1} alignItems="center">
