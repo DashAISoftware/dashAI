@@ -9,6 +9,7 @@
   "tags": "Tags",
   "source": "Source",
   "size": "Size",
+  "notAvailable": "Not available",
   "viewOnSource": "View on source",
   "addToDashAI": "Add to DashAI",
   "download": "Download",

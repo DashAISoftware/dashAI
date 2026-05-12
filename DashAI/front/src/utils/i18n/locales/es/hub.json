@@ -9,6 +9,7 @@
   "tags": "Etiquetas",
   "source": "Fuente",
   "size": "Tamaño",
+  "notAvailable": "No disponible",
   "viewOnSource": "Ver en la fuente",
   "addToDashAI": "Agregar a DashAI",
   "download": "Descargar",

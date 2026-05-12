@@ -19,6 +19,7 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getDatasetInfo } from "../../api/hub";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import LoadingDots from "../shared/LoadingDots";
 
 /**
  * Right panel — detailed view of a selected Hub dataset with action buttons.
@@ -41,6 +42,7 @@ export default function DatasetDetail({
   const { t } = useTranslation(["hub"]);
   const theme = useTheme();
   const [extraInfo, setExtraInfo] = useState(null);
+  const [infoLoading, setInfoLoading] = useState(false);
 
   const formatSize = (bytes) => {
     if (!bytes) return null;
@@ -53,12 +55,15 @@ export default function DatasetDetail({
   useEffect(() => {
     if (!dataset || !sourceName) {
       setExtraInfo(null);
+      setInfoLoading(false);
       return;
     }
     setExtraInfo(null);
+    setInfoLoading(true);
     getDatasetInfo(sourceName, dataset.id)
       .then((info) => setExtraInfo(info))
-      .catch(() => setExtraInfo({}));
+      .catch(() => setExtraInfo({}))
+      .finally(() => setInfoLoading(false));
   }, [dataset?.id, sourceName]);
 
   const renderActionButton = () => {
@@ -222,16 +227,20 @@ export default function DatasetDetail({
             <Divider sx={{ mb: 1.5 }} />
 
             <Stack spacing={1}>
-              {(extraInfo?.size_bytes ?? dataset.size_bytes) != null && (
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("hub:size")}
-                  </Typography>
-                  <Typography variant="body2">
-                    {formatSize(extraInfo?.size_bytes ?? dataset.size_bytes)}
-                  </Typography>
-                </Box>
-              )}
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  {t("hub:size")}
+                </Typography>
+                <Typography variant="body2">
+                  {infoLoading ? (
+                    <LoadingDots />
+                  ) : (extraInfo?.size_bytes ?? dataset.size_bytes) != null ? (
+                    formatSize(extraInfo?.size_bytes ?? dataset.size_bytes)
+                  ) : (
+                    t("hub:notAvailable")
+                  )}
+                </Typography>
+              </Box>
 
               {(extraInfo?.tags ?? dataset.tags)?.length > 0 && (
                 <Box>
