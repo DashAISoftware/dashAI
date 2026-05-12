@@ -7,12 +7,39 @@ import React, {
   useRef,
 } from "react";
 import Joyride from "react-joyride";
+import GlobalStyles from "@mui/material/GlobalStyles";
 import { useTranslation } from "react-i18next";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
 import { tourStyles } from "./tourStyles";
 import { CustomTooltip } from "./CustomTooltip";
 import { useTourRegistry } from "../../contexts/TourRegistryContext";
+
+// hard-light blend: result = 1 - 2*(1-src)*(1-dst) when src > 0.5
+// Inverse: src = 1 - (1-target) / (2*(1-dst))
+// For near-black dst ≈ 0, simplifies to src ≈ (1 + target) / 2
+function hardLightInverse(hexColor) {
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+  const ri = Math.min(255, Math.round((255 + r) / 2));
+  const gi = Math.min(255, Math.round((255 + g) / 2));
+  const bi = Math.min(255, Math.round((255 + b) / 2));
+  return `rgb(${ri},${gi},${bi})`;
+}
+
+const SpotlightHighlight = () => (
+  <GlobalStyles
+    styles={(theme) => {
+      const c = hardLightInverse(theme.palette.primary.main);
+      return {
+        ".react-joyride__spotlight": {
+          boxShadow: `0 0 0 2px ${c}, 0 0 14px ${c} !important`,
+        },
+      };
+    }}
+  />
+);
 
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
@@ -115,6 +142,7 @@ export const TourProvider = ({
 
   return (
     <TourContext.Provider value={contextValue}>
+      <SpotlightHighlight />
       <Joyride
         steps={tourData.steps}
         run={run}

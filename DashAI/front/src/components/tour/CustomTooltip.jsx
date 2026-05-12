@@ -5,19 +5,16 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 
-// Half-diagonal of the rotated square = visible arrow protrusion in px
 const ARROW = 8;
 
-function getArrowSx(placement) {
+function getArrowSx(placement, bg) {
   if (!placement || placement === "center" || placement === "auto") return null;
   const base = {
     position: "absolute",
     width: ARROW * 2,
     height: ARROW * 2,
-    backgroundColor: "#fff",
+    backgroundColor: bg,
     transform: "rotate(45deg)",
-    // lower z-index so it sits behind the tooltip content but is part of the
-    // parent's filter stacking context
     zIndex: 0,
   };
   if (placement.startsWith("top"))
@@ -45,17 +42,18 @@ export const CustomTooltip = ({
   const { t } = useTranslation(["common"]);
   const theme = useTheme();
   const isInteractive = step.isInteractive;
-  const arrowSx = getArrowSx(step.placement);
+
+  const bg = theme.palette.background.paper;
+  const arrowSx = getArrowSx(step.placement, bg);
 
   return (
     <Box
       {...tooltipProps}
       sx={{
-        backgroundColor: "#fff",
+        backgroundColor: bg,
         borderRadius: "8px",
-        // drop-shadow on the Box includes the child arrow in its shape,
-        // so the shadow follows the combined silhouette with no visible seam.
-        filter: "drop-shadow(0 3px 10px rgba(0, 0, 0, 0.18))",
+        border: `1px solid ${theme.palette.ui.borderMed}`,
+        filter: "drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4))",
         maxWidth: "30ch",
         padding: "20px",
         position: "relative",
@@ -63,10 +61,8 @@ export const CustomTooltip = ({
         zIndex: 1,
       }}
     >
-      {/* Custom arrow — part of the Box's filter context */}
       {arrowSx && <Box sx={arrowSx} />}
 
-      {/* Close button */}
       <IconButton
         {...closeProps}
         size="small"
@@ -74,15 +70,14 @@ export const CustomTooltip = ({
           position: "absolute",
           top: 8,
           right: 8,
-          color: "#999",
+          color: theme.palette.text.secondary,
           zIndex: 2,
-          "&:hover": { color: "#333" },
+          "&:hover": { color: theme.palette.text.primary },
         }}
       >
         <CloseIcon fontSize="small" />
       </IconButton>
 
-      {/* Step counter */}
       <Typography
         variant="overline"
         sx={{
@@ -99,32 +94,33 @@ export const CustomTooltip = ({
         {t("common:step")} {index + 1} / {size}
       </Typography>
 
-      {/* Content */}
       <Box
         sx={{
           fontSize: "14px",
           lineHeight: "1.6",
-          color: "#333",
+          color: theme.palette.text.primary,
           pr: 2,
           position: "relative",
           zIndex: 2,
           "& h3": {
             fontSize: "16px",
-            fontWeight: "bold",
+            fontWeight: 600,
             marginBottom: "8px",
             marginTop: 0,
-            color: "#333",
+            color: theme.palette.text.primary,
           },
           "& p": { marginBottom: "8px", marginTop: 0 },
           "& ul": { marginBottom: "8px", marginTop: "8px" },
           "& li": { marginBottom: "4px" },
-          "& strong": { fontWeight: 600, color: "#000" },
+          "& strong": {
+            fontWeight: 600,
+            color: theme.palette.text.primary,
+          },
         }}
       >
         {step.content}
       </Box>
 
-      {/* Footer: Skip (left) | Back + Next (right) */}
       <Box
         sx={{
           display: "flex",
@@ -142,10 +138,9 @@ export const CustomTooltip = ({
               variant="text"
               size="small"
               sx={{
-                color: "#999",
+                color: theme.palette.text.secondary,
                 textTransform: "none",
                 fontSize: "12px",
-                "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
               }}
             >
               {t("common:skipTour")}
