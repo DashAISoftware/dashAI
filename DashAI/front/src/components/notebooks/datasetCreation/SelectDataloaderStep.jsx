@@ -26,6 +26,15 @@ export default function SelectDataloaderStep({
 
   const handleNext = () => {
     goToNextStep();
+    if (tourContext?.run) {
+      const observer = new MutationObserver(() => {
+        if (document.querySelector('[data-tour="upload-area"]')) {
+          observer.disconnect();
+          tourContext.nextStep();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
   };
 
   return (
@@ -71,6 +80,9 @@ export default function SelectDataloaderStep({
         onBack={goToPrevStep}
         onNext={handleNext}
         nextDisabled={!selectedDataloader?.name}
+        nextDataTour={
+          tourContext?.run ? "dataloader-step-next-button" : undefined
+        }
       />
     </Stack>
   );

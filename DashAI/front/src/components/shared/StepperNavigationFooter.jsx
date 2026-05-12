@@ -30,6 +30,7 @@ export default function StepperNavigationFooter({
   variant = "next",
   loading = false,
   sx = {},
+  nextDataTour = null,
 }) {
   const { t } = useTranslation(["common"]);
 
@@ -65,6 +66,7 @@ export default function StepperNavigationFooter({
           variant="contained"
           onClick={onNext}
           disabled={nextDisabled || loading}
+          data-tour={nextDataTour || undefined}
           sx={{
             position: "relative",
           }}
@@ -104,4 +106,5 @@ StepperNavigationFooter.propTypes = {
   variant: PropTypes.oneOf(["next", "save"]),
   loading: PropTypes.bool,
   sx: PropTypes.object,
+  nextDataTour: PropTypes.string,
 };
