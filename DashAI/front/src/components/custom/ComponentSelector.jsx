@@ -37,6 +37,7 @@ function ComponentSelector({
   searchPlaceholder,
   emptyText,
   getIcon,
+  tourDataFor = null,
 }) {
   const { t } = useTranslation("custom");
   const [search, setSearch] = useState("");
@@ -195,11 +196,15 @@ function ComponentSelector({
                     {items.map((component) => {
                       const isSelected = selected?.name === component.name;
                       const icon = getIcon?.(component);
+                      const isCsvComponent =
+                        tourDataFor &&
+                        component.name.toLowerCase().includes("csv");
                       return (
                         <Paper
                           key={component.name}
                           elevation={0}
                           onClick={() => handleSelect(component)}
+                          data-tour={isCsvComponent ? tourDataFor : undefined}
                           sx={{
                             p: 1.5,
                             display: "flex",

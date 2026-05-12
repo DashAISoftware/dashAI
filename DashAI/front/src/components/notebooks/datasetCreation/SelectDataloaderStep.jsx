@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import ComponentSelector from "../../custom/ComponentSelector";
 import { Box, CircularProgress, Stack } from "@mui/material";
 import { useTourContext } from "../../tour/TourProvider";
@@ -26,37 +25,12 @@ export default function SelectDataloaderStep({
   const { t } = useTranslation(["datasets", "common"]);
 
   const handleNext = () => {
-    if (tourContext?.run) {
-      goToNextStep();
-      const observer = new MutationObserver(() => {
-        if (document.querySelector('[data-tour="upload-area"]')) {
-          observer.disconnect();
-          tourContext.nextStep();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-    } else {
-      goToNextStep();
-    }
+    goToNextStep();
   };
-
-  useEffect(() => {
-    if (!loadingDataloaders && tourContext?.run) {
-      setTimeout(() => {
-        const cards = document.querySelectorAll('[role="button"]');
-        cards.forEach((card) => {
-          const cardText = card.textContent;
-          if (cardText.includes("CSVDataLoader") || cardText.includes("CSV")) {
-            card.setAttribute("data-tour", "csv-dataloader-option");
-          }
-        });
-      }, 100);
-    }
-  }, [loadingDataloaders, tourContext]);
 
   return (
     <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={2}>
-      <Box sx={{ flex: 1, minHeight: 0 }} data-tour="csv-dataloader-option">
+      <Box sx={{ flex: 1, minHeight: 0 }}>
         {loadingDataloaders ? (
           <Box
             sx={{
@@ -88,6 +62,7 @@ export default function SelectDataloaderStep({
             searchPlaceholder={t("datasets:searchDataloaders", {
               defaultValue: "Search data loaders...",
             })}
+            tourDataFor={tourContext?.run ? "csv-dataloader-option" : null}
           />
         )}
       </Box>
