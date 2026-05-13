@@ -246,13 +246,23 @@ export default function HubImportPanel({
                     label: sourceName
                       ? `${dataset.name} (${sourceName})`
                       : dataset.name,
-                    ...(selectedValue
+                    ...(stepValue > 0
                       ? { onClick: () => setStepValue(0) }
                       : {}),
                   },
                 ]
               : []),
-            ...(selectedValue
+            ...(stepValue >= dataloaderStep
+              ? [
+                  {
+                    label: t("hub:stepDataloaderTitle"),
+                    ...(stepValue > dataloaderStep
+                      ? { onClick: () => setStepValue(dataloaderStep) }
+                      : {}),
+                  },
+                ]
+              : []),
+            ...(stepValue >= previewStep && selectedValue
               ? [{ label: selectedValue.display_name || selectedValue.name }]
               : []),
           ]}
