@@ -52,9 +52,9 @@ function ResultsTabMetricsRuns({ runData, displaySet }) {
             </Alert>
           ) : (
             Object.keys(runData[displaySet]).map((metric) => (
-              <Grid key={metric} sx={{ px: 20, py: 4, width: "100%" }}>
-                <Typography variant="p">{metric}</Typography>
-                <Typography variant="p" sx={{ float: "right" }}>
+              <Grid key={metric} sx={{ px: 4, py: 4, width: "100%" }}>
+                <Typography variant="body2">{metric}</Typography>
+                <Typography variant="body2" sx={{ float: "right" }}>
                   {runData[displaySet][metric].toFixed(2)}
                 </Typography>
                 <Divider sx={{ mt: 4 }} />

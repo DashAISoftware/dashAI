@@ -64,7 +64,9 @@ function SplitsParams({
       {/* splits configuration form that can be hidden or shown as needed. */}
       <Collapse in={!hideSection}>
         <Divider sx={{ mt: 4, mb: 4 }} />
-        <Typography variant="p">Splits configuration</Typography>
+        <Typography variant="body1" component="p">
+          Splits configuration
+        </Typography>
         {showSplitsError && (
           <Typography variant="caption" component="p" color="error">
             {t("configurableObject:error.splitsParams")}
