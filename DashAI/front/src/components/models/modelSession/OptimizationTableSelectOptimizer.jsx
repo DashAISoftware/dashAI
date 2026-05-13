@@ -7,6 +7,7 @@ function OptimizationTableSelectOptimizer({
   taskName,
   optimizerName,
   handleSelectedOptimizer,
+  required = false,
 }) {
   const { compatibleModels } = useOptimizersByTask({ taskName });
   const [selectedOptimizer, setSelectedOptimizer] = useState(optimizerName);
@@ -32,6 +33,8 @@ function OptimizationTableSelectOptimizer({
       fullWidth
       size="small"
       variant="standard"
+      required={required}
+      error={required && !selectedOptimizer}
       slotProps={{
         MenuProps: {
           PaperProps: {

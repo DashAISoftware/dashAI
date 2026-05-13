@@ -111,6 +111,7 @@
     "operationsWillBeDeletedWarning": "Estas operaciones se eliminarán permanentemente y no se pueden recuperar. ¿Está seguro de que desea continuar?",
     "optimizerConfiguration": "Configure los ajustes del optimizador de hiperparámetros",
     "optimizerParameters": "Parámetros del Optimizador",
+    "optimizer": "Optimizador",
     "pleaseSelectMetricToOptimize": "Por favor seleccione una métrica para optimizar.",
     "predictions": "Predicciones",
     "predictionsCount_one": "• <1>{{count}}</1> predicción",

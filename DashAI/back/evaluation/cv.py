@@ -107,7 +107,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             # agregar métricas para posterior guardado en la base de datos
             # solo si no estamos haciendo nested CV, para evitar guardar métricas
             # innecesariasde cada fold interno
-            if fold_index is not None:
+            if fold_index is None:
                 test_scores = model.compute_metrics(split=SplitEnum.TEST)
 
                 for results, scores in [
@@ -119,7 +119,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                             results[metric_name] = []
                         results[metric_name].append(value)
 
-        if fold_index is not None:
+        if fold_index is None:
             # Promediar resultados por métrica y split
             # solo cuando no esta en inner loop de nested cv
             averaged_train_results = {

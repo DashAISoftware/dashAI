@@ -122,7 +122,9 @@ function AddModelDialog({
   }, []);
 
   const handleOptimizerParametersChange = useCallback((values) => {
-    setOptimizerParameters((prevParams) => ({ ...prevParams, ...values }));
+    // Sin spread, reemplaza completamente asi no se mergean los parametros del
+    // optimizador anterior que pueden ser incompatibles con el nuevo optimizador seleccionado
+    setOptimizerParameters(values);
   }, []);
 
   useEffect(() => {
@@ -393,11 +395,17 @@ function AddModelDialog({
               />
             </Box>
 
-            <OptimizationTableSelectOptimizer
-              taskName={session?.task_name}
-              optimizerName={selectedOptimizer}
-              handleSelectedOptimizer={handleOptimizerSelected}
-            />
+            <Box>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                {t("models:label.optimizer")} *
+              </Typography>
+              <OptimizationTableSelectOptimizer
+                taskName={session?.task_name}
+                optimizerName={selectedOptimizer}
+                handleSelectedOptimizer={handleOptimizerSelected}
+                required
+              />
+            </Box>
 
             {session.evaluation_strategy ===
               "CrossValidationEvaluationStrategy" && (
@@ -413,7 +421,7 @@ function AddModelDialog({
             {selectedOptimizer && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                  {t("models:label.optimizerParameters")}
+                  {t("models:label.optimizerParameters")} *
                 </Typography>
                 <FormSchemaContainer key={selectedOptimizer}>
                   <FormSchemaWithSelectedModel
