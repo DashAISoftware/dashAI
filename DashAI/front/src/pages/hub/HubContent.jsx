@@ -294,20 +294,27 @@ export default function HubContent() {
 
         <RightPanel toggleButtonTop="50%">
           {importMode ? (
-            importStep === 0 ? (
-              importDownload ? (
-                <DatafileInfoPanel datafile={importDownload} />
-              ) : (
-                <ComponentDetailsPanel component={selectedDataloader} />
-              )
-            ) : (
-              <DataloaderConfigBar
-                selectedDataloader={selectedDataloader?.name}
-                formSubmitRef={formSubmitRef}
-                setError={setFormHasErrors}
-                onValuesChange={setFormValues}
-              />
-            )
+            (() => {
+              const dataloaderStep = importDownload ? 1 : 0;
+              const previewStep = importDownload ? 2 : 1;
+              if (importStep < dataloaderStep) {
+                return <DatafileInfoPanel datafile={importDownload} />;
+              }
+              if (importStep === dataloaderStep) {
+                return <ComponentDetailsPanel component={selectedDataloader} />;
+              }
+              if (importStep >= previewStep) {
+                return (
+                  <DataloaderConfigBar
+                    selectedDataloader={selectedDataloader?.name}
+                    formSubmitRef={formSubmitRef}
+                    setError={setFormHasErrors}
+                    onValuesChange={setFormValues}
+                  />
+                );
+              }
+              return null;
+            })()
           ) : (
             <DatasetDetail
               dataset={selectedDataset}
