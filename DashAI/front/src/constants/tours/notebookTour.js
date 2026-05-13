@@ -81,7 +81,7 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
@@ -94,39 +94,25 @@ export const notebookTourSteps = [
   {
     target: '[data-tour="explorer-parameters"]',
     content: (
-      <Trans i18nKey="notebookTour:configureParameters">
+      <Trans i18nKey="notebookTour:configureParametersAndCreate">
         <div>
           <h3></h3>
           <p></p>
           <p></p>
+          <p>
+            <strong></strong>
+          </p>
         </div>
       </Trans>
     ),
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableOverlay: true,
+    isInteractive: true,
     disableScrolling: true,
     disableBackButton: true,
     maxWidth: "320px",
-  },
-  {
-    target: '[data-tour="create-explorer-button"]',
-    content: (
-      <Trans i18nKey="notebookTour:createExplorer">
-        <div>
-          <h3></h3>
-          <p></p>
-        </div>
-      </Trans>
-    ),
-    placement: "top",
-    disableBeacon: true,
-    spotlightClicks: true,
-    disableOverlayClose: true,
-    disableOverlay: false,
-    hideFooter: true,
-    disableScrolling: true,
-    isInteractive: true,
   },
   {
     target: ".explorer-box",
@@ -204,7 +190,7 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "left",
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
@@ -229,48 +215,6 @@ export const notebookTourSteps = [
     disableBeacon: true,
     disableBackButton: true,
   },
-  {
-    target: '[data-tour="nan-remover-converter"]',
-    content: (
-      <Trans i18nKey="notebookTour:nanRemoverConverter">
-        <div>
-          <h3></h3>
-          <p></p>
-          <p></p>
-          <p></p>
-        </div>
-      </Trans>
-    ),
-    placement: "left",
-    disableBeacon: true,
-    spotlightClicks: true,
-    hideFooter: true,
-    isInteractive: true,
-  },
-  {
-    target: '[data-tour="column-selector"]',
-    content: (
-      <Trans i18nKey="notebookTour:selectColumnsClean">
-        <div>
-          <h3></h3>
-          <p></p>
-          <p>
-            <strong></strong>
-          </p>
-        </div>
-      </Trans>
-    ),
-    placement: "left",
-    disableBeacon: true,
-    spotlightClicks: true,
-    disableOverlay: true,
-    hideFooter: true,
-    isInteractive: true,
-    disableScrolling: true,
-    disableBackButton: true,
-    maxWidth: "320px",
-  },
-
   {
     target: ".save-dataset-button",
     content: (
