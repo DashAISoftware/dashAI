@@ -8,18 +8,34 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 /**
- * Breadcrumbs for the Hub module dataset-list view.
+ * Breadcrumbs for the Hub module.
  *
- * @param {string} sourceDisplayName - Human-readable source name shown as the current crumb.
+ * @param {string} [sourceDisplayName] - Simple mode: human-readable source name (current crumb).
+ * @param {Array<{label: string, onClick?: function}>} [crumbs] - Full mode: explicit crumb list.
+ *   Last entry without onClick renders as plain text (current page); others render as links.
+ * @param {function} [onBack] - Custom back-button handler. Defaults to navigating to /app/hub.
  */
-export default function HubBreadcrumbs({ sourceDisplayName }) {
+export default function HubBreadcrumbs({ sourceDisplayName, crumbs, onBack }) {
   const navigate = useNavigate();
   const { t } = useTranslation(["hub"]);
 
-  const handleBack = () => navigate("/app/hub");
+  const resolvedCrumbs = crumbs ?? [
+    { label: t("hub:title"), onClick: () => navigate("/app/hub") },
+    { label: sourceDisplayName },
+  ];
+
+  const handleBack = onBack ?? (() => navigate("/app/hub"));
 
   return (
-    <Box sx={{ mb: 2, minHeight: "24px", display: "flex", alignItems: "center", gap: 1 }}>
+    <Box
+      sx={{
+        mb: 2,
+        minHeight: "24px",
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+      }}
+    >
       <IconButton
         onClick={handleBack}
         size="small"
@@ -31,17 +47,35 @@ export default function HubBreadcrumbs({ sourceDisplayName }) {
       >
         <ArrowBackIcon fontSize="small" />
       </IconButton>
-      <Breadcrumbs aria-label="breadcrumb" sx={{ minHeight: "24px", display: "flex", alignItems: "center" }}>
-        <Link
-          underline="hover"
-          color="inherit"
-          href="#"
-          onClick={(e) => { e.preventDefault(); handleBack(); }}
-          sx={{ cursor: "pointer" }}
-        >
-          {t("hub:title")}
-        </Link>
-        <Typography color="text.primary">{sourceDisplayName}</Typography>
+      <Breadcrumbs
+        aria-label="breadcrumb"
+        sx={{ minHeight: "24px", display: "flex", alignItems: "center" }}
+      >
+        {resolvedCrumbs.map((crumb, index) => {
+          const isLast = index === resolvedCrumbs.length - 1;
+          if (isLast || !crumb.onClick) {
+            return (
+              <Typography key={index} color="text.primary">
+                {crumb.label}
+              </Typography>
+            );
+          }
+          return (
+            <Link
+              key={index}
+              underline="hover"
+              color="inherit"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                crumb.onClick();
+              }}
+              sx={{ cursor: "pointer" }}
+            >
+              {crumb.label}
+            </Link>
+          );
+        })}
       </Breadcrumbs>
     </Box>
   );

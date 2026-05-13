@@ -2,18 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
-  Breadcrumbs,
   CircularProgress,
-  IconButton,
-  Link,
   List,
   ListItemButton,
   ListItemText,
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import HubBreadcrumbs from "./HubBreadcrumbs";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -239,49 +236,23 @@ export default function HubImportPanel({
       sx={{ height: "100%", display: "flex", flexDirection: "column", p: 1 }}
     >
       <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          <IconButton
-            onClick={() => navigate("/app/data")}
-            size="small"
-            sx={{
-              color: "text.secondary",
-              "&:hover": {
-                color: "primary.main",
-                backgroundColor: "action.hover",
-              },
-            }}
-            aria-label={t("common:back")}
-          >
-            <ArrowBackIcon fontSize="small" />
-          </IconButton>
-          <Breadcrumbs aria-label="breadcrumb">
-            <Link
-              underline="hover"
-              color="inherit"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/app/data");
-              }}
-            >
-              {t("common:datasets")}
-            </Link>
-            <Link
-              underline="hover"
-              color="inherit"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/app/hub");
-              }}
-            >
-              {t("common:hub")}
-            </Link>
-            <Typography color="text.primary">
-              {t("hub:importDataset")}
-            </Typography>
-          </Breadcrumbs>
-        </Box>
+        <HubBreadcrumbs
+          crumbs={[
+            {
+              label: t("hub:title"),
+              onClick: () => navigate("/app/hub"),
+            },
+            {
+              label: sourceName,
+              onClick: () => navigate(`/app/hub/${sourceName}`),
+            },
+            ...(dataset?.name ? [{ label: dataset.name }] : []),
+            ...(selectedValue
+              ? [{ label: selectedValue.display_name || selectedValue.name }]
+              : []),
+          ]}
+          onBack={() => navigate(`/app/hub/${sourceName}`)}
+        />
       </Box>
 
       <Box sx={{ p: 2, flex: 1, overflowY: "auto" }}>
