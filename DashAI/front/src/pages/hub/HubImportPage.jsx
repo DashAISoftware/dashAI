@@ -117,9 +117,11 @@ export default function HubImportPage() {
     navigate(sourceName ? `/app/hub/${sourceName}` : "/app/hub");
 
   const handleDeleteDownload = async (downloadId) => {
+    const name = downloads.find((d) => d.id === downloadId)?.name ?? "";
     try {
       await deleteDatafile(downloadId);
       setDownloads((prev) => prev.filter((d) => d.id !== downloadId));
+      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
       if (downloadId === parseInt(datafileId)) {
         navigate(sourceName ? `/app/hub/${sourceName}` : "/app/hub");
       }

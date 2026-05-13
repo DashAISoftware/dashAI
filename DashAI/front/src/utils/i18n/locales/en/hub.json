@@ -55,5 +55,7 @@
   "selectSourceSubtitle": "Select a source to browse and import datafiles.",
   "searchDownloads": "Search datafiles...",
   "datasetDetails": "Datafile Details",
-  "checkQueue": "Check the job queue for details"
+  "checkQueue": "Check the job queue for details",
+  "deleteSuccess": "Datafile \"{{name}}\" deleted.",
+  "deleteError": "Failed to delete datafile."
 }

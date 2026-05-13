@@ -156,6 +156,8 @@ export default function HubContent() {
   };
 
   const handleDeleteDownload = async (downloadId) => {
+    const name =
+      Object.values(downloads).find((d) => d.id === downloadId)?.name ?? "";
     try {
       await deleteDatafile(downloadId);
       setDownloads((prev) => {
@@ -165,8 +167,9 @@ export default function HubContent() {
         }
         return next;
       });
+      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
     } catch {
-      // ignore
+      enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
     }
   };
 

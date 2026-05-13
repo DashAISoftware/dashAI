@@ -55,5 +55,7 @@
   "selectSourceSubtitle": "Selecciona una fuente para explorar e importar datafiles.",
   "searchDownloads": "Buscar datafiles...",
   "datasetDetails": "Detalles del Datafile",
-  "checkQueue": "Revisa la cola de trabajos para más detalles"
+  "checkQueue": "Revisa la cola de trabajos para más detalles",
+  "deleteSuccess": "Datafile \"{{name}}\" eliminado.",
+  "deleteError": "Error al eliminar el datafile."
 }
