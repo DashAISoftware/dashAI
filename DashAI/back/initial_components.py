@@ -102,6 +102,7 @@ from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
 from DashAI.back.job.converter_job import ConverterJob
+from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
@@ -403,6 +404,7 @@ def get_initial_components():
         OptunaOptimizer,
         HyperOptOptimizer,
         # Jobs
+        DatafileJob,
         ExplainerJob,
         ModelJob,
         ExplorerJob,
