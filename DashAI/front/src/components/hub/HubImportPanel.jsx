@@ -240,16 +240,24 @@ export default function HubImportPanel({
               label: t("hub:title"),
               onClick: () => navigate("/app/hub"),
             },
-            {
-              label: sourceName,
-              onClick: () => navigate(`/app/hub/${sourceName}`),
-            },
-            ...(dataset?.name ? [{ label: dataset.name }] : []),
+            ...(dataset?.name
+              ? [
+                  {
+                    label: sourceName
+                      ? `${dataset.name} (${sourceName})`
+                      : dataset.name,
+                  },
+                ]
+              : []),
             ...(selectedValue
               ? [{ label: selectedValue.display_name || selectedValue.name }]
               : []),
           ]}
-          onBack={() => navigate(`/app/hub/${sourceName}`)}
+          onBack={() =>
+            sourceName
+              ? navigate(`/app/hub/${sourceName}`)
+              : navigate("/app/hub")
+          }
         />
       </Box>
 
