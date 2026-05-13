@@ -9,8 +9,12 @@ import {
   AccordionSummary,
   AccordionDetails,
   Alert,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { ViewList as ViewListIcon } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
 import DocumentSelector from "../../../components/generative/RAG/DocumentSelector";
 import ChunkingSection from "./sections/ChunkingSection";
@@ -51,6 +55,8 @@ export default function SimplifiedSessionSetup({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
+  const navigate = useNavigate();
+  const goToPromptsDetail = () => navigate("/app/generative/rag/prompts");
 
   const suggestedName = useMemo(() => {
     const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
@@ -79,6 +85,8 @@ export default function SimplifiedSessionSetup({
   const [nameError, setNameError] = useState("");
   const [isDuplicateName, setIsDuplicateName] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
+    sessionDetails: true,
+    documents: true,
     chunking: true,
     retriever: true,
     generator: true,
@@ -319,12 +327,18 @@ export default function SimplifiedSessionSetup({
         </Box>
 
         {/* Session Details */}
-        <Box>
-          <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: 600 }}>
-            {t("generative:simplifiedRag.setup.sessionDetails")}
-          </Typography>
-
-          <Box display="flex" flexDirection="column" gap={2}>
+        <Accordion
+          expanded={expandedSections.sessionDetails}
+          onChange={handleSectionChange("sessionDetails")}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {t("generative:simplifiedRag.setup.sessionDetails")}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
             <TextField
               fullWidth
               label={t("generative:simplifiedRag.setup.sessionName")}
@@ -372,30 +386,41 @@ export default function SimplifiedSessionSetup({
               size="medium"
               disabled={saving}
             />
-          </Box>
-        </Box>
+          </AccordionDetails>
+        </Accordion>
 
         {/* Document Selection */}
-        <Box display="flex" flexDirection="column" gap={1}>
-          <Typography variant="subtitle1">{t("generative:simplifiedRag.setup.selectDocuments")}</Typography>
-          <Typography variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.setup.selectDocumentsDescription")}
-          </Typography>
-
-          <Box
-            width="100%"
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              minHeight: "500px",
-            }}
+        <Accordion
+          expanded={expandedSections.documents}
+          onChange={handleSectionChange("documents")}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              {t("generative:simplifiedRag.setup.selectDocuments")}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
-            <DocumentSelector
-              selectedIds={sessionData.documents}
-              onSelect={handleDocumentSelectionChange}
-            />
-          </Box>
-        </Box>
+            <Typography variant="body2" color="textSecondary">
+              {t("generative:simplifiedRag.setup.selectDocumentsDescription")}
+            </Typography>
+
+            <Box
+              width="100%"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "500px",
+              }}
+            >
+              <DocumentSelector
+                selectedIds={sessionData.documents}
+                onSelect={handleDocumentSelectionChange}
+              />
+            </Box>
+          </AccordionDetails>
+        </Accordion>
 
         {/* Configuration Sections */}
         <Box display="flex" flexDirection="column" gap={2}>
@@ -445,9 +470,20 @@ export default function SimplifiedSessionSetup({
             onChange={handleSectionChange("prompt")}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.setup.promptTemplate")}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mr: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  {t("generative:simplifiedRag.setup.promptTemplate")}
+                </Typography>
+                <Tooltip title={t("generative:simplifiedRag.prompt.openPrompts")}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); goToPromptsDetail(); }}
+                    aria-label="open-prompt-library"
+                  >
+                    <ViewListIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </AccordionSummary>
             <AccordionDetails
               sx={{ display: "flex", flexDirection: "column", gap: 2 }}

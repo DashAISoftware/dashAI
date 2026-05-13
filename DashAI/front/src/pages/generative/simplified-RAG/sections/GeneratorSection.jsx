@@ -1,36 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
-  Box,
   Typography,
   Card,
   CardContent,
-  Autocomplete,
-  TextField,
-  Button,
-  CircularProgress,
-  Alert,
-  AlertTitle,
-  useTheme,
-  IconButton,
-  Tooltip,
-  Collapse,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { getGeneratorComponents } from "../../../../api/rag";
-import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
-import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
-import InfoIcon from "@mui/icons-material/Info";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-
-const getDescription = (desc, i18n) => {
-  if (!desc) return "";
-  if (typeof desc === "string") return desc;
-  if (typeof desc === "object" && (desc.en || desc.es)) {
-    return desc[i18n.language] || desc.en || desc.es || "";
-  }
-  return "";
-};
+import GeneratorBody from "../components/GeneratorBody";
 
 export default function GeneratorSection({
   generatorModel,
@@ -40,263 +16,43 @@ export default function GeneratorSection({
   promptTokenCount = 0,
   setIsValid,
 }) {
-  const theme = useTheme();
-  const { t, i18n } = useTranslation(["generative"]);
-  const [generators, setGenerators] = useState([]);
-  const [selectedGenerator, setSelectedGenerator] = useState(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showDescription, setShowDescription] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const DEFAULT_CONTEXT_WINDOW = 10000;
-  const DEFAULT_MAX_TOKENS = 1000;
+  const { t } = useTranslation(["generative"]);
   const [initialModelParams, setInitialModelParams] = useState(null);
 
-
   const isAdvanced = useMemo(() => {
-    if (!selectedGenerator || !generatorModel?.params || !initialModelParams) return false;
+    if (!generatorModel?.component || !generatorModel?.params || !initialModelParams) return false;
     return Object.keys(generatorModel.params).some(key => {
       return generatorModel.params[key] !== initialModelParams[key];
     });
-  }, [selectedGenerator, generatorModel?.params, initialModelParams]);
-
-  const contextStats = useMemo(() => {
-    if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
-      return { isValid: true, availableTokens: 0 };
-    }
-
-    const contextWindow = generatorModel.params.context_window || DEFAULT_CONTEXT_WINDOW;
-    const maxTokens = generatorModel.params.max_tokens || DEFAULT_MAX_TOKENS;
-    const chunkTokens = chunkSize * topK;
-    const availableForMessage = contextWindow - chunkTokens - promptTokenCount - maxTokens;
-    const isValid = availableForMessage > 0;
-
-    return {
-      isValid,
-      availableTokens: Math.max(0, Math.floor(availableForMessage))
-    };
-  }, [generatorModel?.params, generatorModel?.component, selectedGenerator, chunkSize, topK, promptTokenCount]);
-
-  useEffect(() => {
-    setIsValid(contextStats.isValid);
-  }, [contextStats.isValid, setIsValid]);
-
-  useEffect(() => {
-    const loadGenerators = async () => {
-      try {
-        const data = await getGeneratorComponents();
-        setGenerators(data || []);
-      } catch (error) {
-        console.error("Error loading generators:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadGenerators();
-  }, []);
-
-  useEffect(() => {
-    if (!generators.length) return;
-
-    if (!generatorModel?.component) {
-      setSelectedGenerator(null);
-      setInitialModelParams(null);
-      return;
-    }
-
-    const foundGenerator = generators.find((generator) => {
-      return generator.name === generatorModel.component;
-    });
-
-    if (!foundGenerator) return;
-
-    const selectedGeneratorName = selectedGenerator?.name || null;
-    const currentGeneratorName = generatorModel.component;
-
-    if (selectedGeneratorName === currentGeneratorName) {
-      return;
-    }
-
-    setSelectedGenerator(foundGenerator);
-    setInitialModelParams({ ...generatorModel.params });
-  }, [generators, generatorModel?.component, generatorModel?.params, initialModelParams]);
-
-  const handleGeneratorChange = (event, newValue) => {
-    setSelectedGenerator(newValue);
-    if (newValue) {
-      const initialParams = buildDefaultValuesFromSchemaProperties(newValue.schema?.properties || {});
-      const overriddenParams = {
-        ...initialParams,
-        max_tokens: DEFAULT_MAX_TOKENS,
-        context_window: DEFAULT_CONTEXT_WINDOW,
-      };
-      setInitialModelParams({...overriddenParams});
-
-      setGeneratorModel({
-        component: newValue.name,
-        params: {...overriddenParams},
-      });
-    } else {
-      setInitialModelParams(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: 120 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  }, [generatorModel?.params, initialModelParams]);
 
   return (
-    <>
-      <Card sx={{ width: '100%', backgroundColor: 'background.paper' }}>
-        <CardContent>
-          <Box display="flex" flexDirection="column" gap={2} width="100%">
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.generator.modelLabel")}
-              </Typography>
-              <Box>
-                <Tooltip title={t("generative:simplifiedRag.generator.description")}> 
-                  <IconButton
-                    size="small"
-                    onClick={() => setShowDescription((s) => !s)}
-                    aria-label="generator-info"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    <InfoIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={isExpanded ? (t("generative:simplifiedRag.prompt.collapse") || "Collapse") : (t("generative:simplifiedRag.prompt.expand") || "Expand")}>
-                  <IconButton
-                    size="small"
-                    onClick={() => setIsExpanded((s) => !s)}
-                    aria-label="toggle-generator-card"
-                  >
-                    <ExpandMoreIcon
-                      fontSize="small"
-                      sx={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
-                    />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </Box>
+    <Card sx={{ width: "100%", backgroundColor: "background.paper" }}>
+      <CardContent>
+        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+          {t("generative:simplifiedRag.generator.description")}
+        </Typography>
 
-            {showDescription && (
-              <Typography variant="body2" color="textSecondary">
-                {t("generative:simplifiedRag.generator.description")}
-              </Typography>
-            )}
-
-            {/* Model Selection */}
-            <Box>
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {t("generative:simplifiedRag.generator.modelLabel")}
-                </Typography>
-                {isAdvanced && (
-                  <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                    {t("generative:simplifiedRag.generator.advancedApplied")}
-                  </Typography>
-                )}
-              </Box>
-              <Autocomplete
-                options={generators}
-                value={selectedGenerator}
-                onChange={handleGeneratorChange}
-                getOptionLabel={(option) => option.name || ""}
-                isOptionEqualToValue={(option, value) => option?.name === value?.name}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={t("generative:simplifiedRag.generator.selectModel")}
-                    placeholder={t("generative:simplifiedRag.generator.selectModelPlaceholder")}
-                    sx={{
-                      "& .MuiOutlinedInput-root": isAdvanced ? {
-                        "& fieldset": { borderColor: theme.palette.warning.main },
-                        "&:hover fieldset": { borderColor: theme.palette.warning.main },
-                        "&.Mui-focused fieldset": { borderColor: theme.palette.warning.main },
-                      } : {}
-                    }}
-                  />
-                )}
-              />
-            </Box>
-
-            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              <Box display="flex" flexDirection="column" gap={2} width="100%">
-                {/* Selected Model Info & Context Message */}
-                {selectedGenerator && generatorModel?.params && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      backgroundColor: "action.hover",
-                      border: "1px solid",
-                      borderColor: contextStats.isValid ? (isAdvanced ? "warning.main" : "divider") : "error.main",
-                      borderRadius: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1
-                    }}
-                  >
-                    <Typography variant="body2">
-                      <strong>{t("generative:simplifiedRag.generator.modelInfo")}</strong> {selectedGenerator.name}
-                    </Typography>
-                    
-                    <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main", fontWeight: 500 }}>
-                      {t("generative:validation.contextSpace", { availableChars: contextStats.availableTokens?.toLocaleString() })}
-                    </Typography>
-
-                    {!contextStats.isValid && (
-                      <Alert severity="error" sx={{ mt: 1 }}>
-                        <AlertTitle>{t("generative:validation.insufficientContextTitle")}</AlertTitle>
-                        {t("generative:validation.insufficientContextDescription")}
-                      </Alert>
-                    )}
-
-                    {getDescription(selectedGenerator.description, i18n) && (
-                      <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                        {getDescription(selectedGenerator.description, i18n)}
-                      </Typography>
-                    )}
-                  </Box>
-                )}
-
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => setShowAdvanced(true)}
-                  fullWidth
-                  disabled={!selectedGenerator}
-                >
-                  ↗ {t("generative:simplifiedRag.generator.advancedButton")}
-                </Button>
-              </Box>
-            </Collapse>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {selectedGenerator && (
-        <GeneratorAdvancedModal
-          open={showAdvanced}
-          onClose={() => setShowAdvanced(false)}
-          selectedGenerator={selectedGenerator}
+        <GeneratorBody
           generatorModel={generatorModel}
           setGeneratorModel={setGeneratorModel}
+          chunkSize={chunkSize}
+          topK={topK}
+          promptTokenCount={promptTokenCount}
+          setIsValid={setIsValid}
+          isAdvanced={isAdvanced}
+          setInitialModelParams={setInitialModelParams}
         />
-      )}
-    </>
+      </CardContent>
+    </Card>
   );
 }
-
 
 GeneratorSection.propTypes = {
   generatorModel: PropTypes.object,
   setGeneratorModel: PropTypes.func.isRequired,
   chunkSize: PropTypes.number,
   topK: PropTypes.number,
+  promptTokenCount: PropTypes.number,
   setIsValid: PropTypes.func.isRequired,
 };

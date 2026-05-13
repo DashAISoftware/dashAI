@@ -6,8 +6,8 @@ import {
   getRAGSession,
   updateGenerativeSessionParams,
 } from "../../../api/rag";
-import PromptSection from "../../../pages/generative/simplified-RAG/sections/PromptSection";
-import GeneratorSection from "../../../pages/generative/simplified-RAG/sections/GeneratorSection";
+import PromptParamsCard from "./PromptParamsCard";
+import GeneratorParamsCard from "./GeneratorParamsCard";
 
 export default function RAGParamsPanel({ selectedSessionId }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -86,11 +86,11 @@ export default function RAGParamsPanel({ selectedSessionId }) {
 
         <Box sx={{ overflow: "auto", flex: 1 }}>
           <Box sx={{ mb: 2 }}>
-            <PromptSection promptId={promptId} setPromptId={setPromptId} onTokenCountChange={() => {}} />
+            <PromptParamsCard promptId={promptId} setPromptId={setPromptId} onTokenCountChange={() => {}} />
           </Box>
 
           <Box sx={{ mt: 2 }}>
-            <GeneratorSection
+            <GeneratorParamsCard
               generatorModel={generatorModel}
               setGeneratorModel={setGeneratorModel}
               chunkSize={0}

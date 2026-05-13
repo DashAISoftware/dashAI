@@ -153,19 +153,6 @@ export default function DocumentSelector({
         width: "100%",
       }}
     >
-      <Box sx={{ width: "100%" }}>
-        <Button
-          variant="contained"
-          fullWidth
-          color="primary"
-          size="large"
-          startIcon={<AddIcon />}
-          onClick={() => setUploadOpen(true)}
-        >
-          {t("generative:simplifiedRag.documents.uploadButton")}
-        </Button>
-      </Box>
-
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <SimplifiedDocumentTable
           documents={documents.map((doc) => ({
@@ -178,6 +165,19 @@ export default function DocumentSelector({
           onRemove={handleRemoveDocument}
           isLoading={isLoading}
         />
+      </Box>
+
+      <Box sx={{ width: "100%" }}>
+        <Button
+          variant="contained"
+          fullWidth
+          color="primary"
+          size="large"
+          startIcon={<AddIcon />}
+          onClick={() => setUploadOpen(true)}
+        >
+          {t("generative:simplifiedRag.documents.uploadButton")}
+        </Button>
       </Box>
 
       <Dialog
