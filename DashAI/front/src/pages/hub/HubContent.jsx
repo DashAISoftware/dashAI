@@ -17,12 +17,9 @@ import HubImportPanel from "../../components/hub/HubImportPanel";
 import DatafileInfoPanel from "../../components/hub/DatafileInfoPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
-import {
-  deleteDatafile,
-  getDatasetSources,
-  getDatafile,
-  listDatafiles,
-} from "../../api/hub";
+import { deleteDatafile, getDatafile, listDatafiles } from "../../api/hub";
+
+import { getComponents } from "../../api/component";
 import { enqueueDatafileJob } from "../../api/job";
 import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
@@ -63,7 +60,7 @@ export default function HubContent() {
     selectedSource?.display_name || selectedSource?.name || sourceNameParam;
 
   useEffect(() => {
-    getDatasetSources()
+    getComponents({ selectTypes: "DatasetSource" })
       .then(setSources)
       .catch(() => setSources([]))
       .finally(() => setSourcesLoading(false));
