@@ -43,7 +43,7 @@ export const generativeTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "bottom",
     disableBeacon: true,
     maxWidth: "320px",
   },

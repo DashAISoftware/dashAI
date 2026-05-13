@@ -70,6 +70,7 @@ export const TourProvider = ({
     handleJoyrideCallback,
     goToStep,
     nextStep,
+    resumeAtStep,
   } = useTour(tourKey);
 
   const tourData = tours[tourKey];
@@ -137,6 +138,7 @@ export const TourProvider = ({
     resetAllTours,
     goToStep,
     nextStep,
+    resumeAtStep,
     setDisabled,
   };
 

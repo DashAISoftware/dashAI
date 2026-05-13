@@ -5,14 +5,26 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ComponentSelector from "../custom/ComponentSelector";
 import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
 import { useCreateSession } from "./CreateSessionContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
+import { useTourContext } from "../tour/TourProvider";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);
+  const tourContext = useTourContext();
+
+  useEffect(() => {
+    if (!tourContext?.run) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (currentTarget === '[data-tour="task-gallery"]') {
+      tourContext.resumeAtStep(tourContext.stepIndex);
+    }
+  }, []);
+
   const {
     step,
     models,
@@ -42,7 +54,7 @@ export default function CreateSessionCenter() {
       }}
     >
       <GenerativeBreadcrumbs />
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2 }} data-tour="task-gallery">
         <Typography variant="h5" component="h2">
           {step === 0
             ? t("generative:label.selectModel")

@@ -94,7 +94,7 @@ export default function GenerativeContent() {
         <LeftPanel data-tour="sessions-left-panel">
           <SessionBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
-        <CenterPanel data-tour="task-gallery">{renderCenter()}</CenterPanel>
+        <CenterPanel>{renderCenter()}</CenterPanel>
         <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
           {renderRight()}
         </RightPanel>
