@@ -191,12 +191,6 @@ export default function HubLeftBar({
                         color="text.secondary"
                       >
                         {t("hub:fromSource", { source: dl.source_name })}
-                        {" · "}
-                        {dl.status === "downloading"
-                          ? t("hub:statusDownloading")
-                          : dl.status === "error"
-                            ? t("hub:statusError")
-                            : t("hub:statusReady")}
                       </Typography>
                     </Box>
                     <Box sx={{ display: "flex", flexShrink: 0 }}>
