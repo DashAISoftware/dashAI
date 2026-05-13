@@ -20,6 +20,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 const ALL_CATEGORY = "All";
+const SEARCH_THRESHOLD = 10;
 
 function getLabel(component) {
   return component.display_name || component.name;
@@ -102,29 +103,31 @@ function ComponentSelector({
 
   return (
     <Stack direction="column" sx={{ height: "100%", minHeight: 0 }} spacing={2}>
-      <TextField
-        size="small"
-        fullWidth
-        placeholder={searchPlaceholder ?? t("search")}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-            endAdornment: search ? (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearch("")}>
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ) : null,
-          },
-        }}
-      />
+      {components.length > SEARCH_THRESHOLD && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder={searchPlaceholder ?? t("search")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: search ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearch("")}>
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            },
+          }}
+        />
+      )}
 
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         {categories.map((cat) => {
