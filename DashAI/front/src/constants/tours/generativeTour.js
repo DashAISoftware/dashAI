@@ -16,6 +16,23 @@ export const generativeTourSteps = [
     disableBeacon: true,
   },
   {
+    target: '[data-tour="create-session-landing"]',
+    content: (
+      <Trans i18nKey="generativeTour:createNewSession">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+    isInteractive: true,
+  },
+  {
     target: '[data-tour="task-gallery"]',
     content: (
       <Trans i18nKey="generativeTour:taskGallery">
