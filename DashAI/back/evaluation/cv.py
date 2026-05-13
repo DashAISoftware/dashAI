@@ -83,8 +83,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         return self.model, plot_paths
 
     def evaluate(self, model, input_dataset, output_dataset, metric, **kwargs):
+        # fold_index es None cuando NO se está haciendo nested CV
         fold_index = kwargs.get("fold_index")
         folds_results = []
+        train_results = {}
+        test_results = {}
 
         # Suponiendo que el último fold es el conjunto completo
         for i in range(len(input_dataset) - 1):
@@ -97,35 +100,46 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
             model.train(x_fold["train"], y_fold["train"])
 
-            y_pred = model.predict(x_fold["test"])
-
-            output_dataset_transformed = model.prepare_output(
-                y_fold["test"], is_fit=False
-            )
-
-            if fold_index is None:
-                model.calculate_metrics(
-                    split=SplitEnum.TRAIN, level=LevelEnum.TRIAL, fold_index=i
-                )
-                model.calculate_metrics(
-                    split=SplitEnum.TEST, level=LevelEnum.TRIAL, fold_index=i
-                )
-            else:
-                model.calculate_metrics(
-                    split=SplitEnum.TRAIN,
-                    level=LevelEnum.TRIAL,
-                    fold_index=fold_index,
-                    inner_fold_index=i,
-                )
-                model.calculate_metrics(
-                    split=SplitEnum.TEST,
-                    level=LevelEnum.TRIAL,
-                    fold_index=fold_index,
-                    inner_fold_index=i,
-                )
-
-            score = metric.score(output_dataset_transformed, y_pred)
+            train_scores = model.compute_metrics(split=SplitEnum.TRAIN)
+            score = train_scores[metric.__name__]
             folds_results.append(score)
+
+            # agregar métricas para posterior guardado en la base de datos
+            # solo si no estamos haciendo nested CV, para evitar guardar métricas
+            # innecesariasde cada fold interno
+            if fold_index is not None:
+                test_scores = model.compute_metrics(split=SplitEnum.TEST)
+
+                for results, scores in [
+                    (train_results, train_scores),
+                    (test_results, test_scores),
+                ]:
+                    for metric_name, value in scores.items():
+                        if metric_name not in results:
+                            results[metric_name] = []
+                        results[metric_name].append(value)
+
+        if fold_index is not None:
+            # Promediar resultados por métrica y split
+            # solo cuando no esta en inner loop de nested cv
+            averaged_train_results = {
+                metric: np.mean(values) for metric, values in train_results.items()
+            }
+            averaged_test_results = {
+                metric: np.mean(values) for metric, values in test_results.items()
+            }
+
+            # Guardar resultados promediados en la base de datos con level=TRIAL
+            model._save_metrics(
+                results=averaged_train_results,
+                split=SplitEnum.TRAIN,
+                level=LevelEnum.TRIAL,
+            )
+            model._save_metrics(
+                results=averaged_test_results,
+                split=SplitEnum.TEST,
+                level=LevelEnum.TRIAL,
+            )
 
         # Retorna el promedio de las métricas de los folds
         return np.mean(folds_results)
