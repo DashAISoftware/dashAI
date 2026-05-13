@@ -122,6 +122,7 @@ i18n
   .init({
     resources,
     supportedLngs: ["en", "es", "pt"],
+    nonExplicitSupportedLngs: true,
     fallbackLng: "en",
 
     ns: [
