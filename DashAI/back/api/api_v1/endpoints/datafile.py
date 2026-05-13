@@ -66,15 +66,13 @@ async def create_download(
     body: CreateDownloadRequest,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-    job_queue=Depends(lambda: di["job_queue"]),
 ) -> Dict[str, Any]:
-    """Create a Datafile record and enqueue the download job.
+    """Create a Datafile record.
 
     If a record for (source_name, dataset_id) already exists and its status is
-    READY, it is returned immediately without re-downloading.
+    READY or DOWNLOADING, it is returned immediately. If status is ERROR the
+    record is reset to DOWNLOADING so the caller can re-enqueue the job.
     """
-    from DashAI.back.job.datafile_job import DatafileJob
-
     sources = registry._registry.get("DatasetSource", {})
     if body.source_name not in sources:
         raise HTTPException(
@@ -135,22 +133,7 @@ async def create_download(
                     detail="DB error creating download record.",
                 ) from e
 
-        datafile_id = row.id
-        result_dict = _row_to_dict(row)
-
-    job = DatafileJob(
-        kwargs={
-            "datafile_id": datafile_id,
-            "source_name": body.source_name,
-            "dataset_source_id": body.dataset_id,
-            "description": body.description,
-            "tags": body.tags,
-        }
-    )
-    job_result = job_queue.put(job)
-    job_id = getattr(job_result, "id", job_result)
-    result_dict["job_id"] = job_id
-    return result_dict
+        return _row_to_dict(row)
 
 
 @router.get("/{datafile_id}", response_model=Dict[str, Any])

@@ -116,6 +116,25 @@ export interface Datafile {
   job_id?: string;
 }
 
+export const createDatafile = async (
+  source_name: string,
+  dataset_id: string,
+  name: string,
+  description: string = "",
+  tags: string[] = [],
+  source_url: string = "",
+): Promise<Datafile> => {
+  const response = await api.post<Datafile>(`${datafileEndpoint}/`, {
+    source_name,
+    dataset_id,
+    name,
+    description,
+    tags,
+    source_url,
+  });
+  return response.data;
+};
+
 export const listDatafiles = async (): Promise<Datafile[]> => {
   const response = await api.get<Datafile[]>(`${datafileEndpoint}/`);
   return response.data;

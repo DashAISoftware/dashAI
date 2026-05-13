@@ -1,5 +1,4 @@
 import api from "./api";
-import type { Datafile } from "./hub";
 
 export const isQueueEmpty = async (): Promise<boolean> => {
   const response = await api.get<{ is_empty: boolean }>("/v1/job/is_empty");
@@ -238,20 +237,24 @@ export const enqueuePipelineJob = async (
 };
 
 export const enqueueDatafileJob = async (
-  source_name: string,
-  dataset_id: string,
-  name: string,
-  description: string = "",
-  tags: string[] = [],
-  source_url: string = "",
-): Promise<Datafile> => {
-  const response = await api.post<Datafile>("/v1/datafile/", {
-    source_name,
-    dataset_id,
-    name,
-    description,
-    tags,
-    source_url,
+  datafileId: number,
+  sourceName: string,
+  datasetSourceId: string,
+): Promise<{ id: string }> => {
+  const formData = new FormData();
+  formData.append("job_type", "DatafileJob");
+  formData.append(
+    "kwargs",
+    JSON.stringify({
+      kwargs: {
+        datafile_id: datafileId,
+        source_name: sourceName,
+        dataset_source_id: datasetSourceId,
+      },
+    }),
+  );
+  const response = await api.post<{ id: string }>("/v1/job/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 };

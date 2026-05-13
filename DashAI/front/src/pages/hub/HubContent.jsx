@@ -17,7 +17,12 @@ import HubImportPanel from "../../components/hub/HubImportPanel";
 import DatafileInfoPanel from "../../components/hub/DatafileInfoPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
-import { deleteDatafile, getDatafile, listDatafiles } from "../../api/hub";
+import {
+  createDatafile,
+  deleteDatafile,
+  getDatafile,
+  listDatafiles,
+} from "../../api/hub";
 
 import { getComponents } from "../../api/component";
 import { enqueueDatafileJob } from "../../api/job";
@@ -140,7 +145,7 @@ export default function HubContent() {
     if (!selectedDataset || !sourceNameParam) return;
     setDownloadLoading(true);
     try {
-      const row = await enqueueDatafileJob(
+      const row = await createDatafile(
         sourceNameParam,
         selectedDataset.id,
         selectedDataset.name,
@@ -148,9 +153,17 @@ export default function HubContent() {
         selectedDataset.tags ?? [],
         selectedDataset.url ?? "",
       );
+      const job = await enqueueDatafileJob(
+        row.id,
+        sourceNameParam,
+        selectedDataset.id,
+      );
       setDownloads((prev) => ({
         ...prev,
-        [`${sourceNameParam}::${selectedDataset.id}`]: row,
+        [`${sourceNameParam}::${selectedDataset.id}`]: {
+          ...row,
+          job_id: job.id,
+        },
       }));
     } catch {
       // error shown via download status
