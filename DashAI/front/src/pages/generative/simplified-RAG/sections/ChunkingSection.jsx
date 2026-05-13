@@ -26,28 +26,30 @@ export default function ChunkingSection({
     {
       value: "small",
       label: t("generative:simplifiedRag.chunking.presets.small.label"),
-      description: t("generative:simplifiedRag.chunking.presets.small.description"),
       config: { chunk_size: 256, chunk_overlap: 25 },
     },
     {
       value: "paragraph",
       label: t("generative:simplifiedRag.chunking.presets.paragraph.label"),
-      description: t("generative:simplifiedRag.chunking.presets.paragraph.description"),
       config: { chunk_size: 500, chunk_overlap: 50 },
     },
     {
       value: "page",
       label: t("generative:simplifiedRag.chunking.presets.page.label"),
-      description: t("generative:simplifiedRag.chunking.presets.page.description"),
       config: { chunk_size: 2000, chunk_overlap: 200 },
     },
     {
       value: "large",
       label: t("generative:simplifiedRag.chunking.presets.large.label"),
-      description: t("generative:simplifiedRag.chunking.presets.large.description"),
       config: { chunk_size: 4000, chunk_overlap: 400 },
     },
   ], [t]);
+
+  const getPresetDescription = (preset) => {
+    const chars = preset.config.chunk_size;
+    const tokens = Math.ceil(chars / 4);
+    return t("generative:simplifiedRag.chunking.presets.chunkSizeFormat", { chars, tokens });
+  };
 
   const CUSTOM_PRESET = useMemo(() => ({
     value: "custom",
@@ -174,6 +176,9 @@ export default function ChunkingSection({
           sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
         >
           {allPresets.map((preset) => {
+            const description = preset === CUSTOM_PRESET
+              ? CUSTOM_PRESET.description
+              : getPresetDescription(preset);
             return (
               <ToggleButton
                 key={preset.value}
@@ -200,7 +205,7 @@ export default function ChunkingSection({
               >
                 <Box display="flex" flexDirection="column" gap={0.5}>
                   <Typography variant="subtitle2">{preset.label}</Typography>
-                  <Typography variant="caption">{preset.description}</Typography>
+                  <Typography variant="caption">{description}</Typography>
                 </Box>
               </ToggleButton>
             );

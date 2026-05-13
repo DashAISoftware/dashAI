@@ -88,7 +88,11 @@ export default function SimplifiedSessionSetup({
   const [isGeneratorValidState, setIsGeneratorValidState] = useState(false);
 
   // Directly derive values from state to ensure reactivity
-  const chunkSize = sessionData.parameters.chunking_model?.params?.chunk_size || 0;
+  let chunkSize = sessionData.parameters.chunking_model?.params?.chunk_size || 0;
+  // If chunking model is character based, use 1 token = 4 characters as a rough estimate
+  if (sessionData.parameters.chunking_model?.component?.toLowerCase().includes("character")) {
+    chunkSize = Math.ceil(chunkSize / 4);
+  }
   const topK = sessionData.parameters.retriever_model?.params?.top_k || 0;
 
   const [promptTokenCount, setPromptTokenCount] = useState(0);

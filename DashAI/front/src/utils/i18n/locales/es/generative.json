@@ -83,21 +83,18 @@
       "description": "Selecciona cómo se dividirán tus documentos en fragmentos para la recuperación.",
       "presets": {
         "small": {
-          "label": "Fragmentos Pequeños",
-          "description": "Chunking de grano fino (~256 tokens)"
+          "label": "Fragmentos Pequeños"
         },
         "paragraph": {
-          "label": "Longitud de Párrafo",
-          "description": "Chunking estándar a nivel de párrafo (~500 tokens)"
+          "label": "Longitud de Párrafo"
         },
         "page": {
-          "label": "Fragmento de Página",
-          "description": "Chunking a nivel de página completa (~2000 tokens)"
+          "label": "Fragmento de Página"
         },
         "large": {
-          "label": "Secciones Grandes",
-          "description": "Chunking de secciones grandes (~4000 tokens)"
+          "label": "Secciones Grandes"
         },
+        "chunkSizeFormat": "{{chars}} caracteres ≈ {{tokens}} tokens",
         "custom": {
           "label": "Modelo de Chunking Personalizado",
           "description": "Configuración avanzada aplicada"

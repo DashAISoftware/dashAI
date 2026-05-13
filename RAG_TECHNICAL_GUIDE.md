@@ -194,3 +194,99 @@ For a RAG session to execute successfully, the following conditions must be met:
 - **Context Window**: The sum of (tokens in history + tokens in prompt + tokens in retrieved chunks) must be less than the LLM's `max_context_length`.
 - **Non-empty Documents**: The session must be associated with at least one document containing text.
 
+---
+
+## 10. Recent Changes & Agent Quick-Start
+
+This section documents the most recent, important code changes related to RAG parameter handling and the frontend RAG configuration UI. It is written for developers and automated agents that need to quickly understand and operate on the codebase without exploring every file.
+
+- **Why these notes exist:** During development we fixed bugs where nested component parameter shapes (the `properties`-wrapped subform) were not handled consistently between components and forms. That caused the Chunking Advanced modal to show only a model selector instead of the parameter fields. We also improved parameter update endpoints and cleanup logic in the backend.
+
+### 10.1 High-level summary of fixes
+
+- Frontend: normalize `chunkingModel` shapes (support both `{ component, params }` and `properties: { component, params: { comp: { component, params }}}`). Ensure the advanced modal mounts the correct subform and renders scalar fields (e.g. `chunk_size`, `chunk_overlap`).
+- Frontend: fixed RAG-specific form renderer to include scalar field rendering and added missing imports.
+- Backend: added robust parameter merging, validation and orphaned-resource cleanup when session parameters change; added parameter history logging.
+
+### 10.2 Files changed (key places to inspect)
+
+- Frontend
+    - DashAI/front/src/pages/generative/simplified-RAG/sections/ChunkingSection.jsx — normalize incoming `chunkingModel` values and derive model/params using helpers.
+    - DashAI/front/src/pages/generative/RAG/NewSessionModal/ChunkingConfigurationStep.jsx — compute initial values defensively from either nested or flat `chunkingModel`; added debug logs used during troubleshooting.
+    - DashAI/front/src/pages/generative/simplified-RAG/advanced/ChunkingAdvancedModal.jsx — use normalized model name as `FormSchemaProvider` key to avoid remount issues.
+    - DashAI/front/src/pages/generative/simplified-RAG/components/RAGFormSchemaRenderFields.jsx — RAG-specific form renderer restored scalar-field rendering and added missing `FormSchemaFieldCard` import.
+    - DashAI/front/src/utils/schema.js — helpers used to format/parse nested subforms: `formattedModel`, `formattedSubform`, `getModelFromSubform`, `getParamsFromSubform`.
+
+- Backend
+    - DashAI/back/api/api_v1/endpoints/generative_session.py — PUT `/{session_id}/parameters` endpoint: merges `old_parameters` + `new_parameters`, validates with `RAGPipeline.SCHEMA`, writes `GenerativeSessionParameterHistory`, and calls cleanup to remove orphaned DB rows and storage folders for removed subcomponents.
+    - DashAI/back/api/api_v1/endpoints/prompts.py & schema updates — prompt update/clone endpoints and templates validation.
+
+### 10.3 How to reproduce locally (quick commands)
+
+Run backend tests (recommended):
+
+```powershell
+# from repo root
+python -m pytest tests/back/api/test_session_api.py -q
+python -m pytest tests/back/api/test_rag_prompt_updates.py -q
+```
+
+Build frontend:
+
+```powershell
+cd DashAI/front
+yarn install   # if dependencies changed
+yarn build
+```
+
+Run frontend dev server for interactive debugging:
+
+```powershell
+cd DashAI/front
+yarn start
+# open http://localhost:3000 and navigate to Simplified RAG
+```
+
+### 10.4 Debug checklist for the Chunking Advanced modal
+
+If an agent/user reports that the Advanced modal only shows the model selector and not the parameters, run this checklist in order:
+
+1. Confirm the UI passed `chunkingModel` to the modal — find the parent component `SimplifiedSessionSetup` and check `sessionData.parameters.chunking_model`.
+2. Verify `chunkingModel` shape: it may be flat `{ component, params }` or nested with `properties`/`params.comp.params`. Use `getModelFromSubform()` and `getParamsFromSubform()` in `DashAI/front/src/utils/schema.js` to inspect.
+3. In the modal code `ChunkingConfigurationStep`, ensure `formInitialValues` is computed with the normalized `modelName` and `params` (the code now uses the helpers).
+4. Confirm the RAG renderer (`RAGFormSchemaRenderFields.jsx`) contains the scalar-field rendering branch and imports `FormSchemaFieldCard`.
+5. Open browser DevTools console — look for logs added during debugging:
+     - `[ChunkingConfigStep] Fetched chunking options:`
+     - `[ChunkingConfigStep] Syncing selectedChunking:`
+     - `[ChunkingConfigStep] Found chunking model:`
+     - `[ChunkingConfigStep] formInitialValues:`
+6. If `selectedChunking` is undefined but `modelName` exists, check that the components list returned by `getChunkingComponents()` includes that model name (backend registration issue).
+
+### 10.5 Backend agent tips (where to start when fixing server-side issues)
+
+- Parameter validation: look at `RAGPipeline.SCHEMA` — when updating session params the backend merges old and new parameter maps then runs `model_validate()` against that schema. If a parameter update fails validation, it will be rejected.
+- Cleanup: `_cleanup_orphaned_rag_resources(db, session_id, old_parameters, new_parameters)` is called after parameter updates to avoid stale DB rows and storage directories. When making changes to component naming or parameter nesting, update this logic accordingly.
+
+### 10.6 Tests added and their purpose
+
+- `tests/back/api/test_session_api.py` — added tests asserting parameter-merge behavior and that parameter history entries are created.
+- `tests/back/api/test_rag_prompt_updates.py` — covers prompt in-place updates, cloning prompts into sessions, and cleanup of orphaned prompts when parameters change.
+
+### 10.7 Common gotchas for agents
+
+- Mixed parameter shapes: codebase frequently uses both flat `{ component, params }` and nested `properties` subform shapes. Prefer the helper functions in `DashAI/front/src/utils/schema.js` to normalize.
+- Form re-mount keys: a `FormSchemaProvider` key should be based on the normalized model name to avoid losing form state or preventing the subform from rendering.
+- Don't rely solely on `component` property at the top level — it may be inside `properties.component`.
+
+### 10.8 Suggested next improvements (short-term)
+
+- Remove the `DialogContentText` double-`<p>` nesting warning by ensuring text content components don't nest `<Typography>` that render `<p>` inside a `<p>` wrapper.
+- Add unit tests for the frontend `ChunkingConfigurationStep` and `RAGFormSchemaRenderFields` to cover both nested and flat parameter shapes.
+- Add an integration test that opens `ChunkingAdvancedModal` with a pre-populated nested `chunkingModel` to prevent regressions.
+
+---
+
+If you'd like, I can also:
+- open a PR with these guide changes, or
+- add the suggested frontend unit/integration tests (I can scaffold one using React Testing Library). Please tell me which next step you prefer.
+
