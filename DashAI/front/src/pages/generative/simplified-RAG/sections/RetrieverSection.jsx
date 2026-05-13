@@ -22,6 +22,12 @@ export default function RetrieverSection({
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["generative"]);
+
+  const formatParadigmName = (name) => {
+    if (!name) return "";
+    const withSpaces = name.replace(/([A-Z])/g, " $1").trim();
+    return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1).toLowerCase();
+  };
   
   const [paradigms, setParadigms] = useState([]);
   const [selectedParadigm, setSelectedParadigm] = useState(null);
@@ -183,9 +189,9 @@ export default function RetrieverSection({
                 sx={{
                   flex: 1,
                   minWidth: 200,
-                  textAlign: "center",
                   py: 2,
                   px: 1,
+                  textTransform: "none",
                   border: "1px solid",
                   borderColor: "divider",
                   "&.Mui-selected": {
@@ -201,8 +207,10 @@ export default function RetrieverSection({
                 }}
               >
                 <Box display="flex" flexDirection="column" gap={0.5}>
-                  <Typography variant="subtitle2">{paradigm.name}</Typography>
-                  <Typography variant="caption">
+                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
+                    {formatParadigmName(paradigm.name)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ textAlign: "left" }}>
                     {t(`generative:simplifiedRag.retriever.explanations.${paradigm.name}`, { defaultValue: "Custom retriever" })}
                   </Typography>
                 </Box>

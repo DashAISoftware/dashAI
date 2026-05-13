@@ -83,20 +83,20 @@
       "description": "Select how your documents will be split into chunks for retrieval.",
       "presets": {
         "small": {
-          "label": "Small Chunks"
+          "label": "Small chunks"
         },
         "paragraph": {
-          "label": "Paragraph Length"
+          "label": "Paragraph length"
         },
         "page": {
-          "label": "Page Chunk"
+          "label": "Page chunk"
         },
         "large": {
-          "label": "Large Sections"
+          "label": "Large sections"
         },
         "chunkSizeFormat": "{{chars}} characters ≈ {{tokens}} tokens",
         "custom": {
-          "label": "Custom Chunking Model",
+          "label": "Custom chunking model",
           "description": "Advanced configuration applied"
         }
       },

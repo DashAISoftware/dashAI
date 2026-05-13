@@ -83,20 +83,20 @@
       "description": "Selecciona cómo se dividirán tus documentos en fragmentos para la recuperación.",
       "presets": {
         "small": {
-          "label": "Fragmentos Pequeños"
+          "label": "Fragmentos pequeños"
         },
         "paragraph": {
-          "label": "Longitud de Párrafo"
+          "label": "Longitud de párrafo"
         },
         "page": {
-          "label": "Fragmento de Página"
+          "label": "Fragmento de página"
         },
         "large": {
-          "label": "Secciones Grandes"
+          "label": "Secciones grandes"
         },
         "chunkSizeFormat": "{{chars}} caracteres ≈ {{tokens}} tokens",
         "custom": {
-          "label": "Modelo de Chunking Personalizado",
+          "label": "Modelo de chunking personalizado",
           "description": "Configuración avanzada aplicada"
         }
       },

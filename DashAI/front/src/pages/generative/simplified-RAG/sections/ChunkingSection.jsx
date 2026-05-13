@@ -186,9 +186,9 @@ export default function ChunkingSection({
                 sx={{
                   flex: 1,
                   minWidth: 150,
-                  textAlign: "center",
                   py: 2,
                   px: 1,
+                  textTransform: "none",
                   border: "1px solid",
                   borderColor: "divider",
                   "&.Mui-selected": {
@@ -204,8 +204,8 @@ export default function ChunkingSection({
                 }}
               >
                 <Box display="flex" flexDirection="column" gap={0.5}>
-                  <Typography variant="subtitle2">{preset.label}</Typography>
-                  <Typography variant="caption">{description}</Typography>
+                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>{preset.label}</Typography>
+                  <Typography variant="caption" sx={{ textAlign: "left" }}>{description}</Typography>
                 </Box>
               </ToggleButton>
             );
