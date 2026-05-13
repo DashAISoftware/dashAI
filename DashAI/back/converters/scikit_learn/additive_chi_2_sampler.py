@@ -25,6 +25,7 @@ class AdditiveChi2SamplerSchema(BaseSchema):
         description=MultilingualString(
             en="The number of sample steps (shuffling) to perform.",
             es="Número de pasos de muestreo (mezcla) a realizar.",
+            pt="O número de passos de amostragem (embaralhamento) a realizar.",
         ),
     )  # type: ignore
     sample_interval: schema_field(
@@ -33,6 +34,7 @@ class AdditiveChi2SamplerSchema(BaseSchema):
         description=MultilingualString(
             en="The number of samples generated between each original sample.",
             es="Número de muestras generadas entre cada muestra original.",
+            pt="O número de amostras geradas entre cada amostra original.",
         ),
     )  # type: ignore
 
@@ -57,8 +59,16 @@ class AdditiveChi2Sampler(
             "Utiliza muestreo de la transformada de Fourier de la función kernel "
             "a intervalos regulares."
         ),
+        pt=(
+            "Utiliza amostragem da transformada de Fourier da característica do "
+            "kernel em intervalos regulares."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Additive Chi² Sampler", es="Muestreador Chi²")
+    DISPLAY_NAME = MultilingualString(
+        en="Additive Chi² Sampler",
+        es="Muestreador Chi²",
+        pt="Amostrador Qui-2 Aditivo",
+    )
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
 
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

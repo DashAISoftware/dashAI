@@ -29,8 +29,9 @@ class DensityHeatmapSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Number of bins along the x axis."),
             es=("Número de bins a lo largo del eje x."),
+            pt=("Número de bins ao longo do eixo x."),
         ),
-        alias=MultilingualString(en="Bins (x)", es="Bins (x)"),
+        alias=MultilingualString(en="Bins (x)", es="Bins (x)", pt="Bins (x)"),
     )  # type: ignore
     nbinsy: schema_field(
         none_type(int_field(ge=1)),
@@ -38,8 +39,9 @@ class DensityHeatmapSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Number of bins along the y axis."),
             es=("Número de bins a lo largo del eje y."),
+            pt=("Número de bins ao longo do eixo y."),
         ),
-        alias=MultilingualString(en="Bins (y)", es="Bins (y)"),
+        alias=MultilingualString(en="Bins (y)", es="Bins (y)", pt="Bins (y)"),
     )  # type: ignore
 
 
@@ -66,6 +68,7 @@ class DensityHeatmapExplorer(RelationshipExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Density Heatmap",
         es="Mapa de Calor de Densidad",
+        pt="Mapa de Calor de Densidade",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -75,6 +78,10 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         es=(
             "Devuelve un mapa de calor de densidad para dos columnas "
             "seleccionadas y visualizar su distribución conjunta."
+        ),
+        pt=(
+            "Retorna um mapa de calor de densidade para duas colunas "
+            "selecionadas para visualizar a distribuição conjunta."
         ),
     )
     IMAGE_PREVIEW = "density_heatmap.png"

@@ -44,9 +44,12 @@ class TranslationTask(BaseTask):
     DESCRIPTION: str = MultilingualString(
         en="Convert text from one language to another preserving meaning.",
         es="Convierte texto de un idioma a otro preservando el significado.",
+        pt="Converte texto de um idioma para outro preservando o significado.",
     )
 
-    DISPLAY_NAME: str = MultilingualString(en="Translation", es="Traducción")
+    DISPLAY_NAME: str = MultilingualString(
+        en="Translation", es="Traducción", pt="Tradução"
+    )
 
     def prepare_for_task(
         self,

@@ -44,8 +44,12 @@ class DescribeExplorerSchema(BaseExplorerSchema):
                 "Percentiles a incluir en la exploración. Use enteros entre 0 y "
                 "100. Ejemplo: '25, 50, 75'"
             ),
+            pt=(
+                "Percentis a incluir na exploração. Use inteiros entre 0 e "
+                "100. Exemplo: '25, 50, 75'"
+            ),
         ),
-        alias=MultilingualString(en="Percentiles", es="Percentiles"),
+        alias=MultilingualString(en="Percentiles", es="Percentiles", pt="Percentis"),
     )  # type: ignore
     include: schema_field(
         none_type(enum_field(["all", "number", "object", "category", "datetime"])),
@@ -53,8 +57,11 @@ class DescribeExplorerSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Data types to include in the exploration."),
             es=("Tipos de datos a incluir en la exploración."),
+            pt=("Tipos de dados a incluir na exploração."),
         ),
-        alias=MultilingualString(en="Include dtypes", es="Incluir tipos"),
+        alias=MultilingualString(
+            en="Include dtypes", es="Incluir tipos", pt="Incluir tipos"
+        ),
     )  # type: ignore
     exclude: schema_field(
         none_type(enum_field(["object", "number", "category", "datetime"])),
@@ -62,8 +69,11 @@ class DescribeExplorerSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Data types to exclude from the exploration."),
             es=("Tipos de datos a excluir de la exploración."),
+            pt=("Tipos de dados a excluir da exploração."),
         ),
-        alias=MultilingualString(en="Exclude dtypes", es="Excluir tipos"),
+        alias=MultilingualString(
+            en="Exclude dtypes", es="Excluir tipos", pt="Excluir tipos"
+        ),
     )  # type: ignore
 
 
@@ -91,6 +101,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Describe Dataset",
         es="Describir Dataset",
+        pt="Explorador de Descrição Estatística",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -105,11 +116,18 @@ class DescribeExplorer(PreviewInspectionExplorer):
             "columnas de tipo objeto: count, unique, top y freq. Puede elegir "
             "percentiles y qué tipos incluir o excluir."
         ),
+        pt=(
+            "Gera um resumo estatístico do conjunto de dados. Para colunas "
+            "numéricas: count, mean, std, min, 25%, 50%, 75% e max. Para "
+            "colunas de objeto: count, unique, top e freq. Você pode escolher "
+            "percentis e quais tipos incluir ou excluir."
+        ),
     )
 
     SHORT_DESCRIPTION = MultilingualString(
         en="Generate a statistical summary of the dataset.",
         es="Genera un resumen estadístico del dataset.",
+        pt="Gera um resumo estatístico do conjunto de dados.",
     )
     IMAGE_PREVIEW = "describe_explorer.png"
 

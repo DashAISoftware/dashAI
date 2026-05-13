@@ -4,8 +4,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -18,6 +16,7 @@ import {
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 import api from "../../api/api";
 
 /**
@@ -43,11 +42,9 @@ function ModelComparisonTable({
   const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
 
-  const { t, i18n } = useTranslation(["models", "common"]);
+  const { t } = useTranslation(["models", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   // ────────────────────────────────────────────────────────────────────────
   // Sync initial runs prop with local state

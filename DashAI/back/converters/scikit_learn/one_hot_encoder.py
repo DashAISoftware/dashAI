@@ -35,6 +35,7 @@ class OneHotEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="The categories of each feature.",
             es="Las categorías de cada característica.",
+            pt="As categorias de cada característica.",
         ),
     )  # type: ignore
     drop: schema_field(
@@ -46,6 +47,10 @@ class OneHotEncoderSchema(BaseSchema):
                 "Especifica una metodología para eliminar una categoría por "
                 "característica."
             ),
+            pt=(
+                "Especifica uma metodologia para eliminar uma categoria por "
+                "característica."
+            ),
         ),
     )  # type: ignore
     dtype: schema_field(
@@ -54,6 +59,7 @@ class OneHotEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
+            pt="Tipo de dado de saída desejado.",
         ),
     )  # type: ignore
     handle_unknown: schema_field(
@@ -62,6 +68,7 @@ class OneHotEncoderSchema(BaseSchema):
         description=MultilingualString(
             en=("How to handle unknown categories during transform."),
             es=("Cómo manejar categorías desconocidas durante la transformación."),
+            pt=("Como lidar com categorias desconhecidas durante a transformação."),
         ),
     )  # type: ignore
     min_frequency: schema_field(
@@ -70,6 +77,7 @@ class OneHotEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum frequency of a category to be considered as frequent.",
             es="Frecuencia mínima para considerar una categoría como frecuente.",
+            pt="Frequência mínima para considerar uma categoria como frequente.",
         ),
     )  # type: ignore
     max_categories: schema_field(
@@ -78,6 +86,7 @@ class OneHotEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of categories to encode.",
             es="Número máximo de categorías a codificar.",
+            pt="Número máximo de categorias a codificar.",
         ),
     )  # type: ignore
     feature_name_combiner: schema_field(
@@ -86,6 +95,7 @@ class OneHotEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Method used to combine feature names.",
             es="Método usado para combinar nombres de características.",
+            pt="Método usado para combinar nomes de características.",
         ),
     )  # type: ignore
 
@@ -123,8 +133,16 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
             "Codifica características categóricas enteras como un arreglo "
             "numérico one-hot."
         ),
+        pt=(
+            "Codifica características categóricas inteiras como um array "
+            "numérico One-Hot."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="One-Hot Encoder", es="Codificador One-Hot")
+    DISPLAY_NAME = MultilingualString(
+        en="One-Hot Encoder",
+        es="Codificador One-Hot",
+        pt="Codificador One-Hot",
+    )
     IMAGE_PREVIEW = "one_hot_encoder.png"
 
     PREFIX = "ohe_"

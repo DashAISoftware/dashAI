@@ -60,8 +60,11 @@ class HistogramPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Number of bins to use for the histogram."),
             es=("Número de bins a usar en el histograma."),
+            pt=("Número de bins a usar no histograma."),
         ),
-        alias=MultilingualString(en="Number of bins", es="Número de bins"),
+        alias=MultilingualString(
+            en="Number of bins", es="Número de bins", pt="Número de bins"
+        ),
     )  # type: ignore
     histfunc: schema_field(
         enum_field([e.value for e in HistFunc]),
@@ -69,8 +72,11 @@ class HistogramPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Binning function used for this histogram trace."),
             es=("Función de agrupación usada para este trazo de histograma."),
+            pt=("Função de agrupamento usada para este traço de histograma."),
         ),
-        alias=MultilingualString(en="Binning function", es="Función de binning"),
+        alias=MultilingualString(
+            en="Binning function", es="Función de binning", pt="Função de agrupamento"
+        ),
     )  # type: ignore
     histnorm: schema_field(
         enum_field([e.value for e in HistNorm]),
@@ -78,8 +84,11 @@ class HistogramPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Type of normalization used for this histogram trace."),
             es=("Tipo de normalización usada en este histograma."),
+            pt=("Tipo de normalização usada neste histograma."),
         ),
-        alias=MultilingualString(en="Normalization", es="Normalización"),
+        alias=MultilingualString(
+            en="Normalization", es="Normalización", pt="Normalização"
+        ),
     )  # type: ignore
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
@@ -87,10 +96,12 @@ class HistogramPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
+            pt=("Nome ou índice de coluna para agrupar pontos por cor."),
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
+            pt="Coluna para grupo de cor",
         ),
     )  # type: ignore
     pattern_group: schema_field(
@@ -99,10 +110,12 @@ class HistogramPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group point patterns."),
             es=("Nombre o índice de columna para agrupar patrones de puntos."),
+            pt=("Nome ou índice de coluna para agrupar padrões de pontos."),
         ),
         alias=MultilingualString(
             en="Pattern group column",
             es="Columna para grupo de patrón",
+            pt="Coluna para grupo de padrão",
         ),
     )  # type: ignore
 
@@ -132,12 +145,17 @@ class HistogramPlotExplorer(DistributionExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Histogram Plot",
         es="Histograma",
+        pt="Histograma",
     )
     DESCRIPTION = MultilingualString(
         en=("Displays a histogram for a selected column to explore its distribution."),
         es=(
             "Muestra un histograma de una columna seleccionada para explorar su "
             "distribución."
+        ),
+        pt=(
+            "Exibe um histograma de uma coluna selecionada para explorar sua "
+            "distribuição."
         ),
     )
     IMAGE_PREVIEW = "histogram_plot.png"
