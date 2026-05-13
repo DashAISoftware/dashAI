@@ -21,17 +21,20 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
         config = di["config"]
         plot_paths = []
+        print("tamaño x Inicial", len(x) - 1)
 
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
             if run.nested:
                 try:
                     registry = di["component_registry"]
-                    splitter_name = run.nested.get("splitter_name", None)
 
+                    inner_splits = run.nested
+                    splitter_name = inner_splits.get("splitter_name", None)
+                    print("inner_splitter_name:", splitter_name)
                     self.inner_splitter: BaseSplitter = registry[splitter_name][
                         "class"
-                    ](run.nested["splitter_params"])
+                    ](inner_splits)
                 except Exception as e:
                     raise ValueError(
                         f"Error configuring inner splitter for nested CV: {e}"
@@ -157,6 +160,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             inner_x, inner_y, _ = self.inner_splitter.split(
                 x_outer["train"], y_outer["train"]
             )
+            print(f"Fold {i}: {len(inner_x) - 1} inner folds created for nested CV.")
 
             strategy_with_context = partial(self.evaluate, fold_index=i)
             # Evaluate the model on the inner folds

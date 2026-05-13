@@ -23,4 +23,5 @@ export interface IRun {
   status: string;
   start_time: Date;
   end_time: Date;
+  nested?: object;
 }

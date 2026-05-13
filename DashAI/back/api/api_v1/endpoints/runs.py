@@ -463,6 +463,7 @@ async def upload_run(
                 goal_metric=params.goal_metric,
                 name=params.name,
                 description=params.description,
+                nested=params.nested,
             )
             db.add(run)
             db.commit()
@@ -556,6 +557,8 @@ async def update_run(
         The new optimizer parameters of the run, by default None.
     goal_metric: Union[str, None], optional
         The new goal metric of the run, by default None.
+    nested: Union[dict, None], optional
+        The new nested cross-validation configuration of the run, by default None.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -594,6 +597,8 @@ async def update_run(
                 reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
+            if params.nested is not None:
+                run.nested = params.nested
 
             if any(
                 [
@@ -603,6 +608,7 @@ async def update_run(
                     params.optimizer,
                     params.optimizer_parameters,
                     params.goal_metric,
+                    params.nested,
                 ]
             ):
                 db.commit()

@@ -30,7 +30,7 @@ import { checkIfHaveOptimazers } from "../../utils/schema";
 
 const DEFAULT_INNER_CONFIG = {
   splitterType: null, // null means: derive from outer splitter on mount
-  nSplits: null,
+  nSplits: 2,
 };
 
 /**
@@ -76,7 +76,6 @@ function AddModelDialog({
   const outerSplit = useMemo(() => {
     try {
       const splits = session?.splits ? JSON.parse(session.splits) : null;
-      console.log("Parsed session splits:", splits);
       const formattedSplitterName = splits.splitter_name.replace(
         "Splitter",
         "",
@@ -89,11 +88,11 @@ function AddModelDialog({
 
   // Derive outer splitter type from session to set a smart default for inner splitter
   useEffect(() => {
-    if (outerSplit && innerConfig.splitterType === null) {
+    if (open && outerSplit && innerConfig.splitterType === null) {
       const outerType = outerSplit.splitter_name;
       setInnerConfig((prev) => ({ ...prev, splitterType: outerType }));
     }
-  }, [outerSplit]);
+  }, [open, innerConfig.splitterType]);
 
   useEffect(() => {
     if (open && selectedModel) {
@@ -228,6 +227,16 @@ function AddModelDialog({
     try {
       setLoading(true);
 
+      let nestedConfig = null;
+      if (useNestedCV && outerSplit) {
+        // Copy the outer splitter configuration and update for inner splitter
+        nestedConfig = {
+          ...outerSplit,
+          splitter_name: `${innerConfig.splitterType}Splitter`,
+          n_splits: innerConfig.nSplits,
+        };
+      }
+
       const newRun = await createRun(
         session.id.toString(),
         selectedModel,
@@ -241,9 +250,7 @@ function AddModelDialog({
         "",
         goalMetric || "",
         "",
-        useNestedCV
-          ? { enabled: true, inner_splitter: innerConfig }
-          : { enabled: false },
+        nestedConfig,
       );
 
       enqueueSnackbar(t("models:message.runCreatedSuccess", { name }), {

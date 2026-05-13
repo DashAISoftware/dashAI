@@ -322,25 +322,6 @@ class ModelJob(BaseJob):
             ) from e
 
         try:
-            # Get the inner splitter if defined for nested cross validation
-            inner_splits_data = splits_data.get("inner_splitter_data", None)
-            inner_splitter: BaseSplitter = None
-
-            if inner_splits_data:
-                inner_splitter_name = inner_splits_data.get("splitter_name", None)
-                inner_splitter: BaseSplitter = component_registry[inner_splitter_name][
-                    "class"
-                ](
-                    splits_data=inner_splits_data,
-                )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"""Unable to find inner Splitter with name
-                {inner_splitter_name} in registry.""",
-            ) from e
-
-        try:
             # Get metrics from model session
             train_metrics: List[BaseMetric] = [
                 component_registry[m]["class"] for m in model_session.train_metrics
@@ -414,7 +395,6 @@ class ModelJob(BaseJob):
                 optimizer=optimizer,
                 run_optimizable_parameters=run_optimizable_parameters,
                 goal_metric=goal_metric,
-                inner_splitter=inner_splitter,
             )
         except Exception as e:
             log.exception(e)

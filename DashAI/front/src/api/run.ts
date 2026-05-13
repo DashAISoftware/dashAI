@@ -34,6 +34,7 @@ export const createRun = async (
   plotImportancePath: string,
   goalMetric: string,
   description: string,
+  nested?: object,
 ): Promise<IRun> => {
   const data = {
     model_session_id: modelSessionId,
@@ -50,6 +51,10 @@ export const createRun = async (
     description,
   };
 
+  if (nested !== undefined) {
+    Object.assign(data, { nested });
+  }
+
   const response = await api.post<IRun>("/v1/run/", data);
   return response.data;
 };
@@ -65,14 +70,21 @@ export const updateRunParameters = async (
   optimizer?: string,
   optimizer_parameters?: object,
   goal_metric?: string,
+  nested?: object,
 ): Promise<IRun> => {
-  const response = await api.patch<IRun>(`/v1/run/${runId}`, {
+  const data = {
     run_name: name,
     parameters,
     optimizer,
     optimizer_parameters,
     goal_metric,
-  });
+  };
+
+  if (nested !== undefined) {
+    Object.assign(data, { nested });
+  }
+
+  const response = await api.patch<IRun>(`/v1/run/${runId}`, data);
   return response.data;
 };
 
