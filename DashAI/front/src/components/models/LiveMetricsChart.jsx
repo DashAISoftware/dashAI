@@ -52,6 +52,19 @@ export function LiveMetricsChart({ run }) {
           const value = run.test_metrics[metricName];
           if (Array.isArray(value)) {
             formattedTestMetrics[metricName] = value;
+          } else if (
+            typeof value === "object" &&
+            value !== null &&
+            "value" in value
+          ) {
+            // Handle {value, std_value, fold_values} format
+            formattedTestMetrics[metricName] = [
+              {
+                step: 1,
+                value: value.value,
+                timestamp: new Date().toISOString(),
+              },
+            ];
           } else {
             formattedTestMetrics[metricName] = [
               { step: 1, value: value, timestamp: new Date().toISOString() },
@@ -148,6 +161,19 @@ export function LiveMetricsChart({ run }) {
             const value = run.test_metrics[metricName];
             if (Array.isArray(value)) {
               formattedTestMetrics[metricName] = value;
+            } else if (
+              typeof value === "object" &&
+              value !== null &&
+              "value" in value
+            ) {
+              // Handle {value, std_value, fold_values} format
+              formattedTestMetrics[metricName] = [
+                {
+                  step: 1,
+                  value: value.value,
+                  timestamp: new Date().toISOString(),
+                },
+              ];
             } else {
               formattedTestMetrics[metricName] = [
                 { step: 1, value: value, timestamp: new Date().toISOString() },
@@ -301,6 +327,13 @@ export function LiveMetricsChart({ run }) {
     setLevel(newLevel);
   };
 
+  // Save the evaluation strategy from the session
+  const isCV = useMemo(() => {
+    if (!run.model_session_id) return false;
+    const session = getModelSessionById(run.model_session_id.toString());
+    return session.evaluation_strategy === "CrossValidationEvaluationStrategy";
+  }, [run.model_session_id]);
+
   return (
     <Box p={2}>
       <Box display="flex" gap={2} mb={2}>
@@ -328,7 +361,9 @@ export function LiveMetricsChart({ run }) {
 
       <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
         <Tab label={t("models:label.train")} value="TRAIN" />
-        <Tab label={t("models:label.validation")} value="VALIDATION" />
+        {isCV && (
+          <Tab label={t("models:label.validation")} value="VALIDATION" />
+        )}
         <Tab label={t("models:label.test")} value="TEST" />
       </Tabs>
 

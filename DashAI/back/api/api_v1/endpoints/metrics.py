@@ -27,6 +27,8 @@ async def live_metrics_websocket(
     import asyncio
     import json
 
+    from DashAI.back.core.enums.metrics import LevelEnum
+
     await websocket.accept()
 
     last_timestamp = None
@@ -35,7 +37,9 @@ async def live_metrics_websocket(
     try:
         while True:
             with session_factory() as db:
-                query = db.query(Metric).filter(Metric.run_id == run_id)
+                query = db.query(Metric).filter(
+                    Metric.run_id == run_id, Metric.level == LevelEnum.TRIAL
+                )
 
                 # First send: get all metrics
                 # Subsequent sends: get only new metrics
