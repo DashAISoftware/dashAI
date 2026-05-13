@@ -6,6 +6,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+
 from DashAI.back.dependencies.database.utils import resolve_db_url
 
 logger = logging.getLogger(__name__)
