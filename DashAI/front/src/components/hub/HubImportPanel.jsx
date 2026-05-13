@@ -98,17 +98,15 @@ export default function HubImportPanel({
   // Reset when dataset/source changes
   useEffect(() => {
     if (!dataset || !sourceName) return;
-    setStepValue(0);
     setName(dataset.name || "");
     setLocalSelectedLoader(null);
-    onSelectedLoaderChange?.(null);
     setPreviewData(null);
     setPreviewError(false);
     setColumnTypes({});
     setColumnRenames({});
     setSelectedFile(null);
     setFiles([]);
-  }, [dataset?.id, sourceName, onSelectedLoaderChange, setStepValue]);
+  }, [dataset?.id, sourceName]);
 
   // Load files when entering file-select step
   useEffect(() => {

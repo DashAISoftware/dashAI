@@ -13,10 +13,6 @@ import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMe
 import HubLeftBar from "../../components/hub/HubLeftBar";
 import DatasetGrid from "../../components/hub/DatasetGrid";
 import DatasetDetail from "../../components/hub/DatasetDetail";
-import HubImportPanel from "../../components/hub/HubImportPanel";
-import DatafileInfoPanel from "../../components/hub/DatafileInfoPanel";
-import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
-import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
 import {
   createDatafile,
   deleteDatafile,
@@ -45,16 +41,9 @@ export default function HubContent() {
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [selectedDataset, setSelectedDataset] = useState(null);
-  const [importMode, setImportMode] = useState(false);
-  const [importStep, setImportStep] = useState(0);
-  const [selectedDataloader, setSelectedDataloader] = useState(null);
-  const [formValues, setFormValues] = useState({});
-  const [formHasErrors, setFormHasErrors] = useState(false);
-  const formSubmitRef = useRef(null);
 
   const [downloads, setDownloads] = useState({});
   const [downloadLoading, setDownloadLoading] = useState(false);
-  const [importDownload, setImportDownload] = useState(null);
 
   const watchedJobsRef = useRef(new Set());
 
@@ -74,12 +63,6 @@ export default function HubContent() {
   // Reset dataset selection when source changes
   useEffect(() => {
     setSelectedDataset(null);
-    setImportMode(false);
-    setImportStep(0);
-    setSelectedDataloader(null);
-    setFormValues({});
-    setFormHasErrors(false);
-    setImportDownload(null);
   }, [sourceNameParam]);
 
   useEffect(() => {
@@ -188,44 +171,16 @@ export default function HubContent() {
   };
 
   const handleImportDownload = (dl) => {
-    setImportDownload(dl);
-    setImportMode(true);
-    setImportStep(0);
-    setSelectedDataloader(null);
-    setFormValues({});
-    setFormHasErrors(false);
+    navigate(`/app/hub/import/${dl.id}`);
   };
 
   const handleSelectSource = (source) => {
     navigate(`/app/hub/${source.name}`);
   };
 
-  const handleImported = () => {
-    setSelectedDataset(null);
-    setImportMode(false);
-    setImportStep(0);
-    setSelectedDataloader(null);
-    setFormValues({});
-    setFormHasErrors(false);
-    setImportDownload(null);
-  };
-
   const handleStartImport = () => {
-    setImportDownload(getDownloadForDataset(selectedDataset));
-    setImportMode(true);
-    setImportStep(0);
-    setSelectedDataloader(null);
-    setFormValues({});
-    setFormHasErrors(false);
-  };
-
-  const handleExitImport = () => {
-    setImportMode(false);
-    setImportStep(0);
-    setSelectedDataloader(null);
-    setFormValues({});
-    setFormHasErrors(false);
-    setImportDownload(null);
+    const dl = getDownloadForDataset(selectedDataset);
+    if (dl) navigate(`/app/hub/import/${dl.id}`);
   };
 
   const downloadsList = Object.values(downloads);
@@ -236,10 +191,6 @@ export default function HubContent() {
     description: source.description || "",
     Icon: SOURCE_ICONS[source.name] ?? CloudDownloadIcon,
   }));
-
-  const importSourceName = importDownload
-    ? importDownload.source_name
-    : sourceNameParam;
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -253,25 +204,7 @@ export default function HubContent() {
         </LeftPanel>
 
         <CenterPanel>
-          {importMode ? (
-            <HubImportPanel
-              dataset={
-                importDownload
-                  ? { id: importDownload.dataset_id, name: importDownload.name }
-                  : selectedDataset
-              }
-              sourceName={importSourceName}
-              datafile={importDownload}
-              step={importStep}
-              onStepChange={setImportStep}
-              selectedLoader={selectedDataloader}
-              onSelectedLoaderChange={setSelectedDataloader}
-              formValues={formValues}
-              formHasErrors={formHasErrors}
-              onCancel={handleExitImport}
-              onImported={handleImported}
-            />
-          ) : sourceNameParam ? (
+          {sourceNameParam ? (
             <DatasetGrid
               sourceName={sourceNameParam}
               sourceDisplayName={sourceDisplayName}
@@ -293,38 +226,14 @@ export default function HubContent() {
         </CenterPanel>
 
         <RightPanel toggleButtonTop="50%">
-          {importMode ? (
-            (() => {
-              const dataloaderStep = importDownload ? 1 : 0;
-              const previewStep = importDownload ? 2 : 1;
-              if (importStep < dataloaderStep) {
-                return <DatafileInfoPanel datafile={importDownload} />;
-              }
-              if (importStep === dataloaderStep) {
-                return <ComponentDetailsPanel component={selectedDataloader} />;
-              }
-              if (importStep >= previewStep) {
-                return (
-                  <DataloaderConfigBar
-                    selectedDataloader={selectedDataloader?.name}
-                    formSubmitRef={formSubmitRef}
-                    setError={setFormHasErrors}
-                    onValuesChange={setFormValues}
-                  />
-                );
-              }
-              return null;
-            })()
-          ) : (
-            <DatasetDetail
-              dataset={selectedDataset}
-              sourceName={sourceNameParam}
-              download={getDownloadForDataset(selectedDataset)}
-              downloadLoading={downloadLoading}
-              onStartDownload={handleStartDownload}
-              onStartImport={handleStartImport}
-            />
-          )}
+          <DatasetDetail
+            dataset={selectedDataset}
+            sourceName={sourceNameParam}
+            download={getDownloadForDataset(selectedDataset)}
+            downloadLoading={downloadLoading}
+            onStartDownload={handleStartDownload}
+            onStartImport={handleStartImport}
+          />
         </RightPanel>
       </ModuleContainer>
     </ThreePanelLayoutContext.Provider>

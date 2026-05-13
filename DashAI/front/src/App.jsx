@@ -14,6 +14,7 @@ import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
+import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 
 function App() {
@@ -63,6 +64,10 @@ function App() {
             </Route>
           </Route>
           <Route path="/app/hub" element={<HubContent />} />
+          <Route
+            path="/app/hub/import/:datafileId/*"
+            element={<HubImportPage />}
+          />
           <Route path="/app/hub/:sourceName" element={<HubContent />} />
         </Routes>
         <JobQueueWidget />
