@@ -1,7 +1,6 @@
 """HuggingFace Hub dataset source for DashAI."""
 
 import logging
-import os
 import re
 from typing import Any, Final
 from urllib.parse import parse_qs, urlparse
@@ -149,10 +148,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             return None
 
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
-        """Download the full dataset using the HuggingFace datasets library.
-
-        For multi-config datasets, all configs are downloaded and concatenated
-        into a single CSV file.
+        """Download the raw dataset files from HuggingFace Hub.
 
         Parameters
         ----------
@@ -164,51 +160,14 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         Returns
         -------
         str
-            Path to the exported CSV file inside ``temp_path``.
+            Path to the directory containing the downloaded files.
         """
-        import pandas as pd
-        from datasets import get_dataset_config_names
-        from datasets import load_dataset as hf_load
+        from huggingface_hub import snapshot_download
 
-        def _load_split(ds) -> pd.DataFrame:
-            split = "train" if "train" in ds else list(ds.keys())[0]
-            return ds[split].to_pandas()
-
-        out_path = os.path.join(temp_path, f"{dataset_id.replace('/', '_')}.csv")
-
-        try:
-            dataset = hf_load(dataset_id, cache_dir=temp_path, trust_remote_code=False)
-            _load_split(dataset).to_csv(out_path, index=False)
-            return out_path
-        except ValueError as exc:
-            if "Config name is missing" not in str(exc):
-                raise RuntimeError(
-                    f"Cannot load dataset '{dataset_id}': {exc}"
-                ) from exc
-
-        configs = get_dataset_config_names(dataset_id)
-        log.debug("%s has %d configs, downloading all", dataset_id, len(configs))
-        dfs = []
-        for config in configs:
-            try:
-                ds = hf_load(
-                    dataset_id,
-                    config,
-                    cache_dir=temp_path,
-                    trust_remote_code=False,
-                )
-                dfs.append(_load_split(ds))
-            except Exception:
-                log.warning(
-                    "Skipping config '%s' for %s — could not load",
-                    config,
-                    dataset_id,
-                )
-
-        if not dfs:
-            raise RuntimeError(
-                f"No configs could be loaded for dataset '{dataset_id}'."
-            )
-
-        pd.concat(dfs, ignore_index=True).to_csv(out_path, index=False)
-        return out_path
+        snapshot_download(
+            repo_id=dataset_id,
+            repo_type="dataset",
+            local_dir=temp_path,
+            ignore_patterns=["*.md", "*.gitattributes", ".gitattributes"],
+        )
+        return temp_path
