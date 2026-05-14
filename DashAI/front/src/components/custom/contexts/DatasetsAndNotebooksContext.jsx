@@ -52,7 +52,6 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [datasetTab, setDatasetTab] = useState(0);
 
   useEffect(() => {
-    fetchDatasets();
     fetchNotebooks();
   }, []);
 

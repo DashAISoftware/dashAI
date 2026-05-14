@@ -27,10 +27,13 @@ export function useDatasets({ t }) {
 
   useEffect(() => {
     const unsubscribe = subscribeJobs((jobs) => {
-      const datasetJobs = Array.isArray(jobs)
-        ? jobs.filter((job) => job.task_type === "DatasetJob")
+      const finishedDatasetJobs = Array.isArray(jobs)
+        ? jobs.filter(
+            (job) =>
+              job.task_type === "DatasetJob" && job.status === "finished",
+          )
         : [];
-      if (datasetJobs.length > 0) {
+      if (finishedDatasetJobs.length > 0) {
         fetchDatasets();
       }
     });
