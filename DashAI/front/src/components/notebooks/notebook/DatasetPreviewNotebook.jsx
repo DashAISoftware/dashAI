@@ -46,7 +46,6 @@ export default function DatasetPreviewNotebook({
     selectDataset,
     clearSelectedDataset,
     deleteDataset,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     setStep,
     setSelectedOption,
@@ -156,15 +155,11 @@ export default function DatasetPreviewNotebook({
         );
 
         try {
-          const freshDatasets = await fetchDatasets(true);
+          const freshDatasets = await fetchDatasets();
           const dataset = freshDatasets.find((d) => d.id === datasetId);
 
           if (dataset) {
-            const enriched = await enrichDatasetsWithInfo(
-              freshDatasets,
-              datasets,
-            );
-            replaceDatasets(enriched);
+            replaceDatasets(freshDatasets);
             selectDataset(datasetId);
             setStep(0);
             setSelectedOption("dataset");
