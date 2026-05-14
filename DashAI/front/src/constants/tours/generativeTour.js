@@ -116,7 +116,6 @@ export const generativeTourSteps = [
     placement: "left",
     disableBeacon: true,
     spotlightClicks: true,
-    disableOverlay: true,
     disableScrolling: true,
   },
   {
