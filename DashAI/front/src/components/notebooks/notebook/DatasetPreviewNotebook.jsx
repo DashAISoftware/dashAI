@@ -60,6 +60,7 @@ export default function DatasetPreviewNotebook({
     () => explorersAndConverters.filter((item) => item.type === "converter"),
     [explorersAndConverters],
   );
+  const converterKey = converters.map((c) => `${c.id}:${c.status}`).join("|");
   const tourContext = useTourContext();
 
   const getDatasetName = () => {
@@ -279,7 +280,7 @@ export default function DatasetPreviewNotebook({
           <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path, converters]}
+              deps={[notebook.file_path, converterKey]}
               initialPageSize={5}
               datasetPath={notebook.file_path}
               columnTypes={columnTypes}
