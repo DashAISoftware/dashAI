@@ -100,6 +100,21 @@ export const generativeTourSteps = [
   },
 
   {
+    target: '[data-tour="session-config"]',
+    content: (
+      <Trans i18nKey="generativeTour:sessionConfig">
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    spotlightClicks: true,
+  },
+
+  {
     target: '[data-tour="model-parameters"]',
     content: (
       <Trans i18nKey="generativeTour:modelParameters">
@@ -149,6 +164,7 @@ export const generativeTourSteps = [
     placement: "right",
     disableBeacon: true,
     disableBackButton: true,
+    disableScrolling: true,
   },
   {
     target: '[data-tour="parameters-right-panel"]',

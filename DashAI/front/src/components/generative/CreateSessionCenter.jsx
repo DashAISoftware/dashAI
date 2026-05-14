@@ -59,7 +59,10 @@ export default function CreateSessionCenter() {
   useEffect(() => {
     if (!tourContext?.run) return;
     const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
-    if (currentTarget === '[data-tour="model-parameters"]') {
+    if (
+      currentTarget === '[data-tour="session-config"]' ||
+      currentTarget === '[data-tour="model-parameters"]'
+    ) {
       tourContext.resumeAtStep(tourContext.stepIndex);
     }
   }, [step]);
@@ -95,6 +98,7 @@ export default function CreateSessionCenter() {
       </Box>
 
       <Box
+        data-tour={step === 1 ? "session-config" : undefined}
         sx={{
           flex: 1,
           minHeight: 0,
