@@ -197,6 +197,26 @@ def test_update_column_encoder_dataset_not_started(
     assert response.status_code == 422, response.text
 
 
+def test_backfill_populates_null_counts(client: TestClient, dataset_1: Dataset) -> None:
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        ds = db.get(Dataset, dataset_1.id)
+        ds.total_rows = None
+        ds.total_columns = None
+        db.commit()
+
+    from DashAI.back.dependencies.database.backfill import backfill_dataset_counts
+
+    backfill_dataset_counts(session_factory)
+
+    with session_factory() as db:
+        ds = db.get(Dataset, dataset_1.id)
+        assert ds.total_rows == 150
+        assert ds.total_columns == 5
+
+
 def test_delete_dataset(client: TestClient, dataset_1: Dataset) -> None:
     response = client.delete(f"/api/v1/dataset/{dataset_1.id}")
     assert response.status_code == 204, response.text
