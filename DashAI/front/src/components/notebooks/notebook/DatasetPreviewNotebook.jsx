@@ -79,7 +79,7 @@ export default function DatasetPreviewNotebook({
       const hasFilters =
         filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
       const data = await getDatasetFileFiltered(
-        notebook.file_path,
+        notebook?.file_path,
         page,
         pageSize,
         filterModel,
@@ -87,7 +87,7 @@ export default function DatasetPreviewNotebook({
       );
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
-    [notebook.id],
+    [notebook?.id],
   );
 
   useEffect(() => {
