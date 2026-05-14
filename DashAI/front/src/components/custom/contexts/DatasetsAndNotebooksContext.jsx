@@ -28,7 +28,6 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
   } = useDatasets({ t });
@@ -68,7 +67,6 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
     notebooks,

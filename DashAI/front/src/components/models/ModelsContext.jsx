@@ -32,7 +32,6 @@ export function ModelsProvider({ children }) {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
   } = useDatasets({ t });
@@ -114,7 +113,6 @@ export function ModelsProvider({ children }) {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
     tasks,
