@@ -4,7 +4,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Collapse,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -24,7 +23,7 @@ export default function GeneratorParamsCard({
 }) {
   const { t } = useTranslation(["generative"]);
   const [showDescription, setShowDescription] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [initialModelParams, setInitialModelParams] = useState(null);
 
   const isAdvanced = useMemo(() => {
@@ -36,23 +35,32 @@ export default function GeneratorParamsCard({
 
   return (
     <Card sx={{ width: "100%", backgroundColor: "background.paper" }}>
-      <CardContent>
-        <Box display="flex" flexDirection="column" gap={2} width="100%">
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              {t("generative:simplifiedRag.generator.modelLabel")}
-            </Typography>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box>
-              <Tooltip title={t("generative:simplifiedRag.generator.description")}>
-                <IconButton
-                  size="small"
-                  onClick={() => setShowDescription((s) => !s)}
-                  aria-label="generator-info"
-                  sx={{ color: "text.secondary" }}
-                >
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {t("generative:simplifiedRag.generator.modelLabel")}
+              </Typography>
+              {isExpanded && isAdvanced && (
+                <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
+                  {t("generative:simplifiedRag.generator.advancedApplied")}
+                </Typography>
+              )}
+            </Box>
+            <Box>
+              {isExpanded && (
+                <Tooltip title={t("generative:simplifiedRag.generator.description")}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowDescription((s) => !s)}
+                    aria-label="generator-info"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip title={isExpanded ? (t("generative:simplifiedRag.prompt.collapse") || "Collapse") : (t("generative:simplifiedRag.prompt.expand") || "Expand")}>
                 <IconButton
                   size="small"
@@ -67,28 +75,24 @@ export default function GeneratorParamsCard({
               </Tooltip>
             </Box>
           </Box>
-
-          {showDescription && (
-            <Typography variant="body2" color="textSecondary">
+          {isExpanded && showDescription && (
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
               {t("generative:simplifiedRag.generator.description")}
             </Typography>
           )}
-
-          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <Box display="flex" flexDirection="column" gap={2} width="100%">
-              <GeneratorBody
-                generatorModel={generatorModel}
-                setGeneratorModel={setGeneratorModel}
-                chunkSize={chunkSize}
-                topK={topK}
-                promptTokenCount={promptTokenCount}
-                setIsValid={setIsValid}
-                isAdvanced={isAdvanced}
-                setInitialModelParams={setInitialModelParams}
-              />
-            </Box>
-          </Collapse>
         </Box>
+
+        <GeneratorBody
+          generatorModel={generatorModel}
+          setGeneratorModel={setGeneratorModel}
+          chunkSize={chunkSize}
+          topK={topK}
+          promptTokenCount={promptTokenCount}
+          setIsValid={setIsValid}
+          isAdvanced={isAdvanced}
+          setInitialModelParams={setInitialModelParams}
+          showDetails={isExpanded}
+        />
       </CardContent>
     </Card>
   );

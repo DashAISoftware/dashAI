@@ -64,7 +64,8 @@
       "promptTemplate": "Prompt Template",
       "languageModel": "Language Model (LLM)",
       "cancel": "Cancel",
-      "saveSession": "Save Session"
+      "saveSession": "Save Session",
+      "openDocumentsLibrary": "Open documents library"
     },
     "validation": {
       "nameRequired": "Session name is required",

@@ -1,11 +1,10 @@
 import { useState, useMemo } from "react";
 import {
   Typography,
-  Card,
-  CardContent,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import SectionCard from "../components/SectionCard";
 import GeneratorBody from "../components/GeneratorBody";
 
 export default function GeneratorSection({
@@ -27,24 +26,22 @@ export default function GeneratorSection({
   }, [generatorModel?.params, initialModelParams]);
 
   return (
-    <Card sx={{ width: "100%", backgroundColor: "background.paper" }}>
-      <CardContent>
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-          {t("generative:simplifiedRag.generator.description")}
-        </Typography>
+    <SectionCard>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+        {t("generative:simplifiedRag.generator.description")}
+      </Typography>
 
-        <GeneratorBody
-          generatorModel={generatorModel}
-          setGeneratorModel={setGeneratorModel}
-          chunkSize={chunkSize}
-          topK={topK}
-          promptTokenCount={promptTokenCount}
-          setIsValid={setIsValid}
-          isAdvanced={isAdvanced}
-          setInitialModelParams={setInitialModelParams}
-        />
-      </CardContent>
-    </Card>
+      <GeneratorBody
+        generatorModel={generatorModel}
+        setGeneratorModel={setGeneratorModel}
+        chunkSize={chunkSize}
+        topK={topK}
+        promptTokenCount={promptTokenCount}
+        setIsValid={setIsValid}
+        isAdvanced={isAdvanced}
+        setInitialModelParams={setInitialModelParams}
+      />
+    </SectionCard>
   );
 }
 

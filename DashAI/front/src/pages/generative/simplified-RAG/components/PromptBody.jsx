@@ -18,6 +18,7 @@ export default function PromptBody({
   promptId,
   setPromptId,
   onTokenCountChange,
+  showDetails = true,
 }) {
   const { t, i18n } = useTranslation(["generative"]);
   const [prompts, setPrompts] = useState([]);
@@ -104,7 +105,7 @@ export default function PromptBody({
   return (
     <>
       {/* Prompt Selection */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: showDetails ? 3 : 0 }}>
         <Autocomplete
           options={prompts}
           value={selectedPrompt}
@@ -127,7 +128,7 @@ export default function PromptBody({
       </Box>
 
       {/* Selected Prompt Info */}
-      {selectedPrompt && (
+      {showDetails && selectedPrompt && (
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
             <strong>{t("generative:simplifiedRag.prompt.selectedTemplate")}</strong>
@@ -160,16 +161,18 @@ export default function PromptBody({
       )}
 
       {/* New Prompt Button */}
-      <Button
-        variant="contained"
-        fullWidth
-        color="primary"
-        size="large"
-        startIcon={<AddIcon />}
-        onClick={() => setNewPromptModalOpen(true)}
-      >
-        {t("generative:simplifiedRag.prompt.newPromptButton")}
-      </Button>
+      {showDetails && (
+        <Button
+          variant="contained"
+          fullWidth
+          color="primary"
+          size="large"
+          startIcon={<AddIcon />}
+          onClick={() => setNewPromptModalOpen(true)}
+        >
+          {t("generative:simplifiedRag.prompt.newPromptButton")}
+        </Button>
+      )}
 
       {/* Advanced Configuration Modal */}
       {selectedPrompt && (
@@ -197,4 +200,5 @@ PromptBody.propTypes = {
   promptId: PropTypes.number,
   setPromptId: PropTypes.func.isRequired,
   onTokenCountChange: PropTypes.func,
+  showDetails: PropTypes.bool,
 };

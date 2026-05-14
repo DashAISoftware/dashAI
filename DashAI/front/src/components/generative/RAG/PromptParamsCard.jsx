@@ -4,7 +4,6 @@ import {
   Typography,
   Card,
   CardContent,
-  Collapse,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ViewList as ViewListIcon, Info as InfoIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
@@ -23,25 +22,27 @@ export default function PromptParamsCard({
   const goToPromptsDetail = () => navigate("/app/generative/rag/prompts");
   const { t } = useTranslation(["generative"]);
   const [showDescription, setShowDescription] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <Card sx={{ backgroundColor: "background.paper" }}>
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: 2 }}>
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Prompt</Typography>
             <Box>
-              <Tooltip title={t("generative:simplifiedRag.prompt.descriptionToggle") || "Description"}>
-                <IconButton
-                  size="small"
-                  onClick={() => setShowDescription((s) => !s)}
-                  aria-label="prompt-info"
-                  sx={{ color: "text.secondary" }}
-                >
-                  <InfoIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              {isExpanded && (
+                <Tooltip title={t("generative:simplifiedRag.prompt.descriptionToggle") || "Description"}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowDescription((s) => !s)}
+                    aria-label="prompt-info"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <InfoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip title={t("generative:simplifiedRag.prompt.openPrompts")}>
                 <IconButton size="small" onClick={goToPromptsDetail} aria-label="open-prompt-library">
                   <ViewListIcon fontSize="small" />
@@ -61,22 +62,19 @@ export default function PromptParamsCard({
               </Tooltip>
             </Box>
           </Box>
-          {showDescription && (
+          {isExpanded && showDescription && (
             <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
               {t("generative:simplifiedRag.prompt.description")}
             </Typography>
           )}
         </Box>
 
-        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <Box>
-            <PromptBody
-              promptId={promptId}
-              setPromptId={setPromptId}
-              onTokenCountChange={onTokenCountChange}
-            />
-          </Box>
-        </Collapse>
+        <PromptBody
+          promptId={promptId}
+          setPromptId={setPromptId}
+          onTokenCountChange={onTokenCountChange}
+          showDetails={isExpanded}
+        />
       </CardContent>
     </Card>
   );

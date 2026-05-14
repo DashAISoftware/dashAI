@@ -1,10 +1,9 @@
 import {
   Typography,
-  Card,
-  CardContent,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import SectionCard from "../components/SectionCard";
 import PromptBody from "../components/PromptBody";
 
 export default function PromptSection({
@@ -15,19 +14,17 @@ export default function PromptSection({
   const { t } = useTranslation(["generative"]);
 
   return (
-    <Card sx={{ backgroundColor: "background.paper" }}>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-          {t("generative:simplifiedRag.prompt.description")}
-        </Typography>
+    <SectionCard>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+        {t("generative:simplifiedRag.prompt.description")}
+      </Typography>
 
-        <PromptBody
-          promptId={promptId}
-          setPromptId={setPromptId}
-          onTokenCountChange={onTokenCountChange}
-        />
-      </CardContent>
-    </Card>
+      <PromptBody
+        promptId={promptId}
+        setPromptId={setPromptId}
+        onTokenCountChange={onTokenCountChange}
+      />
+    </SectionCard>
   );
 }
 

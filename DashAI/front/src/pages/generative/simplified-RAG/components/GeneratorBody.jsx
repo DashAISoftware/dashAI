@@ -25,6 +25,7 @@ export default function GeneratorBody({
   setIsValid,
   isAdvanced,
   setInitialModelParams,
+  showDetails = true,
 }) {
   const theme = useTheme();
   const { t, i18n } = useTranslation(["generative"]);
@@ -125,16 +126,6 @@ export default function GeneratorBody({
       <Box display="flex" flexDirection="column" gap={2} width="100%">
         {/* Model Selection */}
         <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {t("generative:simplifiedRag.generator.modelLabel")}
-            </Typography>
-            {isAdvanced && (
-              <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                {t("generative:simplifiedRag.generator.advancedApplied")}
-              </Typography>
-            )}
-          </Box>
           <Autocomplete
             options={generators}
             value={selectedGenerator}
@@ -159,7 +150,7 @@ export default function GeneratorBody({
         </Box>
 
         {/* Selected Model Info & Context Message */}
-        {selectedGenerator && generatorModel?.params && (
+        {showDetails && selectedGenerator && generatorModel?.params && (
           <Box
             sx={{
               p: 2,
@@ -195,15 +186,17 @@ export default function GeneratorBody({
           </Box>
         )}
 
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => setShowAdvanced(true)}
-          fullWidth
-          disabled={!selectedGenerator}
-        >
-          ↗ {t("generative:simplifiedRag.generator.advancedButton")}
-        </Button>
+        {showDetails && (
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => setShowAdvanced(true)}
+            fullWidth
+            disabled={!selectedGenerator}
+          >
+            ↗ {t("generative:simplifiedRag.generator.advancedButton")}
+          </Button>
+        )}
       </Box>
 
       {selectedGenerator && (
@@ -228,4 +221,5 @@ GeneratorBody.propTypes = {
   setIsValid: PropTypes.func.isRequired,
   isAdvanced: PropTypes.bool,
   setInitialModelParams: PropTypes.func,
+  showDetails: PropTypes.bool,
 };

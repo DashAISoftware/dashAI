@@ -224,7 +224,7 @@ export default function SimplifiedDocumentTable({
 
   return (
     <>
-      <Box sx={{ display: "flex", flexDirection: "column", width: "100%", minHeight: "400px" }}>
+      <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
         <MaterialReactTable table={table} />
       </Box>
       <DocumentPreviewModal

@@ -64,7 +64,8 @@
       "promptTemplate": "Plantilla de Prompt",
       "languageModel": "Modelo de Lenguaje (LLM)",
       "cancel": "Cancelar",
-      "saveSession": "Guardar Sesión"
+      "saveSession": "Guardar Sesión",
+      "openDocumentsLibrary": "Abrir biblioteca de documentos"
     },
     "validation": {
       "nameRequired": "El nombre de la sesión es obligatorio",
