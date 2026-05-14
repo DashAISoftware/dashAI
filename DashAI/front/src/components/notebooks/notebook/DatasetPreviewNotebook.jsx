@@ -18,7 +18,6 @@ import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
 import {
-  getDatasetFile,
   getDatasetFileFiltered,
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
@@ -55,12 +54,16 @@ export default function DatasetPreviewNotebook({
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
   const [columnTypes, setColumnTypes] = useState({});
-  const { explorersAndConverters } = useExplorersAndConverters();
+  const { explorersAndConverters, convertersLoaded } =
+    useExplorersAndConverters();
   const converters = useMemo(
     () => explorersAndConverters.filter((item) => item.type === "converter"),
     [explorersAndConverters],
   );
-  const converterKey = converters.map((c) => `${c.id}:${c.status}`).join("|");
+  const converterKey = useMemo(
+    () => converters.map((c) => `${c.id}:${c.status}`).join("|"),
+    [converters],
+  );
   const tourContext = useTourContext();
 
   const getDatasetName = () => {
@@ -75,18 +78,16 @@ export default function DatasetPreviewNotebook({
     async (page, pageSize, filterModel, sortModel) => {
       const hasFilters =
         filterModel?.items?.length > 0 || (sortModel && sortModel.length > 0);
-      const data = hasFilters
-        ? await getDatasetFileFiltered(
-            notebook.file_path,
-            page,
-            pageSize,
-            filterModel,
-            sortModel,
-          )
-        : await getDatasetFile(notebook.file_path, page, pageSize);
+      const data = await getDatasetFileFiltered(
+        notebook.file_path,
+        page,
+        pageSize,
+        filterModel,
+        sortModel,
+      );
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
-    [notebook?.file_path],
+    [],
   );
 
   useEffect(() => {
@@ -278,15 +279,17 @@ export default function DatasetPreviewNotebook({
 
         <AccordionDetails>
           <Box sx={{ width: "100%" }}>
-            <DatasetTable
-              fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path, converterKey]}
-              initialPageSize={5}
-              datasetPath={notebook.file_path}
-              columnTypes={columnTypes}
-              enableTopToolbar={false}
-              enableRowsPerPageSelector={false}
-            />
+            {convertersLoaded && (
+              <DatasetTable
+                fetchPage={fetchDatasetPage}
+                deps={[notebook.file_path, converterKey]}
+                initialPageSize={5}
+                datasetPath={notebook.file_path}
+                columnTypes={columnTypes}
+                enableTopToolbar={false}
+                enableRowsPerPageSelector={false}
+              />
+            )}
           </Box>
         </AccordionDetails>
       </Accordion>

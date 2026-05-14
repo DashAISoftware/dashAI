@@ -67,8 +67,11 @@ export default function NotebookView({ notebook }) {
     }
   }, [tourContext]);
 
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    setExplorersAndConverters,
+    setConvertersLoaded,
+  } = useExplorersAndConverters();
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -82,6 +85,7 @@ export default function NotebookView({ notebook }) {
 
   const fetchExplorersAndConverters = useCallback(async () => {
     if (!notebook?.id) return;
+    setConvertersLoaded(false);
     try {
       const [explorersData, convertersData] = await Promise.all([
         getExplorersByNotebookId(notebook.id),
@@ -101,8 +105,10 @@ export default function NotebookView({ notebook }) {
       setExplorersAndConverters(merged);
     } catch (error) {
       console.error("Failed to fetch explorers and converters:", error);
+    } finally {
+      setConvertersLoaded(true);
     }
-  }, [notebook?.id, setExplorersAndConverters]);
+  }, [notebook?.id, setExplorersAndConverters, setConvertersLoaded]);
 
   const getItemsToDelete = useCallback(
     (converterToDelete) => {
