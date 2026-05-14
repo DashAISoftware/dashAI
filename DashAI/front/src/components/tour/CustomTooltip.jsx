@@ -89,7 +89,7 @@ export const CustomTooltip = ({
         borderRadius: "8px",
         border: `1px solid ${borderColor}`,
         filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
-        maxWidth: "30ch",
+        maxWidth: "35ch",
         padding: "20px",
         position: "relative",
         overflow: "visible",
