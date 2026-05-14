@@ -28,13 +28,27 @@ function hardLightInverse(hexColor) {
   return `rgb(${ri},${gi},${bi})`;
 }
 
-const SpotlightHighlight = () => (
+const SpotlightHighlight = ({ isInteractive }) => (
   <GlobalStyles
     styles={(theme) => {
       const c = hardLightInverse(theme.palette.primary.main);
-      return {
+      const base = {
         ".react-joyride__spotlight": {
           boxShadow: `0 0 0 2px ${c}, 0 0 14px ${c} !important`,
+        },
+      };
+      if (!isInteractive) return base;
+      return {
+        "@keyframes tourSpotlightGlow": {
+          "0%": { filter: `drop-shadow(0 0 3px ${c})` },
+          "50%": {
+            filter: `drop-shadow(0 0 10px ${c}) drop-shadow(0 0 20px ${c})`,
+          },
+          "100%": { filter: `drop-shadow(0 0 3px ${c})` },
+        },
+        ".react-joyride__spotlight": {
+          boxShadow: `0 0 0 2px ${c}, 0 0 14px ${c} !important`,
+          animation: "tourSpotlightGlow 1.8s ease-in-out infinite !important",
         },
       };
     }}
@@ -119,6 +133,8 @@ export const TourProvider = ({
     return children;
   }
 
+  const isInteractiveStep = run && !!tourData.steps[stepIndex]?.isInteractive;
+
   // Internacionalized locale for tour buttons
   const locale = {
     back: t("common:back"),
@@ -144,7 +160,7 @@ export const TourProvider = ({
 
   return (
     <TourContext.Provider value={contextValue}>
-      <SpotlightHighlight />
+      <SpotlightHighlight isInteractive={isInteractiveStep} />
       <Joyride
         steps={tourData.steps}
         run={run}
