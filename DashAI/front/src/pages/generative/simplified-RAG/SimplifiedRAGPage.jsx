@@ -145,13 +145,14 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     }
   };
 
-  const handleNewSessionButton = () => {
+  const handleNewSessionButton = async () => {
     setGlobalSelectedSessionId?.(null);
     setSelectedTaskName?.("");
     setSelectedDisplayName?.(null);
     setStepIndex?.(0);
     setShowRagChat(false);
     setActiveRagChatSessionId(null);
+    if (fetchSessions) await fetchSessions();
     setSetupKey((prev) => prev + 1);
   };
 

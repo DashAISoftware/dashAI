@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -24,6 +24,7 @@ import PromptSection from "./sections/PromptSection";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { createRAGSession } from "../../../api/rag";
+import { getSessions } from "../../../api/session";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 
 const defaultSessionData = {
@@ -59,22 +60,32 @@ export default function SimplifiedSessionSetup({
   const goToPromptsDetail = () => navigate("/app/generative/rag/prompts");
   const goToDocumentsDetail = () => navigate("/app/generative/rag/documents");
 
-  const suggestedName = useMemo(() => {
+  const [suggestedName, setSuggestedName] = useState(() => {
     const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
-    
-    // Filter sessions by task name for the sequential suggestion
     const ragSessions = sessionsList.filter(s => s?.task_name === "RAGTask");
-    
     const { defaultName } = generateSequentialName({
       base: "RAG_Session",
       items: ragSessions,
       getName: (session) => session?.name,
     });
-
     return defaultName || "RAG_Session_1";
-  }, [existingSessions]);
+  });
 
-  const lastSuggestedNameRef = useRef(suggestedName);
+  useEffect(() => {
+    let cancelled = false;
+    getSessions().then((allSessions) => {
+      if (cancelled) return;
+      const ragSessions = (allSessions || []).filter(s => s?.task_name === "RAGTask");
+      const { defaultName } = generateSequentialName({
+        base: "RAG_Session",
+        items: ragSessions,
+        getName: (session) => session?.name,
+      });
+      setSuggestedName(defaultName || "RAG_Session_1");
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   const [isNameTouched, setIsNameTouched] = useState(Boolean(initialData?.name));
   const [sessionData, setSessionData] = useState({
     ...defaultSessionData,
@@ -110,22 +121,7 @@ export default function SimplifiedSessionSetup({
   useEffect(() => {
     if (initialData?.name) return;
     if (isNameTouched) return;
-
-    setSessionData((prev) => {
-      const currentName = prev?.name || "";
-      const lastSuggested = lastSuggestedNameRef.current;
-
-      const shouldReplace =
-        currentName.trim() === "" || currentName === lastSuggested;
-      
-      if (!shouldReplace) {
-        lastSuggestedNameRef.current = suggestedName;
-        return prev;
-      }
-
-      lastSuggestedNameRef.current = suggestedName;
-      return { ...prev, name: suggestedName };
-    });
+    setSessionData((prev) => ({ ...prev, name: suggestedName }));
   }, [initialData?.name, isNameTouched, suggestedName]);
 
   // Handle name duplicate check when existingSessions or name changes
