@@ -229,6 +229,10 @@ class DatasetJob(BaseJob):
                     folder_path = os.path.realpath(folder_path)
                     dataset = db.get(Dataset, dataset_id)
                     dataset.file_path = folder_path
+                    dataset.total_rows = new_dataset.splits.get("total_rows")
+                    dataset.total_columns = len(
+                        new_dataset.splits.get("column_names", [])
+                    )
                     dataset.set_status_as_finished()
                     db.commit()
                     db.refresh(dataset)

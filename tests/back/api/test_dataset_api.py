@@ -64,6 +64,14 @@ def test_dataset_has_row_column_fields(client: TestClient, dataset_1: Dataset) -
     assert "total_columns" in data
 
 
+def test_dataset_job_writes_counts(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["total_rows"] == 150
+    assert data["total_columns"] == 5
+
+
 def test_get_dataset(client: TestClient, dataset_1: Dataset) -> None:
     response = client.get(f"/api/v1/dataset/{dataset_1.id}")
     assert response.status_code == 200, response.text
