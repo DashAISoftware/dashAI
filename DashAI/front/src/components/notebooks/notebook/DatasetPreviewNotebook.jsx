@@ -85,7 +85,7 @@ export default function DatasetPreviewNotebook({
         : await getDatasetFile(notebook.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
-    [notebook.file_path, converters],
+    [notebook.file_path],
   );
 
   useEffect(() => {

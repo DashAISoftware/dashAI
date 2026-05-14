@@ -89,6 +89,10 @@ export default function DatasetTable({
 
   const [columnFilterFns, setColumnFilterFns] = useState(getDefaultFilterFns);
   const [showColumnFilters, setShowColumnFilters] = useState(false);
+  // loadKey starts at 0 so the main loading effect can skip the initial mount
+  // run (before the deps effect has fired). The deps effect increments it to
+  // signal that initialization is done and a fetch should occur.
+  const [loadKey, setLoadKey] = useState(0);
 
   useEffect(() => {
     initialized.current = false;
@@ -122,6 +126,7 @@ export default function DatasetTable({
     );
     setColumnFilterFns(session?.columnFilterFns ?? getDefaultFilterFns());
     setPagination({ pageIndex: 0, pageSize: initialPageSize });
+    setLoadKey((k) => k + 1);
 
     initialized.current = true;
   }, deps);
@@ -205,7 +210,7 @@ export default function DatasetTable({
   // 1st load: only fetch current page (fast, like develop)
   // If filters active and dataset small: lazy-load all data for client-side filtering
   useEffect(() => {
-    if (!initialized.current) return;
+    if (!initialized.current || loadKey === 0) return;
 
     // If we have cached filtered data, use it for pagination
     if (allFilteredDataRef.current) {
@@ -294,11 +299,11 @@ export default function DatasetTable({
       cancelled = true;
     };
   }, [
+    loadKey,
     pagination.pageIndex,
     pagination.pageSize,
     columnFilters,
     sorting,
-    fetchPage,
   ]);
 
   const handleColumnRename = useCallback(
