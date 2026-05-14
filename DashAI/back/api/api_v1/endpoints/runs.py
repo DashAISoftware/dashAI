@@ -46,8 +46,9 @@ def get_metrics_for_run(db, run_id: int):
     dict
         A dictionary containing train, validation, and test metrics for the run,
         each metric includes 'value' and 'std_value' (standard deviation).
+        For nested CV runs, also includes *_metrics_outer fields.
     """
-    final_metrics = (
+    last_metrics = (
         db.query(Metric)
         .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
         .all()
@@ -59,16 +60,32 @@ def get_metrics_for_run(db, run_id: int):
         .all()
     )
 
+    # Get last_outer metrics for nested CV (if they exist)
+    last_outer_metrics = (
+        db.query(Metric)
+        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST_OUTER)
+        .all()
+    )
+
+    outer_fold_metrics = (
+        db.query(Metric)
+        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.OUTER_FOLD)
+        .all()
+    )
+
     # Initialize the response structure with empty dicts instead of None
     # to prevent issues when fold metrics are present but last metrics are not
     response = {
         "train_metrics": {},
         "validation_metrics": {},
         "test_metrics": {},
+        "train_metrics_outer": {},
+        "validation_metrics_outer": {},
+        "test_metrics_outer": {},
     }
 
     # Group metrics by split
-    for m in final_metrics:
+    for m in last_metrics:
         # Determine the key in the response dictionary
         split_key = f"{m.split.name.lower()}_metrics"
 
@@ -81,15 +98,20 @@ def get_metrics_for_run(db, run_id: int):
 
     for m in fold_metrics:
         split_key = f"{m.split.name.lower()}_metrics"
+        response[split_key][m.name]["fold_values"].append(m.value)
 
-        # Si no existe
-        if m.name not in response[split_key]:
-            response[split_key][m.name] = {
-                "value": None,
-                "std_value": None,
-                "fold_values": [],
-            }
+    # Add last_outer metrics for nested CV
+    for m in last_outer_metrics:
+        split_key = f"{m.split.name.lower()}_metrics_outer"
 
+        response[split_key][m.name] = {
+            "value": m.value,
+            "std_value": m.std_value,
+            "fold_values": [],
+        }
+
+    for m in outer_fold_metrics:
+        split_key = f"{m.split.name.lower()}_metrics_outer"
         response[split_key][m.name]["fold_values"].append(m.value)
 
     return response
@@ -166,6 +188,9 @@ async def get_runs(
                 run.train_metrics = metrics["train_metrics"]
                 run.validation_metrics = metrics["validation_metrics"]
                 run.test_metrics = metrics["test_metrics"]
+                run.train_metrics_outer = metrics["train_metrics_outer"]
+                run.validation_metrics_outer = metrics["validation_metrics_outer"]
+                run.test_metrics_outer = metrics["test_metrics_outer"]
                 run.evaluation_strategy = run.model_session.evaluation_strategy
 
             # Compute scores if requested

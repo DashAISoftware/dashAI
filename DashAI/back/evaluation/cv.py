@@ -21,7 +21,6 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
         config = di["config"]
         plot_paths = []
-        print("tamaño x Inicial", len(x) - 1)
 
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
@@ -31,7 +30,6 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
                     inner_splits = run.nested
                     splitter_name = inner_splits.get("splitter_name", None)
-                    print("inner_splitter_name:", splitter_name)
                     self.inner_splitter: BaseSplitter = registry[splitter_name][
                         "class"
                     ](inner_splits)
@@ -40,7 +38,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                         f"Error configuring inner splitter for nested CV: {e}"
                     ) from e
 
-                self._nested_cv(self.model, x, y)
+                self._nested_cv(run.id, self.model, x, y)
 
             self._do_hpo(x, y, factory, run, db)
 
@@ -75,13 +73,12 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 split=SplitEnum.TEST, level=LevelEnum.FOLD, fold_index=i
             )
 
-        self.model.train(x[-1]["train"], y[-1]["train"])
-
         # Promediar métricas de los folds y guardarlas con level=LAST
         self._aggregate_fold_metrics(
-            run_id=run.id,
-            folds_level=LevelEnum.OUTER_FOLD if run.nested else LevelEnum.FOLD,
+            run_id=run.id, level_to_agg=LevelEnum.FOLD, level_to_save=LevelEnum.LAST
         )
+
+        self.model.train(x[-1]["train"], y[-1]["train"])
 
         return self.model, plot_paths
 
@@ -147,7 +144,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         # Retorna el promedio de las métricas de los folds
         return np.mean(folds_results)
 
-    def _nested_cv(self, model, input_dataset, output_dataset):
+    def _nested_cv(self, run_id, model, input_dataset, output_dataset):
         # Implement the logic to evaluate the model using nested cross-validation
         # This will involve using self.inner_splitter
         # to create inner folds and evaluating the model on those folds
@@ -160,7 +157,6 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             inner_x, inner_y, _ = self.inner_splitter.split(
                 x_outer["train"], y_outer["train"]
             )
-            print(f"Fold {i}: {len(inner_x) - 1} inner folds created for nested CV.")
 
             strategy_with_context = partial(self.evaluate, fold_index=i)
             # Evaluate the model on the inner folds
@@ -186,23 +182,36 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 split=SplitEnum.TRAIN, level=LevelEnum.OUTER_FOLD, fold_index=i
             )
 
-    def _aggregate_fold_metrics(self, run_id: int, folds_level=LevelEnum.FOLD):
+        # Promediar métricas de los outer folds y guardarlas con level=LAST_OUTER
+        self._aggregate_fold_metrics(
+            run_id=run_id,
+            level_to_agg=LevelEnum.OUTER_FOLD,
+            level_to_save=LevelEnum.LAST_OUTER,
+        )
+
+    def _aggregate_fold_metrics(
+        self, run_id: int, level_to_agg=LevelEnum.FOLD, level_to_save=LevelEnum.LAST
+    ):
         """Promediar métricas por fold y guardar como level=LAST.
 
-        Lee todas las métricas con level=FOLD, las agrupa por nombre y split,
-        calcula el promedio, y las guarda con level=LAST.
+        Lee todas las métricas con level=level_to_agg, las agrupa por nombre y split,
+        calcula el promedio, y las guarda con level=level_to_save.
 
         Parameters
         ----------
         run_id : int
             ID de la run
+        level_to_agg : LevelEnum, optional
+            Nivel de las métricas a agregar
+        level_to_save : LevelEnum, optional
+            Nivel con el que se guardarán las métricas agregadas
         """
 
         with di["session_factory"]() as db:
-            # Obtener todas las métricas con level=FOLD
+            # Obtener todas las métricas con level=level_to_agg para esta run
             fold_metrics = (
                 db.query(Metric)
-                .filter(Metric.run_id == run_id, Metric.level == folds_level)
+                .filter(Metric.run_id == run_id, Metric.level == level_to_agg)
                 .all()
             )
 
@@ -222,11 +231,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 avg_value = np.mean(values)
                 std_value = np.std(values) if len(values) > 1 else 0.0
 
-                # Buscar si ya existe una métrica LAST con este nombre
+                # Buscar si ya existe una métrica 'level_to_save' con este nombre
                 existing = (
                     db.query(Metric)
                     .filter_by(
-                        run_id=run_id, split=split, level=LevelEnum.LAST, name=name
+                        run_id=run_id, split=split, level=level_to_save, name=name
                     )
                     .first()
                 )
@@ -241,7 +250,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                         Metric(
                             run_id=run_id,
                             split=split,
-                            level=LevelEnum.LAST,
+                            level=level_to_save,
                             name=name,
                             value=avg_value,
                             std_value=std_value,
