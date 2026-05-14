@@ -16,7 +16,6 @@ def backfill_dataset_counts(session_factory: "sessionmaker") -> None:
         SQLAlchemy session factory from the DI container.
     """
     from DashAI.back.core.enums.status import DatasetStatus
-    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
     from DashAI.back.dependencies.database.models import Dataset
 
     with session_factory() as db:
@@ -24,13 +23,22 @@ def backfill_dataset_counts(session_factory: "sessionmaker") -> None:
             db.query(Dataset)
             .filter(
                 Dataset.status == DatasetStatus.FINISHED,
-                Dataset.total_rows == None,  # noqa: E711 — SQLAlchemy ORM requires == for column IS NULL
+                Dataset.total_rows
+                == None,  # noqa: E711 — SQLAlchemy ORM requires == for column IS NULL
             )
             .all()
         )
         updated = 0
+
+        if not pending:
+            log.debug("No datasets found that require backfilling.")
+            return
         for ds in pending:
             try:
+                from DashAI.back.dataloaders.classes.dashai_dataset import (
+                    get_dataset_info,
+                )
+
                 info = get_dataset_info(f"{ds.file_path}/dataset")
                 ds.total_rows = info["total_rows"]
                 ds.total_columns = info["total_columns"]
