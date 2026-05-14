@@ -1,9 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import {
   getDatasets,
   deleteDataset,
-  getDatasetInfo,
   updateDataset,
   createDataset,
 } from "../../api/datasets";
@@ -13,51 +12,17 @@ export function useDatasets({ t }) {
   const { enqueueSnackbar } = useSnackbar();
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
-  const datasetsRef = useRef(datasets);
-
-  useEffect(() => {
-    datasetsRef.current = datasets;
-  }, [datasets]);
 
   useEffect(() => {
     fetchDatasets();
   }, []);
 
-  // ---------------- helpers ----------------
-
-  const enrichDatasetsWithInfo = useCallback(
-    async (newDatasets, existingDatasets = []) => {
-      return Promise.all(
-        newDatasets.map(async (dataset) => {
-          const existing = existingDatasets.find((d) => d.id === dataset.id);
-
-          if (existing?.total_rows !== undefined) return existing;
-
-          if (dataset.status !== 3) return dataset;
-
-          try {
-            const info = await getDatasetInfo(dataset.id);
-            return {
-              ...dataset,
-              total_rows: info.total_rows,
-              total_columns: info.total_columns,
-            };
-          } catch (error) {
-            return dataset;
-          }
-        }),
-      );
-    },
-    [],
-  );
-
   // ---------------- actions ----------------
 
   const fetchDatasets = useCallback(async () => {
     const data = await getDatasets();
-    const enriched = await enrichDatasetsWithInfo(data, datasetsRef.current);
-    setDatasets(enriched);
-  }, [enrichDatasetsWithInfo]);
+    setDatasets(data);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = subscribeJobs((jobs) => {
@@ -159,7 +124,6 @@ export function useDatasets({ t }) {
   return {
     datasets,
     selectedDatasetId,
-    enrichDatasetsWithInfo,
     createDataset,
     fetchDatasets,
     selectDataset,
