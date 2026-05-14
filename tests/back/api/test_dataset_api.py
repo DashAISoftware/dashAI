@@ -56,6 +56,14 @@ def test_get_all_datasets(client: TestClient, dataset_1: Dataset) -> None:
     assert "test_csv_1" in dataset_names
 
 
+def test_dataset_has_row_column_fields(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert "total_rows" in data
+    assert "total_columns" in data
+
+
 def test_get_dataset(client: TestClient, dataset_1: Dataset) -> None:
     response = client.get(f"/api/v1/dataset/{dataset_1.id}")
     assert response.status_code == 200, response.text
