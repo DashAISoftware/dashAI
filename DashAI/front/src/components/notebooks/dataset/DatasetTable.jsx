@@ -111,8 +111,15 @@ export default function DatasetTable({
         f.value !== undefined &&
         f.value !== "",
     );
-    setColumnFilters(cleanFilters);
-    setSorting(session?.sorting ?? []);
+    const newSorting = session?.sorting ?? [];
+    // Preserve reference identity when values haven't changed so the main
+    // loading effect (which depends on these arrays) does not fire an extra time.
+    setColumnFilters((prev) =>
+      prev.length === 0 && cleanFilters.length === 0 ? prev : cleanFilters,
+    );
+    setSorting((prev) =>
+      prev.length === 0 && newSorting.length === 0 ? prev : newSorting,
+    );
     setColumnFilterFns(session?.columnFilterFns ?? getDefaultFilterFns());
     setPagination({ pageIndex: 0, pageSize: initialPageSize });
 
@@ -286,7 +293,13 @@ export default function DatasetTable({
     return () => {
       cancelled = true;
     };
-  }, [pagination.pageIndex, pagination.pageSize, columnFilters, sorting]);
+  }, [
+    pagination.pageIndex,
+    pagination.pageSize,
+    columnFilters,
+    sorting,
+    fetchPage,
+  ]);
 
   const handleColumnRename = useCallback(
     async (oldName, newName) => {
