@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueDatasetJob } from "../../../api/job";
@@ -17,7 +17,6 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
-import { getConvertersByNotebookId } from "../../../api/notebook";
 import {
   getDatasetFile,
   getDatasetFileFiltered,
@@ -55,9 +54,12 @@ export default function DatasetPreviewNotebook({
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
-  const [converters, setConverters] = useState([]);
   const [columnTypes, setColumnTypes] = useState({});
   const { explorersAndConverters } = useExplorersAndConverters();
+  const converters = useMemo(
+    () => explorersAndConverters.filter((item) => item.type === "converter"),
+    [explorersAndConverters],
+  );
   const tourContext = useTourContext();
 
   const getDatasetName = () => {
@@ -85,38 +87,6 @@ export default function DatasetPreviewNotebook({
     },
     [notebook, converters],
   );
-
-  useEffect(() => {
-    let intervalId;
-
-    const fetchConverters = async () => {
-      try {
-        const response = await getConvertersByNotebookId(notebook.id);
-        setConverters(response);
-
-        const isPollingNeeded = response.some(
-          (converter) => converter.status < 3,
-        );
-
-        if (isPollingNeeded) {
-          if (!intervalId) {
-            intervalId = setInterval(fetchConverters, 2000);
-          }
-        } else {
-          clearInterval(intervalId);
-        }
-      } catch (error) {
-        console.error("Error fetching converters:", error);
-        clearInterval(intervalId);
-      }
-    };
-
-    fetchConverters();
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [notebook, explorersAndConverters]);
 
   useEffect(() => {
     if (!notebook?.file_path) return;
@@ -309,7 +279,7 @@ export default function DatasetPreviewNotebook({
           <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path, converters, explorersAndConverters]}
+              deps={[notebook.file_path, converters]}
               initialPageSize={5}
               datasetPath={notebook.file_path}
               columnTypes={columnTypes}

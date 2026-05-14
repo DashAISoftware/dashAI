@@ -123,7 +123,7 @@ export default function RightBar({ notebook, onToggle }) {
     return () => {
       cancelled = true;
     };
-  }, [explorersAndConverters, t]);
+  }, [t]);
 
   // Clear search when the selected notebook changes
   useEffect(() => {
