@@ -10,7 +10,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import RetrieverConfigurationStep from "../../RAG/NewSessionModal/RetrieverConfigurationStep";
+import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
 
 export default function RetrieverAdvancedModal({
   open,

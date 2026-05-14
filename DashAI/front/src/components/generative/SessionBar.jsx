@@ -126,7 +126,7 @@ export default function SessionBar({
     setStepIndex(0); // sesión existente => modo chat
 
     const targetRoute =
-      session.task_name === "RAGTask" ? "/app/generative/RAG" : "/app/generative";
+      session.task_name === "RAGTask" ? "/app/generative/rag" : "/app/generative";
 
     navigate(targetRoute, {
       replace: true,

@@ -10,12 +10,12 @@ import {
   DialogContentText,
 } from "@mui/material";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import RAGFormSchema from "../../simplified-RAG/components/RAGFormSchema";
+import RAGFormSchema from "../components/RAGFormSchema";
 import { getGeneratorComponents } from "../../../../api/rag";
 import {
   buildDefaultValuesFromSchemaProperties,
   getInitialModelParameters,
-} from "./ragFormDefaults";
+} from "../components/ragFormDefaults";
 
 /**
  * Simple generator configuration step that allows selecting a generator model
@@ -60,7 +60,6 @@ export default function GeneratorConfigurationStep({
     }
     // enable next when there is a selection
     setNextEnabled(!!generatorModel?.component);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generators, generatorModel?.component]);
 
   const handleSelection = (event, newValue) => {

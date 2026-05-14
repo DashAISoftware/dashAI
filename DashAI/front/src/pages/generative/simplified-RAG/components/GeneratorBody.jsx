@@ -12,7 +12,7 @@ import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getGeneratorComponents } from "../../../../api/rag";
-import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
+import { buildDefaultValuesFromSchemaProperties } from "./ragFormDefaults";
 import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
 import { getDescription } from "./sectionUtils";
 

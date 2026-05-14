@@ -10,7 +10,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import ChunkingConfigurationStep from "../../RAG/NewSessionModal/ChunkingConfigurationStep";
+import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 import { getModelFromSubform } from "../../../../utils/schema";
 
 export default function ChunkingAdvancedModal({

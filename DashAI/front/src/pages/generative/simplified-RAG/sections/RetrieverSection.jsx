@@ -11,7 +11,7 @@ import {
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getRetrievalParadigm, getRetrieverComponents } from "../../../../api/rag";
-import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
+import { buildDefaultValuesFromSchemaProperties } from "../components/ragFormDefaults";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
 
 const TOP_K_OPTIONS = [3, 5, 10, 15, 20];

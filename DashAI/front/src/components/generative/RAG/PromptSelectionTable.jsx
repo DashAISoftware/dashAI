@@ -13,7 +13,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DataGrid } from "@mui/x-data-grid";
 import { formatDate } from "../../../utils";
 import TemplateModal from "../../custom/TemplateModal";
-import NewPromptModal from "./NewPromptModal";
+import NewPromptModal from "../../../pages/generative/simplified-RAG/advanced/NewPromptModal";
 import { getRAGPrompts } from "../../../api/rag";
 
 export default function PromptSelectionTable({

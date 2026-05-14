@@ -10,7 +10,7 @@ import {
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
-import { buildDefaultValuesFromSchemaProperties } from "../../RAG/NewSessionModal/ragFormDefaults";
+import { buildDefaultValuesFromSchemaProperties } from "../components/ragFormDefaults";
 import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
 import { useTheme } from "@mui/material/styles";

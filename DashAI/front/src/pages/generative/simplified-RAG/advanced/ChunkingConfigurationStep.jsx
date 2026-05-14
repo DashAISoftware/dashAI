@@ -10,11 +10,11 @@ import {
 import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import RAGFormSchema from "../../simplified-RAG/components/RAGFormSchema";
+import RAGFormSchema from "../components/RAGFormSchema";
 import {
   buildDefaultValuesFromSchemaProperties,
   getInitialModelParameters,
-} from "./ragFormDefaults";
+} from "../components/ragFormDefaults";
 import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 
 export default function ChunkingConfigurationStep({
@@ -82,7 +82,6 @@ export default function ChunkingConfigurationStep({
     } else {
       setNextEnabled(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chunkingOptions, chunkingModel]);
 
   const handleChunkingSelectionChange = (event, newValue) => {

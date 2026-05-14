@@ -10,7 +10,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import GeneratorConfigurationStep from "../../RAG/NewSessionModal/GeneratorConfigurationStep";
+import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
 
 export default function GeneratorAdvancedModal({
   open,

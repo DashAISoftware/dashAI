@@ -36,10 +36,9 @@ function RAGBreadcrumbs({ sessionName }) {
 
     const base = [
       { label: "Generative", path: "/app/generative" },
-      { label: "RAG", path: "/app/generative/RAG" },
+      { label: "RAG", path: "/app/generative/rag" },
     ];
 
-    if (path === "/app/generative/rag/sessions") return [...base, { label: "Sessions", path: null, current: true }];
     if (path === "/app/generative/rag/documents") return [...base, { label: "Documents", path: null, current: true }];
     if (path === "/app/generative/rag/prompts") return [...base, { label: "Prompts", path: null, current: true }];
 
@@ -57,7 +56,7 @@ function RAGBreadcrumbs({ sessionName }) {
       navigateToGenerative();
       return;
     }
-    if (path === "/app/generative/RAG") {
+    if (path === "/app/generative/rag") {
       setSelectedSessionId?.(null);
       setSelectedTaskName?.("RAGTask");
       setSelectedDisplayName?.(null);

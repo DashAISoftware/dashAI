@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
-import SimplifiedIcon from "@mui/icons-material/ViewAgenda";
 import {
   ChatBubbleOutline as TextToTextIcon,
   Image as TextToImageIcon,
@@ -27,6 +26,11 @@ export default function SelectTaskMenu() {
   const navigate = useNavigate();
 
   const goToNextStep = (taskName, displayName) => {
+    if (taskName === "RAGTask") {
+      navigate("/app/generative/rag");
+      return;
+    }
+
     setSelectedDisplayName(displayName);
     setSelectedTaskName(taskName);
     setStepIndex(1);
@@ -44,39 +48,20 @@ export default function SelectTaskMenu() {
     }
   };
 
-  const handleSimplifiedRAG = () => {
-    navigate("/app/generative/simplified-rag");
-  };
-
-  const simplifiedRAGOption = {
-    name: "simplified-rag",
-    display_name: "Simplified RAG Setup",
-    description: "Quick and easy RAG session setup with collapsible configuration sections",
-    Icon: SimplifiedIcon,
-    isCustom: true,
-  };
-
-  const allOptions = [
-    ...tasks.map((task) => ({
-      name: task.name,
-      display_name: task.display_name,
-      description: task.description,
-      Icon: GENERATIVE_TASK_ICONS[task.name] || DefaultGenerativeIcon,
-    })),
-    simplifiedRAGOption,
-  ];
+  const allOptions = tasks.map((task) => ({
+    name: task.name,
+    display_name: task.display_name,
+    description: task.description,
+    Icon: GENERATIVE_TASK_ICONS[task.name] || DefaultGenerativeIcon,
+  }));
 
   return (
     <SelectOptionMenu
       goToNextStep={(optionName) => {
-        if (optionName === "simplified-rag") {
-          handleSimplifiedRAG();
-        } else {
-          goToNextStep(
-            optionName,
-            tasks.find((t) => t.name === optionName)?.display_name,
-          );
-        }
+        goToNextStep(
+          optionName,
+          tasks.find((t) => t.name === optionName)?.display_name,
+        );
       }}
       title={t("generative:label.generativeModule")}
       subtitle={t("generative:label.selectGenerativeTask")}

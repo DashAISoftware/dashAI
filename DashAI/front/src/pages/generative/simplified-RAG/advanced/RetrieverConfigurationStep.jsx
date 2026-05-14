@@ -15,13 +15,13 @@ import {
   getRetrievalParadigm,
 } from "../../../../api/rag";
 
-import RAGFormSchema from "../../simplified-RAG/components/RAGFormSchema";
+import RAGFormSchema from "../components/RAGFormSchema";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
 import {
   FormSchemaProvider,
   useFormSchemaStore,
 } from "../../../../contexts/schema";
-import { getInitialModelParameters } from "./ragFormDefaults";
+import { getInitialModelParameters } from "../components/ragFormDefaults";
 
 function FormSchemaInterceptor({ currentFormValuesRef }) {
   const store = useFormSchemaStore();

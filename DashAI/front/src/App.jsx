@@ -15,8 +15,6 @@ import Generative from "./pages/generative/Generative";
 import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
-import RAGHomePage from "./pages/generative/RAG/RAGHomePage";
-import RAGSessionsPage from "./pages/generative/RAG/RAGSessionsPage";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
 import SimplifiedRAGPage from "./pages/generative/simplified-RAG/SimplifiedRAGPage";
@@ -38,15 +36,7 @@ function App() {
             path="/app/generative/rag"
             element={
               <GenerativeProvider>
-                <RAGHomePage />
-              </GenerativeProvider>
-            }
-          />
-          <Route
-            path="/app/generative/rag/sessions"
-            element={
-              <GenerativeProvider>
-                <RAGSessionsPage />
+                <SimplifiedRAGPage />
               </GenerativeProvider>
             }
           />
@@ -63,14 +53,6 @@ function App() {
             element={
               <GenerativeProvider>
                 <RAGPromptsPage />
-              </GenerativeProvider>
-            }
-          />
-          <Route
-            path="/app/generative/simplified-rag"
-            element={
-              <GenerativeProvider>
-                <SimplifiedRAGPage />
               </GenerativeProvider>
             }
           />
