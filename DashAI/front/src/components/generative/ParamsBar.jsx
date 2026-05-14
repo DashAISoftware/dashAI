@@ -120,7 +120,7 @@ export default function ParamsBar({ onToggle }) {
   const theme = useTheme();
 
   return (
-    <SideBar>
+    <SideBar data-tour="parameters-right-panel">
       <Box
         sx={{
           p: 2,

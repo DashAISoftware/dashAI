@@ -5,7 +5,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ComponentSelector from "../custom/ComponentSelector";
 import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
@@ -38,12 +38,39 @@ export default function CreateSessionCenter() {
     handleCreate,
   } = useCreateSession();
 
+  const handleSelectModelWithTour = useCallback(
+    (model) => {
+      handleSelectModel(model);
+      if (tourContext?.run) tourContext.nextStep();
+    },
+    [handleSelectModel, tourContext],
+  );
+
+  const handleNextWithTour = useCallback(() => {
+    if (tourContext?.run) tourContext.nextStep();
+    handleNext();
+  }, [handleNext, tourContext]);
+
+  const handleCreateWithTour = useCallback(() => {
+    if (tourContext?.run) tourContext.nextStep();
+    handleCreate();
+  }, [handleCreate, tourContext]);
+
+  useEffect(() => {
+    if (!tourContext?.run) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (currentTarget === '[data-tour="model-parameters"]') {
+      tourContext.resumeAtStep(tourContext.stepIndex);
+    }
+  }, [step]);
+
   const canGoNext = !!selectedModel;
   const canCreate =
     !!selectedModel && !!formik.values.name?.trim() && !submitting;
 
   return (
     <Box
+      data-tour="task-gallery"
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -54,7 +81,7 @@ export default function CreateSessionCenter() {
       }}
     >
       <GenerativeBreadcrumbs />
-      <Box sx={{ mb: 2 }} data-tour="task-gallery">
+      <Box sx={{ mb: 2 }}>
         <Typography variant="h5" component="h2">
           {step === 0
             ? t("generative:label.selectModel")
@@ -93,9 +120,11 @@ export default function CreateSessionCenter() {
             <ComponentSelector
               components={models}
               selected={selectedModel}
-              onSelect={handleSelectModel}
+              onSelect={handleSelectModelWithTour}
               categoryKey="task_display_name"
               searchPlaceholder={t("generative:label.searchModels")}
+              tourDataFor={tourContext?.run ? "model-card-qwen" : null}
+              tourDataMatchFn={(c) => c.name.toLowerCase().includes("qwen")}
             />
           )
         ) : (
@@ -126,7 +155,7 @@ export default function CreateSessionCenter() {
 
       <StepperNavigationFooter
         onBack={handleBack}
-        onNext={step === 0 ? handleNext : handleCreate}
+        onNext={step === 0 ? handleNextWithTour : handleCreateWithTour}
         backDisabled={submitting}
         nextDisabled={step === 0 ? !canGoNext : !canCreate}
         nextLabel={
@@ -134,6 +163,13 @@ export default function CreateSessionCenter() {
         }
         loading={submitting}
         variant={step === 0 ? "next" : "save"}
+        nextDataTour={
+          tourContext?.run
+            ? step === 0
+              ? "create-session-next"
+              : "create-session-button"
+            : null
+        }
       />
     </Box>
   );

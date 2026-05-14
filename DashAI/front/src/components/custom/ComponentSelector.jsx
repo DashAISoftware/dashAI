@@ -38,6 +38,7 @@ function ComponentSelector({
   emptyText,
   getIcon,
   tourDataFor = null,
+  tourDataMatchFn = null,
 }) {
   const { t } = useTranslation("custom");
   const [search, setSearch] = useState("");
@@ -198,7 +199,9 @@ function ComponentSelector({
                       const icon = getIcon?.(component);
                       const isCsvComponent =
                         tourDataFor &&
-                        component.name.toLowerCase().includes("csv");
+                        (tourDataMatchFn
+                          ? tourDataMatchFn(component)
+                          : component.name.toLowerCase().includes("csv"));
                       return (
                         <Paper
                           key={component.name}
@@ -347,6 +350,7 @@ ComponentSelector.propTypes = {
   searchPlaceholder: PropTypes.string,
   emptyText: PropTypes.string,
   getIcon: PropTypes.func,
+  tourDataMatchFn: PropTypes.func,
 };
 
 export default ComponentSelector;
