@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box } from "@mui/material";
 import DocumentListItem from "./DocumentListItem";
 import DocumentPreviewModal from "./DocumentPreviewModal";
+import { normalizeUrl } from "../../../utils/urlUtils";
 
 export default function DocumentList({ documents }) {
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -12,7 +13,7 @@ export default function DocumentList({ documents }) {
     setPreviewDoc(doc);
     if (doc.file_type === "txt" && doc.preview) {
       try {
-        const res = await fetch(doc.preview);
+        const res = await fetch(normalizeUrl(doc.preview));
         const text = await res.text();
         setTxtContent(text);
       } catch (e) {

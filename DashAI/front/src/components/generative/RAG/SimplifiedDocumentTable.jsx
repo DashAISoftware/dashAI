@@ -17,6 +17,7 @@ import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../utils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
+import { normalizeUrl } from "../../../utils/urlUtils";
 
 export default function SimplifiedDocumentTable({
   documents,
@@ -39,7 +40,7 @@ export default function SimplifiedDocumentTable({
     setPreviewDoc(doc);
     if (doc.file_type === "txt" && doc.preview) {
       try {
-        const res = await fetch(doc.preview);
+        const res = await fetch(normalizeUrl(doc.preview));
         const text = await res.text();
         setTxtContent(text);
       } catch (e) {

@@ -18,6 +18,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { formatDate } from "../../../utils";
 import DeleteItemModal from "../../custom/DeleteItemModal";
 import DocumentPreviewModal from "./DocumentPreviewModal";
+import { normalizeUrl } from "../../../utils/urlUtils";
 
 export default function DocumentTable({
   documents,
@@ -36,7 +37,7 @@ export default function DocumentTable({
     setPreviewDoc(doc);
     if (doc.file_type === "txt" && doc.preview) {
       try {
-        const res = await fetch(doc.preview);
+        const res = await fetch(normalizeUrl(doc.preview));
         const text = await res.text();
         setTxtContent(text);
       } catch (e) {

@@ -1,6 +1,7 @@
 import { Dialog, DialogTitle, DialogContent, Box } from "@mui/material";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
+import { normalizeUrl } from "../../../utils/urlUtils";
 
 export default function DocumentPreviewModal({
   open,
@@ -9,7 +10,7 @@ export default function DocumentPreviewModal({
   txtContent,
 }) {
   const fileType = document?.file_type || document?.type;
-  const preview = document?.preview;
+  const preview = normalizeUrl(document?.preview);
 
   const dialogContent = (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>

@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Any, Dict, List
+from urllib.parse import quote
 
 from fastapi import (
     APIRouter,
@@ -139,20 +140,27 @@ async def download_document(
             media_type = "application/pdf"
         else:
             media_type = "application/octet-stream"
+
+        encoded_name = quote(document.file_name, safe="")
         if ext == ".pdf":
             return FileResponse(
                 path=document.file_path,
-                filename=document.file_name,
                 media_type=media_type,
                 headers={
-                    "Content-Disposition": f"inline; filename={document.file_name}"
+                    "Content-Disposition": (
+                        f"inline; filename*=UTF-8''{encoded_name}"
+                    ),
                 },
             )
         else:
             return FileResponse(
                 path=document.file_path,
-                filename=document.file_name,
                 media_type=media_type,
+                headers={
+                    "Content-Disposition": (
+                        f"attachment; filename*=UTF-8''{encoded_name}"
+                    ),
+                },
             )
 
 
@@ -162,6 +170,7 @@ async def upload_document(
     metadata: str = Form(...),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    request: Request = None,  # type: ignore[assignment]
 ):
     """
     Upload a new document to the RAG system with file content and metadata.
@@ -202,6 +211,7 @@ async def upload_document(
         ) from None
 
     file_content_hash = hash_function(content_bytes)
+    base = str(request.base_url).rstrip("/") if request else ""
     with session_factory() as db:
         existing_doc: DocumentDBModel = (
             db.query(DocumentDBModel).filter_by(file_hash=file_content_hash).first()
@@ -221,7 +231,7 @@ async def upload_document(
                 last_modified=existing_doc.last_modified,
                 related_sessions=existing_doc.get_related_sessions,
                 optional_metadata=existing_doc.optional_metadata,
-                file_url=f"{base_url}/{existing_doc.id}/download",
+                file_url=f"{base}{base_url}/{existing_doc.id}/download",
             )
         else:
             # Create a new document entry
@@ -256,7 +266,7 @@ async def upload_document(
                     last_modified=doc.last_modified,
                     related_sessions=doc.get_related_sessions,
                     optional_metadata=doc.optional_metadata,
-                    file_url=f"{base_url}/{doc.id}/download",
+                    file_url=f"{base}{base_url}/{doc.id}/download",
                 )
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -396,8 +406,10 @@ async def update_document_metadata(
     document_id: int,
     metadata: str = Form(...),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    request: Request = None,  # type: ignore[assignment]
 ):
     """Update a document's metadata."""
+    base = str(request.base_url).rstrip("/") if request else ""
     with session_factory() as db:
         try:
             document = db.query(DocumentDBModel).filter_by(id=document_id).first()
@@ -448,7 +460,7 @@ async def update_document_metadata(
                 ]
                 if document.related_sessions_ids
                 else None,
-                file_url=f"{base_url}/{document.id}/download",
+                file_url=f"{base}{base_url}/{document.id}/download",
             )
 
         except exc.SQLAlchemyError as e:
