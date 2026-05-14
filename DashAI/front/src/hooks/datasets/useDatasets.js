@@ -22,6 +22,7 @@ export function useDatasets({ t }) {
   const fetchDatasets = useCallback(async () => {
     const data = await getDatasets();
     setDatasets(data);
+    return data;
   }, []);
 
   useEffect(() => {
