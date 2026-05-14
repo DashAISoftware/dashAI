@@ -87,7 +87,7 @@ export default function DatasetPreviewNotebook({
       );
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
-    [],
+    [notebook.id],
   );
 
   useEffect(() => {
