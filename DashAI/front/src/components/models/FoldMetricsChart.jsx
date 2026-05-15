@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
 import {
@@ -44,6 +44,11 @@ export default function FoldMetricsChart({
   const [chartType, setChartType] = useState("boxplot");
   // "outer" = nested CV evaluation folds, "final" = HPO final training folds
   const [foldScope, setFoldScope] = useState("outer");
+  // Ref to always access current selectedRepetition inside async callbacks
+  const selectedRepetitionRef = useRef(selectedRepetition);
+  useEffect(() => {
+    selectedRepetitionRef.current = selectedRepetition;
+  }, [selectedRepetition]);
 
   // Fetch fold metrics data
   useEffect(() => {
@@ -53,7 +58,7 @@ export default function FoldMetricsChart({
       setLoading(true);
       setError(null);
       setAllRepetitionsData(null);
-      setSelectedRepetition(null);
+      const previousRepetition = selectedRepetitionRef.current;
       try {
         // outer-fold-metrics: nested CV evaluation folds
         // fold-metrics: HPO final training folds (default for non-nested)
@@ -71,16 +76,23 @@ export default function FoldMetricsChart({
           Object.keys(response.data).some((key) => key.startsWith("rep_"));
 
         if (hasRepetitions) {
-          // Extract repetition numbers from keys
-          const reps = Object.keys(response.data)
+          // Extract repetition keys (e.g., "rep_0", "rep_1", etc.)
+          const repKeys = Object.keys(response.data)
             .filter((key) => key.startsWith("rep_"))
-            .map((key) => parseInt(key.split("_")[1]))
-            .sort((a, b) => a - b);
+            .sort((a, b) => {
+              const numA = parseInt(a.split("_")[1]);
+              const numB = parseInt(b.split("_")[1]);
+              return numA - numB;
+            });
 
           setAllRepetitionsData(response.data);
           // Set default to first repetition
-          if (reps.length > 0) {
-            setSelectedRepetition(`rep_${reps[0]}`);
+          if (repKeys.length > 0) {
+            // Keep current repetition if valid, otherwise default to averaged
+            const isValidRep =
+              previousRepetition === "averaged" ||
+              repKeys.includes(previousRepetition);
+            setSelectedRepetition(isValidRep ? previousRepetition : "averaged");
           }
         } else {
           // Single CV (no repetitions) - treat as rep_0
@@ -98,11 +110,38 @@ export default function FoldMetricsChart({
     fetchFoldMetrics();
   }, [runId, metricSplit, foldScope, isNestedCV]);
 
+  // Compute per-fold average across all repetitions
+  const computeAveragedData = () => {
+    if (!allRepetitionsData) return null;
+    const reps = Object.keys(allRepetitionsData).filter((k) =>
+      k.startsWith("rep_"),
+    );
+    if (reps.length === 0) return null;
+
+    const metricNames = Object.keys(allRepetitionsData[reps[0]]);
+    const averaged = {};
+
+    metricNames.forEach((metric) => {
+      const nFolds = allRepetitionsData[reps[0]][metric].length;
+      averaged[metric] = Array.from({ length: nFolds }, (_, foldIdx) => {
+        const vals = reps.map(
+          (rep) => allRepetitionsData[rep][metric][foldIdx] ?? 0,
+        );
+        return vals.reduce((a, b) => a + b, 0) / vals.length;
+      });
+    });
+
+    return averaged;
+  };
+
   // Build boxplot traces
   const createBoxplotTraces = () => {
     if (!allRepetitionsData || !selectedRepetition) return [];
 
-    const foldMetrics = allRepetitionsData[selectedRepetition];
+    const foldMetrics =
+      selectedRepetition === "averaged"
+        ? computeAveragedData()
+        : allRepetitionsData[selectedRepetition];
     if (!foldMetrics) return [];
 
     const traces = [];
@@ -142,7 +181,10 @@ export default function FoldMetricsChart({
   const createLineTraces = () => {
     if (!allRepetitionsData || !selectedRepetition) return [];
 
-    const foldMetrics = allRepetitionsData[selectedRepetition];
+    const foldMetrics =
+      selectedRepetition === "averaged"
+        ? computeAveragedData()
+        : allRepetitionsData[selectedRepetition];
     if (!foldMetrics) return [];
 
     const traces = [];
@@ -347,6 +389,7 @@ export default function FoldMetricsChart({
                 label="Repetition"
                 onChange={(e) => setSelectedRepetition(e.target.value)}
               >
+                <MenuItem value="averaged">Averaged</MenuItem>
                 {availableReps.map((rep) => {
                   const repNum = parseInt(rep.split("_")[1]);
                   return (
