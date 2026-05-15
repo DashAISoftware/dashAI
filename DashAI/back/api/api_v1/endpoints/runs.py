@@ -393,6 +393,91 @@ async def get_fold_metrics(
             ) from e
 
 
+@router.get("/{run_id}/outer-fold-metrics")
+@inject
+async def get_outer_fold_metrics(
+    run_id: int,
+    metric_split: Literal["train", "validation", "test"] = Query("test"),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve outer fold-level metrics for nested CV visualization.
+
+    Returns fold values from the outer loop of nested cross-validation
+    (LevelEnum.OUTER_FOLD). Only available for runs that used nested CV.
+
+    Returns
+    -------
+    dict
+        Format: {"accuracy": [fold_1, fold_2, ...], ...}
+        Returns 404 if the run has no outer fold metrics.
+    """
+    from DashAI.back.core.enums.metrics import SplitEnum
+
+    split_map = {
+        "train": SplitEnum.TRAIN,
+        "validation": SplitEnum.VALIDATION,
+        "test": SplitEnum.TEST,
+    }
+    split_enum = split_map.get(metric_split, SplitEnum.TEST)
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Run not found",
+                )
+
+            outer_fold_metrics = (
+                db.query(Metric)
+                .filter(
+                    Metric.run_id == run_id,
+                    Metric.level == LevelEnum.OUTER_FOLD,
+                    Metric.split == split_enum,
+                )
+                .order_by(Metric.name, Metric.fold_index)
+                .all()
+            )
+
+            if not outer_fold_metrics:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No outer fold metrics found for this run",
+                )
+
+            splits_data = json.loads(run.model_session.splits)
+            repetitions = splits_data.get("n_repeats", 1)
+
+            if repetitions > 1:
+                folds = splits_data.get("n_splits", None)
+                metrics_by_name = {}
+                for metric in outer_fold_metrics:
+                    repetition = metric.fold_index // folds if folds else 0
+                    rep_str = f"rep_{repetition}"
+                    if rep_str not in metrics_by_name:
+                        metrics_by_name[rep_str] = {}
+                    if metric.name not in metrics_by_name[rep_str]:
+                        metrics_by_name[rep_str][metric.name] = []
+                    metrics_by_name[rep_str][metric.name].append(metric.value)
+                return metrics_by_name
+
+            metrics_by_name = {}
+            for metric in outer_fold_metrics:
+                if metric.name not in metrics_by_name:
+                    metrics_by_name[metric.name] = []
+                metrics_by_name[metric.name].append(metric.value)
+
+            return metrics_by_name
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
 @router.get("/plot/{run_id}/{plot_type}")
 @inject
 async def get_hyperparameter_optimization_plot(

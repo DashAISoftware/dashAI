@@ -22,8 +22,11 @@ import { useTranslation } from "react-i18next";
 const INNER_SPLITTER_OPTIONS = {
   KFold: ["KFold", "StratifiedKFold"],
   StratifiedKFold: ["KFold", "StratifiedKFold"],
+  RepeatedKFold: ["KFold", "StratifiedKFold"],
+  RepeatedStratifiedKFold: ["KFold", "StratifiedKFold"],
   GroupKFold: ["GroupKFold", "StratifiedGroupKFold"],
   StratifiedGroupKFold: ["GroupKFold", "StratifiedGroupKFold"],
+  LeaveOneOut: ["Kfold", "StratifiedKFold"],
 };
 
 const DEFAULT_INNER_FOLDS = 2;

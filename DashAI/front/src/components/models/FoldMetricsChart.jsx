@@ -34,6 +34,7 @@ export default function FoldMetricsChart({
   runId,
   metricSplit = "test",
   metrics = [],
+  isNestedCV = false,
 }) {
   const theme = useTheme();
   const [allRepetitionsData, setAllRepetitionsData] = useState(null);
@@ -41,6 +42,8 @@ export default function FoldMetricsChart({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState("boxplot");
+  // "outer" = nested CV evaluation folds, "final" = HPO final training folds
+  const [foldScope, setFoldScope] = useState("outer");
 
   // Fetch fold metrics data
   useEffect(() => {
@@ -49,8 +52,16 @@ export default function FoldMetricsChart({
     const fetchFoldMetrics = async () => {
       setLoading(true);
       setError(null);
+      setAllRepetitionsData(null);
+      setSelectedRepetition(null);
       try {
-        const response = await api.get(`/v1/run/${runId}/fold-metrics`, {
+        // outer-fold-metrics: nested CV evaluation folds
+        // fold-metrics: HPO final training folds (default for non-nested)
+        const endpoint =
+          isNestedCV && foldScope === "outer"
+            ? `/v1/run/${runId}/outer-fold-metrics`
+            : `/v1/run/${runId}/fold-metrics`;
+        const response = await api.get(endpoint, {
           params: { metric_split: metricSplit },
         });
 
@@ -85,7 +96,7 @@ export default function FoldMetricsChart({
     };
 
     fetchFoldMetrics();
-  }, [runId, metricSplit]);
+  }, [runId, metricSplit, foldScope, isNestedCV]);
 
   // Build boxplot traces
   const createBoxplotTraces = () => {
@@ -305,6 +316,29 @@ export default function FoldMetricsChart({
           <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
             Cross-Validation Fold Analysis
           </Typography>
+          {isNestedCV && (
+            <ToggleButtonGroup
+              exclusive
+              value={foldScope}
+              onChange={(_, v) => {
+                if (v) setFoldScope(v);
+              }}
+              size="small"
+            >
+              <ToggleButton
+                value="outer"
+                title="Outer folds — reliable generalization estimate from nested CV"
+              >
+                Outer folds
+              </ToggleButton>
+              <ToggleButton
+                value="final"
+                title="Folds used during final HPO training to produce the model"
+              >
+                Folds (HPO final)
+              </ToggleButton>
+            </ToggleButtonGroup>
+          )}
           {availableReps.length > 1 && (
             <FormControl sx={{ minWidth: 180 }} size="small">
               <InputLabel>Repetition</InputLabel>
@@ -370,4 +404,5 @@ FoldMetricsChart.propTypes = {
       metadata: PropTypes.object,
     }),
   ),
+  isNestedCV: PropTypes.bool,
 };

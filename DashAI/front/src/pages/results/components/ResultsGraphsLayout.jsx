@@ -31,6 +31,8 @@ function ResultsGraphsLayout({
     : [];
   const isCrossValidation =
     runs[0]?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+  const isNestedCV =
+    expandedRun?.nested !== null && expandedRun?.nested !== undefined;
   return (
     <Box
       display="flex"
@@ -55,6 +57,7 @@ function ResultsGraphsLayout({
                 runId={expandedRunId}
                 metricSplit={selectedSplit}
                 metrics={metrics}
+                isNestedCV={isNestedCV}
               />
             ) : (
               <Box sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
