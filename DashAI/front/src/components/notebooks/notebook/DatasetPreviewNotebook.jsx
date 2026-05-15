@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueDatasetJob } from "../../../api/job";
@@ -17,10 +17,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
-import {
-  getDatasetFileFiltered,
-  getDatasetTypesByFilePath,
-} from "../../../api/datasets";
+import { getDatasetFileFiltered } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -53,8 +50,7 @@ export default function DatasetPreviewNotebook({
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
-  const [columnTypes, setColumnTypes] = useState({});
-  const { explorersAndConverters, convertersLoaded } =
+  const { explorersAndConverters, convertersLoaded, columnTypes } =
     useExplorersAndConverters();
   const converters = useMemo(
     () => explorersAndConverters.filter((item) => item.type === "converter"),
@@ -89,13 +85,6 @@ export default function DatasetPreviewNotebook({
     },
     [notebook?.id],
   );
-
-  useEffect(() => {
-    if (!notebook?.file_path) return;
-    getDatasetTypesByFilePath(notebook.file_path)
-      .then(setColumnTypes)
-      .catch(() => {});
-  }, [notebook?.file_path]);
 
   if (!notebook) {
     return (
