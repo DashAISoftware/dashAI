@@ -149,7 +149,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     max_depth: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=3,
         description=MultilingualString(
             en="The maximum depth of the individual regression estimators.",
@@ -177,7 +177,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -244,7 +244,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     max_leaf_nodes: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="Grow trees with max_leaf_nodes in best-first fashion.",
@@ -291,7 +291,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     n_iter_no_change: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en=(

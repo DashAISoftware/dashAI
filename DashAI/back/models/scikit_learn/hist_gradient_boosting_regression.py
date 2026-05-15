@@ -8,7 +8,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -61,7 +60,7 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_depth: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en=("Maximum depth of each tree. If None, depth is not constrained."),
@@ -74,7 +73,7 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_leaf_nodes: schema_field(
-        union_type(optimizer_int_field(ge=2), none_type(int)),
+        none_type(optimizer_int_field(ge=2)),
         placeholder=31,
         description=MultilingualString(
             en=(

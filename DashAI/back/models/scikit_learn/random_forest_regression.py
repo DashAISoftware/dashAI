@@ -52,7 +52,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_depth: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="The maximum depth of the tree.",
@@ -129,7 +129,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_leaf_nodes: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="Grow trees with max_leaf_nodes in best-first fashion.",
@@ -183,7 +183,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     n_jobs: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="The number of jobs to run in parallel for both fit and predict.",
@@ -193,7 +193,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -240,7 +240,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_samples: schema_field(
-        union_type(optimizer_float_field(gt=0.0, le=1.0), none_type(float)),
+        none_type(optimizer_float_field(gt=0.0, le=1.0)),
         placeholder=None,
         description=MultilingualString(
             en=(

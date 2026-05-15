@@ -6,7 +6,6 @@ from DashAI.back.core.schema_fields import (
     none_type,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -38,7 +37,7 @@ class ExtraTreesRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_depth: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -105,7 +104,7 @@ class ExtraTreesRegressionSchema(BaseSchema):
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
