@@ -127,7 +127,7 @@ export default function ColumnInsights({
           label={insights.length}
           size="small"
           color="warning"
-          sx={{ height: 22, minWidth: 22, fontWeight: "bold" }}
+          sx={{ height: 22, minWidth: 22, fontWeight: "bold", flexShrink: 0 }}
         />
       </Box>
 
