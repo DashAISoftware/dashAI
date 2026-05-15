@@ -135,7 +135,6 @@ export default function DatasetsCenterContent() {
         <DataBreadcrumbs />
         <UploadNotebookSteps
           backHome={() => {
-            fetchNotebooks();
             navigate("/app/data");
           }}
           datasets={datasets}
