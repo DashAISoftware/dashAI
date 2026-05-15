@@ -39,10 +39,12 @@ export default function DatasetPreviewNotebook({
     createDataset,
     selectDataset,
     clearSelectedDataset,
+    clearSelectedNotebook,
     deleteDataset,
     replaceDatasets,
     setStep,
     setSelectedOption,
+    setRightBarContent,
   } = useDatasetsAndNotebooks();
 
   const theme = useTheme();
@@ -113,9 +115,11 @@ export default function DatasetPreviewNotebook({
           t("datasets:message.datasetCreationSuccess", { datasetName }),
           { variant: "success" },
         );
+        clearSelectedNotebook();
         selectDataset(datasetId);
         setStep(0);
         setSelectedOption("dataset");
+        setRightBarContent(null);
       },
 
       //Failure
@@ -151,9 +155,11 @@ export default function DatasetPreviewNotebook({
 
       // optimistic
       replaceDatasets((prev) => [...prev, dataset]);
+      clearSelectedNotebook();
       selectDataset(dataset.id);
       setStep(0);
       setSelectedOption("dataset");
+      setRightBarContent(null);
 
       const job = await enqueueDatasetJob(dataset.id, null, "", {}, notebookId);
 
