@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import os
 import time
 import zipfile
 from collections import OrderedDict
@@ -62,6 +63,13 @@ class _FilteredTableCache:
         if time.time() - ts > self._ttl:
             del self._store[key]
             return None
+        arrow_file_path = f"{path}/dataset/data.arrow"
+        try:
+            if os.path.getmtime(arrow_file_path) > ts:
+                del self._store[key]
+                return None
+        except OSError:
+            pass
         self._store.move_to_end(key)
         return table, total
 
@@ -106,7 +114,7 @@ def _load_and_filter_table(
     from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
     arrow_file_path = f"{path}/dataset/data.arrow"
-    with pa.memory_map(arrow_file_path, "r") as source:
+    with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
         batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
         table = pa.Table.from_batches(batches)
@@ -1360,7 +1368,7 @@ async def get_dataset_file(
     end = start + page_size
     rows_collected = 0
 
-    with pa.memory_map(arrow_file_path, "r") as source:
+    with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
 
         current_index = 0
@@ -1430,7 +1438,7 @@ async def export_dataset_as_csv(
             )
 
         # Read the complete Arrow file
-        with pa.memory_map(arrow_file_path, "r") as source:
+        with pa.OSFile(arrow_file_path, "rb") as source:
             import io
 
             reader = ipc.RecordBatchFileReader(source)
@@ -1532,7 +1540,7 @@ async def export_dataset_csv_by_id(
                 )
 
             # Read the complete Arrow file
-            with pa.memory_map(arrow_file_path, "r") as source:
+            with pa.OSFile(arrow_file_path, "rb") as source:
                 import io
 
                 reader = ipc.RecordBatchFileReader(source)
