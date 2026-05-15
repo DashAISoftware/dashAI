@@ -243,11 +243,9 @@ async def delete_converter(
             # Enqueue all previous converters
             job_ids = []
             for converter in previous_converters:
-                # Crear instancia de ConverterJob y encolarlo directamente
                 job = ConverterJob(converter_id=converter.id)
-                job_queue.put(job)
-                if hasattr(job, "id"):
-                    job_ids.append(job.id)
+                enqueued = job_queue.put(job)
+                job_ids.append(enqueued.id)
 
             # Delete all the converters after the current one
             for converter in next_converters:

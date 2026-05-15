@@ -18,10 +18,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
-import {
-  getDatasetFileFiltered,
-  getDatasetTypesByFilePath,
-} from "../../../api/datasets";
+import { getDatasetFileFiltered } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -55,8 +52,7 @@ export default function DatasetPreviewNotebook({
   const {
     explorersAndConverters,
     convertersLoaded,
-    columnTypes,
-    setColumnTypes,
+    columnTypes: contextColumnTypes,
   } = useExplorersAndConverters();
   const converters = useMemo(
     () => explorersAndConverters.filter((item) => item.type === "converter"),
@@ -66,12 +62,15 @@ export default function DatasetPreviewNotebook({
     () => converters.map((c) => `${c.id}:${c.status}`).join("|"),
     [converters],
   );
+
+  const [localColumnTypes, setLocalColumnTypes] = useState({});
+
+  // Sync types from context — updated by fetchExplorersAndConverters (initial
+  // load + delete path) and by handleStatusChange / FormConverterSection
+  // onSuccess (apply path). No direct HTTP fetch needed here.
   useEffect(() => {
-    if (!notebook?.file_path || !convertersLoaded) return;
-    getDatasetTypesByFilePath(notebook.file_path)
-      .then((types) => setColumnTypes(types ?? {}))
-      .catch(console.error);
-  }, [converterKey]);
+    setLocalColumnTypes(contextColumnTypes);
+  }, [contextColumnTypes]);
 
   const tourContext = useTourContext();
 
@@ -262,7 +261,7 @@ export default function DatasetPreviewNotebook({
                 deps={[notebook.file_path, converterKey]}
                 initialPageSize={5}
                 datasetPath={notebook.file_path}
-                columnTypes={columnTypes}
+                columnTypes={localColumnTypes}
                 enableTopToolbar={false}
                 enableRowsPerPageSelector={false}
               />

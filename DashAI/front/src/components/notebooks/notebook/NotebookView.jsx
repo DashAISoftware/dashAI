@@ -214,15 +214,23 @@ export default function NotebookView({ notebook }) {
     setItemsToDelete([]);
   }, []);
 
-  const handleStatusChange = useCallback((id, newStatus, type) => {
-    setExplorersAndConverters((prev) =>
-      prev.map((item) =>
-        item.id === id && item.type === type
-          ? { ...item, status: newStatus }
-          : item,
-      ),
-    );
-  });
+  const handleStatusChange = useCallback(
+    (id, newStatus, type) => {
+      setExplorersAndConverters((prev) =>
+        prev.map((item) =>
+          item.id === id && item.type === type
+            ? { ...item, status: newStatus }
+            : item,
+        ),
+      );
+      if (newStatus === 3 && type === "converter" && notebook?.file_path) {
+        getDatasetTypesByFilePath(notebook.file_path)
+          .then((types) => setColumnTypes(types ?? {}))
+          .catch(console.error);
+      }
+    },
+    [notebook?.file_path, setColumnTypes, setExplorersAndConverters],
+  );
 
   const scrollToBottom = () => {
     if (!listBoxRef.current || explorersAndConverters.length === 0) return;
