@@ -37,7 +37,6 @@ export default function DatasetPreviewNotebook({
   const {
     datasets,
     createDataset,
-    fetchDatasets,
     selectDataset,
     clearSelectedDataset,
     deleteDataset,
@@ -114,29 +113,9 @@ export default function DatasetPreviewNotebook({
           t("datasets:message.datasetCreationSuccess", { datasetName }),
           { variant: "success" },
         );
-
-        try {
-          const freshDatasets = await fetchDatasets();
-          const dataset = freshDatasets.find((d) => d.id === datasetId);
-
-          if (dataset) {
-            replaceDatasets(freshDatasets);
-            selectDataset(datasetId);
-            setStep(0);
-            setSelectedOption("dataset");
-          } else {
-            await fetchDatasets();
-            selectDataset(datasetId);
-            setStep(0);
-            setSelectedOption("dataset");
-          }
-        } catch (error) {
-          console.error("Error after dataset job completion:", error);
-          await fetchDatasets();
-          selectDataset(datasetId);
-          setStep(0);
-          setSelectedOption("dataset");
-        }
+        selectDataset(datasetId);
+        setStep(0);
+        setSelectedOption("dataset");
       },
 
       //Failure
