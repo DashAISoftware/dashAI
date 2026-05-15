@@ -23,7 +23,6 @@ export default function DatasetsCenterContent() {
     selectedNotebookId,
     setRightBarContent,
     step,
-    fetchDatasets,
     fetchNotebooks,
     selectedOption,
   } = useDatasetsAndNotebooks();
@@ -111,7 +110,6 @@ export default function DatasetsCenterContent() {
         <DataBreadcrumbs />
         <UploadDatasetSteps
           backHome={() => {
-            fetchDatasets();
             setRightBarContent(null);
             navigate("/app/data");
           }}

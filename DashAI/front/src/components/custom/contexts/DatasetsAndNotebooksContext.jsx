@@ -47,6 +47,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW); // "datasets" or "notebooks"
 
   const [rightBarContent, setRightBarContent] = useState(null);
+  const [availableConverters, setAvailableConverters] = useState([]);
+  const [availableExplorers, setAvailableExplorers] = useState([]);
   const [uploadDataloader, setUploadDataloader] = useState(null);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
