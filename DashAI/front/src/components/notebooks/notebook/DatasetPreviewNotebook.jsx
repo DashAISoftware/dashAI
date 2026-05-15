@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueDatasetJob } from "../../../api/job";
@@ -37,15 +38,12 @@ export default function DatasetPreviewNotebook({
   const {
     datasets,
     createDataset,
-    selectDataset,
     clearSelectedDataset,
-    clearSelectedNotebook,
     deleteDataset,
     replaceDatasets,
-    setStep,
-    setSelectedOption,
-    setRightBarContent,
   } = useDatasetsAndNotebooks();
+
+  const navigate = useNavigate();
 
   const theme = useTheme();
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
@@ -115,11 +113,6 @@ export default function DatasetPreviewNotebook({
           t("datasets:message.datasetCreationSuccess", { datasetName }),
           { variant: "success" },
         );
-        clearSelectedNotebook();
-        selectDataset(datasetId);
-        setStep(0);
-        setSelectedOption("dataset");
-        setRightBarContent(null);
       },
 
       //Failure
@@ -153,13 +146,9 @@ export default function DatasetPreviewNotebook({
         variant: "success",
       });
 
-      // optimistic
+      // optimistic add so the dataset view can render before the job finishes
       replaceDatasets((prev) => [...prev, dataset]);
-      clearSelectedNotebook();
-      selectDataset(dataset.id);
-      setStep(0);
-      setSelectedOption("dataset");
-      setRightBarContent(null);
+      navigate(`/app/data/datasets/${dataset.id}`);
 
       const job = await enqueueDatasetJob(dataset.id, null, "", {}, notebookId);
 
