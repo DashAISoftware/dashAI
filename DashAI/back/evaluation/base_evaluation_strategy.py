@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 from typing import Final
 
 from DashAI.back.dependencies.database.models import Run
@@ -6,7 +7,7 @@ from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
-class BaseEvaluationStrategy:
+class BaseEvaluationStrategy(metaclass=ABCMeta):
     TYPE: Final[str] = "EvaluationStrategy"
 
     def __init__(
@@ -22,9 +23,11 @@ class BaseEvaluationStrategy:
         self.run_optimizable_parameters = run_optimizable_parameters
         self.goal_metric = goal_metric
 
+    @abstractmethod
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
         raise NotImplementedError("Subclasses must implement this method")
 
+    @abstractmethod
     def evaluate(self, model: BaseModel, x, y, metric_name):
         raise NotImplementedError("Subclasses must implement this method")
 

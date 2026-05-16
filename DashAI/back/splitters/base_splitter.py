@@ -1,11 +1,11 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Final
 
 from beartype.typing import Dict, List, Tuple, Union
 from sklearn.preprocessing import LabelEncoder
 
 
-class BaseSplitter:
+class BaseSplitter(metaclass=ABCMeta):
     TYPE: Final[str] = "Splitter"
 
     def __init__(self, splits_data):
