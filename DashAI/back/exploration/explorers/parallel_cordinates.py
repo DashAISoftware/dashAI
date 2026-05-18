@@ -33,8 +33,11 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to color the data points."),
             es=("Columna usada para colorear los puntos."),
+            pt=("Coluna usada para colorir os pontos de dados."),
         ),
-        alias=MultilingualString(en="Color column", es="Columna de color"),
+        alias=MultilingualString(
+            en="Color column", es="Columna de color", pt="Coluna de cor"
+        ),
     )  # type: ignore
 
 
@@ -55,6 +58,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Parallel Coordinates Plot",
         es="Gráfico de Coordenadas Paralelas",
+        pt="Coordenadas Paralelas",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -64,6 +68,10 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
         es=(
             "Forma común de visualizar datos numéricos de alta dimensión. Cada "
             "línea es un dato que cruza ejes para cada característica."
+        ),
+        pt=(
+            "Forma comum de visualizar dados numéricos de alta dimensão. Cada "
+            "linha é um ponto de dados cruzando eixos para cada característica."
         ),
     )
     IMAGE_PREVIEW = "parallel_cordinates.png"

@@ -34,8 +34,17 @@ class KernelShapSchema(BaseSchema):
                 "características con las salidas del modelo. Opciones: 'identity' "
                 "(identidad) o 'logit' (log-odds)."
             ),
+            pt=(
+                "Função de ligação para conectar os valores de importância das "
+                "características às saídas do modelo. Opções: 'identity' "
+                "(identidade) ou 'logit' (log-odds)."
+            ),
         ),
-        alias=MultilingualString(en="Link function", es="Función de enlace"),
+        alias=MultilingualString(
+            en="Link function",
+            es="Función de enlace",
+            pt="Função de ligação",
+        ),
     )  # type: ignore
 
     fit_parameter_sample_background_data: schema_field(
@@ -53,10 +62,17 @@ class KernelShapSchema(BaseSchema):
                 "conjunto de entrenamiento completo. Conjuntos más pequeños "
                 "reducen el tiempo de ejecución."
             ),
+            pt=(
+                "Parâmetro para ajustar o explicador. 'true' se os dados de "
+                "fundo devem ser amostrados; caso contrário, usa-se o conjunto "
+                "de treinamento completo. Conjuntos menores reduzem o tempo de "
+                "execução."
+            ),
         ),
         alias=MultilingualString(
             en="Sample background data",
             es="Muestrear datos de fondo",
+            pt="Amostrar dados de fundo",
         ),
     )  # type: ignore
 
@@ -73,10 +89,16 @@ class KernelShapSchema(BaseSchema):
                 "a la proporción de muestras de fondo a extraer "
                 "del conjunto de entrenamiento."
             ),
+            pt=(
+                "Se 'Amostrar dados de fundo' estiver selecionado, corresponde "
+                "à fração de amostras de fundo a extrair do conjunto de "
+                "treinamento."
+            ),
         ),
         alias=MultilingualString(
             en="Background fraction",
             es="Fracción de fondo",
+            pt="Fração de fundo",
         ),
     )  # type: ignore
 
@@ -96,10 +118,17 @@ class KernelShapSchema(BaseSchema):
                 "'kmeans'. Si hay características categóricas, se usa 'shuffle' "
                 "por defecto."
             ),
+            pt=(
+                "Se for 'true', escolha amostrar instâncias aleatórias com "
+                "'shuffle' ou resumir o conjunto de dados com 'kmeans'. Se "
+                "houver características categóricas, 'shuffle' é usado por "
+                "padrão."
+            ),
         ),
         alias=MultilingualString(
             en="Sampling method",
             es="Método de muestreo",
+            pt="Método de amostragem",
         ),
     )  # type: ignore
 
@@ -127,7 +156,9 @@ class KernelShap(BaseLocalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
-    DISPLAY_NAME = MultilingualString(en="Kernel SHAP", es="Kernel SHAP")
+    DISPLAY_NAME = MultilingualString(
+        en="Kernel SHAP", es="Kernel SHAP", pt="Kernel SHAP"
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Kernel SHAP approximates SHAP values to explain a model's output by "
@@ -137,6 +168,10 @@ class KernelShap(BaseLocalExplainer):
             "Kernel SHAP aproxima los valores SHAP para explicar la salida del "
             "modelo atribuyendo la contribución de cada característica a la "
             "predicción."
+        ),
+        pt=(
+            "Kernel SHAP aproxima os valores de Shapley para explicar a saída do "
+            "modelo atribuindo a contribuição de cada característica à previsão."
         ),
     )
     COLOR = "#008000"

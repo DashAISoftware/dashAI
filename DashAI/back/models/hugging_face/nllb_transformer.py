@@ -41,8 +41,16 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
                 "en el formato "
                 "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
             ),
+            pt=(
+                "Código do idioma de origem para o tokenizer NLLB (ex. spa_Latn para "
+                "espanhol, eng_Latn para inglês). Utiliza tags de idioma BCP-47 "
+                "no formato "
+                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+            ),
         ),
-        alias=MultilingualString(en="Source language", es="Idioma de origen"),
+        alias=MultilingualString(
+            en="Source language", es="Idioma de origen", pt="Idioma de origem"
+        ),
     )  # type: ignore
     target_language: schema_field(
         string_field(),
@@ -59,8 +67,16 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
                 "en el formato "
                 "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
             ),
+            pt=(
+                "Código do idioma de destino para a geração NLLB (ex. eng_Latn para "
+                "inglês, fra_Latn para francês). Utiliza tags de idioma BCP-47 "
+                "no formato "
+                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+            ),
         ),
-        alias=MultilingualString(en="Target language", es="Idioma destino"),
+        alias=MultilingualString(
+            en="Target language", es="Idioma destino", pt="Idioma de destino"
+        ),
     )  # type: ignore
 
 
@@ -90,10 +106,12 @@ class NllbTransformer(TranslationModel):
     DISPLAY_NAME: str = MultilingualString(
         en="NLLB Transformer",
         es="Transformer NLLB",
+        pt="Transformer NLLB",
     )
     DESCRIPTION: str = MultilingualString(
         en=("NLLB multilingual model for configurable source-target translation."),
         es=("Modelo multilenguaje NLLB para traduccion configurable origen-destino."),
+        pt=("Modelo multilingual NLLB para tradução configurável origem-destino."),
     )
     COLOR: str = "#5E35B1"
     ICON: str = "Translate"

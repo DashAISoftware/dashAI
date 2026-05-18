@@ -16,6 +16,23 @@ export const generativeTourSteps = [
     disableBeacon: true,
   },
   {
+    target: '[data-tour="create-session-landing"]',
+    content: (
+      <Trans i18nKey="generativeTour:createNewSession">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+    isInteractive: true,
+  },
+  {
     target: '[data-tour="task-gallery"]',
     content: (
       <Trans i18nKey="generativeTour:taskGallery">
@@ -30,27 +47,6 @@ export const generativeTourSteps = [
     disableBeacon: true,
     maxWidth: "320px",
   },
-  {
-    target: '[data-tour="task-selection"]',
-    content: (
-      <Trans i18nKey="generativeTour:taskCard">
-        <div>
-          <h3></h3>
-          <p></p>
-          <p></p>
-          <p></p>
-          <p>
-            <strong></strong>
-          </p>
-        </div>
-      </Trans>
-    ),
-    placement: "bottom",
-    disableBeacon: true,
-    spotlightClicks: true,
-    isInteractive: true,
-  },
-
   {
     target: '[data-tour="model-card-qwen"]',
     content: (
@@ -74,6 +70,51 @@ export const generativeTourSteps = [
   },
 
   {
+    target: '[data-tour="component-details-panel"]',
+    content: (
+      <Trans i18nKey="generativeTour:componentDetails">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "left",
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="create-session-next"]',
+    content: (
+      <Trans i18nKey="generativeTour:createSessionNext">
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "top",
+    disableBeacon: true,
+    spotlightClicks: true,
+    isInteractive: true,
+  },
+
+  {
+    target: '[data-tour="session-config"]',
+    content: (
+      <Trans i18nKey="generativeTour:sessionConfig">
+        <div>
+          <h3></h3>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    spotlightClicks: true,
+  },
+
+  {
     target: '[data-tour="model-parameters"]',
     content: (
       <Trans i18nKey="generativeTour:modelParameters">
@@ -87,10 +128,9 @@ export const generativeTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "left",
     disableBeacon: true,
     spotlightClicks: true,
-    disableOverlay: true,
     disableScrolling: true,
   },
   {
@@ -124,6 +164,7 @@ export const generativeTourSteps = [
     placement: "right",
     disableBeacon: true,
     disableBackButton: true,
+    disableScrolling: true,
   },
   {
     target: '[data-tour="parameters-right-panel"]',

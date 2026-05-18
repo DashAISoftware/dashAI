@@ -27,9 +27,14 @@ class TabularClassificationTask(ClassificationTask):
             "Predice etiquetas categóricas a partir de datos tabulares "
             "(filas y columnas)."
         ),
+        pt=(
+            "Prevê rótulos categóricos a partir de dados tabulares (linhas e colunas)."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Tabular Classification", es="Clasificación Tabular"
+        en="Tabular Classification",
+        es="Clasificación Tabular",
+        pt="Classificação Tabular",
     )
     SCORING_PROFILES = {
         "balanced": {

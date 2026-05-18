@@ -80,7 +80,7 @@ function RightBarDatasetView() {
   }
 
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+    <Box sx={{ flex: 1, overflowY: "auto" }}>
       <ColumnInsights
         numericStats={datasetInfo?.numeric_stats}
         textStats={datasetInfo?.text_stats}

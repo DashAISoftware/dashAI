@@ -38,6 +38,7 @@ class TFIDFConverterSchema(BaseSchema):
                 "Número máximo de características (términos más frecuentes) "
                 "a conservar."
             ),
+            pt=("Número máximo de características (termos mais frequentes) a manter."),
         ),
     )  # type: ignore
     lowercase: schema_field(
@@ -46,6 +47,10 @@ class TFIDFConverterSchema(BaseSchema):
         description=MultilingualString(
             en=("Whether to convert all characters to lowercase before tokenizing."),
             es=("Si se debe convertir todo a minúsculas antes de tokenizar."),
+            pt=(
+                "Se todos os caracteres devem ser convertidos para minúsculas "
+                "antes de tokenizar."
+            ),
         ),
     )  # type: ignore
     stop_words: schema_field(
@@ -54,6 +59,7 @@ class TFIDFConverterSchema(BaseSchema):
         description=MultilingualString(
             en="Stop word set to remove. Use 'english' or None.",
             es="Conjunto de stopwords a eliminar. Usa 'english' o None.",
+            pt="Conjunto de stopwords a remover. Use 'english' ou None.",
         ),
     )  # type: ignore
     lower_bound_ngrams: schema_field(
@@ -64,6 +70,9 @@ class TFIDFConverterSchema(BaseSchema):
             es=(
                 "Límite inferior de n-grams a extraer. Debe ser <= al límite superior."
             ),
+            pt=(
+                "Limite inferior de n-grams a extrair. Deve ser <= ao limite superior."
+            ),
         ),
     )  # type: ignore
     upper_bound_ngrams: schema_field(
@@ -73,6 +82,9 @@ class TFIDFConverterSchema(BaseSchema):
             en=("Upper bound for n-grams to be extracted. Must be >= lower bound."),
             es=(
                 "Límite superior de n-grams a extraer. Debe ser >= al límite inferior."
+            ),
+            pt=(
+                "Limite superior de n-grams a extrair. Deve ser >= ao limite inferior."
             ),
         ),
     )  # type: ignore
@@ -111,7 +123,7 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = TFIDFConverterSchema
-    DISPLAY_NAME = MultilingualString(en="TF-IDF", es="TF-IDF")
+    DISPLAY_NAME = MultilingualString(en="TF-IDF", es="TF-IDF", pt="TF-IDF")
     IMAGE_PREVIEW = "tf_idf.png"
 
     metadata = {
@@ -125,6 +137,10 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         ),
         es=(
             "Convierte texto en una representación TF-IDF con una columna por "
+            "token (peso TF-IDF por token)."
+        ),
+        pt=(
+            "Converte texto em uma representação TF-IDF com uma coluna por "
             "token (peso TF-IDF por token)."
         ),
     )

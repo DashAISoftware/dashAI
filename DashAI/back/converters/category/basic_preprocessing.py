@@ -17,7 +17,9 @@ class BasicPreprocessingConverter(BaseConverter):
     """
 
     CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
+        en="Basic Preprocessing",
+        es="Preprocesamiento Básico",
+        pt="Pré-processamento Básico",
     )
     ICON: Final[str] = Icon.Build.value
     COLOR: Final[str] = "rgb(60, 179, 113)"

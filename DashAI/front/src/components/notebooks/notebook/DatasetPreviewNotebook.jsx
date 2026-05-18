@@ -36,7 +36,6 @@ export default function DatasetPreviewNotebook({
   const { enqueueSnackbar } = useSnackbar();
 
   const {
-    datasets,
     createDataset,
     clearSelectedDataset,
     deleteDataset,
@@ -194,7 +193,7 @@ export default function DatasetPreviewNotebook({
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+          expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />}
           sx={{
             display: "flex",
             alignItems: "center",

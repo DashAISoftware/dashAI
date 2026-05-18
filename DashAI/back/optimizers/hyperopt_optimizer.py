@@ -18,8 +18,9 @@ class HyperOptSchema(BaseSchema):
                 "The quantity of trials per study. It must be of type positive integer."
             ),
             es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
+            pt=("A quantidade de tentativas por estudo. Deve ser um inteiro positivo."),
         ),
-        alias=MultilingualString(en="N trials", es="N pruebas"),
+        alias=MultilingualString(en="N trials", es="N pruebas", pt="N tentativas"),
     )  # type: ignore
     sampler: schema_field(
         enum_field(enum=["tpe", "rand"]),
@@ -34,8 +35,13 @@ class HyperOptSchema(BaseSchema):
                 "hiperparámetros. Debe ser 'tpe' (Tree-structured Parzen Estimator) "
                 "o 'rand' (Aleatorio)."
             ),
+            pt=(
+                "O algoritmo de amostragem a usar para a otimização de "
+                "hiperparâmetros. Deve ser 'tpe' (Tree-structured Parzen Estimator) "
+                "ou 'rand' (Aleatório)."
+            ),
         ),
-        alias=MultilingualString(en="Sampler", es="Muestreador"),
+        alias=MultilingualString(en="Sampler", es="Muestreador", pt="Amostrador"),
     )  # type: ignore
 
 
@@ -43,10 +49,12 @@ class HyperOptOptimizer(BaseOptimizer):
     DISPLAY_NAME: str = MultilingualString(
         en="HyperOpt Optimizer",
         es="Optimizador HyperOpt",
+        pt="Otimizador HyperOpt",
     )
     DESCRIPTION: str = MultilingualString(
         en="Hyperparameter optimization using HyperOpt library.",
         es="Optimización de hiperparámetros usando la librería HyperOpt.",
+        pt="Otimização de hiperparâmetros usando a biblioteca HyperOpt.",
     )
     COLOR: str = "#FF5722"
     SCHEMA = HyperOptSchema

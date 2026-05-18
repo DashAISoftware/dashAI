@@ -25,6 +25,10 @@ class SelectFweSchema(BaseSchema):
                 "El p-valor sin corregir más alto para que una característica "
                 "sea conservada."
             ),
+            pt=(
+                "O p-valor não corrigido mais alto para que uma característica "
+                "seja mantida."
+            ),
         ),
     )  # type: ignore
 
@@ -69,9 +73,15 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
             "Filtro: Selecciona características según una prueba de tasa de "
             "error familiar (FWE)."
         ),
+        pt=(
+            "Filtro: Seleciona características de acordo com um teste de taxa "
+            "de erro familiar (FWE)."
+        ),
     )
     SUPERVISED = True
-    DISPLAY_NAME = MultilingualString(en="Select FWE", es="Seleccionar FWE")
+    DISPLAY_NAME = MultilingualString(
+        en="Select FWE", es="Seleccionar FWE", pt="Seleção por FWE"
+    )
     IMAGE_PREVIEW = "select_fwe.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 

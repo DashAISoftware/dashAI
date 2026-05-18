@@ -53,6 +53,11 @@ class HammingDistance(ClassificationMetric):
             "etiquetas predichas incorrectamente. "
             "Es especialmente útil para tareas de clasificación multi-etiqueta."
         ),
+        pt=(
+            "A Distância de Hamming mede a fração de "
+            "rótulos previstos incorretamente. "
+            "É especialmente útil para tarefas de classificação multirrótulo."
+        ),
     )
 
     @staticmethod

@@ -103,7 +103,7 @@ export const modelsSessionTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "top",
+    placement: "right",
     disableBeacon: true,
     disableScrolling: true,
     disableScrollParentFix: true,
@@ -152,7 +152,7 @@ export const modelsSessionTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
     maxWidth: "420px",
   },

@@ -7,7 +7,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -43,8 +42,12 @@ class LassoRegressionSchema(BaseSchema):
                 "Fuerza de regularización. Valores más grandes especifican "
                 "regularización más fuerte. alpha=0 es equivalente a MCO."
             ),
+            pt=(
+                "Força de regularização. Valores maiores especificam "
+                "regularização mais forte. alpha=0 é equivalente a MQO."
+            ),
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa"),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -59,8 +62,14 @@ class LassoRegressionSchema(BaseSchema):
                 "Si se calcula el intercepto para este modelo. Si es False, "
                 "se espera que los datos ya estén centrados."
             ),
+            pt=(
+                "Se o intercepto deve ser calculado para este modelo. Se False, "
+                "espera-se que os dados já estejam centrados."
+            ),
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept", es="Ajustar intercepto", pt="Ajustar intercepto"
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -74,8 +83,11 @@ class LassoRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum number of iterations.",
             es="El número máximo de iteraciones.",
+            pt="O número máximo de iterações.",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+        ),
     )  # type: ignore
 
     tol: schema_field(
@@ -89,12 +101,13 @@ class LassoRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The tolerance for the optimisation.",
             es="La tolerancia para la optimización.",
+            pt="A tolerância para a otimização.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -105,8 +118,16 @@ class LassoRegressionSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+        ),
     )  # type: ignore
 
 
@@ -133,10 +154,12 @@ class LassoRegression(RegressionModel, SklearnLikeRegressor, _Lasso):
     DISPLAY_NAME: str = MultilingualString(
         en="Lasso Regression",
         es="Regresión Lasso",
+        pt="Regressão Lasso",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression with L1 regularisation for feature selection.",
         es="Regresión lineal con regularización L1 para selección de características.",
+        pt="Regressão linear com regularização L1 para seleção de características.",
     )
     COLOR: str = "#29B6F6"
     ICON: str = "SelectAll"
