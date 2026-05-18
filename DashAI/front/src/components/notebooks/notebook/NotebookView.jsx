@@ -21,10 +21,14 @@ const RowItem = React.memo(function RowItem({
   handleExplorerDeleteClick,
   handleConverterDeleteClick,
   handleStatusChange,
-  isHighlighted,
 }) {
   return (
-    <Box sx={{ my: 2, mx: "4px", height: "370px" }}>
+    <Box
+      sx={{
+        my: 2,
+        height: "370px",
+      }}
+    >
       {item.type === "explorer" ? (
         <ExplorerBox
           explorer={item}
@@ -32,7 +36,6 @@ const RowItem = React.memo(function RowItem({
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
           }
-          isHighlighted={isHighlighted}
         />
       ) : item.type === "converter" ? (
         <ConverterBox
@@ -41,7 +44,6 @@ const RowItem = React.memo(function RowItem({
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "converter")
           }
-          isHighlighted={isHighlighted}
         />
       ) : null}
     </Box>
@@ -65,12 +67,8 @@ export default function NotebookView({ notebook }) {
     }
   }, [tourContext]);
 
-  const {
-    explorersAndConverters,
-    setExplorersAndConverters,
-    lastAddedItemId,
-    clearLastAddedItemId,
-  } = useExplorersAndConverters();
+  const { explorersAndConverters, setExplorersAndConverters } =
+    useExplorersAndConverters();
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -80,10 +78,7 @@ export default function NotebookView({ notebook }) {
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [listSize, setListSize] = useState(explorersAndConverters.length);
-  const [highlightedItemId, setHighlightedItemId] = useState(null);
   const listBoxRef = useRef(null);
-  const pendingHighlightRef = useRef(false);
-  const isProgrammaticScrollRef = useRef(false);
 
   const fetchExplorersAndConverters = useCallback(async () => {
     if (!notebook?.id) return;
@@ -224,60 +219,12 @@ export default function NotebookView({ notebook }) {
   };
 
   useEffect(() => {
-    if (!pendingHighlightRef.current) scrollToBottom();
+    scrollToBottom();
   }, [listSize]);
 
   useEffect(() => {
     setListSize(explorersAndConverters.length);
   }, [explorersAndConverters]);
-
-  // Smooth scroll to and highlight newly added item (blocks the instant listSize scroll)
-  useEffect(() => {
-    if (!lastAddedItemId) return;
-    pendingHighlightRef.current = true;
-    const scrollTimer = setTimeout(() => {
-      const index = explorersAndConverters.findIndex(
-        (item) => item.id === lastAddedItemId,
-      );
-      if (listBoxRef.current && index >= 0) {
-        isProgrammaticScrollRef.current = true;
-        listBoxRef.current.scrollToIndex({
-          index,
-          align: "end",
-          behavior: "smooth",
-        });
-        setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, 600);
-      }
-      setHighlightedItemId(lastAddedItemId);
-      clearLastAddedItemId();
-      pendingHighlightRef.current = false;
-    }, 100);
-    const clearTimer = setTimeout(() => setHighlightedItemId(null), 4250);
-    return () => {
-      clearTimeout(scrollTimer);
-      clearTimeout(clearTimer);
-    };
-  }, [lastAddedItemId]);
-
-  const renderItem = useCallback(
-    (index, item) => (
-      <RowItem
-        item={item}
-        handleExplorerDeleteClick={handleExplorerDeleteClick}
-        handleConverterDeleteClick={handleConverterDeleteClick}
-        handleStatusChange={handleStatusChange}
-        isHighlighted={highlightedItemId === item.id}
-      />
-    ),
-    [
-      handleExplorerDeleteClick,
-      handleConverterDeleteClick,
-      handleStatusChange,
-      highlightedItemId,
-    ],
-  );
 
   if (!notebook) {
     return (
@@ -316,13 +263,14 @@ export default function NotebookView({ notebook }) {
           style={{ height: "100%" }}
           initialTopMostItemIndex={listSize > 1 ? listSize - 1 : 0}
           data={explorersAndConverters}
-          itemContent={renderItem}
-          components={{ Footer: () => <Box sx={{ height: "20px" }} /> }}
-          onScroll={() => {
-            if (!isProgrammaticScrollRef.current && highlightedItemId) {
-              setHighlightedItemId(null);
-            }
-          }}
+          itemContent={(index, item) => (
+            <RowItem
+              item={item}
+              handleExplorerDeleteClick={handleExplorerDeleteClick}
+              handleConverterDeleteClick={handleConverterDeleteClick}
+              handleStatusChange={handleStatusChange}
+            />
+          )}
         />
       )}
 

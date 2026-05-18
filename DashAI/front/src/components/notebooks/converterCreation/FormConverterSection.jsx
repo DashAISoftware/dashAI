@@ -20,11 +20,8 @@ export default function FormConverterSection({
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const {
-    explorersAndConverters,
-    setExplorersAndConverters,
-    setLastAddedItemId,
-  } = useExplorersAndConverters();
+  const { explorersAndConverters, setExplorersAndConverters } =
+    useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
 
@@ -47,7 +44,6 @@ export default function FormConverterSection({
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
-        setLastAddedItemId(data.id);
         enqueueSnackbar(
           t("datasets:message.converterCreated", { name: tool.name }),
           {

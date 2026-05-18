@@ -8,7 +8,7 @@ import {
   CircularProgress,
   IconButton,
 } from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { Delete } from "@mui/icons-material";
 import {
   MaterialReactTable,
@@ -72,7 +72,6 @@ export default function ConverterBox({
   converter,
   onStatusChange,
   handleConverterDeleteClick,
-  isHighlighted = false,
 }) {
   const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
@@ -133,20 +132,6 @@ export default function ConverterBox({
         bgcolor: theme.palette.background.box,
         borderRadius: 2,
         height: "100%",
-        position: "relative",
-        zIndex: isHighlighted ? 1 : 0,
-        "@keyframes converterHighlight": {
-          "0%": {
-            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
-          },
-          "65%": {
-            boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.15)}`,
-          },
-          "100%": { boxShadow: "none" },
-        },
-        animation: isHighlighted
-          ? "converterHighlight 4s ease-out forwards"
-          : "none",
       }}
     >
       <CardContent
