@@ -60,7 +60,7 @@ function AddModelDialog({
     defaultValues: defaultOptimizerParams,
     loading: optimizerSchemaLoading,
   } = useSchema({
-    modelName: selectedOptimizer,
+    modelName: open && activeStep === 1 ? selectedOptimizer : null,
   });
 
   const tourContext = useTourContext();
