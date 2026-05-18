@@ -6,7 +6,6 @@ from DashAI.back.core.schema_fields import (
     none_type,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -64,7 +63,7 @@ class LinearRegressionSchema(BaseSchema):
     )  # type: ignore
 
     n_jobs: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en=(
