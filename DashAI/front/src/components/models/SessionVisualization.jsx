@@ -13,7 +13,7 @@ import {
   ToggleButton,
   Tooltip,
 } from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   TableChart,
@@ -60,8 +60,6 @@ export default function SessionVisualization() {
   } = useModels();
 
   const theme = useTheme();
-  const glowStart = alpha(theme.palette.primary.main, 0.65);
-  const glowMid = alpha(theme.palette.primary.main, 0.2);
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -466,19 +464,6 @@ export default function SessionVisualization() {
                   sx={{
                     scrollMarginTop: "20px",
                     transition: "transform 0.3s ease",
-                    "@keyframes newRunHighlight": {
-                      "0%": {
-                        boxShadow: `0 0 0 3px ${glowStart}, 0 0 24px 8px ${glowMid}`,
-                      },
-                      "65%": {
-                        boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.15)}`,
-                      },
-                      "100%": { boxShadow: "none" },
-                    },
-                    animation:
-                      highlightedRunId === run.id
-                        ? "newRunHighlight 4s ease-out forwards"
-                        : "none",
                     ...(selectedRunId === run.id && {
                       transform: "scale(1.02)",
                       boxShadow: 3,
@@ -498,6 +483,7 @@ export default function SessionVisualization() {
                     isLastRun={index === sortedRuns.length - 1}
                     existingRuns={runs}
                     onRefresh={fetchRuns}
+                    isHighlighted={highlightedRunId === run.id}
                   />
                 </Box>
               ))}

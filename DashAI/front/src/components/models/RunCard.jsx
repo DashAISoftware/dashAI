@@ -21,7 +21,7 @@ import {
   TextField,
   Alert,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -59,6 +59,7 @@ function RunCard({
   isLastRun = false,
   existingRuns = [],
   onRefresh,
+  isHighlighted = false,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
@@ -293,7 +294,6 @@ function RunCard({
     <Card
       elevation={2}
       sx={{
-        mb: 2,
         borderLeft: "4px solid",
         borderLeftColor:
           run.status === 3 // Finished
@@ -303,6 +303,20 @@ function RunCard({
               : isRunning
                 ? "info.main"
                 : "grey.500",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newRunHighlight": {
+          "0%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "65%": {
+            boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.15)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newRunHighlight 4s ease-out forwards"
+          : "none",
       }}
     >
       <CardContent>
