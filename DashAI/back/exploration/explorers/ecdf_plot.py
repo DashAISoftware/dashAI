@@ -49,8 +49,11 @@ class ECDFPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to color the ECDF plot."),
             es=("Columna usada para colorear el gráfico ECDF."),
+            pt=("Coluna usada para colorir o gráfico ECDF."),
         ),
-        alias=MultilingualString(en="Color column", es="Columna de color"),
+        alias=MultilingualString(
+            en="Color column", es="Columna de color", pt="Coluna de cor"
+        ),
     )  # type: ignore
     facet_col: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
@@ -58,8 +61,11 @@ class ECDFPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to facet the ECDF plot by columns."),
             es=("Columna usada para facetar el gráfico ECDF por columnas."),
+            pt=("Coluna usada para facetar o gráfico ECDF por colunas."),
         ),
-        alias=MultilingualString(en="Facet column", es="Facetear por columnas"),
+        alias=MultilingualString(
+            en="Facet column", es="Facetear por columnas", pt="Facetar por colunas"
+        ),
     )  # type: ignore
     facet_row: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
@@ -67,8 +73,11 @@ class ECDFPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to facet the ECDF plot by rows."),
             es=("Columna usada para facetar el gráfico ECDF por filas."),
+            pt=("Coluna usada para facetar o gráfico ECDF por linhas."),
         ),
-        alias=MultilingualString(en="Facet row", es="Facetear por filas"),
+        alias=MultilingualString(
+            en="Facet row", es="Facetear por filas", pt="Facetar por linhas"
+        ),
     )  # type: ignore
     ecdf_norm: schema_field(
         enum_field([e.value for e in ECDFNorm]),
@@ -76,8 +85,11 @@ class ECDFPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Type of normalization used for the ECDF plot."),
             es=("Tipo de normalización usada en el gráfico ECDF."),
+            pt=("Tipo de normalização usada no gráfico ECDF."),
         ),
-        alias=MultilingualString(en="ECDF normalization", es="Normalización ECDF"),
+        alias=MultilingualString(
+            en="ECDF normalization", es="Normalización ECDF", pt="Normalização ECDF"
+        ),
     )  # type: ignore
 
 
@@ -104,6 +116,7 @@ class ECDFPlotExplorer(DistributionExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Empirical Cumulative Distribution Plot",
         es="Gráfico ECDF (Distribución Acumulada Empírica)",
+        pt="Gráfico ECDF",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -113,6 +126,10 @@ class ECDFPlotExplorer(DistributionExplorer):
         es=(
             "Gráfico no paramétrico que muestra la proporción o el conteo de "
             "observaciones por debajo de cada valor único."
+        ),
+        pt=(
+            "Gráfico não paramétrico que mostra a proporção ou a contagem de "
+            "observações abaixo de cada valor único."
         ),
     )
     IMAGE_PREVIEW = "ecdf_plot.png"

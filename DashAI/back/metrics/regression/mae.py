@@ -40,6 +40,10 @@ class MAE(RegressionMetric):
             "Promedio de las diferencias absolutas entre valores predichos y reales, "
             "proporciona una medida clara de la precisión de predicción."
         ),
+        pt=(
+            "Média das diferenças absolutas entre valores previstos e reais, "
+            "fornece uma medida clara da acurácia de previsão."
+        ),
     )
 
     @staticmethod

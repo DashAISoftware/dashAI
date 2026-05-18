@@ -40,10 +40,12 @@ class ModernBertTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="ModernBERT Transformer",
         es="Transformer ModernBERT",
+        pt="Transformer ModernBERT",
     )
     DESCRIPTION: str = MultilingualString(
         en="Modern BERT model for efficient and robust text classification.",
         es="Modelo Modern BERT para clasificación de texto eficiente y robusta.",
+        pt="Modelo Modern BERT para classificação de texto eficiente e robusta.",
     )
     COLOR: str = "#455A64"
     ICON: str = "Psychology"

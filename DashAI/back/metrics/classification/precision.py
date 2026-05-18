@@ -46,6 +46,10 @@ class Precision(ClassificationMetric):
             "Fracción de positivos predichos que son correctos, "
             "importante cuando los falsos positivos son costosos."
         ),
+        pt=(
+            "Fração dos positivos previstos que estão corretos, "
+            "importante quando os falsos positivos são custosos."
+        ),
     )
 
     @staticmethod

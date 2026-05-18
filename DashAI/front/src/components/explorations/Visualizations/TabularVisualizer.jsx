@@ -5,10 +5,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 /**
  * Convert a DataGrid-style column definition to an MRT column definition.
@@ -70,10 +68,7 @@ function TabularVisualizerInner({
 
 function TabularVisualizer({ loading = false, rows = [], columns = [] }) {
   const theme = useTheme();
-  const { i18n } = useTranslation();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const mrtColumns = useMemo(() => columns.map(toMrtColumn), [columns]);
 

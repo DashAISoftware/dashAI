@@ -48,6 +48,10 @@ class F1(ClassificationMetric):
             "Media armónica de precisión y exhaustividad, "
             "útil para tareas de clasificación desbalanceadas."
         ),
+        pt=(
+            "Média harmônica de precisão e revocação, "
+            "útil para tarefas de classificação desbalanceadas."
+        ),
     )
 
     @staticmethod

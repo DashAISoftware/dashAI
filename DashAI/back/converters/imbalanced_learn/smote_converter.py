@@ -36,6 +36,10 @@ class SMOTESchema(BaseSchema):
                 "Estrategia de muestreo (float o 'auto') para determinar el "
                 "tamaño de la clase minoritaria."
             ),
+            pt=(
+                "Estratégia de amostragem (float ou 'auto') para determinar o "
+                "tamanho da classe minoritária."
+            ),
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -44,6 +48,7 @@ class SMOTESchema(BaseSchema):
         description=MultilingualString(
             en="Seed for reproducibility.",
             es="Semilla para reproducibilidad.",
+            pt="Semente para reprodutibilidade.",
         ),
     )  # type: ignore
     k_neighbors: schema_field(
@@ -52,6 +57,7 @@ class SMOTESchema(BaseSchema):
         description=MultilingualString(
             en="Number of neighbors to use for generating synthetic samples.",
             es="Número de vecinos para generar muestras sintéticas.",
+            pt="Número de vizinhos a usar para gerar amostras sintéticas.",
         ),
     )  # type: ignore
 
@@ -80,9 +86,12 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
     DESCRIPTION = MultilingualString(
         en="SMOTE: Synthetic Minority Over-sampling Technique.",
         es="SMOTE: Técnica de Sobre-muestreo de la Minoría Sintética.",
+        pt="SMOTE: Técnica de Super-amostragem de Minoria Sintética.",
     )
     DISPLAY_NAME = MultilingualString(
-        en="SMOTE (Oversampling)", es="SMOTE (Sobre-muestreo)"
+        en="SMOTE (Oversampling)",
+        es="SMOTE (Sobre-muestreo)",
+        pt="SMOTE (Super-amostragem)",
     )
     IMAGE_PREVIEW = "smote.png"
 

@@ -1,13 +1,63 @@
 import React from "react";
-import { Box, Button, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Button, IconButton, Typography } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { useTheme, alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import StepperNavigationFooter from "../shared/StepperNavigationFooter";
+
+const ARROW = 8;
+
+function getArrowSx(placement, bg, borderColor) {
+  if (!placement || placement === "center" || placement === "auto") return null;
+  const border = `1px solid ${borderColor}`;
+  const base = {
+    position: "absolute",
+    width: ARROW * 2,
+    height: ARROW * 2,
+    backgroundColor: bg,
+    transform: "rotate(45deg)",
+    zIndex: 0,
+  };
+  if (placement.startsWith("top"))
+    return {
+      ...base,
+      bottom: -ARROW,
+      left: `calc(50% - ${ARROW}px)`,
+      borderBottom: border,
+      borderRight: border,
+    };
+  if (placement.startsWith("bottom"))
+    return {
+      ...base,
+      top: -ARROW,
+      left: `calc(50% - ${ARROW}px)`,
+      borderTop: border,
+      borderLeft: border,
+    };
+  if (placement.startsWith("left"))
+    return {
+      ...base,
+      right: -ARROW,
+      top: `calc(50% - ${ARROW}px)`,
+      borderTop: border,
+      borderRight: border,
+    };
+  if (placement.startsWith("right"))
+    return {
+      ...base,
+      left: -ARROW,
+      top: `calc(50% - ${ARROW}px)`,
+      borderBottom: border,
+      borderLeft: border,
+    };
+  return null;
+}
 
 export const CustomTooltip = ({
-  continuous,
   index,
   step,
   backProps,
+  closeProps,
   primaryProps,
   skipProps,
   tooltipProps,
@@ -18,44 +68,89 @@ export const CustomTooltip = ({
   const theme = useTheme();
   const isInteractive = step.isInteractive;
 
+  const bg = theme.palette.background.paper;
+  const borderColor = alpha(theme.palette.primary.main, 0.5);
+  const arrowSx = getArrowSx(step.placement, bg, borderColor);
+
+  const getMarginSx = () => {
+    if (!step.placement) return {};
+    if (step.placement.startsWith("top")) return { marginBottom: "7px" };
+    if (step.placement.startsWith("bottom")) return { marginTop: "7px" };
+    if (step.placement.startsWith("left")) return { marginRight: "7px" };
+    if (step.placement.startsWith("right")) return { marginLeft: "7px" };
+    return {};
+  };
+
   return (
     <Box
       {...tooltipProps}
       sx={{
-        backgroundColor: "#fff",
+        backgroundColor: bg,
         borderRadius: "8px",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-        maxWidth: step.maxWidth || "380px",
+        border: `1px solid ${borderColor}`,
+        filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.8))",
+        maxWidth: "35ch",
         padding: "20px",
+        position: "relative",
+        overflow: "visible",
+        zIndex: 1,
+        ...getMarginSx(),
       }}
     >
+      {arrowSx && <Box sx={arrowSx} />}
+
+      <IconButton
+        {...closeProps}
+        size="small"
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          color: theme.palette.text.secondary,
+          zIndex: 2,
+          "&:hover": { color: theme.palette.text.primary },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+
+      <Typography
+        variant="overline"
+        sx={{
+          color: theme.palette.primary.main,
+          fontWeight: 700,
+          letterSpacing: 1.5,
+          lineHeight: 1,
+          display: "block",
+          mb: 1,
+          zIndex: 2,
+          position: "relative",
+        }}
+      >
+        {t("common:step")} {index + 1} / {size}
+      </Typography>
+
       <Box
         sx={{
-          marginBottom: "16px",
           fontSize: "14px",
           lineHeight: "1.6",
-          color: "#333",
+          color: theme.palette.text.primary,
+          pr: 2,
+          position: "relative",
+          zIndex: 2,
           "& h3": {
-            fontSize: "22px",
-            fontWeight: "bold",
+            fontSize: "16px",
+            fontWeight: 600,
             marginBottom: "8px",
             marginTop: 0,
-            color: "#333",
+            color: theme.palette.text.primary,
           },
-          "& p": {
-            marginBottom: "8px",
-            marginTop: 0,
-          },
-          "& ul": {
-            marginBottom: "8px",
-            marginTop: "8px",
-          },
-          "& li": {
-            marginBottom: "4px",
-          },
+          "& p": { marginBottom: "8px", marginTop: 0 },
+          "& ul": { marginBottom: "8px", marginTop: "8px" },
+          "& li": { marginBottom: "4px" },
           "& strong": {
             fontWeight: 600,
-            color: "#000",
+            color: theme.palette.text.primary,
           },
         }}
       >
@@ -67,87 +162,40 @@ export const CustomTooltip = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginTop: "16px",
+          mt: 1,
+          position: "relative",
+          zIndex: 2,
         }}
       >
         <Box>
-          {index > 0 && !step.disableBackButton && (
-            <Button
-              {...backProps}
-              sx={{
-                color: "#666",
-                textTransform: "none",
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
-                },
-              }}
-            >
-              {t("common:back")}
-            </Button>
-          )}
-        </Box>{" "}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {!isLastStep && (
             <Button
               {...skipProps}
+              variant="text"
+              size="small"
               sx={{
-                color: "#999",
-                fontSize: "12px",
+                color: theme.palette.text.secondary,
                 textTransform: "none",
-                "&:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
-                },
+                fontSize: "12px",
               }}
             >
               {t("common:skipTour")}
             </Button>
           )}
-
-          {isInteractive ? (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "#999",
-                padding: "8px 16px",
-                backgroundColor: "rgba(0, 0, 0, 0.04)",
-                borderRadius: "4px",
-              }}
-            >
-              {index + 1} of {size}
-            </Typography>
-          ) : (
-            <Button
-              {...primaryProps}
-              sx={{
-                backgroundColor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
-                borderRadius: "4px",
-                padding: "8px 16px",
-                fontSize: "14px",
-                textTransform: "none",
-                "&:hover": {
-                  backgroundColor: theme.palette.primary.dark,
-                },
-                display: "flex",
-                gap: 1,
-              }}
-            >
-              {isLastStep ? t("common:finish") : t("common:next")}
-              {continuous && (
-                <Typography
-                  component="span"
-                  variant="body2"
-                  sx={{
-                    opacity: 0.8,
-                    ml: 0.5,
-                  }}
-                >
-                  ({index + 1}/{size})
-                </Typography>
-              )}
-            </Button>
-          )}
         </Box>
+
+        <StepperNavigationFooter
+          onBack={
+            index > 0 && !step.disableBackButton
+              ? backProps?.onClick
+              : undefined
+          }
+          onNext={!isInteractive ? primaryProps?.onClick : undefined}
+          showBack={index > 0 && !step.disableBackButton}
+          showNext={!isInteractive}
+          nextLabel={isLastStep ? t("common:finish") : t("common:next")}
+          sx={{ mt: 0, pt: 0, borderTop: 0 }}
+        />
       </Box>
     </Box>
   );

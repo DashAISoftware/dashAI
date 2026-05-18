@@ -33,8 +33,9 @@ class KNeighborsRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Number of neighbours to use for the prediction.",
             es="Número de vecinos a usar para la predicción.",
+            pt="Número de vizinhos a usar para a previsão.",
         ),
-        alias=MultilingualString(en="N neighbors", es="N vecinos"),
+        alias=MultilingualString(en="N neighbors", es="N vecinos", pt="N vizinhos"),
     )  # type: ignore
 
     weights: schema_field(
@@ -49,8 +50,12 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Función de pesos usada en la predicción. 'uniform' pondera igual "
                 "todos los vecinos; 'distance' pondera por distancia inversa."
             ),
+            pt=(
+                "Função de pesos usada na previsão. 'uniform' pondera igualmente "
+                "todos os vizinhos; 'distance' pondera pela distância inversa."
+            ),
         ),
-        alias=MultilingualString(en="Weights", es="Pesos"),
+        alias=MultilingualString(en="Weights", es="Pesos", pt="Pesos"),
     )  # type: ignore
 
     algorithm: schema_field(
@@ -65,8 +70,12 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Algoritmo para computar los vecinos más cercanos. 'auto' selecciona "
                 "el mejor en función de los valores pasados a fit."
             ),
+            pt=(
+                "Algoritmo para calcular os vizinhos mais próximos. 'auto' seleciona "
+                "o melhor com base nos valores passados ao fit."
+            ),
         ),
-        alias=MultilingualString(en="Algorithm", es="Algoritmo"),
+        alias=MultilingualString(en="Algorithm", es="Algoritmo", pt="Algoritmo"),
     )  # type: ignore
 
     leaf_size: schema_field(
@@ -86,8 +95,14 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Tamaño de hoja pasado a BallTree o KDTree. Afecta la velocidad "
                 "de consulta y la memoria requerida para almacenar el árbol."
             ),
+            pt=(
+                "Tamanho de folha passado ao BallTree ou KDTree. Afeta a velocidade "
+                "de consulta e a memória necessária para armazenar a árvore."
+            ),
         ),
-        alias=MultilingualString(en="Leaf size", es="Tamaño de hoja"),
+        alias=MultilingualString(
+            en="Leaf size", es="Tamaño de hoja", pt="Tamanho de folha"
+        ),
     )  # type: ignore
 
     metric: schema_field(
@@ -96,8 +111,9 @@ class KNeighborsRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Distance metric to use for the neighbour search.",
             es="Métrica de distancia para la búsqueda de vecinos.",
+            pt="Métrica de distância para a busca de vizinhos.",
         ),
-        alias=MultilingualString(en="Metric", es="Métrica"),
+        alias=MultilingualString(en="Metric", es="Métrica", pt="Métrica"),
     )  # type: ignore
 
 
@@ -121,11 +137,16 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
     DISPLAY_NAME: str = MultilingualString(
         en="K-Nearest Neighbours Regression",
         es="Regresión K-Vecinos Más Cercanos",
+        pt="Regressor K-Vizinhos",
     )
     DESCRIPTION: str = MultilingualString(
         en="Non-parametric regression that predicts by averaging nearest neighbours.",
         es=(
             "Regresión no paramétrica que predice promediando los vecinos más cercanos."
+        ),
+        pt=(
+            "Regressão não paramétrica que prevê calculando a média dos vizinhos "
+            "mais próximos."
         ),
     )
     COLOR: str = "#FFA726"

@@ -18,7 +18,9 @@ class PolynomialKernelConverter(BaseConverter):
     """
 
     CATEGORY = MultilingualString(
-        en="Polynomial & Kernel Methods", es="Métodos Polinomiales y de Kernel"
+        en="Polynomial & Kernel Methods",
+        es="Métodos Polinomiales y de Kernel",
+        pt="Métodos Polinomiais e de Kernel",
     )
     ICON: Final[str] = Icon.Functions.value
     COLOR: Final[str] = "rgb(153, 102, 255)"

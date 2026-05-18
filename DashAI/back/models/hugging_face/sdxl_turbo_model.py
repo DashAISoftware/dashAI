@@ -46,8 +46,17 @@ class SDXLTurboSchema(BaseSchema):
                     "efecto mínimo. "
                     "Dejar vacío para mejores resultados."
                 ),
+                pt=(
+                    "Texto descrevendo o que excluir da imagem gerada. "
+                    "Nota: SDXL Turbo usa treinamento por destilação e "
+                    "guidance_scale=0, portanto os prompts negativos têm "
+                    "efeito mínimo. "
+                    "Deixe vazio para melhores resultados."
+                ),
             ),
-            alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
+            alias=MultilingualString(
+                en="Negative prompt", es="Prompt negativo", pt="Prompt negativo"
+            ),
         )  # type: ignore
     ]
 
@@ -68,9 +77,18 @@ class SDXLTurboSchema(BaseSchema):
                 "ligeramente. Valores superiores a 4 tienen rendimientos "
                 "decrecientes para este modelo."
             ),
+            pt=(
+                "Número de etapas de inferência. SDXL Turbo é um modelo destilado "
+                "que gera imagens de alta qualidade em apenas 1-4 etapas. Usar "
+                "1 etapa é o mais rápido; 2-4 etapas melhoram ligeiramente a "
+                "qualidade. Valores acima de 4 têm retornos decrescentes para "
+                "este modelo."
+            ),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de etapas de inferência",
         ),
     )  # type: ignore
 
@@ -89,8 +107,14 @@ class SDXLTurboSchema(BaseSchema):
                 "factible (30-60 segundos por imagen). La GPU sigue siendo "
                 "recomendada para generación en tiempo real o por lotes."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. SDXL Turbo é rápido o "
+                "suficiente para que a inferência em CPU seja viável (30-60 segundos "
+                "por imagem). GPU ainda é recomendada para geração em tempo real "
+                "ou em lote."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
     )  # type: ignore
 
     seed: schema_field(
@@ -108,8 +132,14 @@ class SDXLTurboSchema(BaseSchema):
                 "Use un valor negativo (ej. -1) para una semilla aleatoria en "
                 "cada ejecución."
             ),
+            pt=(
+                "Semente aleatória para geração reproduzível. Um inteiro positivo "
+                "fixo sempre produzirá a mesma imagem com configurações idênticas. "
+                "Use um valor negativo (ex.: -1) para uma semente aleatória a "
+                "cada execução."
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla"),
+        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente"),
     )  # type: ignore
 
     width: schema_field(
@@ -127,8 +157,13 @@ class SDXLTurboSchema(BaseSchema):
                 "grandes pueden reducir la calidad ya que el modelo fue entrenado "
                 "a 512 px."
             ),
+            pt=(
+                "Largura da imagem de saída em pixels. Deve ser múltiplo de 8. "
+                "A resolução ideal do SDXL Turbo é 512x512 px. Resoluções maiores "
+                "podem reduzir a qualidade, pois o modelo foi treinado a 512 px."
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho"),
+        alias=MultilingualString(en="Width", es="Ancho", pt="Largura"),
     )  # type: ignore
 
     height: schema_field(
@@ -143,8 +178,12 @@ class SDXLTurboSchema(BaseSchema):
                 "Altura de la imagen de salida en píxeles. Debe ser múltiplo de 8. "
                 "La resolución óptima de SDXL Turbo es 512x512 px."
             ),
+            pt=(
+                "Altura da imagem de saída em pixels. Deve ser múltiplo de 8. "
+                "A resolução ideal do SDXL Turbo é 512x512 px."
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura"),
+        alias=MultilingualString(en="Height", es="Altura", pt="Altura"),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -161,9 +200,16 @@ class SDXLTurboSchema(BaseSchema):
                 "Como SDXL Turbo es rápido, generar múltiples imágenes por prompt "
                 "es muy eficiente."
             ),
+            pt=(
+                "Quantas imagens gerar a partir de um único prompt em um lote. "
+                "Como o SDXL Turbo é rápido, gerar múltiplas imagens por prompt "
+                "é muito eficiente."
+            ),
         ),
         alias=MultilingualString(
-            en="Num images per prompt", es="Número de imágenes por prompt"
+            en="Num images per prompt",
+            es="Número de imágenes por prompt",
+            pt="Número de imagens por prompt",
         ),
     )  # type: ignore
 
@@ -196,6 +242,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Turbo",
         es="SDXL Turbo",
+        pt="SDXL Turbo",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -216,6 +263,17 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
             "Ideal para aplicaciones interactivas y en tiempo real. Nota: no usa guía "
             "libre de clasificador (guidance_scale=0 internamente). Modelo "
             "disponible en "
+            "https://huggingface.co/stabilityai/sdxl-turbo."
+        ),
+        pt=(
+            "SDXL Turbo é uma versão destilada do Stable Diffusion XL pela "
+            "Stability AI que gera imagens de alta qualidade em uma única etapa "
+            "de remoção de ruído "
+            "usando Destilação por Difusão Adversarial (ADD). Produz imagens "
+            "fotorrealistas a 512x512 px até 30x mais rápido que o SDXL padrão. "
+            "Ideal para aplicações interativas e em tempo real. Nota: não usa "
+            "orientação livre de classificador (guidance_scale=0 internamente). "
+            "Modelo disponível em "
             "https://huggingface.co/stabilityai/sdxl-turbo."
         ),
     )

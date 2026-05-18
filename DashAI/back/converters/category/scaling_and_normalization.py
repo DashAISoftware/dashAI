@@ -17,7 +17,9 @@ class ScalingAndNormalizationConverter(BaseConverter):
     """
 
     CATEGORY = MultilingualString(
-        en="Scaling and Normalization", es="Escalado y Normalización"
+        en="Scaling and Normalization",
+        es="Escalado y Normalización",
+        pt="Escalonamento e Normalização",
     )
     ICON: Final[str] = Icon.TrendingUp.value
     COLOR: Final[str] = "rgb(255, 165, 0)"

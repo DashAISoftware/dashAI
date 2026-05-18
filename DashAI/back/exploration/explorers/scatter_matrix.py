@@ -33,10 +33,12 @@ class ScatterMatrixSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
+            pt=("Nome ou índice de coluna para agrupar pontos por cor."),
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
+            pt="Coluna para grupo de cor",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -45,10 +47,12 @@ class ScatterMatrixSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
+            pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
+            pt="Coluna para grupo de símbolo",
         ),
     )  # type: ignore
 
@@ -70,6 +74,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Multiple Scatter Plot",
         es="Matriz de Dispersión",
+        pt="Matriz de Dispersão",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -81,12 +86,18 @@ class ScatterMatrixExplorer(RelationshipExplorer):
             "generan gráficos de dispersión por cada par, con histogramas en la "
             "diagonal."
         ),
+        pt=(
+            "Retorna uma matriz de dispersão para colunas selecionadas. São "
+            "gerados gráficos de dispersão para cada par, com histogramas na "
+            "diagonal."
+        ),
     )
     IMAGE_PREVIEW = "scatter_matrix.png"
 
     SHORT_DESCRIPTION = MultilingualString(
         en="Display a scatter matrix plot of selected columns.",
         es="Muestra una matriz de dispersión de columnas seleccionadas.",
+        pt="Exibe uma matriz de dispersão das colunas selecionadas.",
     )
 
     SCHEMA = ScatterMatrixSchema

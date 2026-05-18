@@ -26,6 +26,7 @@ class MinMaxScalerSchema(BaseSchema):
         description=MultilingualString(
             en="The minimum value of the range to scale the data to.",
             es="El valor mínimo del rango al que escalar los datos.",
+            pt="O valor mínimo do intervalo para escalonar os dados.",
         ),
     )  # type: ignore
     max_range: schema_field(
@@ -34,6 +35,7 @@ class MinMaxScalerSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum value of the range to scale the data to.",
             es="El valor máximo del rango al que escalar los datos.",
+            pt="O valor máximo do intervalo para escalonar os dados.",
         ),
     )  # type: ignore
     clip: schema_field(
@@ -42,6 +44,10 @@ class MinMaxScalerSchema(BaseSchema):
         description=MultilingualString(
             en="Set to True to clip the data to the feature range.",
             es="Ponlo en True para recortar los datos al rango de características.",
+            pt=(
+                "Defina como True para recortar os dados ao intervalo "
+                "de características."
+            ),
         ),
     )  # type: ignore
 
@@ -74,8 +80,13 @@ class MinMaxScaler(
     DESCRIPTION = MultilingualString(
         en="Transform features by scaling each feature to a given range.",
         es="Transforma características escalándolas a un rango dado.",
+        pt="Transforma características escalonando cada uma para um intervalo dado.",
     )
-    DISPLAY_NAME = MultilingualString(en="Min-Max Scaler", es="Escalador Min-Max")
+    DISPLAY_NAME = MultilingualString(
+        en="Min-Max Scaler",
+        es="Escalador Min-Max",
+        pt="Normalizador Min-Max",
+    )
     IMAGE_PREVIEW = "min_max_scaler.png"
 
     metadata = {

@@ -46,8 +46,13 @@ class MaxAbsScaler(
     DESCRIPTION = MultilingualString(
         en="Scale each feature by its maximum absolute value.",
         es="Escala cada característica por su valor absoluto máximo.",
+        pt="Escala cada característica pelo seu valor absoluto máximo.",
     )
-    DISPLAY_NAME = MultilingualString(en="Max Abs Scaler", es="Escalador Max Abs")
+    DISPLAY_NAME = MultilingualString(
+        en="Max Abs Scaler",
+        es="Escalador Max Abs",
+        pt="Escalador de Valor Absoluto Máximo",
+    )
     IMAGE_PREVIEW = "max_abs_scaler.png"
 
     metadata = {
