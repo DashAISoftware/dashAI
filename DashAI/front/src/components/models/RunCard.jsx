@@ -44,6 +44,7 @@ import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
+import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
  * Card component displaying a model run with actions and details
@@ -110,13 +111,7 @@ function RunCard({
   }, [run.id, explainerRefreshTrigger]);
 
   const hasOptimizableParams = useMemo(() => {
-    return Object.values(editedParameters).some(
-      (value) =>
-        value &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        value.optimize === true,
-    );
+    return checkIfHaveOptimazers(editedParameters);
   }, [editedParameters]);
 
   useEffect(() => {
