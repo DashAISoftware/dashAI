@@ -6,17 +6,17 @@ import {
   CircularProgress,
   Alert,
   AlertTitle,
-  Paper,
-  Typography,
   ToggleButton,
   ToggleButtonGroup,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import api from "../../api/api";
+import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 
 /**
  * FoldMetricsChart
@@ -44,6 +44,8 @@ export default function FoldMetricsChart({
   const [chartType, setChartType] = useState("boxplot");
   // "outer" = nested CV evaluation folds, "final" = HPO final training folds
   const [foldScope, setFoldScope] = useState("outer");
+  // Track selected metrics (array of metric names)
+  const [selectedMetrics, setSelectedMetrics] = useState([]);
   // Ref to always access current selectedRepetition inside async callbacks
   const selectedRepetitionRef = useRef(selectedRepetition);
   useEffect(() => {
@@ -99,6 +101,16 @@ export default function FoldMetricsChart({
           setAllRepetitionsData({ rep_0: response.data });
           setSelectedRepetition("rep_0");
         }
+
+        // Initialize all metrics as selected
+        if (response.data) {
+          const metricsData =
+            hasRepetitions && response.data.rep_0
+              ? response.data.rep_0
+              : response.data;
+          const allMetricNames = Object.keys(metricsData);
+          setSelectedMetrics(allMetricNames);
+        }
       } catch (err) {
         setError(err.response?.data?.detail || "Failed to load fold metrics");
         console.error("Error fetching fold metrics:", err);
@@ -148,6 +160,9 @@ export default function FoldMetricsChart({
     const metricNames = Object.keys(foldMetrics).sort();
 
     metricNames.forEach((metricName, index) => {
+      // Skip if metric is not selected
+      if (!selectedMetrics.includes(metricName)) return;
+
       const metricInfo = metrics.find((m) => m.name === metricName);
       const values = foldMetrics[metricName];
 
@@ -199,6 +214,9 @@ export default function FoldMetricsChart({
     ];
 
     metricNames.forEach((metricName, index) => {
+      // Skip if metric is not selected
+      if (!selectedMetrics.includes(metricName)) return;
+
       const metricInfo = metrics.find((m) => m.name === metricName);
       const values = foldMetrics[metricName];
       const foldNumbers = Array.from(
@@ -235,6 +253,168 @@ export default function FoldMetricsChart({
     return traces;
   };
 
+  // Calculate Q-Q plot data
+  const calculateNormalQuantiles = (data) => {
+    const sorted = [...data].sort((a, b) => a - b);
+    const n = sorted.length;
+    const quantiles = [];
+    for (let i = 0; i < n; i++) {
+      // Use median rank to calculate theoretical quantile
+      const p = (i + 0.5) / n;
+      const q = Math.sqrt(2) * errorInverse(2 * p - 1);
+      quantiles.push({ sample: sorted[i], theoretical: q });
+    }
+    return quantiles;
+  };
+
+  // Approximate inverse error function (Abramowitz & Stegun, more accurate)
+  const errorInverse = (x) => {
+    const a = 0.147;
+    const ln = Math.log(1 - x * x);
+    const term1 = 2 / (Math.PI * a) + ln / 2;
+    const term2 = ln / a;
+    return Math.sign(x) * Math.sqrt(Math.sqrt(term1 * term1 - term2) - term1);
+  };
+
+  // Build Q-Q plot traces
+  const createQQPlotTraces = () => {
+    if (!allRepetitionsData || !selectedRepetition) return [];
+
+    const foldMetrics =
+      selectedRepetition === "averaged"
+        ? computeAveragedData()
+        : allRepetitionsData[selectedRepetition];
+    if (!foldMetrics) return [];
+
+    const traces = [];
+    const metricNames = Object.keys(foldMetrics).sort();
+
+    const themeColors = [
+      theme.palette.primary.main,
+      theme.palette.secondary.main,
+      theme.palette.success.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+    ];
+
+    let allTheoreticalValues = [];
+    let allSampleValues = [];
+
+    metricNames.forEach((metricName, index) => {
+      if (!selectedMetrics.includes(metricName)) return;
+
+      const values = foldMetrics[metricName];
+      if (values.length < 3) return; // Q-Q plot needs at least 3 points
+
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const std = Math.sqrt(
+        values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+          values.length,
+      );
+
+      const quantileData = calculateNormalQuantiles(values);
+      const sampleQuantiles = quantileData.map((q) => q.sample);
+      const theoreticalQuantiles = quantileData.map(
+        (q) => mean + q.theoretical * std,
+      );
+
+      allTheoreticalValues.push(...theoreticalQuantiles);
+      allSampleValues.push(...sampleQuantiles);
+
+      // Sample points
+      traces.push({
+        x: theoreticalQuantiles,
+        y: sampleQuantiles,
+        name: metricName,
+        type: "scatter",
+        mode: "markers",
+        marker: {
+          size: 8,
+          color:
+            metrics.find((m) => m.name === metricName)?.metadata?.color ||
+            themeColors[index % themeColors.length],
+        },
+        hovertemplate:
+          "<b>%{fullData.name}</b><br>" +
+          "Theoretical: %{x:.3f}<br>" +
+          "Sample: %{y:.3f}<br>" +
+          "<extra></extra>",
+      });
+    });
+
+    // Reference diagonal y=x over theoretical quantile range
+    if (allTheoreticalValues.length > 0) {
+      const tMin = Math.min(...allTheoreticalValues);
+      const tMax = Math.max(...allTheoreticalValues);
+      const padding = (tMax - tMin) * 0.1;
+
+      traces.push({
+        x: [tMin - padding, tMax + padding],
+        y: [tMin - padding, tMax + padding],
+        name: "Reference (Normal)",
+        type: "scatter",
+        mode: "lines",
+        line: {
+          color: theme.palette.mode === "dark" ? "#ff7f0e" : "#ff7f0e",
+          dash: "solid",
+          width: 3,
+        },
+        hoverinfo: "skip",
+        showlegend: true,
+      });
+    }
+
+    return traces;
+  };
+
+  // Build histogram traces
+  const createHistogramTraces = () => {
+    if (!allRepetitionsData || !selectedRepetition) return [];
+
+    const foldMetrics =
+      selectedRepetition === "averaged"
+        ? computeAveragedData()
+        : allRepetitionsData[selectedRepetition];
+    if (!foldMetrics) return [];
+
+    const traces = [];
+    const metricNames = Object.keys(foldMetrics).sort();
+
+    const themeColors = [
+      theme.palette.primary.main,
+      theme.palette.secondary.main,
+      theme.palette.success.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+    ];
+
+    metricNames.forEach((metricName, index) => {
+      if (!selectedMetrics.includes(metricName)) return;
+
+      const values = foldMetrics[metricName];
+
+      traces.push({
+        x: values,
+        name: metricName,
+        type: "histogram",
+        nbinsx: Math.max(5, Math.ceil(Math.sqrt(values.length))),
+        marker: {
+          color:
+            metrics.find((m) => m.name === metricName)?.metadata?.color ||
+            themeColors[index % themeColors.length],
+          opacity: 0.7,
+        },
+        hovertemplate:
+          "<b>%{fullData.name}</b><br>" +
+          "Range: [%{x}, %{xbingroup}]<br>" +
+          "Count: %{y}<br>" +
+          "<extra></extra>",
+      });
+    });
+
+    return traces;
+  };
+
   // Build layout with theme colors
   const getLayout = () => {
     const isDarkMode = theme.palette.mode === "dark";
@@ -255,8 +435,9 @@ export default function FoldMetricsChart({
         family: '"Roboto", "Helvetica", "Arial", sans-serif',
       },
       hovermode: "closest",
-      margin: { l: 60, r: 30, t: 50, b: 50 },
+      margin: { l: 30, r: 0, t: 40, b: 50 },
       autosize: true,
+      showlegend: false,
     };
 
     if (chartType === "line") {
@@ -275,6 +456,51 @@ export default function FoldMetricsChart({
       };
     }
 
+    if (chartType === "qq") {
+      return {
+        ...baseLayout,
+        showlegend: true,
+        title: {
+          text: `Q-Q Plot - Normality Assessment (${metricSplit})`,
+          font: { size: 14 },
+        },
+        xaxis: {
+          title: "Theoretical Quantiles",
+          gridcolor: gridColor,
+          titlefont: { color: textColor },
+          tickfont: { color: textColor },
+        },
+        yaxis: {
+          title: "Sample Quantiles",
+          gridcolor: gridColor,
+          titlefont: { color: textColor },
+          tickfont: { color: textColor },
+        },
+      };
+    }
+
+    if (chartType === "histogram") {
+      return {
+        ...baseLayout,
+        title: {
+          text: `Distribution Histogram (${metricSplit})`,
+          font: { size: 14 },
+        },
+        xaxis: {
+          title: "Metric Value",
+          gridcolor: gridColor,
+          titlefont: { color: textColor },
+          tickfont: { color: textColor },
+        },
+        yaxis: {
+          title: "Frequency",
+          gridcolor: gridColor,
+          titlefont: { color: textColor },
+          tickfont: { color: textColor },
+        },
+      };
+    }
+
     return {
       ...baseLayout,
       title: {
@@ -286,6 +512,48 @@ export default function FoldMetricsChart({
         tickfont: { color: textColor },
       },
     };
+  };
+
+  if (!runId) {
+    return (
+      <Alert severity="info">
+        <AlertTitle>No Run Selected</AlertTitle>
+        Select a run to view fold-level metrics.
+      </Alert>
+    );
+  }
+
+  // Get available metrics from current data
+  const getAvailableMetrics = () => {
+    if (!allRepetitionsData || !selectedRepetition) return [];
+    const foldMetrics =
+      selectedRepetition === "averaged"
+        ? computeAveragedData()
+        : allRepetitionsData[selectedRepetition];
+    return foldMetrics ? Object.keys(foldMetrics).sort() : [];
+  };
+
+  const availableMetrics = getAvailableMetrics();
+
+  // Handle selecting all metrics
+  const handleSelectAll = () => {
+    setSelectedMetrics(availableMetrics);
+  };
+
+  // Handle deselecting all metrics
+  const handleClearAll = () => {
+    setSelectedMetrics([]);
+  };
+
+  // Handle individual metric toggle
+  const handleToggleMetric = (metricName) => {
+    setSelectedMetrics((prev) => {
+      if (prev.includes(metricName)) {
+        return prev.filter((m) => m !== metricName);
+      }
+      const next = new Set([...prev, metricName]);
+      return availableMetrics.filter((m) => next.has(m));
+    });
   };
 
   if (!runId) {
@@ -324,7 +592,13 @@ export default function FoldMetricsChart({
   }
 
   const traces =
-    chartType === "line" ? createLineTraces() : createBoxplotTraces();
+    chartType === "line"
+      ? createLineTraces()
+      : chartType === "qq"
+        ? createQQPlotTraces()
+        : chartType === "histogram"
+          ? createHistogramTraces()
+          : createBoxplotTraces();
   const availableReps = allRepetitionsData
     ? Object.keys(allRepetitionsData)
         .filter((key) => key.startsWith("rep_"))
@@ -342,7 +616,7 @@ export default function FoldMetricsChart({
         flexDirection: "column",
         height: "100%",
         width: "100%",
-        minHeight: 300,
+        minHeight: 400,
       }}
     >
       <Box
@@ -350,13 +624,15 @@ export default function FoldMetricsChart({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 2,
-          gap: 2,
+          mb: 1,
+          gap: 1.5,
+          px: 1.5,
+          py: 1,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-            Cross-Validation Fold Analysis
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+            CV Fold Analysis
           </Typography>
           {isNestedCV && (
             <ToggleButtonGroup
@@ -366,28 +642,32 @@ export default function FoldMetricsChart({
                 if (v) setFoldScope(v);
               }}
               size="small"
+              sx={{ height: 28 }}
             >
               <ToggleButton
                 value="outer"
                 title="Outer folds — reliable generalization estimate from nested CV"
+                sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
               >
-                Outer folds
+                Outer
               </ToggleButton>
               <ToggleButton
                 value="final"
                 title="Folds used during final HPO training to produce the model"
+                sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
               >
-                Folds (HPO final)
+                HPO
               </ToggleButton>
             </ToggleButtonGroup>
           )}
           {availableReps.length > 1 && (
-            <FormControl sx={{ minWidth: 180 }} size="small">
-              <InputLabel>Repetition</InputLabel>
+            <FormControl sx={{ minWidth: 140 }} size="small">
+              <InputLabel sx={{ fontSize: "0.85rem" }}>Rep.</InputLabel>
               <Select
                 value={selectedRepetition ?? ""}
-                label="Repetition"
+                label="Rep."
                 onChange={(e) => setSelectedRepetition(e.target.value)}
+                sx={{ fontSize: "0.85rem" }}
               >
                 <MenuItem value="averaged">Averaged</MenuItem>
                 {availableReps.map((rep) => {
@@ -409,30 +689,67 @@ export default function FoldMetricsChart({
             if (newChartType) setChartType(newChartType);
           }}
           size="small"
+          sx={{ height: 28 }}
         >
-          <ToggleButton value="boxplot" title="Boxplot with statistics">
+          <ToggleButton
+            value="boxplot"
+            title="Boxplot with statistics"
+            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+          >
             Boxplot
           </ToggleButton>
           <ToggleButton
             value="line"
             title="Line chart showing fold progression"
+            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
           >
             Lines
           </ToggleButton>
+          <ToggleButton
+            value="qq"
+            title="Q-Q plot for normality assessment"
+            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+          >
+            Q-Q
+          </ToggleButton>
+          <ToggleButton
+            value="histogram"
+            title="Distribution histogram"
+            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+          >
+            Hist
+          </ToggleButton>
         </ToggleButtonGroup>
       </Box>
-      <Box sx={{ flex: 1, minHeight: 0 }}>
-        <Plot
-          data={traces}
-          layout={getLayout()}
-          config={{
-            responsive: true,
-            displayModeBar: true,
-            displaylogo: false,
-            modeBarButtonsToRemove: ["select2d", "lasso2d"],
-          }}
-          style={{ width: "100%", height: "100%" }}
+      <Box sx={{ display: "flex", flex: 1, minHeight: 0, width: "100%" }}>
+        {/* Metrics sidebar using shared component */}
+        <ResultsGraphsParameters
+          currentMetrics={availableMetrics}
+          selectedMetrics={selectedMetrics}
+          handleToggleMetric={handleToggleMetric}
+          handleSelectAll={handleSelectAll}
+          handleClearAll={handleClearAll}
         />
+
+        {/* Chart area */}
+        <Box sx={{ flex: 1, minHeight: 0, width: "100%", p: 0.5 }}>
+          <Plot
+            data={traces}
+            layout={getLayout()}
+            config={{
+              responsive: true,
+              displayModeBar: true,
+              displaylogo: false,
+              modeBarButtonsToRemove: [
+                "select2d",
+                "lasso2d",
+                "zoomIn2d",
+                "autoScale2d",
+              ],
+            }}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </Box>
       </Box>
     </Box>
   );
