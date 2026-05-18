@@ -146,6 +146,24 @@ export default function FoldMetricsChart({
     return averaged;
   };
 
+  // Concatenate all fold values across all repetitions (used for Q-Q plot)
+  const computeConcatenatedData = () => {
+    if (!allRepetitionsData) return null;
+    const reps = Object.keys(allRepetitionsData).filter((k) =>
+      k.startsWith("rep_"),
+    );
+    if (reps.length === 0) return null;
+
+    const metricNames = Object.keys(allRepetitionsData[reps[0]]);
+    const concatenated = {};
+    metricNames.forEach((metric) => {
+      concatenated[metric] = reps.flatMap(
+        (rep) => allRepetitionsData[rep][metric],
+      );
+    });
+    return concatenated;
+  };
+
   // Build boxplot traces
   const createBoxplotTraces = () => {
     if (!allRepetitionsData || !selectedRepetition) return [];
@@ -280,9 +298,11 @@ export default function FoldMetricsChart({
   const createQQPlotTraces = () => {
     if (!allRepetitionsData || !selectedRepetition) return [];
 
+    // For Q-Q, concatenate all repetitions to maximize points
+    // Averaging would reduce points and hide the variability we want to assess
     const foldMetrics =
       selectedRepetition === "averaged"
-        ? computeAveragedData()
+        ? computeConcatenatedData()
         : allRepetitionsData[selectedRepetition];
     if (!foldMetrics) return [];
 
@@ -461,7 +481,10 @@ export default function FoldMetricsChart({
         ...baseLayout,
         showlegend: true,
         title: {
-          text: `Q-Q Plot - Normality Assessment (${metricSplit})`,
+          text:
+            selectedRepetition === "averaged"
+              ? `Q-Q Plot - All Repetitions (${metricSplit})`
+              : `Q-Q Plot - Normality Assessment (${metricSplit})`,
           font: { size: 14 },
         },
         xaxis: {
@@ -669,7 +692,9 @@ export default function FoldMetricsChart({
                 onChange={(e) => setSelectedRepetition(e.target.value)}
                 sx={{ fontSize: "0.85rem" }}
               >
-                <MenuItem value="averaged">Averaged</MenuItem>
+                <MenuItem value="averaged">
+                  {chartType === "qq" ? "All repetitions" : "Averaged"}
+                </MenuItem>
                 {availableReps.map((rep) => {
                   const repNum = parseInt(rep.split("_")[1]);
                   return (
