@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../../utils/jobPoller";
@@ -49,8 +49,11 @@ export default function DatasetPreviewNotebook({
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
-  const { explorersAndConverters, convertersLoaded, columnTypes } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    convertersLoaded,
+    columnTypes: contextColumnTypes,
+  } = useExplorersAndConverters();
   const converters = useMemo(
     () => explorersAndConverters.filter((item) => item.type === "converter"),
     [explorersAndConverters],
@@ -59,6 +62,16 @@ export default function DatasetPreviewNotebook({
     () => converters.map((c) => `${c.id}:${c.status}`).join("|"),
     [converters],
   );
+
+  const [localColumnTypes, setLocalColumnTypes] = useState({});
+
+  // Sync types from context — updated by fetchExplorersAndConverters (initial
+  // load + delete path) and by handleStatusChange / FormConverterSection
+  // onSuccess (apply path). No direct HTTP fetch needed here.
+  useEffect(() => {
+    setLocalColumnTypes(contextColumnTypes);
+  }, [contextColumnTypes]);
+
   const tourContext = useTourContext();
 
   const getDatasetName = () => {
@@ -248,7 +261,7 @@ export default function DatasetPreviewNotebook({
                 deps={[notebook.file_path, converterKey]}
                 initialPageSize={5}
                 datasetPath={notebook.file_path}
-                columnTypes={columnTypes}
+                columnTypes={localColumnTypes}
                 enableTopToolbar={false}
                 enableRowsPerPageSelector={false}
               />
