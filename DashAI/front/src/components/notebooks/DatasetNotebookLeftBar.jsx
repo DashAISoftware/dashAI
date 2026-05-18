@@ -33,6 +33,13 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
   const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation(["datasets", "common"]);
 
+  const SEARCH_THRESHOLD = 10;
+  const totalItems = datasets.length + notebooks.length;
+
+  useEffect(() => {
+    if (totalItems <= SEARCH_THRESHOLD) setSearchQuery("");
+  }, [totalItems]);
+
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
 
@@ -146,13 +153,15 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
       </Box>
 
       {/* Search bar global */}
-      <Box px={2} pb={2} flex={"0 0 auto"}>
-        <SearchBar
-          placeholder={t("datasets:label.searchDatasetsNotebooks")}
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
-      </Box>
+      {totalItems > SEARCH_THRESHOLD && (
+        <Box px={2} pb={2} flex={"0 0 auto"}>
+          <SearchBar
+            placeholder={t("datasets:label.searchDatasetsNotebooks")}
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </Box>
+      )}
 
       <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
