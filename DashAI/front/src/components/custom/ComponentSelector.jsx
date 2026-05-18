@@ -38,6 +38,8 @@ function ComponentSelector({
   searchPlaceholder,
   emptyText,
   getIcon,
+  tourDataFor = null,
+  tourDataMatchFn = null,
 }) {
   const { t } = useTranslation("custom");
   const [search, setSearch] = useState("");
@@ -198,11 +200,17 @@ function ComponentSelector({
                     {items.map((component) => {
                       const isSelected = selected?.name === component.name;
                       const icon = getIcon?.(component);
+                      const isCsvComponent =
+                        tourDataFor &&
+                        (tourDataMatchFn
+                          ? tourDataMatchFn(component)
+                          : component.name.toLowerCase().includes("csv"));
                       return (
                         <Paper
                           key={component.name}
                           elevation={0}
                           onClick={() => handleSelect(component)}
+                          data-tour={isCsvComponent ? tourDataFor : undefined}
                           sx={{
                             p: 1.5,
                             display: "flex",
@@ -345,6 +353,7 @@ ComponentSelector.propTypes = {
   searchPlaceholder: PropTypes.string,
   emptyText: PropTypes.string,
   getIcon: PropTypes.func,
+  tourDataMatchFn: PropTypes.func,
 };
 
 export default ComponentSelector;
