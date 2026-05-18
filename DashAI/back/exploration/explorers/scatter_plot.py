@@ -33,10 +33,12 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
+            pt=("Nome ou índice de coluna para agrupar pontos por cor."),
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
+            pt="Coluna para grupo de cor",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -45,10 +47,12 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
+            pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
+            pt="Coluna para grupo de símbolo",
         ),
     )  # type: ignore
     point_size: schema_field(
@@ -57,8 +61,11 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index to set the size of each point."),
             es=("Nombre o índice de columna para definir el tamaño de cada punto."),
+            pt=("Nome ou índice de coluna para definir o tamanho de cada ponto."),
         ),
-        alias=MultilingualString(en="Point size column", es="Columna tamaño punto"),
+        alias=MultilingualString(
+            en="Point size column", es="Columna tamaño punto", pt="Coluna tamanho ponto"
+        ),
     )  # type: ignore
 
 
@@ -75,7 +82,9 @@ class ScatterPlotExplorer(RelationshipExplorer):
     or discrete groupings in the joint distribution.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Scatter Plot", es="Gráfico de Dispersión")
+    DISPLAY_NAME = MultilingualString(
+        en="Scatter Plot", es="Gráfico de Dispersión", pt="Gráfico de Dispersão"
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Displays a scatter plot for two selected columns to explore their "
@@ -84,6 +93,10 @@ class ScatterPlotExplorer(RelationshipExplorer):
         es=(
             "Muestra un gráfico de dispersión para dos columnas seleccionadas "
             "a fin de explorar su relación."
+        ),
+        pt=(
+            "Exibe um gráfico de dispersão para duas colunas selecionadas "
+            "para explorar sua relação."
         ),
     )
     IMAGE_PREVIEW = "scatter_plot.png"

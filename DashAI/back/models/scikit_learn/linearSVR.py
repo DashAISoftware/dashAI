@@ -45,8 +45,12 @@ class LinearSVRSchema(BaseSchema):
                 "Parámetro epsilon que especifica el tubo-epsilon dentro del cual "
                 "no se asocia ninguna penalización."
             ),
+            pt=(
+                "Parâmetro epsilon que especifica o tubo-epsilon dentro do qual "
+                "nenhuma penalidade é associada."
+            ),
         ),
-        alias=MultilingualString(en="Epsilon", es="Epsilon"),
+        alias=MultilingualString(en="Epsilon", es="Epsilon", pt="Épsilon"),
     )  # type: ignore
 
     tol: schema_field(
@@ -60,8 +64,9 @@ class LinearSVRSchema(BaseSchema):
         description=MultilingualString(
             en="Tolerance for stopping criterion.",
             es="Tolerancia para el criterio de detención.",
+            pt="Tolerância para o critério de parada.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
     )  # type: ignore
 
     C: schema_field(
@@ -81,8 +86,12 @@ class LinearSVRSchema(BaseSchema):
                 "Parámetro de regularización. La fuerza de la regularización "
                 "es inversamente proporcional a C."
             ),
+            pt=(
+                "Parâmetro de regularização. A força da regularização "
+                "é inversamente proporcional a C."
+            ),
         ),
-        alias=MultilingualString(en="C", es="C"),
+        alias=MultilingualString(en="C", es="C", pt="C"),
     )  # type: ignore
 
     loss: schema_field(
@@ -97,8 +106,12 @@ class LinearSVRSchema(BaseSchema):
                 "Especifica la función de pérdida. 'epsilon_insensitive' es "
                 "la pérdida estándar de SVR."
             ),
+            pt=(
+                "Especifica a função de perda. 'epsilon_insensitive' é "
+                "a perda padrão do SVR."
+            ),
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida"),
+        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda"),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -107,8 +120,11 @@ class LinearSVRSchema(BaseSchema):
         description=MultilingualString(
             en="Whether to calculate the intercept for this model.",
             es="Si se debe calcular el intercepto para este modelo.",
+            pt="Se o intercepto deve ser calculado para este modelo.",
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept", es="Ajustar intercepto", pt="Ajustar intercepto"
+        ),
     )  # type: ignore
 
     intercept_scaling: schema_field(
@@ -128,8 +144,16 @@ class LinearSVRSchema(BaseSchema):
                 "Cuando fit_intercept es True, el vector de instancia x se convierte "
                 "en [x, self.intercept_scaling] en el problema primal."
             ),
+            pt=(
+                "Quando fit_intercept é True, o vetor de instância x se torna "
+                "[x, self.intercept_scaling] no problema primal."
+            ),
         ),
-        alias=MultilingualString(en="Intercept scaling", es="Escala del intercepto"),
+        alias=MultilingualString(
+            en="Intercept scaling",
+            es="Escala del intercepto",
+            pt="Escala do intercepto",
+        ),
     )  # type: ignore
 
     dual: schema_field(
@@ -144,8 +168,12 @@ class LinearSVRSchema(BaseSchema):
                 "Selecciona el algoritmo para resolver el problema de optimización "
                 "dual o primal."
             ),
+            pt=(
+                "Seleciona o algoritmo para resolver o problema de otimização "
+                "dual ou primal."
+            ),
         ),
-        alias=MultilingualString(en="Dual", es="Dual"),
+        alias=MultilingualString(en="Dual", es="Dual", pt="Dual"),
     )  # type: ignore
 
     verbose: schema_field(
@@ -165,8 +193,12 @@ class LinearSVRSchema(BaseSchema):
                 "Habilitar salida detallada. Note que esta configuración aprovecha "
                 "una configuración de tiempo de ejecución por proceso en libsvm."
             ),
+            pt=(
+                "Habilitar saída detalhada. Note que esta configuração aproveita "
+                "uma configuração de tempo de execução por processo no libsvm."
+            ),
         ),
-        alias=MultilingualString(en="Verbose", es="Verboso"),
+        alias=MultilingualString(en="Verbose", es="Verboso", pt="Verboso"),
     )  # type: ignore
 
     random_state: schema_field(
@@ -181,8 +213,14 @@ class LinearSVRSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios a usar "
                 "al mezclar los datos."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios a usar "
+                "ao embaralhar os dados."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -196,8 +234,11 @@ class LinearSVRSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum number of iterations to be run.",
             es="El número máximo de iteraciones a ejecutar.",
+            pt="O número máximo de iterações a executar.",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+        ),
     )  # type: ignore
 
 
@@ -228,10 +269,12 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     DISPLAY_NAME: str = MultilingualString(
         en="Linear Support Vector Regression",
         es="Regresión de Vectores de Soporte Lineal",
+        pt="SVR Linear",
     )
     DESCRIPTION: str = MultilingualString(
         en="Support Vector Regression with linear kernel.",
         es="Regresión de Vectores de Soporte con kernel lineal.",
+        pt="Regressão de Vetores de Suporte com kernel linear.",
     )
     COLOR: str = "#2196F3"
     ICON: str = "Timeline"

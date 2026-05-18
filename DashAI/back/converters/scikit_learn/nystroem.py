@@ -33,6 +33,7 @@ class NystroemSchema(BaseSchema):
         description=MultilingualString(
             en="The kernel to use for the approximation.",
             es="El kernel a usar para la aproximación.",
+            pt="O kernel a usar para a aproximação.",
         ),
     )  # type: ignore
     gamma: schema_field(
@@ -47,6 +48,10 @@ class NystroemSchema(BaseSchema):
                 "Parámetro gamma para los kernels RBF, laplaciano, polinomial, "
                 "chi2 exponencial y sigmoide."
             ),
+            pt=(
+                "Parâmetro gamma para kernels RBF, laplaciano, polinomial, "
+                "chi2 exponencial e sigmoide."
+            ),
         ),
     )  # type: ignore
     coef0: schema_field(
@@ -55,6 +60,7 @@ class NystroemSchema(BaseSchema):
         description=MultilingualString(
             en="The coef0 parameter for polynomial and sigmoid kernels.",
             es="Parámetro coef0 para los kernels polinomial y sigmoide.",
+            pt="O parâmetro coef0 para kernels polinomial e sigmoide.",
         ),
     )  # type: ignore
     degree: schema_field(
@@ -63,6 +69,7 @@ class NystroemSchema(BaseSchema):
         description=MultilingualString(
             en="The degree of the polynomial kernel.",
             es="El grado del kernel polinomial.",
+            pt="O grau do kernel polinomial.",
         ),
     )  # type: ignore
     kernel_params: schema_field(
@@ -71,6 +78,7 @@ class NystroemSchema(BaseSchema):
         description=MultilingualString(
             en="Additional parameters (kwargs) for the kernel function.",
             es="Parámetros adicionales (kwargs) para la función kernel.",
+            pt="Parâmetros adicionais (kwargs) para a função kernel.",
         ),
     )  # type: ignore
     n_components: schema_field(
@@ -79,6 +87,7 @@ class NystroemSchema(BaseSchema):
         description=MultilingualString(
             en="The number of features to construct.",
             es="El número de características a construir.",
+            pt="O número de características a construir.",
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -90,6 +99,7 @@ class NystroemSchema(BaseSchema):
                 "shuffling the data."
             ),
             es=("Semilla del generador pseudoaleatorio usado al mezclar los datos."),
+            pt=("Semente do gerador pseudoaleatório a usar ao embaralhar os dados."),
         ),
     )  # type: ignore
     n_jobs: schema_field(
@@ -98,6 +108,7 @@ class NystroemSchema(BaseSchema):
         description=MultilingualString(
             en="Number of parallel jobs to run.",
             es="Número de trabajos paralelos a ejecutar.",
+            pt="Número de tarefas paralelas a executar.",
         ),
     )  # type: ignore
 
@@ -151,9 +162,16 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
             "entrenamiento. Construye un mapa de características aproximado para "
             "un kernel arbitrario usando un subconjunto de datos como base."
         ),
+        pt=(
+            "Aproxima um mapa de kernel usando um subconjunto dos dados de "
+            "treinamento. Constrói um mapa de características aproximado para "
+            "um kernel arbitrário usando um subconjunto de dados como base."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
-        en="Nystroem Approximation", es="Aproximación Nystroem"
+        en="Nystroem Approximation",
+        es="Aproximación Nystroem",
+        pt="Aproximação Nyström",
     )
     IMAGE_PREVIEW = "nystroem.png"
 

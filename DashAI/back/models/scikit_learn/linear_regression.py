@@ -39,8 +39,17 @@ class LinearRegressionSchema(BaseSchema):
                 "Si se establece en False, no se usará intercepto en los cálculos "
                 "(ej., se espera que los datos estén centrados)."
             ),
+            pt=(
+                "Se deve calcular o intercepto para este modelo. "
+                "Se definido como False, nenhum intercepto será usado nos cálculos "
+                "(ex., espera-se que os dados estejam centrados)."
+            ),
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept",
+            es="Ajustar intercepto",
+            pt="Ajustar intercepto",
+        ),
     )  # type: ignore
 
     copy_X: schema_field(  # noqa: N815
@@ -49,8 +58,9 @@ class LinearRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="If True, X will be copied; else, it may be overwritten.",
             es="Si es True, X será copiado; si no, puede ser sobrescrito.",
+            pt="Se True, X será copiado; caso contrário, pode ser sobrescrito.",
         ),
-        alias=MultilingualString(en="Copy X", es="Copiar X"),
+        alias=MultilingualString(en="Copy X", es="Copiar X", pt="Copiar X"),
     )  # type: ignore
 
     n_jobs: schema_field(
@@ -66,8 +76,13 @@ class LinearRegressionSchema(BaseSchema):
                 "None significa 1 trabajo, mientras que -1 significa usar todos "
                 "los procesadores."
             ),
+            pt=(
+                "O número de jobs a usar para o cálculo. "
+                "None significa 1 job, enquanto -1 significa usar todos "
+                "os processadores."
+            ),
         ),
-        alias=MultilingualString(en="N jobs", es="N trabajos"),
+        alias=MultilingualString(en="N jobs", es="N trabajos", pt="N jobs"),
     )  # type: ignore
 
     positive: schema_field(
@@ -76,8 +91,9 @@ class LinearRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="When set to True, forces the coefficients to be positive.",
             es="Cuando se establece en True, fuerza los coeficientes a ser positivos.",
+            pt="Quando definido como True, força os coeficientes a serem positivos.",
         ),
-        alias=MultilingualString(en="Positive", es="Positivo"),
+        alias=MultilingualString(en="Positive", es="Positivo", pt="Positivo"),
     )  # type: ignore
 
 
@@ -105,10 +121,12 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     DISPLAY_NAME: str = MultilingualString(
         en="Linear Regression",
         es="Regresión Lineal",
+        pt="Regressão Linear",
     )
     DESCRIPTION: str = MultilingualString(
         en="Ordinary least squares linear regression.",
         es="Regresión lineal de mínimos cuadrados ordinarios.",
+        pt="Regressão linear de mínimos quadrados ordinários.",
     )
     COLOR: str = "#3F51B5"
     ICON: str = "ShowChart"

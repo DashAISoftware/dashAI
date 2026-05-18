@@ -41,8 +41,14 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "La tasa de aprendizaje (shrinkage). Se usa como factor multiplicativo "
                 "para los valores de las hojas. Use 1 para no aplicar shrinkage."
             ),
+            pt=(
+                "A taxa de aprendizado (encolhimento). Usada como fator multiplicativo "
+                "para os valores das folhas. Use 1 para não aplicar encolhimento."
+            ),
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -56,8 +62,11 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of iterations (trees) of the boosting process.",
             es="Número máximo de iteraciones (árboles) del proceso de boosting.",
+            pt="Número máximo de iterações (árvores) do processo de boosting.",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+        ),
     )  # type: ignore
 
     max_depth: schema_field(
@@ -69,8 +78,14 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "Profundidad máxima de cada árbol. Si es None, la profundidad "
                 "no está restringida."
             ),
+            pt=(
+                "Profundidade máxima de cada árvore. Se None, a profundidade "
+                "não é restringida."
+            ),
         ),
-        alias=MultilingualString(en="Max depth", es="Profundidad máxima"),
+        alias=MultilingualString(
+            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+        ),
     )  # type: ignore
 
     max_leaf_nodes: schema_field(
@@ -85,8 +100,14 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "Número máximo de hojas para cada árbol. Debe ser estrictamente "
                 "mayor que 1. Si es None, no hay límite."
             ),
+            pt=(
+                "Número máximo de folhas para cada árvore. Deve ser estritamente "
+                "maior que 1. Se None, não há limite."
+            ),
         ),
-        alias=MultilingualString(en="Max leaf nodes", es="Máximos nodos hoja"),
+        alias=MultilingualString(
+            en="Max leaf nodes", es="Máximos nodos hoja", pt="Máximos nós folha"
+        ),
     )  # type: ignore
 
     min_samples_leaf: schema_field(
@@ -100,9 +121,12 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum number of samples required to be at a leaf node.",
             es="Número mínimo de muestras requeridas para estar en una hoja.",
+            pt="Número mínimo de amostras necessárias para estar em um nó folha.",
         ),
         alias=MultilingualString(
-            en="Min samples leaf", es="Mínimas muestras para hoja"
+            en="Min samples leaf",
+            es="Mínimas muestras para hoja",
+            pt="Mínimas amostras para folha",
         ),
     )  # type: ignore
 
@@ -120,8 +144,13 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "El parámetro de regularización L2. "
                 "Use 0 para no aplicar regularización."
             ),
+            pt=(
+                "O parâmetro de regularização L2. Use 0 para não aplicar regularização."
+            ),
         ),
-        alias=MultilingualString(en="L2 regularization", es="Regularización L2"),
+        alias=MultilingualString(
+            en="L2 regularization", es="Regularización L2", pt="Regularização L2"
+        ),
     )  # type: ignore
 
 
@@ -151,12 +180,17 @@ class HistGradientBoostingRegression(
     DISPLAY_NAME: str = MultilingualString(
         en="Histogram Gradient Boosting Regression",
         es="Regresión Gradient Boosting con Histogramas",
+        pt="Regressor por Gradient Boosting Histogramado",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast gradient boosting regression using histogram-based algorithms.",
         es=(
             "Regresión gradient boosting rápida usando algoritmos basados "
             "en histogramas."
+        ),
+        pt=(
+            "Regressão gradient boosting rápida usando algoritmos baseados "
+            "em histogramas."
         ),
     )
     COLOR: str = "#9575CD"

@@ -33,6 +33,10 @@ class SMOTEENNSchema(BaseSchema):
                 "Estrategia de muestreo para aplicar SMOTE y limpiar el "
                 "conjunto de datos."
             ),
+            pt=(
+                "Estratégia de amostragem para aplicar SMOTE e limpar o "
+                "conjunto de dados."
+            ),
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -41,6 +45,7 @@ class SMOTEENNSchema(BaseSchema):
         description=MultilingualString(
             en="Seed used for reproducibility.",
             es="Semilla usada para reproducibilidad.",
+            pt="Semente usada para reprodutibilidade.",
         ),
     )  # type: ignore
     k_neighbors: schema_field(
@@ -49,6 +54,7 @@ class SMOTEENNSchema(BaseSchema):
         description=MultilingualString(
             en="Number of neighbors used by SMOTE.",
             es="Número de vecinos utilizados por SMOTE.",
+            pt="Número de vizinhos utilizados pelo SMOTE.",
         ),
     )  # type: ignore
 
@@ -87,9 +93,14 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
             "SMOTEENN: SMOTE con reducción de ruido mediante Vecinos Más "
             "Cercanos Editados."
         ),
+        pt=(
+            "SMOTEENN: SMOTE com redução de ruído via Vizinhos Mais Próximos Editados."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
-        en="SMOTE-ENN (Hybrid Sampling)", es="SMOTE-ENN (Muestreo Híbrido)"
+        en="SMOTE-ENN (Hybrid Sampling)",
+        es="SMOTE-ENN (Muestreo Híbrido)",
+        pt="SMOTEENN (Amostragem Híbrida)",
     )
     IMAGE_PREVIEW = "smoteenn.png"
 

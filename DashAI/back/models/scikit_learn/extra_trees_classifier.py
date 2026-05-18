@@ -35,8 +35,11 @@ class ExtraTreesClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The number of trees in the forest.",
             es="El número de árboles en el bosque.",
+            pt="O número de árvores na floresta.",
         ),
-        alias=MultilingualString(en="N estimators", es="N estimadores"),
+        alias=MultilingualString(
+            en="N estimators", es="N estimadores", pt="N estimadores"
+        ),
     )  # type: ignore
 
     max_depth: schema_field(
@@ -52,8 +55,15 @@ class ExtraTreesClassifierSchema(BaseSchema):
                 "hasta que todas las hojas sean puras o tengan menos de "
                 "min_samples_split muestras."
             ),
+            pt=(
+                "A profundidade máxima da árvore. Se None, os nós são expandidos "
+                "até que todas as folhas sejam puras ou tenham menos de "
+                "min_samples_split amostras."
+            ),
         ),
-        alias=MultilingualString(en="Max depth", es="Profundidad máxima"),
+        alias=MultilingualString(
+            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+        ),
     )  # type: ignore
 
     min_samples_split: schema_field(
@@ -67,9 +77,12 @@ class ExtraTreesClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The minimum number of samples required to split an internal node.",
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
+            pt="O número mínimo de amostras necessárias para dividir um nó interno.",
         ),
         alias=MultilingualString(
-            en="Min samples split", es="Mínimas muestras de división"
+            en="Min samples split",
+            es="Mínimas muestras de división",
+            pt="Mínimas amostras de divisão",
         ),
     )  # type: ignore
 
@@ -84,9 +97,12 @@ class ExtraTreesClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
+            pt="O número mínimo de amostras necessárias para estar em um nó folha.",
         ),
         alias=MultilingualString(
-            en="Min samples leaf", es="Mínimas muestras para hoja"
+            en="Min samples leaf",
+            es="Mínimas muestras para hoja",
+            pt="Mínimas amostras para folha",
         ),
     )  # type: ignore
 
@@ -102,8 +118,12 @@ class ExtraTreesClassifierSchema(BaseSchema):
                 "Si se usan muestras bootstrap al construir los árboles. "
                 "Si es False, se usa todo el conjunto de datos para cada árbol."
             ),
+            pt=(
+                "Se amostras bootstrap são usadas ao construir as árvores. "
+                "Se False, o conjunto de dados completo é usado para cada árvore."
+            ),
         ),
-        alias=MultilingualString(en="Bootstrap", es="Bootstrap"),
+        alias=MultilingualString(en="Bootstrap", es="Bootstrap", pt="Bootstrap"),
     )  # type: ignore
 
     random_state: schema_field(
@@ -118,8 +138,14 @@ class ExtraTreesClassifierSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+        ),
     )  # type: ignore
 
 
@@ -149,6 +175,7 @@ class ExtraTreesClassifier(
     DISPLAY_NAME: str = MultilingualString(
         en="Extra-Trees Classifier",
         es="Clasificador Extra-Trees",
+        pt="Classificador de Árvores Extras",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -158,6 +185,10 @@ class ExtraTreesClassifier(
         es=(
             "Conjunto de árboles de decisión completamente aleatorizados "
             "para clasificación rápida."
+        ),
+        pt=(
+            "Conjunto de árvores de decisão completamente aleatorizadas "
+            "para classificação rápida e de baixa variância."
         ),
     )
     COLOR: str = "#66BB6A"

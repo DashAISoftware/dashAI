@@ -45,12 +45,16 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     DESCRIPTION = MultilingualString(
         en="Encode target labels with value between 0 and n_classes-1.",
         es="Codifica etiquetas objetivo con valores entre 0 y n_clases-1.",
+        pt="Codifica rótulos alvo com valores entre 0 e n_classes-1.",
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Convert categorical labels to numeric values",
         es="Convierte etiquetas categóricas a valores numéricos",
+        pt="Converte rótulos categóricos em valores numéricos",
     )
-    DISPLAY_NAME = MultilingualString(en="Label Encoder", es="Codificador de Etiquetas")
+    DISPLAY_NAME = MultilingualString(
+        en="Label Encoder", es="Codificador de Etiquetas", pt="Codificador de Rótulos"
+    )
     IMAGE_PREVIEW = "label_encoder.png"
 
     PREFIX = "le_"

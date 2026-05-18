@@ -28,8 +28,11 @@ class RowExplorerSchema(BaseExplorerSchema):
         description=MultilingualString(
             en="Maximum number of rows to take.",
             es="Número máximo de filas a tomar.",
+            pt="Número máximo de linhas a tomar.",
         ),
-        alias=MultilingualString(en="Number of rows", es="Número de filas"),
+        alias=MultilingualString(
+            en="Number of rows", es="Número de filas", pt="Número de linhas"
+        ),
     )  # type: ignore
     shuffle: schema_field(
         t=bool_field(),
@@ -37,8 +40,11 @@ class RowExplorerSchema(BaseExplorerSchema):
         description=MultilingualString(
             en="Shuffle the rows when exploring.",
             es="Barajar las filas durante la exploración.",
+            pt="Embaralhar as linhas durante a exploração.",
         ),
-        alias=MultilingualString(en="Shuffle rows", es="Barajar filas"),
+        alias=MultilingualString(
+            en="Shuffle rows", es="Barajar filas", pt="Embaralhar linhas"
+        ),
     )  # type: ignore
     from_top: schema_field(
         t=bool_field(),
@@ -51,8 +57,12 @@ class RowExplorerSchema(BaseExplorerSchema):
                 "Tomar filas desde el inicio del dataset. En caso contrario, "
                 "tomarlas desde el final."
             ),
+            pt=(
+                "Tomar linhas do início do conjunto de dados. Caso contrário, "
+                "tomar do final."
+            ),
         ),
-        alias=MultilingualString(en="From top", es="Desde el inicio"),
+        alias=MultilingualString(en="From top", es="Desde el inicio", pt="Do início"),
     )  # type: ignore
 
 
@@ -67,7 +77,9 @@ class RowExplorer(PreviewInspectionExplorer):
     data format before applying transformations.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Show Rows", es="Mostrar Filas")
+    DISPLAY_NAME = MultilingualString(
+        en="Show Rows", es="Mostrar Filas", pt="Explorador de Linhas"
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Displays a subset of rows from the dataset in tabular form. You can "
@@ -78,11 +90,17 @@ class RowExplorer(PreviewInspectionExplorer):
             "Puede tomar filas desde el inicio o el final y opcionalmente "
             "barajarlas."
         ),
+        pt=(
+            "Exibe um subconjunto de linhas do conjunto de dados em formato tabular. "
+            "Você pode tomar linhas do início ou do final e opcionalmente "
+            "embaralhá-las."
+        ),
     )
 
     SHORT_DESCRIPTION = MultilingualString(
         en="Display a sample of rows from the dataset.",
         es="Muestra una muestra de filas del dataset.",
+        pt="Exibe uma amostra de linhas do conjunto de dados.",
     )
     IMAGE_PREVIEW = "row_explorer.png"
 

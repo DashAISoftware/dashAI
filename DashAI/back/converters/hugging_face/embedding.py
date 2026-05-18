@@ -42,6 +42,7 @@ class EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Name of the pre-trained model to use",
             es="Nombre del modelo preentrenado a usar",
+            pt="Nome do modelo pré-treinado a usar",
         ),
     )  # type: ignore
 
@@ -51,6 +52,7 @@ class EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum sequence length for tokenization",
             es="Longitud máxima de secuencia para la tokenización",
+            pt="Comprimento máximo de sequência para a tokenização",
         ),
     )  # type: ignore
 
@@ -60,6 +62,7 @@ class EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Number of samples to process at once",
             es="Número de muestras a procesar a la vez",
+            pt="Número de amostras a processar de uma vez",
         ),
     )  # type: ignore
 
@@ -69,6 +72,7 @@ class EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to use for computation",
             es="Dispositivo a usar para el cómputo",
+            pt="Dispositivo a usar para o processamento",
         ),
     )  # type: ignore
 
@@ -78,6 +82,7 @@ class EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Strategy to pool token embeddings into sentence embedding",
             es="Estrategia para agrupar embeddings de tokens en uno de oración",
+            pt="Estratégia para agregar embeddings de tokens em embedding de sentença",
         ),
     )  # type: ignore
 
@@ -89,8 +94,12 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     DESCRIPTION = MultilingualString(
         en="Convert text to embeddings using HuggingFace transformer models.",
         es="Convierte texto a embeddings usando modelos de HuggingFace.",
+        pt=(
+            "Converte texto em embeddings usando modelos de transformadores "
+            "HuggingFace."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Embedding", es="Embedding")
+    DISPLAY_NAME = MultilingualString(en="Embedding", es="Embedding", pt="Embedding")
     IMAGE_PREVIEW = "embedding.png"
 
     metadata = {

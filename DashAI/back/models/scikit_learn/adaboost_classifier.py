@@ -42,8 +42,15 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "En caso de ajuste perfecto, el procedimiento de aprendizaje se "
                 "detiene antes."
             ),
+            pt=(
+                "O número máximo de estimadores em que o boosting é encerrado. "
+                "Em caso de ajuste perfeito, o procedimento de aprendizado é "
+                "interrompido antes."
+            ),
         ),
-        alias=MultilingualString(en="N estimators", es="N estimadores"),
+        alias=MultilingualString(
+            en="N estimators", es="N estimadores", pt="N estimadores"
+        ),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -64,8 +71,15 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "Una tasa de aprendizaje mayor incrementa la contribución de cada "
                 "clasificador."
             ),
+            pt=(
+                "Peso aplicado a cada classificador em cada iteração de boosting. "
+                "Uma taxa de aprendizado maior aumenta a contribuição de cada "
+                "classificador."
+            ),
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+        ),
     )  # type: ignore
 
     random_state: schema_field(
@@ -80,8 +94,14 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+        ),
     )  # type: ignore
 
 
@@ -111,10 +131,15 @@ class AdaBoostClassifier(
     DISPLAY_NAME: str = MultilingualString(
         en="AdaBoost Classifier",
         es="Clasificador AdaBoost",
+        pt="Classificador AdaBoost",
     )
     DESCRIPTION: str = MultilingualString(
         en="Adaptive boosting that focuses on misclassified samples.",
         es="Boosting adaptivo que se enfoca en muestras mal clasificadas.",
+        pt=(
+            "Boosting adaptivo que se concentra em amostras classificadas "
+            "incorretamente."
+        ),
     )
     COLOR: str = "#FFA726"
     ICON: str = "Bolt"

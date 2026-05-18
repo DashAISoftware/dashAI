@@ -34,8 +34,15 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "hasta que todas las hojas sean puras o queden menos de "
                 "min_samples_split muestras."
             ),
+            pt=(
+                "A profundidade máxima da árvore. Se None, os nós são expandidos até "
+                "que todas as folhas sejam puras ou restem menos de "
+                "min_samples_split amostras."
+            ),
         ),
-        alias=MultilingualString(en="Max depth", es="Profundidad máxima"),
+        alias=MultilingualString(
+            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+        ),
     )  # type: ignore
 
     min_samples_split: schema_field(
@@ -49,9 +56,12 @@ class DecisionTreeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum number of samples required to split an internal node.",
             es="Número mínimo de muestras requeridas para dividir un nodo interno.",
+            pt="Número mínimo de amostras necessárias para dividir um nó interno.",
         ),
         alias=MultilingualString(
-            en="Min samples split", es="Mínimas muestras de división"
+            en="Min samples split",
+            es="Mínimas muestras de división",
+            pt="Mínimo de amostras para divisão",
         ),
     )  # type: ignore
 
@@ -66,9 +76,12 @@ class DecisionTreeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum number of samples required to be at a leaf node.",
             es="Número mínimo de muestras requeridas para estar en una hoja.",
+            pt="Número mínimo de amostras necessárias para estar em um nó folha.",
         ),
         alias=MultilingualString(
-            en="Min samples leaf", es="Mínimas muestras para hoja"
+            en="Min samples leaf",
+            es="Mínimas muestras para hoja",
+            pt="Mínimo de amostras na folha",
         ),
     )  # type: ignore
 
@@ -84,8 +97,14 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "Crecer un árbol con a lo sumo max_leaf_nodes de manera best-first. "
                 "Si es None, nodos hoja ilimitados."
             ),
+            pt=(
+                "Crescer uma árvore com no máximo max_leaf_nodes de forma best-first. "
+                "Se None, nós folha ilimitados."
+            ),
         ),
-        alias=MultilingualString(en="Max leaf nodes", es="Máximos nodos hoja"),
+        alias=MultilingualString(
+            en="Max leaf nodes", es="Máximos nodos hoja", pt="Máximo de nós folha"
+        ),
     )  # type: ignore
 
     min_impurity_decrease: schema_field(
@@ -105,9 +124,15 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "Un nodo se divide si la división induce una disminución de la "
                 "impureza mayor o igual a este valor."
             ),
+            pt=(
+                "Um nó é dividido se a divisão induz uma diminuição da impureza "
+                "maior ou igual a este valor."
+            ),
         ),
         alias=MultilingualString(
-            en="Min impurity decrease", es="Disminución mínima de impureza"
+            en="Min impurity decrease",
+            es="Disminución mínima de impureza",
+            pt="Diminuição mínima de impureza",
         ),
     )  # type: ignore
 
@@ -123,8 +148,14 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+        ),
     )  # type: ignore
 
 
@@ -152,11 +183,16 @@ class DecisionTreeRegression(
     DISPLAY_NAME: str = MultilingualString(
         en="Decision Tree Regression",
         es="Regresión Árbol de Decisión",
+        pt="Regressão Árvore de Decisão",
     )
     DESCRIPTION: str = MultilingualString(
         en="Interpretable tree-based regressor that partitions the feature space.",
         es=(
             "Regresor basado en árbol interpretable que particiona el espacio "
+            "de características."
+        ),
+        pt=(
+            "Regressor baseado em árvore interpretável que particiona o espaço "
             "de características."
         ),
     )

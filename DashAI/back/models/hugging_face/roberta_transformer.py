@@ -27,6 +27,7 @@ class RobertaTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="RoBERTa Transformer",
         es="Transformer RoBERTa",
+        pt="Transformer RoBERTa",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +37,10 @@ class RobertaTransformer(HuggingFaceTextClassificationTransformer):
         es=(
             "BERT optimizado robustamente para clasificación de texto en inglés. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "BERT otimizado robustamente para classificação de texto em inglês. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
         ),
     )
     COLOR: str = "#E65100"
