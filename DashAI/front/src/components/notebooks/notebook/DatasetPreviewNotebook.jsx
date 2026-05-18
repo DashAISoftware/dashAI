@@ -144,8 +144,6 @@ export default function DatasetPreviewNotebook({
           console.error(e);
         }
         clearSelectedDataset();
-        setStep(0);
-        setSelectedOption(null);
       },
     );
   };
