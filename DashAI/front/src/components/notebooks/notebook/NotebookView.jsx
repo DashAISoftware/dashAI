@@ -21,12 +21,14 @@ const RowItem = React.memo(function RowItem({
   handleExplorerDeleteClick,
   handleConverterDeleteClick,
   handleStatusChange,
+  isHighlighted,
 }) {
   return (
     <Box
       sx={{
         my: 2,
-        height: "370px",
+        p: 1.5,
+        height: "394px",
       }}
     >
       {item.type === "explorer" ? (
@@ -36,6 +38,7 @@ const RowItem = React.memo(function RowItem({
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
           }
+          isHighlighted={isHighlighted}
         />
       ) : item.type === "converter" ? (
         <ConverterBox
@@ -44,6 +47,7 @@ const RowItem = React.memo(function RowItem({
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "converter")
           }
+          isHighlighted={isHighlighted}
         />
       ) : null}
     </Box>
@@ -67,8 +71,14 @@ export default function NotebookView({ notebook }) {
     }
   }, [tourContext]);
 
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    setExplorersAndConverters,
+    lastAddedItemId,
+    setLastAddedItemId,
+  } = useExplorersAndConverters();
+  const [highlightedItemId, setHighlightedItemId] = useState(null);
+  const explorersAndConvertersRef = useRef(explorersAndConverters);
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -77,7 +87,7 @@ export default function NotebookView({ notebook }) {
   const [converterToDelete, setConverterToDelete] = useState(null);
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [itemsToDelete, setItemsToDelete] = useState([]);
-  const [listSize, setListSize] = useState(explorersAndConverters.length);
+  const [listSize] = useState(explorersAndConverters.length);
   const listBoxRef = useRef(null);
 
   const fetchExplorersAndConverters = useCallback(async () => {
@@ -209,22 +219,35 @@ export default function NotebookView({ notebook }) {
     );
   });
 
-  const scrollToBottom = () => {
-    if (!listBoxRef.current || explorersAndConverters.length === 0) return;
-
-    listBoxRef.current.scrollToIndex({
-      index: listSize - 1,
-      align: "start",
-    });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [listSize]);
-
-  useEffect(() => {
-    setListSize(explorersAndConverters.length);
+    explorersAndConvertersRef.current = explorersAndConverters;
   }, [explorersAndConverters]);
+
+  useEffect(() => {
+    if (!lastAddedItemId) return;
+    const scrollTimer = setTimeout(() => {
+      const list = explorersAndConvertersRef.current;
+      const index = list.findIndex(
+        (item) =>
+          item.id === lastAddedItemId.id && item.type === lastAddedItemId.type,
+      );
+      const targetIndex = index >= 0 ? index : list.length - 1;
+      if (listBoxRef.current && targetIndex >= 0) {
+        listBoxRef.current.scrollToIndex({
+          index: targetIndex,
+          align: "center",
+          behavior: "smooth",
+        });
+      }
+      setHighlightedItemId(lastAddedItemId);
+      setLastAddedItemId(null);
+    }, 100);
+    const clearTimer = setTimeout(() => setHighlightedItemId(null), 4100);
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [lastAddedItemId]);
 
   if (!notebook) {
     return (
@@ -269,6 +292,10 @@ export default function NotebookView({ notebook }) {
               handleExplorerDeleteClick={handleExplorerDeleteClick}
               handleConverterDeleteClick={handleConverterDeleteClick}
               handleStatusChange={handleStatusChange}
+              isHighlighted={
+                highlightedItemId?.id === item.id &&
+                highlightedItemId?.type === item.type
+              }
             />
           )}
         />
