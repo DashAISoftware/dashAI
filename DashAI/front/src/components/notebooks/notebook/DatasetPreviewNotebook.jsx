@@ -253,7 +253,7 @@ export default function DatasetPreviewNotebook({
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+          expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />}
           sx={{
             display: "flex",
             alignItems: "center",

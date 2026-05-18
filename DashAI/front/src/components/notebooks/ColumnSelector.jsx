@@ -361,7 +361,7 @@ function ColumnSelector({
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.5)",
+              color: "text.secondary",
               fontStyle: "italic",
               mt: 1,
             }}
