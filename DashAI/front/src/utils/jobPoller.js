@@ -103,6 +103,46 @@ async function pollJobs() {
       ? Date.now() - state.lastCompletionTime
       : Infinity;
 
+    // When the queue is truly empty and the grace period has elapsed (or no
+    // completion was ever detected), do a final full-state flush so subscribers
+    // always receive the definitive job state before the poller stops.
+    // Orphaned watchers (jobs deleted before running) are resolved here too,
+    // using their real status from getJobs() instead of blindly calling onError.
+    if (
+      changeData.queue_empty &&
+      !changeData.recently_completed &&
+      timePassedSinceCompletion > MIN_POLLING_AFTER_COMPLETION
+    ) {
+      try {
+        const allJobs = await getJobs();
+        for (const subscriber of state.subscribers) {
+          try {
+            subscriber(allJobs);
+          } catch (e) {
+            console.error("[JobPoller] Subscriber error in final flush:", e);
+          }
+        }
+        for (const [jobId, watcher] of [...state.jobWatchers.entries()]) {
+          const job = allJobs.find((j) => j.id === jobId);
+          if (job?.status === "finished") {
+            if (watcher.onSuccess) watcher.onSuccess(job);
+          } else {
+            if (watcher.onError)
+              watcher.onError(job || { id: jobId, status: "deleted" });
+          }
+        }
+      } catch (e) {
+        console.error("[JobPoller] Error in final flush:", e);
+        for (const [jobId, watcher] of [...state.jobWatchers.entries()]) {
+          if (watcher.onError)
+            watcher.onError({ id: jobId, status: "deleted" });
+        }
+      }
+      state.jobWatchers.clear();
+      stopJobPoller();
+      return;
+    }
+
     if (
       !activeJobsExist &&
       state.jobWatchers.size === 0 &&

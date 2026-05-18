@@ -60,7 +60,10 @@ async def get_job_changes(
 
         jobs = job_queue.changes_since(since_decoded)
 
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+        _now = datetime.now(timezone.utc)
+        current_time = _now.strftime(
+            f"%Y-%m-%d %H:%M:%S.{_now.microsecond // 1000:03d}"
+        )
 
         is_queue_empty = job_queue.is_empty()
         recently_completed = any(j.get("status") in ("finished", "error") for j in jobs)
@@ -74,7 +77,10 @@ async def get_job_changes(
         }
     except Exception as e:
         logger.exception(f"Error retrieving job changes: {e}")
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+        _now = datetime.now(timezone.utc)
+        current_time = _now.strftime(
+            f"%Y-%m-%d %H:%M:%S.{_now.microsecond // 1000:03d}"
+        )
         return {
             "jobs": [],
             "cursor": current_time,
