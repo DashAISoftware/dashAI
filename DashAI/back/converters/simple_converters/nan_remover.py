@@ -52,12 +52,21 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
             "cuenta que este convertidor también eliminará las columnas no "
             "seleccionadas en el alcance."
         ),
+        pt=(
+            "Remove as linhas com valores NaN do conjunto de dados. Tenha em mente "
+            "que este conversor também removerá as colunas não selecionadas no escopo."
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Removes the rows with NaN values from the dataset.",
         es="Elimina las filas con valores NaN del conjunto de datos.",
+        pt="Remove as linhas com valores NaN do conjunto de dados.",
     )
-    DISPLAY_NAME = MultilingualString(en="NaN Remover", es="Removedor de NaN")
+    DISPLAY_NAME = MultilingualString(
+        en="NaN Remover",
+        es="Removedor de NaN",
+        pt="Removedor de NaN",
+    )
     IMAGE_PREVIEW = "nan_remover.png"
 
     metadata = {

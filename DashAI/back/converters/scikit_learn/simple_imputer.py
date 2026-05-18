@@ -44,6 +44,7 @@ class SimpleImputerSchema(BaseSchema):
         description=MultilingualString(
             en="The imputation strategy.",
             es="La estrategia de imputación.",
+            pt="A estratégia de imputação.",
         ),
     )  # type: ignore
     fill_value: schema_field(
@@ -52,6 +53,7 @@ class SimpleImputerSchema(BaseSchema):
         description=MultilingualString(
             en="The value to replace missing values with.",
             es="El valor para reemplazar los valores faltantes.",
+            pt="O valor para substituir os valores ausentes.",
         ),
     )  # type: ignore
     add_indicator: schema_field(
@@ -60,6 +62,7 @@ class SimpleImputerSchema(BaseSchema):
         description=MultilingualString(
             en="If True, a MissingIndicator transform will stack onto output.",
             es=("Si es True, se apilará un MissingIndicator sobre la salida."),
+            pt=("Se True, uma transformação MissingIndicator será empilhada na saída."),
         ),
     )  # type: ignore
     keep_empty_features: schema_field(
@@ -68,6 +71,7 @@ class SimpleImputerSchema(BaseSchema):
         description=MultilingualString(
             en="If True, empty features will be kept.",
             es="Si es True, se mantendrán las características vacías.",
+            pt="Se True, características vazias serão mantidas.",
         ),
     )  # type: ignore
 
@@ -113,8 +117,18 @@ class SimpleImputer(
             "estadística descriptiva (p. ej., media, mediana o más frecuente) "
             "por columna, o usando un valor constante."
         ),
+        pt=(
+            "Imputador univariado para completar valores ausentes com "
+            "estratégias simples. Substitui valores ausentes usando uma "
+            "estatística descritiva (p. ex., média, mediana ou moda) "
+            "por coluna, ou usando um valor constante."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Simple Imputer", es="Imputador Simple")
+    DISPLAY_NAME = MultilingualString(
+        en="Simple Imputer",
+        es="Imputador Simple",
+        pt="Imputador Simples",
+    )
     IMAGE_PREVIEW = "simple_imputer.png"
 
     metadata = {

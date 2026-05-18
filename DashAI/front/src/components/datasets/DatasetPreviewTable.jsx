@@ -5,10 +5,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 import { dataTypesbyColumnType, columnTypesList } from "../../utils/typesLists";
 import SelectTypeCell from "../custom/SelectTypeCell";
 
@@ -20,11 +18,8 @@ function DatasetPreviewTable({
 }) {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   useEffect(() => {
     if (previewData.sample && previewData.sample.length > 0) {

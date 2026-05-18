@@ -44,8 +44,15 @@ class T5SmallTransformerSchema(OpusMtEnESTransformerSchema):
                 "Soportados: 'German', 'French', 'Romanian'. "
                 "T5-small traduce solo desde inglés."
             ),
+            pt=(
+                "Idioma de destino para a tradução. "
+                "Suportados: 'German', 'French', 'Romanian'. "
+                "T5-small traduz somente a partir do inglês."
+            ),
         ),
-        alias=MultilingualString(en="Target language", es="Idioma destino"),
+        alias=MultilingualString(
+            en="Target language", es="Idioma destino", pt="Idioma de destino"
+        ),
     )  # type: ignore
 
 
@@ -70,6 +77,7 @@ class T5SmallTransformer(TranslationModel):
     DISPLAY_NAME: str = MultilingualString(
         en="T5-Small Translation Transformer",
         es="Transformer de Traducción T5-Small",
+        pt="Transformer de Tradução T5-Small",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -81,6 +89,11 @@ class T5SmallTransformer(TranslationModel):
             "Modelo T5-small de Google para traducción inglés-{alemán, francés, "
             "rumano} usando prefijos de tarea. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "Modelo T5-small do Google para tradução inglês-{alemão, francês, "
+            "romeno} usando prefixos de tarefa. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
         ),
     )
     COLOR: str = "#00695C"

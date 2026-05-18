@@ -25,8 +25,11 @@ class RegressionTask(BaseTask):
     DESCRIPTION: str = MultilingualString(
         en="Predict continuous numeric values from tabular data.",
         es="Predice valores numéricos continuos a partir de datos tabulares.",
+        pt="Prevê valores numéricos contínuos a partir de dados tabulares.",
     )
-    DISPLAY_NAME: str = MultilingualString(en="Regression", es="Regresión")
+    DISPLAY_NAME: str = MultilingualString(
+        en="Regression", es="Regresión", pt="Regressão"
+    )
 
     SCORING_PROFILES = {
         "regression_fit": {

@@ -32,8 +32,11 @@ class WordcloudSchema(BaseExplorerSchema):
         description=MultilingualString(
             en="Maximum number of words to display in the word cloud.",
             es="Número máximo de palabras a mostrar en la nube de palabras.",
+            pt="Número máximo de palavras a exibir na nuvem de palavras.",
         ),
-        alias=MultilingualString(en="Max words", es="Máximo de palabras"),
+        alias=MultilingualString(
+            en="Max words", es="Máximo de palabras", pt="Máximo de palavras"
+        ),
     )  # type: ignore
     background_color: schema_field(
         t=none_type(string_field()),
@@ -47,10 +50,12 @@ class WordcloudSchema(BaseExplorerSchema):
                 "Color de fondo de la nube de palabras. Si es None, el fondo es "
                 "transparente."
             ),
+            pt=("Cor de fundo da nuvem de palavras. Se None, o fundo é transparente."),
         ),
         alias=MultilingualString(
             en="Background color",
             es="Color de fondo",
+            pt="Cor de fundo",
         ),
     )  # type: ignore
 
@@ -69,7 +74,9 @@ class WordcloudExplorer(DistributionExplorer):
     dominant topics in a dataset to non-technical audiences.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Word Cloud", es="Nube de Palabras")
+    DISPLAY_NAME = MultilingualString(
+        en="Word Cloud", es="Nube de Palabras", pt="Nuvem de Palavras"
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Visual representation of text where word size reflects frequency. "
@@ -79,6 +86,11 @@ class WordcloudExplorer(DistributionExplorer):
             "Representación visual del texto donde el tamaño de la palabra "
             "refleja su frecuencia. Genera una nube de palabras concatenando "
             "columnas de texto seleccionadas."
+        ),
+        pt=(
+            "Representação visual do texto onde o tamanho da palavra "
+            "reflete sua frequência. Gera uma nuvem de palavras concatenando "
+            "colunas de texto selecionadas."
         ),
     )
     IMAGE_PREVIEW = "wordcloud.png"

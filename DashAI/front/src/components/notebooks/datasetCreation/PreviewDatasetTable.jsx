@@ -13,11 +13,10 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { TypeChangeValidator } from "./TypeChangeValidator";
 import InferenceReasonPopover from "../dataset/InferenceReasonPopover";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { useSnackbar } from "notistack";
 
 const TYPE_TO_DEFAULT_DTYPE = {
@@ -58,7 +57,8 @@ export default function PreviewDatasetTable({
   onColumnRename,
   onEncoderChange,
 }) {
-  const { t, i18n } = useTranslation(["common"]);
+  const { t } = useTranslation(["common"]);
+  const localization = useTableLocalization();
   const { enqueueSnackbar } = useSnackbar();
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
@@ -67,10 +67,6 @@ export default function PreviewDatasetTable({
   const [columnNames, setColumnNames] = useState({});
   const [encoderAnchor, setEncoderAnchor] = useState(null);
   const [encoderAnchorColumn, setEncoderAnchorColumn] = useState(null);
-
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
 
   const encoderLabel = (enc) => {
     if (enc === "one_hot") return t("common:encoderOneHot");

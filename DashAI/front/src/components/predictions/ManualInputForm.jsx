@@ -33,8 +33,9 @@ export default function ManualInputForm({
     if (manualInputData && manualInputData.length > 0) {
       return manualInputData;
     }
-    setManualInputData([createEmptyRow()]);
-    return [createEmptyRow()];
+    const initialRow = createEmptyRow();
+    setManualInputData([initialRow]);
+    return [initialRow];
   }
 
   function createEmptyRow() {

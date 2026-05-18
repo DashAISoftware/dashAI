@@ -51,6 +51,9 @@ def _build_preview_rows(
 
     columns = list(input_columns) + [output_col]
 
+    def _to_native(v: Any) -> Any:
+        return v.item() if hasattr(v, "item") else v
+
     rows: List[List] = []
     input_data = prepared_dataset.to_dict()
     for i in range(len(y_pred)):
@@ -61,8 +64,10 @@ def _build_preview_rows(
                 val = "data:image/png;base64," + base64.b64encode(val).decode()
             elif isinstance(val, dict) and "bytes" in val:
                 val = "data:image/png;base64," + base64.b64encode(val["bytes"]).decode()
+            else:
+                val = _to_native(val)
             row.append(val)
-        row.append(y_pred[i])
+        row.append(_to_native(y_pred[i]))
         rows.append(row)
 
     columns_json = jsonable_encoder(columns)

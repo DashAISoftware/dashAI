@@ -24,6 +24,10 @@ class BinarizerSchema(BaseSchema):
                 "Los valores por debajo o igual al umbral se reemplazan por 0; "
                 "los superiores por 1."
             ),
+            pt=(
+                "Valores de características abaixo ou iguais a este limiar são "
+                "substituídos por 0; os superiores por 1."
+            ),
         ),
     )  # type: ignore
 
@@ -41,8 +45,14 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
         es=(
             "Binariza datos (pone valores de características en 0 o 1) según un umbral."
         ),
+        pt=(
+            "Binariza dados (define valores de características em 0 ou 1) "
+            "de acordo com um limiar."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Binarizer", es="Binarizador")
+    DISPLAY_NAME = MultilingualString(
+        en="Binarizer", es="Binarizador", pt="Binarizador"
+    )
     IMAGE_PREVIEW = "binarizer.png"
 
     PREFIX = "bin_"

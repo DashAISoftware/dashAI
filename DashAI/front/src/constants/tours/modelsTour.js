@@ -127,7 +127,7 @@ export const modelsTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
     disableBackButton: true,
   },
