@@ -317,6 +317,7 @@ export default function NotebookView({ notebook }) {
           initialTopMostItemIndex={listSize > 1 ? listSize - 1 : 0}
           data={explorersAndConverters}
           itemContent={renderItem}
+          components={{ Footer: () => <Box sx={{ height: "20px" }} /> }}
           onScroll={() => {
             if (!isProgrammaticScrollRef.current && highlightedItemId) {
               setHighlightedItemId(null);

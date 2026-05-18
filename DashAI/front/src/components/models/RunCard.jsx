@@ -306,16 +306,14 @@ function RunCard({
         position: "relative",
         zIndex: isHighlighted ? 1 : 0,
         "@keyframes newRunHighlight": {
-          "0%": {
+          "0%": { boxShadow: "none" },
+          "20%": {
             boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
-          },
-          "65%": {
-            boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, 0.15)}`,
           },
           "100%": { boxShadow: "none" },
         },
         animation: isHighlighted
-          ? "newRunHighlight 4s ease-out forwards"
+          ? "newRunHighlight 4s ease-in-out forwards"
           : "none",
       }}
     >

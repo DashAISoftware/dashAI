@@ -463,6 +463,7 @@ export default function SessionVisualization() {
                   }
                   sx={{
                     scrollMarginTop: "20px",
+                    scrollMarginBottom: "20px",
                     transition: "transform 0.3s ease",
                     ...(selectedRunId === run.id && {
                       transform: "scale(1.02)",
