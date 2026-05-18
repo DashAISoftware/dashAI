@@ -102,8 +102,6 @@ export function useDatasets({ t }) {
     startJobPolling(
       datasetJob.id,
       async () => {
-        await fetchDatasets();
-
         enqueueSnackbar(
           t("datasets:message.datasetCreationSuccess", {
             datasetName: newDataset.name,

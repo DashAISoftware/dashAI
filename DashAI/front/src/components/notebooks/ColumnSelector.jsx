@@ -42,6 +42,7 @@ function ColumnSelector({
   allowedTypes = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
+  columnTypes = null,
 }) {
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
@@ -91,25 +92,30 @@ function ColumnSelector({
   );
 
   useEffect(() => {
+    const toColumns = (types) =>
+      Object.entries(types).map(([columnName, typeInfo], idx) => ({
+        id: idx,
+        columnName: columnName,
+        valueType: typeInfo.type || t("common:unknown"),
+        dataType: typeInfo.dtype || t("common:unknown"),
+        order: idx,
+      }));
+
+    if (columnTypes !== null) {
+      const cols = toColumns(columnTypes);
+      setDatasetColumns(cols);
+      setRows(cols);
+      return;
+    }
+
     let isMounted = true;
     const fetchAllData = async () => {
       try {
         const types = await getDatasetTypesByFilePath(file_path);
-
         if (!isMounted) return;
-
-        const datasetColumns = Object.entries(types).map(
-          ([columnName, typeInfo], idx) => ({
-            id: idx,
-            columnName: columnName,
-            valueType: typeInfo.type || t("common:unknown"),
-            dataType: typeInfo.dtype || t("common:unknown"),
-            order: idx,
-          }),
-        );
-
-        setDatasetColumns(datasetColumns);
-        setRows(datasetColumns);
+        const cols = toColumns(types);
+        setDatasetColumns(cols);
+        setRows(cols);
       } catch (error) {
         console.error("Error fetching dataset info/types:", error);
       }
@@ -120,7 +126,7 @@ function ColumnSelector({
     return () => {
       isMounted = false;
     };
-  }, [file_path]);
+  }, [file_path, columnTypes]);
 
   // Validate current selection
   const isValidSelection = useCallback(

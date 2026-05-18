@@ -19,7 +19,6 @@ import ToolGrid from "./tool/ToolGrid";
 import FormExplorerSection from "./explorerCreation/FormExplorerSection";
 import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
-import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
@@ -96,12 +95,23 @@ export default function RightBar({ notebook, onToggle }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
-  const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
-  const { explorersAndConverters } = useExplorersAndConverters();
+  const { explorersAndConverters, columnTypes } = useExplorersAndConverters();
   const { t } = useTranslation(["datasets", "common"]);
+
+  const datasetColumns = useMemo(
+    () =>
+      Object.entries(columnTypes).map(([columnName, typeInfo], idx) => ({
+        id: idx,
+        columnName,
+        valueType: typeInfo.type || t("common:unknown"),
+        dataType: typeInfo.dtype || t("common:unknown"),
+        order: idx,
+      })),
+    [columnTypes, t],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -123,48 +133,12 @@ export default function RightBar({ notebook, onToggle }) {
     return () => {
       cancelled = true;
     };
-  }, [explorersAndConverters, t]);
+  }, [t]);
 
   // Clear search when the selected notebook changes
   useEffect(() => {
     setSearchQuery("");
   }, [notebook?.id]);
-
-  // Fetch dataset columns from notebook file
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAllData = async () => {
-      try {
-        const types = await getDatasetTypesByFilePath(notebook.file_path);
-
-        if (!isMounted) return;
-
-        const datasetColumns = Object.entries(types).map(
-          ([columnName, typeInfo], idx) => ({
-            id: idx,
-            columnName: columnName,
-            valueType: typeInfo.type || t("common:unknown"),
-            dataType: typeInfo.dtype || t("common:unknown"),
-            order: idx,
-          }),
-        );
-
-        setDatasetColumns(datasetColumns);
-      } catch (error) {
-        console.error("Error fetching dataset info/types:", error);
-      }
-    };
-
-    if (notebook?.file_path) {
-      fetchAllData();
-    } else {
-      setDatasetColumns([]);
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [notebook?.file_path, explorersAndConverters]);
 
   // Validate explorers based on dataset columns
   const validateExplorer = (explorer) => {

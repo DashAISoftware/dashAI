@@ -40,16 +40,19 @@ export const getComponents = async ({
     params = { ...params, has_related_of_type: hasRelatedOfType };
   }
 
-  const response = await api.get<IComponent[]>(`/v1/component/${model}`, {
-    params,
-    paramsSerializer: {
-      indexes: null, // brackets don't appear in the url
+  const response = await api.get<IComponent[]>(
+    model ? `/v1/component/${model}/` : `/v1/component/`,
+    {
+      params,
+      paramsSerializer: {
+        indexes: null, // brackets don't appear in the url
+      },
     },
-  });
+  );
   return response.data;
 };
 
 export const getComponentById = async (id: string): Promise<IComponent> => {
-  const response = await api.get<IComponent>(`/v1/component/${id}`);
+  const response = await api.get<IComponent>(`/v1/component/${id}/`);
   return response.data;
 };

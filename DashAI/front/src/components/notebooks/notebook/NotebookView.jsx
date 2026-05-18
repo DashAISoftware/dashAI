@@ -6,6 +6,7 @@ import {
   getExplorersByNotebookId,
   getConvertersByNotebookId,
 } from "../../../api/notebook";
+import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import ExplorerBox from "../explorer/ExplorerBox";
 import ConverterBox from "../converter/ConverterBox";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
@@ -67,8 +68,12 @@ export default function NotebookView({ notebook }) {
     }
   }, [tourContext]);
 
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    setExplorersAndConverters,
+    setConvertersLoaded,
+    setColumnTypes,
+  } = useExplorersAndConverters();
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -82,10 +87,12 @@ export default function NotebookView({ notebook }) {
 
   const fetchExplorersAndConverters = useCallback(async () => {
     if (!notebook?.id) return;
+    setConvertersLoaded(false);
     try {
-      const [explorersData, convertersData] = await Promise.all([
+      const [explorersData, convertersData, types] = await Promise.all([
         getExplorersByNotebookId(notebook.id),
         getConvertersByNotebookId(notebook.id),
+        getDatasetTypesByFilePath(notebook.file_path),
       ]);
       const explorersWithType = explorersData.map((item) => ({
         ...item,
@@ -99,10 +106,18 @@ export default function NotebookView({ notebook }) {
         (a, b) => new Date(a.created) - new Date(b.created),
       );
       setExplorersAndConverters(merged);
+      setColumnTypes(types ?? {});
     } catch (error) {
       console.error("Failed to fetch explorers and converters:", error);
+    } finally {
+      setConvertersLoaded(true);
     }
-  }, [notebook?.id, setExplorersAndConverters]);
+  }, [
+    notebook?.id,
+    setExplorersAndConverters,
+    setConvertersLoaded,
+    setColumnTypes,
+  ]);
 
   const getItemsToDelete = useCallback(
     (converterToDelete) => {
