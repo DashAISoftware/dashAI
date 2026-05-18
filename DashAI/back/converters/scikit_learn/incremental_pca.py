@@ -29,6 +29,7 @@ class IncrementalPCASchema(BaseSchema):
         description=MultilingualString(
             en="Number of components to keep.",
             es="Número de componentes a conservar.",
+            pt="Número de componentes a manter.",
         ),
     )  # type: ignore
     whiten: schema_field(
@@ -43,6 +44,10 @@ class IncrementalPCASchema(BaseSchema):
                 "Cuando es True las componentes se escalan para asegurar salidas "
                 "no correlacionadas con varianzas unitarias."
             ),
+            pt=(
+                "Quando True, os componentes são escalonados para garantir saídas "
+                "não correlacionadas com variâncias unitárias."
+            ),
         ),
     )  # type: ignore
     batch_size: schema_field(
@@ -51,6 +56,7 @@ class IncrementalPCASchema(BaseSchema):
         description=MultilingualString(
             en="The number of samples to use for each batch.",
             es="Número de muestras a usar por lote.",
+            pt="O número de amostras a usar por lote.",
         ),
     )  # type: ignore
 
@@ -96,12 +102,19 @@ class IncrementalPCA(
             "El PCA incremental (IPCA) se usa típicamente como reemplazo de PCA "
             "cuando el conjunto de datos es demasiado grande para caber en memoria."
         ),
+        pt=(
+            "O PCA Incremental (IPCA) é tipicamente usado como substituto do PCA "
+            "quando o conjunto de dados é grande demais para caber na memória."
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Dimensionality reduction using Incremental PCA.",
         es="Reducción de dimensionalidad usando PCA incremental.",
+        pt="Redução de dimensionalidade usando PCA Incremental.",
     )
-    DISPLAY_NAME = MultilingualString(en="Incremental PCA", es="PCA Incremental")
+    DISPLAY_NAME = MultilingualString(
+        en="Incremental PCA", es="PCA Incremental", pt="PCA Incremental"
+    )
     IMAGE_PREVIEW = "incremental_pca.png"
 
     metadata = {

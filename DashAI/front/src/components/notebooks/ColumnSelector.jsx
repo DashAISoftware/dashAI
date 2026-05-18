@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 
 /**
  * Generic column selection component that can be reused across the application
@@ -36,6 +35,7 @@ import { Trans, useTranslation } from "react-i18next";
  */
 function ColumnSelector({
   file_path,
+  tool,
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
@@ -45,11 +45,9 @@ function ColumnSelector({
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
-  const { t, i18n } = useTranslation(["datasets", "common"]);
+  const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const toMRT = (ids) =>
     Object.fromEntries(ids.map((id) => [String(id), true]));
@@ -363,7 +361,7 @@ function ColumnSelector({
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.5)",
+              color: "text.secondary",
               fontStyle: "italic",
               mt: 1,
             }}
@@ -394,18 +392,41 @@ function ColumnSelector({
             </Box>
           </Typography>
         )}
-      </Box>{" "}
+      </Box>
+
+      {tool?.metadata?.changes_row_count && (
+        <Alert
+          severity="warning"
+          sx={{
+            "& .MuiAlert-icon": { fontSize: 24 },
+            bgcolor: (theme) => `${theme.palette.warning.main}40`,
+            border: (theme) => `1px solid ${theme.palette.warning.main}`,
+            "& \t.MuiAlert-message": {
+              display: "flex",
+              alignItems: "center",
+            },
+            mb: 1.5,
+          }}
+        >
+          {t("datasets:message.changesRowCountWarning")}
+        </Alert>
+      )}
+
       {/* Data Grid */}
-      <MaterialReactTable
-        data-tour="column-selector"
-        table={columnSelectorTable}
-      />
+      <Box data-tour="column-selector">
+        <MaterialReactTable table={columnSelectorTable} />
+      </Box>
     </Box>
   );
 }
 
 ColumnSelector.propTypes = {
   file_path: PropTypes.string.isRequired,
+  tool: PropTypes.shape({
+    metadata: PropTypes.shape({
+      changes_row_count: PropTypes.bool,
+    }),
+  }),
   inputCardinality: PropTypes.shape({
     min: PropTypes.number,
     max: PropTypes.number,

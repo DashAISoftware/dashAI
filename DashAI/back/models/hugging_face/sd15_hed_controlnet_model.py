@@ -36,9 +36,15 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "Número de pasos de eliminación de ruido. Rango típico: 20-30 para "
                 "resultados rápidos, 40-50 para mayor calidad."
             ),
+            pt=(
+                "Número de passos de eliminação de ruído. Intervalo típico: 20-30 para "
+                "resultados rápidos, 40-50 para maior qualidade."
+            ),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de passos de inferência",
         ),
     )  # type: ignore
 
@@ -59,10 +65,17 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "En 1.0 la salida sigue de cerca los bordes de entrada. "
                 "Valores menores dan más libertad creativa."
             ),
+            pt=(
+                "Peso do condicionamento de borda suave do ControlNet (intervalo "
+                "0.0-2.0). HED produz mapas de bordas suaves estilo esboço, menos "
+                "rígidos que o Canny. Em 1.0 a saída segue de perto as bordas de "
+                "entrada. Valores menores oferecem mais liberdade criativa."
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
+            pt="Escala de condicionamento ControlNet",
         ),
     )  # type: ignore
 
@@ -78,8 +91,16 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "Escala CFG. Controla la adherencia al prompt. "
                 "Valores 7-9 son típicos para SD 1.5."
             ),
+            pt=(
+                "Escala CFG. Controla a aderência ao prompt. "
+                "Valores 7-9 são típicos para SD 1.5."
+            ),
         ),
-        alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
+        alias=MultilingualString(
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -94,8 +115,16 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "Dispositivo de hardware para inferencia. Se recomienda GPU. "
                 "La inferencia en CPU es posible pero muy lenta."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. GPU é fortemente "
+                "recomendada. A inferência em CPU é possível, mas muito lenta."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device",
+            es="Dispositivo",
+            pt="Dispositivo",
+        ),
     )  # type: ignore
 
 
@@ -125,6 +154,7 @@ class SD15HEDControlNetModel(BaseControlNetModel):
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 HED ControlNet",
         es="SD 1.5 ControlNet HED",
+        pt="SD 1.5 ControlNet HED",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -152,6 +182,19 @@ class SD15HEDControlNetModel(BaseControlNetModel):
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
             "Requiere controlnet_aux: pip install controlnet_aux."
+        ),
+        pt=(
+            "Combina o condicionamento de borda suave HED (Detecção de Bordas "
+            "Holisticamente Aninhada) do ControlNet com o Stable Diffusion 1.5 para "
+            "geração de imagens guiada por bordas. HED produz mapas de bordas suaves "
+            "estilo esboço que preservam contornos estruturais permitindo mais "
+            "variação criativa que métodos de borda dura como Canny. Ideal para "
+            "reinterpretação artística de imagens. Utiliza "
+            "lllyasviel/sd-controlnet-hed "
+            "(https://huggingface.co/lllyasviel/sd-controlnet-hed) e "
+            "runwayml/stable-diffusion-v1-5 "
+            "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
+            "Requer controlnet_aux: pip install controlnet_aux."
         ),
     )
 

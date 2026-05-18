@@ -13,7 +13,6 @@ export const homeTourSteps = [
     ),
     placement: "bottom",
     disableBeacon: true,
-    spotlightClicks: true,
   },
   {
     target: '[data-tour="models-button"]',

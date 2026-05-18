@@ -1,18 +1,30 @@
 import {
   Box,
-  Button,
   CircularProgress,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ComponentSelector from "../custom/ComponentSelector";
 import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
 import { useCreateSession } from "./CreateSessionContext";
+import StepperNavigationFooter from "../shared/StepperNavigationFooter";
+import { useTourContext } from "../tour/TourProvider";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);
+  const tourContext = useTourContext();
+
+  useEffect(() => {
+    if (!tourContext?.run) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (currentTarget === '[data-tour="task-gallery"]') {
+      tourContext.resumeAtStep(tourContext.stepIndex);
+    }
+  }, []);
+
   const {
     step,
     models,
@@ -26,12 +38,42 @@ export default function CreateSessionCenter() {
     handleCreate,
   } = useCreateSession();
 
+  const handleSelectModelWithTour = useCallback(
+    (model) => {
+      handleSelectModel(model);
+      if (tourContext?.run) tourContext.nextStep();
+    },
+    [handleSelectModel, tourContext],
+  );
+
+  const handleNextWithTour = useCallback(() => {
+    if (tourContext?.run) tourContext.nextStep();
+    handleNext();
+  }, [handleNext, tourContext]);
+
+  const handleCreateWithTour = useCallback(() => {
+    if (tourContext?.run) tourContext.nextStep();
+    handleCreate();
+  }, [handleCreate, tourContext]);
+
+  useEffect(() => {
+    if (!tourContext?.run) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (
+      currentTarget === '[data-tour="session-config"]' ||
+      currentTarget === '[data-tour="model-parameters"]'
+    ) {
+      tourContext.resumeAtStep(tourContext.stepIndex);
+    }
+  }, [step]);
+
   const canGoNext = !!selectedModel;
   const canCreate =
     !!selectedModel && !!formik.values.name?.trim() && !submitting;
 
   return (
     <Box
+      data-tour="task-gallery"
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -56,6 +98,7 @@ export default function CreateSessionCenter() {
       </Box>
 
       <Box
+        data-tour={step === 1 ? "session-config" : undefined}
         sx={{
           flex: 1,
           minHeight: 0,
@@ -81,9 +124,11 @@ export default function CreateSessionCenter() {
             <ComponentSelector
               components={models}
               selected={selectedModel}
-              onSelect={handleSelectModel}
+              onSelect={handleSelectModelWithTour}
               categoryKey="task_display_name"
               searchPlaceholder={t("generative:label.searchModels")}
+              tourDataFor={tourContext?.run ? "model-card-qwen" : null}
+              tourDataMatchFn={(c) => c.name.toLowerCase().includes("qwen")}
             />
           )
         ) : (
@@ -112,40 +157,24 @@ export default function CreateSessionCenter() {
         )}
       </Box>
 
-      <Box
-        sx={{
-          mt: 2,
-          pt: 2,
-          borderTop: 1,
-          borderColor: "divider",
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 1,
-        }}
-      >
-        <Button variant="outlined" onClick={handleBack} disabled={submitting}>
-          {t("common:back")}
-        </Button>
-        {step === 0 ? (
-          <Button
-            variant="contained"
-            onClick={handleNext}
-            disabled={!canGoNext}
-          >
-            {t("common:next")}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!canCreate}
-          >
-            {submitting
-              ? t("common:saving")
-              : t("generative:button.createSession")}
-          </Button>
-        )}
-      </Box>
+      <StepperNavigationFooter
+        onBack={handleBack}
+        onNext={step === 0 ? handleNextWithTour : handleCreateWithTour}
+        backDisabled={submitting}
+        nextDisabled={step === 0 ? !canGoNext : !canCreate}
+        nextLabel={
+          step === 0 ? t("common:next") : t("generative:button.createSession")
+        }
+        loading={submitting}
+        variant={step === 0 ? "next" : "save"}
+        nextDataTour={
+          tourContext?.run
+            ? step === 0
+              ? "create-session-next"
+              : "create-session-button"
+            : null
+        }
+      />
     </Box>
   );
 }

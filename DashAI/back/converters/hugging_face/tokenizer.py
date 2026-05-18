@@ -34,6 +34,7 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Name of the pre-trained tokenizer model",
             es="Nombre del modelo de tokenización preentrenado",
+            pt="Nome do modelo de tokenizer pré-treinado",
         ),
     )  # type: ignore
 
@@ -43,6 +44,7 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum sequence length for tokenization",
             es="Longitud máxima de secuencia para la tokenización",
+            pt="Comprimento máximo de sequência para a tokenização",
         ),
     )  # type: ignore
 
@@ -52,6 +54,7 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Number of samples to process at once",
             es="Número de muestras a procesar a la vez",
+            pt="Número de amostras a processar de uma vez",
         ),
     )  # type: ignore
 
@@ -61,6 +64,7 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Device to use for computation",
             es="Dispositivo a usar para el cómputo",
+            pt="Dispositivo a usar para o processamento",
         ),
     )  # type: ignore
 
@@ -78,8 +82,12 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             "Tokeniza texto a IDs de entrada; cada ID va en su propia columna. "
             "Se ignora la máscara de atención."
         ),
+        pt=(
+            "Tokeniza texto em IDs de entrada; cada ID de token vai para sua própria "
+            "coluna. A máscara de atenção é ignorada."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
+    DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador", pt="Tokenizer")
     IMAGE_PREVIEW = "tokenizer.png"
 
     metadata = {

@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { UploadFile as UploadFileIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { previewWithTypes } from "../../../api/datasets";
@@ -251,21 +260,27 @@ function PreviewDataset({
                 {t("datasets:label.changeColumnTypesInfo")}
               </Typography>
 
-              <Button
-                variant="contained"
-                size="small"
-                onClick={onChangeDataset}
-                sx={{
-                  fontSize: "0.7rem",
-                  px: 1.5,
-                  py: 0.5,
-                  textTransform: "uppercase",
-                  minWidth: "auto",
-                  flexShrink: 0,
-                }}
-              >
-                {t("datasets:button.reUploadDataset")}
-              </Button>
+              <Tooltip title={t("datasets:button.reUploadDataset")}>
+                <IconButton
+                  onClick={onChangeDataset}
+                  size="small"
+                  sx={{
+                    flexShrink: 0,
+                    border: `1px solid ${theme.palette.action.disabled}`,
+                    borderRadius: 2,
+                    color: "text.secondary",
+                    padding: "4px",
+                    transition: "color 0.2s, border-color 0.2s",
+                    "&:hover": {
+                      backgroundColor: "transparent",
+                      color: "primary.main",
+                      borderColor: theme.palette.primary.main,
+                    },
+                  }}
+                >
+                  <UploadFileIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
 
             <Box sx={{ width: "100%" }}>

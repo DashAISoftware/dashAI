@@ -15,6 +15,7 @@ export default function FormExplorerSection({
   handleClose,
   tool,
   notebook,
+  hideButtons = false,
 }) {
   const [classColumnInitialValue, setClassColumnInitialValue] = useState(null);
   const [scopeColumns, setScopeColumns] = useState([]);
@@ -108,8 +109,9 @@ export default function FormExplorerSection({
         overflow: "visible",
         display: "flex",
         flexDirection: "column",
-        flexGrow: 1,
+        flex: 1,
         maxHeight: "100%",
+        minHeight: 0,
       }}
     >
       {step === 0 && (
@@ -124,6 +126,7 @@ export default function FormExplorerSection({
               ? () => setStep((s) => s + 1)
               : () => handleSaveExplorer({})
           }
+          hideButtons={hideButtons}
         />
       )}
 
@@ -133,6 +136,7 @@ export default function FormExplorerSection({
           initialParams={{}}
           handleSaveExplorer={handleSaveExplorer}
           setStep={setStep}
+          hideButtons={hideButtons}
         />
       )}
     </Box>

@@ -53,6 +53,12 @@ class ROCAUC(ClassificationMetric):
             "umbrales de decisión. Representa el grado de "
             "separabilidad entre clases."
         ),
+        pt=(
+            "A Área Sob a Curva ROC (RoC AUC) "
+            "é uma medida de desempenho para problemas de classificação "
+            "em vários limiares de decisão. Representa o grau de "
+            "separabilidade entre classes."
+        ),
     )
 
     @staticmethod

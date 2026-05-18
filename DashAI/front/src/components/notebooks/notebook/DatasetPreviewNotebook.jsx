@@ -45,6 +45,7 @@ export default function DatasetPreviewNotebook({
     fetchDatasets,
     selectDataset,
     clearSelectedDataset,
+    clearSelectedNotebook,
     deleteDataset,
     enrichDatasetsWithInfo,
     replaceDatasets,
@@ -155,6 +156,13 @@ export default function DatasetPreviewNotebook({
           { variant: "success" },
         );
 
+        const transitionToDataset = () => {
+          clearSelectedNotebook();
+          selectDataset(datasetId);
+          setStep(0);
+          setSelectedOption("dataset");
+        };
+
         try {
           const freshDatasets = await fetchDatasets(true);
           const dataset = freshDatasets.find((d) => d.id === datasetId);
@@ -165,21 +173,14 @@ export default function DatasetPreviewNotebook({
               datasets,
             );
             replaceDatasets(enriched);
-            selectDataset(datasetId);
-            setStep(0);
-            setSelectedOption("dataset");
           } else {
             await fetchDatasets();
-            selectDataset(datasetId);
-            setStep(0);
-            setSelectedOption("dataset");
           }
         } catch (error) {
           console.error("Error after dataset job completion:", error);
           await fetchDatasets();
-          selectDataset(datasetId);
-          setStep(0);
-          setSelectedOption("dataset");
+        } finally {
+          transitionToDataset();
         }
       },
 
@@ -216,6 +217,7 @@ export default function DatasetPreviewNotebook({
 
       // optimistic
       replaceDatasets((prev) => [...prev, dataset]);
+      clearSelectedNotebook();
       selectDataset(dataset.id);
       setStep(0);
       setSelectedOption("dataset");
@@ -251,7 +253,7 @@ export default function DatasetPreviewNotebook({
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+          expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />}
           sx={{
             display: "flex",
             alignItems: "center",

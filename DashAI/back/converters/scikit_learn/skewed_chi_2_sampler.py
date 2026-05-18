@@ -32,6 +32,7 @@ class SkewedChi2SamplerSchema(BaseSchema):
         description=MultilingualString(
             en="The skewedness parameter of the chi-squared kernel.",
             es="El parámetro de sesgo del kernel chi-cuadrado.",
+            pt="O parâmetro de enviesamento do kernel qui-quadrado.",
         ),
     )  # type: ignore
     n_components: schema_field(
@@ -46,6 +47,10 @@ class SkewedChi2SamplerSchema(BaseSchema):
                 "Número de muestras de Monte Carlo por característica original. "
                 "Equivale a la dimensionalidad del espacio de características "
                 "calculado."
+            ),
+            pt=(
+                "Número de amostras de Monte Carlo por característica original. "
+                "Equivale à dimensionalidade do espaço de características calculado."
             ),
         ),
     )  # type: ignore
@@ -62,6 +67,11 @@ class SkewedChi2SamplerSchema(BaseSchema):
                 "Generador pseudoaleatorio para controlar la generación de pesos y "
                 "desplazamientos aleatorios al ajustar los datos. Pasa un entero "
                 "para obtener resultados reproducibles."
+            ),
+            pt=(
+                "Gerador pseudoaleatório para controlar a geração de pesos e "
+                "deslocamentos aleatórios ao ajustar os dados. Passe um inteiro "
+                "para obter resultados reproduzíveis."
             ),
         ),
     )  # type: ignore
@@ -110,8 +120,16 @@ class SkewedChi2Sampler(
             "Aproxima el mapa de características de un kernel chi-cuadrado "
             "mediante la aproximación de Monte Carlo de su transformada de Fourier."
         ),
+        pt=(
+            "Aproxima o mapa de características de um kernel qui-quadrado por "
+            "aproximação de Monte Carlo de sua transformada de Fourier."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Skewed Chi² Sampler", es="Muestreador Chi²")
+    DISPLAY_NAME = MultilingualString(
+        en="Skewed Chi² Sampler",
+        es="Muestreador Chi²",
+        pt="Amostrador Qui-2 Enviesado",
+    )
     IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
 
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

@@ -11,10 +11,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 
 import TooltipedCellItem from "../shared/TooltipedCellItem";
 import ExplorerDetails from "./explorers/ExplorerDetails";
@@ -33,11 +31,8 @@ function ResultsByExplorer({
 }) {
   const { explorationData, setExplorerData } = useExplorationsContext();
   const { explorers } = explorationData;
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const [explorerTypes, setExplorerTypes] = useState([]);
   const getExplorerTypes = () => {

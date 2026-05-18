@@ -40,8 +40,19 @@ class JSONDataloaderSchema(BaseSchema):
                 '(también conocido como orientación "records" en pandas), '
                 "establezca este valor como null."
             ),
+            pt=(
+                "Caso os dados tenham a forma "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(também conhecido como "table" no pandas), nome do campo "data", '
+                "onde a lista com dicionários com os dados deve ser encontrada. "
+                "Caso o formato seja apenas uma lista de dicionários "
+                '(também conhecido como orientação "records" no pandas), '
+                "defina este valor como null."
+            ),
         ),
-        alias=MultilingualString(en="Data key", es="Clave de datos"),
+        alias=MultilingualString(
+            en="Data key", es="Clave de datos", pt="Chave de dados"
+        ),
     )  # type: ignore
 
 
@@ -57,6 +68,7 @@ class JSONDataLoader(BaseDataLoader):
     are validated before loading to provide early failure feedback.
     """
 
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".json", ".zip"})
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -76,10 +88,17 @@ class JSONDataLoader(BaseDataLoader):
             "diccionarios) como datos JSON anidados donde los registros están "
             "contenidos dentro de una clave específica."
         ),
+        pt=(
+            "Carregador de dados para dados tabulares em arquivos JSON. "
+            "Suporta tanto o formato de array JSON padrão (uma lista de "
+            "dicionários) como dados JSON aninhados onde os registros estão "
+            "contidos dentro de uma chave específica."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="JSON Data Loader",
         es="Cargador de Datos JSON",
+        pt="Carregador de Dados JSON",
     )
 
     def _check_params(self, params: Dict[str, Any]) -> None:

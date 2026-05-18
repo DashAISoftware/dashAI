@@ -26,6 +26,7 @@ class StandardScalerSchema(BaseSchema):
         description=MultilingualString(
             en="If True, center the data before scaling.",
             es="Si es True, centra los datos antes de escalar.",
+            pt="Se True, centraliza os dados antes de escalonar.",
         ),
     )  # type: ignore
     with_std: schema_field(
@@ -39,6 +40,10 @@ class StandardScalerSchema(BaseSchema):
             es=(
                 "Si es True, escala los datos a varianza unitaria (o "
                 "equivalentemente, desviación estándar unitaria)."
+            ),
+            pt=(
+                "Se True, escala os dados para variância unitária (ou "
+                "equivalentemente, desvio padrão unitário)."
             ),
         ),
     )  # type: ignore
@@ -76,8 +81,16 @@ class StandardScaler(
             "Estandariza las características eliminando la media y escalando "
             "a varianza unitaria."
         ),
+        pt=(
+            "Padroniza as características removendo a média e escalonando "
+            "para variância unitária."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="Standard Scaler", es="Estandarizador")
+    DISPLAY_NAME = MultilingualString(
+        en="Standard Scaler",
+        es="Estandarizador",
+        pt="Normalizador Padrão",
+    )
 
     metadata = {
         "allowed_types": [Float, Integer],

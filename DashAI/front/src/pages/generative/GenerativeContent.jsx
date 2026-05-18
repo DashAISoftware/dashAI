@@ -31,7 +31,8 @@ export default function GenerativeContent() {
     sessions,
     tasks,
   } = useGenerative();
-  const { setDisabled } = useTourContext() ?? {};
+  const tourContext = useTourContext();
+  const { setDisabled } = tourContext ?? {};
   const { t } = useTranslation(["generative"]);
 
   const isCreating = location.pathname.startsWith(
@@ -77,6 +78,14 @@ export default function GenerativeContent() {
     );
   }, [stepIndex, selectedSessionId, setDisabled, t]);
 
+  useEffect(() => {
+    if (!tourContext?.run || !selectedSessionId) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (currentTarget === '[data-tour="sessions-left-panel"]') {
+      tourContext.resumeAtStep(tourContext.stepIndex);
+    }
+  }, [selectedSessionId]);
+
   const renderCenter = () => {
     if (selectedSessionId) return <GenerativeChat />;
     if (isCreating) return <CreateSessionCenter />;
@@ -94,7 +103,7 @@ export default function GenerativeContent() {
         <LeftPanel data-tour="sessions-left-panel">
           <SessionBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
-        <CenterPanel data-tour="task-gallery">{renderCenter()}</CenterPanel>
+        <CenterPanel>{renderCenter()}</CenterPanel>
         <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
           {renderRight()}
         </RightPanel>

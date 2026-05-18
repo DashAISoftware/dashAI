@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Typography, TextField, Box, Button } from "@mui/material";
+import { Typography, TextField, Box } from "@mui/material";
 import { useFormik } from "formik";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
@@ -7,6 +7,7 @@ import { useSnackbar } from "notistack";
 import NoteBox from "../NoteBox";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 
 export default function UploadNotebookSteps({
   backHome,
@@ -153,30 +154,13 @@ export default function UploadNotebookSteps({
         />
       </Box>
 
-      <Box
-        sx={{
-          mt: 2,
-          pt: 2,
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 1,
-        }}
-      >
-        <Button variant="outlined" onClick={backHome}>
-          {t("common:back")}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={formik.handleSubmit}
-          disabled={!isValid}
-          data-tour="create-notebook-button"
-        >
-          {t("datasets:button.createNotebook")}
-        </Button>
-      </Box>
+      <StepperNavigationFooter
+        onBack={backHome}
+        onNext={formik.handleSubmit}
+        nextDisabled={!isValid}
+        nextLabel={t("datasets:button.createNotebook")}
+        nextDataTour={tourContext?.run ? "create-notebook-button" : undefined}
+      />
     </Box>
   );
 }

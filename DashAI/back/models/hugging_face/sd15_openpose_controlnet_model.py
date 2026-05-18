@@ -36,9 +36,15 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "Número de pasos de eliminación de ruido. Rango típico: 20-30 para "
                 "resultados rápidos, 40-50 para mayor calidad."
             ),
+            pt=(
+                "Número de passos de eliminação de ruído. Intervalo típico: 20-30 para "
+                "resultados rápidos, 40-50 para maior qualidade."
+            ),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de passos de inferência",
         ),
     )  # type: ignore
 
@@ -56,10 +62,16 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "En 1.0 la salida sigue de cerca la pose de entrada. Valores menores "
                 "permiten más libertad creativa manteniendo la pose general."
             ),
+            pt=(
+                "Peso do condicionamento de pose do ControlNet (intervalo 0.0-2.0). "
+                "Em 1.0 a saída segue de perto a pose de entrada. Valores menores "
+                "permitem mais liberdade criativa mantendo a pose geral."
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
+            pt="Escala de condicionamento ControlNet",
         ),
     )  # type: ignore
 
@@ -75,8 +87,16 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "Escala CFG. Controla la adherencia al prompt. "
                 "Valores 7-9 son típicos para SD 1.5."
             ),
+            pt=(
+                "Escala CFG. Controla a aderência ao prompt. "
+                "Valores 7-9 são típicos para SD 1.5."
+            ),
         ),
-        alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
+        alias=MultilingualString(
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -91,8 +111,17 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "Dispositivo de hardware para inferencia. Se recomienda GPU. "
                 "La inferencia en CPU es posible pero muy lenta."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. GPU é fortemente "
+                "recomendada para modelos de difusão. A inferência em CPU é "
+                "possível, mas muito lenta."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device",
+            es="Dispositivo",
+            pt="Dispositivo",
+        ),
     )  # type: ignore
 
 
@@ -121,6 +150,7 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 OpenPose ControlNet",
         es="SD 1.5 ControlNet OpenPose",
+        pt="SD 1.5 ControlNet OpenPose",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -146,6 +176,19 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
             "Requiere la librería controlnet_aux: pip install controlnet_aux."
+        ),
+        pt=(
+            "Combina o condicionamento de pose do ControlNet com o Stable "
+            "Diffusion 1.5 para geração de imagens guiada por pose. Recebe uma "
+            "imagem de entrada e um prompt: poses humanas são detectadas usando "
+            "OpenposeDetector do controlnet_aux e usadas como condições espaciais "
+            "para a síntese de imagens. "
+            "Ideal para gerar imagens com poses humanas específicas. Utiliza "
+            "lllyasviel/sd-controlnet-openpose "
+            "(https://huggingface.co/lllyasviel/sd-controlnet-openpose) e "
+            "runwayml/stable-diffusion-v1-5 "
+            "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
+            "Requer a biblioteca controlnet_aux: pip install controlnet_aux."
         ),
     )
 

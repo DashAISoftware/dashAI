@@ -16,11 +16,9 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 
 import { getPipelines, deletePipeline } from "../../api/pipeline";
 import { formatDate } from "../../utils";
@@ -37,11 +35,8 @@ function PipelinesTable({
   const [pipelines, setPipelines] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const fetchPipelines = async () => {
     setLoading(true);

@@ -14,15 +14,20 @@ export default function CreateSessionRight() {
 
   if (step === 0) {
     return (
-      <ComponentDetailsPanel
-        component={selectedModel}
-        categoryKey="task_display_name"
-      />
+      <Box
+        data-tour="component-details-panel"
+        sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+      >
+        <ComponentDetailsPanel
+          component={selectedModel}
+          categoryKey="task_display_name"
+        />
+      </Box>
     );
   }
 
   return (
-    <SideBar>
+    <SideBar data-tour="model-parameters">
       {/* Title */}
       <Box
         sx={{

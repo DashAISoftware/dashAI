@@ -15,6 +15,7 @@ export default function FormConverterSection({
   handleClose,
   tool,
   notebook,
+  hideButtons = false,
 }) {
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
@@ -123,8 +124,9 @@ export default function FormConverterSection({
         overflow: "visible",
         display: "flex",
         flexDirection: "column",
-        flexGrow: 1,
+        flex: 1,
         maxHeight: "100%",
+        minHeight: 0,
       }}
     >
       {step === 0 && (
@@ -143,6 +145,7 @@ export default function FormConverterSection({
               ? () => setStep((s) => s + 1)
               : () => handleSaveConverter({})
           }
+          hideButtons={hideButtons}
         />
       )}
 
@@ -152,6 +155,7 @@ export default function FormConverterSection({
           initialParams={{}}
           handleSaveConverter={handleSaveConverter}
           setStep={setStep}
+          hideButtons={hideButtons}
         />
       )}
     </Box>
