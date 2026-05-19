@@ -113,9 +113,19 @@ export const deleteDataset = async (id: string): Promise<object> => {
   return response;
 };
 
-export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
+export const getDatasetFile = async (
+  path: string,
+  page = 0,
+  pageSize = 5,
+  columns?: string[],
+) => {
   const response = await api.get(`${datasetEndpoint}/file/`, {
-    params: { path, page, page_size: pageSize },
+    params: {
+      path,
+      page,
+      page_size: pageSize,
+      ...(columns && columns.length > 0 ? { columns: columns.join(",") } : {}),
+    },
   });
   return response.data;
 };
@@ -183,6 +193,7 @@ export const getDatasetFileFiltered = async (
   pageSize = 5,
   filterModel?: object,
   sortModel?: object[],
+  columns?: string[],
 ) => {
   const response = await api.get(`${datasetEndpoint}/filter/`, {
     params: {
@@ -194,6 +205,7 @@ export const getDatasetFileFiltered = async (
         sortModel && sortModel.length > 0
           ? JSON.stringify(sortModel)
           : undefined,
+      ...(columns && columns.length > 0 ? { columns: columns.join(",") } : {}),
     },
   });
   return response.data;
