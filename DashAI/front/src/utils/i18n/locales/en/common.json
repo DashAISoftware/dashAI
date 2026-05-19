@@ -219,5 +219,9 @@
   "viewMore": "View more",
   "viewLess": "View less",
   "switchToDarkMode": "Switch to dark mode",
-  "switchToLightMode": "Switch to light mode"
+  "switchToLightMode": "Switch to light mode",
+  "metric": "Metric",
+  "split": "Split",
+  "execute": "Execute",
+  "executing": "Executing..."
 }

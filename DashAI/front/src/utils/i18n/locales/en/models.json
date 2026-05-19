@@ -55,7 +55,11 @@
     "selectOptimizerRequired": "Please select an optimizer for optimizable parameters",
     "selectSessionFirst": "Please select a session first",
     "sessionNameEmpty": "Session name cannot be empty",
-    "sessionNameExists": "A session with this name already exists"
+    "sessionNameExists": "A session with this name already exists",
+    "selectAtLeastTwoRuns": "Please select at least two runs",
+    "selectMetric": "Please select a metric",
+    "selectTest": "Please select a statistical test",
+    "failedToExecuteTest": "Failed to execute statistical test"
   },
   "label": {
     "addModelToSession": "Add Model to Session",
@@ -178,7 +182,13 @@
     "outerSplitter": "Outer loop splitter",
     "outerFolds": "Number of folds",
     "innerSplitter": "Inner loop splitter",
-    "innerFolds": "Number of folds"
+    "innerFolds": "Number of folds",
+    "statisticalTests": "Statistical Tests",
+    "modelsToCompare": "Models to Compare",
+    "statisticalTest": "Statistical Test",
+    "significanceLevel": "Significance Level",
+    "noFinishedRuns": "No finished runs available",
+    "results": "Results"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
@@ -220,5 +230,13 @@
     "nestedCVEnabled": "Hyperparameters are tuned and evaluated on separate data splits, giving a more reliable performance estimate.",
     "nestedCVDisabled": "For each tested combination, the model is trained using cross-validation and the average score across folds is reported. The combination with the best score is selected.",
     "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and {{max}} and lower or equal to the number of outer folds ({{outerNSplits}}). Please adjust the number of inner folds."
+  },
+  "test": {
+    "pairedTTest": "Paired t-test",
+    "correctedPairedTTest": "Corrected Paired t-test",
+    "wilcoxonSignedRankTest": "Wilcoxon Signed-Rank Test",
+    "anovaTest": "ANOVA Test",
+    "friedmanTest": "Friedman Test",
+    "pairwiseWilcoxonTest": "Pairwise Wilcoxon Test"
   }
 }

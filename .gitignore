@@ -206,3 +206,6 @@ docs/node_modules/
 !docs/docs/build/**
 !docs/i18n/**/build/
 !docs/i18n/**/build/**
+
+# MD
+*.md

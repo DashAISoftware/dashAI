@@ -55,7 +55,11 @@
     "selectOptimizerRequired": "Por favor seleccione un optimizador para los parámetros optimizables",
     "selectSessionFirst": "Por favor seleccione una sesión primero",
     "sessionNameEmpty": "El nombre de la sesión no puede estar vacío",
-    "sessionNameExists": "Ya existe una sesión con este nombre"
+    "sessionNameExists": "Ya existe una sesión con este nombre",
+    "selectAtLeastTwoRuns": "Por favor seleccione al menos dos ejecuciones",
+    "selectMetric": "Por favor seleccione una métrica",
+    "selectTest": "Por favor seleccione un test estadístico",
+    "failedToExecuteTest": "Error al ejecutar el test estadístico"
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
@@ -178,7 +182,13 @@
     "outerSplitter": "Splitter para el bucle externo",
     "outerFolds": "Número de folds",
     "innerSplitter": "Splitter para el bucle interno",
-    "innerFolds": "Número de folds"
+    "innerFolds": "Número de folds",
+    "statisticalTests": "Tests estadísticos",
+    "modelsToCompare": "Modelos a comparar",
+    "statisticalTest": "Test estadístico",
+    "significanceLevel": "Nivel de significancia",
+    "noFinishedRuns": "No hay ejecuciones finalizadas disponibles",
+    "results": "Resultados"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
@@ -221,5 +231,13 @@
     "nestedCVEnabled": "Los datos se dividen en dos niveles: uno para ajustar los hiperparámetros y otro para evaluar el modelo final. Al mantenerlos separados, el score obtenido refleja mejor cómo se comportará el modelo con datos nuevos.",
     "nestedCVDisabled": "Por cada combinación probada, el modelo se entrena usando validación cruzada y se reporta el promedio del score entre los folds. La combinación con el mejor score es la seleccionada.",
     "innerFoldsOutOfRange": "Para la validación cruzada anidada, el número de folds internos debe estar entre 2 y {{max}} y ser menor o igual que el número de folds externos ({{outerNSplits}}). Por favor ajuste el número de folds internos."
+  },
+  "test": {
+    "pairedTTest": "Test t pareado",
+    "correctedPairedTTest": "Test t pareado corregido",
+    "wilcoxonSignedRankTest": "Test de Wilcoxon de rangos con signo",
+    "anovaTest": "Test ANOVA",
+    "friedmanTest": "Test de Friedman",
+    "pairwiseWilcoxonTest": "Test de Wilcoxon por pares"
   }
 }

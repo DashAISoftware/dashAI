@@ -21,6 +21,7 @@ import {
 } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
+import StatisticalTestsModal from "./StatisticalTestsModal";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
@@ -410,6 +411,21 @@ export default function SessionVisualization() {
         </Accordion>
 
         <Divider sx={{ my: 1, mt: 1 }} />
+
+        {/* Statistical Tests Modal - Only show for Cross-Validation */}
+        {session &&
+          runs.length > 0 &&
+          session.evaluation_strategy ===
+            "CrossValidationEvaluationStrategy" && (
+            <>
+              <StatisticalTestsModal
+                runs={runs}
+                session={session}
+                visible={true}
+              />
+              <Divider sx={{ my: 1, mt: 1 }} />
+            </>
+          )}
 
         {/* Scrollable Run Cards */}
         <Box
