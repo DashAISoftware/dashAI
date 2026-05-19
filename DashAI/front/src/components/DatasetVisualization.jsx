@@ -136,7 +136,7 @@ export default function DatasetVisualization({
   }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize, filterModel, sortModel) => {
+    async (page, pageSize, filterModel, sortModel, columns) => {
       const isProcessing =
         dataset && !(dataset.status === 3 || dataset.status === 4);
       if (!dataset || isProcessing) return { rows: [], total: 0 };
@@ -151,8 +151,9 @@ export default function DatasetVisualization({
               pageSize,
               filterModel,
               sortModel,
+              columns,
             )
-          : await getDatasetFile(dataset.file_path, page, pageSize);
+          : await getDatasetFile(dataset.file_path, page, pageSize, columns);
 
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
