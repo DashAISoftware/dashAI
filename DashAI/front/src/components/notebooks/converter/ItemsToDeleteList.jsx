@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
@@ -8,15 +8,7 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
   const { t } = useTranslation(["common", "datasets"]);
 
   return (
-    <Box
-      sx={{
-        mt: 2,
-        p: 2,
-        bgcolor: "#2e3037",
-        borderRadius: 1,
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-      }}
-    >
+    <Alert severity="error" icon={false} sx={{ mt: 2 }}>
       <Typography variant="subtitle2" sx={{ color: "error.main", mb: 1 }}>
         {t("common:itemsToBeDeleted")}
       </Typography>
@@ -38,7 +30,6 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
                 alignItems: "center",
                 py: 0.5,
                 fontWeight: isSelected ? "bold" : "normal",
-                //color: isSelected ? "#00BEBB" : "text.secondary",
               }}
             >
               <Typography variant="body2">
@@ -49,7 +40,7 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
           );
         })}
       </Box>
-    </Box>
+    </Alert>
   );
 });
 
