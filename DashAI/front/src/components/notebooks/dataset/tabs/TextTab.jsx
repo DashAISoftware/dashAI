@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import {
   Box,
   Typography,
@@ -37,28 +37,41 @@ export const TextTab = ({ textStats, scrollToColumn, setScrollToColumn }) => {
   const remaining = entries.length - visibleCount;
   const pendingScrollRef = useRef(null);
 
-  useEffect(() => {
-    if (!scrollToColumn) return;
+  useLayoutEffect(() => {
+    if (!scrollToColumn) {
+      if (!pendingScrollRef.current) return;
+      const col = pendingScrollRef.current;
+      const card = document.querySelector(`[data-column-card="${col}"]`);
+      if (!card) return;
+      pendingScrollRef.current = null;
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.style.transition = "box-shadow 0.3s";
+      card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+      setTimeout(() => {
+        card.style.boxShadow = "";
+      }, 2000);
+      return;
+    }
     const idx = entries.findIndex(([col]) => col === scrollToColumn);
     if (idx === -1) return;
-    pendingScrollRef.current = scrollToColumn;
-    if (idx >= visibleCount) setVisibleCount(idx + 1);
+    if (idx >= visibleCount) {
+      pendingScrollRef.current = scrollToColumn;
+      setVisibleCount(idx + 1);
+    } else {
+      const card = document.querySelector(
+        `[data-column-card="${scrollToColumn}"]`,
+      );
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      }
+    }
     setScrollToColumn(null);
-  }, [scrollToColumn]);
-
-  useLayoutEffect(() => {
-    if (!pendingScrollRef.current) return;
-    const col = pendingScrollRef.current;
-    pendingScrollRef.current = null;
-    const card = document.querySelector(`[data-column-card="${col}"]`);
-    if (!card) return;
-    card.scrollIntoView({ behavior: "smooth", block: "center" });
-    card.style.transition = "box-shadow 0.3s";
-    card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
-    setTimeout(() => {
-      card.style.boxShadow = "";
-    }, 2000);
-  }, [visibleCount, scrollToColumn]);
+  }, [scrollToColumn, visibleCount]);
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
