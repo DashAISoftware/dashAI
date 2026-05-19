@@ -1379,6 +1379,12 @@ async def get_dataset_file(
     with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
 
+        valid_cols = (
+            [c for c in columns_list if c in reader.schema.names]
+            if columns_list
+            else None
+        )
+
         current_index = 0
         for i in range(reader.num_record_batches):
             batch = reader.get_batch(i)
@@ -1395,10 +1401,8 @@ async def get_dataset_file(
             slice_end = min(batch.num_rows, end - batch_start)
             sliced_batch = batch.slice(slice_start, slice_end - slice_start)
 
-            if columns_list:
-                valid_cols = [c for c in columns_list if c in sliced_batch.schema.names]
-                if valid_cols:
-                    sliced_batch = sliced_batch.select(valid_cols)
+            if valid_cols is not None:
+                sliced_batch = sliced_batch.select(valid_cols)
 
             for j in range(sliced_batch.num_rows):
                 row = {

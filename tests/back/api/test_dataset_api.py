@@ -270,3 +270,22 @@ def test_get_dataset_file_no_columns_returns_all(client):
         assert resp.status_code == 200
         data = resp.json()
         assert set(data["rows"][0].keys()) == {"a", "b", "c"}
+
+
+def test_get_dataset_file_invalid_columns_returns_empty_schema(client):
+    table = pa.table({"a": [1, 2], "b": ["x", "y"]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _write_test_arrow(tmp, table)
+        resp = client.get(
+            "/api/v1/dataset/file/",
+            params={
+                "path": tmp,
+                "page": 0,
+                "page_size": 5,
+                "columns": "nonexistent,also_bad",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        for row in data["rows"]:
+            assert row == {}
