@@ -3,7 +3,16 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { Box, Button, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Popover,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
@@ -13,6 +22,8 @@ import {
   updateColumnEncoder,
 } from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
+
+const INITIAL_VISIBLE_COLUMNS = 15;
 
 export default function DatasetTable({
   fetchPage,
@@ -46,6 +57,23 @@ export default function DatasetTable({
   const [isLoading, setIsLoading] = useState(true);
   const [columnOrder, setColumnOrder] = useState([]);
   const [density, setDensity] = useState("compact");
+
+  const allColumnNames = useMemo(() => Object.keys(columnTypes), [columnTypes]);
+
+  const [selectedColumns, setSelectedColumns] = useState(() =>
+    Object.keys(columnTypes).slice(0, INITIAL_VISIBLE_COLUMNS),
+  );
+
+  const [columnPickerAnchor, setColumnPickerAnchor] = useState(null);
+
+  const selectedColumnsParam = useMemo(
+    () =>
+      selectedColumns.length === allColumnNames.length
+        ? undefined
+        : selectedColumns,
+    [selectedColumns, allColumnNames],
+  );
+
   const [allFilteredData, setAllFilteredData] = useState(null);
   const [totalRowCount, setTotalRowCount] = useState(0); // Track actual total without filters
 
@@ -123,6 +151,9 @@ export default function DatasetTable({
     );
     setColumnFilterFns(session?.columnFilterFns ?? getDefaultFilterFns());
     setPagination({ pageIndex: 0, pageSize: initialPageSize });
+    setSelectedColumns(
+      Object.keys(columnTypes).slice(0, INITIAL_VISIBLE_COLUMNS),
+    );
     setLoadKey((k) => k + 1);
 
     initialized.current = true;
@@ -235,6 +266,7 @@ export default function DatasetTable({
           pagination.pageSize,
           muiFormattedFilters,
           sorting,
+          selectedColumnsParam,
         );
         if (cancelled) return;
 
@@ -269,6 +301,7 @@ export default function DatasetTable({
             total,
             muiFormattedFilters,
             sorting,
+            selectedColumnsParam,
           );
           if (cancelled) return;
 
@@ -301,6 +334,7 @@ export default function DatasetTable({
     pagination.pageSize,
     columnFilters,
     sorting,
+    selectedColumnsParam,
   ]);
 
   const handleColumnRename = useCallback(
@@ -312,6 +346,9 @@ export default function DatasetTable({
       onEditColumn && (await onEditColumn(result));
 
       setColumnOrder((prev) =>
+        prev.map((col) => (col === oldName ? newName : col)),
+      );
+      setSelectedColumns((prev) =>
         prev.map((col) => (col === oldName ? newName : col)),
       );
 
@@ -350,6 +387,8 @@ export default function DatasetTable({
 
     if (data.length > 0) {
       columnKeys = Object.keys(data[0]).filter((key) => key !== "id");
+    } else if (selectedColumns.length > 0) {
+      columnKeys = selectedColumns;
     } else if (Object.keys(columnTypes).length > 0) {
       columnKeys = Object.keys(columnTypes);
     } else {
@@ -423,6 +462,7 @@ export default function DatasetTable({
   }, [
     data,
     columnTypes,
+    selectedColumns,
     editableColumns,
     datasetId,
     handleColumnRename,
@@ -443,6 +483,7 @@ export default function DatasetTable({
           rowCount,
           muiFormattedFilters,
           sorting,
+          selectedColumnsParam,
         );
         rows = response?.rows ?? [];
       }
@@ -477,7 +518,14 @@ export default function DatasetTable({
     } catch (error) {
       console.error("Error exporting filtered data:", error);
     }
-  }, [rowCount, allFilteredData, buildFilterModel, sorting, fetchPage]);
+  }, [
+    rowCount,
+    allFilteredData,
+    buildFilterModel,
+    sorting,
+    fetchPage,
+    selectedColumnsParam,
+  ]);
 
   const table = useMaterialReactTable({
     columns,
@@ -508,8 +556,9 @@ export default function DatasetTable({
     muiPaginationProps: enableRowsPerPageSelector
       ? undefined
       : { showRowsPerPage: false },
-    renderTopToolbarCustomActions: showExportButton
-      ? () => (
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {showExportButton && (
           <Tooltip
             title={
               columnFilters.length > 0
@@ -532,8 +581,67 @@ export default function DatasetTable({
               </Button>
             </span>
           </Tooltip>
-        )
-      : undefined,
+        )}
+        <Tooltip title="Select visible columns" arrow>
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<ViewColumnIcon />}
+            onClick={(e) => setColumnPickerAnchor(e.currentTarget)}
+          >
+            {selectedColumns.length}/{allColumnNames.length}
+          </Button>
+        </Tooltip>
+        <Popover
+          open={Boolean(columnPickerAnchor)}
+          anchorEl={columnPickerAnchor}
+          onClose={() => setColumnPickerAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <Box
+            sx={{
+              p: 1.5,
+              maxHeight: 380,
+              overflow: "auto",
+              minWidth: 200,
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ px: 0.5, display: "block", mb: 0.5 }}
+            >
+              {selectedColumns.length} of {allColumnNames.length} visible
+            </Typography>
+            {allColumnNames.map((col) => (
+              <FormControlLabel
+                key={col}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={selectedColumns.includes(col)}
+                    onChange={(e) => {
+                      setSelectedColumns((prev) =>
+                        e.target.checked
+                          ? [...prev, col]
+                          : prev.filter((c) => c !== col),
+                      );
+                      setPagination((p) => ({ ...p, pageIndex: 0 }));
+                    }}
+                  />
+                }
+                label={
+                  <Typography variant="body2" noWrap>
+                    {col}
+                  </Typography>
+                }
+                sx={{ display: "flex", m: 0, py: 0.25 }}
+              />
+            ))}
+          </Box>
+        </Popover>
+      </Box>
+    ),
     state: {
       pagination,
       columnFilters,
