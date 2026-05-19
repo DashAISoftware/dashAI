@@ -353,17 +353,10 @@ export default function DatasetTable({
         prev.map((col) => (col === oldName ? newName : col)),
       );
 
-      const muiFormattedFilters = {
-        items: columnFilters.map((f) => ({
-          field: f.id,
-          value: f.value,
-          operator: "contains",
-        })),
-      };
       const response = await fetchPage(
         pagination.pageIndex,
         pagination.pageSize,
-        muiFormattedFilters,
+        buildFilterModel(),
         sorting,
         selectedColumnsParam,
       );
@@ -381,6 +374,7 @@ export default function DatasetTable({
       fetchPage,
       sorting,
       selectedColumnsParam,
+      buildFilterModel,
     ],
   );
 
