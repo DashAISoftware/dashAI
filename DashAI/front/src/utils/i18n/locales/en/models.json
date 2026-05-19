@@ -21,7 +21,9 @@
     "saveAndRunModel": "Save and Run Model",
     "showOperations": "Show Operations",
     "showParameters": "Show Parameters",
-    "updateAndRetrain": "Update & Retrain"
+    "updateAndRetrain": "Update & Retrain",
+    "checkNormality": "Check Normality",
+    "checkingNormality": "Checking Normality..."
   },
   "error": {
     "completeRequiredFields": "Please complete all required fields",
@@ -59,7 +61,9 @@
     "selectAtLeastTwoRuns": "Please select at least two runs",
     "selectMetric": "Please select a metric",
     "selectTest": "Please select a statistical test",
-    "failedToExecuteTest": "Failed to execute statistical test"
+    "failedToExecuteTest": "Failed to execute statistical test",
+    "selectRunsAndMetric": "Please select runs and a metric to check normality",
+    "failedToCheckNormality": "Failed to check normality. Please try again."
   },
   "label": {
     "addModelToSession": "Add Model to Session",
@@ -229,7 +233,11 @@
     "sessionUpdated": "Session updated successfully",
     "nestedCVEnabled": "Hyperparameters are tuned and evaluated on separate data splits, giving a more reliable performance estimate.",
     "nestedCVDisabled": "For each tested combination, the model is trained using cross-validation and the average score across folds is reported. The combination with the best score is selected.",
-    "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and {{max}} and lower or equal to the number of outer folds ({{outerNSplits}}). Please adjust the number of inner folds."
+    "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and {{max}} and lower or equal to the number of outer folds ({{outerNSplits}}). Please adjust the number of inner folds.",
+    "normalityDetected": "✓ Normality Condition Met",
+    "recommendParametricTests": "The data meets normality requirements. Parametric tests (e.g., paired t-test, ANOVA) are recommended for more statistical power.",
+    "normalityNotDetected": "⚠ Normality Condition Not Met",
+    "recommendNonParametricTests": "The data does not meet normality requirements. Non-parametric tests (e.g., Wilcoxon, Friedman) are recommended for robustness."
   },
   "test": {
     "pairedTTest": "Paired t-test",

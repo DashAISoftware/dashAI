@@ -21,7 +21,9 @@
     "saveAndRunModel": "Guardar y Ejecutar Modelo",
     "showOperations": "Mostrar Operaciones",
     "showParameters": "Mostrar Parámetros",
-    "updateAndRetrain": "Actualizar y Re-entrenar"
+    "updateAndRetrain": "Actualizar y Re-entrenar",
+    "checkNormality": "Chequear Normalidad",
+    "checkingNormality": "Chequeando Normalidad..."
   },
   "error": {
     "completeRequiredFields": "Por favor complete todos los campos requeridos",
@@ -59,7 +61,9 @@
     "selectAtLeastTwoRuns": "Por favor seleccione al menos dos ejecuciones",
     "selectMetric": "Por favor seleccione una métrica",
     "selectTest": "Por favor seleccione un test estadístico",
-    "failedToExecuteTest": "Error al ejecutar el test estadístico"
+    "failedToExecuteTest": "Error al ejecutar el test estadístico",
+    "selectRunsAndMetric": "Por favor seleccione ejecuciones y una métrica para verificar la normalidad",
+    "failedToCheckNormality": "Error al verificar la normalidad. Por favor intente nuevamente."
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
@@ -230,7 +234,11 @@
     "sessionUpdated": "Sesión actualizada exitosamente",
     "nestedCVEnabled": "Los datos se dividen en dos niveles: uno para ajustar los hiperparámetros y otro para evaluar el modelo final. Al mantenerlos separados, el score obtenido refleja mejor cómo se comportará el modelo con datos nuevos.",
     "nestedCVDisabled": "Por cada combinación probada, el modelo se entrena usando validación cruzada y se reporta el promedio del score entre los folds. La combinación con el mejor score es la seleccionada.",
-    "innerFoldsOutOfRange": "Para la validación cruzada anidada, el número de folds internos debe estar entre 2 y {{max}} y ser menor o igual que el número de folds externos ({{outerNSplits}}). Por favor ajuste el número de folds internos."
+    "innerFoldsOutOfRange": "Para la validación cruzada anidada, el número de folds internos debe estar entre 2 y {{max}} y ser menor o igual que el número de folds externos ({{outerNSplits}}). Por favor ajuste el número de folds internos.",
+    "normalityDetected": "✓ Condición de Normalidad Cumplida",
+    "recommendParametricTests": "Los datos cumplen con los requisitos de normalidad. Se recomiendan tests paramétricos (ej: test t pareado, ANOVA) para mayor potencia estadística.",
+    "normalityNotDetected": "⚠ Condición de Normalidad No Cumplida",
+    "recommendNonParametricTests": "Los datos no cumplen con los requisitos de normalidad. Se recomiendan tests no paramétricos (ej: Wilcoxon, Friedman) por su robustez."
   },
   "test": {
     "pairedTTest": "Test t pareado",

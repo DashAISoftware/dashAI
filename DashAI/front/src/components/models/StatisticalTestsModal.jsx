@@ -38,6 +38,8 @@ export default function StatisticalTestsModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
+  const [normalityCheckLoading, setNormalityCheckLoading] = useState(false);
+  const [normalityResult, setNormalityResult] = useState(null);
   const { t } = useTranslation(["models", "common"]);
   const [panelHeight, setPanelHeight] = useState(400);
   const isResizing = useRef(false);
@@ -141,6 +143,48 @@ export default function StatisticalTestsModal({
         ? prev.filter((id) => id !== runId)
         : [...prev, runId],
     );
+  };
+
+  const handleNormalityCheck = async () => {
+    if (selectedRuns.length === 0 || !selectedMetric) {
+      setError(t("models:error.selectRunsAndMetric"));
+      return;
+    }
+
+    setNormalityCheckLoading(true);
+    setError(null);
+    setNormalityResult(null);
+
+    try {
+      // Fetch fold metrics for selected runs
+      const foldMetricsData = {};
+      for (const runId of selectedRuns) {
+        const response = await api.get(`/v1/run/${runId}/fold-metrics`, {
+          params: { metric_split: selectedSplit },
+        });
+        foldMetricsData[runId] = response.data[selectedMetric] || [];
+      }
+
+      // Check normality via API
+      const normalityResponse = await api.post(
+        "/v1/statistical-tests/normality-check",
+        {
+          metric_name: selectedMetric,
+          metric_split: selectedSplit,
+          run_ids: selectedRuns,
+          fold_metrics: foldMetricsData,
+        },
+      );
+
+      setNormalityResult(normalityResponse.data);
+    } catch (err) {
+      console.error("Error checking normality:", err);
+      setError(
+        err.response?.data?.detail || t("models:error.failedToCheckNormality"),
+      );
+    } finally {
+      setNormalityCheckLoading(false);
+    }
   };
 
   const handleExecuteTest = async () => {
@@ -297,38 +341,110 @@ export default function StatisticalTestsModal({
           <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
             {t("models:label.modelsToCompare")}
           </Typography>
-          {finishedRuns.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {t("models:label.noFinishedRuns")}
-            </Typography>
-          ) : (
-            <Stack spacing={1} sx={{ pl: 1 }}>
-              {finishedRuns.map((run) => (
-                <FormControlLabel
-                  key={run.id}
-                  control={
-                    <Checkbox
-                      checked={selectedRuns.includes(run.id)}
-                      onChange={() => handleRunToggle(run.id)}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            {/* Left side - Models list (50% width) */}
+            <Box sx={{ flex: 1 }}>
+              {finishedRuns.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  {t("models:label.noFinishedRuns")}
+                </Typography>
+              ) : (
+                <Stack spacing={1} sx={{ pl: 1 }}>
+                  {finishedRuns.map((run) => (
+                    <FormControlLabel
+                      key={run.id}
+                      control={
+                        <Checkbox
+                          checked={selectedRuns.includes(run.id)}
+                          onChange={() => handleRunToggle(run.id)}
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body2">
+                            {run.run_name}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", mt: 0.25 }}
+                          >
+                            {run.model_name} •{" "}
+                            {new Date(run.created).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                      }
                     />
-                  }
-                  label={
+                  ))}
+                </Stack>
+              )}
+            </Box>
+
+            {/* Right side - Normality check button and result (50% width) */}
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.5,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={handleNormalityCheck}
+                disabled={
+                  normalityCheckLoading ||
+                  selectedRuns.length === 0 ||
+                  !selectedMetric
+                }
+                fullWidth
+                sx={{ textTransform: "none" }}
+              >
+                {normalityCheckLoading ? (
+                  <>
+                    <CircularProgress size={18} sx={{ mr: 1 }} />
+                    {t("models:button.checkingNormality")}
+                  </>
+                ) : (
+                  t("models:button.checkNormality")
+                )}
+              </Button>
+
+              {/* Normality Result */}
+              {normalityResult && (
+                <Alert
+                  severity={normalityResult.is_normal ? "success" : "warning"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  {normalityResult.is_normal ? (
                     <Box>
-                      <Typography variant="body2">{run.run_name}</Typography>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: "block", mt: 0.25 }}
+                        variant="body2"
+                        sx={{ fontWeight: 600, mb: 0.5 }}
                       >
-                        {run.model_name} •{" "}
-                        {new Date(run.created).toLocaleDateString()}
+                        {t("models:message.normalityDetected")}
+                      </Typography>
+                      <Typography variant="caption">
+                        {t("models:message.recommendParametricTests")}
                       </Typography>
                     </Box>
-                  }
-                />
-              ))}
-            </Stack>
-          )}
+                  ) : (
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600, mb: 0.5 }}
+                      >
+                        {t("models:message.normalityNotDetected")}
+                      </Typography>
+                      <Typography variant="caption">
+                        {t("models:message.recommendNonParametricTests")}
+                      </Typography>
+                    </Box>
+                  )}
+                </Alert>
+              )}
+            </Box>
+          </Box>
         </Box>
 
         <Divider sx={{ my: 2 }} />
@@ -372,7 +488,7 @@ export default function StatisticalTestsModal({
                     textAlign: "right",
                   }}
                 >
-                  {alpha.toFixed(3)}
+                  {alpha.toFixed(2)}
                 </Typography>
               </Box>
               <Slider
