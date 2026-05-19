@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography, CardContent, Alert } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Typography, CardContent, Alert, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
@@ -9,9 +9,15 @@ import { MetricRow } from "../MetricRow";
 import ExportableCard from "../ExportableCard";
 import { Trans, useTranslation } from "react-i18next";
 
+const BATCH_SIZE = 10;
+
 export const NumericTab = ({ numericStats }) => {
   const { t } = useTranslation(["datasets"]);
   const theme = useTheme();
+  const entries = Object.entries(numericStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
 
   const toNumberOrNull = (value) => {
     if (
@@ -33,7 +39,7 @@ export const NumericTab = ({ numericStats }) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
-      {Object.entries(numericStats ?? {}).map(([column, stats]) => (
+      {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
           filename={`numeric_${column}`}
@@ -344,6 +350,16 @@ export const NumericTab = ({ numericStats }) => {
           </CardContent>
         </ExportableCard>
       ))}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

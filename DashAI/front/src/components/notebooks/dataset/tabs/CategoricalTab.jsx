@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, CardContent } from "@mui/material";
+import { Box, Typography, CardContent, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {
@@ -18,14 +18,20 @@ import { StatBox } from "../StatBox";
 import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
+const BATCH_SIZE = 10;
+
 export const CategoricalTab = ({ categoricalStats }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
   const [activeIndices, setActiveIndices] = useState({});
+  const entries = Object.entries(categoricalStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
-      {Object.entries(categoricalStats).map(([column, stats]) => (
+      {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
           filename={`categorical_${column}`}
@@ -188,6 +194,16 @@ export const CategoricalTab = ({ categoricalStats }) => {
           </CardContent>
         </ExportableCard>
       ))}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

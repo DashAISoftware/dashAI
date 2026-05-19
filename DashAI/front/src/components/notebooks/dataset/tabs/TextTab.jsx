@@ -6,6 +6,7 @@ import {
   Chip,
   Alert,
   Tooltip,
+  Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
@@ -24,13 +25,20 @@ import { MetricRow } from "../MetricRow";
 import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
+const BATCH_SIZE = 10;
+
 export const TextTab = ({ textStats }) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
   const [activeIndices, setActiveIndices] = useState({});
+  const entries = Object.entries(textStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
+
   return (
     <Box display="flex" flexDirection="column" gap={4}>
-      {Object.entries(textStats).map(([column, stats]) => {
+      {visibleEntries.map(([column, stats]) => {
         const lengthData = [
           {
             label: t("datasets:label.min"),
@@ -249,6 +257,16 @@ export const TextTab = ({ textStats }) => {
           </ExportableCard>
         );
       })}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
