@@ -60,6 +60,12 @@ export default function DatasetVisualization({
     datasetsContext?.setDatasetTab ??
     modelsContext?.setDatasetTab ??
     (() => {});
+  const scrollToColumn =
+    datasetsContext?.scrollToColumn ?? modelsContext?.scrollToColumn ?? null;
+  const setScrollToColumn =
+    datasetsContext?.setScrollToColumn ??
+    modelsContext?.setScrollToColumn ??
+    (() => {});
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
@@ -436,14 +442,24 @@ export default function DatasetVisualization({
               />
             )}
             {tab === 1 && (
-              <NumericTab numericStats={datasetInfo?.numeric_stats} />
+              <NumericTab
+                numericStats={datasetInfo?.numeric_stats}
+                scrollToColumn={scrollToColumn}
+                setScrollToColumn={setScrollToColumn}
+              />
             )}
             {tab === 2 && (
               <CategoricalTab
                 categoricalStats={datasetInfo?.categorical_stats}
               />
             )}
-            {tab === 3 && <TextTab textStats={datasetInfo?.text_stats} />}
+            {tab === 3 && (
+              <TextTab
+                textStats={datasetInfo?.text_stats}
+                scrollToColumn={scrollToColumn}
+                setScrollToColumn={setScrollToColumn}
+              />
+            )}
             {tab === 4 && (
               <QualityTab
                 qualityInfo={datasetInfo?.quality_info}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 
 const BATCH_SIZE = 10;
 
-export const TextTab = ({ textStats }) => {
+export const TextTab = ({ textStats, scrollToColumn, setScrollToColumn }) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
   const [activeIndices, setActiveIndices] = useState({});
@@ -35,6 +35,30 @@ export const TextTab = ({ textStats }) => {
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const visibleEntries = entries.slice(0, visibleCount);
   const remaining = entries.length - visibleCount;
+  const pendingScrollRef = useRef(null);
+
+  useEffect(() => {
+    if (!scrollToColumn) return;
+    const idx = entries.findIndex(([col]) => col === scrollToColumn);
+    if (idx === -1) return;
+    pendingScrollRef.current = scrollToColumn;
+    if (idx >= visibleCount) setVisibleCount(idx + 1);
+    setScrollToColumn(null);
+  }, [scrollToColumn]);
+
+  useLayoutEffect(() => {
+    if (!pendingScrollRef.current) return;
+    const col = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+    const card = document.querySelector(`[data-column-card="${col}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.style.transition = "box-shadow 0.3s";
+    card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+    setTimeout(() => {
+      card.style.boxShadow = "";
+    }, 2000);
+  }, [visibleCount, scrollToColumn]);
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
