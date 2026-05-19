@@ -79,10 +79,23 @@ export default function ColumnInsights({
 
   const handleClick = useCallback(
     (insight) => {
-      setDatasetTab(insight.tab);
-      setScrollToColumn(insight.column);
+      const card = document.querySelector(
+        `[data-column-card="${insight.column}"]`,
+      );
+      if (card) {
+        setDatasetTab(insight.tab);
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      } else {
+        setDatasetTab(insight.tab);
+        setScrollToColumn(insight.column);
+      }
     },
-    [setDatasetTab, setScrollToColumn],
+    [setDatasetTab, setScrollToColumn, theme],
   );
 
   const colorMap = {
