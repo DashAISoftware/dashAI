@@ -15,7 +15,6 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ViewList as ViewListIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
 import DocumentSelector from "../../../components/generative/RAG/DocumentSelector";
 import ChunkingSection from "./sections/ChunkingSection";
 import RetrieverSection from "./sections/RetrieverSection";
@@ -306,15 +305,21 @@ export default function SimplifiedSessionSetup({
   };
 
   return (
-    <CenterBox>
       <Box
+        width="100%"
+        height="100%"
         display="flex"
         flexDirection="column"
-        gap={3}
-        width="100%"
+        sx={{ px: 2, pt: 2, pb: 0 }}
       >
+        <Box
+          display="flex"
+          flexDirection="column"
+          height="100%"
+          width="100%"
+        >
         {/* Header */}
-        <Box>
+        <Box flexShrink={0}>
           <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
             {t("generative:simplifiedRag.setup.title")}
           </Typography>
@@ -322,6 +327,9 @@ export default function SimplifiedSessionSetup({
             {t("generative:simplifiedRag.setup.subtitle")}
           </Typography>
         </Box>
+
+        {/* Scrollable Content */}
+        <Box flex={1} overflow="auto" sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 3 }}>
 
         {/* Session Details */}
         <Accordion
@@ -522,13 +530,20 @@ export default function SimplifiedSessionSetup({
           </Accordion>
 
         </Box>
+        </Box>
 
-        {/* Action Buttons */}
+        {/* Action Buttons — fixed at bottom */}
         <Box
+          flexShrink={0}
           display="flex"
           justifyContent="flex-end"
           gap={2}
-          sx={{ pt: 2, borderTop: "1px solid", borderColor: "divider" }}
+          sx={{
+            pt: 2,
+            pb: 0,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
         >
           <Button
             variant="outlined"
@@ -549,6 +564,6 @@ export default function SimplifiedSessionSetup({
           </Button>
         </Box>
       </Box>
-    </CenterBox>
-  );
+      </Box>
+    );
 }

@@ -36,36 +36,65 @@ RAG operations are heavy and thus run as background jobs:
 
 ## 2. Frontend Architecture
 
-DashAI provides two distinct ways to interact with RAG, sharing the same underlying API but offering different user experiences.
+DashAI provides a single RAG interface: the **Simplified View** (`SimplifiedRAGPage`). This replaced the legacy `RAGHomePage` multi-step wizard (removed).
 
-### 2.1 Legacy View (`RAGHomePage`)
-**Goal:** Full administrative control over the RAG ecosystem.
-- **Components:** `RAGSessionsPage`, `RAGDocumentsPage`, `RAGPromptsPage`.
-- **Setup Flow:** Uses `NewSessionModal`, a linear multi-step wizard (1. Documents -> 2. Chunking -> 3. Retriever -> 4. Prompt -> 5. Model).
-- **Resource Management:** Documents and Prompts are managed in their own dedicated views before being selected in a session.
-
-### 2.2 Simplified View (`SimplifiedRAGPage`)
+### 2.1 Simplified View (`SimplifiedRAGPage`)
 **Goal:** Low-friction, guided setup for immediate use.
-- **Component:** `SimplifiedSessionSetup.jsx`.
-- **Setup Flow:** A single-page layout with **Reactive Accordions**. Instead of a wizard, it presents all sections (Chunking, Retriever, Prompt, Generator) in colapsable panels.
-- **Contextual Info:** Uses the `RightPanel` to show a `SimplifiedRAGInfoBar` during setup, providing educational tooltips and status checks.
+- **Route:** `/app/generative/rag`
+- **Layout:** 3-panel (`LeftPanel` / `CenterPanel` / `RightPanel`)
+- **Left Panel:** `SessionBar` (when no session) or `RAGDocumentsPanel` (when session selected)
+- **Center Panel:** `SimplifiedSessionSetup` (creation) → `RAGSessionSummary` (overview) → `GenerativeChat` (active chat)
+- **Right Panel:** `SimplifiedRAGInfoBar` (educational info during creation) or `RAGParamsPanel` (edit prompt + LLM when session selected)
+- **Setup Flow:** Single-page with **Reactive Accordions** (Session Details, Documents, Chunking, Retriever, Prompt, Generator). Cancel/Save buttons are fixed at the bottom using a flex layout.
+- **Navigation:** Selecting "RAG Task" from `/app/generative` navigates directly here. The "Simplified RAG Setup" task card was removed — only the standard "RAG Task" remains.
+
+### 2.2 Dual Card System (Creation vs. Params Bar)
+
+| Aspect | Creation (`PromptSection`/`GeneratorSection`) | Params Bar (`PromptParamsCard`/`GeneratorParamsCard`) |
+|--------|----------------------------------------------|------------------------------------------------------|
+| Description text | Always visible, no toggle | ℹ️ toggle to show/hide |
+| Collapse | Handled by outer Accordion (no inner collapse) | Own `ExpandMoreIcon` toggle |
+| Default state | Expanded (accordion) | Collapsed (selector visible) |
+| Selector | Inside card body | Always visible even when collapsed |
+| Shared core | `PromptBody` / `GeneratorBody` with `showDetails` prop | `PromptBody` / `GeneratorBody` with `showDetails` prop |
+
+Both share `PromptBody` and `GeneratorBody` subcomponents. The `showDetails` prop controls whether template preview / context stats / advanced buttons are rendered.
+
+### 2.3 Chunking Presets
+
+Four presets with dynamic descriptions showing both character and approximate token counts:
+- Small chunks (256 chars ≈ 64 tokens)
+- Paragraph length (500 chars ≈ 125 tokens)  
+- Page chunk (2000 chars ≈ 500 tokens)
+- Large sections (4000 chars ≈ 1000 tokens)
+
+Token estimation uses `Math.ceil(chars / 4)`. Descriptions are i18n-interpolated via `chunkSizeFormat` key. Toggle buttons use sentence case with `textTransform: "none"` to override MUI theme uppercase.
+
+### 2.4 Document Preview
+
+`DocumentPreviewModal` renders PDFs in an `<iframe>` and TXT files as `<pre>`. URLs are normalized via `utils/urlUtils.js` → `normalizeUrl()` which prepends `API_ORIGIN` (extracted from `REACT_APP_API_URL`) to relative paths. Backend `download_document` uses RFC 5987 `filename*=UTF-8''` encoding for Unicode filenames.
+
+### 2.5 Sequential Session Naming
+
+`SimplifiedSessionSetup` fetches sessions directly via `getSessions()` on mount (not relying on prop context chain). Uses `useState` + `useEffect` pattern instead of `useRef`-based tracking to avoid React 18 StrictMode double-fire bugs.
 
 ---
 
-## 3. RAG Setup: Simplified vs. Legacy vs. Standard Tasks
+## 3. RAG Setup: Simplified vs. Standard Tasks
 
-| Feature | Standard Gen Tasks | RAG Legacy | RAG Simplified |
-| :--- | :--- | :--- | :--- |
-| **Form Generation** | `ParameterForm` (Auto-generated from Schema) | Custom multi-step wizard | Custom Reactive Accordions |
-| **Logic Coupling** | Models are independent | Components are linked in a modal | Highly reactive (Cross-component validation) |
-| **Data Source** | None (User input only) | Global document library | Integrated `DocumentSelector` |
-| **Right Panel** | Empty or Static Model Info | Document management | Technical health monitor & Info bar |
-| **User Onboarding** | Direct to Chat | Multi-step config | Guided summary (`RAGSessionSummary`) |
+| Feature | Standard Gen Tasks | RAG Simplified |
+| :--- | :--- | :--- |
+| **Form Generation** | `ParameterForm` (Auto-generated from Schema) | Custom Reactive Accordions |
+| **Logic Coupling** | Models are independent | Highly reactive (Cross-component validation) |
+| **Data Source** | None (User input only) | Integrated `DocumentSelector` |
+| **Right Panel** | Empty or Static Model Info | Educational info bar or Params editor |
+| **User Onboarding** | Direct to Chat | Guided summary (`RAGSessionSummary`) |
 
-### 3.1 Reactive Validation in Simplified View
-The `SimplifiedSessionSetup` implements logic that isn't present in standard tasks:
-- **Token Window Calculation:** It calculates the remaining tokens for the LLM based on the `chunk_size` (from Chunking) and `top_k` (from Retriever). If the combined size exceeds the model's limit, it triggers a validation error *before* the session is created.
-- **Dynamic Suggestions:** Suggests session names based on existing RAG sessions only.
+### 3.1 Reactive Validation
+`SimplifiedSessionSetup` calculates the remaining tokens for the LLM based on `chunk_size` × `top_k` + `prompt_token_count`. If the combined size exceeds the model's context window, it triggers a validation error *before* session creation.
+
+### 3.2 Dynamic Naming
+Session names are suggested sequentially (`RAG_Session_1`, `RAG_Session_2`, etc.) by querying existing RAG sessions from the backend at mount time and filtering by `task_name === "RAGTask"`.
 
 ---
 
@@ -86,45 +115,42 @@ The `SimplifiedSessionSetup` implements logic that isn't present in standard tas
 
 ## 5. Summary of Interfaces
 
-- **`DocumentSelector`**: Shared component used to pick documents from the database.
-- **`DocumentsBar`**: Persistent side-bar in the chat view that lists active files.
-- **`RAGBreadcrumbs`**: Specialized navigation for the RAG module.
-- **`RAGSessionSummary`**: An "entry hall" for a session showing its configuration health before starting the chat.
-
----
+- **`DocumentSelector`**: Document picker used in creation form. Upload button positioned below the document table.
+- **`DocumentsBar`**: Sidebar in the chat/summary view listing session documents.
+- **`RAGDocumentsPanel`**: Left panel wrapper showing session documents.
+- **`RAGBreadcrumbs`**: Navigation breadcrumbs for RAG sub-pages (`/app/generative/rag/*`).
+- **`RAGSessionSummary`**: Session overview showing config details before entering chat.
+- **`RAGParamsPanel`**: Right panel for editing prompt and LLM of an existing session.
+- **`SimplifiedRAGInfoBar`**: Right panel with educational RAG content (shown during session creation).
+- **`PromptBody` / `GeneratorBody`**: Shared core subcomponents with `showDetails` prop.
+- **`PromptParamsCard` / `GeneratorParamsCard`**: Collapsible cards for the params bar (info toggle, selector always visible, collapsed by default).
+- **`SectionCard`**: Consistent spacing wrapper used by Prompt and Generator creation sections.
+- **`SimplifiedDocumentTable`**: MRT-based document table with checkbox selection and preview modal.
 
 ## 6. Component Visibility & Rendering Logic
 
-The visibility of key RAG components depends on the current view (Simplified vs. Legacy) and the state of the session (Selected vs. Chat Active).
+### 6.1 Right Panel
+- **`SimplifiedRAGInfoBar`**: Visible when no session is selected (creation phase). Provides educational guidance.
+- **`RAGParamsPanel`**: Visible when a session is selected. Contains collapsible `PromptParamsCard` and `GeneratorParamsCard`.
 
-### 6.1 Right Panel Components
-The right panel is dynamic and changes based on the user's context:
+### 6.2 Center Panel
+- **`SimplifiedSessionSetup`**: Visible when no session is selected. All sections as reactive Accordions with sticky Cancel/Save buttons.
+- **`RAGSessionSummary`**: Visible when a session is selected but chat is not active. Bridge between config and chat.
+- **`GenerativeChat`**: Visible when user explicitly starts chat from summary.
 
-- **`DocumentsBar`**:
-    - **In Legacy View**: Always visible. If no session is selected, it shows **all** database documents and allows uploads. If a session is selected, it filters to show only **session documents** and disables uploads.
-    - **In Simplified View**: Visible **only when a session is selected**. It always shows the session-specific documents.
-- **`SimplifiedRAGInfoBar`**:
-    - **In Simplified View**: Visible **only during the configuration phase** (when no session is selected). It provides technical guidance for the accordions.
-    - **In Legacy View**: Never visible.
+### 6.3 Left Panel
+- **`SessionBar`**: Visible when no session is selected. Lists all sessions.
+- **`RAGDocumentsPanel`**: Visible when a session is selected. Shows session-specific documents.
 
-### 6.2 Center Panel States
-The center panel manages the primary interaction flow:
+### 6.4 Summary Table
 
-- **`SimplifiedSessionSetup`**: Visible only in Simplified View when `selectedSessionId` is null.
-- **`RAGHomePage` (Option Menu)**: Visible only in Legacy View when `selectedSessionId` is null.
-- **`RAGSessionSummary`**: Visible in **both views** when a session is selected but the chat is not yet active (`!isRagChatActive`). It acts as a bridge between configuration and conversation.
-- **`GenerativeChat`**: Visible in **both views** only when the user explicitly starts the interaction from the summary screen.
-
-### 6.3 Summary Table of States
-
-| Component | View | Condition: No Session | Condition: Session Selected | Condition: Chat Active |
-| :--- | :--- | :--- | :--- | :--- |
-| **`DocumentsBar`** | Legacy | Visible (All Docs) | Visible (Session Docs) | Visible (Session Docs) |
-| **`DocumentsBar`** | Simplified | Hidden | Visible (Session Docs) | Visible (Session Docs) |
-| **`InfoBar`** | Simplified | Visible | Hidden | Hidden |
-| **`Setup/Menu`** | Both | Visible | Hidden | Hidden |
-| **`Summary`** | Both | Hidden | Visible | Hidden |
-- **`Chat`**: Both | Hidden | Hidden | Visible |
+| Component | Condition: No Session | Condition: Session Selected | Condition: Chat Active |
+| :--- | :--- | :--- | :--- |
+| **`DocumentsBar`** | Hidden | Visible (Session Docs) | Visible (Session Docs) |
+| **`InfoBar`** | Visible | Hidden | Hidden |
+| **`Setup`** | Visible | Hidden | Hidden |
+| **`Summary`** | Hidden | Visible | Hidden |
+| **`Chat`** | Hidden | Hidden | Visible |
 
 ---
 
@@ -196,97 +222,67 @@ For a RAG session to execute successfully, the following conditions must be met:
 
 ---
 
-## 10. Recent Changes & Agent Quick-Start
+## 10. Migration Summary (May 2026)
 
-This section documents the most recent, important code changes related to RAG parameter handling and the frontend RAG configuration UI. It is written for developers and automated agents that need to quickly understand and operate on the codebase without exploring every file.
+The legacy `RAGHomePage` and its multi-step wizard (`NewSessionModal`) have been removed. The simplified view is now the only RAG interface.
 
-- **Why these notes exist:** During development we fixed bugs where nested component parameter shapes (the `properties`-wrapped subform) were not handled consistently between components and forms. That caused the Chunking Advanced modal to show only a model selector instead of the parameter fields. We also improved parameter update endpoints and cleanup logic in the backend.
+### 10.1 Files Deleted (19 total)
 
-### 10.1 High-level summary of fixes
+**Dead code (never imported):**
+- `simplified-RAG/sections/index.js`, `simplified-RAG/advanced/index.js` — barrel files
+- `components/generative/RAG/DocumentSelectionTable.jsx`, `SessionMetadata.jsx` — orphaned
+- `pages/generative/RAG/AlgorithmConfigurationStep.jsx`, `ModelConfigurationStep.jsx`, `RetrieverConfigurationStep copy.jsx` — unused
 
-- Frontend: normalize `chunkingModel` shapes (support both `{ component, params }` and `properties: { component, params: { comp: { component, params }}}`). Ensure the advanced modal mounts the correct subform and renders scalar fields (e.g. `chunk_size`, `chunk_overlap`).
-- Frontend: fixed RAG-specific form renderer to include scalar field rendering and added missing imports.
-- Backend: added robust parameter merging, validation and orphaned-resource cleanup when session parameters change; added parameter history logging.
+**Legacy view:**
+- `pages/generative/RAG/RAGHomePage.jsx`, `RAGSessionsPage.jsx`, `RAGSessionsTable.jsx`
+- `pages/generative/RAG/NewSessionModal/` (6 files: NewSessionModal, 3 step components → relocated, ragFormDefaults → relocated)
+- `components/generative/RAG/ComponentSelector.jsx`, `NewPromptModal.jsx` (consolidated into simplified version)
 
-### 10.2 Files changed (key places to inspect)
+### 10.2 Files Relocated (4)
 
-- Frontend
-    - DashAI/front/src/pages/generative/simplified-RAG/sections/ChunkingSection.jsx — normalize incoming `chunkingModel` values and derive model/params using helpers.
-    - DashAI/front/src/pages/generative/RAG/NewSessionModal/ChunkingConfigurationStep.jsx — compute initial values defensively from either nested or flat `chunkingModel`; added debug logs used during troubleshooting.
-    - DashAI/front/src/pages/generative/simplified-RAG/advanced/ChunkingAdvancedModal.jsx — use normalized model name as `FormSchemaProvider` key to avoid remount issues.
-    - DashAI/front/src/pages/generative/simplified-RAG/components/RAGFormSchemaRenderFields.jsx — RAG-specific form renderer restored scalar-field rendering and added missing `FormSchemaFieldCard` import.
-    - DashAI/front/src/utils/schema.js — helpers used to format/parse nested subforms: `formattedModel`, `formattedSubform`, `getModelFromSubform`, `getParamsFromSubform`.
+| Old path (`NewSessionModal/`) | New path (`simplified-RAG/`) |
+|------|------|
+| `ChunkingConfigurationStep.jsx` | `advanced/ChunkingConfigurationStep.jsx` |
+| `RetrieverConfigurationStep.jsx` | `advanced/RetrieverConfigurationStep.jsx` |
+| `GeneratorConfigurationStep.jsx` | `advanced/GeneratorConfigurationStep.jsx` |
+| `ragFormDefaults.js` | `components/ragFormDefaults.js` |
 
-- Backend
-    - DashAI/back/api/api_v1/endpoints/generative_session.py — PUT `/{session_id}/parameters` endpoint: merges `old_parameters` + `new_parameters`, validates with `RAGPipeline.SCHEMA`, writes `GenerativeSessionParameterHistory`, and calls cleanup to remove orphaned DB rows and storage folders for removed subcomponents.
-    - DashAI/back/api/api_v1/endpoints/prompts.py & schema updates — prompt update/clone endpoints and templates validation.
+### 10.3 Routes Updated
 
-### 10.3 How to reproduce locally (quick commands)
+| Route | Before | After |
+|-------|--------|-------|
+| `/app/generative/rag` | `RAGHomePage` (legacy) | `SimplifiedRAGPage` |
+| `/app/generative/rag/sessions` | `RAGSessionsPage` | Removed |
+| `/app/generative/RAG` (uppercase) | `RAGHomePage` | Removed |
+| `/app/generative/simplified-rag` | `SimplifiedRAGPage` | Removed (absorbed) |
+| `/app/generative/rag/documents` | `RAGDocumentsPage` | Unchanged |
+| `/app/generative/rag/prompts` | `RAGPromptsPage` | Unchanged |
 
-Run backend tests (recommended):
+### 10.4 Key Design Changes
 
-```powershell
-# from repo root
-python -m pytest tests/back/api/test_session_api.py -q
-python -m pytest tests/back/api/test_rag_prompt_updates.py -q
-```
+- **SelectTaskMenu**: "Simplified RAG Setup" card removed. "RAG Task" navigates directly to `/app/generative/rag`.
+- **SessionBar / RAGBreadcrumbs**: Fixed route from `/app/generative/RAG` to `/app/generative/rag`.
+- **GenerativeContent**: No longer delegates to RAG — only handles non-RAG generative tasks.
+- **Document preview**: `normalizeUrl()` with `API_ORIGIN` extraction fixes relative URL issue. Backend uses RFC 5987 encoding for Unicode filenames.
+- **Sequential naming**: Direct `getSessions()` fetch on mount avoids React StrictMode ref-timing bug.
+- **Sticky buttons**: Custom wrapper replaces `CenterBox` for RAG setup, with flex layout keeping Cancel/Save fixed at bottom.
+- **DocumentSelector**: Upload button moved below table. `minHeight` removed for natural sizing.
+- **SectionCard**: Replaced Card wrapper with plain Box to avoid nested padding issues.
+- **Chunking presets**: Dynamic `[chars] caracteres ≈ [tokens] tokens` descriptions with i18n.
 
-Build frontend:
+### 10.5 Files to Inspect (current state)
 
-```powershell
-cd DashAI/front
-yarn install   # if dependencies changed
-yarn build
-```
+**Frontend:**
+- `pages/generative/simplified-RAG/SimplifiedRAGPage.jsx` — entry point
+- `pages/generative/simplified-RAG/SimplifiedSessionSetup.jsx` — creation form
+- `pages/generative/simplified-RAG/components/PromptBody.jsx` — shared prompt core
+- `pages/generative/simplified-RAG/components/GeneratorBody.jsx` — shared generator core
+- `components/generative/RAG/PromptParamsCard.jsx` — params bar prompt card
+- `components/generative/RAG/GeneratorParamsCard.jsx` — params bar generator card
+- `components/generative/RAG/DocumentSelector.jsx` — document picker
+- `components/generative/RAG/DocumentPreviewModal.jsx` — preview modal
+- `utils/urlUtils.js` — URL normalization
 
-Run frontend dev server for interactive debugging:
-
-```powershell
-cd DashAI/front
-yarn start
-# open http://localhost:3000 and navigate to Simplified RAG
-```
-
-### 10.4 Debug checklist for the Chunking Advanced modal
-
-If an agent/user reports that the Advanced modal only shows the model selector and not the parameters, run this checklist in order:
-
-1. Confirm the UI passed `chunkingModel` to the modal — find the parent component `SimplifiedSessionSetup` and check `sessionData.parameters.chunking_model`.
-2. Verify `chunkingModel` shape: it may be flat `{ component, params }` or nested with `properties`/`params.comp.params`. Use `getModelFromSubform()` and `getParamsFromSubform()` in `DashAI/front/src/utils/schema.js` to inspect.
-3. In the modal code `ChunkingConfigurationStep`, ensure `formInitialValues` is computed with the normalized `modelName` and `params` (the code now uses the helpers).
-4. Confirm the RAG renderer (`RAGFormSchemaRenderFields.jsx`) contains the scalar-field rendering branch and imports `FormSchemaFieldCard`.
-5. Open browser DevTools console — look for logs added during debugging:
-     - `[ChunkingConfigStep] Fetched chunking options:`
-     - `[ChunkingConfigStep] Syncing selectedChunking:`
-     - `[ChunkingConfigStep] Found chunking model:`
-     - `[ChunkingConfigStep] formInitialValues:`
-6. If `selectedChunking` is undefined but `modelName` exists, check that the components list returned by `getChunkingComponents()` includes that model name (backend registration issue).
-
-### 10.5 Backend agent tips (where to start when fixing server-side issues)
-
-- Parameter validation: look at `RAGPipeline.SCHEMA` — when updating session params the backend merges old and new parameter maps then runs `model_validate()` against that schema. If a parameter update fails validation, it will be rejected.
-- Cleanup: `_cleanup_orphaned_rag_resources(db, session_id, old_parameters, new_parameters)` is called after parameter updates to avoid stale DB rows and storage directories. When making changes to component naming or parameter nesting, update this logic accordingly.
-
-### 10.6 Tests added and their purpose
-
-- `tests/back/api/test_session_api.py` — added tests asserting parameter-merge behavior and that parameter history entries are created.
-- `tests/back/api/test_rag_prompt_updates.py` — covers prompt in-place updates, cloning prompts into sessions, and cleanup of orphaned prompts when parameters change.
-
-### 10.7 Common gotchas for agents
-
-- Mixed parameter shapes: codebase frequently uses both flat `{ component, params }` and nested `properties` subform shapes. Prefer the helper functions in `DashAI/front/src/utils/schema.js` to normalize.
-- Form re-mount keys: a `FormSchemaProvider` key should be based on the normalized model name to avoid losing form state or preventing the subform from rendering.
-- Don't rely solely on `component` property at the top level — it may be inside `properties.component`.
-
-### 10.8 Suggested next improvements (short-term)
-
-- Remove the `DialogContentText` double-`<p>` nesting warning by ensuring text content components don't nest `<Typography>` that render `<p>` inside a `<p>` wrapper.
-- Add unit tests for the frontend `ChunkingConfigurationStep` and `RAGFormSchemaRenderFields` to cover both nested and flat parameter shapes.
-- Add an integration test that opens `ChunkingAdvancedModal` with a pre-populated nested `chunkingModel` to prevent regressions.
-
----
-
-If you'd like, I can also:
-- open a PR with these guide changes, or
-- add the suggested frontend unit/integration tests (I can scaffold one using React Testing Library). Please tell me which next step you prefer.
+**Backend:**
+- `DashAI/back/api/api_v1/endpoints/documents.py` — file_url absolute URLs + RFC 5987 encoding
 
