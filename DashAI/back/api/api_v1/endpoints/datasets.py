@@ -271,11 +271,31 @@ async def filter_dataset_file(
     sort_model: str = Query(None, alias="sortModel"),
     columns: str = Query(None),
 ):
-    """
-    Fetch filtered and paginated dataset rows based on the provided
-    filterModel from the frontend. Uses an in-memory cache so that
-    pagination over the same filter+sort combination avoids re-reading
-    and re-filtering the Arrow file.
+    """Fetch filtered and paginated dataset rows.
+
+    Uses an in-memory cache so that pagination over the same filter+sort
+    combination avoids re-reading and re-filtering the Arrow file.
+
+    Parameters
+    ----------
+    path : str
+        The folder path of the dataset to retrieve.
+    page : int
+        The page number to retrieve.
+    page_size : int
+        The number of items per page.
+    filter_model : str, optional
+        JSON-encoded MUI filter model.
+    sort_model : str, optional
+        JSON-encoded MUI sort model.
+    columns : str, optional
+        Comma-separated list of column names to return. Returns all columns
+        if not provided.
+
+    Returns
+    -------
+    JSONResponse
+        A JSON response containing the filtered rows and total row count.
     """
     cached = _filtered_table_cache.get(path, filter_model, sort_model)
     if cached is not None:
