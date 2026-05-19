@@ -289,3 +289,47 @@ def test_get_dataset_file_invalid_columns_returns_empty_schema(client):
         data = resp.json()
         for row in data["rows"]:
             assert row == {}
+
+
+def test_filter_dataset_file_column_projection(client):
+    table = pa.table({"a": [1, 2, 3], "b": ["x", "y", "z"], "c": [0.1, 0.2, 0.3]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _write_test_arrow(tmp, table)
+        resp = client.get(
+            "/api/v1/dataset/filter/",
+            params={
+                "path": tmp,
+                "page": 0,
+                "page_size": 3,
+                "columns": "b,c",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["rows"]) == 3
+        for row in data["rows"]:
+            assert set(row.keys()) == {"b", "c"}
+
+
+def test_filter_dataset_file_column_projection_with_filter(client):
+    table = pa.table({"a": [1, 2, 3], "b": ["foo", "bar", "foo"], "c": [0.1, 0.2, 0.3]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _write_test_arrow(tmp, table)
+        filter_model = json.dumps(
+            {"items": [{"field": "b", "operator": "equals", "value": "foo"}]}
+        )
+        resp = client.get(
+            "/api/v1/dataset/filter/",
+            params={
+                "path": tmp,
+                "page": 0,
+                "page_size": 10,
+                "filterModel": filter_model,
+                "columns": "a,c",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 2
+        for row in data["rows"]:
+            assert set(row.keys()) == {"a", "c"}

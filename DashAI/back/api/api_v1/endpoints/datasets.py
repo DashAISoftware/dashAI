@@ -269,6 +269,7 @@ async def filter_dataset_file(
     page_size: int = 10,
     filter_model: str = Query(None, alias="filterModel"),
     sort_model: str = Query(None, alias="sortModel"),
+    columns: str = Query(None),
 ):
     """
     Fetch filtered and paginated dataset rows based on the provided
@@ -285,6 +286,12 @@ async def filter_dataset_file(
 
     start = page * page_size
     paged_table = table.slice(start, page_size)
+
+    if columns:
+        columns_list = [c.strip() for c in columns.split(",") if c.strip()]
+        valid_cols = [c for c in columns_list if c in paged_table.schema.names]
+        paged_table = paged_table.select(valid_cols)
+
     rows = [
         {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
         for i in range(paged_table.num_rows)
