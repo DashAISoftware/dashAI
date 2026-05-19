@@ -247,7 +247,9 @@ export default function SessionVisualization() {
               </Tooltip>
             }
             sx={{
+              alignItems: "flex-start",
               "& .MuiAccordionSummary-content": { my: "8px", mr: 1 },
+              "& .MuiAccordionSummary-expandIconWrapper": { mt: "10px" },
             }}
           >
             <Box
@@ -256,13 +258,20 @@ export default function SessionVisualization() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 width: "100%",
+                flexWrap: "wrap",
+                gap: 1,
               }}
             >
               <Typography variant="h6" color="text.primary">
                 {t("models:label.modelComparison")}
               </Typography>
               <Box
-                sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Metric Split Selector — controls both table and graph views */}
@@ -278,17 +287,17 @@ export default function SessionVisualization() {
                     size="small"
                   >
                     {hasTrainMetrics && (
-                      <ToggleButton value="train" sx={{ width: 120 }}>
+                      <ToggleButton value="train">
                         {t("common:train")}
                       </ToggleButton>
                     )}
                     {hasValidationMetrics && (
-                      <ToggleButton value="validation" sx={{ width: 120 }}>
+                      <ToggleButton value="validation">
                         {t("common:validation")}
                       </ToggleButton>
                     )}
                     {hasTestMetrics && (
-                      <ToggleButton value="test" sx={{ width: 120 }}>
+                      <ToggleButton value="test">
                         {t("common:test")}
                       </ToggleButton>
                     )}
@@ -301,7 +310,6 @@ export default function SessionVisualization() {
                     variant={showTable ? "contained" : "outlined"}
                     onClick={() => handleToggleView(true)}
                     startIcon={<TableChart />}
-                    sx={{ width: 110 }}
                   >
                     {t("common:table")}
                   </Button>
@@ -310,7 +318,6 @@ export default function SessionVisualization() {
                     variant={!showTable ? "contained" : "outlined"}
                     onClick={() => handleToggleView(false)}
                     startIcon={<BarChart />}
-                    sx={{ width: 110 }}
                   >
                     {t("common:graphs")}
                   </Button>
