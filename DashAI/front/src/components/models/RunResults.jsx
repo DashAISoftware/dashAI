@@ -263,23 +263,21 @@ export default function RunResults({
                     </Box>
                   </Box>
                   <Stack spacing={2}>
-                    {!globalCreatorOpen && (
-                      <Box sx={{ width: "100%" }}>
-                        <TimestampWrapper
-                          eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
+                    <Box sx={{ width: "100%" }}>
+                      <TimestampWrapper
+                        eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => setGlobalCreatorOpen(true)}
+                          fullWidth
                         >
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<AddIcon />}
-                            onClick={() => setGlobalCreatorOpen(true)}
-                            fullWidth
-                          >
-                            {t("models:button.createGlobalExplainer")}
-                          </Button>
-                        </TimestampWrapper>
-                      </Box>
-                    )}
+                          {t("models:button.createGlobalExplainer")}
+                        </Button>
+                      </TimestampWrapper>
+                    </Box>
                     <InlineExplainerCreator
                       open={globalCreatorOpen}
                       scope="global"
@@ -345,23 +343,21 @@ export default function RunResults({
                     </Box>
                   </Box>
                   <Stack spacing={2}>
-                    {!localCreatorOpen && (
-                      <Box sx={{ width: "100%" }}>
-                        <TimestampWrapper
-                          eventName={TIMESTAMP_KEYS.explainer.configureLocal}
+                    <Box sx={{ width: "100%" }}>
+                      <TimestampWrapper
+                        eventName={TIMESTAMP_KEYS.explainer.configureLocal}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={() => setLocalCreatorOpen(true)}
+                          fullWidth
                         >
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<AddIcon />}
-                            onClick={() => setLocalCreatorOpen(true)}
-                            fullWidth
-                          >
-                            {t("models:button.createLocalExplainer")}
-                          </Button>
-                        </TimestampWrapper>
-                      </Box>
-                    )}
+                          {t("models:button.createLocalExplainer")}
+                        </Button>
+                      </TimestampWrapper>
+                    </Box>
                     <InlineExplainerCreator
                       open={localCreatorOpen}
                       scope="local"
