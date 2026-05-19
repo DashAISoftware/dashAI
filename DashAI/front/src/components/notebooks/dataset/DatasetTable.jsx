@@ -65,6 +65,9 @@ export default function DatasetTable({
   );
 
   const [columnPickerAnchor, setColumnPickerAnchor] = useState(null);
+  const [pendingColumns, setPendingColumns] = useState(() =>
+    Object.keys(columnTypes).slice(0, INITIAL_VISIBLE_COLUMNS),
+  );
 
   // When allColumnNames changes (new dataset loaded), reset selectedColumns if
   // the current selection has no overlap with the new column set.
@@ -72,7 +75,9 @@ export default function DatasetTable({
     setSelectedColumns((prev) => {
       const valid = prev.filter((c) => allColumnNames.includes(c));
       if (valid.length > 0 && valid.length === prev.length) return prev;
-      return allColumnNames.slice(0, INITIAL_VISIBLE_COLUMNS);
+      const reset = allColumnNames.slice(0, INITIAL_VISIBLE_COLUMNS);
+      setPendingColumns(reset);
+      return reset;
     });
   }, [allColumnNames]);
 
@@ -604,7 +609,10 @@ export default function DatasetTable({
             size="small"
             variant="text"
             startIcon={<ViewColumnIcon />}
-            onClick={(e) => setColumnPickerAnchor(e.currentTarget)}
+            onClick={(e) => {
+              setPendingColumns(selectedColumns);
+              setColumnPickerAnchor(e.currentTarget);
+            }}
           >
             {selectedColumns.length}/{allColumnNames.length}
           </Button>
@@ -632,46 +640,71 @@ export default function DatasetTable({
         onClose={() => setColumnPickerAnchor(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
       >
-        <Box
-          sx={{
-            p: 1.5,
-            maxHeight: 380,
-            overflow: "auto",
-            minWidth: 200,
-          }}
-        >
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ px: 0.5, display: "block", mb: 0.5 }}
+        <Box sx={{ display: "flex", flexDirection: "column", minWidth: 200 }}>
+          <Box
+            sx={{
+              px: 1.5,
+              pt: 1.5,
+              pb: 0.5,
+              maxHeight: 340,
+              overflow: "auto",
+            }}
           >
-            {selectedColumns.length} of {allColumnNames.length} visible
-          </Typography>
-          {allColumnNames.map((col) => (
-            <FormControlLabel
-              key={col}
-              control={
-                <Checkbox
-                  size="small"
-                  checked={selectedColumns.includes(col)}
-                  onChange={(e) => {
-                    setSelectedColumns((prev) =>
-                      e.target.checked
-                        ? [...prev, col]
-                        : prev.filter((c) => c !== col),
-                    );
-                    setPagination((p) => ({ ...p, pageIndex: 0 }));
-                  }}
-                />
-              }
-              label={
-                <Typography variant="body2" noWrap>
-                  {col}
-                </Typography>
-              }
-              sx={{ display: "flex", m: 0, py: 0.25 }}
-            />
-          ))}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ px: 0.5, display: "block", mb: 0.5 }}
+            >
+              {pendingColumns.length} of {allColumnNames.length} selected
+            </Typography>
+            {allColumnNames.map((col) => (
+              <FormControlLabel
+                key={col}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={pendingColumns.includes(col)}
+                    onChange={(e) => {
+                      setPendingColumns((prev) =>
+                        e.target.checked
+                          ? [...prev, col]
+                          : prev.filter((c) => c !== col),
+                      );
+                    }}
+                  />
+                }
+                label={
+                  <Typography variant="body2" noWrap>
+                    {col}
+                  </Typography>
+                }
+                sx={{ display: "flex", m: 0, py: 0.25 }}
+              />
+            ))}
+          </Box>
+          <Box
+            sx={{
+              px: 1.5,
+              py: 1,
+              borderTop: 1,
+              borderColor: "divider",
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button
+              size="small"
+              variant="contained"
+              disableElevation
+              onClick={() => {
+                setSelectedColumns(pendingColumns);
+                setPagination((p) => ({ ...p, pageIndex: 0 }));
+                setColumnPickerAnchor(null);
+              }}
+            >
+              Apply
+            </Button>
+          </Box>
         </Box>
       </Popover>
     </Box>
