@@ -68,6 +68,7 @@ export default function DatasetTable({
 
   const selectedColumnsParam = useMemo(
     () =>
+      selectedColumns.length === 0 ||
       selectedColumns.length === allColumnNames.length
         ? undefined
         : selectedColumns,
@@ -363,6 +364,8 @@ export default function DatasetTable({
         pagination.pageIndex,
         pagination.pageSize,
         muiFormattedFilters,
+        sorting,
+        selectedColumnsParam,
       );
       const rows = response?.rows ?? [];
       setData(rows);
@@ -370,7 +373,15 @@ export default function DatasetTable({
 
       return result;
     },
-    [datasetId, onEditColumn, columnFilters, pagination, fetchPage],
+    [
+      datasetId,
+      onEditColumn,
+      columnFilters,
+      pagination,
+      fetchPage,
+      sorting,
+      selectedColumnsParam,
+    ],
   );
 
   const handleEncoderChange = useCallback(
@@ -592,54 +603,6 @@ export default function DatasetTable({
             {selectedColumns.length}/{allColumnNames.length}
           </Button>
         </Tooltip>
-        <Popover
-          open={Boolean(columnPickerAnchor)}
-          anchorEl={columnPickerAnchor}
-          onClose={() => setColumnPickerAnchor(null)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        >
-          <Box
-            sx={{
-              p: 1.5,
-              maxHeight: 380,
-              overflow: "auto",
-              minWidth: 200,
-            }}
-          >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ px: 0.5, display: "block", mb: 0.5 }}
-            >
-              {selectedColumns.length} of {allColumnNames.length} visible
-            </Typography>
-            {allColumnNames.map((col) => (
-              <FormControlLabel
-                key={col}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={selectedColumns.includes(col)}
-                    onChange={(e) => {
-                      setSelectedColumns((prev) =>
-                        e.target.checked
-                          ? [...prev, col]
-                          : prev.filter((c) => c !== col),
-                      );
-                      setPagination((p) => ({ ...p, pageIndex: 0 }));
-                    }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" noWrap>
-                    {col}
-                  </Typography>
-                }
-                sx={{ display: "flex", m: 0, py: 0.25 }}
-              />
-            ))}
-          </Box>
-        </Popover>
       </Box>
     ),
     state: {
@@ -657,6 +620,54 @@ export default function DatasetTable({
   return (
     <Box sx={{ width: "100%" }}>
       <MaterialReactTable table={table} />
+      <Popover
+        open={Boolean(columnPickerAnchor)}
+        anchorEl={columnPickerAnchor}
+        onClose={() => setColumnPickerAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+      >
+        <Box
+          sx={{
+            p: 1.5,
+            maxHeight: 380,
+            overflow: "auto",
+            minWidth: 200,
+          }}
+        >
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ px: 0.5, display: "block", mb: 0.5 }}
+          >
+            {selectedColumns.length} of {allColumnNames.length} visible
+          </Typography>
+          {allColumnNames.map((col) => (
+            <FormControlLabel
+              key={col}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={selectedColumns.includes(col)}
+                  onChange={(e) => {
+                    setSelectedColumns((prev) =>
+                      e.target.checked
+                        ? [...prev, col]
+                        : prev.filter((c) => c !== col),
+                    );
+                    setPagination((p) => ({ ...p, pageIndex: 0 }));
+                  }}
+                />
+              }
+              label={
+                <Typography variant="body2" noWrap>
+                  {col}
+                </Typography>
+              }
+              sx={{ display: "flex", m: 0, py: 0.25 }}
+            />
+          ))}
+        </Box>
+      </Popover>
     </Box>
   );
 }
