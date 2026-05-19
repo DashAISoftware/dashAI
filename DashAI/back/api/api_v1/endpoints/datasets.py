@@ -1339,6 +1339,7 @@ async def get_dataset_file(
     path: str,
     page: int = 0,
     page_size: int = 10,
+    columns: str = Query(None),
 ):
     """Fetch the dataset file associated with the provided file path.
 
@@ -1350,6 +1351,9 @@ async def get_dataset_file(
         The page number to retrieve.
     page_size: int
         The number of items per page.
+    columns : str, optional
+        Comma-separated list of column names to return. Returns all columns
+        if not provided.
 
     Returns
     -------
@@ -1368,6 +1372,10 @@ async def get_dataset_file(
     end = start + page_size
     rows_collected = 0
 
+    columns_list = (
+        [c.strip() for c in columns.split(",") if c.strip()] if columns else None
+    )
+
     with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
 
@@ -1378,15 +1386,19 @@ async def get_dataset_file(
             batch_end = current_index + batch.num_rows
             current_index = batch_end
 
-            # Skip batches before the page start
             if batch_end <= start:
                 continue
             if batch_start >= end:
-                break  # already got all needed rows
+                break
 
             slice_start = max(0, start - batch_start)
             slice_end = min(batch.num_rows, end - batch_start)
             sliced_batch = batch.slice(slice_start, slice_end - slice_start)
+
+            if columns_list:
+                valid_cols = [c for c in columns_list if c in sliced_batch.schema.names]
+                if valid_cols:
+                    sliced_batch = sliced_batch.select(valid_cols)
 
             for j in range(sliced_batch.num_rows):
                 row = {

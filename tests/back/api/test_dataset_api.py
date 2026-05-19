@@ -1,5 +1,9 @@
+import json
 import os
+import tempfile
 
+import pyarrow as pa
+import pyarrow.ipc as ipc
 import pytest
 from fastapi.testclient import TestClient
 
@@ -223,3 +227,46 @@ def test_delete_dataset(client: TestClient, dataset_1: Dataset) -> None:
 
     response = client.delete("/api/v1/dataset/10000")
     assert response.status_code == 404, response.text
+
+
+def _write_test_arrow(path: str, table: pa.Table) -> str:
+    """Write a PyArrow table to {path}/dataset/data.arrow and return path."""
+    dataset_dir = os.path.join(path, "dataset")
+    os.makedirs(dataset_dir, exist_ok=True)
+    arrow_path = os.path.join(dataset_dir, "data.arrow")
+    with pa.OSFile(arrow_path, "wb") as sink:
+        writer = ipc.RecordBatchFileWriter(sink, table.schema)
+        writer.write_table(table)
+        writer.close()
+    splits_path = os.path.join(dataset_dir, "splits.json")
+    with open(splits_path, "w") as f:
+        json.dump({"total_rows": table.num_rows, "splits": {}}, f)
+    return path
+
+
+def test_get_dataset_file_column_projection(client):
+    table = pa.table({"a": [1, 2, 3], "b": ["x", "y", "z"], "c": [0.1, 0.2, 0.3]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _write_test_arrow(tmp, table)
+        resp = client.get(
+            "/api/v1/dataset/file/",
+            params={"path": tmp, "page": 0, "page_size": 3, "columns": "a,b"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["rows"]) == 3
+        for row in data["rows"]:
+            assert set(row.keys()) == {"a", "b"}
+
+
+def test_get_dataset_file_no_columns_returns_all(client):
+    table = pa.table({"a": [1], "b": ["x"], "c": [0.1]})
+    with tempfile.TemporaryDirectory() as tmp:
+        _write_test_arrow(tmp, table)
+        resp = client.get(
+            "/api/v1/dataset/file/",
+            params={"path": tmp, "page": 0, "page_size": 5},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert set(data["rows"][0].keys()) == {"a", "b", "c"}
