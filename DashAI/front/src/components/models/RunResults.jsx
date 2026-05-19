@@ -82,6 +82,16 @@ export default function RunResults({
     fetchOperations();
   }, [fetchOperations, explainerRefreshTrigger]);
 
+  // Refetch when run parameters change (after editing)
+  useEffect(() => {
+    fetchOperations();
+  }, [
+    run.parameters,
+    run.optimizer_parameters,
+    run.goal_metric,
+    fetchOperations,
+  ]);
+
   const hasRunningExplainers =
     globalExplainers.some((e) => e.status === 1 || e.status === 2) ||
     localExplainers.some((e) => e.status === 1 || e.status === 2);
