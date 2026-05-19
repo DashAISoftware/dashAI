@@ -650,13 +650,36 @@ export default function DatasetTable({
               overflow: "auto",
             }}
           >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ px: 0.5, display: "block", mb: 0.5 }}
-            >
-              {pendingColumns.length} of {allColumnNames.length} selected
-            </Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={pendingColumns.length === allColumnNames.length}
+                  indeterminate={
+                    pendingColumns.length > 0 &&
+                    pendingColumns.length < allColumnNames.length
+                  }
+                  onChange={(e) =>
+                    setPendingColumns(
+                      e.target.checked ? [...allColumnNames] : [],
+                    )
+                  }
+                />
+              }
+              label={
+                <Typography variant="body2" fontWeight="bold" noWrap>
+                  Select all ({pendingColumns.length}/{allColumnNames.length})
+                </Typography>
+              }
+              sx={{
+                display: "flex",
+                m: 0,
+                py: 0.5,
+                borderBottom: 1,
+                borderColor: "divider",
+                mb: 0.5,
+              }}
+            />
             {allColumnNames.map((col) => (
               <FormControlLabel
                 key={col}
