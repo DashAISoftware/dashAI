@@ -66,14 +66,26 @@ export default function DatasetTable({
 
   const [columnPickerAnchor, setColumnPickerAnchor] = useState(null);
 
-  const selectedColumnsParam = useMemo(
-    () =>
-      selectedColumns.length === 0 ||
-      selectedColumns.length === allColumnNames.length
-        ? undefined
-        : selectedColumns,
-    [selectedColumns, allColumnNames],
-  );
+  // When allColumnNames changes (new dataset loaded), reset selectedColumns if
+  // the current selection has no overlap with the new column set.
+  useEffect(() => {
+    setSelectedColumns((prev) => {
+      const valid = prev.filter((c) => allColumnNames.includes(c));
+      if (valid.length > 0 && valid.length === prev.length) return prev;
+      return allColumnNames.slice(0, INITIAL_VISIBLE_COLUMNS);
+    });
+  }, [allColumnNames]);
+
+  // Filter selectedColumns to only those that exist in allColumnNames so that
+  // a stale selection from a previous dataset doesn't lock the fetch into
+  // returning 0 columns. An empty valid set is treated as "all columns".
+  const selectedColumnsParam = useMemo(() => {
+    if (selectedColumns.length === 0) return undefined;
+    const valid = selectedColumns.filter((c) => allColumnNames.includes(c));
+    if (valid.length === 0 || valid.length === allColumnNames.length)
+      return undefined;
+    return valid;
+  }, [selectedColumns, allColumnNames]);
 
   const [allFilteredData, setAllFilteredData] = useState(null);
   const [totalRowCount, setTotalRowCount] = useState(0); // Track actual total without filters
