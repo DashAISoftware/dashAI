@@ -11,7 +11,7 @@ export const getModelSessions = async (): Promise<IModelSession[]> => {
 export const getModelSessionById = async (
   id: string,
 ): Promise<IModelSession> => {
-  const response = await api.get<IModelSession>(`${endpointURL}/${id}`);
+  const response = await api.get<IModelSession>(`${endpointURL}/${id}/`);
   return response.data;
 };
 

@@ -83,7 +83,7 @@ function RunCard({
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
 
   const { defaultValues: defaultOptimizerParams } = useSchema({
-    modelName: editedOptimizer,
+    modelName: isEditing ? editedOptimizer : null,
   });
 
   useEffect(() => {
