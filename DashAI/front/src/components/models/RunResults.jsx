@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -24,6 +25,7 @@ import {
 } from "@mui/icons-material";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
+import { LoadingButton } from "@mui/lab";
 import InlineExplainerCreator from "../explainers/InlineExplainerCreator";
 import DatasetPredictionPanel from "./DatasetPredictionPanel";
 import ManualPredictionPanel from "./ManualPredictionPanel";
@@ -62,6 +64,11 @@ export default function RunResults({
   const [manualExpanded, setManualExpanded] = useState(true);
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const [showManualPanel, setShowManualPanel] = useState(false);
+  const manualSaveRef = useRef(null);
+  const [manualSaveState, setManualSaveState] = useState({
+    canSave: false,
+    isSaving: false,
+  });
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
@@ -469,7 +476,10 @@ export default function RunResults({
                   variant="outlined"
                   size="small"
                   startIcon={<TrendingUpIcon />}
-                  onClick={() => setShowManualPanel(true)}
+                  onClick={() => {
+                    setManualSaveState({ canSave: false, isSaving: false });
+                    setShowManualPanel(true);
+                  }}
                   fullWidth
                 >
                   {t("models:button.newManualPrediction")}
@@ -520,7 +530,7 @@ export default function RunResults({
             <Dialog
               open={showManualPanel}
               onClose={() => setShowManualPanel(false)}
-              maxWidth="md"
+              maxWidth="lg"
               fullWidth
               PaperProps={{ sx: { minHeight: "500px" } }}
             >
@@ -553,8 +563,28 @@ export default function RunResults({
                     setShowManualPanel(false);
                   }}
                   onClose={() => setShowManualPanel(false)}
+                  saveRef={manualSaveRef}
+                  onStateChange={setManualSaveState}
                 />
               </DialogContent>
+              <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowManualPanel(false)}
+                  disabled={manualSaveState.isSaving}
+                >
+                  {t("common:cancel")}
+                </Button>
+                <LoadingButton
+                  variant="contained"
+                  color="primary"
+                  disabled={!manualSaveState.canSave}
+                  loading={manualSaveState.isSaving}
+                  onClick={() => manualSaveRef.current?.()}
+                >
+                  {t("prediction:button.saveResults")}
+                </LoadingButton>
+              </DialogActions>
             </Dialog>
 
             <Stack spacing={2}>
