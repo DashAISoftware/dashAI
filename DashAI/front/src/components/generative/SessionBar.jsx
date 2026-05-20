@@ -23,6 +23,12 @@ export default function SessionBar({ onToggle }) {
   const [openSections, setOpenSections] = useState({});
   const { t } = useTranslation(["generative", "common"]);
 
+  const SEARCH_THRESHOLD = 10;
+
+  useEffect(() => {
+    if (sessions.length <= SEARCH_THRESHOLD) setSearchQuery("");
+  }, [sessions.length]);
+
   // Create a map of task_name to display_name for quick lookup
   const taskDisplayNameMap =
     tasks?.reduce((map, task) => {
@@ -149,13 +155,15 @@ export default function SessionBar({ onToggle }) {
         </Box>
 
         {/* Search Bar */}
-        <Box px={4} pb={4} flex={"0 0 auto"}>
-          <SearchBar
-            placeholder={t("generative:label.searchSessions")}
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-        </Box>
+        {sessions.length > SEARCH_THRESHOLD && (
+          <Box px={4} pb={4} flex={"0 0 auto"}>
+            <SearchBar
+              placeholder={t("generative:label.searchSessions")}
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </Box>
+        )}
 
         <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 

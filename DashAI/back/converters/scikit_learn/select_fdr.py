@@ -25,6 +25,10 @@ class SelectFdrSchema(BaseSchema):
                 "El p-valor sin corregir más alto para que una característica "
                 "sea conservada."
             ),
+            pt=(
+                "O p-valor não corrigido mais alto para que uma característica "
+                "seja mantida."
+            ),
         ),
     )  # type: ignore
 
@@ -67,9 +71,15 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
             "Filtro: Selecciona características según una prueba de tasa de "
             "falsos descubrimientos (FDR)."
         ),
+        pt=(
+            "Filtro: Seleciona características de acordo com um teste de taxa "
+            "de falsa descoberta (FDR)."
+        ),
     )
     SUPERVISED = True
-    DISPLAY_NAME = MultilingualString(en="Select FDR", es="Seleccionar FDR")
+    DISPLAY_NAME = MultilingualString(
+        en="Select FDR", es="Seleccionar FDR", pt="Seleção por FDR"
+    )
     IMAGE_PREVIEW = "select_fdr.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 

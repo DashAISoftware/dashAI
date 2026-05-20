@@ -159,6 +159,7 @@ export default function UploadNotebookSteps({
         onNext={formik.handleSubmit}
         nextDisabled={!isValid}
         nextLabel={t("datasets:button.createNotebook")}
+        nextDataTour={tourContext?.run ? "create-notebook-button" : undefined}
       />
     </Box>
   );

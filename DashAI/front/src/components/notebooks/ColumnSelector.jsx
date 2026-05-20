@@ -5,11 +5,10 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 
 /**
  * Generic column selection component that can be reused across the application
@@ -46,11 +45,9 @@ function ColumnSelector({
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
-  const { t, i18n } = useTranslation(["datasets", "common"]);
+  const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const toMRT = (ids) =>
     Object.fromEntries(ids.map((id) => [String(id), true]));
@@ -364,7 +361,7 @@ function ColumnSelector({
           <Typography
             variant="body2"
             sx={{
-              color: "rgba(255, 255, 255, 0.5)",
+              color: "text.secondary",
               fontStyle: "italic",
               mt: 2,
             }}
@@ -416,10 +413,9 @@ function ColumnSelector({
       )}
 
       {/* Data Grid */}
-      <MaterialReactTable
-        data-tour="column-selector"
-        table={columnSelectorTable}
-      />
+      <Box data-tour="column-selector">
+        <MaterialReactTable table={columnSelectorTable} />
+      </Box>
     </Box>
   );
 }

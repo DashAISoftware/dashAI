@@ -35,6 +35,14 @@ export const useTour = (tourKey) => {
     setStepIndex(step);
   }, []);
 
+  const resumeAtStep = useCallback((step) => {
+    setRun(false);
+    setTimeout(() => {
+      setStepIndex(step);
+      setRun(true);
+    }, 80);
+  }, []);
+
   const nextStep = useCallback(() => {
     setStepIndex((prevIndex) => {
       return prevIndex + 1;
@@ -97,5 +105,6 @@ export const useTour = (tourKey) => {
     handleJoyrideCallback,
     goToStep,
     nextStep,
+    resumeAtStep,
   };
 };

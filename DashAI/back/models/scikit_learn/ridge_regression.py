@@ -8,7 +8,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -45,8 +44,12 @@ class RidgeRegressionSchema(BaseSchema):
                 "Fuerza de regularización; debe ser un float positivo. "
                 "Valores más grandes especifican una regularización más fuerte."
             ),
+            pt=(
+                "Força de regularização; deve ser um float positivo. "
+                "Valores maiores especificam uma regularização mais forte."
+            ),
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa"),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -63,8 +66,15 @@ class RidgeRegressionSchema(BaseSchema):
                 "Si se establece en False, no se usará intercepto en los cálculos "
                 "(ej., se espera que los datos estén centrados)."
             ),
+            pt=(
+                "Se o intercepto deve ser calculado para este modelo. "
+                "Se definido como False, nenhum intercepto será usado nos cálculos "
+                "(ex., espera-se que os dados estejam centrados)."
+            ),
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept", es="Ajustar intercepto", pt="Ajustar intercepto"
+        ),
     )  # type: ignore
 
     copy_X: schema_field(  # noqa: N815
@@ -73,8 +83,9 @@ class RidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="If True, X will be copied; else, it may be overwritten.",
             es="Si es True, X será copiado; si no, puede ser sobrescrito.",
+            pt="Se True, X será copiado; caso contrário, pode ser sobrescrito.",
         ),
-        alias=MultilingualString(en="Copy X", es="Copiar X"),
+        alias=MultilingualString(en="Copy X", es="Copiar X", pt="Copiar X"),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -91,8 +102,13 @@ class RidgeRegressionSchema(BaseSchema):
                 "Número máximo de iteraciones para el "
                 "solucionador de gradiente conjugado."
             ),
+            pt=(
+                "Número máximo de iterações para o solucionador de gradiente conjugado."
+            ),
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+        ),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(ge=0.0),
@@ -105,8 +121,9 @@ class RidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Precision of the solution.",
             es="Precisión de la solución.",
+            pt="Precisão da solução.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
     )  # type: ignore
     solver: schema_field(
         enum_field(
@@ -122,8 +139,12 @@ class RidgeRegressionSchema(BaseSchema):
                 "Solucionador a usar en el cálculo. 'auto' elige el "
                 "solucionador automáticamente basado en el tipo de datos."
             ),
+            pt=(
+                "Solucionador a usar no cálculo. 'auto' escolhe o "
+                "solucionador automaticamente com base no tipo de dados."
+            ),
         ),
-        alias=MultilingualString(en="Solver", es="Solucionador"),
+        alias=MultilingualString(en="Solver", es="Solucionador", pt="Solucionador"),
     )  # type: ignore
     positive: schema_field(
         bool_field(),
@@ -131,11 +152,12 @@ class RidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="When set to True, forces the coefficients to be positive.",
             es="Cuando se establece en True, fuerza los coeficientes a ser positivos.",
+            pt="Quando definido como True, força os coeficientes a serem positivos.",
         ),
-        alias=MultilingualString(en="Positive", es="Positivo"),
+        alias=MultilingualString(en="Positive", es="Positivo", pt="Positivo"),
     )  # type: ignore
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -148,8 +170,15 @@ class RidgeRegressionSchema(BaseSchema):
                 "al mezclar los datos. Pase un int para salida reproducible entre "
                 "múltiples llamadas, o None para no establecer una semilla específica."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios a usar "
+                "ao embaralhar os dados. Passe um int para saída reproduzível entre "
+                "múltiplas chamadas, ou None para não definir uma semente específica."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+        ),
     )  # type: ignore
 
 
@@ -179,10 +208,12 @@ class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
     DISPLAY_NAME: str = MultilingualString(
         en="Ridge Regression",
         es="Regresión Ridge",
+        pt="Regressão Ridge",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression with L2 regularization.",
         es="Regresión lineal con regularización L2.",
+        pt="Regressão linear com regularização L2.",
     )
     COLOR: str = "#2196F3"
     ICON: str = "ShowChart"

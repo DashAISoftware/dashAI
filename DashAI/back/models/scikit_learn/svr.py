@@ -36,8 +36,12 @@ class SVRSchema(BaseSchema):
                 "Especifica el tipo de kernel a usar. "
                 "'rbf' es la función de base radial predeterminada."
             ),
+            pt=(
+                "Especifica o tipo de kernel a usar. "
+                "'rbf' é a função de base radial padrão."
+            ),
         ),
-        alias=MultilingualString(en="Kernel", es="Kernel"),
+        alias=MultilingualString(en="Kernel", es="Kernel", pt="Kernel"),
     )  # type: ignore
 
     C: schema_field(  # noqa: N815
@@ -57,8 +61,12 @@ class SVRSchema(BaseSchema):
                 "Parámetro de regularización. Inversamente proporcional a la "
                 "fuerza de la regularización."
             ),
+            pt=(
+                "Parâmetro de regularização. Inversamente proporcional à "
+                "força da regularização."
+            ),
         ),
-        alias=MultilingualString(en="C", es="C"),
+        alias=MultilingualString(en="C", es="C", pt="C"),
     )  # type: ignore
 
     epsilon: schema_field(
@@ -78,8 +86,12 @@ class SVRSchema(BaseSchema):
                 "Especifica el tubo epsilon dentro del cual no se asocia penalización "
                 "en la función de pérdida de entrenamiento."
             ),
+            pt=(
+                "Especifica o tubo epsilon dentro do qual nenhuma penalização é "
+                "associada na função de perda de treinamento."
+            ),
         ),
-        alias=MultilingualString(en="Epsilon", es="Épsilon"),
+        alias=MultilingualString(en="Epsilon", es="Épsilon", pt="Épsilon"),
     )  # type: ignore
 
     gamma: schema_field(
@@ -94,8 +106,12 @@ class SVRSchema(BaseSchema):
                 "Coeficiente del kernel para 'rbf', 'poly' y 'sigmoid'. "
                 "'scale' usa 1/(n_features * X.var()); 'auto' usa 1/n_features."
             ),
+            pt=(
+                "Coeficiente do kernel para 'rbf', 'poly' e 'sigmoid'. "
+                "'scale' usa 1/(n_features * X.var()); 'auto' usa 1/n_features."
+            ),
         ),
-        alias=MultilingualString(en="Gamma", es="Gamma"),
+        alias=MultilingualString(en="Gamma", es="Gamma", pt="Gamma"),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -112,8 +128,11 @@ class SVRSchema(BaseSchema):
                 "Límite en iteraciones dentro del solucionador. "
                 "-1 significa sin límite."
             ),
+            pt=("Limite de iterações dentro do solucionador. -1 significa sem limite."),
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations", es="Máximas iteraciones", pt="Iterações máximas"
+        ),
     )  # type: ignore
 
 
@@ -138,12 +157,17 @@ class SVR(RegressionModel, SklearnLikeRegressor, _SVR):
     DISPLAY_NAME: str = MultilingualString(
         en="Support Vector Regression",
         es="Regresión de Vectores de Soporte",
+        pt="Regressão de Vetores de Suporte",
     )
     DESCRIPTION: str = MultilingualString(
         en="Kernel-based SVR that finds a function within an epsilon-insensitive tube.",
         es=(
             "SVR basado en kernel que encuentra una función dentro de un tubo "
             "insensible a épsilon."
+        ),
+        pt=(
+            "SVR baseado em kernel que encontra uma função dentro de um tubo "
+            "insensível a épsilon."
         ),
     )
     COLOR: str = "#EF5350"

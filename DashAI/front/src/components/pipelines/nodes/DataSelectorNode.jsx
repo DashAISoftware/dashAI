@@ -8,13 +8,10 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { getDatasets } from "../../../api/datasets";
 import { useSnackbar } from "notistack";
-import { useTranslation } from "react-i18next";
-
 function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [datasetId, setDatasetId] = useState(savedConfig ? savedConfig.id : "");
   const [openModal, setOpenModal] = useState(false);
@@ -22,11 +19,8 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const [validationStatus, setValidationStatus] = useState("");
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const fetchDatasets = async () => {
     setLoading(true);

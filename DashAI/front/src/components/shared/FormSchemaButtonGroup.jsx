@@ -44,11 +44,7 @@ function FormSchemaButtonGroup({
       nextLabel={finalSaveText}
       showBack={!!onCancel}
       showNext={!!onFormSubmit}
-      sx={{
-        "& button:last-child": {
-          ...(finalDataTour && { "data-tour": finalDataTour }),
-        },
-      }}
+      nextDataTour={finalDataTour}
     />
   );
 }

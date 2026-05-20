@@ -1,17 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  Box,
-  Typography,
-  IconButton,
-} from "@mui/material";
+import { Modal, TextField, Box, Typography, IconButton } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 import NoteBox from "../NoteBox";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import { useTourContext } from "../../tour/TourProvider";
@@ -84,18 +76,48 @@ export function SaveDatasetModal({
   const nameError = getNameError();
 
   return (
-    <Dialog open={open} onClose={() => {}} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {t("datasets:label.saveProcessedDataset")}
-        <IconButton
-          onClick={handleClose}
-          sx={{ position: "absolute", right: 8, top: 8 }}
+    <Modal open={open} onClose={() => {}}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: { xs: "90%", sm: 560 },
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          boxShadow: 12,
+          p: 0,
+          outline: "none",
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+          }}
         >
-          <Close />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent data-tour="save-dataset-modal-notebook">
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 6, mt: 2 }}>
+          <Typography variant="h6" component="h2">
+            {t("datasets:label.saveProcessedDataset")}
+          </Typography>
+          <IconButton
+            onClick={handleClose}
+            size="small"
+            sx={{ color: "text.secondary" }}
+          >
+            <Close />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box
+          sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}
+          data-tour="save-dataset-modal-notebook"
+        >
           <NoteBox
             message={t("datasets:label.newDatasetCreatedWithTransformations")}
           />
@@ -122,20 +144,16 @@ export function SaveDatasetModal({
             )}
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
-            <FormSchemaButtonGroup
-              onCancel={handleClose}
-              onFormSubmit={handleSubmit}
-              formik={{
-                errors: nameError ? { name: nameError } : {},
-              }}
-              saveButtonText={t("datasets:button.saveDataset")}
-              backButtonText={t("common:cancel")}
-              dataTour="save-dataset-button-notebook"
-            />
-          </Box>
+          <StepperNavigationFooter
+            onBack={handleClose}
+            onNext={handleSubmit}
+            nextDisabled={Boolean(nameError)}
+            backLabel={t("common:cancel")}
+            nextLabel={t("datasets:button.saveDataset")}
+            variant="save"
+          />
         </Box>
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Modal>
   );
 }

@@ -240,6 +240,9 @@ export default function ConfigureAndUploadDatasetStep({
         nextDisabled={!uploadEnabled}
         nextLabel={t("common:upload")}
         loading={uploading}
+        nextDataTour={
+          tourContext?.run ? "dataset-step-upload-button" : undefined
+        }
       />
     </Box>
   );

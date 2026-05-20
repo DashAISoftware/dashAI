@@ -31,6 +31,7 @@ class KNNImputerSchema(BaseSchema):
         description=MultilingualString(
             en="The number of nearest neighbors to use for imputation.",
             es="Número de vecinos más cercanos a usar para la imputación.",
+            pt="O número de vizinhos mais próximos a usar para imputação.",
         ),
     )  # type: ignore
     weights: schema_field(
@@ -39,6 +40,7 @@ class KNNImputerSchema(BaseSchema):
         description=MultilingualString(
             en="The weight function to use for imputation.",
             es="La función de peso a usar para la imputación.",
+            pt="A função de peso a usar para imputação.",
         ),
     )  # type: ignore
     metric: schema_field(
@@ -47,6 +49,7 @@ class KNNImputerSchema(BaseSchema):
         description=MultilingualString(
             en="The metric to use for imputation.",
             es="La métrica a usar para la imputación.",
+            pt="A métrica a usar para imputação.",
         ),
     )  # type: ignore
     add_indicator: schema_field(
@@ -55,6 +58,7 @@ class KNNImputerSchema(BaseSchema):
         description=MultilingualString(
             en="If True, a MissingIndicator transform will stack onto output.",
             es="Si es True, se apilará un MissingIndicator sobre la salida.",
+            pt="Se True, um MissingIndicator será adicionado à saída.",
         ),
     )  # type: ignore
     keep_empty_features: schema_field(
@@ -63,6 +67,7 @@ class KNNImputerSchema(BaseSchema):
         description=MultilingualString(
             en="If True, empty features will be kept.",
             es="Si es True, se mantendrán las características vacías.",
+            pt="Se True, características vazias serão mantidas.",
         ),
     )  # type: ignore
 
@@ -97,8 +102,14 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
             "Imputación para completar valores faltantes utilizando "
             "k-Vecinos Más Cercanos."
         ),
+        pt=(
+            "Imputação para completar valores ausentes utilizando "
+            "k-Vizinhos Mais Próximos."
+        ),
     )
-    DISPLAY_NAME = MultilingualString(en="KNN Imputer", es="Imputador KNN")
+    DISPLAY_NAME = MultilingualString(
+        en="KNN Imputer", es="Imputador KNN", pt="Imputador KNN"
+    )
     IMAGE_PREVIEW = "knn_imputer.png"
 
     metadata = {

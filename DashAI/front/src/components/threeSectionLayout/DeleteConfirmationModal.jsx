@@ -1,14 +1,12 @@
 import {
   Alert,
+  Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  useMediaQuery,
-  useTheme,
+  IconButton,
+  Modal,
+  Typography,
 } from "@mui/material";
+import { Close } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
 export default function DeleteConfirmationModal({
@@ -19,46 +17,77 @@ export default function DeleteConfirmationModal({
   warning,
   onExited,
 }) {
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const { t } = useTranslation(["common"]);
 
   return (
-    <Dialog
-      fullScreen={fullScreen}
+    <Modal
       open={open}
       onClose={onClose}
-      aria-labelledby="delete-confirmation-dialog-title"
-      keepMounted={false}
-      slotProps={{
-        transition: { onExited },
-      }}
+      slotProps={{ transition: { onExited } }}
     >
-      <DialogTitle id="delete-confirmation-dialog-title">
-        {t("common:confirmDeletion")}
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText sx={{ whiteSpace: "pre-line" }}>
-          {content ||
-            t(
-              "common:confirmDeletionMessage",
-              "Are you sure you want to delete this item? This action cannot be undone.",
-            )}
-        </DialogContentText>
-        {warning && (
-          <Alert severity="warning" sx={{ mt: 4 }}>
-            {warning}
-          </Alert>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} sx={{ color: "common.white" }}>
-          {t("common:cancel")}
-        </Button>
-        <Button onClick={onConfirm} color="error" autoFocus>
-          {t("common:delete")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <Box
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: { xs: "90%", sm: 560 },
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          boxShadow: 12,
+          p: 0,
+          outline: "none",
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            {t("common:confirmDeletion")}
+          </Typography>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{ color: "text.secondary" }}
+          >
+            <Close />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography
+            variant="body1"
+            sx={{ whiteSpace: "pre-line" }}
+            color="text.secondary"
+          >
+            {content ||
+              t(
+                "common:confirmDeletionMessage",
+                "Are you sure you want to delete this item? This action cannot be undone.",
+              )}
+          </Typography>
+          {warning && <Alert severity="warning">{warning}</Alert>}
+
+          {/* Footer */}
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 1 }}
+          >
+            <Button onClick={onClose} sx={{ color: "text.secondary" }}>
+              {t("common:cancel")}
+            </Button>
+            <Button onClick={onConfirm} color="error" variant="text" autoFocus>
+              {t("common:delete")}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </Modal>
   );
 }

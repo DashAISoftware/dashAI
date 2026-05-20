@@ -83,9 +83,11 @@ export default function ParamsBar({ onToggle }) {
       onParamsUpdate(updatedSession.parameters);
 
       // Advance tour to chat input if tour is running
+      const currentTarget =
+        tourContext?.steps?.[tourContext?.stepIndex]?.target;
       if (
         tourContext?.run &&
-        tourContext?.stepIndex === 7 &&
+        currentTarget === '[data-tour="parameters-right-panel"]' &&
         !hasAdvancedTourRef.current
       ) {
         hasAdvancedTourRef.current = true;
@@ -120,7 +122,7 @@ export default function ParamsBar({ onToggle }) {
   const theme = useTheme();
 
   return (
-    <SideBar>
+    <SideBar data-tour="parameters-right-panel">
       <Box
         sx={{
           p: 4,

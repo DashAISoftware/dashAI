@@ -44,8 +44,12 @@ class SVCSchema(BaseSchema):
                 "El parámetro 'C' es un parámetro de regularización. "
                 "La fuerza de la regularización es inversamente proporcional a C"
             ),
+            pt=(
+                "O parâmetro 'C' é um parâmetro de regularização. "
+                "A força da regularização é inversamente proporcional a C"
+            ),
         ),
-        alias=MultilingualString(en="C", es="C"),
+        alias=MultilingualString(en="C", es="C", pt="C"),
     )  # type: ignore
     coef0: schema_field(
         optimizer_float_field(),
@@ -66,8 +70,13 @@ class SVCSchema(BaseSchema):
                 "función del kernel. "
                 "Solo es significativo para los kernels poly y sigmoid. "
             ),
+            pt=(
+                "O parâmetro 'coef0' é um termo independente na "
+                "função kernel. "
+                "É significativo apenas para kernels poly e sigmoid. "
+            ),
         ),
-        alias=MultilingualString(en="coef0", es="coef0"),
+        alias=MultilingualString(en="coef0", es="coef0", pt="coef0"),
     )  # type: ignore
     degree: schema_field(
         optimizer_float_field(ge=0.0),
@@ -80,8 +89,9 @@ class SVCSchema(BaseSchema):
         description=MultilingualString(
             en="The 'degree' parameter is only significant for 'poly' kernel.",
             es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
+            pt="O parâmetro 'grau' só é significativo para o kernel 'poly'.",
         ),
-        alias=MultilingualString(en="degree", es="grado"),
+        alias=MultilingualString(en="degree", es="grado", pt="grau"),
     )  # type: ignore
     gamma: schema_field(
         enum_field(enum=["scale", "auto"]),
@@ -89,8 +99,9 @@ class SVCSchema(BaseSchema):
         description=MultilingualString(
             en="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels.",
             es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
+            pt="Coeficiente para kernels 'rbf', 'poly' e 'sigmoid'.",
         ),
-        alias=MultilingualString(en="gamma", es="gamma"),
+        alias=MultilingualString(en="gamma", es="gamma", pt="gamma"),
     )  # type: ignore
     kernel: schema_field(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
@@ -98,8 +109,9 @@ class SVCSchema(BaseSchema):
         description=MultilingualString(
             en="The 'kernel' parameter is the kernel used in the model.",
             es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
+            pt="O parâmetro 'kernel' é o kernel utilizado no modelo.",
         ),
-        alias=MultilingualString(en="kernel", es="kernel"),
+        alias=MultilingualString(en="kernel", es="kernel", pt="kernel"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=-1),
@@ -120,8 +132,15 @@ class SVCSchema(BaseSchema):
                 "solucionador. Debe ser un entero positivo "
                 "o -1 para indicar sin límite."
             ),
+            pt=(
+                "O parâmetro 'max_iter' determina o limite de iterações para o "
+                "solucionador. Deve ser um inteiro positivo "
+                "ou -1 para indicar sem limite."
+            ),
         ),
-        alias=MultilingualString(en="max iterations", es="max iteraciones"),
+        alias=MultilingualString(
+            en="max iterations", es="max iteraciones", pt="máx iterações"
+        ),
     )  # type: ignore
     shrinking: schema_field(
         bool_field(),
@@ -135,8 +154,12 @@ class SVCSchema(BaseSchema):
                 "El parámetro 'reducción' determina si "
                 "se utiliza una heurística de reducción."
             ),
+            pt=(
+                "O parâmetro 'redução' determina se "
+                "uma heurística de redução é utilizada."
+            ),
         ),
-        alias=MultilingualString(en="shrinking", es="reducción"),
+        alias=MultilingualString(en="shrinking", es="reducción", pt="redução"),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(gt=0.0),
@@ -152,8 +175,9 @@ class SVCSchema(BaseSchema):
                 "El parámetro 'tol' determina "
                 " la tolerancia para el criterio de detención."
             ),
+            pt=("O parâmetro 'tol' determina a tolerância para o critério de parada."),
         ),
-        alias=MultilingualString(en="tolerance", es="tolerancia"),
+        alias=MultilingualString(en="tolerance", es="tolerancia", pt="tolerância"),
     )  # type: ignore
 
 
@@ -182,6 +206,7 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     DISPLAY_NAME: str = MultilingualString(
         en="Support Vector Machine (SVM)",
         es="Máquina de Vectores de Soporte (SVM)",
+        pt="Máquina de Vetores de Suporte (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -204,6 +229,16 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
             "muestras y pueden modelar fronteras de decisión complejas y no lineales "
             "mediante el uso de funciones kernel como lineal, polinomial y de base "
             "radial (RBF)."
+        ),
+        pt=(
+            "A Máquina de Vetores de Suporte (SVM) é um algoritmo de aprendizado "
+            "de máquina supervisionado utilizado para tarefas de classificação e "
+            "regressão. Funciona encontrando o hiperplano ótimo que maximiza a "
+            "margem entre as diferentes classes em um espaço de características de "
+            "alta dimensionalidade. As SVMs são especialmente eficazes quando o "
+            "número de características é grande em relação ao número de amostras e "
+            "podem modelar fronteiras de decisão complexas e não lineares mediante "
+            "o uso de funções kernel como linear, polinomial e de base radial (RBF)."
         ),
     )
     COLOR: str = "#FF80AB"

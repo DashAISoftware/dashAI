@@ -11,6 +11,7 @@ import { MediaPreviewList } from "./mediaInput/MediaPreviewList";
 import { MediaAttachPopper } from "./mediaInput/MediaAttachPopper";
 import { MediaOnlyPlaceholder } from "./mediaInput/MediaOnlyPlaceholder";
 import { useMediaFiles } from "./mediaInput/useMediaFiles";
+import { useTourContext } from "../tour/TourProvider";
 
 export function MediaInput({
   onSendMessage,
@@ -18,6 +19,7 @@ export function MediaInput({
   inputsCardinality = { str: 1 },
 }) {
   const { t } = useTranslation(["generative"]);
+  const tourContext = useTourContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const {
     text,
@@ -44,6 +46,10 @@ export function MediaInput({
     if (!requirementsMet) return;
     onSendMessage(collectPayload());
     reset();
+    const currentTarget = tourContext?.steps?.[tourContext?.stepIndex]?.target;
+    if (tourContext?.run && currentTarget === '[data-tour="chat-input"]') {
+      tourContext.nextStep();
+    }
   };
 
   useEffect(() => {

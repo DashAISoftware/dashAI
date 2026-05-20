@@ -3,8 +3,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -20,6 +18,7 @@ import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
 import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 /**
  * Modal to select a class column for supervised learning
@@ -39,10 +38,8 @@ const ConverterTargetColumnModal = ({
   const [datasetColumns, setDatasetColumns] = useState([]);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t, i18n } = useTranslation(["common", "datasets"]);
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const { t } = useTranslation(["common", "datasets"]);
+  const localization = useTableLocalization();
 
   const columns = [
     {

@@ -1,4 +1,10 @@
-import React, { useCallback, useRef, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useState,
+  useMemo,
+  useEffect,
+} from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -14,6 +20,7 @@ import PreviewDataset from "./PreviewDataset";
 import { useSnackbar } from "notistack";
 import JSZip from "jszip";
 import { useTranslation } from "react-i18next";
+import { useTourContext } from "../../tour/TourProvider";
 
 /**
  * Renders a drag and drop to upload a file (dataset).
@@ -44,6 +51,25 @@ function Upload({
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(initialFile);
   const inputRef = useRef(null);
+  const uploadGridRef = useRef(null);
+
+  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
+  const tourContext = useTourContext();
+
+  // Monitor upload-area size changes to recalculate tour positioning
+  useEffect(() => {
+    if (!uploadGridRef.current || !tourContext?.run) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Dispatch resize event to force Joyride to recalculate positioning
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    resizeObserver.observe(uploadGridRef.current);
+    return () => resizeObserver.disconnect();
+  }, [tourContext?.run]);
 
   const uploadDataset = async (file) => {
     setDatasetState(LOADING);
@@ -52,10 +78,6 @@ function Upload({
     setDatasetState(LOADED);
     setFile(file);
   };
-
-  const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["datasets", "common"]);
-  const theme = useTheme();
 
   // helper to extract allowed extensions from acceptAttr (returns lowercase extensions like ".csv")
   const getAllowedExtensions = (accept) => {
@@ -344,6 +366,7 @@ function Upload({
 
   return (
     <Grid
+      ref={uploadGridRef}
       container
       direction="column"
       rowSpacing={4}
