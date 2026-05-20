@@ -161,7 +161,13 @@ export default function ConverterBox({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
               label={getConverterStatus(statusLabel, t)}
-              color={statusLabel === 3 ? "primary" : "default"} // Finished
+              color={
+                statusLabel === 3
+                  ? "success"
+                  : statusLabel === 4
+                    ? "error"
+                    : "default"
+              }
               size="small"
             />
             {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
