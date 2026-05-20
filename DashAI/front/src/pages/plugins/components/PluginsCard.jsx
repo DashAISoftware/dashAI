@@ -159,7 +159,7 @@ function PluginsCard({
               updatePlugin();
             }}
             sx={{
-              fontSize: "13px",
+              fontSize: "12px",
               fontWeight: 500,
               color: accent,
               cursor: "pointer",
@@ -351,7 +351,7 @@ function PluginsCard({
                 updatePlugin();
               }}
               sx={{
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: 500,
                 color: accent,
                 cursor: "pointer",

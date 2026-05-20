@@ -53,13 +53,16 @@ function SidebarSection({ label, links, t, theme }) {
       sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
     >
       <Typography
+        variant="caption"
         sx={{
           color: theme.palette.text.disabled,
           px: "20px",
           py: "10px",
           pb: "6px",
           display: "block",
-          ...theme.typography.sectionLabel,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          fontFamily: '"Geist Mono", monospace',
         }}
       >
         {label}
@@ -203,7 +206,7 @@ function Home() {
         <Box
           component="aside"
           sx={{
-            width: 220,
+            width: 230,
             flexShrink: 0,
             borderRight: `1px solid ${theme.palette.divider}`,
             background: theme.palette.background.box,
@@ -234,14 +237,13 @@ function Home() {
             }}
           >
             <Typography
+              variant="sectionLabel"
               sx={{
-                fontSize: "9px",
                 color: theme.palette.text.disabled,
-                letterSpacing: "0.04em",
                 lineHeight: 1.9,
               }}
             >
-              v0.2.1-beta · MIT License
+              v0.9.3-alpha - MIT License
             </Typography>
           </Box>
         </Box>
