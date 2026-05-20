@@ -21,10 +21,10 @@ function PluginsCard({
   const { t } = useTranslation(["plugins"]);
   const theme = useTheme();
 
-  const accent = theme.palette.accent.coral;
-  const accentDim = theme.palette.accent.coralDim;
-  const accentBorder = theme.palette.accent.coralBorder;
-  const accentGlow = theme.palette.accent.coralGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${accent}1F`;
+  const accentBorder = `${accent}38`;
+  const accentGlow = `${accent}0A`;
 
   const descRef = React.useRef(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
