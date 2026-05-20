@@ -85,7 +85,7 @@ function SidebarSection({ label, links, t, theme }) {
             "&:hover": {
               background: theme.palette.ui.hover,
               color: theme.palette.text.primary,
-              borderLeftColor: theme.palette.accent.amberBorder,
+              borderLeftColor: `${theme.palette.primary.main}38`,
             },
             "&:hover .ext-icon": { opacity: 1 },
           }}

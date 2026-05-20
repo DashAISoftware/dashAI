@@ -22,10 +22,10 @@ export default function OptionBox({
     }
   }, [description]);
   const theme = useTheme();
-  const accent = theme.palette.accent.amber;
-  const accentDim = theme.palette.accent.amberDim;
-  const accentBorder = theme.palette.accent.amberBorder;
-  const accentGlow = theme.palette.accent.amberGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${theme.palette.primary.main}1F`;
+  const accentBorder = `${theme.palette.primary.main}38`;
+  const accentGlow = `${theme.palette.primary.main}0A`;
 
   return (
     <ButtonBase

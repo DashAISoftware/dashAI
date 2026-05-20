@@ -97,8 +97,8 @@ export default function CollapsibleList({
           component="div"
           sx={{
             mr: 1,
-            bgcolor: theme.palette.ui.scrollbar,
-            color: theme.palette.text.primary,
+            bgcolor: "primary.main",
+            color: "primary.light",
             borderRadius: "50%",
             width: 20,
             height: 20,
