@@ -118,7 +118,7 @@ export default function GroupedCollapsibleList({
           component="div"
           sx={{
             bgcolor: "primary.main",
-            color: "primary.light",
+            color: "primary.contrastText",
             borderRadius: "50%",
             width: 20,
             height: 20,
@@ -195,7 +195,7 @@ export default function GroupedCollapsibleList({
                 sx={{
                   ml: 1,
                   bgcolor: "primary.main",
-                  color: "primary.light",
+                  color: "primary.contrastText",
                   borderRadius: "50%",
                   width: 20,
                   height: 20,

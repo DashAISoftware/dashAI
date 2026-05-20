@@ -98,7 +98,7 @@ export default function CollapsibleList({
           sx={{
             mr: 1,
             bgcolor: "primary.main",
-            color: "primary.light",
+            color: "primary.contrastText",
             borderRadius: "50%",
             width: 20,
             height: 20,
