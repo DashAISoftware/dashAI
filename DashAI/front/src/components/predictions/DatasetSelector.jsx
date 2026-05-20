@@ -107,9 +107,10 @@ function DatasetSelector({
           <Paper>
             <DatasetTable
               fetchPage={fetchDatasetPage}
-              initialPageSize={10}
+              initialPageSize={5}
               datasetPath={selectedDataset.file_path}
               columnTypes={columnTypes}
+              showExportButton={false}
             />
           </Paper>
         </>

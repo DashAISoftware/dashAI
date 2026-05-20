@@ -11,12 +11,16 @@ import {
   Tab,
   Grid,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Add as AddIcon,
   TrendingUp as TrendingUpIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
@@ -473,6 +477,86 @@ export default function RunResults({
               </Grid>
             </Grid>
 
+            <Dialog
+              open={showDatasetPanel}
+              onClose={() => setShowDatasetPanel(false)}
+              maxWidth="sm"
+              fullWidth
+              PaperProps={{ sx: { minHeight: "400px" } }}
+            >
+              <DialogTitle sx={{ bgcolor: "background.paper" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography variant="h6" component="span">
+                    {t("models:button.newDatasetPrediction")}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowDatasetPanel(false)}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              </DialogTitle>
+              <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
+                <DatasetPredictionPanel
+                  run={run}
+                  session={session}
+                  onSaved={(prediction) => {
+                    handlePredictionCreated(prediction);
+                    setShowDatasetPanel(false);
+                  }}
+                  onClose={() => setShowDatasetPanel(false)}
+                />
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={showManualPanel}
+              onClose={() => setShowManualPanel(false)}
+              maxWidth="md"
+              fullWidth
+              PaperProps={{ sx: { minHeight: "500px" } }}
+            >
+              <DialogTitle sx={{ bgcolor: "background.paper" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography variant="h6" component="span">
+                    {t("models:button.newManualPrediction")}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowManualPanel(false)}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              </DialogTitle>
+              <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
+                <ManualPredictionPanel
+                  run={run}
+                  session={session}
+                  onSaved={(prediction) => {
+                    handlePredictionCreated(prediction);
+                    setShowManualPanel(false);
+                  }}
+                  onClose={() => setShowManualPanel(false)}
+                />
+              </DialogContent>
+            </Dialog>
+
             <Stack spacing={2}>
               <Box
                 sx={{
@@ -513,39 +597,15 @@ export default function RunResults({
                   </IconButton>
                 </Box>
                 <Collapse in={datasetExpanded}>
-                  <Collapse in={showDatasetPanel} unmountOnExit>
-                    <Box
-                      sx={{
-                        border: 1,
-                        borderColor: "primary.main",
-                        borderRadius: 1,
-                        p: 2,
-                        mb: 2,
-                        bgcolor: "background.default",
-                      }}
-                    >
-                      <DatasetPredictionPanel
-                        run={run}
-                        session={session}
-                        onSaved={(prediction) => {
-                          handlePredictionCreated(prediction);
-                          setShowDatasetPanel(false);
-                        }}
-                        onClose={() => setShowDatasetPanel(false)}
-                      />
-                    </Box>
-                  </Collapse>
                   {predictions.filter((p) => p.dataset_id).length === 0 ? (
-                    !showDatasetPanel && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
-                      >
-                        {t("models:label.noDatasetPredictionsYet")}
-                      </Typography>
-                    )
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      {t("models:label.noDatasetPredictionsYet")}
+                    </Typography>
                   ) : (
                     <Box
                       sx={{
@@ -609,39 +669,15 @@ export default function RunResults({
                   </IconButton>
                 </Box>
                 <Collapse in={manualExpanded}>
-                  <Collapse in={showManualPanel} unmountOnExit>
-                    <Box
-                      sx={{
-                        border: 1,
-                        borderColor: "primary.main",
-                        borderRadius: 1,
-                        p: 2,
-                        mb: 2,
-                        bgcolor: "background.default",
-                      }}
-                    >
-                      <ManualPredictionPanel
-                        run={run}
-                        session={session}
-                        onSaved={(prediction) => {
-                          handlePredictionCreated(prediction);
-                          setShowManualPanel(false);
-                        }}
-                        onClose={() => setShowManualPanel(false)}
-                      />
-                    </Box>
-                  </Collapse>
                   {predictions.filter((p) => !p.dataset_id).length === 0 ? (
-                    !showManualPanel && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
-                      >
-                        {t("models:label.noManualPredictionsYet")}
-                      </Typography>
-                    )
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      {t("models:label.noManualPredictionsYet")}
+                    </Typography>
                   ) : (
                     <Box
                       sx={{
