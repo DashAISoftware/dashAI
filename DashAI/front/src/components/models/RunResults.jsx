@@ -241,6 +241,60 @@ export default function RunResults({
 
         {activeTab === 1 && isFinished && (
           <Box sx={{ py: 2, width: "100%" }}>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={6}>
+                <TimestampWrapper
+                  eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
+                >
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() => setGlobalCreatorOpen(true)}
+                    fullWidth
+                  >
+                    {t("models:button.createGlobalExplainer")}
+                  </Button>
+                </TimestampWrapper>
+              </Grid>
+              <Grid item xs={6}>
+                <TimestampWrapper
+                  eventName={TIMESTAMP_KEYS.explainer.configureLocal}
+                >
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AddIcon />}
+                    onClick={() => setLocalCreatorOpen(true)}
+                    fullWidth
+                  >
+                    {t("models:button.createLocalExplainer")}
+                  </Button>
+                </TimestampWrapper>
+              </Grid>
+            </Grid>
+
+            <InlineExplainerCreator
+              open={globalCreatorOpen}
+              scope="global"
+              explainerConfig={{
+                runId: run.id,
+                taskName: session?.task_name,
+              }}
+              onCreated={handleExplainerCreated}
+              onCancel={() => setGlobalCreatorOpen(false)}
+            />
+            <InlineExplainerCreator
+              open={localCreatorOpen}
+              scope="local"
+              explainerConfig={{
+                runId: run.id,
+                taskName: session?.task_name,
+              }}
+              onCreated={handleExplainerCreated}
+              onCancel={() => setLocalCreatorOpen(false)}
+            />
+
             <Grid container spacing={2} alignItems="stretch">
               <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
@@ -257,47 +311,20 @@ export default function RunResults({
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
+                      gap: 1,
                       mb: 2,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1" fontWeight="medium">
-                        {t("models:label.globalExplainers")}
-                      </Typography>
-                      <Chip
-                        label={globalExplainers.length}
-                        size="small"
-                        color="primary"
-                      />
-                    </Box>
+                    <Typography variant="body1" fontWeight="medium">
+                      {t("models:label.globalExplainers")}
+                    </Typography>
+                    <Chip
+                      label={globalExplainers.length}
+                      size="small"
+                      color="primary"
+                    />
                   </Box>
                   <Stack spacing={2}>
-                    <Box sx={{ width: "100%" }}>
-                      <TimestampWrapper
-                        eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
-                      >
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AddIcon />}
-                          onClick={() => setGlobalCreatorOpen(true)}
-                          fullWidth
-                        >
-                          {t("models:button.createGlobalExplainer")}
-                        </Button>
-                      </TimestampWrapper>
-                    </Box>
-                    <InlineExplainerCreator
-                      open={globalCreatorOpen}
-                      scope="global"
-                      explainerConfig={{
-                        runId: run.id,
-                        taskName: session?.task_name,
-                      }}
-                      onCreated={handleExplainerCreated}
-                      onCancel={() => setGlobalCreatorOpen(false)}
-                    />
                     {globalExplainers.length === 0 ? (
                       <Typography
                         variant="body2"
@@ -337,47 +364,20 @@ export default function RunResults({
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
+                      gap: 1,
                       mb: 2,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1" fontWeight="medium">
-                        {t("models:label.localExplainers")}
-                      </Typography>
-                      <Chip
-                        label={localExplainers.length}
-                        size="small"
-                        color="primary"
-                      />
-                    </Box>
+                    <Typography variant="body1" fontWeight="medium">
+                      {t("models:label.localExplainers")}
+                    </Typography>
+                    <Chip
+                      label={localExplainers.length}
+                      size="small"
+                      color="primary"
+                    />
                   </Box>
                   <Stack spacing={2}>
-                    <Box sx={{ width: "100%" }}>
-                      <TimestampWrapper
-                        eventName={TIMESTAMP_KEYS.explainer.configureLocal}
-                      >
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AddIcon />}
-                          onClick={() => setLocalCreatorOpen(true)}
-                          fullWidth
-                        >
-                          {t("models:button.createLocalExplainer")}
-                        </Button>
-                      </TimestampWrapper>
-                    </Box>
-                    <InlineExplainerCreator
-                      open={localCreatorOpen}
-                      scope="local"
-                      explainerConfig={{
-                        runId: run.id,
-                        taskName: session?.task_name,
-                      }}
-                      onCreated={handleExplainerCreated}
-                      onCancel={() => setLocalCreatorOpen(false)}
-                    />
                     {localExplainers.length === 0 ? (
                       <Typography
                         variant="body2"
