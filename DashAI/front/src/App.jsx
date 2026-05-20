@@ -22,56 +22,48 @@ function App() {
       <BrowserRouter
         future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
       >
-        <ModuleThemeWrapper>
-          <ResponsiveAppBar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/app" element={<Home />} />
-            <Route path="/app/data/" element={<DatasetsPage />} />
-            <Route path="/app/data/datasets/new" element={<DatasetsPage />} />
-            <Route
-              path="/app/data/datasets/new/:dataloaderName"
-              element={<DatasetsPage />}
-            />
-            <Route path="/app/data/datasets/:id" element={<DatasetsPage />} />
-            <Route path="/app/data/notebooks/new" element={<DatasetsPage />} />
-            <Route path="/app/data/notebooks/:id" element={<DatasetsPage />} />
-            <Route path="/app/models" element={<ModelsPage />} />
-            <Route path="/app/models/datasets/:id" element={<ModelsPage />} />
-            <Route path="/app/models/sessions/:id" element={<ModelsPage />} />
-            <Route
-              path="/app/models/sessions/new/:taskName"
-              element={<ModelsPage />}
-            />
-            <Route path="/app/generative" element={<Generative />} />
-            <Route
-              path="/app/generative/sessions/new"
-              element={<Generative />}
-            />
-            <Route
-              path="/app/generative/sessions/new/:modelName"
-              element={<Generative />}
-            />
-            <Route
-              path="/app/generative/sessions/:id"
-              element={<Generative />}
-            />
-            <Route path="/app/pipelines" element={<PipelinesPage />} />
-            <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
-            <Route
-              path="/app/pipelines/:pipelineId"
-              element={<NewPipelineWrapper />}
-            />
-            <Route path="/app/plugins">
+        <ResponsiveAppBar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/app" element={<Home />} />
+          <Route path="/app/data/" element={<DatasetsPage />} />
+          <Route path="/app/data/datasets/new" element={<DatasetsPage />} />
+          <Route
+            path="/app/data/datasets/new/:dataloaderName"
+            element={<DatasetsPage />}
+          />
+          <Route path="/app/data/datasets/:id" element={<DatasetsPage />} />
+          <Route path="/app/data/notebooks/new" element={<DatasetsPage />} />
+          <Route path="/app/data/notebooks/:id" element={<DatasetsPage />} />
+          <Route path="/app/models" element={<ModelsPage />} />
+          <Route path="/app/models/datasets/:id" element={<ModelsPage />} />
+          <Route path="/app/models/sessions/:id" element={<ModelsPage />} />
+          <Route
+            path="/app/models/sessions/new/:taskName"
+            element={<ModelsPage />}
+          />
+          <Route path="/app/generative" element={<Generative />} />
+          <Route path="/app/generative/sessions/new" element={<Generative />} />
+          <Route
+            path="/app/generative/sessions/new/:modelName"
+            element={<Generative />}
+          />
+          <Route path="/app/generative/sessions/:id" element={<Generative />} />
+          <Route path="/app/pipelines" element={<PipelinesPage />} />
+          <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
+          <Route
+            path="/app/pipelines/:pipelineId"
+            element={<NewPipelineWrapper />}
+          />
+          <Route path="/app/plugins">
+            <Route index element={<PluginsPage />} />
+            <Route path=":category">
               <Route index element={<PluginsPage />} />
-              <Route path=":category">
-                <Route index element={<PluginsPage />} />
-                <Route path="details/:id" element={<PluginsDetails />} />
-              </Route>
+              <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
-          </Routes>
-          <JobQueueWidget />
-        </ModuleThemeWrapper>
+          </Route>
+        </Routes>
+        <JobQueueWidget />
       </BrowserRouter>
     </TourRegistryProvider>
   );
