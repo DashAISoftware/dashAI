@@ -100,7 +100,7 @@ export default function ExplainersCard({
             >
               <Grid sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   fontWeight="medium"
                   sx={{
                     display: "flex",

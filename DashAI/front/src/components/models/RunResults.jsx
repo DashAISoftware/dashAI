@@ -10,6 +10,7 @@ import {
   Tabs,
   Tab,
   Grid,
+  IconButton,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -51,6 +52,8 @@ export default function RunResults({
 
   const [globalCreatorOpen, setGlobalCreatorOpen] = useState(false);
   const [localCreatorOpen, setLocalCreatorOpen] = useState(false);
+  const [globalExpanded, setGlobalExpanded] = useState(true);
+  const [localExpanded, setLocalExpanded] = useState(true);
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const [showManualPanel, setShowManualPanel] = useState(false);
 
@@ -309,20 +312,32 @@ export default function RunResults({
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
-                    mb: 2,
+                    justifyContent: "space-between",
+                    mb: globalExpanded ? 2 : 0,
                   }}
                 >
-                  <Typography variant="body1" fontWeight="medium">
-                    {t("models:label.globalExplainers")}
-                  </Typography>
-                  <Chip
-                    label={globalExplainers.length}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      {t("models:label.globalExplainers")}
+                    </Typography>
+                    <Chip
+                      label={globalExplainers.length}
+                      size="small"
+                      color="primary"
+                    />
+                  </Box>
+                  <IconButton
                     size="small"
-                    color="primary"
-                  />
+                    onClick={() => setGlobalExpanded((prev) => !prev)}
+                  >
+                    {globalExpanded ? (
+                      <ExpandLessIcon fontSize="small" />
+                    ) : (
+                      <ExpandMoreIcon fontSize="small" />
+                    )}
+                  </IconButton>
                 </Box>
-                <Stack spacing={2}>
+                <Collapse in={globalExpanded}>
                   {globalExplainers.length === 0 ? (
                     <Typography
                       variant="body2"
@@ -333,17 +348,26 @@ export default function RunResults({
                       {t("models:label.noGlobalExplainersYet")}
                     </Typography>
                   ) : (
-                    globalExplainers.map((explainer) => (
-                      <ExplainersCard
-                        key={explainer.id}
-                        explainer={explainer}
-                        scope="global"
-                        onDelete={handleExplainerDeleted}
-                        compact
-                      />
-                    ))
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(680px, 1fr))",
+                        gap: 2,
+                      }}
+                    >
+                      {globalExplainers.map((explainer) => (
+                        <ExplainersCard
+                          key={explainer.id}
+                          explainer={explainer}
+                          scope="global"
+                          onDelete={handleExplainerDeleted}
+                          compact
+                        />
+                      ))}
+                    </Box>
                   )}
-                </Stack>
+                </Collapse>
               </Box>
 
               <Box
@@ -359,20 +383,32 @@ export default function RunResults({
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
-                    mb: 2,
+                    justifyContent: "space-between",
+                    mb: localExpanded ? 2 : 0,
                   }}
                 >
-                  <Typography variant="body1" fontWeight="medium">
-                    {t("models:label.localExplainers")}
-                  </Typography>
-                  <Chip
-                    label={localExplainers.length}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      {t("models:label.localExplainers")}
+                    </Typography>
+                    <Chip
+                      label={localExplainers.length}
+                      size="small"
+                      color="primary"
+                    />
+                  </Box>
+                  <IconButton
                     size="small"
-                    color="primary"
-                  />
+                    onClick={() => setLocalExpanded((prev) => !prev)}
+                  >
+                    {localExpanded ? (
+                      <ExpandLessIcon fontSize="small" />
+                    ) : (
+                      <ExpandMoreIcon fontSize="small" />
+                    )}
+                  </IconButton>
                 </Box>
-                <Stack spacing={2}>
+                <Collapse in={localExpanded}>
                   {localExplainers.length === 0 ? (
                     <Typography
                       variant="body2"
@@ -383,17 +419,26 @@ export default function RunResults({
                       {t("models:label.noLocalExplainersYet")}
                     </Typography>
                   ) : (
-                    localExplainers.map((explainer) => (
-                      <ExplainersCard
-                        key={explainer.id}
-                        explainer={explainer}
-                        scope="local"
-                        onDelete={handleExplainerDeleted}
-                        compact
-                      />
-                    ))
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(680px, 1fr))",
+                        gap: 2,
+                      }}
+                    >
+                      {localExplainers.map((explainer) => (
+                        <ExplainersCard
+                          key={explainer.id}
+                          explainer={explainer}
+                          scope="local"
+                          onDelete={handleExplainerDeleted}
+                          compact
+                        />
+                      ))}
+                    </Box>
                   )}
-                </Stack>
+                </Collapse>
               </Box>
             </Stack>
           </Box>
@@ -421,7 +466,7 @@ export default function RunResults({
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1" fontWeight="medium">
+                      <Typography variant="subtitle2" fontWeight="medium">
                         {t("models:label.datasetPredictions")}
                       </Typography>
                       <Chip
@@ -510,7 +555,7 @@ export default function RunResults({
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1" fontWeight="medium">
+                      <Typography variant="subtitle2" fontWeight="medium">
                         {t("models:label.manualPredictions")}
                       </Typography>
                       <Chip

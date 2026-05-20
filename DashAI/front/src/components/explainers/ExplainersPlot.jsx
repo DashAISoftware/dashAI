@@ -83,6 +83,7 @@ export default function ExplainersPlot({ explainer, scope }) {
         display: "flex",
         flexDirection: "column",
         width: "100%",
+        maxWidth: 700,
       }}
     >
       {!loading && isLocal && explainersPlots.length > 0 && (
@@ -109,10 +110,12 @@ export default function ExplainersPlot({ explainer, scope }) {
             data={explainersPlots[currentPlot].data}
             layout={{
               ...themedLayout,
-              width: 700,
               height: 380,
+              autosize: true,
             }}
             config={{ displayModeBar: false }}
+            useResizeHandler
+            style={{ width: "100%" }}
           />
         ) : (
           <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
