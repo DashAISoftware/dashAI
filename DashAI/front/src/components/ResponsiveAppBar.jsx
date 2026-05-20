@@ -95,7 +95,7 @@ function ResponsiveAppBar() {
             }}
           >
             <Box component="span" sx={{ color: theme.palette.primary.main }}>
-              Dash
+              dash
             </Box>
             AI
           </Typography>
