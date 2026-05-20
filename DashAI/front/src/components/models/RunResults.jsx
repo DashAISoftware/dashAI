@@ -295,113 +295,107 @@ export default function RunResults({
               onCancel={() => setLocalCreatorOpen(false)}
             />
 
-            <Grid container spacing={2} alignItems="stretch">
-              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
+            <Stack spacing={2}>
+              <Box
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  p: 2,
+                  width: "100%",
+                }}
+              >
                 <Box
                   sx={{
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    p: 2,
-                    height: "100%",
-                    minHeight: 180,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Typography variant="body1" fontWeight="medium">
-                      {t("models:label.globalExplainers")}
-                    </Typography>
-                    <Chip
-                      label={globalExplainers.length}
-                      size="small"
-                      color="primary"
-                    />
-                  </Box>
-                  <Stack spacing={2}>
-                    {globalExplainers.length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
-                      >
-                        {t("models:label.noGlobalExplainersYet")}
-                      </Typography>
-                    ) : (
-                      globalExplainers.map((explainer) => (
-                        <ExplainersCard
-                          key={explainer.id}
-                          explainer={explainer}
-                          scope="global"
-                          onDelete={handleExplainerDeleted}
-                          compact
-                        />
-                      ))
-                    )}
-                  </Stack>
+                  <Typography variant="body1" fontWeight="medium">
+                    {t("models:label.globalExplainers")}
+                  </Typography>
+                  <Chip
+                    label={globalExplainers.length}
+                    size="small"
+                    color="primary"
+                  />
                 </Box>
-              </Grid>
+                <Stack spacing={2}>
+                  {globalExplainers.length === 0 ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      {t("models:label.noGlobalExplainersYet")}
+                    </Typography>
+                  ) : (
+                    globalExplainers.map((explainer) => (
+                      <ExplainersCard
+                        key={explainer.id}
+                        explainer={explainer}
+                        scope="global"
+                        onDelete={handleExplainerDeleted}
+                        compact
+                      />
+                    ))
+                  )}
+                </Stack>
+              </Box>
 
-              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
+              <Box
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  p: 2,
+                  width: "100%",
+                }}
+              >
                 <Box
                   sx={{
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    p: 2,
-                    height: "100%",
-                    minHeight: 180,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 2,
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Typography variant="body1" fontWeight="medium">
-                      {t("models:label.localExplainers")}
-                    </Typography>
-                    <Chip
-                      label={localExplainers.length}
-                      size="small"
-                      color="primary"
-                    />
-                  </Box>
-                  <Stack spacing={2}>
-                    {localExplainers.length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
-                      >
-                        {t("models:label.noLocalExplainersYet")}
-                      </Typography>
-                    ) : (
-                      localExplainers.map((explainer) => (
-                        <ExplainersCard
-                          key={explainer.id}
-                          explainer={explainer}
-                          scope="local"
-                          onDelete={handleExplainerDeleted}
-                          compact
-                        />
-                      ))
-                    )}
-                  </Stack>
+                  <Typography variant="body1" fontWeight="medium">
+                    {t("models:label.localExplainers")}
+                  </Typography>
+                  <Chip
+                    label={localExplainers.length}
+                    size="small"
+                    color="primary"
+                  />
                 </Box>
-              </Grid>
-            </Grid>
+                <Stack spacing={2}>
+                  {localExplainers.length === 0 ? (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      {t("models:label.noLocalExplainersYet")}
+                    </Typography>
+                  ) : (
+                    localExplainers.map((explainer) => (
+                      <ExplainersCard
+                        key={explainer.id}
+                        explainer={explainer}
+                        scope="local"
+                        onDelete={handleExplainerDeleted}
+                        compact
+                      />
+                    ))
+                  )}
+                </Stack>
+              </Box>
+            </Stack>
           </Box>
         )}
 
