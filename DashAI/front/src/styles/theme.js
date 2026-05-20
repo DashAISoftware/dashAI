@@ -187,13 +187,13 @@ const getTheme = (mode) => ({
     h1: { fontSize: "28px", fontWeight: 700, letterSpacing: "-0.01em" },
     h2: { fontSize: "22px", fontWeight: 600, letterSpacing: "-0.01em" },
     h3: { fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em" },
-    h4: { fontSize: "17px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h4: { fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em" },
     h5: { fontSize: "16px", fontWeight: 600 },
-    h6: { fontSize: "14px", fontWeight: 600 },
+    h6: { fontSize: "16px", fontWeight: 600 },
 
     subtitle1: { fontSize: "17px", fontWeight: 400 },
     subtitle2: { fontSize: "16px", fontWeight: 400 },
-    body1: { fontSize: "14px", fontWeight: 400, lineHeight: 1.6 },
+    body1: { fontSize: "16px", fontWeight: 400, lineHeight: 1.6 },
     body2: { fontSize: "12px", fontWeight: 400, lineHeight: 1.5 },
     caption: { fontSize: "12px", fontWeight: 400 },
     code: {
@@ -222,7 +222,7 @@ const getTheme = (mode) => ({
       textTransform: "uppercase",
     },
     button: {
-      fontSize: "14px",
+      fontSize: "16px",
       fontWeight: 500,
       letterSpacing: "-0.01em",
       textTransform: "uppercase",
