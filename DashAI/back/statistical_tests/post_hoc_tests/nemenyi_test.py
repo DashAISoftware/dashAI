@@ -24,8 +24,8 @@ class NemenyiTest(BaseStatisticalTest):
         self,
         scores: dict[str, list[float]],
         alpha: float = 0.05,
-        friedman_statistic: float = None,
-        friedman_p_value: float = None,
+        statistic: float = None,  # Friedman statistic
+        p_value: float = None,  # Friedman p-value
         **kwargs,
     ) -> StatisticalTestResult:
         import numpy as np
@@ -49,8 +49,8 @@ class NemenyiTest(BaseStatisticalTest):
                 )
 
         # Use precalculated Friedman values if provided, otherwise compute
-        if friedman_statistic is not None and friedman_p_value is not None:
-            friedman_stat, friedman_p = friedman_statistic, friedman_p_value
+        if statistic is not None and p_value is not None:
+            friedman_stat, friedman_p = statistic, p_value
         else:
             friedman_stat, friedman_p = friedmanchisquare(*score_arrays)
 

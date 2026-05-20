@@ -19,8 +19,8 @@ class TukeyHSDTest(BaseStatisticalTest):
         self,
         scores: dict[str, list[float]],
         alpha: float = 0.05,
-        anova_statistic: float = None,
-        anova_p_value: float = None,
+        statistic: float = None,  # ANOVA F-statistic
+        p_value: float = None,  # ANOVA p-value
         **kwargs,
     ) -> StatisticalTestResult:
         import numpy as np
@@ -44,8 +44,8 @@ class TukeyHSDTest(BaseStatisticalTest):
                 )
 
         # Use precalculated ANOVA values if provided, otherwise compute
-        if anova_statistic is not None and anova_p_value is not None:
-            anova_stat, anova_p = anova_statistic, anova_p_value
+        if statistic is not None and p_value is not None:
+            anova_stat, anova_p = statistic, p_value
         else:
             anova_stat, anova_p = f_oneway(*score_arrays)
 
