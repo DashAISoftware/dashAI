@@ -16,7 +16,7 @@ const getTheme = (mode) => ({
       contrastText: "#FEFEFF",
     },
 
-    divider: mode === "dark" ? "rgba(44,122,255,0.12)" : "rgba(0,28,52,0.10)",
+    divider: mode === "dark" ? "rgba(254,254,255,0.10)" : "rgba(0,28,52,0.10)",
 
     background:
       mode === "dark"
@@ -76,22 +76,22 @@ const getTheme = (mode) => ({
 
     // Module accent colors — dark uses lighter variants, light uses darker variants
     accent: {
-      // Datasets → blue
-      amber: mode === "dark" ? "#A7C7FF" : "#2C7AFF",
+      // Datasets → orange-brown
+      amber: mode === "dark" ? "#FFA578" : "#79310C",
       amberDim:
-        mode === "dark" ? "rgba(167,199,255,0.12)" : "rgba(44,122,255,0.12)",
-      amberBorder:
-        mode === "dark" ? "rgba(167,199,255,0.22)" : "rgba(44,122,255,0.22)",
-      amberGlow:
-        mode === "dark" ? "rgba(167,199,255,0.04)" : "rgba(44,122,255,0.04)",
-      // Models → orange-brown
-      teal: mode === "dark" ? "#FFA578" : "#79310C",
-      tealDim:
         mode === "dark" ? "rgba(255,165,120,0.12)" : "rgba(121,49,12,0.12)",
-      tealBorder:
+      amberBorder:
         mode === "dark" ? "rgba(255,165,120,0.22)" : "rgba(121,49,12,0.22)",
-      tealGlow:
+      amberGlow:
         mode === "dark" ? "rgba(255,165,120,0.04)" : "rgba(121,49,12,0.04)",
+      // Models → blue
+      teal: mode === "dark" ? "#A7C7FF" : "#2C7AFF",
+      tealDim:
+        mode === "dark" ? "rgba(167,199,255,0.12)" : "rgba(44,122,255,0.12)",
+      tealBorder:
+        mode === "dark" ? "rgba(167,199,255,0.22)" : "rgba(44,122,255,0.22)",
+      tealGlow:
+        mode === "dark" ? "rgba(167,199,255,0.04)" : "rgba(44,122,255,0.04)",
       // Generative → teal/mint
       purple: mode === "dark" ? "#90F1C4" : "#005967",
       purpleDim:
@@ -148,17 +148,17 @@ const getTheme = (mode) => ({
     ui:
       mode === "dark"
         ? {
-            border: "rgba(44,122,255,0.10)",
-            borderLight: "rgba(44,122,255,0.06)",
-            borderMed: "rgba(44,122,255,0.18)",
-            borderDark: "rgba(44,122,255,0.22)",
+            border: "rgba(254,254,255,0.10)",
+            borderLight: "rgba(254,254,255,0.06)",
+            borderMed: "rgba(254,254,255,0.16)",
+            borderDark: "rgba(254,254,255,0.22)",
             panelDark: "#1B1A19",
             panelMedium: "#1F1E1D",
             panelLight: "#232221",
-            scrollbar: "rgba(44,122,255,0.25)",
-            scrollbarHover: "rgba(44,122,255,0.40)",
-            hover: "rgba(44,122,255,0.04)",
-            divider: "rgba(44,122,255,0.10)",
+            scrollbar: "rgba(254,254,255,0.20)",
+            scrollbarHover: "rgba(254,254,255,0.35)",
+            hover: "rgba(254,254,255,0.04)",
+            divider: "rgba(254,254,255,0.10)",
             box: "#1B1A19",
             disabled: "#232221",
             rowDisabled: "rgba(255,255,255,0.04)",
@@ -230,6 +230,24 @@ const getTheme = (mode) => ({
   },
 
   components: {
+    MuiIconButton: {
+      styleOverrides: {
+        colorPrimary: ({ theme }) => ({
+          "&:hover": {
+            backgroundColor: `${theme.palette.primary.light}1A`,
+          },
+        }),
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        containedPrimary: ({ theme }) => ({
+          "&:hover": {
+            backgroundColor: theme.palette.primary.light,
+          },
+        }),
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: `
         ::-webkit-scrollbar { width: 12px; }
@@ -242,7 +260,7 @@ const getTheme = (mode) => ({
           -webkit-border-radius: 10px;
           border-radius: 10px;
           background: ${
-            mode === "dark" ? "rgba(44, 122, 255, 0.25)" : "rgba(0,28,52,0.25)"
+            mode === "dark" ? "rgba(254,254,255,0.20)" : "rgba(0,28,52,0.25)"
           };
           -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.2);
         }
