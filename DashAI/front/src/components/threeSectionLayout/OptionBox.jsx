@@ -94,7 +94,7 @@ export default function OptionBox({
 
       {/* Title */}
       <Typography
-        variant="h5"
+        variant="h4"
         sx={{
           color: theme.palette.text.primary,
           mb: "5px",
