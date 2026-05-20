@@ -262,10 +262,7 @@ function Home() {
               py: "20px",
               pb: "18px",
               borderBottom: `1px solid ${theme.palette.divider}`,
-              background:
-                theme.palette.mode === "dark"
-                  ? "rgba(12,12,10,0.7)"
-                  : theme.palette.background.box,
+              background: theme.palette.background.default,
             }}
           >
             <Typography variant="h3" sx={{ color: theme.palette.text.primary }}>
