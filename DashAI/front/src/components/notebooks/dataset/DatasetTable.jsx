@@ -392,7 +392,7 @@ export default function DatasetTable({
             </div>
           ) : (
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+              <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>
                 {key}
               </Typography>
               <Typography variant="caption" color="text.secondary">
