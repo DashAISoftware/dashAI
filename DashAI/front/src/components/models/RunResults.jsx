@@ -63,6 +63,11 @@ export default function RunResults({
   const [datasetExpanded, setDatasetExpanded] = useState(true);
   const [manualExpanded, setManualExpanded] = useState(true);
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
+  const datasetRunRef = useRef(null);
+  const [datasetRunState, setDatasetRunState] = useState({
+    canRun: false,
+    isSubmitting: false,
+  });
   const [showManualPanel, setShowManualPanel] = useState(false);
   const manualSaveRef = useRef(null);
   const [manualSaveState, setManualSaveState] = useState({
@@ -465,7 +470,10 @@ export default function RunResults({
                   variant="outlined"
                   size="small"
                   startIcon={<TrendingUpIcon />}
-                  onClick={() => setShowDatasetPanel(true)}
+                  onClick={() => {
+                    setDatasetRunState({ canRun: false, isSubmitting: false });
+                    setShowDatasetPanel(true);
+                  }}
                   fullWidth
                 >
                   {t("models:button.newDatasetPrediction")}
@@ -490,9 +498,9 @@ export default function RunResults({
             <Dialog
               open={showDatasetPanel}
               onClose={() => setShowDatasetPanel(false)}
-              maxWidth="sm"
+              maxWidth="md"
               fullWidth
-              PaperProps={{ sx: { minHeight: "400px" } }}
+              PaperProps={{ sx: { minHeight: "500px" } }}
             >
               <DialogTitle sx={{ bgcolor: "background.paper" }}>
                 <Box
@@ -523,8 +531,28 @@ export default function RunResults({
                     setShowDatasetPanel(false);
                   }}
                   onClose={() => setShowDatasetPanel(false)}
+                  runRef={datasetRunRef}
+                  onStateChange={setDatasetRunState}
                 />
               </DialogContent>
+              <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowDatasetPanel(false)}
+                  disabled={datasetRunState.isSubmitting}
+                >
+                  {t("common:cancel")}
+                </Button>
+                <LoadingButton
+                  variant="contained"
+                  color="primary"
+                  disabled={!datasetRunState.canRun}
+                  loading={datasetRunState.isSubmitting}
+                  onClick={() => datasetRunRef.current?.()}
+                >
+                  {t("prediction:button.runPrediction")}
+                </LoadingButton>
+              </DialogActions>
             </Dialog>
 
             <Dialog
