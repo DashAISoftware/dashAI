@@ -162,7 +162,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
 
   return (
     <>
-      <Card elevation={2} sx={{ width: "100%" }}>
+      <Card elevation={2} sx={{ width: "100%", maxWidth: 900 }}>
         <CardContent sx={{ pb: 1 }}>
           {/* Header with status and dataset info */}
           <Box
@@ -205,11 +205,37 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                 </Box>
               )}
             </Box>
-            <Chip
-              label={getPredictionStatus(statusText, t)}
-              color={getStatusColor(statusText)}
-              size="small"
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Chip
+                label={getPredictionStatus(statusText, t)}
+                color={getStatusColor(statusText)}
+                size="small"
+              />
+              <Tooltip title={t("prediction:button.downloadResults")}>
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={!isFinished}
+                    color="primary"
+                    onClick={handleDownload}
+                  >
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title={t("common:delete")}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={isRunning}
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
           </Box>
 
           {/* Expandable Results */}
@@ -264,34 +290,6 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
             </Box>
           )}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: "flex-end", pt: 0 }}>
-          <Tooltip title={t("prediction:button.downloadResults")}>
-            <span>
-              <IconButton
-                size="small"
-                disabled={!isFinished}
-                color="primary"
-                onClick={handleDownload}
-              >
-                <DownloadIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-
-          <Tooltip title={t("common:delete")}>
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={isRunning}
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </CardActions>
       </Card>
 
       {/* Delete Confirmation Dialog */}
