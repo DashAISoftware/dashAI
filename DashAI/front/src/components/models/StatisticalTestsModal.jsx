@@ -21,7 +21,11 @@ import {
 } from "@mui/material";
 import { ExpandMore } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
-import api from "../../api/api";
+import {
+  getFoldMetrics,
+  checkNormality,
+  runStatisticalTest,
+} from "../../api/statisticalTests";
 
 export default function StatisticalTestsModal({
   runs,
@@ -159,24 +163,19 @@ export default function StatisticalTestsModal({
       // Fetch fold metrics for selected runs
       const foldMetricsData = {};
       for (const runId of selectedRuns) {
-        const response = await api.get(`/v1/run/${runId}/fold-metrics`, {
-          params: { metric_split: selectedSplit },
-        });
-        foldMetricsData[runId] = response.data[selectedMetric] || [];
+        const metrics = await getFoldMetrics(runId, selectedSplit);
+        foldMetricsData[runId] = metrics[selectedMetric] || [];
       }
 
-      // Check normality via API
-      const normalityResponse = await api.post(
-        "/v1/statistical-tests/normality-check",
-        {
-          metric_name: selectedMetric,
-          metric_split: selectedSplit,
-          run_ids: selectedRuns,
-          fold_metrics: foldMetricsData,
-        },
+      // Check normality via service
+      const normalityResponse = await checkNormality(
+        selectedMetric,
+        selectedSplit,
+        selectedRuns,
+        foldMetricsData,
       );
 
-      setNormalityResult(normalityResponse.data);
+      setNormalityResult(normalityResponse);
     } catch (err) {
       console.error("Error checking normality:", err);
       setError(
@@ -211,23 +210,21 @@ export default function StatisticalTestsModal({
       // Fetch fold metrics for selected runs
       const foldMetricsData = {};
       for (const runId of selectedRuns) {
-        const response = await api.get(`/v1/run/${runId}/fold-metrics`, {
-          params: { metric_split: selectedSplit },
-        });
-        foldMetricsData[runId] = response.data[selectedMetric] || [];
+        const metrics = await getFoldMetrics(runId, selectedSplit);
+        foldMetricsData[runId] = metrics[selectedMetric] || [];
       }
 
-      // Execute the statistical test via API
-      const testResponse = await api.post("/v1/statistical-tests/run", {
-        test_name: selectedTest,
-        metric_name: selectedMetric,
-        metric_split: selectedSplit,
-        run_ids: selectedRuns,
-        fold_metrics: foldMetricsData,
+      // Execute the statistical test via service
+      const testResponse = await runStatisticalTest(
+        selectedTest,
+        selectedMetric,
+        selectedSplit,
+        selectedRuns,
+        foldMetricsData,
         alpha,
-      });
+      );
 
-      setResults(testResponse.data);
+      setResults(testResponse);
       setError(null);
     } catch (err) {
       console.error("Error executing statistical test:", err);
