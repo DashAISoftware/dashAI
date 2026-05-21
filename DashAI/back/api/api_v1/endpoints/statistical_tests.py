@@ -63,7 +63,7 @@ async def check_normality(request: NormalityCheckRequest) -> NormalityCheckRespo
 
         # Test normality for each run individually
         for run_id in request.run_ids:
-            metrics = request.fold_metrics.get(run_id, [])
+            metrics = request.fold_metrics.get(str(run_id), [])
 
             if not metrics:
                 raise HTTPException(
@@ -178,7 +178,7 @@ async def run_statistical_test(
         # Build scores dict keyed by run name for readability in results
         # Use run_id as key if no name mapping is available
         scores: Dict[str, List[float]] = {
-            run_id: request.fold_metrics[run_id]
+            run_id: request.fold_metrics[str(run_id)]
             for run_id in request.run_ids
             if run_id in request.fold_metrics
         }

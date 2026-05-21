@@ -10,14 +10,14 @@ class NormalityCheckRequest(BaseModel):
 
     metric_name: str
     metric_split: str
-    run_ids: List[str]
+    run_ids: List[int]
     fold_metrics: Dict[str, List[float]]
 
 
 class NormalityTestResult(BaseModel):
     """Normality test result for a single run."""
 
-    run_id: str
+    run_id: int
     p_value: float
     is_normal: bool
 
@@ -36,7 +36,7 @@ class StatisticalTestRequest(BaseModel):
     test_name: str
     metric_name: str
     metric_split: str
-    run_ids: List[str]
+    run_ids: List[int]
     fold_metrics: Dict[str, List[float]]
     alpha: Optional[float] = 0.05
     # Extra kwargs forwarded to the test's run() method (e.g. alternative)
@@ -46,8 +46,8 @@ class StatisticalTestRequest(BaseModel):
 class PairwiseResultResponse(BaseModel):
     """Single pairwise comparison result from a post-hoc test."""
 
-    run_1: str
-    run_2: str
+    run_1: int
+    run_2: int
     p_value: float
     significant: bool
 

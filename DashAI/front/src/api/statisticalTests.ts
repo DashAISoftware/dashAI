@@ -1,10 +1,12 @@
 import api from "./api";
 
+import {
+  NormalityCheckResponse,
+  StatisticalTestResponse,
+} from "../types/statisticalTests";
+
 /**
- * Get fold metrics for a specific run and metric split
- * @param runId - The ID of the run
- * @param metricSplit - The metric split to retrieve (train, test, validation)
- * @returns Object with metrics data
+ * Get fold metrics for a specific run and metric split.
  */
 export const getFoldMetrics = async (
   runId: string,
@@ -12,28 +14,22 @@ export const getFoldMetrics = async (
 ): Promise<Record<string, number[]>> => {
   const response = await api.get<Record<string, number[]>>(
     `/v1/run/${runId}/fold-metrics`,
-    {
-      params: { metric_split: metricSplit },
-    },
+    { params: { metric_split: metricSplit } },
   );
   return response.data;
 };
 
 /**
- * Check if selected runs meet normality requirements for a given metric
- * @param metricName - The name of the metric to check
- * @param metricSplit - The metric split (train, test, validation)
- * @param runIds - Array of run IDs to check
- * @param foldMetrics - Object containing fold metrics for each run
- * @returns Object with is_normal boolean flag
+ * Check normality for selected runs using Shapiro-Wilk test.
+ * Returns overall is_normal flag and per-run results.
  */
 export const checkNormality = async (
   metricName: string,
   metricSplit: string,
-  runIds: string[],
+  runIds: number[],
   foldMetrics: Record<string, number[]>,
-): Promise<{ is_normal: boolean }> => {
-  const response = await api.post<{ is_normal: boolean }>(
+): Promise<NormalityCheckResponse> => {
+  const response = await api.post<NormalityCheckResponse>(
     "/v1/statistical-tests/normality-check",
     {
       metric_name: metricName,
@@ -46,30 +42,32 @@ export const checkNormality = async (
 };
 
 /**
- * Run a statistical test on selected runs
- * @param testName - The name of the statistical test (e.g., paired_t_test, anova_test)
- * @param metricName - The name of the metric
- * @param metricSplit - The metric split (train, test, validation)
- * @param runIds - Array of run IDs to compare
- * @param foldMetrics - Object containing fold metrics for each run
- * @param alpha - Significance level (default 0.05)
- * @returns Test results
+ * Run a statistical test on selected runs.
+ * Automatically includes post-hoc results when applicable
+ * (Nemenyi after significant Friedman, Tukey after significant ANOVA).
+ *
+ * @param params - Extra test-specific params (e.g. { alternative: "two-sided" })
  */
 export const runStatisticalTest = async (
   testName: string,
   metricName: string,
   metricSplit: string,
-  runIds: string[],
+  runIds: number[],
   foldMetrics: Record<string, number[]>,
   alpha: number = 0.05,
-): Promise<unknown> => {
-  const response = await api.post<unknown>("/v1/statistical-tests/run", {
-    test_name: testName,
-    metric_name: metricName,
-    metric_split: metricSplit,
-    run_ids: runIds,
-    fold_metrics: foldMetrics,
-    alpha,
-  });
+  params: Record<string, unknown> = {},
+): Promise<StatisticalTestResponse> => {
+  const response = await api.post<StatisticalTestResponse>(
+    "/v1/statistical-tests/run",
+    {
+      test_name: testName,
+      metric_name: metricName,
+      metric_split: metricSplit,
+      run_ids: runIds,
+      fold_metrics: foldMetrics,
+      alpha,
+      params,
+    },
+  );
   return response.data;
 };
