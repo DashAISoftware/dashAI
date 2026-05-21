@@ -17,6 +17,7 @@ from DashAI.back.api.api_v1.schemas.statistical_tests_params import (
     StatisticalTestResponse,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 logging.basicConfig(level=logging.DEBUG)
@@ -168,7 +169,9 @@ async def run_statistical_test(
 
         # Resolve test class from registry
         try:
-            test_instance = component_registry[request.test_name]()
+            test_instance: BaseStatisticalTest = component_registry[request.test_name][
+                "class"
+            ]()
         except KeyError as key_error:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -180,7 +183,7 @@ async def run_statistical_test(
         scores: Dict[str, List[float]] = {
             run_id: request.fold_metrics[str(run_id)]
             for run_id in request.run_ids
-            if run_id in request.fold_metrics
+            if str(run_id) in request.fold_metrics
         }
 
         if len(scores) < 2:
@@ -202,7 +205,9 @@ async def run_statistical_test(
         if result.significant and request.test_name in POSTHOC_MAP:
             posthoc_test_name = POSTHOC_MAP[request.test_name]
             try:
-                posthoc_instance = component_registry[posthoc_test_name]()
+                posthoc_instance: BaseStatisticalTest = component_registry[
+                    posthoc_test_name
+                ]["class"]()
 
                 # Pass precalculated omnibus values to avoid recomputing
                 posthoc_result: StatisticalTestResult = posthoc_instance.run(
@@ -240,7 +245,7 @@ async def run_statistical_test(
 
         log.info(
             f"Statistical test '{request.test_name}' completed: "
-            f"p={result.p_value:.4f}, significant={result.significant}"
+            f"p={result.p_value}, significant={result.significant}"
         )
 
         return StatisticalTestResponse(

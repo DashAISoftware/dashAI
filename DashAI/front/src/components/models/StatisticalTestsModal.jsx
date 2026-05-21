@@ -87,15 +87,15 @@ export default function StatisticalTestsModal({
   const availableTests = React.useMemo(() => {
     if (selectedRuns.length === 2) {
       return [
-        { value: "paired_t_test", label: "pairedTTest" },
-        { value: "corrected_paired_t_test", label: "correctedPairedTTest" },
-        { value: "wilcoxon_sr_test", label: "wilcoxonSignedRankTest" },
+        { value: "PairedTTest", label: "pairedTTest" },
+        { value: "CorrectedPairedTTest", label: "correctedPairedTTest" },
+        { value: "WilcoxonSRTest", label: "wilcoxonSignedRankTest" },
       ];
     } else if (selectedRuns.length >= 3) {
       return [
-        { value: "anova_test", label: "anovaTest" },
-        { value: "friedman_test", label: "friedmanTest" },
-        { value: "pairwise_wilcoxon_test", label: "pairwiseWilcoxonTest" },
+        { value: "AnovaTest", label: "anovaTest" },
+        { value: "FriedmanTest", label: "friedmanTest" },
+        { value: "PairwiseWilcoxonTest", label: "pairwiseWilcoxonTest" },
       ];
     }
     return [];

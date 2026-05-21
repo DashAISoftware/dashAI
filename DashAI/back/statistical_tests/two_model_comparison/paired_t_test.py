@@ -2,7 +2,7 @@ from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalT
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
-class PairedTTEST(BaseStatisticalTest):
+class PairedTTest(BaseStatisticalTest):
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}
@@ -25,11 +25,28 @@ class PairedTTEST(BaseStatisticalTest):
                 "Both sets of scores must have the same number of observations."
             )
 
+        # Validar que haya suficientes observaciones
+        if len(scores1) < 2:
+            raise ValueError(
+                "Paired T-Test requires at least 2 observations per group."
+            )
+
+        # Validar que no haya valores NaN
+        if np.isnan(scores1).any() or np.isnan(scores2).any():
+            raise ValueError("Scores contain NaN values. Please check your input data.")
+
+        # Validar que haya varianza en los datos
+        if np.var(scores1) == 0 or np.var(scores2) == 0:
+            raise ValueError(
+                "One or both score sets have zero variance. "
+                "All values are identical, making the t-test undefined."
+            )
+
         statistic, p_value = ttest_rel(scores1, scores2, alternative=alternative)
 
         significant = p_value < alpha
         interpretation = (
-            f"With a p-value of {p_value:.4f}, "
+            f"With a p-value of {p_value}, "
             f"we {'reject' if significant else 'fail to reject'} "
             f"the null hypothesis at the alpha level of {alpha}."
         )

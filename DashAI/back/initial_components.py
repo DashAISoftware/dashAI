@@ -279,6 +279,22 @@ from DashAI.back.splitters.repeated_stratified_k_fold import (
 from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSplitter
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
 
+# Statistical tests
+from DashAI.back.statistical_tests.multi_model_comparison.anova_test import AnovaTest
+from DashAI.back.statistical_tests.multi_model_comparison.friedman_test import (
+    FriedmanTest,
+)
+from DashAI.back.statistical_tests.multi_model_comparison.pairw_wilcoxon_test import (
+    PairwiseWilcoxonTest,
+)
+from DashAI.back.statistical_tests.two_model_comparison.corrected_paired_t_test import (
+    CorrectedPairedTTest,
+)
+from DashAI.back.statistical_tests.two_model_comparison.paired_t_test import PairedTTest
+from DashAI.back.statistical_tests.two_model_comparison.wilcoxon_sr_test import (
+    WilcoxonSRTest,
+)
+
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.regression_task import RegressionTask
@@ -492,6 +508,13 @@ def get_initial_components():
         # Evaluation Strategies
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
+        # Statistical tests
+        AnovaTest,
+        FriedmanTest,
+        PairwiseWilcoxonTest,
+        CorrectedPairedTTest,
+        PairedTTest,
+        WilcoxonSRTest,
     ]
 
     # Obtener plugins instalados
