@@ -118,7 +118,13 @@ export default function ExplorerBox({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
               label={getExplorerStatus(statusLabel, t)}
-              color={statusLabel === 3 ? "primary" : "default"} // Finished
+              color={
+                statusLabel === 3
+                  ? "success"
+                  : statusLabel === 4
+                    ? "error"
+                    : "default"
+              }
               size="small"
             />
             <>
@@ -134,10 +140,7 @@ export default function ExplorerBox({
                   color="primary"
                   icon={<Info />}
                   sx={{
-                    bgcolor: "primary.main",
-                    "&:hover": {
-                      bgcolor: "primary.dark",
-                    },
+                    "&:hover": { bgcolor: "primary.light" },
                   }}
                 />
               )}

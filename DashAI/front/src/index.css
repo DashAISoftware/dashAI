@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
     "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -8,6 +8,6 @@ body {
 }
 
 code {
-  font-family: "IBM Plex Mono", source-code-pro, Menlo, Monaco, Consolas,
+  font-family: "Geist Mono", source-code-pro, Menlo, Monaco, Consolas,
     "Courier New", monospace;
 }

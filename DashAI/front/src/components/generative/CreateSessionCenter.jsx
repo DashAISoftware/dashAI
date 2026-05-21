@@ -106,6 +106,7 @@ export default function CreateSessionCenter() {
           flexDirection: "column",
           overflowY: "auto",
           pt: 1,
+          pb: 2,
         }}
       >
         {step === 0 ? (
