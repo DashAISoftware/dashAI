@@ -3,21 +3,16 @@ import PropTypes from "prop-types";
 import {
   Card,
   CardContent,
-  CardActions,
   Typography,
   IconButton,
   Chip,
   Box,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
   Collapse,
   CircularProgress,
 } from "@mui/material";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -292,26 +287,12 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeleteConfirmationModal
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>{t("prediction:label.confirmDeletionTitle")}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t("prediction:label.confirmDeletion")}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            {t("common:cancel")}
-          </Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
-            {t("common:delete")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleDelete}
+        content={t("prediction:label.confirmDeletion")}
+      />
     </>
   );
 }

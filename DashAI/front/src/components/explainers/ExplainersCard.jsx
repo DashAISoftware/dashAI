@@ -4,16 +4,12 @@ import {
   Typography,
   IconButton,
   Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
   Collapse,
   Box,
   CircularProgress,
 } from "@mui/material";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -165,27 +161,12 @@ export default function ExplainersCard({
           </Grid>
         </Paper>
 
-        <Dialog
+        <DeleteConfirmationModal
           open={open}
           onClose={handleClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            {t("explainers:label.deleteExplainer")}
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              {t("explainers:label.deleteExplainerConfirmation")}
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>{t("common:cancel")}</Button>
-            <Button onClick={handleConfirmDelete} color="error" autoFocus>
-              {t("common:delete")}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onConfirm={handleConfirmDelete}
+          content={t("explainers:label.deleteExplainerConfirmation")}
+        />
       </>
     );
   }
@@ -230,27 +211,12 @@ export default function ExplainersCard({
             >
               <DeleteIcon />
             </IconButton>
-            <Dialog
+            <DeleteConfirmationModal
               open={open}
               onClose={handleClose}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description"
-            >
-              <DialogTitle id="alert-dialog-title">
-                {t("explainers:label.deleteExplainer")}
-              </DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">
-                  {t("explainers:label.deleteExplainerConfirmation")}
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClose}>{t("common:cancel")}</Button>
-                <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                  {t("common:delete")}
-                </Button>
-              </DialogActions>
-            </Dialog>
+              onConfirm={handleConfirmDelete}
+              content={t("explainers:label.deleteExplainerConfirmation")}
+            />
           </Grid>
         </Grid>
         <ExplainersPlot explainer={explainer} scope={scope} />

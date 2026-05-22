@@ -119,8 +119,18 @@ export default function ManualPredictionPanel({
       return;
     }
 
-    // Row edited — clear all predictions (data changed, results are stale)
-    setPreviewResults(null);
+    // Row edited — clear only that row's prediction
+    for (let i = 0; i < newRows.length; i++) {
+      if (JSON.stringify(prevRows[i]) !== JSON.stringify(newRows[i])) {
+        setPreviewResults((prev) => {
+          if (!prev) return null;
+          const rows = [...prev.rows];
+          rows[i] = null;
+          return { ...prev, rows };
+        });
+        break;
+      }
+    }
   }, []);
 
   const handleRunPrediction = async () => {

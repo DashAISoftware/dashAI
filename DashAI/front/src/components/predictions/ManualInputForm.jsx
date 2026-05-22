@@ -77,7 +77,7 @@ export default function ManualInputForm({
 
   const handleChange = (rowIndex, col, value) => {
     const newRows = [...rows];
-    newRows[rowIndex][col] = value;
+    newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
     setRows(newRows);
     setManualInputData(newRows);
   };
