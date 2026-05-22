@@ -1,3 +1,7 @@
+import getTheme from "../../../styles/theme";
+
+const darkTheme = getTheme("dark");
+
 const getTraceColors = (theme) => [
   theme.palette.primary.main,
   theme.palette.secondary.main,
@@ -114,8 +118,9 @@ function heatmapMaking(
     metricsMetadata[m]?.maximize === false ? `${m} ↓` : m,
   );
 
-  const primaryColor = theme.palette.primary.main;
-  const secondaryColor = theme.palette.secondary.main;
+  // To use current-mode colors, replace `darkTheme` with `theme` below
+  const worstColor = darkTheme.palette.error.main;
+  const bestColor = darkTheme.palette.accent.teal;
 
   return [
     {
@@ -126,10 +131,10 @@ function heatmapMaking(
       text: annotationText,
       texttemplate: "%{text}",
       textfont: { size: 11, weight: 700, color: theme.palette.text.primary },
-      // orange (primary) = min/worst, green (secondary) = max/best
+      // amber (accent) = min/worst, teal/blue (accent) = max/best
       colorscale: [
-        [0, primaryColor],
-        [1, secondaryColor],
+        [0, worstColor],
+        [1, bestColor],
       ],
       zauto: false,
       zmin: 0,
