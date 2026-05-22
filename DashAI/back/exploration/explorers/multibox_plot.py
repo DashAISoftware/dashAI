@@ -43,10 +43,15 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "Si es True, el diagrama de caja será horizontal; en caso "
                 "contrario, vertical."
             ),
+            pt=(
+                "Se True, o diagrama de caixa será horizontal; caso "
+                "contrário, vertical."
+            ),
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
+            pt="Gráfico horizontal",
         ),
     )  # type: ignore
     points: schema_field(
@@ -60,10 +65,15 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
             es=(
                 "Una de 'all', 'outliers' o 'False'. Determina qué puntos se muestran."
             ),
+            pt=(
+                "Um de 'all', 'outliers' ou 'False'. Determina quais pontos "
+                "são exibidos."
+            ),
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
+            pt="Pontos exibidos",
         ),
     )  # type: ignore
     opposite_axis: schema_field(
@@ -72,8 +82,11 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index to use for the opposite axis."),
             es=("Nombre o índice de columna para el eje opuesto."),
+            pt=("Nome ou índice de coluna para usar no eixo oposto."),
         ),
-        alias=MultilingualString(en="Opposite axis", es="Eje opuesto"),
+        alias=MultilingualString(
+            en="Opposite axis", es="Eje opuesto", pt="Eixo oposto"
+        ),
     )  # type: ignore
 
 
@@ -102,6 +115,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Multiple Column Box Plot",
         es="Diagrama de Caja Multicolumna",
+        pt="Diagrama de Caixa Múltiplo",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -111,6 +125,10 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         es=(
             "Muestra un diagrama de caja para múltiples columnas en un eje, "
             "usando otra columna como eje opuesto (si se proporciona)."
+        ),
+        pt=(
+            "Exibe um diagrama de caixa para múltiplas colunas em um eixo, "
+            "usando outra coluna como eixo oposto (se fornecida)."
         ),
     )
     IMAGE_PREVIEW = "multi_column_box_plot.png"

@@ -43,10 +43,17 @@ class ARFFDataLoader(BaseDataLoader):
             "Los archivos ARFF son autodescriptivos y no requieren "
             "parámetros adicionales."
         ),
+        pt=(
+            "Carregador de dados para dados tabulares em arquivos ARFF "
+            "(formato Weka Attribute-Relation File Format). "
+            "Os arquivos ARFF são autodescritivos e não requerem "
+            "parâmetros adicionais."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="ARFF Data Loader",
         es="Cargador de Datos ARFF",
+        pt="Carregador de Dados ARFF",
     )
 
     def _read_arff_file(self, filepath: str):

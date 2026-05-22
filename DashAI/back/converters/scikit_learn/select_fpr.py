@@ -22,6 +22,7 @@ class SelectFprSchema(BaseSchema):
         description=MultilingualString(
             en="The highest p-value for features to be kept.",
             es="El p-valor más alto para conservar características.",
+            pt="O p-valor mais alto para manter características.",
         ),
     )  # type: ignore
 
@@ -64,9 +65,15 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
             "Filtro: Selecciona características según una prueba de tasa de "
             "falsos positivos (FPR)."
         ),
+        pt=(
+            "Filtro: Seleciona características de acordo com um teste de taxa "
+            "de falso positivo (FPR)."
+        ),
     )
     SUPERVISED = True
-    DISPLAY_NAME = MultilingualString(en="Select FPR", es="Seleccionar FPR")
+    DISPLAY_NAME = MultilingualString(
+        en="Select FPR", es="Seleccionar FPR", pt="Seleção por FPR"
+    )
     IMAGE_PREVIEW = "select_fpr.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 

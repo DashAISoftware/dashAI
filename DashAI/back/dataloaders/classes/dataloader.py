@@ -22,6 +22,7 @@ class BaseDataLoader(ConfigObject):
     CATEGORY: Final = MultilingualString(
         en="File Uploading",
         es="Carga de Archivos",
+        pt="Carregamento de Arquivos",
     )
     SUPPORTED_EXTENSIONS: frozenset[str] = frozenset()
 

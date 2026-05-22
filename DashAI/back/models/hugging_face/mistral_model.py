@@ -51,8 +51,18 @@ class MistralSchema(BaseSchema):
                 "desarrollado conjuntamente con NVIDIA, con una ventana de contexto "
                 "de 128K y mejores capacidades multilingües."
             ),
+            pt=(
+                "O checkpoint Mistral Instruct para carregar em formato GGUF. "
+                "'Mistral-7B-Instruct-v0.3' é um modelo de instrução de 7B "
+                "parâmetros com forte desempenho para seu tamanho. "
+                "'Mistral-Nemo-Instruct-2407' é um modelo de 12B parâmetros "
+                "desenvolvido conjuntamente com a NVIDIA, com uma janela de contexto "
+                "de 128K e melhores capacidades multilíngues."
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+        ),
     )  # type: ignore
 
     max_tokens: schema_field(
@@ -70,8 +80,16 @@ class MistralSchema(BaseSchema):
                 "para respuestas cortas, 500-1000 para explicaciones detalladas "
                 "o código."
             ),
+            pt=(
+                "Número máximo de tokens novos que o modelo gerará por resposta. "
+                "Aproximadamente 1 token ≈ 0.75 palavras em português. Use 100-200 "
+                "para respostas curtas, 500-1000 para explicações detalhadas "
+                "ou código."
+            ),
         ),
-        alias=MultilingualString(en="Max tokens", es="Tokens máximos"),
+        alias=MultilingualString(
+            en="Max tokens", es="Tokens máximos", pt="Tokens máximos"
+        ),
     )  # type: ignore
 
     temperature: schema_field(
@@ -90,8 +108,15 @@ class MistralSchema(BaseSchema):
                 "Alrededor de 0.7 equilibra calidad y creatividad. En 1.0 las salidas "
                 "son máximamente variadas."
             ),
+            pt=(
+                "Temperatura de amostragem que controla a aleatoriedade "
+                "(intervalo 0.0-1.0). "
+                "Em 0.0 o modelo escolhe o token mais provável (determinístico). "
+                "Em torno de 0.7 equilibra qualidade e criatividade. Em 1.0 as saídas "
+                "são maximamente variadas."
+            ),
         ),
-        alias=MultilingualString(en="Temperature", es="Temperatura"),
+        alias=MultilingualString(en="Temperature", es="Temperatura", pt="Temperatura"),
     )  # type: ignore
 
     frequency_penalty: schema_field(
@@ -107,9 +132,16 @@ class MistralSchema(BaseSchema):
                 "frecuencia (rango 0.0-2.0). Valores más altos desincentivan "
                 "la repetición."
             ),
+            pt=(
+                "Penaliza tokens que já apareceram na saída com base na "
+                "frequência (intervalo 0.0-2.0). Valores mais altos desencorajam "
+                "a repetição."
+            ),
         ),
         alias=MultilingualString(
-            en="Frequency penalty", es="Penalización de frecuencia"
+            en="Frequency penalty",
+            es="Penalización de frecuencia",
+            pt="Penalidade de frequência",
         ),
     )  # type: ignore
 
@@ -127,8 +159,15 @@ class MistralSchema(BaseSchema):
                 "respuesta. Mistral-7B soporta hasta 32K tokens; Mistral-Nemo "
                 "soporta hasta 128K tokens."
             ),
+            pt=(
+                "Orçamento total de tokens por passagem, incluindo prompt e "
+                "resposta. Mistral-7B suporta até 32K tokens; Mistral-Nemo "
+                "suporta até 128K tokens."
+            ),
         ),
-        alias=MultilingualString(en="Context window", es="Ventana de contexto"),
+        alias=MultilingualString(
+            en="Context window", es="Ventana de contexto", pt="Janela de contexto"
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -144,8 +183,13 @@ class MistralSchema(BaseSchema):
                 "el modelo en RAM. Una opción de GPU descarga todas las capas para "
                 "inferencia más rápida."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência com llama.cpp. 'CPU' executa "
+                "o modelo em RAM. Uma opção de GPU descarrega todas as camadas para "
+                "inferência mais rápida."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
     )  # type: ignore
 
 
@@ -173,6 +217,7 @@ class MistralModel(TextToTextGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Mistral Model",
         es="Modelo Mistral",
+        pt="Modelo Mistral",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -192,6 +237,15 @@ class MistralModel(TextToTextGenerationTaskModel):
             "parámetros e inferencia eficiente. Soporta conversación multi-turno, "
             "razonamiento y generación de texto en general. Disponible en variantes de "
             "7B (Mistral-7B-v0.3) y 12B (Mistral-Nemo-2407). Modelos en "
+            "https://huggingface.co/bartowski."
+        ),
+        pt=(
+            "Modelos ajustados para instruções da Mistral AI, carregados em formato "
+            "GGUF para inferência eficiente em CPU e GPU via llama.cpp. Os modelos "
+            "Mistral são conhecidos pelo forte desempenho em relação à sua quantidade "
+            "de parâmetros e inferência eficiente. Suporta conversação multi-turno, "
+            "raciocínio e geração de texto em geral. Disponível nas variantes de "
+            "7B (Mistral-7B-v0.3) e 12B (Mistral-Nemo-2407). Modelos em "
             "https://huggingface.co/bartowski."
         ),
     )

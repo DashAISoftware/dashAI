@@ -14,13 +14,12 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../../utils/converterStatus";
 import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 function ConverterParametersTable({ converter, t, localization }) {
   const paramColumns = [
@@ -76,10 +75,8 @@ export default function ConverterBox({
 }) {
   const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
-  const { t, i18n } = useTranslation(["common", "datasets"]);
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const { t } = useTranslation(["common", "datasets"]);
+  const localization = useTableLocalization();
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -164,7 +161,13 @@ export default function ConverterBox({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
               label={getConverterStatus(statusLabel, t)}
-              color={statusLabel === 3 ? "primary" : "default"} // Finished
+              color={
+                statusLabel === 3
+                  ? "success"
+                  : statusLabel === 4
+                    ? "error"
+                    : "default"
+              }
               size="small"
             />
             {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished

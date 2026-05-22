@@ -51,8 +51,18 @@ class PixArtSigmaSchema(BaseSchema):
                 "'PixArt-Sigma-XL-2-512-MS' es la variante de 512px, más rápida y "
                 "ligera manteniendo resultados nítidos."
             ),
+            pt=(
+                "O checkpoint PixArt-Sigma a carregar. "
+                "'PixArt-Sigma-XL-2-1024-MS' é a variante de alta resolução "
+                "treinada a 1024px com suporte multi-escala, entregando a melhor "
+                "qualidade de imagem. "
+                "'PixArt-Sigma-XL-2-512-MS' é a variante de 512px, mais rápida e "
+                "leve, mantendo resultados nítidos."
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+        ),
     )  # type: ignore
 
     negative_prompt: Optional[
@@ -71,8 +81,16 @@ class PixArtSigmaSchema(BaseSchema):
                     "marca de agua'. "
                     "Dejar vacío para omitir el condicionamiento negativo."
                 ),
+                pt=(
+                    "Texto descrevendo o que excluir da imagem gerada. "
+                    "Valores comuns: 'borrado, baixa qualidade, distorcido, "
+                    "marca d'água'. "
+                    "Deixe vazio para omitir o condicionamento negativo."
+                ),
             ),
-            alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
+            alias=MultilingualString(
+                en="Negative prompt", es="Prompt negativo", pt="Prompt negativo"
+            ),
         )  # type: ignore
     ]
 
@@ -90,9 +108,16 @@ class PixArtSigmaSchema(BaseSchema):
                 "calidad con 14-25 pasos gracias a su eficiente arquitectura "
                 "transformer. Más pasos refinan detalles pero aumentan el tiempo."
             ),
+            pt=(
+                "Número de etapas de inferência. PixArt-Sigma atinge boa qualidade "
+                "com 14-25 etapas graças à sua eficiente arquitetura transformer. "
+                "Mais etapas refinam detalhes, mas aumentam o tempo de geração."
+            ),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de etapas de inferência",
         ),
     )  # type: ignore
 
@@ -112,8 +137,16 @@ class PixArtSigmaSchema(BaseSchema):
                 "Valores más altos refuerzan el prompt pero pueden saturar colores. "
                 "El valor por defecto de 4.5 es recomendado."
             ),
+            pt=(
+                "Escala de Classifier-Free Guidance (CFG). PixArt-Sigma funciona "
+                "melhor com valores mais baixos (3.5-5.5) em comparação com modelos "
+                "U-Net. Valores mais altos reforçam o prompt, mas podem saturar as "
+                "cores. O valor padrão de 4.5 é recomendado."
+            ),
         ),
-        alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
+        alias=MultilingualString(
+            en="Guidance scale", es="Escala de guía", pt="Escala de orientação"
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -130,8 +163,14 @@ class PixArtSigmaSchema(BaseSchema):
                 "PixArt-Sigma usa una arquitectura DiT (Diffusion Transformer) "
                 "con codificación de texto T5, más rápida que U-Net en GPU."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. GPU é fortemente "
+                "recomendada. PixArt-Sigma usa uma arquitetura DiT (Diffusion "
+                "Transformer) com codificação de texto T5, mais rápida que U-Net "
+                "na GPU."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
     )  # type: ignore
 
     seed: schema_field(
@@ -146,8 +185,12 @@ class PixArtSigmaSchema(BaseSchema):
                 "Semilla aleatoria para generación reproducible. Un entero positivo "
                 "fijo siempre produce la misma imagen. Use -1 para semilla aleatoria."
             ),
+            pt=(
+                "Semente aleatória para geração reproduzível. Um inteiro positivo "
+                "fixo sempre produz a mesma imagem. Use -1 para uma semente aleatória."
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla"),
+        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente"),
     )  # type: ignore
 
     width: schema_field(
@@ -162,8 +205,12 @@ class PixArtSigmaSchema(BaseSchema):
                 "Ancho de la imagen en píxeles. Debe ser múltiplo de 8. "
                 "PixArt-Sigma soporta resoluciones flexibles hasta 2048px."
             ),
+            pt=(
+                "Largura da imagem em pixels. Deve ser múltiplo de 8. "
+                "PixArt-Sigma suporta resoluções flexíveis até 2048px."
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho"),
+        alias=MultilingualString(en="Width", es="Ancho", pt="Largura"),
     )  # type: ignore
 
     height: schema_field(
@@ -178,8 +225,12 @@ class PixArtSigmaSchema(BaseSchema):
                 "Altura de la imagen en píxeles. Debe ser múltiplo de 8. "
                 "PixArt-Sigma soporta resoluciones flexibles hasta 2048px."
             ),
+            pt=(
+                "Altura da imagem em pixels. Deve ser múltiplo de 8. "
+                "PixArt-Sigma suporta resoluções flexíveis até 2048px."
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura"),
+        alias=MultilingualString(en="Height", es="Altura", pt="Altura"),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -194,9 +245,15 @@ class PixArtSigmaSchema(BaseSchema):
                 "Cuántas imágenes generar desde un solo prompt en un lote. "
                 "Requiere proporcionalmente más memoria GPU por imagen adicional."
             ),
+            pt=(
+                "Quantas imagens gerar a partir de um único prompt em um lote. "
+                "Requer proporcionalmente mais memória GPU por imagem adicional."
+            ),
         ),
         alias=MultilingualString(
-            en="Num images per prompt", es="Número de imágenes por prompt"
+            en="Num images per prompt",
+            es="Número de imágenes por prompt",
+            pt="Número de imagens por prompt",
         ),
     )  # type: ignore
 
@@ -227,6 +284,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="PixArt-Sigma",
         es="PixArt-Sigma",
+        pt="PixArt-Sigma",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -252,6 +310,19 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             "Significativamente más eficiente en parámetros que modelos comparables. "
             "Modelos en "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS y "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS."
+        ),
+        pt=(
+            "PixArt-Sigma é um modelo Diffusion Transformer (DiT) de alta eficiência "
+            "para geração de imagens a partir de texto, desenvolvido pela equipe "
+            "PixArt. Usa um codificador de texto T5 para rica compreensão semântica e "
+            "atinge qualidade de imagem de última geração com menos etapas de "
+            "inferência do que modelos U-Net. Suporta resoluções multi-escala "
+            "flexíveis até "
+            "2048px. Disponível nas variantes de 512px e 1024px. "
+            "Significativamente mais eficiente em parâmetros do que modelos "
+            "comparáveis. Modelos em "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS e "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS."
         ),
     )

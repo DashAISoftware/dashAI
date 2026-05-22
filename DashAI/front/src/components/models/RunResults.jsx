@@ -36,6 +36,7 @@ export default function RunResults({
   session,
   onRefresh,
   explainerRefreshTrigger,
+  autoExpand = false,
 }) {
   const [globalExplainers, setGlobalExplainers] = useState([]);
   const [localExplainers, setLocalExplainers] = useState([]);
@@ -106,11 +107,11 @@ export default function RunResults({
   }, [run.id]);
 
   useEffect(() => {
-    if (isRunning) {
+    if (isRunning && autoExpand) {
       setResultsVisible(true);
       setActiveTab(0); // Live Metrics tab
     }
-  }, [isRunning]);
+  }, [isRunning, autoExpand]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -611,4 +612,5 @@ RunResults.propTypes = {
   }),
   onRefresh: PropTypes.func,
   explainerRefreshTrigger: PropTypes.number,
+  autoExpand: PropTypes.bool,
 };

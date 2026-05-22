@@ -96,7 +96,7 @@ function ResponsiveAppBar() {
             }}
           >
             <Box component="span" sx={{ color: theme.palette.primary.main }}>
-              Dash
+              dash
             </Box>
             AI
           </Typography>
@@ -105,8 +105,8 @@ function ResponsiveAppBar() {
               display: { xs: "none", sm: "block" },
               ...theme.typography.statusBadge,
               color: theme.palette.primary.main,
-              border: `1px solid ${theme.palette.accent.amberBorder}`,
-              background: theme.palette.accent.amberDim,
+              border: `1px solid ${theme.palette.primary.main}38`,
+              background: `${theme.palette.primary.main}1F`,
               borderRadius: "2px",
               px: "7px",
               py: "2px",
@@ -205,7 +205,7 @@ function ResponsiveAppBar() {
                     ? theme.palette.primary.main
                     : theme.palette.text.secondary,
                   background: active
-                    ? theme.palette.accent.amberGlow
+                    ? `${theme.palette.primary.main}0A`
                     : "transparent",
                   borderBottom: active
                     ? `2px solid ${theme.palette.primary.main}`

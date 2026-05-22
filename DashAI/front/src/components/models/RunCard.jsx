@@ -81,6 +81,7 @@ function RunCard({
   const [operationsCount, setOperationsCount] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [autoExpand, setAutoExpand] = useState(false);
 
   const { defaultValues: defaultOptimizerParams } = useSchema({
     modelName: editedOptimizer,
@@ -266,6 +267,12 @@ function RunCard({
     }
   };
 
+  useEffect(() => {
+    if (run.status !== 1 && run.status !== 2) {
+      setAutoExpand(false);
+    }
+  }, [run.status]);
+
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4; // Not Started, Finished, Error
   const isRunning = run.status === 1 || run.status === 2; // Delivered, Started
 
@@ -411,7 +418,10 @@ function RunCard({
                   color="primary"
                   size="small"
                   startIcon={<PlayArrow />}
-                  onClick={() => onTrain(run, operationsCount)}
+                  onClick={() => {
+                    setAutoExpand(true);
+                    onTrain(run, operationsCount);
+                  }}
                   data-tour={isLastRun ? "train-button" : undefined}
                   disabled={isEditing}
                 >
@@ -699,6 +709,7 @@ function RunCard({
             session={session}
             onRefresh={onOperationsRefresh}
             explainerRefreshTrigger={explainerRefreshTrigger}
+            autoExpand={autoExpand}
           />
         </Box>
         <RetrainConfirmDialog
