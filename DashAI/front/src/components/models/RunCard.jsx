@@ -68,7 +68,17 @@ function RunCard({
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
-  const [expanded, setExpanded] = useState(false);
+  const [resultsVisible, setResultsVisible] = useState(() => {
+    const saved = localStorage.getItem(`run-${run.id}-results-visible`);
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      `run-${run.id}-results-visible`,
+      JSON.stringify(resultsVisible),
+    );
+  }, [resultsVisible, run.id]);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(run.name || "");
   const [editedParameters, setEditedParameters] = useState(
@@ -322,25 +332,6 @@ function RunCard({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
-            <Tooltip
-              title={
-                expanded
-                  ? t("models:button.hideParameters")
-                  : t("models:button.showParameters")
-              }
-            >
-              <IconButton
-                size="small"
-                onClick={() => setExpanded(!expanded)}
-                color={expanded ? "primary" : "default"}
-              >
-                {expanded ? (
-                  <ExpandLess fontSize="small" />
-                ) : (
-                  <ExpandMore fontSize="small" />
-                )}
-              </IconButton>
-            </Tooltip>
             <Typography
               variant="h6"
               component="div"
@@ -430,6 +421,25 @@ function RunCard({
                 <Delete fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Tooltip
+              title={
+                resultsVisible
+                  ? t("models:label.hideResults")
+                  : t("models:label.showResults")
+              }
+            >
+              <IconButton
+                size="small"
+                onClick={() => setResultsVisible(!resultsVisible)}
+                color="default"
+              >
+                {resultsVisible ? (
+                  <ExpandLess fontSize="small" />
+                ) : (
+                  <ExpandMore fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -469,89 +479,14 @@ function RunCard({
           </Typography>
         )}
 
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <Box sx={{ mt: 2 }}>
-            {run.parameters && Object.keys(run.parameters).length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  {t("common:modelParameters")}
-                </Typography>
-                <TableContainer component={Paper}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{t("common:parameter")}</TableCell>
-                        <TableCell>{t("common:value")}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {Object.entries(run.parameters).map(([key, value]) => (
-                        <TableRow key={key}>
-                          <TableCell>{key}</TableCell>
-                          <TableCell>{renderParamValue(value)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            )}
-
-            {run.optimizer_name && run.goal_metric && (
-              <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  {t("common:optimizer")}: {run.optimizer_name}
-                </Typography>
-                {run.optimizer_parameters &&
-                  Object.keys(run.optimizer_parameters).length > 0 && (
-                    <TableContainer component={Paper}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>{t("common:parameter")}</TableCell>
-                            <TableCell>{t("common:value")}</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {Object.entries(run.optimizer_parameters).map(
-                            ([key, value]) => (
-                              <TableRow key={key}>
-                                <TableCell>{key}</TableCell>
-                                <TableCell>
-                                  {typeof value === "object"
-                                    ? JSON.stringify(value)
-                                    : String(value)}
-                                </TableCell>
-                              </TableRow>
-                            ),
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-              </Box>
-            )}
-
-            {run.goal_metric && (
-              <Box sx={{ mt: 2 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ color: theme.palette.text.secondary }}
-                >
-                  {t("models:label.goalMetric")}:{" "}
-                  <strong>{run.goal_metric}</strong>
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </Collapse>
-
         <Box sx={{ mt: 2 }}>
           <RunResults
             run={run}
             session={session}
             onRefresh={onOperationsRefresh}
             explainerRefreshTrigger={explainerRefreshTrigger}
+            resultsVisible={resultsVisible}
+            setResultsVisible={setResultsVisible}
           />
         </Box>
         <RetrainConfirmDialog

@@ -15,7 +15,15 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from "@mui/material";
+import { renderParamValue } from "./ModelParamBlock";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -43,14 +51,25 @@ export default function RunResults({
   session,
   onRefresh,
   explainerRefreshTrigger,
+  resultsVisible: controlledVisible = undefined,
+  setResultsVisible: setControlledVisible = undefined,
 }) {
+  const isControlled = controlledVisible !== undefined;
+
   const [globalExplainers, setGlobalExplainers] = useState([]);
   const [localExplainers, setLocalExplainers] = useState([]);
   const [predictions, setPredictions] = useState([]);
-  const [resultsVisible, setResultsVisible] = useState(() => {
+  const [internalVisible, setInternalVisible] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
     return saved ? JSON.parse(saved) : false;
   });
+  const resultsVisible = isControlled ? controlledVisible : internalVisible;
+  const setResultsVisible = isControlled
+    ? setControlledVisible
+    : setInternalVisible;
+
+  const [paramsExpanded, setParamsExpanded] = useState(false);
+
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
     return saved ? JSON.parse(saved) : 0;
@@ -144,11 +163,12 @@ export default function RunResults({
   }, [isRunning]);
 
   useEffect(() => {
+    if (isControlled) return;
     localStorage.setItem(
       `run-${run.id}-results-visible`,
       JSON.stringify(resultsVisible),
     );
-  }, [resultsVisible, run.id]);
+  }, [resultsVisible, run.id, isControlled]);
 
   useEffect(() => {
     localStorage.setItem(`run-${run.id}-active-tab`, JSON.stringify(activeTab));
@@ -191,23 +211,90 @@ export default function RunResults({
   const totalOperations =
     globalExplainers.length + localExplainers.length + predictions.length;
 
+  const hasParams =
+    (run.parameters && Object.keys(run.parameters).length > 0) ||
+    (run.optimizer_name && run.goal_metric);
+
   return (
     <Box id={`run-results-${run.id}`}>
-      <Box sx={{ mb: 2 }}>
-        <Button
-          size="small"
-          onClick={() => setResultsVisible(!resultsVisible)}
-          endIcon={resultsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          sx={{ textTransform: "none" }}
-        >
-          {resultsVisible
-            ? t("models:label.hideResults")
-            : t("models:label.showResults")}
-          {isFinished && (
-            <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
-          )}
-        </Button>
-      </Box>
+      {hasParams && (
+        <Box sx={{ mb: 2 }}>
+          <Button
+            size="small"
+            onClick={() => setParamsExpanded(!paramsExpanded)}
+            endIcon={paramsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            sx={{ textTransform: "none" }}
+          >
+            {t("common:modelParameters")}
+          </Button>
+          <Collapse in={paramsExpanded} timeout="auto" unmountOnExit>
+            <Box sx={{ mt: 1 }}>
+              {run.parameters && Object.keys(run.parameters).length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{t("common:parameter")}</TableCell>
+                          <TableCell>{t("common:value")}</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(run.parameters).map(([key, value]) => (
+                          <TableRow key={key}>
+                            <TableCell>{key}</TableCell>
+                            <TableCell>{renderParamValue(value)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
+              {run.optimizer_name && run.goal_metric && (
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    {t("common:optimizer")}: {run.optimizer_name}
+                  </Typography>
+                  {run.optimizer_parameters &&
+                    Object.keys(run.optimizer_parameters).length > 0 && (
+                      <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>{t("common:parameter")}</TableCell>
+                              <TableCell>{t("common:value")}</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {Object.entries(run.optimizer_parameters).map(
+                              ([key, value]) => (
+                                <TableRow key={key}>
+                                  <TableCell>{key}</TableCell>
+                                  <TableCell>
+                                    {renderParamValue(value)}
+                                  </TableCell>
+                                </TableRow>
+                              ),
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}
+                  >
+                    {t("models:label.goalMetric")}:{" "}
+                    <strong>{run.goal_metric}</strong>
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Collapse>
+        </Box>
+      )}
 
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
