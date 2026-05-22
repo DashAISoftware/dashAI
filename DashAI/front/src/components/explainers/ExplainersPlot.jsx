@@ -84,6 +84,12 @@ export default function ExplainersPlot({ explainer, scope }) {
         flexDirection: "column",
         width: "100%",
         maxWidth: 700,
+        border: 1,
+        borderColor: "divider",
+        bgcolor: "background.default",
+        borderRadius: 1,
+        overflow: "hidden",
+        p: 1,
       }}
     >
       {!loading && isLocal && explainersPlots.length > 0 && (

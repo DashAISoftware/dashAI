@@ -256,14 +256,25 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                   >
                     {t("prediction:label.resultsPreview")}
                   </Typography>
-                  <DatasetTable
-                    fetchPage={fetchPage}
-                    initialPageSize={10}
-                    datasetPath={prediction.results_path}
-                    columnTypes={columnTypes}
-                    showExportButton={false}
-                    baseBackgroundColor={theme.palette.background.paper}
-                  />
+                  <Box
+                    sx={{
+                      border: 1,
+                      borderColor: "divider",
+                      bgcolor: "background.default",
+                      borderRadius: 1,
+                      overflow: "hidden",
+                      p: 1,
+                    }}
+                  >
+                    <DatasetTable
+                      fetchPage={fetchPage}
+                      initialPageSize={10}
+                      datasetPath={prediction.results_path}
+                      columnTypes={columnTypes}
+                      showExportButton={false}
+                      baseBackgroundColor={theme.palette.background.paper}
+                    />
+                  </Box>
                 </Box>
               </Collapse>
             </Box>
