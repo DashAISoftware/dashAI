@@ -40,6 +40,13 @@ class Chrf(TranslationMetric):
             "sobre n-gramas de caracteres, y es especialmente útil para "
             "idiomas morfológicamente ricos o textos cortos."
         ),
+        pt=(
+            "CHRF (Character n-gram F-score) avalia a qualidade da tradução "
+            "automática comparando textos candidatos e de referência ao nível "
+            "de caracteres. Calcula precisão, revocação e F-score "
+            "sobre n-gramas de caracteres, e é especialmente útil para "
+            "idiomas morfologicamente ricos ou textos curtos."
+        ),
     )
 
     @staticmethod

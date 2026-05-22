@@ -53,6 +53,12 @@ class ROCAUC(ClassificationMetric):
             "umbrales de decisión. Representa el grado de "
             "separabilidad entre clases."
         ),
+        pt=(
+            "A Área Sob a Curva ROC (RoC AUC) "
+            "é uma medida de desempenho para problemas de classificação "
+            "em vários limiares de decisão. Representa o grau de "
+            "separabilidade entre classes."
+        ),
     )
 
     @staticmethod
@@ -80,14 +86,26 @@ class ROCAUC(ClassificationMetric):
         float
             RoC AUC score between true labels and predicted labels
         """
+        import numpy as np
+
         true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
-        # Use the provided multiclass parameter or determine it using is_multiclass
-        if multiclass is None:
-            multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        # ROC AUC is undefined when only one class is present in y_true.
+        if len(np.unique(true_labels)) < 2:
+            return float("nan")
 
         from sklearn.metrics import roc_auc_score
 
+        n_classes = probs_pred_labels.shape[1]
+
+        if multiclass is None:
+            multiclass = n_classes > 2
         if multiclass:
-            return roc_auc_score(true_labels, probs_pred_labels, multi_class="ovr")
+            return roc_auc_score(
+                true_labels,
+                probs_pred_labels,
+                multi_class="ovr",
+                labels=list(range(n_classes)),
+            )
         else:
             return roc_auc_score(true_labels, probs_pred_labels[:, 1])

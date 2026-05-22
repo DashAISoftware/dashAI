@@ -428,7 +428,7 @@ async def get_all_generative_sessions(
         try:
             sessions = (
                 db.query(GenerativeSession)
-                .order_by(GenerativeSession.created.desc())
+                .order_by(GenerativeSession.created.asc())
                 .all()
             )
         except exc.SQLAlchemyError as e:

@@ -19,14 +19,17 @@ class ControlNetTask(BaseGenerativeTask):
     """
 
     metadata: dict = {
-        "inputs_types": [Image.Image, str],
-        "outputs_types": [Image.Image],
-        "inputs_cardinality": 2,
-        "outputs_cardinality": "n",
+        "inputs": {
+            "Image": {"min": 1, "max": 1},
+            "str": {"min": 1, "max": 1},
+        },
+        "outputs": {"Image": {"min": 1, "max": "n"}},
     }
 
     DISPLAY_NAME: str = MultilingualString(
-        en="ControlNet Image Generation", es="Generación de Imágenes con ControlNet"
+        en="ControlNet Image Generation",
+        es="Generación de Imágenes con ControlNet",
+        pt="Geração de Imagens com ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en="""
@@ -36,6 +39,10 @@ class ControlNetTask(BaseGenerativeTask):
         es="""
         Esta tarea genera imágenes basadas en el texto de entrada
         y la imagen proporcionados.
+        """,
+        pt="""
+        Esta tarefa gera imagens com base no texto de entrada
+        e na imagem fornecidos.
         """,
     )
 

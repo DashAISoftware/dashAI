@@ -41,6 +41,10 @@ class RMSE(RegressionMetric):
             "Raíz cuadrada del promedio de las diferencias al cuadrado entre "
             "valores predichos y reales, penaliza más los errores grandes."
         ),
+        pt=(
+            "Raiz quadrada da média das diferenças ao quadrado entre "
+            "valores previstos e reais, penaliza mais os erros grandes."
+        ),
     )
 
     @staticmethod

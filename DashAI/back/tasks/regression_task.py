@@ -23,19 +23,13 @@ class RegressionTask(BaseTask):
     """
 
     DESCRIPTION: str = MultilingualString(
-        en="""
-    Regression in machine learning involves predicting continuous values for
-    structured data organized in tabular form (rows and columns).
-    Models are trained to learn patterns and relationships in the data,
-    enabling accurate prediction of new instances.""",
-        es="""
-    La regresión en el aprendizaje automático implica predecir valores
-    continuos para datos estructurados organizados en
-    forma tabular (filas y columnas).
-    Los modelos se entrenan para aprender patrones y relaciones en los datos,
-    lo que permite una predicción precisa de nuevas instancias.""",
+        en="Predict continuous numeric values from tabular data.",
+        es="Predice valores numéricos continuos a partir de datos tabulares.",
+        pt="Prevê valores numéricos contínuos a partir de dados tabulares.",
     )
-    DISPLAY_NAME: str = MultilingualString(en="Regression", es="Regresión")
+    DISPLAY_NAME: str = MultilingualString(
+        en="Regression", es="Regresión", pt="Regressão"
+    )
 
     SCORING_PROFILES = {
         "regression_fit": {

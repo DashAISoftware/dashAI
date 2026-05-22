@@ -63,7 +63,7 @@ const getTheme = (mode) => ({
       main: mode === "dark" ? "#ff8383" : "#d32f2f",
     },
     warning: {
-      main: mode === "dark" ? "#f1ae61" : "#ed6c02",
+      main: mode === "dark" ? "#fbc02d" : "#f9a825",
     },
     success: {
       main: "#43A047",
@@ -104,19 +104,29 @@ const getTheme = (mode) => ({
 
     dataType: {
       numerical: "#00BEBB", // Numerical data (float)
-      integer: "#3e68ff", // Integer data
+      integer: "#5c6bc0", // Integer data
       categorical: "#9c27b0", // Categorical data
-      text: "#f1ae61", // Text/string data
-      boolean: "#43A047", // Boolean data
+      text: "#d4a054", // Text/string data
+      boolean: "#8bc34a", // Boolean data
       datetime: "#e91e63", // Date/time data
       image: "#6E86E8", // Image data
       default: "#757575", // Unknown or default type
     },
 
     chart: {
-      train: "#4caf50",
-      test: "#2196f3",
+      train: "#66bb6a",
+      test: "#42a5f5",
       validation: "#ff9800",
+      palette: [
+        "#66bb6a",
+        "#42a5f5",
+        "#ff9800",
+        "#ab47bc",
+        "#ef5350",
+        "#26a69a",
+        "#8d6e63",
+        "#78909c",
+      ],
     },
 
     ui:
@@ -158,57 +168,49 @@ const getTheme = (mode) => ({
   typography: {
     fontFamily: '"IBM Plex Sans", sans-serif',
 
-    // --- SANS SERIF ---
-    pageTitle: {
-      fontSize: "18px",
-      fontWeight: 600,
-      letterSpacing: "-0.01em",
-    }, // Main titles
+    // --- ESCALA DE TITULARES ---
+    h1: { fontSize: "28px", fontWeight: 700, letterSpacing: "-0.01em" },
+    h2: { fontSize: "22px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h3: { fontSize: "20px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h4: { fontSize: "17px", fontWeight: 600, letterSpacing: "-0.01em" },
+    h5: { fontSize: "16px", fontWeight: 600 },
+    h6: { fontSize: "14px", fontWeight: 600 },
 
-    cardTitle: {
-      fontSize: "15px",
-      fontWeight: 600,
-      letterSpacing: "-0.01em",
-    }, // Module/Card titles
-
-    navItem: {
-      fontSize: "12.5px",
-      fontWeight: 400,
-    }, // Sidebar links/Navigation
-
-    description: {
+    // --- ESCALA DE CUERPO ---
+    subtitle1: { fontSize: "17px", fontWeight: 400 }, // Parámetros principales
+    subtitle2: { fontSize: "16px", fontWeight: 400 }, // Texto destacado
+    body1: { fontSize: "14px", fontWeight: 400, lineHeight: 1.6 }, // Cuerpo / párrafos
+    body2: { fontSize: "12px", fontWeight: 400, lineHeight: 1.5 }, // Texto auxiliar / labels
+    caption: { fontSize: "12px", fontWeight: 400 }, // Información secundaria, captions
+    code: {
+      fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "12px",
-      fontWeight: 300,
-      lineHeight: 1.65,
-      color: "rgba(171, 178, 191, 0.45)",
-    }, // Explanatory text
+      fontWeight: 400,
+    }, // Code snippets, valores técnicos
 
-    // --- MONOSPACE ---
+    // --- VARIANTES UI FUNCIONALES ---
+    navItem: { fontSize: "12px", fontWeight: 400 }, // Sidebar links/Navigation
     tabLabel: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "10px",
       letterSpacing: "0.12em",
       textTransform: "uppercase",
     }, // Navigation tabs
-
     sectionLabel: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "9px",
       letterSpacing: "0.2em",
       textTransform: "uppercase",
     }, // Sidebar section headers
-
     statusBadge: {
       fontFamily: '"IBM Plex Mono", monospace',
       fontSize: "8.5px",
       letterSpacing: "0.12em",
       textTransform: "uppercase",
     },
-
-    // Others
     button: {
-      fontSize: "15px",
-      fontWeight: 400,
+      fontSize: "14px",
+      fontWeight: 500,
       letterSpacing: "-0.01em",
       textTransform: "uppercase",
     },

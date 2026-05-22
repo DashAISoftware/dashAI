@@ -35,6 +35,23 @@ import pluginsEN from "./locales/en/plugins.json";
 import pluginsES from "./locales/es/plugins.json";
 import generativeTourEN from "./locales/en/generativeTour.json";
 import generativeTourES from "./locales/es/generativeTour.json";
+import configurableObjectPT from "./locales/pt/configurableObject.json";
+import commonPT from "./locales/pt/common.json";
+import customPT from "./locales/pt/custom.json";
+import experimentsPT from "./locales/pt/experiments.json";
+import explainersPT from "./locales/pt/explainers.json";
+import generativePT from "./locales/pt/generative.json";
+import modelsPT from "./locales/pt/models.json";
+import datasetsPT from "./locales/pt/datasets.json";
+import predictionPT from "./locales/pt/prediction.json";
+import homeTourPT from "./locales/pt/homeTour.json";
+import datasetsTourPT from "./locales/pt/datasetsTour.json";
+import notebookTourPT from "./locales/pt/notebookTour.json";
+import modelsTourPT from "./locales/pt/modelsTour.json";
+import modelsSessionTourPT from "./locales/pt/modelsSessionTour.json";
+import homePT from "./locales/pt/home.json";
+import pluginsPT from "./locales/pt/plugins.json";
+import generativeTourPT from "./locales/pt/generativeTour.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -78,6 +95,25 @@ const resources = {
     modelsSessionTour: modelsSessionTourES,
     generativeTour: generativeTourES,
   },
+  pt: {
+    configurableObject: configurableObjectPT,
+    common: commonPT,
+    custom: customPT,
+    experiments: experimentsPT,
+    explainers: explainersPT,
+    generative: generativePT,
+    models: modelsPT,
+    datasets: datasetsPT,
+    prediction: predictionPT,
+    plugins: pluginsPT,
+    home: homePT,
+    homeTour: homeTourPT,
+    datasetsTour: datasetsTourPT,
+    notebookTour: notebookTourPT,
+    modelsTour: modelsTourPT,
+    modelsSessionTour: modelsSessionTourPT,
+    generativeTour: generativeTourPT,
+  },
 };
 
 i18n
@@ -85,7 +121,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    supportedLngs: ["en", "es"],
+    supportedLngs: ["en", "es", "pt"],
+    nonExplicitSupportedLngs: true,
     fallbackLng: "en",
 
     ns: [

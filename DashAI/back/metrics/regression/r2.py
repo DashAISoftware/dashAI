@@ -48,6 +48,12 @@ class R2(RegressionMetric):
             "se aproximan a los datos reales. Proporciona una indicación de "
             "la bondad de ajuste del modelo."
         ),
+        pt=(
+            "A pontuação R2, também conhecida como coeficiente de determinação, "
+            "mede quão bem os valores previstos de um modelo de regressão "
+            "se aproximam dos dados reais. Fornece uma indicação da "
+            "qualidade do ajuste do modelo."
+        ),
     )
 
     @staticmethod

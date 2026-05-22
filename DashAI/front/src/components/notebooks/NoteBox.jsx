@@ -10,12 +10,10 @@ export default function NoteBox({ message, className = "", ...props }) {
       className={className}
       {...props}
       sx={{
-        mt: 2,
         p: 2,
         bgcolor: theme.palette.background.box,
         borderRadius: 1,
         border: `1px solid ${theme.palette.ui.divider}`,
-        mb: 2,
       }}
     >
       <Typography

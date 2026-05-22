@@ -1,0 +1,158 @@
+services:
+  dashai-1:
+    image: dashai:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - dashai-data-1:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-2:
+    image: dashai:latest
+    ports:
+      - "8002:8000"
+    volumes:
+      - dashai-data-2:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-3:
+    image: dashai:latest
+    ports:
+      - "8003:8000"
+    volumes:
+      - dashai-data-3:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-4:
+    image: dashai:latest
+    ports:
+      - "8004:8000"
+    volumes:
+      - dashai-data-4:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-5:
+    image: dashai:latest
+    ports:
+      - "8005:8000"
+    volumes:
+      - dashai-data-5:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-6:
+    image: dashai:latest
+    ports:
+      - "8006:8000"
+    volumes:
+      - dashai-data-6:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-7:
+    image: dashai:latest
+    ports:
+      - "8007:8000"
+    volumes:
+      - dashai-data-7:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-8:
+    image: dashai:latest
+    ports:
+      - "8008:8000"
+    volumes:
+      - dashai-data-8:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-9:
+    image: dashai:latest
+    ports:
+      - "8009:8000"
+    volumes:
+      - dashai-data-9:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-10:
+    image: dashai:latest
+    ports:
+      - "8010:8000"
+    volumes:
+      - dashai-data-10:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-11:
+    image: dashai:latest
+    ports:
+      - "8011:8000"
+    volumes:
+      - dashai-data-11:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+  dashai-12:
+    image: dashai:latest
+    ports:
+      - "8012:8000"
+    volumes:
+      - dashai-data-12:/root/.DashAI
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 8G
+
+volumes:
+  dashai-data-1:
+  dashai-data-2:
+  dashai-data-3:
+  dashai-data-4:
+  dashai-data-5:
+  dashai-data-6:
+  dashai-data-7:
+  dashai-data-8:
+  dashai-data-9:
+  dashai-data-10:
+  dashai-data-11:
+  dashai-data-12:

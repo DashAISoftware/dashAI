@@ -5,6 +5,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Final
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.utils import MultilingualString
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,19 @@ class BaseDataLoader(ConfigObject):
     """Abstract class with base methods for DashAI dataloaders."""
 
     TYPE: Final[str] = "DataLoader"
+    CATEGORY: Final = MultilingualString(
+        en="File Uploading",
+        es="Carga de Archivos",
+        pt="Carregamento de Arquivos",
+    )
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset()
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        return {
+            "category": cls.CATEGORY if cls.CATEGORY else "File Uploading",
+            "supported_extensions": sorted(cls.SUPPORTED_EXTENSIONS),
+        }
 
     @abstractmethod
     def load_data(

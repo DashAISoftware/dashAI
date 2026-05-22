@@ -47,6 +47,13 @@ class MSE(RegressionMetric):
             "Indica la precisión de predicción del modelo, "
             "donde valores más bajos indican mejor ajuste."
         ),
+        pt=(
+            "O Erro Quadrático Médio (MSE) mede a média "
+            "das diferenças ao quadrado "
+            "entre valores previstos e reais em um modelo de regressão. "
+            "Indica a acurácia de previsão do modelo, "
+            "com valores mais baixos indicando melhor ajuste."
+        ),
     )
 
     @staticmethod

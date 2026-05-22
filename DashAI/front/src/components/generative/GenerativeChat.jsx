@@ -7,14 +7,13 @@ import {
   getProcessesBySessionId,
   deleteProcessById,
 } from "../../api/process";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
 import { useSnackbar } from "notistack";
-import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
@@ -32,8 +31,14 @@ export default function GenerativeChat() {
   const {
     selectedSessionId: sessionId,
     selectedTaskName: taskName,
+    tasks,
     paramsVersion,
   } = useGenerative();
+
+  const inputsCardinality = useMemo(() => {
+    const task = tasks?.find((t) => t.name === taskName);
+    return task?.metadata?.inputs ?? { str: 1 };
+  }, [tasks, taskName]);
 
   const [history, setHistory] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -327,10 +332,9 @@ export default function GenerativeChat() {
       flexDirection="column"
       justifyContent="flex-start"
       alignItems="center"
-      gap={1}
       width={"100%"}
       height={"100%"}
-      //bgcolor={"background.box"}
+      sx={{ overflow: "hidden", minHeight: 0 }}
     >
       {/* RAG Breadcrumbs - only show for RAG tasks */}
       {taskName === "RAGTask" && (
@@ -349,7 +353,6 @@ export default function GenerativeChat() {
           alignItems: "center",
           borderRadius: 1,
           opacity: 0.5,
-          mb: 0.8,
         }}
       >
         <Box
@@ -359,6 +362,8 @@ export default function GenerativeChat() {
           justifyContent="space-between"
           gap={0.5}
           width={"100%"}
+          height={"32px"}
+          mb={2}
         >
           <Typography>
             {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
@@ -380,55 +385,7 @@ export default function GenerativeChat() {
         </Box>
       </Box>
 
-      {/* Model display - hide for RAG tasks since breadcrumbs show session info */}
-      {taskName !== "RAGTask" && (
-        <>
-          <Box
-            sx={{
-              width: "100%",
-              height: "30px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderRadius: 1,
-              opacity: 0.5,
-              mb: 1,
-            }}
-          >
-            <Box
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-              gap={0.5}
-              width={"100%"}
-            >
-              <Typography variant="title1" gutterBottom>
-                {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
-                {sessionInfo?.description ? ":" : null}
-                <br />
-                {sessionInfo?.description}
-              </Typography>
-
-              <Box>
-                <IconButton onClick={() => setSessionInfoVisible(true)}>
-                  <InfoIcon
-                    sx={{
-                      color: "#a0a0a0",
-                      "&:hover": {
-                        color: "#ffffff",
-                      },
-                    }}
-                  />
-                </IconButton>
-              </Box>
-            </Box>
-          </Box>
-
-          <Divider sx={{ width: "100%" }} />
-        </>
-      )}
+      <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
       {/* Chat display */}
       <Box
@@ -438,7 +395,8 @@ export default function GenerativeChat() {
         alignItems="flex-start"
         gap={1}
         width={"100%"}
-        height={"100%"}
+        flex={1}
+        minHeight={0}
         overflow={"auto"}
         mt={1}
         p={2}
@@ -471,7 +429,7 @@ export default function GenerativeChat() {
               mt={1}
             >
               {message.type === "history" ? (
-                <Typography sx={{ fontSize: "0.875rem", opacity: 0.8 }}>
+                <Typography variant="body1" sx={{ opacity: 0.8 }}>
                   <Trans i18nKey="generative:label.parameterChangeEvent">
                     Parameters updated: <span>{message.changedMessage}</span>
                   </Trans>
@@ -539,21 +497,14 @@ export default function GenerativeChat() {
       </Box>
 
       {/* Chat input */}
-      {taskName === "ControlNetTask" ? (
-        <MediaInput
-          onSendMessage={(input) => {
-            handleSendMessage(input);
-          }}
-          isLoading={isLoadingMessage}
-        />
-      ) : (
-        <TextInput
-          onSendMessage={(input) => {
-            handleSendMessage(input);
-          }}
-          isLoading={isLoadingMessage}
-        />
-      )}
+      <MediaInput
+        key={sessionId}
+        onSendMessage={(input) => {
+          handleSendMessage(input);
+        }}
+        isLoading={isLoadingMessage}
+        inputsCardinality={inputsCardinality}
+      />
 
       {/* Session Info Modal */}
       {sessionInfo && (

@@ -65,7 +65,9 @@ def test_load_preview_csv(client, file, sep, expected_max_rows, expected_columns
 
     with path.open("rb") as f:
         files = {"file": (file, f, "text/csv")}
-        data = {"params": json.dumps({"separator": sep})}
+        data = {
+            "params": json.dumps({"separator": sep, "dataloader_name": "CSVDataLoader"})
+        }
         resp = client.post("/api/v1/dataset/preview_with_types", data=data, files=files)
 
     assert resp.status_code == 200, resp.text
@@ -101,7 +103,11 @@ def test_load_preview_json(client, file, datakey, expected_columns):
 
     with path.open("rb") as f:
         files = {"file": (file, f, "application/json")}
-        data = {"params": json.dumps({"data_key": datakey})}
+        data = {
+            "params": json.dumps(
+                {"data_key": datakey, "dataloader_name": "JSONDataLoader"}
+            )
+        }
         resp = client.post("/api/v1/dataset/preview_with_types", data=data, files=files)
 
     assert resp.status_code == 200, resp.text
@@ -124,7 +130,9 @@ def test_schema_change(client: TestClient):
 
     with path.open("rb") as f:
         files = {"file": ("iris.csv", f, "text/csv")}
-        data = {"params": json.dumps({"separator": ","})}
+        data = {
+            "params": json.dumps({"separator": ",", "dataloader_name": "CSVDataLoader"})
+        }
         resp = client.post("/api/v1/dataset/preview_with_types", data=data, files=files)
 
     assert resp.status_code == 200, resp.text

@@ -1,11 +1,17 @@
 import os
 import platform
 import site
+from PyInstaller.utils.hooks import collect_all
 
 SITEPKG = str(site.getsitepackages()[-1])
 
 # Check for llama_cpp/lib presence to determine if we can include the binaries
 llama_lib = os.path.exists(os.path.join(SITEPKG, "llama_cpp/lib"))
+
+if platform.system() == "Darwin":
+    webview_datas, webview_binaries, webview_hiddenimports = collect_all('webview')
+else:
+    webview_datas, webview_binaries, webview_hiddenimports = [], [], []
 
 # Ensure the temp_checkpoints directory exists before building
 if not os.path.exists(os.path.join("DashAI/back/user_models/temp_checkpoints")):
@@ -14,7 +20,7 @@ if not os.path.exists(os.path.join("DashAI/back/user_models/temp_checkpoints")):
 a = Analysis(
     platform.system() == "Windows" and ["DashAI/__main__.py"] or ["DashAI/webview.py"],
     pathex=["."],
-    binaries=llama_lib and [(f"{SITEPKG}/llama_cpp/lib/*", "llama_cpp/lib")] or [],
+    binaries=(llama_lib and [(f"{SITEPKG}/llama_cpp/lib/*", "llama_cpp/lib")] or []) + webview_binaries,
     datas=[
         ("DashAI/__main__.py", "DashAI/__main__.py"),
         ("DashAI/alembic", "DashAI/alembic"),
@@ -27,8 +33,8 @@ a = Analysis(
             "DashAI/back/user_models/temp_checkpoints",
         ),
         (f"{SITEPKG}/transformers", "transformers"),
-    ],
-    hiddenimports=[],
+    ] + webview_datas,
+    hiddenimports=webview_hiddenimports,
     hookspath=["hooks"],
     runtime_hooks=None,
     excludes=None,

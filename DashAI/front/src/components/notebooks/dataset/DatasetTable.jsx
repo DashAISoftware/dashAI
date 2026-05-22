@@ -3,12 +3,11 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { Box, Button, Tooltip, Typography } from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import {
   renameDatasetColumn,
   updateColumnEncoder,
@@ -29,11 +28,9 @@ export default function DatasetTable({
   enableTopToolbar = true,
   enableRowsPerPageSelector = true,
 }) {
-  const { t, i18n } = useTranslation(["common"]);
+  const { t } = useTranslation(["common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   // Only load all data client-side if:
   // 1. Filters/sorting are active AND

@@ -1,4 +1,7 @@
-import { Box, Typography, ButtonBase, useTheme } from "@mui/material";
+import { useRef, useState, useEffect } from "react";
+import { Box, Typography, ButtonBase, Tooltip, useTheme } from "@mui/material";
+
+const DESCRIPTION_MAX_LINES = 3;
 
 export default function OptionBox({
   optionName,
@@ -9,6 +12,15 @@ export default function OptionBox({
   dataTour,
   ...otherProps
 }) {
+  const descRef = useRef(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight);
+    }
+  }, [description]);
   const theme = useTheme();
   const accent = theme.palette.accent.amber;
   const accentDim = theme.palette.accent.amberDim;
@@ -21,7 +33,7 @@ export default function OptionBox({
       onClick={onClick}
       sx={{
         width: "100%",
-        height: "100%",
+        height: 250,
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
@@ -82,8 +94,8 @@ export default function OptionBox({
 
       {/* Title */}
       <Typography
+        variant="h5"
         sx={{
-          ...theme.typography.cardTitle,
           color: theme.palette.text.primary,
           mb: "5px",
           width: "100%",
@@ -93,18 +105,31 @@ export default function OptionBox({
       </Typography>
 
       {/* Description */}
-      <Typography
-        sx={{
-          fontSize: "15px",
-          fontWeight: 300,
-          color: theme.palette.text.secondary,
-          lineHeight: 1.65,
-          flexGrow: 1,
-          width: "100%",
-        }}
+      <Tooltip
+        title={isTruncated ? description : ""}
+        arrow
+        enterDelay={300}
+        placement="bottom"
       >
-        {description}
-      </Typography>
+        <Typography
+          ref={descRef}
+          variant="body1"
+          sx={{
+            fontWeight: 300,
+            color: theme.palette.text.secondary,
+            lineHeight: 1.65,
+            flexGrow: 1,
+            width: "100%",
+            display: "-webkit-box",
+            WebkitLineClamp: DESCRIPTION_MAX_LINES,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {description}
+        </Typography>
+      </Tooltip>
 
       {/* Footer: chips + arrow */}
       <Box
@@ -136,10 +161,11 @@ export default function OptionBox({
             </Box>
           ))}
         </Box>
-        <Box
+        <Typography
+          component="span"
+          variant="h2"
           className="card-arrow"
           sx={{
-            fontSize: "18px",
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
@@ -147,7 +173,7 @@ export default function OptionBox({
           }}
         >
           →
-        </Box>
+        </Typography>
       </Box>
     </ButtonBase>
   );

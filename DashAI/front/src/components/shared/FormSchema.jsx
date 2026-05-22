@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { Box } from "@mui/material";
 import useFormSchema from "../../hooks/useFormSchema";
 import FormSchemaButtonGroup from "./FormSchemaButtonGroup";
 import FormSchemaParameterContainer from "./FormSchemaParameterContainer";
@@ -43,7 +44,14 @@ function FormSchema({
   });
 
   return (
-    <>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
       <FormSchemaParameterContainer showBorder={showBorder}>
         <FormSchemaRenderFields
           modelSchema={modelSchema}
@@ -66,7 +74,7 @@ function FormSchema({
           saveButtonText={saveButtonText}
         />
       )}
-    </>
+    </Box>
   );
 }
 

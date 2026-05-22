@@ -81,7 +81,7 @@ function RightBarDatasetView() {
   }
 
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+    <Box sx={{ flex: 1, overflowY: "auto" }}>
       <ColumnInsights
         numericStats={datasetInfo?.numeric_stats}
         textStats={datasetInfo?.text_stats}
@@ -123,8 +123,7 @@ export default function RightBar({ notebook, onToggle }) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [explorersAndConverters]);
+  }, [explorersAndConverters, t]);
 
   // Clear search when the selected notebook changes
   useEffect(() => {
@@ -287,7 +286,6 @@ export default function RightBar({ notebook, onToggle }) {
           notebook,
         };
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [explorers, datasetColumns, notebook?.id],
   );
 
@@ -303,7 +301,6 @@ export default function RightBar({ notebook, onToggle }) {
           notebook,
         };
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [converters, datasetColumns, notebook?.id],
   );
 

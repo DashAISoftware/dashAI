@@ -54,6 +54,12 @@ class LogLoss(ClassificationMetric):
             "donde la entrada de predicción es un valor de probabilidad "
             "entre 0 y 1."
         ),
+        pt=(
+            "Log Loss, também conhecido como Perda Logística ou Entropia Cruzada, "
+            "mede o desempenho de um modelo de classificação "
+            "onde a entrada de previsão é um valor de probabilidade "
+            "entre 0 e 1."
+        ),
     )
 
     MAXIMIZE: bool = False
@@ -81,10 +87,13 @@ class LogLoss(ClassificationMetric):
         Returns
         -------
         float
-            Log Loss score between true labels and predicted labels
+            Log Loss, lower is better.
         """
         from sklearn.metrics import log_loss
 
         true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
-
-        return log_loss(true_labels, probs_pred_labels)
+        # Pass all expected class indices so log_loss works even when a split
+        # happens to contain only one class (e.g. small validation sets).
+        n_classes = probs_pred_labels.shape[1]
+        labels = list(range(n_classes))
+        return log_loss(true_labels, probs_pred_labels, labels=labels)

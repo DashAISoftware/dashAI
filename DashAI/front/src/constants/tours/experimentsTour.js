@@ -523,7 +523,7 @@ export const experimentsTourSteps = [
             padding: "8px",
             borderRadius: "4px",
             marginTop: "10px",
-            fontSize: "0.9em",
+            fontSize: "14px",
           }}
         >
           ⏱️ Training may take a few moments depending on your dataset size and

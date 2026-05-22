@@ -64,7 +64,6 @@ export default function SelectOptionMenu({
         <Grid
           container
           direction="row"
-          justifyContent="center"
           alignItems="stretch"
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
@@ -72,7 +71,7 @@ export default function SelectOptionMenu({
           {loading
             ? Array.from({ length: 6 }).map((_, index) => (
                 <Grid
-                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  size={{ xl: 4, lg: 4, md: 6, sm: 12, xs: 12 }}
                   key={index}
                 >
                   <Skeleton variant="rounded" height={100} />
@@ -86,7 +85,7 @@ export default function SelectOptionMenu({
 
               return (
                 <Grid
-                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  size={{ xl: 4, lg: 4, md: 6, sm: 12, xs: 12 }}
                   key={index}
                 >
                   <OptionBox

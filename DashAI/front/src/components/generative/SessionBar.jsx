@@ -1,5 +1,6 @@
 import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
@@ -10,7 +11,6 @@ import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { useNavigate } from "react-router-dom";
 
 export default function SessionBar({
   onToggle,
@@ -27,23 +27,23 @@ export default function SessionBar({
     tasks,
     sessions: sessionsCtx,
     selectedSessionId: selectedSessionIdCtx,
-    setSelectedTaskName,
-    setSelectedSessionId,
-    setSelectedDisplayName,
     deleteSessionById,
-    setStepIndex,
     editSession,
   } = useGenerative();
 
   const sessions = sessionsProp ?? sessionsCtx ?? [];
   const selectedSessionId = selectedSessionIdProp ?? selectedSessionIdCtx;
-  const deleteHandler = handleSessionDeleteProp ?? deleteSessionById;
-
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
   const { t } = useTranslation(["generative", "common"]);
+
+  const SEARCH_THRESHOLD = 10;
+
+  useEffect(() => {
+    if (sessions.length <= SEARCH_THRESHOLD) setSearchQuery("");
+  }, [sessions.length]);
 
   // Create a map of task_name to display_name for quick lookup
   const taskDisplayNameMap =
@@ -103,40 +103,37 @@ export default function SessionBar({
       handleNewSessionButtonProp();
       return;
     }
-    setSelectedSessionId(null);
-    setStepIndex(0);
-    setSelectedTaskName("");
+    navigate("/app/generative");
   };
 
   const handleSessionClick = (sessionId) => {
     const session = sessions.find((s) => s.id === sessionId);
     if (!session) return;
 
-    const displayName =
-      taskDisplayNameMap[session.task_name] || t("common:other");
-
     if (handleSessionClickProp) {
+      const displayName =
+        taskDisplayNameMap[session.task_name] || t("common:other");
       handleSessionClickProp(sessionId, session.task_name, displayName);
       return;
     }
 
-    setSelectedTaskName(session.task_name);
-    setSelectedSessionId(sessionId);
-    setSelectedDisplayName(displayName);
-    setStepIndex(0); // sesión existente => modo chat
+    if (session.task_name === "RAGTask") {
+      navigate("/app/generative/rag");
+    } else {
+      navigate(`/app/generative/sessions/${sessionId}`);
+    }
+  };
 
-    const targetRoute =
-      session.task_name === "RAGTask" ? "/app/generative/rag" : "/app/generative";
-
-    navigate(targetRoute, {
-      replace: true,
-      state: {
-        selectedSessionId: sessionId,
-        taskName: session.task_name,
-        taskDisplayName: displayName,
-        fromSessionSelection: true,
-      },
-    });
+  const handleSessionDelete = async (id) => {
+    if (handleSessionDeleteProp) {
+      await handleSessionDeleteProp(id);
+      return;
+    }
+    const wasSelected = id === selectedSessionId;
+    const ok = await deleteSessionById(id);
+    if (ok && wasSelected) {
+      navigate("/app/generative");
+    }
   };
 
   const getSessionDeleteConfirmationContent = (session) =>
@@ -196,7 +193,7 @@ export default function SessionBar({
         </Box>
 
         {/* Search Bar */}
-        {showSearch && (
+        {showSearch && sessions.length > SEARCH_THRESHOLD && (
           <Box px={2} pb={2} flex={"0 0 auto"}>
             <SearchBar
               placeholder={t("generative:label.searchSessions")}
@@ -213,7 +210,7 @@ export default function SessionBar({
           groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={handleSessionClick}
-          onItemDelete={deleteHandler}
+          onItemDelete={handleSessionDelete}
           onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
           title={t("common:generative")}

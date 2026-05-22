@@ -30,7 +30,21 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/app" element={<Home />} />
           <Route path="/app/data/" element={<DatasetsPage />} />
+          <Route path="/app/data/datasets/new" element={<DatasetsPage />} />
+          <Route
+            path="/app/data/datasets/new/:dataloaderName"
+            element={<DatasetsPage />}
+          />
+          <Route path="/app/data/datasets/:id" element={<DatasetsPage />} />
+          <Route path="/app/data/notebooks/new" element={<DatasetsPage />} />
+          <Route path="/app/data/notebooks/:id" element={<DatasetsPage />} />
           <Route path="/app/models" element={<ModelsPage />} />
+          <Route path="/app/models/datasets/:id" element={<ModelsPage />} />
+          <Route path="/app/models/sessions/:id" element={<ModelsPage />} />
+          <Route
+            path="/app/models/sessions/new/:taskName"
+            element={<ModelsPage />}
+          />
           <Route path="/app/generative" element={<Generative />} />
           <Route
             path="/app/generative/rag"
@@ -56,6 +70,12 @@ function App() {
               </GenerativeProvider>
             }
           />
+          <Route path="/app/generative/sessions/new" element={<Generative />} />
+          <Route
+            path="/app/generative/sessions/new/:modelName"
+            element={<Generative />}
+          />
+          <Route path="/app/generative/sessions/:id" element={<Generative />} />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
           <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
           <Route

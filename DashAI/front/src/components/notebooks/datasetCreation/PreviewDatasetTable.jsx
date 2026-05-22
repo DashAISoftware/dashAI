@@ -13,11 +13,10 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { TypeChangeValidator } from "./TypeChangeValidator";
 import InferenceReasonPopover from "../dataset/InferenceReasonPopover";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { useSnackbar } from "notistack";
 
 const TYPE_TO_DEFAULT_DTYPE = {
@@ -57,7 +56,8 @@ export default function PreviewDatasetTable({
   onColumnRename,
   onEncoderChange,
 }) {
-  const { t, i18n } = useTranslation(["common"]);
+  const { t } = useTranslation(["common"]);
+  const localization = useTableLocalization();
   const { enqueueSnackbar } = useSnackbar();
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
@@ -66,10 +66,6 @@ export default function PreviewDatasetTable({
   const [columnNames, setColumnNames] = useState({});
   const [encoderAnchor, setEncoderAnchor] = useState(null);
   const [encoderAnchorColumn, setEncoderAnchorColumn] = useState(null);
-
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
 
   const encoderLabel = (enc) => {
     if (enc === "one_hot") return t("common:encoderOneHot");
@@ -245,11 +241,10 @@ export default function PreviewDatasetTable({
             ) : (
               <Tooltip title={t("common:renameColumn")} arrow>
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   onDoubleClick={() => handleStartEdit(field)}
                   sx={{
                     fontWeight: 600,
-                    fontSize: "0.875rem",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     "&:hover": {
@@ -288,25 +283,25 @@ export default function PreviewDatasetTable({
                 columnName={displayName}
                 reason={columnType?.inference_reason}
               />
-
-              {columnType?.type === "Categorical" && columnType?.encoder && (
-                <Tooltip title={t("common:changeEncoder")} arrow>
-                  <span style={{ display: "inline-flex" }}>
-                    <Chip
-                      label={encoderLabel(columnType.encoder)}
-                      size="small"
-                      onClick={(e) => handleEncoderClick(e, field)}
-                      aria-label={t("common:encoder")}
-                      sx={{
-                        fontSize: "0.65rem",
-                        height: "18px",
-                        cursor: "pointer",
-                      }}
-                    />
-                  </span>
-                </Tooltip>
-              )}
             </Box>
+
+            {columnType?.type === "Categorical" && columnType?.encoder && (
+              <Tooltip title={t("common:changeEncoder")} arrow>
+                <span style={{ display: "inline-flex" }}>
+                  <Chip
+                    label={encoderLabel(columnType.encoder)}
+                    size="small"
+                    onClick={(e) => handleEncoderClick(e, field)}
+                    aria-label={t("common:encoder")}
+                    sx={{
+                      fontSize: "0.65rem",
+                      height: "18px",
+                      cursor: "pointer",
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
           </Box>
         ),
       };

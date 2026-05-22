@@ -294,7 +294,7 @@ function AddModelDialog({
       <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
         <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
           {steps.map((label) => (
-            <Step key={label}>
+            <Step key={label} completed={false}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
@@ -381,11 +381,11 @@ function AddModelDialog({
       </DialogContent>
 
       <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-        <Button onClick={handleClose} disabled={loading}>
+        <Button variant="outlined" onClick={handleClose} disabled={loading}>
           {t("common:cancel")}
         </Button>
         {activeStep > 0 && (
-          <Button onClick={handleBack} disabled={loading}>
+          <Button variant="outlined" onClick={handleBack} disabled={loading}>
             {t("common:back")}
           </Button>
         )}

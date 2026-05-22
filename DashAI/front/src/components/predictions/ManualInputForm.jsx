@@ -33,8 +33,9 @@ export default function ManualInputForm({
     if (manualInputData && manualInputData.length > 0) {
       return manualInputData;
     }
-    setManualInputData([createEmptyRow()]);
-    return [createEmptyRow()];
+    const initialRow = createEmptyRow();
+    setManualInputData([initialRow]);
+    return [initialRow];
   }
 
   function createEmptyRow() {
@@ -103,6 +104,20 @@ export default function ManualInputForm({
       >
         {t("prediction:label.provideManualInput")}
       </Typography>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button
+          startIcon={<AddCircleOutline />}
+          variant="outlined"
+          onClick={handleAddRow}
+          sx={{
+            textTransform: "none",
+            fontWeight: 500,
+          }}
+        >
+          {t("common:addRow")}
+        </Button>
+      </Box>
 
       <TableContainer
         component={Paper}
@@ -213,20 +228,6 @@ export default function ManualInputForm({
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
-        <Button
-          startIcon={<AddCircleOutline />}
-          variant="outlined"
-          onClick={handleAddRow}
-          sx={{
-            textTransform: "none",
-            fontWeight: 500,
-          }}
-        >
-          {t("common:addRow")}
-        </Button>
-      </Box>
     </Box>
   );
 }

@@ -21,6 +21,7 @@ import {
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 
 export default function ConfigureToolModal({
   tool,
@@ -121,7 +122,7 @@ export default function ConfigureToolModal({
         <Box sx={{ flex: 1 }}>
           <Stepper activeStep={step}>
             {steps.map((label) => (
-              <Step key={label}>
+              <Step key={label} completed={false}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))}
@@ -148,11 +149,12 @@ export default function ConfigureToolModal({
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            overflow: "auto",
+            overflow: "hidden",
             p: 2,
             borderRight: "1px solid",
             borderColor: theme.palette.ui.borderDark,
             minWidth: 0,
+            minHeight: 0,
           }}
         >
           <FormSection

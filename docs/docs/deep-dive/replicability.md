@@ -46,7 +46,7 @@ Full pipeline export (a portable "recipe" capturing the full preprocessing + mod
 :::info What is a Notebook?
 A Notebook in DashAI is a working session with a mutable copy of a dataset. It groups
 Explorers (visualizations) and Converters (transformations) applied to that copy. The
-original dataset is never modified. See [System Design → Notebook](./notebook)
+original dataset is never modified. See [System Design → Notebook](/deep-dive/notebook)
 for details.
 :::
 

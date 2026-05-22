@@ -13,8 +13,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
@@ -23,6 +21,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 import { formatDate } from "../../utils";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -31,11 +30,9 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [loading, setLoading] = useState(true);
   const [requestError, setRequestError] = useState(false);
   const tourContext = useTourContext();
-  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const { t } = useTranslation(["experiments", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const columns = useMemo(
     () => [
@@ -155,7 +152,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             </AlertTitle>
             <Trans i18nKey="experiments:label.noDatasetsAvailableGoToDataTab">
               Go to
-              <Link component={RouterLink} to="/app/data">
+              <Link component={RouterLink} to="/app/data?action=upload">
                 data tab
               </Link>
               to upload one first.

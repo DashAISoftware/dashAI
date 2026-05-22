@@ -1,70 +1,69 @@
-import { useState, useRef } from "react";
-import { TextField, Button, Box, IconButton } from "@mui/material";
+import { useEffect, useState } from "react";
+import { TextField, Button, Box } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
-import ImageIcon from "@mui/icons-material/Image";
-import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
+import {
+  MEDIA_KINDS,
+  MEDIA_ORDER,
+  parseCardinality,
+} from "./mediaInput/constants";
+import { MediaPreviewList } from "./mediaInput/MediaPreviewList";
+import { MediaAttachPopper } from "./mediaInput/MediaAttachPopper";
+import { MediaOnlyPlaceholder } from "./mediaInput/MediaOnlyPlaceholder";
+import { useMediaFiles } from "./mediaInput/useMediaFiles";
+import { useTourContext } from "../tour/TourProvider";
 
 export function MediaInput({
   onSendMessage,
   isLoading = false,
-  maxImages = 1,
+  inputsCardinality = { str: 1 },
 }) {
-  const [text, setText] = useState("");
-  const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
-  const fileInputRef = useRef(null);
   const { t } = useTranslation(["generative"]);
+  const tourContext = useTourContext();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const {
+    text,
+    setText,
+    filesByKind,
+    previewsByKind,
+    fileInputRefs,
+    wantsText,
+    activeKinds,
+    hasAnyMedia,
+    handleFileChange,
+    removeFile,
+    requirementsMet,
+    reset,
+    collectPayload,
+  } = useMediaFiles(inputsCardinality);
 
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      const validFiles = newFiles.slice(0, maxImages - images.length);
+  const pickKind = (kind) => {
+    setMenuOpen(false);
+    fileInputRefs.current[kind]?.click();
+  };
 
-      if (validFiles.length > 0) {
-        // Create preview URLs
-        const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
-
-        setImages([...images, ...validFiles]);
-        setPreviews([...previews, ...newPreviews]);
-      }
+  const handleSend = () => {
+    if (!requirementsMet) return;
+    onSendMessage(collectPayload());
+    reset();
+    const currentTarget = tourContext?.steps?.[tourContext?.stepIndex]?.target;
+    if (tourContext?.run && currentTarget === '[data-tour="chat-input"]') {
+      tourContext.nextStep();
     }
   };
 
-  const removeImage = (index) => {
-    // Revoke the object URL to avoid memory leaks
-    URL.revokeObjectURL(previews[index]);
-
-    const newImages = [...images];
-    const newPreviews = [...previews];
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-
-    setImages(newImages);
-    setPreviews(newPreviews);
-
-    // Reset the file input so the same file can be selected again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (text.trim() && images.length > 0) {
-      onSendMessage(images.concat(text));
-      setText("");
-
-      // Clean up all preview URLs
-      previews.forEach((url) => URL.revokeObjectURL(url));
-      setImages([]);
-      setPreviews([]);
-
-      // Reset the file input so the same file can be selected again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
+  useEffect(() => {
+    if (wantsText || isLoading) return;
+    const onKeyDown = (e) => {
+      if (e.key !== "Enter" || e.shiftKey) return;
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      e.preventDefault();
+      handleSend();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   return (
     <Box
@@ -73,104 +72,88 @@ export function MediaInput({
         flexDirection: "column",
         width: "100%",
         gap: 2,
+        flexShrink: 0,
       }}
     >
-      {/* Image previews */}
-      {previews.length > 0 && (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {previews.map((preview, index) => (
-            <Box key={index} sx={{ position: "relative" }}>
+      <MediaPreviewList
+        activeKinds={activeKinds}
+        previewsByKind={previewsByKind}
+        onRemove={removeFile}
+      />
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {wantsText ? (
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            maxRows={3}
+            placeholder={t("generative:label.typeYourMessage")}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            disabled={isLoading}
+            variant="outlined"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !isLoading) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            data-tour="chat-input"
+          />
+        ) : (
+          <MediaOnlyPlaceholder
+            hasAnyMedia={hasAnyMedia}
+            inputsCardinality={inputsCardinality}
+            filesByKind={filesByKind}
+            onPick={pickKind}
+          />
+        )}
+
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
+          {wantsText && (
+            <MediaAttachPopper
+              open={menuOpen}
+              setOpen={setMenuOpen}
+              disabled={isLoading || !hasAnyMedia}
+              inputsCardinality={inputsCardinality}
+              filesByKind={filesByKind}
+              onPick={pickKind}
+            />
+          )}
+
+          {MEDIA_ORDER.map((kind) => {
+            const { accept } = MEDIA_KINDS[kind];
+            const { max } = parseCardinality(inputsCardinality[kind]);
+            return (
               <Box
-                component="img"
-                src={preview || "/placeholder.svg"}
-                alt={`Preview ${index}`}
-                sx={{
-                  height: 80,
-                  width: 80,
-                  objectFit: "cover",
-                  borderRadius: 1,
+                key={`file-input-${kind}`}
+                component="input"
+                type="file"
+                accept={accept}
+                multiple={max > 1}
+                onChange={handleFileChange(kind)}
+                disabled={isLoading}
+                sx={{ display: "none" }}
+                ref={(el) => {
+                  fileInputRefs.current[kind] = el;
                 }}
               />
-              <IconButton
-                size="small"
-                onClick={() => removeImage(index)}
-                sx={{
-                  position: "absolute",
-                  top: -8,
-                  right: -8,
-                  bgcolor: "error.main",
-                  color: "white",
-                  padding: "4px",
-                  "&:hover": { bgcolor: "error.dark" },
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 14 }} />
-              </IconButton>
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {/* Text input and controls */}
-      <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
-        <TextField
-          fullWidth
-          multiline
-          minRows={3}
-          maxRows={6}
-          placeholder={t("generative:label.typeYourMessage")}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          disabled={isLoading}
-          variant="outlined"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !isLoading) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-        />
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <Box
-            component="label"
-            htmlFor="image-upload"
-            sx={{
-              cursor: images.length >= maxImages ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              borderRadius: 1,
-              border: 1,
-              borderColor: "divider",
-              opacity: images.length >= maxImages ? 0.5 : 1,
-              "&:hover": {
-                bgcolor:
-                  images.length >= maxImages ? undefined : "action.hover",
-              },
-            }}
-          >
-            <ImageIcon sx={{ fontSize: 20 }} />
-          </Box>
-          <Box
-            component="input"
-            id="image-upload"
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            disabled={isLoading || images.length >= maxImages}
-            sx={{ display: "none" }}
-            ref={fileInputRef}
-          />
-
+            );
+          })}
           <Button
             variant="contained"
             color="primary"
-            onClick={handleSendMessage}
-            disabled={isLoading || !text.trim() || images.length === 0}
+            onClick={handleSend}
+            disabled={isLoading || !requirementsMet}
             sx={{ minWidth: 40, width: 40, height: 40, padding: 0 }}
           >
             <SendIcon />

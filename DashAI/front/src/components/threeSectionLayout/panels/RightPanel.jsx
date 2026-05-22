@@ -25,8 +25,6 @@ export default function RightPanel({
           transform: "translateY(-50%)",
           bgcolor: "primary.main",
           color: "primary.contrastText",
-          border: "1px solid",
-          borderColor: "primary.dark",
           boxShadow: 2,
           width: 18,
           height: 32,

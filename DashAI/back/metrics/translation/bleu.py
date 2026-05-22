@@ -35,6 +35,11 @@ class Bleu(TranslationMetric):
             "mide la similitud entre el texto generado y el de referencia "
             "basándose en la superposición de n-gramas."
         ),
+        pt=(
+            "BLEU (bilingual evaluation understudy) "
+            "mede a similaridade entre o texto gerado e o de referência "
+            "com base na sobreposição de n-gramas."
+        ),
     )
 
     @staticmethod

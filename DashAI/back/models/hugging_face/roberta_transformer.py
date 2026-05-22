@@ -1,0 +1,50 @@
+"""DashAI implementation of RoBERTa model for English text classification."""
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.hugging_face.base_text_classification_transformer import (
+    HuggingFaceTextClassificationTransformer,
+)
+from DashAI.back.models.hugging_face.distilbert_transformer import (
+    DistilBertTransformerSchema,
+)
+
+
+class RobertaTransformer(HuggingFaceTextClassificationTransformer):
+    """Pre-trained RoBERTa model for English text classification.
+
+    RoBERTa (Robustly Optimised BERT Pre-training Approach) improves upon BERT
+    by training longer with larger mini-batches, removing the next-sentence
+    prediction objective, and using dynamic masking. It achieves consistently
+    higher performance on NLP benchmarks than BERT.
+
+    References
+    ----------
+    - [1] Liu, Y. et al. (2019). "RoBERTa: A Robustly Optimized BERT Pretraining
+           Approach." arXiv:1907.11692.
+    - [2] https://huggingface.co/roberta-base
+    """
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="RoBERTa Transformer",
+        es="Transformer RoBERTa",
+        pt="Transformer RoBERTa",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Robustly optimised BERT for English text classification. "
+            "Downloads weights from Hugging Face on first use (internet required)."
+        ),
+        es=(
+            "BERT optimizado robustamente para clasificación de texto en inglés. "
+            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "BERT otimizado robustamente para classificação de texto em inglês. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+    )
+    COLOR: str = "#E65100"
+    ICON: str = "SmartToy"
+    SCHEMA = DistilBertTransformerSchema
+    MODEL_NAME: str = "roberta-base"
+    TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_roberta"
