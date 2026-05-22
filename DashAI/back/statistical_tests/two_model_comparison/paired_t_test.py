@@ -45,11 +45,6 @@ class PairedTTest(BaseStatisticalTest):
         statistic, p_value = ttest_rel(scores1, scores2, alternative=alternative)
 
         significant = p_value < alpha
-        interpretation = (
-            f"With a p-value of {p_value}, "
-            f"we {'reject' if significant else 'fail to reject'} "
-            f"the null hypothesis at the alpha level of {alpha}."
-        )
 
         return StatisticalTestResult(
             test_name="Paired T-Test",
@@ -64,7 +59,6 @@ class PairedTTest(BaseStatisticalTest):
                 "scores_run_2": scores2.tolist(),
                 "alternative": alternative,
             },
-            interpretation=interpretation,
         )
 
     def get_schema(self) -> dict:

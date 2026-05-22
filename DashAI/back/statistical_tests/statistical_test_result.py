@@ -20,7 +20,6 @@ class StatisticalTestResult:
     significant: bool
     alpha: float
     details: dict
-    interpretation: str
     # Populated by post-hoc tests (Nemenyi, Tukey HSD)
     # None for pairwise tests (Wilcoxon, paired t-test)
     posthoc: Optional[list[PairwiseResult]] = field(default=None)

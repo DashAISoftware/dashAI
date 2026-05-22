@@ -73,28 +73,7 @@ class TukeyHSDTest(BaseStatisticalTest):
                 )
             )
 
-        significant_pairs = [p for p in pairwise if p.significant]
         overall_significant = anova_p < alpha
-
-        if not overall_significant:
-            interpretation = (
-                f"The ANOVA test was not significant (p={anova_p:.4f}), "
-                f"so post-hoc comparisons should be interpreted with caution."
-            )
-        elif not significant_pairs:
-            interpretation = (
-                f"The ANOVA test was significant (p={anova_p:.4f}), "
-                f"but no individual pairs were significantly different at"
-                f"alpha={alpha}."
-            )
-        else:
-            pair_strs = ", ".join(
-                f"{p.run_1} vs {p.run_2} (p={p.p_value:.4f})" for p in significant_pairs
-            )
-            interpretation = (
-                f"The ANOVA test was significant (p={anova_p:.4f}). "
-                f"The following pairs differ significantly: {pair_strs}."
-            )
 
         return StatisticalTestResult(
             test_name="Tukey HSD Post-hoc Test",
@@ -107,7 +86,6 @@ class TukeyHSDTest(BaseStatisticalTest):
                 "score_arrays": [a.tolist() for a in score_arrays],
                 "tukey_summary": str(tukey.summary()),
             },
-            interpretation=interpretation,
             posthoc=pairwise,
         )
 

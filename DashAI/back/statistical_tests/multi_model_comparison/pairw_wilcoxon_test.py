@@ -74,20 +74,6 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
         significant_pairs = [p for p in pairwise if p.significant]
         overall_significant = len(significant_pairs) > 0
 
-        if not significant_pairs:
-            interpretation = (
-                f"No significant differences were found between any pair of models "
-                f"at alpha={alpha} after Holm correction."
-            )
-        else:
-            pair_strs = ", ".join(
-                f"{p.run_1} vs {p.run_2} (p={p.p_value:.4f})" for p in significant_pairs
-            )
-            interpretation = (
-                f"The following pairs differ significantly after Holm correction: "
-                f"{pair_strs}."
-            )
-
         return StatisticalTestResult(
             test_name="Pairwise Wilcoxon Test (Holm correction)",
             statistic=float("nan"),  # no single omnibus statistic
@@ -100,7 +86,6 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
                 "posthoc_matrix": posthoc_matrix.to_dict(),
                 "p_adjust": "holm",
             },
-            interpretation=interpretation,
             posthoc=pairwise,
         )
 

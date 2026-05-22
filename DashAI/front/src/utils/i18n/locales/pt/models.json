@@ -170,12 +170,19 @@
     "profile_text_balanced": "Equilíbrio",
     "profile_text_detectPositives": "Detectar Positivos",
     "profile_text_avoidFalseAlarms": "Evitar Falsos Alarmes",
-    "profile_text_probabilityQuality": "Qualidade de Probabilidades"
+    "profile_text_probabilityQuality": "Qualidade de Probabilidades",
+    "statistic": "Estatística",
+    "significant": "Significativo",
+    "notSignificant": "Não Significativo",
+    "technicalDetails": "Detalhes Técnicos"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
     "confirmDeleteRun": "Tem certeza de que deseja excluir esta execução? Esta ação não pode ser desfeita.",
     "editingParametersWarning": "Ao editar os parâmetros, o estado desta execução será redefinido para 'Não Iniciado'. Todas as métricas e resultados existentes serão perdidos.",
+    "hypothesis_reject": "rejeitamos",
+    "hypothesis_failToReject": "falhamos em rejeitar",
+    "hypothesisDecision": "Com um p-valor de {{pValue}}, {{decision}} a hipótese nula em um nível de significância de {{alpha}}.",
     "aboutToUpdateParameters": "Você está prestes a atualizar os parâmetros para a execução <strong>{{runName}}</strong>. Esta ação terá as seguintes consequências:",
     "dataWillBeDeleted": "Os seguintes dados serão excluídos permanentemente:",
     "metricsWillBeCleared": "Todas as métricas existentes serão excluídas",

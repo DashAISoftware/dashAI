@@ -192,7 +192,11 @@
     "statisticalTest": "Test estadístico",
     "significanceLevel": "Nivel de significancia",
     "noFinishedRuns": "No hay ejecuciones finalizadas disponibles",
-    "results": "Resultados"
+    "results": "Resultados",
+    "statistic": "Estadístico",
+    "significant": "Significativo",
+    "notSignificant": "No Significativo",
+    "technicalDetails": "Detalles Técnicos"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
@@ -238,7 +242,10 @@
     "normalityDetected": "✓ Condición de Normalidad Cumplida",
     "recommendParametricTests": "Los datos cumplen con los requisitos de normalidad. Se recomiendan tests paramétricos (ej: test t pareado, ANOVA) para mayor potencia estadística.",
     "normalityNotDetected": "⚠ Condición de Normalidad No Cumplida",
-    "recommendNonParametricTests": "Los datos no cumplen con los requisitos de normalidad. Se recomiendan tests no paramétricos (ej: Wilcoxon, Friedman) por su robustez."
+    "recommendNonParametricTests": "Los datos no cumplen con los requisitos de normalidad. Se recomiendan tests no paramétricos (ej: Wilcoxon, Friedman) por su robustez.",
+    "hypothesis_reject": "rechazamos",
+    "hypothesis_failToReject": "no rechazamos",
+    "hypothesisDecision": "Con un p-valor de {{pValue}}, {{decision}} la hipótesis nula a un nivel de significancia de {{alpha}}."
   },
   "test": {
     "pairedTTest": "Test t pareado",

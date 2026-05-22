@@ -33,11 +33,6 @@ class WilcoxonSRTest(BaseStatisticalTest):
         statistic, p_value = wilcoxon(score_differences, alternative=alternative)
 
         significant = p_value < alpha
-        interpretation = (
-            f"With a p-value of {p_value:.4f}, "
-            f"we {'reject' if significant else 'fail to reject'} "
-            f"the null hypothesis at the alpha level of {alpha}."
-        )
 
         return StatisticalTestResult(
             test_name="Wilcoxon Signed-Rank Test",
@@ -53,7 +48,6 @@ class WilcoxonSRTest(BaseStatisticalTest):
                 "score_differences": score_differences.tolist(),
                 "alternative": alternative,
             },
-            interpretation=interpretation,
         )
 
     def get_schema(self) -> dict:

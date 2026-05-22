@@ -18,14 +18,23 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Collapse,
+  IconButton,
 } from "@mui/material";
-import { ExpandMore } from "@mui/icons-material";
+import { ExpandMore, ExpandLess } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import {
   getFoldMetrics,
   checkNormality,
   runStatisticalTest,
 } from "../../api/statisticalTests";
+import { getHypothesisDecisionMessage } from "../../utils/translateHypothesisDecision";
 
 export default function StatisticalTestsModal({
   runs,
@@ -44,6 +53,7 @@ export default function StatisticalTestsModal({
   const [results, setResults] = useState(null);
   const [normalityCheckLoading, setNormalityCheckLoading] = useState(false);
   const [normalityResult, setNormalityResult] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   const { t } = useTranslation(["models", "common"]);
   const [panelHeight, setPanelHeight] = useState(400);
   const isResizing = useRef(false);
@@ -533,27 +543,166 @@ export default function StatisticalTestsModal({
               borderColor: "divider",
             }}
           >
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              {t("models:label.results")}
-            </Typography>
+            {/* Header: test name + significance badge */}
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+            >
+              <Typography variant="h6">{results.test_name}</Typography>
+              <Chip
+                label={
+                  results.significant
+                    ? t("models:label.significant")
+                    : t("models:label.notSignificant")
+                }
+                color={results.significant ? "success" : "default"}
+                size="small"
+              />
+            </Box>
+
+            {/* Key stats */}
             <Box
               sx={{
-                bgcolor: "background.paper",
-                p: 2,
+                display: "flex",
+                gap: 3,
+                mb: 2,
+                p: 1.5,
+                bgcolor: "action.hover",
                 borderRadius: 1,
-                border: "1px solid",
-                borderColor: "divider",
-                fontFamily: "monospace",
-                fontSize: "0.875rem",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                maxHeight: 300,
-                overflow: "auto",
               }}
             >
-              {typeof results === "string"
-                ? results
-                : JSON.stringify(results, null, 2)}
+              {results.statistic !== null && !isNaN(results.statistic) && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("models:label.statistic")}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {results.statistic?.toFixed(4)}
+                  </Typography>
+                </Box>
+              )}
+              {results.p_value !== null && !isNaN(results.p_value) && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    p-value
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: results.significant
+                        ? "success.main"
+                        : "text.primary",
+                    }}
+                  >
+                    {results.p_value?.toFixed(4)}
+                  </Typography>
+                </Box>
+              )}
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  α
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {results.alpha}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Interpretation */}
+            <Alert
+              severity={results.significant ? "success" : "info"}
+              sx={{ mb: 2 }}
+            >
+              {getHypothesisDecisionMessage(
+                results.significant,
+                results.p_value,
+                results.alpha,
+                t,
+              )}
+            </Alert>
+
+            {/* Post-hoc pairwise table */}
+            {results.posthoc && results.posthoc.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  {t("models:label.pairwiseComparisons")}
+                </Typography>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{t("models:label.model1")}</TableCell>
+                      <TableCell>{t("models:label.model2")}</TableCell>
+                      <TableCell align="right">p-value</TableCell>
+                      <TableCell align="center">
+                        {t("models:label.result")}
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {results.posthoc.map((pair, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{pair.run_1}</TableCell>
+                        <TableCell>{pair.run_2}</TableCell>
+                        <TableCell align="right">
+                          {pair.p_value?.toFixed(4)}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={
+                              pair.significant
+                                ? t("models:label.significant")
+                                : t("models:label.notSignificant")
+                            }
+                            color={pair.significant ? "success" : "default"}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            )}
+
+            {/* Technical details collapsible */}
+            <Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  color: "text.secondary",
+                }}
+                onClick={() => setShowDetails((v) => !v)}
+              >
+                <IconButton size="small">
+                  {showDetails ? <ExpandLess /> : <ExpandMore />}
+                </IconButton>
+                <Typography variant="caption">
+                  {t("models:label.technicalDetails")}
+                </Typography>
+              </Box>
+              <Collapse in={showDetails}>
+                <Box
+                  sx={{
+                    bgcolor: "background.paper",
+                    p: 1.5,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    fontFamily: "monospace",
+                    fontSize: "0.75rem",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    maxHeight: 200,
+                    overflow: "auto",
+                    mt: 1,
+                  }}
+                >
+                  {JSON.stringify(results.details, null, 2)}
+                </Box>
+              </Collapse>
             </Box>
           </Box>
         )}

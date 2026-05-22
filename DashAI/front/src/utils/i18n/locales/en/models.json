@@ -192,7 +192,11 @@
     "statisticalTest": "Statistical Test",
     "significanceLevel": "Significance Level",
     "noFinishedRuns": "No finished runs available",
-    "results": "Results"
+    "results": "Results",
+    "statistic": "Statistic",
+    "significant": "Significant",
+    "notSignificant": "Not Significant",
+    "technicalDetails": "Technical Details"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
@@ -237,7 +241,10 @@
     "normalityDetected": "✓ Normality Condition Met",
     "recommendParametricTests": "The data meets normality requirements. Parametric tests (e.g., paired t-test, ANOVA) are recommended for more statistical power.",
     "normalityNotDetected": "⚠ Normality Condition Not Met",
-    "recommendNonParametricTests": "The data does not meet normality requirements. Non-parametric tests (e.g., Wilcoxon, Friedman) are recommended for robustness."
+    "recommendNonParametricTests": "The data does not meet normality requirements. Non-parametric tests (e.g., Wilcoxon, Friedman) are recommended for robustness.",
+    "hypothesis_reject": "reject",
+    "hypothesis_failToReject": "fail to reject",
+    "hypothesisDecision": "With a p-value of {{pValue}}, we {{decision}} the null hypothesis at the alpha level of {{alpha}}."
   },
   "test": {
     "pairedTTest": "Paired t-test",

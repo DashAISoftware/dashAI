@@ -77,14 +77,6 @@ class CorrectedPairedTTest(BaseStatisticalTest):
             p_value = stats.t.cdf(t_statistic, df=k - 1)
 
         significant = p_value < alpha
-        interpretation = (
-            f"With a p-value of {p_value:.4f}, we "
-            f"{'reject' if significant else 'fail to reject'} "
-            f"the null hypothesis at the alpha level of {alpha}. "
-            f"The variance was corrected using the Nadeau & Bengio (2003) "
-            f"factor of {correction_factor:.4f} to account for the "
-            f"non-independence of cross-validation folds."
-        )
 
         return StatisticalTestResult(
             test_name="Corrected Paired t-test",
@@ -105,7 +97,6 @@ class CorrectedPairedTTest(BaseStatisticalTest):
                 "degrees_of_freedom": k - 1,
                 "alternative": alternative,
             },
-            interpretation=interpretation,
         )
 
     def get_schema(self) -> dict:

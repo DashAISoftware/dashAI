@@ -72,28 +72,7 @@ class NemenyiTest(BaseStatisticalTest):
                     )
                 )
 
-        significant_pairs = [p for p in pairwise if p.significant]
         overall_significant = friedman_p < alpha
-
-        if not overall_significant:
-            interpretation = (
-                f"The Friedman test was not significant (p={friedman_p:.4f}), "
-                f"so post-hoc comparisons should be interpreted with caution."
-            )
-        elif not significant_pairs:
-            interpretation = (
-                f"The Friedman test was significant (p={friedman_p:.4f}), "
-                f"but no individual pairs were significantly different at "
-                f"alpha={alpha}."
-            )
-        else:
-            pair_strs = ", ".join(
-                f"{p.run_1} vs {p.run_2} (p={p.p_value:.4f})" for p in significant_pairs
-            )
-            interpretation = (
-                f"The Friedman test was significant (p={friedman_p:.4f}). "
-                f"The following pairs differ significantly: {pair_strs}."
-            )
 
         return StatisticalTestResult(
             test_name="Nemenyi Post-hoc Test",
@@ -106,7 +85,6 @@ class NemenyiTest(BaseStatisticalTest):
                 "score_arrays": [a.tolist() for a in score_arrays],
                 "posthoc_matrix": posthoc_matrix.to_dict(),
             },
-            interpretation=interpretation,
             posthoc=pairwise,
         )
 

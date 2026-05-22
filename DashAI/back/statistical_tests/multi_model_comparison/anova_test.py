@@ -29,11 +29,6 @@ class AnovaTest(BaseStatisticalTest):
         statistic, p_value = f_oneway(*score_arrays)
 
         significant = p_value < alpha
-        interpretation = (
-            f"With a p-value of {p_value:.4f}, "
-            f"we {'reject' if significant else 'fail to reject'} "
-            f"the null hypothesis at the alpha level of {alpha}."
-        )
 
         return StatisticalTestResult(
             test_name="ANOVA Test",
@@ -45,7 +40,6 @@ class AnovaTest(BaseStatisticalTest):
                 "runs": run_names,
                 "score_arrays": [a.tolist() for a in score_arrays],
             },
-            interpretation=interpretation,
         )
 
     def get_schema(self) -> dict:
