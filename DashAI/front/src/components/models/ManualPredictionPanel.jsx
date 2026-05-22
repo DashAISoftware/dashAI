@@ -50,11 +50,15 @@ export default function ManualPredictionPanel({
 
   // Notify parent when save-button state changes
   useEffect(() => {
+    const allRowsHavePrediction =
+      !!previewResults &&
+      manualRows.length > 0 &&
+      manualRows.every((_, i) => previewResults.rows[i] != null);
     onStateChange?.({
-      canSave: !!previewResults && !isSaving && !isPreviewing,
+      canSave: allRowsHavePrediction && !isSaving && !isPreviewing,
       isSaving,
     });
-  }, [previewResults, isSaving, isPreviewing, onStateChange]);
+  }, [previewResults, isSaving, isPreviewing, manualRows, onStateChange]);
 
   // Load model session metadata once on mount
   useEffect(() => {
@@ -84,9 +88,38 @@ export default function ManualPredictionPanel({
     fetchSessionData();
   }, [run, session, enqueueSnackbar, t]);
 
-  // Reset preview when rows change so stale results are not shown
-  const handleRowsChange = useCallback((rows) => {
-    setManualRows(rows);
+  const prevRowsRef = useRef([]);
+
+  const handleRowsChange = useCallback((newRows) => {
+    const prevRows = prevRowsRef.current;
+    prevRowsRef.current = newRows;
+    setManualRows(newRows);
+
+    if (newRows.length > prevRows.length) {
+      // Row added — keep all existing predictions
+      return;
+    }
+
+    if (newRows.length < prevRows.length) {
+      // Row deleted — remove only that row's prediction
+      let deletedIndex = prevRows.length - 1;
+      for (let i = 0; i < newRows.length; i++) {
+        if (JSON.stringify(prevRows[i]) !== JSON.stringify(newRows[i])) {
+          deletedIndex = i;
+          break;
+        }
+      }
+      setPreviewResults((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          rows: prev.rows.filter((_, i) => i !== deletedIndex),
+        };
+      });
+      return;
+    }
+
+    // Row edited — clear all predictions (data changed, results are stale)
     setPreviewResults(null);
   }, []);
 
