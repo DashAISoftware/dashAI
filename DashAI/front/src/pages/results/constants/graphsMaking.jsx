@@ -1,7 +1,3 @@
-import getTheme from "../../../styles/theme";
-
-const darkTheme = getTheme("dark");
-
 const getTraceColors = (theme) => [
   theme.palette.primary.main,
   theme.palette.secondary.main,
@@ -118,9 +114,11 @@ function heatmapMaking(
     metricsMetadata[m]?.maximize === false ? `${m} ↓` : m,
   );
 
-  // To use current-mode colors, replace `darkTheme` with `theme` below
-  const worstColor = darkTheme.palette.error.main;
-  const bestColor = darkTheme.palette.accent.teal;
+  // error.main dark (#ff8383) / light (#d32f2f); primary.light is #A7C7FF in both modes
+  // To use current-mode colors, change the ternary to just `theme.palette.error.main`
+  const worstColor =
+    theme.palette.mode === "dark" ? theme.palette.error.main : "#ff8383";
+  const bestColor = theme.palette.primary.light;
 
   return [
     {

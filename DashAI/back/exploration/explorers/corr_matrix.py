@@ -229,11 +229,9 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
             numeric_only=self.numeric_only,
         )
 
-        result = result.round(4)
-
         if self.plot:
             result = px.imshow(
-                result,
+                result.round(4),
                 text_auto=".4~f",
                 aspect="auto",
                 title=f"Correlation Matrix of {len(explorer_info.columns)} columns",
