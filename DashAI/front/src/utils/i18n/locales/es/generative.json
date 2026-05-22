@@ -56,7 +56,9 @@
     "attachMedia": "Adjuntar medio",
     "attachMediaToContinue": "Adjunta medios para continuar",
     "noInputAvailable": "No hay entrada disponible para esta tarea",
-    "selectModelCrumb": "Select Model"
+    "selectModelCrumb": "Select Model",
+    "ragTask": "RAG - Generación Aumentada por Recuperación",
+    "ragTaskDescription": "Sube documentos y conversa con ellos usando generación aumentada por recuperación."
   },
   "message": {
     "sessionCreatedSuccess": "Sesión creada exitosamente.",

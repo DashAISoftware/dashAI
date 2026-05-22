@@ -12,10 +12,8 @@ class RAGTask(BaseGenerativeTask):
     """
 
     metadata: dict = {
-        "inputs_types": [str],
-        "outputs_types": [str, Dict],
-        "inputs_cardinality": 1,
-        "outputs_cardinality": 2,
+        "inputs": {"str": {"min": 1, "max": 1}},
+        "outputs": {"str": {"min": 1, "max": 1}, "Dict": {"min": 1, "max": 1}},
     }
 
     DISPLAY_NAME: str = MultilingualString(

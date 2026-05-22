@@ -47,7 +47,9 @@ export function CreateSessionProvider({ children }) {
     setLoadingModels(true);
 
     Promise.all(
-      tasks.map((task) =>
+      tasks
+        .filter((task) => task.name !== "RAGTask")
+        .map((task) =>
         getRelatedComponents(task.name).then((components) =>
           components.map((c) => ({
             ...c,

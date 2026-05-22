@@ -56,7 +56,9 @@
     "attachMedia": "Attach media",
     "attachMediaToContinue": "Attach media to continue",
     "noInputAvailable": "No input available for this task",
-    "selectModelCrumb": "Select Model"
+    "selectModelCrumb": "Select Model",
+    "ragTask": "RAG - Retrieval Augmented Generation",
+    "ragTaskDescription": "Upload documents and chat with them using retrieval-augmented generation."
   },
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",

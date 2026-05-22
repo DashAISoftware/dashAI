@@ -1,4 +1,5 @@
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import TextSnippetIcon from "@mui/icons-material/TextSnippet";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
@@ -9,7 +10,11 @@ export default function CreateSessionLanding() {
   const { t } = useTranslation(["generative", "common"]);
   const tourContext = useTourContext();
 
-  const handleCreateSession = () => {
+  const handleOption = (name) => {
+    if (name === "RAGTask") {
+      navigate("/app/generative/rag");
+      return;
+    }
     if (tourContext?.run) {
       tourContext.nextStep();
     }
@@ -18,10 +23,16 @@ export default function CreateSessionLanding() {
 
   return (
     <SelectOptionMenu
-      goToNextStep={handleCreateSession}
+      goToNextStep={handleOption}
       title={t("generative:label.generativeModule")}
       subtitle={t("generative:label.createNewSessionDescription")}
       options={[
+        {
+          name: "RAGTask",
+          display_name: t("generative:label.ragTask"),
+          description: t("generative:label.ragTaskDescription"),
+          Icon: TextSnippetIcon,
+        },
         {
           name: "new_session",
           display_name: t("generative:label.createNewSession"),
