@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "./styles/geist-font.css";
 import "./index.css";
 import CssBaseline from "@mui/material/CssBaseline";
 import App from "./App";

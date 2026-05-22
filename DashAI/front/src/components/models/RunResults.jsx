@@ -53,6 +53,7 @@ export default function RunResults({
   explainerRefreshTrigger,
   resultsVisible: controlledVisible = undefined,
   setResultsVisible: setControlledVisible = undefined,
+  autoExpand = false,
 }) {
   const isControlled = controlledVisible !== undefined;
 
@@ -156,11 +157,11 @@ export default function RunResults({
   }, [run.id]);
 
   useEffect(() => {
-    if (isRunning) {
+    if (isRunning && autoExpand) {
       setResultsVisible(true);
       setActiveTab(0); // Live Metrics tab
     }
-  }, [isRunning]);
+  }, [isRunning, autoExpand]);
 
   useEffect(() => {
     if (isControlled) return;
@@ -878,4 +879,7 @@ RunResults.propTypes = {
   }),
   onRefresh: PropTypes.func,
   explainerRefreshTrigger: PropTypes.number,
+  resultsVisible: PropTypes.bool,
+  setResultsVisible: PropTypes.func,
+  autoExpand: PropTypes.bool,
 };
