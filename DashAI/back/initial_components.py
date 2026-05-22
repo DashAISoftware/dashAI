@@ -72,6 +72,7 @@ from DashAI.back.dataset_sources.huggingface_dataset_source import (
     HuggingFaceDatasetSource,
 )
 from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
 
 # Explainers
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
@@ -382,6 +383,7 @@ def get_initial_components():
         # Dataset Sources
         HuggingFaceDatasetSource,
         OpenMLDatasetSource,
+        ZenodoDatasetSource,
         # Metrics
         F1,
         Accuracy,
