@@ -310,6 +310,7 @@ function RunCard({
       elevation={2}
       sx={{
         mb: 2,
+        bgcolor: "background.box",
         borderLeft: "4px solid",
         borderLeftColor:
           run.status === 3 // Finished
@@ -318,7 +319,7 @@ function RunCard({
               ? "error.main"
               : isRunning
                 ? "info.main"
-                : "grey.500",
+                : "divider",
       }}
     >
       <CardContent>
