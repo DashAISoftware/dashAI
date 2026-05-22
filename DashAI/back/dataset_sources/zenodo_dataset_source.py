@@ -110,7 +110,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
                         description=_strip_html(metadata.get("description", "") or ""),
                         tags=metadata.get("keywords", []) or [],
                         size_bytes=size_bytes,
-                        url=record.get("links", {}).get("html", ""),
+                        url=record.get("links", {}).get("self_html", ""),
                         source=self.__class__.__name__,
                     )
                 )
@@ -148,7 +148,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
                 description=_strip_html(metadata.get("description", "") or ""),
                 tags=metadata.get("keywords", []) or [],
                 size_bytes=size_bytes,
-                url=record.get("links", {}).get("html", ""),
+                url=record.get("links", {}).get("self_html", ""),
                 source=self.__class__.__name__,
             )
         except Exception:
@@ -187,7 +187,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
 
         for file_entry in files:
             filename = file_entry.get("key")
-            download_url = file_entry.get("links", {}).get("self")
+            download_url = file_entry.get("links", {}).get("content")
             if not filename or not download_url:
                 log.warning(
                     "Skipping malformed file entry in Zenodo record %s", dataset_id
