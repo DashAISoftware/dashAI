@@ -273,6 +273,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                       columnTypes={columnTypes}
                       showExportButton={false}
                       baseBackgroundColor={theme.palette.background.paper}
+                      showBorder={false}
                     />
                   </Box>
                 </Box>
