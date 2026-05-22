@@ -53,7 +53,10 @@ function applyThemeToLayout(baseLayout, theme) {
         bgcolor:
           theme.palette.ui?.borderLight ?? theme.palette.background.paper,
         bordercolor: gridColor,
-        font: { color: "#000000" },
+        font: {
+          ...menu.font,
+          color: textColor,
+        },
         activecolor: theme.palette.primary.main,
         buttons: menu.buttons?.map((button) => {
           const layoutArgs = button.args?.[1];
