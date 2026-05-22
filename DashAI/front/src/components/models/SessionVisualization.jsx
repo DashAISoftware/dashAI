@@ -410,83 +410,92 @@ export default function SessionVisualization() {
           </AccordionDetails>
         </Accordion>
 
-        <Divider sx={{ my: 1, mt: 1 }} />
-
-        {/* Statistical Tests Modal - Only show for Cross-Validation */}
-        {session &&
-          runs.length > 0 &&
-          session.evaluation_strategy ===
-            "CrossValidationEvaluationStrategy" && (
-            <>
-              <StatisticalTestsModal
-                runs={runs}
-                session={session}
-                visible={true}
-              />
-              <Divider sx={{ my: 1, mt: 1 }} />
-            </>
-          )}
-
-        {/* Scrollable Run Cards */}
+        {/* Scrollable area: Statistical Tests + Run Cards */}
         <Box
-          data-tour="run-cards-section"
           sx={{
             flex: 1,
-            overflow: "auto",
-            p: 2,
+            overflowY: "auto",
+            overflowX: "hidden",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          {runs.length === 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <Typography variant="body1" color="text.secondary">
-                {t("models:label.noRunsYet")}
-              </Typography>
-            </Box>
-          ) : (
-            <Stack spacing={2}>
-              {sortedRuns.map((run, index) => (
-                <Box
-                  key={run.id}
-                  id={`run-card-${run.id}`}
-                  data-tour={
-                    index === sortedRuns.length - 1
-                      ? "first-run-card"
-                      : undefined
-                  }
-                  sx={{
-                    scrollMarginTop: "20px",
-                    transition: "all 0.3s ease",
-                    ...(selectedRunId === run.id && {
-                      transform: "scale(1.02)",
-                      boxShadow: 3,
-                    }),
-                  }}
-                >
-                  <RunCard
-                    run={run}
-                    models={models}
-                    session={session}
-                    onTrain={handleTrainWithTour}
-                    onDelete={onDeleteRun}
-                    explainerRefreshTrigger={explainerRefreshTrigger}
-                    onOperationsRefresh={() =>
-                      setExplainerRefreshTrigger((prev) => prev + 1)
+          <Divider sx={{ my: 1, mt: 1 }} />
+
+          {/* Statistical Tests Modal - Only show for Cross-Validation */}
+          {session &&
+            runs.length > 0 &&
+            session.evaluation_strategy ===
+              "CrossValidationEvaluationStrategy" && (
+              <>
+                <StatisticalTestsModal
+                  runs={runs}
+                  session={session}
+                  visible={true}
+                />
+                <Divider sx={{ my: 1, mt: 1 }} />
+              </>
+            )}
+
+          {/* Run Cards */}
+          <Box
+            data-tour="run-cards-section"
+            sx={{
+              p: 2,
+            }}
+          >
+            {runs.length === 0 ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  {t("models:label.noRunsYet")}
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={2}>
+                {sortedRuns.map((run, index) => (
+                  <Box
+                    key={run.id}
+                    id={`run-card-${run.id}`}
+                    data-tour={
+                      index === sortedRuns.length - 1
+                        ? "first-run-card"
+                        : undefined
                     }
-                    isLastRun={index === sortedRuns.length - 1}
-                    existingRuns={runs}
-                    onRefresh={fetchRuns}
-                  />
-                </Box>
-              ))}
-            </Stack>
-          )}
+                    sx={{
+                      scrollMarginTop: "20px",
+                      transition: "all 0.3s ease",
+                      ...(selectedRunId === run.id && {
+                        transform: "scale(1.02)",
+                        boxShadow: 3,
+                      }),
+                    }}
+                  >
+                    <RunCard
+                      run={run}
+                      models={models}
+                      session={session}
+                      onTrain={handleTrainWithTour}
+                      onDelete={onDeleteRun}
+                      explainerRefreshTrigger={explainerRefreshTrigger}
+                      onOperationsRefresh={() =>
+                        setExplainerRefreshTrigger((prev) => prev + 1)
+                      }
+                      isLastRun={index === sortedRuns.length - 1}
+                      existingRuns={runs}
+                      onRefresh={fetchRuns}
+                    />
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
         </Box>
       </Box>
 

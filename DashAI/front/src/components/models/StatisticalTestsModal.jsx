@@ -279,7 +279,6 @@ export default function StatisticalTestsModal({
           overflowY: "auto",
           overflowX: "hidden",
           height: `${panelHeight}px`,
-          position: "relative",
         }}
       >
         {error && (
@@ -358,15 +357,12 @@ export default function StatisticalTestsModal({
                       }
                       label={
                         <Box>
-                          <Typography variant="body2">
-                            {run.run_name}
-                          </Typography>
+                          <Typography variant="body2">{run.name}</Typography>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             sx={{ display: "block", mt: 0.25 }}
                           >
-                            {run.model_name} •{" "}
                             {new Date(run.created).toLocaleDateString()}
                           </Typography>
                         </Box>
@@ -561,27 +557,22 @@ export default function StatisticalTestsModal({
             </Box>
           </Box>
         )}
-        {/* Resize Handle */}
-        <Box
-          onMouseDown={() => {
-            isResizing.current = true;
-            document.body.style.cursor = "row-resize";
-            document.body.style.userSelect = "none";
-          }}
-          sx={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: "5px",
-            cursor: "row-resize",
-            bgcolor: "transparent",
-            transition: "background-color 0.2s ease",
-            "&:hover": { bgcolor: "primary.main" },
-            zIndex: 10,
-          }}
-        />
       </AccordionDetails>
+      <Box
+        onMouseDown={() => {
+          isResizing.current = true;
+          document.body.style.cursor = "row-resize";
+          document.body.style.userSelect = "none";
+        }}
+        sx={{
+          height: "5px",
+          cursor: "row-resize",
+          bgcolor: "transparent",
+          transition: "background-color 0.2s ease",
+          "&:hover": { bgcolor: "primary.main" },
+          zIndex: 10,
+        }}
+      />
     </Accordion>
   );
 }
