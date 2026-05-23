@@ -1,14 +1,18 @@
 import React from "react";
-import { TextField, Select, MenuItem, FormControl } from "@mui/material";
+import { Box, TextField, Select, MenuItem, FormControl } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import {
+  MIN_INPUT_WIDTH,
+  CHAR_WIDTH_PX,
+  INPUT_PADDING_PX,
+} from "./inputFieldConstants";
 
-const MIN_INPUT_WIDTH = 120;
-const CHAR_WIDTH_PX = 8;
-const INPUT_PADDING_PX = 28;
-
-function computeWidth(val) {
-  const len = String(val ?? "").length;
+function computeWidth(val, placeholder) {
+  const len = Math.max(
+    String(val ?? "").length,
+    String(placeholder ?? "").length,
+  );
   return Math.max(MIN_INPUT_WIDTH, len * CHAR_WIDTH_PX + INPUT_PADDING_PX);
 }
 
@@ -116,7 +120,7 @@ function InputField({
                 : parseFloat(e.target.value);
           handleChange(rowIndex, col, val);
         }}
-        sx={{ width: computeWidth(value), ...commonStyles }}
+        sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
       />
     );
   }
@@ -132,7 +136,7 @@ function InputField({
         value={value}
         placeholder={placeholder}
         onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-        sx={{ width: computeWidth(value), ...commonStyles }}
+        sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
       />
     );
   }
@@ -166,7 +170,7 @@ function InputField({
       value={value}
       placeholder={placeholder}
       onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-      sx={{ width: computeWidth(value), ...commonStyles }}
+      sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
     />
   );
 }

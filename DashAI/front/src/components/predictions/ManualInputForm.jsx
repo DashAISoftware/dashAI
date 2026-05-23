@@ -15,6 +15,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline, DeleteOutline } from "@mui/icons-material";
 import InputField from "./InputField";
+import { MIN_INPUT_WIDTH } from "./inputFieldConstants";
 import { useTranslation } from "react-i18next";
 
 export default function ManualInputForm({
@@ -155,7 +156,7 @@ export default function ManualInputForm({
                     color: theme.palette.text.primary,
                     textTransform: "none",
                     whiteSpace: "nowrap",
-                    minWidth: 120,
+                    minWidth: MIN_INPUT_WIDTH,
                   }}
                 >
                   {col}
