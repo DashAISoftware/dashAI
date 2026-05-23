@@ -1,7 +1,20 @@
 import React from "react";
-import { TextField, Select, MenuItem, FormControl } from "@mui/material";
+import { Box, TextField, Select, MenuItem, FormControl } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import {
+  MIN_INPUT_WIDTH,
+  CHAR_WIDTH_PX,
+  INPUT_PADDING_PX,
+} from "./inputFieldConstants";
+
+function computeWidth(val, placeholder) {
+  const len = Math.max(
+    String(val ?? "").length,
+    String(placeholder ?? "").length,
+  );
+  return Math.max(MIN_INPUT_WIDTH, len * CHAR_WIDTH_PX + INPUT_PADDING_PX);
+}
 
 function InputField({
   handleChange,
@@ -40,7 +53,7 @@ function InputField({
 
   if (effectiveType === "Categorical" && categories && categories.length > 0) {
     return (
-      <FormControl fullWidth size="small">
+      <FormControl size="small" sx={{ minWidth: MIN_INPUT_WIDTH }}>
         <Select
           value={value || ""}
           onChange={(e) => handleChange(rowIndex, col, e.target.value)}
@@ -91,7 +104,6 @@ function InputField({
 
     return (
       <TextField
-        fullWidth
         size="small"
         type="number"
         value={value}
@@ -108,7 +120,7 @@ function InputField({
                 : parseFloat(e.target.value);
           handleChange(rowIndex, col, val);
         }}
-        sx={commonStyles}
+        sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
       />
     );
   }
@@ -120,12 +132,11 @@ function InputField({
   ) {
     return (
       <TextField
-        fullWidth
         size="small"
         value={value}
         placeholder={placeholder}
         onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-        sx={commonStyles}
+        sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
       />
     );
   }
@@ -155,12 +166,11 @@ function InputField({
 
   return (
     <TextField
-      fullWidth
       size="small"
       value={value}
       placeholder={placeholder}
       onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-      sx={commonStyles}
+      sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
     />
   );
 }
