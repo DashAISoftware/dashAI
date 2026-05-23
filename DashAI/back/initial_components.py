@@ -287,6 +287,8 @@ from DashAI.back.statistical_tests.multi_model_comparison.friedman_test import (
 from DashAI.back.statistical_tests.multi_model_comparison.pairw_wilcoxon_test import (
     PairwiseWilcoxonTest,
 )
+from DashAI.back.statistical_tests.post_hoc_tests.nemenyi_test import NemenyiTest
+from DashAI.back.statistical_tests.post_hoc_tests.tukey_test import TukeyHSDTest
 from DashAI.back.statistical_tests.two_model_comparison.corrected_paired_t_test import (
     CorrectedPairedTTest,
 )
@@ -515,6 +517,8 @@ def get_initial_components():
         CorrectedPairedTTest,
         PairedTTest,
         WilcoxonSRTest,
+        NemenyiTest,
+        TukeyHSDTest,
     ]
 
     # Obtener plugins instalados

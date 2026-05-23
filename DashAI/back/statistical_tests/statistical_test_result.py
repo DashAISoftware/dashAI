@@ -6,8 +6,8 @@ from typing import Optional
 class PairwiseResult:
     """Result for a single pairwise comparison in a post-hoc test."""
 
-    run_1: str
-    run_2: str
+    run_1: int
+    run_2: int
     p_value: float
     significant: bool
 

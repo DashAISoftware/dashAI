@@ -23,7 +23,6 @@ export interface StatisticalTestResponse {
   p_value: number | null;
   significant: boolean;
   alpha: number;
-  interpretation: string;
   details: Record<string, unknown> | null;
   posthoc: PairwiseResult[] | null;
 }

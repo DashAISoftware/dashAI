@@ -254,7 +254,6 @@ async def run_statistical_test(
             p_value=result.p_value,
             significant=result.significant,
             alpha=result.alpha,
-            interpretation=result.interpretation,
             details=result.details,
             posthoc=posthoc_results,
         )

@@ -60,7 +60,6 @@ class StatisticalTestResponse(BaseModel):
     p_value: Optional[float] = None
     significant: bool
     alpha: float
-    interpretation: str
     details: Optional[Dict] = None
     # Populated for post-hoc tests (Nemenyi, Tukey, PairwiseWilcoxon)
     posthoc: Optional[List[PairwiseResultResponse]] = None
