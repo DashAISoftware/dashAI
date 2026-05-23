@@ -124,7 +124,7 @@ export default function ManualInputForm({
         sx={{
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: 1,
-          overflow: "hidden",
+          overflow: "auto",
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
         }}
       >
@@ -155,6 +155,7 @@ export default function ManualInputForm({
                     color: theme.palette.text.primary,
                     textTransform: "none",
                     whiteSpace: "nowrap",
+                    minWidth: 120,
                   }}
                 >
                   {col}
