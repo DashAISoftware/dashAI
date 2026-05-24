@@ -193,10 +193,17 @@
     "significanceLevel": "Significance Level",
     "noFinishedRuns": "No finished runs available",
     "results": "Results",
+    "result": "Result",
     "statistic": "Statistic",
     "significant": "Significant",
     "notSignificant": "Not Significant",
-    "technicalDetails": "Technical Details"
+    "technicalDetails": "Technical Details",
+    "model1": "Model 1",
+    "model2": "Model 2",
+    "pairwiseComparisons": "Post-hoc Pairwise Comparisons",
+    "nemenyiPairwiseComparisons": "Nemenyi post-hoc after Friedman test",
+    "tukeyPairwiseComparisons": "Tukey post-hoc after ANOVA test",
+    "wilcoxonPairwiseComparisons": "Pairwise Wilcoxon tests with Holmes correction"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

@@ -75,7 +75,6 @@ class NemenyiTest(BaseStatisticalTest):
         overall_significant = friedman_p < alpha
 
         return StatisticalTestResult(
-            test_name="Nemenyi Post-hoc Test",
             statistic=float(friedman_stat),
             p_value=float(friedman_p),
             significant=overall_significant,

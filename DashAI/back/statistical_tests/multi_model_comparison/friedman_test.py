@@ -31,7 +31,6 @@ class FriedmanTest(BaseStatisticalTest):
         significant = p_value < alpha
 
         return StatisticalTestResult(
-            test_name="Friedman Test",
             statistic=float(statistic),
             p_value=float(p_value),
             significant=significant,

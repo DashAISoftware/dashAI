@@ -27,6 +27,7 @@ export const checkNormality = async (
   metricName: string,
   metricSplit: string,
   runIds: number[],
+  runNames: Record<string, string>,
   foldMetrics: Record<string, number[]>,
 ): Promise<NormalityCheckResponse> => {
   const response = await api.post<NormalityCheckResponse>(
@@ -35,6 +36,7 @@ export const checkNormality = async (
       metric_name: metricName,
       metric_split: metricSplit,
       run_ids: runIds,
+      run_names: runNames,
       fold_metrics: foldMetrics,
     },
   );
@@ -53,6 +55,7 @@ export const runStatisticalTest = async (
   metricName: string,
   metricSplit: string,
   runIds: number[],
+  runNames: Record<string, string>,
   foldMetrics: Record<string, number[]>,
   alpha: number = 0.05,
   params: Record<string, unknown> = {},
@@ -64,6 +67,7 @@ export const runStatisticalTest = async (
       metric_name: metricName,
       metric_split: metricSplit,
       run_ids: runIds,
+      run_names: runNames,
       fold_metrics: foldMetrics,
       alpha,
       params,

@@ -48,8 +48,7 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
                     "All sets of scores must have the same number of observations."
                 )
 
-        # Build data matrix: shape (n_folds, n_models)
-        data_matrix = np.column_stack(score_arrays)
+        data_matrix = np.array(score_arrays)
 
         # posthoc_wilcoxon applies Holm correction by default (p_adjust="holm")
         posthoc_matrix = sp.posthoc_wilcoxon(
@@ -75,7 +74,6 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
         overall_significant = len(significant_pairs) > 0
 
         return StatisticalTestResult(
-            test_name="Pairwise Wilcoxon Test (Holm correction)",
             statistic=float("nan"),  # no single omnibus statistic
             p_value=float("nan"),
             significant=overall_significant,

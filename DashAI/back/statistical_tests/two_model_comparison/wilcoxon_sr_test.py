@@ -35,7 +35,6 @@ class WilcoxonSRTest(BaseStatisticalTest):
         significant = p_value < alpha
 
         return StatisticalTestResult(
-            test_name="Wilcoxon Signed-Rank Test",
             statistic=statistic,
             p_value=p_value,
             significant=significant,

@@ -35,7 +35,6 @@ class TukeyHSDTest(BaseStatisticalTest):
 
         run_names = list(scores.keys())
         score_arrays = [np.array(scores[name]) for name in run_names]
-        run_id_map = kwargs.get("run_id_map", {})
 
         num_observations = len(score_arrays[0])
         for arr in score_arrays:
@@ -61,16 +60,14 @@ class TukeyHSDTest(BaseStatisticalTest):
         # Parse pairwise results from tukey summary
         pairwise = []
         for row in tukey.summary().data[1:]:  # skip header row
-            run_1_name, run_2_name, _, _, _, _, reject = row
+            run_1, run_2, _, _, _, _, reject = row
             # p-value not directly exposed, derive significance from reject flag
             # and get adjusted p-value from meandiffs table
             p_val = float(tukey.pvalues[len(pairwise)])
-            run_1_id = int(run_id_map.get(str(run_1_name), 0))
-            run_2_id = int(run_id_map.get(str(run_2_name), 0))
             pairwise.append(
                 PairwiseResult(
-                    run_1=run_1_id,
-                    run_2=run_2_id,
+                    run_1=str(run_1),
+                    run_2=str(run_2),
                     p_value=p_val,
                     significant=bool(reject),
                 )
@@ -79,7 +76,6 @@ class TukeyHSDTest(BaseStatisticalTest):
         overall_significant = anova_p < alpha
 
         return StatisticalTestResult(
-            test_name="Tukey HSD Post-hoc Test",
             statistic=float(anova_stat),
             p_value=float(anova_p),
             significant=overall_significant,

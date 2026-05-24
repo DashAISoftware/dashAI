@@ -58,6 +58,12 @@ export default function StatisticalTestsModal({
   const [panelHeight, setPanelHeight] = useState(400);
   const isResizing = useRef(false);
 
+  const postHocTestLabels = {
+    FriedmanTest: "models:label.nemenyiPairwiseComparisons",
+    AnovaTest: "models:label.tukeyPairwiseComparisons",
+    PairwiseWilcoxonTest: "models:label.wilcoxonPairwiseComparisons",
+  };
+
   const handleMouseMove = useCallback((e) => {
     if (!isResizing.current) return;
     const panel = document.querySelector("[data-statistical-tests-panel]");
@@ -170,6 +176,14 @@ export default function StatisticalTestsModal({
     setNormalityResult(null);
 
     try {
+      // Create mapping of run_id to run_name
+      const runNames = {};
+      finishedRuns.forEach((run) => {
+        if (selectedRuns.includes(run.id)) {
+          runNames[run.id.toString()] = run.name;
+        }
+      });
+
       // Fetch fold metrics for selected runs
       const foldMetricsData = {};
       for (const runId of selectedRuns) {
@@ -182,6 +196,7 @@ export default function StatisticalTestsModal({
         selectedMetric,
         selectedSplit,
         selectedRuns,
+        runNames,
         foldMetricsData,
       );
 
@@ -217,6 +232,14 @@ export default function StatisticalTestsModal({
     setResults(null);
 
     try {
+      // Create mapping of run_id to run_name
+      const runNames = {};
+      finishedRuns.forEach((run) => {
+        if (selectedRuns.includes(run.id)) {
+          runNames[run.id.toString()] = run.name;
+        }
+      });
+
       // Fetch fold metrics for selected runs
       const foldMetricsData = {};
       for (const runId of selectedRuns) {
@@ -230,6 +253,7 @@ export default function StatisticalTestsModal({
         selectedMetric,
         selectedSplit,
         selectedRuns,
+        runNames,
         foldMetricsData,
         alpha,
       );
@@ -609,23 +633,28 @@ export default function StatisticalTestsModal({
             </Box>
 
             {/* Interpretation */}
-            <Alert
-              severity={results.significant ? "success" : "info"}
-              sx={{ mb: 2 }}
-            >
-              {getHypothesisDecisionMessage(
-                results.significant,
-                results.p_value,
-                results.alpha,
-                t,
-              )}
-            </Alert>
+            {results.p_value !== null && !isNaN(results.p_value) && (
+              <Alert
+                severity={results.significant ? "success" : "info"}
+                sx={{ mb: 2 }}
+              >
+                {getHypothesisDecisionMessage(
+                  results.significant,
+                  results.p_value,
+                  results.alpha,
+                  t,
+                )}
+              </Alert>
+            )}
 
             {/* Post-hoc pairwise table */}
             {results.posthoc && results.posthoc.length > 0 && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                  {t("models:label.pairwiseComparisons")}
+                  {t(
+                    postHocTestLabels[results.test_name] ||
+                      "models:label.pairwiseComparisons",
+                  )}
                 </Typography>
                 <Table size="small">
                   <TableHead>
@@ -641,8 +670,8 @@ export default function StatisticalTestsModal({
                   <TableBody>
                     {results.posthoc.map((pair, i) => (
                       <TableRow key={i}>
-                        <TableCell>{pair.run_1}</TableCell>
-                        <TableCell>{pair.run_2}</TableCell>
+                        <TableCell>{pair.run_1_name || pair.run_1}</TableCell>
+                        <TableCell>{pair.run_2_name || pair.run_2}</TableCell>
                         <TableCell align="right">
                           {pair.p_value?.toFixed(4)}
                         </TableCell>

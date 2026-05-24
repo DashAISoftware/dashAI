@@ -47,7 +47,6 @@ class PairedTTest(BaseStatisticalTest):
         significant = p_value < alpha
 
         return StatisticalTestResult(
-            test_name="Paired T-Test",
             statistic=float(statistic),
             p_value=float(p_value),
             significant=significant,

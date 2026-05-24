@@ -12,8 +12,11 @@ class AnovaTest(BaseStatisticalTest):
         import numpy as np
         from scipy.stats import f_oneway
 
-        if len(scores) < 2:
-            raise ValueError("ANOVA Test requires at least two sets of scores.")
+        if len(scores) < 3:
+            raise ValueError(
+                "ANOVA Test requires at least three sets of scores. "
+                "For comparing two models use Paired t-test instead."
+            )
 
         run_names = list(scores.keys())
         score_arrays = [np.array(scores[run_name]) for run_name in run_names]
@@ -31,7 +34,6 @@ class AnovaTest(BaseStatisticalTest):
         significant = p_value < alpha
 
         return StatisticalTestResult(
-            test_name="ANOVA Test",
             statistic=float(statistic),
             p_value=float(p_value),
             significant=significant,

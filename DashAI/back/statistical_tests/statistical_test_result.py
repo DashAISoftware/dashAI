@@ -14,7 +14,6 @@ class PairwiseResult:
 
 @dataclass
 class StatisticalTestResult:
-    test_name: str
     statistic: float
     p_value: float
     significant: bool

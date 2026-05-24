@@ -221,7 +221,9 @@ async def run_statistical_test(
                     posthoc_results = [
                         PairwiseResultResponse(
                             run_1=pr.run_1,
+                            run_1_name=request.run_names.get(str(pr.run_1), None),
                             run_2=pr.run_2,
+                            run_2_name=request.run_names.get(str(pr.run_2), None),
                             p_value=pr.p_value,
                             significant=pr.significant,
                         )
@@ -236,7 +238,9 @@ async def run_statistical_test(
             posthoc_results = [
                 PairwiseResultResponse(
                     run_1=pr.run_1,
+                    run_1_name=request.run_names.get(str(pr.run_1), None),
                     run_2=pr.run_2,
+                    run_2_name=request.run_names.get(str(pr.run_2), None),
                     p_value=pr.p_value,
                     significant=pr.significant,
                 )
@@ -249,7 +253,7 @@ async def run_statistical_test(
         )
 
         return StatisticalTestResponse(
-            test_name=result.test_name,
+            test_name=request.test_name,
             statistic=result.statistic,
             p_value=result.p_value,
             significant=result.significant,

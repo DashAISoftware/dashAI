@@ -193,10 +193,17 @@
     "significanceLevel": "Nivel de significancia",
     "noFinishedRuns": "No hay ejecuciones finalizadas disponibles",
     "results": "Resultados",
+    "result": "Resultado",
     "statistic": "Estadístico",
     "significant": "Significativo",
     "notSignificant": "No Significativo",
-    "technicalDetails": "Detalles Técnicos"
+    "technicalDetails": "Detalles Técnicos",
+    "model1": "Modelo 1",
+    "model2": "Modelo 2",
+    "pairwiseComparisons": "Comparaciones post-hoc por pares",
+    "nemenyiPairwiseComparisons": "Comparaciones post-hoc de Nemenyi después del test de Friedman",
+    "tukeyPairwiseComparisons": "Comparaciones post-hoc de Tukey después del test ANOVA",
+    "wilcoxonPairwiseComparisons": "Tests de Wilcoxon por pares con corrección de Holmes"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
