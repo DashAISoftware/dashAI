@@ -167,7 +167,9 @@ class BaseExplorer(ConfigObject, ABC):
         if "max" in input_cardinality and n > input_cardinality["max"]:
             return False
 
-        # Check each column against allowed_types (semantic) AND allowed_dtypes (dtype)
+        # When an explorer sets "numeric_categorical_only" in its metadata, Categorical
+        # columns are only accepted if their dtype is numeric (not string/bool).
+        reject_string_categorical = bool(metadata.get("numeric_categorical_only"))
         for column in selected_columns:
             column_name = column["columnName"]
             col_info = column_spec.get(column_name, {})
@@ -175,6 +177,12 @@ class BaseExplorer(ConfigObject, ABC):
             col_dtype = col_info.get("dtype", "")
 
             if allowed_types and col_type not in allowed_types:
+                return False
+            if (
+                reject_string_categorical
+                and col_type == "Categorical"
+                and col_dtype in ("string", "bool", "")
+            ):
                 return False
             if allowed_dtypes and col_dtype not in allowed_dtypes:
                 return False
