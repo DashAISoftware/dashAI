@@ -7,7 +7,6 @@ import {
   Box,
   Link,
   Collapse,
-  Fade,
   Typography,
   MenuItem,
   TextField,
@@ -114,23 +113,30 @@ function NestedCVSelector({
         label={t("models:label.nestedCrossValidation")}
       />
 
-      <Alert severity="info" sx={{ py: 1.5, overflow: "hidden" }}>
-        <Fade key={String(useNestedCV)} in timeout={{ enter: 350, exit: 0 }}>
+      <Collapse in={!useNestedCV} unmountOnExit>
+        <Alert severity="info" sx={{ py: 1.5 }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <div>
-              {useNestedCV
-                ? t("models:message.processChosenNestedCV") + " "
-                : t("models:message.processChosenNormalHPO")}
-              {useNestedCV && learnMoreLink}
-            </div>
+            <div>{t("models:message.processChosenNormalHPO")}</div>
             <Typography variant="body2" color="text.secondary">
-              {useNestedCV
-                ? t("models:message.computationalCostNestedCV")
-                : t("models:message.computationalCostNormalHPO")}
+              {t("models:message.computationalCostNormalHPO")}
             </Typography>
           </Box>
-        </Fade>
-      </Alert>
+        </Alert>
+      </Collapse>
+
+      <Collapse in={useNestedCV} unmountOnExit>
+        <Alert severity="info" sx={{ py: 1.5 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <div>
+              {t("models:message.processChosenNestedCV") + " "}
+              {learnMoreLink}
+            </div>
+            <Typography variant="body2" color="text.secondary">
+              {t("models:message.computationalCostNestedCV")}
+            </Typography>
+          </Box>
+        </Alert>
+      </Collapse>
 
       <Collapse in={useNestedCV} unmountOnExit>
         <Box
