@@ -246,9 +246,11 @@
     "nestedCVDisabled": "For each tested combination, the model is trained using cross-validation and the average score across folds is reported. The combination with the best score is selected.",
     "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and {{max}} and lower or equal to the number of outer folds ({{outerNSplits}}). Please adjust the number of inner folds.",
     "normalityDetected": "✓ Normality Condition Met",
+    "normalityCheckMethod": "Shapiro-Wilk test (α=0.05): Data is considered normal if p-value > 0.05.",
     "recommendParametricTests": "The data meets normality requirements. Parametric tests (e.g., paired t-test, ANOVA) are recommended for more statistical power.",
     "normalityNotDetected": "⚠ Normality Condition Not Met",
     "recommendNonParametricTests": "The data does not meet normality requirements. Non-parametric tests (e.g., Wilcoxon, Friedman) are recommended for robustness.",
+    "normalityCheckTooltip": "Checks if metric values follow a normal distribution using Shapiro-Wilk test with significance level α=0.05. It's recommended to analyze the Q-Q plot to visually confirm data normality.",
     "hypothesis_reject": "reject",
     "hypothesis_failToReject": "fail to reject",
     "hypothesisDecision": "With a p-value of {{pValue}}, we {{decision}} the null hypothesis at the alpha level of {{alpha}}."

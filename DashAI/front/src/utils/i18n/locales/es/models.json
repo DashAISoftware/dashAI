@@ -247,9 +247,11 @@
     "nestedCVDisabled": "Por cada combinación probada, el modelo se entrena usando validación cruzada y se reporta el promedio del score entre los folds. La combinación con el mejor score es la seleccionada.",
     "innerFoldsOutOfRange": "Para la validación cruzada anidada, el número de folds internos debe estar entre 2 y {{max}} y ser menor o igual que el número de folds externos ({{outerNSplits}}). Por favor ajuste el número de folds internos.",
     "normalityDetected": "✓ Condición de Normalidad Cumplida",
+    "normalityCheckMethod": "Test Shapiro-Wilk (α=0.05): Los datos se consideran normales si el p-valor > 0.05.",
     "recommendParametricTests": "Los datos cumplen con los requisitos de normalidad. Se recomiendan tests paramétricos (ej: test t pareado, ANOVA) para mayor potencia estadística.",
     "normalityNotDetected": "⚠ Condición de Normalidad No Cumplida",
     "recommendNonParametricTests": "Los datos no cumplen con los requisitos de normalidad. Se recomiendan tests no paramétricos (ej: Wilcoxon, Friedman) por su robustez.",
+    "normalityCheckTooltip": "Verifica si los valores de la métrica siguen una distribución normal usando el test Shapiro-Wilk con nivel de significancia α=0.05. Se recomienda analizar el grafico Q-Q para confirmar visualmente la normalidad de los datos.",
     "hypothesis_reject": "rechazamos",
     "hypothesis_failToReject": "no rechazamos",
     "hypothesisDecision": "Con un p-valor de {{pValue}}, {{decision}} la hipótesis nula a un nivel de significancia de {{alpha}}."

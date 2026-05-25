@@ -27,7 +27,7 @@ import {
   Collapse,
   IconButton,
 } from "@mui/material";
-import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import { ExpandMore, ExpandLess, Help } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import {
   getFoldMetrics,
@@ -416,59 +416,154 @@ export default function StatisticalTestsModal({
                 gap: 1.5,
               }}
             >
-              <Button
-                variant="outlined"
-                onClick={handleNormalityCheck}
-                disabled={
-                  normalityCheckLoading ||
-                  selectedRuns.length === 0 ||
-                  !selectedMetric
-                }
-                fullWidth
-                sx={{ textTransform: "none" }}
-              >
-                {normalityCheckLoading ? (
-                  <>
-                    <CircularProgress size={18} sx={{ mr: 1 }} />
-                    {t("models:button.checkingNormality")}
-                  </>
-                ) : (
-                  t("models:button.checkNormality")
-                )}
-              </Button>
+              {/* Help icon + Button row */}
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <Tooltip
+                  title={t("models:message.normalityCheckTooltip")}
+                  arrow
+                >
+                  <Help
+                    sx={{
+                      fontSize: "1.2rem",
+                      color: "text.secondary",
+                      cursor: "help",
+                      flexShrink: 0,
+                    }}
+                  />
+                </Tooltip>
+
+                <Button
+                  variant="outlined"
+                  onClick={handleNormalityCheck}
+                  disabled={
+                    normalityCheckLoading ||
+                    selectedRuns.length === 0 ||
+                    !selectedMetric
+                  }
+                  fullWidth
+                  sx={{ textTransform: "none" }}
+                >
+                  {normalityCheckLoading ? (
+                    <>
+                      <CircularProgress size={18} sx={{ mr: 1 }} />
+                      {t("models:button.checkingNormality")}
+                    </>
+                  ) : (
+                    t("models:button.checkNormality")
+                  )}
+                </Button>
+              </Box>
 
               {/* Normality Result */}
               {normalityResult && (
-                <Alert
-                  severity={normalityResult.is_normal ? "success" : "warning"}
-                  sx={{ fontSize: "0.875rem" }}
-                >
-                  {normalityResult.is_normal ? (
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, mb: 0.5 }}
-                      >
-                        {t("models:message.normalityDetected")}
-                      </Typography>
-                      <Typography variant="caption">
-                        {t("models:message.recommendParametricTests")}
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, mb: 0.5 }}
-                      >
-                        {t("models:message.normalityNotDetected")}
-                      </Typography>
-                      <Typography variant="caption">
-                        {t("models:message.recommendNonParametricTests")}
-                      </Typography>
-                    </Box>
-                  )}
-                </Alert>
+                <Box>
+                  <Alert
+                    severity={normalityResult.is_normal ? "success" : "warning"}
+                    sx={{ fontSize: "0.875rem", mb: 1.5 }}
+                  >
+                    {normalityResult.is_normal ? (
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, mb: 0.5 }}
+                        >
+                          {t("models:message.normalityDetected")}
+                        </Typography>
+                        <Typography variant="caption">
+                          {t("models:message.recommendParametricTests")}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 600, mb: 0.5 }}
+                        >
+                          {t("models:message.normalityNotDetected")}
+                        </Typography>
+                        <Typography variant="caption">
+                          {t("models:message.recommendNonParametricTests")}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Alert>
+
+                  {/* Show test method and individual p-values */}
+                  <Box
+                    sx={{
+                      bgcolor: "action.hover",
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 600, display: "block", mb: 1 }}
+                      color="text.secondary"
+                    >
+                      {t("models:message.normalityCheckMethod")}
+                    </Typography>
+
+                    {/* Individual run p-values */}
+                    {normalityResult.results_by_run &&
+                      normalityResult.results_by_run.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          {normalityResult.results_by_run.map((result, idx) => {
+                            const runName =
+                              finishedRuns.find((r) => r.id === result.run_id)
+                                ?.name || `Run ${result.run_id}`;
+                            return (
+                              <Box
+                                key={idx}
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  py: 0.5,
+                                  fontSize: "0.8rem",
+                                  borderBottom:
+                                    idx <
+                                    normalityResult.results_by_run.length - 1
+                                      ? "1px solid"
+                                      : "none",
+                                  borderColor: "divider",
+                                }}
+                              >
+                                <Typography variant="caption">
+                                  {runName}
+                                </Typography>
+                                <Box sx={{ display: "flex", gap: 2, ml: 1 }}>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: result.is_normal
+                                        ? "success.main"
+                                        : "warning.main",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    p = {result.p_value.toFixed(4)}
+                                  </Typography>
+                                  <Chip
+                                    label={
+                                      result.is_normal ? "Normal" : "Non-normal"
+                                    }
+                                    size="small"
+                                    color={
+                                      result.is_normal ? "success" : "warning"
+                                    }
+                                    variant="outlined"
+                                  />
+                                </Box>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      )}
+                  </Box>
+                </Box>
               )}
             </Box>
           </Box>
