@@ -7,6 +7,7 @@ import {
   Box,
   Link,
   Collapse,
+  Fade,
   Typography,
   MenuItem,
   TextField,
@@ -62,7 +63,7 @@ function NestedCVSelector({
       href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html"
       target="_blank"
       rel="noopener noreferrer"
-      sx={{ color: "warning.main", fontWeight: 600 }}
+      sx={{ color: "info.main", fontWeight: 600 }}
     >
       {t("common:learnMore")}
     </Link>
@@ -113,11 +114,22 @@ function NestedCVSelector({
         label={t("models:label.nestedCrossValidation")}
       />
 
-      <Alert severity="info">
-        {useNestedCV
-          ? t("models:message.nestedCVEnabled")
-          : t("models:message.nestedCVDisabled")}{" "}
-        {useNestedCV && learnMoreLink}
+      <Alert severity="info" sx={{ py: 1.5, overflow: "hidden" }}>
+        <Fade key={String(useNestedCV)} in timeout={{ enter: 350, exit: 0 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <div>
+              {useNestedCV
+                ? t("models:message.processChosenNestedCV") + " "
+                : t("models:message.processChosenNormalHPO")}
+              {useNestedCV && learnMoreLink}
+            </div>
+            <Typography variant="body2" color="text.secondary">
+              {useNestedCV
+                ? t("models:message.computationalCostNestedCV")
+                : t("models:message.computationalCostNormalHPO")}
+            </Typography>
+          </Box>
+        </Fade>
       </Alert>
 
       <Collapse in={useNestedCV} unmountOnExit>
