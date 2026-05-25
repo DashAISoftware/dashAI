@@ -1,5 +1,6 @@
 """MLP-based image classifier for DashAI."""
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -65,16 +66,87 @@ class MLPImageClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    batch_size: schema_field(
+        int_field(ge=1),
+        placeholder=32,
+        description=MultilingualString(
+            en=(
+                "Number of images processed together in each training step. "
+                "Larger values speed up training but require more memory."
+            ),
+            es=(
+                "Número de imágenes procesadas juntas en cada paso de entrenamiento. "
+                "Valores más grandes aceleran el entrenamiento "
+                "pero requieren más memoria."
+            ),
+        ),
+        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
+    )  # type: ignore
+
+    image_size: schema_field(
+        int_field(ge=8),
+        placeholder=64,
+        description=MultilingualString(
+            en=(
+                "Images are resized to this value (in pixels) for both width "
+                "and height before training. Larger sizes preserve more detail "
+                "but increase training time."
+            ),
+            es=(
+                "Las imágenes se redimensionan a este valor (en píxeles) "
+                "tanto en ancho como en alto antes del entrenamiento. "
+                "Tamaños más grandes preservan más detalle "
+                "pero aumentan el tiempo de entrenamiento."
+            ),
+        ),
+        alias=MultilingualString(en="Image size", es="Tamaño de imagen"),
+    )  # type: ignore
+
+    dropout_rate: schema_field(
+        float_field(ge=0.0, lt=1.0),
+        placeholder=0.0,
+        description=MultilingualString(
+            en=(
+                "Fraction of neurons randomly deactivated during each training step. "
+                "Values between 0.2 and 0.5 help prevent overfitting. "
+                "Use 0.0 to disable."
+            ),
+            es=(
+                "Fracción de neuronas desactivadas aleatoriamente en cada paso de "
+                "entrenamiento. Valores entre 0.2 y 0.5 ayudan a prevenir "
+                "el sobreajuste. Use 0.0 para desactivarlo."
+            ),
+        ),
+        alias=MultilingualString(en="Dropout rate", es="Tasa de dropout"),
+    )  # type: ignore
+
+    weight_decay: schema_field(
+        float_field(ge=0.0),
+        placeholder=0.0,
+        description=MultilingualString(
+            en=(
+                "L2 regularization coefficient for the Adam optimizer. Penalizes large "
+                "weights to improve generalization. Typical values: 1e-4 to 1e-2."
+            ),
+            es=(
+                "Coeficiente de regularización L2 para el optimizador Adam. Penaliza "
+                "pesos grandes para mejorar la generalización. "
+                "Valores típicos: 1e-4 a 1e-2."
+            ),
+        ),
+        alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
+    )  # type: ignore
+
 
 class _ImageDataset(torch.utils.data.Dataset):
     """Torch Dataset wrapper for DashAI image datasets."""
 
-    def __init__(self, x_dataset, y_dataset=None):
+    def __init__(self, x_dataset, y_dataset=None, image_size=64):
         self.x_dataset = x_dataset
         self.y_dataset = y_dataset
         self.transforms = transforms.Compose(
             [
-                transforms.Resize((30, 30)),
+                transforms.Resize((image_size, image_size)),
                 transforms.ToTensor(),
             ]
         )
@@ -115,13 +187,15 @@ class _ImageDataset(torch.utils.data.Dataset):
 class _MLP(nn.Module):
     """Multi-Layer Perceptron for image classification."""
 
-    def __init__(self, input_dim, output_dim, hidden_dims):
+    def __init__(self, input_dim, output_dim, hidden_dims, dropout_rate=0.0):
         super().__init__()
         self.hidden_layers = nn.ModuleList()
+        self.dropout_layers = nn.ModuleList()
         previous_dim = input_dim
 
         for hidden_dim in hidden_dims:
             self.hidden_layers.append(nn.Linear(previous_dim, hidden_dim))
+            self.dropout_layers.append(nn.Dropout(dropout_rate))
             previous_dim = hidden_dim
 
         self.output_layer = nn.Linear(previous_dim, output_dim)
@@ -131,8 +205,8 @@ class _MLP(nn.Module):
         batch_size = x.shape[0]
         x = x.view(batch_size, -1)
 
-        for layer in self.hidden_layers:
-            x = self.relu(layer(x))
+        for layer, dropout in zip(self.hidden_layers, self.dropout_layers):
+            x = dropout(self.relu(layer(x)))
 
         return self.output_layer(x)
 
@@ -177,12 +251,26 @@ class MLPImageClassifier(BaseModel):
         """Custom collate function for batches with only images."""
         return torch.stack(batch)
 
-    def __init__(self, epochs=10, learning_rate=0.001, hidden_dims=None, **kwargs):
+    def __init__(
+        self,
+        epochs=10,
+        learning_rate=0.001,
+        hidden_dims=None,
+        batch_size=32,
+        image_size=64,
+        dropout_rate=0.0,
+        weight_decay=0.0,
+        **kwargs,
+    ):
         if hidden_dims is None:
             hidden_dims = [128, 64]
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.hidden_dims = hidden_dims
+        self.batch_size = batch_size
+        self.image_size = image_size
+        self.dropout_rate = dropout_rate
+        self.weight_decay = weight_decay
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = None
         self.optimizer = None
@@ -225,7 +313,9 @@ class MLPImageClassifier(BaseModel):
         MLPImageClassifier
             The trained model instance.
         """
-        image_dataset = _ImageDataset(x_train, y_dataset=y_train)
+        image_dataset = _ImageDataset(
+            x_train, y_dataset=y_train, image_size=self.image_size
+        )
 
         self.input_dim = (
             image_dataset.tensor_shape[0]
@@ -239,16 +329,20 @@ class MLPImageClassifier(BaseModel):
 
         train_loader = torch.utils.data.DataLoader(
             image_dataset,
-            batch_size=32,
+            batch_size=self.batch_size,
             shuffle=True,
             collate_fn=self._collate_fn_with_labels,
         )
 
-        self.model = _MLP(self.input_dim, self.output_dim, self.hidden_dims).to(
-            self.device
-        )
+        self.model = _MLP(
+            self.input_dim, self.output_dim, self.hidden_dims, self.dropout_rate
+        ).to(self.device)
         criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        self.optimizer = optim.Adam(
+            self.model.parameters(),
+            lr=self.learning_rate,
+            weight_decay=self.weight_decay,
+        )
 
         self.model.train()
         for _ in range(self.epochs):
@@ -275,10 +369,10 @@ class MLPImageClassifier(BaseModel):
         list of lists
             List of predicted probabilities for each class for each image.
         """
-        image_dataset = _ImageDataset(x, y_dataset=None)
+        image_dataset = _ImageDataset(x, y_dataset=None, image_size=self.image_size)
         test_loader = torch.utils.data.DataLoader(
             image_dataset,
-            batch_size=32,
+            batch_size=self.batch_size,
             shuffle=False,
             collate_fn=self._collate_fn_no_labels,
         )
@@ -290,9 +384,9 @@ class MLPImageClassifier(BaseModel):
                 images = images.to(self.device)
                 logits = self.model(images)
                 probs = torch.softmax(logits, dim=1)
-                all_probs += probs.cpu().tolist()
+                all_probs.append(probs.cpu().numpy())
 
-        return all_probs
+        return np.concatenate(all_probs, axis=0)
 
     def save(self, filename: str) -> None:
         """Save the model checkpoint to disk.
@@ -308,6 +402,10 @@ class MLPImageClassifier(BaseModel):
             "epochs": self.epochs,
             "learning_rate": self.learning_rate,
             "hidden_dims": self.hidden_dims,
+            "batch_size": self.batch_size,
+            "image_size": self.image_size,
+            "dropout_rate": self.dropout_rate,
+            "weight_decay": self.weight_decay,
             "input_dim": self.input_dim,
             "output_dim": self.output_dim,
             "idx_to_label": self.idx_to_label,
@@ -334,14 +432,24 @@ class MLPImageClassifier(BaseModel):
             epochs=checkpoint["epochs"],
             learning_rate=checkpoint["learning_rate"],
             hidden_dims=checkpoint["hidden_dims"],
+            batch_size=checkpoint.get("batch_size", 32),
+            image_size=checkpoint.get("image_size", 64),
+            dropout_rate=checkpoint.get("dropout_rate", 0.0),
+            weight_decay=checkpoint.get("weight_decay", 0.0),
         )
         instance.input_dim = checkpoint["input_dim"]
         instance.output_dim = checkpoint["output_dim"]
         instance.model = _MLP(
-            instance.input_dim, instance.output_dim, instance.hidden_dims
+            instance.input_dim,
+            instance.output_dim,
+            instance.hidden_dims,
+            instance.dropout_rate,
         )
         instance.model.load_state_dict(checkpoint["model_state_dict"])
-        instance.optimizer = optim.Adam(instance.model.parameters())
+        instance.optimizer = optim.Adam(
+            instance.model.parameters(),
+            weight_decay=instance.weight_decay,
+        )
         instance.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         instance.idx_to_label = checkpoint.get("idx_to_label", {})
         instance.label_to_idx = checkpoint.get("label_to_idx", {})
