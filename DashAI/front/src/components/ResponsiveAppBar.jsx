@@ -87,34 +87,16 @@ function ResponsiveAppBar() {
             flexShrink: 0,
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              letterSpacing: "0.02em",
-              color: theme.palette.text.primary,
-              lineHeight: 1,
-            }}
-          >
-            <Box component="span" sx={{ color: theme.palette.primary.main }}>
-              dash
-            </Box>
-            AI
-          </Typography>
           <Box
+            component="img"
+            src="/dashai-logo.svg"
+            alt="dashAI"
             sx={{
-              display: { xs: "none", sm: "block" },
-              ...theme.typography.statusBadge,
-              color: theme.palette.primary.main,
-              border: `1px solid ${theme.palette.primary.main}38`,
-              background: `${theme.palette.primary.main}1F`,
-              borderRadius: "2px",
-              px: "7px",
-              py: "2px",
-              lineHeight: 1.4,
+              height: 18,
+              width: "auto",
+              flexShrink: 0,
             }}
-          >
-            Workbench
-          </Box>
+          />
         </Box>
 
         {/* Mobile hamburger */}
