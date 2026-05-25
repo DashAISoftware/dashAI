@@ -15,7 +15,7 @@ export const getHypothesisDecisionMessage = (significant, pValue, alpha, t) => {
 
   return t("models:message.hypothesisDecision", {
     decision,
-    pValue: pValue.toFixed(4),
+    pValue,
     alpha,
   });
 };

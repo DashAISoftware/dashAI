@@ -54,6 +54,15 @@ export default function StatisticalTestsModal({
   const [normalityCheckLoading, setNormalityCheckLoading] = useState(false);
   const [normalityResult, setNormalityResult] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [alternative, setAlternative] = useState("two-sided");
+
+  // Tests that support alternative hypothesis
+  const PAIRWISE_TESTS = [
+    "WilcoxonSRTest",
+    "PairedTTest",
+    "CorrectedPairedTTest",
+  ];
+  const supportAlternative = PAIRWISE_TESTS.includes(selectedTest);
   const { t } = useTranslation(["models", "common"]);
   const [panelHeight, setPanelHeight] = useState(400);
   const isResizing = useRef(false);
@@ -62,6 +71,11 @@ export default function StatisticalTestsModal({
     FriedmanTest: "models:label.nemenyiPairwiseComparisons",
     AnovaTest: "models:label.tukeyPairwiseComparisons",
     PairwiseWilcoxonTest: "models:label.wilcoxonPairwiseComparisons",
+  };
+
+  const formatPValue = (p) => {
+    if (p < 0.0001) return p.toExponential(2);
+    return p.toFixed(4);
   };
 
   const handleMouseMove = useCallback((e) => {
@@ -256,6 +270,7 @@ export default function StatisticalTestsModal({
         runNames,
         foldMetricsData,
         alpha,
+        supportAlternative ? { alternative } : {},
       );
 
       setResults(testResponse);
@@ -380,29 +395,60 @@ export default function StatisticalTestsModal({
                 </Typography>
               ) : (
                 <Stack spacing={1} sx={{ pl: 1 }}>
-                  {finishedRuns.map((run) => (
-                    <FormControlLabel
-                      key={run.id}
-                      control={
-                        <Checkbox
-                          checked={selectedRuns.includes(run.id)}
-                          onChange={() => handleRunToggle(run.id)}
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Typography variant="body2">{run.name}</Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block", mt: 0.25 }}
+                  {finishedRuns.map((run) => {
+                    const selIdx = selectedRuns.indexOf(run.id);
+                    return (
+                      <FormControlLabel
+                        key={run.id}
+                        control={
+                          <Checkbox
+                            checked={selectedRuns.includes(run.id)}
+                            onChange={() => handleRunToggle(run.id)}
+                          />
+                        }
+                        label={
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.75,
+                            }}
                           >
-                            {new Date(run.created).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  ))}
+                            <Box>
+                              <Typography variant="body2">
+                                {run.name}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block", mt: 0.25 }}
+                              >
+                                {new Date(run.created).toLocaleDateString()}
+                              </Typography>
+                            </Box>
+                            {selIdx === 0 && (
+                              <Chip
+                                label={t("models:label.model1")}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                                sx={{ fontSize: "0.65rem", height: 18 }}
+                              />
+                            )}
+                            {selIdx === 1 && (
+                              <Chip
+                                label={t("models:label.model2")}
+                                size="small"
+                                color="secondary"
+                                variant="outlined"
+                                sx={{ fontSize: "0.65rem", height: 18 }}
+                              />
+                            )}
+                          </Box>
+                        }
+                      />
+                    );
+                  })}
                 </Stack>
               )}
             </Box>
@@ -630,6 +676,67 @@ export default function StatisticalTestsModal({
             </Box>
           </Box>
 
+          {/* Alternative hypothesis selector - only for pairwise tests */}
+          {supportAlternative && (
+            <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 0.5,
+                }}
+              >
+                <FormControl sx={{ minWidth: 0 }} size="small">
+                  <InputLabel>
+                    {t("models:label.alternativeHypothesis")}
+                  </InputLabel>
+                  <Select
+                    value={alternative}
+                    onChange={(e) => setAlternative(e.target.value)}
+                    label={t("models:label.alternativeHypothesis")}
+                    MenuProps={{
+                      disablePortal: false,
+                      style: { zIndex: 9999 },
+                    }}
+                  >
+                    <MenuItem value="two-sided">
+                      {t("models:alternative.twoSided")}
+                    </MenuItem>
+                    <MenuItem value="greater">
+                      {t("models:alternative.greater")}
+                    </MenuItem>
+                    <MenuItem value="less">
+                      {t("models:alternative.less")}
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.5, display: "block" }}
+                >
+                  {selectedRuns.length === 2 &&
+                    (() => {
+                      const m1 = finishedRuns.find(
+                        (r) => r.id === selectedRuns[0],
+                      );
+                      const m2 = finishedRuns.find(
+                        (r) => r.id === selectedRuns[1],
+                      );
+                      return m1 && m2 ? (
+                        <>
+                          {t("models:label.model1")}: <strong>{m1.name}</strong>
+                          <br />
+                          {t("models:label.model2")}: <strong>{m2.name}</strong>
+                        </>
+                      ) : null;
+                    })()}
+                </Typography>
+              </Box>
+              <Box sx={{ flex: 1 }} />
+            </Box>
+          )}
           {/* Execute Button */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
             <Button
@@ -713,7 +820,7 @@ export default function StatisticalTestsModal({
                         : "text.primary",
                     }}
                   >
-                    {results.p_value?.toFixed(4)}
+                    {formatPValue(results.p_value)}
                   </Typography>
                 </Box>
               )}
@@ -735,7 +842,7 @@ export default function StatisticalTestsModal({
               >
                 {getHypothesisDecisionMessage(
                   results.significant,
-                  results.p_value,
+                  formatPValue(results.p_value),
                   results.alpha,
                   t,
                 )}
@@ -768,7 +875,7 @@ export default function StatisticalTestsModal({
                         <TableCell>{pair.run_1_name || pair.run_1}</TableCell>
                         <TableCell>{pair.run_2_name || pair.run_2}</TableCell>
                         <TableCell align="right">
-                          {pair.p_value?.toFixed(4)}
+                          {formatPValue(pair.p_value)}
                         </TableCell>
                         <TableCell align="center">
                           <Chip

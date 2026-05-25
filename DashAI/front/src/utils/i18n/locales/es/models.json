@@ -203,7 +203,8 @@
     "pairwiseComparisons": "Comparaciones post-hoc por pares",
     "nemenyiPairwiseComparisons": "Comparaciones post-hoc de Nemenyi después del test de Friedman",
     "tukeyPairwiseComparisons": "Comparaciones post-hoc de Tukey después del test ANOVA",
-    "wilcoxonPairwiseComparisons": "Tests de Wilcoxon por pares con corrección de Holmes"
+    "wilcoxonPairwiseComparisons": "Tests de Wilcoxon por pares con corrección de Holmes",
+    "alternativeHypothesis": "Hipótesis Alternativa"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
@@ -263,5 +264,10 @@
     "anovaTest": "Test ANOVA",
     "friedmanTest": "Test de Friedman",
     "pairwiseWilcoxonTest": "Test de Wilcoxon por pares"
+  },
+  "alternative": {
+    "twoSided": "Ambos lados (Modelo 1 ≠ Modelo 2)",
+    "greater": "Mayor (Modelo 1 > Modelo 2)",
+    "less": "Menor (Modelo 1 < Modelo 2)"
   }
 }
