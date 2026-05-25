@@ -20,19 +20,8 @@ class ImageClassificationTask(ClassificationTask):
     """
 
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Image classification in machine learning involves predicting "
-            "categorical labels for image data. Models are trained to learn "
-            "visual patterns and features in images, enabling accurate "
-            "classification of new instances."
-        ),
-        es=(
-            "La clasificación de imágenes en el aprendizaje automático implica "
-            "predecir etiquetas categóricas para datos de imágenes. Los modelos "
-            "se entrenan para aprender patrones visuales y características en "
-            "las imágenes, lo que permite una clasificación precisa de nuevas "
-            "instancias."
-        ),
+        en="Predict categorical labels from image data.",
+        es="Predice etiquetas categóricas a partir de datos de imágenes.",
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Image Classification", es="Clasificación de Imágenes"
