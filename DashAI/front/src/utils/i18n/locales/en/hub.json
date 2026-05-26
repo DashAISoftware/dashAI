@@ -53,6 +53,7 @@
   "sources": "Sources",
   "fromSource": "from {{source}}",
   "selectSourceSubtitle": "Select a source to browse and import datafiles.",
+  "searchSources": "Search sources...",
   "searchDownloads": "Search datafiles...",
   "datasetDetails": "Datafile Details",
   "checkQueue": "Check the job queue for details",

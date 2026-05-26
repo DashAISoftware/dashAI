@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box } from "@mui/material";
-import HubIcon from "@mui/icons-material/Hub";
-import ScienceIcon from "@mui/icons-material/Science";
-import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
-import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import HubBreadcrumbs from "../../components/hub/HubBreadcrumbs";
+import ComponentSelector from "../../components/custom/ComponentSelector";
 import HubLeftBar from "../../components/hub/HubLeftBar";
 import DatasetGrid from "../../components/hub/DatasetGrid";
 import DatasetDetail from "../../components/hub/DatasetDetail";
@@ -27,11 +24,6 @@ import { enqueueDatafileJob } from "../../api/job";
 import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
-
-const SOURCE_ICONS = {
-  HuggingFaceDatasetSource: HubIcon,
-  OpenMLDatasetSource: ScienceIcon,
-};
 
 export default function HubContent() {
   const { t } = useTranslation(["hub"]);
@@ -190,13 +182,6 @@ export default function HubContent() {
 
   const downloadsList = Object.values(downloads);
 
-  const sourceOptions = sources.map((source) => ({
-    name: source.name,
-    display_name: source.display_name || source.name,
-    description: source.description || "",
-    Icon: SOURCE_ICONS[source.name] ?? CloudDownloadIcon,
-  }));
-
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
@@ -228,14 +213,13 @@ export default function HubContent() {
               }}
             >
               <HubBreadcrumbs />
-              <SelectOptionMenu
-                title={t("hub:title")}
-                subtitle={t("hub:selectSourceSubtitle")}
-                options={sourceOptions}
-                loading={sourcesLoading}
-                goToNextStep={(name) =>
-                  handleSelectSource(sources.find((s) => s.name === name))
-                }
+              <ComponentSelector
+                components={sources.map((s) => ({
+                  ...s,
+                  category: s.metadata?.category,
+                }))}
+                onSelect={(source) => handleSelectSource(source)}
+                searchPlaceholder={t("hub:searchSources")}
               />
             </Box>
           )}
