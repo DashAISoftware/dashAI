@@ -30,7 +30,7 @@ export default function HubContent() {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const { sourceName: sourceNameParam } = useParams();
-  const threePanelLayout = useThreePanelLayout({ storageKey: "hub" });
+  const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);

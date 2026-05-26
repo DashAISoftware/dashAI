@@ -21,7 +21,7 @@ export default function HubImportPage() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["hub"]);
-  const threePanelLayout = useThreePanelLayout({ storageKey: "hub" });
+  const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
   const previewMatch = useMatch(
     "/app/data/hub/import/:datafileId/loader/:loaderName/preview",
