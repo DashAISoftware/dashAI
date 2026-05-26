@@ -11,11 +11,18 @@ import {
 export const getFoldMetrics = async (
   runId: string,
   metricSplit: string,
+  level: "fold" | "outer" = "fold",
 ): Promise<Record<string, number[]>> => {
-  const response = await api.get<Record<string, number[]>>(
-    `/v1/run/${runId}/fold-metrics`,
-    { params: { metric_split: metricSplit } },
-  );
+  const response =
+    level === "fold"
+      ? await api.get<Record<string, number[]>>(
+          `/v1/run/${runId}/fold-metrics`,
+          { params: { metric_split: metricSplit } },
+        )
+      : await api.get<Record<string, number[]>>(
+          `/v1/run/${runId}/outer-fold-metrics`,
+          { params: { metric_split: metricSplit } },
+        );
   return response.data;
 };
 

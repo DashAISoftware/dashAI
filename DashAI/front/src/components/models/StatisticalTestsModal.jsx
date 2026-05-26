@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -108,13 +108,18 @@ export default function StatisticalTestsModal({
   }, [handleMouseMove, handleMouseUp]);
 
   // Filter runs that have finished successfully
-  const finishedRuns = React.useMemo(
+  const finishedRuns = useMemo(
     () => runs.filter((run) => run.status === 3),
     [runs],
   );
 
+  const runIds = useMemo(
+    () => selectedRuns.map((run) => run.id),
+    [selectedRuns],
+  );
+
   // Determine available tests based on number of selected runs
-  const availableTests = React.useMemo(() => {
+  const availableTests = useMemo(() => {
     if (selectedRuns.length === 2) {
       return [
         { value: "PairedTTest", label: "pairedTTest" },
@@ -171,11 +176,11 @@ export default function StatisticalTestsModal({
     }
   }, [availableTests, selectedTest]);
 
-  const handleRunToggle = (runId) => {
+  const handleRunToggle = (run) => {
     setSelectedRuns((prev) =>
-      prev.includes(runId)
-        ? prev.filter((id) => id !== runId)
-        : [...prev, runId],
+      prev.some((r) => r.id === run.id)
+        ? prev.filter((r) => r.id !== run.id)
+        : [...prev, run],
     );
   };
 
@@ -190,26 +195,27 @@ export default function StatisticalTestsModal({
     setNormalityResult(null);
 
     try {
-      // Create mapping of run_id to run_name
+      // Create mapping of run_id to run_name from selected runs
       const runNames = {};
-      finishedRuns.forEach((run) => {
-        if (selectedRuns.includes(run.id)) {
-          runNames[run.id.toString()] = run.name;
-        }
+      selectedRuns.forEach((run) => {
+        runNames[run.id.toString()] = run.name;
       });
 
       // Fetch fold metrics for selected runs
       const foldMetricsData = {};
-      for (const runId of selectedRuns) {
-        const metrics = await getFoldMetrics(runId, selectedSplit);
-        foldMetricsData[runId] = metrics[selectedMetric] || [];
+      for (const run of selectedRuns) {
+        const metrics = await getFoldMetrics(
+          run.id,
+          selectedSplit,
+          run.nested ? "outer" : "fold",
+        );
+        foldMetricsData[run.id] = metrics[selectedMetric] || [];
       }
 
-      // Check normality via service
       const normalityResponse = await checkNormality(
         selectedMetric,
         selectedSplit,
-        selectedRuns,
+        runIds,
         runNames,
         foldMetricsData,
       );
@@ -246,19 +252,21 @@ export default function StatisticalTestsModal({
     setResults(null);
 
     try {
-      // Create mapping of run_id to run_name
+      // Create mapping of run_id to run_name from selected runs
       const runNames = {};
-      finishedRuns.forEach((run) => {
-        if (selectedRuns.includes(run.id)) {
-          runNames[run.id.toString()] = run.name;
-        }
+      selectedRuns.forEach((run) => {
+        runNames[run.id.toString()] = run.name;
       });
 
       // Fetch fold metrics for selected runs
       const foldMetricsData = {};
-      for (const runId of selectedRuns) {
-        const metrics = await getFoldMetrics(runId, selectedSplit);
-        foldMetricsData[runId] = metrics[selectedMetric] || [];
+      for (const run of selectedRuns) {
+        const metrics = await getFoldMetrics(
+          run.id,
+          selectedSplit,
+          run.nested ? "outer" : "fold",
+        );
+        foldMetricsData[run.id] = metrics[selectedMetric] || [];
       }
 
       // Execute the statistical test via service
@@ -266,7 +274,7 @@ export default function StatisticalTestsModal({
         selectedTest,
         selectedMetric,
         selectedSplit,
-        selectedRuns,
+        runIds,
         runNames,
         foldMetricsData,
         alpha,
@@ -332,7 +340,9 @@ export default function StatisticalTestsModal({
       >
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            {typeof error === "string"
+              ? error
+              : error?.msg || JSON.stringify(error)}
           </Alert>
         )}
 
@@ -396,14 +406,19 @@ export default function StatisticalTestsModal({
               ) : (
                 <Stack spacing={1} sx={{ pl: 1 }}>
                   {finishedRuns.map((run) => {
-                    const selIdx = selectedRuns.indexOf(run.id);
+                    const isSelected = selectedRuns.some(
+                      (r) => r.id === run.id,
+                    );
+                    const selIdx = selectedRuns.findIndex(
+                      (r) => r.id === run.id,
+                    );
                     return (
                       <FormControlLabel
                         key={run.id}
                         control={
                           <Checkbox
-                            checked={selectedRuns.includes(run.id)}
-                            onChange={() => handleRunToggle(run.id)}
+                            checked={isSelected}
+                            onChange={() => handleRunToggle(run)}
                           />
                         }
                         label={
@@ -718,12 +733,8 @@ export default function StatisticalTestsModal({
                 >
                   {selectedRuns.length === 2 &&
                     (() => {
-                      const m1 = finishedRuns.find(
-                        (r) => r.id === selectedRuns[0],
-                      );
-                      const m2 = finishedRuns.find(
-                        (r) => r.id === selectedRuns[1],
-                      );
+                      const m1 = selectedRuns[0];
+                      const m2 = selectedRuns[1];
                       return m1 && m2 ? (
                         <>
                           {t("models:label.model1")}: <strong>{m1.name}</strong>
