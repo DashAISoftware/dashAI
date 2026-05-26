@@ -283,6 +283,8 @@ class MLPImageClassifier(BaseModel):
             collate_fn=self._collate_fn_no_labels,
         )
 
+        import numpy as np
+
         self.model.eval()
         all_probs = []
         with torch.no_grad():
@@ -290,9 +292,13 @@ class MLPImageClassifier(BaseModel):
                 images = images.to(self.device)
                 logits = self.model(images)
                 probs = torch.softmax(logits, dim=1)
-                all_probs += probs.cpu().tolist()
+                all_probs.append(probs.cpu())
 
-        return all_probs
+        return (
+            torch.cat(all_probs, dim=0).numpy()
+            if all_probs
+            else np.empty((0, self.output_dim))
+        )
 
     def save(self, filename: str) -> None:
         """Save the model checkpoint to disk.
