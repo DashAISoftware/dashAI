@@ -127,9 +127,20 @@ export const exportDatasetCsvById = async (id: number): Promise<Blob> => {
   return response.data;
 };
 
-export const exportDatasetCsvByPath = async (path: string): Promise<Blob> => {
+export const exportDatasetCsvByPath = async (
+  path: string,
+  filterModel?: object,
+  sortModel?: object[],
+): Promise<Blob> => {
   const response = await api.get(`${datasetEndpoint}/export/csv`, {
-    params: { path },
+    params: {
+      path,
+      filter_model: filterModel ? JSON.stringify(filterModel) : undefined,
+      sort_model:
+        sortModel && sortModel.length > 0
+          ? JSON.stringify(sortModel)
+          : undefined,
+    },
     responseType: "blob",
   });
   return response.data;

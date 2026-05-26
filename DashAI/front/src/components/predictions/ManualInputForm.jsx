@@ -46,7 +46,9 @@ export default function ManualInputForm({
     );
     inputColumns.forEach((col) => {
       const typeInfo = types[col];
-      if (
+      if (typeInfo?.type === "Image") {
+        row[col] = null;
+      } else if (
         typeInfo?.type === "Categorical" &&
         typeInfo?.categories?.length > 0
       ) {

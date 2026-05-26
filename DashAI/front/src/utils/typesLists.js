@@ -26,6 +26,7 @@ export const dataTypesList = [
   "large_binary",
   "string",
   "large_string",
+  "struct",
 ];
 
 export const columnTypesList = [
@@ -63,5 +64,5 @@ export const dataTypesbyColumnType = {
   Date: ["date32", "date64"],
   Binary: ["binary", "large_binary"],
   Categorical: ["string"],
-  Image: ["string", "binary", "large_binary"],
+  Image: ["struct"],
 };
