@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import {
   CloudUpload as UploadDatasetIcon,
   AutoStories as NotebookIcon,
+  Hub as HubIcon,
 } from "@mui/icons-material";
 
 export default function DatasetsCenterContent() {
@@ -56,6 +57,11 @@ export default function DatasetsCenterContent() {
             tourContext.nextStep();
           }, 600);
         }
+        return;
+      }
+
+      if (option === "hub") {
+        navigate("/app/data/hub");
         return;
       }
 
@@ -165,6 +171,12 @@ export default function DatasetsCenterContent() {
             description: t("datasets:label.createNewNotebookDescription"),
             Icon: NotebookIcon,
             "data-tour": "notebook-option",
+          },
+          {
+            name: "hub",
+            display_name: t("datasets:label.importFromHub"),
+            description: t("datasets:label.importFromHubDescription"),
+            Icon: HubIcon,
           },
         ]}
         searchBar={false}

@@ -13,18 +13,18 @@ import { useTranslation } from "react-i18next";
  * @param {string} [sourceDisplayName] - Simple mode: human-readable source name (current crumb).
  * @param {Array<{label: string, onClick?: function}>} [crumbs] - Full mode: explicit crumb list.
  *   Last entry without onClick renders as plain text (current page); others render as links.
- * @param {function} [onBack] - Custom back-button handler. Defaults to navigating to /app/hub.
+ * @param {function} [onBack] - Custom back-button handler. Defaults to navigating to /app/data/hub.
  */
 export default function HubBreadcrumbs({ sourceDisplayName, crumbs, onBack }) {
   const navigate = useNavigate();
   const { t } = useTranslation(["hub"]);
 
   const resolvedCrumbs = crumbs ?? [
-    { label: t("hub:title"), onClick: () => navigate("/app/hub") },
+    { label: t("hub:title"), onClick: () => navigate("/app/data/hub") },
     { label: sourceDisplayName },
   ];
 
-  const handleBack = onBack ?? (() => navigate("/app/hub"));
+  const handleBack = onBack ?? (() => navigate("/app/data/hub"));
 
   return (
     <Box

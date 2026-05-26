@@ -24,12 +24,12 @@ export default function HubImportPage() {
   const threePanelLayout = useThreePanelLayout({ storageKey: "hub" });
 
   const previewMatch = useMatch(
-    "/app/hub/import/:datafileId/loader/:loaderName/preview",
+    "/app/data/hub/import/:datafileId/loader/:loaderName/preview",
   );
   const loaderWithNameMatch = useMatch(
-    "/app/hub/import/:datafileId/loader/:loaderName",
+    "/app/data/hub/import/:datafileId/loader/:loaderName",
   );
-  const loaderMatch = useMatch("/app/hub/import/:datafileId/loader");
+  const loaderMatch = useMatch("/app/data/hub/import/:datafileId/loader");
 
   const loaderName =
     previewMatch?.params.loaderName ??
@@ -55,7 +55,7 @@ export default function HubImportPage() {
     if (!datafileId) return;
     getDatafile(parseInt(datafileId))
       .then(setDatafile)
-      .catch(() => navigate("/app/hub"));
+      .catch(() => navigate("/app/data/hub"));
   }, [datafileId, navigate]);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function HubImportPage() {
 
   const sourceName = datafile?.source_name ?? null;
 
-  const base = `/app/hub/import/${datafileId}`;
+  const base = `/app/data/hub/import/${datafileId}`;
 
   const handleStepChange = useCallback(
     (newStepOrFn) => {
@@ -112,9 +112,9 @@ export default function HubImportPage() {
   );
 
   const handleCancel = () =>
-    navigate(sourceName ? `/app/hub/${sourceName}` : "/app/hub");
+    navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
   const handleImported = () =>
-    navigate(sourceName ? `/app/hub/${sourceName}` : "/app/hub");
+    navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
 
   const handleDeleteDownload = async (downloadId) => {
     const name = downloads.find((d) => d.id === downloadId)?.name ?? "";
@@ -123,7 +123,7 @@ export default function HubImportPage() {
       setDownloads((prev) => prev.filter((d) => d.id !== downloadId));
       enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
       if (downloadId === parseInt(datafileId)) {
-        navigate(sourceName ? `/app/hub/${sourceName}` : "/app/hub");
+        navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
       }
     } catch {
       enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
@@ -131,7 +131,7 @@ export default function HubImportPage() {
   };
 
   const handleImportDownload = (dl) => {
-    navigate(`/app/hub/import/${dl.id}`);
+    navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   const renderRightPanel = () => {

@@ -64,12 +64,12 @@ function App() {
               <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
           </Route>
-          <Route path="/app/hub" element={<HubContent />} />
+          <Route path="/app/data/hub" element={<HubContent />} />
           <Route
-            path="/app/hub/import/:datafileId/*"
+            path="/app/data/hub/import/:datafileId/*"
             element={<HubImportPage />}
           />
-          <Route path="/app/hub/:sourceName" element={<HubContent />} />
+          <Route path="/app/data/hub/:sourceName" element={<HubContent />} />
         </Routes>
         <JobQueueWidget />
       </BrowserRouter>

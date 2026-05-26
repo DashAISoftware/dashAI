@@ -174,16 +174,16 @@ export default function HubContent() {
   };
 
   const handleImportDownload = (dl) => {
-    navigate(`/app/hub/import/${dl.id}`);
+    navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   const handleSelectSource = (source) => {
-    navigate(`/app/hub/${source.name}`);
+    navigate(`/app/data/hub/${source.name}`);
   };
 
   const handleStartImport = () => {
     const dl = getDownloadForDataset(selectedDataset);
-    if (dl) navigate(`/app/hub/import/${dl.id}`);
+    if (dl) navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   const downloadsList = Object.values(downloads);

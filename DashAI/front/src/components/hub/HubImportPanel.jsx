@@ -238,7 +238,7 @@ export default function HubImportPanel({
           crumbs={[
             {
               label: t("hub:title"),
-              onClick: () => navigate("/app/hub"),
+              onClick: () => navigate("/app/data/hub"),
             },
             ...(dataset?.name
               ? [
@@ -268,8 +268,8 @@ export default function HubImportPanel({
           ]}
           onBack={() =>
             sourceName
-              ? navigate(`/app/hub/${sourceName}`)
-              : navigate("/app/hub")
+              ? navigate(`/app/data/hub/${sourceName}`)
+              : navigate("/app/data/hub")
           }
         />
       </Box>
