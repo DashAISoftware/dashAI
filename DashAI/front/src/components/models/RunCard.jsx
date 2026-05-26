@@ -44,6 +44,7 @@ import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
@@ -83,6 +84,7 @@ function RunCard({
   const [operationsCount, setOperationsCount] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [autoExpand, setAutoExpand] = useState(false);
 
   const {
@@ -438,7 +440,7 @@ function RunCard({
               <IconButton
                 size="small"
                 color="error"
-                onClick={() => onDelete(run)}
+                onClick={() => setDeleteConfirmOpen(true)}
                 disabled={isRunning}
               >
                 <Delete fontSize="small" />
@@ -708,6 +710,15 @@ function RunCard({
           onConfirm={doSave}
           run={run}
           operationsCount={operationsCount}
+        />
+        <DeleteConfirmationModal
+          open={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          onConfirm={() => {
+            setDeleteConfirmOpen(false);
+            onDelete(run);
+          }}
+          content={t("models:message.confirmDeleteRun")}
         />
       </CardContent>
     </Card>
