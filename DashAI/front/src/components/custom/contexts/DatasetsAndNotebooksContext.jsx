@@ -28,7 +28,6 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
   } = useDatasets({ t });
@@ -48,12 +47,13 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW); // "datasets" or "notebooks"
 
   const [rightBarContent, setRightBarContent] = useState(null);
+  const [availableConverters, setAvailableConverters] = useState([]);
+  const [availableExplorers, setAvailableExplorers] = useState([]);
   const [uploadDataloader, setUploadDataloader] = useState(null);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
 
   useEffect(() => {
-    fetchDatasets();
     fetchNotebooks();
   }, []);
 
@@ -68,7 +68,6 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
     notebooks,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -21,7 +21,7 @@ import {
   TextField,
   Alert,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -44,6 +44,7 @@ import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
+import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
  * Card component displaying a model run with actions and details
@@ -59,6 +60,7 @@ function RunCard({
   isLastRun = false,
   existingRuns = [],
   onRefresh,
+  isHighlighted = false,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
@@ -83,8 +85,11 @@ function RunCard({
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [autoExpand, setAutoExpand] = useState(false);
 
-  const { defaultValues: defaultOptimizerParams } = useSchema({
-    modelName: editedOptimizer,
+  const {
+    defaultValues: defaultOptimizerParams,
+    loading: optimizerSchemaLoading,
+  } = useSchema({
+    modelName: isEditing ? editedOptimizer : null,
   });
 
   useEffect(() => {
@@ -111,29 +116,8 @@ function RunCard({
   }, [run.id, explainerRefreshTrigger]);
 
   const hasOptimizableParams = useMemo(() => {
-    return Object.values(editedParameters).some(
-      (value) =>
-        value &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        value.optimize === true,
-    );
+    return checkIfHaveOptimazers(editedParameters);
   }, [editedParameters]);
-
-  useEffect(() => {
-    if (
-      editedOptimizer &&
-      defaultOptimizerParams &&
-      Object.keys(defaultOptimizerParams).length > 0
-    ) {
-      setEditedOptimizerParams((prev) => {
-        if (Object.keys(prev).length === 0) {
-          return defaultOptimizerParams;
-        }
-        return prev;
-      });
-    }
-  }, [editedOptimizer, defaultOptimizerParams]);
 
   const handleStartEdit = () => {
     setIsEditing(true);
@@ -158,7 +142,7 @@ function RunCard({
         editedName.trim(),
         editedParameters,
         editedOptimizer || "",
-        editedOptimizerParams || {},
+        { ...defaultOptimizerParams, ...editedOptimizerParams },
         editedGoalMetric || "",
       );
 
@@ -232,19 +216,9 @@ function RunCard({
     await doSave();
   };
 
-  const handleParametersChange = useCallback((values) => {
-    setEditedParameters(values);
-  }, []);
-
-  const handleOptimizerParamsChange = useCallback((values) => {
-    setEditedOptimizerParams((prev) => ({ ...prev, ...values }));
-  }, []);
-
-  const handleOptimizerSelected = (optimizerName, defaultValues) => {
+  const handleOptimizerSelected = (optimizerName) => {
     setEditedOptimizer(optimizerName);
-    if (defaultValues && Object.keys(defaultValues).length > 0) {
-      setEditedOptimizerParams(defaultValues);
-    }
+    setEditedOptimizerParams({});
   };
 
   const statusText = getRunStatus(run.status, t);
@@ -300,7 +274,6 @@ function RunCard({
     <Card
       elevation={2}
       sx={{
-        mb: 2,
         borderLeft: "4px solid",
         borderLeftColor:
           run.status === 3 // Finished
@@ -310,6 +283,18 @@ function RunCard({
               : isRunning
                 ? "info.main"
                 : "grey.500",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newRunHighlight": {
+          "0%": { boxShadow: "none" },
+          "20%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newRunHighlight 4s ease-in-out forwards"
+          : "none",
       }}
     >
       <CardContent>
@@ -534,8 +519,8 @@ function RunCard({
                       <FormSchemaWithSelectedModel
                         modelToConfigure={run.model_name}
                         initialValues={editedParameters}
-                        onFormSubmit={handleParametersChange}
-                        onValuesChange={handleParametersChange}
+                        onFormSubmit={() => {}}
+                        onValuesChange={setEditedParameters}
                         onCancel={() => {}}
                         hideButtons
                       />
@@ -574,25 +559,29 @@ function RunCard({
                       handleSelectedOptimizer={handleOptimizerSelected}
                     />
 
-                    {editedOptimizer && (
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                          {t("common:optimizerParameters")}
-                        </Typography>
-                        <FormSchemaContainer>
-                          <FormSchemaWithSelectedModel
-                            modelToConfigure={editedOptimizer}
-                            initialValues={editedOptimizerParams}
-                            onFormSubmit={(values) =>
-                              setEditedOptimizerParams(values)
-                            }
-                            onValuesChange={handleOptimizerParamsChange}
-                            onCancel={() => {}}
-                            hideButtons
-                          />
-                        </FormSchemaContainer>
-                      </Box>
-                    )}
+                    {editedOptimizer &&
+                      (Object.keys(editedOptimizerParams).length > 0 ||
+                        !optimizerSchemaLoading) && (
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                            {t("common:optimizerParameters")}
+                          </Typography>
+                          <FormSchemaContainer key={editedOptimizer}>
+                            <FormSchemaWithSelectedModel
+                              modelToConfigure={editedOptimizer}
+                              initialValues={
+                                Object.keys(editedOptimizerParams).length > 0
+                                  ? editedOptimizerParams
+                                  : defaultOptimizerParams
+                              }
+                              onFormSubmit={() => {}}
+                              onValuesChange={setEditedOptimizerParams}
+                              onCancel={() => {}}
+                              hideButtons
+                            />
+                          </FormSchemaContainer>
+                        </Box>
+                      )}
                   </Box>
                 )}
 

@@ -41,14 +41,16 @@ export default function ConverterHistoryList({
                 secondary={scopeText}
               />
               <Chip label={formatDate(converter.created)} size="small" />
-              <IconButton
-                onClick={() => onConverterDelete(converter)}
-                size="small"
-                sx={{ ml: 1 }}
-                color="error"
-              >
-                <Delete />
-              </IconButton>
+              {showDeleteButtons && (
+                <IconButton
+                  onClick={() => onConverterDelete(converter)}
+                  size="small"
+                  sx={{ ml: 1 }}
+                  color="error"
+                >
+                  <Delete />
+                </IconButton>
+              )}
             </Box>
           </ListItem>
         );
