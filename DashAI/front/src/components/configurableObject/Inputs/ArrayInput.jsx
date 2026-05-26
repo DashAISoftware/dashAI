@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import InputWithDebounce from "../../shared/InputWithDebounce";
 import { FormControl } from "@mui/material";
@@ -15,6 +15,12 @@ function ArrayInput({
   ...props
 }) {
   const [inputValue, setInputValue] = useState(value.join(","));
+
+  useEffect(() => {
+    if (Array.isArray(value)) {
+      setInputValue(value.join(","));
+    }
+  }, [value]);
 
   const convertValue = (val) => {
     switch (itemType) {

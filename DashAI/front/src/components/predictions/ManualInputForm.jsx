@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
 import InputField from "./InputField";
+import { MIN_INPUT_WIDTH } from "./inputFieldConstants";
 import { useTranslation } from "react-i18next";
 
 const HEADER_HEIGHT = 40;
@@ -62,7 +63,9 @@ export default function ManualInputForm({
     );
     inputColumns.forEach((col) => {
       const typeInfo = types[col];
-      if (
+      if (typeInfo?.type === "Image") {
+        row[col] = null;
+      } else if (
         typeInfo?.type === "Categorical" &&
         typeInfo?.categories?.length > 0
       ) {
@@ -166,7 +169,7 @@ export default function ManualInputForm({
           display: "flex",
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: 1,
-          overflow: "hidden",
+          overflow: "auto",
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
         }}
       >

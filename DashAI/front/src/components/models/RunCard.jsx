@@ -25,7 +25,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -64,6 +64,7 @@ function RunCard({
   isLastRun = false,
   existingRuns = [],
   onRefresh,
+  isHighlighted = false,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
@@ -99,7 +100,7 @@ function RunCard({
   const [autoExpand, setAutoExpand] = useState(false);
 
   const { defaultValues: defaultOptimizerParams } = useSchema({
-    modelName: editedOptimizer,
+    modelName: isEditing ? editedOptimizer : null,
   });
 
   useEffect(() => {
@@ -327,6 +328,18 @@ function RunCard({
               : isRunning
                 ? "info.main"
                 : "divider",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newRunHighlight": {
+          "0%": { boxShadow: "none" },
+          "20%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newRunHighlight 4s ease-in-out forwards"
+          : "none",
       }}
     >
       <CardContent>

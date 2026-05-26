@@ -5,6 +5,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -152,8 +153,9 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
 
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "numeric_categorical_only": True,
         "input_cardinality": {"min": 2},
     }
 

@@ -31,6 +31,7 @@ export default function DataloaderConfigBar({
   const schemaValuesRef = useRef({});
   const { t } = useTranslation(["common", "datasets"]);
   const theme = useTheme();
+  const showInferenceRows = selectedDataloader !== "ImageDataLoader";
 
   // Handler for when FormSchema values change - merge with inference_rows
   const handleFormSchemaValuesChange = useCallback(() => {
@@ -94,29 +95,31 @@ export default function DataloaderConfigBar({
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pt: 1, pb: 2 }}>
-        <Box
-          sx={{
-            pb: 1,
-          }}
-        >
-          <FormSchemaFieldCard
-            label={t("datasets:label.inferenceRows")}
-            description={t("datasets:label.inferenceRowsDescription")}
+        {showInferenceRows && (
+          <Box
+            sx={{
+              pb: 1,
+            }}
           >
-            <Box sx={{ pt: 0.75 }}>
-              <InputWithDebounce
-                name="inference_rows"
-                value={inferenceRows}
-                onChange={handleInferenceRowsChange}
-                type="number"
-                variant="outlined"
-                size="small"
-                fullWidth
-                slotProps={{ input: { min: 2 } }}
-              />
-            </Box>
-          </FormSchemaFieldCard>
-        </Box>
+            <FormSchemaFieldCard
+              label={t("datasets:label.inferenceRows")}
+              description={t("datasets:label.inferenceRowsDescription")}
+            >
+              <Box sx={{ pt: 0.75 }}>
+                <InputWithDebounce
+                  name="inference_rows"
+                  value={inferenceRows}
+                  onChange={handleInferenceRowsChange}
+                  type="number"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  slotProps={{ input: { min: 2 } }}
+                />
+              </Box>
+            </FormSchemaFieldCard>
+          </Box>
+        )}
         <FormSchemaContainer>
           <FormSchema
             autoSave
