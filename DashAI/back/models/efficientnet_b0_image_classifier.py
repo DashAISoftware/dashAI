@@ -1,0 +1,53 @@
+"""EfficientNet-B0 image classifier for DashAI."""
+
+import torch.nn as nn
+from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.base_torchvision_image_classifier import (
+    TorchvisionImageClassifier,
+    TorchvisionImageClassifierSchema,
+)
+
+
+class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
+    """EfficientNet-B0 image classifier (Tan & Le, 2019).
+
+    Compact baseline of the EfficientNet family, which scales network width,
+    depth, and resolution jointly. The classifier head is replaced to match
+    the number of target classes. Supports ImageNet pre-trained weights.
+    """
+
+    SCHEMA = TorchvisionImageClassifierSchema
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    DISPLAY_NAME: str = MultilingualString(
+        en="EfficientNet-B0",
+        es="EfficientNet-B0",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "EfficientNet-B0 (Tan & Le, 2019). Scales network width, depth, "
+            "and resolution jointly for the best accuracy/efficiency trade-off. "
+            "Smaller and faster than ResNet-18 at similar accuracy."
+        ),
+        es=(
+            "EfficientNet-B0 (Tan & Le, 2019). Escala ancho, profundidad y "
+            "resolución de la red de forma conjunta para el mejor balance entre "
+            "accuracy y eficiencia. Más pequeño y rápido que ResNet-18."
+        ),
+    )
+    COLOR: str = "#00838F"
+    ICON: str = "Speed"
+
+    def _build_backbone(self, num_classes: int, pretrained: bool) -> nn.Module:
+        weights = EfficientNet_B0_Weights.DEFAULT if pretrained else None
+        model = efficientnet_b0(weights=weights)
+        in_features = model.classifier[1].in_features
+        model.classifier = nn.Sequential(
+            nn.Dropout(self.dropout_rate),
+            nn.Linear(in_features, num_classes),
+        )
+        return model
+
+    def _classifier_head(self) -> nn.Module:
+        return self.model.classifier

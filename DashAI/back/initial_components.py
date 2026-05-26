@@ -123,6 +123,10 @@ from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
+from DashAI.back.models.cnn_image_classifier import CNNImageClassifier
+from DashAI.back.models.efficientnet_b0_image_classifier import (
+    EfficientNetB0ImageClassifier,
+)
 
 # Models
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
@@ -195,7 +199,10 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
+from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
+from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
@@ -250,6 +257,7 @@ from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
     TfIdfLogRegTextClassificationModel,
 )
+from DashAI.back.models.vgg16_image_classifier import VGG16ImageClassifier
 
 # Optimizers
 from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
@@ -372,6 +380,12 @@ def get_initial_components():
         XlmRobertaTransformer,
         XlnetTransformer,
         MLPImageClassifier,
+        CNNImageClassifier,
+        LeNet5ImageClassifier,
+        VGG16ImageClassifier,
+        ResNet18ImageClassifier,
+        ResNet50ImageClassifier,
+        EfficientNetB0ImageClassifier,
         # Dataloaders
         ARFFDataLoader,
         CSVDataLoader,
