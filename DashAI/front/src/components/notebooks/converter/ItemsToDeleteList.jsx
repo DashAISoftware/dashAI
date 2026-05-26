@@ -40,7 +40,6 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
                 alignItems: "center",
                 py: 0.5,
                 fontWeight: isSelected ? "bold" : "normal",
-                //color: isSelected ? "#00BEBB" : "text.secondary",
               }}
             >
               <Typography variant="body2">
