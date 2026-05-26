@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
@@ -217,6 +217,14 @@ export default function HubContent() {
               }}
             >
               <HubBreadcrumbs />
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h5" component="h1">
+                  {t("hub:selectSourceTitle")}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t("hub:selectSourceSubtitle")}
+                </Typography>
+              </Box>
               <Box sx={{ flex: 1, minHeight: 0 }}>
                 <ComponentSelector
                   components={sources.map((s) => ({
