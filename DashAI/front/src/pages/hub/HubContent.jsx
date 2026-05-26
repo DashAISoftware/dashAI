@@ -9,6 +9,8 @@ import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/pan
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import HubBreadcrumbs from "../../components/hub/HubBreadcrumbs";
 import ComponentSelector from "../../components/custom/ComponentSelector";
+import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
+import StepperNavigationFooter from "../../components/shared/StepperNavigationFooter";
 import HubLeftBar from "../../components/hub/HubLeftBar";
 import DatasetGrid from "../../components/hub/DatasetGrid";
 import DatasetDetail from "../../components/hub/DatasetDetail";
@@ -35,6 +37,8 @@ export default function HubContent() {
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [selectedDataset, setSelectedDataset] = useState(null);
+
+  const [pendingSource, setPendingSource] = useState(null);
 
   const [downloads, setDownloads] = useState({});
   const [downloadLoading, setDownloadLoading] = useState(false);
@@ -213,27 +217,39 @@ export default function HubContent() {
               }}
             >
               <HubBreadcrumbs />
-              <ComponentSelector
-                components={sources.map((s) => ({
-                  ...s,
-                  category: s.metadata?.category,
-                }))}
-                onSelect={(source) => handleSelectSource(source)}
-                searchPlaceholder={t("hub:searchSources")}
+              <Box sx={{ flex: 1, minHeight: 0 }}>
+                <ComponentSelector
+                  components={sources.map((s) => ({
+                    ...s,
+                    category: s.metadata?.category,
+                  }))}
+                  selected={pendingSource}
+                  onSelect={setPendingSource}
+                  searchPlaceholder={t("hub:searchSources")}
+                />
+              </Box>
+              <StepperNavigationFooter
+                onBack={() => navigate("/app/data")}
+                onNext={() => handleSelectSource(pendingSource)}
+                nextDisabled={!pendingSource}
               />
             </Box>
           )}
         </CenterPanel>
 
         <RightPanel toggleButtonTop="50%">
-          <DatasetDetail
-            dataset={selectedDataset}
-            sourceName={sourceNameParam}
-            download={getDownloadForDataset(selectedDataset)}
-            downloadLoading={downloadLoading}
-            onStartDownload={handleStartDownload}
-            onStartImport={handleStartImport}
-          />
+          {!sourceNameParam ? (
+            <ComponentDetailsPanel component={pendingSource} />
+          ) : (
+            <DatasetDetail
+              dataset={selectedDataset}
+              sourceName={sourceNameParam}
+              download={getDownloadForDataset(selectedDataset)}
+              downloadLoading={downloadLoading}
+              onStartDownload={handleStartDownload}
+              onStartImport={handleStartImport}
+            />
+          )}
         </RightPanel>
       </ModuleContainer>
     </ThreePanelLayoutContext.Provider>
