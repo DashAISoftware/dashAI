@@ -14,27 +14,32 @@ export default function useSchema({ modelName = null } = {}) {
   const { t } = useTranslation();
 
   useEffect(() => {
+    let cancelled = false;
     setModel(null);
 
     const getModel = async () => {
       try {
         setLoading(true);
-        const result = await getComponents({
-          model: modelName,
-        });
-
+        const result = await getComponents({ model: modelName });
         const formattedSchema = await formattedModel(result?.schema);
-
-        setModel(formattedSchema);
+        if (!cancelled) {
+          setModel(formattedSchema);
+        }
       } catch (error) {
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     if (modelName) {
       getModel();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [modelName, t]);
 
   const { schema, initialValues } = model

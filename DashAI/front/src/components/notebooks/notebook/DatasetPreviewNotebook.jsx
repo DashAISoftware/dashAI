@@ -277,6 +277,7 @@ export default function DatasetPreviewNotebook({
           (converter) => converter.status === 3,
         )}
         existingDatasets={existingDatasets}
+        notebook={notebook}
       />
 
       <NotebookHistoryModal

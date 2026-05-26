@@ -54,7 +54,7 @@ function AddModelDialog({
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
-    modelName: selectedModel,
+    modelName: open ? selectedModel : null,
   });
   const {
     defaultValues: defaultOptimizerParams,

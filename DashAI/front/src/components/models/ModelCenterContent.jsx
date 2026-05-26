@@ -13,6 +13,7 @@ import {
   TextFields as TextClassificationIcon,
   TableChart as TabularClassificationIcon,
   Translate as TranslationIcon,
+  ImageSearch as ImageClassificationIcon,
   Science as DefaultTaskIcon,
 } from "@mui/icons-material";
 
@@ -20,6 +21,7 @@ const TASK_ICONS = {
   ClassificationTask: ClassificationIcon,
   TabularClassificationTask: TabularClassificationIcon,
   TextClassificationTask: TextClassificationIcon,
+  ImageClassificationTask: ImageClassificationIcon,
   RegressionTask: RegressionIcon,
   TranslationTask: TranslationIcon,
 };

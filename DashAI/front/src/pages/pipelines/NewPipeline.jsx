@@ -6,6 +6,7 @@ import {
   DialogTitle,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactFlowProvider } from "reactflow";
 import CustomLayout from "../../components/custom/CustomLayout";
@@ -22,6 +23,7 @@ import {
 } from "../../components/pipelines";
 
 function NewPipeline() {
+  const theme = useTheme();
   const location = useLocation();
   const { pipelineId } = useParams();
   const navigate = useNavigate();
@@ -125,7 +127,13 @@ function NewPipeline() {
                 nodeHelp={nodeHelp}
               />
 
-              <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#f5f5f5" }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  p: 2,
+                  backgroundColor: theme.palette.background.default,
+                }}
+              >
                 <PipelineToolbar
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}

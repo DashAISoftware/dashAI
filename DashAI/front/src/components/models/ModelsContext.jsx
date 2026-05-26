@@ -67,6 +67,8 @@ export function ModelsProvider({ children }) {
     onEditRun,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
   } = useSessions({ t });
 
   const [selectedModel, setSelectedModel] = useState(null);
@@ -147,6 +149,8 @@ export function ModelsProvider({ children }) {
     onDeleteRun,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
     datasetInfo,
     setDatasetInfo,
     datasetTab,

@@ -1,0 +1,90 @@
+from typing import TYPE_CHECKING, List, Union
+
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.tasks.classification_task import ClassificationTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_image import DashAIImage
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class ImageClassificationTask(ClassificationTask):
+    """Task for classifying images into discrete categories.
+
+    Image classification predicts categorical labels from image inputs.
+    It accepts image columns as inputs, requires a single categorical
+    output column, and is compatible with image classifier models.
+    """
+
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Image classification in machine learning involves predicting "
+            "categorical labels for image data. Models are trained to learn "
+            "visual patterns and features in images, enabling accurate "
+            "classification of new instances."
+        ),
+        es=(
+            "La clasificación de imágenes en el aprendizaje automático implica "
+            "predecir etiquetas categóricas para datos de imágenes. Los modelos "
+            "se entrenan para aprender patrones visuales y características en "
+            "las imágenes, lo que permite una clasificación precisa de nuevas "
+            "instancias."
+        ),
+    )
+    DISPLAY_NAME: str = MultilingualString(
+        en="Image Classification", es="Clasificación de Imágenes"
+    )
+    SCORING_PROFILES = {
+        "balanced": {
+            "description": "Balanced",
+            "weights": {"Accuracy": 0.3, "F1": 0.4, "ROCAUC": 0.3},
+        },
+        "detectPositives": {
+            "description": "Detect Positives",
+            "weights": {"Recall": 0.6, "F1": 0.3, "Precision": 0.1},
+        },
+        "avoidFalseAlarms": {
+            "description": "Avoid False Alarms",
+            "weights": {"Precision": 0.6, "F1": 0.3, "Recall": 0.1},
+        },
+        "probabilityQuality": {
+            "description": "Probability Quality",
+            "weights": {"ROCAUC": 0.5, "LogLoss": 0.5},
+        },
+    }
+    metadata: dict = {
+        "inputs_types": [DashAIImage],
+        "outputs_types": [Categorical],
+        "inputs_cardinality": 1,
+        "outputs_cardinality": 1,
+    }
+
+    def prepare_for_task(
+        self,
+        dataset: Union["DatasetDict", "DashAIDataset"],
+        input_columns: List[str],
+        output_columns: List[str],
+    ) -> "DashAIDataset":
+        """Prepare a dataset for an image classification task.
+
+        Parameters
+        ----------
+        dataset : Union[DatasetDict, DashAIDataset]
+            Dataset to be prepared.
+        input_columns : List[str]
+            Names of the image input columns.
+        output_columns : List[str]
+            Names of the categorical output columns.
+
+        Returns
+        -------
+        DashAIDataset
+            The validated dataset, ready for training or inference.
+        """
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset

@@ -7979,6 +7979,7 @@ __metadata:
     eslint-plugin-promise: ^6.0.0
     eslint-plugin-react: ^7.34.2
     formik: ^2.2.9
+    geist: ^1.7.0
     html2canvas: ^1.4.1
     i18next: ^25.7.4
     i18next-browser-languagedetector: ^8.2.0
@@ -10293,6 +10294,15 @@ __metadata:
   version: 1.2.3
   resolution: "functions-have-names@npm:1.2.3"
   checksum: c3f1f5ba20f4e962efb71344ce0a40722163e85bee2101ce25f88214e78182d2d2476aa85ef37950c579eb6cf6ee811c17b3101bb84004bb75655f3e33f3fdb5
+  languageName: node
+  linkType: hard
+
+"geist@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "geist@npm:1.7.0"
+  peerDependencies:
+    next: ">=13.2.0"
+  checksum: 0891451c11d1c06700ccd5764e883a66b8aa9936efe4ecde648779d29765b9fcc7262a46907712c112e37b7c8c0c4970b90888ca7e70b3ebdd24a9177a988060
   languageName: node
   linkType: hard
 

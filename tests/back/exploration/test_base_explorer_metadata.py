@@ -201,3 +201,66 @@ def test_validate_columns_missing_column_in_spec_passes_when_unrestricted():
     explorer_info = _MockExplorerInfo([{"columnName": "missing_col"}])
     column_spec = {}  # no restrictions → passes regardless
     assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+# --- numeric_categorical_only tests ---
+
+
+def test_numeric_categorical_only_passes_int_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        numeric_categorical_only=True,
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_num"}])
+    column_spec = {"cat_num": {"type": "Categorical", "dtype": "int64"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+def test_numeric_categorical_only_passes_float_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        numeric_categorical_only=True,
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_num"}])
+    column_spec = {"cat_num": {"type": "Categorical", "dtype": "float64"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+def test_numeric_categorical_only_blocks_string_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        numeric_categorical_only=True,
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_str"}])
+    column_spec = {"cat_str": {"type": "Categorical", "dtype": "string"}}
+    assert cls.validate_columns(explorer_info, column_spec) is False
+
+
+def test_numeric_categorical_only_blocks_bool_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        numeric_categorical_only=True,
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_bool"}])
+    column_spec = {"cat_bool": {"type": "Categorical", "dtype": "bool"}}
+    assert cls.validate_columns(explorer_info, column_spec) is False
+
+
+def test_numeric_categorical_only_false_allows_string_categorical():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        numeric_categorical_only=False,
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_str"}])
+    column_spec = {"cat_str": {"type": "Categorical", "dtype": "string"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True

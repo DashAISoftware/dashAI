@@ -61,11 +61,16 @@ class BaseTask:
         """
         metadata = cls.metadata
 
-        # Extract class names
-        inputs_types = [input_type.__name__ for input_type in metadata["inputs_types"]]
-        outputs_types = [
-            output_type.__name__ for output_type in metadata["outputs_types"]
-        ]
+        _CLASS_NAME_TO_DISPLAY = {
+            "DashAIImage": "Image",
+        }
+
+        def _type_display_name(t):
+            name = t.__name__
+            return _CLASS_NAME_TO_DISPLAY.get(name, name)
+
+        inputs_types = [_type_display_name(t) for t in metadata["inputs_types"]]
+        outputs_types = [_type_display_name(t) for t in metadata["outputs_types"]]
 
         parsed_metadata: dict = {
             "inputs_types": inputs_types,
@@ -389,14 +394,43 @@ class BaseTask:
                 if isinstance(value, UploadFile):
                     file_bytes = value.file.read()
                     data, detected_type = get_bytes_with_type_filetype(file_bytes)
-
-                    if detected_type != column_spec.get("type"):
+                    expected_type = column_spec.get("type", "")
+                    if detected_type.lower() != expected_type.lower():
                         raise TypeError(
                             f"Row {row_idx}, column '{col_name}': "
                             f"File type '{detected_type}' doesn't match "
-                            f"expected type '{column_spec.get('type')}'"
+                            f"expected type '{expected_type}'"
                         )
-                    row[col_name] = data
+                    if detected_type == "image":
+                        # Store in the same struct format used by the image dataloader
+                        # so DashAIDataset.__getitem__ can wrap it in DashAIImage.
+                        fname = getattr(value, "filename", None) or ""
+                        row[col_name] = {"bytes": data, "path": fname}
+                    else:
+                        row[col_name] = data
+
+                # File saved to disk by job queue
+                elif isinstance(value, dict) and "__image_file__" in value:
+                    file_path_on_disk = value["__image_file__"]
+                    with open(file_path_on_disk, "rb") as f:
+                        file_bytes = f.read()
+                    data, detected_type = get_bytes_with_type_filetype(file_bytes)
+                    expected_type = column_spec.get("type", "")
+                    if detected_type.lower() != expected_type.lower():
+                        raise TypeError(
+                            f"Row {row_idx}, column '{col_name}': "
+                            f"File type '{detected_type}' doesn't match "
+                            f"expected type '{expected_type}'"
+                        )
+                    if detected_type == "image":
+                        import os
+
+                        row[col_name] = {
+                            "bytes": data,
+                            "path": os.path.basename(file_path_on_disk),
+                        }
+                    else:
+                        row[col_name] = data
 
                 # Primitive value
                 else:

@@ -40,15 +40,13 @@ export const getComponents = async ({
     params = { ...params, has_related_of_type: hasRelatedOfType };
   }
 
-  const response = await api.get<IComponent[]>(
-    model ? `/v1/component/${model}/` : `/v1/component/`,
-    {
-      params,
-      paramsSerializer: {
-        indexes: null, // brackets don't appear in the url
-      },
+  const url = model ? `/v1/component/${model}/` : `/v1/component/`;
+  const response = await api.get<IComponent[]>(url, {
+    params,
+    paramsSerializer: {
+      indexes: null, // brackets don't appear in the url
     },
-  );
+  });
   return response.data;
 };
 

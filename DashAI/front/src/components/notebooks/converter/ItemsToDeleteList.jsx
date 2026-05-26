@@ -1,20 +1,22 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
   if (!items || items.length === 0) return null;
 
   const { t } = useTranslation(["common", "datasets"]);
+  const theme = useTheme();
 
   return (
     <Box
       sx={{
         mt: 2,
         p: 2,
-        bgcolor: "#2e3037",
+        bgcolor: theme.palette.ui.panelDark,
         borderRadius: 1,
-        border: "1px solid rgba(255, 255, 255, 0.1)",
+        border: `1px solid ${theme.palette.ui.border}`,
       }}
     >
       <Typography variant="subtitle2" sx={{ color: "error.main", mb: 1 }}>
