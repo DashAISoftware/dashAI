@@ -56,6 +56,22 @@ def test_get_all_datasets(client: TestClient, dataset_1: Dataset) -> None:
     assert "test_csv_1" in dataset_names
 
 
+def test_dataset_has_row_column_fields(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert "total_rows" in data
+    assert "total_columns" in data
+
+
+def test_dataset_job_writes_counts(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["total_rows"] == 150
+    assert data["total_columns"] == 5
+
+
 def test_get_dataset(client: TestClient, dataset_1: Dataset) -> None:
     response = client.get(f"/api/v1/dataset/{dataset_1.id}")
     assert response.status_code == 200, response.text
@@ -179,6 +195,26 @@ def test_update_column_encoder_dataset_not_started(
         json={"encoder": "label"},
     )
     assert response.status_code == 422, response.text
+
+
+def test_backfill_populates_null_counts(client: TestClient, dataset_1: Dataset) -> None:
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        ds = db.get(Dataset, dataset_1.id)
+        ds.total_rows = None
+        ds.total_columns = None
+        db.commit()
+
+    from DashAI.back.dependencies.database.backfill import backfill_dataset_counts
+
+    backfill_dataset_counts(session_factory)
+
+    with session_factory() as db:
+        ds = db.get(Dataset, dataset_1.id)
+        assert ds.total_rows == 150
+        assert ds.total_columns == 5
 
 
 def test_delete_dataset(client: TestClient, dataset_1: Dataset) -> None:

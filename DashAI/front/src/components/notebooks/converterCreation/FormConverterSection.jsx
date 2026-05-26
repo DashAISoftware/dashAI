@@ -7,6 +7,7 @@ import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueConverterJob } from "../../../api/job";
+import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 export default function FormConverterSection({
@@ -23,6 +24,7 @@ export default function FormConverterSection({
   const {
     explorersAndConverters,
     setExplorersAndConverters,
+    setColumnTypes,
     setLastAddedItemId,
   } = useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
@@ -78,6 +80,12 @@ export default function FormConverterSection({
                         : item,
                     ),
                   );
+
+                  if (notebook?.file_path) {
+                    getDatasetTypesByFilePath(notebook.file_path)
+                      .then((types) => setColumnTypes(types ?? {}))
+                      .catch(console.error);
+                  }
                 },
 
                 (result) => {

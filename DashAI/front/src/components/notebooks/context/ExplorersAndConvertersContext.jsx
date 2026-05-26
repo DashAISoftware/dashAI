@@ -7,11 +7,17 @@ export const useExplorersAndConverters = () =>
 
 export const ExplorersAndConvertersProvider = ({ children }) => {
   const [explorersAndConverters, setExplorersAndConverters] = useState([]);
+  const [convertersLoaded, setConvertersLoaded] = useState(false);
+  const [columnTypes, setColumnTypes] = useState({});
   const [lastAddedItemId, setLastAddedItemId] = useState(null);
 
   const value = {
     explorersAndConverters,
     setExplorersAndConverters,
+    convertersLoaded,
+    setConvertersLoaded,
+    columnTypes,
+    setColumnTypes,
     lastAddedItemId,
     setLastAddedItemId,
   };

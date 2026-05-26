@@ -42,6 +42,8 @@ class Dataset(BaseModel):
     last_modified: datetime
     file_path: str
     status: DatasetStatus
+    total_rows: Optional[int] = None
+    total_columns: Optional[int] = None
 
 
 class DatasetCreateParams(BaseModel):

@@ -208,7 +208,7 @@ export default function ToolListItem({
             }}
           >
             <img
-              src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+              src={`${api.defaults.baseURL}/v1/component/image/${tool.name}/`}
               alt={tool.display_name}
               style={{
                 width: "100%",
