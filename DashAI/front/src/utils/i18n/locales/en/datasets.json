@@ -320,6 +320,7 @@
     "shapeIndicators": "Shape Indicators",
     "showGrid": "{{axis}} Axis Show Grid",
     "showingRowsInference": "Showing {{sampleLength}} of {{previewRowCount}} rows analyzed for type inference.",
+    "showingRowsPreview": "Showing {{sampleLength}} of {{previewRowCount}} rows.",
     "showLegend": "Show Legend",
     "showZeroLine": "{{axis}} Axis Show Zero Line",
     "skewness": "Skewness",

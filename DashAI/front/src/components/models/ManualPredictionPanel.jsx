@@ -320,9 +320,23 @@ export default function ManualPredictionPanel({
                   <TableRow key={rowIdx}>
                     {row.map((cell, cellIdx) => (
                       <TableCell key={cellIdx}>
-                        {cell !== null && cell !== undefined
-                          ? String(cell)
-                          : "—"}
+                        {typeof cell === "string" &&
+                        cell.startsWith("data:image/") ? (
+                          <img
+                            src={cell}
+                            alt="img"
+                            style={{
+                              maxHeight: 48,
+                              maxWidth: 48,
+                              objectFit: "contain",
+                              borderRadius: 4,
+                            }}
+                          />
+                        ) : cell !== null && cell !== undefined ? (
+                          String(cell)
+                        ) : (
+                          "—"
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
