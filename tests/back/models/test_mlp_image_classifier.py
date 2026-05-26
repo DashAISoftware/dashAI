@@ -101,9 +101,9 @@ def test_mlp_image_classifier_train_and_predict(loaded_dataset):
     model.train(x["train"], y["train"])
 
     predictions = model.predict(x["test"])
-    assert isinstance(predictions, list)
+    assert isinstance(predictions, np.ndarray)
     assert len(predictions) == x["test"].num_rows
-    assert len(predictions[0]) == 3  # 3 classes
+    assert predictions.shape[1] == 3  # 3 classes
 
 
 def test_mlp_image_classifier_save_and_load(loaded_dataset):

@@ -28,6 +28,7 @@ export default function DatasetTable({
   baseBackgroundColor,
   enableTopToolbar = true,
   enableRowsPerPageSelector = true,
+  showBorder = true,
 }) {
   const { t } = useTranslation(["common"]);
   const theme = useTheme();
@@ -438,7 +439,7 @@ export default function DatasetTable({
             </div>
           ) : (
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+              <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>
                 {key}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -498,7 +499,7 @@ export default function DatasetTable({
     },
     muiTablePaperProps: {
       elevation: 0,
-      sx: { border: "1px solid", borderColor: "divider" },
+      sx: showBorder ? { border: "1px solid", borderColor: "divider" } : {},
     },
     enablePagination: true,
     manualPagination: true,
