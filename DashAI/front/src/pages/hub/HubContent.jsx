@@ -220,7 +220,6 @@ export default function HubContent() {
               subtitle={t("hub:selectSourceSubtitle")}
               options={sourceOptions}
               loading={sourcesLoading}
-              searchBar
               goToNextStep={(name) =>
                 handleSelectSource(sources.find((s) => s.name === name))
               }
