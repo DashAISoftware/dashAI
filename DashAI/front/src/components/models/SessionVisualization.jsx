@@ -13,6 +13,7 @@ import {
   ToggleButton,
   Tooltip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   TableChart,
@@ -32,6 +33,7 @@ import { useTourContext } from "../tour/TourProvider";
 export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
+  const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
@@ -53,7 +55,11 @@ export default function SessionVisualization() {
     operationsCount,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
   } = useModels();
+
+  const theme = useTheme();
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -110,6 +116,24 @@ export default function SessionVisualization() {
       }, 1000);
     }
   }, [sessionTourContext]);
+
+  // Scroll to and highlight a newly added run card
+  useEffect(() => {
+    if (!lastAddedRunId) return;
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(`run-card-${lastAddedRunId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      setHighlightedRunId(lastAddedRunId);
+      clearLastAddedRunId();
+    }, 100);
+    const clearTimer = setTimeout(() => setHighlightedRunId(null), 4100);
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [lastAddedRunId]);
 
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
@@ -439,7 +463,8 @@ export default function SessionVisualization() {
                   }
                   sx={{
                     scrollMarginTop: "20px",
-                    transition: "all 0.3s ease",
+                    scrollMarginBottom: "20px",
+                    transition: "transform 0.3s ease",
                     ...(selectedRunId === run.id && {
                       transform: "scale(1.02)",
                       boxShadow: 3,
@@ -459,6 +484,7 @@ export default function SessionVisualization() {
                     isLastRun={index === sortedRuns.length - 1}
                     existingRuns={runs}
                     onRefresh={fetchRuns}
+                    isHighlighted={highlightedRunId === run.id}
                   />
                 </Box>
               ))}
