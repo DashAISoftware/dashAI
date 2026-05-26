@@ -19,10 +19,6 @@ export function useDatasets({ t }) {
     datasetsRef.current = datasets;
   }, [datasets]);
 
-  useEffect(() => {
-    fetchDatasets();
-  }, []);
-
   // ---------------- helpers ----------------
 
   const enrichDatasetsWithInfo = useCallback(

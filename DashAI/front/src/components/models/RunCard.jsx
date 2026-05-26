@@ -85,7 +85,7 @@ function RunCard({
   const [autoExpand, setAutoExpand] = useState(false);
 
   const { defaultValues: defaultOptimizerParams } = useSchema({
-    modelName: editedOptimizer,
+    modelName: isEditing ? editedOptimizer : null,
   });
 
   useEffect(() => {
