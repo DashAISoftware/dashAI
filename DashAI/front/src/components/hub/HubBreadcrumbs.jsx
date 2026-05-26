@@ -17,12 +17,16 @@ import { useTranslation } from "react-i18next";
  */
 export default function HubBreadcrumbs({ sourceDisplayName, crumbs, onBack }) {
   const navigate = useNavigate();
-  const { t } = useTranslation(["hub"]);
+  const { t } = useTranslation(["hub", "common"]);
 
-  const resolvedCrumbs = crumbs ?? [
+  const rootCrumbs = [
+    { label: t("common:datasets"), onClick: () => navigate("/app/data") },
     { label: t("hub:title"), onClick: () => navigate("/app/data/hub") },
-    { label: sourceDisplayName },
   ];
+
+  const resolvedCrumbs = crumbs
+    ? [...rootCrumbs, ...crumbs.slice(1)]
+    : [...rootCrumbs, { label: sourceDisplayName }];
 
   const handleBack = onBack ?? (() => navigate("/app/data/hub"));
 
