@@ -49,6 +49,7 @@ import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { renderParamValue } from "./ModelParamBlock";
 import { useTranslation } from "react-i18next";
+import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
  * Card component displaying a model run with actions and details
@@ -99,7 +100,10 @@ function RunCard({
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [autoExpand, setAutoExpand] = useState(false);
 
-  const { defaultValues: defaultOptimizerParams } = useSchema({
+  const {
+    defaultValues: defaultOptimizerParams,
+    loading: optimizerSchemaLoading,
+  } = useSchema({
     modelName: isEditing ? editedOptimizer : null,
   });
 
@@ -128,29 +132,8 @@ function RunCard({
   }, [fetchOperationsCount, explainerRefreshTrigger]);
 
   const hasOptimizableParams = useMemo(() => {
-    return Object.values(editedParameters).some(
-      (value) =>
-        value &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        value.optimize === true,
-    );
+    return checkIfHaveOptimazers(editedParameters);
   }, [editedParameters]);
-
-  useEffect(() => {
-    if (
-      editedOptimizer &&
-      defaultOptimizerParams &&
-      Object.keys(defaultOptimizerParams).length > 0
-    ) {
-      setEditedOptimizerParams((prev) => {
-        if (Object.keys(prev).length === 0) {
-          return defaultOptimizerParams;
-        }
-        return prev;
-      });
-    }
-  }, [editedOptimizer, defaultOptimizerParams]);
 
   const handleStartEdit = () => {
     setIsEditing(true);
@@ -174,7 +157,7 @@ function RunCard({
         editedName.trim(),
         editedParameters,
         editedOptimizer || "",
-        editedOptimizerParams || {},
+        { ...defaultOptimizerParams, ...editedOptimizerParams },
         editedGoalMetric || "",
       );
 
@@ -254,14 +237,12 @@ function RunCard({
   }, []);
 
   const handleOptimizerParamsChange = useCallback((values) => {
-    setEditedOptimizerParams((prev) => ({ ...prev, ...values }));
+    setEditedOptimizerParams(values);
   }, []);
 
-  const handleOptimizerSelected = (optimizerName, defaultValues) => {
+  const handleOptimizerSelected = (optimizerName) => {
     setEditedOptimizer(optimizerName);
-    if (defaultValues && Object.keys(defaultValues).length > 0) {
-      setEditedOptimizerParams(defaultValues);
-    }
+    setEditedOptimizerParams({});
   };
 
   const statusText = getRunStatus(run.status, t);

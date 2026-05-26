@@ -73,13 +73,16 @@ class HyperOptOptimizer(BaseOptimizer):
         """
         Configure the search space.
 
-        Args:
-            hyperparams_data (dict[str, any]): Dict with the range values
-            for the possible search space
+        Parameters
+        ----------
+        hyperparams_data : list
+            Tuples of (obj, hyperparameter, values, dtype) describing the
+            search space bounds.
 
         Returns
         -------
-            search_space: Dict with the information for the search space .
+        dict
+            Search space dict compatible with hyperopt.
         """
         from hyperopt import hp
 
@@ -99,19 +102,22 @@ class HyperOptOptimizer(BaseOptimizer):
 
     def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
         """
-        Optimization process
+        Run hyperparameter optimization and retrain the model with best params.
 
-        Args:
-            model (class): class for the model from the current experiment
-            input_dataset (dict): dict with train dataset
-            output_dataset (dict): dict with validation dataset
-            parameters (dict): dict with the information to create the search space
-            metric (class): class for the metric to optimize
-            task (string): Name of the current task
-
-        Returns
-        -------
-            None
+        Parameters
+        ----------
+        model : object
+            Model instance to optimize.
+        input_dataset : dict
+            Dataset splits keyed by "train" and "validation".
+        output_dataset : dict
+            Label splits keyed by "train" and "validation".
+        parameters : list
+            Tuples of (obj, key, bounds, dtype) for each hyperparameter.
+        metric : dict
+            Dict with keys "class" (metric instance) and "metadata".
+        task : str
+            Name of the current task.
         """
         import importlib
 
@@ -122,16 +128,23 @@ class HyperOptOptimizer(BaseOptimizer):
         self.output_dataset = output_dataset
         self.parameters = parameters
         self.metric = metric["class"]
+        self.maximize = metric["metadata"]["maximize"]
 
         sampler = importlib.import_module(f"hyperopt.{self.sampler}").suggest
 
-        param_mapping = {key: (obj, key) for obj, key, _, _ in self.parameters}
+        param_mapping = {
+            key: (obj, key, dtype) for obj, key, _, dtype in self.parameters
+        }
 
         search_space = self.search_space(self.parameters)
 
         def objective(params):
             for param_name, value in params.items():
-                obj, key = param_mapping[param_name]
+                obj, key, dtype = param_mapping[param_name]
+                if dtype == "integer":
+                    value = int(value)
+                elif dtype == "number":
+                    value = float(value)
                 setattr(obj, key, value)
 
             self.model.train(self.input_dataset["train"], self.output_dataset["train"])
@@ -152,7 +165,7 @@ class HyperOptOptimizer(BaseOptimizer):
             return -score if metric["metadata"]["maximize"] else score
 
         trials = Trials()
-        fmin(
+        best_params_raw = fmin(
             fn=objective,
             space=search_space,
             algo=sampler,
@@ -160,6 +173,13 @@ class HyperOptOptimizer(BaseOptimizer):
             trials=trials,
         )
         self.trials = trials
+
+        # Apply best params and retrain with the best configuration
+        for param_name, raw_value in best_params_raw.items():
+            obj, key, dtype = param_mapping[param_name]
+            value = int(raw_value) if dtype == "integer" else float(raw_value)
+            setattr(obj, key, value)
+        self.model.train(self.input_dataset["train"], self.output_dataset["train"])
 
     def get_model(self):
         return self.model
@@ -169,7 +189,9 @@ class HyperOptOptimizer(BaseOptimizer):
         for trial in self.trials:
             if trial["result"]["status"] == "ok":
                 params = {key: val[0] for key, val in trial["misc"]["vals"].items()}
-                trials.append({"params": params, "value": trial["result"]["loss"]})
+                loss = trial["result"]["loss"]
+                value = -loss if self.maximize else loss
+                trials.append({"params": params, "value": value})
         return trials
 
     def get_best_params(self):
@@ -177,4 +199,12 @@ class HyperOptOptimizer(BaseOptimizer):
         best_trial = min(
             self.trials, key=lambda t: t["result"].get("loss", float("inf"))
         )
-        return {key: val[0] for key, val in best_trial["misc"]["vals"].items()}
+        param_mapping = {
+            key: (obj, key, dtype) for obj, key, _, dtype in self.parameters
+        }
+        result = {}
+        for key, vals in best_trial["misc"]["vals"].items():
+            raw = vals[0]
+            dtype = param_mapping[key][2]
+            result[key] = int(raw) if dtype == "integer" else float(raw)
+        return result
