@@ -53,8 +53,27 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         es="HuggingFace Hub",
     )
     DESCRIPTION: Final = MultilingualString(
-        en="Browse and import public datasets from HuggingFace Hub.",
-        es="Navega e importa datasets públicos desde HuggingFace Hub.",
+        en=(
+            "HuggingFace Hub is the largest open repository of machine learning "
+            "datasets, hosting hundreds of thousands of community-contributed "
+            "collections across NLP, computer vision, audio, and tabular tasks. "
+            "Datasets range from classic benchmarks to cutting-edge research "
+            "splits, and many include multiple configurations or language "
+            "variants. Search by name, download directly to DashAI, "
+            "and start training in minutes. "
+            "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
+        ),
+        es=(
+            "HuggingFace Hub es el repositorio abierto más grande de datasets "
+            "para aprendizaje automático, con cientos de miles de colecciones "
+            "aportadas por la comunidad para tareas de NLP, visión por "
+            "computadora, audio y datos tabulares. Los datasets van desde "
+            "benchmarks clásicos hasta particiones de investigación de vanguardia, "
+            "y muchos incluyen múltiples configuraciones o variantes de idioma. "
+            "Busca por nombre, descarga directamente a DashAI y comienza "
+            "a entrenar en minutos. "
+            "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
+        ),
     )
 
     def search(

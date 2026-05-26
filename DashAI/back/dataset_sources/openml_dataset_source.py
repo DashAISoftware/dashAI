@@ -30,8 +30,27 @@ class OpenMLDatasetSource(BaseDatasetSource):
         es="OpenML",
     )
     DESCRIPTION: Final = MultilingualString(
-        en="Browse and import public datasets from OpenML.",
-        es="Navega e importa datasets públicos desde OpenML.",
+        en=(
+            "OpenML is an open science platform dedicated to reproducible machine "
+            "learning research. It hosts thousands of curated, benchmark-ready "
+            "datasets widely used in academic papers and competitions, covering "
+            "classification, regression, and clustering tasks. Datasets are "
+            "standardized and versioned, making them ideal for comparing models "
+            "and reproducing published results. Search by name and download "
+            "directly to DashAI. "
+            "[https://www.openml.org](https://www.openml.org)"
+        ),
+        es=(
+            "OpenML es una plataforma de ciencia abierta dedicada a la "
+            "investigación reproducible en aprendizaje automático. Aloja miles de "
+            "datasets curados y listos para benchmarking, ampliamente utilizados "
+            "en artículos académicos y competiciones, cubriendo tareas de "
+            "clasificación, regresión y agrupamiento. Los datasets están "
+            "estandarizados y versionados, lo que los hace ideales para comparar "
+            "modelos y reproducir resultados publicados. Busca por nombre y "
+            "descarga directamente a DashAI. "
+            "[https://www.openml.org](https://www.openml.org)"
+        ),
     )
 
     def search(
