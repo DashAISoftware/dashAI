@@ -19,16 +19,33 @@ export default function HubBreadcrumbs({ sourceDisplayName, crumbs, onBack }) {
   const navigate = useNavigate();
   const { t } = useTranslation(["hub", "common"]);
 
-  const rootCrumbs = [
-    { label: t("common:datasets"), onClick: () => navigate("/app/data") },
-    { label: t("hub:title"), onClick: () => navigate("/app/data/hub") },
-  ];
+  const datasetsRootCrumb = {
+    label: t("common:datasets"),
+    onClick: () => navigate("/app/data"),
+  };
+  const hubLinkCrumb = {
+    label: t("hub:title"),
+    onClick: () => navigate("/app/data/hub"),
+  };
+  const hubCurrentCrumb = { label: t("hub:title") };
 
-  const resolvedCrumbs = crumbs
-    ? [...rootCrumbs, ...crumbs.slice(1)]
-    : [...rootCrumbs, { label: sourceDisplayName }];
+  let resolvedCrumbs;
+  if (crumbs) {
+    resolvedCrumbs = [datasetsRootCrumb, hubLinkCrumb, ...crumbs.slice(1)];
+  } else if (sourceDisplayName) {
+    resolvedCrumbs = [
+      datasetsRootCrumb,
+      hubLinkCrumb,
+      { label: sourceDisplayName },
+    ];
+  } else {
+    resolvedCrumbs = [datasetsRootCrumb, hubCurrentCrumb];
+  }
 
-  const handleBack = onBack ?? (() => navigate("/app/data/hub"));
+  const handleBack =
+    onBack ??
+    (() =>
+      navigate(sourceDisplayName || crumbs ? "/app/data/hub" : "/app/data"));
 
   return (
     <Box

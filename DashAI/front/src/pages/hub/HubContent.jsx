@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Box } from "@mui/material";
 import HubIcon from "@mui/icons-material/Hub";
 import ScienceIcon from "@mui/icons-material/Science";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
@@ -10,6 +11,7 @@ import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
+import HubBreadcrumbs from "../../components/hub/HubBreadcrumbs";
 import HubLeftBar from "../../components/hub/HubLeftBar";
 import DatasetGrid from "../../components/hub/DatasetGrid";
 import DatasetDetail from "../../components/hub/DatasetDetail";
@@ -215,15 +217,27 @@ export default function HubContent() {
               onSelectDataset={setSelectedDataset}
             />
           ) : (
-            <SelectOptionMenu
-              title={t("hub:title")}
-              subtitle={t("hub:selectSourceSubtitle")}
-              options={sourceOptions}
-              loading={sourcesLoading}
-              goToNextStep={(name) =>
-                handleSelectSource(sources.find((s) => s.name === name))
-              }
-            />
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                height: "100%",
+                px: 2,
+                pt: 2,
+              }}
+            >
+              <HubBreadcrumbs />
+              <SelectOptionMenu
+                title={t("hub:title")}
+                subtitle={t("hub:selectSourceSubtitle")}
+                options={sourceOptions}
+                loading={sourcesLoading}
+                goToNextStep={(name) =>
+                  handleSelectSource(sources.find((s) => s.name === name))
+                }
+              />
+            </Box>
           )}
         </CenterPanel>
 
