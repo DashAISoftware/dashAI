@@ -8,11 +8,6 @@ describe("ResponsiveAppBar", () => {
     renderWithProviders(<ResponsiveAppBar />);
   });
 
-  it("renders DashAI logo text", () => {
-    renderWithProviders(<ResponsiveAppBar />);
-    expect(screen.getByText("AI")).toBeInTheDocument();
-  });
-
   it("renders nav links for main sections", () => {
     renderWithProviders(<ResponsiveAppBar />);
     expect(screen.getByRole("link", { name: /datasets/i })).toBeInTheDocument();

@@ -81,6 +81,27 @@ function DatasetPreviewTable({
         accessorKey: "example",
         header: "Example",
         size: 200,
+        Cell: ({ cell, row }) => {
+          const val = cell.getValue();
+          if (
+            row.original.columnType === "Image" &&
+            typeof val === "string" &&
+            val.startsWith("data:image")
+          ) {
+            return (
+              <img
+                src={val}
+                alt="preview"
+                style={{
+                  maxHeight: 48,
+                  maxWidth: 48,
+                  objectFit: "contain",
+                }}
+              />
+            );
+          }
+          return String(val ?? "");
+        },
       },
       {
         accessorKey: "columnType",
