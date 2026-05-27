@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, use } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -62,13 +62,13 @@ function AddModelDialog({
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
-    modelName: selectedModel,
+    modelName: open ? selectedModel : null,
   });
   const {
     defaultValues: defaultOptimizerParams,
     loading: optimizerSchemaLoading,
   } = useSchema({
-    modelName: selectedOptimizer,
+    modelName: open && activeStep === 1 ? selectedOptimizer : null,
   });
 
   const tourContext = useTourContext();
@@ -146,16 +146,6 @@ function AddModelDialog({
       setHasLoadedInitialParams(true);
     }
   }, [selectedModel, defaultModelParams, hasLoadedInitialParams]);
-
-  useEffect(() => {
-    if (
-      !optimizerSchemaLoading &&
-      defaultOptimizerParams &&
-      Object.keys(defaultOptimizerParams).length > 0
-    ) {
-      setOptimizerParameters(defaultOptimizerParams);
-    }
-  }, [selectedOptimizer, optimizerSchemaLoading]);
 
   const handleClose = () => {
     setTimeout(() => {
@@ -243,7 +233,7 @@ function AddModelDialog({
         name.trim(),
         modelParameters || {},
         selectedOptimizer || "",
-        optimizerParameters || {},
+        { ...defaultOptimizerParams, ...optimizerParameters },
         "",
         "",
         "",
@@ -374,7 +364,7 @@ function AddModelDialog({
                     modelToConfigure={selectedModel}
                     initialValues={modelParameters}
                     onFormSubmit={() => {}}
-                    onValuesChange={handleModelParametersChange}
+                    onValuesChange={setModelParameters}
                     onCancel={() => {}}
                     hideButtons
                   />
@@ -425,7 +415,7 @@ function AddModelDialog({
               />
             )}
 
-            {selectedOptimizer && (
+            {selectedOptimizer && !optimizerSchemaLoading && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   {t("models:label.optimizerParameters")} *
@@ -433,9 +423,9 @@ function AddModelDialog({
                 <FormSchemaContainer key={selectedOptimizer}>
                   <FormSchemaWithSelectedModel
                     modelToConfigure={selectedOptimizer}
-                    initialValues={optimizerParameters}
+                    initialValues={defaultOptimizerParams}
                     onFormSubmit={() => {}}
-                    onValuesChange={handleOptimizerParametersChange}
+                    onValuesChange={setOptimizerParameters}
                     onCancel={() => {}}
                     hideButtons
                   />

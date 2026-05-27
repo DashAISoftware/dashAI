@@ -19,6 +19,7 @@ import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
 import api from "../../api/api";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -43,6 +44,7 @@ function ModelComparisonTable({
   const [scores, setScores] = useState({});
   const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
+  const [runToDelete, setRunToDelete] = useState(null);
 
   const { t } = useTranslation(["models", "common"]);
   const theme = useTheme();
@@ -545,7 +547,9 @@ function ModelComparisonTable({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete(runs.find((r) => r.id === row.original.id));
+                      setRunToDelete(
+                        runs.find((r) => r.id === row.original.id),
+                      );
                     }}
                     disabled={isRunning}
                     color="error"
@@ -718,6 +722,16 @@ function ModelComparisonTable({
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <MaterialReactTable table={table} />
       </Box>
+
+      <DeleteConfirmationModal
+        open={Boolean(runToDelete)}
+        onClose={() => setRunToDelete(null)}
+        onConfirm={() => {
+          onDelete(runToDelete);
+          setRunToDelete(null);
+        }}
+        content={t("models:message.confirmDeleteRun")}
+      />
     </Box>
   );
 }

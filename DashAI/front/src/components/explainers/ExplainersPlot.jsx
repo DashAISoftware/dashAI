@@ -41,9 +41,21 @@ export default function ExplainersPlot({ explainer, scope }) {
         explainer.id,
         scope,
       );
-      const parsedExplainersPlot = parseExplanationPlot(explainersPlots);
-      setExplainersPlots(parsedExplainersPlot);
+      if (!explainersPlots || explainersPlots.length === 0) {
+        setExplainersPlots([]);
+        setCurrentPlot(0);
+        enqueueSnackbar(t("explainers:error.noData"), {
+          variant: "warning",
+        });
+      } else {
+        const parsedExplainersPlot = parseExplanationPlot(explainersPlots);
+        setExplainersPlots(parsedExplainersPlot);
+        // Reset currentPlot when data updates to avoid stale index
+        setCurrentPlot(0);
+      }
     } catch (error) {
+      setExplainersPlots([]);
+      setCurrentPlot(0);
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
@@ -63,7 +75,7 @@ export default function ExplainersPlot({ explainer, scope }) {
     if (explainer.status === 3) {
       getExplainerPlot();
     }
-  }, [explainer.status]);
+  }, [explainer.id, explainer.status]);
 
   return (
     <Box
@@ -71,9 +83,16 @@ export default function ExplainersPlot({ explainer, scope }) {
         display: "flex",
         flexDirection: "column",
         width: "100%",
+        maxWidth: 700,
+        border: 1,
+        borderColor: "divider",
+        bgcolor: "background.default",
+        borderRadius: 1,
+        overflow: "hidden",
+        p: 1,
       }}
     >
-      {!loading && isLocal && (
+      {!loading && isLocal && explainersPlots.length > 0 && (
         <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 1 }}>
           <InputLabel id="select-type-label">Select an instance</InputLabel>
           <Select
@@ -92,15 +111,21 @@ export default function ExplainersPlot({ explainer, scope }) {
         </FormControl>
       )}
       {!loading && explainer.status === 3 ? (
-        <Plot
-          data={explainersPlots[currentPlot].data}
-          layout={{
-            ...themedLayout,
-            width: 700,
-            height: 380,
-          }}
-          config={{ displayModeBar: false }}
-        />
+        explainersPlots.length > 0 && explainersPlots[currentPlot] ? (
+          <Plot
+            data={explainersPlots[currentPlot].data}
+            layout={{
+              ...themedLayout,
+              height: 380,
+              autosize: true,
+            }}
+            config={{ displayModeBar: false }}
+            useResizeHandler
+            style={{ width: "100%" }}
+          />
+        ) : (
+          <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
+        )
       ) : explainer.status === 4 ? (
         <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>
       ) : (

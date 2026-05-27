@@ -56,6 +56,8 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
+    total_rows: Mapped[int] = mapped_column(Integer, nullable=True)
+    total_columns: Mapped[int] = mapped_column(Integer, nullable=True)
 
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"

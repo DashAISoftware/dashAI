@@ -13,6 +13,7 @@ import {
   ToggleButton,
   Tooltip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   TableChart,
@@ -33,6 +34,7 @@ import { useTourContext } from "../tour/TourProvider";
 export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
+  const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
@@ -55,7 +57,11 @@ export default function SessionVisualization() {
     operationsCount,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
   } = useModels();
+
+  const theme = useTheme();
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -112,6 +118,24 @@ export default function SessionVisualization() {
       }, 1000);
     }
   }, [sessionTourContext]);
+
+  // Scroll to and highlight a newly added run card
+  useEffect(() => {
+    if (!lastAddedRunId) return;
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(`run-card-${lastAddedRunId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      setHighlightedRunId(lastAddedRunId);
+      clearLastAddedRunId();
+    }, 100);
+    const clearTimer = setTimeout(() => setHighlightedRunId(null), 4100);
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [lastAddedRunId]);
 
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
@@ -249,7 +273,9 @@ export default function SessionVisualization() {
               </Tooltip>
             }
             sx={{
+              alignItems: "flex-start",
               "& .MuiAccordionSummary-content": { my: "8px", mr: 1 },
+              "& .MuiAccordionSummary-expandIconWrapper": { mt: "10px" },
             }}
           >
             <Box
@@ -258,13 +284,20 @@ export default function SessionVisualization() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 width: "100%",
+                flexWrap: "wrap",
+                gap: 1,
               }}
             >
               <Typography variant="h6" color="text.primary">
                 {t("models:label.modelComparison")}
               </Typography>
               <Box
-                sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Metric Split Selector — controls both table and graph views */}
@@ -280,17 +313,17 @@ export default function SessionVisualization() {
                     size="small"
                   >
                     {hasTrainMetrics && (
-                      <ToggleButton value="train" sx={{ width: 120 }}>
+                      <ToggleButton value="train">
                         {t("common:train")}
                       </ToggleButton>
                     )}
                     {hasValidationMetrics && (
-                      <ToggleButton value="validation" sx={{ width: 120 }}>
+                      <ToggleButton value="validation">
                         {t("common:validation")}
                       </ToggleButton>
                     )}
                     {hasTestMetrics && (
-                      <ToggleButton value="test" sx={{ width: 120 }}>
+                      <ToggleButton value="test">
                         {t("common:test")}
                       </ToggleButton>
                     )}
@@ -303,7 +336,6 @@ export default function SessionVisualization() {
                     variant={showTable ? "contained" : "outlined"}
                     onClick={() => handleToggleView(true)}
                     startIcon={<TableChart />}
-                    sx={{ width: 110 }}
                   >
                     {t("common:table")}
                   </Button>
@@ -312,7 +344,6 @@ export default function SessionVisualization() {
                     variant={!showTable ? "contained" : "outlined"}
                     onClick={() => handleToggleView(false)}
                     startIcon={<BarChart />}
-                    sx={{ width: 110 }}
                   >
                     {t("common:graphs")}
                   </Button>
@@ -470,7 +501,7 @@ export default function SessionVisualization() {
                     }
                     sx={{
                       scrollMarginTop: "20px",
-                      transition: "all 0.3s ease",
+                      transition: "transform 0.3s ease",
                       ...(selectedRunId === run.id && {
                         transform: "scale(1.02)",
                         boxShadow: 3,
@@ -490,6 +521,7 @@ export default function SessionVisualization() {
                       isLastRun={index === sortedRuns.length - 1}
                       existingRuns={runs}
                       onRefresh={fetchRuns}
+                      isHighlighted={highlightedRunId === run.id}
                     />
                   </Box>
                 ))}

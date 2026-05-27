@@ -1,5 +1,12 @@
 import React from "react";
-import { Box, TextField, Select, MenuItem, FormControl } from "@mui/material";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  Box,
+  Button,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import {
@@ -125,6 +132,50 @@ function InputField({
     );
   }
 
+  if (effectiveType === "Image" || dtype === "image") {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
+        {value instanceof File && (
+          <img
+            src={URL.createObjectURL(value)}
+            alt="preview"
+            style={{
+              maxHeight: 40,
+              maxWidth: 40,
+              objectFit: "contain",
+              borderRadius: 4,
+            }}
+          />
+        )}
+        <Button
+          variant="outlined"
+          component="label"
+          size="small"
+          sx={{ textTransform: "none", fontSize: "0.8rem" }}
+        >
+          {value instanceof File
+            ? t("prediction:label.changeImage")
+            : t("prediction:label.uploadImage")}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleChange(rowIndex, col, file);
+            }}
+          />
+        </Button>
+      </Box>
+    );
+  }
+
   if (
     effectiveType === "Text" ||
     effectiveType === "string" ||
@@ -138,29 +189,6 @@ function InputField({
         onChange={(e) => handleChange(rowIndex, col, e.target.value)}
         sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
       />
-    );
-  }
-
-  if (effectiveType === "Image" || dtype === "image") {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
-          style={{
-            fontSize: "0.875rem",
-            color: theme.palette.text.primary,
-            padding: "4px 0",
-          }}
-        />
-      </Box>
     );
   }
 

@@ -65,6 +65,7 @@ from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
+from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
 # Evaluation Strategies
@@ -198,6 +199,7 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
+from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
@@ -299,6 +301,7 @@ from DashAI.back.statistical_tests.two_model_comparison.wilcoxon_sr_test import 
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -330,6 +333,7 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
+        ImageClassificationTask,
         # Models
         AdaBoostClassifier,
         AlbertTransformer,
@@ -401,10 +405,12 @@ def get_initial_components():
         TongyiZImageModel,
         XlmRobertaTransformer,
         XlnetTransformer,
+        MLPImageClassifier,
         # Dataloaders
         ARFFDataLoader,
         CSVDataLoader,
         ExcelDataLoader,
+        ImageDataLoader,
         JSONDataLoader,
         # Metrics
         F1,
