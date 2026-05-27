@@ -282,27 +282,29 @@ function PreviewDataset({
                 {t("datasets:label.changeColumnTypesInfo")}
               </Typography>
 
-              <Tooltip title={t("datasets:button.reUploadDataset")}>
-                <IconButton
-                  onClick={onChangeDataset}
-                  size="small"
-                  sx={{
-                    flexShrink: 0,
-                    border: `1px solid ${theme.palette.action.disabled}`,
-                    borderRadius: 2,
-                    color: "text.secondary",
-                    padding: "4px",
-                    transition: "color 0.2s, border-color 0.2s",
-                    "&:hover": {
-                      backgroundColor: "transparent",
-                      color: "primary.main",
-                      borderColor: theme.palette.primary.main,
-                    },
-                  }}
-                >
-                  <UploadFileIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              {onChangeDataset && (
+                <Tooltip title={t("datasets:button.reUploadDataset")}>
+                  <IconButton
+                    onClick={onChangeDataset}
+                    size="small"
+                    sx={{
+                      flexShrink: 0,
+                      border: `1px solid ${theme.palette.action.disabled}`,
+                      borderRadius: 2,
+                      color: "text.secondary",
+                      padding: "4px",
+                      transition: "color 0.2s, border-color 0.2s",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                        color: "primary.main",
+                        borderColor: theme.palette.primary.main,
+                      },
+                    }}
+                  >
+                    <UploadFileIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
             )}
             <Box sx={{ width: "100%" }}>
