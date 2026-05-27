@@ -229,10 +229,10 @@ export default function GenerativeChat() {
           flexDirection="row"
           alignItems="center"
           justifyContent="space-between"
-          gap={0.5}
+          gap={2}
           width={"100%"}
           height={"32px"}
-          mb={2}
+          mb={8}
         >
           <Typography>
             {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
@@ -262,13 +262,13 @@ export default function GenerativeChat() {
         flexDirection="column"
         justifyContent="flex-start"
         alignItems="flex-start"
-        gap={1}
+        gap={4}
         width={"100%"}
         flex={1}
         minHeight={0}
         overflow={"auto"}
-        mt={1}
-        p={2}
+        mt={4}
+        p={8}
         ref={chatContainerRef}
       >
         {messagesWithHistory?.map((message) => {
@@ -279,10 +279,10 @@ export default function GenerativeChat() {
               flexDirection="column"
               justifyContent="flex-start"
               flexGrow={0}
-              gap={1}
+              gap={4}
               width={"100%"}
               //height={"100%"}
-              mt={1}
+              mt={4}
             >
               {message.type === "history" ? (
                 <Typography variant="body1" sx={{ opacity: 0.8 }}>

@@ -50,15 +50,15 @@ const SIDEBAR_LINKS = {
 function SidebarSection({ label, links, t, theme }) {
   return (
     <Box
-      sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
+      sx={{ pb: 4, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
     >
       <Typography
         variant="caption"
         sx={{
           color: theme.palette.text.disabled,
-          px: "20px",
-          py: "10px",
-          pb: "6px",
+          px: 4,
+          py: 2,
+          pb: 1,
           display: "block",
           letterSpacing: "0.12em",
           textTransform: "uppercase",
@@ -77,9 +77,9 @@ function SidebarSection({ label, links, t, theme }) {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            px: "20px",
-            py: "8px",
+            gap: 2,
+            px: 4,
+            py: 2,
             borderLeft: "2px solid transparent",
             textDecoration: "none",
             color: theme.palette.text.secondary,
@@ -231,8 +231,8 @@ function Home() {
           <Box
             sx={{
               mt: "auto",
-              px: "20px",
-              py: "16px",
+              px: 4,
+              py: 4,
               borderTop: `1px solid ${theme.palette.divider}`,
             }}
           >
@@ -260,9 +260,9 @@ function Home() {
           {/* Page header */}
           <Box
             sx={{
-              px: "28px",
-              py: "20px",
-              pb: "18px",
+              px: 6,
+              py: 4,
+              pb: 4,
               borderBottom: `1px solid ${theme.palette.divider}`,
               background: theme.palette.background.default,
             }}
@@ -276,7 +276,7 @@ function Home() {
                 color: theme.palette.text.disabled,
                 fontWeight: 300,
                 lineHeight: 1.65,
-                mt: "3px",
+                mt: 1,
               }}
             >
               {t("home:label.welcomeSubtitle")}
@@ -286,11 +286,11 @@ function Home() {
           {/* 2x2 module card grid */}
           <Box
             sx={{
-              p: "14px",
+              p: 4,
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gridTemplateRows: "1fr 1fr",
-              gap: "14px",
+              gap: 4,
               height: "70%",
               width: "80%",
               minHeight: 0,

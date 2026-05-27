@@ -138,7 +138,7 @@ function InputField({
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          gap: 2,
         }}
       >
         {value instanceof File && (

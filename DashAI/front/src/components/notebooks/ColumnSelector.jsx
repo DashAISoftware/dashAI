@@ -324,8 +324,8 @@ function ColumnSelector({
       {/* Column requirements */}
       <Box
         sx={{
-          mb: 1.5,
-          p: 1.5,
+          mb: 3,
+          p: 3,
           borderRadius: 2,
           backgroundColor: theme.palette.ui.hover,
           border: `1px solid ${theme.palette.ui.divider}`,
@@ -333,7 +333,7 @@ function ColumnSelector({
         }}
       >
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
@@ -369,7 +369,7 @@ function ColumnSelector({
             sx={{
               color: "text.secondary",
               fontStyle: "italic",
-              mt: 1,
+              mt: 2,
             }}
           >
             <Trans i18nKey="datasets:label.allowedValueTypes">
@@ -387,7 +387,7 @@ function ColumnSelector({
         {allowedDtypes.length > 0 && (
           <Typography
             variant="caption"
-            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+            sx={{ color: "text.disabled", mt: 1, display: "block" }}
           >
             {t("common:allowedTypes")}:{" "}
             <Box

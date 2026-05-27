@@ -21,7 +21,7 @@ export default function LanguageSelector() {
           "& .MuiSelect-select": {
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 2,
           },
         }}
       >

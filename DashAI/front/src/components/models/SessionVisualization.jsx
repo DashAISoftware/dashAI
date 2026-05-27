@@ -220,13 +220,13 @@ export default function SessionVisualization() {
             height: "100%",
             justifyContent: "center",
             alignItems: "center",
-            p: 4,
+            p: 8,
           }}
         >
           <Typography variant="h5" color="text.secondary">
             {t("models:label.noSessionSelected")}
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 4 }}>
             {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
@@ -292,7 +292,7 @@ export default function SessionVisualization() {
               <Box
                 sx={{
                   display: "flex",
-                  gap: 1,
+                  gap: 4,
                   alignItems: "center",
                   flexWrap: "wrap",
                 }}
@@ -433,7 +433,7 @@ export default function SessionVisualization() {
           </AccordionDetails>
         </Accordion>
 
-        <Divider sx={{ my: 1, mt: 1 }} />
+        <Divider sx={{ my: 2, mt: 2 }} />
 
         {/* Scrollable Run Cards */}
         <Box
@@ -441,7 +441,7 @@ export default function SessionVisualization() {
           sx={{
             flex: 1,
             overflow: "auto",
-            p: 2,
+            p: 4,
           }}
         >
           {runs.length === 0 ? (
@@ -458,7 +458,7 @@ export default function SessionVisualization() {
               </Typography>
             </Box>
           ) : (
-            <Stack spacing={2}>
+            <Stack spacing={4}>
               {sortedRuns.map((run, index) => (
                 <Box
                   key={run.id}

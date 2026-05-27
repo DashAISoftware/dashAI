@@ -374,7 +374,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
         component="span"
         sx={{
           display: "inline-flex",
-          gap: 0.5,
+          gap: 1,
           flexWrap: "wrap",
           alignItems: "center",
         }}
@@ -408,7 +408,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
           <Alert
             severity="warning"
             sx={{
-              mb: 1,
+              mb: 2,
               "& .MuiAlert-icon": { fontSize: 24 },
               bgcolor: (theme) => `${theme.palette.warning.main}40`,
               border: (theme) => `1px solid ${theme.palette.warning.main}`,
@@ -417,7 +417,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
             <AlertTitle>
               {t("experiments:label.missingValuesDetected")}
             </AlertTitle>
-            <Grid container spacing={2}>
+            <Grid container spacing={4}>
               {Object.entries(datasetInfo.nan)
                 .filter(([_, count]) => count > 0)
                 .map(([col, count]) => (
@@ -433,7 +433,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
       <Alert
         severity={columnsAreValid ? "success" : "error"}
         sx={{
-          mb: 1,
+          mb: 2,
           "& .MuiAlert-icon": { fontSize: 24 },
           bgcolor: (theme) =>
             `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
@@ -452,13 +452,13 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
               )
             : null}
         </AlertTitle>
-        <Grid container spacing={2}>
+        <Grid container spacing={4}>
           <Grid size={{ xs: 12 }}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -484,7 +484,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -507,7 +507,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
       </Alert>
 
       {!infoLoading ? (
-        <Grid container spacing={1}>
+        <Grid container spacing={2}>
           <DivideDatasetColumns
             allColumnNames={datasetInfo.column_names || []}
             columnTypes={datasetTypes}

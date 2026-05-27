@@ -56,7 +56,7 @@ function FormSchemaRenderFields({
   onFormSubmit,
   setError,
   errorsMessage,
-  spacing = 1,
+  spacing = 2,
 }) {
   if (!modelSchema) return null;
 

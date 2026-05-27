@@ -26,14 +26,14 @@ function CustomLayout({
 
   return (
     <React.Fragment>
-      <Container maxWidth={matches ? "xl" : "lg"} sx={{ my: 5, mb: 4 }}>
+      <Container maxWidth={matches ? "xl" : "lg"} sx={{ my: 8, mb: 8 }}>
         {title && (
-          <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
+          <Typography variant="h4" component="h1" sx={{ mb: 6 }}>
             {title}
           </Typography>
         )}
         {subtitle && (
-          <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
             {subtitle}
           </Typography>
         )}

@@ -21,7 +21,7 @@ function PipelineResultsMetrics({ metricsData = {} }) {
   const hasValidationData = !!metricsData.validation;
 
   return (
-    <Grid container direction="column" rowSpacing={2}>
+    <Grid container direction="column" rowSpacing={4}>
       <ResultsTabMetricsToggle
         displaySet={displaySet}
         setDisplaySet={setDisplaySet}
@@ -30,7 +30,7 @@ function PipelineResultsMetrics({ metricsData = {} }) {
         hasValidationData={hasValidationData}
       />
 
-      <Grid container direction="column" spacing={1}>
+      <Grid container direction="column" spacing={2}>
         {Object.keys(currentMetrics).length === 0 ? (
           <Typography variant="body1">
             No metrics available for {displaySet.replace("_metrics", "")} set.

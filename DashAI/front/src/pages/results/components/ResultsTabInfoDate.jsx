@@ -12,8 +12,8 @@ function ResultsTabInfoDate({ runData }) {
         container
         direction="row"
         alignItems="center"
-        rowSpacing={3}
-        columnSpacing={15}
+        rowSpacing={6}
+        columnSpacing={30}
       >
         {runDateInfo.map((param) => (
           <Grid key={param.key}>

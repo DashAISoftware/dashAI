@@ -71,7 +71,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               sx={{
                 color: theme.palette.text.secondary,
                 lineHeight: 1.1,
-                mt: 0.2,
+                mt: 1,
                 fontSize: "95%",
               }}
             >
@@ -149,7 +149,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
   if (!predictions || predictions.length === 0) {
     return (
-      <Box sx={{ textAlign: "center", py: 8 }}>
+      <Box sx={{ textAlign: "center", py: 16 }}>
         <Typography sx={{ color: theme.palette.text.secondary }}>
           {t("prediction:label.noPredictionsYet")}
         </Typography>
@@ -185,12 +185,12 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         {t("prediction:label.predictions")}
       </Typography>
       <Typography
         variant="body2"
-        sx={{ color: theme.palette.text.secondary, mb: 2 }}
+        sx={{ color: theme.palette.text.secondary, mb: 4 }}
       >
         {t("prediction:label.clickToViewOrDelete")}
       </Typography>

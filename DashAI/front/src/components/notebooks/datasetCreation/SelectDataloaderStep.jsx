@@ -38,7 +38,7 @@ export default function SelectDataloaderStep({
   };
 
   return (
-    <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={2}>
+    <Stack sx={{ height: "100%", minHeight: 0, flex: 1 }} spacing={4}>
       <Box sx={{ flex: 1, minHeight: 0 }}>
         {loadingDataloaders ? (
           <Box

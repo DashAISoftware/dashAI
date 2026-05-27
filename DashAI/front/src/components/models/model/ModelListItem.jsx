@@ -65,8 +65,8 @@ export default function ModelListItem({
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
+            gap: 3,
+            p: 3,
             bgcolor: disabled
               ? theme.palette.ui.disabled
               : theme.palette.ui.box,

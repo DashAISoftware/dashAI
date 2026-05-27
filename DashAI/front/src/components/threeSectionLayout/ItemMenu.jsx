@@ -101,7 +101,7 @@ export default function ItemMenu({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 0.5,
+            gap: 1,
           }}
         >
           {/* Only show Info button if onInfo is provided */}

@@ -255,7 +255,7 @@ function EditColumnsDialog({
               <IconButton onClick={handleClose}>
                 <ArrowBackOutlined />
               </IconButton>
-              <Typography variant="h5" sx={{ ml: 2 }}>
+              <Typography variant="h5" sx={{ ml: 4 }}>
                 Update Column Selection
               </Typography>
             </Box>
@@ -264,15 +264,15 @@ function EditColumnsDialog({
             <Box sx={{ height: "100%", width: "100%" }}>
               <Typography
                 variant="body1"
-                sx={{ mb: 2, whiteSpace: "pre-line" }}
+                sx={{ mb: 4, whiteSpace: "pre-line" }}
               >
                 {`Select the columns you want to use for the ${explorerType.label} exploration`}
               </Typography>
 
               <Stack
                 direction="row"
-                spacing={1}
-                sx={{ mb: 1, display: "flex", justifyContent: "space-evenly" }}
+                spacing={2}
+                sx={{ mb: 2, display: "flex", justifyContent: "space-evenly" }}
               >
                 {inputCardinality.min && (
                   <Typography variant="body2">
@@ -294,10 +294,10 @@ function EditColumnsDialog({
               {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
                 <Box
                   sx={{
-                    mb: 1,
+                    mb: 2,
                     display: "flex",
                     flexDirection: "row",
-                    gap: 1,
+                    gap: 2,
                     alignItems: "center",
                   }}
                 >
@@ -315,10 +315,10 @@ function EditColumnsDialog({
               {restrictedDtypes?.length > 0 && (
                 <Box
                   sx={{
-                    mb: 1,
+                    mb: 2,
                     display: "flex",
                     flexDirection: "row",
-                    gap: 1,
+                    gap: 2,
                     alignItems: "center",
                   }}
                 >

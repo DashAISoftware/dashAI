@@ -69,7 +69,7 @@ export default function InferenceReasonPopover({ columnName, reason }) {
           e.stopPropagation();
           setAnchorEl(e.currentTarget);
         }}
-        sx={{ p: 0.25, ml: 0.5 }}
+        sx={{ p: 1, ml: 1 }}
         aria-label={t("datasets:inferenceReason.openExplanation")}
       >
         <InfoOutlinedIcon sx={{ fontSize: "0.95rem" }} />
@@ -79,13 +79,13 @@ export default function InferenceReasonPopover({ columnName, reason }) {
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        slotProps={{ paper: { sx: { p: 2, maxWidth: 360 } } }}
+        slotProps={{ paper: { sx: { p: 4, maxWidth: 360 } } }}
       >
-        <Stack spacing={1}>
+        <Stack spacing={2}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
             {t("datasets:inferenceReason.title", { column: columnName })}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               size="small"
               label={reason.final_type}
@@ -135,9 +135,7 @@ export default function InferenceReasonPopover({ columnName, reason }) {
               <Typography variant="caption" color="text.secondary">
                 {t("datasets:inferenceReason.sampleValues")}
               </Typography>
-              <Box
-                sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}
-              >
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
                 {reason.sample_values.map((v, i) => (
                   <Chip
                     key={i}

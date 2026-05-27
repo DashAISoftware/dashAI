@@ -77,8 +77,8 @@ export default function ToolListItem({
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
+            gap: 6,
+            p: 6,
             bgcolor: disabled
               ? theme.palette.ui.disabled
               : theme.palette.ui.box,
@@ -143,8 +143,8 @@ export default function ToolListItem({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 0.5,
+                gap: 4,
+                mb: 2,
               }}
             >
               <Typography
@@ -168,8 +168,8 @@ export default function ToolListItem({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 0.5,
+                gap: 4,
+                mb: 2,
               }}
             >
               <Typography

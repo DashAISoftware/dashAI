@@ -202,7 +202,7 @@ export default function ConfigureAndUploadDatasetStep({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <TextField
           label={t("datasets:label.datasetName")}
           value={datasetName}
@@ -216,7 +216,7 @@ export default function ConfigureAndUploadDatasetStep({
         direction="column"
         justifyContent="flex-start"
         alignItems="stretch"
-        spacing={2}
+        spacing={4}
         sx={{
           flex: 1,
           minHeight: 0,

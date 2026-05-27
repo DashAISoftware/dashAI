@@ -1,4 +1,24 @@
 const getTheme = (mode) => ({
+  spacing: 4,
+
+  layout: {
+    spacing: {
+      xs: 1, //  4px — icon gaps, chip padding, tight inline elements
+      sm: 2, //  8px — between items in the same group, form field rows
+      md: 3, // 12px — compact section spacing, between related controls
+      lg: 4, // 16px — card padding, internal section spacing
+      xl: 6, // 24px — between distinct sections within a page
+      xxl: 8, // 32px — between major content blocks, dialog padding
+      xxxl: 12, // 48px — wide page-level spacing
+      max: 16, // 64px — hero / full-page sections
+    },
+    dimensions: {
+      appBarHeight: "53px",
+      appBarHeightLg: "74px",
+      sidebarWidth: "220px",
+    },
+  },
+
   palette: {
     mode,
 
