@@ -98,6 +98,7 @@
     "nameYourSession": "Name Your Session",
     "selectDatasetAndPrepare": "Name your session, select a dataset and configure its columns and splits.",
     "noCompatibleModelsFound": "No compatible models found",
+    "dropModelHere": "Drop here to add",
     "noDatasetPredictionsYet": "No dataset predictions yet",
     "noGlobalExplainersYet": "No global explainers yet",
     "noLocalExplainersYet": "No local explainers yet",
