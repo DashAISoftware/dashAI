@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMatch, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
@@ -19,7 +20,7 @@ import { useDatasetsAndNotebooks } from "../../components/custom/contexts/Datase
 export default function HubImportPage() {
   const { datafileId } = useParams();
   const navigate = useNavigate();
-  const { t } = useTranslation(["hub"]);
+  const { t } = useTranslation(["hub", "common"]);
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
   const { addDatasetOptimistically, startDatasetPolling } =
     useDatasetsAndNotebooks();
@@ -46,6 +47,7 @@ export default function HubImportPage() {
       : 0;
 
   const [datafile, setDatafile] = useState(null);
+  const [datafileLoading, setDatafileLoading] = useState(true);
   const [dataloaders, setDataloaders] = useState([]);
   const [formValues, setFormValues] = useState({});
   const [formHasErrors, setFormHasErrors] = useState(false);
@@ -53,9 +55,11 @@ export default function HubImportPage() {
 
   useEffect(() => {
     if (!datafileId) return;
+    setDatafileLoading(true);
     getDatafile(parseInt(datafileId))
       .then(setDatafile)
-      .catch(() => navigate("/app/data/hub"));
+      .catch(() => navigate("/app/data/hub"))
+      .finally(() => setDatafileLoading(false));
   }, [datafileId, navigate]);
 
   useEffect(() => {
@@ -146,19 +150,34 @@ export default function HubImportPage() {
         </LeftPanel>
 
         <CenterPanel>
-          <HubImportPanel
-            dataset={dataset}
-            sourceName={sourceName}
-            datafile={datafile}
-            step={step}
-            onStepChange={handleStepChange}
-            selectedLoader={selectedLoader}
-            onSelectedLoaderChange={handleLoaderChange}
-            formValues={formValues}
-            formHasErrors={formHasErrors}
-            onCancel={handleCancel}
-            onImported={handleImported}
-          />
+          {datafileLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+                gap: 2,
+              }}
+            >
+              <CircularProgress color="primary" />
+              <Typography>{t("common:loading")}</Typography>
+            </Box>
+          ) : (
+            <HubImportPanel
+              dataset={dataset}
+              sourceName={sourceName}
+              datafile={datafile}
+              step={step}
+              onStepChange={handleStepChange}
+              selectedLoader={selectedLoader}
+              onSelectedLoaderChange={handleLoaderChange}
+              formValues={formValues}
+              formHasErrors={formHasErrors}
+              onCancel={handleCancel}
+              onImported={handleImported}
+            />
+          )}
         </CenterPanel>
 
         <RightPanel toggleButtonTop="50%">{renderRightPanel()}</RightPanel>
