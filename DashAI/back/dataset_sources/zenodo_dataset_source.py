@@ -48,8 +48,27 @@ class ZenodoDatasetSource(BaseDatasetSource):
         es="Zenodo",
     )
     DESCRIPTION: Final = MultilingualString(
-        en="Browse and import public datasets from Zenodo.",
-        es="Navega e importa datasets públicos desde Zenodo.",
+        en=(
+            "Zenodo is an open-access repository operated by CERN that hosts "
+            "research datasets, papers, software, and other scientific outputs "
+            "from researchers worldwide. It covers all disciplines and accepts "
+            "any file format, making it a go-to archive for datasets published "
+            "alongside academic papers. Every record gets a DOI, ensuring "
+            "long-term citability. Search by keyword and download directly to "
+            "DashAI. "
+            "[https://zenodo.org](https://zenodo.org)"
+        ),
+        es=(
+            "Zenodo es un repositorio de acceso abierto operado por el CERN que "
+            "aloja datasets de investigación, artículos, software y otros "
+            "resultados científicos de investigadores de todo el mundo. Cubre "
+            "todas las disciplinas y acepta cualquier formato de archivo, siendo "
+            "el archivo de referencia para datasets publicados junto a artículos "
+            "académicos. Cada registro obtiene un DOI que garantiza su "
+            "citabilidad a largo plazo. Busca por palabra clave y descarga "
+            "directamente a DashAI. "
+            "[https://zenodo.org](https://zenodo.org)"
+        ),
     )
 
     def search(

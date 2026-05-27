@@ -132,9 +132,9 @@ class OpenMLDatasetSource(BaseDatasetSource):
             if query:
                 list_kwargs["data_name"] = query
 
-            df = openml.datasets.list_datasets(**list_kwargs)
+            result = openml.datasets.list_datasets(**list_kwargs)
 
-            rows = df.to_dict("records")
+            rows = result.to_dict("records")
 
             def _meta(did: str) -> tuple[str, tuple[str, ...]] | None:
                 """Fetch enrichment for one id, isolating failures as None."""
