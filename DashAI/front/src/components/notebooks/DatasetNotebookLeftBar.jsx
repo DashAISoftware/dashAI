@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -33,6 +33,8 @@ export default function DatasetsNotebooksLeftBar({
     deleteNotebookById,
   } = useDatasetsAndNotebooks();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isHub = pathname.startsWith("/app/data/hub");
   const { enqueueSnackbar } = useSnackbar();
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
@@ -222,41 +224,51 @@ export default function DatasetsNotebooksLeftBar({
           getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
         />
 
-        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+        {!isHub && (
+          <>
+            <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
-        <CollapsibleList
-          items={filteredNotebooks}
-          selectedItemId={selectedNotebookId}
-          onItemClick={onNotebookClick}
-          onItemDelete={onNotebookDelete}
-          onItemEdit={editNotebook}
-          onItemInfo={handleNotebookInfo}
-          defaultOpen={true}
-          title={t("datasets:label.notebooks")}
-          Icon={DescriptionIcon}
-          datasets={datasets}
-          getItemDescription={getNotebookDescription}
-          getDeleteConfirmationContent={getNotebookDeleteConfirmationContent}
-        />
+            <CollapsibleList
+              items={filteredNotebooks}
+              selectedItemId={selectedNotebookId}
+              onItemClick={onNotebookClick}
+              onItemDelete={onNotebookDelete}
+              onItemEdit={editNotebook}
+              onItemInfo={handleNotebookInfo}
+              defaultOpen={true}
+              title={t("datasets:label.notebooks")}
+              Icon={DescriptionIcon}
+              datasets={datasets}
+              getItemDescription={getNotebookDescription}
+              getDeleteConfirmationContent={
+                getNotebookDeleteConfirmationContent
+              }
+            />
+          </>
+        )}
 
-        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+        {isHub && (
+          <>
+            <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
-        <CollapsibleList
-          items={filteredDownloads}
-          onItemClick={(id) => {
-            const dl = filteredDownloads.find((d) => d.id === id);
-            if (dl?.status === "ready")
-              navigate(`/app/data/hub/import/${dl.id}`);
-          }}
-          onItemDelete={handleDeleteDownload}
-          onItemEdit={() => {}}
-          defaultOpen={true}
-          title={t("hub:downloadedDatasets")}
-          Icon={CloudDownloadIcon}
-          getItemDescription={(dl) =>
-            t("hub:fromSource", { source: dl.source_name })
-          }
-        />
+            <CollapsibleList
+              items={filteredDownloads}
+              onItemClick={(id) => {
+                const dl = filteredDownloads.find((d) => d.id === id);
+                if (dl?.status === "ready")
+                  navigate(`/app/data/hub/import/${dl.id}`);
+              }}
+              onItemDelete={handleDeleteDownload}
+              onItemEdit={() => {}}
+              defaultOpen={true}
+              title={t("hub:downloadedDatasets")}
+              Icon={CloudDownloadIcon}
+              getItemDescription={(dl) =>
+                t("hub:fromSource", { source: dl.source_name })
+              }
+            />
+          </>
+        )}
       </Box>
 
       {/* Footer */}
