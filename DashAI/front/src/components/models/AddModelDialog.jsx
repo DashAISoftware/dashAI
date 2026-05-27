@@ -68,7 +68,7 @@ function AddModelDialog({
     defaultValues: defaultOptimizerParams,
     loading: optimizerSchemaLoading,
   } = useSchema({
-    modelName: open ? selectedOptimizer : null,
+    modelName: open && activeStep === 1 ? selectedOptimizer : null,
   });
 
   const tourContext = useTourContext();
@@ -405,24 +405,23 @@ function AddModelDialog({
               />
             )}
 
-            {selectedOptimizer &&
-              !optimizerSchemaLoading(
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                    {t("models:label.optimizerParameters")} *
-                  </Typography>
-                  <FormSchemaContainer key={selectedOptimizer}>
-                    <FormSchemaWithSelectedModel
-                      modelToConfigure={selectedOptimizer}
-                      initialValues={defaultOptimizerParams}
-                      onFormSubmit={() => {}}
-                      onValuesChange={setOptimizerParameters}
-                      onCancel={() => {}}
-                      hideButtons
-                    />
-                  </FormSchemaContainer>
-                </Box>,
-              )}
+            {selectedOptimizer && !optimizerSchemaLoading && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  {t("models:label.optimizerParameters")} *
+                </Typography>
+                <FormSchemaContainer key={selectedOptimizer}>
+                  <FormSchemaWithSelectedModel
+                    modelToConfigure={selectedOptimizer}
+                    initialValues={defaultOptimizerParams}
+                    onFormSubmit={() => {}}
+                    onValuesChange={setOptimizerParameters}
+                    onCancel={() => {}}
+                    hideButtons
+                  />
+                </FormSchemaContainer>
+              </Box>
+            )}
           </Box>
         )}
       </DialogContent>
