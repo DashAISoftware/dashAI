@@ -424,13 +424,13 @@ function SplitDatasetRows({
               value="HoldoutEvaluationStrategy"
               sx={{ textTransform: "none", fontSize: "0.8rem" }}
             >
-              Holdout
+              {t("experiments:label.holdout")}
             </ToggleButton>
             <ToggleButton
               value="CrossValidationEvaluationStrategy"
               sx={{ textTransform: "none", fontSize: "0.8rem" }}
             >
-              Cross-Validation
+              {t("experiments:label.crossValidation")}
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
