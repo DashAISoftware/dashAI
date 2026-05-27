@@ -68,7 +68,7 @@ function AddModelDialog({
     defaultValues: defaultOptimizerParams,
     loading: optimizerSchemaLoading,
   } = useSchema({
-    modelName: open && activeStep === 1 ? selectedOptimizer : null,
+    modelName: open ? selectedOptimizer : null,
   });
 
   const tourContext = useTourContext();
@@ -115,16 +115,6 @@ function AddModelDialog({
   const steps = hasOptimizableParams
     ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
     : [t("models:label.configureModel")];
-
-  const handleModelParametersChange = useCallback((values) => {
-    setModelParameters(values);
-  }, []);
-
-  const handleOptimizerParametersChange = useCallback((values) => {
-    // Sin spread, reemplaza completamente asi no se mergean los parametros del
-    // optimizador anterior que pueden ser incompatibles con el nuevo optimizador seleccionado
-    setOptimizerParameters(values);
-  }, []);
 
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
@@ -415,23 +405,24 @@ function AddModelDialog({
               />
             )}
 
-            {selectedOptimizer && !optimizerSchemaLoading && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                  {t("models:label.optimizerParameters")} *
-                </Typography>
-                <FormSchemaContainer key={selectedOptimizer}>
-                  <FormSchemaWithSelectedModel
-                    modelToConfigure={selectedOptimizer}
-                    initialValues={defaultOptimizerParams}
-                    onFormSubmit={() => {}}
-                    onValuesChange={setOptimizerParameters}
-                    onCancel={() => {}}
-                    hideButtons
-                  />
-                </FormSchemaContainer>
-              </Box>
-            )}
+            {selectedOptimizer &&
+              !optimizerSchemaLoading(
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                    {t("models:label.optimizerParameters")} *
+                  </Typography>
+                  <FormSchemaContainer key={selectedOptimizer}>
+                    <FormSchemaWithSelectedModel
+                      modelToConfigure={selectedOptimizer}
+                      initialValues={defaultOptimizerParams}
+                      onFormSubmit={() => {}}
+                      onValuesChange={setOptimizerParameters}
+                      onCancel={() => {}}
+                      hideButtons
+                    />
+                  </FormSchemaContainer>
+                </Box>,
+              )}
           </Box>
         )}
       </DialogContent>
