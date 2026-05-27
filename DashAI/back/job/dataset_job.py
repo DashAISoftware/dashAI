@@ -189,6 +189,7 @@ class DatasetJob(BaseJob):
                                 str(p)
                                 for p in Path(hub_work_dir).rglob("*")
                                 if p.is_file()
+                                and not any(part.startswith(".") for part in p.parts)
                             )
                             if not files:
                                 raise JobError("Hub download directory is empty.")

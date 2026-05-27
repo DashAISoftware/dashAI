@@ -210,9 +210,14 @@ export default function HubImportPanel({
         importParams.datafile_id = datafile.id;
         if (selectedFile) importParams.selected_file = selectedFile;
       }
-      await importHubDataset(sourceName, dataset.id, created.id, importParams);
+      const importResult = await importHubDataset(
+        sourceName,
+        dataset.id,
+        created.id,
+        importParams,
+      );
       enqueueSnackbar(t("hub:importSuccess"), { variant: "success" });
-      onImported?.(created);
+      onImported?.(created, importResult);
     } catch {
       enqueueSnackbar(t("hub:importError"), { variant: "error" });
     } finally {

@@ -21,7 +21,8 @@ export default function HubImportPage() {
   const navigate = useNavigate();
   const { t } = useTranslation(["hub"]);
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
-  const { addDatasetOptimistically } = useDatasetsAndNotebooks();
+  const { addDatasetOptimistically, startDatasetPolling } =
+    useDatasetsAndNotebooks();
 
   const previewMatch = useMatch(
     "/app/data/hub/import/:datafileId/loader/:loaderName/preview",
@@ -106,8 +107,11 @@ export default function HubImportPage() {
 
   const handleCancel = () =>
     navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
-  const handleImported = (dataset) => {
+  const handleImported = (dataset, importResult) => {
     addDatasetOptimistically(dataset);
+    if (importResult?.job_id) {
+      startDatasetPolling(dataset, { id: importResult.job_id });
+    }
     navigate(`/app/data/datasets/${dataset.id}`);
   };
 
