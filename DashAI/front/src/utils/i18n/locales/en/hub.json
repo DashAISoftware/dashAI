@@ -39,6 +39,7 @@
   "downloadToDashAI": "Download to DashAI",
   "startingDownload": "Starting download...",
   "downloading": "Downloading...",
+  "downloadingWait": "The dataset is being downloaded. This page will update automatically when it's ready.",
   "downloaded": "Downloaded",
   "downloadFailed": "Download failed",
   "downloadError": "An error occurred while downloading.",

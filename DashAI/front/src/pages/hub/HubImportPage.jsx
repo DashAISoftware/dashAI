@@ -22,7 +22,7 @@ export default function HubImportPage() {
   const navigate = useNavigate();
   const { t } = useTranslation(["hub", "common"]);
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
-  const { addDatasetOptimistically, startDatasetPolling } =
+  const { addDatasetOptimistically, startDatasetPolling, downloads } =
     useDatasetsAndNotebooks();
 
   const previewMatch = useMatch(
@@ -67,6 +67,15 @@ export default function HubImportPage() {
       .then(setDataloaders)
       .catch(() => setDataloaders([]));
   }, []);
+
+  // Sync local datafile when context downloads update (e.g. downloading → ready)
+  useEffect(() => {
+    if (!datafile || datafile.status === "ready") return;
+    const updated = downloads.find((d) => d.id === datafile.id);
+    if (updated && updated.status !== datafile.status) {
+      setDatafile(updated);
+    }
+  }, [downloads, datafile]);
 
   // Reset form when selected loader changes
   useEffect(() => {
@@ -150,18 +159,37 @@ export default function HubImportPage() {
         </LeftPanel>
 
         <CenterPanel>
-          {datafileLoading ? (
+          {datafileLoading || datafile?.status === "downloading" ? (
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 height: "100%",
-                gap: 2,
+                flexDirection: "column",
+                gap: 4,
               }}
             >
               <CircularProgress color="primary" />
-              <Typography>{t("common:loading")}</Typography>
+              <Typography variant="h6">
+                {datafileLoading ? t("common:loading") : t("hub:downloading")}
+              </Typography>
+              {!datafileLoading && (
+                <Typography variant="body2" color="text.secondary">
+                  {t("hub:downloadingWait")}
+                </Typography>
+              )}
+            </Box>
+          ) : datafile?.status === "error" ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+              }}
+            >
+              <Typography color="error">{t("hub:downloadError")}</Typography>
             </Box>
           ) : (
             <HubImportPanel

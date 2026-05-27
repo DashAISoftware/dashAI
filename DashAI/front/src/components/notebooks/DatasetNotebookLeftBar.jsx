@@ -227,9 +227,7 @@ export default function DatasetsNotebooksLeftBar({
             <CollapsibleList
               items={filteredDownloads}
               onItemClick={(id) => {
-                const dl = filteredDownloads.find((d) => d.id === id);
-                if (dl?.status === "ready")
-                  navigate(`/app/data/hub/import/${dl.id}`);
+                navigate(`/app/data/hub/import/${id}`);
               }}
               onItemDelete={handleDeleteDownload}
               defaultOpen={true}
