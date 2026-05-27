@@ -2,9 +2,12 @@
 
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 from typing import Any, Final
 
 import httpx
+import openml
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataset_sources.base_dataset_source import (
@@ -15,14 +18,53 @@ from DashAI.back.dataset_sources.base_dataset_source import (
 
 log = logging.getLogger(__name__)
 
-_OPENML_API = "https://www.openml.org/api/v1/json"
-_OPENML_ES = "https://www.openml.org/es/data/data/_search"
+# get_dataset is thread-safe because ``oslo.concurrency`` is installed (OpenML
+# uses its interprocess file locks internally), so calls can be fanned out
+# across threads without an extra lock.  The lru_cache on top means repeated
+# lookups never touch the network.
+#
+# Bound the fan-out so a large page does not open dozens of sockets at once.
+_MAX_META_WORKERS: Final = 8
+
+
+@lru_cache(maxsize=1024)
+def _fetch_dataset_meta(dataset_id: int) -> tuple[str, tuple[str, ...]]:
+    """Fetch description and tags for one OpenML dataset (cached).
+
+    Metadata only - never downloads the data file.  Results are memoized in
+    process via ``lru_cache``; OpenML additionally caches the description XML on
+    disk, so a cold miss here is still cheap on the second process run.
+
+    Parameters
+    ----------
+    dataset_id : int
+        OpenML dataset ID.
+
+    Returns
+    -------
+    tuple of (str, tuple of str)
+        ``(description, tags)``.  Tags are a tuple so the result stays hashable
+        and cacheable.
+
+    Raises
+    ------
+    Exception
+        Propagates any OpenML error so the failure is NOT cached; the caller is
+        responsible for isolating it.
+    """
+    dataset = openml.datasets.get_dataset(
+        dataset_id,
+        download_data=False,
+        download_qualities=False,
+        download_features_meta_data=False,
+    )
+    return (dataset.description or "", tuple(dataset.tag or ()))
 
 
 class OpenMLDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from OpenML.
 
-    Uses the OpenML Elasticsearch API — no authentication required.
+    Uses the OpenML Python library - no authentication required.
     """
 
     DISPLAY_NAME: Final = MultilingualString(
@@ -81,56 +123,48 @@ class OpenMLDatasetSource(BaseDatasetSource):
         """
         try:
             offset = int(cursor) if cursor else 0
-            must_clause: dict[str, Any] = (
-                {"multi_match": {"query": query, "fields": ["name^3", "description"]}}
-                if query
-                else {"match_all": {}}
-            )
-            body: dict[str, Any] = {
-                "from": offset,
+            list_kwargs: dict[str, Any] = {
+                "offset": offset,
                 "size": limit,
-                "query": {
-                    "bool": {
-                        "must": must_clause,
-                        "filter": [{"term": {"status": "active"}}],
-                        "should": [{"term": {"visibility": "public"}}],
-                        "minimum_should_match": 1,
-                    }
-                },
-                "_source": [
-                    "data_id",
-                    "name",
-                    "version",
-                    "format",
-                    "description",
-                    "status",
-                    "date",
-                    "tags",
-                ],
-                "sort": {"runs": {"order": "desc"}},
+                "status": "active",
+                "output_format": "dataframe",
             }
-            resp = httpx.post(
-                _OPENML_ES,
-                params={"type": "data"},
-                json=body,
-                timeout=15,
-            )
-            if resp.status_code != 200:
-                log.warning("OpenML ES API returned %s", resp.status_code)
-                return SearchPage()
+            if query:
+                list_kwargs["data_name"] = query
 
-            hits = resp.json().get("hits", {}).get("hits", [])
+            df = openml.datasets.list_datasets(**list_kwargs)
+
+            rows = df.to_dict("records")
+
+            def _meta(did: str) -> tuple[str, tuple[str, ...]] | None:
+                """Fetch enrichment for one id, isolating failures as None."""
+                try:
+                    return _fetch_dataset_meta(int(did))
+                except Exception:
+                    # One bad dataset must not break the whole page.
+                    log.warning("Could not enrich OpenML dataset %s", did)
+                    return None
+
+            # Fan out the per-dataset metadata fetches across threads.  Safe to
+            # parallelize because oslo.concurrency makes get_dataset thread-safe;
+            # executor.map preserves input order.
+            ids = [str(row.get("did", "")) for row in rows]
+            workers = min(_MAX_META_WORKERS, len(ids)) or 1
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                metas = list(pool.map(_meta, ids))
+
             entries = []
-            for hit in hits:
-                src = hit.get("_source", {})
-                did = str(src.get("data_id", ""))
-                tag_raw = src.get("tags", [])
-                tags = [tag["tag"] for tag in tag_raw if tag["uploader"] > "0"]
+            for row, did, meta in zip(rows, ids, metas):
+                description = ""
+                tags: list[str] = []
+                if meta is not None:
+                    description, real_tags = meta
+                    tags = list(real_tags)
                 entries.append(
                     DatasetEntry(
                         id=did,
-                        name=src.get("name", ""),
-                        description=src.get("description", "") or "",
+                        name=row.get("name", "") or "",
+                        description=description,
                         tags=tags,
                         size_bytes=None,
                         url=f"https://www.openml.org/d/{did}",
@@ -144,7 +178,10 @@ class OpenMLDatasetSource(BaseDatasetSource):
             return SearchPage()
 
     def download_dataset(self, dataset_id: str, temp_path: str) -> str:
-        """Download the raw ARFF file for an OpenML dataset.
+        """Download an OpenML dataset's raw data file from its source URL.
+
+        Resolves the dataset's data URL via the OpenML library, then downloads
+        that file (typically ARFF) into ``temp_path``.
 
         Parameters
         ----------
@@ -156,16 +193,25 @@ class OpenMLDatasetSource(BaseDatasetSource):
         Returns
         -------
         str
-            Path to the downloaded ARFF file inside ``temp_path``.
+            Path to the downloaded data file inside ``temp_path``.
         """
-        info_resp = httpx.get(f"{_OPENML_API}/data/{dataset_id}", timeout=15)
-        info_resp.raise_for_status()
-        arff_url = info_resp.json()["data_set_description"]["url"]
+        dataset = openml.datasets.get_dataset(
+            int(dataset_id),
+            download_data=False,
+            download_qualities=False,
+            download_features_meta_data=False,
+        )
+        url = dataset.url
+        if not url:
+            raise FileNotFoundError(
+                f"OpenML returned no data URL for dataset '{dataset_id}'."
+            )
 
-        file_resp = httpx.get(arff_url, timeout=120, follow_redirects=True)
-        file_resp.raise_for_status()
+        resp = httpx.get(url, timeout=120, follow_redirects=True)
+        resp.raise_for_status()
 
-        out_path = os.path.join(temp_path, f"openml_{dataset_id}.arff")
+        ext = os.path.splitext(url.split("?")[0])[1] or ".dat"
+        out_path = os.path.join(temp_path, f"openml_{dataset_id}{ext}")
         with open(out_path, "wb") as f:
-            f.write(file_resp.content)
+            f.write(resp.content)
         return out_path
