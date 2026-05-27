@@ -306,7 +306,6 @@ function PreviewDataset({
                 </Tooltip>
               )}
             </Box>
-            )}
             <Box sx={{ width: "100%" }}>
               <PreviewDatasetTable
                 rows={previewData.sample}
