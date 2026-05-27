@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -14,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -22,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import Footer from "../threeSectionLayout/Footer";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import { useDatasets } from "../../hooks/datasets/useDatasets";
 
 function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
   const theme = useTheme();
@@ -31,8 +34,8 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
       alignItems="center"
       sx={{
         cursor: "pointer",
-        py: 0.5,
-        px: 1,
+        py: 2,
+        px: 4,
         borderRadius: 1,
         "&:hover": {
           bgcolor: theme.palette.ui?.hover ?? theme.palette.action.hover,
@@ -40,7 +43,7 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
       }}
       onClick={onToggle}
     >
-      <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
+      <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 4 }} />
       <Typography
         variant="h5"
         sx={{
@@ -57,9 +60,9 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
         variant="body2"
         component="div"
         sx={{
-          mr: 1,
-          bgcolor: theme.palette.ui?.scrollbar ?? theme.palette.divider,
-          color: theme.palette.text.primary,
+          mr: 4,
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
           borderRadius: "50%",
           width: 20,
           height: 20,
@@ -84,7 +87,7 @@ function SectionHeader({ icon: Icon, title, count, open, onToggle }) {
 }
 
 /**
- * Left sidebar for the Hub module — shows downloaded datasets only.
+ * Left sidebar for the Hub module — shows DashAI datasets and downloaded datafiles.
  *
  * @param {Array} downloads - List of Datafile records to show.
  * @param {function} onDeleteDownload - Called with download id when user deletes.
@@ -95,14 +98,21 @@ export default function HubLeftBar({
   onDeleteDownload,
   onImportDownload,
 }) {
-  const { t } = useTranslation(["hub", "common"]);
+  const { t } = useTranslation(["hub", "common", "datasets"]);
   const theme = useTheme();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [datasetsOpen, setDatasetsOpen] = useState(true);
   const [downloadsOpen, setDownloadsOpen] = useState(true);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const { datasets } = useDatasets({ t });
 
+  const q = searchQuery.toLowerCase();
+  const filteredDatasets = datasets.filter((d) =>
+    d.name.toLowerCase().includes(q),
+  );
   const filteredDownloads = downloads.filter((dl) =>
-    dl.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    dl.name.toLowerCase().includes(q),
   );
 
   const handleDeleteConfirm = () => {
@@ -114,7 +124,7 @@ export default function HubLeftBar({
     <SideBar>
       <Box
         sx={{
-          px: 2,
+          p: 4,
           height: "64px",
           display: "flex",
           alignItems: "center",
@@ -126,9 +136,9 @@ export default function HubLeftBar({
         </Typography>
       </Box>
 
-      <Box px={2} pb={2} sx={{ flexShrink: 0 }}>
+      <Box px={4} pb={4} sx={{ flexShrink: 0 }}>
         <SearchBar
-          placeholder={t("hub:searchDownloads", "Search downloads...")}
+          placeholder={t("hub:searchDownloads", "Search...")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -137,16 +147,106 @@ export default function HubLeftBar({
       <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
-        <Box sx={{ px: 2, pt: 2, pb: 2 }}>
-          <SectionHeader
-            icon={StorageIcon}
-            title={t("hub:downloadedDatasets")}
-            count={filteredDownloads.length}
-            open={downloadsOpen}
-            onToggle={() => setDownloadsOpen((v) => !v)}
-          />
-          <Collapse in={downloadsOpen} timeout="auto">
-            <Box pl={2}>
+        {/* Datasets — top half */}
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box sx={{ pl: 4, pr: 4, pt: 4, flexShrink: 0 }}>
+            <SectionHeader
+              icon={StorageIcon}
+              title={t("datasets:label.availableDatasets")}
+              count={filteredDatasets.length}
+              open={datasetsOpen}
+              onToggle={() => setDatasetsOpen((v) => !v)}
+            />
+          </Box>
+          <Collapse
+            in={datasetsOpen}
+            timeout="auto"
+            sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
+          >
+            <Box pl={4} pr={4} pb={4}>
+              {filteredDatasets.length === 0 ? (
+                <Typography
+                  sx={{
+                    color: "text.primary",
+                    opacity: 0.5,
+                    textAlign: "center",
+                    p: 2,
+                  }}
+                >
+                  {t("common:noItemsAvailable", "No items available.")}
+                </Typography>
+              ) : (
+                filteredDatasets.map((ds) => (
+                  <Box
+                    key={ds.id}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                      height: "50px",
+                      p: 1,
+                      borderRadius: 1,
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: theme.palette.action.hover },
+                    }}
+                    onClick={() => navigate(`/app/data/datasets/${ds.id}`)}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body1" color="text.primary" noWrap>
+                        {ds.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        noWrap
+                        sx={{ pl: 1 }}
+                        color="text.secondary"
+                      >
+                        {ds.total_rows} {t("common:rows")}, {ds.total_columns}{" "}
+                        {t("common:columns")}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Collapse>
+        </Box>
+
+        <Divider
+          sx={{ width: "90%", bgcolor: "divider", mx: "auto", flexShrink: 0 }}
+        />
+
+        {/* Datafiles — bottom half */}
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box sx={{ pl: 4, pr: 4, pt: 4, flexShrink: 0 }}>
+            <SectionHeader
+              icon={CloudDownloadIcon}
+              title={t("hub:downloadedDatasets")}
+              count={filteredDownloads.length}
+              open={downloadsOpen}
+              onToggle={() => setDownloadsOpen((v) => !v)}
+            />
+          </Box>
+          <Collapse
+            in={downloadsOpen}
+            timeout="auto"
+            sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
+          >
+            <Box pl={4} pr={4} pb={4}>
               {filteredDownloads.length === 0 ? (
                 <Typography
                   sx={{
@@ -166,14 +266,13 @@ export default function HubLeftBar({
                       display: "flex",
                       alignItems: "center",
                       width: "100%",
-                      minHeight: "50px",
-                      py: 0.5,
-                      px: 1,
+                      height: "50px",
+                      p: 1,
                       borderRadius: 1,
                       cursor: dl.status === "ready" ? "pointer" : "default",
                       "&:hover":
                         dl.status === "ready"
-                          ? { bgcolor: (theme) => theme.palette.action.hover }
+                          ? { bgcolor: theme.palette.action.hover }
                           : {},
                     }}
                     onClick={() =>
