@@ -425,10 +425,12 @@ export default function HubImportPanel({
           <Button variant="outlined" onClick={onCancel}>
             {t("common:cancel")}
           </Button>
-        ) : (
+        ) : stepValue < previewStep ? (
           <Button variant="outlined" onClick={handleBack}>
             {t("common:back")}
           </Button>
+        ) : (
+          <Box sx={{ flexGrow: 1 }} />
         )}
 
         {stepValue < previewStep ? (
@@ -440,13 +442,18 @@ export default function HubImportPanel({
             {t("common:next")}
           </Button>
         ) : (
-          <Button
-            variant="contained"
-            onClick={handleImport}
-            disabled={!canImport}
-          >
-            {importing ? t("hub:importing") : t("hub:importDataset")}
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" onClick={handleBack}>
+              {t("common:back")}
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleImport}
+              disabled={!canImport}
+            >
+              {importing ? t("hub:importing") : t("hub:importDataset")}
+            </Button>
+          </Box>
         )}
       </Box>
     </Box>
