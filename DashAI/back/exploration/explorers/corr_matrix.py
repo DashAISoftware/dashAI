@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -164,8 +165,9 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
 
     SCHEMA = CorrelationMatrixExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "numeric_categorical_only": True,
         "input_cardinality": {"min": 2},
     }
 
@@ -231,8 +233,8 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
 
         if self.plot:
             result = px.imshow(
-                result,
-                text_auto=True,
+                result.round(4),
+                text_auto=".4~f",
                 aspect="auto",
                 title=f"Correlation Matrix of {len(explorer_info.columns)} columns",
             )

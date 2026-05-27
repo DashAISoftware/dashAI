@@ -21,7 +21,7 @@ export default function NewItemButton({
         height: "100%",
         width: "100%",
         textTransform: "none",
-        "&:hover": { bgcolor: "primary.dark" },
+        "&:hover": { bgcolor: "primary.light" },
       }}
       onClick={onClick}
       endIcon={<AddIcon />}

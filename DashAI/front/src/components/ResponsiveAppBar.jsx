@@ -86,34 +86,16 @@ function ResponsiveAppBar() {
             flexShrink: 0,
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              letterSpacing: "0.02em",
-              color: theme.palette.text.primary,
-              lineHeight: 1,
-            }}
-          >
-            <Box component="span" sx={{ color: theme.palette.primary.main }}>
-              Dash
-            </Box>
-            AI
-          </Typography>
           <Box
+            component="img"
+            src="/dashai-logo.svg"
+            alt="dashAI"
             sx={{
-              display: { xs: "none", sm: "block" },
-              ...theme.typography.statusBadge,
-              color: theme.palette.primary.main,
-              border: `1px solid ${theme.palette.accent.amberBorder}`,
-              background: theme.palette.accent.amberDim,
-              borderRadius: "2px",
-              px: 2,
-              py: 1,
-              lineHeight: 1.4,
+              height: 18,
+              width: "auto",
+              flexShrink: 0,
             }}
-          >
-            Workbench
-          </Box>
+          />
         </Box>
 
         {/* Mobile hamburger */}
@@ -204,7 +186,7 @@ function ResponsiveAppBar() {
                     ? theme.palette.primary.main
                     : theme.palette.text.secondary,
                   background: active
-                    ? theme.palette.accent.amberGlow
+                    ? `${theme.palette.primary.main}0A`
                     : "transparent",
                   borderBottom: active
                     ? `2px solid ${theme.palette.primary.main}`

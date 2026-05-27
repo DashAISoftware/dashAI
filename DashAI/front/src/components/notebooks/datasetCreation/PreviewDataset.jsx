@@ -252,10 +252,15 @@ function PreviewDataset({
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                {t("datasets:label.showingRowsInference", {
-                  sampleLength: previewData.sample.length,
-                  previewRowCount: previewData.preview_row_count,
-                })}
+                {t(
+                  previewData.types_inferred === false
+                    ? "datasets:label.showingRowsPreview"
+                    : "datasets:label.showingRowsInference",
+                  {
+                    sampleLength: previewData.sample.length,
+                    previewRowCount: previewData.preview_row_count,
+                  },
+                )}
                 <br />
                 {t("datasets:label.changeColumnTypesInfo")}
               </Typography>

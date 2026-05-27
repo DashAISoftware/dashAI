@@ -176,7 +176,7 @@ export default function SelectDatasetStep({
       sx: {
         cursor: "pointer",
         ...(row.original.id === selectedDatasetId && {
-          backgroundColor: theme.palette.accent.amberDim,
+          backgroundColor: `${theme.palette.primary.main}1F`,
           borderLeft: `3px solid ${theme.palette.primary.main}`,
           "&:hover td": {
             backgroundColor: "transparent",

@@ -103,6 +103,42 @@ async function pollJobs() {
       ? Date.now() - state.lastCompletionTime
       : Infinity;
 
+    // When the queue is truly empty and the grace period has elapsed (or no
+    // completion was ever detected), resolve any orphaned watchers (jobs deleted
+    // from the queue that will never appear in incremental changes) using the
+    // authoritative state from getJobs(). Subscribers are NOT flushed here —
+    // they receive incremental updates during the grace period via normal polling,
+    // and sending a full snapshot would leave stale deleted-job entries in their
+    // state. If getJobs() fails, leave watchers in place and retry next poll.
+    if (
+      changeData.queue_empty &&
+      !changeData.recently_completed &&
+      timePassedSinceCompletion > MIN_POLLING_AFTER_COMPLETION
+    ) {
+      if (state.jobWatchers.size === 0) {
+        stopJobPoller();
+        return;
+      }
+      try {
+        const allJobs = await getJobs();
+        for (const [jobId, watcher] of [...state.jobWatchers.entries()]) {
+          const job = allJobs.find((j) => j.id === jobId);
+          if (job?.status === "finished") {
+            if (watcher.onSuccess) watcher.onSuccess(job);
+          } else {
+            if (watcher.onError)
+              watcher.onError(job || { id: jobId, status: "deleted" });
+          }
+        }
+        state.jobWatchers.clear();
+        stopJobPoller();
+        return;
+      } catch (e) {
+        console.error("[JobPoller] Final flush failed, will retry:", e);
+        // Fall through — watchers stay intact, next poll retries the flush
+      }
+    }
+
     if (
       !activeJobsExist &&
       state.jobWatchers.size === 0 &&

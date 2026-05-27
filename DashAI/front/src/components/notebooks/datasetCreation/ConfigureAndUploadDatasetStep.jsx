@@ -132,9 +132,11 @@ export default function ConfigureAndUploadDatasetStep({
   }, [
     selectedDataloader,
     datasetFileToUpload,
+    datasetName,
     columnTypes,
     columnRenames,
     formSubmitRef,
+    formValues,
     handleDatasetCreated,
     backHome,
     enqueueSnackbar,

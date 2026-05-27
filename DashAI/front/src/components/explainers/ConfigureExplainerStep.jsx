@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  DialogContentText,
-  Grid,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 
 import FormSchema from "../shared/FormSchema";
@@ -76,44 +70,20 @@ function ConfigureExplainerStep({
   }, [error]);
 
   return (
-    <Grid
-      container
-      direction="row"
-      justifyContent="space-around"
-      alignItems="stretch"
-      spacing={6}
-    >
-      <Grid size={{ xs: 12 }}>
-        <Typography variant="h5" component="h3">
-          {t("explainers:label.configureExplainer")}
-        </Typography>
-      </Grid>
-      {/* Configure dataloader parameters */}
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Paper
-          variant="outlined"
-          sx={{ p: 8, maxHeight: "55vh", overflow: "auto" }}
-        >
-          <Stack spacing={6}>
-            <DialogContentText>
-              {t("explainers:label.explainerConfiguration")}
-            </DialogContentText>
-
-            <FormSchemaLayout>
-              <FormSchema
-                autoSave
-                model={newExpl.explainer_name}
-                onFormSubmit={(values) => {
-                  handleUpdateParameters(values);
-                }}
-                setError={setError}
-                formSubmitRef={formSubmitRef}
-              />
-            </FormSchemaLayout>
-          </Stack>
-        </Paper>
-      </Grid>
-    </Grid>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Typography variant="subtitle2">
+        {t("explainers:label.explainerConfiguration")}
+      </Typography>
+      <FormSchemaLayout>
+        <FormSchema
+          autoSave
+          model={newExpl.explainer_name}
+          onFormSubmit={handleUpdateParameters}
+          setError={setError}
+          formSubmitRef={formSubmitRef}
+        />
+      </FormSchemaLayout>
+    </Box>
   );
 }
 

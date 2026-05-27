@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -15,13 +15,10 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import DatasetTable from "../dataset/DatasetTable";
 import api from "../../../api/api";
-import {
-  getDatasetFile,
-  getDatasetFileFiltered,
-  getDatasetTypesByFilePath,
-} from "../../../api/datasets";
+import { getDatasetFile, getDatasetFileFiltered } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
 export default function ConfigureToolModal({
   tool,
@@ -33,15 +30,8 @@ export default function ConfigureToolModal({
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
   const [step, setStep] = useState(0);
-  const [columnTypes, setColumnTypes] = useState({});
   const [imageOpen, setImageOpen] = useState(false);
-
-  useEffect(() => {
-    if (!notebook?.file_path) return;
-    getDatasetTypesByFilePath(notebook.file_path)
-      .then(setColumnTypes)
-      .catch(() => {});
-  }, [notebook?.file_path]);
+  const { columnTypes } = useExplorersAndConverters();
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel, sortModel) => {
@@ -229,7 +219,7 @@ export default function ConfigureToolModal({
               }}
             >
               <img
-                src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                src={`${api.defaults.baseURL}/v1/component/image/${tool.name}/`}
                 alt={tool.display_name}
                 style={{
                   width: "100%",
@@ -273,7 +263,7 @@ export default function ConfigureToolModal({
                   <Close />
                 </IconButton>
                 <img
-                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}/`}
                   alt={tool.display_name}
                   style={{
                     maxWidth: "90vw",

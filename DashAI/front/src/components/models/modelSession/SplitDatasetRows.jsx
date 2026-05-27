@@ -346,7 +346,10 @@ function SplitDatasetRows({
                     fullWidth
                     error={randomSplitError}
                     onChange={handleRowsChange}
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{
+                      inputLabel: { shrink: true },
+                      htmlInput: { step: 0.1 },
+                    }}
                   />
                 </Grid>
               ))}

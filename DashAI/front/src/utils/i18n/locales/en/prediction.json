@@ -57,6 +57,8 @@
     "reviewDetails": "Review your prediction configuration before submitting",
     "runFirstPrediction": "Run your first prediction to see it here",
     "selectCategory": "Select a category",
+    "uploadImage": "Upload image",
+    "changeImage": "Change image",
     "selectDataset": "Select a dataset for prediction",
     "selectDatasetFromPlatform": "Select a dataset from platform",
     "selectMode": "Select Mode",

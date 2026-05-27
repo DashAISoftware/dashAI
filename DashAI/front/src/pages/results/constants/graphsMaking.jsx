@@ -114,8 +114,11 @@ function heatmapMaking(
     metricsMetadata[m]?.maximize === false ? `${m} ↓` : m,
   );
 
-  const primaryColor = theme.palette.primary.main;
-  const secondaryColor = theme.palette.secondary.main;
+  // error.main dark (#ff8383) / light (#d32f2f); primary.light is #A7C7FF in both modes
+  // To use current-mode colors, change the ternary to just `theme.palette.error.main`
+  const worstColor =
+    theme.palette.mode === "dark" ? theme.palette.error.main : "#ff8383";
+  const bestColor = theme.palette.primary.light;
 
   return [
     {
@@ -126,10 +129,10 @@ function heatmapMaking(
       text: annotationText,
       texttemplate: "%{text}",
       textfont: { size: 11, weight: 700, color: theme.palette.text.primary },
-      // orange (primary) = min/worst, green (secondary) = max/best
+      // amber (accent) = min/worst, teal/blue (accent) = max/best
       colorscale: [
-        [0, primaryColor],
-        [1, secondaryColor],
+        [0, worstColor],
+        [1, bestColor],
       ],
       zauto: false,
       zmin: 0,

@@ -8,7 +8,7 @@ import {
   CircularProgress,
   IconButton,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import { Delete } from "@mui/icons-material";
 import {
   MaterialReactTable,
@@ -72,6 +72,7 @@ export default function ConverterBox({
   converter,
   onStatusChange,
   handleConverterDeleteClick,
+  isHighlighted = false,
 }) {
   const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
@@ -132,6 +133,18 @@ export default function ConverterBox({
         bgcolor: theme.palette.background.box,
         borderRadius: 2,
         height: "100%",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newItemHighlight": {
+          "0%": { boxShadow: "none" },
+          "20%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newItemHighlight 4s ease-in-out forwards"
+          : "none",
       }}
     >
       <CardContent
@@ -161,7 +174,13 @@ export default function ConverterBox({
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={getConverterStatus(statusLabel, t)}
-              color={statusLabel === 3 ? "primary" : "default"} // Finished
+              color={
+                statusLabel === 3
+                  ? "success"
+                  : statusLabel === 4
+                    ? "error"
+                    : "default"
+              }
               size="small"
             />
             {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished

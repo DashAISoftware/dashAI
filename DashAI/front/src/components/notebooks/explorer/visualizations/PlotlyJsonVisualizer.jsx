@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
@@ -15,6 +16,7 @@ const MIN_HEIGHT_MINIMALIST = 200;
 const MIN_HEIGHT_NORMAL = 500;
 
 function PlotlyJsonVisualizer({ data, minimalist = false }) {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
   const plotRef = useRef(null);
   const fullscreenPlotRef = useRef(null);
@@ -155,24 +157,24 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
   };
 
   const iconBtnSx = {
-    bgcolor: "rgba(255,255,255,0.85)",
-    border: "1px solid rgba(0,0,0,0.08)",
-    color: "#9e9e9e",
+    bgcolor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.ui.borderLight}`,
+    color: theme.palette.text.disabled,
     width: 30,
     height: 30,
     "&:hover": {
-      bgcolor: "rgba(255,255,255,1)",
-      color: "#616161",
+      bgcolor: theme.palette.background.paper,
+      color: theme.palette.text.secondary,
     },
   };
 
   const downloadBtnSx = {
-    bgcolor: "#ef9f27",
-    color: "white",
+    bgcolor: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
     width: 30,
     height: 30,
     "&:hover": {
-      bgcolor: "#f5b94a",
+      bgcolor: theme.palette.primary.light,
     },
   };
 

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-
-import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
+import { Box, CircularProgress, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getComponents as getComponentsRequest } from "../../api/component";
-import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
+import ComponentSelector from "../custom/ComponentSelector";
 import { useTranslation } from "react-i18next";
 
 function SetNameAndExplainerStep({
@@ -19,7 +18,6 @@ function SetNameAndExplainerStep({
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
 
-  // Explainer name state
   const [nModifications, setNModifications] = useState(0);
   const [explNameOk, setExplNameOk] = useState(false);
   const [explNameError, setExplNameError] = useState(false);
@@ -30,18 +28,14 @@ function SetNameAndExplainerStep({
   const [selectedExplainerOk, setSelectedExplainerOk] = useState(false);
   const { t } = useTranslation(["explainers"]);
 
-  function filterObjects(arr) {
-    return arr.filter((obj) => !obj.name.startsWith("Fit"));
-  }
-
   const getExplainers = async () => {
     setLoading(true);
     try {
-      const explainers = await getComponentsRequest({
+      const result = await getComponentsRequest({
         selectTypes: [`${scope}Explainer`],
         relatedComponent: taskName,
       });
-      setExplainers(filterObjects(explainers));
+      setExplainers(result.filter((obj) => !obj.name.startsWith("Fit")));
     } catch (error) {
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
@@ -116,54 +110,46 @@ function SetNameAndExplainerStep({
   }, [explNameOk, selectedExplainerOk, explNameExistsError]);
 
   return (
-    <Grid
-      container
-      direction="row"
-      justifyContent="space-around"
-      alignItems="stretch"
-      spacing={4}
-    >
-      {/* Set Name subcomponent */}
-      <Grid size={{ xs: 12 }}>
-        <Typography variant="subtitle1" component="h3" sx={{ mb: 6 }}>
-          {t("explainers:label.selectExplainerAndName")}
-        </Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <TextField
+        id="explainer-name-input"
+        label={t("explainers:label.explainerName")}
+        value={newExpl.name}
+        fullWidth
+        onChange={handleNameInputChange}
+        autoComplete="off"
+        error={explNameError || explNameExistsError}
+        helperText={
+          explNameExistsError
+            ? t("explainers:error.nameAlreadyExists", {
+                defaultValue: "Name already exists",
+              })
+            : explNameError
+              ? t("explainers:error.nameTooShort")
+              : ""
+        }
+      />
 
-        <TextField
-          id="explainer-name-input"
-          label={t("explainers:label.explainerName")}
-          value={newExpl.name}
-          fullWidth
-          onChange={handleNameInputChange}
-          autoComplete="off"
-          sx={{ mb: 4 }}
-          error={explNameError || explNameExistsError}
-          helperText={
-            explNameExistsError
-              ? t("explainers:error.nameAlreadyExists", {
-                  defaultValue: "Name already exists",
-                })
-              : t("explainers:error.nameTooShort")
-          }
+      <Typography variant="subtitle2">
+        {t("explainers:label.selectExplainer")}
+      </Typography>
+
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <ComponentSelector
+          components={explainers}
+          selected={selectedExplainer?.name ? selectedExplainer : null}
+          onSelect={setSelectedExplainer}
+          flat
+          searchPlaceholder={t("explainers:label.searchExplainers", {
+            defaultValue: "Search explainers...",
+          })}
         />
-      </Grid>
-
-      {/* Tasks Subcomponent */}
-      <Grid size={{ xs: 12 }}>
-        <Grid>
-          {/* Tasks list and description */}
-          {!loading ? (
-            <ItemSelectorWithInfo
-              itemsList={explainers}
-              selectedItem={selectedExplainer}
-              setSelectedItem={setSelectedExplainer}
-            />
-          ) : (
-            <CircularProgress color="inherit" />
-          )}
-        </Grid>
-      </Grid>
-    </Grid>
+      )}
+    </Box>
   );
 }
 

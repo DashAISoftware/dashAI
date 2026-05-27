@@ -60,7 +60,10 @@ async def get_job_changes(
 
         jobs = job_queue.changes_since(since_decoded)
 
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+        _now = datetime.now(timezone.utc)
+        current_time = _now.strftime(
+            f"%Y-%m-%d %H:%M:%S.{_now.microsecond // 1000:03d}"
+        )
 
         is_queue_empty = job_queue.is_empty()
         recently_completed = any(j.get("status") in ("finished", "error") for j in jobs)
@@ -74,7 +77,10 @@ async def get_job_changes(
         }
     except Exception as e:
         logger.exception(f"Error retrieving job changes: {e}")
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+        _now = datetime.now(timezone.utc)
+        current_time = _now.strftime(
+            f"%Y-%m-%d %H:%M:%S.{_now.microsecond // 1000:03d}"
+        )
         return {
             "jobs": [],
             "cursor": current_time,
@@ -234,6 +240,32 @@ async def enqueue_job(
                 )
 
             kwargs = json.loads(kwargs_str)
+
+            # Handle image files for manual predictions
+            import re
+
+            manual_input = kwargs.get("manual_input_data")
+            if manual_input and isinstance(manual_input, list):
+                file_key_regex = re.compile(r"^file_(\d+)_(.+)$")
+                temp_dir = tempfile.mkdtemp()
+                for field_name in form:
+                    upload = form[field_name]
+                    if not hasattr(upload, "read"):
+                        continue
+                    match = file_key_regex.match(field_name)
+                    if not match:
+                        continue
+                    row_idx = int(match.group(1))
+                    col_name = match.group(2)
+                    if row_idx < 0 or row_idx >= len(manual_input):
+                        continue
+                    if manual_input[row_idx].get(col_name) != field_name:
+                        continue
+                    file_bytes = await upload.read()
+                    file_path = os.path.join(temp_dir, f"{row_idx}_{col_name}")
+                    with open(file_path, "wb") as f:
+                        f.write(file_bytes)
+                    manual_input[row_idx][col_name] = {"__image_file__": file_path}
 
         # instantiate job with only primitive args
         JobClass = component_registry[job_type]["class"]

@@ -270,18 +270,6 @@ export default function GenerativeChat() {
         mt={4}
         p={8}
         ref={chatContainerRef}
-        sx={{
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.palette.ui.border,
-            borderRadius: "4px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: theme.palette.ui.hover,
-          },
-        }}
       >
         {messagesWithHistory?.map((message) => {
           return (

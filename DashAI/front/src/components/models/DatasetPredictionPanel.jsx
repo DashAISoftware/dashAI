@@ -1,10 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, CircularProgress } from "@mui/material";
-import {
-  TrendingUp as TrendingUpIcon,
-  Close as CloseIcon,
-} from "@mui/icons-material";
+import { Box, CircularProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import DatasetSelector from "../predictions/DatasetSelector";
@@ -26,6 +22,8 @@ export default function DatasetPredictionPanel({
   session,
   onSaved,
   onClose,
+  runRef = null,
+  onStateChange = null,
 }) {
   const [datasets, setDatasets] = useState([]);
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -35,6 +33,18 @@ export default function DatasetPredictionPanel({
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "common"]);
+
+  const handleRunRef = useRef(null);
+  useEffect(() => {
+    if (runRef) runRef.current = () => handleRunRef.current?.();
+  }, [runRef]);
+
+  useEffect(() => {
+    onStateChange?.({
+      canRun: !!selectedDataset && !isSubmitting,
+      isSubmitting,
+    });
+  }, [selectedDataset, isSubmitting, onStateChange]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -151,6 +161,7 @@ export default function DatasetPredictionPanel({
       setIsSubmitting(false);
     }
   };
+  handleRunRef.current = handleRunDatasetPrediction;
 
   if (loading) {
     return (
@@ -172,42 +183,6 @@ export default function DatasetPredictionPanel({
         selectedDataset={selectedDataset}
         setSelectedDataset={setSelectedDataset}
       />
-
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2,
-          flexWrap: "wrap",
-          justifyContent: "flex-end",
-        }}
-      >
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={
-            isSubmitting ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <TrendingUpIcon />
-            )
-          }
-          onClick={handleRunDatasetPrediction}
-          disabled={!selectedDataset || isSubmitting}
-        >
-          {t("prediction:button.runPrediction")}
-        </Button>
-
-        <Button
-          variant="text"
-          size="small"
-          startIcon={<CloseIcon />}
-          onClick={onClose}
-          disabled={isSubmitting}
-          color="inherit"
-        >
-          {t("common:cancel")}
-        </Button>
-      </Box>
     </Box>
   );
 }
