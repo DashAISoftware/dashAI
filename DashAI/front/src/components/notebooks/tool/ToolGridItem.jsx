@@ -5,6 +5,7 @@ import api from "../../../api/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
+import { setCustomDragImage } from "../../../utils/dragImage";
 
 export default function ToolGridItem({ tool, disabled, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -51,6 +52,19 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
       >
         <Box
           key={tool.id}
+          draggable={!disabled}
+          onDragStart={
+            !disabled
+              ? (e) => {
+                  e.dataTransfer.setData(
+                    "application/json",
+                    JSON.stringify(tool),
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                  setCustomDragImage(e);
+                }
+              : undefined
+          }
           onMouseEnter={(e) => handleMouseEnter(e, tool)}
           onMouseLeave={handleMouseLeave}
           onClick={disabled ? null : onClick}
@@ -62,7 +76,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
             border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1.5,
             overflow: "hidden",
-            cursor: disabled ? "not-allowed" : "pointer",
+            cursor: disabled ? "not-allowed" : "grab",
             transition: "all 0.2s",
             opacity: disabled ? 0.5 : 1,
             filter: disabled ? "grayscale(0.6)" : "none",

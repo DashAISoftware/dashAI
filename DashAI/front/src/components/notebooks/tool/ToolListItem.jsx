@@ -5,6 +5,7 @@ import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { useTranslation } from "react-i18next";
+import { setCustomDragImage } from "../../../utils/dragImage";
 
 export default function ToolListItem({
   tool,
@@ -71,6 +72,19 @@ export default function ToolListItem({
           key={tool.id}
           data-tour={getTourAttribute()}
           {...props}
+          draggable={!disabled}
+          onDragStart={
+            !disabled
+              ? (e) => {
+                  e.dataTransfer.setData(
+                    "application/json",
+                    JSON.stringify(tool),
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                  setCustomDragImage(e);
+                }
+              : undefined
+          }
           onMouseEnter={(e) => handleMouseEnter(e, tool)}
           onMouseLeave={handleMouseLeave}
           onClick={disabled ? null : onClick}
@@ -84,7 +98,7 @@ export default function ToolListItem({
               : theme.palette.ui.box,
             border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1,
-            cursor: disabled ? "not-allowed" : "pointer",
+            cursor: disabled ? "not-allowed" : "grab",
             transition: "all 0.2s",
             opacity: disabled ? 0.5 : 1,
             filter: disabled ? "grayscale(0.6)" : "none",

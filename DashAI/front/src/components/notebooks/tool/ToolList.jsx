@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
   Accordion,
@@ -14,6 +14,7 @@ import ConfigureToolModal from "./ConfigureToolModal";
 import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
 import { useTranslation } from "react-i18next";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
 export default function ToolList({ tools, notebook, FormComponent }) {
   const theme = useTheme();
@@ -21,6 +22,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
   const [selectedTool, setSelectedTool] = useState(null);
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
+  const { pendingDropTool, setPendingDropTool } = useExplorersAndConverters();
 
   const grouped = useMemo(() => groupByCategory(tools), [tools]);
   const categories = useMemo(
@@ -37,6 +39,15 @@ export default function ToolList({ tools, notebook, FormComponent }) {
       }, 500);
     }
   };
+
+  useEffect(() => {
+    if (!pendingDropTool) return;
+    const match = tools.find((t) => t.name === pendingDropTool.name);
+    if (match) {
+      handleToolClick(match);
+      setPendingDropTool(null);
+    }
+  }, [pendingDropTool]);
 
   if (!tools || tools.length === 0) {
     return (
