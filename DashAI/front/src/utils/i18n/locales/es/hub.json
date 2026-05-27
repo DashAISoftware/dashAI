@@ -55,7 +55,7 @@
   "selectSourceTitle": "Seleccionar fuente de datos",
   "selectSourceSubtitle": "Elige una fuente de datos externa para explorar datasets públicos. Una vez que encuentres un dataset, descárgalo a DashAI e impórtalo como dataset para comenzar a entrenar modelos.",
   "searchSources": "Buscar fuentes...",
-  "searchDownloads": "Buscar datafiles...",
+  "searchDownloads": "Buscar Datafiles...",
   "datasetDetails": "Detalles del Datafile",
   "checkQueue": "Revisa la cola de trabajos para más detalles",
   "deleteSuccess": "Datafile \"{{name}}\" eliminado.",

@@ -55,7 +55,7 @@
   "selectSourceTitle": "Select a Data Source",
   "selectSourceSubtitle": "Choose an external data source to browse public datasets. Once you find a dataset, download it to DashAI and import it as a dataset to start training models.",
   "searchSources": "Search sources...",
-  "searchDownloads": "Search datafiles...",
+  "searchDownloads": "Search Datafiles...",
   "datasetDetails": "Datafile Details",
   "checkQueue": "Check the job queue for details",
   "deleteSuccess": "Datafile \"{{name}}\" deleted.",
