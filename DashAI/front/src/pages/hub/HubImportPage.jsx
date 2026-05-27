@@ -121,8 +121,7 @@ export default function HubImportPage() {
     [base, navigate],
   );
 
-  const handleCancel = () =>
-    navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
+  const handleCancel = () => navigate("/app/data/hub");
   const handleImported = (dataset, importResult) => {
     addDatasetOptimistically(dataset);
     if (importResult?.job_id) {
