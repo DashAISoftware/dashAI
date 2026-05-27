@@ -108,13 +108,6 @@ export default function HubImportPanel({
     setFiles([]);
   }, [dataset?.id, sourceName]);
 
-  // Redirect to step 0 if file step was skipped (e.g. direct URL navigation)
-  useEffect(() => {
-    if (hasFileStep && stepValue > 0 && selectedFile === null) {
-      setStepValue(0);
-    }
-  }, [hasFileStep, stepValue, selectedFile]);
-
   // Load files when entering file-select step
   useEffect(() => {
     if (!hasFileStep || stepValue !== 0 || !datafile) return;
