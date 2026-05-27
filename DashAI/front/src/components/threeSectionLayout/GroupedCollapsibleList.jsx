@@ -71,22 +71,22 @@ export default function GroupedCollapsibleList({
     <Box
       display="flex"
       flexDirection="column"
-      pb={1}
+      pb={4}
       sx={{
         overflowY: "hidden",
         flex: 1,
-        pl: 2,
-        pr: 2,
-        pt: 2,
+        pl: 4,
+        pr: 4,
+        pt: 4,
       }}
     >
       {/* Main Header */}
       <Box
         display="flex"
         alignItems="center"
-        py={0.5}
-        px={1}
-        mb={0.5}
+        py={2}
+        px={4}
+        mb={2}
         sx={{
           position: "sticky",
           top: 0,
@@ -97,7 +97,7 @@ export default function GroupedCollapsibleList({
       >
         {Icon && (
           <Icon
-            sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 20 }}
+            sx={{ color: theme.palette.primary.main, mr: 4, fontSize: 20 }}
           />
         )}
         <Typography
@@ -149,15 +149,15 @@ export default function GroupedCollapsibleList({
         }}
       >
         {Object.entries(groups || {}).map(([groupName, items]) => (
-          <Box key={groupName} mb={1}>
+          <Box key={groupName} mb={2}>
             {/* Group Header */}
             <Box
               display="flex"
               alignItems="center"
               sx={{
                 cursor: "pointer",
-                py: 0.5,
-                px: 1,
+                py: 2,
+                px: 4,
                 borderRadius: 1,
                 "&:hover": {
                   bgcolor: theme.palette.ui.hover,
@@ -176,7 +176,7 @@ export default function GroupedCollapsibleList({
               )}
               <Typography
                 sx={{
-                  ml: 1,
+                  ml: 4,
                   ...theme.typography.h5,
                   textTransform: "capitalize",
                   overflow: "hidden",
@@ -193,7 +193,7 @@ export default function GroupedCollapsibleList({
                 variant="body2"
                 component="div"
                 sx={{
-                  ml: 1,
+                  ml: 4,
                   bgcolor: "primary.main",
                   color: "primary.contrastText",
                   borderRadius: "50%",
@@ -210,7 +210,7 @@ export default function GroupedCollapsibleList({
 
             {/* Group Items */}
             <Collapse in={openGroups[groupName]} timeout="auto">
-              <Box pl={2}>
+              <Box pl={4}>
                 {items?.length ? (
                   items.map((item) => (
                     <ItemBox
@@ -248,7 +248,7 @@ export default function GroupedCollapsibleList({
                       color: theme.palette.text.primary,
                       opacity: 0.5,
                       textAlign: "center",
-                      p: 2,
+                      p: 8,
                     }}
                   >
                     {t("common:noItemsInGroup", "No items found.")}

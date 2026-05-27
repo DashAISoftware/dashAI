@@ -130,7 +130,9 @@ export const enqueuePredictionJob = async (
     const cleanObj: any = {};
     Object.entries(obj).forEach(([key, value]) => {
       if (value instanceof File) {
-        formData.append(`file_${i}_${key}`, value); // attach file
+        const fieldName = `file_${i}_${key}`;
+        formData.append(fieldName, value);
+        cleanObj[key] = fieldName;
       } else {
         cleanObj[key] = value;
       }

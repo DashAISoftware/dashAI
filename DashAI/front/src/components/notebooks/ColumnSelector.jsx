@@ -41,6 +41,7 @@ function ColumnSelector({
   allowedTypes = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
+  columnTypes = null,
 }) {
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
@@ -88,25 +89,30 @@ function ColumnSelector({
   );
 
   useEffect(() => {
+    const toColumns = (types) =>
+      Object.entries(types).map(([columnName, typeInfo], idx) => ({
+        id: idx,
+        columnName: columnName,
+        valueType: typeInfo.type || t("common:unknown"),
+        dataType: typeInfo.dtype || t("common:unknown"),
+        order: idx,
+      }));
+
+    if (columnTypes !== null) {
+      const cols = toColumns(columnTypes);
+      setDatasetColumns(cols);
+      setRows(cols);
+      return;
+    }
+
     let isMounted = true;
     const fetchAllData = async () => {
       try {
         const types = await getDatasetTypesByFilePath(file_path);
-
         if (!isMounted) return;
-
-        const datasetColumns = Object.entries(types).map(
-          ([columnName, typeInfo], idx) => ({
-            id: idx,
-            columnName: columnName,
-            valueType: typeInfo.type || t("common:unknown"),
-            dataType: typeInfo.dtype || t("common:unknown"),
-            order: idx,
-          }),
-        );
-
-        setDatasetColumns(datasetColumns);
-        setRows(datasetColumns);
+        const cols = toColumns(types);
+        setDatasetColumns(cols);
+        setRows(cols);
       } catch (error) {
         console.error("Error fetching dataset info/types:", error);
       }
@@ -117,7 +123,7 @@ function ColumnSelector({
     return () => {
       isMounted = false;
     };
-  }, [file_path]);
+  }, [file_path, columnTypes]);
 
   // Validate current selection
   const isValidSelection = useCallback(
@@ -277,6 +283,7 @@ function ColumnSelector({
     enableFullScreenToggle: false,
     enableHiding: false,
     enablePagination: true,
+    autoResetPageIndex: false,
     muiPaginationProps: { rowsPerPageOptions: [10, 15, 20] },
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
@@ -318,8 +325,8 @@ function ColumnSelector({
       {/* Column requirements */}
       <Box
         sx={{
-          mb: 1.5,
-          p: 1.5,
+          mb: 3,
+          p: 3,
           borderRadius: 2,
           backgroundColor: theme.palette.ui.hover,
           border: `1px solid ${theme.palette.ui.divider}`,
@@ -327,7 +334,7 @@ function ColumnSelector({
         }}
       >
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
@@ -363,7 +370,7 @@ function ColumnSelector({
             sx={{
               color: "text.secondary",
               fontStyle: "italic",
-              mt: 1,
+              mt: 2,
             }}
           >
             <Trans i18nKey="datasets:label.allowedValueTypes">
@@ -381,7 +388,7 @@ function ColumnSelector({
         {allowedDtypes.length > 0 && (
           <Typography
             variant="caption"
-            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+            sx={{ color: "text.disabled", mt: 1, display: "block" }}
           >
             {t("common:allowedTypes")}:{" "}
             <Box

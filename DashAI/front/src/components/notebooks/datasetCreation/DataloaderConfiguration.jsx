@@ -33,7 +33,7 @@ function DataloaderConfiguration({
   );
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={6}>
       {/* Form title */}
       <DialogContentText sx={{ alignSelf: "center" }}>
         {t("datasets:label.selectedDataloaderConfiguration", {

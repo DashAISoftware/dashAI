@@ -47,7 +47,7 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
               justifyContent={"space-between"}
             >
               <Grid>
-                <Typography variant="h4" py={2}>
+                <Typography variant="h4" py={4}>
                   {t("plugins:label.plugins", { label })}
                 </Typography>
               </Grid>

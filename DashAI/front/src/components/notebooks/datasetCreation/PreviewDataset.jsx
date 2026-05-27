@@ -190,7 +190,7 @@ function PreviewDataset({
         boxShadow: "none",
       }}
     >
-      <Grid sx={{ p: 4 }}>
+      <Grid sx={{ p: 8 }}>
         {loading && (
           <Box
             sx={{
@@ -258,50 +258,53 @@ function PreviewDataset({
               width: "100%",
             }}
           >
-            {!initialData && (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 2,
-                  mb: 2,
-                  flexShrink: 0,
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  {t("datasets:label.showingRowsInference", {
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 4,
+                mb: 4,
+                flexShrink: 0,
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                {t(
+                  previewData.types_inferred === false
+                    ? "datasets:label.showingRowsPreview"
+                    : "datasets:label.showingRowsInference",
+                  {
                     sampleLength: previewData.sample.length,
                     previewRowCount: previewData.preview_row_count,
-                  })}
-                  <br />
-                  {t("datasets:label.changeColumnTypesInfo")}
-                </Typography>
+                  },
+                )}
+                <br />
+                {t("datasets:label.changeColumnTypesInfo")}
+              </Typography>
 
-                <Tooltip title={t("datasets:button.reUploadDataset")}>
-                  <IconButton
-                    onClick={onChangeDataset}
-                    size="small"
-                    sx={{
-                      flexShrink: 0,
-                      border: `1px solid ${theme.palette.action.disabled}`,
-                      borderRadius: 2,
-                      color: "text.secondary",
-                      padding: "4px",
-                      transition: "color 0.2s, border-color 0.2s",
-                      "&:hover": {
-                        backgroundColor: "transparent",
-                        color: "primary.main",
-                        borderColor: theme.palette.primary.main,
-                      },
-                    }}
-                  >
-                    <UploadFileIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+              <Tooltip title={t("datasets:button.reUploadDataset")}>
+                <IconButton
+                  onClick={onChangeDataset}
+                  size="small"
+                  sx={{
+                    flexShrink: 0,
+                    border: `1px solid ${theme.palette.action.disabled}`,
+                    borderRadius: 2,
+                    color: "text.secondary",
+                    padding: "4px",
+                    transition: "color 0.2s, border-color 0.2s",
+                    "&:hover": {
+                      backgroundColor: "transparent",
+                      color: "primary.main",
+                      borderColor: theme.palette.primary.main,
+                    },
+                  }}
+                >
+                  <UploadFileIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
             )}
-
             <Box sx={{ width: "100%" }}>
               <PreviewDatasetTable
                 rows={previewData.sample}

@@ -130,7 +130,7 @@ class SkewedChi2Sampler(
         es="Muestreador Chi²",
         pt="Amostrador Qui-2 Enviesado",
     )
-    IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
+    IMAGE_PREVIEW = "skewed_chi2_sampler.png"
 
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 

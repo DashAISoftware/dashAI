@@ -75,7 +75,7 @@ function ResultsByExplorer({
         enableColumnFilter: false,
         size: 60,
         Cell: ({ row }) => (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <TooltipedCellItem
               icon={<DetailsIcon />}
               label="Show Explorer details"
@@ -140,8 +140,8 @@ function ResultsByExplorer({
         sx={{
           display: "flex",
           flexDirection: "column",
-          px: 3,
-          py: 2,
+          px: 6,
+          py: 4,
           width: "100%",
         }}
         // solves a mui problem related to putting datagrid inside another datagrid

@@ -121,7 +121,7 @@ export default function DebouncedColorPicker({
       sx={{
         display: "flex",
         alignItems: "flex-start",
-        gap: 1,
+        gap: 2,
         width: "100%",
       }}
     >

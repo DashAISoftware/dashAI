@@ -11,6 +11,7 @@ import { useTableLocalization } from "../../../utils/useTableLocalization";
 import {
   renameDatasetColumn,
   updateColumnEncoder,
+  exportDatasetCsvByPath,
 } from "../../../api/datasets";
 import EditableColumnHeader from "./EditableColumnHeader";
 
@@ -27,6 +28,7 @@ export default function DatasetTable({
   baseBackgroundColor,
   enableTopToolbar = true,
   enableRowsPerPageSelector = true,
+  showBorder = true,
 }) {
   const { t } = useTranslation(["common"]);
   const theme = useTheme();
@@ -86,6 +88,10 @@ export default function DatasetTable({
 
   const [columnFilterFns, setColumnFilterFns] = useState(getDefaultFilterFns);
   const [showColumnFilters, setShowColumnFilters] = useState(false);
+  // loadKey starts at 0 so the main loading effect can skip the initial mount
+  // run (before the deps effect has fired). The deps effect increments it to
+  // signal that initialization is done and a fetch should occur.
+  const [loadKey, setLoadKey] = useState(0);
 
   useEffect(() => {
     initialized.current = false;
@@ -108,10 +114,18 @@ export default function DatasetTable({
         f.value !== undefined &&
         f.value !== "",
     );
-    setColumnFilters(cleanFilters);
-    setSorting(session?.sorting ?? []);
+    const newSorting = session?.sorting ?? [];
+    // Preserve reference identity when values haven't changed so the main
+    // loading effect (which depends on these arrays) does not fire an extra time.
+    setColumnFilters((prev) =>
+      prev.length === 0 && cleanFilters.length === 0 ? prev : cleanFilters,
+    );
+    setSorting((prev) =>
+      prev.length === 0 && newSorting.length === 0 ? prev : newSorting,
+    );
     setColumnFilterFns(session?.columnFilterFns ?? getDefaultFilterFns());
     setPagination({ pageIndex: 0, pageSize: initialPageSize });
+    setLoadKey((k) => k + 1);
 
     initialized.current = true;
   }, deps);
@@ -195,7 +209,7 @@ export default function DatasetTable({
   // 1st load: only fetch current page (fast, like develop)
   // If filters active and dataset small: lazy-load all data for client-side filtering
   useEffect(() => {
-    if (!initialized.current) return;
+    if (!initialized.current || loadKey === 0) return;
 
     // If we have cached filtered data, use it for pagination
     if (allFilteredDataRef.current) {
@@ -283,7 +297,13 @@ export default function DatasetTable({
     return () => {
       cancelled = true;
     };
-  }, [pagination.pageIndex, pagination.pageSize, columnFilters, sorting]);
+  }, [
+    loadKey,
+    pagination.pageIndex,
+    pagination.pageSize,
+    columnFilters,
+    sorting,
+  ]);
 
   const handleColumnRename = useCallback(
     async (oldName, newName) => {
@@ -348,11 +368,38 @@ export default function DatasetTable({
       const colTypeRaw = columnTypes[key];
       const colType =
         typeof colTypeRaw === "string" ? colTypeRaw : (colTypeRaw?.type ?? "");
+      const isImage =
+        colType === "Image" ||
+        (data.length > 0 &&
+          typeof data[0][key] === "string" &&
+          data[0][key].startsWith("data:image"));
       const filterVariant = "text";
       return {
         accessorKey: key,
         header: key,
         filterVariant,
+        enableColumnFilter: !isImage,
+        enableSorting: !isImage,
+        ...(isImage && {
+          Cell: ({ cell }) => {
+            const val = cell.getValue();
+            if (typeof val === "string" && val.startsWith("data:image")) {
+              return (
+                <img
+                  src={val}
+                  alt="img"
+                  style={{
+                    maxHeight: 48,
+                    maxWidth: 48,
+                    objectFit: "contain",
+                  }}
+                />
+              );
+            }
+            return val;
+          },
+          size: 80,
+        }),
         filterFn: ["Integer", "Float"].includes(colType)
           ? "between"
           : "contains",
@@ -392,7 +439,7 @@ export default function DatasetTable({
             </div>
           ) : (
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+              <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>
                 {key}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -415,51 +462,31 @@ export default function DatasetTable({
   const handleExportFilteredRows = useCallback(async () => {
     if (rowCount === 0) return;
     try {
-      let rows;
-      if (allFilteredData) {
-        rows = allFilteredData;
-      } else {
-        const muiFormattedFilters = buildFilterModel();
-        const response = await fetchPage(
-          0,
-          rowCount,
-          muiFormattedFilters,
-          sorting,
-        );
-        rows = response?.rows ?? [];
-      }
-      if (rows.length === 0) return;
-
-      const headers = Object.keys(rows[0]).filter((k) => k !== "id");
-      const csvRows = [headers.join(",")];
-      for (const row of rows) {
-        csvRows.push(
-          headers
-            .map((h) => {
-              const val = row[h] ?? "";
-              const str = String(val);
-              return str.includes(",") ||
-                str.includes('"') ||
-                str.includes("\n")
-                ? `"${str.replace(/"/g, '""')}"`
-                : str;
-            })
-            .join(","),
-        );
-      }
-      const blob = new Blob([csvRows.join("\n")], {
-        type: "text/csv;charset=utf-8;",
-      });
+      const hasFilters = columnFilters.length > 0;
+      const currentFilterModel = hasFilters ? buildFilterModel() : undefined;
+      const currentSortModel = sorting.length > 0 ? sorting : undefined;
+      const blob = await exportDatasetCsvByPath(
+        datasetPath,
+        currentFilterModel,
+        currentSortModel,
+      );
+      const isZip =
+        blob.type === "application/zip" ||
+        blob.type === "application/octet-stream";
+      const ext = isZip ? "zip" : "csv";
+      const filename = hasFilters
+        ? `dataset_filtered.${ext}`
+        : `dataset.${ext}`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "dataset_filtered.csv";
+      link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error exporting filtered data:", error);
+      console.error("Error exporting data:", error);
     }
-  }, [rowCount, allFilteredData, buildFilterModel, sorting, fetchPage]);
+  }, [rowCount, datasetPath, buildFilterModel, columnFilters, sorting]);
 
   const table = useMaterialReactTable({
     columns,
@@ -472,7 +499,7 @@ export default function DatasetTable({
     },
     muiTablePaperProps: {
       elevation: 0,
-      sx: { border: "1px solid", borderColor: "divider" },
+      sx: showBorder ? { border: "1px solid", borderColor: "divider" } : {},
     },
     enablePagination: true,
     manualPagination: true,

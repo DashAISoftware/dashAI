@@ -130,7 +130,7 @@ function NewPipeline() {
               <Box
                 sx={{
                   flexGrow: 1,
-                  p: 2,
+                  p: 8,
                   backgroundColor: theme.palette.background.default,
                 }}
               >
@@ -203,7 +203,7 @@ function NewPipeline() {
             </Box>
           </>
         ) : (
-          <Box sx={{ p: 2 }}>
+          <Box sx={{ p: 8 }}>
             {resultId ? (
               <PipelineResults pipelineId={resultId} />
             ) : (

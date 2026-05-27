@@ -68,7 +68,7 @@ function EditDataTypeModal({ datasetId, updateDatasets }) {
         <DialogContent onClick={(event) => event.stopPropagation()}>
           <Paper
             variant="outlined"
-            sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
+            sx={{ p: 8, maxHeight: "55vh", overflow: "auto" }}
           >
             <Grid container direction="column" alignItems="center">
               <Grid>
@@ -76,7 +76,7 @@ function EditDataTypeModal({ datasetId, updateDatasets }) {
                 <Typography
                   variant="caption"
                   component="h3"
-                  sx={{ mb: 2, color: "grey" }}
+                  sx={{ mb: 4, color: "grey" }}
                 >
                   Summary of the dataset. You can modify the type by selecting a
                   different value.

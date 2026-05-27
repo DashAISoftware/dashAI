@@ -77,7 +77,7 @@ export default function DeleteConfirmationModal({
 
           {/* Footer */}
           <Box
-            sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 1 }}
           >
             <Button onClick={onClose} sx={{ color: "text.secondary" }}>
               {t("common:cancel")}

@@ -10,21 +10,21 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
   const theme = useTheme();
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+    <Box sx={{ mb: 6 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         {t("prediction:label.selectPredictionMode")}
       </Typography>
       <Typography
         variant="body2"
-        sx={{ color: theme.palette.text.secondary, mb: 2 }}
+        sx={{ color: theme.palette.text.secondary, mb: 4 }}
       >
         {t("prediction:label.chooseInputMethod")}
       </Typography>
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
         <Paper
           elevation={predictionMode === "dataset" ? 3 : 0}
           sx={{
-            p: 2,
+            p: 4,
             cursor: "pointer",
             border: 2,
             borderColor:
@@ -40,7 +40,7 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
           }}
           onClick={() => setPredictionMode("dataset")}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <StorageIcon
               color={predictionMode === "dataset" ? "primary" : "action"}
             />
@@ -60,7 +60,7 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
         <Paper
           elevation={predictionMode === "manual" ? 3 : 0}
           sx={{
-            p: 2,
+            p: 4,
             cursor: "pointer",
             border: 2,
             borderColor:
@@ -76,7 +76,7 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
           }}
           onClick={() => setPredictionMode("manual")}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <CreateIcon
               color={predictionMode === "manual" ? "primary" : "action"}
             />

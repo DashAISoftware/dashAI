@@ -73,7 +73,7 @@ function ResultsTable({ selectedPrediction }) {
 
       <Typography
         variant="subtitle2"
-        sx={{ color: theme.palette.text.secondary, mb: 1, display: "block" }}
+        sx={{ color: theme.palette.text.secondary, mb: 2, display: "block" }}
       >
         {loadingExecution
           ? t("prediction:label.predictionStillRunningResults")
@@ -84,13 +84,13 @@ function ResultsTable({ selectedPrediction }) {
       {loadingExecution && (
         <Box
           sx={{
-            py: 4,
+            py: 8,
             textAlign: "center",
             color: theme.palette.text.secondary,
           }}
         >
           <CircularProgress size={28} />
-          <Typography variant="body2" sx={{ mt: 1 }}>
+          <Typography variant="body2" sx={{ mt: 2 }}>
             {t("prediction:label.predictionStillRunning")}
           </Typography>
         </Box>
@@ -102,7 +102,7 @@ function ResultsTable({ selectedPrediction }) {
           <>
             <Typography
               variant="body2"
-              sx={{ color: theme.palette.text.secondary, mb: 2 }}
+              sx={{ color: theme.palette.text.secondary, mb: 4 }}
             >
               {selectedPrediction.dataset
                 ? t("prediction:label.basedOnDataset", {

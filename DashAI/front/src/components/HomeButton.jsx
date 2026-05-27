@@ -163,7 +163,7 @@ function HomeButton({
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
-            ml: 1,
+            ml: 2,
           }}
         >
           →

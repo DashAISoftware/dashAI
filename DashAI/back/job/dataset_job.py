@@ -231,13 +231,17 @@ class DatasetJob(BaseJob):
                             n_sample=n_sample,
                         )
 
-                    if "inferred_types" in params:
+                    if params.get("inferred_types"):
                         schema = params["inferred_types"]
+                    elif new_dataset.types:
+                        schema = {
+                            col: typ.to_string()
+                            for col, typ in new_dataset.types.items()
+                        }
                     else:
                         schema = infer_types(
                             new_dataset.to_pandas(), method="DashAIPtype"
                         )
-
                     if "column_renames" in params:
                         renames = params["column_renames"]
                         original_names = new_dataset.arrow_table.schema.names
@@ -286,6 +290,10 @@ class DatasetJob(BaseJob):
                     folder_path = os.path.realpath(folder_path)
                     dataset = db.get(Dataset, dataset_id)
                     dataset.file_path = folder_path
+                    dataset.total_rows = new_dataset.splits.get("total_rows")
+                    dataset.total_columns = len(
+                        new_dataset.splits.get("column_names", [])
+                    )
                     dataset.set_status_as_finished()
                     db.commit()
                     db.refresh(dataset)

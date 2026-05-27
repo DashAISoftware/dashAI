@@ -10,7 +10,7 @@ import PropTypes from "prop-types";
 function FormSchemaLayout({ children }) {
   return (
     <FormSchemaContainer>
-      <Box display="flex" gap={2}>
+      <Box display="flex" gap={4}>
         <Box flex={1}>{children}</Box>
       </Box>
     </FormSchemaContainer>

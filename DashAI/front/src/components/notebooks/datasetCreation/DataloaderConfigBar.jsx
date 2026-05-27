@@ -31,6 +31,7 @@ export default function DataloaderConfigBar({
   const schemaValuesRef = useRef({});
   const { t } = useTranslation(["common", "datasets"]);
   const theme = useTheme();
+  const showInferenceRows = selectedDataloader !== "ImageDataLoader";
 
   // Handler for when FormSchema values change - merge with inference_rows
   const handleFormSchemaValuesChange = useCallback(() => {
@@ -64,7 +65,7 @@ export default function DataloaderConfigBar({
         alignItems="center"
         bgcolor="background.box"
         borderBottom={`0.1px solid ${(theme) => theme.palette.divider}`}
-        p={3}
+        p={6}
       >
         <Typography
           variant="body2"
@@ -80,7 +81,7 @@ export default function DataloaderConfigBar({
     <SideBar data-tour="dataloader-config">
       <Box
         sx={{
-          p: 2,
+          p: 4,
           borderBottom: `1px solid ${theme.palette.ui.border}`,
           flexShrink: 0,
           height: 64,
@@ -93,30 +94,32 @@ export default function DataloaderConfigBar({
         </Typography>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pt: 1, pb: 2 }}>
-        <Box
-          sx={{
-            pb: 1,
-          }}
-        >
-          <FormSchemaFieldCard
-            label={t("datasets:label.inferenceRows")}
-            description={t("datasets:label.inferenceRowsDescription")}
+      <Box sx={{ flex: 1, overflowY: "auto", px: 4, pt: 2, pb: 4 }}>
+        {showInferenceRows && (
+          <Box
+            sx={{
+              pb: 2,
+            }}
           >
-            <Box sx={{ pt: 0.75 }}>
-              <InputWithDebounce
-                name="inference_rows"
-                value={inferenceRows}
-                onChange={handleInferenceRowsChange}
-                type="number"
-                variant="outlined"
-                size="small"
-                fullWidth
-                slotProps={{ input: { min: 2 } }}
-              />
-            </Box>
-          </FormSchemaFieldCard>
-        </Box>
+            <FormSchemaFieldCard
+              label={t("datasets:label.inferenceRows")}
+              description={t("datasets:label.inferenceRowsDescription")}
+            >
+              <Box sx={{ pt: 2 }}>
+                <InputWithDebounce
+                  name="inference_rows"
+                  value={inferenceRows}
+                  onChange={handleInferenceRowsChange}
+                  type="number"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  slotProps={{ input: { min: 2 } }}
+                />
+              </Box>
+            </FormSchemaFieldCard>
+          </Box>
+        )}
         <FormSchemaContainer>
           <FormSchema
             autoSave

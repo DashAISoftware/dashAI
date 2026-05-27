@@ -168,8 +168,8 @@ function HyperparameterPlots({ run }) {
   }
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Grid container spacing={2} direction="column">
+    <Box sx={{ p: 4 }}>
+      <Grid container spacing={4} direction="column">
         {historicalPlot && (
           <Grid sx={{ width: "100%" }}>
             <Plot

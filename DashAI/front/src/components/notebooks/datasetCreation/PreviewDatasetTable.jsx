@@ -30,6 +30,7 @@ const TYPE_TO_DEFAULT_DTYPE = {
   // Duration: "duration(us)",
   Decimal: "decimal128(8, 0)",
   Binary: "binary",
+  Image: "string",
   // Boolean: "bool",  // Boolean is always Categorical
 };
 
@@ -204,6 +205,10 @@ export default function PreviewDatasetTable({
     return Object.keys(firstRow).map((field) => {
       const columnType = columnTypes[field];
       const displayName = columnNames[field] || field;
+      const isImage =
+        columnType?.type === "Image" ||
+        (typeof firstRow[field] === "string" &&
+          firstRow[field].startsWith("data:image"));
 
       return {
         accessorKey: field,
@@ -212,6 +217,26 @@ export default function PreviewDatasetTable({
         grow: 1,
         enableSorting: false,
         enableColumnActions: false,
+        ...(isImage && {
+          Cell: ({ cell }) => {
+            const val = cell.getValue();
+            if (typeof val === "string" && val.startsWith("data:image")) {
+              return (
+                <img
+                  src={val}
+                  alt="img"
+                  style={{
+                    maxHeight: 48,
+                    maxWidth: 48,
+                    objectFit: "contain",
+                  }}
+                />
+              );
+            }
+            return val;
+          },
+          size: 80,
+        }),
         Header: () => (
           <Box
             sx={{
@@ -219,7 +244,7 @@ export default function PreviewDatasetTable({
               flexDirection: "column",
               alignItems: "flex-start",
               width: "100%",
-              gap: 0.5,
+              gap: 1,
             }}
           >
             {editingColumn === field ? (
@@ -234,7 +259,7 @@ export default function PreviewDatasetTable({
                   width: "100%",
                   "& .MuiInputBase-input": {
                     fontSize: "0.875rem",
-                    paddingY: 0.5,
+                    paddingY: 1,
                   },
                 }}
               />
@@ -258,7 +283,7 @@ export default function PreviewDatasetTable({
               </Tooltip>
             )}
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Select
                 value={columnType?.type || "Text"}
                 onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
@@ -268,7 +293,7 @@ export default function PreviewDatasetTable({
                   fontSize: "0.75rem",
                   minWidth: 120,
                   "& .MuiSelect-select": {
-                    paddingY: 0.5,
+                    paddingY: 1,
                     paddingX: 1,
                   },
                 }}
@@ -277,6 +302,7 @@ export default function PreviewDatasetTable({
                 <MenuItem value="Float">Float</MenuItem>
                 <MenuItem value="Text">Text</MenuItem>
                 <MenuItem value="Categorical">Categorical</MenuItem>
+                <MenuItem value="Image">Image</MenuItem>
               </Select>
 
               <InferenceReasonPopover
@@ -327,6 +353,12 @@ export default function PreviewDatasetTable({
     },
     muiTablePaperProps: { elevation: 0 },
     paginationDisplayMode: "pages",
+    enableColumnFilters: false,
+    enableGlobalFilter: false,
+    enableDensityToggle: false,
+    enableFullScreenToggle: false,
+    enableHiding: false,
+    enableTopToolbar: false,
   });
 
   return (

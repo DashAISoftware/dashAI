@@ -82,7 +82,7 @@ function ComponentDetailsPanel({
         {/* Title */}
         <Box
           sx={{
-            p: 2,
+            p: 4,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             display: "flex",
@@ -103,7 +103,7 @@ function ComponentDetailsPanel({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              p: 3,
+              p: 6,
             }}
           >
             <Typography
@@ -116,12 +116,12 @@ function ComponentDetailsPanel({
           </Box>
         ) : (
           <Box sx={{ flex: 1, overflowY: "auto" }}>
-            <Stack spacing={2} sx={{ p: 2 }}>
-              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Stack spacing={4} sx={{ p: 4 }}>
+              <Stack direction="row" spacing={3} alignItems="flex-start">
                 {getIcon?.(component) && (
                   <Box
                     sx={{
-                      p: 1.25,
+                      p: 3,
                       borderRadius: 1,
                       bgcolor: "primary.main",
                       color: "primary.contrastText",
@@ -153,7 +153,7 @@ function ComponentDetailsPanel({
                 >
                   {t("description")}
                 </Typography>
-                <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.6 }}>
+                <Typography variant="body2" sx={{ mt: 1, lineHeight: 1.6 }}>
                   {getDescription(component) ? (
                     <DescriptionText text={getDescription(component)} />
                   ) : (
@@ -174,10 +174,10 @@ function ComponentDetailsPanel({
                   </Typography>
                   <Stack
                     direction="row"
-                    spacing={0.5}
+                    spacing={1}
                     flexWrap="wrap"
                     useFlexGap
-                    sx={{ mt: 0.5 }}
+                    sx={{ mt: 1 }}
                   >
                     {(component.schema?.tags || component.metadata?.tags).map(
                       (tag) => (
@@ -196,7 +196,7 @@ function ComponentDetailsPanel({
               {extraSections &&
                 extraSections.map((section) => (
                   <Box key={section.title}>
-                    <Divider sx={{ mb: 2 }} />
+                    <Divider sx={{ mb: 4 }} />
                     <Typography
                       variant="overline"
                       color="text.secondary"
@@ -204,7 +204,7 @@ function ComponentDetailsPanel({
                     >
                       {section.title}
                     </Typography>
-                    <Box sx={{ mt: 0.5 }}>{section.content}</Box>
+                    <Box sx={{ mt: 1 }}>{section.content}</Box>
                   </Box>
                 ))}
             </Stack>

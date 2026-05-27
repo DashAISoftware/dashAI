@@ -61,14 +61,14 @@ function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
     <React.Fragment>
       <Divider flexItem />
       <Grid container direction="column" alignItems="center">
-        <Grid container justifyContent="flex-start" sx={{ mt: 1, mb: 1 }}>
-          <Grid sx={{ ml: 2 }}>
+        <Grid container justifyContent="flex-start" sx={{ mt: 2, mb: 2 }}>
+          <Grid sx={{ ml: 4 }}>
             <Typography variant="body1">
               View all or view by explorer details
             </Typography>
           </Grid>
         </Grid>
-        <Grid sx={{ my: 1 }}>
+        <Grid sx={{ my: 2 }}>
           <Grid container justifyContent="center">
             <TimestampWrapper
               eventName={TIMESTAMP_KEYS.exploration.viewResults}

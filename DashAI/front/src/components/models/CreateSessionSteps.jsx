@@ -117,7 +117,7 @@ function CreateSessionSteps({
           height: "100%",
           justifyContent: "center",
           alignItems: "center",
-          p: 2,
+          p: 4,
         }}
       >
         <Typography variant="body2" color="text.secondary" textAlign="center">
@@ -220,7 +220,7 @@ function CreateSessionSteps({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography variant="h5" component="h1">
           {t("models:label.prepareDataset")}
         </Typography>
@@ -234,10 +234,10 @@ function CreateSessionSteps({
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
-          pt: 1,
+          pt: 2,
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 4,
         }}
       >
         <SetNameAndDatasetStep formik={formik} nameError={nameError} />

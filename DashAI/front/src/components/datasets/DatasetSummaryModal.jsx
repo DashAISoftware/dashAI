@@ -42,7 +42,7 @@ function DatasetSummaryModal({ datasetId }) {
             direction="row"
             justifyContent="space-around"
             alignItems="stretch"
-            spacing={2}
+            spacing={4}
             onClick={(event) => event.stopPropagation()}
           >
             {/* Dataset Summary Table */}
