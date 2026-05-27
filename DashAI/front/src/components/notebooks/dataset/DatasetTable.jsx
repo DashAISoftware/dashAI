@@ -21,6 +21,7 @@ export default function DatasetTable({
   deps = [],
   datasetPath,
   datasetId,
+  datasetName = "dataset",
   columnTypes = {},
   editableColumns = false,
   onEditColumn = null,
@@ -475,8 +476,8 @@ export default function DatasetTable({
         blob.type === "application/octet-stream";
       const ext = isZip ? "zip" : "csv";
       const filename = hasFilters
-        ? `dataset_filtered.${ext}`
-        : `dataset.${ext}`;
+        ? `${datasetName}_filtered.${ext}`
+        : `${datasetName}.${ext}`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

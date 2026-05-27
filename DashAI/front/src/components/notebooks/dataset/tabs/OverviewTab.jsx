@@ -84,6 +84,7 @@ const OverviewTab = ({
             initialPageSize={10}
             datasetPath={dataset.file_path}
             datasetId={dataset.id}
+            datasetName={dataset.name}
             onEditColumn={onEditColumnName}
             editableColumns={true}
             columnTypes={
