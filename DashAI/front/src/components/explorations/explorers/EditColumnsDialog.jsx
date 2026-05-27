@@ -210,6 +210,7 @@ function EditColumnsDialog({
     enableDensityToggle: false,
     enableFullScreenToggle: false,
     enableHiding: false,
+    autoResetPageIndex: false,
     initialState: {
       density: "compact",
       pagination: { pageIndex: 0, pageSize: 5 },
