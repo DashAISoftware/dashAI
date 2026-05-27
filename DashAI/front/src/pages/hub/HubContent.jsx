@@ -11,7 +11,7 @@ import HubBreadcrumbs from "../../components/hub/HubBreadcrumbs";
 import ComponentSelector from "../../components/custom/ComponentSelector";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import StepperNavigationFooter from "../../components/shared/StepperNavigationFooter";
-import HubLeftBar from "../../components/hub/HubLeftBar";
+import DatasetsNotebooksLeftBar from "../../components/notebooks/DatasetNotebookLeftBar";
 import DatasetGrid from "../../components/hub/DatasetGrid";
 import DatasetDetail from "../../components/hub/DatasetDetail";
 import {
@@ -190,10 +190,8 @@ export default function HubContent() {
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         <LeftPanel>
-          <HubLeftBar
-            downloads={downloadsList}
-            onDeleteDownload={handleDeleteDownload}
-            onImportDownload={handleImportDownload}
+          <DatasetsNotebooksLeftBar
+            onToggle={threePanelLayout.handleToggleLeft}
           />
         </LeftPanel>
 

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMatch, useNavigate, useParams } from "react-router-dom";
-import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
@@ -8,18 +7,17 @@ import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel"
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
-import HubLeftBar from "../../components/hub/HubLeftBar";
+import DatasetsNotebooksLeftBar from "../../components/notebooks/DatasetNotebookLeftBar";
 import HubImportPanel from "../../components/hub/HubImportPanel";
 import DatafileInfoPanel from "../../components/hub/DatafileInfoPanel";
 import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel";
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
 import { getComponents } from "../../api/component";
-import { deleteDatafile, getDatafile, listDatafiles } from "../../api/hub";
+import { getDatafile } from "../../api/hub";
 
 export default function HubImportPage() {
   const { datafileId } = useParams();
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["hub"]);
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
@@ -46,7 +44,6 @@ export default function HubImportPage() {
 
   const [datafile, setDatafile] = useState(null);
   const [dataloaders, setDataloaders] = useState([]);
-  const [downloads, setDownloads] = useState([]);
   const [formValues, setFormValues] = useState({});
   const [formHasErrors, setFormHasErrors] = useState(false);
   const formSubmitRef = useRef(null);
@@ -62,12 +59,6 @@ export default function HubImportPage() {
     getComponents({ selectTypes: ["DataLoader"] })
       .then(setDataloaders)
       .catch(() => setDataloaders([]));
-  }, []);
-
-  useEffect(() => {
-    listDatafiles()
-      .then(setDownloads)
-      .catch(() => {});
   }, []);
 
   // Reset form when selected loader changes
@@ -116,22 +107,10 @@ export default function HubImportPage() {
   const handleImported = () =>
     navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
 
-  const handleDeleteDownload = async (downloadId) => {
-    const name = downloads.find((d) => d.id === downloadId)?.name ?? "";
-    try {
-      await deleteDatafile(downloadId);
-      setDownloads((prev) => prev.filter((d) => d.id !== downloadId));
-      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
-      if (downloadId === parseInt(datafileId)) {
-        navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
-      }
-    } catch {
-      enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
+  const handleDownloadDelete = (id) => {
+    if (id === parseInt(datafileId)) {
+      navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
     }
-  };
-
-  const handleImportDownload = (dl) => {
-    navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   const renderRightPanel = () => {
@@ -152,10 +131,9 @@ export default function HubImportPage() {
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         <LeftPanel>
-          <HubLeftBar
-            downloads={downloads}
-            onDeleteDownload={handleDeleteDownload}
-            onImportDownload={handleImportDownload}
+          <DatasetsNotebooksLeftBar
+            onToggle={threePanelLayout.handleToggleLeft}
+            onDownloadDelete={handleDownloadDelete}
           />
         </LeftPanel>
 

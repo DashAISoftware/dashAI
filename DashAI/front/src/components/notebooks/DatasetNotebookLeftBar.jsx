@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import Footer from "../threeSectionLayout/Footer";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -10,10 +11,16 @@ import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+import { listDatafiles, deleteDatafile } from "../../api/hub";
+import { subscribeJobs } from "../../utils/jobPoller";
 
-export default function DatasetsNotebooksLeftBar({ onToggle }) {
+export default function DatasetsNotebooksLeftBar({
+  onToggle,
+  onDownloadDelete,
+}) {
   const {
     datasets,
     notebooks,
@@ -26,15 +33,35 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     deleteNotebookById,
   } = useDatasetsAndNotebooks();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
+  const [filteredDownloads, setFilteredDownloads] = useState([]);
+  const [downloads, setDownloads] = useState([]);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { t } = useTranslation(["datasets", "common"]);
+  const { t } = useTranslation(["datasets", "common", "hub"]);
+
+  useEffect(() => {
+    listDatafiles()
+      .then(setDownloads)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeJobs((jobs) => {
+      if (Array.isArray(jobs) && jobs.some((j) => j.status === "finished")) {
+        listDatafiles()
+          .then(setDownloads)
+          .catch(() => {});
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const SEARCH_THRESHOLD = 10;
-  const totalItems = datasets.length + notebooks.length;
+  const totalItems = datasets.length + notebooks.length + downloads.length;
 
   useEffect(() => {
     if (totalItems <= SEARCH_THRESHOLD) setSearchQuery("");
@@ -46,6 +73,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     if (!q) {
       setFilteredDatasets(datasets);
       setFilteredNotebooks(notebooks);
+      setFilteredDownloads(downloads);
       return;
     }
 
@@ -53,7 +81,8 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
 
     setFilteredDatasets(datasets.filter(match));
     setFilteredNotebooks(notebooks.filter(match));
-  }, [searchQuery, datasets, notebooks]);
+    setFilteredDownloads(downloads.filter(match));
+  }, [searchQuery, datasets, notebooks, downloads]);
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
@@ -61,6 +90,18 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     const notebook = notebooks.find((n) => n.id === notebookId);
     if (notebook) {
       setSelectedInfoNotebook(notebook);
+    }
+  };
+
+  const handleDeleteDownload = async (id) => {
+    const name = downloads.find((d) => d.id === id)?.name ?? "";
+    try {
+      await deleteDatafile(id);
+      setDownloads((prev) => prev.filter((d) => d.id !== id));
+      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
+      onDownloadDelete?.(id);
+    } catch {
+      enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
     }
   };
 
@@ -196,6 +237,25 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
           datasets={datasets}
           getItemDescription={getNotebookDescription}
           getDeleteConfirmationContent={getNotebookDeleteConfirmationContent}
+        />
+
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+
+        <CollapsibleList
+          items={filteredDownloads}
+          onItemClick={(id) => {
+            const dl = filteredDownloads.find((d) => d.id === id);
+            if (dl?.status === "ready")
+              navigate(`/app/data/hub/import/${dl.id}`);
+          }}
+          onItemDelete={handleDeleteDownload}
+          onItemEdit={() => {}}
+          defaultOpen={true}
+          title={t("hub:downloadedDatasets")}
+          Icon={CloudDownloadIcon}
+          getItemDescription={(dl) =>
+            t("hub:fromSource", { source: dl.source_name })
+          }
         />
       </Box>
 

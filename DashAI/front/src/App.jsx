@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { TourRegistryProvider } from "./contexts/TourRegistryContext";
 import ModuleThemeWrapper from "./components/ModuleThemeWrapper";
 
@@ -17,6 +17,15 @@ import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
+import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
+
+function DataSectionLayout() {
+  return (
+    <DatasetsAndNotebooksProvider>
+      <Outlet />
+    </DatasetsAndNotebooksProvider>
+  );
+}
 
 function App() {
   return (
@@ -28,15 +37,23 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/app" element={<Home />} />
-          <Route path="/app/data/" element={<DatasetsPage />} />
-          <Route path="/app/data/datasets/new" element={<DatasetsPage />} />
-          <Route
-            path="/app/data/datasets/new/:dataloaderName"
-            element={<DatasetsPage />}
-          />
-          <Route path="/app/data/datasets/:id" element={<DatasetsPage />} />
-          <Route path="/app/data/notebooks/new" element={<DatasetsPage />} />
-          <Route path="/app/data/notebooks/:id" element={<DatasetsPage />} />
+          <Route path="/app/data" element={<DataSectionLayout />}>
+            <Route index element={<DatasetsPage />} />
+            <Route path="datasets/new" element={<DatasetsPage />} />
+            <Route
+              path="datasets/new/:dataloaderName"
+              element={<DatasetsPage />}
+            />
+            <Route path="datasets/:id" element={<DatasetsPage />} />
+            <Route path="notebooks/new" element={<DatasetsPage />} />
+            <Route path="notebooks/:id" element={<DatasetsPage />} />
+            <Route path="hub" element={<HubContent />} />
+            <Route
+              path="hub/import/:datafileId/*"
+              element={<HubImportPage />}
+            />
+            <Route path="hub/:sourceName" element={<HubContent />} />
+          </Route>
           <Route path="/app/models" element={<ModelsPage />} />
           <Route path="/app/models/datasets/:id" element={<ModelsPage />} />
           <Route path="/app/models/sessions/:id" element={<ModelsPage />} />
@@ -64,12 +81,6 @@ function App() {
               <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
           </Route>
-          <Route path="/app/data/hub" element={<HubContent />} />
-          <Route
-            path="/app/data/hub/import/:datafileId/*"
-            element={<HubImportPage />}
-          />
-          <Route path="/app/data/hub/:sourceName" element={<HubContent />} />
         </Routes>
         <JobQueueWidget />
       </BrowserRouter>
