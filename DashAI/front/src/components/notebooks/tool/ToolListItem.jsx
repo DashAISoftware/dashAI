@@ -77,7 +77,7 @@ export default function ToolListItem({
             !disabled
               ? (e) => {
                   e.dataTransfer.setData(
-                    "application/json",
+                    "application/x-dashai-tool",
                     JSON.stringify(tool),
                   );
                   e.dataTransfer.effectAllowed = "copy";

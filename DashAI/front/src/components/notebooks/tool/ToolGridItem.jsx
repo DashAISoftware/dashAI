@@ -57,7 +57,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
             !disabled
               ? (e) => {
                   e.dataTransfer.setData(
-                    "application/json",
+                    "application/x-dashai-tool",
                     JSON.stringify(tool),
                   );
                   e.dataTransfer.effectAllowed = "copy";

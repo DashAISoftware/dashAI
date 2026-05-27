@@ -311,7 +311,8 @@ export default function NotebookView({ notebook }) {
   };
 
   const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) {
+    const related = e.relatedTarget;
+    if (!related || !e.currentTarget.contains(related)) {
       setIsDragOver(false);
     }
   };
@@ -320,7 +321,9 @@ export default function NotebookView({ notebook }) {
     e.preventDefault();
     setIsDragOver(false);
     try {
-      const tool = JSON.parse(e.dataTransfer.getData("application/json"));
+      const tool = JSON.parse(
+        e.dataTransfer.getData("application/x-dashai-tool"),
+      );
       if (tool?.name) setPendingDropTool(tool);
     } catch {
       // ignore invalid drops
@@ -329,12 +332,12 @@ export default function NotebookView({ notebook }) {
 
   return (
     <Box
+      className="explorer-converter-box"
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       sx={{
-        className: "explorer-converter-box",
         display: "flex",
         flexDirection: "column",
         height: "100%",

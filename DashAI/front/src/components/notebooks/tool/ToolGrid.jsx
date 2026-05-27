@@ -48,7 +48,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
       handleToolClick(match);
       setPendingDropTool(null);
     }
-  }, [pendingDropTool]);
+  }, [pendingDropTool, tools]);
 
   if (!tools || tools.length === 0) {
     return (

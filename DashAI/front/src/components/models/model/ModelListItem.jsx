@@ -64,7 +64,7 @@ export default function ModelListItem({
             !disabled
               ? (e) => {
                   e.dataTransfer.setData(
-                    "application/json",
+                    "application/x-dashai-model",
                     JSON.stringify(model),
                   );
                   e.dataTransfer.effectAllowed = "copy";

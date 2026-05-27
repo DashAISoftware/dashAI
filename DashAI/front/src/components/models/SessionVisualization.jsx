@@ -264,7 +264,8 @@ export default function SessionVisualization() {
           setIsDragOver(true);
         }}
         onDragLeave={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) {
+          const related = e.relatedTarget;
+          if (!related || !e.currentTarget.contains(related)) {
             setIsDragOver(false);
           }
         }}
@@ -273,7 +274,7 @@ export default function SessionVisualization() {
           setIsDragOver(false);
           try {
             const model = JSON.parse(
-              e.dataTransfer.getData("application/json"),
+              e.dataTransfer.getData("application/x-dashai-model"),
             );
             if (model?.name) selectModel(model);
           } catch {
