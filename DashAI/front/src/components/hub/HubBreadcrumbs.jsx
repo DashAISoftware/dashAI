@@ -86,11 +86,8 @@ export default function HubBreadcrumbs({ sourceDisplayName, crumbs, onBack }) {
               key={index}
               underline="hover"
               color="inherit"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                crumb.onClick();
-              }}
+              component="button"
+              onClick={crumb.onClick}
               sx={{ cursor: "pointer" }}
             >
               {crumb.label}
