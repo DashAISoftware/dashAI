@@ -421,16 +421,14 @@ export default function HubImportPanel({
           gap: 1,
         }}
       >
-        {stepValue === 0 ? (
-          <Button variant="outlined" onClick={onCancel}>
-            {t("common:cancel")}
-          </Button>
-        ) : (
-          <Box sx={{ flexGrow: 1 }} />
-        )}
+        <Box sx={{ flexGrow: 1 }} />
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          {stepValue > 0 && (
+          {stepValue === 0 ? (
+            <Button variant="outlined" onClick={onCancel}>
+              {t("common:cancel")}
+            </Button>
+          ) : (
             <Button variant="outlined" onClick={handleBack}>
               {t("common:back")}
             </Button>
