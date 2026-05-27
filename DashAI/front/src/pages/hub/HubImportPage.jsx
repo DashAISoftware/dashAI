@@ -46,6 +46,9 @@ export default function HubImportPage() {
       ? dataloaderStep
       : 0;
 
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
   const [datafile, setDatafile] = useState(null);
   const [datafileLoading, setDatafileLoading] = useState(true);
   const [dataloaders, setDataloaders] = useState([]);
@@ -58,9 +61,9 @@ export default function HubImportPage() {
     setDatafileLoading(true);
     getDatafile(parseInt(datafileId))
       .then(setDatafile)
-      .catch(() => navigate("/app/data/hub"))
+      .catch(() => navigateRef.current("/app/data/hub"))
       .finally(() => setDatafileLoading(false));
-  }, [datafileId, navigate]);
+  }, [datafileId]);
 
   useEffect(() => {
     getComponents({ selectTypes: ["DataLoader"] })
