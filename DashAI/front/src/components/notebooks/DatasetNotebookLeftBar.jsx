@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useMatch } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -34,6 +34,10 @@ export default function DatasetsNotebooksLeftBar({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isHub = pathname.startsWith("/app/data/hub");
+  const datafileMatch = useMatch("/app/data/hub/import/:datafileId/*");
+  const selectedDatafileId = datafileMatch
+    ? parseInt(datafileMatch.params.datafileId)
+    : null;
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
@@ -226,6 +230,7 @@ export default function DatasetsNotebooksLeftBar({
 
             <CollapsibleList
               items={filteredDownloads}
+              selectedItemId={selectedDatafileId}
               onItemClick={(id) => {
                 navigate(`/app/data/hub/import/${id}`);
               }}
