@@ -205,7 +205,7 @@ export default function HubImportPanel({
       }
       await importHubDataset(sourceName, dataset.id, created.id, importParams);
       enqueueSnackbar(t("hub:importSuccess"), { variant: "success" });
-      onImported?.();
+      onImported?.(created);
     } catch {
       enqueueSnackbar(t("hub:importError"), { variant: "error" });
     } finally {

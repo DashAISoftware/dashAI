@@ -14,12 +14,14 @@ import ComponentDetailsPanel from "../../components/custom/ComponentDetailsPanel
 import DataloaderConfigBar from "../../components/notebooks/datasetCreation/DataloaderConfigBar";
 import { getComponents } from "../../api/component";
 import { getDatafile } from "../../api/hub";
+import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
 
 export default function HubImportPage() {
   const { datafileId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation(["hub"]);
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
+  const { addDatasetOptimistically } = useDatasetsAndNotebooks();
 
   const previewMatch = useMatch(
     "/app/data/hub/import/:datafileId/loader/:loaderName/preview",
@@ -104,8 +106,10 @@ export default function HubImportPage() {
 
   const handleCancel = () =>
     navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
-  const handleImported = () =>
-    navigate(sourceName ? `/app/data/hub/${sourceName}` : "/app/data/hub");
+  const handleImported = (dataset) => {
+    addDatasetOptimistically(dataset);
+    navigate(`/app/data/datasets/${dataset.id}`);
+  };
 
   const handleDownloadDelete = (id) => {
     if (id === parseInt(datafileId)) {
