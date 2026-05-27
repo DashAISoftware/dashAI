@@ -114,7 +114,7 @@ export default function DatasetGrid({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        p: 2,
+        p: 4,
         gap: 2,
       }}
     >

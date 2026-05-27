@@ -236,7 +236,7 @@ export default function HubImportPanel({
 
   return (
     <Box
-      sx={{ height: "100%", display: "flex", flexDirection: "column", p: 1 }}
+      sx={{ height: "100%", display: "flex", flexDirection: "column", p: 4 }}
     >
       <Box>
         <HubBreadcrumbs

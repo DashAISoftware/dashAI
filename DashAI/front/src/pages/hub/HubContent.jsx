@@ -191,8 +191,8 @@ export default function HubContent() {
                 flexDirection: "column",
                 width: "100%",
                 height: "100%",
-                px: 2,
-                pt: 2,
+                px: 4,
+                pt: 4,
               }}
             >
               <HubBreadcrumbs />
