@@ -57,7 +57,7 @@ async def list_downloads(
 ) -> List[Dict[str, Any]]:
     """Return all datafile records."""
     with session_factory() as db:
-        rows = db.query(Datafile).order_by(Datafile.created.desc()).all()
+        rows = db.query(Datafile).order_by(Datafile.created.asc()).all()
         return [_row_to_dict(r) for r in rows]
 
 
