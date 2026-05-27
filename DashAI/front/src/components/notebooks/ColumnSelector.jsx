@@ -283,6 +283,7 @@ function ColumnSelector({
     enableFullScreenToggle: false,
     enableHiding: false,
     enablePagination: true,
+    autoResetPageIndex: false,
     muiPaginationProps: { rowsPerPageOptions: [10, 15, 20] },
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
