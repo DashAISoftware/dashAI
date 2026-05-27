@@ -26,11 +26,13 @@ import { enqueueDatafileJob } from "../../api/job";
 import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
+import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
 
 export default function HubContent() {
   const { t } = useTranslation(["hub"]);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const { addDownload, updateDownload } = useDatasetsAndNotebooks();
   const { sourceName: sourceNameParam } = useParams();
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
 
@@ -89,6 +91,7 @@ export default function HubContent() {
             ...prev,
             [`${updated.source_name}::${updated.dataset_id}`]: updated,
           }));
+          updateDownload(updated);
           if (isError) {
             enqueueSnackbar(
               `${t("hub:downloadFailed")}: ${d.name} - ${t("hub:checkQueue")}`,
@@ -139,13 +142,12 @@ export default function HubContent() {
         sourceNameParam,
         selectedDataset.id,
       );
+      const entry = { ...row, job_id: job.id };
       setDownloads((prev) => ({
         ...prev,
-        [`${sourceNameParam}::${selectedDataset.id}`]: {
-          ...row,
-          job_id: job.id,
-        },
+        [`${sourceNameParam}::${selectedDataset.id}`]: entry,
       }));
+      addDownload(entry);
     } catch {
       // error shown via download status
     } finally {
