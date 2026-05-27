@@ -208,5 +208,10 @@ async def list_files(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Download directory not found on disk.",
         )
-    files = sorted(str(p.relative_to(path)) for p in path.rglob("*") if p.is_file())
+    files = sorted(
+        str(p.relative_to(path))
+        for p in path.rglob("*")
+        if p.is_file()
+        and not any(part.startswith(".") for part in p.relative_to(path).parts)
+    )
     return files

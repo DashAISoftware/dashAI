@@ -185,11 +185,15 @@ class DatasetJob(BaseJob):
                         if selected_file:
                             file_path_hub = str(Path(hub_work_dir) / selected_file)
                         else:
+                            hub_base = Path(hub_work_dir)
                             files = sorted(
                                 str(p)
-                                for p in Path(hub_work_dir).rglob("*")
+                                for p in hub_base.rglob("*")
                                 if p.is_file()
-                                and not any(part.startswith(".") for part in p.parts)
+                                and not any(
+                                    part.startswith(".")
+                                    for part in p.relative_to(hub_base).parts
+                                )
                             )
                             if not files:
                                 raise JobError("Hub download directory is empty.")

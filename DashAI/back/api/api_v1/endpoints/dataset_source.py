@@ -210,8 +210,14 @@ async def preview_dataset_with_params(
         if body.selected_file:
             file_path = str(Path(hub_row.local_path) / body.selected_file)
         else:
+            base_path = Path(hub_row.local_path)
             files = sorted(
-                str(p) for p in Path(hub_row.local_path).rglob("*") if p.is_file()
+                str(p)
+                for p in base_path.rglob("*")
+                if p.is_file()
+                and not any(
+                    part.startswith(".") for part in p.relative_to(base_path).parts
+                )
             )
             if not files:
                 raise HTTPException(
