@@ -232,7 +232,6 @@ export default function DatasetsNotebooksLeftBar({
                   navigate(`/app/data/hub/import/${dl.id}`);
               }}
               onItemDelete={handleDeleteDownload}
-              onItemEdit={() => {}}
               defaultOpen={true}
               title={t("hub:downloadedDatasets")}
               Icon={CloudDownloadIcon}
