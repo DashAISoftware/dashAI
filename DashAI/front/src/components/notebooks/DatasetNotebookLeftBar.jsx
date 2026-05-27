@@ -11,11 +11,8 @@ import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { useTranslation } from "react-i18next";
-import { useSnackbar } from "notistack";
 
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
-import { listDatafiles, deleteDatafile } from "../../api/hub";
-import { subscribeJobs } from "../../utils/jobPoller";
 
 export default function DatasetsNotebooksLeftBar({
   onToggle,
@@ -31,36 +28,19 @@ export default function DatasetsNotebooksLeftBar({
     editDataset,
     editNotebook,
     deleteNotebookById,
+    downloads,
+    deleteDownloadById,
   } = useDatasetsAndNotebooks();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isHub = pathname.startsWith("/app/data/hub");
-  const { enqueueSnackbar } = useSnackbar();
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
-  const [filteredDownloads, setFilteredDownloads] = useState([]);
-  const [downloads, setDownloads] = useState([]);
+  const [filteredDownloads, setFilteredDownloads] = useState(downloads);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation(["datasets", "common", "hub"]);
-
-  useEffect(() => {
-    listDatafiles()
-      .then(setDownloads)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = subscribeJobs((jobs) => {
-      if (Array.isArray(jobs) && jobs.some((j) => j.status === "finished")) {
-        listDatafiles()
-          .then(setDownloads)
-          .catch(() => {});
-      }
-    });
-    return unsubscribe;
-  }, []);
 
   const SEARCH_THRESHOLD = 10;
   const totalItems = datasets.length + notebooks.length + downloads.length;
@@ -96,15 +76,8 @@ export default function DatasetsNotebooksLeftBar({
   };
 
   const handleDeleteDownload = async (id) => {
-    const name = downloads.find((d) => d.id === id)?.name ?? "";
-    try {
-      await deleteDatafile(id);
-      setDownloads((prev) => prev.filter((d) => d.id !== id));
-      enqueueSnackbar(t("hub:deleteSuccess", { name }), { variant: "success" });
-      onDownloadDelete?.(id);
-    } catch {
-      enqueueSnackbar(t("hub:deleteError"), { variant: "error" });
-    }
+    const success = await deleteDownloadById(id);
+    if (success) onDownloadDelete?.(id);
   };
 
   const getDatasetDeleteConfirmationContent = (dataset) =>
