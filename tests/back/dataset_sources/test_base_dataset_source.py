@@ -102,21 +102,23 @@ def test_hf_source_has_correct_type():
     assert HuggingFaceDatasetSource.TYPE == "DatasetSource"
 
 
-def test_hf_search_returns_dataset_entries():
-    search_resp = MagicMock()
-    search_resp.status_code = 200
-    search_resp.headers = {
-        "Link": '<https://huggingface.co/api/datasets?cursor=abc123>; rel="next"'
-    }
-    search_resp.json.return_value = [
-        {
-            "id": "stanfordnlp/imdb",
-            "description": "IMDB movie review sentiment",
-            "tags": ["text-classification"],
-        }
-    ]
+def _hf_item(item_id, description="", tags=None):
+    item = MagicMock()
+    item.id = item_id
+    item.description = description
+    item.tags = list(tags or [])
+    return item
 
-    with patch("httpx.get", return_value=search_resp):
+
+def test_hf_search_returns_dataset_entries():
+    item = _hf_item(
+        "stanfordnlp/imdb",
+        description="IMDB movie review sentiment",
+        tags=["text-classification"],
+    )
+
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.list_datasets.return_value = iter([item])
         source = HuggingFaceDatasetSource()
         page = source.search("imdb", limit=5)
 
@@ -126,7 +128,7 @@ def test_hf_search_returns_dataset_entries():
     assert page.entries[0].source == "HuggingFaceDatasetSource"
     assert page.entries[0].url == "https://huggingface.co/datasets/stanfordnlp/imdb"
     assert page.entries[0].size_bytes is None
-    assert page.next_cursor == "abc123"
+    assert page.next_cursor is None
 
 
 def test_hf_get_info_returns_size_bytes():
@@ -169,43 +171,38 @@ def test_hf_get_info_size_none_when_used_storage_absent():
     assert entry.size_bytes is None
 
 
-def test_hf_search_uses_cursor_for_next_page():
-    search_resp = MagicMock()
-    search_resp.status_code = 200
-    search_resp.headers = {}
-    search_resp.json.return_value = [
-        {"id": "owner/repo", "description": "", "tags": []}
-    ]
+def test_hf_search_uses_cursor_as_offset():
+    """cursor encodes a numeric offset; results past the offset are returned."""
+    items = [_hf_item(f"owner/repo{i}") for i in range(8)]
 
-    with patch("httpx.get", return_value=search_resp) as mock_get:
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.list_datasets.return_value = iter(items)
         source = HuggingFaceDatasetSource()
-        source.search("repo", cursor="prev_cursor")
+        page = source.search("repo", limit=3, cursor="2")
 
-    search_call_kwargs = mock_get.call_args_list[0][1]["params"]
-    assert search_call_kwargs.get("cursor") == "prev_cursor"
-
-
-def test_hf_search_size_bytes_none_when_card_data_absent():
-    search_resp = MagicMock()
-    search_resp.status_code = 200
-    search_resp.headers = {}
-    search_resp.json.return_value = [
-        {"id": "owner/repo", "description": "", "tags": []}
+    assert [e.id for e in page.entries] == [
+        "owner/repo2",
+        "owner/repo3",
+        "owner/repo4",
     ]
+    assert page.next_cursor == "5"
 
-    with patch("httpx.get", return_value=search_resp):
+
+def test_hf_search_next_cursor_none_when_partial_page():
+    item = _hf_item("owner/repo")
+
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.list_datasets.return_value = iter([item])
         source = HuggingFaceDatasetSource()
-        page = source.search("repo")
+        page = source.search("repo", limit=5)
 
     assert page.entries[0].size_bytes is None
     assert page.next_cursor is None
 
 
-def test_hf_search_handles_http_error(caplog):
-    mock_response = MagicMock()
-    mock_response.status_code = 500
-
-    with patch("httpx.get", return_value=mock_response):
+def test_hf_search_handles_api_error():
+    with patch("huggingface_hub.HfApi") as MockApi:
+        MockApi.return_value.list_datasets.side_effect = Exception("boom")
         source = HuggingFaceDatasetSource()
         page = source.search("anything")
 
@@ -217,30 +214,25 @@ def test_openml_source_has_correct_type():
     assert OpenMLDatasetSource.TYPE == "DatasetSource"
 
 
-def test_openml_search_returns_dataset_entries():
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "hits": {
-            "total": 1,
-            "hits": [
-                {
-                    "_id": "61",
-                    "_source": {
-                        "data_id": 61,
-                        "name": "iris",
-                        "description": "Iris flower dataset.",
-                        "tags": [
-                            {"tag": "study_14", "uploader": "1"},
-                            {"tag": "uci", "uploader": "1"},
-                        ],
-                    },
-                }
-            ],
-        }
-    }
+def _openml_list_result(rows):
+    result = MagicMock()
+    result.to_dict.return_value = rows
+    return result
 
-    with patch("httpx.post", return_value=mock_resp):
+
+def test_openml_search_returns_dataset_entries():
+    list_result = _openml_list_result([{"did": 61, "name": "iris"}])
+
+    with (
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.list_datasets",
+            return_value=list_result,
+        ),
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source._fetch_dataset_meta",
+            return_value=("Iris flower dataset.", ("study_14", "uci")),
+        ),
+    ):
         source = OpenMLDatasetSource()
         page = source.search("iris", limit=5)
 
@@ -256,59 +248,52 @@ def test_openml_search_returns_dataset_entries():
     assert page.next_cursor is None
 
 
-def test_openml_search_empty_query_uses_match_all():
-    """Empty query should use match_all (not multi_match) in ES body."""
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {"hits": {"total": 0, "hits": []}}
+def test_openml_search_empty_query_omits_data_name():
+    """Empty query must not be passed as data_name filter."""
+    list_result = _openml_list_result([])
 
-    with patch("httpx.post", return_value=mock_resp) as mock_post:
+    with patch(
+        "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.list_datasets",
+        return_value=list_result,
+    ) as mock_list:
         source = OpenMLDatasetSource()
         source.search("", limit=20)
 
-    sent_body = mock_post.call_args[1]["json"]
-    must_clause = sent_body["query"]["bool"]["must"]
-    assert "match_all" in must_clause
-    assert "multi_match" not in must_clause
+    kwargs = mock_list.call_args.kwargs
+    assert "data_name" not in kwargs
 
 
 def test_openml_search_uses_cursor_for_pagination():
-    """cursor string encodes numeric offset passed to ES 'from'."""
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {"hits": {"total": 0, "hits": []}}
+    """cursor encodes numeric offset passed to list_datasets."""
+    list_result = _openml_list_result([])
 
-    with patch("httpx.post", return_value=mock_resp) as mock_post:
+    with patch(
+        "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.list_datasets",
+        return_value=list_result,
+    ) as mock_list:
         source = OpenMLDatasetSource()
         source.search("iris", limit=10, cursor="20")
 
-    sent_body = mock_post.call_args[1]["json"]
-    assert sent_body["from"] == 20
-    assert sent_body["size"] == 10
+    kwargs = mock_list.call_args.kwargs
+    assert kwargs["offset"] == 20
+    assert kwargs["size"] == 10
 
 
 def test_openml_search_next_cursor_set_when_full_page():
     """next_cursor is non-null when a full page is returned."""
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "hits": {
-            "hits": [
-                {
-                    "_id": str(i),
-                    "_source": {
-                        "data_id": i,
-                        "name": f"ds{i}",
-                        "description": "",
-                        "tags": [],
-                    },
-                }
-                for i in range(5)
-            ]
-        }
-    }
+    rows = [{"did": i, "name": f"ds{i}"} for i in range(5)]
+    list_result = _openml_list_result(rows)
 
-    with patch("httpx.post", return_value=mock_resp):
+    with (
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.list_datasets",
+            return_value=list_result,
+        ),
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source._fetch_dataset_meta",
+            return_value=("", ()),
+        ),
+    ):
         source = OpenMLDatasetSource()
         page = source.search("x", limit=5)
 
@@ -317,36 +302,29 @@ def test_openml_search_next_cursor_set_when_full_page():
 
 def test_openml_search_next_cursor_none_when_partial_page():
     """next_cursor is null when fewer results than limit are returned."""
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "hits": {
-            "hits": [
-                {
-                    "_id": "1",
-                    "_source": {
-                        "data_id": 1,
-                        "name": "only",
-                        "description": "",
-                        "tags": [],
-                    },
-                }
-            ]
-        }
-    }
+    list_result = _openml_list_result([{"did": 1, "name": "only"}])
 
-    with patch("httpx.post", return_value=mock_resp):
+    with (
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.list_datasets",
+            return_value=list_result,
+        ),
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source._fetch_dataset_meta",
+            return_value=("", ()),
+        ),
+    ):
         source = OpenMLDatasetSource()
         page = source.search("x", limit=5)
 
     assert page.next_cursor is None
 
 
-def test_openml_search_handles_http_error():
-    mock_response = MagicMock()
-    mock_response.status_code = 500
-
-    with patch("httpx.post", return_value=mock_response):
+def test_openml_search_handles_api_error():
+    with patch(
+        "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.list_datasets",
+        side_effect=Exception("boom"),
+    ):
         source = OpenMLDatasetSource()
         page = source.search("iris")
 
@@ -354,34 +332,29 @@ def test_openml_search_handles_http_error():
     assert page.next_cursor is None
 
 
-def test_openml_download_dataset_returns_arff(tmp_path):
-    info_response = MagicMock()
-    info_response.status_code = 200
-    info_response.json.return_value = {
-        "data_set_description": {
-            "file_id": "22044555",
-            "url": "https://openml.org/data/v1/download/22044555/iris.arff",
-        }
-    }
+def test_openml_download_dataset_returns_file(tmp_path):
+    mock_dataset = MagicMock()
+    mock_dataset.url = "https://openml.org/data/v1/download/22044555/iris.arff"
 
-    arff_content = b"""@relation iris
-@attribute sepalLength numeric
-@attribute class {Iris-setosa,Iris-versicolor}
-@data
-5.1,Iris-setosa
-4.9,Iris-versicolor
-"""
+    arff_content = b"@relation iris\n@data\n5.1,Iris-setosa\n"
     file_response = MagicMock()
     file_response.status_code = 200
     file_response.content = arff_content
     file_response.raise_for_status = MagicMock()
 
-    info_response.raise_for_status = MagicMock()
-
-    with patch("httpx.get", side_effect=[info_response, file_response]):
+    with (
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source.openml.datasets.get_dataset",
+            return_value=mock_dataset,
+        ),
+        patch(
+            "DashAI.back.dataset_sources.openml_dataset_source.httpx.get",
+            return_value=file_response,
+        ),
+    ):
         source = OpenMLDatasetSource()
-        arff_path = source.download_dataset("61", str(tmp_path))
+        out_path = source.download_dataset("61", str(tmp_path))
 
-    assert arff_path.endswith(".arff")
-    with open(arff_path, "rb") as fh:
-        assert b"sepalLength" in fh.read()
+    assert out_path.endswith(".arff")
+    with open(out_path, "rb") as fh:
+        assert b"@relation iris" in fh.read()
