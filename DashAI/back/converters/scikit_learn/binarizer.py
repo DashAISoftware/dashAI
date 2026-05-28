@@ -28,6 +28,11 @@ class BinarizerSchema(BaseSchema):
                 "Valores de características abaixo ou iguais a este limiar são "
                 "substituídos por 0; os superiores por 1."
             ),
+            de=(
+                "Merkmalswerte unterhalb oder gleich diesem Schwellenwert werden durch "
+                "0 ersetzt, "
+                "oberhalb davon durch 1."
+            ),
         ),
     )  # type: ignore
 
@@ -49,9 +54,13 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
             "Binariza dados (define valores de características em 0 ou 1) "
             "de acordo com um limiar."
         ),
+        de=(
+            "Daten binarisieren (Merkmalswerte auf 0 oder 1 setzen) gemäß einem "
+            "Schwellenwert."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
-        en="Binarizer", es="Binarizador", pt="Binarizador"
+        en="Binarizer", es="Binarizador", pt="Binarizador", de="Binarisierer"
     )
     IMAGE_PREVIEW = "binarizer.png"
 

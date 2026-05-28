@@ -30,8 +30,11 @@ class DensityHeatmapSchema(BaseExplorerSchema):
             en=("Number of bins along the x axis."),
             es=("Número de bins a lo largo del eje x."),
             pt=("Número de bins ao longo do eixo x."),
+            de=("Anzahl der Klassen entlang der x-Achse."),
         ),
-        alias=MultilingualString(en="Bins (x)", es="Bins (x)", pt="Bins (x)"),
+        alias=MultilingualString(
+            en="Bins (x)", es="Bins (x)", pt="Bins (x)", de="Klassen (x)"
+        ),
     )  # type: ignore
     nbinsy: schema_field(
         none_type(int_field(ge=1)),
@@ -40,8 +43,11 @@ class DensityHeatmapSchema(BaseExplorerSchema):
             en=("Number of bins along the y axis."),
             es=("Número de bins a lo largo del eje y."),
             pt=("Número de bins ao longo do eixo y."),
+            de=("Anzahl der Klassen entlang der y-Achse."),
         ),
-        alias=MultilingualString(en="Bins (y)", es="Bins (y)", pt="Bins (y)"),
+        alias=MultilingualString(
+            en="Bins (y)", es="Bins (y)", pt="Bins (y)", de="Klassen (y)"
+        ),
     )  # type: ignore
 
 
@@ -69,6 +75,7 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         en="Density Heatmap",
         es="Mapa de Calor de Densidad",
         pt="Mapa de Calor de Densidade",
+        de="Dichte-Heatmap",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -82,6 +89,10 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         pt=(
             "Retorna um mapa de calor de densidade para duas colunas "
             "selecionadas para visualizar a distribuição conjunta."
+        ),
+        de=(
+            "Gibt eine Dichte-Heatmap für zwei ausgewählte Spalten zurück, um "
+            "die gemeinsame Verteilung zu visualisieren."
         ),
     )
     IMAGE_PREVIEW = "density_heatmap.png"

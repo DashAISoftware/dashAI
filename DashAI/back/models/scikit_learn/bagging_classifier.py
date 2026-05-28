@@ -36,9 +36,13 @@ class BaggingClassifierSchema(BaseSchema):
             en="The number of base estimators in the ensemble.",
             es="El número de estimadores base en el conjunto.",
             pt="O número de estimadores base no conjunto.",
+            de="Die Anzahl der Basis-Schätzer im Ensemble.",
         ),
         alias=MultilingualString(
-            en="N estimators", es="N estimadores", pt="N estimadores"
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
         ),
     )  # type: ignore
 
@@ -63,9 +67,16 @@ class BaggingClassifierSchema(BaseSchema):
                 "Fração de amostras de treinamento para cada estimador base "
                 "(0 < max_samples ≤ 1.0)."
             ),
+            de=(
+                "Anteil der Trainingsstichproben für jeden Basis-Schätzer "
+                "(0 < max_samples ≤ 1.0)."
+            ),
         ),
         alias=MultilingualString(
-            en="Max samples", es="Máximas muestras", pt="Máximo de amostras"
+            en="Max samples",
+            es="Máximas muestras",
+            pt="Máximo de amostras",
+            de="Maximale Stichproben",
         ),
     )  # type: ignore
 
@@ -90,11 +101,15 @@ class BaggingClassifierSchema(BaseSchema):
                 "Fração de características para cada estimador base "
                 "(0 < max_features ≤ 1.0)."
             ),
+            de=(
+                "Anteil der Merkmale für jeden Basis-Schätzer (0 < max_features ≤ 1.0)."
+            ),
         ),
         alias=MultilingualString(
             en="Max features",
             es="Máximas características",
             pt="Máximo de características",
+            de="Maximale Merkmale",
         ),
     )  # type: ignore
 
@@ -105,8 +120,11 @@ class BaggingClassifierSchema(BaseSchema):
             en="Whether to draw samples with replacement.",
             es="Si se extraen muestras con reemplazo.",
             pt="Se as amostras são extraídas com reposição.",
+            de="Ob Stichproben mit Zurücklegen gezogen werden.",
         ),
-        alias=MultilingualString(en="Bootstrap", es="Bootstrap", pt="Bootstrap"),
+        alias=MultilingualString(
+            en="Bootstrap", es="Bootstrap", pt="Bootstrap", de="Bootstrap"
+        ),
     )  # type: ignore
 
     bootstrap_features: schema_field(
@@ -116,11 +134,13 @@ class BaggingClassifierSchema(BaseSchema):
             en="Whether to draw features with replacement.",
             es="Si se extraen características con reemplazo.",
             pt="Se as características são extraídas com reposição.",
+            de="Ob Merkmale mit Zurücklegen gezogen werden.",
         ),
         alias=MultilingualString(
             en="Bootstrap features",
             es="Bootstrap características",
             pt="Bootstrap características",
+            de="Bootstrap-Merkmale",
         ),
     )  # type: ignore
 
@@ -140,9 +160,18 @@ class BaggingClassifierSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int para "
                 "saída reproduzível, ou None para não definir uma semente específica."
             ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -172,11 +201,13 @@ class BaggingClassifier(
         en="Bagging Classifier",
         es="Clasificador Bagging",
         pt="Classificador Bagging",
+        de="Bagging-Klassifikator",
     )
     DESCRIPTION: str = MultilingualString(
         en="Bootstrap aggregating ensemble to reduce variance.",
         es="Conjunto de bootstrap aggregating para reducir la varianza.",
         pt="Conjunto de bootstrap aggregating para reduzir a variância.",
+        de="Bagging-Ensemble zur Varianzreduktion.",
     )
     COLOR: str = "#26C6DA"
     ICON: str = "Inventory"

@@ -37,11 +37,16 @@ class BoxPlotSchema(BaseExplorerSchema):
                 "Se True, o diagrama de caixa será horizontal; caso contrário, "
                 "vertical."
             ),
+            de=(
+                "Wenn True, wird das Boxdiagramm horizontal dargestellt; sonst "
+                "vertikal."
+            ),
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
             pt="Gráfico horizontal",
+            de="Horizontales Diagramm",
         ),
     )  # type: ignore
     points: schema_field(
@@ -59,11 +64,16 @@ class BoxPlotSchema(BaseExplorerSchema):
                 "Uma de 'all', 'outliers' ou 'False'. Determina quais pontos "
                 "são exibidos."
             ),
+            de=(
+                "Eines von 'all', 'outliers' oder 'False'. Bestimmt, welche "
+                "Punkte angezeigt werden."
+            ),
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
             pt="Pontos exibidos",
+            de="Angezeigte Punkte",
         ),
     )  # type: ignore
 
@@ -90,6 +100,7 @@ class BoxPlotExplorer(DistributionExplorer):
         en="Box Plot",
         es="Diagrama de Caja",
         pt="Diagrama de Caixa",
+        de="Boxdiagramm",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -103,6 +114,10 @@ class BoxPlotExplorer(DistributionExplorer):
         pt=(
             "Retorna um diagrama de caixa das colunas selecionadas no conjunto "
             "de dados para visualizar a distribuição e os valores atípicos."
+        ),
+        de=(
+            "Gibt ein Boxdiagramm der ausgewählten Spalten im Datensatz zurück, "
+            "um Verteilung und Ausreißer zu visualisieren."
         ),
     )
     IMAGE_PREVIEW = "box_plot.png"

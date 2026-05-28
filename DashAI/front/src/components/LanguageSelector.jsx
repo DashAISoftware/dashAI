@@ -43,6 +43,12 @@ export default function LanguageSelector() {
             <span>Português</span>
           </Box>
         </MenuItem>
+        <MenuItem value="de">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span>🇩🇪</span>
+            <span>Deutsch</span>
+          </Box>
+        </MenuItem>
       </Select>
     </FormControl>
   );

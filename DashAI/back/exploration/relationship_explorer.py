@@ -20,6 +20,7 @@ class RelationshipExplorer(BaseExplorer):
         en="Relationship Analysis",
         es="Análisis de Relaciones",
         pt="Análise de Relações",
+        de="Beziehungsanalyse",
     )
     ICON: Final[str] = Icon.ScatterPlot.value
     COLOR: Final[str] = "rgb(46, 204, 113)"

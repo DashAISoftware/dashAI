@@ -21,6 +21,7 @@ class PolynomialKernelConverter(BaseConverter):
         en="Polynomial & Kernel Methods",
         es="Métodos Polinomiales y de Kernel",
         pt="Métodos Polinomiais e de Kernel",
+        de="Polynomiale und Kernel-Methoden",
     )
     ICON: Final[str] = Icon.Functions.value
     COLOR: Final[str] = "rgb(153, 102, 255)"

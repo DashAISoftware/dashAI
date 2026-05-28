@@ -54,6 +54,10 @@ class CohenKappa(ClassificationMetric):
             "A pontuação Cohen Kappa mede a concordância entre dois avaliadores "
             "que classificam itens em categorias mutuamente exclusivas."
         ),
+        de=(
+            "Der Cohen-Kappa-Wert misst die Übereinstimmung zwischen zwei Bewertern, "
+            "die jeweils Elemente in gegenseitig ausschließende Kategorien einteilen."
+        ),
     )
 
     @staticmethod

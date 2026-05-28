@@ -23,6 +23,7 @@ class BaseDataLoader(ConfigObject):
         en="File Uploading",
         es="Carga de Archivos",
         pt="Carregamento de Arquivos",
+        de="Datei-Upload",
     )
     SUPPORTED_EXTENSIONS: frozenset[str] = frozenset()
 

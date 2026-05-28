@@ -62,9 +62,21 @@ class StableDiffusionSchema(BaseSchema):
                 "qualidade. "
                 "Todas as variantes visam 1024x1024 px nativamente."
             ),
+            de=(
+                "Der zu ladende SD3/SD3.5-Checkpoint. 'sd-3-medium' ist das "
+                "2B-Parameter-Basismodell. 'sd-3.5-medium' verbessert die Qualität "
+                "bei ähnlicher Geschwindigkeit. 'sd-3.5-large' (8B) liefert die höchste"
+                "Qualität, benötigt aber mehr VRAM. 'sd-3.5-large-turbo' ist ein "
+                "destilliertes Large-Modell, das deutlich weniger Schritte (4-8) für "
+                "schnelle hochwertige Generierung benötigt. "
+                "Alle Varianten zielen nativ auf 1024x1024 px ab."
+            ),
         ),
         alias=MultilingualString(
-            en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
         ),
     )  # type: ignore
 
@@ -92,9 +104,19 @@ class StableDiffusionSchema(BaseSchema):
                 "Configurações → Tokens de Acesso e gere um token com escopo "
                 "'Read'."
             ),
+            de=(
+                "Hugging Face Lesezugriffs-Token, der zum Herunterladen dieser "
+                "geschützten Modelle erforderlich ist. So erhalten Sie ihn: Akzeptieren"
+                "Sie die Modell-Lizenz auf huggingface.co/stabilityai, dann gehen Sie "
+                "zu Einstellungen → Zugriffstoken und generieren Sie einen Token "
+                "mit 'Read'-Umfang."
+            ),
         ),
         alias=MultilingualString(
-            en="Hugging Face key", es="Clave Hugging Face", pt="Chave Hugging Face"
+            en="Hugging Face key",
+            es="Clave Hugging Face",
+            pt="Chave Hugging Face",
+            de="Hugging Face-Schlüssel",
         ),
     )  # type: ignore
 
@@ -120,9 +142,18 @@ class StableDiffusionSchema(BaseSchema):
                     "marca d'água'. "
                     "Deixe vazio para omitir o condicionamento negativo."
                 ),
+                de=(
+                    "Text, der beschreibt, was aus dem generierten Bild ausgeschlossen "
+                    "werden soll. Häufige Werte: 'unscharf, geringe Qualität, verzerrt,"
+                    "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
+                    "überspringen."
+                ),
             ),
             alias=MultilingualString(
-                en="Negative prompt", es="Prompt negativo", pt="Prompt negativo"
+                en="Negative prompt",
+                es="Prompt negativo",
+                pt="Prompt negativo",
+                de="Negativer Prompt",
             ),
         )  # type: ignore
     ]
@@ -151,11 +182,19 @@ class StableDiffusionSchema(BaseSchema):
                 "'large-turbo'. Valores acima de 50 raramente melhoram o "
                 "resultado para SD3/SD3.5."
             ),
+            de=(
+                "Anzahl der auszuführenden Entrauschungsschritte. Mehr Schritte "
+                "verfeinern das Bild, erhöhen aber die Generierungszeit. Typischer "
+                "Bereich: 20-40 für Standardmodelle; verwenden Sie nur 4-8 Schritte "
+                "mit 'large-turbo'. Werte über 50 verbessern das Ergebnis für "
+                "SD3/SD3.5 selten."
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
         ),
     )  # type: ignore
 
@@ -184,9 +223,20 @@ class StableDiffusionSchema(BaseSchema):
                 "guidance_scale=1 (sem CFG). Valores mais altos reforçam o prompt "
                 "mas podem introduzir supersaturação ou artefatos."
             ),
+            de=(
+                "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
+                "dem Prompt folgt. SD3.5 funktioniert gut bei 3,5-4,5. Die "
+                "'large-turbo'-"
+                "Variante ist für guidance_scale=1 (kein CFG) ausgelegt. Höhere Werte "
+                "erzwingen den Prompt, können aber Übersättigung oder Artefakte "
+                "einführen."
+            ),
         ),
         alias=MultilingualString(
-            en="Guidance scale", es="Escala de guía", pt="Escala de orientação"
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+            de="Führungsskala",
         ),
     )  # type: ignore
 
@@ -212,8 +262,16 @@ class StableDiffusionSchema(BaseSchema):
                 "difusão. Selecione 'CPU' em sistemas sem GPU compatível, mas espere "
                 "tempos de geração significativamente mais longos."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. Wählen Sie eine GPU-Option für "
+                "Hardwarebeschleunigung, die für Diffusionsmodelle dringend empfohlen "
+                "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber erwarten"
+                "Sie deutlich längere Generierungszeiten."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
     seed: schema_field(
@@ -237,8 +295,14 @@ class StableDiffusionSchema(BaseSchema):
                 "Use um valor negativo (ex. -1) para uma semente aleatória em cada "
                 "execução."
             ),
+            de=(
+                "Zufalls-Seed für reproduzierbare Generierung. Ein fester positiver "
+                "Integer erzeugt stets dasselbe Bild bei identischen Einstellungen. "
+                "Verwenden Sie einen negativen Wert (z.B. -1) für einen zufälligen "
+                "Seed bei jedem Durchlauf."
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente"),
+        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
     )  # type: ignore
 
     width: schema_field(
@@ -260,8 +324,13 @@ class StableDiffusionSchema(BaseSchema):
                 "Os modelos SD3/SD3.5 são nativamente treinados a 1024x1024 px; "
                 "usar essa resolução produz a melhor qualidade."
             ),
+            de=(
+                "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "SD3/SD3.5-Modelle werden nativ bei 1024x1024 px trainiert; "
+                "diese Auflösung liefert die beste Qualität."
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura"),
+        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
     )  # type: ignore
 
     height: schema_field(
@@ -283,8 +352,13 @@ class StableDiffusionSchema(BaseSchema):
                 "Os modelos SD3/SD3.5 são nativamente treinados a 1024x1024 px; "
                 "usar essa resolução produz a melhor qualidade."
             ),
+            de=(
+                "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "SD3/SD3.5-Modelle werden nativ bei 1024x1024 px trainiert; "
+                "diese Auflösung liefert die beste Qualität."
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura"),
+        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -306,11 +380,17 @@ class StableDiffusionSchema(BaseSchema):
                 "Aumentar este valor é mais eficiente do que executar várias sessões, "
                 "mas requer proporcionalmente mais memória GPU."
             ),
+            de=(
+                "Wie viele Bilder aus einem einzelnen Prompt in einem Stapel generiert "
+                "werden sollen. Diesen Wert zu erhöhen ist effizienter als mehrere "
+                "Sitzungen zu starten, erfordert aber proportional mehr GPU-Speicher."
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
         ),
     )  # type: ignore
 
@@ -343,6 +423,7 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
         en="Stable Diffusion V3",
         es="Stable Diffusion V3",
         pt="Stable Diffusion V3",
+        de="Stable Diffusion V3",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -372,6 +453,16 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
             "as variantes SD3 Medium, SD3.5 Medium, SD3.5 Large e SD3.5 Large "
             "Turbo. Uma chave de API do Hugging Face é necessária para acessar esses "
             "modelos protegidos. Os modelos estão disponíveis em "
+            "https://huggingface.co/stabilityai."
+        ),
+        de=(
+            "Stable Diffusion 3 und 3.5 sind Text-zu-Bild-Modelle der nächsten "
+            "Generation von Stability AI, die eine Multimodal Diffusion Transformer "
+            "(MMDiT)-Architektur verwenden und verbesserte Prompt-Treue, Typografie "
+            "und Bildqualität gegenüber früheren Versionen bieten. Unterstützt die "
+            "Varianten SD3 Medium, SD3.5 Medium, SD3.5 Large und SD3.5 Large Turbo. "
+            "Ein Hugging Face API-Schlüssel ist erforderlich, um auf diese geschützten "
+            "Modelle zuzugreifen. Modelle verfügbar unter "
             "https://huggingface.co/stabilityai."
         ),
     )

@@ -30,6 +30,7 @@ class CCASchema(BaseSchema):
             en="Number of components to keep.",
             es="Número de componentes a conservar.",
             pt="Número de componentes a manter.",
+            de="Anzahl der beizubehaltenden Komponenten.",
         ),
     )  # type: ignore
     scale: schema_field(
@@ -39,6 +40,7 @@ class CCASchema(BaseSchema):
             en="Whether to scale the data.",
             es="Si se deben escalar los datos.",
             pt="Se os dados devem ser escalonados.",
+            de="Ob die Daten skaliert werden sollen.",
         ),
     )  # type: ignore
     max_iter: schema_field(
@@ -48,6 +50,7 @@ class CCASchema(BaseSchema):
             en="Maximum number of iterations to perform.",
             es="Número máximo de iteraciones a realizar.",
             pt="Número máximo de iterações a realizar.",
+            de="Maximale Anzahl der durchzuführenden Iterationen.",
         ),
     )  # type: ignore
     tol: schema_field(
@@ -57,6 +60,7 @@ class CCASchema(BaseSchema):
             en="Tolerance for the stopping condition.",
             es="Tolerancia para la condición de parada.",
             pt="Tolerância para a condição de parada.",
+            de="Toleranz für die Abbruchbedingung.",
         ),
     )  # type: ignore
     copy: schema_field(
@@ -66,6 +70,10 @@ class CCASchema(BaseSchema):
             en="Whether to copy X and Y or perform in-place normalization.",
             es="Si copiar X e Y o normalizar in situ.",
             pt="Se copiar X e Y ou realizar normalização in-place.",
+            de=(
+                "Ob X und Y kopiert oder eine In-Place-Normalisierung durchgeführt "
+                "werden soll."
+            ),
         ),
     )  # type: ignore
 
@@ -109,8 +117,9 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
         en="Canonical Correlation Analysis, also known as 'Mode B' PLS.",
         es="Análisis de Correlación Canónica, también conocido como PLS 'Modo B'.",
         pt="Análise de Correlação Canônica, também conhecida como PLS 'Modo B'.",
+        de="Kanonische Korrelationsanalyse, auch bekannt als PLS 'Modus B'.",
     )
-    DISPLAY_NAME = MultilingualString(en="CCA", es="CCA", pt="CCA")
+    DISPLAY_NAME = MultilingualString(en="CCA", es="CCA", pt="CCA", de="KKA")
 
     metadata = {
         "allowed_types": [Float, Integer],

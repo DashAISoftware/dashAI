@@ -32,8 +32,12 @@ class MLPImageClassifierSchema(BaseSchema):
                 "El número de épocas para entrenar el modelo. Una época es una "
                 "iteración completa sobre los datos de entrenamiento."
             ),
+            de=(
+                "Die Anzahl der Epochen zum Trainieren des Modells. Eine Epoche ist "
+                "eine vollständige Iteration über die Trainingsdaten."
+            ),
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas"),
+        alias=MultilingualString(en="Epochs", es="Épocas", de="Epochen"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -42,8 +46,11 @@ class MLPImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Learning rate for the Adam optimizer.",
             es="Tasa de aprendizaje para el optimizador Adam.",
+            de="Lernrate für den Adam-Optimierer.",
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate", es="Tasa de aprendizaje", de="Lernrate"
+        ),
     )  # type: ignore
 
     hidden_dims: schema_field(
@@ -58,10 +65,15 @@ class MLPImageClassifierSchema(BaseSchema):
                 "Las capas ocultas y sus dimensiones. Especifique el número "
                 "de unidades de cada capa separadas por comas."
             ),
+            de=(
+                "Die verdeckten Schichten und ihre Dimensionen. Geben Sie die Anzahl "
+                "der Einheiten jeder Schicht durch Kommas getrennt an."
+            ),
         ),
         alias=MultilingualString(
             en="Hidden layer dimensions",
             es="Dimensiones de capas ocultas",
+            de="Dimensionen der verdeckten Schichten",
         ),
     )  # type: ignore
 
@@ -149,6 +161,7 @@ class MLPImageClassifier(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="MLP Image Classifier",
         es="Clasificador de Imágenes MLP",
+        de="MLP-Bildklassifikator",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -160,6 +173,11 @@ class MLPImageClassifier(BaseModel):
             "Un clasificador de imágenes basado en Perceptrón Multicapa (MLP) "
             "que aplana los píxeles de la imagen y los pasa por capas ocultas "
             "completamente conectadas con activación ReLU para clasificación."
+        ),
+        de=(
+            "Ein Bildklassifikator auf Basis eines Mehrschichtigen Perzeptrons (MLP), "
+            "der Bildpixel abflacht und durch konfigurierbare vollständig verbundene "
+            "verdeckte Schichten mit ReLU-Aktivierung zur Klassifikation leitet."
         ),
     )
     COLOR: str = "#E91E63"
