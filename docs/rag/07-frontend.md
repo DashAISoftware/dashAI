@@ -41,10 +41,12 @@ SimplifiedRAGPage
 
 ### Creation Flow
 - `SimplifiedSessionSetup`: Multi-accordion form with sticky Cancel/Save buttons
-- `ChunkingSection`: 4 presets (Small/Paragraph/Page/Large) with dynamic char→token descriptions
-- `RetrieverSection`: Paradigm selector + Top-K
+- `ChunkingSection`: 4 presets (Small/Paragraph/Page/Large) using `PresetCard` + `AdvancedConfigCard` when custom config applied
+- `RetrieverSection`: Paradigm selector using `PresetCard` + Top-K + `AdvancedConfigCard` when custom params applied
 - `PromptSection` / `GeneratorSection`: Wrappers around `PromptBody` / `GeneratorBody`
 - `DocumentSelector` + `SimplifiedDocumentTable`: MRT-based document picker with upload below table
+- `PresetCard`: Unified component for all toggle/card styling — single source of truth for py, px, border, selected-state (amberDim/amberBorder). Used by ChunkingSection presets, RetrieverSection paradigms, and `AdvancedConfigCard`.
+- `AdvancedConfigCard`: Clickable card (always `selected` state). Shows "Advanced Configuration Applied" + model name. Clicking re-opens the respective advanced modal with current values pre-filled.
 
 ### Session View
 - `RAGSessionSummary`: Config overview, "Open Chat" button → transitions to chat
@@ -68,3 +70,9 @@ SimplifiedRAGPage
 6. **Chunking presets**: Dynamic `[chars] caracteres ≈ [tokens] tokens` descriptions with i18n
 7. **Document upload**: Button moved below table; `minHeight` removed for natural sizing
 8. **Reactive validation**: `chunk_size * top_k + prompt_tokens ≤ LLM context window` checked before creation
+
+9. **Generic FormSchema adoption** (May 2026): RAG-specific form components (`RAGFormSchema`, `RAGFormSchemaRenderFields`, `RAGFormSchemaFieldWithParent`) were deleted. ConfigurationStep components now use the generic `FormSchema` + `FormSchemaContainer`. The generic `FormSchemaFieldWithParent` was fixed to render its sub-modal Dialog (previously clicking the gear icon did nothing). This eliminates ~250 lines of duplicated code and ensures nested model parameter forms work consistently across all modules.
+
+10. **AddModelDialog aesthetic**: Advanced configuration modals follow the same Dialog shell as the models module: `minHeight: "500px"`, `bgcolor: "background.paper"` on all Dialog sections, `variant="outlined"` Cancel button, `variant="subtitle2"` content headings, `gap: 3` content spacing.
+
+11. **PresetCard unification**: `PresetCard` is the single source of truth for all toggle/card styling in RAG sections. Uses same py/px/border/selected-state colors (amberDim/amberBorder/primary.main) as the Top-K selector. Eliminates style drift between toggle buttons and standalone indicator cards. Selected state is managed via the `selected` prop with manual click handlers; MUI `ToggleButtonGroup` is no longer used for preset/paradigm selection to ensure uniform gap spacing with the `AdvancedConfigCard`.

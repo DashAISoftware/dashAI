@@ -2,7 +2,7 @@
 
 > Auto-generated index of all files involved in the RAG simplified view,
 > session summary, generative chat, and side panels.
-> Last updated: 2026-05-14
+> Last updated: 2026-05-27
 
 ---
 
@@ -26,20 +26,19 @@ pages/generative/simplified-RAG/
 ├── SimplifiedSessionSetup.jsx       ← Session creation form (replaces CenterBox with custom wrapper)
 │
 ├── sections/                        ← Creation form sections
-│   ├── ChunkingSection.jsx          ← Chunking presets (Small/Paragraph/Page/Large)
-│   ├── RetrieverSection.jsx         ← Retriever paradigm selector + Top-K
+│   ├── ChunkingSection.jsx          ← Chunking presets (Small/Paragraph/Page/Large) + AdvancedConfigCard
+│   ├── RetrieverSection.jsx         ← Retriever paradigm selector + Top-K + AdvancedConfigCard
 │   ├── PromptSection.jsx            ← Thin wrapper: description always visible, no info toggle
 │   └── GeneratorSection.jsx         ← Thin wrapper: description always visible, no info toggle
 │
 ├── components/                      ← Shared subcomponents
 │   ├── SectionCard.jsx              ← Consistent spacing Box (replaced Card wrapper)
 │   ├── PromptBody.jsx               ← Core prompt logic + autocomplete + template + new prompt btn
-│   ├── GeneratorBody.jsx            ← Core generator logic + autocomplete + context stats + advanced btn
+│   ├── GeneratorBody.jsx            ← Core generator logic + autocomplete + context stats + AdvancedConfigCard
+│   ├── PresetCard.jsx               ← Unified toggle/card styling (single source of truth for presets + advanced cards)
+│   ├── AdvancedConfigCard.jsx       ← Clickable card: "Advanced Configuration Applied" + model name → opens modal
 │   ├── sectionUtils.jsx             ← getDescription(), renderTemplateWithHighlights()
-│   ├── ragFormDefaults.js           ← buildDefaultValuesFromSchemaProperties, getInitialModelParameters (relocated)
-│   ├── RAGFormSchema.jsx            ← RAG-specific form schema renderer
-│   ├── RAGFormSchemaRenderFields.jsx← Field renderer for RAGFormSchema
-│   └── RAGFormSchemaFieldWithParent.jsx ← Nested model param field
+│   └── ragFormDefaults.js           ← buildDefaultValuesFromSchemaProperties, getInitialModelParameters (relocated)
 │
 └── advanced/                        ← Advanced config modals + configuration step components (relocated)
     ├── ChunkingAdvancedModal.jsx    ← Dialog wrapping ChunkingConfigurationStep
@@ -93,12 +92,15 @@ SimplifiedRAGPage
 │                                                   └→ DocumentPreviewModal
 ├── [Center] SimplifiedSessionSetup  (no session selected)
 │   ├── DocumentSelector → SimplifiedDocumentTable → DocumentPreviewModal
-│   ├── ChunkingSection → ChunkingAdvancedModal → ChunkingConfigurationStep
-│   ├── RetrieverSection → RetrieverAdvancedModal → RetrieverConfigurationStep
+│   ├── ChunkingSection → PresetCard (4 presets + AdvancedConfigCard) → ChunkingAdvancedModal
+│   │                                     └→ ChunkingConfigurationStep (uses generic FormSchema)
+│   ├── RetrieverSection → PresetCard (2 paradigms + AdvancedConfigCard) → RetrieverAdvancedModal
+│   │                                     └→ RetrieverConfigurationStep (uses generic FormSchema)
 │   ├── PromptSection → SectionCard → PromptBody → PromptAdvancedModal
 │   │                                               └→ NewPromptModal → PlaceholdersList
 │   └── GeneratorSection → SectionCard → GeneratorBody → GeneratorAdvancedModal
-│                                                       └→ GeneratorConfigurationStep
+│                                                       ├→ AdvancedConfigCard
+│                                                       └→ GeneratorConfigurationStep (uses generic FormSchema)
 ├── [Center] RAGSessionSummary / GenerativeChat
 │   └── RAGBreadcrumbs
 ├── [Right]  SimplifiedRAGInfoBar   (no session selected)
@@ -115,9 +117,12 @@ SimplifiedRAGPage
 |------|---------|---------|
 | `api/rag.ts` | All RAG API calls | Most components |
 | `simplified-RAG/components/ragFormDefaults.js` | `buildDefaultValuesFromSchemaProperties`, `getInitialModelParameters` | ChunkingSection, RetrieverSection, GeneratorBody, GeneratorConfigurationStep, ChunkingConfigurationStep, RetrieverConfigurationStep |
-| `utils/schema.js` | `getModelFromSubform`, `getParamsFromSubform`, `formattedSubform` | ChunkingSection, RAGFormSchemaRenderFields, RAGFormSchemaFieldWithParent |
+| `simplified-RAG/components/PresetCard.jsx` | Unified toggle/card component | ChunkingSection, RetrieverSection, AdvancedConfigCard, GeneratorBody |
+| `components/shared/FormSchema.jsx` | Generic form schema renderer (replaces RAGFormSchema) | ChunkingConfigurationStep, GeneratorConfigurationStep, RetrieverConfigurationStep |
+| `components/shared/FormSchemaFieldWithParent.jsx` | Sub-modal for nested model params (fixed May 2026) | FormSchemaRenderFields |
+| `utils/schema.js` | `getModelFromSubform`, `getParamsFromSubform`, `formattedSubform` | ChunkingSection, FormSchemaRenderFields |
 | `utils/urlUtils.js` | `normalizeUrl` | DocumentPreviewModal, SimplifiedDocumentTable, DocumentList, DocumentTable |
-| `contexts/schema.js` | `FormSchemaProvider`, `useFormSchemaStore` | RAGFormSchemaFieldWithParent, advanced modals |
+| `contexts/schema.js` | `FormSchemaProvider`, `useFormSchemaStore` | FormSchemaFieldWithParent, advanced modals, FormSchema |
 
 ---
 
@@ -156,3 +161,13 @@ SimplifiedRAGPage
 9. **Chunk size display**: Presets show `[n chars] caracteres ≈ [n tokens] tokens` via i18n interpolation. ToggleButton text uses sentence case with `textTransform: "none"` to override MUI theme uppercase.
 
 10. **DocumentSelector**: Upload button moved below table. `minHeight` removed from table wrapper for natural sizing.
+
+11. **Unified PresetCard styling**: `PresetCard` is the single source of truth for toggle and card styling (py, px, border, selected-state colors). Used by ChunkingSection presets, RetrieverSection paradigms, and `AdvancedConfigCard`. Eliminates style drift between toggle buttons and standalone cards.
+
+12. **AdvancedConfigCard**: Clickable card shown when custom configuration is applied (chunking custom preset, retriever custom params, generator custom params). Displays "Advanced Configuration Applied" + model name. Clicking re-opens the advanced modal with current values pre-filled.
+
+13. **Generic FormSchema adoption**: RAG-specific form components (`RAGFormSchema`, `RAGFormSchemaRenderFields`, `RAGFormSchemaFieldWithParent`) were deleted. ConfigurationStep components now use the generic `FormSchema` + `FormSchemaContainer` + `FormSchemaRenderFields`. The generic `FormSchemaFieldWithParent` was fixed to render its sub-modal Dialog (was broken — clicking the gear icon did nothing).
+
+14. **AddModelDialog aesthetic**: Advanced configuration modals (`ChunkingAdvancedModal`, `RetrieverAdvancedModal`, `GeneratorAdvancedModal`) follow the same Dialog shell as `AddModelDialog`: `PaperProps.sx.minHeight: "500px"`, `bgcolor: "background.paper"` on DialogTitle/DialogContent/DialogActions, `variant="outlined"` on Cancel button, `variant="subtitle2"` for content headings, `gap: 3` for content spacing.
+
+15. **No ToggleButtonGroup**: Preset/paradigm selection uses manual `Box flex gap: 1` with `PresetCard` components instead of MUI `ToggleButtonGroup`. This ensures uniform gap between all items (presets + AdvancedConfigCard) without the border-collapsing behavior of `ToggleButtonGroup`. Selected state is managed via the `selected` prop with click handlers.

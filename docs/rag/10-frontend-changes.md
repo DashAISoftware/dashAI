@@ -1,5 +1,9 @@
 # Frontend Changes Required — RAG Factory Refactoring (May 2026)
 
+> **Update May 27 2026**: The RAG-specific form components (`RAGFormSchema`, `RAGFormSchemaRenderFields`, `RAGFormSchemaFieldWithParent`) have been deleted. ConfigurationStep components now use the generic `FormSchema` + `FormSchemaContainer`. The generic `FormSchemaFieldWithParent` was fixed to render its sub-modal Dialog. See [09-pending-tasks.md](./09-pending-tasks.md) for details.
+
+---
+
 This document describes the frontend changes needed to align with the
 backend factory refactoring. The core change is: **prompts are now
 components (like chunking, retriever, and LLM)**, not a simple ID reference.

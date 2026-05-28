@@ -22,6 +22,14 @@ Consolidated from `pendientes_rag.md` and current codebase analysis.
 - `extra_args_enum.py` reduced from 12 to 3 constants
 - 4 Alembic migrations (composite, uniqueness, FK inversion, chunk_set)
 
+### Frontend Cleanup (May 2026)
+- **Generic `FormSchemaFieldWithParent` fixed**: Added missing sub-modal Dialog (previously clicking the gear icon on nested model fields did nothing). The component had `openSubModal` state and `handleSubModelSave` handler but the `<Dialog>` JSX was never rendered. Now works for all modules.
+- **RAG-specific form components deleted**: `RAGFormSchema.jsx`, `RAGFormSchemaRenderFields.jsx`, `RAGFormSchemaFieldWithParent.jsx` — all 3 were nearly identical copies of generic components. ConfigurationStep components (`ChunkingConfigurationStep`, `RetrieverConfigurationStep`, `GeneratorConfigurationStep`) now use `FormSchema` + `FormSchemaContainer` directly.
+- **`PresetCard` unified component**: Single source of truth for toggle/card styling. Used by ChunkingSection presets, RetrieverSection paradigms, and `AdvancedConfigCard`. Same selected-state colors (amberDim/amberBorder) as Top-K selector.
+- **`AdvancedConfigCard` component**: Clickable card showing "Advanced Configuration Applied" + model name. Replaces the old text caption and Custom toggle button. Clicking re-opens the advanced modal with current values pre-filled.
+- **`AddModelDialog` aesthetic applied**: Advanced configuration modals now match the platform's Dialog shell style (`minHeight: "500px"`, `bgcolor: "background.paper"`, `variant="outlined"` Cancel button, `variant="subtitle2"` headings, `gap: 3` spacing).
+- **No `ToggleButtonGroup`**: Preset/paradigm selection uses manual `Box flex gap: 1` with `PresetCard` components. Ensures uniform spacing between toggle items and `AdvancedConfigCard`.
+
 ---
 
 ## Pending Items
@@ -89,6 +97,9 @@ The 4 migrations were generated but need end-to-end verification:
 | `RAGPipeline.load_documents_from_db` | Already removed earlier | `DocumentLoader.load` | DONE |
 | `RAGPipeline.validate_params` | Instance method validation | `RAGPipelineConfig.from_kwargs` | REMOVED (folded into config) |
 | `RAGPipeline.print()` | Debug statement | (removed) | REMOVED |
+| `simplified-RAG/components/RAGFormSchema.jsx` | RAG-specific FormSchema clone | Generic `FormSchema` | REMOVED (May 2026) |
+| `simplified-RAG/components/RAGFormSchemaRenderFields.jsx` | RAG-specific render fields clone | Generic `FormSchemaRenderFields` | REMOVED (May 2026) |
+| `simplified-RAG/components/RAGFormSchemaFieldWithParent.jsx` | RAG-specific parent field (sub-modal) | Generic `FormSchemaFieldWithParent` (fixed) | REMOVED (May 2026) |
 | Old cleanup in `generative_session.py` | References old columns | Update to use RetrieverRepository | PENDING |
 
 ## Next Steps (Priority Order)
