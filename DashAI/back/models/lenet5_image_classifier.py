@@ -29,8 +29,12 @@ class LeNet5ImageClassifierSchema(BaseSchema):
                 "El número de épocas para entrenar el modelo. Una época es una "
                 "iteración completa sobre los datos de entrenamiento."
             ),
+            pt=(
+                "O número de épocas para treinar o modelo. Uma época é uma "
+                "iteração completa sobre os dados de treinamento."
+            ),
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas"),
+        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -39,8 +43,13 @@ class LeNet5ImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Learning rate for the Adam optimizer.",
             es="Tasa de aprendizaje para el optimizador Adam.",
+            pt="Taxa de aprendizado para o otimizador Adam.",
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
@@ -56,8 +65,15 @@ class LeNet5ImageClassifierSchema(BaseSchema):
                 "entrenamiento. Valores más grandes aceleran el entrenamiento "
                 "pero requieren más memoria."
             ),
+            pt=(
+                "Número de imagens processadas juntas em cada etapa de "
+                "treinamento. Valores maiores aceleram o treinamento "
+                "mas requerem mais memória."
+            ),
         ),
-        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
+        alias=MultilingualString(
+            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote"
+        ),
     )  # type: ignore
 
     image_size: schema_field(
@@ -72,8 +88,14 @@ class LeNet5ImageClassifierSchema(BaseSchema):
                 "Las imágenes se redimensionan a este valor (en píxeles) tanto "
                 "en ancho como en alto. El LeNet-5 original usa 32×32."
             ),
+            pt=(
+                "As imagens são redimensionadas para este valor (em pixels) tanto "
+                "em largura quanto em altura. O LeNet-5 original usa 32×32."
+            ),
         ),
-        alias=MultilingualString(en="Image size", es="Tamaño de imagen"),
+        alias=MultilingualString(
+            en="Image size", es="Tamaño de imagen", pt="Tamanho da imagem"
+        ),
     )  # type: ignore
 
     dropout_rate: schema_field(
@@ -90,8 +112,15 @@ class LeNet5ImageClassifierSchema(BaseSchema):
                 "Valores entre 0.2 y 0.5 ayudan a prevenir el sobreajuste. "
                 "Use 0.0 para reproducir el LeNet-5 original."
             ),
+            pt=(
+                "Taxa de dropout aplicada entre as camadas completamente conectadas. "
+                "Valores entre 0.2 e 0.5 ajudam a prevenir o sobreajuste. "
+                "Use 0.0 para reproduzir o LeNet-5 original."
+            ),
         ),
-        alias=MultilingualString(en="Dropout rate", es="Tasa de dropout"),
+        alias=MultilingualString(
+            en="Dropout rate", es="Tasa de dropout", pt="Taxa de dropout"
+        ),
     )  # type: ignore
 
     weight_decay: schema_field(
@@ -106,8 +135,14 @@ class LeNet5ImageClassifierSchema(BaseSchema):
                 "Coeficiente de regularización L2 para el optimizador Adam. "
                 "Valores típicos: 1e-4 a 1e-2."
             ),
+            pt=(
+                "Coeficiente de regularização L2 para o otimizador Adam. "
+                "Valores típicos: 1e-4 a 1e-2."
+            ),
         ),
-        alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
+        alias=MultilingualString(
+            en="Weight decay", es="Decaimiento de pesos", pt="Decaimento de pesos"
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -116,8 +151,9 @@ class LeNet5ImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Hardware device used for training and inference (CPU/GPU).",
             es="Dispositivo de hardware para entrenamiento e inferencia (CPU/GPU).",
+            pt="Dispositivo de hardware usado para treinamento e inferência (CPU/GPU).",
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
     )  # type: ignore
 
 
@@ -223,6 +259,7 @@ class LeNet5ImageClassifier(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="LeNet-5",
         es="LeNet-5",
+        pt="LeNet-5",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -234,6 +271,11 @@ class LeNet5ImageClassifier(BaseModel):
             "La arquitectura CNN original (LeCun et al., 1998). Dos bloques "
             "conv→tanh→pool seguidos de tres capas completamente conectadas. "
             "Ideal para imágenes pequeñas y uso educativo."
+        ),
+        pt=(
+            "A arquitetura CNN original (LeCun et al., 1998). Dois blocos "
+            "conv→tanh→pool seguidos de três camadas completamente conectadas. "
+            "Ideal para imagens pequenas e uso educacional."
         ),
     )
     COLOR: str = "#7B1FA2"

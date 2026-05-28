@@ -21,6 +21,7 @@ class ResNet50ImageClassifier(TorchvisionImageClassifier):
     DISPLAY_NAME: str = MultilingualString(
         en="ResNet-50",
         es="ResNet-50",
+        pt="ResNet-50",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -32,6 +33,11 @@ class ResNet50ImageClassifier(TorchvisionImageClassifier):
             "ResNet-50 (He et al., 2015). Red residual de 50 capas con bloques "
             "bottleneck y conexiones de salto. La variante CNN más citada en "
             "papers académicos; soporta pesos preentrenados en ImageNet."
+        ),
+        pt=(
+            "ResNet-50 (He et al., 2015). Rede residual de 50 camadas com blocos "
+            "bottleneck e conexões de salto. A variante CNN mais citada em "
+            "artigos acadêmicos; suporta pesos pré-treinados no ImageNet."
         ),
     )
     COLOR: str = "#1B5E20"

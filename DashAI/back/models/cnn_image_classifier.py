@@ -29,8 +29,12 @@ class CNNImageClassifierSchema(BaseSchema):
                 "El número de épocas para entrenar el modelo. Una época es una "
                 "iteración completa sobre los datos de entrenamiento."
             ),
+            pt=(
+                "O número de épocas para treinar o modelo. Uma época é uma "
+                "iteração completa sobre os dados de treinamento."
+            ),
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas"),
+        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -39,8 +43,13 @@ class CNNImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Learning rate for the Adam optimizer.",
             es="Tasa de aprendizaje para el optimizador Adam.",
+            pt="Taxa de aprendizado para o otimizador Adam.",
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
@@ -56,8 +65,15 @@ class CNNImageClassifierSchema(BaseSchema):
                 "entrenamiento. Valores más grandes aceleran el entrenamiento "
                 "pero requieren más memoria."
             ),
+            pt=(
+                "Número de imagens processadas juntas em cada etapa de "
+                "treinamento. Valores maiores aceleram o treinamento "
+                "mas requerem mais memória."
+            ),
         ),
-        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
+        alias=MultilingualString(
+            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote"
+        ),
     )  # type: ignore
 
     image_size: schema_field(
@@ -72,8 +88,14 @@ class CNNImageClassifierSchema(BaseSchema):
                 "Las imágenes se redimensionan a este valor (en píxeles) tanto "
                 "en ancho como en alto. Debe ser al menos 2^num_conv_blocks."
             ),
+            pt=(
+                "As imagens são redimensionadas para este valor (em pixels) tanto "
+                "em largura quanto em altura. Deve ser pelo menos 2^num_conv_blocks."
+            ),
         ),
-        alias=MultilingualString(en="Image size", es="Tamaño de imagen"),
+        alias=MultilingualString(
+            en="Image size", es="Tamaño de imagen", pt="Tamanho da imagem"
+        ),
     )  # type: ignore
 
     num_conv_blocks: schema_field(
@@ -90,10 +112,16 @@ class CNNImageClassifierSchema(BaseSchema):
                 "convolución, activación ReLU y max-pooling que reduce a la "
                 "mitad las dimensiones espaciales."
             ),
+            pt=(
+                "Número de blocos convolucionais. Cada bloco aplica uma "
+                "convolução, ativação ReLU e max-pooling que reduz à metade "
+                "as dimensões espaciais."
+            ),
         ),
         alias=MultilingualString(
             en="Number of conv blocks",
             es="Número de bloques conv",
+            pt="Número de blocos conv",
         ),
     )  # type: ignore
 
@@ -109,8 +137,14 @@ class CNNImageClassifierSchema(BaseSchema):
                 "Número de filtros en el primer bloque convolucional. "
                 "Cada bloque siguiente duplica este número."
             ),
+            pt=(
+                "Número de filtros no primeiro bloco convolucional. "
+                "Cada bloco subsequente dobra este número."
+            ),
         ),
-        alias=MultilingualString(en="Initial filters", es="Filtros iniciales"),
+        alias=MultilingualString(
+            en="Initial filters", es="Filtros iniciales", pt="Filtros iniciais"
+        ),
     )  # type: ignore
 
     dropout_rate: schema_field(
@@ -127,8 +161,15 @@ class CNNImageClassifierSchema(BaseSchema):
                 "capa de salida. Valores entre 0.2 y 0.5 ayudan a prevenir el "
                 "sobreajuste. Use 0.0 para desactivarlo."
             ),
+            pt=(
+                "Fração de neurônios desativados aleatoriamente antes da "
+                "camada de saída. Valores entre 0.2 e 0.5 ajudam a prevenir o "
+                "sobreajuste. Use 0.0 para desativar."
+            ),
         ),
-        alias=MultilingualString(en="Dropout rate", es="Tasa de dropout"),
+        alias=MultilingualString(
+            en="Dropout rate", es="Tasa de dropout", pt="Taxa de dropout"
+        ),
     )  # type: ignore
 
     weight_decay: schema_field(
@@ -143,8 +184,14 @@ class CNNImageClassifierSchema(BaseSchema):
                 "Coeficiente de regularización L2 para el optimizador Adam. "
                 "Valores típicos: 1e-4 a 1e-2."
             ),
+            pt=(
+                "Coeficiente de regularização L2 para o otimizador Adam. "
+                "Valores típicos: 1e-4 a 1e-2."
+            ),
         ),
-        alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
+        alias=MultilingualString(
+            en="Weight decay", es="Decaimiento de pesos", pt="Decaimento de pesos"
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -153,8 +200,9 @@ class CNNImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Hardware device used for training and inference (CPU/GPU).",
             es="Dispositivo de hardware para entrenamiento e inferencia (CPU/GPU).",
+            pt="Dispositivo de hardware usado para treinamento e inferência (CPU/GPU).",
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
     )  # type: ignore
 
 
@@ -275,6 +323,7 @@ class CNNImageClassifier(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="CNN Image Classifier",
         es="Clasificador de Imágenes CNN",
+        pt="Classificador de Imagens CNN",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -286,6 +335,11 @@ class CNNImageClassifier(BaseModel):
             "Un clasificador de imágenes basado en Red Neuronal Convolucional "
             "(CNN) que aprende características espaciales mediante bloques "
             "conv→ReLU→pool configurables, duplicando los filtros en cada etapa."
+        ),
+        pt=(
+            "Um classificador de imagens baseado em Rede Neural Convolucional "
+            "(CNN) que aprende características espaciais por meio de blocos "
+            "conv→ReLU→pool configuráveis, dobrando os filtros em cada etapa."
         ),
     )
     COLOR: str = "#1565C0"

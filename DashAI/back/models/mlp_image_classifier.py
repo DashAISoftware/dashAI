@@ -30,8 +30,12 @@ class MLPImageClassifierSchema(BaseSchema):
                 "El número de épocas para entrenar el modelo. Una época es una "
                 "iteración completa sobre los datos de entrenamiento."
             ),
+            pt=(
+                "O número de épocas para treinar o modelo. Uma época é uma "
+                "iteração completa sobre os dados de treinamento."
+            ),
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas"),
+        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -40,8 +44,13 @@ class MLPImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Learning rate for the Adam optimizer.",
             es="Tasa de aprendizaje para el optimizador Adam.",
+            pt="Taxa de aprendizado para o otimizador Adam.",
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+        ),
     )  # type: ignore
 
     hidden_dims: schema_field(
@@ -56,10 +65,15 @@ class MLPImageClassifierSchema(BaseSchema):
                 "Las capas ocultas y sus dimensiones. Especifique el número "
                 "de unidades de cada capa separadas por comas."
             ),
+            pt=(
+                "As camadas ocultas e suas dimensões. Especifique o número "
+                "de unidades de cada camada separadas por vírgulas."
+            ),
         ),
         alias=MultilingualString(
             en="Hidden layer dimensions",
             es="Dimensiones de capas ocultas",
+            pt="Dimensões das camadas ocultas",
         ),
     )  # type: ignore
 
@@ -76,8 +90,15 @@ class MLPImageClassifierSchema(BaseSchema):
                 "Valores más grandes aceleran el entrenamiento "
                 "pero requieren más memoria."
             ),
+            pt=(
+                "Número de imagens processadas juntas em cada etapa de treinamento. "
+                "Valores maiores aceleram o treinamento "
+                "mas requerem mais memória."
+            ),
         ),
-        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
+        alias=MultilingualString(
+            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote"
+        ),
     )  # type: ignore
 
     image_size: schema_field(
@@ -95,8 +116,16 @@ class MLPImageClassifierSchema(BaseSchema):
                 "Tamaños más grandes preservan más detalle "
                 "pero aumentan el tiempo de entrenamiento."
             ),
+            pt=(
+                "As imagens são redimensionadas para este valor (em pixels) "
+                "tanto em largura quanto em altura antes do treinamento. "
+                "Tamanhos maiores preservam mais detalhes "
+                "mas aumentam o tempo de treinamento."
+            ),
         ),
-        alias=MultilingualString(en="Image size", es="Tamaño de imagen"),
+        alias=MultilingualString(
+            en="Image size", es="Tamaño de imagen", pt="Tamanho da imagem"
+        ),
     )  # type: ignore
 
     dropout_rate: schema_field(
@@ -113,8 +142,15 @@ class MLPImageClassifierSchema(BaseSchema):
                 "entrenamiento. Valores entre 0.2 y 0.5 ayudan a prevenir "
                 "el sobreajuste. Use 0.0 para desactivarlo."
             ),
+            pt=(
+                "Fração de neurônios desativados aleatoriamente em cada etapa de "
+                "treinamento. Valores entre 0.2 e 0.5 ajudam a prevenir "
+                "o sobreajuste. Use 0.0 para desativar."
+            ),
         ),
-        alias=MultilingualString(en="Dropout rate", es="Tasa de dropout"),
+        alias=MultilingualString(
+            en="Dropout rate", es="Tasa de dropout", pt="Taxa de dropout"
+        ),
     )  # type: ignore
 
     weight_decay: schema_field(
@@ -130,8 +166,15 @@ class MLPImageClassifierSchema(BaseSchema):
                 "pesos grandes para mejorar la generalización. "
                 "Valores típicos: 1e-4 a 1e-2."
             ),
+            pt=(
+                "Coeficiente de regularização L2 para o otimizador Adam. Penaliza "
+                "pesos grandes para melhorar a generalização. "
+                "Valores típicos: 1e-4 a 1e-2."
+            ),
         ),
-        alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
+        alias=MultilingualString(
+            en="Weight decay", es="Decaimiento de pesos", pt="Decaimento de pesos"
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -140,8 +183,9 @@ class MLPImageClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Hardware device used for training and inference (CPU/GPU).",
             es="Dispositivo de hardware para entrenamiento e inferencia (CPU/GPU).",
+            pt="Dispositivo de hardware usado para treinamento e inferência (CPU/GPU).",
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
     )  # type: ignore
 
 
@@ -238,6 +282,7 @@ class MLPImageClassifier(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="MLP Image Classifier",
         es="Clasificador de Imágenes MLP",
+        pt="Classificador de Imagens MLP",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -249,6 +294,11 @@ class MLPImageClassifier(BaseModel):
             "Un clasificador de imágenes basado en Perceptrón Multicapa (MLP) "
             "que aplana los píxeles de la imagen y los pasa por capas ocultas "
             "completamente conectadas con activación ReLU para clasificación."
+        ),
+        pt=(
+            "Um classificador de imagens baseado em Perceptron Multicamada (MLP) "
+            "que achata os pixels da imagem e os passa por camadas ocultas "
+            "completamente conectadas com ativação ReLU para classificação."
         ),
     )
     COLOR: str = "#E91E63"
