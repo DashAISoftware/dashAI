@@ -1,13 +1,8 @@
 """Shared base class for torchvision-based image classifiers."""
 
-import abc
+from __future__ import annotations
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data
-from torchvision import transforms
+import abc
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -152,50 +147,58 @@ class TorchvisionImageClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-class _ImageDataset(torch.utils.data.Dataset):
-    """Torch Dataset with ImageNet normalization for torchvision models."""
+def _make_image_dataset(x_dataset, y_dataset=None, image_size=224):
+    import torch.utils.data
+    from torchvision import transforms
 
-    def __init__(self, x_dataset, y_dataset=None, image_size=224):
-        self.x_dataset = x_dataset
-        self.y_dataset = y_dataset
-        self.transforms = transforms.Compose(
-            [
-                transforms.Lambda(lambda img: img.convert("RGB")),
-                transforms.Resize((image_size, image_size)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225],
-                ),
-            ]
-        )
+    class _ImageDataset(torch.utils.data.Dataset):
+        def __init__(self, x_ds, y_ds, img_size):
+            self.x_dataset = x_ds
+            self.y_dataset = y_ds
+            self.transforms = transforms.Compose(
+                [
+                    transforms.Lambda(lambda img: img.convert("RGB")),
+                    transforms.Resize((img_size, img_size)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225],
+                    ),
+                ]
+            )
 
-        self.image_col_name = list(x_dataset.features.keys())[0]
-        self.label_col_name = (
-            list(y_dataset.features.keys())[0] if y_dataset is not None else None
-        )
+            self.image_col_name = list(x_ds.features.keys())[0]
+            self.label_col_name = (
+                list(y_ds.features.keys())[0] if y_ds is not None else None
+            )
 
-        self.label_to_idx = {}
-        self.idx_to_label = {}
-        if self.label_col_name:
-            unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
-            self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
-            self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+            self.label_to_idx = {}
+            self.idx_to_label = {}
+            if self.label_col_name:
+                unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
+                self.label_to_idx = {
+                    label: idx for idx, label in enumerate(unique_labels)
+                }
+                self.idx_to_label = {
+                    idx: label for label, idx in self.label_to_idx.items()
+                }
 
-    def num_classes(self):
-        if self.label_col_name is None:
-            return 0
-        return len(self.label_to_idx)
+        def num_classes(self):
+            if self.label_col_name is None:
+                return 0
+            return len(self.label_to_idx)
 
-    def __len__(self):
-        return len(self.x_dataset)
+        def __len__(self):
+            return len(self.x_dataset)
 
-    def __getitem__(self, idx):
-        image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
-        if self.label_col_name is None:
-            return image
-        label_str = self.y_dataset[idx][self.label_col_name]
-        return image, self.label_to_idx[label_str]
+        def __getitem__(self, idx):
+            image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
+            if self.label_col_name is None:
+                return image
+            label_str = self.y_dataset[idx][self.label_col_name]
+            return image, self.label_to_idx[label_str]
+
+    return _ImageDataset(x_dataset, y_dataset, image_size)
 
 
 class TorchvisionImageClassifier(BaseModel, abc.ABC):
@@ -211,21 +214,25 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
     COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
 
     @abc.abstractmethod
-    def _build_backbone(self, num_classes: int, pretrained: bool) -> nn.Module:
+    def _build_backbone(self, num_classes: int, pretrained: bool):
         """Build and return the adapted torchvision model."""
 
     @abc.abstractmethod
-    def _classifier_head(self) -> nn.Module:
+    def _classifier_head(self):
         """Return the classifier head module (kept trainable when freezing)."""
 
     @staticmethod
     def _collate_fn_with_labels(batch):
+        import torch
+
         images = torch.stack([item[0] for item in batch])
         labels = torch.tensor([item[1] for item in batch], dtype=torch.long)
         return images, labels
 
     @staticmethod
     def _collate_fn_no_labels(batch):
+        import torch
+
         return torch.stack(batch)
 
     def __init__(
@@ -240,6 +247,8 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         freeze_backbone=False,
         **kwargs,
     ):
+        import torch
+
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -284,16 +293,23 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         y_train : DashAIDataset
             Target dataset containing string labels.
         x_validation : DashAIDataset, optional
-            Unused. Defaults to None.
+            Validation input features. Defaults to None.
         y_validation : DashAIDataset, optional
-            Unused. Defaults to None.
+            Validation target labels. Defaults to None.
 
         Returns
         -------
         BaseTorchvisionImageClassifier
             The trained model instance.
         """
-        image_dataset = _ImageDataset(
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
+        import torch.utils.data
+
+        from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+
+        image_dataset = _make_image_dataset(
             x_train, y_dataset=y_train, image_size=self.image_size
         )
         self.num_classes = image_dataset.num_classes()
@@ -321,14 +337,31 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
             weight_decay=self.weight_decay,
         )
 
-        self.model.train()
-        for _ in range(self.epochs):
+        for epoch in range(self.epochs):
+            self.model.train()
             for images, labels in train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 loss = criterion(self.model(images), labels)
                 loss.backward()
                 self.optimizer.step()
+
+            self.model.eval()
+            self.calculate_metrics(
+                split=SplitEnum.TRAIN,
+                level=LevelEnum.EPOCH,
+                x_data=x_train,
+                y_data=y_train,
+                log_index=epoch + 1,
+            )
+            if x_validation is not None:
+                self.calculate_metrics(
+                    split=SplitEnum.VALIDATION,
+                    level=LevelEnum.EPOCH,
+                    x_data=x_validation,
+                    y_data=y_validation,
+                    log_index=epoch + 1,
+                )
 
         return self
 
@@ -345,7 +378,13 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         np.ndarray
             Array of shape (n_samples, n_classes) with softmax probabilities.
         """
-        image_dataset = _ImageDataset(x, y_dataset=None, image_size=self.image_size)
+        import numpy as np
+        import torch
+        import torch.utils.data
+
+        image_dataset = _make_image_dataset(
+            x, y_dataset=None, image_size=self.image_size
+        )
         loader = torch.utils.data.DataLoader(
             image_dataset,
             batch_size=self.batch_size,
@@ -370,6 +409,8 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         filename : str
             Path where the checkpoint will be saved.
         """
+        import torch
+
         torch.save(
             {
                 "model_state_dict": self.model.state_dict(),
@@ -403,6 +444,9 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         BaseTorchvisionImageClassifier
             Instance with loaded weights.
         """
+        import torch
+        import torch.optim as optim
+
         ckpt = torch.load(filename, map_location=torch.device("cpu"))
         instance = cls(
             epochs=ckpt["epochs"],

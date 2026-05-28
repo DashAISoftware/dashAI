@@ -1,11 +1,6 @@
 """LeNet-5 image classifier for DashAI."""
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data
-from torchvision import transforms
+from __future__ import annotations
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -114,82 +109,93 @@ class LeNet5ImageClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-class _ImageDataset(torch.utils.data.Dataset):
-    """Torch Dataset wrapper for DashAI image datasets."""
+def _make_image_dataset(x_dataset, y_dataset=None, image_size=32):
+    import torch.utils.data
+    from torchvision import transforms
 
-    def __init__(self, x_dataset, y_dataset=None, image_size=32):
-        self.x_dataset = x_dataset
-        self.y_dataset = y_dataset
-        self.transforms = transforms.Compose(
-            [
-                transforms.Resize((image_size, image_size)),
-                transforms.ToTensor(),
-            ]
-        )
+    class _ImageDataset(torch.utils.data.Dataset):
+        def __init__(self, x_ds, y_ds, img_size):
+            self.x_dataset = x_ds
+            self.y_dataset = y_ds
+            self.transforms = transforms.Compose(
+                [
+                    transforms.Resize((img_size, img_size)),
+                    transforms.ToTensor(),
+                ]
+            )
 
-        self.image_col_name = list(x_dataset.features.keys())[0]
-        self.label_col_name = (
-            list(y_dataset.features.keys())[0] if y_dataset is not None else None
-        )
+            self.image_col_name = list(x_ds.features.keys())[0]
+            self.label_col_name = (
+                list(y_ds.features.keys())[0] if y_ds is not None else None
+            )
 
-        self.label_to_idx = {}
-        self.idx_to_label = {}
-        if self.label_col_name:
-            unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
-            self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
-            self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+            self.label_to_idx = {}
+            self.idx_to_label = {}
+            if self.label_col_name:
+                unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
+                self.label_to_idx = {
+                    label: idx for idx, label in enumerate(unique_labels)
+                }
+                self.idx_to_label = {
+                    idx: label for label, idx in self.label_to_idx.items()
+                }
 
-        self.tensor_shape = self.transforms(
-            self.x_dataset[0][self.image_col_name].to_pil()
-        ).shape
+            self.tensor_shape = self.transforms(
+                self.x_dataset[0][self.image_col_name].to_pil()
+            ).shape
 
-    def num_classes(self):
-        if self.label_col_name is None:
-            return 0
-        return len(self.label_to_idx)
+        def num_classes(self):
+            if self.label_col_name is None:
+                return 0
+            return len(self.label_to_idx)
 
-    def __len__(self):
-        return len(self.x_dataset)
+        def __len__(self):
+            return len(self.x_dataset)
 
-    def __getitem__(self, idx):
-        image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
-        if self.label_col_name is None:
-            return image
-        label_str = self.y_dataset[idx][self.label_col_name]
-        return image, self.label_to_idx[label_str]
+        def __getitem__(self, idx):
+            image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
+            if self.label_col_name is None:
+                return image
+            label_str = self.y_dataset[idx][self.label_col_name]
+            return image, self.label_to_idx[label_str]
+
+    return _ImageDataset(x_dataset, y_dataset, image_size)
 
 
-class _LeNet5(nn.Module):
-    """LeNet-5 architecture (LeCun et al., 1998) with configurable dropout."""
+def _build_lenet5_model(input_channels, input_size, num_classes, dropout_rate):
+    import torch
+    import torch.nn as nn
 
-    def __init__(self, input_channels, input_size, num_classes, dropout_rate):
-        super().__init__()
-        self.conv_layers = nn.Sequential(
-            nn.Conv2d(input_channels, 6, kernel_size=5),
-            nn.Tanh(),
-            nn.AvgPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(6, 16, kernel_size=5),
-            nn.Tanh(),
-            nn.AvgPool2d(kernel_size=2, stride=2),
-        )
+    class _LeNet5(nn.Module):
+        def __init__(self, in_ch, in_sz, n_cls, drop_r):
+            super().__init__()
+            self.conv_layers = nn.Sequential(
+                nn.Conv2d(in_ch, 6, kernel_size=5),
+                nn.Tanh(),
+                nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.Conv2d(6, 16, kernel_size=5),
+                nn.Tanh(),
+                nn.AvgPool2d(kernel_size=2, stride=2),
+            )
 
-        # Compute flattened dimension dynamically for arbitrary input_size
-        dummy = torch.zeros(1, input_channels, input_size, input_size)
-        flat_dim = self.conv_layers(dummy).view(1, -1).shape[1]
+            dummy = torch.zeros(1, in_ch, in_sz, in_sz)
+            flat_dim = self.conv_layers(dummy).view(1, -1).shape[1]
 
-        self.classifier = nn.Sequential(
-            nn.Linear(flat_dim, 120),
-            nn.Tanh(),
-            nn.Dropout(dropout_rate),
-            nn.Linear(120, 84),
-            nn.Tanh(),
-            nn.Dropout(dropout_rate),
-            nn.Linear(84, num_classes),
-        )
+            self.classifier = nn.Sequential(
+                nn.Linear(flat_dim, 120),
+                nn.Tanh(),
+                nn.Dropout(drop_r),
+                nn.Linear(120, 84),
+                nn.Tanh(),
+                nn.Dropout(drop_r),
+                nn.Linear(84, n_cls),
+            )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.conv_layers(x)
-        return self.classifier(x.view(x.size(0), -1))
+        def forward(self, x):
+            x = self.conv_layers(x)
+            return self.classifier(x.view(x.size(0), -1))
+
+    return _LeNet5(input_channels, input_size, num_classes, dropout_rate)
 
 
 class LeNet5ImageClassifier(BaseModel):
@@ -223,12 +229,16 @@ class LeNet5ImageClassifier(BaseModel):
 
     @staticmethod
     def _collate_fn_with_labels(batch):
+        import torch
+
         images = torch.stack([item[0] for item in batch])
         labels = torch.tensor([item[1] for item in batch], dtype=torch.long)
         return images, labels
 
     @staticmethod
     def _collate_fn_no_labels(batch):
+        import torch
+
         return torch.stack(batch)
 
     def __init__(
@@ -241,6 +251,8 @@ class LeNet5ImageClassifier(BaseModel):
         weight_decay=0.0,
         **kwargs,
     ):
+        import torch
+
         self.epochs = epochs
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -278,16 +290,23 @@ class LeNet5ImageClassifier(BaseModel):
         y_train : DashAIDataset
             Target dataset containing string labels.
         x_validation : DashAIDataset, optional
-            Unused. Defaults to None.
+            Validation input features. Defaults to None.
         y_validation : DashAIDataset, optional
-            Unused. Defaults to None.
+            Validation target labels. Defaults to None.
 
         Returns
         -------
         LeNet5ImageClassifier
             The trained model instance.
         """
-        image_dataset = _ImageDataset(
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
+        import torch.utils.data
+
+        from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+
+        image_dataset = _make_image_dataset(
             x_train, y_dataset=y_train, image_size=self.image_size
         )
         self.input_channels = image_dataset.tensor_shape[0]
@@ -302,7 +321,7 @@ class LeNet5ImageClassifier(BaseModel):
             collate_fn=self._collate_fn_with_labels,
         )
 
-        self.model = _LeNet5(
+        self.model = _build_lenet5_model(
             self.input_channels,
             self.image_size,
             self.num_classes,
@@ -316,14 +335,31 @@ class LeNet5ImageClassifier(BaseModel):
             weight_decay=self.weight_decay,
         )
 
-        self.model.train()
-        for _ in range(self.epochs):
+        for epoch in range(self.epochs):
+            self.model.train()
             for images, labels in train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 loss = criterion(self.model(images), labels)
                 loss.backward()
                 self.optimizer.step()
+
+            self.model.eval()
+            self.calculate_metrics(
+                split=SplitEnum.TRAIN,
+                level=LevelEnum.EPOCH,
+                x_data=x_train,
+                y_data=y_train,
+                log_index=epoch + 1,
+            )
+            if x_validation is not None:
+                self.calculate_metrics(
+                    split=SplitEnum.VALIDATION,
+                    level=LevelEnum.EPOCH,
+                    x_data=x_validation,
+                    y_data=y_validation,
+                    log_index=epoch + 1,
+                )
 
         return self
 
@@ -340,7 +376,13 @@ class LeNet5ImageClassifier(BaseModel):
         np.ndarray
             Array of shape (n_samples, n_classes) with softmax probabilities.
         """
-        image_dataset = _ImageDataset(x, y_dataset=None, image_size=self.image_size)
+        import numpy as np
+        import torch
+        import torch.utils.data
+
+        image_dataset = _make_image_dataset(
+            x, y_dataset=None, image_size=self.image_size
+        )
         loader = torch.utils.data.DataLoader(
             image_dataset,
             batch_size=self.batch_size,
@@ -365,6 +407,8 @@ class LeNet5ImageClassifier(BaseModel):
         filename : str
             Path where the checkpoint will be saved.
         """
+        import torch
+
         torch.save(
             {
                 "model_state_dict": self.model.state_dict(),
@@ -397,6 +441,9 @@ class LeNet5ImageClassifier(BaseModel):
         LeNet5ImageClassifier
             Instance with loaded weights.
         """
+        import torch
+        import torch.optim as optim
+
         ckpt = torch.load(filename, map_location=torch.device("cpu"))
         instance = cls(
             epochs=ckpt["epochs"],
@@ -410,7 +457,7 @@ class LeNet5ImageClassifier(BaseModel):
         instance.num_classes = ckpt["num_classes"]
         instance.idx_to_label = ckpt.get("idx_to_label", {})
         instance.label_to_idx = ckpt.get("label_to_idx", {})
-        instance.model = _LeNet5(
+        instance.model = _build_lenet5_model(
             instance.input_channels,
             instance.image_size,
             instance.num_classes,

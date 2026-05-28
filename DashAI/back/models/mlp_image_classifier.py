@@ -1,11 +1,6 @@
 """MLP-based image classifier for DashAI."""
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data
-from torchvision import transforms
+from __future__ import annotations
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -138,77 +133,85 @@ class MLPImageClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-class _ImageDataset(torch.utils.data.Dataset):
-    """Torch Dataset wrapper for DashAI image datasets."""
+def _make_image_dataset(x_dataset, y_dataset=None, image_size=64):
+    import torch.utils.data
+    from torchvision import transforms
 
-    def __init__(self, x_dataset, y_dataset=None, image_size=64):
-        self.x_dataset = x_dataset
-        self.y_dataset = y_dataset
-        self.transforms = transforms.Compose(
-            [
-                transforms.Resize((image_size, image_size)),
-                transforms.ToTensor(),
-            ]
-        )
+    class _ImageDataset(torch.utils.data.Dataset):
+        def __init__(self, x_ds, y_ds, img_size):
+            self.x_dataset = x_ds
+            self.y_dataset = y_ds
+            self.transforms = transforms.Compose(
+                [
+                    transforms.Resize((img_size, img_size)),
+                    transforms.ToTensor(),
+                ]
+            )
 
-        self.image_col_name = list(x_dataset.features.keys())[0]
-        self.label_col_name = (
-            list(y_dataset.features.keys())[0] if y_dataset is not None else None
-        )
+            self.image_col_name = list(x_ds.features.keys())[0]
+            self.label_col_name = (
+                list(y_ds.features.keys())[0] if y_ds is not None else None
+            )
 
-        self.label_to_idx = {}
-        self.idx_to_label = {}
-        if self.label_col_name:
-            unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
-            self.label_to_idx = {label: idx for idx, label in enumerate(unique_labels)}
-            self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+            self.label_to_idx = {}
+            self.idx_to_label = {}
+            if self.label_col_name:
+                unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
+                self.label_to_idx = {
+                    label: idx for idx, label in enumerate(unique_labels)
+                }
+                self.idx_to_label = {
+                    idx: label for label, idx in self.label_to_idx.items()
+                }
 
-        self.tensor_shape = self.transforms(
-            self.x_dataset[0][self.image_col_name].to_pil()
-        ).shape
+            self.tensor_shape = self.transforms(
+                self.x_dataset[0][self.image_col_name].to_pil()
+            ).shape
 
-    def num_classes(self):
-        if self.label_col_name is None:
-            return 0
-        return len(self.label_to_idx)
+        def num_classes(self):
+            if self.label_col_name is None:
+                return 0
+            return len(self.label_to_idx)
 
-    def __len__(self):
-        return len(self.x_dataset)
+        def __len__(self):
+            return len(self.x_dataset)
 
-    def __getitem__(self, idx):
-        image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
-        if self.label_col_name is None:
-            return image
-        label_str = self.y_dataset[idx][self.label_col_name]
-        label_idx = self.label_to_idx[label_str]
-        return image, label_idx
+        def __getitem__(self, idx):
+            image = self.transforms(self.x_dataset[idx][self.image_col_name].to_pil())
+            if self.label_col_name is None:
+                return image
+            label_str = self.y_dataset[idx][self.label_col_name]
+            return image, self.label_to_idx[label_str]
+
+    return _ImageDataset(x_dataset, y_dataset, image_size)
 
 
-class _MLP(nn.Module):
-    """Multi-Layer Perceptron for image classification."""
+def _build_mlp_model(input_dim, output_dim, hidden_dims, dropout_rate=0.0):
+    import torch.nn as nn
 
-    def __init__(self, input_dim, output_dim, hidden_dims, dropout_rate=0.0):
-        super().__init__()
-        self.hidden_layers = nn.ModuleList()
-        self.dropout_layers = nn.ModuleList()
-        previous_dim = input_dim
+    class _MLP(nn.Module):
+        def __init__(self, in_dim, out_dim, h_dims, drop_r):
+            super().__init__()
+            self.hidden_layers = nn.ModuleList()
+            self.dropout_layers = nn.ModuleList()
+            prev_dim = in_dim
+            for h_dim in h_dims:
+                self.hidden_layers.append(nn.Linear(prev_dim, h_dim))
+                self.dropout_layers.append(nn.Dropout(drop_r))
+                prev_dim = h_dim
+            self.output_layer = nn.Linear(prev_dim, out_dim)
+            self.relu = nn.ReLU()
 
-        for hidden_dim in hidden_dims:
-            self.hidden_layers.append(nn.Linear(previous_dim, hidden_dim))
-            self.dropout_layers.append(nn.Dropout(dropout_rate))
-            previous_dim = hidden_dim
+        def forward(self, x):
+            batch_size = x.shape[0]
+            x = x.view(batch_size, -1)
+            for layer, dropout in zip(
+                self.hidden_layers, self.dropout_layers, strict=True
+            ):
+                x = dropout(self.relu(layer(x)))
+            return self.output_layer(x)
 
-        self.output_layer = nn.Linear(previous_dim, output_dim)
-        self.relu = nn.ReLU()
-
-    def forward(self, x: torch.Tensor):
-        batch_size = x.shape[0]
-        x = x.view(batch_size, -1)
-
-        for layer, dropout in zip(self.hidden_layers, self.dropout_layers):
-            x = dropout(self.relu(layer(x)))
-
-        return self.output_layer(x)
+    return _MLP(input_dim, output_dim, hidden_dims, dropout_rate)
 
 
 class MLPImageClassifier(BaseModel):
@@ -241,14 +244,16 @@ class MLPImageClassifier(BaseModel):
 
     @staticmethod
     def _collate_fn_with_labels(batch):
-        """Custom collate function for batches with (image, label) tuples."""
+        import torch
+
         images = torch.stack([item[0] for item in batch])
         labels = torch.tensor([item[1] for item in batch], dtype=torch.long)
         return images, labels
 
     @staticmethod
     def _collate_fn_no_labels(batch):
-        """Custom collate function for batches with only images."""
+        import torch
+
         return torch.stack(batch)
 
     def __init__(
@@ -262,6 +267,8 @@ class MLPImageClassifier(BaseModel):
         weight_decay=0.0,
         **kwargs,
     ):
+        import torch
+
         if hidden_dims is None:
             hidden_dims = [128, 64]
         self.epochs = epochs
@@ -304,16 +311,23 @@ class MLPImageClassifier(BaseModel):
         y_train : DashAIDataset
             Target dataset containing labels.
         x_validation : DashAIDataset, optional
-            Validation input features (unused). Defaults to None.
+            Validation input features. Defaults to None.
         y_validation : DashAIDataset, optional
-            Validation target labels (unused). Defaults to None.
+            Validation target labels. Defaults to None.
 
         Returns
         -------
         MLPImageClassifier
             The trained model instance.
         """
-        image_dataset = _ImageDataset(
+        import torch
+        import torch.nn as nn
+        import torch.optim as optim
+        import torch.utils.data
+
+        from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+
+        image_dataset = _make_image_dataset(
             x_train, y_dataset=y_train, image_size=self.image_size
         )
 
@@ -323,7 +337,6 @@ class MLPImageClassifier(BaseModel):
             * image_dataset.tensor_shape[2]
         )
         self.output_dim = image_dataset.num_classes()
-
         self.idx_to_label = image_dataset.idx_to_label
         self.label_to_idx = image_dataset.label_to_idx
 
@@ -334,9 +347,10 @@ class MLPImageClassifier(BaseModel):
             collate_fn=self._collate_fn_with_labels,
         )
 
-        self.model = _MLP(
+        self.model = _build_mlp_model(
             self.input_dim, self.output_dim, self.hidden_dims, self.dropout_rate
         ).to(self.device)
+
         criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(
             self.model.parameters(),
@@ -344,8 +358,8 @@ class MLPImageClassifier(BaseModel):
             weight_decay=self.weight_decay,
         )
 
-        self.model.train()
-        for _ in range(self.epochs):
+        for epoch in range(self.epochs):
+            self.model.train()
             for images, labels in train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
@@ -353,6 +367,23 @@ class MLPImageClassifier(BaseModel):
                 loss = criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
+
+            self.model.eval()
+            self.calculate_metrics(
+                split=SplitEnum.TRAIN,
+                level=LevelEnum.EPOCH,
+                x_data=x_train,
+                y_data=y_train,
+                log_index=epoch + 1,
+            )
+            if x_validation is not None:
+                self.calculate_metrics(
+                    split=SplitEnum.VALIDATION,
+                    level=LevelEnum.EPOCH,
+                    x_data=x_validation,
+                    y_data=y_validation,
+                    log_index=epoch + 1,
+                )
 
         return self
 
@@ -366,10 +397,16 @@ class MLPImageClassifier(BaseModel):
 
         Returns
         -------
-        list of lists
-            List of predicted probabilities for each class for each image.
+        np.ndarray
+            Array of shape (n_samples, n_classes) with softmax probabilities.
         """
-        image_dataset = _ImageDataset(x, y_dataset=None, image_size=self.image_size)
+        import numpy as np
+        import torch
+        import torch.utils.data
+
+        image_dataset = _make_image_dataset(
+            x, y_dataset=None, image_size=self.image_size
+        )
         test_loader = torch.utils.data.DataLoader(
             image_dataset,
             batch_size=self.batch_size,
@@ -400,6 +437,8 @@ class MLPImageClassifier(BaseModel):
         filename : str
             Path where the checkpoint will be saved.
         """
+        import torch
+
         checkpoint = {
             "model_state_dict": self.model.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
@@ -431,6 +470,9 @@ class MLPImageClassifier(BaseModel):
         MLPImageClassifier
             Instance with loaded weights.
         """
+        import torch
+        import torch.optim as optim
+
         checkpoint = torch.load(filename, map_location=torch.device("cpu"))
         instance = cls(
             epochs=checkpoint["epochs"],
@@ -443,7 +485,7 @@ class MLPImageClassifier(BaseModel):
         )
         instance.input_dim = checkpoint["input_dim"]
         instance.output_dim = checkpoint["output_dim"]
-        instance.model = _MLP(
+        instance.model = _build_mlp_model(
             instance.input_dim,
             instance.output_dim,
             instance.hidden_dims,

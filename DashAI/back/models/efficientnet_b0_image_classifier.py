@@ -1,8 +1,5 @@
 """EfficientNet-B0 image classifier for DashAI."""
 
-import torch.nn as nn
-from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0
-
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_torchvision_image_classifier import (
     TorchvisionImageClassifier,
@@ -39,7 +36,10 @@ class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
     COLOR: str = "#00838F"
     ICON: str = "Speed"
 
-    def _build_backbone(self, num_classes: int, pretrained: bool) -> nn.Module:
+    def _build_backbone(self, num_classes: int, pretrained: bool):
+        import torch.nn as nn
+        from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0
+
         weights = EfficientNet_B0_Weights.DEFAULT if pretrained else None
         model = efficientnet_b0(weights=weights)
         in_features = model.classifier[1].in_features
@@ -49,5 +49,5 @@ class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
         )
         return model
 
-    def _classifier_head(self) -> nn.Module:
+    def _classifier_head(self):
         return self.model.classifier

@@ -1,8 +1,5 @@
 """ResNet-18 image classifier for DashAI."""
 
-import torch.nn as nn
-from torchvision.models import ResNet18_Weights, resnet18
-
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_torchvision_image_classifier import (
     TorchvisionImageClassifier,
@@ -39,7 +36,10 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
     COLOR: str = "#2E7D32"
     ICON: str = "AccountTree"
 
-    def _build_backbone(self, num_classes: int, pretrained: bool) -> nn.Module:
+    def _build_backbone(self, num_classes: int, pretrained: bool):
+        import torch.nn as nn
+        from torchvision.models import ResNet18_Weights, resnet18
+
         weights = ResNet18_Weights.DEFAULT if pretrained else None
         model = resnet18(weights=weights)
         in_features = model.fc.in_features
@@ -49,5 +49,5 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
         )
         return model
 
-    def _classifier_head(self) -> nn.Module:
+    def _classifier_head(self):
         return self.model.fc
