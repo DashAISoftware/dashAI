@@ -45,6 +45,7 @@ class SimpleImputerSchema(BaseSchema):
             en="The imputation strategy.",
             es="La estrategia de imputación.",
             pt="A estratégia de imputação.",
+            de="Die Imputationsstrategie.",
         ),
     )  # type: ignore
     fill_value: schema_field(
@@ -54,6 +55,7 @@ class SimpleImputerSchema(BaseSchema):
             en="The value to replace missing values with.",
             es="El valor para reemplazar los valores faltantes.",
             pt="O valor para substituir os valores ausentes.",
+            de="Der Wert zum Ersetzen fehlender Werte.",
         ),
     )  # type: ignore
     add_indicator: schema_field(
@@ -63,6 +65,10 @@ class SimpleImputerSchema(BaseSchema):
             en="If True, a MissingIndicator transform will stack onto output.",
             es=("Si es True, se apilará un MissingIndicator sobre la salida."),
             pt=("Se True, uma transformação MissingIndicator será empilhada na saída."),
+            de=(
+                "Wenn True, wird eine MissingIndicator-Transformation auf die Ausgabe "
+                "gestapelt."
+            ),
         ),
     )  # type: ignore
     keep_empty_features: schema_field(
@@ -72,6 +78,7 @@ class SimpleImputerSchema(BaseSchema):
             en="If True, empty features will be kept.",
             es="Si es True, se mantendrán las características vacías.",
             pt="Se True, características vazias serão mantidas.",
+            de="Wenn True, werden leere Merkmale beibehalten.",
         ),
     )  # type: ignore
 
@@ -123,11 +130,18 @@ class SimpleImputer(
             "estatística descritiva (p. ex., média, mediana ou moda) "
             "por coluna, ou usando um valor constante."
         ),
+        de=(
+            "Univariater Imputierer zum Vervollständigen fehlender Werte mit einfachen "
+            "Strategien. Fehlende Werte werden durch eine deskriptive Statistik "
+            "(z.B. Mittelwert, Median oder häufigster Wert) entlang jeder Spalte "
+            "oder durch einen konstanten Wert ersetzt."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
         en="Simple Imputer",
         es="Imputador Simple",
         pt="Imputador Simples",
+        de="Einfacher Imputierer",
     )
     IMAGE_PREVIEW = "simple_imputer.png"
 

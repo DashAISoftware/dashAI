@@ -30,16 +30,19 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
         en="Removes the columns selected in scope from the dataset.",
         es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
         pt="Remove as colunas selecionadas no escopo do conjunto de dados.",
+        de="Entfernt die im Geltungsbereich ausgewählten Spalten aus dem Datensatz.",
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Removes the columns selected in scope from the dataset.",
         es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
         pt="Remove as colunas selecionadas no escopo do conjunto de dados.",
+        de="Entfernt die im Geltungsbereich ausgewählten Spalten aus dem Datensatz.",
     )
     DISPLAY_NAME = MultilingualString(
         en="Column Remover",
         es="Removedor de Columnas",
         pt="Removedor de Colunas",
+        de="Spalten-Entferner",
     )
     IMAGE_PREVIEW = "column_remover.png"
 

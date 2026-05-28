@@ -30,9 +30,13 @@ class OpusMtEnESTransformerSchema(BaseSchema):
             en="Total number of training epochs to perform.",
             es="Número total de épocas de entrenamiento a realizar.",
             pt="Número total de épocas de treinamento a realizar.",
+            de="Gesamtanzahl der durchzuführenden Trainingsepochen.",
         ),
         alias=MultilingualString(
-            en="Num train epochs", es="Número de épocas", pt="Número de épocas"
+            en="Num train epochs",
+            es="Número de épocas",
+            pt="Número de épocas",
+            de="Anzahl Trainingsepochen",
         ),
     )  # type: ignore
     batch_size: schema_field(
@@ -42,9 +46,10 @@ class OpusMtEnESTransformerSchema(BaseSchema):
             en="The batch size per GPU/TPU core/CPU for training.",
             es="El tamaño de lote por núcleo GPU/TPU/CPU para entrenamiento.",
             pt="O tamanho do lote por núcleo GPU/TPU/CPU para treinamento.",
+            de="Die Stapelgröße pro GPU/TPU-Kern/CPU für das Training.",
         ),
         alias=MultilingualString(
-            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote"
+            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote", de="Stapelgröße"
         ),
     )  # type: ignore
     learning_rate: schema_field(
@@ -54,9 +59,13 @@ class OpusMtEnESTransformerSchema(BaseSchema):
             en="The initial learning rate for AdamW optimizer.",
             es="La tasa de aprendizaje inicial para el optimizador AdamW.",
             pt="A taxa de aprendizado inicial para o otimizador AdamW.",
+            de="Die anfängliche Lernrate für den AdamW-Optimierer.",
         ),
         alias=MultilingualString(
-            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
         ),
     )  # type: ignore
     device: schema_field(
@@ -77,8 +86,15 @@ class OpusMtEnESTransformerSchema(BaseSchema):
                 "quando disponível. Se GPU for selecionada, todas as GPUs "
                 "disponíveis são usadas."
             ),
+            de=(
+                "Hardware, auf der das Training ausgeführt wird. GPU wird empfohlen, "
+                "wenn verfügbar. Bei Auswahl von GPU werden alle verfügbaren GPUs "
+                "verwendet."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
     weight_decay: schema_field(
         float_field(ge=0.0),
@@ -96,9 +112,16 @@ class OpusMtEnESTransformerSchema(BaseSchema):
                 "Coeficiente de regularização L2 aplicado pelo otimizador AdamW "
                 "para evitar overfitting."
             ),
+            de=(
+                "L2-Regularisierungskoeffizient, der über den AdamW-Optimierer "
+                "angewendet wird, um Überanpassung zu verhindern."
+            ),
         ),
         alias=MultilingualString(
-            en="Weight decay", es="Decaimiento de pesos", pt="Decaimento de pesos"
+            en="Weight decay",
+            es="Decaimiento de pesos",
+            pt="Decaimento de pesos",
+            de="Gewichtsabnahme",
         ),
     )  # type: ignore
     log_train_every_n_epochs: schema_field(
@@ -114,11 +137,16 @@ class OpusMtEnESTransformerSchema(BaseSchema):
                 "Registrar métricas de treinamento a cada N épocas. "
                 "None desativa o registro por época."
             ),
+            de=(
+                "Trainingsmetriken alle N Epochen protokollieren. "
+                "None deaktiviert die epochenweise Protokollierung."
+            ),
         ),
         alias=MultilingualString(
             en="Log train every N epochs",
             es="Registrar entrenamiento cada N épocas",
             pt="Registrar treinamento a cada N épocas",
+            de="Training alle N Epochen protokollieren",
         ),
     )  # type: ignore
     log_train_every_n_steps: schema_field(
@@ -134,11 +162,16 @@ class OpusMtEnESTransformerSchema(BaseSchema):
                 "Registrar métricas de treinamento a cada N passos. "
                 "None desativa o registro por passo."
             ),
+            de=(
+                "Trainingsmetriken alle N Schritte protokollieren. "
+                "None deaktiviert die schrittweise Protokollierung."
+            ),
         ),
         alias=MultilingualString(
             en="Log train every N steps",
             es="Registrar entrenamiento cada N pasos",
             pt="Registrar treinamento a cada N passos",
+            de="Training alle N Schritte protokollieren",
         ),
     )  # type: ignore
     log_validation_every_n_epochs: schema_field(
@@ -157,11 +190,16 @@ class OpusMtEnESTransformerSchema(BaseSchema):
                 "Registrar métricas de validação a cada N épocas. "
                 "None desativa o registro por época."
             ),
+            de=(
+                "Validierungsmetriken alle N Epochen protokollieren. "
+                "None deaktiviert die epochenweise Protokollierung."
+            ),
         ),
         alias=MultilingualString(
             en="Log validation every N epochs",
             es="Registrar validación cada N épocas",
             pt="Registrar validação a cada N épocas",
+            de="Validierung alle N Epochen protokollieren",
         ),
     )  # type: ignore
     log_validation_every_n_steps: schema_field(
@@ -179,11 +217,16 @@ class OpusMtEnESTransformerSchema(BaseSchema):
                 "Registrar métricas de validação a cada N passos. "
                 "None desativa o registro por passo."
             ),
+            de=(
+                "Validierungsmetriken alle N Schritte protokollieren. "
+                "None deaktiviert die schrittweise Protokollierung."
+            ),
         ),
         alias=MultilingualString(
             en="Log validation every N steps",
             es="Registrar validación cada N pasos",
             pt="Registrar validação a cada N passos",
+            de="Validierung alle N Schritte protokollieren",
         ),
     )  # type: ignore
 
@@ -208,6 +251,7 @@ class OpusMtEnESTransformer(OpusMtTransformerMixin):
         en="Opus MT En-Es Transformer",
         es="Transformer Opus MT En-Es",
         pt="Transformer Opus MT En-Es",
+        de="Opus MT En-Es Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -221,6 +265,11 @@ class OpusMtEnESTransformer(OpusMtTransformerMixin):
         pt=(
             "Transformer pré-treinado para tradução inglês-espanhol. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Vortrainierter Transformer für Englisch-Spanisch-Übersetzung. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#FFA500"

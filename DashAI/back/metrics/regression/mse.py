@@ -54,6 +54,14 @@ class MSE(RegressionMetric):
             "Indica a acurácia de previsão do modelo, "
             "com valores mais baixos indicando melhor ajuste."
         ),
+        de=(
+            "Mittlerer Quadratischer Fehler (MSE) misst den Durchschnitt "
+            "der quadrierten Differenzen "
+            "zwischen vorhergesagten und tatsächlichen Werten in einem "
+            "Regressionsmodell. "
+            "Er gibt einen Hinweis auf die Vorhersagegenauigkeit des Modells, "
+            "wobei niedrigere Werte eine bessere Anpassung anzeigen."
+        ),
     )
 
     @staticmethod

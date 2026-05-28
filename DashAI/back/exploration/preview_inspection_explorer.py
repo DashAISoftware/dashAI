@@ -20,6 +20,7 @@ class PreviewInspectionExplorer(BaseExplorer):
         en="Preview Inspection",
         es="Inspección Previa",
         pt="Inspeção Prévia",
+        de="Vorschauinspektion",
     )
     ICON: Final[str] = Icon.TableChart.value
     COLOR: Final[str] = "rgb(52, 152, 219)"

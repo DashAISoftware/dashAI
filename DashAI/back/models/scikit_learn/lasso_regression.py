@@ -46,8 +46,12 @@ class LassoRegressionSchema(BaseSchema):
                 "Força de regularização. Valores maiores especificam "
                 "regularização mais forte. alpha=0 é equivalente a MQO."
             ),
+            de=(
+                "Regularisierungsstärke. Größere Werte bedeuten stärkere "
+                "Regularisierung. alpha=0 entspricht OLS."
+            ),
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -66,9 +70,17 @@ class LassoRegressionSchema(BaseSchema):
                 "Se o intercepto deve ser calculado para este modelo. Se False, "
                 "espera-se que os dados já estejam centrados."
             ),
+            de=(
+                "Ob der Achsenabschnitt für dieses Modell berechnet werden soll. Bei "
+                "False "
+                "wird erwartet, dass die Daten bereits zentriert sind."
+            ),
         ),
         alias=MultilingualString(
-            en="Fit intercept", es="Ajustar intercepto", pt="Ajustar intercepto"
+            en="Fit intercept",
+            es="Ajustar intercepto",
+            pt="Ajustar intercepto",
+            de="Achsenabschnitt anpassen",
         ),
     )  # type: ignore
 
@@ -84,9 +96,13 @@ class LassoRegressionSchema(BaseSchema):
             en="The maximum number of iterations.",
             es="El número máximo de iteraciones.",
             pt="O número máximo de iterações.",
+            de="Die maximale Anzahl der Iterationen.",
         ),
         alias=MultilingualString(
-            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Máximas iterações",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
 
@@ -102,8 +118,11 @@ class LassoRegressionSchema(BaseSchema):
             en="The tolerance for the optimisation.",
             es="La tolerancia para la optimización.",
             pt="A tolerância para a otimização.",
+            de="Die Toleranz für die Optimierung.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
     random_state: schema_field(
@@ -122,11 +141,18 @@ class LassoRegressionSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int para "
                 "saída reproduzível, ou None para não definir uma semente específica."
             ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -155,11 +181,13 @@ class LassoRegression(RegressionModel, SklearnLikeRegressor, _Lasso):
         en="Lasso Regression",
         es="Regresión Lasso",
         pt="Regressão Lasso",
+        de="Lasso-Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression with L1 regularisation for feature selection.",
         es="Regresión lineal con regularización L1 para selección de características.",
         pt="Regressão linear com regularização L1 para seleção de características.",
+        de="Lineare Regression mit L1-Regularisierung für Merkmalsselektion.",
     )
     COLOR: str = "#29B6F6"
     ICON: str = "SelectAll"

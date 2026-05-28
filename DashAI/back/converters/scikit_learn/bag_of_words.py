@@ -41,6 +41,7 @@ class BagOfWordsConverterSchema(BaseSchema):
             pt=(
                 "Número máximo de características (palavras mais frequentes) a manter."
             ),
+            de="Maximale Anzahl der beizubehaltenden Merkmale (häufigste Wörter).",
         ),
     )  # type: ignore
     lowercase: schema_field(
@@ -53,6 +54,10 @@ class BagOfWordsConverterSchema(BaseSchema):
                 "Se todos os caracteres devem ser convertidos para "
                 "minúsculas antes de tokenizar."
             ),
+            de=(
+                "Ob alle Zeichen vor der Tokenisierung in Kleinbuchstaben umgewandelt "
+                "werden sollen."
+            ),
         ),
     )  # type: ignore
     stop_words: schema_field(
@@ -62,6 +67,7 @@ class BagOfWordsConverterSchema(BaseSchema):
             en="Stop word set to remove. Use 'english' or None.",
             es="Conjunto de stopwords a eliminar. Usa 'english' o None.",
             pt="Conjunto de stopwords a remover. Use 'english' ou None.",
+            de="Stoppwort-Set zum Entfernen. Verwende 'english' oder None.",
         ),
     )  # type: ignore
     lower_bound_ngrams: schema_field(
@@ -71,6 +77,7 @@ class BagOfWordsConverterSchema(BaseSchema):
             en="Lower bound for n-grams. Must be <= upper bound.",
             es="Límite inferior de n-grams. Debe ser <= al límite superior.",
             pt="Limite inferior para n-grams. Deve ser <= ao limite superior.",
+            de="Untergrenze für N-Gramme. Muss <= Obergrenze sein.",
         ),
     )  # type: ignore
     upper_bound_ngrams: schema_field(
@@ -80,6 +87,7 @@ class BagOfWordsConverterSchema(BaseSchema):
             en="Upper bound for n-grams. Must be >= lower bound.",
             es="Límite superior de n-grams. Debe ser >= al límite inferior.",
             pt="Limite superior para n-grams. Deve ser >= ao limite inferior.",
+            de="Obergrenze für N-Gramme. Muss >= Untergrenze sein.",
         ),
     )  # type: ignore
 
@@ -111,7 +119,7 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     SCHEMA = BagOfWordsConverterSchema
     DISPLAY_NAME = MultilingualString(
-        en="Bag of Words", es="Bolsa de Palabras", pt="Bag of Words"
+        en="Bag of Words", es="Bolsa de Palabras", pt="Bag of Words", de="Bag of Words"
     )
     IMAGE_PREVIEW = "bag_of_words.png"
 
@@ -131,6 +139,10 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         pt=(
             "Converte texto em uma representação Bag of Words com uma coluna "
             "por token (frequência por token)."
+        ),
+        de=(
+            "Konvertiert Text in eine Bag-of-Words-Darstellung mit einer Spalte "
+            "pro Token (Häufigkeit pro Token)."
         ),
     )
 

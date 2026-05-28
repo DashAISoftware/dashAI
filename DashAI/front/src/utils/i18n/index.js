@@ -52,6 +52,23 @@ import modelsSessionTourPT from "./locales/pt/modelsSessionTour.json";
 import homePT from "./locales/pt/home.json";
 import pluginsPT from "./locales/pt/plugins.json";
 import generativeTourPT from "./locales/pt/generativeTour.json";
+import configurableObjectDE from "./locales/de/configurableObject.json";
+import commonDE from "./locales/de/common.json";
+import customDE from "./locales/de/custom.json";
+import experimentsDE from "./locales/de/experiments.json";
+import explainersDE from "./locales/de/explainers.json";
+import generativeDE from "./locales/de/generative.json";
+import modelsDE from "./locales/de/models.json";
+import datasetsDE from "./locales/de/datasets.json";
+import predictionDE from "./locales/de/prediction.json";
+import homeTourDE from "./locales/de/homeTour.json";
+import datasetsTourDE from "./locales/de/datasetsTour.json";
+import notebookTourDE from "./locales/de/notebookTour.json";
+import modelsTourDE from "./locales/de/modelsTour.json";
+import modelsSessionTourDE from "./locales/de/modelsSessionTour.json";
+import homeDE from "./locales/de/home.json";
+import pluginsDE from "./locales/de/plugins.json";
+import generativeTourDE from "./locales/de/generativeTour.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -114,6 +131,25 @@ const resources = {
     modelsSessionTour: modelsSessionTourPT,
     generativeTour: generativeTourPT,
   },
+  de: {
+    configurableObject: configurableObjectDE,
+    common: commonDE,
+    custom: customDE,
+    experiments: experimentsDE,
+    explainers: explainersDE,
+    generative: generativeDE,
+    models: modelsDE,
+    datasets: datasetsDE,
+    prediction: predictionDE,
+    plugins: pluginsDE,
+    home: homeDE,
+    homeTour: homeTourDE,
+    datasetsTour: datasetsTourDE,
+    notebookTour: notebookTourDE,
+    modelsTour: modelsTourDE,
+    modelsSessionTour: modelsSessionTourDE,
+    generativeTour: generativeTourDE,
+  },
 };
 
 i18n
@@ -121,7 +157,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    supportedLngs: ["en", "es", "pt"],
+    supportedLngs: ["en", "es", "pt", "de"],
     nonExplicitSupportedLngs: true,
     fallbackLng: "en",
 

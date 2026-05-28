@@ -42,9 +42,16 @@ class GaussianNBSchema(BaseSchema):
                 "Porção da maior variância de todas as características que é "
                 "adicionada às variâncias para estabilidade do cálculo."
             ),
+            de=(
+                "Anteil der größten Varianz aller Merkmale, der den Varianzen "
+                "zur Berechnungsstabilität hinzugefügt wird."
+            ),
         ),
         alias=MultilingualString(
-            en="Var smoothing", es="Suavizado de varianza", pt="Suavização de variância"
+            en="Var smoothing",
+            es="Suavizado de varianza",
+            pt="Suavização de variância",
+            de="Varianzglättung",
         ),
     )  # type: ignore
 
@@ -71,6 +78,7 @@ class GaussianNB(TabularClassificationModel, SklearnLikeClassifier, _GaussianNB)
         en="Gaussian Naïve Bayes",
         es="Naïve Bayes Gaussiano",
         pt="Gaussiano Naive Bayes",
+        de="Gaussscher Naiver Bayes",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -84,6 +92,10 @@ class GaussianNB(TabularClassificationModel, SklearnLikeClassifier, _GaussianNB)
         pt=(
             "Classificador probabilístico baseado no teorema de Bayes "
             "com verossimilhanças gaussianas."
+        ),
+        de=(
+            "Probabilistischer Klassifikator basierend auf dem Bayes-Theorem "
+            "mit Gauß-Wahrscheinlichkeiten."
         ),
     )
     COLOR: str = "#AB47BC"

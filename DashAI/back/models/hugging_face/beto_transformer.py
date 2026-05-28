@@ -28,6 +28,7 @@ class BetoTransformer(HuggingFaceTextClassificationTransformer):
         en="BETO Spanish BERT",
         es="BETO BERT en Español",
         pt="BETO BERT em Espanhol",
+        de="BETO Spanisches BERT",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +42,11 @@ class BetoTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "BERT em espanhol (BETO) pré-treinado em corpus em espanhol. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Spanisches BERT (BETO) vortrainiert auf spanischen Korpora. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#C62828"

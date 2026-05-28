@@ -42,11 +42,16 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
                 "Número mínimo de observações requeridas por par de colunas "
                 "para obter um resultado válido."
             ),
+            de=(
+                "Mindestanzahl der Beobachtungen pro Spaltenpaar für ein "
+                "gültiges Ergebnis."
+            ),
         ),
         alias=MultilingualString(
             en="Minimum periods",
             es="Períodos mínimos",
             pt="Períodos mínimos",
+            de="Mindestperioden",
         ),
     )  # type: ignore
     delta_degree_of_freedom: schema_field(
@@ -65,11 +70,16 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
                 "Graus de liberdade delta a usar ao calcular a matriz de "
                 "covariância. Usado apenas se numeric_only for True."
             ),
+            de=(
+                "Delta-Freiheitsgrade zur Berechnung der Kovarianzmatrix. "
+                "Wird nur verwendet, wenn numeric_only True ist."
+            ),
         ),
         alias=MultilingualString(
             en="Delta degrees of freedom",
             es="Grados de libertad delta",
             pt="Graus de liberdade delta",
+            de="Delta-Freiheitsgrade",
         ),
     )  # type: ignore
     numeric_only: schema_field(
@@ -88,9 +98,16 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
                 "Se True, inclui apenas colunas numéricas no cálculo; "
                 "caso contrário inclui todas as colunas."
             ),
+            de=(
+                "Wenn True, werden nur numerische Spalten in die Berechnung "
+                "einbezogen; sonst alle Spalten."
+            ),
         ),
         alias=MultilingualString(
-            en="Numeric only", es="Solo numéricas", pt="Apenas numéricas"
+            en="Numeric only",
+            es="Solo numéricas",
+            pt="Apenas numéricas",
+            de="Nur numerisch",
         ),
     )  # type: ignore
     plot: schema_field(
@@ -100,9 +117,13 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
             en=("If True, the result will be plotted."),
             es=("Si es True, el resultado será graficado."),
             pt=("Se True, o resultado será plotado."),
+            de=("Wenn True, wird das Ergebnis dargestellt."),
         ),
         alias=MultilingualString(
-            en="Plot result", es="Graficar resultado", pt="Plotar resultado"
+            en="Plot result",
+            es="Graficar resultado",
+            pt="Plotar resultado",
+            de="Ergebnis darstellen",
         ),
     )  # type: ignore
 
@@ -132,6 +153,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         en="Covariance Matrix",
         es="Matriz de Covarianza",
         pt="Matriz de Covariância",
+        de="Kovarianzmatrix",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -147,6 +169,11 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
             "Retorna a matriz de covariância do conjunto de dados. O resultado "
             "padrão é um mapa de calor, mas também pode ser retornado em "
             "formato tabular."
+        ),
+        de=(
+            "Gibt die Kovarianzmatrix des Datensatzes zurück. Die Standardausgabe "
+            "ist eine Heatmap, aber es kann auch ein tabellarisches Ergebnis "
+            "zurückgegeben werden."
         ),
     )
     IMAGE_PREVIEW = "covariance_matrix.png"

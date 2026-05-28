@@ -43,11 +43,17 @@ class LinearRegressionSchema(BaseSchema):
                 "Se definido como False, nenhum intercepto será usado nos cálculos "
                 "(ex., espera-se que os dados estejam centrados)."
             ),
+            de=(
+                "Ob der Achsenabschnitt für dieses Modell berechnet werden soll. "
+                "Bei False wird kein Achsenabschnitt in den Berechnungen verwendet "
+                "(z.B. wird erwartet, dass die Daten zentriert sind)."
+            ),
         ),
         alias=MultilingualString(
             en="Fit intercept",
             es="Ajustar intercepto",
             pt="Ajustar intercepto",
+            de="Achsenabschnitt anpassen",
         ),
     )  # type: ignore
 
@@ -58,8 +64,11 @@ class LinearRegressionSchema(BaseSchema):
             en="If True, X will be copied; else, it may be overwritten.",
             es="Si es True, X será copiado; si no, puede ser sobrescrito.",
             pt="Se True, X será copiado; caso contrário, pode ser sobrescrito.",
+            de="Wenn True, wird X kopiert; andernfalls kann es überschrieben werden.",
         ),
-        alias=MultilingualString(en="Copy X", es="Copiar X", pt="Copiar X"),
+        alias=MultilingualString(
+            en="Copy X", es="Copiar X", pt="Copiar X", de="X kopieren"
+        ),
     )  # type: ignore
 
     n_jobs: schema_field(
@@ -80,8 +89,14 @@ class LinearRegressionSchema(BaseSchema):
                 "None significa 1 job, enquanto -1 significa usar todos "
                 "os processadores."
             ),
+            de=(
+                "Die Anzahl der Jobs für die Berechnung. "
+                "None bedeutet 1 Job, -1 bedeutet alle Prozessoren verwenden."
+            ),
         ),
-        alias=MultilingualString(en="N jobs", es="N trabajos", pt="N jobs"),
+        alias=MultilingualString(
+            en="N jobs", es="N trabajos", pt="N jobs", de="Anzahl Jobs"
+        ),
     )  # type: ignore
 
     positive: schema_field(
@@ -91,8 +106,11 @@ class LinearRegressionSchema(BaseSchema):
             en="When set to True, forces the coefficients to be positive.",
             es="Cuando se establece en True, fuerza los coeficientes a ser positivos.",
             pt="Quando definido como True, força os coeficientes a serem positivos.",
+            de="Wenn True, werden die Koeffizienten auf positive Werte gezwungen.",
         ),
-        alias=MultilingualString(en="Positive", es="Positivo", pt="Positivo"),
+        alias=MultilingualString(
+            en="Positive", es="Positivo", pt="Positivo", de="Positiv"
+        ),
     )  # type: ignore
 
 
@@ -121,11 +139,13 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
         en="Linear Regression",
         es="Regresión Lineal",
         pt="Regressão Linear",
+        de="Lineare Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="Ordinary least squares linear regression.",
         es="Regresión lineal de mínimos cuadrados ordinarios.",
         pt="Regressão linear de mínimos quadrados ordinários.",
+        de="Lineare Regression der gewöhnlichen kleinsten Quadrate.",
     )
     COLOR: str = "#3F51B5"
     ICON: str = "ShowChart"

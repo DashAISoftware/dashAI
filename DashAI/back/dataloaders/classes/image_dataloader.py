@@ -123,10 +123,16 @@ class ImageDataLoader(BaseDataLoader):
             "ZIP con imágenes organizadas en subdirectorios por etiqueta "
             "de clase (formato imagefolder)."
         ),
+        de=(
+            "Datenlader für Bilddatensätze. Laden Sie eine ZIP-Datei hoch, die "
+            "Bilder in Unterverzeichnissen nach Klassenbezeichnung "
+            "organisiert enthält (imagefolder-Format)."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Image Data Loader",
         es="Cargador de Datos de Imágenes",
+        de="Bild Datenlader",
     )
 
     @beartype

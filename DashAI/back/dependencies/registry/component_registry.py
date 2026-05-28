@@ -201,12 +201,16 @@ class ComponentRegistry:
         if hasattr(new_component, "DESCRIPTION"):
             description = new_component.DESCRIPTION
             if isinstance(description, str):
-                new_component.DESCRIPTION = MultilingualString(en=description)
+                new_component.DESCRIPTION = MultilingualString(
+                    en=description, de=description
+                )
 
         if hasattr(new_component, "DISPLAY_NAME"):
             display_name = new_component.DISPLAY_NAME
             if isinstance(display_name, str):
-                new_component.DISPLAY_NAME = MultilingualString(en=display_name)
+                new_component.DISPLAY_NAME = MultilingualString(
+                    en=display_name, de=display_name
+                )
 
         new_register_component = {
             "name": new_component.__name__,

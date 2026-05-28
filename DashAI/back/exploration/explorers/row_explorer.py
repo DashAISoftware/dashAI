@@ -29,9 +29,13 @@ class RowExplorerSchema(BaseExplorerSchema):
             en="Maximum number of rows to take.",
             es="Número máximo de filas a tomar.",
             pt="Número máximo de linhas a tomar.",
+            de="Maximale Anzahl der zu nehmenden Zeilen.",
         ),
         alias=MultilingualString(
-            en="Number of rows", es="Número de filas", pt="Número de linhas"
+            en="Number of rows",
+            es="Número de filas",
+            pt="Número de linhas",
+            de="Anzahl der Zeilen",
         ),
     )  # type: ignore
     shuffle: schema_field(
@@ -41,9 +45,13 @@ class RowExplorerSchema(BaseExplorerSchema):
             en="Shuffle the rows when exploring.",
             es="Barajar las filas durante la exploración.",
             pt="Embaralhar as linhas durante a exploração.",
+            de="Zeilen beim Erkunden mischen.",
         ),
         alias=MultilingualString(
-            en="Shuffle rows", es="Barajar filas", pt="Embaralhar linhas"
+            en="Shuffle rows",
+            es="Barajar filas",
+            pt="Embaralhar linhas",
+            de="Zeilen mischen",
         ),
     )  # type: ignore
     from_top: schema_field(
@@ -61,8 +69,13 @@ class RowExplorerSchema(BaseExplorerSchema):
                 "Tomar linhas do início do conjunto de dados. Caso contrário, "
                 "tomar do final."
             ),
+            de=(
+                "Zeilen vom Anfang des Datensatzes nehmen. Andernfalls vom Ende nehmen."
+            ),
         ),
-        alias=MultilingualString(en="From top", es="Desde el inicio", pt="Do início"),
+        alias=MultilingualString(
+            en="From top", es="Desde el inicio", pt="Do início", de="Von oben"
+        ),
     )  # type: ignore
 
 
@@ -78,7 +91,10 @@ class RowExplorer(PreviewInspectionExplorer):
     """
 
     DISPLAY_NAME = MultilingualString(
-        en="Show Rows", es="Mostrar Filas", pt="Explorador de Linhas"
+        en="Show Rows",
+        es="Mostrar Filas",
+        pt="Explorador de Linhas",
+        de="Zeilen anzeigen",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -95,12 +111,17 @@ class RowExplorer(PreviewInspectionExplorer):
             "Você pode tomar linhas do início ou do final e opcionalmente "
             "embaralhá-las."
         ),
+        de=(
+            "Zeigt eine Teilmenge von Zeilen des Datensatzes in tabellarischer Form an."
+            "Sie können Zeilen von oben oder unten nehmen und optional mischen."
+        ),
     )
 
     SHORT_DESCRIPTION = MultilingualString(
         en="Display a sample of rows from the dataset.",
         es="Muestra una muestra de filas del dataset.",
         pt="Exibe uma amostra de linhas do conjunto de dados.",
+        de="Zeigt eine Stichprobe von Zeilen des Datensatzes an.",
     )
     IMAGE_PREVIEW = "row_explorer.png"
 

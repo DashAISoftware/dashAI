@@ -26,6 +26,10 @@ class NormalizerSchema(BaseSchema):
             en="The norm to use to normalize each non-zero sample.",
             es="La norma a usar para normalizar cada muestra no nula.",
             pt="A norma a usar para normalizar cada amostra não nula.",
+            de=(
+                "Die Norm, die zur Normalisierung jeder nicht-null Stichprobe verwendet"
+                "wird."
+            ),
         ),
     )  # type: ignore
 
@@ -63,9 +67,10 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
         en="Normalize samples individually to unit norm.",
         es="Normaliza muestras individualmente a norma unitaria.",
         pt="Normaliza amostras individualmente para norma unitária.",
+        de="Stichproben individuell auf Einheitsnorm normalisieren.",
     )
     DISPLAY_NAME = MultilingualString(
-        en="Normalizer", es="Normalizador", pt="Normalizador"
+        en="Normalizer", es="Normalizador", pt="Normalizador", de="Normalisierer"
     )
     IMAGE_PREVIEW = "normalizer.png"
 
