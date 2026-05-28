@@ -7,12 +7,14 @@ import abc
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
+    enum_field,
     float_field,
     int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
 class TorchvisionImageClassifierSchema(BaseSchema):
@@ -146,6 +148,16 @@ class TorchvisionImageClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    device: schema_field(
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
+        description=MultilingualString(
+            en="Hardware device used for training and inference (CPU/GPU).",
+            es="Dispositivo de hardware para entrenamiento e inferencia (CPU/GPU).",
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
+    )  # type: ignore
+
 
 def _make_image_dataset(x_dataset, y_dataset=None, image_size=224):
     import torch.utils.data
@@ -245,6 +257,7 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         weight_decay=0.0,
         pretrained=True,
         freeze_backbone=False,
+        device=DEVICE_PLACEHOLDER,
         **kwargs,
     ):
         import torch
@@ -257,7 +270,12 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         self.weight_decay = weight_decay
         self.pretrained = pretrained
         self.freeze_backbone = freeze_backbone
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device_name = device
+        self.device = torch.device(
+            f"cuda:{DEVICE_TO_IDX.get(device)}"
+            if DEVICE_TO_IDX.get(device, -1) >= 0
+            else "cpu"
+        )
         self.model = None
         self.optimizer = None
         self.num_classes = None
@@ -423,6 +441,7 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
                 "weight_decay": self.weight_decay,
                 "pretrained": self.pretrained,
                 "freeze_backbone": self.freeze_backbone,
+                "device_name": self._device_name,
                 "num_classes": self.num_classes,
                 "idx_to_label": self.idx_to_label,
                 "label_to_idx": self.label_to_idx,
@@ -457,6 +476,7 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
             weight_decay=ckpt.get("weight_decay", 0.0),
             pretrained=False,
             freeze_backbone=ckpt.get("freeze_backbone", False),
+            device=ckpt.get("device_name", DEVICE_PLACEHOLDER),
         )
         instance.num_classes = ckpt["num_classes"]
         instance.idx_to_label = ckpt.get("idx_to_label", {})

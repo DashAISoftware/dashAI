@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
+    enum_field,
     float_field,
     int_field,
     list_field,
@@ -11,6 +12,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
 class MLPImageClassifierSchema(BaseSchema):
@@ -130,6 +132,16 @@ class MLPImageClassifierSchema(BaseSchema):
             ),
         ),
         alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
+    )  # type: ignore
+
+    device: schema_field(
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
+        description=MultilingualString(
+            en="Hardware device used for training and inference (CPU/GPU).",
+            es="Dispositivo de hardware para entrenamiento e inferencia (CPU/GPU).",
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
 
 
@@ -265,6 +277,7 @@ class MLPImageClassifier(BaseModel):
         image_size=64,
         dropout_rate=0.0,
         weight_decay=0.0,
+        device=DEVICE_PLACEHOLDER,
         **kwargs,
     ):
         import torch
@@ -278,7 +291,12 @@ class MLPImageClassifier(BaseModel):
         self.image_size = image_size
         self.dropout_rate = dropout_rate
         self.weight_decay = weight_decay
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device_name = device
+        self.device = torch.device(
+            f"cuda:{DEVICE_TO_IDX.get(device)}"
+            if DEVICE_TO_IDX.get(device, -1) >= 0
+            else "cpu"
+        )
         self.model = None
         self.optimizer = None
         self.input_dim = None
@@ -449,6 +467,7 @@ class MLPImageClassifier(BaseModel):
             "image_size": self.image_size,
             "dropout_rate": self.dropout_rate,
             "weight_decay": self.weight_decay,
+            "device_name": self._device_name,
             "input_dim": self.input_dim,
             "output_dim": self.output_dim,
             "idx_to_label": self.idx_to_label,
@@ -482,6 +501,7 @@ class MLPImageClassifier(BaseModel):
             image_size=checkpoint.get("image_size", 64),
             dropout_rate=checkpoint.get("dropout_rate", 0.0),
             weight_decay=checkpoint.get("weight_decay", 0.0),
+            device=checkpoint.get("device_name", DEVICE_PLACEHOLDER),
         )
         instance.input_dim = checkpoint["input_dim"]
         instance.output_dim = checkpoint["output_dim"]

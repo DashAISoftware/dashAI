@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
+    enum_field,
     float_field,
     int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
 class LeNet5ImageClassifierSchema(BaseSchema):
@@ -106,6 +108,16 @@ class LeNet5ImageClassifierSchema(BaseSchema):
             ),
         ),
         alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
+    )  # type: ignore
+
+    device: schema_field(
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
+        description=MultilingualString(
+            en="Hardware device used for training and inference (CPU/GPU).",
+            es="Dispositivo de hardware para entrenamiento e inferencia (CPU/GPU).",
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
 
 
@@ -249,6 +261,7 @@ class LeNet5ImageClassifier(BaseModel):
         image_size=32,
         dropout_rate=0.0,
         weight_decay=0.0,
+        device=DEVICE_PLACEHOLDER,
         **kwargs,
     ):
         import torch
@@ -259,7 +272,12 @@ class LeNet5ImageClassifier(BaseModel):
         self.image_size = image_size
         self.dropout_rate = dropout_rate
         self.weight_decay = weight_decay
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device_name = device
+        self.device = torch.device(
+            f"cuda:{DEVICE_TO_IDX.get(device)}"
+            if DEVICE_TO_IDX.get(device, -1) >= 0
+            else "cpu"
+        )
         self.model = None
         self.optimizer = None
         self.input_channels = None
@@ -419,6 +437,7 @@ class LeNet5ImageClassifier(BaseModel):
                 "image_size": self.image_size,
                 "dropout_rate": self.dropout_rate,
                 "weight_decay": self.weight_decay,
+                "device_name": self._device_name,
                 "input_channels": self.input_channels,
                 "num_classes": self.num_classes,
                 "idx_to_label": self.idx_to_label,
@@ -452,6 +471,7 @@ class LeNet5ImageClassifier(BaseModel):
             image_size=ckpt.get("image_size", 32),
             dropout_rate=ckpt.get("dropout_rate", 0.0),
             weight_decay=ckpt.get("weight_decay", 0.0),
+            device=ckpt.get("device_name", DEVICE_PLACEHOLDER),
         )
         instance.input_channels = ckpt["input_channels"]
         instance.num_classes = ckpt["num_classes"]
