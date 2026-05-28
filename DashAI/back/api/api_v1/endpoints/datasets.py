@@ -1813,6 +1813,7 @@ async def preview_with_types(
 
         try:
             inference_rows = parsed_params.get("inference_rows", 1000)
+            use_native_types = parsed_params.get("use_native_types", False)
             dataloader_name = parsed_params.get("dataloader_name")
 
             if not dataloader_name:
@@ -1829,6 +1830,11 @@ async def preview_with_types(
 
             dataloader_cls = component_registry[dataloader_name]["class"]
             dataloader = dataloader_cls()
+
+            native_types = None
+            should_use_native = (
+                use_native_types and dataloader_cls.SUPPORTS_NATIVE_TYPES
+            )
 
             if file.filename.endswith(".zip"):
                 allowed_exts = dataloader_cls.SUPPORTED_EXTENSIONS
@@ -1915,6 +1921,11 @@ async def preview_with_types(
                         n_rows=inference_rows,
                     )
 
+                    if should_use_native:
+                        native_types = dataloader.extract_native_types(
+                            matched_file, parsed_params
+                        )
+
                 finally:
                     with contextlib.suppress(Exception):
                         shutil.rmtree(extract_dir, ignore_errors=True)
@@ -1926,17 +1937,25 @@ async def preview_with_types(
                     n_rows=inference_rows,
                 )
 
+                if should_use_native:
+                    native_types = dataloader.extract_native_types(
+                        tmp_file_path, parsed_params
+                    )
+
             sample_df = loaded_dataset.head(100)
 
             table = pa.Table.from_pandas(loaded_dataset)
             arrow_schema = arrow_to_dashai_schema(table)
 
-            methods = parsed_params.get("methods", ["DashAIPtype"])
-            inferred_types = {}
+            if native_types is not None:
+                inferred_types = native_types
+            else:
+                methods = parsed_params.get("methods", ["DashAIPtype"])
+                inferred_types = {}
 
-            for method in methods:
-                method_types = infer_types(loaded_dataset, method=method)
-                inferred_types.update(method_types)
+                for method in methods:
+                    method_types = infer_types(loaded_dataset, method=method)
+                    inferred_types.update(method_types)
 
             sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
             sample = sample_df.to_dict(orient="records")
