@@ -39,9 +39,7 @@ def replace_defs_in_schema(schema: dict):
         else:
             # fallback: derive from property name
             fallback_title = prop.replace("_", " ").title()
-            prop_schema["title"] = MultilingualString(
-                en=fallback_title, de=fallback_title
-            )
+            prop_schema["title"] = MultilingualString(en=fallback_title)
 
     return schema
 

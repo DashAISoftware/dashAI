@@ -32,7 +32,7 @@ def schema_field(
     """
     # Default to english if a string is provided
     if isinstance(description, str):
-        description = MultilingualString(en=description, de=description)
+        description = MultilingualString(en=description)
 
     field_params = {
         "description": description,
