@@ -257,7 +257,6 @@ from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
     TfIdfLogRegTextClassificationModel,
 )
-from DashAI.back.models.vgg16_image_classifier import VGG16ImageClassifier
 
 # Optimizers
 from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
@@ -382,7 +381,6 @@ def get_initial_components():
         MLPImageClassifier,
         CNNImageClassifier,
         LeNet5ImageClassifier,
-        VGG16ImageClassifier,
         ResNet18ImageClassifier,
         ResNet50ImageClassifier,
         EfficientNetB0ImageClassifier,
