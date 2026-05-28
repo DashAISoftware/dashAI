@@ -11,7 +11,7 @@ import GeneratorParamsCard from "./GeneratorParamsCard";
 
 export default function RAGParamsPanel({ selectedSessionId }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [promptId, setPromptId] = useState(null);
+  const [promptModel, setPromptModel] = useState({ component: "", params: {} });
   const [generatorModel, setGeneratorModel] = useState({ component: null, params: {} });
   const [loading, setLoading] = useState(false);
   const [isValid, setIsValid] = useState(true);
@@ -24,14 +24,14 @@ export default function RAGParamsPanel({ selectedSessionId }) {
     getRAGSession(selectedSessionId)
       .then((session) => {
         const params = session.parameters || {};
-        setPromptId(params.prompt_id || null);
+        setPromptModel(params.prompt || { component: "", params: {} });
         setGeneratorModel({
           component: params.generation_model?.component || null,
           params: params.generation_model?.params || {},
         });
         // Store original parameters snapshot
         originalParamsRef.current = {
-          prompt_id: params.prompt_id || null,
+          prompt: params.prompt || { component: "", params: {} },
           generation_model: {
             component: params.generation_model?.component || null,
             params: params.generation_model?.params || {},
@@ -49,17 +49,17 @@ export default function RAGParamsPanel({ selectedSessionId }) {
   const hasParamChanges = React.useMemo(() => {
     if (!originalParamsRef.current) return false;
     const original = originalParamsRef.current;
-    const hasPromptIdChanged = original.prompt_id !== promptId;
+    const hasPromptChanged = JSON.stringify(original.prompt) !== JSON.stringify(promptModel);
     const hasComponentChanged = original.generation_model.component !== generatorModel.component;
     const hasParamsChanged = JSON.stringify(original.generation_model.params) !== JSON.stringify(generatorModel.params);
-    return hasPromptIdChanged || hasComponentChanged || hasParamsChanged;
-  }, [promptId, generatorModel, savedVersion]);
+    return hasPromptChanged || hasComponentChanged || hasParamsChanged;
+  }, [promptModel, generatorModel, savedVersion]);
 
   const handleSave = async () => {
     if (!selectedSessionId || !hasParamChanges) return;
     const payload = {
       parameters: {
-        prompt_id: promptId,
+        prompt: promptModel,
         generation_model: {
           component: generatorModel.component,
           params: generatorModel.params,
@@ -86,7 +86,7 @@ export default function RAGParamsPanel({ selectedSessionId }) {
 
         <Box sx={{ overflow: "auto", flex: 1 }}>
           <Box sx={{ mb: 2 }}>
-            <PromptParamsCard promptId={promptId} setPromptId={setPromptId} onTokenCountChange={() => {}} />
+            <PromptParamsCard promptModel={promptModel} setPromptModel={setPromptModel} onTokenCountChange={() => {}} />
           </Box>
 
           <Box sx={{ mt: 2 }}>

@@ -5,8 +5,8 @@ from DashAI.back.models.RAG.prompts.augmentation import (
     CustomAugmentationPrompt
 )
 from DashAI.back.models.RAG.prompts.generation import (
-    GenerationPrompt,
-    CustomGenerationPrompt,
-    DefaultGenerationPrompt,
-    DefaultQnAGenerationPrompt
+    RAGGenerationPrompt,
+    CustomRAGGenerationPrompt,
+    DefaultRAGGenerationPrompt,
+    DefaultQnARAGGenerationPrompt
 )

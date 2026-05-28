@@ -151,7 +151,11 @@
       "selectTemplate": "Seleccionar plantilla de prompt",
       "selectTemplatePlaceholder": "ej. Prompt por Defecto, Instrucción Personalizada",
       "selectedTemplate": "Plantilla de Prompt Seleccionada:",
-      "newPromptButton": "Nuevo Prompt"
+      "newPromptButton": "Nuevo Prompt",
+      "defaultGenerationPrompt": "Prompt de Generación por Defecto",
+      "defaultQnAGenerationPrompt": "Prompt de Generación Q&A por Defecto",
+      "createNewPrompt": "Crear nuevo prompt",
+      "language": "Idioma"
     },
     "documents": {
       "uploadButton": "Subir documentos",
@@ -192,7 +196,8 @@
       "save": "Guardar",
       "unsavedChanges": "Tienes cambios sin guardar. ¿Estás seguro de que quieres cancelar?",
       "success": "¡Prompt creado exitosamente!",
-      "error": "Error al crear el prompt"
+      "error": "Error al crear el prompt",
+      "languageLabel": "Idioma (opcional)"
     },
     "advanced": {
       "chunkingTitle": "Configuración Avanzada de Chunking",

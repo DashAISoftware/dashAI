@@ -1,8 +1,7 @@
 from typing import List
 
-from pydantic import field_validator
-
 from openai import OpenAI
+from pydantic import field_validator
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -13,11 +12,10 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
-from DashAI.back.core.utils import MultilingualString
-
 
 # Hardcoded since the list of available models is only accessible via API call with
 # api key :c

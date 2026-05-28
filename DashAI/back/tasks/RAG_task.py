@@ -1,9 +1,10 @@
-from typing import Any, List, Tuple, Optional, Dict
-from itertools import chain
+from typing import Any, List, Optional, Tuple
+import json
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.dependencies.database.models import ProcessData
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+
 
 class RAGTask(BaseGenerativeTask):
     """Class for RAG Task.
@@ -108,7 +109,7 @@ class RAGTask(BaseGenerativeTask):
         path (Str): Indicates the path where the output will be stored.
         """
         message, chunks = output
-        return [(str(message), "str"), (str(chunks), "Dict")]
+        return [(str(message), "str"), (json.dumps(chunks, ensure_ascii=False, default=str), "Dict")]
 
     def process_output_from_database(
         self,

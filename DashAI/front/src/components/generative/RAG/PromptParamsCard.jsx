@@ -14,8 +14,8 @@ import { useTranslation } from "react-i18next";
 import PromptBody from "../../../pages/generative/simplified-RAG/components/PromptBody";
 
 export default function PromptParamsCard({
-  promptId,
-  setPromptId,
+  promptModel,
+  setPromptModel,
   onTokenCountChange,
 }) {
   const navigate = useNavigate();
@@ -70,8 +70,8 @@ export default function PromptParamsCard({
         </Box>
 
         <PromptBody
-          promptId={promptId}
-          setPromptId={setPromptId}
+          promptModel={promptModel}
+          setPromptModel={setPromptModel}
           onTokenCountChange={onTokenCountChange}
           showDetails={isExpanded}
         />
@@ -81,7 +81,7 @@ export default function PromptParamsCard({
 }
 
 PromptParamsCard.propTypes = {
-  promptId: PropTypes.number,
-  setPromptId: PropTypes.func.isRequired,
+  promptModel: PropTypes.object,
+  setPromptModel: PropTypes.func.isRequired,
   onTokenCountChange: PropTypes.func,
 };

@@ -1,6 +1,7 @@
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
 
 from DashAI.back.models.RAG.prompts.augmentation import AugmentationPrompt
+
 
 class CustomAugmentationPrompt(AugmentationPrompt):
     """
@@ -16,25 +17,23 @@ class CustomAugmentationPrompt(AugmentationPrompt):
         "optional_placeholders": AugmentationPrompt.optional_placeholders,
         "placeholder_descriptions": {
             "{input}": "The user input message.",
-            "{n_search_terms}": "The number of search terms to generate."
-        }
+            "{n_search_terms}": "The number of search terms to generate.",
+        },
     }
 
     required_placeholders = ["{input}", "{n_search_terms}"]
     optional_placeholders = []
 
-
     def __init__(self, **kwargs):
         self.template = kwargs.pop("template")
 
-
     def format(
-            self,
-            input: str, 
-            n_search_terms: int,
-            history: List[Tuple[str, str]] = None,
-            **kwargs: Any
-        ) -> str:
+        self,
+        input: str,
+        n_search_terms: int,
+        history: List[Tuple[str, str]] = None,
+        **kwargs: Any,
+    ) -> str:
         """
         Instantiate and format the prompt for augmentation.
         Args:
@@ -47,9 +46,12 @@ class CustomAugmentationPrompt(AugmentationPrompt):
         """
         buffer = self.template
         if history:
-            buffer = buffer.replace("{history}", "\n".join(
-                [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
-            ))
+            buffer = buffer.replace(
+                "{history}",
+                "\n".join(
+                    [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
+                ),
+            )
         buffer = buffer.replace("{input}", input)
         buffer = buffer.replace("{n_search_terms}", str(n_search_terms))
         return buffer

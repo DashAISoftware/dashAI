@@ -11,8 +11,6 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.tasks import BaseGenerativeTask
-from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 if TYPE_CHECKING:
@@ -113,7 +111,23 @@ class GenerativeJob(BaseJob):
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
-        # (Lazy imports removed to avoid duplicate and unused imports warnings)
+
+        from DashAI.back.job.rag_job import RAGJob
+        from DashAI.back.tasks.RAG_task import RAGTask
+
+        with session_factory() as db:
+            process = db.get(
+                GenerativeProcess, self.kwargs.get("generative_process_id")
+            )
+            if process is not None:
+                session = db.get(GenerativeSession, process.session_id)
+                if session is not None:
+                    task_class = component_registry[session.task_name]["class"]
+                    if issubclass(task_class, RAGTask):
+                        rag_job = RAGJob(**self.kwargs)
+                        rag_job.run()
+                        return
+
         model = None
         generative_process = None
         with session_factory() as db:
@@ -154,11 +168,6 @@ class GenerativeJob(BaseJob):
                         "class"
                     ]
                     params = generative_session.parameters
-                    if model_class is RAGPipeline:
-                        params["db"] = db
-                        params["component_registry"] = component_registry
-                        params["session_id"] = generative_session.id
-                        params["env_rag_path"] = config["RAG_PATH"]
                     model: BaseGenerativeModel = model_class(**params)
                 except Exception as e:
                     log.exception(e)

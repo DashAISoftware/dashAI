@@ -1,20 +1,17 @@
-from DashAI.back.core.schema_fields import (
-    BaseSchema,
-    schema_field,
-    enum_field
-)
-from typing import Final, List
+from typing import List
+
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 from DashAI.back.core.schema_fields import (
+    BaseSchema,
     enum_field,
     int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 
 class HuggingFaceEmbeddingSchema(BaseSchema):
@@ -67,7 +64,7 @@ class HuggingFaceEmbedding(DenseEmbedding):
 
     SCHEMA = HuggingFaceEmbeddingSchema
     DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
-    
+
     def __init__(self, **kwargs):
         self.params = self.validate_and_transform(kwargs)
         self.pooling_strategy = self.params["pooling_strategy"]
@@ -78,7 +75,7 @@ class HuggingFaceEmbedding(DenseEmbedding):
         self.model = None
         self.tokenizer = None
         self.load()
-        
+
     def save(self):
         pass
 
@@ -91,7 +88,7 @@ class HuggingFaceEmbedding(DenseEmbedding):
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
         self.embedding_dim = self.model.config.hidden_size
 
-    def batch_encode(self, texts:List[str])-> List[np.ndarray]:
+    def batch_encode(self, texts: List[str]) -> List[np.ndarray]:
         """Encode a list of texts into embeddings."""
         # Tokenize
         encoded = self.tokenizer(

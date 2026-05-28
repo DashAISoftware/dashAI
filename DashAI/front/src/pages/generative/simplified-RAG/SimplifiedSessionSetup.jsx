@@ -43,7 +43,10 @@ const defaultSessionData = {
       component: "",
       params: {},
     },
-    prompt_id: null,
+    prompt: {
+      component: "",
+      params: {},
+    },
   },
 };
 
@@ -199,12 +202,12 @@ export default function SimplifiedSessionSetup({
     }));
   };
 
-  const updatePromptId = (promptId) => {
+  const updatePrompt = (prompt) => {
     setSessionData((prev) => ({
       ...prev,
       parameters: {
         ...prev.parameters,
-        prompt_id: promptId,
+        prompt,
       },
     }));
   };
@@ -247,7 +250,7 @@ export default function SimplifiedSessionSetup({
       enqueueSnackbar(t("generative:simplifiedRag.validation.generatorInvalid"), { variant: "error" });
       return false;
     }
-    if (!sessionData.parameters.prompt_id) {
+    if (!sessionData.parameters.prompt?.component) {
       enqueueSnackbar(t("generative:simplifiedRag.validation.promptRequired"), { variant: "warning" });
       return false;
     }
@@ -259,7 +262,7 @@ export default function SimplifiedSessionSetup({
     const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
     const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
     const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
-    const isPromptValid = sessionData.parameters.prompt_id !== null && sessionData.parameters.prompt_id !== undefined;
+    const isPromptValid = sessionData.parameters.prompt?.component;
 
     return isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isPromptValid;
   }, [sessionData, isGeneratorValidState, isDuplicateName]);
@@ -281,7 +284,7 @@ export default function SimplifiedSessionSetup({
           chunking_model: sessionData.parameters.chunking_model,
           retriever_model: sessionData.parameters.retriever_model,
           generation_model: sessionData.parameters.generator_model,
-          prompt_id: sessionData.parameters.prompt_id,
+          prompt: sessionData.parameters.prompt,
         },
       };
 
@@ -498,8 +501,8 @@ export default function SimplifiedSessionSetup({
               sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
             >
               <PromptSection
-                promptId={sessionData.parameters.prompt_id}
-                setPromptId={updatePromptId}
+                promptModel={sessionData.parameters.prompt}
+                setPromptModel={updatePrompt}
                 onTokenCountChange={setPromptTokenCount}
               />
             </AccordionDetails>

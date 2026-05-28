@@ -1,6 +1,4 @@
-from datetime import datetime
 
-import pytest
 
 from DashAI.back.dependencies.database.models import GenerativeSession, RAGPrompt
 

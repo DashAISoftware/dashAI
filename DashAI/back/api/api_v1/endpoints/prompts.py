@@ -12,15 +12,14 @@ from DashAI.back.api.api_v1.schemas.rag_prompt import (
     RAGPromptUpdateSchema,
 )
 from DashAI.back.dependencies.database.models import (
-    RAGPrompt,
     GenerativeSession,
     GenerativeSessionParameterHistory,
+    RAGPrompt,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models.RAG import (
-    DefaultAugmentationPrompt,
-    DefaultGenerationPrompt,
-    DefaultQnAGenerationPrompt,
+    DefaultRAGGenerationPrompt,
+    DefaultQnARAGGenerationPrompt,
     Prompt,
 )
 
@@ -298,14 +297,14 @@ async def get_all_prompts(
 
             if len(prompts) == 0:
                 default_generation_prompt = RAGPrompt(
-                    class_name=DefaultGenerationPrompt.__name__,
-                    name="Default Generation Prompt",
-                    parameters={"template": DefaultGenerationPrompt.template},
+                    class_name=DefaultRAGGenerationPrompt.__name__,
+                    name="Default RAG Generation Prompt",
+                    parameters={"template": DefaultRAGGenerationPrompt.template},
                 )
                 default_qa_prompt = RAGPrompt(
-                    class_name=DefaultQnAGenerationPrompt.__name__,
-                    name="Default QnA Prompt",
-                    parameters={"template": DefaultQnAGenerationPrompt.template},
+                    class_name=DefaultQnARAGGenerationPrompt.__name__,
+                    name="Default QnA RAG Generation Prompt",
+                    parameters={"template": DefaultQnARAGGenerationPrompt.template},
                 )
                 """ default_augmentation_prompt = RAGPrompt(
                     class_name=DefaultAugmentationPrompt.__name__,

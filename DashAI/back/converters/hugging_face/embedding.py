@@ -1,8 +1,9 @@
-from typing import Final, List
+from typing import List
+
 import numpy as np
 import torch
-from datasets import Dataset, concatenate_datasets
 from transformers import AutoModel, AutoTokenizer
+
 """HuggingFace embedding converter with lazy-loaded dependencies."""
 
 from typing import TYPE_CHECKING
@@ -163,7 +164,6 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     def _load_model(self):
         """Load the embedding model and tokenizer."""
-        from transformers import AutoModel, AutoTokenizer
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
@@ -218,7 +218,6 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             dense embedding vector column(s).
         """
         import pyarrow as pa
-        import torch
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 

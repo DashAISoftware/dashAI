@@ -27,9 +27,10 @@ export default function NewPromptModal({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
   const [promptTypes, setPromptTypes] = useState([]);
-  const selectedPromptType = "CustomGenerationPrompt"; // Default to GenerationPrompt
+  const selectedPromptType = "CustomRAGGenerationPrompt"; // Default to RAGGenerationPrompt
   const [promptName, setPromptName] = useState("");
   const [promptTemplate, setPromptTemplate] = useState("");
+  const [promptLanguage, setPromptLanguage] = useState("en");
   const [defaultPromptName, setDefaultPromptName] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -60,6 +61,7 @@ export default function NewPromptModal({
       setDefaultPromptName(generatedName.defaultName);
       setPromptName(generatedName.defaultName);
       setPromptTemplate("");
+      setPromptLanguage("en");
       setHasUnsavedChanges(false);
     }
   }, [open, existingPrompts]);
@@ -92,6 +94,7 @@ export default function NewPromptModal({
         name: promptName,
         parameters: {
           template: promptTemplate,
+          ...(promptLanguage ? { language: promptLanguage } : {}),
         },
       });
       if (result && result.id) {
@@ -149,6 +152,24 @@ export default function NewPromptModal({
           helperText={!promptName.trim() ? t("generative:simplifiedRag.newPrompt.nameRequired") : ""}
           InputLabelProps={{ required: false }}
         />
+
+        <TextField
+          select
+          fullWidth
+          label={t("generative:simplifiedRag.newPrompt.languageLabel") || "Language (optional)"}
+          value={promptLanguage}
+          onChange={(e) => {
+            setPromptLanguage(e.target.value);
+            setHasUnsavedChanges(true);
+          }}
+          sx={{ mb: 2 }}
+          SelectProps={{ native: true }}
+        >
+          <option value="">— No language —</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+        </TextField>
 
         {selectedPromptType &&
           (() => {

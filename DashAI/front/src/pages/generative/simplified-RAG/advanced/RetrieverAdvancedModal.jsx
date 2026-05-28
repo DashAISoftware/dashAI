@@ -16,6 +16,7 @@ export default function RetrieverAdvancedModal({
   open,
   onClose,
   selectedParadigm,
+  allParadigms,
   retrieverModel,
   setRetrieverModel,
 }) {
@@ -72,6 +73,7 @@ export default function RetrieverAdvancedModal({
         <FormSchemaProvider key={`retriever-advanced-${retrieverModel?.component}`}>
           <RetrieverConfigurationStep
             ref={retrieverStepRef}
+            allParadigms={allParadigms}
             retrieverModel={retrieverModel}
             setRetrieverModel={setRetrieverModel}
             setNextEnabled={setStepValid}

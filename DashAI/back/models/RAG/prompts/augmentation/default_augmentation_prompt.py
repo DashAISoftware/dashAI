@@ -1,6 +1,8 @@
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
 
-from DashAI.back.models.RAG.prompts.augmentation.augmentation_prompt import AugmentationPrompt
+from DashAI.back.models.RAG.prompts.augmentation.augmentation_prompt import (
+    AugmentationPrompt,
+)
 
 template = """
 You are a intelligent and insightful assistant. Your task is to generate keywords or phrases to search for
@@ -18,11 +20,13 @@ The keywords or phrases should be concise and to the point. You must fill the fo
 }
 """
 
+
 class DefaultAugmentationPrompt(AugmentationPrompt):
     """
     AugmentationPrompt class for generating augmented retrieval prompts,
     it uses the language model to generate keywords or phrases that can be used to augment the input.
     """
+
     metadata = {
         "name": "Default Augmentation Prompt",
         "description": "Default prompt template for generating augmented retrieval prompts.",
@@ -32,9 +36,9 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
         "placeholder_descriptions": {
             "{input}": "The user input message.",
             "{history}": "The chat history (optional) to be included in the context.",
-            "{n_search_terms}": "The number of search terms to generate."
+            "{n_search_terms}": "The number of search terms to generate.",
         },
-        "template": template
+        "template": template,
     }
 
     template = template
@@ -43,11 +47,11 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
 
     @staticmethod
     def format(
-            input: str,
-            n_search_terms: int,
-            history: List[Tuple[str, str]] = None,
-            **kwargs: Any
-        ) -> str:
+        input: str,
+        n_search_terms: int,
+        history: List[Tuple[str, str]] = None,
+        **kwargs: Any,
+    ) -> str:
         """
         Instantiate and format the prompt for augmentation.
         Args:
@@ -61,9 +65,12 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
         buffer = template
         buffer = buffer.replace("{input}", input)
         if history:
-            buffer = buffer.replace("{history}", "\n".join(
-                [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
-            ))
+            buffer = buffer.replace(
+                "{history}",
+                "\n".join(
+                    [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
+                ),
+            )
         else:
             buffer = buffer.replace("{history}", "No previous conversation.")
         buffer = buffer.replace("{n_search_terms}", str(n_search_terms))

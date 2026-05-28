@@ -60,9 +60,9 @@ async def get_all_documents(
                         last_modified=doc.last_modified,
                         optional_metadata=doc.optional_metadata,
                         related_sessions=[
-                            session.id for session in doc.related_sessions_ids
+                            session.id for session in doc.get_related_sessions
                         ]
-                        if getattr(doc, "related_sessions_ids", None)
+                        if getattr(doc, "get_related_sessions", None)
                         else None,
                         file_url=f"{base}{base_url}/{doc.id}/download",
                     )
@@ -96,13 +96,15 @@ async def get_document(
             return DocumentResponse(
                 id=document.id,
                 file_name=document.file_name,
+                file_type=document.file_type,
                 file_hash=document.file_hash,
                 created=document.created,
+                last_modified=document.last_modified,
                 optional_metadata=document.optional_metadata,
                 related_sessions=[
-                    session.id for session in document.related_sessions_ids
+                    session.id for session in document.get_related_sessions
                 ]
-                if getattr(document, "related_sessions_ids", None)
+                if getattr(document, "get_related_sessions", None)
                 else None,
                 file_url=f"{base}{base_url}/{document.id}/download",
             )
@@ -147,9 +149,7 @@ async def download_document(
                 path=document.file_path,
                 media_type=media_type,
                 headers={
-                    "Content-Disposition": (
-                        f"inline; filename*=UTF-8''{encoded_name}"
-                    ),
+                    "Content-Disposition": (f"inline; filename*=UTF-8''{encoded_name}"),
                 },
             )
         else:
@@ -236,9 +236,7 @@ async def upload_document(
         else:
             # Create a new document entry
             try:
-                file_path = os.path.join(
-                    docs_folder_path, file_name
-                )
+                file_path = docs_folder_path / file_name
 
                 with open(file_path, "wb") as f:
                     f.write(content_bytes)
@@ -349,10 +347,10 @@ async def get_related_sessions(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Document {document_id} does not exist in DB.",
                 )
-            if not document.related_sessions_ids:
+            if not document.get_related_sessions:
                 return []
             related_session_ids = [
-                session.id for session in document.related_sessions_ids
+                session.id for session in document.get_related_sessions
             ]
             return related_session_ids
         except exc.SQLAlchemyError as e:
@@ -456,9 +454,9 @@ async def update_document_metadata(
                 created=document.created,
                 optional_metadata=document.optional_metadata,
                 related_sessions=[
-                    session.id for session in document.related_sessions_ids
+                    session.id for session in document.get_related_sessions
                 ]
-                if document.related_sessions_ids
+                if document.get_related_sessions
                 else None,
                 file_url=f"{base}{base_url}/{document.id}/download",
             )

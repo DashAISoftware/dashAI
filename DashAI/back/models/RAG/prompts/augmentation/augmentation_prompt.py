@@ -1,6 +1,7 @@
-from typing import List, Tuple, Any
+from typing import Any
 
 from DashAI.back.models.RAG.prompts.prompt import Prompt
+
 
 class AugmentationPrompt(Prompt):
     """
@@ -14,12 +15,7 @@ class AugmentationPrompt(Prompt):
     def __init__(self, **kwargs: Any):
         self.template = kwargs.pop("template")
 
-    def format(
-            self,
-            input: str,
-            n_search_terms: int,
-            **kwargs: Any
-        ) -> str:
+    def format(self, input: str, n_search_terms: int, **kwargs: Any) -> str:
         """
         Instantiate and format the prompt for augmentation.
         Args:

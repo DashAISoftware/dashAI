@@ -103,6 +103,7 @@ from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.pipeline_job import PipelineJob
 from DashAI.back.job.predict_job import PredictJob
+from DashAI.back.job.rag_job import RAGJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
@@ -156,9 +157,11 @@ from DashAI.back.models.hugging_face.opus_mt_en_pt_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
     OpusMtEsENTransformer,
 )
-from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import Phi4MiniInstructModel
 from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
+)
+from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
+    Phi4MiniInstructModel,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
@@ -180,31 +183,6 @@ from DashAI.back.models.hugging_face.smol_lm_model import SmolLMModel
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
 )
-from DashAI.back.models.RAG import (
-    RAGPipeline,
-    # Prompts
-    DefaultGenerationPrompt,
-    CustomGenerationPrompt,
-    DefaultQnAGenerationPrompt,
-    #DefaultAugmentationPrompt,
-    CustomAugmentationPrompt,
-    # Chunking Models
-    CharacterChunkModel,
-    TokenChunkModel,
-    # Retrievers
-    DenseRetriever,
-    # Encodings
-    # DenseEmbedding,
-    FastTextEmbedding,
-    HuggingFaceEmbedding,
-    # Pipeline
-    RAGPipeline,
-    SparseRetriever,
-    TFIDFRetriever,
-    TFIDFVectorizerModel,
-    TokenChunkModel,
-    
-)
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
     StableDiffusionV2Model,
 )
@@ -216,11 +194,39 @@ from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
 )
 from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
 from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
-from DashAI.back.models.remote_models.openai_text_to_text_generation_model import OpenAITextToTextGenerationModel
 from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
+from DashAI.back.models.RAG import (
+    BM25Retriever,
+    BM25VectorizerModel,
+    # Chunking Models
+    CharacterChunkModel,
+    # DefaultAugmentationPrompt,
+    CustomAugmentationPrompt,
+    CustomRAGGenerationPrompt,
+    DefaultQnARAGGenerationPrompt,
+    # Prompts
+    DefaultRAGGenerationPrompt,
+    # Retrievers
+    DenseRetriever,
+    # Encodings
+    # DenseEmbedding,
+    FastTextEmbedding,
+    HuggingFaceEmbedding,
+    # Pipeline
+    ParallelRetriever,
+    RAGPipeline,
+    SequentialRetriever,
+    SparseRetriever,
+    TFIDFRetriever,
+    TFIDFVectorizerModel,
+    TokenChunkModel,
+)
+from DashAI.back.models.remote_models.openai_text_to_text_generation_model import (
+    OpenAITextToTextGenerationModel,
+)
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
@@ -289,10 +295,10 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
+from DashAI.back.tasks.controlnet_task import ControlNetTask
 
 # Tasks
 from DashAI.back.tasks.RAG_task import RAGTask
-from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -435,6 +441,7 @@ def get_initial_components():
         DatasetJob,
         GenerativeJob,
         PipelineJob,
+        RAGJob,
         # Explainers
         KernelShap,
         PartialDependence,
@@ -506,16 +513,20 @@ def get_initial_components():
         FastTextEmbedding,
         HuggingFaceEmbedding,
         # Prompts
-        DefaultGenerationPrompt,
-        CustomGenerationPrompt,
-        DefaultQnAGenerationPrompt,
-        #DefaultAugmentationPrompt,
+        DefaultRAGGenerationPrompt,
+        CustomRAGGenerationPrompt,
+        DefaultQnARAGGenerationPrompt,
+        # DefaultAugmentationPrompt,
         CustomAugmentationPrompt,
         # Retrievers
         DenseRetriever,
         SparseRetriever,
         TFIDFRetriever,
         TFIDFVectorizerModel,
+        BM25Retriever,
+        BM25VectorizerModel,
+        SequentialRetriever,
+        ParallelRetriever,
     ]
 
     # Obtener plugins instalados

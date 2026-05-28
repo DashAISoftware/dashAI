@@ -87,7 +87,7 @@ function AutoSaveFormSchema({
 
 const RetrieverConfigurationStep = forwardRef(
   function RetrieverConfigurationStep(
-    { retrieverModel, setRetrieverModel, setNextEnabled },
+    { allParadigms, retrieverModel, setRetrieverModel, setNextEnabled },
     ref,
   ) {
     const [retrievalParadigms, setRetrievalParadigms] = useState([]);
@@ -206,7 +206,9 @@ const RetrieverConfigurationStep = forwardRef(
 
     const fetchRetrievalParadigms = async () => {
       try {
-        const data = await getRetrievalParadigm();
+        const data = allParadigms && allParadigms.length > 0
+          ? allParadigms
+          : await getRetrievalParadigm();
         setRetrievalParadigms(data);
 
         if (retrieverModel?.component) {
@@ -449,6 +451,7 @@ const RetrieverConfigurationStep = forwardRef(
 );
 
 RetrieverConfigurationStep.propTypes = {
+  allParadigms: PropTypes.array,
   retrieverModel: PropTypes.object,
   setRetrieverModel: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,

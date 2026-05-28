@@ -15,6 +15,7 @@ import { buildDefaultValuesFromSchemaProperties } from "../components/ragFormDef
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
 
 const TOP_K_OPTIONS = [3, 5, 10, 15, 20];
+const SIMPLIFIED_PARADIGMS = ["DenseRetriever", "SparseRetriever"];
 
 export default function RetrieverSection({
   retrieverModel,
@@ -29,13 +30,18 @@ export default function RetrieverSection({
     return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1).toLowerCase();
   };
   
-  const [paradigms, setParadigms] = useState([]);
+  const [allParadigms, setAllParadigms] = useState([]);
   const [selectedParadigm, setSelectedParadigm] = useState(null);
   const [retrievers, setRetrievers] = useState([]);
   const [selectedRetriever, setSelectedRetriever] = useState(null);
   const [topK, setTopK] = useState(retrieverModel?.params?.top_k || 5);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const paradigms = useMemo(
+    () => allParadigms.filter((p) => SIMPLIFIED_PARADIGMS.includes(p.name)),
+    [allParadigms],
+  );
 
   useEffect(() => {
     if (retrieverModel?.params?.top_k && retrieverModel.params.top_k !== topK) {
@@ -58,12 +64,20 @@ export default function RetrieverSection({
     const loadParadigms = async () => {
       try {
         const data = await getRetrievalParadigm();
-        setParadigms(data || []);
+        setAllParadigms(data || []);
         if (data && data.length > 0) {
+          const simplified = data.filter((p) => SIMPLIFIED_PARADIGMS.includes(p.name));
           if (retrieverModel?.component) {
-            setSelectedParadigm(data.find(p => p.name === "SparseRetriever") || data[0]);
+            const matching = simplified.find(
+              (p) => p.name === retrieverModel.component,
+            );
+            if (matching) {
+              setSelectedParadigm(matching);
+            } else {
+              setSelectedParadigm(simplified.find((p) => p.name === "SparseRetriever") || simplified[0]);
+            }
           } else {
-            const defaultParadigm = data.find((p) => p.name === "SparseRetriever") || data[0];
+            const defaultParadigm = simplified.find((p) => p.name === "SparseRetriever") || simplified[0];
             setSelectedParadigm(defaultParadigm);
           }
         }
@@ -279,6 +293,7 @@ export default function RetrieverSection({
         open={showAdvanced}
         onClose={() => setShowAdvanced(false)}
         selectedParadigm={selectedParadigm}
+        allParadigms={allParadigms}
         retrieverModel={retrieverModel}
         setRetrieverModel={setRetrieverModel}
       />

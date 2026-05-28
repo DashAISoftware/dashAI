@@ -6,5 +6,6 @@ export interface IRAGPrompt {
   last_modified?: string;
   parameters: {
     template: string;
+    language?: string;
   };
 }

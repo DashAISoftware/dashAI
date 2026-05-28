@@ -71,6 +71,21 @@ export default function PromptSelectionTable({
         editable: false,
       },
       {
+        field: "language",
+        headerName: "Language",
+        minWidth: 100,
+        flex: 0.7,
+        editable: false,
+        valueGetter: (value, row) => {
+          const lang = row.parameters?.language;
+          const langMap = { en: "English", es: "Español", pt: "Português" };
+          if (lang) {
+            return langMap[lang] || lang;
+          }
+          return row.class_name?.startsWith("Default") ? "English" : "-";
+        },
+      },
+      {
         field: "created",
         headerName: "Created",
         minWidth: 140,

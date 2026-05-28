@@ -151,7 +151,11 @@
       "selectTemplate": "Select prompt template",
       "selectTemplatePlaceholder": "e.g., Default Prompt, Custom Instruction",
       "selectedTemplate": "Selected Prompt Template:",
-      "newPromptButton": "New Prompt"
+      "newPromptButton": "New Prompt",
+      "defaultGenerationPrompt": "Default Generation Prompt",
+      "defaultQnAGenerationPrompt": "Default Q&A Generation Prompt",
+      "createNewPrompt": "Create new prompt",
+      "language": "Language"
     },
     "documents": {
       "uploadButton": "Upload documents",
@@ -192,7 +196,8 @@
       "save": "Save",
       "unsavedChanges": "You have unsaved changes. Are you sure you want to cancel?",
       "success": "Prompt created successfully!",
-      "error": "Failed to create prompt"
+      "error": "Failed to create prompt",
+      "languageLabel": "Language (optional)"
     },
     "advanced": {
       "chunkingTitle": "Advanced Chunking Configuration",

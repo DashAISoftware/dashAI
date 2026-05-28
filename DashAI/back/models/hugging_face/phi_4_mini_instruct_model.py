@@ -1,6 +1,5 @@
 from typing import List
 
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -207,7 +206,7 @@ class Phi4MiniInstructModel(TextToTextGenerationTaskModel):
             "soportar una adherencia precisa a las instrucciones y medidas de seguridad."
         ),
     )
-        
+
     def __init__(self, **kwargs):
         try:
             from llama_cpp import Llama

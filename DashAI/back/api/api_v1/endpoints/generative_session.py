@@ -2,7 +2,11 @@ import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Final, Union
+
+COMPOSITE_RETRIEVER_NAMES: Final = frozenset(
+    {"SequentialRetriever", "ParallelRetriever"}
+)
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
@@ -16,13 +20,16 @@ from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
+    ProcessData,
     RAGChunkingModel,
     RAGDenseRetriever,
     RAGEmbeddingMatrix,
     RAGEmbeddingModel,
+    RAGPipeline,
     RAGPrompt,
+    RAGRetriever,
+    RAGRetrieverChild,
     RAGSparseRetriever,
-    ProcessData,
 )
 from DashAI.back.tasks.RAG_task import RAGTask
 
@@ -56,9 +63,7 @@ def _other_sessions_with_same_config(
     This avoids generator/list comprehensions for clarity.
     """
     other_sessions = (
-        db.query(GenerativeSession)
-        .filter(GenerativeSession.id != session_id)
-        .all()
+        db.query(GenerativeSession).filter(GenerativeSession.id != session_id).all()
     )
 
     for other_session in other_sessions:
@@ -89,25 +94,43 @@ def _cleanup_orphaned_rag_resources(
         return old_parameters.get(key) != new_parameters.get(key)
 
     other_sessions = (
-        db.query(GenerativeSession)
-        .filter(GenerativeSession.id != session_id)
-        .all()
+        db.query(GenerativeSession).filter(GenerativeSession.id != session_id).all()
     )
 
-    # Clean up session-scoped prompt if no other session references it
-    old_prompt_id = old_parameters.get("prompt_id")
-    if old_prompt_id is not None:
-        found_in_other = False
-        for other_session in other_sessions:
-            other_params = other_session.parameters or {}
-            if other_params.get("prompt_id") == old_prompt_id:
-                found_in_other = True
-                break
-        if not found_in_other:
-            old_prompt = db.get(RAGPrompt, old_prompt_id)
-            if old_prompt is not None and f" - session {session_id}" in (old_prompt.name or ""):
-                db.delete(old_prompt)
+    documents_ids = old_parameters.get("documents") or []
+    documents_ids = sorted(documents_ids)
 
+    # ── Retriever cleanup MUST run BEFORE chunking cleanup ──────────
+    # _cleanup_unit_retriever queries RAGChunkingModel to obtain
+    # chunking_model_id. If chunking models are deleted first, the
+    # query returns None and retriever rows are silently skipped.
+    # ─────────────────────────────────────────────────────────────────
+    retriever_model_params = old_parameters.get("retriever_model")
+    if not retriever_model_params:
+        retriever_model_params = {}
+
+    retriever_component_name = retriever_model_params.get("component", "")
+
+    should_cleanup_retriever = (
+        bool(retriever_model_params)
+        and _component_changed("retriever_model")
+        and not _other_sessions_with_same_config(
+            db,
+            session_id,
+            old_parameters,
+            keys=("documents", "chunking_model", "retriever_model"),
+        )
+    )
+
+    if should_cleanup_retriever:
+        if retriever_component_name in COMPOSITE_RETRIEVER_NAMES:
+            _cleanup_composite_retriever(db, old_parameters, documents_ids, session_id)
+        else:
+            _cleanup_unit_retriever(
+                db, old_parameters, documents_ids, retriever_model_params, session_id
+            )
+
+    # ── Chunking model cleanup (AFTER retriever) ──────────────────────
     chunking_model_params = old_parameters.get("chunking_model")
     if not chunking_model_params:
         chunking_model_params = {}
@@ -132,107 +155,140 @@ def _cleanup_orphaned_rag_resources(
         for chunking_model in chunking_models:
             db.delete(chunking_model)
 
-    retriever_model_params = old_parameters.get("retriever_model")
-    if not retriever_model_params:
-        retriever_model_params = {}
 
-    should_cleanup_retriever = (
-        bool(retriever_model_params)
-        and _component_changed("retriever_model")
-        and not _other_sessions_with_same_config(
-            db, session_id, old_parameters, keys=("documents", "chunking_model", "retriever_model")
-        )
+def _find_pipeline_id(db, session_id: int) -> int | None:
+    pipeline = db.query(RAGPipeline).filter_by(session_id=session_id).first()
+    return pipeline.id if pipeline else None
+
+
+def _cleanup_composite_retriever(
+    db,
+    old_parameters,
+    documents_ids,
+    session_id,
+) -> None:
+    pipeline_id = _find_pipeline_id(db, session_id)
+    if pipeline_id is None:
+        return
+
+    retriever_component_name = old_parameters.get("retriever_model", {}).get(
+        "component"
     )
 
-    if should_cleanup_retriever:
-        documents_ids = old_parameters.get("documents") or []
-        documents_ids = sorted(documents_ids)
+    composite_bridges = (
+        db.query(RAGRetriever)
+        .filter(
+            RAGRetriever.pipeline_id == pipeline_id,
+            RAGRetriever.class_name == retriever_component_name,
+        )
+        .all()
+    )
 
-        # Find chunking model instance (if any)
-        chunking_model = (
-            db.query(RAGChunkingModel)
+    for bridge in composite_bridges:
+        child_links = (
+            db.query(RAGRetrieverChild)
+            .filter_by(parent_id=bridge.id)
+            .order_by(RAGRetrieverChild.child_order)
+            .all()
+        )
+        for link in child_links:
+            child_bridge = db.query(RAGRetriever).get(link.child_id)
+            if child_bridge is None:
+                continue
+            if child_bridge.sparse_detail:
+                _delete_path(child_bridge.sparse_detail.storage_folder)
+                db.delete(child_bridge.sparse_detail)
+            elif child_bridge.dense_detail:
+                db.delete(child_bridge.dense_detail)
+        db.delete(bridge)
+
+
+def _cleanup_unit_retriever(
+    db,
+    old_parameters,
+    documents_ids,
+    retriever_model_params,
+    session_id,
+) -> None:
+    # Previously queried non-existent columns (chunking_model_id, document_ids)
+    # on RAGDenseRetriever/RAGSparseRetriever. Fixed after schema refactor:
+    # trace through the pipeline chain to obtain the valid chunk_set_id column.
+    retriever_params = retriever_model_params.get("params", {})
+
+    pipeline_id = _find_pipeline_id(db, session_id)
+    if pipeline_id is None:
+        return
+
+    bridge = (
+        db.query(RAGRetriever)
+        .filter(
+            RAGRetriever.pipeline_id == pipeline_id,
+            RAGRetriever.class_name == retriever_model_params.get("component"),
+        )
+        .first()
+    )
+    if bridge is None:
+        return
+
+    if "encoding_model" in retriever_params:
+        dense_retriever = (
+            db.query(RAGDenseRetriever)
             .filter(
-                RAGChunkingModel.class_name == retriever_model_params.get("component"),
-                RAGChunkingModel.parameters == retriever_model_params.get("params"),
+                RAGDenseRetriever.bridge_id == bridge.id,
+                RAGDenseRetriever.class_name == retriever_model_params.get("component"),
+                RAGDenseRetriever.parameters == retriever_params,
             )
             .first()
         )
-        chunking_model_id = chunking_model.id if chunking_model else None
+        if dense_retriever is None:
+            return
 
-        retriever_params = retriever_model_params.get("params", {})
+        chunk_set_id = dense_retriever.chunk_set_id
+        embedding_model_id = dense_retriever.embedding_model_id
 
-        # Check for dense retriever with embedded encoding model
-        if "encoding_model" in retriever_params:
-            retriever_payload = retriever_params
-
-            # Extract nested encoding model properties step-by-step for clarity
-            encoding_model_prop = retriever_payload.get("encoding_model", {})
-            encoding_properties = encoding_model_prop.get("properties", {})
-            encoding_params = encoding_properties.get("params", {})
-            encoding_comp = encoding_params.get("comp", {})
-
-            embedding_model = (
-                db.query(RAGEmbeddingModel)
-                .filter(
-                    RAGEmbeddingModel.class_name == encoding_comp.get("component"),
-                    RAGEmbeddingModel.parameters == encoding_comp.get("params"),
-                )
-                .first()
+        embedding_matrices = (
+            db.query(RAGEmbeddingMatrix)
+            .filter(
+                RAGEmbeddingMatrix.chunk_set_id == chunk_set_id,
+                RAGEmbeddingMatrix.embedding_model_id == embedding_model_id,
+                RAGEmbeddingMatrix.document_id.in_(documents_ids),
             )
-            embedding_model_id = embedding_model.id if embedding_model else None
+            .all()
+        )
 
-            if embedding_model_id is not None and chunking_model_id is not None:
-                embedding_matrices = (
-                    db.query(RAGEmbeddingMatrix)
-                    .filter(
-                        RAGEmbeddingMatrix.chunking_model_id == chunking_model_id,
-                        RAGEmbeddingMatrix.embedding_model_id == embedding_model_id,
-                        RAGEmbeddingMatrix.document_id.in_(documents_ids),
-                    )
-                    .all()
-                )
+        matrix_ids = []
+        for matrix in embedding_matrices:
+            _delete_path(matrix.storage_folder)
+            matrix_ids.append(matrix.id)
 
-                # Remove storage folders and collect ids explicitly
-                matrix_ids = []
-                for matrix in embedding_matrices:
-                    _delete_path(matrix.storage_folder)
-                    matrix_ids.append(matrix.id)
+        if matrix_ids:
+            db.query(RAGEmbeddingMatrix).filter(
+                RAGEmbeddingMatrix.id.in_(matrix_ids)
+            ).delete(synchronize_session=False)
 
-                if matrix_ids:
-                    db.query(RAGEmbeddingMatrix).filter(
-                        RAGEmbeddingMatrix.id.in_(matrix_ids)
-                    ).delete(synchronize_session=False)
+        embedding_model = db.query(RAGEmbeddingModel).get(embedding_model_id)
+        if embedding_model is not None:
+            db.delete(embedding_model)
 
-                if embedding_model is not None:
-                    db.delete(embedding_model)
-
-                dense_retrievers = (
-                    db.query(RAGDenseRetriever)
-                    .filter(
-                        RAGDenseRetriever.class_name == retriever_model_params.get("component"),
-                        RAGDenseRetriever.parameters == retriever_payload,
-                        RAGDenseRetriever.chunking_model_id == chunking_model_id,
-                        RAGDenseRetriever.document_ids == documents_ids,
-                    )
-                    .all()
-                )
-                for dense_retriever in dense_retrievers:
-                    db.delete(dense_retriever)
-        else:
-            retriever_payload = retriever_params
-            sparse_retrievers = (
-                db.query(RAGSparseRetriever)
-                .filter(
-                    RAGSparseRetriever.class_name == retriever_model_params.get("component"),
-                    RAGSparseRetriever.parameters == retriever_payload,
-                    RAGSparseRetriever.chunking_model_id == chunking_model_id,
-                    RAGSparseRetriever.documents_ids == documents_ids,
-                )
-                .all()
+        db.delete(dense_retriever)
+        db.delete(bridge)
+    else:
+        sparse_retriever = (
+            db.query(RAGSparseRetriever)
+            .filter(
+                RAGSparseRetriever.bridge_id == bridge.id,
+                RAGSparseRetriever.class_name
+                == retriever_model_params.get("component"),
+                RAGSparseRetriever.parameters == retriever_params,
             )
-            for sparse_retriever in sparse_retrievers:
-                _delete_path(sparse_retriever.storage_folder)
-                db.delete(sparse_retriever)
+            .first()
+        )
+        if sparse_retriever is None:
+            return
+
+        _delete_path(sparse_retriever.storage_folder)
+        db.delete(sparse_retriever)
+        db.delete(bridge)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -637,6 +693,7 @@ async def update_generative_session_params(
     session_id: int,
     new_params: dict,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Update the parameters of a generative session and log the change.
 
@@ -673,15 +730,31 @@ async def update_generative_session_params(
             old_parameters = dict(session.parameters or {})
             updated_parameters = {**old_parameters, **new_params}
 
-            from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
+            if "prompt_id" in updated_parameters:
+                if "prompt" not in updated_parameters:
+                    prompt_db = db.get(RAGPrompt, updated_parameters["prompt_id"])
+                    if prompt_db:
+                        updated_parameters["prompt"] = {
+                            "component": prompt_db.class_name,
+                            "params": prompt_db.parameters or {},
+                        }
+                del updated_parameters["prompt_id"]
 
             try:
-                RAGPipeline.SCHEMA.model_validate(updated_parameters)
-            except ValueError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid parameters for RAG session {session_id}: {e}",
-                ) from e
+                task_class = component_registry[session.task_name]["class"]
+            except KeyError:
+                task_class = None
+
+            if task_class is not None and task_class == RAGTask:
+                from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
+
+                try:
+                    RAGPipeline.SCHEMA.model_validate(updated_parameters)
+                except ValueError as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid parameters for RAG session {session_id}: {e}",
+                    ) from e
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
@@ -693,7 +766,9 @@ async def update_generative_session_params(
             session.parameters = updated_parameters
             session.last_modified = datetime.now()
 
-            _cleanup_orphaned_rag_resources(db, session_id, old_parameters, updated_parameters)
+            _cleanup_orphaned_rag_resources(
+                db, session_id, old_parameters, updated_parameters
+            )
             db.commit()
             db.refresh(session)
 
@@ -846,11 +921,13 @@ async def get_parameter_history_entry(
                             }
                         )
 
-                events.append({
-                    "id": curr["id"],
-                    "timestamp": curr["modified_at"],
-                    "changes": changes,
-                })
+                events.append(
+                    {
+                        "id": curr["id"],
+                        "timestamp": curr["modified_at"],
+                        "changes": changes,
+                    }
+                )
                 prev_params = curr_params
 
             return events

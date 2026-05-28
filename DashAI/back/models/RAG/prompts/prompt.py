@@ -1,7 +1,6 @@
 from typing import Any, Dict, List
 
 from DashAI.back.core.schema_fields import BaseSchema, schema_field, string_field
-from DashAI.back.dependencies.database.models import RAGPrompt as PromptDBModel
 from DashAI.back.models.base_model import BaseModel
 
 

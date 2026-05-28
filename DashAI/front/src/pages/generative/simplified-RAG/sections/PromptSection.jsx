@@ -7,8 +7,8 @@ import SectionCard from "../components/SectionCard";
 import PromptBody from "../components/PromptBody";
 
 export default function PromptSection({
-  promptId,
-  setPromptId,
+  promptModel,
+  setPromptModel,
   onTokenCountChange,
 }) {
   const { t } = useTranslation(["generative"]);
@@ -20,8 +20,8 @@ export default function PromptSection({
       </Typography>
 
       <PromptBody
-        promptId={promptId}
-        setPromptId={setPromptId}
+        promptModel={promptModel}
+        setPromptModel={setPromptModel}
         onTokenCountChange={onTokenCountChange}
       />
     </SectionCard>
@@ -29,7 +29,7 @@ export default function PromptSection({
 }
 
 PromptSection.propTypes = {
-  promptId: PropTypes.number,
-  setPromptId: PropTypes.func.isRequired,
+  promptModel: PropTypes.object,
+  setPromptModel: PropTypes.func.isRequired,
   onTokenCountChange: PropTypes.func,
 };

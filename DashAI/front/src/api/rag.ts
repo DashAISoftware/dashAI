@@ -59,7 +59,10 @@ export const createRAGSession = async (
       component: string;
       params: Record<string, any>;
     };
-    prompt_id: number;
+    prompt: {
+      component: string;
+      params: Record<string, any>;
+    };
   };
 
   const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
@@ -83,7 +86,7 @@ export const createRAGSession = async (
           component: params.generation_model.component,
           params: params.generation_model.params,
         },
-        prompt_id: params.prompt_id,
+        prompt: params.prompt,
       },
     };
 
@@ -138,7 +141,7 @@ export const updateGenerativeSessionParams = async (
 };
 
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
-  const response = getChildComponents("RetrieverModel", false);
+  const response = getChildComponents("RetrieverModel", true);
   if (!response) {
     throw new Error(`Failed to fetch retrieval options`);
   }
@@ -241,6 +244,10 @@ export const addDocument = async ({
   return response.data;
 };
 
+export const getDefaultPrompts = async (): Promise<IComponent[]> => {
+  return getChildComponents("RAGGenerationPrompt", false);
+};
+
 export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
   const response = await api.get<IRAGPrompt[]>("/v1/prompt/");
   if (response.status !== 200) {
@@ -250,7 +257,7 @@ export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
 };
 
 export const getCustomPrompts = async (
-  types: string[] = ["GenerationPrompt", "AugmentationPrompt"],
+  types: string[] = ["RAGGenerationPrompt", "AugmentationPrompt"],
 ): Promise<IComponent[]> => {
   let allChildren: IComponent[] = [];
   for (const type of types) {

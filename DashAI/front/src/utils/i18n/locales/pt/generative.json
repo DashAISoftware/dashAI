@@ -62,5 +62,13 @@
     "sessionCreatedSuccess": "Sessão criada com sucesso.",
     "sessionDeleted": "Sessão excluída com sucesso",
     "sessionUpdated": "Sessão atualizada com sucesso"
+  },
+  "simplifiedRag": {
+    "prompt": {
+      "defaultGenerationPrompt": "Prompt de Geração Padrão",
+      "defaultQnAGenerationPrompt": "Prompt de Geração Q&A Padrão",
+      "createNewPrompt": "Criar novo prompt",
+      "language": "Idioma"
+    }
   }
 }
