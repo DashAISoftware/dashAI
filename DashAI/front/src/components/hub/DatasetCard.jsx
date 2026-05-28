@@ -34,7 +34,14 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
       <Typography
         variant="subtitle2"
         fontWeight={600}
-        sx={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+        sx={{
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          wordBreak: "break-word",
+          overflowWrap: "break-word",
+        }}
       >
         {dataset.name}
       </Typography>
@@ -45,7 +52,7 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
           color="text.secondary"
           sx={{
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 4,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
             wordBreak: "break-word",
@@ -62,6 +69,7 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
         {dataset.tags?.slice(0, 3).map((tag) => (
           <Box
             key={tag}
+            title={tag}
             sx={{
               ...theme.typography.statusBadge,
               lineHeight: 1,
@@ -71,6 +79,11 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
               py: "2px",
               borderRadius: "2px",
               background: theme.palette.background.default,
+              maxWidth: "100%",
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {tag}
