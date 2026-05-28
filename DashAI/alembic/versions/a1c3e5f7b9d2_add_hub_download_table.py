@@ -45,4 +45,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("datafile")
-    op.execute("DROP TYPE IF EXISTS hubdownloadstatus")
