@@ -1,11 +1,8 @@
 """HuggingFace Hub dataset source for DashAI."""
 
 import logging
-import re
+from itertools import islice
 from typing import Any, Final
-from urllib.parse import parse_qs, urlparse
-
-import httpx
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataset_sources.base_dataset_source import (
@@ -16,36 +13,14 @@ from DashAI.back.dataset_sources.base_dataset_source import (
 
 log = logging.getLogger(__name__)
 
-_HF_API = "https://huggingface.co/api/datasets"
-
-
-def _extract_next_cursor(link_header: str) -> str | None:
-    """Extract the cursor value from a HuggingFace Link response header.
-
-    Parameters
-    ----------
-    link_header : str
-        Value of the ``Link`` HTTP response header.
-
-    Returns
-    -------
-    str or None
-        The cursor token, or ``None`` if no next page is indicated.
-    """
-    match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
-    if not match:
-        return None
-    params = parse_qs(urlparse(match.group(1)).query)
-    cursors = params.get("cursor", [])
-    return cursors[0] if cursors else None
-
 
 class HuggingFaceDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from HuggingFace Hub.
 
-    Uses the HuggingFace public REST API — no authentication required for
-    public datasets.  Pagination is cursor-based (the HF API ignores numeric
-    offsets); the cursor is extracted from the ``Link`` response header.
+    Uses ``huggingface_hub.HfApi`` — no authentication required for public
+    datasets.  ``HfApi.list_datasets`` exposes an iterator rather than native
+    cursors, so pagination is implemented by treating the cursor as a numeric
+    offset and slicing the iterator.
     """
 
     DISPLAY_NAME: Final = MultilingualString(
@@ -88,12 +63,12 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         Parameters
         ----------
         query : str
-            Search string passed to the HuggingFace datasets API.
+            Search string passed to ``HfApi.list_datasets``.
         limit : int, optional
             Maximum number of results, by default 20.
         cursor : str or None, optional
-            Pagination cursor returned by the previous call.  ``None`` fetches
-            the first page.
+            Pagination cursor returned by the previous call (encoded numeric
+            offset).  ``None`` fetches the first page.
         **filters : Any
             Unused; reserved for future tag/task filters.
 
@@ -102,35 +77,34 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         SearchPage
             Matching datasets and cursor for the next page (or ``None``).
         """
+        from huggingface_hub import HfApi
+
         try:
-            params: dict[str, Any] = {
-                "search": query,
-                "limit": limit,
-                "full": "True",
-            }
-            if cursor:
-                params["cursor"] = cursor
+            offset = int(cursor) if cursor else 0
 
-            resp = httpx.get(_HF_API, params=params, timeout=15)
-            if resp.status_code != 200:
-                log.warning("HuggingFace API returned %s", resp.status_code)
-                return SearchPage()
-
-            next_cursor = _extract_next_cursor(resp.headers.get("Link", ""))
+            iterator = HfApi().list_datasets(
+                search=query or None,
+                full=True,
+                limit=offset + limit + 1,
+            )
+            window = list(islice(iterator, offset, offset + limit + 1))
+            has_next = len(window) > limit
+            page = window[:limit]
 
             entries = [
                 DatasetEntry(
-                    id=item.get("id", ""),
-                    name=item.get("id", "").split("/")[-1],
-                    description=item.get("description") or "",
-                    tags=item.get("tags", []),
+                    id=item.id,
+                    name=item.id.split("/")[-1],
+                    description=getattr(item, "description", "") or "",
+                    tags=list(getattr(item, "tags", []) or []),
                     size_bytes=None,
-                    url=f"https://huggingface.co/datasets/{item.get('id', '')}",
+                    url=f"https://huggingface.co/datasets/{item.id}",
                     source=self.__class__.__name__,
                 )
-                for item in resp.json()
+                for item in page
             ]
 
+            next_cursor = str(offset + limit) if has_next else None
             return SearchPage(entries=entries, next_cursor=next_cursor)
         except Exception:
             log.exception("Error searching HuggingFace datasets")
