@@ -123,12 +123,12 @@ export default function ManualInputForm({
       component="form"
       onSubmit={handleSubmit}
     >
-      <Typography variant="h6" mb={2} fontWeight={600}>
+      <Typography variant="h6" mb={4} fontWeight={600}>
         {t("prediction:label.manualInputData")}
       </Typography>
       <Typography
         variant="body2"
-        mb={3}
+        mb={6}
         sx={{ color: theme.palette.text.secondary }}
       >
         {t("prediction:label.provideManualInput")}

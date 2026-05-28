@@ -267,6 +267,7 @@
     "notebookName": "Notebook Name",
     "notebooks": "Notebooks",
     "noToolsMatched": "No tools found matching your search.",
+    "dropToolHere": "Drop here to add",
     "noTransformationsApplied": "No transformations applied.",
     "noTransformationsAppliedYet": "No transformations applied yet.",
     "numericalAnalysis": "Numerical Analysis",

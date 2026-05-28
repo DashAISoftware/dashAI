@@ -29,7 +29,7 @@ function HyperparameterOptimizationStep({ newExp, setNewExp, setNextEnabled }) {
       direction="row"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={2}
+      spacing={4}
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">

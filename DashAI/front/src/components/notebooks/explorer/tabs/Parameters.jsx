@@ -29,7 +29,7 @@ function Parameters({ data }) {
       <Typography variant="sectionLabel" sx={{ color: "text.secondary" }}>
         {t("common:parameters")}
       </Typography>
-      <Divider sx={{ mt: 1, mb: 1, borderColor: "ui.borderLight" }} />
+      <Divider sx={{ mt: 2, mb: 2, borderColor: "ui.borderLight" }} />
       <Table size="small">
         <TableBody>
           {entries.map(([key, value]) => (
@@ -37,7 +37,7 @@ function Parameters({ data }) {
               <TableCell
                 sx={{
                   borderColor: "ui.borderLight",
-                  py: 0.75,
+                  py: 3,
                 }}
               >
                 <Typography
@@ -53,7 +53,7 @@ function Parameters({ data }) {
               <TableCell
                 sx={{
                   borderColor: "ui.borderLight",
-                  py: 0.75,
+                  py: 3,
                 }}
               >
                 <Typography variant="body2" color="text.primary">

@@ -15,7 +15,7 @@ export default function Header({ totalRows, totalColumns, fileSize }) {
       sx={{
         display: "flex",
         flexDirection: "column",
-        gap: 1,
+        gap: 2,
         flexGrow: 1,
         minHeight: 0,
       }}
@@ -24,7 +24,7 @@ export default function Header({ totalRows, totalColumns, fileSize }) {
         sx={{
           display: "flex",
           flexDirection: "row",
-          gap: 1,
+          gap: 2,
           justifyContent: "flex-start",
           alignItems: "stretch",
           width: "100%",

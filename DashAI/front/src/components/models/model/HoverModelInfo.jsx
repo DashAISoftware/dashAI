@@ -31,9 +31,9 @@ export default function HoverModelInfo({
           bgcolor: theme.palette.background.paper,
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
-          p: 2,
+          p: 4,
           maxWidth: 320,
-          ml: -1,
+          ml: -2,
         },
       }}
     >
@@ -42,7 +42,7 @@ export default function HoverModelInfo({
           {/* Title */}
           <Typography
             variant="subtitle2"
-            sx={{ color: theme.palette.text.primary, fontWeight: 600, mb: 1 }}
+            sx={{ color: theme.palette.text.primary, fontWeight: 600, mb: 2 }}
           >
             {hoveredModel.display_name || hoveredModel.name}
           </Typography>

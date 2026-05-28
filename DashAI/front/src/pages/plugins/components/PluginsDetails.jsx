@@ -58,7 +58,7 @@ function PluginsDetails() {
 
   function PluginsActions() {
     return (
-      <Grid container columnGap={2}>
+      <Grid container columnGap={8}>
         {installLoading ? (
           <Button size="medium" variant="outlined" disabled>
             <CircularProgress size={24} />
@@ -110,7 +110,7 @@ function PluginsDetails() {
         {t("plugins:button.return")}
       </Button>
       {loading && (
-        <Paper sx={{ p: 2, mt: 2, minHeight: "75vh" }}>
+        <Paper sx={{ p: 8, mt: 8, minHeight: "75vh" }}>
           <Grid size={{ xs: 12 }} height={"218px"}>
             <Card
               sx={{
@@ -126,7 +126,7 @@ function PluginsDetails() {
         </Paper>
       )}
       {!loading && !error && (
-        <Paper sx={{ p: 2, mt: 2, minHeight: "75vh" }}>
+        <Paper sx={{ p: 8, mt: 8, minHeight: "75vh" }}>
           <Card
             sx={{
               width: "100%",
@@ -142,7 +142,7 @@ function PluginsDetails() {
                 width: "100%",
               }}
               subheader={
-                <Grid container direction={"column"} rowGap={1}>
+                <Grid container direction={"column"} rowGap={8}>
                   <Grid>
                     {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
                       plugin.status,

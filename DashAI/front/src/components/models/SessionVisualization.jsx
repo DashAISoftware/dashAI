@@ -57,9 +57,26 @@ export default function SessionVisualization() {
     handleConfirmRetrain,
     lastAddedRunId,
     clearLastAddedRunId,
+    selectModel,
   } = useModels();
 
   const theme = useTheme();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const onStart = () => setIsDragging(true);
+    const onEnd = () => {
+      setIsDragging(false);
+      setIsDragOver(false);
+    };
+    window.addEventListener("dragstart", onStart);
+    window.addEventListener("dragend", onEnd);
+    return () => {
+      window.removeEventListener("dragstart", onStart);
+      window.removeEventListener("dragend", onEnd);
+    };
+  }, []);
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -220,13 +237,13 @@ export default function SessionVisualization() {
             height: "100%",
             justifyContent: "center",
             alignItems: "center",
-            p: 4,
+            p: 8,
           }}
         >
           <Typography variant="h5" color="text.secondary">
             {t("models:label.noSessionSelected")}
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 4 }}>
             {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
@@ -238,13 +255,77 @@ export default function SessionVisualization() {
     <>
       <Box
         data-session-viz
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          const related = e.relatedTarget;
+          if (!related || !e.currentTarget.contains(related)) {
+            setIsDragOver(false);
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          try {
+            const model = JSON.parse(
+              e.dataTransfer.getData("application/x-dashai-model"),
+            );
+            if (model?.name) selectModel(model);
+          } catch {
+            // ignore invalid drops
+          }
+        }}
         sx={{
           display: "flex",
           flexDirection: "column",
           height: "100%",
           overflow: "hidden",
+          position: "relative",
+          outline: isDragOver
+            ? `2px dashed ${theme.palette.primary.main}`
+            : isDragging
+              ? `2px dashed ${theme.palette.divider}`
+              : "none",
+          transition: "outline 0.15s",
         }}
       >
+        {isDragging && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: isDragOver
+                ? `${theme.palette.primary.main}14`
+                : `${theme.palette.action.hover}`,
+              pointerEvents: "none",
+              transition: "background-color 0.15s",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                color: isDragOver
+                  ? theme.palette.primary.main
+                  : theme.palette.text.secondary,
+                fontWeight: 600,
+                pointerEvents: "none",
+                transition: "color 0.15s",
+              }}
+            >
+              {t("models:label.dropModelHere")}
+            </Typography>
+          </Box>
+        )}
         {/* Sticky Comparison Table */}
         <Accordion
           data-tour="model-comparison-panel"
@@ -292,7 +373,7 @@ export default function SessionVisualization() {
               <Box
                 sx={{
                   display: "flex",
-                  gap: 1,
+                  gap: 4,
                   alignItems: "center",
                   flexWrap: "wrap",
                 }}
@@ -433,7 +514,7 @@ export default function SessionVisualization() {
           </AccordionDetails>
         </Accordion>
 
-        <Divider sx={{ my: 1, mt: 1 }} />
+        <Divider sx={{ my: 2, mt: 2 }} />
 
         {/* Scrollable Run Cards */}
         <Box
@@ -441,7 +522,7 @@ export default function SessionVisualization() {
           sx={{
             flex: 1,
             overflow: "auto",
-            p: 2,
+            p: 4,
           }}
         >
           {runs.length === 0 ? (
@@ -458,7 +539,7 @@ export default function SessionVisualization() {
               </Typography>
             </Box>
           ) : (
-            <Stack spacing={2}>
+            <Stack spacing={4}>
               {sortedRuns.map((run, index) => (
                 <Box
                   key={run.id}

@@ -32,7 +32,7 @@ function BoxWithTitle({ title, children, borderColor = "grey.700" }) {
           top: -12,
           left: 8,
           backgroundColor: "inherit",
-          px: 1,
+          px: 4,
           zIndex: 3,
         }}
       >

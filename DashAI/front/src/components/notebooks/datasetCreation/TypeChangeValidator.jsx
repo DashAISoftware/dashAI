@@ -64,9 +64,9 @@ export const TypeChangeValidator = ({
       <DialogTitle>{t("datasets:label.validateTypeChanges")}</DialogTitle>
       <DialogContent>
         {validating && (
-          <Box display="flex" justifyContent="center" alignItems="center" p={3}>
+          <Box display="flex" justifyContent="center" alignItems="center" p={6}>
             <CircularProgress />
-            <Box ml={2}>{t("datasets:label.validatingTypeChanges")}</Box>
+            <Box ml={4}>{t("datasets:label.validatingTypeChanges")}</Box>
           </Box>
         )}
 
@@ -78,7 +78,7 @@ export const TypeChangeValidator = ({
               </Alert>
             ) : (
               <>
-                <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 2 }}>
+                <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 4 }}>
                   {t("datasets:label.someTypeChangesCannotBeApplied")}
                 </Alert>
                 <List dense>
@@ -106,7 +106,7 @@ export const TypeChangeValidator = ({
                   <Alert
                     severity="warning"
                     icon={<WarningIcon />}
-                    sx={{ mt: 2, mb: 1 }}
+                    sx={{ mt: 4, mb: 2 }}
                   >
                     {t("datasets:label.typeChangeWarnings")}
                   </Alert>

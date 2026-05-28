@@ -5,8 +5,8 @@ export function InlineCode({ children, ...props }) {
     <Box
       component="code"
       sx={{
-        px: 0.5,
-        py: 0.1,
+        px: 1,
+        py: 1,
         borderRadius: 0.5,
         bgcolor: "action.hover",
         fontSize: "0.85em",

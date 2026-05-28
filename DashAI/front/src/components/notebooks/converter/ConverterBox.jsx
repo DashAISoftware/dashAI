@@ -160,10 +160,10 @@ export default function ConverterBox({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
+            mb: 4,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Transform
               sx={{ color: theme.palette.primary.main, fontSize: 20 }}
             />
@@ -171,7 +171,7 @@ export default function ConverterBox({
               {converterComponent.display_name}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={getConverterStatus(statusLabel, t)}
               color={
@@ -208,12 +208,12 @@ export default function ConverterBox({
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",
-              p: 2,
+              p: 4,
               overflow: "hidden",
             }}
           >
             {/* Descripción */}
-            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 4 }}>
               {converterComponent.description}
             </Typography>
 
@@ -256,7 +256,7 @@ export default function ConverterBox({
               justifyContent: "center",
             }}
           >
-            <CircularProgress size={20} sx={{ mr: 1 }} />
+            <CircularProgress size={20} sx={{ mr: 2 }} />
             <Typography>{t("common:processing")}</Typography>
           </Box>
         )}

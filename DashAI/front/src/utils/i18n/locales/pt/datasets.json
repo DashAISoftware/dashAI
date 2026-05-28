@@ -271,6 +271,7 @@
     "notebookName": "Nome do Caderno",
     "notebooks": "Cadernos",
     "noToolsMatched": "Nenhuma ferramenta encontrada que corresponda à sua busca.",
+    "dropToolHere": "Solte aqui para adicionar",
     "noTransformationsApplied": "Nenhuma transformação aplicada.",
     "noTransformationsAppliedYet": "Nenhuma transformação foi aplicada ainda.",
     "numericalAnalysis": "Análise Numérica",

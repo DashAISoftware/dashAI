@@ -139,7 +139,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
   return (
     <SideBar>
       {/* Create new item button */}
-      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+      <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedNotebookId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
@@ -154,7 +154,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
 
       {/* Search bar global */}
       {totalItems > SEARCH_THRESHOLD && (
-        <Box px={2} pb={2} flex={"0 0 auto"}>
+        <Box px={4} pb={4} flex={"0 0 auto"}>
           <SearchBar
             placeholder={t("datasets:label.searchDatasetsNotebooks")}
             value={searchQuery}

@@ -93,7 +93,7 @@ export default function ExplainersPlot({ explainer, scope }) {
       }}
     >
       {!loading && isLocal && explainersPlots.length > 0 && (
-        <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 1 }}>
+        <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 2 }}>
           <InputLabel id="select-type-label">Select an instance</InputLabel>
           <Select
             id="select-type"
@@ -127,7 +127,7 @@ export default function ExplainersPlot({ explainer, scope }) {
           <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
         )
       ) : explainer.status === 4 ? (
-        <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>
+        <Box sx={{ p: 4 }}>{t("explainers:error.explainerFailed")}</Box>
       ) : (
         <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
           <CircularProgress />

@@ -85,8 +85,8 @@ export default function ExplainersCard({
   if (compact) {
     return (
       <>
-        <Paper elevation={2} sx={{ p: 2 }}>
-          <Grid container direction="column" gap={1}>
+        <Paper elevation={2} sx={{ p: 4 }}>
+          <Grid container direction="column" gap={2}>
             <Grid
               item
               container
@@ -101,7 +101,7 @@ export default function ExplainersCard({
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
+                    gap: 2,
                     flexWrap: "wrap",
                     wordBreak: "break-word",
                   }}
@@ -118,7 +118,7 @@ export default function ExplainersCard({
                   </Typography>
                 </Typography>
               </Grid>
-              <Grid sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {isRunning && <CircularProgress size={18} />}
                 <IconButton
                   size="small"
@@ -133,7 +133,7 @@ export default function ExplainersCard({
             </Grid>
 
             {isRunning ? (
-              <Box sx={{ py: 1, textAlign: "center" }}>
+              <Box sx={{ py: 2, textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
                   {t("explainers:label.explainerInProgress")}
                 </Typography>
@@ -152,7 +152,7 @@ export default function ExplainersCard({
                 </Button>
 
                 <Collapse in={expanded} timeout="auto" unmountOnExit>
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{ mt: 4 }}>
                     <ExplainersPlot explainer={explainer} scope={scope} />
                   </Box>
                 </Collapse>
@@ -174,7 +174,7 @@ export default function ExplainersCard({
   // Full mode for standalone page
   return (
     <Paper elevation={3} sx={{ width: "100%" }}>
-      <Grid container item p={4} gap={2}>
+      <Grid container item p={8} gap={4}>
         <Grid
           item
           container
@@ -190,7 +190,7 @@ export default function ExplainersCard({
               {t("explainers:label.forExplainer", { name: explainer.name })}
             </Typography>
           </Grid>
-          <Grid sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {isRunning && <CircularProgress size={22} />}
             <IconButton
               aria-label="zoomin"

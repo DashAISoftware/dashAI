@@ -78,7 +78,7 @@ export default function SplitColumn({
       </Box>
 
       {/* Metrics */}
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ p: 4, display: "flex", flexDirection: "column", gap: 4 }}>
         {metrics.map((metric) => (
           <MetricCard
             key={metric.name}

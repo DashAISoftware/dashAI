@@ -244,7 +244,7 @@ export default function PreviewDatasetTable({
               flexDirection: "column",
               alignItems: "flex-start",
               width: "100%",
-              gap: 0.5,
+              gap: 1,
             }}
           >
             {editingColumn === field ? (
@@ -259,7 +259,7 @@ export default function PreviewDatasetTable({
                   width: "100%",
                   "& .MuiInputBase-input": {
                     fontSize: "0.875rem",
-                    paddingY: 0.5,
+                    paddingY: 1,
                   },
                 }}
               />
@@ -283,7 +283,7 @@ export default function PreviewDatasetTable({
               </Tooltip>
             )}
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Select
                 value={columnType?.type || "Text"}
                 onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
@@ -293,7 +293,7 @@ export default function PreviewDatasetTable({
                   fontSize: "0.75rem",
                   minWidth: 120,
                   "& .MuiSelect-select": {
-                    paddingY: 0.5,
+                    paddingY: 1,
                     paddingX: 1,
                   },
                 }}

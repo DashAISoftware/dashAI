@@ -165,7 +165,7 @@ export default function DatasetPredictionPanel({
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress size={28} />
       </Box>
     );

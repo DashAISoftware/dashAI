@@ -331,7 +331,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         sx={{
           borderBottom: 1,
           borderColor: "divider",
-          px: 3,
+          px: 6,
         }}
       >
         <Tabs
@@ -412,7 +412,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions sx={{ px: 6, py: 4 }}>
         {activeTab === 0 ? (
           <>
             <Button variant="outlined" onClick={onClose}>

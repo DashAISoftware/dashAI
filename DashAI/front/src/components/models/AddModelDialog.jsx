@@ -274,7 +274,7 @@ function AddModelDialog({
       </DialogTitle>
 
       <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-        <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+        <Stepper activeStep={activeStep} sx={{ mb: 6 }}>
           {steps.map((label) => (
             <Step key={label} completed={false}>
               <StepLabel>{label}</StepLabel>
@@ -283,7 +283,7 @@ function AddModelDialog({
         </Stepper>
 
         {activeStep === 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <TextField
               label={t("common:modelName")}
               value={name}
@@ -299,7 +299,7 @@ function AddModelDialog({
 
             {selectedModel && (
               <Box data-tour="model-config">
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 4 }}>
                   {t("common:modelParameters")}
                 </Typography>
                 <FormSchemaContainer key={selectedModel}>
@@ -318,13 +318,13 @@ function AddModelDialog({
         )}
 
         {activeStep === 1 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <Typography variant="subtitle2">
               {t("models:label.optimizerConfiguration")}
             </Typography>
 
             <Box>
-              <Typography variant="body2" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>
                 {t("models:label.goalMetric")} *
               </Typography>
               <ModelsTableSelectMetric
@@ -342,8 +342,8 @@ function AddModelDialog({
             />
 
             {selectedOptimizer && !optimizerSchemaLoading && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="subtitle2" sx={{ mb: 4 }}>
                   {t("models:label.optimizerParameters")}
                 </Typography>
                 <FormSchemaContainer key={selectedOptimizer}>
@@ -362,7 +362,7 @@ function AddModelDialog({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+      <DialogActions sx={{ p: 4, bgcolor: "background.paper" }}>
         <Button variant="outlined" onClick={handleClose} disabled={loading}>
           {t("common:cancel")}
         </Button>

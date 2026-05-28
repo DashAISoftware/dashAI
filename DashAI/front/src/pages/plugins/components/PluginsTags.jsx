@@ -9,7 +9,7 @@ import PropTypes from "prop-types";
  */
 function PluginTags({ tags }) {
   return (
-    <Grid container columnGap={1}>
+    <Grid container columnGap={4}>
       {tags.map((tag, i) => (
         <Chip key={i} size="small" label={tag.name} />
       ))}

@@ -300,7 +300,7 @@ function RunCard({
     <Card
       elevation={2}
       sx={{
-        mb: 2,
+        mb: 4,
         bgcolor: "background.box",
         borderLeft: "4px solid",
         borderLeftColor:
@@ -331,18 +331,18 @@ function RunCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
-            gap: 1,
+            mb: 4,
+            gap: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
             <Typography
               variant="h6"
               component="div"
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -357,7 +357,7 @@ function RunCard({
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {!isRunning && (
               <Button
                 variant="outlined"
@@ -451,11 +451,11 @@ function RunCard({
         </Box>
 
         {metrics && Object.keys(metrics).length > 0 && (
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle2" gutterBottom>
               {t("common:metrics")}
             </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {Object.entries(metrics).map(([metric, values]) => {
                 const avgValue =
                   values.reduce((sum, val) => sum + val, 0) / values.length;
@@ -480,13 +480,13 @@ function RunCard({
         {run.description && (
           <Typography
             variant="body2"
-            sx={{ color: theme.palette.text.secondary, mb: 2 }}
+            sx={{ color: theme.palette.text.secondary, mb: 4 }}
           >
             {run.description}
           </Typography>
         )}
 
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ mt: 4 }}>
           <RunResults
             run={run}
             session={session}

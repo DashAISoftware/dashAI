@@ -48,11 +48,11 @@ const CorrelationsTab = ({ correlations }) => {
   return (
     <ExportableCard filename="correlations" exportData={strongCorrelations}>
       <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
-        <Typography variant="h6" fontWeight="bold" mb={3}>
+        <Typography variant="h6" fontWeight="bold" mb={6}>
           {t("datasets:label.correlationAnalysis")}
         </Typography>
 
-        <Box mb={4}>
+        <Box mb={8}>
           <Plot
             data={[
               {
@@ -107,17 +107,17 @@ const CorrelationsTab = ({ correlations }) => {
         </Box>
 
         <Box>
-          <Typography variant="h6" fontWeight="bold" mb={2}>
+          <Typography variant="h6" fontWeight="bold" mb={4}>
             {t("datasets:label.strongCorrelations")} (|r| &gt; 0.5)
           </Typography>
-          <Box display="flex" flexDirection="column" gap={1}>
+          <Box display="flex" flexDirection="column" gap={4}>
             {strongCorrelations.map((d, idx) => (
               <Box
                 key={idx}
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
-                p={2}
+                p={4}
                 sx={{
                   backgroundColor: theme.palette.ui.panelMedium,
                   borderRadius: 2,
@@ -138,7 +138,7 @@ const CorrelationsTab = ({ correlations }) => {
               </Box>
             ))}
             {strongCorrelations.length === 0 && (
-              <Box p={2}>
+              <Box p={4}>
                 <Typography
                   variant="body2"
                   color="text.secondary"

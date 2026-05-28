@@ -161,7 +161,7 @@ export default function UploadDatasetSteps({ backHome }) {
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography variant="h5" component="h1">
           {getTitle()}
         </Typography>

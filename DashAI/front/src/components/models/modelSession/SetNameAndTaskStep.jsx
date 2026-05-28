@@ -164,11 +164,11 @@ function SetNameAndTaskStep({
       direction="row"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={2}
+      spacing={4}
     >
       {/* Set Name subcomponent */}
       <Grid size={{ xs: 12 }}>
-        <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" component="h3" sx={{ mb: 6 }}>
           {t("experiments:label.setNameAndTask")}
         </Typography>
 
@@ -179,7 +179,7 @@ function SetNameAndTaskStep({
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}
-          sx={{ mb: 2 }}
+          sx={{ mb: 4 }}
           error={Boolean(nameError)}
           helperText={nameError}
           slotProps={{

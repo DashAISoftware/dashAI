@@ -47,7 +47,7 @@ export default function RetrainConfirmDialog({
       <DialogContent>
         {hasOperations ? (
           <>
-            <Alert severity="warning" sx={{ mb: 2 }}>
+            <Alert severity="warning" sx={{ mb: 4 }}>
               {mode === "save"
                 ? t("models:message.saveWillDeleteOperations")
                 : t("models:label.retrainWillDeleteOperations")}
@@ -65,7 +65,7 @@ export default function RetrainConfirmDialog({
                 </Trans>
               )}
             </DialogContentText>
-            <Box sx={{ mt: 2, pl: 2 }}>
+            <Box sx={{ mt: 4, pl: 4 }}>
               {operationsCount.explainers > 0 && (
                 <Typography variant="body2">
                   <Trans
@@ -89,7 +89,7 @@ export default function RetrainConfirmDialog({
                 </Typography>
               )}
             </Box>
-            <DialogContentText sx={{ mt: 2 }}>
+            <DialogContentText sx={{ mt: 4 }}>
               {t("models:label.operationsWillBeDeletedWarning")}
             </DialogContentText>
           </>

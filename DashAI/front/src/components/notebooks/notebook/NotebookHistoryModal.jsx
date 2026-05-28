@@ -123,13 +123,13 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1 }}>
+          <Box sx={{ mt: 2 }}>
             {converters.length === 0 ? (
               <Typography
                 variant="body2"
                 color="text.secondary"
                 textAlign="center"
-                sx={{ py: 4 }}
+                sx={{ py: 8 }}
               >
                 {t("datasets:label.noTransformationsAppliedYet")}
               </Typography>

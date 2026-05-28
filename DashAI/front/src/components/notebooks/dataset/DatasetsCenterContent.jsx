@@ -103,8 +103,8 @@ export default function DatasetsCenterContent() {
           width: "100%",
           height: "100%",
           overflow: "auto",
-          px: 2,
-          pt: 2,
+          px: 4,
+          pt: 4,
         }}
       >
         <DataBreadcrumbs />
@@ -126,8 +126,8 @@ export default function DatasetsCenterContent() {
           width: "100%",
           height: "100%",
           overflow: "auto",
-          px: 2,
-          pt: 2,
+          px: 4,
+          pt: 4,
         }}
       >
         <DataBreadcrumbs />

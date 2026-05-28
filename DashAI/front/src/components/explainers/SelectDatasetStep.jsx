@@ -235,7 +235,7 @@ export default function SelectDatasetStep({
 
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
             <Trans i18nKey="explainers:label.noDatasetsAvailable">
               <AlertTitle>There are no datasets available.</AlertTitle>
               Go to
