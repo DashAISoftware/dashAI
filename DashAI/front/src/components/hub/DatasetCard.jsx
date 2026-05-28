@@ -66,7 +66,7 @@ export default function DatasetCard({ dataset, selected, onSelect }) {
               ...theme.typography.statusBadge,
               lineHeight: 1,
               border: `1px solid ${theme.palette.divider}`,
-              color: theme.palette.text.disabled,
+              color: theme.palette.text.primary,
               px: "7px",
               py: "2px",
               borderRadius: "2px",
