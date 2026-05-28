@@ -120,7 +120,9 @@ export default function ModelsRightBar({ onToggle }) {
             {t("models:label.configureSession")}
           </Typography>
         </Box>
-        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+        <Box
+          sx={{ flex: 1, overflowY: "auto", p: 2, scrollbarGutter: "stable" }}
+        >
           {sessionRightContent}
         </Box>
       </SideBar>

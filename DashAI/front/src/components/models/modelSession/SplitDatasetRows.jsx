@@ -20,12 +20,13 @@ import {
 import BooleanInput from "../../configurableObject/Inputs/BooleanInput";
 import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
 import { useTranslation } from "react-i18next";
+import { SplitscreenOutlined } from "@mui/icons-material";
 
 /**
  * Splits card shell — same Paper/header visual as FormSchemaFieldCard but WITHOUT
  * the label-hiding CSS so Train / Validation / Test TextField labels stay visible.
  */
-function SplitsCard({ label, description, errorMessage, children }) {
+function SplitsCard({ label, description, errorMessage, children, warning }) {
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
       <Box
@@ -39,7 +40,13 @@ function SplitsCard({ label, description, errorMessage, children }) {
         <Typography
           variant="body2"
           fontWeight={600}
-          color={errorMessage ? "error.main" : "text.primary"}
+          color={
+            errorMessage
+              ? "error.main"
+              : warning
+                ? "warning.main"
+                : "text.primary"
+          }
         >
           {label}
         </Typography>
@@ -47,12 +54,18 @@ function SplitsCard({ label, description, errorMessage, children }) {
       <Box sx={{ px: 2, pt: 0.5, pb: description || errorMessage ? 0.5 : 1 }}>
         {children}
       </Box>
-      {(description || errorMessage) && (
+      {(description || errorMessage || warning) && (
         <Box sx={{ px: 2, pb: 0.5 }}>
           <Typography
             component="span"
             variant="caption"
-            color={errorMessage ? "error.main" : "text.disabled"}
+            color={
+              errorMessage
+                ? "error.main"
+                : warning
+                  ? "warning.main"
+                  : "text.disabled"
+            }
             sx={{ display: "block", lineHeight: 1.5 }}
           >
             {errorMessage ?? description}
@@ -167,6 +180,12 @@ function SplitDatasetRows({
   const [manualSplitError, setManualSplitError] = useState(false);
   const [manualSplitErrorText, setManualSplitErrorText] = useState("");
 
+  const [cvFoldError, setCvFoldError] = useState(false);
+  const [cvFoldErrorText, setCvFoldErrorText] = useState("");
+  const [cvRepeatError, setCvRepeatError] = useState(false);
+  const [cvRepeatErrorText, setCvRepeatErrorText] = useState("");
+  const [groupColumnError, setGroupColumnError] = useState(true);
+
   const handleSplitTypeChange = (_e, newType) => {
     if (!newType) return;
     setSplitType(newType);
@@ -280,21 +299,37 @@ function SplitDatasetRows({
   };
 
   const handleGroupColumnChange = (event) => {
-    setGroupColumn(event.target.value);
+    const value = event.target.value;
+    setGroupColumn(value);
+    if (value) {
+      setGroupColumnError(false);
+    } else {
+      setGroupColumnError(true);
+    }
   };
 
   const handleNumFoldsChange = (event) => {
-    const value =
-      event.target.value === ""
-        ? ""
-        : Math.max(1, Math.min(Number(event.target.value), 20));
+    const value = event.target.value;
     setNumFolds(value);
-  };
-
-  const handleOnBlurNumFolds = (event) => {
-    if (event.target.value < 2) {
-      setNumFolds(2);
+    if (value !== "" && value > 1 && value <= datasetInfo.total_rows) {
+      setCvFoldError(false);
+      setCvFoldErrorText("");
+      return;
     }
+
+    if (value === "") {
+      setCvFoldErrorText(t("experiments:error.foldsMustBeAnInteger"));
+    } else if (value <= 1) {
+      setCvFoldErrorText(t("experiments:error.foldsMustBeGreaterThanOne"));
+    } else if (value > datasetInfo.total_rows) {
+      setCvFoldErrorText(
+        t("experiments:error.foldsMustBeLessThanDatasetSize", {
+          datasetSize: datasetInfo.total_rows,
+        }),
+      );
+    }
+    setCvFoldError(true);
+    return;
   };
 
   const handleOnBlurSeed = (event) => {
@@ -304,17 +339,20 @@ function SplitDatasetRows({
   };
 
   const handleNumRepeatsChange = (event) => {
-    const value =
-      event.target.value === ""
-        ? ""
-        : Math.max(1, Math.min(Number(event.target.value), 10));
+    const value = event.target.value;
     setNumRepeats(value);
-  };
-
-  const handleOnBlurNumRepeats = (event) => {
-    if (event.target.value < 2) {
-      setNumRepeats(2);
+    if (value !== "" && value > 1) {
+      setCvRepeatError(false);
+      setCvRepeatErrorText("");
+      return;
     }
+    if (value === "") {
+      setCvRepeatErrorText(t("experiments:error.repeatsMustBeGreaterThanOne"));
+    } else if (value <= 1) {
+      setCvRepeatErrorText(t("experiments:error.repeatsMustBeGreaterThanOne"));
+    }
+    setCvRepeatError(true);
+    return;
   };
 
   // Check if current cvType is a repeated CV type
@@ -341,22 +379,30 @@ function SplitDatasetRows({
   }, [hasPredefinedSplits]);
 
   useEffect(() => {
-    if (splitType === SPLIT_TYPES.PREDEFINED) {
-      setSplitsReady(true);
-    } else if (
-      splitType === SPLIT_TYPES.MANUAL &&
-      !manualSplitError &&
-      rowsPartitionsIndex.train.length >= 1
-    ) {
-      setSplitsReady(true);
-    } else if (
-      splitType === SPLIT_TYPES.RANDOM &&
-      !randomSplitError &&
-      rowsPartitionsPercentage.train > 0
-    ) {
-      setSplitsReady(true);
+    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
+      if (splitType === SPLIT_TYPES.PREDEFINED) {
+        setSplitsReady(true);
+      } else if (
+        splitType === SPLIT_TYPES.MANUAL &&
+        !manualSplitError &&
+        rowsPartitionsIndex.train.length >= 1
+      ) {
+        setSplitsReady(true);
+      } else if (
+        splitType === SPLIT_TYPES.RANDOM &&
+        !randomSplitError &&
+        rowsPartitionsPercentage.train > 0
+      ) {
+        setSplitsReady(true);
+      } else {
+        setSplitsReady(false);
+      }
     } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
-      setSplitsReady(true);
+      if (!cvFoldError && !cvRepeatError && !groupColumnError) {
+        setSplitsReady(true);
+      } else {
+        setSplitsReady(false);
+      }
     } else {
       setSplitsReady(false);
     }
@@ -367,6 +413,9 @@ function SplitDatasetRows({
     manualSplitError,
     splitType,
     evaluationStrategy,
+    cvFoldError,
+    cvRepeatError,
+    groupColumnError,
   ]);
 
   const splitOptions = [
@@ -392,7 +441,16 @@ function SplitDatasetRows({
     }
   }, [allowedCvTypes, cvType, setCvType]);
 
-  console.log("rendering evaluation strategy:", evaluationStrategy);
+  // Validate group column when grouping CV type is selected
+  useEffect(() => {
+    const isGrouping = cvType?.includes("Group");
+    if (isGrouping && !groupColumn) {
+      setGroupColumnError(true);
+    } else {
+      setGroupColumnError(false);
+    }
+  }, [cvType, groupColumn, t]);
+
   return (
     <Stack spacing={1} data-tour="exp-dataset-splits">
       {/* Evaluation Strategy Selector */}
@@ -414,7 +472,6 @@ function SplitDatasetRows({
             value={evaluationStrategy}
             exclusive={true}
             onChange={(_, value) => {
-              console.log("onChange fired, value:", value);
               value && setEvaluationStrategy(value);
             }}
             fullWidth
@@ -629,77 +686,83 @@ function SplitDatasetRows({
       {evaluationStrategy === "CrossValidationEvaluationStrategy" && (
         <>
           {/* CV Type Selector */}
-          <FormControl fullWidth>
-            <InputLabel>{t("experiments:label.cvType")}</InputLabel>
-            <Select
-              value={cvType}
-              onChange={handleCvTypeChange}
-              label={t("experiments:label.cvType")}
-            >
-              {allowedCvTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <SplitsCard label={t("experiments:label.cvType")}>
+            <FormControl fullWidth size="small">
+              <Select value={cvType} onChange={handleCvTypeChange}>
+                {allowedCvTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </SplitsCard>
 
           {/* Number of Folds - not for LeaveOneOut */}
           {!isLeaveOneOut() && (
-            <FormSchemaFieldCard
+            <SplitsCard
               label={t("experiments:label.numFolds")}
               description={t("experiments:label.numFoldsDescription")}
+              errorMessage={cvFoldError ? cvFoldErrorText : undefined}
             >
               <TextField
                 id="numFolds"
-                label={t("experiments:label.numFolds")}
                 value={numFolds}
                 onChange={handleNumFoldsChange}
-                onBlur={handleOnBlurNumFolds}
                 type="number"
                 size="small"
                 fullWidth
+                error={cvFoldError}
                 inputProps={{ min: 2, max: 20 }}
               />
-            </FormSchemaFieldCard>
+            </SplitsCard>
           )}
 
           {/* Number of Repeats - only for Repeated CV types */}
           {isRepeatedCvType() && (
-            <FormSchemaFieldCard
+            <SplitsCard
               label={t("experiments:label.numRepeats")}
               description={t("experiments:label.numRepeatsDescription")}
+              errorMessage={cvRepeatError ? cvRepeatErrorText : undefined}
             >
               <TextField
                 id="numRepeats"
-                label={t("experiments:label.numRepeats")}
                 value={numRepeats}
                 onChange={handleNumRepeatsChange}
-                onBlur={handleOnBlurNumRepeats}
                 type="number"
                 size="small"
                 fullWidth
+                error={cvRepeatError}
                 inputProps={{ min: 2, max: 10 }}
               />
-            </FormSchemaFieldCard>
+            </SplitsCard>
           )}
 
           {/* Group Column - only for GroupKFold types */}
           {isGroupingCvType() && (
-            <FormControl fullWidth>
-              <InputLabel>{t("experiments:label.groupColumn")}</InputLabel>
-              <Select
-                value={groupColumn || ""}
-                onChange={handleGroupColumnChange}
-                label={t("experiments:label.groupColumn")}
-              >
-                {inputColumnNames?.map((col) => (
-                  <MenuItem key={col} value={col}>
-                    {col}
+            <SplitsCard
+              label={t("experiments:label.groupColumn")}
+              description={t("experiments:label.groupColumnDescription")}
+              warning={groupColumnError && !groupColumn ? true : false}
+            >
+              <FormControl fullWidth size="small">
+                <Select
+                  value={groupColumn || ""}
+                  onChange={handleGroupColumnChange}
+                  error={groupColumnError && !groupColumn}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    <em>{t("experiments:label.selectAColumn")}</em>
                   </MenuItem>
-                )) || []}
-              </Select>
-            </FormControl>
+                  {inputColumnNames?.map((col) => (
+                    <MenuItem key={col} value={col}>
+                      {col}
+                    </MenuItem>
+                  )) || []}
+                </Select>
+              </FormControl>
+            </SplitsCard>
           )}
 
           {/* Shuffle - only if NOT a repeated CV type */}

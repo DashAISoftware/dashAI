@@ -71,7 +71,7 @@ function PrepareDatasetStep({
 
   // Cross-Validation configuration states
   const [cvType, setCvType] = useState("KFold");
-  const [numFolds, setNumFolds] = useState(2);
+  const [numFolds, setNumFolds] = useState(5);
   const [numRepeats, setNumRepeats] = useState(2);
   const [groupColumn, setGroupColumn] = useState("");
 
