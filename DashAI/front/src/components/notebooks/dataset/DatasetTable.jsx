@@ -3,7 +3,13 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { Box, Button, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
@@ -21,6 +27,7 @@ export default function DatasetTable({
   deps = [],
   datasetPath,
   datasetId,
+  datasetName = "dataset",
   columnTypes = {},
   editableColumns = false,
   onEditColumn = null,
@@ -46,6 +53,7 @@ export default function DatasetTable({
   const [data, setData] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [columnOrder, setColumnOrder] = useState([]);
   const [density, setDensity] = useState("compact");
   const [allFilteredData, setAllFilteredData] = useState(null);
@@ -461,6 +469,7 @@ export default function DatasetTable({
 
   const handleExportFilteredRows = useCallback(async () => {
     if (rowCount === 0) return;
+    setIsExporting(true);
     try {
       const hasFilters = columnFilters.length > 0;
       const currentFilterModel = hasFilters ? buildFilterModel() : undefined;
@@ -475,8 +484,8 @@ export default function DatasetTable({
         blob.type === "application/octet-stream";
       const ext = isZip ? "zip" : "csv";
       const filename = hasFilters
-        ? `dataset_filtered.${ext}`
-        : `dataset.${ext}`;
+        ? `${datasetName}_filtered.${ext}`
+        : `${datasetName}.${ext}`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -485,8 +494,17 @@ export default function DatasetTable({
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error exporting data:", error);
+    } finally {
+      setIsExporting(false);
     }
-  }, [rowCount, datasetPath, buildFilterModel, columnFilters, sorting]);
+  }, [
+    rowCount,
+    datasetPath,
+    datasetName,
+    buildFilterModel,
+    columnFilters,
+    sorting,
+  ]);
 
   const table = useMaterialReactTable({
     columns,
@@ -530,8 +548,14 @@ export default function DatasetTable({
             <span>
               <Button
                 onClick={handleExportFilteredRows}
-                disabled={rowCount === 0}
-                startIcon={<FileDownloadIcon />}
+                disabled={rowCount === 0 || isExporting}
+                startIcon={
+                  isExporting ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <FileDownloadIcon />
+                  )
+                }
                 variant="text"
                 size="small"
               >
