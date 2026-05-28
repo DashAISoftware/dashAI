@@ -30,11 +30,16 @@ class TabularClassificationTask(ClassificationTask):
         pt=(
             "Prevê rótulos categóricos a partir de dados tabulares (linhas e colunas)."
         ),
+        de=(
+            "Kategoriale Zielgrößen aus tabellarischen Daten (Zeilen und Spalten) "
+            "vorhersagen."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Tabular Classification",
         es="Clasificación Tabular",
         pt="Classificação Tabular",
+        de="Tabellarische Klassifikation",
     )
     SCORING_PROFILES = {
         "balanced": {

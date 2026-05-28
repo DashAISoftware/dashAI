@@ -37,8 +37,11 @@ class CSVDataloaderSchema(BaseSchema):
             en="A separator character delimits the data in a CSV file.",
             es="Un carácter separador delimita los datos en un archivo CSV.",
             pt="Um caractere separador delimita os dados em um arquivo CSV.",
+            de="Ein Trennzeichen begrenzt die Daten in einer CSV-Datei.",
         ),
-        alias=MultilingualString(en="Separator", es="Separador", pt="Separador"),
+        alias=MultilingualString(
+            en="Separator", es="Separador", pt="Separador", de="Trennzeichen"
+        ),
     )  # type: ignore
 
     header: schema_field(
@@ -68,8 +71,18 @@ class CSVDataloaderSchema(BaseSchema):
                 "cabeçalho também pode ser uma lista de inteiros que especificam "
                 "as localizações de linha para MultiIndex nas colunas."
             ),
+            de=(
+                "Zeilennummer(n) mit Spaltenbezeichnungen, die den Beginn der Daten "
+                "markieren (nullbasiert). Standardverhalten ist das Ableiten der "
+                "Spaltennamen. Wenn Spaltennamen explizit übergeben werden, sollte "
+                "dies auf '0' gesetzt werden. Header kann auch eine Liste von "
+                "Ganzzahlen "
+                "sein, die Zeilenpositionen für MultiIndex auf den Spalten angeben."
+            ),
         ),
-        alias=MultilingualString(en="Header", es="Encabezado", pt="Cabeçalho"),
+        alias=MultilingualString(
+            en="Header", es="Encabezado", pt="Cabeçalho", de="Kopfzeile"
+        ),
     )  # type: ignore
 
     names: schema_field(
@@ -94,8 +107,14 @@ class CSVDataloaderSchema(BaseSchema):
                 "header=0 para substituir os nomes de coluna. "
                 "Exemplo: 'col1,col2,col3'. Deixe vazio para usar os cabeçalhos."
             ),
+            de=(
+                "Kommagetrennte Liste der zu verwendenden Spaltennamen. Wenn die Datei "
+                "eine Kopfzeile enthält, sollte header=0 explizit übergeben werden, "
+                "um die Spaltennamen zu überschreiben. Beispiel: 'col1,col2,col3'. "
+                "Leer lassen, um die Datei-Kopfzeilen zu verwenden."
+            ),
         ),
-        alias=MultilingualString(en="Names", es="Nombres", pt="Nomes"),
+        alias=MultilingualString(en="Names", es="Nombres", pt="Nomes", de="Namen"),
     )  # type: ignore
 
     encoding: schema_field(
@@ -114,8 +133,14 @@ class CSVDataloaderSchema(BaseSchema):
                 "Codificação a usar para UTF ao ler/escrever. As codificações mais "
                 "comuns são fornecidas."
             ),
+            de=(
+                "Kodierung für UTF beim Lesen/Schreiben. Die gängigsten "
+                "Kodierungen sind verfügbar."
+            ),
         ),
-        alias=MultilingualString(en="Encoding", es="Codificación", pt="Codificação"),
+        alias=MultilingualString(
+            en="Encoding", es="Codificación", pt="Codificação", de="Kodierung"
+        ),
     )  # type: ignore
 
     na_values: schema_field(
@@ -134,9 +159,14 @@ class CSVDataloaderSchema(BaseSchema):
                 "Strings adicionais separadas por vírgulas para reconhecer "
                 "como NA/NaN. Exemplo: 'NULL,missing,n/a'"
             ),
+            de=(
+                "Kommagetrennte zusätzliche Zeichenketten, die als NA/NaN erkannt "
+                "werden. "
+                "Beispiel: 'NULL,missing,n/a'"
+            ),
         ),
         alias=MultilingualString(
-            en="NA values", es="Valores NA", pt="Valores ausentes"
+            en="NA values", es="Valores NA", pt="Valores ausentes", de="NA-Werte"
         ),
     )  # type: ignore
 
@@ -156,11 +186,17 @@ class CSVDataloaderSchema(BaseSchema):
                 "Se os valores NaN padrão devem ser incluídos ao analisar os dados "
                 "(True recomendado)."
             ),
+            de=(
+                "Ob die Standard-NaN-Werte beim Parsen der Daten einbezogen werden "
+                "sollen "
+                "(True empfohlen)."
+            ),
         ),
         alias=MultilingualString(
             en="Keep default NA",
             es="Mantener NA predeterminado",
             pt="Manter valores ausentes padrão",
+            de="Standard-NA behalten",
         ),
     )  # type: ignore
 
@@ -177,9 +213,16 @@ class CSVDataloaderSchema(BaseSchema):
                 "Valores separados por vírgulas a considerar como True. "
                 "Exemplo: 'yes,true,1,on'"
             ),
+            de=(
+                "Kommagetrennte Werte, die als True betrachtet werden. "
+                "Beispiel: 'yes,true,1,on'"
+            ),
         ),
         alias=MultilingualString(
-            en="True values", es="Valores verdaderos", pt="Valores verdadeiros"
+            en="True values",
+            es="Valores verdaderos",
+            pt="Valores verdadeiros",
+            de="Wahr-Werte",
         ),
     )  # type: ignore
 
@@ -196,9 +239,16 @@ class CSVDataloaderSchema(BaseSchema):
                 "Valores separados por vírgulas a considerar como False. "
                 "Exemplo: 'no,false,0,off'"
             ),
+            de=(
+                "Kommagetrennte Werte, die als False betrachtet werden. "
+                "Beispiel: 'no,false,0,off'"
+            ),
         ),
         alias=MultilingualString(
-            en="False values", es="Valores falsos", pt="Valores falsos"
+            en="False values",
+            es="Valores falsos",
+            pt="Valores falsos",
+            de="Falsch-Werte",
         ),
     )  # type: ignore
 
@@ -215,11 +265,16 @@ class CSVDataloaderSchema(BaseSchema):
                 "Se True, ignorar linhas em branco em vez de interpretá-las como "
                 "valores NaN."
             ),
+            de=(
+                "Wenn True, leere Zeilen überspringen anstatt sie als NaN-Werte "
+                "zu interpretieren."
+            ),
         ),
         alias=MultilingualString(
             en="Skip blank lines",
             es="Omitir líneas en blanco",
             pt="Ignorar linhas em branco",
+            de="Leerzeilen überspringen",
         ),
     )  # type: ignore
 
@@ -239,8 +294,18 @@ class CSVDataloaderSchema(BaseSchema):
                 "Número de linhas de dados a pular após a leitura do cabeçalho. "
                 "Deixe vazio para não pular nenhuma."
             ),
+            de=(
+                "Anzahl der Datenzeilen, die nach dem Lesen der Kopfzeile übersprungen "
+                "werden. "
+                "Leer lassen, um keine zu überspringen."
+            ),
         ),
-        alias=MultilingualString(en="Skip rows", es="Omitir filas", pt="Pular linhas"),
+        alias=MultilingualString(
+            en="Skip rows",
+            es="Omitir filas",
+            pt="Pular linhas",
+            de="Zeilen überspringen",
+        ),
     )  # type: ignore
 
     nrows: schema_field(
@@ -256,8 +321,14 @@ class CSVDataloaderSchema(BaseSchema):
                 "Número de linhas a ler do arquivo. Deixe vazio para ler todas as "
                 "linhas."
             ),
+            de=(
+                "Anzahl der aus der Datei zu lesenden Zeilen. Leer lassen, "
+                "um alle Zeilen zu lesen."
+            ),
         ),
-        alias=MultilingualString(en="N rows", es="N filas", pt="N linhas"),
+        alias=MultilingualString(
+            en="N rows", es="N filas", pt="N linhas", de="Anzahl Zeilen"
+        ),
     )  # type: ignore
 
 
@@ -295,11 +366,17 @@ class CSVDataLoader(BaseDataLoader):
             "Todos os arquivos CSV enviados devem ter a mesma estrutura de colunas "
             "e usar separadores consistentes."
         ),
+        de=(
+            "Datenlader für tabellarische Daten in CSV-Dateien. "
+            "Alle hochgeladenen CSV-Dateien müssen die gleiche Spaltenstruktur "
+            "und konsistente Trennzeichen verwenden."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="CSV Data Loader",
         es="Cargador de Datos CSV",
         pt="Carregador de Dados CSV",
+        de="CSV Datenlader",
     )
 
     def _check_params(

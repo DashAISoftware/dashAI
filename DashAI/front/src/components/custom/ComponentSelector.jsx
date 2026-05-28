@@ -317,7 +317,7 @@ function ComponentSelector({
 
       <Box
         sx={{
-          pt: 6,
+          pt: 4,
           borderTop: 1,
           borderColor: "divider",
           display: "flex",

@@ -60,6 +60,12 @@ class LogLoss(ClassificationMetric):
             "onde a entrada de previsão é um valor de probabilidade "
             "entre 0 e 1."
         ),
+        de=(
+            "Log Loss, auch bekannt als Logistischer Verlust oder Kreuzentropieverlust,"
+            "misst die Leistung eines Klassifikationsmodells, "
+            "bei dem die Vorhersageeingabe ein Wahrscheinlichkeitswert "
+            "zwischen 0 und 1 ist."
+        ),
     )
 
     MAXIMIZE: bool = False

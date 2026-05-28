@@ -26,6 +26,7 @@ class AdditiveChi2SamplerSchema(BaseSchema):
             en="The number of sample steps (shuffling) to perform.",
             es="Número de pasos de muestreo (mezcla) a realizar.",
             pt="O número de passos de amostragem (embaralhamento) a realizar.",
+            de="Die Anzahl der Stichprobenschritte (Mischen) zur Durchführung.",
         ),
     )  # type: ignore
     sample_interval: schema_field(
@@ -35,6 +36,10 @@ class AdditiveChi2SamplerSchema(BaseSchema):
             en="The number of samples generated between each original sample.",
             es="Número de muestras generadas entre cada muestra original.",
             pt="O número de amostras geradas entre cada amostra original.",
+            de=(
+                "Die Anzahl der zwischen jeder ursprünglichen Stichprobe generierten "
+                "Stichproben."
+            ),
         ),
     )  # type: ignore
 
@@ -63,11 +68,16 @@ class AdditiveChi2Sampler(
             "Utiliza amostragem da transformada de Fourier da característica do "
             "kernel em intervalos regulares."
         ),
+        de=(
+            "Verwendet Stichproben der Fourier-Transformation der Kerneleigenschaft "
+            "in regelmäßigen Abständen."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
         en="Additive Chi² Sampler",
         es="Muestreador Chi²",
         pt="Amostrador Qui-2 Aditivo",
+        de="Additiver Chi²-Stichprobennehmer",
     )
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
 

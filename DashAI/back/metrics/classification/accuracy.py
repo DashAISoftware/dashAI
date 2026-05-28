@@ -47,6 +47,10 @@ class Accuracy(ClassificationMetric):
             "Proporção de previsões corretas sobre todas as amostras, "
             "mais adequada para conjuntos de dados balanceados."
         ),
+        de=(
+            "Anteil der korrekten Vorhersagen über alle Stichproben, "
+            "am besten geeignet für ausgewogene Datensätze."
+        ),
     )
 
     @staticmethod

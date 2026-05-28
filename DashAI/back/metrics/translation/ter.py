@@ -39,6 +39,11 @@ class Ter(TranslationMetric):
             "necessárias para transformar a saída do sistema "
             "em uma das referências."
         ),
+        de=(
+            "TER (Translation Edit Rate) misst die Anzahl der Bearbeitungen, "
+            "die erforderlich sind, um eine Systemausgabe in eine der Referenzen "
+            "umzuwandeln."
+        ),
     )
 
     @staticmethod

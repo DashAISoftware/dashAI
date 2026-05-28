@@ -52,6 +52,10 @@ class F1(ClassificationMetric):
             "Média harmônica de precisão e revocação, "
             "útil para tarefas de classificação desbalanceadas."
         ),
+        de=(
+            "Harmonisches Mittel von Präzision und Trefferquote, "
+            "nützlich für unausgewogene Klassifikationsaufgaben."
+        ),
     )
 
     @staticmethod

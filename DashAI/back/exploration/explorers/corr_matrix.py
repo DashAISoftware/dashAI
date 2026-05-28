@@ -49,11 +49,13 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
             en=("Correlation method to use: 'pearson', 'kendall', or 'spearman'."),
             es=("Método de correlación a usar: 'pearson', 'kendall' o 'spearman'."),
             pt=("Método de correlação a usar: 'pearson', 'kendall' ou 'spearman'."),
+            de=("Korrelationsmethode: 'pearson', 'kendall' oder 'spearman'."),
         ),
         alias=MultilingualString(
             en="Correlation method",
             es="Método de correlación",
             pt="Método de correlação",
+            de="Korrelationsmethode",
         ),
     )  # type: ignore
     min_periods: schema_field(
@@ -74,11 +76,16 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
                 "para obter um resultado válido. Usado apenas com 'pearson' ou "
                 "'spearman'."
             ),
+            de=(
+                "Mindestanzahl der Beobachtungen pro Spaltenpaar für ein gültiges "
+                "Ergebnis. Nur mit 'pearson' oder 'spearman' verwendet."
+            ),
         ),
         alias=MultilingualString(
             en="Minimum periods",
             es="Períodos mínimos",
             pt="Períodos mínimos",
+            de="Mindestperioden",
         ),
     )  # type: ignore
     numeric_only: schema_field(
@@ -97,11 +104,16 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
                 "Se True, inclui apenas colunas numéricas ao calcular a "
                 "correlação; caso contrário, inclui todas."
             ),
+            de=(
+                "Wenn True, werden nur numerische Spalten bei der Berechnung "
+                "der Korrelation berücksichtigt; sonst alle Spalten."
+            ),
         ),
         alias=MultilingualString(
             en="Numeric only",
             es="Solo numéricas",
             pt="Somente numéricas",
+            de="Nur numerisch",
         ),
     )  # type: ignore
     plot: schema_field(
@@ -111,11 +123,13 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
             en=("If True, the result will be plotted."),
             es=("Si es True, el resultado será graficado."),
             pt=("Se True, o resultado será graficado."),
+            de=("Wenn True, wird das Ergebnis dargestellt."),
         ),
         alias=MultilingualString(
             en="Plot result",
             es="Graficar resultado",
             pt="Graficar resultado",
+            de="Ergebnis darstellen",
         ),
     )  # type: ignore
 
@@ -144,6 +158,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         en="Correlation Matrix",
         es="Matriz de Correlación",
         pt="Matriz de Correlação",
+        de="Korrelationsmatrix",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -159,6 +174,11 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
             "Retorna a matriz de correlação do conjunto de dados. A saída "
             "padrão é um mapa de calor, mas também pode ser retornada em "
             "formato tabular."
+        ),
+        de=(
+            "Gibt die Korrelationsmatrix des Datensatzes zurück. Die "
+            "Standardausgabe ist eine Heatmap, aber es kann auch ein "
+            "tabellarisches Ergebnis zurückgegeben werden."
         ),
     )
     IMAGE_PREVIEW = "correlation_matrix.png"

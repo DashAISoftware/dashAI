@@ -35,11 +35,13 @@ class ScatterMatrixSchema(BaseExplorerSchema):
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
             pt=("Nome ou índice de coluna para agrupar pontos por cor."),
+            de=("Spaltenname oder -index zur Farbgruppierung der Punkte."),
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
             pt="Coluna para grupo de cor",
+            de="Farbgruppen-Spalte",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -49,11 +51,13 @@ class ScatterMatrixSchema(BaseExplorerSchema):
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
             pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
+            de=("Spaltenname oder -index zur Symbolgruppierung der Punkte."),
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
             pt="Coluna para grupo de símbolo",
+            de="Symbolgruppen-Spalte",
         ),
     )  # type: ignore
 
@@ -76,6 +80,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         en="Multiple Scatter Plot",
         es="Matriz de Dispersión",
         pt="Matriz de Dispersão",
+        de="Streudiagramm-Matrix",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -92,6 +97,11 @@ class ScatterMatrixExplorer(RelationshipExplorer):
             "gerados gráficos de dispersão para cada par, com histogramas na "
             "diagonal."
         ),
+        de=(
+            "Gibt eine Streudiagramm-Matrix für ausgewählte Spalten zurück. Für "
+            "jedes Paar werden Streudiagramme erzeugt, mit Histogrammen auf der "
+            "Diagonale."
+        ),
     )
     IMAGE_PREVIEW = "scatter_matrix.png"
 
@@ -99,6 +109,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         en="Display a scatter matrix plot of selected columns.",
         es="Muestra una matriz de dispersión de columnas seleccionadas.",
         pt="Exibe uma matriz de dispersão das colunas selecionadas.",
+        de="Zeigt eine Streudiagramm-Matrix der ausgewählten Spalten an.",
     )
 
     SCHEMA = ScatterMatrixSchema

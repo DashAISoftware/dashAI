@@ -59,8 +59,17 @@ class SGDClassifierSchema(BaseSchema):
                 "'squared_hinge' é como hinge mas penalizado quadraticamente; "
                 "'perceptron' é a perda linear usada pelo algoritmo perceptron."
             ),
+            de=(
+                "Die zu verwendende Verlustfunktion. 'hinge' ergibt ein lineares SVM; "
+                "'log_loss' "
+                "ergibt logistische Regression; 'modified_huber' ist glatter; "
+                "'squared_hinge' ist wie hinge aber quadratisch bestraft; "
+                "'perceptron' ist der lineare Verlust des Perceptron-Algorithmus."
+            ),
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda"),
+        alias=MultilingualString(
+            en="Loss", es="Pérdida", pt="Perda", de="Verlustfunktion"
+        ),
     )  # type: ignore
 
     alpha: schema_field(
@@ -84,8 +93,12 @@ class SGDClassifierSchema(BaseSchema):
                 "Parâmetro de regularização. Valores mais altos resultam em "
                 "regularização mais forte."
             ),
+            de=(
+                "Regularisierungsparameter. Höhere Werte führen zu stärkerer "
+                "Regularisierung."
+            ),
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -100,9 +113,13 @@ class SGDClassifierSchema(BaseSchema):
             en="The maximum number of passes over the training data (epochs).",
             es="El número máximo de pasadas sobre los datos de entrenamiento (épocas).",
             pt="O número máximo de passagens sobre os dados de treinamento (épocas).",
+            de="Die maximale Anzahl von Durchläufen über die Trainingsdaten (Epochen).",
         ),
         alias=MultilingualString(
-            en="Max iterations", es="Máximas iteraciones", pt="Iterações máximas"
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Iterações máximas",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
 
@@ -124,8 +141,14 @@ class SGDClassifierSchema(BaseSchema):
                 "O critério de parada. O treinamento para quando "
                 "perda > melhor_perda - tol."
             ),
+            de=(
+                "Das Abbruchkriterium. Das Training stoppt, wenn Verlust > "
+                "bester_Verlust - tol."
+            ),
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -149,11 +172,17 @@ class SGDClassifierSchema(BaseSchema):
                 "'invscaling' decresce como 1/t^power; 'adaptive' reduz à "
                 "metade a taxa quando o treinamento para de melhorar."
             ),
+            de=(
+                "Der Lernraten-Zeitplan. 'optimal' verwendet 1/(alpha*(t+t0)); "
+                "'constant' hält eta0 konstant; 'invscaling' sinkt als "
+                "1/t^power; 'adaptive' halbiert die Rate, wenn das Training stagniert."
+            ),
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
+            de="Lernrate",
         ),
     )  # type: ignore
 
@@ -173,9 +202,17 @@ class SGDClassifierSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int "
                 "para saída reproduzível, ou None para não definir uma semente."
             ),
+            de=(
+                "Der Startwert des Pseudo-Zufallszahlengenerators. Übergeben Sie eine "
+                "ganze Zahl für reproduzierbare Ausgaben oder None für keinen "
+                "bestimmten Startwert."
+            ),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -202,11 +239,13 @@ class SGDClassifier(TabularClassificationModel, SklearnLikeClassifier, _SGDClass
         en="SGD Classifier",
         es="Clasificador SGD",
         pt="Classificador SGD",
+        de="SGD-Klassifikator",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear classifier trained with stochastic gradient descent.",
         es="Clasificador lineal entrenado con descenso de gradiente estocástico.",
         pt="Classificador linear treinado com descida de gradiente estocástico.",
+        de="Linearer Klassifikator, trainiert mit stochastischem Gradientenabstieg.",
     )
     COLOR: str = "#78909C"
     ICON: str = "TrendingDown"

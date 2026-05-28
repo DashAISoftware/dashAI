@@ -115,6 +115,9 @@ function ResultsTable({ selectedPrediction }) {
                 fetchPage={fetchPage}
                 initialPageSize={10}
                 datasetPath={selectedPrediction.results_path}
+                datasetName={
+                  selectedPrediction.dataset?.name ?? "prediction_results"
+                }
                 columnTypes={columnTypes}
               />
             </Paper>

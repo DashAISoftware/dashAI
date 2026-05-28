@@ -24,8 +24,11 @@ class DummyClassifierSchema(BaseSchema):
             en="Strategy to use to generate predictions.",
             es="Estrategia a utilizar para generar predicciones.",
             pt="Estratégia a usar para gerar predições.",
+            de="Strategie zur Generierung von Vorhersagen.",
         ),
-        alias=MultilingualString(en="Strategy", es="Estrategia", pt="Estratégia"),
+        alias=MultilingualString(
+            en="Strategy", es="Estrategia", pt="Estratégia", de="Strategie"
+        ),
     )  # type: ignore
 
 
@@ -53,11 +56,13 @@ class DummyClassifier(
         en="Dummy Classifier",
         es="Clasificador Dummy",
         pt="Classificador Fictício",
+        de="Dummy-Klassifikator",
     )
     DESCRIPTION: str = MultilingualString(
         en="Baseline classifier using simple rules for comparison.",
         es=("Clasificador base que utiliza reglas simples para comparación."),
         pt=("Classificador de referência que usa regras simples para comparação."),
+        de=("Basis-Klassifikator, der einfache Regeln zum Vergleich verwendet."),
     )
     COLOR: str = "#4DB6AC"
     ICON: str = "Science"

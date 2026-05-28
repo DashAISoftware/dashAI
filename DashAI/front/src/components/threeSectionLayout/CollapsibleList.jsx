@@ -153,7 +153,9 @@ export default function CollapsibleList({
                 id={ds.id}
                 onClick={() => onItemClick(ds.id)}
                 onDelete={() => onItemDelete(ds.id)}
-                onEdit={(name) => onItemEdit(ds.id, name)}
+                onEdit={
+                  onItemEdit ? (name) => onItemEdit(ds.id, name) : undefined
+                }
                 onInfo={onItemInfo ? () => onItemInfo(ds.id) : undefined}
                 deleteConfirmationContent={
                   getDeleteConfirmationContent

@@ -60,9 +60,21 @@ class StableDiffusionSchema(BaseSchema):
                 "As variantes '2-1' são mais ajustadas "
                 "e geralmente superam a '2'."
             ),
+            de=(
+                "Der zu ladende spezifische Stable Diffusion 2.x-Checkpoint. "
+                "Die '-base'-Varianten werden bei 512x512 px trainiert und sind "
+                "schneller; "
+                "die Nicht-base-Varianten zielen auf 768x768 px ab "
+                "und liefern schärfere Details. "
+                "Die '2-1'-Varianten sind weiter feinabgestimmt "
+                "und übertreffen '2' in der Regel."
+            ),
         ),
         alias=MultilingualString(
-            en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
         ),
     )  # type: ignore
 
@@ -88,9 +100,18 @@ class StableDiffusionSchema(BaseSchema):
                     "marca d'água'. Deixe vazio para omitir "
                     "o condicionamento negativo."
                 ),
+                de=(
+                    "Text, der beschreibt, was aus dem generierten Bild ausgeschlossen "
+                    "werden soll. Häufige Werte: 'unscharf, geringe Qualität, verzerrt,"
+                    "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
+                    "überspringen."
+                ),
             ),
             alias=MultilingualString(
-                en="Negative prompt", es="Prompt negativo", pt="Prompt negativo"
+                en="Negative prompt",
+                es="Prompt negativo",
+                pt="Prompt negativo",
+                de="Negativer Prompt",
             ),
         )  # type: ignore
     ]
@@ -116,11 +137,19 @@ class StableDiffusionSchema(BaseSchema):
                 "para resultados rápidos, 40-50 para maior qualidade. Valores acima "
                 "de 100 raramente melhoram o resultado."
             ),
+            de=(
+                "Anzahl der auszuführenden Entrauschungsschritte. Mehr Schritte "
+                "verfeinern "
+                "das Bild, erhöhen aber die Generierungszeit. Typischer Bereich: 15-30 "
+                "für schnelle Ergebnisse, 40-50 für höhere Qualität. Werte über 100 "
+                "verbessern das Ergebnis selten."
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
         ),
     )  # type: ignore
 
@@ -148,9 +177,18 @@ class StableDiffusionSchema(BaseSchema):
                 "qualidade e aderência; valores altos (10+) reforçam o prompt mas "
                 "podem produzir artefatos."
             ),
+            de=(
+                "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
+                "dem Textprompt folgt. Niedrige Werte (1-4) erlauben kreative Freiheit;"
+                "mittlere Werte (5-9) balancieren Qualität und Treue; hohe Werte (10+) "
+                "erzwingen den Prompt, können aber Artefakte erzeugen."
+            ),
         ),
         alias=MultilingualString(
-            en="Guidance scale", es="Escala de guía", pt="Escala de orientação"
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+            de="Führungsskala",
         ),
     )  # type: ignore
 
@@ -176,8 +214,16 @@ class StableDiffusionSchema(BaseSchema):
                 "difusão. Selecione 'CPU' em sistemas sem GPU compatível, mas espere "
                 "tempos de geração significativamente mais longos."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. Wählen Sie eine GPU-Option für "
+                "Hardwarebeschleunigung, die für Diffusionsmodelle dringend empfohlen "
+                "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber erwarten"
+                "Sie deutlich längere Generierungszeiten."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
     seed: schema_field(
@@ -201,8 +247,14 @@ class StableDiffusionSchema(BaseSchema):
                 "Use um valor negativo (ex. -1) para uma semente aleatória em cada "
                 "execução."
             ),
+            de=(
+                "Zufalls-Seed für reproduzierbare Generierung. Ein fester positiver "
+                "Integer erzeugt stets dasselbe Bild bei identischen Einstellungen. "
+                "Verwenden Sie einen negativen Wert (z.B. -1) für einen zufälligen "
+                "Seed bei jedem Durchlauf."
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente"),
+        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
     )  # type: ignore
 
     width: schema_field(
@@ -224,8 +276,14 @@ class StableDiffusionSchema(BaseSchema):
                 "A resolução nativa é 512 para variantes '-base' e 768 para as "
                 "demais. Usar a resolução nativa produz os melhores resultados."
             ),
+            de=(
+                "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "Die native Auflösung beträgt 512 für '-base'-Varianten und 768 für "
+                "andere. "
+                "Die native Auflösung liefert die besten Qualitätsergebnisse."
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura"),
+        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
     )  # type: ignore
 
     height: schema_field(
@@ -247,8 +305,14 @@ class StableDiffusionSchema(BaseSchema):
                 "A resolução nativa é 512 para variantes '-base' e 768 para as "
                 "demais. Usar a resolução nativa produz os melhores resultados."
             ),
+            de=(
+                "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "Die native Auflösung beträgt 512 für '-base'-Varianten und 768 für "
+                "andere. "
+                "Die native Auflösung liefert die besten Qualitätsergebnisse."
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura"),
+        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -270,11 +334,17 @@ class StableDiffusionSchema(BaseSchema):
                 "Aumentar este valor é mais eficiente do que executar várias sessões, "
                 "mas requer proporcionalmente mais memória GPU."
             ),
+            de=(
+                "Wie viele Bilder aus einem einzelnen Prompt in einem Stapel generiert "
+                "werden sollen. Diesen Wert zu erhöhen ist effizienter als mehrere "
+                "Sitzungen zu starten, erfordert aber proportional mehr GPU-Speicher."
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
         ),
     )  # type: ignore
 
@@ -312,6 +382,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         en="Stable Diffusion V2",
         es="Stable Diffusion V2",
         pt="Stable Diffusion V2",
+        de="Stable Diffusion V2",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -348,6 +419,19 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "sd2-community (https://huggingface.co/sd2-community), um espelho "
             "comunitário dos pesos originais da Stability AI que foram depreciados e "
             "removidos de https://huggingface.co/stabilityai."
+        ),
+        de=(
+            "Stable Diffusion 2.x ist ein latentes Diffusionsmodell von Stability AI "
+            "zur hochauflösenden Text-zu-Bild-Generierung. Es verwendet einen U-Net-"
+            "Entrauscher konditioniert auf CLIP-Texteinbettungen und einen "
+            "variationalen "
+            "Autoencoder (VAE) zur Erzeugung detaillierter Bilder. Unterstützt die "
+            "Varianten stable-diffusion-2, stable-diffusion-2-base, "
+            "stable-diffusion-2-1 "
+            "und stable-diffusion-2-1-base. Modelle werden von der Organisation "
+            "sd2-community (https://huggingface.co/sd2-community) bereitgestellt, einem"
+            "Community-Spiegel der originalen Stability AI-Gewichte, die von "
+            "https://huggingface.co/stabilityai veraltet und entfernt wurden."
         ),
     )
 

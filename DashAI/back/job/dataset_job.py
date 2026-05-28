@@ -162,17 +162,79 @@ class DatasetJob(BaseJob):
                         )
 
                 else:
-                    parsed_params = parse_params(DatasetParams, json.dumps(params))
-                    dataloader = component_registry[parsed_params.dataloader]["class"]()
-                    log.debug("Storing dataset in %s", folder_path)
-                    new_dataset = dataloader.load_data(
-                        filepath_or_buffer=(
-                            str(file_path) if file_path is not None else url
-                        ),
-                        temp_path=str(temp_dir),
-                        params=parsed_params.model_dump(),
-                        n_sample=n_sample,
-                    )
+                    source_name = self.kwargs.get("source_name")
+
+                    if source_name:
+                        # --- Hub import path ---
+                        from DashAI.back.core.enums.status import DatafileStatus
+                        from DashAI.back.dependencies.database.models import (
+                            Datafile,
+                        )
+
+                        datafile_id = params.get("datafile_id")
+                        selected_file = params.get("selected_file")
+
+                        if datafile_id is None:
+                            raise JobError("datafile_id is required for hub imports.")
+
+                        with session_factory() as db:
+                            hub_row = db.get(Datafile, datafile_id)
+                        if hub_row is None or hub_row.status != DatafileStatus.READY:
+                            raise JobError(f"Datafile {datafile_id} is not ready.")
+                        hub_work_dir = hub_row.local_path
+                        if selected_file:
+                            file_path_hub = str(Path(hub_work_dir) / selected_file)
+                        else:
+                            hub_base = Path(hub_work_dir)
+                            files = sorted(
+                                str(p)
+                                for p in hub_base.rglob("*")
+                                if p.is_file()
+                                and not any(
+                                    part.startswith(".")
+                                    for part in p.relative_to(hub_base).parts
+                                )
+                            )
+                            if not files:
+                                raise JobError("Hub download directory is empty.")
+                            file_path_hub = files[0]
+
+                        selected_dataloader = params.get("dataloader", "")
+                        _reg = component_registry._registry
+                        dl_registry = _reg.get("DataLoader", {})
+                        if selected_dataloader not in dl_registry:
+                            raise JobError(
+                                f"DataLoader '{selected_dataloader}'"
+                                " not found in registry."
+                            )
+                        dataloader = dl_registry[selected_dataloader]["class"]()
+                        log.debug(
+                            "Loading hub dataset from %s using %s",
+                            file_path_hub,
+                            selected_dataloader,
+                        )
+                        hub_loader_params = params.get("dataloader_params", {})
+                        new_dataset = dataloader.load_data(
+                            filepath_or_buffer=file_path_hub,
+                            temp_path=hub_work_dir,
+                            params=hub_loader_params,
+                            n_sample=None,
+                        )
+                    else:
+                        # --- File / URL upload path (unchanged) ---
+                        parsed_params = parse_params(DatasetParams, json.dumps(params))
+                        dataloader = component_registry[parsed_params.dataloader][
+                            "class"
+                        ]()
+                        log.debug("Storing dataset in %s", folder_path)
+                        new_dataset = dataloader.load_data(
+                            filepath_or_buffer=(
+                                str(file_path) if file_path is not None else url
+                            ),
+                            temp_path=str(temp_dir),
+                            params=parsed_params.model_dump(),
+                            n_sample=n_sample,
+                        )
 
                     if params.get("inferred_types"):
                         schema = params["inferred_types"]

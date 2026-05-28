@@ -118,17 +118,19 @@ export default function ItemMenu({
               <ListItemText>{t("common:info")}</ListItemText>
             </MenuItem>
           )}
-          <MenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAction(onEdit, itemId);
-            }}
-          >
-            <ListItemIcon>
-              <EditIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>{t("common:edit")}</ListItemText>
-          </MenuItem>
+          {onEdit && (
+            <MenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAction(onEdit, itemId);
+              }}
+            >
+              <ListItemIcon>
+                <EditIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{t("common:edit")}</ListItemText>
+            </MenuItem>
+          )}
           <Divider />
         </Box>
         <DeleteMenuItem

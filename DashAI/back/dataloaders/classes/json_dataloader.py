@@ -49,9 +49,18 @@ class JSONDataloaderSchema(BaseSchema):
                 '(também conhecido como orientação "records" no pandas), '
                 "defina este valor como null."
             ),
+            de=(
+                "Falls die Daten die Form "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(auch bekannt als "table" in pandas) haben, Name des Felds "data", '
+                "wo die Liste mit Wörterbüchern mit den Daten gefunden werden soll. "
+                "Falls das Format nur eine Liste von Wörterbüchern ist "
+                '(auch bekannt als "records"-Orientierung in pandas), '
+                "setzen Sie diesen Wert auf null."
+            ),
         ),
         alias=MultilingualString(
-            en="Data key", es="Clave de datos", pt="Chave de dados"
+            en="Data key", es="Clave de datos", pt="Chave de dados", de="Datenschlüssel"
         ),
     )  # type: ignore
 
@@ -94,11 +103,18 @@ class JSONDataLoader(BaseDataLoader):
             "dicionários) como dados JSON aninhados onde os registros estão "
             "contidos dentro de uma chave específica."
         ),
+        de=(
+            "Datenlader für tabellarische Daten in JSON-Dateien. "
+            "Unterstützt sowohl das Standard-JSON-Array-Format (eine Liste von "
+            "Wörterbüchern) als auch verschachtelte JSON-Daten, bei denen Datensätze "
+            "innerhalb eines bestimmten Schlüssels enthalten sind."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="JSON Data Loader",
         es="Cargador de Datos JSON",
         pt="Carregador de Dados JSON",
+        de="JSON Datenlader",
     )
 
     def _check_params(self, params: Dict[str, Any]) -> None:

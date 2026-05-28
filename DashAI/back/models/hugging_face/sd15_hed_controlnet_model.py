@@ -40,11 +40,16 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "Número de passos de eliminação de ruído. Intervalo típico: 20-30 para "
                 "resultados rápidos, 40-50 para maior qualidade."
             ),
+            de=(
+                "Anzahl der Entrauschungsschritte. Typischer Bereich: 20-30 für "
+                "schnelle Ergebnisse, 40-50 für höhere Qualität."
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
         ),
     )  # type: ignore
 
@@ -71,11 +76,19 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "rígidos que o Canny. Em 1.0 a saída segue de perto as bordas de "
                 "entrada. Valores menores oferecem mais liberdade criativa."
             ),
+            de=(
+                "Gewicht der weichen ControlNet-Kantenkonditionierung (Bereich "
+                "0.0-2.0). "
+                "HED erzeugt weiche, skizzenartige Kantenkarten, die weniger streng "
+                "als Canny sind. Bei 1.0 folgt die Ausgabe den Eingabekanten eng. "
+                "Niedrigere Werte bieten mehr kreative Freiheit."
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
             pt="Escala de condicionamento ControlNet",
+            de="ControlNet-Konditionierungsskala",
         ),
     )  # type: ignore
 
@@ -95,11 +108,16 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "Escala CFG. Controla a aderência ao prompt. "
                 "Valores 7-9 são típicos para SD 1.5."
             ),
+            de=(
+                "CFG-Skala. Steuert die Prompt-Treue. "
+                "Werte 7-9 sind typisch für SD 1.5."
+            ),
         ),
         alias=MultilingualString(
             en="Guidance scale",
             es="Escala de guía",
             pt="Escala de orientação",
+            de="Führungsskala",
         ),
     )  # type: ignore
 
@@ -119,11 +137,16 @@ class SD15HEDControlNetSchema(BaseSchema):
                 "Dispositivo de hardware para inferência. GPU é fortemente "
                 "recomendada. A inferência em CPU é possível, mas muito lenta."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. GPU wird dringend empfohlen. "
+                "CPU-Inferenz ist möglich, aber sehr langsam."
+            ),
         ),
         alias=MultilingualString(
             en="Device",
             es="Dispositivo",
             pt="Dispositivo",
+            de="Gerät",
         ),
     )  # type: ignore
 
@@ -155,6 +178,7 @@ class SD15HEDControlNetModel(BaseControlNetModel):
         en="SD 1.5 HED ControlNet",
         es="SD 1.5 ControlNet HED",
         pt="SD 1.5 ControlNet HED",
+        de="SD 1.5 HED ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -195,6 +219,19 @@ class SD15HEDControlNetModel(BaseControlNetModel):
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
             "Requer controlnet_aux: pip install controlnet_aux."
+        ),
+        de=(
+            "Kombiniert die weiche HED-Kantenkonditionierung (Holistically-nested Edge "
+            "Detection) von ControlNet mit Stable Diffusion 1.5 für kantengeführte "
+            "Bildgenerierung. HED erzeugt weiche, skizzenartige Kantenkarten, die "
+            "strukturelle Umrisse bewahren und mehr kreative Variation als harte "
+            "Kantenmethoden wie Canny ermöglichen. Ideal für künstlerische "
+            "Neuinterpretation vorhandener Bilder. Verwendet "
+            "lllyasviel/sd-controlnet-hed "
+            "(https://huggingface.co/lllyasviel/sd-controlnet-hed) und "
+            "runwayml/stable-diffusion-v1-5 "
+            "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
+            "Erfordert controlnet_aux: pip install controlnet_aux."
         ),
     )
 

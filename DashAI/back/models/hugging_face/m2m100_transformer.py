@@ -43,9 +43,16 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
                 "Código ISO 639-1 do idioma de origem (ex. 'en', 'es', 'fr', 'de'). "
                 "Suporta 100 idiomas."
             ),
+            de=(
+                "ISO 639-1-Code der Quellsprache (z.B. 'en', 'es', 'fr', 'de'). "
+                "Unterstützt 100 Sprachen."
+            ),
         ),
         alias=MultilingualString(
-            en="Source language", es="Idioma de origen", pt="Idioma de origem"
+            en="Source language",
+            es="Idioma de origen",
+            pt="Idioma de origem",
+            de="Quellsprache",
         ),
     )  # type: ignore
     target_language: schema_field(
@@ -64,9 +71,16 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
                 "Código ISO 639-1 do idioma destino (ex. 'en', 'es', 'fr', 'de'). "
                 "Suporta 100 idiomas."
             ),
+            de=(
+                "ISO 639-1-Code der Zielsprache (z.B. 'en', 'es', 'fr', 'de'). "
+                "Unterstützt 100 Sprachen."
+            ),
         ),
         alias=MultilingualString(
-            en="Target language", es="Idioma destino", pt="Idioma destino"
+            en="Target language",
+            es="Idioma destino",
+            pt="Idioma destino",
+            de="Zielsprache",
         ),
     )  # type: ignore
 
@@ -95,6 +109,7 @@ class M2M100Transformer(TranslationModel):
         en="M2M-100 Multilingual Transformer",
         es="Transformer Multilingüe M2M-100",
         pt="Transformer Multilíngue M2M-100",
+        de="M2M-100 Mehrsprachiger Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -111,6 +126,12 @@ class M2M100Transformer(TranslationModel):
             "Modelo M2M-100 do Facebook para tradução direta entre 100 idiomas "
             "usando códigos ISO 639-1. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Facebook M2M-100-Modell für direkte Übersetzung zwischen 100 Sprachen "
+            "mit ISO 639-1-Codes. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#6A1B9A"

@@ -20,11 +20,37 @@ class ImageClassificationTask(ClassificationTask):
     """
 
     DESCRIPTION: str = MultilingualString(
-        en="Predict categorical labels from image data.",
-        es="Predice etiquetas categóricas a partir de datos de imágenes.",
+        en=(
+            "Image classification in machine learning involves predicting "
+            "categorical labels for image data. Models are trained to learn "
+            "visual patterns and features in images, enabling accurate "
+            "classification of new instances."
+        ),
+        es=(
+            "La clasificación de imágenes en el aprendizaje automático implica "
+            "predecir etiquetas categóricas para datos de imágenes. Los modelos "
+            "se entrenan para aprender patrones visuales y características en "
+            "las imágenes, lo que permite una clasificación precisa de nuevas "
+            "instancias."
+        ),
+        pt=(
+            "A classificação de imagens no aprendizado de máquina envolve a "
+            "previsão de rótulos categóricos para dados de imagem. Os modelos "
+            "são treinados para aprender padrões visuais e características nas "
+            "imagens, permitindo uma classificação precisa de novas instâncias."
+        ),
+        de=(
+            "Bildklassifikation im maschinellen Lernen umfasst die Vorhersage "
+            "kategorialer Zielgrößen für Bilddaten. Modelle werden trainiert, um "
+            "visuelle Muster und Merkmale in Bildern zu erlernen, was eine genaue "
+            "Klassifikation neuer Instanzen ermöglicht."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Image Classification", es="Clasificación de Imágenes"
+        en="Image Classification",
+        es="Clasificación de Imágenes",
+        pt="Classificação de Imagens",
+        de="Bildklassifikation",
     )
     SCORING_PROFILES = {
         "balanced": {

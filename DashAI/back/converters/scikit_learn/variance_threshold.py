@@ -33,6 +33,10 @@ class VarianceThresholdSchema(BaseSchema):
             pt=(
                 "Características com variância inferior a este limiar serão removidas."
             ),
+            de=(
+                "Merkmale mit einer Varianz unterhalb dieses Schwellenwerts werden "
+                "entfernt."
+            ),
         ),
     )  # type: ignore
 
@@ -72,11 +76,13 @@ class VarianceThreshold(
         en="Feature selector that removes all low-variance features.",
         es="Selector de características que elimina todas las de baja varianza.",
         pt="Seletor de características que remove todas as de baixa variância.",
+        de="Merkmalsselektor, der alle Merkmale mit niedriger Varianz entfernt.",
     )
     DISPLAY_NAME = MultilingualString(
         en="Variance Threshold",
         es="Umbral de Varianza",
         pt="Limiar de Variância",
+        de="Varianz-Schwellenwert",
     )
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

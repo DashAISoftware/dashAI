@@ -25,6 +25,10 @@ class CharacterReplacerSchema(BaseSchema):
             en=("The character or substring to be replaced. Cannot be empty."),
             es=("El carácter o subcadena a reemplazar. No puede estar vacío."),
             pt=("O caractere ou substring a ser substituído. Não pode estar vazio."),
+            de=(
+                "Das zu ersetzende Zeichen oder die Teilzeichenkette. Darf nicht leer "
+                "sein."
+            ),
         ),
     )  # type: ignore
     replacement_char: schema_field(
@@ -42,6 +46,10 @@ class CharacterReplacerSchema(BaseSchema):
             pt=(
                 "O caractere ou substring com o qual substituir. Se nulo, "
                 "'char_to_replace' será removido."
+            ),
+            de=(
+                "Das Ersatzzeichen oder die Ersatzteilzeichenkette. Wenn null, "
+                "wird 'char_to_replace' entfernt."
             ),
         ),
     )  # type: ignore
@@ -70,11 +78,16 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             "Substitui ou remove caracteres/substrings especificados nas "
             "colunas de texto selecionadas."
         ),
+        de=(
+            "Ersetzt oder entfernt angegebene Zeichen/Teilzeichenketten in "
+            "ausgewählten Text-Spalten."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
         en="Character Replacer",
         es="Reemplazador de Caracteres",
         pt="Substituidor de Caracteres",
+        de="Zeichenersetzung",
     )
     IMAGE_PREVIEW = "character_replacer.png"
 
