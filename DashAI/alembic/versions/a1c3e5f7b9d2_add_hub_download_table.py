@@ -32,8 +32,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("error_message", sa.String(), nullable=True),
-        sa.Column("created", sa.DateTime(), nullable=True),
-        sa.Column("last_modified", sa.DateTime(), nullable=True),
+        sa.Column("created", sa.DateTime(), nullable=False),
+        sa.Column("last_modified", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_datafile")),
         sa.UniqueConstraint(
             "source_name",
