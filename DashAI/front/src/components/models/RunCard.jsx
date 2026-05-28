@@ -72,6 +72,7 @@ function RunCard({
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [resultsVisible, setResultsVisible] = useState(() => {
+    if (run.status === 0) return false;
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
     return saved ? JSON.parse(saved) : false;
   });
@@ -510,6 +511,8 @@ function RunCard({
           onClose={() => setDeleteConfirmOpen(false)}
           onConfirm={() => {
             setDeleteConfirmOpen(false);
+            localStorage.removeItem(`run-${run.id}-results-visible`);
+            localStorage.removeItem(`run-${run.id}-active-tab`);
             onDelete(run);
           }}
           content={t("models:message.confirmDeleteRun")}

@@ -61,6 +61,7 @@ export default function RunResults({
   const [localExplainers, setLocalExplainers] = useState([]);
   const [predictions, setPredictions] = useState([]);
   const [internalVisible, setInternalVisible] = useState(() => {
+    if (run.status === 0) return false;
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
     return saved ? JSON.parse(saved) : false;
   });
@@ -73,7 +74,13 @@ export default function RunResults({
 
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
-    return saved ? JSON.parse(saved) : 0;
+    if (saved !== null) {
+      const savedTab = JSON.parse(saved);
+      // Tabs 1+ (Explainability, Predictions, Hyperparameters) require a finished run
+      if (savedTab > 0 && run.status !== 3) return 0;
+      return savedTab;
+    }
+    return 0;
   });
 
   const [globalCreatorOpen, setGlobalCreatorOpen] = useState(false);
