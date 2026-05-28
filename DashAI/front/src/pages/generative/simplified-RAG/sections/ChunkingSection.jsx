@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
-  ToggleButton,
-  ToggleButtonGroup,
   Button,
   CircularProgress,
 } from "@mui/material";
@@ -13,13 +11,13 @@ import { getChunkingComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "../components/ragFormDefaults";
 import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
-import { useTheme } from "@mui/material/styles";
+import AdvancedConfigCard from "../components/AdvancedConfigCard";
+import PresetCard from "../components/PresetCard";
 
 export default function ChunkingSection({
   chunkingModel,
   setChunkingModel,
 }) {
-  const theme = useTheme();
   const { t } = useTranslation(["generative"]);
 
   const CHUNKING_PRESETS = useMemo(() => [
@@ -50,12 +48,6 @@ export default function ChunkingSection({
     const tokens = Math.ceil(chars / 4);
     return t("generative:simplifiedRag.chunking.presets.chunkSizeFormat", { chars, tokens });
   };
-
-  const CUSTOM_PRESET = useMemo(() => ({
-    value: "custom",
-    label: t("generative:simplifiedRag.chunking.presets.custom.label"),
-    description: t("generative:simplifiedRag.chunking.presets.custom.description"),
-  }), [t]);
 
   const [chunkers, setChunkers] = useState([]);
   const [selectedChunker, setSelectedChunker] = useState(null);
@@ -136,13 +128,11 @@ export default function ChunkingSection({
     });
   };
 
-  const handlePresetChange = (event, newPresetValue) => {
-    if (newPresetValue !== null && selectedChunker) {
-      if (newPresetValue === "custom") {
-        setSelectedPreset("custom");
-        return;
-      }
-      const preset = CHUNKING_PRESETS.find(p => p.value === newPresetValue);
+  const handlePresetClick = (presetValue) => {
+    if (!selectedChunker) return;
+    if (presetValue === selectedPreset) return;
+    const preset = CHUNKING_PRESETS.find(p => p.value === presetValue);
+    if (preset) {
       applyPreset(selectedChunker, preset);
     }
   };
@@ -155,10 +145,7 @@ export default function ChunkingSection({
     );
   }
 
-  const allPresets = [...CHUNKING_PRESETS];
-  if (selectedPreset === "custom") {
-    allPresets.push(CUSTOM_PRESET);
-  }
+  const isCustom = selectedPreset === "custom";
 
   return (
     <>
@@ -168,49 +155,24 @@ export default function ChunkingSection({
         </Typography>
 
         {/* Preset Options */}
-        <ToggleButtonGroup
-          value={selectedPreset}
-          exclusive
-          onChange={handlePresetChange}
-          fullWidth
-          sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
-        >
-          {allPresets.map((preset) => {
-            const description = preset === CUSTOM_PRESET
-              ? CUSTOM_PRESET.description
-              : getPresetDescription(preset);
-            return (
-              <ToggleButton
-                key={preset.value}
-                value={preset.value}
-                sx={{
-                  flex: 1,
-                  minWidth: 150,
-                  py: 2,
-                  px: 1,
-                  textTransform: "none",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  "&.Mui-selected": {
-                    color: theme.palette.primary.main,
-                    border: `1px solid ${theme.palette.accent.amberBorder}`,
-                    background: theme.palette.accent.amberDim,
-                    borderRadius: "2px",
-                    "&:hover": {
-                      backgroundColor: theme.palette.primary.main,
-                      color: theme.palette.primary.contrastText,
-                    },
-                  },
-                }}
-              >
-                <Box display="flex" flexDirection="column" gap={0.5}>
-                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>{preset.label}</Typography>
-                  <Typography variant="caption" sx={{ textAlign: "left" }}>{description}</Typography>
-                </Box>
-              </ToggleButton>
-            );
-          })}
-        </ToggleButtonGroup>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
+          {CHUNKING_PRESETS.map((preset) => (
+            <PresetCard
+              key={preset.value}
+              selected={selectedPreset === preset.value}
+              onClick={() => handlePresetClick(preset.value)}
+              label={preset.label}
+              description={getPresetDescription(preset)}
+              sx={{ flex: 1, minWidth: 150, py: 2, px: 1 }}
+            />
+          ))}
+          {isCustom && selectedChunker && (
+            <AdvancedConfigCard
+              modelName={selectedChunker.name}
+              onClick={() => setShowAdvanced(true)}
+            />
+          )}
+        </Box>
 
         {/* Advanced Configuration Button */}
         <Button

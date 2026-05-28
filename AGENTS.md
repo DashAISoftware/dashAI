@@ -167,6 +167,75 @@ Every retriever gets a **bridge record** in `rag_retriever` (canonical identity 
 - `embeddings/trainable_encoding.py` — incomplete intermediate hierarchy, unused
 - RAG-specific code in `GenerativeJob` — now in `RAGJob`
 
+## RAG Design Decisions & Gotchas
+
+This section captures every non-obvious design decision and recurring pitfall encountered during the RAG module refactor. **Read this before touching any RAG code.**
+
+### Critical: Parameter format mismatch in factory lookup-or-create
+
+**Problem:** `RetrieverFactory._create_unit()` computed `sorted_params` from raw frontend params (`{component, params}` format for nested ComponentFields), then passed them to `_load_unit_from_db()` for the DB lookup. However, `_save_sparse()` / `_save_dense()` stored `model.params` — which is the post-`validate_and_transform` / `fill_objects` format (deeply nested with `{properties: {params: {comp: ...}}}` structure).
+
+Result: the DB lookup (raw format) never found records saved in post-transform format → `IntegrityError: UNIQUE constraint failed` on the second message in the same session.
+
+**Fix:** Both `_save_sparse()` and `_save_dense()` receive the raw `sorted_params` (computed before `_inject_infra()` and `model_class(**params)`) and store that raw format in the DB. Lookup and save now use the same parameter representation.
+
+**Rule:** In any factory with lookup-or-create semantics, the parameters used for DB lookup and DB save **must be the exact same dict** (same keys, same structure, same sort order). Never save `model.params` (post-transform) while looking up with raw params.
+
+### Prompt type system
+
+- `RAGGenerationPrompt` is the base class for all RAG generation prompts. Custom user prompts inherit directly from it.
+- `DefaultRAGGenerationPrompt` and `DefaultQnARAGGenerationPrompt` are built-in defaults with **multilingual templates** (`en`, `es`, `pt`). They are registered in `get_initial_components()`.
+- Default prompts include a `Language` schema parameter; user-created custom prompts do NOT have `Language` — the frontend autocomplete reads from the component registry and the DB, deduplicating by `component` name.
+- Prompt is sent from frontend as `{component: "RAGGenerationPrompt", params: {...}}` (unified `{component, params}` format). Backend resolves `component` string via `ComponentRegistry`, validates `params` against its schema. No `prompt_id` integer field anywhere — the old `prompt_id` column was removed from `GenerativeSession`.
+
+### ComponentField is resolved by ComponentRegistry, not by recursive inheritance
+
+The `getChildComponents("RetrieverModel", recursive=false)` call in the frontend returns **only classes that inherit directly from `RetrieverModel`** — none of which are concrete retrievers. All concrete retrievers inherit via intermediate abstract classes (`SparseRetriever`, `DenseRetriever`, `CompositeRetriever`). Always use `recursive=true` when querying the component tree for concrete subclasses.
+
+### Chunk IDs are None until SQLAlchemy flush
+
+When building chunk references in `_build_chunk_references()`, `chunk.id` is `None` because SQLAlchemy doesn't assign IDs until the session is flushed. The fix uses a **synthetic key** `f"{document_id}_{chunk_position}"` as the chunk reference sent to the LLM, then maps it back to the database row after flush.
+
+### `metadata` column name conflicts with SQLAlchemy `Base.metadata`
+
+`Chunk` model had a column named `metadata` which shadows SQLAlchemy's `Base.metadata` class attribute, breaking introspection. The attribute was renamed to `chunk_metadata` while keeping the DB column name as `"metadata"` via `Column("metadata", ...)`. **Never name an ORM column `metadata`.**
+
+### Never `kwargs.pop()` a required parameter before `super().__init__()`
+
+Several retriever subclasses used `kwargs.pop("persistence")` — but `persistence` is a **required** parameter of the parent `_Dense`/`_Sparse` constructors. Popping it caused `TypeError: __init__() missing required argument`. Required parameters must use `kwargs["persistence"]` or be passed explicitly.
+
+### Retrievers inject infra keys into their params dict
+
+`RetrieverFactory._inject_infra()` adds `env_rag_path`, `chunks`, and `persistence` into the params dict **before** instantiating the model. These are runtime dependencies, not part of the schema — they must be excluded from `sorted_params` (the lookup/save key) by computing `sorted_params` **before** calling `_inject_infra()`.
+
+### Validation of RAG session params is opt-in, not default
+
+`GenerativeSession.create()` does NOT validate that session `parameters` conform to `RAGPipeline.SCHEMA` for all tasks — only when the session's task is `RAGTask`. Non-RAG sessions pass through without schema validation. Adding generic schema validation for all tasks would break existing generative sessions.
+
+### Link Table pattern: prefer `Table()` over ORM models for association tables
+
+Composite retriever children are tracked via `rag_retriever_child` — a `Table()` (not an ORM model class). This avoids the pitfalls of instrumented ORM instances for pure many-to-many links. The `RetrieverRepository` manages these directly via core SQLAlchemy operations.
+
+### `RAGTask.process_output` serializes chunks as JSON
+
+Chunk source references sent to the LLM are Python objects; `RAGTask.process_output()` calls `json.dumps(chunks, ensure_ascii=False, default=str)` to serialize them before storing in the process `output` column. Without this, `str(chunks)` produces unparseable Python repr strings.
+
+### Template design for LLM responses
+
+RAG generation prompts include explicit instructions:
+- Use only the provided document excerpts (never hallucinate)
+- Cite sources by document name, page, and section when available
+- Answer "I don't know" if the information is not in the retrieved chunks
+
+Language-specific templates exist in `DEFAULT_RAG_GENERATION_TEMPLATE` and `DEFAULT_QNA_RAG_GENERATION_TEMPLATE` (en/es/pt). Adding a new language requires updating both default prompt files.
+
+### DB and RAG cache cleanup
+
+After schema changes to RAG models (renamed columns, removed tables), you must:
+1. Delete `sqlite.db` to force full schema rebuild (Alembic migrations cover only production scenarios)
+2. Delete `~/.DashAI/rag/` directory to clear stale embeddings, indices, and sparse retriever files
+The dev server automatically rebuilds the DB on startup with the current ORM models.
+
 ## Testing
 
 - Backend tests use in-memory SQLite — no setup needed.

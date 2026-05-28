@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 import { getRetrievalParadigm, getRetrieverComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "../components/ragFormDefaults";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
+import AdvancedConfigCard from "../components/AdvancedConfigCard";
+import PresetCard from "../components/PresetCard";
 
 const TOP_K_OPTIONS = [3, 5, 10, 15, 20];
 const SIMPLIFIED_PARADIGMS = ["DenseRetriever", "SparseRetriever"];
@@ -140,12 +142,11 @@ export default function RetrieverSection({
     });
   };
 
-  const handleParadigmChange = (event, newValue) => {
-    if (newValue !== null) {
-      const selected = paradigms.find((p) => p.name === newValue);
-      setSelectedParadigm(selected);
-      setSelectedRetriever(null);
-    }
+  const handleParadigmClick = (paradigmName) => {
+    if (paradigmName === selectedParadigm?.name) return;
+    const selected = paradigms.find((p) => p.name === paradigmName);
+    setSelectedParadigm(selected);
+    setSelectedRetriever(null);
   };
 
   const handleTopKChange = (newValue) => {
@@ -179,58 +180,27 @@ export default function RetrieverSection({
 
         {/* Paradigm Selection */}
         <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {t("generative:simplifiedRag.retriever.paradigmLabel")}
-            </Typography>
-            {isAdvanced && (
-              <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                {t("generative:simplifiedRag.retriever.advancedApplied")}
-              </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 500, mb: 2 }}>
+            {t("generative:simplifiedRag.retriever.paradigmLabel")}
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
+            {paradigms.map((paradigm) => (
+              <PresetCard
+                key={paradigm.name}
+                selected={!isAdvanced && selectedParadigm?.name === paradigm.name}
+                onClick={() => handleParadigmClick(paradigm.name)}
+                label={formatParadigmName(paradigm.name)}
+                description={t(`generative:simplifiedRag.retriever.explanations.${paradigm.name}`, { defaultValue: "Custom retriever" })}
+                sx={{ flex: 1, minWidth: 200, py: 2, px: 1 }}
+              />
+            ))}
+            {isAdvanced && retrieverModel?.component && (
+              <AdvancedConfigCard
+                modelName={retrieverModel.component}
+                onClick={() => setShowAdvanced(true)}
+              />
             )}
           </Box>
-          <ToggleButtonGroup
-            value={selectedParadigm?.name || ""}
-            exclusive
-            onChange={handleParadigmChange}
-            fullWidth
-            sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}
-          >
-            {paradigms.map((paradigm) => (
-              <ToggleButton
-                key={paradigm.name}
-                value={paradigm.name}
-                sx={{
-                  flex: 1,
-                  minWidth: 200,
-                  py: 2,
-                  px: 1,
-                  textTransform: "none",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  "&.Mui-selected": {
-                    color: theme.palette.primary.main,
-                    border: `1px solid ${theme.palette.accent.amberBorder}`,
-                    background: theme.palette.accent.amberDim,
-                    borderRadius: "2px",
-                    "&:hover": {
-                      backgroundColor: theme.palette.primary.main,
-                      color: theme.palette.primary.contrastText,
-                    },
-                  },
-                }}
-              >
-                <Box display="flex" flexDirection="column" gap={0.5}>
-                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
-                    {formatParadigmName(paradigm.name)}
-                  </Typography>
-                  <Typography variant="caption" sx={{ textAlign: "left" }}>
-                    {t(`generative:simplifiedRag.retriever.explanations.${paradigm.name}`, { defaultValue: "Custom retriever" })}
-                  </Typography>
-                </Box>
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
         </Box>
 
         {selectedParadigm && (

@@ -125,7 +125,7 @@
     "retriever": {
       "description": "Select your retrieval paradigm. The retriever will search through your documents and return the most relevant chunks.",
       "paradigmLabel": "Retrieval Paradigm",
-      "advancedApplied": "ADVANCED CONFIGURATION APPLIED",
+      "advancedApplied": "Advanced Configuration Applied",
       "topKLabel": "Number of Results (Top K)",
       "advancedButton": "Open Advanced Configuration",
       "explanations": {
@@ -137,7 +137,7 @@
     "generator": {
       "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",
       "modelLabel": "Generator Model",
-      "advancedApplied": "ADVANCED CONFIGURATION APPLIED",
+      "advancedApplied": "Advanced Configuration Applied",
       "selectModel": "Select language model",
       "selectModelPlaceholder": "e.g., GPT-4, Claude, Llama",
       "modelInfo": "Model:",

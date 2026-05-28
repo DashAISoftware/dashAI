@@ -8,12 +8,12 @@ import {
   Alert,
   AlertTitle,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getGeneratorComponents } from "../../../../api/rag";
 import { buildDefaultValuesFromSchemaProperties } from "./ragFormDefaults";
 import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
+import AdvancedConfigCard from "./AdvancedConfigCard";
 import { getDescription } from "./sectionUtils";
 
 export default function GeneratorBody({
@@ -27,7 +27,6 @@ export default function GeneratorBody({
   setInitialModelParams,
   showDetails = true,
 }) {
-  const theme = useTheme();
   const { t, i18n } = useTranslation(["generative"]);
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
@@ -137,17 +136,17 @@ export default function GeneratorBody({
                 {...params}
                 label={t("generative:simplifiedRag.generator.selectModel")}
                 placeholder={t("generative:simplifiedRag.generator.selectModelPlaceholder")}
-                sx={{
-                  "& .MuiOutlinedInput-root": isAdvanced ? {
-                    "& fieldset": { borderColor: theme.palette.warning.main },
-                    "&:hover fieldset": { borderColor: theme.palette.warning.main },
-                    "&.Mui-focused fieldset": { borderColor: theme.palette.warning.main },
-                  } : {}
-                }}
               />
             )}
           />
         </Box>
+
+        {isAdvanced && selectedGenerator && (
+          <AdvancedConfigCard
+            modelName={selectedGenerator.name}
+            onClick={() => setShowAdvanced(true)}
+          />
+        )}
 
         {/* Selected Model Info & Context Message */}
         {showDetails && selectedGenerator && generatorModel?.params && (
@@ -156,7 +155,7 @@ export default function GeneratorBody({
               p: 2,
               backgroundColor: "action.hover",
               border: "1px solid",
-              borderColor: contextStats.isValid ? (isAdvanced ? "warning.main" : "divider") : "error.main",
+              borderColor: contextStats.isValid ? "divider" : "error.main",
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",

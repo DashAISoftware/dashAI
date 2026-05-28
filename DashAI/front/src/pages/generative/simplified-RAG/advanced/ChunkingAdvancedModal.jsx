@@ -38,19 +38,12 @@ export default function ChunkingAdvancedModal({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: {
-          maxHeight: "90vh",
-          zIndex: 1300,
-        },
-      }}
-      BackdropProps={{
-        sx: {
-          zIndex: 1299,
-        }
+        sx: { minHeight: "500px" },
       }}
     >
       <DialogTitle
         sx={{
+          bgcolor: "background.paper",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -59,13 +52,14 @@ export default function ChunkingAdvancedModal({
         {t("generative:simplifiedRag.advanced.chunkingTitle")}
         <IconButton
           onClick={handleClose}
+          size="small"
           sx={{ color: "text.secondary" }}
         >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ minHeight: 400 }}>
+      <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
         <FormSchemaProvider key={`chunking-advanced-${modelName}`}>
           <ChunkingConfigurationStep
             chunkingModel={chunkingModel}
@@ -75,8 +69,8 @@ export default function ChunkingAdvancedModal({
         </FormSchemaProvider>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2 }}>
-        <Button onClick={handleClose} color="inherit">
+      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+        <Button onClick={handleClose} variant="outlined">
           {t("generative:simplifiedRag.advanced.close")}
         </Button>
         <Button

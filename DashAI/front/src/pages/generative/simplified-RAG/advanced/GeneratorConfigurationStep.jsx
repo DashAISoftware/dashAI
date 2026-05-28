@@ -5,22 +5,15 @@ import {
   Autocomplete,
   TextField,
   Typography,
-  Paper,
-  Stack,
-  DialogContentText,
 } from "@mui/material";
-import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import RAGFormSchema from "../components/RAGFormSchema";
+import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { getGeneratorComponents } from "../../../../api/rag";
 import {
   buildDefaultValuesFromSchemaProperties,
   getInitialModelParameters,
 } from "../components/ragFormDefaults";
 
-/**
- * Simple generator configuration step that allows selecting a generator model
- * and editing its parameters via FormSchema.
- */
 export default function GeneratorConfigurationStep({
   generatorModel,
   setGeneratorModel,
@@ -79,12 +72,10 @@ export default function GeneratorConfigurationStep({
   };
 
   return (
-    <Stack spacing={3} sx={{ height: "100%" }}>
-      <DialogContentText>
-        <Typography sx={{ fontSize: 16 }}>
-          Configure Generator Model (LLM)
-        </Typography>
-      </DialogContentText>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Typography variant="subtitle2" sx={{ mb: 0 }}>
+        Configure Generator Model (LLM)
+      </Typography>
 
       <Autocomplete
         disablePortal
@@ -99,9 +90,8 @@ export default function GeneratorConfigurationStep({
       />
 
       {selectedGenerator && (
-        <FormSchemaLayout>
-          <RAGFormSchema
-            key={`generator-form-${selectedGenerator.name}`}
+        <FormSchemaContainer key={`generator-form-${selectedGenerator.name}`}>
+          <FormSchema
             autoSave
             model={selectedGenerator.name}
             initialValues={formInitialValues}
@@ -112,10 +102,11 @@ export default function GeneratorConfigurationStep({
               });
             }}
             setError={(err) => console.error("FormSchema error:", err)}
+            hideButtons
           />
-        </FormSchemaLayout>
+        </FormSchemaContainer>
       )}
-    </Stack>
+    </Box>
   );
 }
 

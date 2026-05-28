@@ -125,7 +125,7 @@
     "retriever": {
       "description": "Selecciona tu paradigma de recuperación. El recuperador buscará en tus documentos y devolverá los fragmentos más relevantes.",
       "paradigmLabel": "Paradigma de Recuperación",
-      "advancedApplied": "CONFIGURACIÓN AVANZADA APLICADA",
+      "advancedApplied": "Configuración Avanzada Aplicada",
       "topKLabel": "Número de Resultados (Top K)",
       "advancedButton": "Abrir Configuración Avanzada",
       "explanations": {
@@ -137,7 +137,7 @@
     "generator": {
       "description": "Selecciona el modelo de lenguaje que generará las respuestas basadas en el contexto recuperado y tus prompts.",
       "modelLabel": "Modelo de Generación",
-      "advancedApplied": "CONFIGURACIÓN AVANZADA APLICADA",
+      "advancedApplied": "Configuración Avanzada Aplicada",
       "selectModel": "Seleccionar modelo de lenguaje",
       "selectModelPlaceholder": "ej. GPT-4, Claude, Llama",
       "modelInfo": "Modelo:",

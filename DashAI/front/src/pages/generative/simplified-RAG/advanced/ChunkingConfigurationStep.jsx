@@ -4,13 +4,11 @@ import {
   Autocomplete,
   TextField,
   Typography,
-  Stack,
-  DialogContentText,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
-import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import RAGFormSchema from "../components/RAGFormSchema";
+import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import {
   buildDefaultValuesFromSchemaProperties,
   getInitialModelParameters,
@@ -126,10 +124,10 @@ export default function ChunkingConfigurationStep({
   };
 
   return (
-    <Stack spacing={3} sx={{ height: "100%" }}>
-      <DialogContentText>
-        <Typography sx={{ fontSize: 16 }}>Configure Chunking Model</Typography>
-      </DialogContentText>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Typography variant="subtitle2" sx={{ mb: 0 }}>
+        Configure Chunking Model
+      </Typography>
 
       <Autocomplete
         disablePortal
@@ -150,9 +148,8 @@ export default function ChunkingConfigurationStep({
       )}
 
       {selectedChunking && (
-        <FormSchemaLayout>
-          <RAGFormSchema
-            key={`chunking-form-${selectedChunking.name}`}
+        <FormSchemaContainer key={`chunking-form-${selectedChunking.name}`}>
+          <FormSchema
             autoSave
             model={selectedChunking.name}
             initialValues={formInitialValues}
@@ -164,10 +161,11 @@ export default function ChunkingConfigurationStep({
                 setNextEnabled(false);
               }
             }}
+            hideButtons
           />
-        </FormSchemaLayout>
+        </FormSchemaContainer>
       )}
-    </Stack>
+    </Box>
   );
 }
 

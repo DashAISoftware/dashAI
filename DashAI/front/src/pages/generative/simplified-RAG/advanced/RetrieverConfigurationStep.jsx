@@ -14,9 +14,7 @@ import {
   getRetrieverComponents,
   getRetrievalParadigm,
 } from "../../../../api/rag";
-
-import RAGFormSchema from "../components/RAGFormSchema";
-import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
+import FormSchema from "../../../../components/shared/FormSchema";
 import {
   FormSchemaProvider,
   useFormSchemaStore,
@@ -71,17 +69,17 @@ function AutoSaveFormSchema({
   );
 
   return (
-    <FormSchemaLayout>
+    <>
       <FormSchemaInterceptor currentFormValuesRef={currentFormValuesRef} />
-      <RAGFormSchema
+      <FormSchema
         model={selectedRetriever.name}
         initialValues={initialValues}
         autoSave={true}
         onFormSubmit={handleFormSubmit}
-        onCancel={undefined}
         formSubmitRef={formikRef}
+        hideButtons
       />
-    </FormSchemaLayout>
+    </>
   );
 }
 
@@ -375,12 +373,14 @@ const RetrieverConfigurationStep = forwardRef(
 
     return (
       <Box
-        p={2}
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-start"
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          p: 2,
+        }}
       >
-        <Typography variant="h5" sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 2 }}>
           Select retrieval paradigm
         </Typography>
         <Autocomplete
@@ -398,7 +398,7 @@ const RetrieverConfigurationStep = forwardRef(
         {selectedRetrievalParadigm &&
           selectedRetrievalParadigm.name === "SparseRetriever" && (
             <>
-              <Typography variant="h5" sx={{ marginY: 2 }}>
+              <Typography variant="subtitle2" sx={{ marginY: 2 }}>
                 Select retriever model
               </Typography>
               <Autocomplete
