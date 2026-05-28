@@ -355,6 +355,8 @@
     "uniqueValues": "Unique Values",
     "unknownDataset": "Unknown dataset",
     "uploadAndConfigure": "Upload your dataset and configure parameters",
+    "importFromHub": "Datafile Hub",
+    "importFromHubDescription": "Browse and download datasets from external sources like HuggingFace and OpenML.",
     "uploadDataset": "Dataset",
     "uploadDatasetBeforeCreatingSession": "You need to upload a dataset before creating a session. Please go to the Dataset Module to upload your data.",
     "uploadDatasetDescription": "Import your data from various sources and formats",

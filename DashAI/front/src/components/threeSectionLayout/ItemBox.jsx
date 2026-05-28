@@ -153,7 +153,7 @@ const ItemBox = forwardRef(function ItemBox(
         itemId={id}
         onInfo={onInfo}
         onDelete={onDelete}
-        onEdit={handleEdit}
+        onEdit={onEdit ? handleEdit : undefined}
         deleteConfirmationContent={deleteConfirmationContent}
         deleteConfirmationWarning={deleteConfirmationWarning}
       />

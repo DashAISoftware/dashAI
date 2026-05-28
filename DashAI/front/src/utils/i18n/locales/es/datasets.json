@@ -361,6 +361,8 @@
     "uniqueValues": "Valores Únicos",
     "unknownDataset": "Dataset desconocido",
     "uploadAndConfigure": "Sube tu dataset y configura parámetros",
+    "importFromHub": "Datafile Hub",
+    "importFromHubDescription": "Explora y descarga datasets desde fuentes externas como HuggingFace y OpenML.",
     "uploadDataset": "Dataset",
     "uploadDatasetBeforeCreatingSession": "Necesitas subir un dataset antes de crear una sesión. Por favor ve al Módulo de Datasets para subir tus datos.",
     "uploadDatasetDescription": "Importa tus datos desde varias fuentes y formatos",

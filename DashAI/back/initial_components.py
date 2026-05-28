@@ -68,6 +68,13 @@ from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
+# Dataset Sources
+from DashAI.back.dataset_sources.huggingface_dataset_source import (
+    HuggingFaceDatasetSource,
+)
+from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
+
 # Explainers
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
 from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
@@ -97,6 +104,7 @@ from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
 from DashAI.back.job.converter_job import ConverterJob
+from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
@@ -378,6 +386,10 @@ def get_initial_components():
         ExcelDataLoader,
         ImageDataLoader,
         JSONDataLoader,
+        # Dataset Sources
+        HuggingFaceDatasetSource,
+        OpenMLDatasetSource,
+        ZenodoDatasetSource,
         # Metrics
         F1,
         Accuracy,
@@ -400,6 +412,7 @@ def get_initial_components():
         OptunaOptimizer,
         HyperOptOptimizer,
         # Jobs
+        DatafileJob,
         ExplainerJob,
         ModelJob,
         ExplorerJob,
