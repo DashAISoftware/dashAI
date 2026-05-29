@@ -148,7 +148,7 @@ export default function DatasetPreviewNotebook({
     );
   };
 
-  const handleAddDatasetFromNotebook = async (name, notebookId) => {
+  const handleAddDatasetFromNotebook = async (name, notebookId, options = {}) => {
     try {
       const dataset = await createDataset(name);
 
@@ -160,7 +160,16 @@ export default function DatasetPreviewNotebook({
       replaceDatasets((prev) => [...prev, dataset]);
       navigate(`/app/data/datasets/${dataset.id}`);
 
-      const job = await enqueueDatasetJob(dataset.id, null, "", {}, notebookId);
+      const params = {
+        compute_metadata: options.compute_metadata ?? true,
+      };
+      const job = await enqueueDatasetJob(
+        dataset.id,
+        null,
+        "",
+        params,
+        notebookId,
+      );
 
       pollForDataset(
         { datasetId: dataset.id, datasetName: name },
@@ -270,8 +279,8 @@ export default function DatasetPreviewNotebook({
       <SaveDatasetModal
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
-        onSaveDataset={(name) =>
-          handleAddDatasetFromNotebook(name, notebook.id)
+        onSaveDataset={(name, options) =>
+          handleAddDatasetFromNotebook(name, notebook.id, options)
         }
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,
