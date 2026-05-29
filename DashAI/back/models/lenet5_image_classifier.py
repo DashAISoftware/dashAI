@@ -1,4 +1,4 @@
-"""MLP-based image classifier for DashAI."""
+"""LeNet-5 image classifier for DashAI."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
     int_field,
-    list_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -15,8 +14,8 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
-class MLPImageClassifierSchema(BaseSchema):
-    """Configuration parameters for the MLP Image Classifier."""
+class LeNet5ImageClassifierSchema(BaseSchema):
+    """Configuration parameters for the LeNet-5 Image Classifier."""
 
     epochs: schema_field(
         int_field(ge=1),
@@ -34,12 +33,8 @@ class MLPImageClassifierSchema(BaseSchema):
                 "O número de épocas para treinar o modelo. Uma época é uma "
                 "iteração completa sobre os dados de treinamento."
             ),
-            de=(
-                "Die Anzahl der Epochen zum Trainieren des Modells. Eine Epoche ist "
-                "eine vollständige Iteration über die Trainingsdaten."
-            ),
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas", de="Epochen"),
+        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -49,42 +44,11 @@ class MLPImageClassifierSchema(BaseSchema):
             en="Learning rate for the Adam optimizer.",
             es="Tasa de aprendizaje para el optimizador Adam.",
             pt="Taxa de aprendizado para o otimizador Adam.",
-            de="Lernrate für den Adam-Optimierer.",
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
-            de="Lernrate",
-        ),
-    )  # type: ignore
-
-    hidden_dims: schema_field(
-        list_field(int_field(ge=1), min_items=1),
-        placeholder=[128, 64],
-        description=MultilingualString(
-            en=(
-                "The hidden layers and their dimensions. Specify the number "
-                "of units of each layer separated by commas."
-            ),
-            es=(
-                "Las capas ocultas y sus dimensiones. Especifique el número "
-                "de unidades de cada capa separadas por comas."
-            ),
-            pt=(
-                "As camadas ocultas e suas dimensões. Especifique o número "
-                "de unidades de cada camada separadas por vírgulas."
-            ),
-            de=(
-                "Die verdeckten Schichten und ihre Dimensionen. Geben Sie die Anzahl "
-                "der Einheiten jeder Schicht durch Kommas getrennt an."
-            ),
-        ),
-        alias=MultilingualString(
-            en="Hidden layer dimensions",
-            es="Dimensiones de capas ocultas",
-            pt="Dimensões das camadas ocultas",
-            de="Dimensionen der verdeckten Schichten",
         ),
     )  # type: ignore
 
@@ -97,13 +61,13 @@ class MLPImageClassifierSchema(BaseSchema):
                 "Larger values speed up training but require more memory."
             ),
             es=(
-                "Número de imágenes procesadas juntas en cada paso de entrenamiento. "
-                "Valores más grandes aceleran el entrenamiento "
+                "Número de imágenes procesadas juntas en cada paso de "
+                "entrenamiento. Valores más grandes aceleran el entrenamiento "
                 "pero requieren más memoria."
             ),
             pt=(
-                "Número de imagens processadas juntas em cada etapa de treinamento. "
-                "Valores maiores aceleram o treinamento "
+                "Número de imagens processadas juntas em cada etapa de "
+                "treinamento. Valores maiores aceleram o treinamento "
                 "mas requerem mais memória."
             ),
         ),
@@ -113,25 +77,20 @@ class MLPImageClassifierSchema(BaseSchema):
     )  # type: ignore
 
     image_size: schema_field(
-        int_field(ge=8),
-        placeholder=64,
+        int_field(ge=16),
+        placeholder=32,
         description=MultilingualString(
             en=(
                 "Images are resized to this value (in pixels) for both width "
-                "and height before training. Larger sizes preserve more detail "
-                "but increase training time."
+                "and height. The original LeNet-5 uses 32×32."
             ),
             es=(
-                "Las imágenes se redimensionan a este valor (en píxeles) "
-                "tanto en ancho como en alto antes del entrenamiento. "
-                "Tamaños más grandes preservan más detalle "
-                "pero aumentan el tiempo de entrenamiento."
+                "Las imágenes se redimensionan a este valor (en píxeles) tanto "
+                "en ancho como en alto. El LeNet-5 original usa 32×32."
             ),
             pt=(
-                "As imagens são redimensionadas para este valor (em pixels) "
-                "tanto em largura quanto em altura antes do treinamento. "
-                "Tamanhos maiores preservam mais detalhes "
-                "mas aumentam o tempo de treinamento."
+                "As imagens são redimensionadas para este valor (em pixels) tanto "
+                "em largura quanto em altura. O LeNet-5 original usa 32×32."
             ),
         ),
         alias=MultilingualString(
@@ -144,19 +103,19 @@ class MLPImageClassifierSchema(BaseSchema):
         placeholder=0.0,
         description=MultilingualString(
             en=(
-                "Fraction of neurons randomly deactivated during each training step. "
+                "Dropout rate applied between fully-connected layers. "
                 "Values between 0.2 and 0.5 help prevent overfitting. "
-                "Use 0.0 to disable."
+                "Use 0.0 to reproduce the original LeNet-5."
             ),
             es=(
-                "Fracción de neuronas desactivadas aleatoriamente en cada paso de "
-                "entrenamiento. Valores entre 0.2 y 0.5 ayudan a prevenir "
-                "el sobreajuste. Use 0.0 para desactivarlo."
+                "Tasa de dropout entre las capas completamente conectadas. "
+                "Valores entre 0.2 y 0.5 ayudan a prevenir el sobreajuste. "
+                "Use 0.0 para reproducir el LeNet-5 original."
             ),
             pt=(
-                "Fração de neurônios desativados aleatoriamente em cada etapa de "
-                "treinamento. Valores entre 0.2 e 0.5 ajudam a prevenir "
-                "o sobreajuste. Use 0.0 para desativar."
+                "Taxa de dropout aplicada entre as camadas completamente conectadas. "
+                "Valores entre 0.2 e 0.5 ajudam a prevenir o sobreajuste. "
+                "Use 0.0 para reproduzir o LeNet-5 original."
             ),
         ),
         alias=MultilingualString(
@@ -169,17 +128,15 @@ class MLPImageClassifierSchema(BaseSchema):
         placeholder=0.0,
         description=MultilingualString(
             en=(
-                "L2 regularization coefficient for the Adam optimizer. Penalizes large "
-                "weights to improve generalization. Typical values: 1e-4 to 1e-2."
+                "L2 regularization coefficient for the Adam optimizer. "
+                "Typical values: 1e-4 to 1e-2."
             ),
             es=(
-                "Coeficiente de regularización L2 para el optimizador Adam. Penaliza "
-                "pesos grandes para mejorar la generalización. "
+                "Coeficiente de regularización L2 para el optimizador Adam. "
                 "Valores típicos: 1e-4 a 1e-2."
             ),
             pt=(
-                "Coeficiente de regularização L2 para o otimizador Adam. Penaliza "
-                "pesos grandes para melhorar a generalização. "
+                "Coeficiente de regularização L2 para o otimizador Adam. "
                 "Valores típicos: 1e-4 a 1e-2."
             ),
         ),
@@ -200,7 +157,7 @@ class MLPImageClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-def _make_image_dataset(x_dataset, y_dataset=None, image_size=64):
+def _make_image_dataset(x_dataset, y_dataset=None, image_size=32):
     import torch.utils.data
     from torchvision import transforms
 
@@ -253,73 +210,76 @@ def _make_image_dataset(x_dataset, y_dataset=None, image_size=64):
     return _ImageDataset(x_dataset, y_dataset, image_size)
 
 
-def _build_mlp_model(input_dim, output_dim, hidden_dims, dropout_rate=0.0):
+def _build_lenet5_model(input_channels, input_size, num_classes, dropout_rate):
+    import torch
     import torch.nn as nn
 
-    class _MLP(nn.Module):
-        def __init__(self, in_dim, out_dim, h_dims, drop_r):
+    class _LeNet5(nn.Module):
+        def __init__(self, in_ch, in_sz, n_cls, drop_r):
             super().__init__()
-            self.hidden_layers = nn.ModuleList()
-            self.dropout_layers = nn.ModuleList()
-            prev_dim = in_dim
-            for h_dim in h_dims:
-                self.hidden_layers.append(nn.Linear(prev_dim, h_dim))
-                self.dropout_layers.append(nn.Dropout(drop_r))
-                prev_dim = h_dim
-            self.output_layer = nn.Linear(prev_dim, out_dim)
-            self.relu = nn.ReLU()
+            self.conv_layers = nn.Sequential(
+                nn.Conv2d(in_ch, 6, kernel_size=5),
+                nn.Tanh(),
+                nn.AvgPool2d(kernel_size=2, stride=2),
+                nn.Conv2d(6, 16, kernel_size=5),
+                nn.Tanh(),
+                nn.AvgPool2d(kernel_size=2, stride=2),
+            )
+
+            dummy = torch.zeros(1, in_ch, in_sz, in_sz)
+            flat_dim = self.conv_layers(dummy).view(1, -1).shape[1]
+
+            self.classifier = nn.Sequential(
+                nn.Linear(flat_dim, 120),
+                nn.Tanh(),
+                nn.Dropout(drop_r),
+                nn.Linear(120, 84),
+                nn.Tanh(),
+                nn.Dropout(drop_r),
+                nn.Linear(84, n_cls),
+            )
 
         def forward(self, x):
-            batch_size = x.shape[0]
-            x = x.view(batch_size, -1)
-            for layer, dropout in zip(
-                self.hidden_layers, self.dropout_layers, strict=True
-            ):
-                x = dropout(self.relu(layer(x)))
-            return self.output_layer(x)
+            x = self.conv_layers(x)
+            return self.classifier(x.view(x.size(0), -1))
 
-    return _MLP(input_dim, output_dim, hidden_dims, dropout_rate)
+    return _LeNet5(input_channels, input_size, num_classes, dropout_rate)
 
 
-class MLPImageClassifier(BaseModel):
-    """MLP-based image classifier.
+class LeNet5ImageClassifier(BaseModel):
+    """LeNet-5 image classifier (LeCun et al., 1998).
 
-    A feed-forward neural network that flattens image pixels and passes them
-    through configurable hidden layers with ReLU activation for classification.
+    The original convolutional neural network architecture, featuring two
+    conv→tanh→pool blocks followed by three fully-connected layers.
+    Uses Tanh activations and average pooling as in the original paper.
     """
 
-    SCHEMA = MLPImageClassifierSchema
+    SCHEMA = LeNet5ImageClassifierSchema
     COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
     DISPLAY_NAME: str = MultilingualString(
-        en="MLP Image Classifier",
-        es="Clasificador de Imágenes MLP",
-        pt="Classificador de Imagens MLP",
-        de="MLP-Bildklassifikator",
+        en="LeNet-5",
+        es="LeNet-5",
+        pt="LeNet-5",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "A Multi-Layer Perceptron (MLP) image classifier that flattens "
-            "image pixels and passes them through configurable fully-connected "
-            "hidden layers with ReLU activation for classification."
+            "The original CNN architecture (LeCun et al., 1998). Two "
+            "conv→tanh→pool blocks followed by three fully-connected layers. "
+            "Ideal for small images and educational use."
         ),
         es=(
-            "Un clasificador de imágenes basado en Perceptrón Multicapa (MLP) "
-            "que aplana los píxeles de la imagen y los pasa por capas ocultas "
-            "completamente conectadas con activación ReLU para clasificación."
+            "La arquitectura CNN original (LeCun et al., 1998). Dos bloques "
+            "conv→tanh→pool seguidos de tres capas completamente conectadas. "
+            "Ideal para imágenes pequeñas y uso educativo."
         ),
         pt=(
-            "Um classificador de imagens baseado em Perceptron Multicamada (MLP) "
-            "que achata os pixels da imagem e os passa por camadas ocultas "
-            "completamente conectadas com ativação ReLU para classificação."
-        ),
-        de=(
-            "Ein Bildklassifikator auf Basis eines Mehrschichtigen Perzeptrons (MLP), "
-            "der Bildpixel abflacht und durch konfigurierbare vollständig verbundene "
-            "verdeckte Schichten mit ReLU-Aktivierung zur Klassifikation leitet."
+            "A arquitetura CNN original (LeCun et al., 1998). Dois blocos "
+            "conv→tanh→pool seguidos de três camadas completamente conectadas. "
+            "Ideal para imagens pequenas e uso educacional."
         ),
     )
-    COLOR: str = "#E91E63"
-    ICON: str = "ImageSearch"
+    COLOR: str = "#7B1FA2"
+    ICON: str = "History"
 
     @staticmethod
     def _collate_fn_with_labels(batch):
@@ -339,9 +299,8 @@ class MLPImageClassifier(BaseModel):
         self,
         epochs=10,
         learning_rate=0.001,
-        hidden_dims=None,
         batch_size=32,
-        image_size=64,
+        image_size=32,
         dropout_rate=0.0,
         weight_decay=0.0,
         device=DEVICE_PLACEHOLDER,
@@ -349,11 +308,8 @@ class MLPImageClassifier(BaseModel):
     ):
         import torch
 
-        if hidden_dims is None:
-            hidden_dims = [128, 64]
         self.epochs = epochs
         self.learning_rate = learning_rate
-        self.hidden_dims = hidden_dims
         self.batch_size = batch_size
         self.image_size = image_size
         self.dropout_rate = dropout_rate
@@ -366,8 +322,8 @@ class MLPImageClassifier(BaseModel):
         )
         self.model = None
         self.optimizer = None
-        self.input_dim = None
-        self.output_dim = None
+        self.input_channels = None
+        self.num_classes = None
         self.idx_to_label = {}
         self.label_to_idx = {}
 
@@ -381,20 +337,18 @@ class MLPImageClassifier(BaseModel):
             return dataset
 
         col_name = dataset.column_names[0]
-        labels = dataset[col_name]
-        encoded = [self.label_to_idx.get(label, label) for label in labels]
-        table = pa.table({col_name: encoded})
-        return DashAIDataset(table)
+        encoded = [self.label_to_idx.get(lbl, lbl) for lbl in dataset[col_name]]
+        return DashAIDataset(pa.table({col_name: encoded}))
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
-        """Train the MLP on the provided image dataset.
+        """Train LeNet-5 on the provided image dataset.
 
         Parameters
         ----------
         x_train : DashAIDataset
             Input dataset containing images.
         y_train : DashAIDataset
-            Target dataset containing labels.
+            Target dataset containing string labels.
         x_validation : DashAIDataset, optional
             Validation input features. Defaults to None.
         y_validation : DashAIDataset, optional
@@ -402,7 +356,7 @@ class MLPImageClassifier(BaseModel):
 
         Returns
         -------
-        MLPImageClassifier
+        LeNet5ImageClassifier
             The trained model instance.
         """
         import torch
@@ -415,13 +369,8 @@ class MLPImageClassifier(BaseModel):
         image_dataset = _make_image_dataset(
             x_train, y_dataset=y_train, image_size=self.image_size
         )
-
-        self.input_dim = (
-            image_dataset.tensor_shape[0]
-            * image_dataset.tensor_shape[1]
-            * image_dataset.tensor_shape[2]
-        )
-        self.output_dim = image_dataset.num_classes()
+        self.input_channels = image_dataset.tensor_shape[0]
+        self.num_classes = image_dataset.num_classes()
         self.idx_to_label = image_dataset.idx_to_label
         self.label_to_idx = image_dataset.label_to_idx
 
@@ -432,8 +381,11 @@ class MLPImageClassifier(BaseModel):
             collate_fn=self._collate_fn_with_labels,
         )
 
-        self.model = _build_mlp_model(
-            self.input_dim, self.output_dim, self.hidden_dims, self.dropout_rate
+        self.model = _build_lenet5_model(
+            self.input_channels,
+            self.image_size,
+            self.num_classes,
+            self.dropout_rate,
         ).to(self.device)
 
         criterion = nn.CrossEntropyLoss()
@@ -448,8 +400,7 @@ class MLPImageClassifier(BaseModel):
             for images, labels in train_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
-                outputs = self.model(images)
-                loss = criterion(outputs, labels)
+                loss = criterion(self.model(images), labels)
                 loss.backward()
                 self.optimizer.step()
 
@@ -473,7 +424,7 @@ class MLPImageClassifier(BaseModel):
         return self
 
     def predict(self, x):
-        """Make predictions on the input dataset.
+        """Return per-class probability matrix for each image.
 
         Parameters
         ----------
@@ -492,7 +443,7 @@ class MLPImageClassifier(BaseModel):
         image_dataset = _make_image_dataset(
             x, y_dataset=None, image_size=self.image_size
         )
-        test_loader = torch.utils.data.DataLoader(
+        loader = torch.utils.data.DataLoader(
             image_dataset,
             batch_size=self.batch_size,
             shuffle=False,
@@ -502,17 +453,11 @@ class MLPImageClassifier(BaseModel):
         self.model.eval()
         all_probs = []
         with torch.no_grad():
-            for images in test_loader:
-                images = images.to(self.device)
-                logits = self.model(images)
-                probs = torch.softmax(logits, dim=1)
-                all_probs.append(probs.cpu())
+            for images in loader:
+                logits = self.model(images.to(self.device))
+                all_probs.append(torch.softmax(logits, dim=1).cpu().numpy())
 
-        return (
-            torch.cat(all_probs, dim=0).numpy()
-            if all_probs
-            else np.empty((0, self.output_dim))
-        )
+        return np.concatenate(all_probs, axis=0)
 
     def save(self, filename: str) -> None:
         """Save the model checkpoint to disk.
@@ -524,23 +469,24 @@ class MLPImageClassifier(BaseModel):
         """
         import torch
 
-        checkpoint = {
-            "model_state_dict": self.model.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
-            "epochs": self.epochs,
-            "learning_rate": self.learning_rate,
-            "hidden_dims": self.hidden_dims,
-            "batch_size": self.batch_size,
-            "image_size": self.image_size,
-            "dropout_rate": self.dropout_rate,
-            "weight_decay": self.weight_decay,
-            "device_name": self._device_name,
-            "input_dim": self.input_dim,
-            "output_dim": self.output_dim,
-            "idx_to_label": self.idx_to_label,
-            "label_to_idx": self.label_to_idx,
-        }
-        torch.save(checkpoint, filename)
+        torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "epochs": self.epochs,
+                "learning_rate": self.learning_rate,
+                "batch_size": self.batch_size,
+                "image_size": self.image_size,
+                "dropout_rate": self.dropout_rate,
+                "weight_decay": self.weight_decay,
+                "device_name": self._device_name,
+                "input_channels": self.input_channels,
+                "num_classes": self.num_classes,
+                "idx_to_label": self.idx_to_label,
+                "label_to_idx": self.label_to_idx,
+            },
+            filename,
+        )
 
     @classmethod
     def load(cls, filename: str):
@@ -553,37 +499,36 @@ class MLPImageClassifier(BaseModel):
 
         Returns
         -------
-        MLPImageClassifier
+        LeNet5ImageClassifier
             Instance with loaded weights.
         """
         import torch
         import torch.optim as optim
 
-        checkpoint = torch.load(filename, map_location=torch.device("cpu"))
+        ckpt = torch.load(filename, map_location=torch.device("cpu"))
         instance = cls(
-            epochs=checkpoint["epochs"],
-            learning_rate=checkpoint["learning_rate"],
-            hidden_dims=checkpoint["hidden_dims"],
-            batch_size=checkpoint.get("batch_size", 32),
-            image_size=checkpoint.get("image_size", 64),
-            dropout_rate=checkpoint.get("dropout_rate", 0.0),
-            weight_decay=checkpoint.get("weight_decay", 0.0),
-            device=checkpoint.get("device_name", DEVICE_PLACEHOLDER),
+            epochs=ckpt["epochs"],
+            learning_rate=ckpt["learning_rate"],
+            batch_size=ckpt.get("batch_size", 32),
+            image_size=ckpt.get("image_size", 32),
+            dropout_rate=ckpt.get("dropout_rate", 0.0),
+            weight_decay=ckpt.get("weight_decay", 0.0),
+            device=ckpt.get("device_name", DEVICE_PLACEHOLDER),
         )
-        instance.input_dim = checkpoint["input_dim"]
-        instance.output_dim = checkpoint["output_dim"]
-        instance.model = _build_mlp_model(
-            instance.input_dim,
-            instance.output_dim,
-            instance.hidden_dims,
+        instance.input_channels = ckpt["input_channels"]
+        instance.num_classes = ckpt["num_classes"]
+        instance.idx_to_label = ckpt.get("idx_to_label", {})
+        instance.label_to_idx = ckpt.get("label_to_idx", {})
+        instance.model = _build_lenet5_model(
+            instance.input_channels,
+            instance.image_size,
+            instance.num_classes,
             instance.dropout_rate,
         )
-        instance.model.load_state_dict(checkpoint["model_state_dict"])
+        instance.model.load_state_dict(ckpt["model_state_dict"])
         instance.optimizer = optim.Adam(
             instance.model.parameters(),
             weight_decay=instance.weight_decay,
         )
-        instance.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        instance.idx_to_label = checkpoint.get("idx_to_label", {})
-        instance.label_to_idx = checkpoint.get("label_to_idx", {})
+        instance.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
         return instance
