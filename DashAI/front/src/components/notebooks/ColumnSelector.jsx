@@ -39,6 +39,7 @@ function ColumnSelector({
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
+  typesDtypeRestrictions = {},
   onSelectionChange = () => {},
   onValidationChange = () => {},
   columnTypes = null,
@@ -160,10 +161,14 @@ function ColumnSelector({
         if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
           return false;
         }
+        const forbiddenDtypes = typesDtypeRestrictions[row.valueType];
+        if (forbiddenDtypes && forbiddenDtypes.includes(row.dataType)) {
+          return false;
+        }
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, allowedTypes]);
+  }, [rows, allowedDtypes, allowedTypes, typesDtypeRestrictions]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -441,6 +446,7 @@ ColumnSelector.propTypes = {
   }),
   allowedDtypes: PropTypes.array,
   allowedTypes: PropTypes.array,
+  typesDtypeRestrictions: PropTypes.object,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };
