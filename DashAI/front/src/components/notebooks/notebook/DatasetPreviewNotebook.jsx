@@ -148,7 +148,11 @@ export default function DatasetPreviewNotebook({
     );
   };
 
-  const handleAddDatasetFromNotebook = async (name, notebookId, options = {}) => {
+  const handleAddDatasetFromNotebook = async (
+    name,
+    notebookId,
+    options = {},
+  ) => {
     try {
       const dataset = await createDataset(name);
 
