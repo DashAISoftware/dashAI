@@ -277,7 +277,10 @@ class DatasetJob(BaseJob):
 
                     new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
-                new_dataset.compute_metadata()
+                if params.get("compute_metadata", True):
+                    new_dataset.compute_metadata()
+                else:
+                    new_dataset.compute_base_metadata()
                 gc.collect()
 
                 dataset_save_path = folder_path / "dataset"
