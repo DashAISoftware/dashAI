@@ -387,5 +387,15 @@
     "noChangesMade": "No changes were made",
     "notebookCreated": "Notebook created successfully",
     "notebookUpdateSuccess": "Notebook updated successfully"
+  },
+  "computeMetadata": {
+    "label": "Compute extended metadata (EDA)",
+    "helper": "Disable for big datasets to speed up upload. Extended stats (correlations, quality, etc.) won't be available for this dataset.",
+    "recommendation": "Recommended off: this dataset has {{colCount}} columns and {{estRows}} rows. Computing metadata could take several minutes.",
+    "confirmTitle": "Compute metadata anyway?",
+    "confirmBody": "This dataset has {{colCount}} columns and {{estRows}} rows. Computing metadata could take several minutes and use significant memory.",
+    "skipButton": "Skip metadata",
+    "computeButton": "Compute anyway",
+    "missingNotice": "Extended metadata was not computed for this dataset. Re-upload it with metadata enabled to see this section."
   }
 }
