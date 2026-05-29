@@ -173,7 +173,10 @@ export default function RightBar({ notebook, onToggle }) {
     if (Object.keys(typesDtypeRestrictions).length > 0) {
       validColumns = validColumns.filter((col) => {
         const forbidden = typesDtypeRestrictions[col.valueType];
-        return !forbidden || !forbidden.includes(col.dataType);
+        if (!forbidden) return true;
+        const dtypeKey =
+          col.dataType === t("common:unknown") ? "" : col.dataType;
+        return !forbidden.includes(dtypeKey);
       });
     }
 

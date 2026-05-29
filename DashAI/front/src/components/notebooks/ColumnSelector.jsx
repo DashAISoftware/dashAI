@@ -162,8 +162,10 @@ function ColumnSelector({
           return false;
         }
         const forbiddenDtypes = typesDtypeRestrictions[row.valueType];
-        if (forbiddenDtypes && forbiddenDtypes.includes(row.dataType)) {
-          return false;
+        if (forbiddenDtypes) {
+          const dtypeKey =
+            row.dataType === t("common:unknown") ? "" : row.dataType;
+          if (forbiddenDtypes.includes(dtypeKey)) return false;
         }
         return true;
       })
