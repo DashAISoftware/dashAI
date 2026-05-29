@@ -33,7 +33,7 @@ export default function HoverToolInfo({
           bgcolor: theme.palette.background.paper,
           border: `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
-          p: 2,
+          p: 4,
           maxWidth: 320,
           ml: -1,
         },
@@ -50,11 +50,11 @@ export default function HoverToolInfo({
               bgcolor: theme.palette.ui.border,
               border: `1px solid ${theme.palette.divider}`,
               overflow: "hidden",
-              mb: 2,
+              mb: 4,
             }}
           >
             <img
-              src={`${api.defaults.baseURL}/v1/component/image/${hoveredTool.name}`}
+              src={`${api.defaults.baseURL}/v1/component/image/${hoveredTool.name}/`}
               alt={hoveredTool.display_name}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
@@ -63,7 +63,7 @@ export default function HoverToolInfo({
           {/* Title */}
           <Typography
             variant="subtitle2"
-            sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}
+            sx={{ color: "text.primary", fontWeight: 600, mb: 2 }}
           >
             {hoveredTool.display_name}
           </Typography>
@@ -71,7 +71,7 @@ export default function HoverToolInfo({
           {/* Description */}
           <Typography
             variant="body2"
-            sx={{ color: "text.secondary", lineHeight: 1.5, mb: 1.5 }}
+            sx={{ color: "text.secondary", lineHeight: 1.5, mb: 3 }}
           >
             {hoveredTool.description}
           </Typography>

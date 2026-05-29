@@ -11,13 +11,12 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import ResultsDetails from "./ResultsDetails";
 import { PlayArrow } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 function ResultsTableLayout({
   rows,
@@ -30,11 +29,9 @@ function ResultsTableLayout({
   handleExecuteRuns,
   handleRun,
 }) {
-  const { t, i18n } = useTranslation(["models"]);
+  const { t } = useTranslation(["models"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const table = useMaterialReactTable({
     columns,
@@ -74,7 +71,7 @@ function ResultsTableLayout({
   return (
     <Paper
       sx={{
-        p: 4,
+        p: 8,
       }}
     >
       {!loading ? (
@@ -83,7 +80,7 @@ function ResultsTableLayout({
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              pb: 4,
+              pb: 8,
               pt: 0,
             }}
           >

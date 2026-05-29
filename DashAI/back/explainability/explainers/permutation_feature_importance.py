@@ -34,8 +34,21 @@ class PermutationFeatureImportanceSchema(BaseSchema):
                 "Métrica utilizada para evaluar cómo cambia el rendimiento del "
                 "modelo cuando se baraja una característica particular."
             ),
+            pt=(
+                "Métrica usada para avaliar como o desempenho do modelo muda "
+                "quando uma característica particular é embaralhada."
+            ),
+            de=(
+                "Metrik zur Bewertung, wie sich die Modellleistung ändert, wenn "
+                "ein bestimmtes Merkmal permutiert wird."
+            ),
         ),
-        alias=MultilingualString(en="Scoring metric", es="Métrica de evaluación"),
+        alias=MultilingualString(
+            en="Scoring metric",
+            es="Métrica de evaluación",
+            pt="Métrica de avaliação",
+            de="Bewertungsmetrik",
+        ),
     )  # type: ignore
 
     n_repeats: schema_field(
@@ -44,8 +57,15 @@ class PermutationFeatureImportanceSchema(BaseSchema):
         description=MultilingualString(
             en=("Number of times to permute a feature."),
             es=("Número de veces que se permuta una característica."),
+            pt=("Número de vezes que uma característica é permutada."),
+            de=("Anzahl der Permutationen eines Merkmals."),
         ),
-        alias=MultilingualString(en="Number of repeats", es="Número de repeticiones"),
+        alias=MultilingualString(
+            en="Number of repeats",
+            es="Número de repeticiones",
+            pt="Número de repetições",
+            de="Anzahl der Wiederholungen",
+        ),
     )  # type: ignore
 
     random_state: schema_field(
@@ -60,8 +80,21 @@ class PermutationFeatureImportanceSchema(BaseSchema):
                 "Semilla del generador aleatorio para controlar las permutaciones "
                 "de cada característica."
             ),
+            pt=(
+                "Semente do gerador de números aleatórios para controlar as "
+                "permutações de cada característica."
+            ),
+            de=(
+                "Startwert für den Zufallszahlengenerator zur Steuerung der "
+                "Permutationen jedes Merkmals."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Semilla aleatoria"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Semilla aleatoria",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+        ),
     )  # type: ignore
 
     max_samples_fraction: schema_field(
@@ -76,10 +109,20 @@ class PermutationFeatureImportanceSchema(BaseSchema):
                 "Fracción de muestras a extraer del conjunto de prueba para "
                 "calcular la importancia en cada repetición."
             ),
+            pt=(
+                "Fração de amostras a extrair do conjunto de teste para "
+                "calcular a importância das características a cada repetição."
+            ),
+            de=(
+                "Anteil der aus dem Testdatensatz gezogenen Stichproben zur "
+                "Berechnung der Merkmalswichtigkeit bei jeder Wiederholung."
+            ),
         ),
         alias=MultilingualString(
             en="Max samples fraction",
             es="Fracción máxima de muestras",
+            pt="Fração máxima de amostras",
+            de="Maximaler Stichprobenanteil",
         ),
     )  # type: ignore
 
@@ -113,6 +156,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     DISPLAY_NAME = MultilingualString(
         en="Permutation Feature Importance",
         es="Importancia por Permutación",
+        pt="Importância por Permutação",
+        de="Permutations-Merkmalswichtigkeit",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -123,6 +168,15 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             "Evalúa la importancia de las características midiendo la caída en el "
             "rendimiento del modelo cuando los valores de una característica se "
             "barajan aleatoriamente."
+        ),
+        pt=(
+            "Avalia a importância das características medindo a queda no "
+            "desempenho do modelo quando os valores de uma característica são "
+            "embaralhados aleatoriamente."
+        ),
+        de=(
+            "Bewertet die Merkmalswichtigkeit durch Messung des Leistungsabfalls "
+            "des Modells, wenn die Werte eines Merkmals zufällig permutiert werden."
         ),
     )
     COLOR = "#800080"

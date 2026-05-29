@@ -33,6 +33,14 @@ class SMOTEENNSchema(BaseSchema):
                 "Estrategia de muestreo para aplicar SMOTE y limpiar el "
                 "conjunto de datos."
             ),
+            pt=(
+                "Estratégia de amostragem para aplicar SMOTE e limpar o "
+                "conjunto de dados."
+            ),
+            de=(
+                "Abtaststrategie zur Anwendung von SMOTE und Bereinigung des "
+                "Datensatzes."
+            ),
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -41,6 +49,8 @@ class SMOTEENNSchema(BaseSchema):
         description=MultilingualString(
             en="Seed used for reproducibility.",
             es="Semilla usada para reproducibilidad.",
+            pt="Semente usada para reprodutibilidade.",
+            de="Startwert für die Reproduzierbarkeit.",
         ),
     )  # type: ignore
     k_neighbors: schema_field(
@@ -49,6 +59,8 @@ class SMOTEENNSchema(BaseSchema):
         description=MultilingualString(
             en="Number of neighbors used by SMOTE.",
             es="Número de vecinos utilizados por SMOTE.",
+            pt="Número de vizinhos utilizados pelo SMOTE.",
+            de="Anzahl der von SMOTE verwendeten Nachbarn.",
         ),
     )  # type: ignore
 
@@ -87,9 +99,16 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
             "SMOTEENN: SMOTE con reducción de ruido mediante Vecinos Más "
             "Cercanos Editados."
         ),
+        pt=(
+            "SMOTEENN: SMOTE com redução de ruído via Vizinhos Mais Próximos Editados."
+        ),
+        de="SMOTEENN: SMOTE mit Rauschreduzierung durch Edited Nearest Neighbors.",
     )
     DISPLAY_NAME = MultilingualString(
-        en="SMOTE-ENN (Hybrid Sampling)", es="SMOTE-ENN (Muestreo Híbrido)"
+        en="SMOTE-ENN (Hybrid Sampling)",
+        es="SMOTE-ENN (Muestreo Híbrido)",
+        pt="SMOTEENN (Amostragem Híbrida)",
+        de="SMOTE-ENN (Hybride Abtastung)",
     )
     IMAGE_PREVIEW = "smoteenn.png"
 

@@ -46,7 +46,7 @@ function ConfigurableNode({
       <DialogTitle>Configure Node</DialogTitle>
       <DialogContent dividers>
         {(configSchema?.fields || []).map((field) => (
-          <Box key={field.name} sx={{ my: 2 }}>
+          <Box key={field.name} sx={{ my: 4 }}>
             {field.type === "select" ? (
               <TextField
                 select

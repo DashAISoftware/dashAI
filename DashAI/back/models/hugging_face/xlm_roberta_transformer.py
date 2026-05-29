@@ -27,6 +27,8 @@ class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="XLM-RoBERTa Transformer",
         es="Transformer XLM-RoBERTa",
+        pt="Transformer XLM-RoBERTa",
+        de="XLM-RoBERTa Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -38,6 +40,17 @@ class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
             "RoBERTa multilingüe para clasificación de texto entre idiomas "
             "(100 idiomas). "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "RoBERTa multilingual para classificação de texto entre idiomas "
+            "(100 idiomas). "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Mehrsprachiges RoBERTa für sprachübergreifende Textklassifikation "
+            "(100 Sprachen). "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#6A1B9A"

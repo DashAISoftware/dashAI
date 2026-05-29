@@ -9,8 +9,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import {
   Box,
   ButtonGroup,
@@ -37,6 +35,7 @@ import SingleRun from "./runButtons/SingleRun";
 import EditRunDialog from "./runButtons/EditRunDialog";
 import DeleteRun from "./runButtons/DeleteRun";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 const toMRT = (ids) => Object.fromEntries(ids.map((id) => [String(id), true]));
 const fromMRT = (sel) =>
@@ -60,11 +59,9 @@ function RunnerDialog({
   const experimentNameRef = useRef(experiment.name);
   const tourContext = useTourContext();
   const [models, setModels] = useState([]);
-  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const { t } = useTranslation(["experiments", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const hasActiveRuns = rows.some(
     (r) => r.status === 1 || r.status === 2, // Delivered or Started
@@ -356,7 +353,7 @@ function RunnerDialog({
       enableSorting: false,
       enableColumnFilter: false,
       Cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <SingleRun run={row.original} onRun={handleSingleRun} />
           <EditRunDialog
             experiment={experiment}
@@ -454,19 +451,19 @@ function RunnerDialog({
         </DialogTitle>
         <DialogContent>
           <Paper
-            sx={{ px: 3, py: 2 }}
+            sx={{ px: 12, py: 8 }}
             onClick={(event) => {
               event.target = document.body;
             }}
           >
-            <Typography variant="subtitle1" component="h3" sx={{ pb: 1 }}>
+            <Typography variant="subtitle1" component="h3" sx={{ pb: 4 }}>
               Select models to run
             </Typography>
             <MaterialReactTable table={table} />
           </Paper>
         </DialogContent>
         <DialogActions>
-          <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 2 }}>
+          <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 8 }}>
             <Button
               variant="outlined"
               onClick={handleCloseAndAdvance}

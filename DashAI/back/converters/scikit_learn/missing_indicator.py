@@ -48,9 +48,14 @@ class MissingIndicator(
     DESCRIPTION = MultilingualString(
         en="Binary indicators for missing values.",
         es="Indicadores binarios para valores faltantes.",
+        pt="Indicadores binários para valores ausentes.",
+        de="Binäre Indikatoren für fehlende Werte.",
     )
     DISPLAY_NAME = MultilingualString(
-        en="Missing Indicator", es="Indicador de Faltantes"
+        en="Missing Indicator",
+        es="Indicador de Faltantes",
+        pt="Indicador de Valores Ausentes",
+        de="Fehlender-Wert-Indikator",
     )
     IMAGE_PREVIEW = "missing_indicator.png"
 

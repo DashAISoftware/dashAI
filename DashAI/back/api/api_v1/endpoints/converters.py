@@ -229,15 +229,23 @@ async def delete_converter(
                 notebook.file_path,
                 dirs_exist_ok=True,
             )
+            # copytree preserves the source mtime, which may predate the API
+            # cache entry. Touch data.arrow so the cache invalidation detects
+            # the change even when no previous converters are re-run.
+            import os
+            import time
+
+            arrow_path = os.path.join(notebook.file_path, "dataset", "data.arrow")
+            if os.path.exists(arrow_path):
+                now = time.time()
+                os.utime(arrow_path, (now, now))
 
             # Enqueue all previous converters
             job_ids = []
             for converter in previous_converters:
-                # Crear instancia de ConverterJob y encolarlo directamente
                 job = ConverterJob(converter_id=converter.id)
-                job_queue.put(job)
-                if hasattr(job, "id"):
-                    job_ids.append(job.id)
+                enqueued = job_queue.put(job)
+                job_ids.append(enqueued.id)
 
             # Delete all the converters after the current one
             for converter in next_converters:

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Box, Button, Grid, TextField } from "@mui/material";
+import { Box, Grid, TextField } from "@mui/material";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
@@ -9,6 +9,7 @@ import { generateSequentialName } from "../../../utils/nameGenerator";
 import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -131,9 +132,11 @@ export default function ConfigureAndUploadDatasetStep({
   }, [
     selectedDataloader,
     datasetFileToUpload,
+    datasetName,
     columnTypes,
     columnRenames,
     formSubmitRef,
+    formValues,
     handleDatasetCreated,
     backHome,
     enqueueSnackbar,
@@ -199,7 +202,7 @@ export default function ConfigureAndUploadDatasetStep({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <TextField
           label={t("datasets:label.datasetName")}
           value={datasetName}
@@ -213,7 +216,7 @@ export default function ConfigureAndUploadDatasetStep({
         direction="column"
         justifyContent="flex-start"
         alignItems="stretch"
-        spacing={2}
+        spacing={4}
         sx={{
           flex: 1,
           minHeight: 0,
@@ -233,31 +236,16 @@ export default function ConfigureAndUploadDatasetStep({
         />
       </Grid>
 
-      <Box
-        sx={{
-          mt: 2,
-          pt: 2,
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 1,
-        }}
-      >
-        <Button variant="outlined" onClick={goToPrevStep}>
-          {t("common:back")}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={submitNewDataset}
-          disabled={!uploadEnabled}
-          data-tour="dataset-step-upload-button"
-          loading={uploading}
-        >
-          {t("common:upload")}
-        </Button>
-      </Box>
+      <StepperNavigationFooter
+        onBack={goToPrevStep}
+        onNext={submitNewDataset}
+        nextDisabled={!uploadEnabled}
+        nextLabel={t("common:upload")}
+        loading={uploading}
+        nextDataTour={
+          tourContext?.run ? "dataset-step-upload-button" : undefined
+        }
+      />
     </Box>
   );
 }

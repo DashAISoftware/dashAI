@@ -1,0 +1,63 @@
+{
+  "button": {
+    "addExplainer": "Erklärungsmodell hinzufügen",
+    "backToExplainers": "Zurück zu Erklärungsmodellen",
+    "hidePlot": "Plot ausblenden",
+    "showPlot": "Plot anzeigen"
+  },
+  "error": {
+    "explainerFailed": "Erklärungsmodell konnte nicht generiert werden.",
+    "fetchDataError": "Fehler beim Abrufen der Daten des Erklärungsmodells mit ID: {{explainerId}}",
+    "fetchDatasets": "Fehler beim Abrufen der Datensätze.",
+    "fetchExplainers": "Fehler beim Abrufen der Erklärungsmodelle.",
+    "fetchRuns": "Fehler beim Abrufen der Durchlauftabelle.",
+    "fetchTasks": "Fehler beim Abrufen der Aufgaben.",
+    "globalExplainerCreationError": "Fehler beim Erstellen des globalen Erklärungsmodells.",
+    "globalExplainerJobEnqueueError": "Fehler beim Einreihen des globalen Erklärungsmodell-Jobs.",
+    "globalExplainerJobFailed": "Globaler Erklärungsmodell-Job fehlgeschlagen: {{error}}",
+    "invalidDataset": "Der ausgewählte Datensatz ist ungültig.",
+    "localExplainerCreationError": "Fehler beim Erstellen des lokalen Erklärungsmodells.",
+    "localExplainerJobEnqueueError": "Fehler beim Einreihen des lokalen Erklärungsmodell-Jobs.",
+    "localExplainerJobFailed": "Lokaler Erklärungsmodell-Job fehlgeschlagen: {{error}}",
+    "nameTooShort": "Der Name des Erklärungsmodells muss mindestens 4 alphanumerische Zeichen enthalten.",
+    "validateDataset": "Fehler beim Validieren des ausgewählten Datensatzes."
+  },
+  "label": {
+    "configureExplainer": "Erklärungsmodell konfigurieren",
+    "configureExplainerParameters": "Parameter des Erklärungsmodells konfigurieren",
+    "datasetId": "Datensatz-ID",
+    "datasetSelection": "Der hier ausgewählte Datensatz wird zur Berechnung der Erklärungen verwendet. Wenn Sie denselben Datensatz verwenden, der zum Training des Modells verwendet wurde, möchten Sie möglicherweise eine Stichprobe Ihrer Testmenge verwenden. Beachten Sie, dass einige Erklärungsmodelle je nach Anzahl der ausgewählten Instanzen viel Zeit benötigen können.",
+    "datasetSplit": "Datensatzaufteilung",
+    "deleteExplainer": "Erklärungsmodell löschen?",
+    "deleteExplainerConfirmation": "Sind Sie sicher, dass Sie dieses Erklärungsmodell löschen möchten?",
+    "explainerConfiguration": "Konfiguration des Erklärungsmodells",
+    "explainerName": "Name des Erklärungsmodells",
+    "explainerParameters": "Parameter des Erklärungsmodells",
+    "explainersDashboardDescription": "Konfigurieren Sie globale oder lokale Erklärungsmodelle für Ihr trainiertes Modell, um dessen Entscheidungsprozess zu erkunden und zu verstehen.",
+    "explainersDashboardTitle": "Erklärungs-Dashboard für Modell {{modelName}}",
+    "explanationPath": "Erklärungspfad",
+    "forExplainer": "Name des Erklärungsmodells: {{name}}",
+    "globalExplanations": "Globale Erklärungen",
+    "globalExplanationsDescription": "Globale Erklärungen beschreiben, wie das gesamte ML-Modell funktioniert.",
+    "instanceNumber": "Instanz {{number}}",
+    "localExplanations": "Lokale Erklärungen",
+    "localExplanationsDescription": "Lokale Erklärungen erklären Modellvorhersagen für eine spezifische Instanz.",
+    "newGlobalExplainer": "Neues globales Erklärungsmodell",
+    "newLocalExplainer": "Neues lokales Erklärungsmodell",
+    "noDatasetsAvailable": "<0>Keine Datensätze verfügbar.</0>Gehen Sie zum <2>Daten-Tab</2>, um zuerst einen hochzuladen.",
+    "percentageOfSplitToUse": "Prozentsatz der zu verwendenden Aufteilung",
+    "plotPath": "Plot-Pfad",
+    "runId": "Durchlauf-ID",
+    "selectDataset": "Datensatz auswählen",
+    "selectDatasetToExplain": "Datensatz mit zu erklärenden Instanzen auswählen",
+    "selectExplainer": "Name und Erklärungsmodell festlegen",
+    "selectExplainerAndName": "Erklärungsmodell auswählen und Namen eingeben",
+    "explainerInProgress": "Erklärungsmodell wird verarbeitet...",
+    "splitSelectionSummary": "Prozentsatz: {{percentage}}% | Ausgewählte Zeilen: {{rowsSelected}} / {{totalRows}}"
+  },
+  "message": {
+    "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",
+    "globalExplainerJobCreated": "Globaler Erklärungsmodell-Job erfolgreich erstellt.",
+    "localExplainerJobCreated": "Lokaler Erklärungsmodell-Job erfolgreich erstellt."
+  }
+}

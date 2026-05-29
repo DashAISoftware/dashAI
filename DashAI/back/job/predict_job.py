@@ -47,13 +47,27 @@ def _build_preview_rows(
     y_pred: Any,
 ) -> Tuple[List[str], List[List]]:
     """Build JSON-safe tabular rows for manual preview responses."""
+    import base64
+
     columns = list(input_columns) + [output_col]
+
+    def _to_native(v: Any) -> Any:
+        return v.item() if hasattr(v, "item") else v
 
     rows: List[List] = []
     input_data = prepared_dataset.to_dict()
     for i in range(len(y_pred)):
-        row = [input_data[col][i] for col in input_columns]
-        row.append(y_pred[i])
+        row = []
+        for col in input_columns:
+            val = input_data[col][i]
+            if isinstance(val, bytes):
+                val = "data:image/png;base64," + base64.b64encode(val).decode()
+            elif isinstance(val, dict) and "bytes" in val:
+                val = "data:image/png;base64," + base64.b64encode(val["bytes"]).decode()
+            else:
+                val = _to_native(val)
+            row.append(val)
+        row.append(_to_native(y_pred[i]))
         rows.append(row)
 
     columns_json = jsonable_encoder(columns)
@@ -177,6 +191,7 @@ def run_manual_prediction(
                 model_session=model_session,
             )
         except (ValueError, TypeError) as e:
+            logging.exception("Manual prediction input error: %s", e)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid input data: {str(e)}",

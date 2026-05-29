@@ -122,13 +122,13 @@ export default function MetricsSelector({
         {t("experiments:metrics.selectMetricsDescription")}
       </Typography>
 
-      <Container sx={{ py: 4 }}>
+      <Container sx={{ py: 8 }}>
         {/* Quick actions */}
         <Stack
           direction="row"
-          spacing={2}
+          spacing={4}
           justifyContent="center"
-          mb={4}
+          mb={8}
           alignItems="center"
         >
           <Typography variant="body2" color="text.secondary">
@@ -156,7 +156,7 @@ export default function MetricsSelector({
           sx={{
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            gap: 3,
+            gap: 6,
           }}
         >
           <SplitColumn
@@ -189,7 +189,7 @@ export default function MetricsSelector({
 
         {/* Alert */}
         {missingSplits.length > 0 && (
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="warning" sx={{ mt: 4 }}>
             {missingSplits.length === 1 ? (
               <>
                 {missingSplits[0].charAt(0).toUpperCase() +

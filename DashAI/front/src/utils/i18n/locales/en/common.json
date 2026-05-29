@@ -1,5 +1,6 @@
 {
   "actions": "Actions",
+  "hub": "Hub",
   "add": "Add",
   "addModel": "Add Model",
   "addRow": "Add Row",
@@ -117,6 +118,7 @@
   "started": "Started",
   "startTime": "Start Time",
   "status": "Status",
+  "step": "Step",
   "submit": "Submit",
   "submitting": "Submitting...",
   "table": "Table",

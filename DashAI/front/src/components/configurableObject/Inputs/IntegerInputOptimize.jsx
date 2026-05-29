@@ -116,12 +116,12 @@ function OptimizeIntegerInput({
         </FormControl>
       )}
       {canOptimize && switchState ? (
-        <Box display="flex" gap={1}>
+        <Box display="flex" gap={4}>
           <Box flex={1}>
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ mb: 0.25, display: "block" }}
+              sx={{ mb: 1, display: "block" }}
             >
               {t("lowerBound")}
             </Typography>
@@ -142,7 +142,7 @@ function OptimizeIntegerInput({
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ mb: 0.25, display: "block" }}
+              sx={{ mb: 1, display: "block" }}
             >
               {t("upperBound")}
             </Typography>

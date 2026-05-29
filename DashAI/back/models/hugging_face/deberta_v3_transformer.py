@@ -46,10 +46,14 @@ class DebertaV3Transformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="DeBERTa-v3 Transformer",
         es="Transformer DeBERTa-v3",
+        pt="Transformer DeBERTa-v3",
+        de="DeBERTa-v3 Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en="DeBERTa-v3 model for robust text classification performance.",
         es="Modelo DeBERTa-v3 para clasificación de texto robusta.",
+        pt="Modelo DeBERTa-v3 para classificação de texto robusta.",
+        de="DeBERTa-v3-Modell für robuste Textklassifikationsleistung.",
     )
     COLOR: str = "#1E88E5"
     ICON: str = "Psychology"

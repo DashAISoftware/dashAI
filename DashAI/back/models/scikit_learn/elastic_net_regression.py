@@ -7,7 +7,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -43,8 +42,16 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "Multiplicador de fuerza de regularización. alpha=0 es MCO; "
                 "aumentar alpha incrementa la regularización."
             ),
+            pt=(
+                "Multiplicador da força de regularização. alpha=0 é OLS; "
+                "aumentar alpha aumenta a regularização."
+            ),
+            de=(
+                "Regularisierungsstärke-Multiplikator. alpha=0 entspricht OLS; "
+                "größere Werte erhöhen die Regularisierung."
+            ),
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
     )  # type: ignore
 
     l1_ratio: schema_field(
@@ -64,8 +71,18 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "El parámetro de mezcla. l1_ratio=0 es Ridge puro; "
                 "l1_ratio=1 es Lasso puro."
             ),
+            pt=(
+                "O parâmetro de mistura. l1_ratio=0 é Ridge puro; "
+                "l1_ratio=1 é Lasso puro."
+            ),
+            de=(
+                "Der Mischungsparameter. l1_ratio=0 ist reines Ridge; "
+                "l1_ratio=1 ist reines Lasso."
+            ),
         ),
-        alias=MultilingualString(en="L1 ratio", es="Ratio L1"),
+        alias=MultilingualString(
+            en="L1 ratio", es="Ratio L1", pt="Razão L1", de="L1-Verhältnis"
+        ),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -80,8 +97,22 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "Si se calcula el intercepto para este modelo. Si es False, "
                 "se espera que los datos ya estén centrados."
             ),
+            pt=(
+                "Se o intercepto deve ser calculado para este modelo. Se False, "
+                "espera-se que os dados já estejam centrados."
+            ),
+            de=(
+                "Ob der Achsenabschnitt für dieses Modell berechnet werden soll. Bei "
+                "False "
+                "wird erwartet, dass die Daten bereits zentriert sind."
+            ),
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept",
+            es="Ajustar intercepto",
+            pt="Ajustar intercepto",
+            de="Achsenabschnitt anpassen",
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -95,8 +126,15 @@ class ElasticNetRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum number of iterations.",
             es="El número máximo de iteraciones.",
+            pt="O número máximo de iterações.",
+            de="Die maximale Anzahl der Iterationen.",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Iterações máximas",
+            de="Maximale Iterationen",
+        ),
     )  # type: ignore
 
     tol: schema_field(
@@ -110,12 +148,16 @@ class ElasticNetRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The tolerance for the optimisation.",
             es="La tolerancia para la optimización.",
+            pt="A tolerância para a otimização.",
+            de="Die Toleranz für die Optimierung.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -126,8 +168,23 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int "
+                "para saída reproduzível, ou None para não definir uma semente."
+            ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+        ),
     )  # type: ignore
 
 
@@ -153,10 +210,14 @@ class ElasticNetRegression(RegressionModel, SklearnLikeRegressor, _ElasticNet):
     DISPLAY_NAME: str = MultilingualString(
         en="Elastic Net Regression",
         es="Regresión Elastic Net",
+        pt="Regressão Elastic Net",
+        de="ElasticNet-Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression combining L1 and L2 regularisation.",
         es="Regresión lineal que combina regularización L1 y L2.",
+        pt="Regressão linear que combina regularização L1 e L2.",
+        de="Lineare Regression mit kombinierter L1- und L2-Regularisierung.",
     )
     COLOR: str = "#26A69A"
     ICON: str = "Hub"

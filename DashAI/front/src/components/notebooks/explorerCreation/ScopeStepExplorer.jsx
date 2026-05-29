@@ -11,6 +11,7 @@ export default function ScopeStepExplorer({
   tool,
   setScopeColumns,
   nextStep,
+  hideButtons = false,
 }) {
   const theme = useTheme();
   const [isSelectionValid, setIsSelectionValid] = useState(false);
@@ -29,17 +30,18 @@ export default function ScopeStepExplorer({
       sx={{
         display: "flex",
         flexDirection: "column",
-        flexGrow: 1,
+        flex: 1,
         height: "100%",
-        gap: 1,
+        gap: 2,
+        minHeight: 0,
       }}
       data-tour="column-selector-explorer-container"
     >
       {/* Content */}
-      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.primary, mb: 1.5 }}
+          sx={{ color: theme.palette.text.primary, mb: 3 }}
         >
           {t("datasets:label.selectColumnsForExplorerScope")}
         </Typography>
@@ -55,15 +57,7 @@ export default function ScopeStepExplorer({
       </Box>
 
       {/* Buttons */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          gap: 1,
-        }}
-      >
+      {!hideButtons && (
         <FormSchemaButtonGroup
           onFormSubmit={handleSubmit}
           error={!isSelectionValid}
@@ -74,7 +68,7 @@ export default function ScopeStepExplorer({
           }
           data-tour="explorer-scope-next-button"
         />
-      </Box>
+      )}
     </Box>
   );
 }

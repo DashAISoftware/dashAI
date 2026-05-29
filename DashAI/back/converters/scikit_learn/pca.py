@@ -41,6 +41,14 @@ class PCASchema(BaseSchema):
                 "Número de componentes a conservar. Si es None, se conservan "
                 "todas las componentes."
             ),
+            pt=(
+                "Número de componentes a manter. Se None, todos os componentes "
+                "são mantidos."
+            ),
+            de=(
+                "Anzahl der beizubehaltenden Komponenten. Wenn None, werden alle "
+                "Komponenten behalten."
+            ),
         ),
     )  # type: ignore
     whiten: schema_field(
@@ -56,6 +64,16 @@ class PCASchema(BaseSchema):
                 "no correlacionadas con varianzas unitarias. Puede mejorar "
                 "estimadores posteriores."
             ),
+            pt=(
+                "Quando True, os componentes são escalonados para garantir saídas "
+                "não correlacionadas com variâncias unitárias. Pode melhorar "
+                "estimadores posteriores."
+            ),
+            de=(
+                "Wenn True werden die Komponenten skaliert, um unkorrelierte "
+                "Ausgaben mit Einheitsvarianz zu gewährleisten. Kann nachgelagerte "
+                "Schätzer verbessern."
+            ),
         ),
     )  # type: ignore
     svd_solver: schema_field(
@@ -70,6 +88,14 @@ class PCASchema(BaseSchema):
                 "Método para la descomposición propia. 'auto' elige el más "
                 "apropiado según los datos."
             ),
+            pt=(
+                "Solucionador para a decomposição espectral. 'auto' escolhe o "
+                "mais adequado para os dados."
+            ),
+            de=(
+                "Löser für die Eigenzerlegung. 'auto' wählt den am besten "
+                "geeigneten entsprechend der Daten."
+            ),
         ),
     )  # type: ignore
     tol: schema_field(
@@ -78,6 +104,8 @@ class PCASchema(BaseSchema):
         description=MultilingualString(
             en="Tolerance for singular values when svd_solver == 'arpack'.",
             es="Tolerancia para valores singulares cuando svd_solver == 'arpack'.",
+            pt="Tolerância para valores singulares quando svd_solver == 'arpack'.",
+            de="Toleranz für Singulärwerte wenn svd_solver == 'arpack'.",
         ),
     )  # type: ignore
     iterated_power: schema_field(
@@ -92,6 +120,14 @@ class PCASchema(BaseSchema):
                 "Número de iteraciones para el método de potencia cuando "
                 "svd_solver == 'randomized'."
             ),
+            pt=(
+                "Número de iterações para o método de potência quando "
+                "svd_solver == 'randomized'."
+            ),
+            de=(
+                "Anzahl der Iterationen für die Potenzmethode wenn "
+                "svd_solver == 'randomized'."
+            ),
         ),
     )  # type: ignore
     n_oversamples: schema_field(
@@ -100,6 +136,11 @@ class PCASchema(BaseSchema):
         description=MultilingualString(
             en="Number of power iterations used when svd_solver == 'randomized'.",
             es="Número de iteraciones de potencia cuando svd_solver == 'randomized'.",
+            pt=(
+                "Número de iterações de potência usadas quando "
+                "svd_solver == 'randomized'."
+            ),
+            de="Anzahl der Potenziterationen wenn svd_solver == 'randomized'.",
         ),
     )  # type: ignore
     power_iteration_normalizer: schema_field(
@@ -114,6 +155,14 @@ class PCASchema(BaseSchema):
                 "Cómo se calcula el normalizador de iteración de potencia: "
                 "'auto', QR o LU. No se usa con ARPACK."
             ),
+            pt=(
+                "Como o normalizador de iteração de potência deve ser calculado: "
+                "'auto', QR ou LU. Não usado com ARPACK."
+            ),
+            de=(
+                "Wie der Potenziterations-Normalisierer berechnet werden soll: 'auto', "
+                "QR oder LU. Nicht verwendet von ARPACK."
+            ),
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -127,6 +176,14 @@ class PCASchema(BaseSchema):
             es=(
                 "Usado con los métodos 'arpack' o 'randomized'. Pasa un entero "
                 "para resultados reproducibles."
+            ),
+            pt=(
+                "Usado com os solucionadores 'arpack' ou 'randomized'. Passe um "
+                "inteiro para resultados reproduzíveis."
+            ),
+            de=(
+                "Wird verwendet wenn 'arpack' oder 'randomized' Löser verwendet werden."
+                "Übergeben Sie eine Ganzzahl für reproduzierbare Ergebnisse."
             ),
         ),
     )  # type: ignore
@@ -182,14 +239,28 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
             "reducción de dimensionalidad usada para simplificar conjuntos de "
             "datos complejos conservando tanta variabilidad como sea posible."
         ),
+        pt=(
+            "A Análise de Componentes Principais (PCA) é uma técnica de "
+            "redução de dimensionalidade usada para simplificar conjuntos de "
+            "dados complexos conservando o máximo de variabilidade possível."
+        ),
+        de=(
+            "Hauptkomponentenanalyse (PCA) ist eine Dimensionsreduktions-"
+            "technik, die zur Vereinfachung komplexer Datensätze verwendet wird, "
+            "während so viel Variabilität wie möglich erhalten bleibt."
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Dimensionality reduction using PCA.",
         es="Reducción de dimensionalidad usando PCA.",
+        pt="Redução de dimensionalidade usando PCA.",
+        de="Dimensionsreduktion mittels PCA.",
     )
     DISPLAY_NAME = MultilingualString(
         en="Principal Component Analysis (PCA)",
         es="Análisis de Componentes Principales (PCA)",
+        pt="Análise de Componentes Principais (PCA)",
+        de="Hauptkomponentenanalyse (PCA)",
     )
     IMAGE_PREVIEW = "pca.png"
 

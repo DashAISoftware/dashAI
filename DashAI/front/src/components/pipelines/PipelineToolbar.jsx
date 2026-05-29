@@ -15,7 +15,7 @@ function PipelineToolbar({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        mb: 2,
+        mb: 4,
       }}
     >
       <TextField
@@ -29,7 +29,7 @@ function PipelineToolbar({
         error={nameError}
         helperText={nameErrorMessage}
         sx={{
-          mr: 2,
+          mr: 4,
           input: { color: "black" },
           "& .MuiOutlinedInput-root fieldset": { borderColor: "black" },
           "& label": { color: "black" },

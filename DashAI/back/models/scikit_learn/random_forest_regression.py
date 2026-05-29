@@ -37,8 +37,15 @@ class RandomForestRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The number of trees in the forest.",
             es="El número de árboles en el bosque.",
+            pt="O número de árvores na floresta.",
+            de="Die Anzahl der Bäume im Wald.",
         ),
-        alias=MultilingualString(en="N estimators", es="N estimadores"),
+        alias=MultilingualString(
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
+        ),
     )  # type: ignore
 
     criterion: schema_field(
@@ -47,18 +54,29 @@ class RandomForestRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The function to measure the quality of a split.",
             es="La función para medir la calidad de una división.",
+            pt="A função para medir a qualidade de uma divisão.",
+            de="Die Funktion zur Messung der Qualität einer Aufteilung.",
         ),
-        alias=MultilingualString(en="Criterion", es="Criterio"),
+        alias=MultilingualString(
+            en="Criterion", es="Criterio", pt="Critério", de="Kriterium"
+        ),
     )  # type: ignore
 
     max_depth: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="The maximum depth of the tree.",
             es="La profundidad máxima del árbol.",
+            pt="A profundidade máxima da árvore.",
+            de="Die maximale Tiefe des Baums.",
         ),
-        alias=MultilingualString(en="Max depth", es="Profundidad máxima"),
+        alias=MultilingualString(
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
+        ),
     )  # type: ignore
 
     min_samples_split: schema_field(
@@ -72,9 +90,17 @@ class RandomForestRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The minimum number of samples required to split an internal node.",
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
+            pt="O número mínimo de amostras necessárias para dividir um nó interno.",
+            de=(
+                "Mindestanzahl an Proben, die zum Aufteilen eines internen Knotens "
+                "erforderlich sind."
+            ),
         ),
         alias=MultilingualString(
-            en="Min samples split", es="Mínimas muestras de división"
+            en="Min samples split",
+            es="Mínimas muestras de división",
+            pt="Mínimas amostras de divisão",
+            de="Mindestproben Aufteilung",
         ),
     )  # type: ignore
 
@@ -89,9 +115,17 @@ class RandomForestRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
+            pt="O número mínimo de amostras necessárias para estar em um nó folha.",
+            de=(
+                "Mindestanzahl an Proben, die in einem Blattknoten vorhanden sein "
+                "müssen."
+            ),
         ),
         alias=MultilingualString(
-            en="Min samples leaf", es="Mínimas muestras para hoja"
+            en="Min samples leaf",
+            es="Mínimas muestras para hoja",
+            pt="Mínimas amostras para folha",
+            de="Mindestproben Blatt",
         ),
     )  # type: ignore
 
@@ -107,9 +141,20 @@ class RandomForestRegressionSchema(BaseSchema):
                 "La fracción ponderada mínima de la suma total de pesos "
                 "requerida para estar en una hoja."
             ),
+            pt=(
+                "A fração ponderada mínima da soma total de pesos "
+                "necessária para estar em um nó folha."
+            ),
+            de=(
+                "Der minimale gewichtete Anteil der Gesamtgewichte, "
+                "der in einem Blattknoten vorhanden sein muss."
+            ),
         ),
         alias=MultilingualString(
-            en="Min weight fraction leaf", es="Fracción de peso mínima para hoja"
+            en="Min weight fraction leaf",
+            es="Fracción de peso mínima para hoja",
+            pt="Fração mínima de peso para folha",
+            de="Mindestgewichtsanteil Blatt",
         ),
     )  # type: ignore
 
@@ -124,18 +169,35 @@ class RandomForestRegressionSchema(BaseSchema):
             es=(
                 "El número de características a considerar al buscar la mejor división."
             ),
+            pt=("O número de características a considerar ao buscar a melhor divisão."),
+            de=(
+                "Die Anzahl der Merkmale, die bei der Suche nach der besten Aufteilung "
+                "berücksichtigt werden."
+            ),
         ),
-        alias=MultilingualString(en="Max features", es="Máximas características"),
+        alias=MultilingualString(
+            en="Max features",
+            es="Máximas características",
+            pt="Máximo de características",
+            de="Maximale Merkmale",
+        ),
     )  # type: ignore
 
     max_leaf_nodes: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="Grow trees with max_leaf_nodes in best-first fashion.",
             es="Crecer árboles con max_leaf_nodes de manera best-first.",
+            pt="Crescer árvores com max_leaf_nodes de maneira melhor-primeiro.",
+            de="Bäume mit max_leaf_nodes Blättern nach Best-First-Strategie wachsen.",
         ),
-        alias=MultilingualString(en="Max leaf nodes", es="Máximos nodos hoja"),
+        alias=MultilingualString(
+            en="Max leaf nodes",
+            es="Máximos nodos hoja",
+            pt="Máximos nós folha",
+            de="Maximale Blattknoten",
+        ),
     )  # type: ignore
 
     min_impurity_decrease: schema_field(
@@ -150,9 +212,20 @@ class RandomForestRegressionSchema(BaseSchema):
                 "Un nodo se dividirá si esta división induce una disminución de "
                 "la impureza mayor o igual a este valor."
             ),
+            pt=(
+                "Um nó será dividido se esta divisão induzir uma diminuição da "
+                "impureza maior ou igual a este valor."
+            ),
+            de=(
+                "Ein Knoten wird aufgeteilt, wenn diese Aufteilung eine Verringerung "
+                "der Unreinheit größer oder gleich diesem Wert bewirkt."
+            ),
         ),
         alias=MultilingualString(
-            en="Min impurity decrease", es="Disminución mínima de impureza"
+            en="Min impurity decrease",
+            es="Disminución mínima de impureza",
+            pt="Diminuição mínima de impureza",
+            de="Mindest-Unreinheitsverringerung",
         ),
     )  # type: ignore
 
@@ -162,8 +235,12 @@ class RandomForestRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Whether bootstrap samples are used when building trees.",
             es="Si se usan muestras bootstrap al construir árboles.",
+            pt="Se amostras bootstrap são usadas ao construir árvores.",
+            de="Ob Bootstrap-Proben beim Erstellen von Bäumen verwendet werden.",
         ),
-        alias=MultilingualString(en="Bootstrap", es="Bootstrap"),
+        alias=MultilingualString(
+            en="Bootstrap", es="Bootstrap", pt="Bootstrap", de="Bootstrap"
+        ),
     )  # type: ignore
 
     oob_score: schema_field(
@@ -178,22 +255,36 @@ class RandomForestRegressionSchema(BaseSchema):
                 "Si se usan muestras out-of-bag para estimar "
                 "la puntuación de generalización."
             ),
+            pt=(
+                "Se amostras out-of-bag são usadas para estimar "
+                "a pontuação de generalização."
+            ),
+            de=(
+                "Ob Out-of-Bag-Proben zur Schätzung des Generalisierungswerts verwendet"
+                "werden."
+            ),
         ),
-        alias=MultilingualString(en="OOB score", es="Puntuación OOB"),
+        alias=MultilingualString(
+            en="OOB score", es="Puntuación OOB", pt="Pontuação OOB", de="OOB-Wertung"
+        ),
     )  # type: ignore
 
     n_jobs: schema_field(
-        union_type(optimizer_int_field(ge=1), none_type(int)),
+        none_type(optimizer_int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en="The number of jobs to run in parallel for both fit and predict.",
             es="El número de trabajos a ejecutar en paralelo para fit y predict.",
+            pt="O número de tarefas a executar em paralelo para fit e predict.",
+            de="Die Anzahl der parallel auszuführenden Jobs für Fit und Vorhersage.",
         ),
-        alias=MultilingualString(en="N jobs", es="N trabajos"),
+        alias=MultilingualString(
+            en="N jobs", es="N trabajos", pt="N tarefas", de="Anzahl Jobs"
+        ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -204,8 +295,21 @@ class RandomForestRegressionSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios a usar "
                 "al mezclar los datos."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios a usar "
+                "ao embaralhar os dados."
+            ),
+            de=(
+                "Der Startwert des Pseudo-Zufallszahlengenerators beim Mischen der "
+                "Daten."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+        ),
     )  # type: ignore
 
     warm_start: schema_field(
@@ -220,8 +324,21 @@ class RandomForestRegressionSchema(BaseSchema):
                 "Cuando se establece en True, reutiliza la solución de la llamada "
                 "anterior a fit y agrega más estimadores al conjunto."
             ),
+            pt=(
+                "Quando definido como True, reutiliza a solução da chamada anterior "
+                "a fit e adiciona mais estimadores ao conjunto."
+            ),
+            de=(
+                "Wenn True, wird die Lösung des vorherigen Aufrufs wiederverwendet "
+                "und dem Ensemble weitere Schätzer hinzugefügt."
+            ),
         ),
-        alias=MultilingualString(en="Warm start", es="Inicio en caliente"),
+        alias=MultilingualString(
+            en="Warm start",
+            es="Inicio en caliente",
+            pt="Início a quente",
+            de="Warmstart",
+        ),
     )  # type: ignore
 
     ccp_alpha: schema_field(
@@ -235,12 +352,19 @@ class RandomForestRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Complexity parameter used for Minimal Cost-Complexity Pruning.",
             es="Parámetro de complejidad usado para poda de costo-complejidad mínima.",
+            pt=(
+                "Parâmetro de complexidade usado para poda de "
+                "custo-complexidade mínima."
+            ),
+            de="Komplexitätsparameter für das minimale Kosten-Komplexitätsbeschneiden.",
         ),
-        alias=MultilingualString(en="CCP alpha", es="CCP alfa"),
+        alias=MultilingualString(
+            en="CCP alpha", es="CCP alfa", pt="CCP alfa", de="CCP Alpha"
+        ),
     )  # type: ignore
 
     max_samples: schema_field(
-        union_type(optimizer_float_field(gt=0.0, le=1.0), none_type(float)),
+        none_type(optimizer_float_field(gt=0.0, le=1.0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -251,8 +375,21 @@ class RandomForestRegressionSchema(BaseSchema):
                 "Si bootstrap es True, el número de muestras a tomar de "
                 "X para entrenar cada estimador base."
             ),
+            pt=(
+                "Se bootstrap é True, o número de amostras a extrair de "
+                "X para treinar cada estimador base."
+            ),
+            de=(
+                "Wenn Bootstrap True ist, die Anzahl der aus X zu ziehenden Proben "
+                "zum Trainieren jedes Basis-Schätzers."
+            ),
         ),
-        alias=MultilingualString(en="Max samples", es="Máximas muestras"),
+        alias=MultilingualString(
+            en="Max samples",
+            es="Máximas muestras",
+            pt="Máximas amostras",
+            de="Maximale Proben",
+        ),
     )  # type: ignore
 
 
@@ -283,12 +420,22 @@ class RandomForestRegression(
     DISPLAY_NAME: str = MultilingualString(
         en="Random Forest",
         es="Bosque Aleatorio",
+        pt="Regressor de Floresta Aleatória",
+        de="Random-Forest-Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="An ensemble learning method using multiple decision trees for regression.",
         es=(
             "Un método de aprendizaje en conjunto usando múltiples árboles de "
             "decisión para regresión."
+        ),
+        pt=(
+            "Um método de aprendizado em conjunto usando múltiplas árvores de "
+            "decisão para regressão."
+        ),
+        de=(
+            "Eine Ensemble-Lernmethode, die mehrere Entscheidungsbäume für die "
+            "Regression kombiniert."
         ),
     )
     COLOR: str = "#FF8A65"

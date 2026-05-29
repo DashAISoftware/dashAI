@@ -1,18 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  Box,
-  Typography,
-  IconButton,
-} from "@mui/material";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Modal, TextField, Box, Typography, IconButton } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 import NoteBox from "../NoteBox";
+import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
+import ItemsToDeleteList from "../converter/ItemsToDeleteList";
+import { deleteConverterById } from "../../../api/converter";
+import {
+  getConvertersByNotebookId,
+  getExplorersByNotebookId,
+} from "../../../api/notebook";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
@@ -23,12 +23,21 @@ export function SaveDatasetModal({
   onSaveDataset,
   appliedConverters,
   existingDatasets = [],
+  notebook,
 }) {
   const [name, setName] = useState("");
   const [frozenDefaultName, setFrozenDefaultName] = useState("");
+  const [localConverters, setLocalConverters] = useState([]);
+  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [converterToDelete, setConverterToDelete] = useState(null);
+  const [deleteModalContent, setDeleteModalContent] = useState("");
+  const [itemsToDelete, setItemsToDelete] = useState([]);
+
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
+  const { explorersAndConverters, setExplorersAndConverters } =
+    useExplorersAndConverters();
 
   const { defaultName } = useMemo(() => {
     if (tourContext && tourContext.run) {
@@ -46,6 +55,84 @@ export function SaveDatasetModal({
       setName(defaultName);
     }
   }, [open, defaultName]);
+
+  useEffect(() => {
+    setLocalConverters(appliedConverters);
+  }, [appliedConverters]);
+
+  const fetchExplorersAndConverters = useCallback(async () => {
+    if (!notebook) return;
+    try {
+      const [explorersData, convertersData] = await Promise.all([
+        getExplorersByNotebookId(notebook.id),
+        getConvertersByNotebookId(notebook.id),
+      ]);
+      const explorersWithType = explorersData.map((item) => ({
+        ...item,
+        type: "explorer",
+      }));
+      const convertersWithType = convertersData.map((item) => ({
+        ...item,
+        type: "converter",
+      }));
+      const merged = [...explorersWithType, ...convertersWithType].sort(
+        (a, b) => new Date(a.created) - new Date(b.created),
+      );
+      setExplorersAndConverters(merged);
+    } catch (error) {
+      console.error("Failed to fetch explorers and converters:", error);
+    }
+  }, [notebook, setExplorersAndConverters]);
+
+  const getItemsToDelete = useCallback(
+    (converter) => {
+      const converterIndex = explorersAndConverters.findIndex(
+        (item) => item.id === converter.id && item.type === "converter",
+      );
+      if (converterIndex === -1) return [];
+      return explorersAndConverters.slice(converterIndex);
+    },
+    [explorersAndConverters],
+  );
+
+  const handleConverterDeleteClick = useCallback(
+    (converter) => {
+      setConverterToDelete(converter);
+      const items = getItemsToDelete(converter);
+      setItemsToDelete(items);
+      setDeleteModalContent(
+        t("datasets:label.deleteConverterConfirmation", {
+          converter: converter?.converter,
+        }),
+      );
+      setOpenDeleteConfirmation(true);
+    },
+    [getItemsToDelete, t],
+  );
+
+  const handleConfirmConverterDelete = useCallback(async () => {
+    if (!converterToDelete) return;
+    try {
+      await deleteConverterById(converterToDelete.id);
+      await fetchExplorersAndConverters();
+      setLocalConverters((prev) =>
+        prev.filter((c) => c.id !== converterToDelete.id),
+      );
+      setOpenDeleteConfirmation(false);
+      setConverterToDelete(null);
+      setDeleteModalContent("");
+      setItemsToDelete([]);
+    } catch (error) {
+      console.error("Failed to delete converter:", error);
+    }
+  }, [converterToDelete, fetchExplorersAndConverters]);
+
+  const handleCancelDelete = useCallback(() => {
+    setOpenDeleteConfirmation(false);
+    setConverterToDelete(null);
+    setDeleteModalContent("");
+    setItemsToDelete([]);
+  }, []);
 
   const handleSubmit = () => {
     const datasetName = name.trim();
@@ -84,58 +171,116 @@ export function SaveDatasetModal({
   const nameError = getNameError();
 
   return (
-    <Dialog open={open} onClose={() => {}} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {t("datasets:label.saveProcessedDataset")}
-        <IconButton
-          onClick={handleClose}
-          sx={{ position: "absolute", right: 8, top: 8 }}
+    <>
+      <Modal open={open} onClose={() => {}}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 560 },
+            maxHeight: "90vh",
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 12,
+            p: 0,
+            outline: "none",
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
-          <Close />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent data-tour="save-dataset-modal-notebook">
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-          <NoteBox
-            message={t("datasets:label.newDatasetCreatedWithTransformations")}
-          />
-          <TextField
-            fullWidth
-            label={t("datasets:label.datasetName")}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            variant="outlined"
-            error={Boolean(nameError)}
-            helperText={nameError}
-          />
-
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              {t("datasets:label.appliedTransformations")}
+          {/* Header */}
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              flexShrink: 0,
+            }}
+          >
+            <Typography variant="h6" component="h2">
+              {t("datasets:label.saveProcessedDataset")}
             </Typography>
-            {appliedConverters.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                {t("datasets:label.noTransformationsApplied")}
-              </Typography>
-            ) : (
-              <ConverterHistoryList converters={appliedConverters} />
-            )}
+            <IconButton
+              onClick={handleClose}
+              size="small"
+              sx={{ color: "text.secondary" }}
+            >
+              <Close />
+            </IconButton>
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-            <FormSchemaButtonGroup
-              onCancel={handleClose}
-              onFormSubmit={handleSubmit}
-              formik={{
-                errors: nameError ? { name: nameError } : {},
-              }}
-              saveButtonText={t("datasets:button.saveDataset")}
-              backButtonText={t("common:cancel")}
-              dataTour="save-dataset-button-notebook"
+          {/* Scrollable Content */}
+          <Box
+            sx={{
+              p: 3,
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+              overflowY: "auto",
+              flex: 1,
+            }}
+            data-tour="save-dataset-modal-notebook"
+          >
+            <NoteBox
+              message={t("datasets:label.newDatasetCreatedWithTransformations")}
+            />
+            <TextField
+              fullWidth
+              label={t("datasets:label.datasetName")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              variant="outlined"
+              error={Boolean(nameError)}
+              helperText={nameError}
+            />
+
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                {t("datasets:label.appliedTransformations")}
+              </Typography>
+              {localConverters.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  {t("datasets:label.noTransformationsApplied")}
+                </Typography>
+              ) : (
+                <ConverterHistoryList
+                  converters={localConverters}
+                  onConverterDelete={handleConverterDeleteClick}
+                  showDeleteButtons={true}
+                />
+              )}
+            </Box>
+          </Box>
+
+          {/* Footer - always visible */}
+          <Box sx={{ px: 3, pb: 3, flexShrink: 0 }}>
+            <StepperNavigationFooter
+              onBack={handleClose}
+              onNext={handleSubmit}
+              nextDisabled={Boolean(nameError) || localConverters.length === 0}
+              backLabel={t("common:cancel")}
+              nextLabel={t("datasets:button.saveDataset")}
+              variant="save"
             />
           </Box>
         </Box>
-      </DialogContent>
-    </Dialog>
+      </Modal>
+
+      <DeleteConfirmationModal
+        open={openDeleteConfirmation}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmConverterDelete}
+        content={
+          <Box>
+            <Typography>{deleteModalContent}</Typography>
+            <ItemsToDeleteList items={itemsToDelete} />
+          </Box>
+        }
+      />
+    </>
   );
 }

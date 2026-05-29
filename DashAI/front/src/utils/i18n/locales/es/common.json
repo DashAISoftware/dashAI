@@ -1,5 +1,6 @@
 {
   "actions": "Acciones",
+  "hub": "Hub",
   "add": "Agregar",
   "addModel": "Agregar Modelo",
   "addRow": "Agregar Fila",
@@ -117,6 +118,7 @@
   "started": "Iniciado",
   "startTime": "Hora de Inicio",
   "status": "Estado",
+  "step": "Paso",
   "submit": "Enviar",
   "submitting": "Enviando...",
   "table": "Tabla",

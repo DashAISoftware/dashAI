@@ -3,9 +3,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import PropTypes from "prop-types";
 import {
@@ -27,8 +26,6 @@ import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
 import { parseIndexToRange } from "../../../utils/parseRange";
 import TooltipedCellItem from "../../shared/TooltipedCellItem";
 import InputWithDebounce from "../../shared/InputWithDebounce";
-import { useTranslation } from "react-i18next";
-
 /**
  * Modal to define the scope of a converter
  * @param {Object} props
@@ -50,11 +47,8 @@ const ConverterScopeModal = ({
   },
   datasetColumns,
 }) => {
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const columns = useMemo(
     () => [
@@ -249,14 +243,14 @@ const ConverterScopeModal = ({
               <IconButton onClick={() => setOpen(false)}>
                 <ArrowBackOutlined />
               </IconButton>
-              <Typography variant="h5" sx={{ ml: 2 }}>
+              <Typography variant="h5" sx={{ ml: 4 }}>
                 {elementToConfigure} scope
               </Typography>
             </Box>
           </DialogTitle>
           <DialogContent>
             <Box sx={{ height: "100%", width: "100%" }}>
-              <Stack spacing={4} sx={{ py: 2 }}>
+              <Stack spacing={8} sx={{ py: 4 }}>
                 <Box>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     Columns
@@ -264,7 +258,7 @@ const ConverterScopeModal = ({
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 4 }}
                   >
                     Select the columns that will be transformed by this
                     converter. The selected columns will be used as input for
@@ -275,9 +269,9 @@ const ConverterScopeModal = ({
                       sx={{
                         backgroundColor: "error.light",
                         color: "error.contrastText",
-                        p: 2,
-                        mx: 2,
-                        my: 2,
+                        p: 4,
+                        mx: 4,
+                        my: 4,
                         borderRadius: 1,
                       }}
                     >
@@ -296,7 +290,7 @@ const ConverterScopeModal = ({
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 4 }}
                   >
                     Select specific rows to be used for training the converter.
                     This allows you to focus on particular data patterns or
@@ -304,9 +298,9 @@ const ConverterScopeModal = ({
                   </Typography>
                   <Box
                     sx={{
-                      px: 2,
+                      px: 4,
                       overflowY: "auto",
-                      py: 4,
+                      py: 8,
                       height: "auto",
                       width: "inherit",
                       transition: "opacity 0.3s ease",
@@ -321,13 +315,13 @@ const ConverterScopeModal = ({
                         value="all-rows"
                         control={<Radio />}
                         label="Use all rows of the selected columns"
-                        sx={{ my: 1 }}
+                        sx={{ my: 2 }}
                       />
                       <FormControlLabel
                         value="custom-rows"
                         control={<Radio />}
                         label="Specify the range from which this converter will learn"
-                        sx={{ my: 1 }}
+                        sx={{ my: 2 }}
                       />
                       <InputWithDebounce
                         variant="outlined"
@@ -339,7 +333,7 @@ const ConverterScopeModal = ({
                         error={inputError["rows"] !== ""}
                         helperText={inputError["rows"]}
                         fullWidth
-                        sx={{ mt: 2 }}
+                        sx={{ mt: 4 }}
                       />
                     </RadioGroup>
                   </Box>
@@ -347,7 +341,7 @@ const ConverterScopeModal = ({
               </Stack>
             </Box>
           </DialogContent>
-          <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
+          <Box sx={{ p: 4, display: "flex", justifyContent: "flex-end" }}>
             <ButtonGroup>
               <Button onClick={() => setOpen(false)}>Back</Button>
               <Button

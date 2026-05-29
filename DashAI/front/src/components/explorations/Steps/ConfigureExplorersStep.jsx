@@ -300,7 +300,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
       direction="row"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={2}
+      spacing={4}
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
@@ -310,7 +310,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
 
       {/* Form to add a single explorer to the exploration */}
       <Grid size={{ xs: 12 }}>
-        <Grid container direction="row" columnSpacing={3} wrap="nowrap">
+        <Grid container direction="row" columnSpacing={6} wrap="nowrap">
           <Grid size={{ xs: 4, md: 12 }}>
             <TextField
               label="Name (optional)"

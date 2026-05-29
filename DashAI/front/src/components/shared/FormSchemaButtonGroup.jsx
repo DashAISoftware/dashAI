@@ -1,6 +1,6 @@
-import { Button, Box } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import StepperNavigationFooter from "./StepperNavigationFooter";
 
 function FormSchemaButtonGroup({
   onCancel,
@@ -28,34 +28,24 @@ function FormSchemaButtonGroup({
         ? "create-converter-button"
         : undefined);
 
+  const isFormValid =
+    !autoSave && Object.keys(formik?.errors ?? {}).length === 0 && !error;
+
+  if (autoSave) {
+    return null;
+  }
+
   return (
-    <Box
-      size="large"
-      sx={{
-        mt: 2,
-        pt: 2,
-        flexShrink: 0,
-        display: "flex",
-        justifyContent: "flex-end",
-        gap: 1,
-      }}
-    >
-      {onCancel && (
-        <Button variant="outlined" onClick={onCancel}>
-          {finalBackText}
-        </Button>
-      )}
-      {!autoSave && (
-        <Button
-          variant="contained"
-          onClick={onFormSubmit}
-          disabled={Object.keys(formik?.errors ?? {}).length > 0 || error}
-          data-tour={finalDataTour}
-        >
-          {finalSaveText}
-        </Button>
-      )}
-    </Box>
+    <StepperNavigationFooter
+      onBack={onCancel}
+      onNext={onFormSubmit}
+      nextDisabled={!isFormValid}
+      backLabel={finalBackText}
+      nextLabel={finalSaveText}
+      showBack={!!onCancel}
+      showNext={!!onFormSubmit}
+      nextDataTour={finalDataTour}
+    />
   );
 }
 

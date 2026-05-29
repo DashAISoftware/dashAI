@@ -41,8 +41,18 @@ class KNeighborsClassifierSchema(BaseSchema):
                 "Es el número de vecinos a considerar en "
                 "cada entrada para la clasificación. "
             ),
+            pt=(
+                "O número de vizinhos a considerar em "
+                "cada entrada para a classificação. "
+            ),
+            de=(
+                "Die Anzahl der Nachbarn, die für jede Eingabe bei der Klassifikation "
+                "berücksichtigt werden. "
+            ),
         ),
-        alias=MultilingualString(en="N neighbors", es="N vecinos"),
+        alias=MultilingualString(
+            en="N neighbors", es="N vecinos", pt="N vizinhos", de="Anzahl Nachbarn"
+        ),
     )  # type: ignore
     weights: schema_field(
         enum_field(enum=["uniform", "distance"]),
@@ -50,8 +60,10 @@ class KNeighborsClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The parameter must be 'uniform' or 'distance'.",
             es="El parámetro debe ser 'uniform' o 'distance'.",
+            pt="O parâmetro deve ser 'uniform' ou 'distance'.",
+            de="Der Parameter muss 'uniform' oder 'distance' sein.",
         ),
-        alias=MultilingualString(en="Weights", es="Pesos"),
+        alias=MultilingualString(en="Weights", es="Pesos", pt="Pesos", de="Gewichte"),
     )  # type: ignore
     algorithm: schema_field(
         enum_field(enum=["auto", "ball_tree", "kd_tree", "brute"]),
@@ -59,8 +71,12 @@ class KNeighborsClassifierSchema(BaseSchema):
         description=MultilingualString(
             en=("The parameter must be 'auto', 'ball_tree', 'kd_tree', or 'brute'."),
             es=("El parámetro debe ser 'auto', 'ball_tree', 'kd_tree' o 'brute'.",),
+            pt=("O parâmetro deve ser 'auto', 'ball_tree', 'kd_tree' ou 'brute'."),
+            de=("Der Parameter muss 'auto', 'ball_tree', 'kd_tree' oder 'brute' sein."),
         ),
-        alias=MultilingualString(en="Algorithm", es="Algoritmo"),
+        alias=MultilingualString(
+            en="Algorithm", es="Algoritmo", pt="Algoritmo", de="Algorithmus"
+        ),
     )  # type: ignore
 
 
@@ -93,12 +109,22 @@ class KNeighborsClassifier(
     DISPLAY_NAME: str = MultilingualString(
         en="K-Nearest Neighbors (KNN)",
         es="K-Vecinos más Cercanos (KNN)",
+        pt="Classificador K-Vizinhos",
+        de="K-Nächste-Nachbarn (KNN)",
     )
     DESCRIPTION: str = MultilingualString(
         en="Classification based on k nearest training examples in feature space.",
         es=(
             "Clasificación basada en los k ejemplos de entrenamiento más cercanos en "
             "el espacio de características."
+        ),
+        pt=(
+            "Classificação baseada nos k exemplos de treinamento mais próximos no "
+            "espaço de características."
+        ),
+        de=(
+            "Klassifikation basierend auf den k nächsten Trainingsbeispielen im "
+            "Merkmalsraum."
         ),
     )
     COLOR: str = "#FFD54F"

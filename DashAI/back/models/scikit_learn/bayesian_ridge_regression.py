@@ -35,8 +35,15 @@ class BayesianRidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of iterations over the complete dataset.",
             es="Número máximo de iteraciones sobre el conjunto de datos completo.",
+            pt="Número máximo de iterações sobre o conjunto de dados completo.",
+            de="Maximale Anzahl von Iterationen über den vollständigen Datensatz.",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Iterações máximas",
+            de="Maximale Iterationen",
+        ),
     )  # type: ignore
 
     tol: schema_field(
@@ -50,8 +57,15 @@ class BayesianRidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Stop the algorithm if the weight update is smaller than tol.",
             es=("Detener el algoritmo si la actualización de pesos es menor que tol."),
+            pt=("Parar o algoritmo se a atualização dos pesos for menor que tol."),
+            de=(
+                "Den Algorithmus stoppen, wenn die Gewichtsaktualisierung kleiner als "
+                "tol ist."
+            ),
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
     alpha_1: schema_field(
@@ -65,8 +79,10 @@ class BayesianRidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Shape parameter for the Gamma distribution prior over alpha.",
             es=("Parámetro de forma para la distribución Gamma previa sobre alfa."),
+            pt=("Parâmetro de forma para a distribuição Gamma a priori sobre alfa."),
+            de=("Formparameter für die Gamma-Verteilungs-Prior über Alpha."),
         ),
-        alias=MultilingualString(en="Alpha 1", es="Alfa 1"),
+        alias=MultilingualString(en="Alpha 1", es="Alfa 1", pt="Alfa 1", de="Alpha 1"),
     )  # type: ignore
 
     alpha_2: schema_field(
@@ -80,8 +96,10 @@ class BayesianRidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Rate parameter for the Gamma distribution prior over alpha.",
             es=("Parámetro de tasa para la distribución Gamma previa sobre alfa."),
+            pt=("Parâmetro de taxa para a distribuição Gamma a priori sobre alfa."),
+            de=("Ratenparameter für die Gamma-Verteilungs-Prior über Alpha."),
         ),
-        alias=MultilingualString(en="Alpha 2", es="Alfa 2"),
+        alias=MultilingualString(en="Alpha 2", es="Alfa 2", pt="Alfa 2", de="Alpha 2"),
     )  # type: ignore
 
     lambda_1: schema_field(
@@ -95,8 +113,12 @@ class BayesianRidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Shape parameter for the Gamma distribution prior over lambda.",
             es=("Parámetro de forma para la distribución Gamma previa sobre lambda."),
+            pt=("Parâmetro de forma para a distribuição Gamma a priori sobre lambda."),
+            de=("Formparameter für die Gamma-Verteilungs-Prior über Lambda."),
         ),
-        alias=MultilingualString(en="Lambda 1", es="Lambda 1"),
+        alias=MultilingualString(
+            en="Lambda 1", es="Lambda 1", pt="Lambda 1", de="Lambda 1"
+        ),
     )  # type: ignore
 
     lambda_2: schema_field(
@@ -110,8 +132,12 @@ class BayesianRidgeRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="Rate parameter for the Gamma distribution prior over lambda.",
             es=("Parámetro de tasa para la distribución Gamma previa sobre lambda."),
+            pt=("Parâmetro de taxa para a distribuição Gamma a priori sobre lambda."),
+            de=("Ratenparameter für die Gamma-Verteilungs-Prior über Lambda."),
         ),
-        alias=MultilingualString(en="Lambda 2", es="Lambda 2"),
+        alias=MultilingualString(
+            en="Lambda 2", es="Lambda 2", pt="Lambda 2", de="Lambda 2"
+        ),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -126,8 +152,22 @@ class BayesianRidgeRegressionSchema(BaseSchema):
                 "Si se calcula el intercepto para este modelo. Si es False, "
                 "se espera que los datos ya estén centrados."
             ),
+            pt=(
+                "Se o intercepto deve ser calculado para este modelo. Se False, "
+                "espera-se que os dados já estejam centrados."
+            ),
+            de=(
+                "Ob der Achsenabschnitt für dieses Modell berechnet werden soll. Bei "
+                "False "
+                "wird erwartet, dass die Daten bereits zentriert sind."
+            ),
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept",
+            es="Ajustar intercepto",
+            pt="Ajustar intercepto",
+            de="Achsenabschnitt anpassen",
+        ),
     )  # type: ignore
 
 
@@ -153,10 +193,14 @@ class BayesianRidgeRegression(RegressionModel, SklearnLikeRegressor, _BayesianRi
     DISPLAY_NAME: str = MultilingualString(
         en="Bayesian Ridge Regression",
         es="Regresión Ridge Bayesiana",
+        pt="Regressão Ridge Bayesiana",
+        de="Bayesische Ridge-Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="Bayesian regression with automatic regularisation estimation.",
         es="Regresión bayesiana con estimación automática de regularización.",
+        pt="Regressão bayesiana com estimação automática de regularização.",
+        de="Bayesische Regression mit automatischer Regularisierungsschätzung.",
     )
     COLOR: str = "#7E57C2"
     ICON: str = "Psychology"

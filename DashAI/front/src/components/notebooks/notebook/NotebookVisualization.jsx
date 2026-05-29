@@ -24,7 +24,7 @@ export default function NotebookVisualization({
           />
         </Box>
 
-        <Divider sx={{ my: 1, mt: 1 }} />
+        <Divider sx={{ my: 2, mt: 2 }} />
 
         {/* Notebook view */}
         <Box sx={{ flexGrow: 1, minHeight: 200, overflow: "auto" }}>

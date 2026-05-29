@@ -17,7 +17,10 @@ class DistributionExplorer(BaseExplorer):
     """
 
     CATEGORY: Final[str] = MultilingualString(
-        en="Distribution Analysis", es="Análisis de Distribución"
+        en="Distribution Analysis",
+        es="Análisis de Distribución",
+        pt="Análise de Distribuição",
+        de="Verteilungsanalyse",
     )
     ICON: Final[str] = Icon.BarChart.value
     COLOR: Final[str] = "rgb(155, 89, 182)"

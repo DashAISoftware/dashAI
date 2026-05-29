@@ -90,13 +90,19 @@ def validate_explorer_params(
         columns_spec = get_columns_spec(dataset_path)
 
         try:
-            explorer_class.validate_columns(explorer, columns_spec)
+            valid = explorer_class.validate_columns(explorer, columns_spec)
         except Exception as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Error while validating explorer columns",
             ) from e
+        if not valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Selected columns do not satisfy the explorer's type "
+                "constraints",
+            )
 
     return True
 

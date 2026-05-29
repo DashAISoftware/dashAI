@@ -8,7 +8,7 @@ export const StatBox = ({ label, value }) => {
     <Paper
       elevation={1}
       sx={{
-        p: 2,
+        p: 4,
         textAlign: "center",
         borderRadius: 2,
         bgcolor: theme.palette.ui.panelMedium,

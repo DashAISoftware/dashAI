@@ -3,8 +3,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
@@ -13,6 +11,7 @@ import OptimizationTableSelectOptimizer from "./OptimizationTableSelectOptimizer
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -22,11 +21,9 @@ import { useTranslation } from "react-i18next";
 function OptimizationTable({ newExp, setNewExp }) {
   const [selectedOptimizer, setSelectedOptimizer] = useState({});
   const [models, setModels] = useState([]);
-  const { t, i18n } = useTranslation(["experiments", "common"]);
+  const { t } = useTranslation(["experiments", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -136,7 +133,7 @@ function OptimizationTable({ newExp, setNewExp }) {
           }
 
           return (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <EditOptimizerDialog
                 optimizerToConfigure={row.original.optimizer_name}
                 updateParameters={handleUpdateParameters(row.original.id)}
@@ -162,14 +159,14 @@ function OptimizationTable({ newExp, setNewExp }) {
   });
 
   return (
-    <Paper sx={{ py: 1, px: 2 }}>
+    <Paper sx={{ py: 4, px: 8 }}>
       {/* Title */}
       <Grid
         container
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        sx={{ mb: 8 }}
       >
         <Typography variant="subtitle1" component="h3">
           {t("experiments:label.modelsInExperiment")}

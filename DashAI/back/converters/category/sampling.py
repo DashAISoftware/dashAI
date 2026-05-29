@@ -17,7 +17,10 @@ class SamplingConverter(BaseConverter):
     """
 
     CATEGORY = MultilingualString(
-        en="Resampling & Class Balancing", es="Remuestreo y Balanceo de Clases"
+        en="Resampling & Class Balancing",
+        es="Remuestreo y Balanceo de Clases",
+        pt="Reamostragem e Balanceamento de Classes",
+        de="Resampling und Klassenausgleich",
     )
     ICON: Final[str] = Icon.Casino.value
     COLOR: Final[str] = "rgb(255, 159, 64)"

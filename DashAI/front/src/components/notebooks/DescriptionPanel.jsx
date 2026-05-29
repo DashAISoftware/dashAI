@@ -8,7 +8,7 @@ export default function DescriptionPanel() {
   return (
     <Box
       sx={{
-        p: 2,
+        p: 4,
         bgcolor: theme.palette.ui.panelDark,
         borderTop: `1px solid ${theme.palette.ui.borderLight}`,
         minHeight: 80,

@@ -32,6 +32,8 @@ class TruncatedSVDSchema(BaseSchema):
         description=MultilingualString(
             en="Desired dimensionality of output data.",
             es="Dimensionalidad deseada de los datos de salida.",
+            pt="Dimensionalidade desejada dos dados de saída.",
+            de="Gewünschte Dimensionalität der Ausgabedaten.",
         ),
     )  # type: ignore
     algorithm: schema_field(
@@ -40,6 +42,8 @@ class TruncatedSVDSchema(BaseSchema):
         description=MultilingualString(
             en="SVD solver to use.",
             es="Método SVD a utilizar.",
+            pt="Solucionador SVD a usar.",
+            de="Zu verwendender SVD-Löser.",
         ),
     )  # type: ignore
     n_iter: schema_field(
@@ -48,6 +52,8 @@ class TruncatedSVDSchema(BaseSchema):
         description=MultilingualString(
             en="Number of iterations for randomized SVD solver.",
             es="Número de iteraciones para el método SVD aleatorizado.",
+            pt="Número de iterações para o solucionador SVD aleatorizado.",
+            de="Anzahl der Iterationen für den randomisierten SVD-Löser.",
         ),
     )  # type: ignore
     n_oversamples: schema_field(
@@ -59,6 +65,14 @@ class TruncatedSVDSchema(BaseSchema):
                 "Número de iteraciones de potencia utilizadas en el método "
                 "SVD aleatorizado."
             ),
+            pt=(
+                "Número de iterações de potência usadas no solucionador "
+                "SVD aleatorizado."
+            ),
+            de=(
+                "Anzahl der Potenziterationen, die im randomisierten SVD-Löser "
+                "verwendet werden."
+            ),
         ),
     )  # type: ignore
     power_iteration_normalizer: schema_field(
@@ -67,6 +81,8 @@ class TruncatedSVDSchema(BaseSchema):
         description=MultilingualString(
             en="Method to normalize the eigenvectors.",
             es="Método para normalizar los eigenvectores.",
+            pt="Método para normalizar os autovetores.",
+            de="Methode zur Normalisierung der Eigenvektoren.",
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -81,6 +97,14 @@ class TruncatedSVDSchema(BaseSchema):
                 "Usado durante SVD aleatorizado. Pasa un entero para obtener "
                 "resultados reproducibles en múltiples ejecuciones."
             ),
+            pt=(
+                "Usado durante SVD aleatorizado. Passe um inteiro para obter "
+                "resultados reproduzíveis em múltiplas execuções."
+            ),
+            de=(
+                "Wird bei randomisiertem SVD verwendet. Ganzzahl übergeben für "
+                "reproduzierbare Ergebnisse bei mehreren Funktionsaufrufen."
+            ),
         ),
     )  # type: ignore
     tol: schema_field(
@@ -89,6 +113,8 @@ class TruncatedSVDSchema(BaseSchema):
         description=MultilingualString(
             en="Tolerance for ARPACK.",
             es="Tolerancia para ARPACK.",
+            pt="Tolerância para ARPACK.",
+            de="Toleranz für ARPACK.",
         ),
     )  # type: ignore
 
@@ -140,12 +166,29 @@ class TruncatedSVD(
             "calcular la descomposición, lo que permite trabajar eficientemente "
             "con matrices dispersas."
         ),
+        pt=(
+            "Este transformador realiza redução linear de dimensionalidade por "
+            "meio da decomposição em valores singulares truncada (SVD). "
+            "Ao contrário do PCA, este estimador não centraliza os dados antes "
+            "de calcular a decomposição, permitindo trabalhar eficientemente "
+            "com matrizes esparsas."
+        ),
+        de=(
+            "Dieser Transformator führt lineare Dimensionsreduktion mittels "
+            "gekürzter Singulärwertzerlegung (SVD) durch. Im Gegensatz zu PCA "
+            "zentriert dieser Schätzer die Daten nicht vor der Berechnung, "
+            "was eine effiziente Arbeit mit sparse Matrizen ermöglicht."
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Dimensionality reduction using truncated SVD.",
         es="Reducción de dimensionalidad utilizando SVD truncado.",
+        pt="Redução de dimensionalidade usando SVD Truncado.",
+        de="Dimensionsreduktion mittels gekürzter SVD.",
     )
-    DISPLAY_NAME = MultilingualString(en="Truncated SVD", es="SVD Truncado")
+    DISPLAY_NAME = MultilingualString(
+        en="Truncated SVD", es="SVD Truncado", pt="SVD Truncado", de="Gekürzte SVD"
+    )
     IMAGE_PREVIEW = "truncated_svd.png"
 
     metadata = {

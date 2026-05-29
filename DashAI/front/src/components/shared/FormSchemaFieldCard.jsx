@@ -14,7 +14,7 @@ const mdComponents = (color) => ({
       component="span"
       variant="caption"
       color={color}
-      sx={{ display: "block", lineHeight: 1.5, "& + span": { mt: 0.25 } }}
+      sx={{ display: "block", lineHeight: 1.5, "& + span": { mt: 1 } }}
     >
       {children}
     </Typography>
@@ -39,8 +39,8 @@ const mdComponents = (color) => ({
           fontSize: "0.7rem",
           bgcolor: "action.hover",
           borderRadius: 0.5,
-          px: 0.4,
-          py: 0.1,
+          px: 2,
+          py: 1,
         }}
       >
         {children}
@@ -53,8 +53,8 @@ const mdComponents = (color) => ({
           fontSize: "0.7rem",
           bgcolor: "action.hover",
           borderRadius: 1,
-          p: 0.75,
-          mt: 0.5,
+          p: 3,
+          mt: 2,
           overflowX: "auto",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
@@ -74,18 +74,12 @@ const mdComponents = (color) => ({
     </Box>
   ),
   ul: ({ children }) => (
-    <Box
-      component="ul"
-      sx={{ pl: 2, my: 0.25, "& li": { fontSize: "0.75rem" } }}
-    >
+    <Box component="ul" sx={{ pl: 8, my: 1, "& li": { fontSize: "0.75rem" } }}>
       {children}
     </Box>
   ),
   ol: ({ children }) => (
-    <Box
-      component="ol"
-      sx={{ pl: 2, my: 0.25, "& li": { fontSize: "0.75rem" } }}
-    >
+    <Box component="ol" sx={{ pl: 8, my: 1, "& li": { fontSize: "0.75rem" } }}>
       {children}
     </Box>
   ),
@@ -103,7 +97,7 @@ function DescriptionBlock({ text, isError }) {
   const color = isError ? "error.main" : "text.disabled";
 
   return (
-    <Box sx={{ mt: 0.5, pb: 0.5 }}>
+    <Box sx={{ mt: 2, pb: 2 }}>
       <ReactMarkdown components={mdComponents(color)}>
         {displayed}
       </ReactMarkdown>
@@ -116,7 +110,7 @@ function DescriptionBlock({ text, isError }) {
           underline="hover"
           onClick={() => setExpanded((prev) => !prev)}
           sx={{
-            mt: 0.25,
+            mt: 1,
             display: "inline-block",
             background: "none",
             border: "none",
@@ -160,11 +154,11 @@ function FormSchemaFieldCard({
       {/* ── Header ── */}
       <Box
         sx={{
-          px: 2,
-          py: 0.75,
+          px: 8,
+          py: 3,
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          gap: 4,
           borderBottom: "1px solid",
           borderColor: "divider",
         }}
@@ -196,9 +190,9 @@ function FormSchemaFieldCard({
       <FormCardProvider>
         <Box
           sx={{
-            px: 2,
-            pt: 0.5,
-            pb: description || errorMessage ? 0.5 : 1,
+            px: 8,
+            pt: 2,
+            pb: description || errorMessage ? 2 : 4,
             // Hide the floating label — the card header already shows it
             "& .MuiInputLabel-root": { display: "none" },
             // Remove the label notch indent from outlined inputs
@@ -211,7 +205,7 @@ function FormSchemaFieldCard({
         </Box>
 
         {(description || errorMessage) && (
-          <Box sx={{ px: 2 }}>
+          <Box sx={{ px: 8 }}>
             <DescriptionBlock
               text={errorMessage ?? description}
               isError={Boolean(errorMessage)}

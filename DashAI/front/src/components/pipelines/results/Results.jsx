@@ -60,7 +60,7 @@ function PipelineResults({ pipelineId, onClose }) {
 
   if (!hasExploration && !hasTrain && !hasPrediction) {
     return (
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 4 }}>
         {onClose && (
           <Button startIcon={<ArrowBackIosNew />} onClick={onClose}>
             Volver
@@ -110,7 +110,7 @@ function PipelineResults({ pipelineId, onClose }) {
                   <Tab label="Metrics" />
                   <Tab label="Graphs" />
                 </Tabs>
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 6 }}>
                   {trainTab === 0 && (
                     <Box>
                       <Typography variant="subtitle1">Model Name</Typography>

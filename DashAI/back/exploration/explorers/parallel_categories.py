@@ -33,8 +33,15 @@ class ParallelCategoriesSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to color the data points."),
             es=("Columna usada para colorear los puntos."),
+            pt=("Coluna usada para colorir os pontos de dados."),
+            de=("Spalte zur Einfärbung der Datenpunkte."),
         ),
-        alias=MultilingualString(en="Color column", es="Columna de color"),
+        alias=MultilingualString(
+            en="Color column",
+            es="Columna de color",
+            pt="Coluna de cor",
+            de="Farbspalte",
+        ),
     )  # type: ignore
 
 
@@ -55,6 +62,8 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Parallel Categories Plot",
         es="Gráfico de Categorías Paralelas",
+        pt="Categorias Paralelas",
+        de="Parallele Kategoriendiagramm",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -65,6 +74,16 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
             "Visualiza datos categóricos de alta dimensión. Cada línea vertical "
             "es un nivel de categoría y las conexiones muestran combinaciones "
             "entre columnas."
+        ),
+        pt=(
+            "Visualiza dados categóricos de alta dimensão. Cada linha vertical "
+            "é um nível de categoria e as conexões mostram combinações "
+            "entre colunas."
+        ),
+        de=(
+            "Visualisiert hochdimensionale kategorische Daten. Jede vertikale "
+            "Linie ist eine Kategorienstufe und Verbindungen zeigen Kombinationen "
+            "über Spalten hinweg."
         ),
     )
     IMAGE_PREVIEW = "parallel_categories.png"

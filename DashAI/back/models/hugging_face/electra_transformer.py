@@ -27,6 +27,8 @@ class ElectraTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="ELECTRA Transformer",
         es="Transformer ELECTRA",
+        pt="Transformer ELECTRA",
+        de="ELECTRA Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +38,15 @@ class ElectraTransformer(HuggingFaceTextClassificationTransformer):
         es=(
             "Discriminador ELECTRA eficiente en muestras para clasificación de texto. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "Discriminador ELECTRA eficiente em amostras para classificação de texto. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Stichprobeneffizienter ELECTRA-Diskriminator für Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#558B2F"

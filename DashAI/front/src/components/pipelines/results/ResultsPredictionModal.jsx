@@ -52,7 +52,7 @@ function PredictionSummary({ predictName }) {
           <Tab label="Summary" disabled={summary.data_type === "string"} />
           <Tab label="Sample" />
         </Tabs>
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 6 }}>
           {tab === 0 && (
             <Box>
               <Typography variant="subtitle1">Name</Typography>

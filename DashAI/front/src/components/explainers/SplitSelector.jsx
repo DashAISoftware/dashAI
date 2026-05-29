@@ -48,8 +48,8 @@ export function SplitSelector({
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+    <Box sx={{ p: 6 }}>
+      <FormControl component="fieldset" sx={{ mb: 6, width: "100%" }}>
         <FormLabel component="legend">
           {t("explainers:label.datasetSplit")}
         </FormLabel>
@@ -58,7 +58,7 @@ export function SplitSelector({
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{ mt: 1 }}
+          sx={{ mt: 2 }}
         >
           <RadioGroup
             row
@@ -93,12 +93,12 @@ export function SplitSelector({
         </Stack>
       </FormControl>
 
-      <Stack spacing={2} mb={2}>
+      <Stack spacing={4} mb={4}>
         <Typography gutterBottom>
           {t("explainers:label.percentageOfSplitToUse")}
         </Typography>
 
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={4} alignItems="center">
           <Slider
             value={typeof percentage === "number" ? percentage : 0}
             onChange={handleSliderChange}
@@ -129,9 +129,9 @@ export function SplitSelector({
         </Stack>
       </Stack>
 
-      <Divider sx={{ my: 1 }} />
+      <Divider sx={{ my: 2 }} />
 
-      <Box mt={1}>
+      <Box mt={2}>
         <Typography variant="caption" color="text.secondary">
           <Trans i18nKey="explainers:label.splitSelectionSummary">
             Percentage: {{ percentage }}% | Rows selected:

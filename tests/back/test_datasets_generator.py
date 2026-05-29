@@ -334,6 +334,62 @@ class JSONTestDatasetGenerator:
         )
 
 
+class ARFFTestDatasetGenerator:
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        dataset_name: str,
+        ouptut_path: pathlib.Path,
+        random_state: int,
+    ) -> None:
+        base_path = pathlib.Path(ouptut_path) / "arff" / dataset_name
+        os.makedirs(base_path, exist_ok=True)
+
+        self._generate_common_cases(base_path=base_path, df=df)
+        self._generate_bad_formats(base_path=base_path)
+        self._generate_splits(base_path=base_path, df=df, random_state=random_state)
+
+    @staticmethod
+    def _write_arff(
+        df: pd.DataFrame, filepath: pathlib.Path, relation: str = "dataset"
+    ):
+        with open(filepath, "w") as f:
+            f.write(f"@relation {relation}\n\n")
+            for col in df.columns:
+                safe_col = f"'{col}'"
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    f.write(f"@attribute {safe_col} NUMERIC\n")
+                else:
+                    values = ",".join(f"'{v}'" for v in df[col].unique())
+                    f.write(f"@attribute {safe_col} {{{values}}}\n")
+            f.write("\n@data\n")
+            for _, row in df.iterrows():
+                f.write(",".join(str(v) for v in row) + "\n")
+
+    def _generate_common_cases(self, base_path: pathlib.Path, df: pd.DataFrame):
+        self._write_arff(df, base_path / "basic.arff")
+
+    def _generate_bad_formats(self, base_path: pathlib.Path):
+        with open(base_path / "bad_format.arff", "wb") as f:
+            f.write(b"not a valid arff file #$%&--")
+        with open(base_path / "empty_file.arff", "w") as f:
+            f.write("")
+
+    def _generate_splits(
+        self, base_path: pathlib.Path, df: pd.DataFrame, random_state: int
+    ):
+        os.makedirs(base_path / "split" / "train", exist_ok=True)
+        os.makedirs(base_path / "split" / "test", exist_ok=True)
+        os.makedirs(base_path / "split" / "val", exist_ok=True)
+
+        train, test, val = _get_test_splits(df, random_state)
+
+        self._write_arff(train, base_path / "split" / "train" / "train.arff")
+        self._write_arff(test, base_path / "split" / "test" / "test.arff")
+        self._write_arff(val, base_path / "split" / "val" / "val.arff")
+        shutil.make_archive(str(base_path / "split"), "zip", base_path / "split")
+
+
 class ExcelTestDatasetGenerator:
     def __init__(
         self,

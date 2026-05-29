@@ -310,7 +310,7 @@ const Train = ({
               helperText={outputError ? outputErrorMessage : ""}
             />
 
-            <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
+            <Grid size={{ xs: 12 }} sx={{ mt: 6 }}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -321,7 +321,7 @@ const Train = ({
                   />
                 }
                 label="Shuffle"
-                sx={{ ml: 1 }}
+                sx={{ ml: 2 }}
               />
               <FormControlLabel
                 control={
@@ -373,7 +373,7 @@ const Train = ({
             />
           </Grid>
 
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12 }} sx={{ mt: 4 }}>
             <Typography variant="body1">Task and Model:</Typography>
           </Grid>
 
@@ -404,7 +404,7 @@ const Train = ({
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={2} alignItems="center">
               <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Model"
@@ -437,7 +437,7 @@ const Train = ({
             </Grid>
           </Grid>
 
-          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12 }} sx={{ mt: 4 }}>
             <Typography variant="body1">Metrics:</Typography>
           </Grid>
 

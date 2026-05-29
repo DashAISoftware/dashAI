@@ -65,7 +65,16 @@ export const datasetsTourSteps = [
               onMouseOut={(e) => (e.target.style.backgroundColor = "#ef9f27")}
             ></a>
           </p>
-          <p style={{ fontSize: "14px", color: "#666" }}>
+          <p
+            style={{
+              backgroundColor: "#1b2f26",
+              color: "white",
+              padding: "8px",
+              borderRadius: "4px",
+              marginTop: "10px",
+              borderLeft: "3px solid #4caf50",
+            }}
+          >
             <strong></strong>
           </p>
           <p style={{ marginTop: "10px" }}></p>
@@ -148,7 +157,16 @@ export const datasetsTourSteps = [
               <strong></strong>
             </li>
           </ul>
-          <p style={{ fontSize: "14px", color: "#666", marginTop: "10px" }}></p>
+          <p
+            style={{
+              backgroundColor: "#1b2f26",
+              color: "white",
+              padding: "8px",
+              borderRadius: "4px",
+              marginTop: "10px",
+              borderLeft: "3px solid #4caf50",
+            }}
+          ></p>
         </div>
       </Trans>
     ),
@@ -178,10 +196,12 @@ export const datasetsTourSteps = [
           </ul>
           <p
             style={{
-              backgroundColor: "#e8f5e9",
+              backgroundColor: "#1b2f26",
+              color: "white",
               padding: "8px",
               borderRadius: "4px",
               marginTop: "10px",
+              borderLeft: "3px solid #4caf50",
             }}
           >
             <strong></strong>

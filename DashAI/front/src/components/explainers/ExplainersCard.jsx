@@ -4,16 +4,12 @@ import {
   Typography,
   IconButton,
   Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
   Collapse,
   Box,
   CircularProgress,
 } from "@mui/material";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -89,8 +85,8 @@ export default function ExplainersCard({
   if (compact) {
     return (
       <>
-        <Paper elevation={2} sx={{ p: 2 }}>
-          <Grid container direction="column" gap={1}>
+        <Paper elevation={2} sx={{ p: 4 }}>
+          <Grid container direction="column" gap={2}>
             <Grid
               item
               container
@@ -100,12 +96,12 @@ export default function ExplainersCard({
             >
               <Grid sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   fontWeight="medium"
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 1,
+                    gap: 2,
                     flexWrap: "wrap",
                     wordBreak: "break-word",
                   }}
@@ -122,7 +118,7 @@ export default function ExplainersCard({
                   </Typography>
                 </Typography>
               </Grid>
-              <Grid sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {isRunning && <CircularProgress size={18} />}
                 <IconButton
                   size="small"
@@ -137,7 +133,7 @@ export default function ExplainersCard({
             </Grid>
 
             {isRunning ? (
-              <Box sx={{ py: 1, textAlign: "center" }}>
+              <Box sx={{ py: 2, textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
                   {t("explainers:label.explainerInProgress")}
                 </Typography>
@@ -156,7 +152,7 @@ export default function ExplainersCard({
                 </Button>
 
                 <Collapse in={expanded} timeout="auto" unmountOnExit>
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{ mt: 4 }}>
                     <ExplainersPlot explainer={explainer} scope={scope} />
                   </Box>
                 </Collapse>
@@ -165,27 +161,12 @@ export default function ExplainersCard({
           </Grid>
         </Paper>
 
-        <Dialog
+        <DeleteConfirmationModal
           open={open}
           onClose={handleClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            {t("explainers:label.deleteExplainer")}
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              {t("explainers:label.deleteExplainerConfirmation")}
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>{t("common:cancel")}</Button>
-            <Button onClick={handleConfirmDelete} color="error" autoFocus>
-              {t("common:delete")}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onConfirm={handleConfirmDelete}
+          content={t("explainers:label.deleteExplainerConfirmation")}
+        />
       </>
     );
   }
@@ -193,7 +174,7 @@ export default function ExplainersCard({
   // Full mode for standalone page
   return (
     <Paper elevation={3} sx={{ width: "100%" }}>
-      <Grid container item p={4} gap={2}>
+      <Grid container item p={8} gap={4}>
         <Grid
           item
           container
@@ -209,7 +190,7 @@ export default function ExplainersCard({
               {t("explainers:label.forExplainer", { name: explainer.name })}
             </Typography>
           </Grid>
-          <Grid sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {isRunning && <CircularProgress size={22} />}
             <IconButton
               aria-label="zoomin"
@@ -230,27 +211,12 @@ export default function ExplainersCard({
             >
               <DeleteIcon />
             </IconButton>
-            <Dialog
+            <DeleteConfirmationModal
               open={open}
               onClose={handleClose}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description"
-            >
-              <DialogTitle id="alert-dialog-title">
-                {t("explainers:label.deleteExplainer")}
-              </DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">
-                  {t("explainers:label.deleteExplainerConfirmation")}
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClose}>{t("common:cancel")}</Button>
-                <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                  {t("common:delete")}
-                </Button>
-              </DialogActions>
-            </Dialog>
+              onConfirm={handleConfirmDelete}
+              content={t("explainers:label.deleteExplainerConfirmation")}
+            />
           </Grid>
         </Grid>
         <ExplainersPlot explainer={explainer} scope={scope} />

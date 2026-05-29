@@ -166,7 +166,7 @@ function ParamsSettings({
       <DialogTitle
         sx={{
           m: 0,
-          p: 2,
+          p: 4,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -184,7 +184,7 @@ function ParamsSettings({
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <Stack spacing={2}>{renderFields()}</Stack>
+        <Stack spacing={4}>{renderFields()}</Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleSave} color="primary">

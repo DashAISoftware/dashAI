@@ -1,5 +1,6 @@
 {
   "configureParameters": "<0><0>Configure Parameters</0><1>Here you can customize the explorer's parameters, such as the number of bins for the histogram.</1><2>For now, we'll use the default settings. These work well for most cases!</2></0>",
+  "configureParametersAndCreate": "<0><0>Configure Parameters and Create Explorer</0><1>Here you can customize the explorer's parameters, such as the number of bins for the histogram.</1><2>For now, we'll use the default settings. These work well for most cases!</2><3>When ready, click the <0>Create Explorer</0> button to generate the histogram visualization.</3></0>",
   "converterApplied": "<0><0>Converter Applied!</0><1>Excellent! Your Label Encoder is now processing the selected columns.</1><2>Once finished, you'll see the transformation details here. All subsequent explorers and converters will use this transformed data.</2></0>",
   "convertersTab": "<0><0>Converters Tab</0><1>Click on the \"Converters\" tab to see available transformation tools.</1><2>We'll use a Label Encoder to convert categorical data into numerical values.</2></0>",
   "createExplorer": "<0><0>Create the Explorer</0><1>Now click the \"Create Explorer\" button to generate the histogram visualization.</1></0>",

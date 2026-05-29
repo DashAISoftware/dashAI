@@ -159,7 +159,7 @@ function ResultsGraphs({
 
   if (finishedRuns.length === 0) {
     return (
-      <Alert severity="warning" sx={{ mb: 2 }}>
+      <Alert severity="warning" sx={{ mb: 4 }}>
         <AlertTitle>No information from the experiments</AlertTitle>
         There are no completed experiments or all have an error status.
       </Alert>

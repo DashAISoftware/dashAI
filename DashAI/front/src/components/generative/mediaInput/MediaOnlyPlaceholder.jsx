@@ -23,13 +23,13 @@ export function MediaOnlyPlaceholder({
         flex: 1,
         minHeight: "104px",
         boxSizing: "border-box",
-        px: 2,
-        py: 1.5,
+        px: 4,
+        py: 3,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 1,
+        gap: 2,
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: 1,
         backgroundColor: "transparent",
@@ -44,7 +44,7 @@ export function MediaOnlyPlaceholder({
               "Attach media to continue",
             )}
           </Typography>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={2}>
             {MEDIA_ORDER.map((kind) => {
               const { icon, tooltipKey } = MEDIA_KINDS[kind];
               const enabled = isActive(inputsCardinality[kind]);

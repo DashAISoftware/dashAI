@@ -3,21 +3,16 @@ import PropTypes from "prop-types";
 import {
   Card,
   CardContent,
-  CardActions,
   Typography,
   IconButton,
   Chip,
   Box,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
   Collapse,
   CircularProgress,
 } from "@mui/material";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -115,8 +110,9 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
 
   const handleDownload = async () => {
     try {
-      const data = await exportDatasetCsvByPath(prediction.results_path);
-      const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+      const blob = await exportDatasetCsvByPath(prediction.results_path);
+      const isZip = blob.type === "application/zip";
+      const ext = isZip ? "zip" : "csv";
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -124,7 +120,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
         "download",
         `prediction-${prediction.id}-${
           new Date(prediction.created).toISOString().split("T")[0]
-        }.csv`,
+        }.${ext}`,
       );
       document.body.appendChild(link);
       link.click();
@@ -162,15 +158,15 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
 
   return (
     <>
-      <Card elevation={2} sx={{ width: "100%" }}>
-        <CardContent sx={{ pb: 1 }}>
+      <Card elevation={2} sx={{ width: "100%", maxWidth: 900 }}>
+        <CardContent sx={{ pb: 2 }}>
           {/* Header with status and dataset info */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "start",
-              mb: 1,
+              mb: 2,
             }}
           >
             <Box sx={{ flex: 1 }}>
@@ -189,8 +185,8 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 0.5,
-                    mt: 0.5,
+                    gap: 1,
+                    mt: 1,
                   }}
                 >
                   <DatasetIcon
@@ -205,16 +201,42 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                 </Box>
               )}
             </Box>
-            <Chip
-              label={getPredictionStatus(statusText, t)}
-              color={getStatusColor(statusText)}
-              size="small"
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Chip
+                label={getPredictionStatus(statusText, t)}
+                color={getStatusColor(statusText)}
+                size="small"
+              />
+              <Tooltip title={t("prediction:button.downloadResults")}>
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={!isFinished}
+                    color="primary"
+                    onClick={handleDownload}
+                  >
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title={t("common:delete")}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={isRunning}
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
           </Box>
 
           {/* Expandable Results */}
           {isFinished && (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 4 }}>
               <Button
                 size="small"
                 onClick={() => setExpanded(!expanded)}
@@ -227,22 +249,34 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
               </Button>
 
               <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 4 }}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ mb: 1, display: "block" }}
+                    sx={{ mb: 2, display: "block" }}
                   >
                     {t("prediction:label.resultsPreview")}
                   </Typography>
-                  <DatasetTable
-                    fetchPage={fetchPage}
-                    initialPageSize={10}
-                    datasetPath={prediction.results_path}
-                    columnTypes={columnTypes}
-                    showExportButton={false}
-                    baseBackgroundColor={theme.palette.background.paper}
-                  />
+                  <Box
+                    sx={{
+                      border: 1,
+                      borderColor: "divider",
+                      bgcolor: "background.default",
+                      borderRadius: 1,
+                      overflow: "hidden",
+                      p: 1,
+                    }}
+                  >
+                    <DatasetTable
+                      fetchPage={fetchPage}
+                      initialPageSize={10}
+                      datasetPath={prediction.results_path}
+                      columnTypes={columnTypes}
+                      showExportButton={false}
+                      baseBackgroundColor={theme.palette.background.paper}
+                      showBorder={false}
+                    />
+                  </Box>
                 </Box>
               </Collapse>
             </Box>
@@ -252,68 +286,26 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
           {isRunning && (
             <Box
               sx={{
-                py: 2,
+                py: 4,
                 textAlign: "center",
                 color: "text.secondary",
               }}
             >
               <CircularProgress size={24} />
-              <Typography variant="body2" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ mt: 2 }}>
                 {t("prediction:label.predictionInProgress")}
               </Typography>
             </Box>
           )}
         </CardContent>
-
-        <CardActions sx={{ justifyContent: "flex-end", pt: 0 }}>
-          <Tooltip title={t("prediction:button.downloadResults")}>
-            <span>
-              <IconButton
-                size="small"
-                disabled={!isFinished}
-                color="primary"
-                onClick={handleDownload}
-              >
-                <DownloadIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-
-          <Tooltip title={t("common:delete")}>
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={isRunning}
-                color="error"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </CardActions>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <DeleteConfirmationModal
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>{t("prediction:label.confirmDeletionTitle")}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t("prediction:label.confirmDeletion")}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            {t("common:cancel")}
-          </Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
-            {t("common:delete")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleDelete}
+        content={t("prediction:label.confirmDeletion")}
+      />
     </>
   );
 }
