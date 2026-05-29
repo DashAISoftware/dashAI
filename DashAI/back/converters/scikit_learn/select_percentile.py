@@ -23,6 +23,7 @@ class SelectPercentileSchema(BaseSchema):
             en="Percent of features to keep.",
             es="Porcentaje de características a conservar.",
             pt="Percentual de características a manter.",
+            de="Prozentsatz der beizubehaltenden Merkmale.",
         ),
     )  # type: ignore
 
@@ -71,12 +72,14 @@ class SelectPercentile(
             "Seleciona características de acordo com um percentil das pontuações "
             "mais altas."
         ),
+        de="Merkmale gemäß einem Perzentil der höchsten Bewertungen auswählen.",
     )
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(
         en="Select Percentile",
         es="Seleccionar Percentil",
         pt="Seleção por Percentil",
+        de="Perzentil-Auswahl",
     )
     IMAGE_PREVIEW = "select_percentile.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

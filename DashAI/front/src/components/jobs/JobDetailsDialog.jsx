@@ -67,7 +67,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                     : "default"
           }
           size="small"
-          sx={{ ml: 1 }}
+          sx={{ ml: 2 }}
         />
       </DialogTitle>
 
@@ -77,7 +77,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
             <CircularProgress />
           </Box>
         ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={4}>
             <Grid size={{ xs: 12 }}>
               <Typography
                 variant="subtitle2"
@@ -195,7 +195,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                   <Divider />
                   <Typography
                     variant="subtitle2"
-                    sx={{ fontWeight: "bold", color: "error.main", mt: 2 }}
+                    sx={{ fontWeight: "bold", color: "error.main", mt: 4 }}
                   >
                     {t("common:jobQueue.details.errorMessage")}
                   </Typography>
@@ -206,7 +206,8 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                         theme.palette.mode === "dark"
                           ? theme.palette.grey[900]
                           : theme.palette.grey[100],
-                      p: 2,
+                      p: 4,
+                      fontSize: "0.875rem",
                       overflow: "auto",
                       maxHeight: "200px",
                     }}

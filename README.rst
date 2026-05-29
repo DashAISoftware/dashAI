@@ -13,7 +13,7 @@ DashAI
 A graphical toolbox for training, evaluating and deploying state-of-the-art
 AI models
 
-.. image:: ./images/DashAI_banner.png
+.. image:: ./images/dashai-logo.svg
    :alt: DashAI Logo
 
 Quick installation (Pypi)

@@ -12,6 +12,11 @@ export default function ManualInput({
   sample,
   manualInputData,
   setManualInputData,
+  predictionResults = null,
+  targetColumn = null,
+  onRun = null,
+  isPreviewing = false,
+  isSaving = false,
 }) {
   const { t } = useTranslation(["prediction"]);
 
@@ -27,6 +32,11 @@ export default function ManualInput({
           onSubmit={(values) => console.log("Form submitted:", values)}
           manualInputData={manualInputData}
           setManualInputData={setManualInputData}
+          predictionResults={predictionResults}
+          targetColumn={targetColumn}
+          onRun={onRun}
+          isPreviewing={isPreviewing}
+          isSaving={isSaving}
         />
       ) : (
         <div>{t("prediction:label.noExperimentDataAvailable")}</div>

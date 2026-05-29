@@ -65,7 +65,15 @@ from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
+from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
+
+# Dataset Sources
+from DashAI.back.dataset_sources.huggingface_dataset_source import (
+    HuggingFaceDatasetSource,
+)
+from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
 
 # Explainers
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
@@ -96,6 +104,7 @@ from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
 from DashAI.back.job.converter_job import ConverterJob
+from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
@@ -194,6 +203,7 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
+from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
@@ -265,6 +275,7 @@ from DashAI.back.plugins.utils import get_available_plugins
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -296,6 +307,7 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
+        ImageClassificationTask,
         # Models
         AdaBoostClassifier,
         AlbertTransformer,
@@ -367,11 +379,17 @@ def get_initial_components():
         TongyiZImageModel,
         XlmRobertaTransformer,
         XlnetTransformer,
+        MLPImageClassifier,
         # Dataloaders
         ARFFDataLoader,
         CSVDataLoader,
         ExcelDataLoader,
+        ImageDataLoader,
         JSONDataLoader,
+        # Dataset Sources
+        HuggingFaceDatasetSource,
+        OpenMLDatasetSource,
+        ZenodoDatasetSource,
         # Metrics
         F1,
         Accuracy,
@@ -394,6 +412,7 @@ def get_initial_components():
         OptunaOptimizer,
         HyperOptOptimizer,
         # Jobs
+        DatafileJob,
         ExplainerJob,
         ModelJob,
         ExplorerJob,

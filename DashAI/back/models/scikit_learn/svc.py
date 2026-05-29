@@ -48,8 +48,12 @@ class SVCSchema(BaseSchema):
                 "O parâmetro 'C' é um parâmetro de regularização. "
                 "A força da regularização é inversamente proporcional a C"
             ),
+            de=(
+                "Der Parameter 'C' ist ein Regularisierungsparameter. "
+                "Die Stärke der Regularisierung ist umgekehrt proportional zu C."
+            ),
         ),
-        alias=MultilingualString(en="C", es="C", pt="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
     )  # type: ignore
     coef0: schema_field(
         optimizer_float_field(),
@@ -75,8 +79,13 @@ class SVCSchema(BaseSchema):
                 "função kernel. "
                 "É significativo apenas para kernels poly e sigmoid. "
             ),
+            de=(
+                "Der Parameter 'coef0' ist ein unabhängiger Term in der "
+                "Kernelfunktion. "
+                "Er ist nur für die Kernel poly und sigmoid relevant. "
+            ),
         ),
-        alias=MultilingualString(en="coef0", es="coef0", pt="coef0"),
+        alias=MultilingualString(en="coef0", es="coef0", pt="coef0", de="coef0"),
     )  # type: ignore
     degree: schema_field(
         optimizer_float_field(ge=0.0),
@@ -90,8 +99,9 @@ class SVCSchema(BaseSchema):
             en="The 'degree' parameter is only significant for 'poly' kernel.",
             es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
             pt="O parâmetro 'grau' só é significativo para o kernel 'poly'.",
+            de="Der Parameter 'degree' ist nur für den 'poly'-Kernel relevant.",
         ),
-        alias=MultilingualString(en="degree", es="grado", pt="grau"),
+        alias=MultilingualString(en="degree", es="grado", pt="grau", de="Grad"),
     )  # type: ignore
     gamma: schema_field(
         enum_field(enum=["scale", "auto"]),
@@ -100,8 +110,9 @@ class SVCSchema(BaseSchema):
             en="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels.",
             es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
             pt="Coeficiente para kernels 'rbf', 'poly' e 'sigmoid'.",
+            de="Koeffizient für 'rbf'-, 'poly'- und 'sigmoid'-Kernel.",
         ),
-        alias=MultilingualString(en="gamma", es="gamma", pt="gamma"),
+        alias=MultilingualString(en="gamma", es="gamma", pt="gamma", de="Gamma"),
     )  # type: ignore
     kernel: schema_field(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
@@ -110,8 +121,9 @@ class SVCSchema(BaseSchema):
             en="The 'kernel' parameter is the kernel used in the model.",
             es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
             pt="O parâmetro 'kernel' é o kernel utilizado no modelo.",
+            de="Der Parameter 'kernel' gibt den im Modell verwendeten Kernel an.",
         ),
-        alias=MultilingualString(en="kernel", es="kernel", pt="kernel"),
+        alias=MultilingualString(en="kernel", es="kernel", pt="kernel", de="Kernel"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=-1),
@@ -137,9 +149,17 @@ class SVCSchema(BaseSchema):
                 "solucionador. Deve ser um inteiro positivo "
                 "ou -1 para indicar sem limite."
             ),
+            de=(
+                "Der Parameter 'max_iter' bestimmt das Iterationslimit für den "
+                "Löser. Muss eine positive ganze Zahl oder "
+                "-1 für kein Limit sein."
+            ),
         ),
         alias=MultilingualString(
-            en="max iterations", es="max iteraciones", pt="máx iterações"
+            en="max iterations",
+            es="max iteraciones",
+            pt="máx iterações",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
     shrinking: schema_field(

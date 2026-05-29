@@ -44,9 +44,16 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "A taxa de aprendizado (encolhimento). Usada como fator multiplicativo "
                 "para os valores das folhas. Use 1 para não aplicar encolhimento."
             ),
+            de=(
+                "Die Lernrate (Schrumpfung). Wird als multiplikativer Faktor "
+                "für Blattwerte verwendet. Verwenden Sie 1 für keine Schrumpfung."
+            ),
         ),
         alias=MultilingualString(
-            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
         ),
     )  # type: ignore
 
@@ -62,9 +69,13 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
             en="Maximum number of iterations (trees) of the boosting process.",
             es="Número máximo de iteraciones (árboles) del proceso de boosting.",
             pt="Número máximo de iterações (árvores) do processo de boosting.",
+            de="Maximale Anzahl von Iterationen (Bäumen) des Boosting-Prozesses.",
         ),
         alias=MultilingualString(
-            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Máximas iterações",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
 
@@ -81,9 +92,13 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "Profundidade máxima de cada árvore. Se None, a profundidade "
                 "não é restringida."
             ),
+            de=("Maximale Tiefe jedes Baums. Bei None ist die Tiefe nicht begrenzt."),
         ),
         alias=MultilingualString(
-            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
         ),
     )  # type: ignore
 
@@ -103,9 +118,16 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
                 "Número máximo de folhas para cada árvore. Deve ser estritamente "
                 "maior que 1. Se None, não há limite."
             ),
+            de=(
+                "Maximale Anzahl von Blättern für jeden Baum. Muss strikt größer "
+                "als 1 sein. Bei None kein Maximallimit."
+            ),
         ),
         alias=MultilingualString(
-            en="Max leaf nodes", es="Máximos nodos hoja", pt="Máximos nós folha"
+            en="Max leaf nodes",
+            es="Máximos nodos hoja",
+            pt="Máximos nós folha",
+            de="Maximale Blattknoten",
         ),
     )  # type: ignore
 
@@ -121,11 +143,16 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
             en="Minimum number of samples required to be at a leaf node.",
             es="Número mínimo de muestras requeridas para estar en una hoja.",
             pt="Número mínimo de amostras necessárias para estar em um nó folha.",
+            de=(
+                "Mindestanzahl von Stichproben, die an einem Blattknoten erforderlich "
+                "sind."
+            ),
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mínimas amostras para folha",
+            de="Minimale Aufteilungsstichproben für Blatt",
         ),
     )  # type: ignore
 
@@ -146,9 +173,16 @@ class HistGradientBoostingRegressionSchema(BaseSchema):
             pt=(
                 "O parâmetro de regularização L2. Use 0 para não aplicar regularização."
             ),
+            de=(
+                "Der L2-Regularisierungsparameter. Verwenden Sie 0 für keine "
+                "Regularisierung."
+            ),
         ),
         alias=MultilingualString(
-            en="L2 regularization", es="Regularización L2", pt="Regularização L2"
+            en="L2 regularization",
+            es="Regularización L2",
+            pt="Regularização L2",
+            de="L2-Regularisierung",
         ),
     )  # type: ignore
 
@@ -180,6 +214,7 @@ class HistGradientBoostingRegression(
         en="Histogram Gradient Boosting Regression",
         es="Regresión Gradient Boosting con Histogramas",
         pt="Regressor por Gradient Boosting Histogramado",
+        de="Histogramm-Gradient-Boosting-Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast gradient boosting regression using histogram-based algorithms.",
@@ -190,6 +225,9 @@ class HistGradientBoostingRegression(
         pt=(
             "Regressão gradient boosting rápida usando algoritmos baseados "
             "em histogramas."
+        ),
+        de=(
+            "Schnelle Gradient-Boosting-Regression mit histogrammbasierten Algorithmen."
         ),
     )
     COLOR: str = "#9575CD"

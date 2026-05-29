@@ -30,6 +30,7 @@ class IncrementalPCASchema(BaseSchema):
             en="Number of components to keep.",
             es="Número de componentes a conservar.",
             pt="Número de componentes a manter.",
+            de="Anzahl der beizubehaltenden Komponenten.",
         ),
     )  # type: ignore
     whiten: schema_field(
@@ -48,6 +49,10 @@ class IncrementalPCASchema(BaseSchema):
                 "Quando True, os componentes são escalonados para garantir saídas "
                 "não correlacionadas com variâncias unitárias."
             ),
+            de=(
+                "Wenn True werden die Komponenten skaliert, um unkorrellierte "
+                "Ausgaben mit Einheitsvarianz zu gewährleisten."
+            ),
         ),
     )  # type: ignore
     batch_size: schema_field(
@@ -57,6 +62,7 @@ class IncrementalPCASchema(BaseSchema):
             en="The number of samples to use for each batch.",
             es="Número de muestras a usar por lote.",
             pt="O número de amostras a usar por lote.",
+            de="Die Anzahl der Stichproben, die pro Stapel verwendet werden sollen.",
         ),
     )  # type: ignore
 
@@ -106,14 +112,22 @@ class IncrementalPCA(
             "O PCA Incremental (IPCA) é tipicamente usado como substituto do PCA "
             "quando o conjunto de dados é grande demais para caber na memória."
         ),
+        de=(
+            "Inkrementelle PCA (IPCA) wird typischerweise als Ersatz für PCA "
+            "verwendet, wenn der Datensatz zu groß für den Arbeitsspeicher ist."
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Dimensionality reduction using Incremental PCA.",
         es="Reducción de dimensionalidad usando PCA incremental.",
         pt="Redução de dimensionalidade usando PCA Incremental.",
+        de="Dimensionsreduktion mittels inkrementeller PCA.",
     )
     DISPLAY_NAME = MultilingualString(
-        en="Incremental PCA", es="PCA Incremental", pt="PCA Incremental"
+        en="Incremental PCA",
+        es="PCA Incremental",
+        pt="PCA Incremental",
+        de="Inkrementelle PCA",
     )
     IMAGE_PREVIEW = "incremental_pca.png"
 

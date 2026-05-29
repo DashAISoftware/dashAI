@@ -56,6 +56,15 @@ class MedianAbsoluteError(RegressionMetric):
             "menos sensível a valores atípicos "
             "em comparação com o Erro Absoluto Médio (MAE)."
         ),
+        de=(
+            "Mittlerer Absoluter Fehler (MedAE) misst den Median "
+            "der absoluten Differenzen "
+            "zwischen vorhergesagten und tatsächlichen Werten in einem "
+            "Regressionsmodell. "
+            "Er bietet ein robustes Maß für die Vorhersagegenauigkeit, "
+            "das weniger empfindlich gegenüber Ausreißern ist "
+            "als der Mittlere Absolute Fehler (MAE)."
+        ),
     )
 
     @staticmethod

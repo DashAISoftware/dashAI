@@ -28,6 +28,7 @@ class BertTransformer(HuggingFaceTextClassificationTransformer):
         en="BERT Transformer",
         es="Transformer BERT",
         pt="Transformer BERT",
+        de="BERT Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +42,11 @@ class BertTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "Modelo BERT bidirecional para classificação de texto em inglês. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Bidirektionales BERT-Modell für englische Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#1565C0"

@@ -39,6 +39,7 @@ class FastICASchema(BaseSchema):
             en="Number of components to extract.",
             es="Número de componentes a extraer.",
             pt="Número de componentes a extrair.",
+            de="Anzahl der zu extrahierenden Komponenten.",
         ),
     )  # type: ignore
     algorithm: schema_field(
@@ -48,6 +49,7 @@ class FastICASchema(BaseSchema):
             en="Apply parallel or deflational algorithm for FastICA.",
             es="Aplica el algoritmo paralelo o deflacional para FastICA.",
             pt="Aplicar algoritmo paralelo ou deflacional para FastICA.",
+            de="Parallelen oder deflationären Algorithmus für FastICA anwenden.",
         ),
     )  # type: ignore
     # Deprecated since version 1.1
@@ -62,6 +64,7 @@ class FastICASchema(BaseSchema):
             en="If True, the data is whitened.",
             es="Si es True, los datos se blanquean.",
             pt="Se True, os dados são branqueados.",
+            de="Wenn True, werden die Daten geweißt.",
         ),
     )  # type: ignore
     fun: schema_field(
@@ -77,6 +80,10 @@ class FastICASchema(BaseSchema):
                 "a la neg-entropía."
             ),
             pt=("Forma funcional da função G usada na aproximação da neg-entropia."),
+            de=(
+                "Funktionale Form der G-Funktion, die bei der Annäherung an "
+                "Neg-Entropie verwendet wird."
+            ),
         ),
     )  # type: ignore
     fun_args: schema_field(
@@ -86,6 +93,7 @@ class FastICASchema(BaseSchema):
             en="Arguments to the G function.",
             es="Argumentos de la función G.",
             pt="Argumentos da função G.",
+            de="Argumente für die G-Funktion.",
         ),
     )  # type: ignore
     max_iter: schema_field(
@@ -95,6 +103,7 @@ class FastICASchema(BaseSchema):
             en="Maximum number of iterations to perform.",
             es="Número máximo de iteraciones a realizar.",
             pt="Número máximo de iterações a realizar.",
+            de="Maximale Anzahl der durchzuführenden Iterationen.",
         ),
     )  # type: ignore
     tol: schema_field(
@@ -104,6 +113,7 @@ class FastICASchema(BaseSchema):
             en="Tolerance on update at each iteration.",
             es="Tolerancia en la actualización en cada iteración.",
             pt="Tolerância na atualização em cada iteração.",
+            de="Toleranz bei der Aktualisierung in jeder Iteration.",
         ),
     )  # type: ignore
     w_init: schema_field(
@@ -113,6 +123,7 @@ class FastICASchema(BaseSchema):
             en="Initial guess for the unmixing matrix.",
             es="Estimación inicial de la matriz de separación.",
             pt="Estimativa inicial para a matriz de separação.",
+            de="Anfangsschätzung für die Trennungsmatrix.",
         ),
     )  # type: ignore
     whiten_solver: schema_field(
@@ -122,6 +133,7 @@ class FastICASchema(BaseSchema):
             en="The solver to use for whitening.",
             es="Método a utilizar para el blanqueo.",
             pt="O solucionador a usar para o branqueamento.",
+            de="Der zu verwendende Löser für die Weißung.",
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -141,6 +153,11 @@ class FastICASchema(BaseSchema):
                 "Usado para inicializar w_init quando não especificado, com "
                 "uma distribuição normal. Passe um inteiro para resultados "
                 "reproduzíveis."
+            ),
+            de=(
+                "Zur Initialisierung von w_init verwendet, wenn nicht angegeben, "
+                "mit einer Normalverteilung. Ganzzahl übergeben für reproduzierbare "
+                "Ergebnisse."
             ),
         ),
     )  # type: ignore
@@ -190,8 +207,11 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
         pt=(
             "FastICA: um algoritmo rápido para a Análise de Componentes Independentes."
         ),
+        de="FastICA: ein schneller Algorithmus für die Unabhängige Komponentenanalyse.",
     )
-    DISPLAY_NAME = MultilingualString(en="Fast ICA", es="Fast ICA", pt="Fast ICA")
+    DISPLAY_NAME = MultilingualString(
+        en="Fast ICA", es="Fast ICA", pt="Fast ICA", de="Fast ICA"
+    )
     IMAGE_PREVIEW = "fast_ica.png"
 
     metadata = {

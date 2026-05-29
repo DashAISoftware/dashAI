@@ -54,6 +54,12 @@ class R2(RegressionMetric):
             "se aproximam dos dados reais. Fornece uma indicação da "
             "qualidade do ajuste do modelo."
         ),
+        de=(
+            "R2-Wertung, auch bekannt als Bestimmtheitsmaß, "
+            "misst, wie gut die vorhergesagten Werte eines Regressionsmodells "
+            "die tatsächlichen Datenpunkte annähern. Sie gibt einen Hinweis auf "
+            "die Güte der Anpassung des Modells."
+        ),
     )
 
     @staticmethod

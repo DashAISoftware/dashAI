@@ -9,7 +9,7 @@ export function MediaPreviewList({ activeKinds, previewsByKind, onRemove }) {
     return (
       <Box
         key={`previews-${kind}`}
-        sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+        sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}
       >
         {previews.map((preview, index) => (
           <Box key={`${kind}-${index}`} sx={{ position: "relative" }}>
@@ -32,7 +32,7 @@ export function MediaPreviewList({ activeKinds, previewsByKind, onRemove }) {
                 sx={{
                   height: 80,
                   minWidth: 80,
-                  px: 1,
+                  px: 2,
                   borderRadius: 1,
                   border: 1,
                   borderColor: "divider",

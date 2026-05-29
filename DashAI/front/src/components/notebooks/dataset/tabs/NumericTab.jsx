@@ -79,7 +79,7 @@ export const NumericTab = ({
   };
 
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
+    <Box display="flex" flexDirection="column" gap={8}>
       {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
@@ -90,15 +90,15 @@ export const NumericTab = ({
         >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Title */}
-            <Box display="flex" alignItems="center" mb={2}>
-              <TrendingUpIcon sx={{ color: "primary.main", mr: 1 }} />
+            <Box display="flex" alignItems="center" mb={4}>
+              <TrendingUpIcon sx={{ color: "primary.main", mr: 2 }} />
               <Typography variant="h6" fontWeight="bold">
                 {column}
               </Typography>
             </Box>
 
             {/* Summary Stats */}
-            <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+            <Box display="flex" flexWrap="wrap" gap={4} mb={6}>
               <Box flex="1 1 200px" minWidth="150px">
                 <StatBox
                   label={t("datasets:label.mean")}
@@ -126,7 +126,7 @@ export const NumericTab = ({
             </Box>
 
             {/* Two-column metrics */}
-            <Box display="flex" flexWrap="wrap" gap={4}>
+            <Box display="flex" flexWrap="wrap" gap={8}>
               {/* Distribution Metrics */}
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
@@ -138,7 +138,7 @@ export const NumericTab = ({
                 >
                   {t("datasets:label.distributionMetrics")}
                 </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
+                <Box display="flex" flexDirection="column" gap={2}>
                   <MetricRow
                     label={t("datasets:label.lowerBound")}
                     value={formatNumber(stats?.lower_bound)}
@@ -181,7 +181,7 @@ export const NumericTab = ({
                 >
                   {t("datasets:label.shapeIndicators")}
                 </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
+                <Box display="flex" flexDirection="column" gap={2}>
                   <MetricRow
                     label={t("datasets:label.skewness")}
                     value={formatNumber(stats?.skew, 3)}
@@ -210,7 +210,7 @@ export const NumericTab = ({
             </Box>
 
             {/* Horizontal Boxplot Visualization */}
-            <Box mt={4}>
+            <Box mt={8}>
               <Typography
                 variant="subtitle2"
                 color="text.secondary"
@@ -356,7 +356,7 @@ export const NumericTab = ({
               <Alert
                 severity="warning"
                 icon={<InfoIcon fontSize="inherit" />}
-                sx={{ mt: 3 }}
+                sx={{ mt: 6 }}
               >
                 <Typography variant="body2">
                   {t("datasets:label.insightOutliers", {
@@ -376,7 +376,7 @@ export const NumericTab = ({
                   <Alert
                     severity="warning"
                     icon={<InfoIcon fontSize="inherit" />}
-                    sx={{ mt: 3 }}
+                    sx={{ mt: 6 }}
                   >
                     <Typography variant="body2">
                       <Trans i18nKey="datasets:label.rightSkewedWarning">

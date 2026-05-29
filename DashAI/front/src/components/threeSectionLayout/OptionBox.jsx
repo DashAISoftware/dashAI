@@ -22,10 +22,10 @@ export default function OptionBox({
     }
   }, [description]);
   const theme = useTheme();
-  const accent = theme.palette.accent.amber;
-  const accentDim = theme.palette.accent.amberDim;
-  const accentBorder = theme.palette.accent.amberBorder;
-  const accentGlow = theme.palette.accent.amberGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${theme.palette.primary.main}1F`;
+  const accentBorder = `${theme.palette.primary.main}38`;
+  const accentGlow = `${theme.palette.primary.main}0A`;
 
   return (
     <ButtonBase
@@ -94,7 +94,7 @@ export default function OptionBox({
 
       {/* Title */}
       <Typography
-        variant="h5"
+        variant="h4"
         sx={{
           color: theme.palette.text.primary,
           mb: "5px",
@@ -169,7 +169,7 @@ export default function OptionBox({
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
-            ml: 1,
+            ml: 2,
           }}
         >
           →

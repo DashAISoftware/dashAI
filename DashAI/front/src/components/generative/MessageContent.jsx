@@ -24,7 +24,7 @@ export function MessageContent({ messages, isUser, isWaiting }) {
       {isWaiting ? (
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {messages?.map((message) => {
             const type = message["data_type"];
             return (

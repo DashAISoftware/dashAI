@@ -39,6 +39,7 @@ class TFIDFConverterSchema(BaseSchema):
                 "a conservar."
             ),
             pt=("Número máximo de características (termos mais frequentes) a manter."),
+            de="Maximale Anzahl der beizubehaltenden Merkmale (häufigste Begriffe).",
         ),
     )  # type: ignore
     lowercase: schema_field(
@@ -51,6 +52,10 @@ class TFIDFConverterSchema(BaseSchema):
                 "Se todos os caracteres devem ser convertidos para minúsculas "
                 "antes de tokenizar."
             ),
+            de=(
+                "Ob alle Zeichen vor der Tokenisierung in Kleinbuchstaben umgewandelt "
+                "werden sollen."
+            ),
         ),
     )  # type: ignore
     stop_words: schema_field(
@@ -60,6 +65,7 @@ class TFIDFConverterSchema(BaseSchema):
             en="Stop word set to remove. Use 'english' or None.",
             es="Conjunto de stopwords a eliminar. Usa 'english' o None.",
             pt="Conjunto de stopwords a remover. Use 'english' ou None.",
+            de="Stoppwort-Set zum Entfernen. Verwende 'english' oder None.",
         ),
     )  # type: ignore
     lower_bound_ngrams: schema_field(
@@ -73,6 +79,7 @@ class TFIDFConverterSchema(BaseSchema):
             pt=(
                 "Limite inferior de n-grams a extrair. Deve ser <= ao limite superior."
             ),
+            de="Untergrenze für zu extrahierende N-Gramme. Muss <= Obergrenze sein.",
         ),
     )  # type: ignore
     upper_bound_ngrams: schema_field(
@@ -86,6 +93,7 @@ class TFIDFConverterSchema(BaseSchema):
             pt=(
                 "Limite superior de n-grams a extrair. Deve ser >= ao limite inferior."
             ),
+            de="Obergrenze für zu extrahierende N-Gramme. Muss >= Untergrenze sein.",
         ),
     )  # type: ignore
 
@@ -123,7 +131,9 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = TFIDFConverterSchema
-    DISPLAY_NAME = MultilingualString(en="TF-IDF", es="TF-IDF", pt="TF-IDF")
+    DISPLAY_NAME = MultilingualString(
+        en="TF-IDF", es="TF-IDF", pt="TF-IDF", de="TF-IDF"
+    )
     IMAGE_PREVIEW = "tf_idf.png"
 
     metadata = {
@@ -142,6 +152,10 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         pt=(
             "Converte texto em uma representação TF-IDF com uma coluna por "
             "token (peso TF-IDF por token)."
+        ),
+        de=(
+            "Konvertiert Text in eine TF-IDF-Darstellung mit einer Spalte pro "
+            "Token (TF-IDF-Gewicht pro Token)."
         ),
     )
 

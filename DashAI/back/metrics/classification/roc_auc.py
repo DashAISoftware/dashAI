@@ -59,6 +59,12 @@ class ROCAUC(ClassificationMetric):
             "em vários limiares de decisão. Representa o grau de "
             "separabilidade entre classes."
         ),
+        de=(
+            "Die Fläche unter der ROC-Kurve (RoC AUC) "
+            "ist ein Leistungsmaß für Klassifikationsprobleme bei verschiedenen "
+            "Schwellenwert-Einstellungen. Sie repräsentiert den Grad der "
+            "Trennbarkeit zwischen Klassen."
+        ),
     )
 
     @staticmethod

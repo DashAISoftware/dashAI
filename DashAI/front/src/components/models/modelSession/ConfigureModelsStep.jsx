@@ -165,7 +165,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
       direction="row"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={2}
+      spacing={4}
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
@@ -176,8 +176,8 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         <Grid
           container
           direction="row"
-          columnSpacing={3}
-          rowSpacing={3}
+          columnSpacing={6}
+          rowSpacing={6}
           wrap="wrap"
         >
           <Grid size={{ xs: 4, md: 12 }}>

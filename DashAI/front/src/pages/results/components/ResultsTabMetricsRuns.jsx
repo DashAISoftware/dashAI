@@ -19,14 +19,14 @@ function ResultsTabMetricsRuns({ runData, displaySet }) {
   return (
     <Grid>
       <Paper sx={{ borderRadius: 4 }}>
-        <Grid container direction="column" rowSpacing={2} sx={{ mt: 1 }}>
+        <Grid container direction="column" rowSpacing={4} sx={{ mt: 4 }}>
           {runData[displaySet] === null ? (
             runData.status === 3 ? (
               <Box sx={{ width: "100%" }}>
                 <LinearProgress />
               </Box>
             ) : (
-              <Alert severity="warning" sx={{ mb: 2 }}>
+              <Alert severity="warning" sx={{ mb: 4 }}>
                 <AlertTitle>
                   {t("models:label.thereAreNoMetricsForThisRun", {
                     set: getDisplaySetName(displaySet),
@@ -42,7 +42,7 @@ function ResultsTabMetricsRuns({ runData, displaySet }) {
               </Alert>
             )
           ) : Object.keys(runData[displaySet]).length === 0 ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 4 }}>
               <AlertTitle>Error</AlertTitle>
               <Typography variant="body1">
                 {t("models:label.metricsEmptyForDisplaySet", {
@@ -52,12 +52,12 @@ function ResultsTabMetricsRuns({ runData, displaySet }) {
             </Alert>
           ) : (
             Object.keys(runData[displaySet]).map((metric) => (
-              <Grid key={metric} sx={{ px: 5, py: 1, width: "100%" }}>
-                <Typography variant="p">{metric}</Typography>
-                <Typography variant="p" sx={{ float: "right" }}>
+              <Grid key={metric} sx={{ px: 4, py: 4, width: "100%" }}>
+                <Typography variant="body2">{metric}</Typography>
+                <Typography variant="body2" sx={{ float: "right" }}>
                   {runData[displaySet][metric].toFixed(2)}
                 </Typography>
-                <Divider sx={{ mt: 1 }} />
+                <Divider sx={{ mt: 4 }} />
               </Grid>
             ))
           )}

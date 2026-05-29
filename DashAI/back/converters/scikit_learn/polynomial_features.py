@@ -30,6 +30,7 @@ class PolynomialFeaturesSchema(BaseSchema):
             en="The degree of the polynomial features.",
             es="El grado de las características polinomiales.",
             pt="O grau das características polinomiais.",
+            de="Der Grad der polynomialen Merkmale.",
         ),
     )  # type: ignore
     interaction_only: schema_field(
@@ -47,6 +48,10 @@ class PolynomialFeaturesSchema(BaseSchema):
             pt=(
                 "Se True, somente características de interação são produzidas: "
                 "produtos de até 'degree' características de entrada distintas."
+            ),
+            de=(
+                "Wenn True, werden nur Interaktionsmerkmale erzeugt: Produkte von "
+                "höchstens 'degree' verschiedenen Eingangsmerkmalen."
             ),
         ),
     )  # type: ignore
@@ -66,6 +71,10 @@ class PolynomialFeaturesSchema(BaseSchema):
                 "Se True (padrão), inclui uma coluna de viés (coluna de uns que "
                 "atua como termo de intercepto)."
             ),
+            de=(
+                "Wenn True (Standard), wird eine Bias-Spalte einbezogen "
+                "(eine Spalte aus Einsen, die als Achsenabschnitt wirkt)."
+            ),
         ),
     )  # type: ignore
     order: schema_field(
@@ -84,6 +93,11 @@ class PolynomialFeaturesSchema(BaseSchema):
             pt=(
                 "Ordem do array de saída no caso denso. A ordem 'F' é mais "
                 "rápida de calcular, mas pode lentificar estimadores posteriores."
+            ),
+            de=(
+                "Reihenfolge des Ausgabe-Arrays im dichten Fall. Reihenfolge 'F' "
+                "ist schneller zu berechnen, kann aber nachfolgende Schätzer "
+                "verlangsamen."
             ),
         ),
     )  # type: ignore
@@ -136,11 +150,17 @@ class PolynomialFeatures(
             "uma amostra de entrada é [a, b], as características de grau 2 são "
             "[1, a, b, a^2, ab, b^2]."
         ),
+        de=(
+            "Polynomiale und Interaktionsmerkmale generieren. Zum Beispiel, wenn "
+            "eine Eingabe [a, b] ist, sind die Grad-2-Polynommerkmale "
+            "[1, a, b, a^2, ab, b^2]."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
         en="Polynomial Features",
         es="Características Polinomiales",
         pt="Características Polinomiais",
+        de="Polynomiale Merkmale",
     )
     IMAGE_PREVIEW = "polynomial_features.png"
 

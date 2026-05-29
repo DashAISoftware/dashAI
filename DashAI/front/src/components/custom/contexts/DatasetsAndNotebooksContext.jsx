@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../../hooks/datasets/useDatasets";
 import { useNotebooks } from "../../../hooks/datasets/useNotebooks";
+import { useDownloads } from "../../../hooks/datasets/useDownloads";
 
 const DatasetsAndNotebooksContext = createContext();
 
@@ -33,6 +34,14 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   } = useDatasets({ t });
 
   const {
+    downloads,
+    fetchDownloads,
+    deleteDownloadById,
+    updateDownload,
+    addDownload,
+  } = useDownloads();
+
+  const {
     notebooks,
     selectedNotebookId,
     fetchNotebooks,
@@ -59,6 +68,11 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   }, []);
 
   const value = {
+    downloads,
+    fetchDownloads,
+    deleteDownloadById,
+    updateDownload,
+    addDownload,
     datasets,
     createDataset,
     selectedDatasetId,

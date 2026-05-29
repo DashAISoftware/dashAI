@@ -54,6 +54,13 @@ class ExplainedVariance(RegressionMetric):
             "em um modelo de regressão. Indica quão bem o modelo "
             "captura a variabilidade dos dados."
         ),
+        de=(
+            "Erklärte Varianz misst den Anteil der Varianz in der "
+            "abhängigen Variable, der aus den unabhängigen Variablen "
+            "in einem Regressionsmodell vorhersagbar ist. Sie gibt an, wie gut das "
+            "Modell "
+            "die Variabilität der Daten erfasst."
+        ),
     )
 
     @staticmethod

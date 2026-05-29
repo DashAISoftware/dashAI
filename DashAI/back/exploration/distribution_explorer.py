@@ -20,6 +20,7 @@ class DistributionExplorer(BaseExplorer):
         en="Distribution Analysis",
         es="Análisis de Distribución",
         pt="Análise de Distribuição",
+        de="Verteilungsanalyse",
     )
     ICON: Final[str] = Icon.BarChart.value
     COLOR: Final[str] = "rgb(155, 89, 182)"

@@ -58,6 +58,11 @@ class HammingDistance(ClassificationMetric):
             "rótulos previstos incorretamente. "
             "É especialmente útil para tarefas de classificação multirrótulo."
         ),
+        de=(
+            "Die Hamming-Distanz misst den Anteil der "
+            "falsch vorhergesagten Zielgrößen. "
+            "Sie ist besonders nützlich für Multi-Label-Klassifikationsaufgaben."
+        ),
     )
 
     @staticmethod

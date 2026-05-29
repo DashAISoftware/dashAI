@@ -20,7 +20,7 @@ export default function TraceForm({
   const { t } = useTranslation(["datasets", "common"]);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Common trace settings */}
       <TextField
         label={t("common:name")}

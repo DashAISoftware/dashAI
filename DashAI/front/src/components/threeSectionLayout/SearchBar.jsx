@@ -19,7 +19,7 @@ export default function SearchBar({ placeholder, onChange, value }) {
         },
         "& .MuiInputBase-input": {
           color: theme.palette.text.primary,
-          py: 1,
+          py: 2,
           fontSize: "0.875rem",
         },
         "& .MuiInputBase-input::placeholder": {

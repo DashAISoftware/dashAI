@@ -2,6 +2,7 @@ import { useTourContext } from "../../tour/TourProvider";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   getExplorersByNotebookId,
   getConvertersByNotebookId,
@@ -22,12 +23,14 @@ const RowItem = React.memo(function RowItem({
   handleExplorerDeleteClick,
   handleConverterDeleteClick,
   handleStatusChange,
+  isHighlighted,
 }) {
   return (
     <Box
       sx={{
-        my: 2,
-        height: "370px",
+        my: 4,
+        p: 1.5,
+        height: "394px",
       }}
     >
       {item.type === "explorer" ? (
@@ -37,6 +40,7 @@ const RowItem = React.memo(function RowItem({
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
           }
+          isHighlighted={isHighlighted}
         />
       ) : item.type === "converter" ? (
         <ConverterBox
@@ -45,6 +49,7 @@ const RowItem = React.memo(function RowItem({
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "converter")
           }
+          isHighlighted={isHighlighted}
         />
       ) : null}
     </Box>
@@ -73,7 +78,29 @@ export default function NotebookView({ notebook }) {
     setExplorersAndConverters,
     setConvertersLoaded,
     setColumnTypes,
+    lastAddedItemId,
+    setLastAddedItemId,
+    setPendingDropTool,
   } = useExplorersAndConverters();
+  const theme = useTheme();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [highlightedItemId, setHighlightedItemId] = useState(null);
+
+  useEffect(() => {
+    const onStart = () => setIsDragging(true);
+    const onEnd = () => {
+      setIsDragging(false);
+      setIsDragOver(false);
+    };
+    window.addEventListener("dragstart", onStart);
+    window.addEventListener("dragend", onEnd);
+    return () => {
+      window.removeEventListener("dragstart", onStart);
+      window.removeEventListener("dragend", onEnd);
+    };
+  }, []);
+  const explorersAndConvertersRef = useRef(explorersAndConverters);
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -82,7 +109,7 @@ export default function NotebookView({ notebook }) {
   const [converterToDelete, setConverterToDelete] = useState(null);
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [itemsToDelete, setItemsToDelete] = useState([]);
-  const [listSize, setListSize] = useState(explorersAndConverters.length);
+  const [listSize] = useState(explorersAndConverters.length);
   const listBoxRef = useRef(null);
 
   const fetchExplorersAndConverters = useCallback(async () => {
@@ -232,22 +259,35 @@ export default function NotebookView({ notebook }) {
     [notebook?.file_path, setColumnTypes, setExplorersAndConverters],
   );
 
-  const scrollToBottom = () => {
-    if (!listBoxRef.current || explorersAndConverters.length === 0) return;
-
-    listBoxRef.current.scrollToIndex({
-      index: listSize - 1,
-      align: "start",
-    });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [listSize]);
-
-  useEffect(() => {
-    setListSize(explorersAndConverters.length);
+    explorersAndConvertersRef.current = explorersAndConverters;
   }, [explorersAndConverters]);
+
+  useEffect(() => {
+    if (!lastAddedItemId) return;
+    const scrollTimer = setTimeout(() => {
+      const list = explorersAndConvertersRef.current;
+      const index = list.findIndex(
+        (item) =>
+          item.id === lastAddedItemId.id && item.type === lastAddedItemId.type,
+      );
+      const targetIndex = index >= 0 ? index : list.length - 1;
+      if (listBoxRef.current && targetIndex >= 0) {
+        listBoxRef.current.scrollToIndex({
+          index: targetIndex,
+          align: "center",
+          behavior: "smooth",
+        });
+      }
+      setHighlightedItemId(lastAddedItemId);
+      setLastAddedItemId(null);
+    }, 100);
+    const clearTimer = setTimeout(() => setHighlightedItemId(null), 4100);
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [lastAddedItemId]);
 
   if (!notebook) {
     return (
@@ -260,16 +300,88 @@ export default function NotebookView({ notebook }) {
     );
   }
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    const related = e.relatedTarget;
+    if (!related || !e.currentTarget.contains(related)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    try {
+      const tool = JSON.parse(
+        e.dataTransfer.getData("application/x-dashai-tool"),
+      );
+      if (tool?.name) setPendingDropTool(tool);
+    } catch {
+      // ignore invalid drops
+    }
+  };
+
   return (
     <Box
+      className="explorer-converter-box"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       sx={{
-        className: "explorer-converter-box",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         overflow: "auto",
+        position: "relative",
+        outline: isDragOver
+          ? `2px dashed ${theme.palette.primary.main}`
+          : isDragging
+            ? `2px dashed ${theme.palette.divider}`
+            : "none",
+        transition: "outline 0.15s",
       }}
     >
+      {isDragging && (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: isDragOver
+              ? `${theme.palette.primary.main}14`
+              : `${theme.palette.action.hover}`,
+            pointerEvents: "none",
+            transition: "background-color 0.15s",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              color: isDragOver
+                ? theme.palette.primary.main
+                : theme.palette.text.secondary,
+              fontWeight: 600,
+              pointerEvents: "none",
+              transition: "color 0.15s",
+            }}
+          >
+            {t("datasets:label.dropToolHere")}
+          </Typography>
+        </Box>
+      )}
       {explorersAndConverters.length === 0 ? (
         <Box
           sx={{
@@ -292,6 +404,10 @@ export default function NotebookView({ notebook }) {
               handleExplorerDeleteClick={handleExplorerDeleteClick}
               handleConverterDeleteClick={handleConverterDeleteClick}
               handleStatusChange={handleStatusChange}
+              isHighlighted={
+                highlightedItemId?.id === item.id &&
+                highlightedItemId?.type === item.type
+              }
             />
           )}
         />

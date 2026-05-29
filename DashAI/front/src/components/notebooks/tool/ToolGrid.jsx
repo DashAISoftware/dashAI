@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import ToolGridItem from "./ToolGridItem";
 import ConfigureToolModal from "./ConfigureToolModal";
@@ -6,6 +6,7 @@ import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
 export default function ToolGrid({ tools, notebook, FormComponent }) {
   const [open, setOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
+  const { pendingDropTool, setPendingDropTool } = useExplorersAndConverters();
 
   const grouped = useMemo(() => groupByCategory(tools), [tools]);
   const categories = useMemo(
@@ -39,11 +41,20 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
     }
   };
 
+  useEffect(() => {
+    if (!pendingDropTool) return;
+    const match = tools.find((t) => t.name === pendingDropTool.name);
+    if (match) {
+      handleToolClick(match);
+      setPendingDropTool(null);
+    }
+  }, [pendingDropTool, tools]);
+
   if (!tools || tools.length === 0) {
     return (
       <Typography
         variant="body2"
-        sx={{ color: "text.secondary", textAlign: "center", py: 2 }}
+        sx={{ color: "text.secondary", textAlign: "center", py: 4 }}
       >
         {t("datasets:label.noToolsMatched")}
       </Typography>
@@ -51,7 +62,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {categories.map((cat) => {
         const list = grouped[cat] || [];
         return (
@@ -61,9 +72,9 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 1.5,
-                pb: 0.5,
+                gap: 2,
+                mb: 3,
+                pb: 1,
                 borderBottom: "1px solid",
                 borderColor: theme.palette.divider,
               }}
@@ -83,7 +94,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
             <Box
               sx={{
                 display: "grid",
-                gap: 1.5,
+                gap: 3,
                 gridTemplateColumns: {
                   lg: "repeat(1, minmax(0, 1fr))",
                   xl: "repeat(2, minmax(0, 1fr))",

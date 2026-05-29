@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -34,11 +35,13 @@ class ScatterMatrixSchema(BaseExplorerSchema):
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
             pt=("Nome ou índice de coluna para agrupar pontos por cor."),
+            de=("Spaltenname oder -index zur Farbgruppierung der Punkte."),
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
             pt="Coluna para grupo de cor",
+            de="Farbgruppen-Spalte",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -48,11 +51,13 @@ class ScatterMatrixSchema(BaseExplorerSchema):
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
             pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
+            de=("Spaltenname oder -index zur Symbolgruppierung der Punkte."),
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
             pt="Coluna para grupo de símbolo",
+            de="Symbolgruppen-Spalte",
         ),
     )  # type: ignore
 
@@ -75,6 +80,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         en="Multiple Scatter Plot",
         es="Matriz de Dispersión",
         pt="Matriz de Dispersão",
+        de="Streudiagramm-Matrix",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -91,6 +97,11 @@ class ScatterMatrixExplorer(RelationshipExplorer):
             "gerados gráficos de dispersão para cada par, com histogramas na "
             "diagonal."
         ),
+        de=(
+            "Gibt eine Streudiagramm-Matrix für ausgewählte Spalten zurück. Für "
+            "jedes Paar werden Streudiagramme erzeugt, mit Histogrammen auf der "
+            "Diagonale."
+        ),
     )
     IMAGE_PREVIEW = "scatter_matrix.png"
 
@@ -98,12 +109,14 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         en="Display a scatter matrix plot of selected columns.",
         es="Muestra una matriz de dispersión de columnas seleccionadas.",
         pt="Exibe uma matriz de dispersão das colunas selecionadas.",
+        de="Zeigt eine Streudiagramm-Matrix der ausgewählten Spalten an.",
     )
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "numeric_categorical_only": True,
         "input_cardinality": {"min": 2},
     }
 

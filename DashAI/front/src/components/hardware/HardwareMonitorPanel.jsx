@@ -17,13 +17,13 @@ function UsageBar({ label, value, detail, color = "primary" }) {
   const percent = value ?? 0;
 
   return (
-    <Box sx={{ mb: 1.5 }}>
+    <Box sx={{ mb: 6 }}>
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 0.5,
+          mb: 2,
         }}
       >
         <Typography variant="body2" fontWeight={500}>
@@ -49,7 +49,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
 
   if (!connected || !stats) {
     return (
-      <Box sx={{ p: 2, minWidth: 320 }}>
+      <Box sx={{ p: 8, minWidth: 320 }}>
         <Typography variant="body2" color="text.secondary" textAlign="center">
           {t("common:hardwareMonitor.connecting")}
         </Typography>
@@ -60,7 +60,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
   const { cpu, ram, gpus } = stats;
 
   return (
-    <Box sx={{ p: 2, minWidth: 320, maxWidth: 400 }}>
+    <Box sx={{ p: 4, minWidth: 320, maxWidth: 400 }}>
       <Typography variant="subtitle2" gutterBottom>
         {t("common:hardwareMonitor.cpu")}
         {cpu.frequency_mhz != null && (
@@ -68,7 +68,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
             component="span"
             variant="caption"
             color="text.secondary"
-            sx={{ ml: 1 }}
+            sx={{ ml: 4 }}
           >
             {cpu.frequency_mhz.toFixed(0)} MHz · {cpu.cores_physical}C/
             {cpu.cores_logical}T
@@ -81,7 +81,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
         color="primary"
       />
 
-      <Divider sx={{ my: 1.5 }} />
+      <Divider sx={{ my: 6 }} />
 
       <Typography variant="subtitle2" gutterBottom>
         {t("common:hardwareMonitor.ram")}
@@ -94,18 +94,18 @@ export default function HardwareMonitorPanel({ stats, connected }) {
 
       {gpus.length > 0 && (
         <>
-          <Divider sx={{ my: 1.5 }} />
+          <Divider sx={{ my: 6 }} />
           <Typography variant="subtitle2" gutterBottom>
             {t("common:hardwareMonitor.gpu")}
           </Typography>
           {gpus.map((gpu, idx) => (
-            <Box key={gpu.name} sx={{ mb: idx < gpus.length - 1 ? 2 : 0 }}>
+            <Box key={gpu.name} sx={{ mb: idx < gpus.length - 1 ? 8 : 0 }}>
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 1,
-                  mb: 0.5,
+                  gap: 4,
+                  mb: 2,
                 }}
               >
                 <Typography variant="body2" fontWeight={500} noWrap>

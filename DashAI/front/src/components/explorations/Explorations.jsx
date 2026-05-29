@@ -101,7 +101,7 @@ function Explorations() {
 
   return (
     <React.Fragment>
-      <Stack direction="row" alignItems="center" spacing={2} pl={2} pr={2}>
+      <Stack direction="row" alignItems="center" spacing={8} pl={8} pr={8}>
         {/* Show back button */}
         {explorationMode.backButton && (
           <Button variant="text" onClick={handleBack} startIcon={<BackIcon />}>
@@ -151,13 +151,13 @@ function Explorations() {
         sx={{
           overflowY: "auto",
           overflowX: "auto",
-          mt: 2,
-          mb: 2,
+          mt: 8,
+          mb: 8,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          gap: 1,
+          gap: 4,
         }}
       >
         {explorationMode === explorationModes.EXPLORATION_LIST && (

@@ -92,13 +92,13 @@ export default function ConfigureToolModal({
       {/* HEADER */}
       <Box
         sx={{
-          p: 2,
+          p: 4,
           borderBottom: "1px solid",
           borderColor: theme.palette.ui.borderDark,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 2,
+          gap: 4,
           flexShrink: 0,
         }}
       >
@@ -140,7 +140,7 @@ export default function ConfigureToolModal({
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            p: 2,
+            p: 4,
             borderRight: "1px solid",
             borderColor: theme.palette.ui.borderDark,
             minWidth: 0,
@@ -170,7 +170,7 @@ export default function ConfigureToolModal({
           {/* About section */}
           <Box
             sx={{
-              p: 2,
+              p: 4,
               borderBottom: "1px solid",
               borderColor: theme.palette.ui.borderDark,
               overflow: "auto",
@@ -181,8 +181,8 @@ export default function ConfigureToolModal({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 1.5,
+                gap: 2,
+                mb: 3,
               }}
             >
               <InfoOutlinedIcon
@@ -204,7 +204,7 @@ export default function ConfigureToolModal({
               sx={{
                 color: "text.secondary",
                 lineHeight: 1.6,
-                mb: 2,
+                mb: 4,
               }}
             >
               {tool.description || t("common:noDescription")}
@@ -284,7 +284,7 @@ export default function ConfigureToolModal({
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
-              p: 2,
+              p: 4,
               minHeight: 0,
             }}
           >
@@ -292,8 +292,8 @@ export default function ConfigureToolModal({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 1,
+                gap: 2,
+                mb: 2,
               }}
             >
               <TableChartIcon

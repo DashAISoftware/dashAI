@@ -30,7 +30,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
   const remaining = entries.length - visibleCount;
 
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
+    <Box display="flex" flexDirection="column" gap={8}>
       {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
@@ -40,15 +40,15 @@ export const CategoricalTab = ({ categoricalStats }) => {
         >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Header */}
-            <Box display="flex" alignItems="center" mb={2}>
-              <TitleIcon sx={{ color: "primary.main", mr: 1 }} />
+            <Box display="flex" alignItems="center" mb={4}>
+              <TitleIcon sx={{ color: "primary.main", mr: 2 }} />
               <Typography variant="h6" fontWeight="bold">
                 {column}
               </Typography>
             </Box>
 
             {/* Summary Stats */}
-            <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
+            <Box display="flex" flexWrap="wrap" gap={4} mb={8}>
               <Box flex="1 1 300px" minWidth="250px">
                 <StatBox
                   label={t("datasets:label.uniqueValues")}
@@ -70,7 +70,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
             </Box>
 
             {/* Charts */}
-            <Box display="flex" flexWrap="wrap" gap={4}>
+            <Box display="flex" flexWrap="wrap" gap={8}>
               {/* Value Distribution */}
               <Box flex="1 1 400px" minWidth="300px">
                 <Typography
@@ -129,8 +129,8 @@ export const CategoricalTab = ({ categoricalStats }) => {
                                 index === activeIndex
                                   ? 1
                                   : activeIndex !== null
-                                    ? 0.5
-                                    : 0.7
+                                  ? 0.5
+                                  : 0.7
                               }
                             />
                           );

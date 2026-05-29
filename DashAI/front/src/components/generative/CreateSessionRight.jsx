@@ -31,7 +31,7 @@ export default function CreateSessionRight() {
       {/* Title */}
       <Box
         sx={{
-          p: 2,
+          p: 4,
           borderBottom: `1px solid ${theme.palette.ui.border}`,
           flexShrink: 0,
           display: "flex",
@@ -52,7 +52,7 @@ export default function CreateSessionRight() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            p: 2,
+            p: 4,
           }}
         >
           <Typography variant="body2" color="text.secondary" textAlign="center">
@@ -60,7 +60,7 @@ export default function CreateSessionRight() {
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflowY: "auto", pt: 2, px: 2, pb: 5 }}>
+        <Box sx={{ flex: 1, overflowY: "auto", pt: 4, px: 4, pb: 10 }}>
           <FormSchemaRenderFields
             modelSchema={processedProperties}
             formik={formik}
@@ -71,7 +71,7 @@ export default function CreateSessionRight() {
             onFormSubmit={formik.handleSubmit}
             setError={(error) => console.error(error)}
             errorsMessage={formik.errors || {}}
-            spacing={2}
+            spacing={4}
           />
         </Box>
       )}

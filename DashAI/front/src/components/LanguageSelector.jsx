@@ -21,7 +21,7 @@ export default function LanguageSelector() {
           "& .MuiSelect-select": {
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 2,
           },
         }}
       >
@@ -41,6 +41,12 @@ export default function LanguageSelector() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <span>🇧🇷</span>
             <span>Português</span>
+          </Box>
+        </MenuItem>
+        <MenuItem value="de">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span>🇩🇪</span>
+            <span>Deutsch</span>
           </Box>
         </MenuItem>
       </Select>

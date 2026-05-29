@@ -33,6 +33,7 @@ class OpusMtFrEnTransformer(OpusMtTransformerMixin):
         en="Opus MT Fr-En Transformer",
         es="Transformer Opus MT Fr-En",
         pt="Transformer Opus MT Fr-En",
+        de="Opus MT Fr-En Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -46,6 +47,11 @@ class OpusMtFrEnTransformer(OpusMtTransformerMixin):
         pt=(
             "Transformer pré-treinado para tradução francês-inglês. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Vortrainierter Transformer für Französisch-Englisch-Übersetzung. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#0097A7"

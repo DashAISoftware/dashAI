@@ -11,7 +11,7 @@ function PipelineHeader({ activeTab, setActiveTab, navigate }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        mb: 2,
+        mb: 4,
       }}
     >
       <Button
@@ -25,7 +25,7 @@ function PipelineHeader({ activeTab, setActiveTab, navigate }) {
         <Button
           onClick={() => setActiveTab("flow")}
           variant={activeTab === "flow" ? "contained" : "text"}
-          sx={{ mr: 1, fontSize: "1.1rem" }}
+          sx={{ mr: 2, fontSize: "1.1rem" }}
         >
           Design
         </Button>

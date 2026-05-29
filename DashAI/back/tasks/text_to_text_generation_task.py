@@ -25,7 +25,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
     }
 
     DISPLAY_NAME: MultilingualString = MultilingualString(
-        en="Text to Text", es="Texto a Texto", pt="Texto para Texto"
+        en="Text to Text", es="Texto a Texto", pt="Texto para Texto", de="Text zu Text"
     )
 
     DESCRIPTION: MultilingualString = MultilingualString(
@@ -40,6 +40,10 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         pt="""
         Esta tarefa utiliza um modelo de linguagem grande (LLM)
         para gerar texto a partir de um prompt fornecido.
+        """,
+        de="""
+        Diese Aufgabe verwendet ein großes Sprachmodell (LLM),
+        um Text aus einem gegebenen Prompt zu generieren.
         """,
     )
 

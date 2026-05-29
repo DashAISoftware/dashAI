@@ -26,7 +26,7 @@ function ResultsGraphsPlot({ selectedChart, chartData }) {
           border: "1px dashed",
           borderColor: "divider",
           borderRadius: 1,
-          m: 2,
+          m: 4,
         }}
       >
         <Typography color="text.secondary">

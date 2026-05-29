@@ -11,7 +11,8 @@ import GlobalStyles from "@mui/material/GlobalStyles";
 import { useTranslation } from "react-i18next";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
-import { tourStyles } from "./tourStyles";
+import { getTourStyles } from "./tourStyles";
+import { useTheme } from "@mui/material/styles";
 import { CustomTooltip } from "./CustomTooltip";
 import { useTourRegistry } from "../../contexts/TourRegistryContext";
 
@@ -71,6 +72,7 @@ export const TourProvider = ({
   disabledMessage: disabledMessageProp = "Tour not available",
 }) => {
   const { t } = useTranslation(["common"]);
+  const theme = useTheme();
   const registry = useTourRegistry() ?? NOOP_REGISTRY;
   const regIdRef = useRef(null);
 
@@ -174,7 +176,7 @@ export const TourProvider = ({
         disableCloseOnEsc={tourData.config.disableCloseOnEsc}
         locale={locale}
         disableScrollParentFix={true}
-        styles={tourStyles}
+        styles={getTourStyles(theme)}
         tooltipComponent={CustomTooltip}
         scrollToFirstStep
         scrollOffset={100}

@@ -95,7 +95,7 @@ export default function UploadNotebookSteps({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography variant="h5" component="h1">
           {t("datasets:label.createNewNotebook")}
         </Typography>
@@ -109,10 +109,10 @@ export default function UploadNotebookSteps({
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
-          pt: 1,
+          pt: 2,
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 4,
         }}
       >
         <NoteBox

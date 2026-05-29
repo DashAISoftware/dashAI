@@ -21,6 +21,7 @@ class FeatureSelectionConverter(BaseConverter):
         en="Feature Selection",
         es="Selección de Características",
         pt="Seleção de Características",
+        de="Merkmalsauswahl",
     )
     ICON: Final[str] = Icon.FilterList.value
     COLOR: Final[str] = "rgb(255, 206, 86)"
