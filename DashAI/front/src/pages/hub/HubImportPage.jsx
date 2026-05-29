@@ -54,7 +54,25 @@ export default function HubImportPage() {
   const [dataloaders, setDataloaders] = useState([]);
   const [formValues, setFormValues] = useState({});
   const [formHasErrors, setFormHasErrors] = useState(false);
+  const [computeMetadata, setComputeMetadata] = useState(true);
+  const [computeMetadataTouched, setComputeMetadataTouched] = useState(false);
   const formSubmitRef = useRef(null);
+
+  const handleComputeMetadataChange = (next) => {
+    setComputeMetadataTouched(true);
+    setComputeMetadata(next);
+  };
+
+  const handleComputeMetadataAutoOff = () => {
+    if (!computeMetadataTouched) {
+      setComputeMetadata(false);
+    }
+  };
+
+  const handleComputeMetadataForceOff = () => {
+    setComputeMetadataTouched(true);
+    setComputeMetadata(false);
+  };
 
   useEffect(() => {
     if (!datafileId) return;
@@ -146,6 +164,8 @@ export default function HubImportPage() {
         formSubmitRef={formSubmitRef}
         setError={setFormHasErrors}
         onValuesChange={setFormValues}
+        computeMetadata={computeMetadata}
+        onComputeMetadataChange={handleComputeMetadataChange}
       />
     );
   };
@@ -206,6 +226,7 @@ export default function HubImportPage() {
               formHasErrors={formHasErrors}
               onCancel={handleCancel}
               onImported={handleImported}
+              computeMetadata={computeMetadata}
             />
           )}
         </CenterPanel>
