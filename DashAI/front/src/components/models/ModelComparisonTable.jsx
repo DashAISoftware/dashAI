@@ -114,12 +114,20 @@ function ModelComparisonTable({
     fetchProfiles();
   }, [session?.task_name]);
 
+  // Stable string that changes only when a run's status changes.
+  // Used as a dep so the score fetch re-triggers after training completes
+  // without firing on every unrelated re-render of the parent.
+  const runStatusSignature = useMemo(
+    () => initialRuns.map((r) => `${r.id}:${r.status}`).join(","),
+    [initialRuns],
+  );
+
   // ────────────────────────────────────────────────────────────────────────
-  // Fetch scores when profile or runs change
+  // Fetch scores when profile, split, session or any run status changes
   // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!runs.length || !selectedProfile || !session?.id) return;
+    if (!initialRuns.length || !selectedProfile || !session?.id) return;
 
     const fetchScores = async () => {
       setLoadingScores(true);
@@ -152,7 +160,7 @@ function ModelComparisonTable({
     };
 
     fetchScores();
-  }, [selectedProfile, metricSplit, session?.id]);
+  }, [selectedProfile, metricSplit, session?.id, runStatusSignature]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
@@ -297,8 +305,8 @@ function ModelComparisonTable({
         </Tooltip>
       ),
       Cell: ({ row }) => {
-        const { statusCode, id } = row.original;
-        const isRunning = statusCode === 1 || statusCode === 2;
+        const { status, id } = row.original;
+        const isRunning = status === 1 || status === 2;
         if (isRunning) return "-";
 
         const scoreData = scores[id];
