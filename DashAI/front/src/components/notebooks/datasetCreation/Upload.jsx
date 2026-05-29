@@ -248,7 +248,9 @@ function Upload({
     setFile(null);
   }, [onFileUpload]);
 
-  // memoize datasetData object so its reference stays stable across renders
+  // memoize datasetData object so its reference stays stable across renders.
+  // `compute_metadata` is intentionally stripped: it only affects the upload
+  // job, not the preview, so toggling it must not trigger a preview re-fetch.
   const datasetDataMemo = useMemo(() => {
     let dataloaderName = selectedDataloader;
     if (selectedDataloader && typeof selectedDataloader === "object") {
@@ -256,11 +258,14 @@ function Upload({
         selectedDataloader.name || selectedDataloader.display_name || null;
     }
 
+    // eslint-disable-next-line no-unused-vars
+    const { compute_metadata, ...previewFormValues } = formValues || {};
+
     const params = {
-      ...formValues,
+      ...previewFormValues,
       inference_rows:
-        formValues && formValues.inference_rows != null
-          ? formValues.inference_rows
+        previewFormValues.inference_rows != null
+          ? previewFormValues.inference_rows
           : 1000,
       ...(dataloaderName ? { dataloader_name: dataloaderName } : {}),
     };
