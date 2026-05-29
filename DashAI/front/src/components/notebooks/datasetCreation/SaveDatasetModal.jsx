@@ -43,7 +43,6 @@ export function SaveDatasetModal({
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [computeMetadata, setComputeMetadata] = useState(true);
-  const [computeMetadataTouched, setComputeMetadataTouched] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const notebookColCount = notebook?.total_columns ?? 0;
@@ -52,12 +51,6 @@ export function SaveDatasetModal({
     colCount: notebookColCount,
     estRows: notebookRowCount,
   });
-
-  useEffect(() => {
-    if (open && !computeMetadataTouched && exceedsThreshold) {
-      setComputeMetadata(false);
-    }
-  }, [open, computeMetadataTouched, exceedsThreshold]);
 
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
@@ -278,10 +271,7 @@ export function SaveDatasetModal({
               <Box sx={{ pt: 2 }}>
                 <Switch
                   checked={computeMetadata}
-                  onChange={(e) => {
-                    setComputeMetadataTouched(true);
-                    setComputeMetadata(e.target.checked);
-                  }}
+                  onChange={(e) => setComputeMetadata(e.target.checked)}
                   size="small"
                   name="compute_metadata"
                 />
@@ -313,7 +303,7 @@ export function SaveDatasetModal({
               onNext={handleSubmit}
               nextDisabled={Boolean(nameError)}
               backLabel={t("common:cancel")}
-              nextLabel={t("datasets:button.saveDataset")}
+              nextLabel={t("common:upload")}
               variant="save"
             />
           </Box>
@@ -342,7 +332,6 @@ export function SaveDatasetModal({
         }}
         onSkipMetadata={() => {
           setConfirmOpen(false);
-          setComputeMetadataTouched(true);
           setComputeMetadata(false);
           doSubmit(false);
         }}

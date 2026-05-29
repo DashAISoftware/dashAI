@@ -24,8 +24,6 @@ export default function ConfigureAndUploadDatasetStep({
   formHasErrors,
   existingDatasets = [],
   computeMetadata = true,
-  computeMetadataTouched = false,
-  onComputeMetadataAutoOff,
   onComputeMetadataForceOff,
   onPreviewMetrics,
 }) {
@@ -176,21 +174,8 @@ export default function ConfigureAndUploadDatasetStep({
       if (onPreviewMetrics) {
         onPreviewMetrics(metrics);
       }
-      if (
-        computeMetadata &&
-        !computeMetadataTouched &&
-        onComputeMetadataAutoOff &&
-        shouldRecommendDisableMetadata(metrics)
-      ) {
-        onComputeMetadataAutoOff();
-      }
     },
-    [
-      computeMetadata,
-      computeMetadataTouched,
-      onComputeMetadataAutoOff,
-      onPreviewMetrics,
-    ],
+    [onPreviewMetrics],
   );
 
   // After parent flips compute_metadata to false (via auto-off or confirm-skip),

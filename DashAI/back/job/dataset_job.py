@@ -6,7 +6,7 @@ from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dependencies.database.models import Dataset, Notebook
+from DashAI.back.dependencies.database.models import Converter, Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
 
 if TYPE_CHECKING:
@@ -141,6 +141,7 @@ class DatasetJob(BaseJob):
                         f"A dataset with the name {random_name} already exists."
                     ) from e
 
+            from_notebook_no_converters = False
             try:
                 if notebook_id is not None:
                     log.debug(f"Copying dataset from notebook id {notebook_id}.")
@@ -157,6 +158,18 @@ class DatasetJob(BaseJob):
                                 " has no associated dataset."
                             )
                             raise JobError(msg)
+                        # Detect whether any converters have been applied to
+                        # this notebook. When none, the saved data is byte-
+                        # identical to the source dataset, so we can reuse
+                        # the source's metadata directly instead of
+                        # recomputing.
+                        has_converters = (
+                            db.query(Converter)
+                            .filter(Converter.notebook_id == notebook_id)
+                            .first()
+                            is not None
+                        )
+                        from_notebook_no_converters = not has_converters
                         new_dataset = load_dataset(
                             os.path.join(notebook_dataset.file_path, "dataset")
                         )
@@ -277,21 +290,40 @@ class DatasetJob(BaseJob):
 
                     new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
-                if params.get("compute_metadata", True):
+                compute_meta = params.get("compute_metadata", True)
+                extended_keys = (
+                    "general_info",
+                    "numeric_stats",
+                    "categorical_stats",
+                    "text_stats",
+                    "quality_info",
+                    "correlations",
+                )
+
+                if from_notebook_no_converters:
+                    # No converters applied - saved data matches the source
+                    # dataset byte-for-byte. Reuse the source's splits.json
+                    # (already loaded into ``new_dataset.splits`` by
+                    # ``load_dataset``) instead of recomputing.
+                    has_extended = any(k in new_dataset.splits for k in extended_keys)
+                    if compute_meta:
+                        # Use source's full metadata if present, else compute.
+                        if not has_extended:
+                            new_dataset.compute_metadata()
+                    else:
+                        # Keep only base metadata; drop any inherited extended.
+                        if "total_rows" not in new_dataset.splits:
+                            new_dataset.compute_base_metadata()
+                        for stale_key in extended_keys:
+                            new_dataset.splits.pop(stale_key, None)
+                elif compute_meta:
                     new_dataset.compute_metadata()
                 else:
                     new_dataset.compute_base_metadata()
-                    # When copying from another dataset (notebook flow), strip
-                    # any extended metadata that was inherited via splits.json
-                    # — the user explicitly opted out.
-                    for stale_key in (
-                        "general_info",
-                        "numeric_stats",
-                        "categorical_stats",
-                        "text_stats",
-                        "quality_info",
-                        "correlations",
-                    ):
+                    # Defensive: strip any extended keys that may have been
+                    # inherited from a source dataset (e.g. notebook flow
+                    # with converters that ran before this rule existed).
+                    for stale_key in extended_keys:
                         new_dataset.splits.pop(stale_key, None)
                 gc.collect()
 
