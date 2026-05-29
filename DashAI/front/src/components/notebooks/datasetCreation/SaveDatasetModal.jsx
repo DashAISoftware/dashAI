@@ -326,15 +326,11 @@ export function SaveDatasetModal({
         open={confirmOpen}
         colCount={notebookColCount}
         estRows={notebookRowCount}
-        onComputeAnyway={() => {
+        onConfirm={() => {
           setConfirmOpen(false);
           doSubmit(true);
         }}
-        onSkipMetadata={() => {
-          setConfirmOpen(false);
-          setComputeMetadata(false);
-          doSubmit(false);
-        }}
+        onCancel={() => setConfirmOpen(false)}
       />
     </>
   );

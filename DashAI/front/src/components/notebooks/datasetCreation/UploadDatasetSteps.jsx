@@ -37,10 +37,6 @@ export default function UploadDatasetSteps({ backHome }) {
   const handleComputeMetadataChange = (next) => {
     setComputeMetadata(next);
   };
-
-  const handleComputeMetadataForceOff = () => {
-    setComputeMetadata(false);
-  };
   const { t } = useTranslation(["datasets"]);
   const { enqueueSnackbar } = useSnackbar();
   const tourContext = useTourContext();
@@ -203,7 +199,6 @@ export default function UploadDatasetSteps({ backHome }) {
           formHasErrors={error}
           existingDatasets={datasets}
           computeMetadata={computeMetadata}
-          onComputeMetadataForceOff={handleComputeMetadataForceOff}
         />
       )}
     </Box>

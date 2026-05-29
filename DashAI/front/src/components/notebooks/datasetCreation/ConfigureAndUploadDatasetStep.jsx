@@ -24,7 +24,6 @@ export default function ConfigureAndUploadDatasetStep({
   formHasErrors,
   existingDatasets = [],
   computeMetadata = true,
-  onComputeMetadataForceOff,
   onPreviewMetrics,
 }) {
   const { defaultName } = useMemo(
@@ -45,7 +44,6 @@ export default function ConfigureAndUploadDatasetStep({
     estRows: 0,
   });
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingSubmitSkip, setPendingSubmitSkip] = useState(false);
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -178,15 +176,6 @@ export default function ConfigureAndUploadDatasetStep({
     [onPreviewMetrics],
   );
 
-  // After parent flips compute_metadata to false (via auto-off or confirm-skip),
-  // re-trigger pending submit if one is queued.
-  useEffect(() => {
-    if (pendingSubmitSkip && computeMetadata === false) {
-      setPendingSubmitSkip(false);
-      doSubmit(false);
-    }
-  }, [pendingSubmitSkip, computeMetadata, doSubmit]);
-
   const handleFileUpload = (file, url) => {
     setDatasetFileToUpload({ file, url });
     setPreviewLoaded(false);
@@ -295,17 +284,11 @@ export default function ConfigureAndUploadDatasetStep({
         open={confirmOpen}
         colCount={previewMetrics.colCount}
         estRows={previewMetrics.estRows}
-        onComputeAnyway={async () => {
+        onConfirm={async () => {
           setConfirmOpen(false);
           await doSubmit(true);
         }}
-        onSkipMetadata={() => {
-          setConfirmOpen(false);
-          if (onComputeMetadataForceOff) {
-            onComputeMetadataForceOff();
-          }
-          setPendingSubmitSkip(true);
-        }}
+        onCancel={() => setConfirmOpen(false)}
       />
     </Box>
   );

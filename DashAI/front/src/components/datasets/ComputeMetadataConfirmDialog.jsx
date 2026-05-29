@@ -20,13 +20,13 @@ export default function ComputeMetadataConfirmDialog({
   open,
   colCount,
   estRows,
-  onComputeAnyway,
-  onSkipMetadata,
+  onConfirm,
+  onCancel,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
 
   return (
-    <Dialog open={open} onClose={onSkipMetadata}>
+    <Dialog open={open} onClose={onCancel}>
       <DialogTitle>{t("datasets:computeMetadata.confirmTitle")}</DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -37,11 +37,11 @@ export default function ComputeMetadataConfirmDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onSkipMetadata} color="inherit">
-          {t("datasets:computeMetadata.skipButton")}
+        <Button onClick={onCancel} color="inherit">
+          {t("common:cancel")}
         </Button>
-        <Button onClick={onComputeAnyway} variant="contained">
-          {t("datasets:computeMetadata.computeButton")}
+        <Button onClick={onConfirm} variant="contained">
+          {t("common:upload")}
         </Button>
       </DialogActions>
     </Dialog>
@@ -52,6 +52,6 @@ ComputeMetadataConfirmDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   colCount: PropTypes.number,
   estRows: PropTypes.number,
-  onComputeAnyway: PropTypes.func.isRequired,
-  onSkipMetadata: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
 };

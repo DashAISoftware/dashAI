@@ -61,10 +61,6 @@ export default function HubImportPage() {
     setComputeMetadata(next);
   };
 
-  const handleComputeMetadataForceOff = () => {
-    setComputeMetadata(false);
-  };
-
   useEffect(() => {
     if (!datafileId) return;
     setDatafileLoading(true);
