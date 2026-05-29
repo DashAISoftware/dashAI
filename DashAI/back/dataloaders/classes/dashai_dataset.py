@@ -637,7 +637,7 @@ class DashAIDataset(Dataset):
 
         new_splits = {"split_indices": {split_name: indices}}
         arrow_table = subset.arrow_table  # with_format("arrow")[:] ####Check
-        subset = DashAIDataset(arrow_table, splits=new_splits)
+        subset = DashAIDataset(arrow_table, splits=new_splits, types=self._types)
         return subset
 
     @beartype
