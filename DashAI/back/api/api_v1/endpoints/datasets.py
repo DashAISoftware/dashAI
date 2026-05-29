@@ -1842,6 +1842,7 @@ async def preview_with_types(
         ) as tmp_file:
             content = await file.read()
             tmp_file.write(content)
+            previewed_bytes = len(content)
             tmp_file_path = tmp_file.name
 
         try:
@@ -1937,6 +1938,7 @@ async def preview_with_types(
                             "inferred_types": inferred_types,
                             "preview_row_count": total_images,
                             "types_inferred": False,
+                            "previewed_bytes": previewed_bytes,
                         }
 
                     if matched_file is None:
@@ -1999,6 +2001,7 @@ async def preview_with_types(
                 "inferred_types": inferred_types,
                 "preview_row_count": len(loaded_dataset),
                 "types_inferred": True,
+                "previewed_bytes": previewed_bytes,
             }
 
         finally:
