@@ -5,12 +5,12 @@ import {
   Box,
   Typography,
   IconButton,
-  FormControlLabel,
   Switch,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { shouldRecommendDisableMetadata } from "../../../utils/metadataRecommendation";
 import ComputeMetadataConfirmDialog from "../../datasets/ComputeMetadataConfirmDialog";
+import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
 import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
@@ -271,24 +271,22 @@ export function SaveDatasetModal({
               helperText={nameError}
             />
 
-            <Box>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={computeMetadata}
-                    onChange={(e) => {
-                      setComputeMetadataTouched(true);
-                      setComputeMetadata(e.target.checked);
-                    }}
-                    name="compute_metadata"
-                  />
-                }
-                label={t("datasets:computeMetadata.label")}
-              />
-              <Typography variant="caption" color="text.secondary">
-                {t("datasets:computeMetadata.helper")}
-              </Typography>
-            </Box>
+            <FormSchemaFieldCard
+              label={t("datasets:computeMetadata.label")}
+              description={t("datasets:computeMetadata.helper")}
+            >
+              <Box sx={{ pt: 2 }}>
+                <Switch
+                  checked={computeMetadata}
+                  onChange={(e) => {
+                    setComputeMetadataTouched(true);
+                    setComputeMetadata(e.target.checked);
+                  }}
+                  size="small"
+                  name="compute_metadata"
+                />
+              </Box>
+            </FormSchemaFieldCard>
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>

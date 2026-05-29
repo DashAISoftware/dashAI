@@ -79,8 +79,19 @@ function RightBarDatasetView() {
     );
   }
 
+  const hasMetadata = Boolean(
+    datasetInfo?.numeric_stats || datasetInfo?.text_stats,
+  );
+
   return (
     <Box sx={{ flex: 1, overflowY: "auto" }}>
+      {!hasMetadata && (
+        <Box sx={{ p: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {t("datasets:computeMetadata.missingNotice")}
+          </Typography>
+        </Box>
+      )}
       <ColumnInsights
         numericStats={datasetInfo?.numeric_stats}
         textStats={datasetInfo?.text_stats}

@@ -333,6 +333,14 @@ export default function DatasetVisualization({
               totalColumns={datasetInfo?.total_columns}
               fileSize={datasetInfo?.general_info?.memory_usage_mb}
             />
+            {/* Compute-metadata missing notice */}
+            {!datasetInfo?.general_info && (
+              <Box>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  {t("datasets:computeMetadata.missingNotice")}
+                </Alert>
+              </Box>
+            )}
             {/* Data Quality Alerts */}
             <Box>
               <QualityAlerts
