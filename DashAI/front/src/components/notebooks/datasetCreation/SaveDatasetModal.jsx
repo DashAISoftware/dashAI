@@ -311,7 +311,7 @@ export function SaveDatasetModal({
             <StepperNavigationFooter
               onBack={handleClose}
               onNext={handleSubmit}
-              nextDisabled={Boolean(nameError) || localConverters.length === 0}
+              nextDisabled={Boolean(nameError)}
               backLabel={t("common:cancel")}
               nextLabel={t("datasets:button.saveDataset")}
               variant="save"
