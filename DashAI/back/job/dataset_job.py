@@ -281,6 +281,18 @@ class DatasetJob(BaseJob):
                     new_dataset.compute_metadata()
                 else:
                     new_dataset.compute_base_metadata()
+                    # When copying from another dataset (notebook flow), strip
+                    # any extended metadata that was inherited via splits.json
+                    # — the user explicitly opted out.
+                    for stale_key in (
+                        "general_info",
+                        "numeric_stats",
+                        "categorical_stats",
+                        "text_stats",
+                        "quality_info",
+                        "correlations",
+                    ):
+                        new_dataset.splits.pop(stale_key, None)
                 gc.collect()
 
                 dataset_save_path = folder_path / "dataset"
