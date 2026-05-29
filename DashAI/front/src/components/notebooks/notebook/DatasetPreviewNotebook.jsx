@@ -18,7 +18,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
-import { getDatasetFileFiltered } from "../../../api/datasets";
+import { getDataset, getDatasetFileFiltered } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -129,6 +129,22 @@ export default function DatasetPreviewNotebook({
 
       //Failure
       async (result) => {
+        // The poller can fire onError when a job finishes too quickly to be
+        // observed in the changes stream. Confirm the dataset actually failed
+        // before deleting it / surfacing the error.
+        try {
+          const persisted = await getDataset(datasetId);
+          if (persisted && persisted.status === "finished") {
+            enqueueSnackbar(
+              t("datasets:message.datasetCreationSuccess", { datasetName }),
+              { variant: "success" },
+            );
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to verify dataset state after poll error:", e);
+        }
+
         console.error("Dataset job failed:", result);
 
         enqueueSnackbar(

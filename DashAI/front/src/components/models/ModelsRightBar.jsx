@@ -159,13 +159,6 @@ export default function ModelsRightBar({ onToggle }) {
         {!session ? (
           datasetInfo ? (
             <Box sx={{ flex: 1, overflowY: "auto" }}>
-              {!datasetInfo.numeric_stats && !datasetInfo.text_stats && (
-                <Box sx={{ p: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("datasets:computeMetadata.missingNotice")}
-                  </Typography>
-                </Box>
-              )}
               <ColumnInsights
                 numericStats={datasetInfo?.numeric_stats}
                 textStats={datasetInfo?.text_stats}

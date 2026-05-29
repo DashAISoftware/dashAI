@@ -381,5 +381,15 @@
     "noChangesMade": "Es wurden keine Änderungen vorgenommen",
     "notebookCreated": "Notizbuch erfolgreich erstellt",
     "notebookUpdateSuccess": "Notizbuch erfolgreich aktualisiert"
+  },
+  "computeMetadata": {
+    "label": "Erweiterte Metadaten berechnen (EDA)",
+    "helper": "Bei großen Datensätzen deaktivieren, um den Upload zu beschleunigen. Erweiterte Statistiken (Korrelationen, Qualität usw.) sind dann für diesen Datensatz nicht verfügbar.",
+    "recommendation": "Empfohlen: Deaktivieren. Dieser Datensatz hat {{colCount}} Spalten und {{estRows}} Zeilen. Das Berechnen der Metadaten kann mehrere Minuten dauern.",
+    "confirmTitle": "Metadaten trotzdem berechnen?",
+    "confirmBody": "Dieser Datensatz hat {{colCount}} Spalten und {{estRows}} Zeilen. Das Berechnen der Metadaten kann mehrere Minuten dauern und viel Speicher verbrauchen.",
+    "skipButton": "Metadaten überspringen",
+    "computeButton": "Trotzdem berechnen",
+    "missingNotice": "Für diesen Datensatz wurden keine erweiterten Metadaten berechnet. Lade ihn erneut mit aktivierten Metadaten hoch, um diesen Bereich zu sehen."
   }
 }
