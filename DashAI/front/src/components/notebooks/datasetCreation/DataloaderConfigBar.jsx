@@ -62,7 +62,6 @@ export default function DataloaderConfigBar({
               ...schemaValuesRef.current,
               inference_rows: inferenceRows,
               use_native_types: true,
-              compute_metadata: computeMetadata,
             });
           }
         }
@@ -84,16 +83,9 @@ export default function DataloaderConfigBar({
         ...values,
         inference_rows: inferenceRows,
         use_native_types: useNativeTypes,
-        compute_metadata: computeMetadata,
       });
     }
-  }, [
-    formSubmitRef,
-    inferenceRows,
-    useNativeTypes,
-    computeMetadata,
-    onValuesChange,
-  ]);
+  }, [formSubmitRef, inferenceRows, useNativeTypes, onValuesChange]);
 
   // Handler for when inference_rows changes - merge with schema values
   const handleInferenceRowsChange = useCallback(
@@ -105,11 +97,10 @@ export default function DataloaderConfigBar({
           ...schemaValuesRef.current,
           inference_rows: numeric,
           use_native_types: useNativeTypes,
-          compute_metadata: computeMetadata,
         });
       }
     },
-    [onValuesChange, useNativeTypes, computeMetadata],
+    [onValuesChange, useNativeTypes],
   );
 
   const handleUseNativeTypesChange = useCallback(
@@ -121,43 +112,24 @@ export default function DataloaderConfigBar({
           ...schemaValuesRef.current,
           inference_rows: inferenceRows,
           use_native_types: next,
-          compute_metadata: computeMetadata,
         });
       }
     },
-    [onValuesChange, inferenceRows, computeMetadata],
+    [onValuesChange, inferenceRows],
   );
 
+  // compute_metadata is intentionally NOT pushed through onValuesChange / formValues —
+  // it flows to the parent through onComputeMetadataChange directly. Avoiding the
+  // formValues round-trip keeps the preview table from re-rendering when the
+  // toggle is clicked, which matters for datasets with many columns.
   const handleComputeMetadataChange = useCallback(
     (event) => {
-      const next = event.target.checked;
       if (onComputeMetadataChange) {
-        onComputeMetadataChange(next);
-      }
-      if (onValuesChange) {
-        onValuesChange({
-          ...schemaValuesRef.current,
-          inference_rows: inferenceRows,
-          use_native_types: useNativeTypes,
-          compute_metadata: next,
-        });
+        onComputeMetadataChange(event.target.checked);
       }
     },
-    [onValuesChange, onComputeMetadataChange, inferenceRows, useNativeTypes],
+    [onComputeMetadataChange],
   );
-
-  // Keep formValues in sync when parent changes computeMetadata (e.g. auto-off
-  // from preview metrics, or skip from the confirm dialog).
-  useEffect(() => {
-    if (onValuesChange) {
-      onValuesChange({
-        ...schemaValuesRef.current,
-        inference_rows: inferenceRows,
-        use_native_types: useNativeTypes,
-        compute_metadata: computeMetadata,
-      });
-    }
-  }, [computeMetadata]);
 
   if (!selectedDataloader) {
     return (
