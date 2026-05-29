@@ -32,6 +32,24 @@ export default function UploadDatasetSteps({ backHome }) {
   const [formValues, setFormValues] = useState({});
   const [error, setError] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [computeMetadata, setComputeMetadata] = useState(true);
+  const [computeMetadataTouched, setComputeMetadataTouched] = useState(false);
+
+  const handleComputeMetadataChange = (next) => {
+    setComputeMetadataTouched(true);
+    setComputeMetadata(next);
+  };
+
+  const handleComputeMetadataAutoOff = () => {
+    if (!computeMetadataTouched) {
+      setComputeMetadata(false);
+    }
+  };
+
+  const handleComputeMetadataForceOff = () => {
+    setComputeMetadataTouched(true);
+    setComputeMetadata(false);
+  };
   const { t } = useTranslation(["datasets"]);
   const { enqueueSnackbar } = useSnackbar();
   const tourContext = useTourContext();
@@ -133,12 +151,14 @@ export default function UploadDatasetSteps({ backHome }) {
           formSubmitRef={formSubmitRef}
           setError={setError}
           onValuesChange={setFormValues}
+          computeMetadata={computeMetadata}
+          onComputeMetadataChange={handleComputeMetadataChange}
         />,
       );
     } else {
       setRightBarContent(null);
     }
-  }, [step, selectedDataloader, datasets, setRightBarContent]);
+  }, [step, selectedDataloader, datasets, setRightBarContent, computeMetadata]);
 
   const handleDatasetCreated = (newDataset, datasetJob) => {
     addDatasetOptimistically(newDataset);
@@ -191,6 +211,10 @@ export default function UploadDatasetSteps({ backHome }) {
           onPreviewError={setPreviewError}
           formHasErrors={error}
           existingDatasets={datasets}
+          computeMetadata={computeMetadata}
+          computeMetadataTouched={computeMetadataTouched}
+          onComputeMetadataAutoOff={handleComputeMetadataAutoOff}
+          onComputeMetadataForceOff={handleComputeMetadataForceOff}
         />
       )}
     </Box>

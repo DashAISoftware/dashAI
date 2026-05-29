@@ -15,7 +15,6 @@ import { useSnackbar } from "notistack";
 import { previewWithTypes } from "../../../api/datasets";
 import PreviewDatasetTable from "./PreviewDatasetTable";
 import { useTranslation } from "react-i18next";
-import ComputeMetadataToggle from "../../datasets/ComputeMetadataToggle";
 import { estimateTotalRows } from "../../../utils/metadataRecommendation";
 
 /**
@@ -37,8 +36,6 @@ function PreviewDataset({
   onColumnRename,
   onPreviewLoaded,
   initialData = null,
-  computeMetadata,
-  onComputeMetadataChange,
   onPreviewMetrics,
 }) {
   const theme = useTheme();
@@ -339,17 +336,6 @@ function PreviewDataset({
                 onEncoderChange={handleEncoderChange}
               />
             </Box>
-            {typeof computeMetadata === "boolean" &&
-              onComputeMetadataChange && (
-                <Box sx={{ mt: 4, width: "100%" }}>
-                  <ComputeMetadataToggle
-                    value={computeMetadata}
-                    onChange={onComputeMetadataChange}
-                    colCount={colCount}
-                    estRows={estRows}
-                  />
-                </Box>
-              )}
           </Box>
         )}
       </Grid>
@@ -369,8 +355,6 @@ PreviewDataset.propTypes = {
     inferred_types: PropTypes.object.isRequired,
     preview_row_count: PropTypes.number,
   }),
-  computeMetadata: PropTypes.bool,
-  onComputeMetadataChange: PropTypes.func,
   onPreviewMetrics: PropTypes.func,
 };
 

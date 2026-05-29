@@ -23,6 +23,11 @@ export default function ConfigureAndUploadDatasetStep({
   onPreviewError,
   formHasErrors,
   existingDatasets = [],
+  computeMetadata = true,
+  computeMetadataTouched = false,
+  onComputeMetadataAutoOff,
+  onComputeMetadataForceOff,
+  onPreviewMetrics,
 }) {
   const { defaultName } = useMemo(
     () => generateSequentialName({ base: "Dataset", items: existingDatasets }),
@@ -37,13 +42,12 @@ export default function ConfigureAndUploadDatasetStep({
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
   const [columnTypes, setColumnTypes] = useState(null);
   const [columnRenames, setColumnRenames] = useState({});
-  const [computeMetadata, setComputeMetadata] = useState(true);
-  const [computeMetadataTouched, setComputeMetadataTouched] = useState(false);
   const [previewMetrics, setPreviewMetrics] = useState({
     colCount: 0,
     estRows: 0,
   });
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingSubmitSkip, setPendingSubmitSkip] = useState(false);
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -166,20 +170,37 @@ export default function ConfigureAndUploadDatasetStep({
     await doSubmit(computeMetadata);
   }, [computeMetadata, previewMetrics, doSubmit]);
 
-  const handleComputeMetadataChange = useCallback((next) => {
-    setComputeMetadataTouched(true);
-    setComputeMetadata(next);
-  }, []);
-
   const handlePreviewMetrics = useCallback(
     (metrics) => {
       setPreviewMetrics(metrics);
-      if (!computeMetadataTouched && shouldRecommendDisableMetadata(metrics)) {
-        setComputeMetadata(false);
+      if (onPreviewMetrics) {
+        onPreviewMetrics(metrics);
+      }
+      if (
+        computeMetadata &&
+        !computeMetadataTouched &&
+        onComputeMetadataAutoOff &&
+        shouldRecommendDisableMetadata(metrics)
+      ) {
+        onComputeMetadataAutoOff();
       }
     },
-    [computeMetadataTouched],
+    [
+      computeMetadata,
+      computeMetadataTouched,
+      onComputeMetadataAutoOff,
+      onPreviewMetrics,
+    ],
   );
+
+  // After parent flips compute_metadata to false (via auto-off or confirm-skip),
+  // re-trigger pending submit if one is queued.
+  useEffect(() => {
+    if (pendingSubmitSkip && computeMetadata === false) {
+      setPendingSubmitSkip(false);
+      doSubmit(false);
+    }
+  }, [pendingSubmitSkip, computeMetadata, doSubmit]);
 
   const handleFileUpload = (file, url) => {
     setDatasetFileToUpload({ file, url });
@@ -271,8 +292,6 @@ export default function ConfigureAndUploadDatasetStep({
           onPreviewError={setPreviewError}
           onTypesChanged={handleTypesChanged}
           onPreviewLoaded={handlePreviewLoaded}
-          computeMetadata={computeMetadata}
-          onComputeMetadataChange={handleComputeMetadataChange}
           onPreviewMetrics={handlePreviewMetrics}
         />
       </Grid>
@@ -295,11 +314,12 @@ export default function ConfigureAndUploadDatasetStep({
           setConfirmOpen(false);
           await doSubmit(true);
         }}
-        onSkipMetadata={async () => {
+        onSkipMetadata={() => {
           setConfirmOpen(false);
-          setComputeMetadataTouched(true);
-          setComputeMetadata(false);
-          await doSubmit(false);
+          if (onComputeMetadataForceOff) {
+            onComputeMetadataForceOff();
+          }
+          setPendingSubmitSkip(true);
         }}
       />
     </Box>

@@ -43,8 +43,6 @@ function Upload({
   onTypesChanged,
   onColumnRename,
   onPreviewLoaded,
-  computeMetadata,
-  onComputeMetadataChange,
   onPreviewMetrics,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
@@ -350,8 +348,6 @@ function Upload({
                 onTypesChanged={onTypesChanged}
                 onColumnRename={onColumnRename}
                 onPreviewLoaded={onPreviewLoaded}
-                computeMetadata={computeMetadata}
-                onComputeMetadataChange={onComputeMetadataChange}
                 onPreviewMetrics={onPreviewMetrics}
               />
             </Box>
@@ -466,8 +462,6 @@ Upload.propTypes = {
   onTypesChanged: PropTypes.func,
   onColumnRename: PropTypes.func,
   onPreviewLoaded: PropTypes.func,
-  computeMetadata: PropTypes.bool,
-  onComputeMetadataChange: PropTypes.func,
   onPreviewMetrics: PropTypes.func,
 };
 

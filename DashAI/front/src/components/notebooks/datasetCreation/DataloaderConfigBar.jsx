@@ -27,6 +27,8 @@ export default function DataloaderConfigBar({
   formSubmitRef,
   setError,
   onValuesChange,
+  computeMetadata = true,
+  onComputeMetadataChange,
 }) {
   const [inferenceRows, setInferenceRows] = useState(1000);
   const [supportsNativeTypes, setSupportsNativeTypes] = useState(false);
@@ -60,6 +62,7 @@ export default function DataloaderConfigBar({
               ...schemaValuesRef.current,
               inference_rows: inferenceRows,
               use_native_types: true,
+              compute_metadata: computeMetadata,
             });
           }
         }
@@ -81,9 +84,16 @@ export default function DataloaderConfigBar({
         ...values,
         inference_rows: inferenceRows,
         use_native_types: useNativeTypes,
+        compute_metadata: computeMetadata,
       });
     }
-  }, [formSubmitRef, inferenceRows, useNativeTypes, onValuesChange]);
+  }, [
+    formSubmitRef,
+    inferenceRows,
+    useNativeTypes,
+    computeMetadata,
+    onValuesChange,
+  ]);
 
   // Handler for when inference_rows changes - merge with schema values
   const handleInferenceRowsChange = useCallback(
@@ -95,10 +105,11 @@ export default function DataloaderConfigBar({
           ...schemaValuesRef.current,
           inference_rows: numeric,
           use_native_types: useNativeTypes,
+          compute_metadata: computeMetadata,
         });
       }
     },
-    [onValuesChange, useNativeTypes],
+    [onValuesChange, useNativeTypes, computeMetadata],
   );
 
   const handleUseNativeTypesChange = useCallback(
@@ -110,11 +121,43 @@ export default function DataloaderConfigBar({
           ...schemaValuesRef.current,
           inference_rows: inferenceRows,
           use_native_types: next,
+          compute_metadata: computeMetadata,
         });
       }
     },
-    [onValuesChange, inferenceRows],
+    [onValuesChange, inferenceRows, computeMetadata],
   );
+
+  const handleComputeMetadataChange = useCallback(
+    (event) => {
+      const next = event.target.checked;
+      if (onComputeMetadataChange) {
+        onComputeMetadataChange(next);
+      }
+      if (onValuesChange) {
+        onValuesChange({
+          ...schemaValuesRef.current,
+          inference_rows: inferenceRows,
+          use_native_types: useNativeTypes,
+          compute_metadata: next,
+        });
+      }
+    },
+    [onValuesChange, onComputeMetadataChange, inferenceRows, useNativeTypes],
+  );
+
+  // Keep formValues in sync when parent changes computeMetadata (e.g. auto-off
+  // from preview metrics, or skip from the confirm dialog).
+  useEffect(() => {
+    if (onValuesChange) {
+      onValuesChange({
+        ...schemaValuesRef.current,
+        inference_rows: inferenceRows,
+        use_native_types: useNativeTypes,
+        compute_metadata: computeMetadata,
+      });
+    }
+  }, [computeMetadata]);
 
   if (!selectedDataloader) {
     return (
@@ -180,6 +223,21 @@ export default function DataloaderConfigBar({
                 </FormSchemaFieldCard>
               </Box>
             )}
+            <Box sx={{ pb: 2 }}>
+              <FormSchemaFieldCard
+                label={t("datasets:computeMetadata.label")}
+                description={t("datasets:computeMetadata.helper")}
+              >
+                <Box sx={{ pt: 2 }}>
+                  <Switch
+                    checked={computeMetadata}
+                    onChange={handleComputeMetadataChange}
+                    size="small"
+                    name="compute_metadata"
+                  />
+                </Box>
+              </FormSchemaFieldCard>
+            </Box>
             <FormSchemaFieldCard
               label={t(
                 useNativeTypes
@@ -228,4 +286,6 @@ DataloaderConfigBar.propTypes = {
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
   setError: PropTypes.func,
   onValuesChange: PropTypes.func,
+  computeMetadata: PropTypes.bool,
+  onComputeMetadataChange: PropTypes.func,
 };
