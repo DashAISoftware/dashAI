@@ -132,8 +132,8 @@ export const TextTab = ({ textStats, scrollToColumn, setScrollToColumn }) => {
                           uniquePercentage > 90
                             ? theme.palette.success.main
                             : uniquePercentage > 30
-                            ? theme.palette.warning.main
-                            : theme.palette.error.main,
+                              ? theme.palette.warning.main
+                              : theme.palette.error.main,
                         color: "white",
                         cursor: "default",
                       }}
@@ -279,8 +279,8 @@ export const TextTab = ({ textStats, scrollToColumn, setScrollToColumn }) => {
                                 index === activeIndex
                                   ? 1
                                   : activeIndex !== null
-                                  ? 0.5
-                                  : 0.7
+                                    ? 0.5
+                                    : 0.7
                               }
                             />
                           );

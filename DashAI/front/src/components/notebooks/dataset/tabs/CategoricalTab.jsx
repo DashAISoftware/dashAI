@@ -129,8 +129,8 @@ export const CategoricalTab = ({ categoricalStats }) => {
                                 index === activeIndex
                                   ? 1
                                   : activeIndex !== null
-                                  ? 0.5
-                                  : 0.7
+                                    ? 0.5
+                                    : 0.7
                               }
                             />
                           );
