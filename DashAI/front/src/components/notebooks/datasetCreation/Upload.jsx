@@ -43,6 +43,9 @@ function Upload({
   onTypesChanged,
   onColumnRename,
   onPreviewLoaded,
+  computeMetadata,
+  onComputeMetadataChange,
+  onPreviewMetrics,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -347,6 +350,9 @@ function Upload({
                 onTypesChanged={onTypesChanged}
                 onColumnRename={onColumnRename}
                 onPreviewLoaded={onPreviewLoaded}
+                computeMetadata={computeMetadata}
+                onComputeMetadataChange={onComputeMetadataChange}
+                onPreviewMetrics={onPreviewMetrics}
               />
             </Box>
           );
@@ -458,6 +464,11 @@ Upload.propTypes = {
   selectedDataloader: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
+  onColumnRename: PropTypes.func,
+  onPreviewLoaded: PropTypes.func,
+  computeMetadata: PropTypes.bool,
+  onComputeMetadataChange: PropTypes.func,
+  onPreviewMetrics: PropTypes.func,
 };
 
 export default Upload;
