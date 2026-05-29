@@ -52,7 +52,7 @@ export default function ModelsRightBar({ onToggle }) {
     } finally {
       setLoading(false);
     }
-  }, [session?.task_name, enqueueSnackbar]);
+  }, [session?.task_name, enqueueSnackbar, t]);
 
   useEffect(() => {
     if (session) {
