@@ -31,6 +31,10 @@ export const TypeChangeValidator = ({
   const { t } = useTranslation(["datasets", "common"]);
 
   const validateChanges = async () => {
+    if (!file) {
+      setValidationResult({ valid: true, errors: {}, warnings: {} });
+      return;
+    }
     setValidating(true);
     try {
       const formData = new FormData();
