@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import {
   Box,
   Typography,
@@ -6,6 +6,7 @@ import {
   Chip,
   Alert,
   Tooltip,
+  Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
@@ -24,13 +25,57 @@ import { MetricRow } from "../MetricRow";
 import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
-export const TextTab = ({ textStats }) => {
+const BATCH_SIZE = 10;
+
+export const TextTab = ({ textStats, scrollToColumn, setScrollToColumn }) => {
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
   const [activeIndices, setActiveIndices] = useState({});
+  const entries = Object.entries(textStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
+  const pendingScrollRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!scrollToColumn) {
+      if (!pendingScrollRef.current) return;
+      const col = pendingScrollRef.current;
+      const card = document.querySelector(`[data-column-card="${col}"]`);
+      if (!card) return;
+      pendingScrollRef.current = null;
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.style.transition = "box-shadow 0.3s";
+      card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+      setTimeout(() => {
+        card.style.boxShadow = "";
+      }, 2000);
+      return;
+    }
+    const idx = entries.findIndex(([col]) => col === scrollToColumn);
+    if (idx === -1) return;
+    if (idx >= visibleCount) {
+      pendingScrollRef.current = scrollToColumn;
+      setVisibleCount(idx + 1);
+    } else {
+      const card = document.querySelector(
+        `[data-column-card="${scrollToColumn}"]`,
+      );
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      }
+    }
+    setScrollToColumn(null);
+  }, [scrollToColumn, visibleCount]);
+
   return (
     <Box display="flex" flexDirection="column" gap={8}>
-      {Object.entries(textStats).map(([column, stats]) => {
+      {visibleEntries.map(([column, stats]) => {
         const lengthData = [
           {
             label: t("datasets:label.min"),
@@ -249,6 +294,16 @@ export const TextTab = ({ textStats }) => {
           </ExportableCard>
         );
       })}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

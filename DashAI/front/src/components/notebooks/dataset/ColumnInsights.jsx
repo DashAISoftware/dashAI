@@ -23,6 +23,7 @@ export default function ColumnInsights({
   const { t } = useTranslation(["datasets"]);
   const context = useDatasetsAndNotebooks();
   const setDatasetTab = onNavigateTab ?? context?.setDatasetTab ?? (() => {});
+  const setScrollToColumn = context?.setScrollToColumn ?? (() => {});
 
   const insights = useMemo(() => {
     const items = [];
@@ -78,24 +79,23 @@ export default function ColumnInsights({
 
   const handleClick = useCallback(
     (insight) => {
-      setDatasetTab(insight.tab);
-      // Wait for the tab content to render, then scroll to the card
-      setTimeout(() => {
-        const card = document.querySelector(
-          `[data-column-card="${insight.column}"]`,
-        );
-        if (card) {
-          card.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Brief highlight effect
-          card.style.transition = "box-shadow 0.3s";
-          card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
-          setTimeout(() => {
-            card.style.boxShadow = "";
-          }, 2000);
-        }
-      }, 100);
+      const card = document.querySelector(
+        `[data-column-card="${insight.column}"]`,
+      );
+      if (card) {
+        setDatasetTab(insight.tab);
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      } else {
+        setDatasetTab(insight.tab);
+        setScrollToColumn(insight.column);
+      }
     },
-    [setDatasetTab, theme],
+    [setDatasetTab, setScrollToColumn, theme],
   );
 
   const colorMap = {

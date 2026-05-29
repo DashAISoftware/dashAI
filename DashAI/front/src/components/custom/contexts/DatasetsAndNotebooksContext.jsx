@@ -61,6 +61,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [uploadDataloader, setUploadDataloader] = useState(null);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
+  const [scrollToColumn, setScrollToColumn] = useState(null);
 
   useEffect(() => {
     fetchNotebooks();
@@ -102,6 +103,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     setDatasetInfo,
     datasetTab,
     setDatasetTab,
+    scrollToColumn,
+    setScrollToColumn,
     uploadDataloader,
     setUploadDataloader,
   };

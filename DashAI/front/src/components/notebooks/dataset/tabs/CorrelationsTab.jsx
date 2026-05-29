@@ -10,7 +10,7 @@ const CorrelationsTab = ({ correlations }) => {
   const theme = useTheme();
 
   const { columns, zValues, strongCorrelations, leftMargin } = useMemo(() => {
-    const cols = Object.keys(correlations);
+    const cols = Object.keys(correlations ?? {});
 
     // Build symmetric matrix
     const z = cols.map((col1) =>
@@ -67,12 +67,18 @@ const CorrelationsTab = ({ correlations }) => {
                 ],
                 zmin: -1,
                 zmax: 1,
-                text: zValues.map((row) => row.map((val) => val.toFixed(3))),
-                texttemplate: "%{text}",
-                textfont: {
-                  color: theme.palette.text.primary,
-                  size: 11,
-                },
+                ...(columns.length <= 30
+                  ? {
+                      text: zValues.map((row) =>
+                        row.map((val) => val.toFixed(3)),
+                      ),
+                      texttemplate: "%{text}",
+                      textfont: {
+                        color: theme.palette.text.primary,
+                        size: 11,
+                      },
+                    }
+                  : {}),
                 hovertemplate: "%{x} — %{y}<br>r = %{z:.3f}<extra></extra>",
                 showscale: true,
                 colorbar: {

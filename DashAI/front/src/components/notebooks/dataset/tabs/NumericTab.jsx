@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography, CardContent, Alert } from "@mui/material";
+import React, { useState, useRef, useLayoutEffect } from "react";
+import { Box, Typography, CardContent, Alert, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
@@ -9,9 +9,56 @@ import { MetricRow } from "../MetricRow";
 import ExportableCard from "../ExportableCard";
 import { Trans, useTranslation } from "react-i18next";
 
-export const NumericTab = ({ numericStats }) => {
+const BATCH_SIZE = 10;
+
+export const NumericTab = ({
+  numericStats,
+  scrollToColumn,
+  setScrollToColumn,
+}) => {
   const { t } = useTranslation(["datasets"]);
   const theme = useTheme();
+  const entries = Object.entries(numericStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
+  const pendingScrollRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!scrollToColumn) {
+      if (!pendingScrollRef.current) return;
+      const col = pendingScrollRef.current;
+      const card = document.querySelector(`[data-column-card="${col}"]`);
+      if (!card) return;
+      pendingScrollRef.current = null;
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.style.transition = "box-shadow 0.3s";
+      card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+      setTimeout(() => {
+        card.style.boxShadow = "";
+      }, 2000);
+      return;
+    }
+    const idx = entries.findIndex(([col]) => col === scrollToColumn);
+    if (idx === -1) return;
+    if (idx >= visibleCount) {
+      pendingScrollRef.current = scrollToColumn;
+      setVisibleCount(idx + 1);
+    } else {
+      const card = document.querySelector(
+        `[data-column-card="${scrollToColumn}"]`,
+      );
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      }
+    }
+    setScrollToColumn(null);
+  }, [scrollToColumn, visibleCount]);
 
   const toNumberOrNull = (value) => {
     if (
@@ -33,7 +80,7 @@ export const NumericTab = ({ numericStats }) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={8}>
-      {Object.entries(numericStats ?? {}).map(([column, stats]) => (
+      {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
           filename={`numeric_${column}`}
@@ -344,6 +391,16 @@ export const NumericTab = ({ numericStats }) => {
           </CardContent>
         </ExportableCard>
       ))}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
