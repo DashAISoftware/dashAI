@@ -14,8 +14,6 @@ function ResultsGraphs({
   runs,
   selectedSplit: splitProp = undefined,
   onSplitChange = undefined,
-  expandedRunId = null,
-  onExpandRunChart = undefined,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -104,7 +102,7 @@ function ResultsGraphs({
       finishedRuns.forEach((run, idx) => {
         const metricsObj = run[metricsKey] ?? {};
         const values = selectedMetrics.map((m) => {
-          const v = metricsObj[m]["value"] ?? metricsObj[m];
+          const v = metricsObj[m];
           if (v === undefined || v === null) return null;
           if (Array.isArray(v)) return v[v.length - 1]?.value ?? null;
           return typeof v === "number" ? v : null;
@@ -161,7 +159,7 @@ function ResultsGraphs({
 
   if (finishedRuns.length === 0) {
     return (
-      <Alert severity="warning" sx={{ mb: 2 }}>
+      <Alert severity="warning" sx={{ mb: 4 }}>
         <AlertTitle>No information from the experiments</AlertTitle>
         There are no completed experiments or all have an error status.
       </Alert>
@@ -180,10 +178,6 @@ function ResultsGraphs({
       handleSelectAll={handleSelectAll}
       handleClearAll={handleClearAll}
       chartData={chartData}
-      expandedRunId={expandedRunId}
-      onExpandRunChart={onExpandRunChart}
-      selectedSplit={selectedSplit}
-      runs={runs}
     />
   );
 }
@@ -192,8 +186,6 @@ ResultsGraphs.propTypes = {
   runs: PropTypes.array.isRequired,
   selectedSplit: PropTypes.string,
   onSplitChange: PropTypes.func,
-  expandedRunId: PropTypes.number,
-  onExpandRunChart: PropTypes.func,
 };
 
 export default ResultsGraphs;

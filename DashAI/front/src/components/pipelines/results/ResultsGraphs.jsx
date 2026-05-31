@@ -95,10 +95,7 @@ function PipelineResultsGraphs({ metrics }) {
         const numericValues = [];
         ["train", "validation", "test"].forEach((split) => {
           metricNames.forEach((metric) => {
-            const metricData = metrics[split][metric];
-            // Handle both old format (direct number) and new format (object with value and std_value)
-            const value = metricData?.value ?? metricData;
-            numericValues.push(value);
+            numericValues.push(metrics[split][metric]);
           });
         });
 
@@ -145,7 +142,7 @@ function PipelineResultsGraphs({ metrics }) {
   return (
     <>
       {filteredDataProcess.length === 0 ? (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert severity="warning" sx={{ mb: 4 }}>
           <AlertTitle>No metric data available</AlertTitle>
           Please provide valid metrics to render the graphs.
         </Alert>
