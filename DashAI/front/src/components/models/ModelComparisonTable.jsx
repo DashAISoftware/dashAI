@@ -7,7 +7,6 @@ import {
 import { useTheme } from "@mui/material/styles";
 import {
   Box,
-  Chip,
   IconButton,
   MenuItem,
   Select,
@@ -35,7 +34,6 @@ function ModelComparisonTable({
   onDelete,
   onRowClick,
   metricSplit = "test",
-  selectedRunId = null,
 }) {
   const [models, setModels] = useState([]);
   const [metrics, setMetrics] = useState([]);
@@ -116,21 +114,20 @@ function ModelComparisonTable({
     fetchProfiles();
   }, [session?.task_name]);
 
-  // ────────────────────────────────────────────────────────────────────────
-  // Fetch scores when profile or runs change
-  // ────────────────────────────────────────────────────────────────────────
-
-  const completedRunIds = useMemo(
-    () =>
-      runs
-        .filter((r) => r.status === 3)
-        .map((r) => r.id)
-        .join(","),
-    [runs],
+  // Stable string that changes only when a run's status changes.
+  // Used as a dep so the score fetch re-triggers after training completes
+  // without firing on every unrelated re-render of the parent.
+  const runStatusSignature = useMemo(
+    () => initialRuns.map((r) => `${r.id}:${r.status}`).join(","),
+    [initialRuns],
   );
 
+  // ────────────────────────────────────────────────────────────────────────
+  // Fetch scores when profile, split, session or any run status changes
+  // ────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    if (!runs.length || !selectedProfile || !session?.id) return;
+    if (!initialRuns.length || !selectedProfile || !session?.id) return;
 
     const fetchScores = async () => {
       setLoadingScores(true);
@@ -163,38 +160,26 @@ function ModelComparisonTable({
     };
 
     fetchScores();
-  }, [selectedProfile, metricSplit, session?.id, completedRunIds]);
+  }, [selectedProfile, metricSplit, session?.id, runStatusSignature]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
   // ────────────────────────────────────────────────────────────────────────
 
-  // Returns true if this run used nested CV
-  const isNestedCV = (run) => run.nested !== null && run.nested !== undefined;
-
-  // Returns the correct metrics key depending on nested CV
-  const getMetricsKey = (run, split) => {
-    const base =
-      split === "validation" ? "validation_metrics" : `${split}_metrics`;
-    return isNestedCV(run) ? `${base}_outer` : base;
-  };
+  const isCrossValidation =
+    session.evaluation_strategy === "CrossValidationEvaluationStrategy";
 
   const getMetricColumns = () => {
     const metricsSet = new Set();
     const prefix = metricSplit === "validation" ? "val" : metricSplit;
 
     runs.forEach((run) => {
-      // Collect metric names from both regular and outer keys
-      // so columns are stable regardless of which runs are present
-      const baseKey = `${metricSplit}_metrics`;
-      const outerKey = `${metricSplit}_metrics_outer`;
-      [baseKey, outerKey].forEach((key) => {
-        if (run[key] && Object.keys(run[key]).length > 0) {
-          Object.keys(run[key]).forEach((m) =>
-            metricsSet.add(`${prefix}_${m}`),
-          );
-        }
-      });
+      const metricsKey = `${metricSplit}_metrics`;
+      if (run[metricsKey]) {
+        Object.keys(run[metricsKey]).forEach((key) =>
+          metricsSet.add(`${prefix}_${key}`),
+        );
+      }
     });
 
     // Compute best value per metric field
@@ -205,19 +190,14 @@ function ModelComparisonTable({
       const maximize = metricInfo?.metadata?.maximize;
       if (maximize === undefined || maximize === null) return;
 
+      const metricsKey = `${metricSplit}_metrics`;
       const values = runs
-        .filter((run) => {
-          const k = getMetricsKey(run, metricSplit);
-          const val = run[k]?.[metricName];
-          return val !== undefined && val !== null;
-        })
-        .map((run) => {
-          const k = getMetricsKey(run, metricSplit);
-          const metricData = run[k]?.[metricName];
-          // Handle direct number or object with value and std_value
-          const value = metricData?.value ?? metricData;
-          return Number(value);
-        })
+        .filter(
+          (run) =>
+            run[metricsKey]?.[metricName] !== undefined &&
+            run[metricsKey]?.[metricName] !== null,
+        )
+        .map((run) => Number(run[metricsKey][metricName]))
         .filter((v) => !isNaN(v));
 
       if (values.length > 0) {
@@ -247,13 +227,11 @@ function ModelComparisonTable({
         : metricDescription;
 
       const bestVal = bestValues[metricField];
+      const metricsKey = `${metricSplit}_metrics`;
 
       return {
         id: metricField,
-        accessorFn: (row) => {
-          const key = getMetricsKey(row, metricSplit);
-          return row[key]?.[metricName]?.value ?? row[key]?.[metricName];
-        },
+        accessorFn: (row) => row[metricsKey]?.[metricName],
         header: `${metricName} ${directionArrow}`.trim(),
         size: 120,
         Header: () => (
@@ -268,7 +246,7 @@ function ModelComparisonTable({
             >
               {metricName}
               {directionArrow && (
-                <Box component="span" sx={{ ml: 0.5, opacity: 0.7 }}>
+                <Box component="span" sx={{ ml: 1, opacity: 0.7 }}>
                   {directionArrow}
                 </Box>
               )}
@@ -280,17 +258,7 @@ function ModelComparisonTable({
           const isRunning = status === 1 || status === 2;
 
           if (isRunning) return "-";
-
-          const resolvedKey = getMetricsKey(row.original, metricSplit);
-          // Fallback to the other key if primary has no data
-          const baseKey = `${metricSplit}_metrics`;
-          const outerKey = `${metricSplit}_metrics_outer`;
-          const fallbackKey = resolvedKey === outerKey ? baseKey : outerKey;
-          const metricData =
-            row.original[resolvedKey]?.[metricName] ??
-            row.original[fallbackKey]?.[metricName];
-          const val = metricData?.value ?? metricData;
-
+          const val = cell.getValue();
           if (val === null || val === undefined) return "-";
 
           const value = Number(val);
@@ -300,23 +268,22 @@ function ModelComparisonTable({
           const isBest =
             bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
 
-          // Get std_value if available
-          const stdValue = metricData?.std_value;
-          const stdFormatted =
-            stdValue !== null && stdValue !== undefined
-              ? `±${Number(stdValue).toFixed(4)}`
-              : "";
-
-          const isNested = isNestedCV(row.original);
-          const nestedSuffix = isNested
-            ? ` — ${t("models:tooltip.nestedCVMetric")}`
-            : "";
-          const tooltipTitle = stdFormatted
-            ? `${formatted} ${stdFormatted}${nestedSuffix}`
-            : `${formatted}${nestedSuffix}`;
+          // Get standard deviation for CV sessions
+          let stdValue = null;
+          if (isCrossValidation) {
+            const stdMetricsKey = `${metricSplit}_metrics_std`;
+            stdValue = row.original[stdMetricsKey]?.[metricName];
+          }
 
           return (
-            <Tooltip title={tooltipTitle} placement="top" arrow>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.25,
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 {isBest && (
                   <Tooltip title={t("models:label.bestModel")} placement="top">
@@ -328,22 +295,14 @@ function ModelComparisonTable({
                     </Box>
                   </Tooltip>
                 )}
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>{formatted}</Box>
-                  {stdFormatted && (
-                    <Box sx={{ fontSize: "0.75rem", opacity: 0.7 }}>
-                      {stdFormatted}
-                    </Box>
-                  )}
-                </Box>
+                <Box>{formatted}</Box>
               </Box>
-            </Tooltip>
+              {isCrossValidation && stdValue !== null && (
+                <Box sx={{ fontSize: "0.9em", color: "text.secondary" }}>
+                  ±{Number(stdValue).toFixed(4)}
+                </Box>
+              )}
+            </Box>
           );
         },
       };
@@ -391,7 +350,7 @@ function ModelComparisonTable({
             <Typography
               variant="body2"
               component="div"
-              sx={{ fontWeight: "bold", mb: 0.5 }}
+              sx={{ fontWeight: "bold", mb: 1 }}
             >
               {t("models:label.score")}: {score.toFixed(1)}/100
             </Typography>
@@ -410,7 +369,7 @@ function ModelComparisonTable({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 0.5,
+                gap: 1,
                 cursor: "help",
                 fontWeight: "bold",
               }}
@@ -431,45 +390,21 @@ function ModelComparisonTable({
       {
         accessorKey: "name",
         header: t("common:modelName"),
-        size: 160,
-        Cell: ({ cell, row }) => {
-          const run = row.original;
-          const hasOptimizer = run.optimizer_name?.trim();
-          const nested = isNestedCV(run);
-          const chipLabel = nested ? "Nested CV" : hasOptimizer ? "HPO" : null;
-          const chipColor = nested ? "secondary" : "primary";
-          const chipTooltip = nested
-            ? t("models:tooltip.nestedCVRun")
-            : t("models:tooltip.hpoRun");
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Tooltip title={cell.getValue()} placement="top" arrow>
-                <Box
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    minWidth: 0,
-                    flex: 1,
-                  }}
-                >
-                  {cell.getValue()}
-                </Box>
-              </Tooltip>
-              {chipLabel && (
-                <Tooltip title={chipTooltip} placement="top" arrow>
-                  <Chip
-                    label={chipLabel}
-                    color={chipColor}
-                    size="small"
-                    variant="outlined"
-                    sx={{ fontSize: "0.65rem", height: 18, flexShrink: 0 }}
-                  />
-                </Tooltip>
-              )}
+        size: 120,
+        Cell: ({ cell }) => (
+          <Tooltip title={cell.getValue()} placement="top" arrow>
+            <Box
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                width: "120px",
+              }}
+            >
+              {cell.getValue()}
             </Box>
-          );
-        },
+          </Tooltip>
+        ),
       },
       {
         accessorKey: "model_name",
@@ -511,7 +446,7 @@ function ModelComparisonTable({
             row.original.status === 1 || row.original.status === 2;
 
           return (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Tooltip title={t("common:train")}>
                 <span>
                   <IconButton
@@ -575,31 +510,6 @@ function ModelComparisonTable({
     onDelete,
   ]);
 
-  // Determine row background color based on HPO configuration
-  const getRowBackgroundColor = (run) => {
-    const hasOptimizer = run.optimizer_name && run.optimizer_name.trim() !== "";
-    const hasNested = run.nested !== null && run.nested !== undefined;
-
-    if (!hasOptimizer) {
-      // No HPO - neutral gray
-      return theme.palette.mode === "dark"
-        ? "rgba(128, 128, 128, 0.15)" // gray with opacity
-        : "rgba(128, 128, 128, 0.1)";
-    }
-
-    if (hasNested) {
-      // Nested CV - purple
-      return theme.palette.mode === "dark"
-        ? "rgba(156, 39, 176, 0.15)" // purple with opacity
-        : "rgba(156, 39, 176, 0.1)";
-    }
-
-    // Normal HPO - blue
-    return theme.palette.mode === "dark"
-      ? "rgba(33, 150, 243, 0.15)" // blue with opacity
-      : "rgba(33, 150, 243, 0.1)";
-  };
-
   const columnOrder = useMemo(
     () => columns.map((col) => col.id ?? col.accessorKey).filter(Boolean),
     [columns],
@@ -627,8 +537,8 @@ function ModelComparisonTable({
     enablePagination: false,
     enableTopToolbar: false,
     enableBottomToolbar: false,
-    muiTableBodyCellProps: { sx: { py: 0.25, whiteSpace: "pre" } },
-    muiTableHeadCellProps: { sx: { py: 0.5 } },
+    muiTableBodyCellProps: { sx: { py: 1, whiteSpace: "pre" } },
+    muiTableHeadCellProps: { sx: { py: 1 } },
     state: { columnOrder },
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
@@ -636,17 +546,7 @@ function ModelComparisonTable({
           onRowClick(row.original.id);
         }
       },
-      sx: {
-        cursor: onRowClick ? "pointer" : "default",
-        backgroundColor:
-          selectedRunId === row.original.id
-            ? theme.palette.action.hover
-            : getRowBackgroundColor(row.original),
-        transition: "background-color 0.2s ease",
-        "&:hover": {
-          backgroundColor: theme.palette.action.hover,
-        },
-      },
+      sx: { cursor: onRowClick ? "pointer" : "default" },
     }),
   });
 
@@ -669,8 +569,8 @@ function ModelComparisonTable({
       {/* Profile selector */}
       <Box
         sx={{
-          px: 1.5,
-          py: 0.5,
+          px: 3,
+          py: 1,
           display: "flex",
           alignItems: "center",
           gap: 1,
@@ -748,7 +648,6 @@ ModelComparisonTable.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
   metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
-  selectedRunId: PropTypes.number,
 };
 
 export default ModelComparisonTable;

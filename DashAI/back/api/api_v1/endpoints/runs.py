@@ -44,75 +44,41 @@ def get_metrics_for_run(db, run_id: int):
     Returns
     -------
     dict
-        A dictionary containing train, validation, and test metrics for the run,
-        each metric includes 'value' and 'std_value' (standard deviation).
-        For nested CV runs, also includes *_metrics_outer fields.
+        A dictionary containing train, validation, and test metrics for the run.
     """
-    last_metrics = (
+    metrics = (
         db.query(Metric)
         .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
         .all()
     )
 
-    fold_metrics = (
-        db.query(Metric)
-        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.FOLD)
-        .all()
-    )
-
-    # Get last_outer metrics for nested CV (if they exist)
-    last_outer_metrics = (
-        db.query(Metric)
-        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST_OUTER)
-        .all()
-    )
-
-    outer_fold_metrics = (
-        db.query(Metric)
-        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.OUTER_FOLD)
-        .all()
-    )
-
-    # Initialize the response structure with empty dicts instead of None
-    # to prevent issues when fold metrics are present but last metrics are not
+    # Initialize the response structure
     response = {
-        "train_metrics": {},
-        "validation_metrics": {},
-        "test_metrics": {},
-        "train_metrics_outer": {},
-        "validation_metrics_outer": {},
-        "test_metrics_outer": {},
+        "train_metrics": None,
+        "validation_metrics": None,
+        "test_metrics": None,
+        "train_metrics_std": None,
+        "test_metrics_std": None,
     }
 
     # Group metrics by split
-    for m in last_metrics:
+    for metric in metrics:
         # Determine the key in the response dictionary
-        split_key = f"{m.split.name.lower()}_metrics"
+        split_key = f"{metric.split.name.lower()}_metrics"
 
-        # Store both value and standard deviation
-        response[split_key][m.name] = {
-            "value": m.value,
-            "std_value": m.std_value,
-            "fold_values": [],
-        }
+        if response[split_key] is None:
+            response[split_key] = {}
 
-    for m in fold_metrics:
-        split_key = f"{m.split.name.lower()}_metrics"
-        response[split_key][m.name]["fold_values"].append(m.value)
+        # In the new schema, we store 'value'.
+        # For 'LAST' level, we just want the latest name: value pair.
+        response[split_key][metric.name] = metric.value
 
-    # Add last_outer metrics for nested CV
-    for m in last_outer_metrics:
-        split_key = f"{m.split.name.lower()}_metrics_outer"
-
-        response[split_key][m.name] = {
-            "value": m.value,
-            "std_value": m.std_value,
-            "fold_values": [],
-        }
-
-    for m in outer_fold_metrics:
-        split_key = f"{m.split.name.lower()}_metrics_outer"
-        response[split_key][m.name]["fold_values"].append(m.value)
+        # Add std metrics calculating the std of fold metrics if they exist
+        if metric.std_value is not None:
+            std_key = f"{metric.split.name.lower()}_metrics_std"
+            if response[std_key] is None:
+                response[std_key] = {}
+            response[std_key][metric.name] = metric.std_value
 
     return response
 
@@ -188,10 +154,8 @@ async def get_runs(
                 run.train_metrics = metrics["train_metrics"]
                 run.validation_metrics = metrics["validation_metrics"]
                 run.test_metrics = metrics["test_metrics"]
-                run.train_metrics_outer = metrics["train_metrics_outer"]
-                run.validation_metrics_outer = metrics["validation_metrics_outer"]
-                run.test_metrics_outer = metrics["test_metrics_outer"]
-                run.evaluation_strategy = run.model_session.evaluation_strategy
+                run.train_metrics_std = metrics["train_metrics_std"]
+                run.test_metrics_std = metrics["test_metrics_std"]
 
             # Compute scores if requested
             if include_scores and runs:
@@ -275,8 +239,8 @@ async def get_run_by_id(
             run.train_metrics = metrics["train_metrics"]
             run.validation_metrics = metrics["validation_metrics"]
             run.test_metrics = metrics["test_metrics"]
-            # Add evaluation strategy
-            run.evaluation_strategy = run.model_session.evaluation_strategy
+            run.train_metrics_std = metrics["train_metrics_std"]
+            run.test_metrics_std = metrics["test_metrics_std"]
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
