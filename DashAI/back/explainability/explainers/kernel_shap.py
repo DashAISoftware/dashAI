@@ -39,11 +39,17 @@ class KernelShapSchema(BaseSchema):
                 "características às saídas do modelo. Opções: 'identity' "
                 "(identidade) ou 'logit' (log-odds)."
             ),
+            de=(
+                "Verknüpfungsfunktion, um Merkmalswichtigkeitswerte mit den "
+                "Modellausgaben zu verbinden. Optionen: 'identity' "
+                "(Identitätsfunktion) oder 'logit' (Log-Odds)."
+            ),
         ),
         alias=MultilingualString(
             en="Link function",
             es="Función de enlace",
             pt="Função de ligação",
+            de="Verknüpfungsfunktion",
         ),
     )  # type: ignore
 
@@ -68,11 +74,17 @@ class KernelShapSchema(BaseSchema):
                 "de treinamento completo. Conjuntos menores reduzem o tempo de "
                 "execução."
             ),
+            de=(
+                "Parameter zum Anpassen des Erklärers. 'true', wenn Hintergrunddaten "
+                "gesamplet werden müssen; sonst wird der gesamte Trainingssatz "
+                "verwendet. Kleinere Datensätze beschleunigen die Laufzeit."
+            ),
         ),
         alias=MultilingualString(
             en="Sample background data",
             es="Muestrear datos de fondo",
             pt="Amostrar dados de fundo",
+            de="Hintergrunddaten samplen",
         ),
     )  # type: ignore
 
@@ -94,11 +106,16 @@ class KernelShapSchema(BaseSchema):
                 "à fração de amostras de fundo a extrair do conjunto de "
                 "treinamento."
             ),
+            de=(
+                "Wenn 'Hintergrunddaten samplen' ausgewählt ist, entspricht dies dem "
+                "Anteil der Hintergrundproben aus dem Trainingssatz."
+            ),
         ),
         alias=MultilingualString(
             en="Background fraction",
             es="Fracción de fondo",
             pt="Fração de fundo",
+            de="Hintergrundfraktion",
         ),
     )  # type: ignore
 
@@ -124,11 +141,17 @@ class KernelShapSchema(BaseSchema):
                 "houver características categóricas, 'shuffle' é usado por "
                 "padrão."
             ),
+            de=(
+                "Wenn 'true', werden zufällige Instanzen mit 'shuffle' gesamplet "
+                "oder der Datensatz mit 'kmeans' zusammengefasst. Bei kategorialen "
+                "Merkmalen wird standardmäßig 'shuffle' verwendet."
+            ),
         ),
         alias=MultilingualString(
             en="Sampling method",
             es="Método de muestreo",
             pt="Método de amostragem",
+            de="Samplingmethode",
         ),
     )  # type: ignore
 
@@ -157,7 +180,7 @@ class KernelShap(BaseLocalExplainer):
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     DISPLAY_NAME = MultilingualString(
-        en="Kernel SHAP", es="Kernel SHAP", pt="Kernel SHAP"
+        en="Kernel SHAP", es="Kernel SHAP", pt="Kernel SHAP", de="Kernel SHAP"
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -172,6 +195,10 @@ class KernelShap(BaseLocalExplainer):
         pt=(
             "Kernel SHAP aproxima os valores de Shapley para explicar a saída do "
             "modelo atribuindo a contribuição de cada característica à previsão."
+        ),
+        de=(
+            "Kernel SHAP approximiert SHAP-Werte, um die Modellausgabe zu erklären, "
+            "indem die Beiträge jedes Merkmals zur Vorhersage zugeordnet werden."
         ),
     )
     COLOR = "#008000"
