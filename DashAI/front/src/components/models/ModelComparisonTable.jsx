@@ -169,6 +169,31 @@ function ModelComparisonTable({
   const isCrossValidation =
     session.evaluation_strategy === "CrossValidationEvaluationStrategy";
 
+  // Run type color using existing theme.palette.accent tokens
+  const getRunType = (run) => {
+    if (run.nested) return "nestedCv";
+    if (run.optimizer_name) return "hpo";
+    return "noHpo";
+  };
+
+  const runTypeStyles = {
+    noHpo: {
+      bg: theme.palette.accent.amberDim,
+      border: theme.palette.accent.amberBorder,
+      color: theme.palette.accent.amber,
+    },
+    hpo: {
+      bg: theme.palette.accent.tealDim,
+      border: theme.palette.accent.tealBorder,
+      color: theme.palette.accent.teal,
+    },
+    nestedCv: {
+      bg: theme.palette.accent.purpleDim,
+      border: theme.palette.accent.purpleBorder,
+      color: theme.palette.accent.purple,
+    },
+  };
+
   const getMetricColumns = () => {
     const metricsSet = new Set();
     const prefix = metricSplit === "validation" ? "val" : metricSplit;
@@ -540,14 +565,21 @@ function ModelComparisonTable({
     muiTableBodyCellProps: { sx: { py: 1, whiteSpace: "pre" } },
     muiTableHeadCellProps: { sx: { py: 1 } },
     state: { columnOrder },
-    muiTableBodyRowProps: ({ row }) => ({
-      onClick: () => {
-        if (onRowClick) {
-          onRowClick(row.original.id);
-        }
-      },
-      sx: { cursor: onRowClick ? "pointer" : "default" },
-    }),
+    muiTableBodyRowProps: ({ row }) => {
+      const runType = getRunType(row.original);
+      const { bg, border } = runTypeStyles[runType];
+      return {
+        onClick: () => {
+          if (onRowClick) onRowClick(row.original.id);
+        },
+        sx: {
+          cursor: onRowClick ? "pointer" : "default",
+          backgroundColor: bg,
+          borderLeft: `3px solid ${border}`,
+          "&:hover td": { backgroundColor: "transparent" },
+        },
+      };
+    },
   });
 
   const activeProfile = profiles.find((p) => p.id === selectedProfile);
@@ -616,6 +648,48 @@ function ModelComparisonTable({
             {t("common:loading")}
           </Typography>
         )}
+
+        {/* Run type legend — right side of profile bar */}
+        <Box
+          sx={{
+            ml: loadingScores ? 2 : "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          {[
+            { key: "noHpo", label: t("models:label.runType.noHpo", "Sin HPO") },
+            { key: "hpo", label: t("models:label.runType.hpo", "Con HPO") },
+            {
+              key: "nestedCv",
+              label: t("models:label.runType.nestedCv", "Nested CV"),
+            },
+          ].map(({ key, label }) => (
+            <Box
+              key={key}
+              sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+            >
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "2px",
+                  backgroundColor: runTypeStyles[key].bg,
+                  border: `1.5px solid ${runTypeStyles[key].border}`,
+                  flexShrink: 0,
+                }}
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                {label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
       </Box>
 
       {/* Table */}
