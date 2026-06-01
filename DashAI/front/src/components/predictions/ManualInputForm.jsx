@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import { CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -60,12 +60,14 @@ export default function ManualInputForm({
     return row;
   }
 
-  const handleChange = (rowIndex, col, value) => {
-    const newRows = [...rows];
-    newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
-    setRows(newRows);
-    setManualInputData(newRows);
-  };
+  const handleChange = useCallback((rowIndex, col, value) => {
+    setRows((prev) => {
+      const newRows = [...prev];
+      newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
+      setManualInputData(newRows);
+      return newRows;
+    });
+  }, [setManualInputData]);
 
   const handleAddRow = () => {
     const newRows = [...rows, createEmptyRow()];
@@ -103,9 +105,7 @@ export default function ManualInputForm({
     whiteSpace: "nowrap",
     minWidth: 120,
     fontWeight: 600,
-    fontSize: "0.8rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
+    fontSize: "0.875rem",
     color: textPrimary,
     height: HEADER_HEIGHT,
     background: headerBg,

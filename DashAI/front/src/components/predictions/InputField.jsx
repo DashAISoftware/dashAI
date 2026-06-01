@@ -7,7 +7,6 @@ import {
   Box,
   Button,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import {
   MIN_INPUT_WIDTH,
@@ -33,29 +32,18 @@ function InputField({
 }) {
   const { dtype, type, categories } = typeInfo || {};
   const effectiveType = type || dtype || "string";
-  const theme = useTheme();
   const { t } = useTranslation(["prediction"]);
 
+  // commonStyles is static — no useTheme needed. Emotion resolves theme
+  // tokens at style-injection time, so `theme.palette.*` inside `sx` is
+  // fine as a CSS variable reference without calling useTheme here.
   const commonStyles = {
     "& .MuiOutlinedInput-root": {
       fontSize: "0.875rem",
-      backgroundColor: theme.palette.background.paper,
-      "& fieldset": {
-        borderColor: theme.palette.divider,
-        borderWidth: "1px",
-      },
-      "&:hover fieldset": {
-        borderColor: theme.palette.primary.main,
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: theme.palette.primary.main,
-        borderWidth: "2px",
-      },
+      "& fieldset": { borderWidth: "1px" },
+      "&.Mui-focused fieldset": { borderWidth: "2px" },
     },
-    "& .MuiInputBase-input": {
-      padding: "6px 10px",
-      color: theme.palette.text.primary,
-    },
+    "& .MuiInputBase-input": { padding: "6px 10px" },
   };
 
   if (effectiveType === "Categorical" && categories && categories.length > 0) {
@@ -67,25 +55,11 @@ function InputField({
           displayEmpty
           sx={{
             fontSize: "0.875rem",
-            backgroundColor: theme.palette.background.paper,
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: theme.palette.divider,
-              borderWidth: "1px",
-            },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: theme.palette.primary.main,
-            },
+            "& .MuiOutlinedInput-notchedOutline": { borderWidth: "1px" },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: theme.palette.primary.main,
               borderWidth: "2px",
             },
-            "& .MuiSelect-select": {
-              padding: "6px 10px",
-              color: theme.palette.text.primary,
-            },
-            "& .MuiSvgIcon-root": {
-              color: theme.palette.text.secondary,
-            },
+            "& .MuiSelect-select": { padding: "6px 10px" },
           }}
         >
           <MenuItem value="" disabled sx={{ fontSize: "0.875rem" }}>
@@ -203,4 +177,4 @@ function InputField({
   );
 }
 
-export default InputField;
+export default React.memo(InputField);
