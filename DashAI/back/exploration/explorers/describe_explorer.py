@@ -48,8 +48,11 @@ class DescribeExplorerSchema(BaseExplorerSchema):
                 "Percentis a incluir na exploração. Use inteiros entre 0 e "
                 "100. Exemplo: '25, 50, 75'"
             ),
+            zh="探索中包含的百分位数。使用0到100之间的整数。示例：'25, 50, 75'",
         ),
-        alias=MultilingualString(en="Percentiles", es="Percentiles", pt="Percentis"),
+        alias=MultilingualString(
+            en="Percentiles", es="Percentiles", pt="Percentis", zh="百分位数"
+        ),
     )  # type: ignore
     include: schema_field(
         none_type(enum_field(["all", "number", "object", "category", "datetime"])),
@@ -58,9 +61,13 @@ class DescribeExplorerSchema(BaseExplorerSchema):
             en=("Data types to include in the exploration."),
             es=("Tipos de datos a incluir en la exploración."),
             pt=("Tipos de dados a incluir na exploração."),
+            zh="探索中包含的数据类型。",
         ),
         alias=MultilingualString(
-            en="Include dtypes", es="Incluir tipos", pt="Incluir tipos"
+            en="Include dtypes",
+            es="Incluir tipos",
+            pt="Incluir tipos",
+            zh="包含数据类型",
         ),
     )  # type: ignore
     exclude: schema_field(
@@ -70,9 +77,13 @@ class DescribeExplorerSchema(BaseExplorerSchema):
             en=("Data types to exclude from the exploration."),
             es=("Tipos de datos a excluir de la exploración."),
             pt=("Tipos de dados a excluir da exploração."),
+            zh="探索中排除的数据类型。",
         ),
         alias=MultilingualString(
-            en="Exclude dtypes", es="Excluir tipos", pt="Excluir tipos"
+            en="Exclude dtypes",
+            es="Excluir tipos",
+            pt="Excluir tipos",
+            zh="排除数据类型",
         ),
     )  # type: ignore
 
@@ -102,6 +113,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
         en="Describe Dataset",
         es="Describir Dataset",
         pt="Explorador de Descrição Estatística",
+        zh="统计描述数据集",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -122,12 +134,17 @@ class DescribeExplorer(PreviewInspectionExplorer):
             "colunas de objeto: count, unique, top e freq. Você pode escolher "
             "percentis e quais tipos incluir ou excluir."
         ),
+        zh=(
+            "生成数据集的统计摘要。数值列：count、mean、std、min、25%、50%、75%和max。"
+            "对象列：count、unique、top和freq。可选择百分位数和包含或排除的数据类型。"
+        ),
     )
 
     SHORT_DESCRIPTION = MultilingualString(
         en="Generate a statistical summary of the dataset.",
         es="Genera un resumen estadístico del dataset.",
         pt="Gera um resumo estatístico do conjunto de dados.",
+        zh="生成数据集的统计摘要。",
     )
     IMAGE_PREVIEW = "describe_explorer.png"
 

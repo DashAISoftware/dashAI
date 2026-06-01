@@ -230,12 +230,14 @@ class MLPClassifier(TabularClassificationModel, SklearnLikeClassifier, _MLPClass
         es="Clasificador MLP",
         pt="Classificador MLP",
         de="MLP-Klassifikator",
+        zh="多层感知机分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Multi-layer perceptron neural network for tabular classification.",
         es="Red neuronal perceptrón multicapa para clasificación tabular.",
         pt="Rede neural perceptrón multicamada para classificação tabular.",
         de="Mehrschichtiges Perzeptron-Netz für tabellarische Klassifikation.",
+        zh="用于表格分类的多层感知机神经网络。",
     )
     COLOR: str = "#EF5350"
     ICON: str = "AccountTree"

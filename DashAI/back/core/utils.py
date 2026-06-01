@@ -8,6 +8,7 @@ class MultilingualString:
     es: Optional[str] = None
     pt: Optional[str] = None
     de: Optional[str] = None
+    zh: Optional[str] = None
 
     def get(self, lang: str) -> str:
         if lang == "es" and self.es:
@@ -16,4 +17,6 @@ class MultilingualString:
             return self.pt
         if lang == "de" and self.de:
             return self.de
+        if lang == "zh" and self.zh:
+            return self.zh
         return self.en

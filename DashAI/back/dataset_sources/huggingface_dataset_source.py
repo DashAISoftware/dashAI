@@ -26,6 +26,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
     DISPLAY_NAME: Final = MultilingualString(
         en="HuggingFace Hub",
         es="HuggingFace Hub",
+        zh="HuggingFace Hub",
     )
     DESCRIPTION: Final = MultilingualString(
         en=(
@@ -47,6 +48,12 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             "y muchos incluyen múltiples configuraciones o variantes de idioma. "
             "Busca por nombre, descarga directamente a DashAI y comienza "
             "a entrenar en minutos. "
+            "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
+        ),
+        zh=(
+            "HuggingFace Hub是最大的机器学习数据集开放仓库，托管了数十万个社区贡献的"
+            "NLP、计算机视觉、音频和表格任务数据集。数据集涵盖经典基准到前沿研究划分，"
+            "许多包含多种配置或语言变体。按名称搜索，直接下载到DashAI，数分钟内开始训练。"
             "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
         ),
     )

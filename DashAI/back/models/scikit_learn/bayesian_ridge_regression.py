@@ -195,12 +195,14 @@ class BayesianRidgeRegression(RegressionModel, SklearnLikeRegressor, _BayesianRi
         es="Regresión Ridge Bayesiana",
         pt="Regressão Ridge Bayesiana",
         de="Bayesische Ridge-Regression",
+        zh="贝叶斯岭回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Bayesian regression with automatic regularisation estimation.",
         es="Regresión bayesiana con estimación automática de regularización.",
         pt="Regressão bayesiana com estimação automática de regularização.",
         de="Bayesische Regression mit automatischer Regularisierungsschätzung.",
+        zh="具有自动正则化估计的贝叶斯回归。",
     )
     COLOR: str = "#7E57C2"
     ICON: str = "Psychology"

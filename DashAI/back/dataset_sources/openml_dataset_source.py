@@ -70,6 +70,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
     DISPLAY_NAME: Final = MultilingualString(
         en="OpenML",
         es="OpenML",
+        zh="OpenML",
     )
     DESCRIPTION: Final = MultilingualString(
         en=(
@@ -91,6 +92,13 @@ class OpenMLDatasetSource(BaseDatasetSource):
             "estandarizados y versionados, lo que los hace ideales para comparar "
             "modelos y reproducir resultados publicados. Busca por nombre y "
             "descarga directamente a DashAI. "
+            "[https://www.openml.org](https://www.openml.org)"
+        ),
+        zh=(
+            "OpenML是一个致力于可重现机器学习研究的开放科学平台。"
+            "它托管了数千个精心整理的基准就绪数据集，广泛用于学术论文和竞赛，"
+            "涵盖分类、回归和聚类任务。数据集经过标准化和版本控制，"
+            "非常适合比较模型和重现已发布结果。按名称搜索，直接下载到DashAI。"
             "[https://www.openml.org](https://www.openml.org)"
         ),
     )

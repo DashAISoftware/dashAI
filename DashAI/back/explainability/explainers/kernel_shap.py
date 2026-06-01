@@ -39,11 +39,16 @@ class KernelShapSchema(BaseSchema):
                 "características às saídas do modelo. Opções: 'identity' "
                 "(identidade) ou 'logit' (log-odds)."
             ),
+            zh=(
+                "将特征重要性值连接到模型输出的链接函数。"
+                "选项：'identity'（恒等函数）或'logit'（对数几率）。"
+            ),
         ),
         alias=MultilingualString(
             en="Link function",
             es="Función de enlace",
             pt="Função de ligação",
+            zh="链接函数",
         ),
     )  # type: ignore
 
@@ -68,11 +73,16 @@ class KernelShapSchema(BaseSchema):
                 "de treinamento completo. Conjuntos menores reduzem o tempo de "
                 "execução."
             ),
+            zh=(
+                "用于拟合解释器的参数。如果需要对背景数据进行采样则为'true'；"
+                "否则使用整个训练集。较小的数据集可加速算法运行时间。"
+            ),
         ),
         alias=MultilingualString(
             en="Sample background data",
             es="Muestrear datos de fondo",
             pt="Amostrar dados de fundo",
+            zh="采样背景数据",
         ),
     )  # type: ignore
 
@@ -94,11 +104,13 @@ class KernelShapSchema(BaseSchema):
                 "à fração de amostras de fundo a extrair do conjunto de "
                 "treinamento."
             ),
+            zh="如果选择了'采样背景数据'，则对应从训练集中抽取的背景样本比例。",
         ),
         alias=MultilingualString(
             en="Background fraction",
             es="Fracción de fondo",
             pt="Fração de fundo",
+            zh="背景比例",
         ),
     )  # type: ignore
 
@@ -124,11 +136,16 @@ class KernelShapSchema(BaseSchema):
                 "houver características categóricas, 'shuffle' é usado por "
                 "padrão."
             ),
+            zh=(
+                "如果为'true'，选择用'shuffle'随机采样实例或用'kmeans'汇总数据集。"
+                "如果存在类别特征，默认使用'shuffle'。"
+            ),
         ),
         alias=MultilingualString(
             en="Sampling method",
             es="Método de muestreo",
             pt="Método de amostragem",
+            zh="采样方法",
         ),
     )  # type: ignore
 
@@ -157,7 +174,7 @@ class KernelShap(BaseLocalExplainer):
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     DISPLAY_NAME = MultilingualString(
-        en="Kernel SHAP", es="Kernel SHAP", pt="Kernel SHAP"
+        en="Kernel SHAP", es="Kernel SHAP", pt="Kernel SHAP", zh="Kernel SHAP"
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -173,6 +190,7 @@ class KernelShap(BaseLocalExplainer):
             "Kernel SHAP aproxima os valores de Shapley para explicar a saída do "
             "modelo atribuindo a contribuição de cada característica à previsão."
         ),
+        zh=("Kernel SHAP通过将每个特征的贡献归因于预测来逼近SHAP值，以解释模型输出。"),
     )
     COLOR = "#008000"
     SCHEMA = KernelShapSchema

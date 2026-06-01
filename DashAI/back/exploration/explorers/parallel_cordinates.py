@@ -36,12 +36,14 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
             es=("Columna usada para colorear los puntos."),
             pt=("Coluna usada para colorir os pontos de dados."),
             de=("Spalte zur Einfärbung der Datenpunkte."),
+            zh="用于为数据点着色的列。",
         ),
         alias=MultilingualString(
             en="Color column",
             es="Columna de color",
             pt="Coluna de cor",
             de="Farbspalte",
+            zh="颜色列",
         ),
     )  # type: ignore
 
@@ -65,6 +67,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
         es="Gráfico de Coordenadas Paralelas",
         pt="Coordenadas Paralelas",
         de="Parallele Koordinatendiagramm",
+        zh="平行坐标图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -83,6 +86,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
             "Gängige Methode zur Visualisierung hochdimensionaler numerischer Daten. "
             "Jede Linie ist ein Datenpunkt, der die Achsen jedes Merkmals kreuzt."
         ),
+        zh="可视化高维数值数据的常用方法。每条线是一个数据点，穿越每个特征的轴。",
     )
     IMAGE_PREVIEW = "parallel_cordinates.png"
 

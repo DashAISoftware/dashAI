@@ -65,6 +65,10 @@ class ROCAUC(ClassificationMetric):
             "Schwellenwert-Einstellungen. Sie repräsentiert den Grad der "
             "Trennbarkeit zwischen Klassen."
         ),
+        zh=(
+            "ROC 曲线下面积（ROC AUC）是在不同阈值设置下衡量分类问题性能的指标，"
+            "代表类别间的可分离程度。"
+        ),
     )
 
     @staticmethod

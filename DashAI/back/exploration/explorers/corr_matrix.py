@@ -50,12 +50,14 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
             es=("Método de correlación a usar: 'pearson', 'kendall' o 'spearman'."),
             pt=("Método de correlação a usar: 'pearson', 'kendall' ou 'spearman'."),
             de=("Korrelationsmethode: 'pearson', 'kendall' oder 'spearman'."),
+            zh="使用的相关性方法：'pearson'、'kendall'或'spearman'。",
         ),
         alias=MultilingualString(
             en="Correlation method",
             es="Método de correlación",
             pt="Método de correlação",
             de="Korrelationsmethode",
+            zh="相关性方法",
         ),
     )  # type: ignore
     min_periods: schema_field(
@@ -80,12 +82,14 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
                 "Mindestanzahl der Beobachtungen pro Spaltenpaar für ein gültiges "
                 "Ergebnis. Nur mit 'pearson' oder 'spearman' verwendet."
             ),
+            zh="每列对获得有效结果所需的最小观测数。仅用于'pearson'或'spearman'。",
         ),
         alias=MultilingualString(
             en="Minimum periods",
             es="Períodos mínimos",
             pt="Períodos mínimos",
             de="Mindestperioden",
+            zh="最小周期数",
         ),
     )  # type: ignore
     numeric_only: schema_field(
@@ -108,12 +112,14 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
                 "Wenn True, werden nur numerische Spalten bei der Berechnung "
                 "der Korrelation berücksichtigt; sonst alle Spalten."
             ),
+            zh="如果为True，计算相关性时仅包含数值列；否则包含所有列。",
         ),
         alias=MultilingualString(
             en="Numeric only",
             es="Solo numéricas",
             pt="Somente numéricas",
             de="Nur numerisch",
+            zh="仅数值列",
         ),
     )  # type: ignore
     plot: schema_field(
@@ -124,12 +130,14 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
             es=("Si es True, el resultado será graficado."),
             pt=("Se True, o resultado será graficado."),
             de=("Wenn True, wird das Ergebnis dargestellt."),
+            zh="如果为True，结果将以图表显示。",
         ),
         alias=MultilingualString(
             en="Plot result",
             es="Graficar resultado",
             pt="Graficar resultado",
             de="Ergebnis darstellen",
+            zh="绘制结果",
         ),
     )  # type: ignore
 
@@ -159,6 +167,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         es="Matriz de Correlación",
         pt="Matriz de Correlação",
         de="Korrelationsmatrix",
+        zh="相关性矩阵",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -180,6 +189,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
             "Standardausgabe ist eine Heatmap, aber es kann auch ein "
             "tabellarisches Ergebnis zurückgegeben werden."
         ),
+        zh="返回数据集的相关性矩阵。默认输出为热图，也可返回表格形式。",
     )
     IMAGE_PREVIEW = "correlation_matrix.png"
 

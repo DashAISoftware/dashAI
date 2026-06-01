@@ -48,11 +48,13 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "Se True, o diagrama de caixa será horizontal; caso "
                 "contrário, vertical."
             ),
+            zh="如果为True，箱线图将水平显示；否则垂直显示。",
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
             pt="Gráfico horizontal",
+            zh="水平图",
         ),
     )  # type: ignore
     points: schema_field(
@@ -70,11 +72,13 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "Um de 'all', 'outliers' ou 'False'. Determina quais pontos "
                 "são exibidos."
             ),
+            zh="'all'、'outliers'或'False'之一。确定显示哪些数据点。",
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
             pt="Pontos exibidos",
+            zh="显示的点",
         ),
     )  # type: ignore
     opposite_axis: schema_field(
@@ -84,9 +88,10 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
             en=("Column name or index to use for the opposite axis."),
             es=("Nombre o índice de columna para el eje opuesto."),
             pt=("Nome ou índice de coluna para usar no eixo oposto."),
+            zh="用于对立轴的列名或索引。",
         ),
         alias=MultilingualString(
-            en="Opposite axis", es="Eje opuesto", pt="Eixo oposto"
+            en="Opposite axis", es="Eje opuesto", pt="Eixo oposto", zh="对立轴"
         ),
     )  # type: ignore
 
@@ -117,6 +122,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         en="Multiple Column Box Plot",
         es="Diagrama de Caja Multicolumna",
         pt="Diagrama de Caixa Múltiplo",
+        zh="多列箱线图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -131,6 +137,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
             "Exibe um diagrama de caixa para múltiplas colunas em um eixo, "
             "usando outra coluna como eixo oposto (se fornecida)."
         ),
+        zh="在一个轴上显示多列箱线图，使用另一列作为对立轴（如果提供）。",
     )
     IMAGE_PREVIEW = "multi_column_box_plot.png"
 

@@ -215,6 +215,7 @@ class HistGradientBoostingRegression(
         es="Regresión Gradient Boosting con Histogramas",
         pt="Regressor por Gradient Boosting Histogramado",
         de="Histogramm-Gradient-Boosting-Regression",
+        zh="基于直方图的梯度提升回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast gradient boosting regression using histogram-based algorithms.",
@@ -229,6 +230,7 @@ class HistGradientBoostingRegression(
         de=(
             "Schnelle Gradient-Boosting-Regression mit histogrammbasierten Algorithmen."
         ),
+        zh="使用基于直方图算法的快速梯度提升回归。",
     )
     COLOR: str = "#9575CD"
     ICON: str = "RocketLaunch"

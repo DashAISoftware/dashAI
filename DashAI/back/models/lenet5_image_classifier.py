@@ -260,6 +260,7 @@ class LeNet5ImageClassifier(BaseModel):
         en="LeNet-5",
         es="LeNet-5",
         pt="LeNet-5",
+        zh="LeNet-5",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -276,6 +277,10 @@ class LeNet5ImageClassifier(BaseModel):
             "A arquitetura CNN original (LeCun et al., 1998). Dois blocos "
             "conv→tanh→pool seguidos de três camadas completamente conectadas. "
             "Ideal para imagens pequenas e uso educacional."
+        ),
+        zh=(
+            "原始卷积神经网络架构（LeCun 等，1998）。两个卷积→tanh→池化块，"
+            "后接三个全连接层。适用于小图像和教学用途。"
         ),
     )
     COLOR: str = "#7B1FA2"

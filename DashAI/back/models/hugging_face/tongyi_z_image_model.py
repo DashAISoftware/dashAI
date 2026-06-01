@@ -324,6 +324,7 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
         en="Tongyi Z-Image",
         es="Tongyi Z-Image",
         pt="Tongyi Z-Image",
+        zh="通义 Z-Image",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -355,6 +356,10 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
             "geração fotorrealista de imagens, estilos diversos e renderização "
             "precisa de texto. Modelo disponível em "
             "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
+        ),
+        zh=(
+            "通义 Z-Image 是阿里巴巴的 60 亿参数文本到图像模型，"
+            "采用创新的 S3-DiT 架构，擅长真实感图像生成、多样风格和精确文字渲染。"
         ),
     )
 

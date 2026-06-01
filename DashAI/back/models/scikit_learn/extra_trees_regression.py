@@ -202,6 +202,7 @@ class ExtraTreesRegression(RegressionModel, SklearnLikeRegressor, _ExtraTreesReg
         es="Regresión Extra-Trees",
         pt="Regressor de Árvores Extras",
         de="Extra-Trees-Regression",
+        zh="极端随机树回归",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -220,6 +221,7 @@ class ExtraTreesRegression(RegressionModel, SklearnLikeRegressor, _ExtraTreesReg
             "Ensemble vollständig zufälliger Entscheidungsbäume für schnelle "
             "Regression mit geringer Varianz."
         ),
+        zh="完全随机决策树集成，用于快速低方差回归。",
     )
     COLOR: str = "#26A69A"
     ICON: str = "Park"

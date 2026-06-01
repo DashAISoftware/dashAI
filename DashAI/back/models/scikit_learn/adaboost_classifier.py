@@ -155,6 +155,7 @@ class AdaBoostClassifier(
         es="Clasificador AdaBoost",
         pt="Classificador AdaBoost",
         de="AdaBoost-Klassifikator",
+        zh="AdaBoost 分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Adaptive boosting that focuses on misclassified samples.",
@@ -167,6 +168,7 @@ class AdaBoostClassifier(
             "Adaptives Boosting, das sich auf falsch klassifizierte Stichproben "
             "konzentriert."
         ),
+        zh="自适应提升算法，专注于被误分类的样本。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "Bolt"

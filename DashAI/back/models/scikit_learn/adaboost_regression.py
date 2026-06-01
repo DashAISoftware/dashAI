@@ -169,6 +169,7 @@ class AdaBoostRegression(RegressionModel, SklearnLikeRegressor, _AdaBoostRegress
         es="Regresión AdaBoost",
         pt="Regressão AdaBoost",
         de="AdaBoost Regression",
+        zh="AdaBoost 回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Adaptive boosting that focuses on samples with large residuals.",
@@ -178,6 +179,7 @@ class AdaBoostRegression(RegressionModel, SklearnLikeRegressor, _AdaBoostRegress
             "Adaptives Boosting, das sich auf Stichproben mit großen Residuen "
             "konzentriert."
         ),
+        zh="自适应提升回归，专注于残差较大的样本。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "Bolt"

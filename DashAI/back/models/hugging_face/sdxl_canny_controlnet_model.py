@@ -263,6 +263,7 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
         es="SDXL ControlNet Canny",
         pt="SDXL ControlNet Canny",
         de="SDXL Canny ControlNet",
+        zh="SDXL Canny ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -320,6 +321,10 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
             "stabilityai/stable-diffusion-xl-base-1.0 "
             "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0). "
             "Erfordert opencv-python: pip install opencv-python."
+        ),
+        zh=(
+            "结合 ControlNet Canny 边缘条件与 Stable Diffusion XL 1.0，"
+            "实现边缘引导的 1024x1024px 高分辨率图像生成。需要 opencv-python。"
         ),
     )
 

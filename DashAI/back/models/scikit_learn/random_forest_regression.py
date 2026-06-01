@@ -422,6 +422,7 @@ class RandomForestRegression(
         es="Bosque Aleatorio",
         pt="Regressor de Floresta Aleatória",
         de="Random-Forest-Regression",
+        zh="随机森林回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="An ensemble learning method using multiple decision trees for regression.",
@@ -437,6 +438,7 @@ class RandomForestRegression(
             "Eine Ensemble-Lernmethode, die mehrere Entscheidungsbäume für die "
             "Regression kombiniert."
         ),
+        zh="使用多棵决策树进行回归的集成学习方法。",
     )
     COLOR: str = "#FF8A65"
     ICON: str = "Forest"

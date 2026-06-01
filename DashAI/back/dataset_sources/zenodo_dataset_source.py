@@ -46,6 +46,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
     DISPLAY_NAME: Final = MultilingualString(
         en="Zenodo",
         es="Zenodo",
+        zh="Zenodo",
     )
     DESCRIPTION: Final = MultilingualString(
         en=(
@@ -67,6 +68,13 @@ class ZenodoDatasetSource(BaseDatasetSource):
             "académicos. Cada registro obtiene un DOI que garantiza su "
             "citabilidad a largo plazo. Busca por palabra clave y descarga "
             "directamente a DashAI. "
+            "[https://zenodo.org](https://zenodo.org)"
+        ),
+        zh=(
+            "Zenodo是由CERN运营的开放获取仓库，托管来自全球研究人员的研究数据集、"
+            "论文、软件和其他科学成果。它涵盖所有学科并接受任何文件格式，"
+            "是学术论文配套数据集的首选档案。每条记录都获得DOI，确保长期可引用性。"
+            "按关键词搜索，直接下载到DashAI。"
             "[https://zenodo.org](https://zenodo.org)"
         ),
     )

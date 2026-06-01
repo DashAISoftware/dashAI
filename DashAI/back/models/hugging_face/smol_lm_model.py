@@ -283,6 +283,7 @@ class SmolLMModel(TextToTextGenerationTaskModel):
         es="Modelo SmolLM",
         pt="Modelo SmolLM",
         de="SmolLM-Modell",
+        zh="SmolLM 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -321,6 +322,11 @@ class SmolLMModel(TextToTextGenerationTaskModel):
             "Parametern. Die 360M-Variante benötigt weniger als 300 MB RAM und ist "
             "ideal für ressourcenbeschränkte Umgebungen. Verfügbar in den Varianten "
             "360M und 1,7B. Modelle unter https://huggingface.co/HuggingFaceTB."
+        ),
+        zh=(
+            "SmolLM2 是 Hugging Face 推出的紧凑型指令微调语言模型系列，"
+            "以 GGUF 格式加载，通过 llama.cpp 库高效推理。"
+            "专为端侧和边缘部署设计，提供 360M 和 1.7B 两种规格。"
         ),
     )
 

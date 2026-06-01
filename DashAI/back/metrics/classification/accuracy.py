@@ -51,6 +51,7 @@ class Accuracy(ClassificationMetric):
             "Anteil der korrekten Vorhersagen über alle Stichproben, "
             "am besten geeignet für ausgewogene Datensätze."
         ),
+        zh=("正确预测占所有样本的比例，最适用于类别均衡的数据集。"),
     )
 
     @staticmethod

@@ -110,6 +110,7 @@ class M2M100Transformer(TranslationModel):
         es="Transformer Multilingüe M2M-100",
         pt="Transformer Multilíngue M2M-100",
         de="M2M-100 Mehrsprachiger Transformer",
+        zh="M2M-100 多语言 Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -132,6 +133,11 @@ class M2M100Transformer(TranslationModel):
             "mit ISO 639-1-Codes. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "Facebook M2M-100 模型，使用 ISO 639-1 代码支持"
+            " 100 种语言之间的直接翻译。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#6A1B9A"

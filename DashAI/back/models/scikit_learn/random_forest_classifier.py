@@ -243,6 +243,7 @@ class RandomForestClassifier(
         es="Bosque Aleatorio",
         pt="Classificador de Floresta Aleatória",
         de="Random Forest",
+        zh="随机森林",
     )
     DESCRIPTION: str = MultilingualString(
         en="An ensemble learning method using multiple decision trees.",
@@ -255,6 +256,7 @@ class RandomForestClassifier(
             "decisão."
         ),
         de=("Eine Ensemble-Lernmethode, die mehrere Entscheidungsbäume verwendet."),
+        zh="使用多棵决策树的集成学习方法。",
     )
     COLOR: str = "#FF8A65"
     ICON: str = "Forest"

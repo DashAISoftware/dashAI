@@ -26,10 +26,11 @@ class SelectFdrSchema(BaseSchema):
                 "sea conservada."
             ),
             pt=(
-                "O p-valor não corrigido mais alto para que uma característica "
+                "O p-valor não corrigido más alto para que uma característica "
                 "seja mantida."
             ),
             de="Der höchste unkorrigierte p-Wert für beizubehaltende Merkmale.",
+            zh="保留特征的最高未校正 p 值。",
         ),
     )  # type: ignore
 
@@ -80,10 +81,15 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
             "Filter: Merkmale gemäß einem Test der Falschentdeckungsrate (FDR) "
             "auswählen."
         ),
+        zh="过滤器：根据错误发现率（FDR）检验选择特征。",
     )
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(
-        en="Select FDR", es="Seleccionar FDR", pt="Seleção por FDR", de="FDR-Auswahl"
+        en="Select FDR",
+        es="Seleccionar FDR",
+        pt="Seleção por FDR",
+        de="FDR-Auswahl",
+        zh="FDR 特征选择",
     )
     IMAGE_PREVIEW = "select_fdr.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

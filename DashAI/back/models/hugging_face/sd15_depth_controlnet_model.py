@@ -208,6 +208,7 @@ class SD15DepthControlNetModel(BaseControlNetModel):
         en="SD 1.5 Depth ControlNet",
         es="SD 1.5 ControlNet de Profundidad",
         pt="SD 1.5 ControlNet de Profundidade",
+        zh="SD 1.5 深度 ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -241,6 +242,11 @@ class SD15DepthControlNetModel(BaseControlNetModel):
             "(https://huggingface.co/lllyasviel/sd-controlnet-depth) e "
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5)."
+        ),
+        zh=(
+            "结合 ControlNet 深度条件与 Stable Diffusion 1.5，"
+            "使用 Intel DPT-Hybrid-MiDaS 模型提取深度图，"
+            "实现结构感知的 512x512px 图像生成。"
         ),
     )
 

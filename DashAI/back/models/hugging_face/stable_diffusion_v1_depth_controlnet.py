@@ -177,6 +177,7 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
         en="Stable Diffusion XL V1 ControlNet",
         es="Stable Diffusion XL V1 ControlNet",
         pt="Stable Diffusion XL V1 ControlNet",
+        zh="Stable Diffusion XL V1 ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -216,6 +217,10 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
             "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) e "
             "stabilityai/stable-diffusion-xl-base-1.0 "
             "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
+        ),
+        zh=(
+            "结合 ControlNet 深度条件与 Stable Diffusion XL 1.0，"
+            "使用 Intel DPT-Hybrid-MiDaS 提取深度图，实现结构感知的高分辨率图像生成。"
         ),
     )
 

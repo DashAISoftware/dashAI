@@ -44,6 +44,7 @@ class Ter(TranslationMetric):
             "die erforderlich sind, um eine Systemausgabe in eine der Referenzen "
             "umzuwandeln."
         ),
+        zh="TER（翻译编辑率）衡量将系统输出转换为参考译文之一所需的编辑次数。",
     )
 
     @staticmethod

@@ -268,6 +268,7 @@ class MistralModel(TextToTextGenerationTaskModel):
         es="Modelo Mistral",
         pt="Modelo Mistral",
         de="Mistral-Modell",
+        zh="Mistral 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -306,6 +307,11 @@ class MistralModel(TextToTextGenerationTaskModel):
             "Schlussfolgerung und allgemeine Textgenerierung. Verfügbar in 7B "
             "(Mistral-7B-v0.3) und 12B (Mistral-Nemo-2407) Varianten. Modelle unter "
             "https://huggingface.co/bartowski."
+        ),
+        zh=(
+            "Mistral AI 的指令微调模型，以 GGUF 格式加载，"
+            "通过 llama.cpp 库实现高效的 CPU 和 GPU 推理。"
+            "支持多轮对话、推理和通用文本生成。提供 7B 和 12B 两种规格。"
         ),
     )
 

@@ -33,9 +33,13 @@ class WordcloudSchema(BaseExplorerSchema):
             en="Maximum number of words to display in the word cloud.",
             es="Número máximo de palabras a mostrar en la nube de palabras.",
             pt="Número máximo de palavras a exibir na nuvem de palavras.",
+            zh="词云中显示的最大词数。",
         ),
         alias=MultilingualString(
-            en="Max words", es="Máximo de palabras", pt="Máximo de palavras"
+            en="Max words",
+            es="Máximo de palabras",
+            pt="Máximo de palavras",
+            zh="最大词数",
         ),
     )  # type: ignore
     background_color: schema_field(
@@ -51,11 +55,13 @@ class WordcloudSchema(BaseExplorerSchema):
                 "transparente."
             ),
             pt=("Cor de fundo da nuvem de palavras. Se None, o fundo é transparente."),
+            zh="词云的背景颜色。如果为None，则背景透明。",
         ),
         alias=MultilingualString(
             en="Background color",
             es="Color de fondo",
             pt="Cor de fundo",
+            zh="背景颜色",
         ),
     )  # type: ignore
 
@@ -75,7 +81,7 @@ class WordcloudExplorer(DistributionExplorer):
     """
 
     DISPLAY_NAME = MultilingualString(
-        en="Word Cloud", es="Nube de Palabras", pt="Nuvem de Palavras"
+        en="Word Cloud", es="Nube de Palabras", pt="Nuvem de Palavras", zh="词云"
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -92,6 +98,7 @@ class WordcloudExplorer(DistributionExplorer):
             "reflete sua frequência. Gera uma nuvem de palavras concatenando "
             "colunas de texto selecionadas."
         ),
+        zh=("文本的可视化表示，词语大小反映频率。通过连接所选文本列生成词云。"),
     )
     IMAGE_PREVIEW = "wordcloud.png"
 
