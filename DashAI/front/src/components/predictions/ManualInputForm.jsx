@@ -99,22 +99,25 @@ export default function ManualInputForm({
 
   // Shared plain-<td> styles — no Emotion per-cell cost.
   const thStyle = {
-    padding: "6px 12px",
+    padding: "8px 12px",
     whiteSpace: "nowrap",
-    minWidth: 110,
+    minWidth: 120,
     fontWeight: 600,
-    fontSize: "0.875rem",
+    fontSize: "0.8rem",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
     color: textPrimary,
     height: HEADER_HEIGHT,
     background: headerBg,
-    borderBottom: `1px solid ${divider}`,
+    borderBottom: `2px solid ${divider}`,
     verticalAlign: "middle",
+    textAlign: "left",
   };
 
   const tdStyle = {
     padding: "6px 12px",
     whiteSpace: "nowrap",
-    minWidth: 110,
+    minWidth: 120,
     color: textPrimary,
     height: ROW_HEIGHT,
     borderBottom: `1px solid ${divider}`,
@@ -184,8 +187,9 @@ export default function ManualInputForm({
           <table
             style={{
               borderCollapse: "collapse",
-              width: "100%",
               tableLayout: "auto",
+              width: "max-content",
+              minWidth: "100%",
             }}
           >
             <thead>
@@ -234,7 +238,7 @@ export default function ManualInputForm({
             borderLeft: `2px solid ${predictionResults ? theme.palette.primary.main : divider}`,
           }}
         >
-          <table style={{ borderCollapse: "collapse" }}>
+          <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
             <thead>
               <tr>
                 <th
@@ -242,6 +246,7 @@ export default function ManualInputForm({
                     ...thStyle,
                     color: theme.palette.primary.main,
                     minWidth: 120,
+                    textAlign: "left",
                   }}
                 >
                   {targetLabel ?? ""}
