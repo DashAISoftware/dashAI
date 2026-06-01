@@ -1,17 +1,12 @@
 import logging
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm.attributes import flag_modified
 
-from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
-from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.metrics.base_metric import BaseMetric
-from DashAI.back.models.base_model import BaseModel
-from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+from DashAI.back.job.model_job_context import ModelJobContext
 from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
@@ -87,182 +82,32 @@ class ModelJob(BaseJob):
         return f"Model Training ({run_id})"
 
     @inject
-    def run(
-        self,
-    ) -> None:
+    def run(self) -> None:
+        """Run a model job by delegating execution to the task executor."""
         import gc
-        import json
         import os
-        import pickle
 
         from kink import di
-
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            prepare_for_model_session,
-            select_columns,
-            split_dataset,
-        )
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
 
-        # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
 
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
+
             try:
-                # Get the model session, dataset, task, metrics and splits
-                model_session: ModelSession = db.get(ModelSession, run.model_session_id)
-                if not model_session:
-                    raise JobError(
-                        f"Model session {run.model_session_id} does not exist in DB."
-                    )
-                dataset: Dataset = db.get(Dataset, model_session.dataset_id)
-                if not dataset:
-                    raise JobError(
-                        f"Dataset {model_session.dataset_id} does not exist in DB."
-                    )
+                context = self._build_context(
+                    run=run,
+                    db=db,
+                    component_registry=component_registry,
+                    config=config,
+                )
 
-                try:
-                    loaded_dataset: "DashAIDataset" = load_dataset(
-                        f"{dataset.file_path}/dataset"
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Can not load dataset from path {dataset.file_path}",
-                    ) from e
-
-                try:
-                    task: BaseTask = component_registry[model_session.task_name][
-                        "class"
-                    ]()
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        (
-                            f"Unable to find Task with name {model_session.task_name} "
-                            "in registry"
-                        ),
-                    ) from e
-
-                try:
-                    # Get metrics from model session
-                    train_metrics: List[BaseMetric] = [
-                        component_registry[m]["class"]
-                        for m in model_session.train_metrics
-                    ]
-                    validation_metrics: List[BaseMetric] = [
-                        component_registry[m]["class"]
-                        for m in model_session.validation_metrics
-                    ]
-                    test_metrics: List[BaseMetric] = [
-                        component_registry[m]["class"]
-                        for m in model_session.test_metrics
-                    ]
-
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Unable to find metrics associated with"
-                        f"Task {model_session.task_name} in registry",
-                    ) from e
-
-                try:
-                    prepared_dataset = task.prepare_for_task(
-                        dataset=loaded_dataset,
-                        input_columns=model_session.input_columns,
-                        output_columns=model_session.output_columns,
-                    )
-                    n_labels = task.num_labels(
-                        prepared_dataset, model_session.output_columns[0]
-                    )
-
-                    splits = json.loads(model_session.splits)
-                    prepared_dataset, splits = prepare_for_model_session(
-                        dataset=prepared_dataset,
-                        splits=splits,
-                        output_columns=model_session.output_columns,
-                    )
-
-                    run.split_indexes = json.dumps(
-                        {
-                            "train_indexes": splits["train_indexes"],
-                            "test_indexes": splits["test_indexes"],
-                            "val_indexes": splits["val_indexes"],
-                        }
-                    )
-
-                    x, y = select_columns(
-                        prepared_dataset,
-                        model_session.input_columns,
-                        model_session.output_columns,
-                    )
-
-                    x = split_dataset(x)
-                    y = split_dataset(y)
-
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"""Can not prepare Dataset {dataset.id}
-                        for Task {model_session.task_name}""",
-                    ) from e
-
-                try:
-                    run_model_class = component_registry[run.model_name]["class"]
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Unable to find Model with name {run.model_name} in registry.",
-                    ) from e
-                try:
-                    factory = ModelFactory(
-                        run_model_class,
-                        run.parameters,
-                        run_id,
-                        x,
-                        y,
-                        train_metrics,
-                        validation_metrics,
-                        test_metrics,
-                        n_labels=n_labels,
-                    )
-                    model: BaseModel = factory.model
-                    run_optimizable_parameters = factory.optimizable_parameters
-
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Unable to instantiate model using run {run_id}",
-                    ) from e
-                try:
-                    if run_optimizable_parameters:
-                        goal_metric = component_registry[run.goal_metric]
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Metric is not compatible with the Task. {e}",
-                    ) from e
-                try:
-                    # Optimizer configuration
-                    if run_optimizable_parameters:
-                        run_optimizer_class = component_registry[run.optimizer_name][
-                            "class"
-                        ]
-                        optimizer: BaseOptimizer = run_optimizer_class(
-                            **run.optimizer_parameters
-                        )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Error instantiating optimizer {run.optimizer_name}, {e}",
-                    ) from e
                 try:
                     run.set_status_as_started()
                     db.commit()
@@ -271,103 +116,14 @@ class ModelJob(BaseJob):
                     raise JobError(
                         "Connection with the database failed",
                     ) from e
+
                 try:
-                    # Hyperparameter Tunning
-                    plot_paths = []
-                    if not run_optimizable_parameters:
-                        model.train(
-                            x["train"], y["train"], x["validation"], y["validation"]
-                        )
-                    else:
-                        optimizer.optimize(
-                            model,
-                            x,
-                            y,
-                            run_optimizable_parameters,
-                            goal_metric,
-                            task,
-                        )
-                        model = optimizer.get_model()
-                        best_params = optimizer.get_best_params()
-
-                        old_parameters = run.parameters.copy()
-                        updated_parameters = factory.update_parameters(
-                            old_parameters, best_params
-                        )
-
-                        run.parameters = updated_parameters
-                        flag_modified(run, "parameters")
-                        db.commit()
-
-                        # Generate hyperparameter plot
-                        trials = optimizer.get_trials_values()
-                        plot_filenames, plots = optimizer.create_plots(
-                            trials,
-                            run_id,
-                            n_params=len(run_optimizable_parameters),
-                            goal_metric=goal_metric,
-                        )
-                        for filename, plot in zip(plot_filenames, plots, strict=False):
-                            plot_path = os.path.join(config["RUNS_PATH"], filename)
-                            with open(plot_path, "wb") as file:
-                                pickle.dump(plot, file)
-                                plot_paths.append(plot_path)
+                    executor = self._get_task_executor(context)
+                    model = executor.execute(context)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         f"Model training failed {e}",
-                    ) from e
-                try:
-                    paths = plot_paths + [None] * (4 - len(plot_paths))
-                    (
-                        run.plot_history_path,
-                        run.plot_slice_path,
-                        run.plot_contour_path,
-                        run.plot_importance_path,
-                    ) = paths[:4]
-                    db.commit()
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Hyperparameter plot path saving failed {e}",
-                    ) from e
-
-                # Calculate metrics at the end of training if not done already
-                try:
-                    last_train_metric = (
-                        db.query(Metric)
-                        .filter_by(run_id=run.id, split="TRAIN", level="LAST")
-                        .first()
-                    )
-                    if not last_train_metric:
-                        model.calculate_metrics(
-                            split=SplitEnum.TRAIN,
-                            level=LevelEnum.LAST,
-                        )
-                    last_val_metric = (
-                        db.query(Metric)
-                        .filter_by(run_id=run.id, split="VALIDATION", level="LAST")
-                        .first()
-                    )
-                    if not last_val_metric:
-                        model.calculate_metrics(
-                            split=SplitEnum.VALIDATION,
-                            level=LevelEnum.LAST,
-                        )
-                    last_test_metric = (
-                        db.query(Metric)
-                        .filter_by(run_id=run.id, split="TEST", level="LAST")
-                        .first()
-                    )
-                    if not last_test_metric:
-                        model.calculate_metrics(
-                            split=SplitEnum.TEST,
-                            level=LevelEnum.LAST,
-                        )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Metric calculation failed {e}",
                     ) from e
 
                 try:
@@ -389,6 +145,7 @@ class ModelJob(BaseJob):
                     raise JobError(
                         "Connection with the database failed",
                     ) from e
+
                 try:
                     run.set_status_as_finished()
                     db.commit()
@@ -403,3 +160,75 @@ class ModelJob(BaseJob):
                 raise e
             finally:
                 gc.collect()
+
+    def _build_context(self, run, db, component_registry, config) -> ModelJobContext:
+        """Build the shared context consumed by task-specific executors."""
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
+
+        model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+        if not model_session:
+            raise JobError(
+                f"Model session {run.model_session_id} does not exist in DB."
+            )
+
+        dataset: Dataset = db.get(Dataset, model_session.dataset_id)
+        if not dataset:
+            raise JobError(f"Dataset {model_session.dataset_id} does not exist in DB.")
+
+        try:
+            loaded_dataset: "DashAIDataset" = load_dataset(
+                f"{dataset.file_path}/dataset"
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Can not load dataset from path {dataset.file_path}",
+            ) from e
+
+        try:
+            task: BaseTask = component_registry[model_session.task_name]["class"]()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                (
+                    f"Unable to find Task with name {model_session.task_name} "
+                    "in registry"
+                ),
+            ) from e
+
+        return ModelJobContext(
+            run=run,
+            model_session=model_session,
+            dataset_record=dataset,
+            dataset=loaded_dataset,
+            task=task,
+            component_registry=component_registry,
+            db=db,
+            config=config,
+        )
+
+    def _get_task_executor(self, context: ModelJobContext):
+        """Resolve the executor compatible with the current task.
+
+        Each task must have exactly one compatible executor. Executors are
+        internal job components related to tasks through ``COMPATIBLE_COMPONENTS``;
+        this keeps ``ModelJob`` independent from concrete task families such as
+        supervised learning, clustering, or forecasting.
+        """
+        task_name = context.model_session.task_name
+        component_registry = context.component_registry
+
+        related_components = component_registry.get_related_components(task_name)
+        executor_components = [
+            component
+            for component in related_components
+            if component.get("type") == "TaskExecutor"
+        ]
+
+        if not executor_components:
+            raise JobError(f"No task executor found for Task {task_name}.")
+
+        if len(executor_components) > 1:
+            raise JobError(f"Multiple task executors found for Task {task_name}.")
+
+        return executor_components[0]["class"]()
