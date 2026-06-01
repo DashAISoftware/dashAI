@@ -39,6 +39,7 @@ import DatasetPredictionPanel from "./DatasetPredictionPanel";
 import ManualPredictionPanel from "./ManualPredictionPanel";
 import LiveMetricsChart from "./LiveMetricsChart";
 import HyperparameterPlots from "./HyperparameterPlots";
+import FoldMetricsChart from "./FoldMetricsChart";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
 import { checkHowManyOptimazers } from "../../utils/schema";
@@ -61,6 +62,7 @@ export default function RunResults({
   const [localExplainers, setLocalExplainers] = useState([]);
   const [predictions, setPredictions] = useState([]);
   const [internalVisible, setInternalVisible] = useState(() => {
+    if (run.status === 0) return false;
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
     return saved ? JSON.parse(saved) : false;
   });
@@ -73,7 +75,13 @@ export default function RunResults({
 
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
-    return saved ? JSON.parse(saved) : 0;
+    if (saved !== null) {
+      const savedTab = JSON.parse(saved);
+      // Tabs 1+ (Explainability, Predictions, Hyperparameters) require a finished run
+      if (savedTab > 0 && run.status !== 3) return 0;
+      return savedTab;
+    }
+    return 0;
   });
 
   const [globalCreatorOpen, setGlobalCreatorOpen] = useState(false);
@@ -219,7 +227,7 @@ export default function RunResults({
   return (
     <Box id={`run-results-${run.id}`}>
       {hasParams && (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 4 }}>
           <Button
             size="small"
             onClick={() => setParamsExpanded(!paramsExpanded)}
@@ -229,9 +237,9 @@ export default function RunResults({
             {t("common:modelParameters")}
           </Button>
           <Collapse in={paramsExpanded} timeout="auto" unmountOnExit>
-            <Box sx={{ mt: 1 }}>
+            <Box sx={{ mt: 2 }}>
               {run.parameters && Object.keys(run.parameters).length > 0 && (
-                <Box sx={{ mb: 2 }}>
+                <Box sx={{ mb: 4 }}>
                   <TableContainer component={Paper} variant="outlined">
                     <Table size="small">
                       <TableHead>
@@ -285,7 +293,7 @@ export default function RunResults({
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mt: 1 }}
+                    sx={{ mt: 2 }}
                   >
                     {t("models:label.goalMetric")}:{" "}
                     <strong>{run.goal_metric}</strong>
@@ -298,16 +306,19 @@ export default function RunResults({
       )}
 
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
             aria-label="Results tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
           >
             <Tab label={t("models:label.liveMetrics")} />
             <Tab
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <span>{t("models:label.explainability")}</span>
                   {isFinished && (
                     <Chip
@@ -322,7 +333,7 @@ export default function RunResults({
             />
             <Tab
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <span>{t("models:label.predictions")}</span>
                   {isFinished && (
                     <Chip
@@ -339,18 +350,19 @@ export default function RunResults({
               label={t("models:label.hyperparameters")}
               disabled={!isFinished || optimizables === 0}
             />
+            <Tab label={t("models:label.foldMetrics")} disabled={!isFinished} />
           </Tabs>
         </Box>
 
         {activeTab === 0 && (
-          <Box sx={{ py: 2 }}>
+          <Box sx={{ py: 4 }}>
             <LiveMetricsChart run={run} />
           </Box>
         )}
 
         {activeTab === 1 && isFinished && (
-          <Box sx={{ py: 2, width: "100%" }}>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Box sx={{ py: 4, width: "100%" }}>
+            <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
                 <TimestampWrapper
                   eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
@@ -404,13 +416,13 @@ export default function RunResults({
               onCancel={() => setLocalCreatorOpen(false)}
             />
 
-            <Stack spacing={2}>
+            <Stack spacing={4}>
               <Box
                 sx={{
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 1,
-                  p: 2,
+                  p: 4,
                   width: "100%",
                 }}
               >
@@ -419,10 +431,10 @@ export default function RunResults({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    mb: globalExpanded ? 2 : 0,
+                    mb: globalExpanded ? 4 : 0,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Typography variant="subtitle2" fontWeight="medium">
                       {t("models:label.globalExplainers")}
                     </Typography>
@@ -449,7 +461,7 @@ export default function RunResults({
                       variant="body2"
                       color="text.secondary"
                       align="center"
-                      sx={{ py: 3 }}
+                      sx={{ py: 6 }}
                     >
                       {t("models:label.noGlobalExplainersYet")}
                     </Typography>
@@ -481,7 +493,7 @@ export default function RunResults({
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 1,
-                  p: 2,
+                  p: 4,
                   width: "100%",
                 }}
               >
@@ -490,10 +502,10 @@ export default function RunResults({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    mb: localExpanded ? 2 : 0,
+                    mb: localExpanded ? 4 : 0,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Typography variant="subtitle2" fontWeight="medium">
                       {t("models:label.localExplainers")}
                     </Typography>
@@ -520,7 +532,7 @@ export default function RunResults({
                       variant="body2"
                       color="text.secondary"
                       align="center"
-                      sx={{ py: 3 }}
+                      sx={{ py: 6 }}
                     >
                       {t("models:label.noLocalExplainersYet")}
                     </Typography>
@@ -551,8 +563,8 @@ export default function RunResults({
         )}
 
         {activeTab === 2 && isFinished && (
-          <Box sx={{ py: 2, width: "100%" }}>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Box sx={{ py: 4, width: "100%" }}>
+            <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
                 <Button
                   variant="outlined"
@@ -852,8 +864,14 @@ export default function RunResults({
         )}
 
         {activeTab === 3 && isFinished && optimizables > 0 && (
-          <Box sx={{ py: 2 }}>
+          <Box sx={{ py: 4 }}>
             <HyperparameterPlots run={run} />
+          </Box>
+        )}
+
+        {activeTab === 4 && isFinished && (
+          <Box sx={{ py: 4 }}>
+            <FoldMetricsChart runId={run.id} />
           </Box>
         )}
       </Collapse>

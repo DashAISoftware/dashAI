@@ -92,6 +92,7 @@
     "hyperparameterOptimizationPlots": "Hyperparameter Optimization Plots",
     "hyperparameterOptimizerConfiguration": "Hyperparameter Optimizer Configuration",
     "hyperparameters": "Hyperparameters",
+    "foldMetrics": "Fold Metrics",
     "runName": "Run Name",
     "confirmParameterUpdate": "Confirm Parameter Update",
     "liveMetrics": "Live Metrics",
