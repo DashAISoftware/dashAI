@@ -26,7 +26,7 @@ class SelectFdrSchema(BaseSchema):
                 "sea conservada."
             ),
             pt=(
-                "O p-valor não corrigido más alto para que uma característica "
+                "O p-valor não corrigido mais alto para que uma característica "
                 "seja mantida."
             ),
             de="Der höchste unkorrigierte p-Wert für beizubehaltende Merkmale.",

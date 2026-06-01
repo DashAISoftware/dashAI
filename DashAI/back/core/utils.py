@@ -11,6 +11,8 @@ class MultilingualString:
     zh: Optional[str] = None
 
     def get(self, lang: str) -> str:
+        # Normalize: "zh-CN" → "zh", "zh,zh;q=0.9" → "zh"
+        lang = lang.split(",")[0].split(";")[0].split("-")[0].strip()
         if lang == "es" and self.es:
             return self.es
         if lang == "pt" and self.pt:
