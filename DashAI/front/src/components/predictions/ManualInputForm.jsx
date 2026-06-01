@@ -60,14 +60,17 @@ export default function ManualInputForm({
     return row;
   }
 
-  const handleChange = useCallback((rowIndex, col, value) => {
-    setRows((prev) => {
-      const newRows = [...prev];
-      newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
-      setManualInputData(newRows);
-      return newRows;
-    });
-  }, [setManualInputData]);
+  const handleChange = useCallback(
+    (rowIndex, col, value) => {
+      setRows((prev) => {
+        const newRows = [...prev];
+        newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
+        setManualInputData(newRows);
+        return newRows;
+      });
+    },
+    [setManualInputData],
+  );
 
   const handleAddRow = () => {
     const newRows = [...rows, createEmptyRow()];
@@ -99,7 +102,7 @@ export default function ManualInputForm({
     ? predictionResults.columns[predictionResults.columns.length - 1]
     : targetColumn;
 
-  // Shared plain-<td> styles — no Emotion per-cell cost.
+  // Shared plain-<td> styles - no Emotion per-cell cost.
   const thStyle = {
     padding: "8px 12px",
     whiteSpace: "nowrap",
