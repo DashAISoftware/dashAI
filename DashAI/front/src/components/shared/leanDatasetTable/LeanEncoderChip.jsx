@@ -1,11 +1,10 @@
 import { memo, useState } from "react";
 import PropTypes from "prop-types";
-import { Chip, Menu, MenuItem, Tooltip } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 
 import { updateColumnEncoder } from "../../../api/datasets";
-import { ENCODER_OPTIONS } from "./operators";
+import EncoderChipBase from "./EncoderChipBase";
 
 function useEncoderLabel() {
   const { t } = useTranslation(["common"]);
@@ -22,14 +21,12 @@ const LeanEncoderChip = memo(function LeanEncoderChip({
   datasetId,
   onChanged,
 }) {
-  const [anchor, setAnchor] = useState(null);
   const [pending, setPending] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["common", "datasets"]);
+  const { t } = useTranslation(["datasets"]);
   const encoderLabel = useEncoderLabel();
 
   const handleSelect = async (next) => {
-    setAnchor(null);
     if (next === encoder) return;
     setPending(true);
     try {
@@ -46,45 +43,12 @@ const LeanEncoderChip = memo(function LeanEncoderChip({
   };
 
   return (
-    <>
-      <Tooltip title={t("common:changeEncoder")} arrow>
-        <span style={{ display: "inline-flex" }}>
-          <Chip
-            label={pending ? "..." : encoderLabel(encoder)}
-            size="small"
-            disabled={pending}
-            onClick={(e) => {
-              e.stopPropagation();
-              setAnchor(e.currentTarget);
-            }}
-            aria-label={t("common:encoder")}
-            sx={{
-              fontSize: "0.65rem",
-              height: "18px",
-              cursor: "pointer",
-            }}
-          />
-        </span>
-      </Tooltip>
-      {anchor && (
-        <Menu
-          anchorEl={anchor}
-          open={Boolean(anchor)}
-          onClose={() => setAnchor(null)}
-        >
-          {ENCODER_OPTIONS.map((opt) => (
-            <MenuItem
-              key={opt}
-              selected={opt === encoder}
-              onClick={() => handleSelect(opt)}
-              sx={{ fontSize: "0.85rem" }}
-            >
-              {encoderLabel(opt)}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
-    </>
+    <EncoderChipBase
+      encoder={pending ? "..." : encoder}
+      onSelect={handleSelect}
+      disabled={pending}
+      encoderLabel={encoderLabel}
+    />
   );
 });
 
