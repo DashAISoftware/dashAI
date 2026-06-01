@@ -1,0 +1,294 @@
+.lean-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.lean-loading {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+}
+
+.lean-scroll {
+  overflow: auto;
+  max-height: 60vh;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+}
+
+.lean-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+  font-size: 13px;
+  background: var(--lean-body-bg, transparent);
+  /* min-width: 100% expands the table to fill the container when columns
+     are few; width: max-content lets it grow past the container width
+     (with horizontal scroll) when there are many columns. */
+  min-width: 100%;
+  width: max-content;
+}
+
+.lean-table thead th.lean-th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--lean-header-bg, #1f1f1f);
+  color: var(--lean-header-fg, inherit);
+  text-align: center;
+  vertical-align: top;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.4);
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.lean-th-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.lean-th-type {
+  font-size: 11px;
+}
+
+.lean-th-type > span {
+  opacity: 0.65;
+}
+
+
+.lean-cell {
+  padding: 4px 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.lean-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.lean-th-filter {
+  position: sticky;
+  top: 46px;
+  z-index: 1;
+  background: var(--lean-header-bg, #1f1f1f);
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.lean-filter-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lean-op-btn {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.lean-op-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lean-filter-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 3px 6px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 4px;
+  outline: none;
+}
+
+.lean-filter-input--half {
+  flex: 1 1 0;
+  width: 0;
+}
+
+.lean-filter-input:focus {
+  border-color: rgba(100, 150, 255, 0.7);
+}
+
+.lean-filter-placeholder {
+  flex: 1 1 auto;
+}
+
+.lean-th-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.lean-encoder-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  font-size: 10px;
+  line-height: 1;
+  font-family: inherit;
+  color: inherit;
+  background: rgba(100, 150, 255, 0.15);
+  border: 1px solid rgba(100, 150, 255, 0.4);
+  border-radius: 9px;
+  cursor: pointer;
+  text-transform: lowercase;
+}
+
+.lean-encoder-chip:hover {
+  background: rgba(100, 150, 255, 0.25);
+}
+
+.lean-encoder-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.lean-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lean-search-icon {
+  opacity: 0.6;
+}
+
+.lean-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font-size: 12px;
+  width: 180px;
+}
+
+.lean-search-input::placeholder {
+  opacity: 0.55;
+}
+
+.lean-sort-arrow {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+  display: inline-block;
+  font-size: 0.8em;
+}
+.lean-sort--asc .lean-sort-arrow--up,
+.lean-sort--desc .lean-sort-arrow--down {
+  opacity: 1;
+}
+
+.lean-mark {
+  background: rgba(255, 215, 0, 0.45);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 1px;
+}
+
+.lean-th-name--editable {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  cursor: pointer;
+  text-decoration: underline transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s;
+}
+
+.lean-th-name--editable:hover {
+  text-decoration-color: currentColor;
+}
+
+.lean-rename-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.lean-rename-input {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(100, 150, 255, 0.7);
+  border-radius: 4px;
+  padding: 2px 6px;
+  outline: none;
+  min-width: 60px;
+}
+
+.lean-rename-error {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #ff6b6b;
+}
+
+.lean-th-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lean-sort {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1;
+  color: inherit;
+}
+
+.lean-sort-arrow {
+  font-size: 8px;
+  line-height: 1;
+  opacity: 0.3;
+}
+
+.lean-sort:hover .lean-sort-arrow {
+  opacity: 0.6;
+}
+
+.lean-sort--asc .lean-sort-arrow--up,
+.lean-sort--desc .lean-sort-arrow--down {
+  opacity: 1;
+}
