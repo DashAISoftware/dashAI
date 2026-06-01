@@ -52,19 +52,6 @@ export function LiveMetricsChart({ run }) {
           const value = run.test_metrics[metricName];
           if (Array.isArray(value)) {
             formattedTestMetrics[metricName] = value;
-          } else if (
-            typeof value === "object" &&
-            value !== null &&
-            "value" in value
-          ) {
-            // Handle {value, std_value, fold_values} format
-            formattedTestMetrics[metricName] = [
-              {
-                step: 1,
-                value: value.value,
-                timestamp: new Date().toISOString(),
-              },
-            ];
           } else {
             formattedTestMetrics[metricName] = [
               { step: 1, value: value, timestamp: new Date().toISOString() },
@@ -161,19 +148,6 @@ export function LiveMetricsChart({ run }) {
             const value = run.test_metrics[metricName];
             if (Array.isArray(value)) {
               formattedTestMetrics[metricName] = value;
-            } else if (
-              typeof value === "object" &&
-              value !== null &&
-              "value" in value
-            ) {
-              // Handle {value, std_value, fold_values} format
-              formattedTestMetrics[metricName] = [
-                {
-                  step: 1,
-                  value: value.value,
-                  timestamp: new Date().toISOString(),
-                },
-              ];
             } else {
               formattedTestMetrics[metricName] = [
                 { step: 1, value: value, timestamp: new Date().toISOString() },
@@ -359,7 +333,7 @@ export function LiveMetricsChart({ run }) {
         </FormControl>
       </Box>
 
-      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
+      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 4 }}>
         <Tab label={t("models:label.train")} value="TRAIN" />
         {isCV && (
           <Tab label={t("models:label.validation")} value="VALIDATION" />

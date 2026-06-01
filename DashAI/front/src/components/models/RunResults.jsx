@@ -224,6 +224,9 @@ export default function RunResults({
     (run.parameters && Object.keys(run.parameters).length > 0) ||
     (run.optimizer_name && run.goal_metric);
 
+  const isCv =
+    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+
   return (
     <Box id={`run-results-${run.id}`}>
       {hasParams && (
@@ -350,7 +353,12 @@ export default function RunResults({
               label={t("models:label.hyperparameters")}
               disabled={!isFinished || optimizables === 0}
             />
-            <Tab label={t("models:label.foldMetrics")} disabled={!isFinished} />
+            {isCv && (
+              <Tab
+                label={t("models:label.foldMetrics")}
+                disabled={!isFinished}
+              />
+            )}
           </Tabs>
         </Box>
 
@@ -871,7 +879,7 @@ export default function RunResults({
 
         {activeTab === 4 && isFinished && (
           <Box sx={{ py: 4 }}>
-            <FoldMetricsChart runId={run.id} />
+            <FoldMetricsChart runId={run.id} isNestedCV={run.nested !== null} />
           </Box>
         )}
       </Collapse>

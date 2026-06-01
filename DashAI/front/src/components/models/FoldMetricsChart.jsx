@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
 import {
@@ -12,444 +18,365 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import api from "../../api/api";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 
-/**
- * FoldMetricsChart
- *
- * Displays fold-level metrics from cross-validation using interactive Plotly charts.
- * Supports boxplots and line charts for visualizing fold-level performance.
- * For repeated cross-validation, allows selecting which repetition to display.
- *
- * Props:
- * - runId: ID of the run to display fold metrics for
- * - metricSplit: "train", "validation", or "test"
- * - metrics: Array of metric objects with name and metadata properties
- */
-export default function FoldMetricsChart({
-  runId,
-  metricSplit = "test",
-  metrics = [],
-  isNestedCV = false,
-}) {
+// ─── Pure helpers (defined outside component — stable references) ─────────────
+
+const THEME_COLORS = (theme) => [
+  theme.palette.primary.main,
+  theme.palette.secondary.main,
+  theme.palette.success.main,
+  theme.palette.warning.main,
+  theme.palette.error.main,
+];
+
+const errorInverse = (x) => {
+  const a = 0.147;
+  const ln = Math.log(1 - x * x);
+  const term1 = 2 / (Math.PI * a) + ln / 2;
+  const term2 = ln / a;
+  return Math.sign(x) * Math.sqrt(Math.sqrt(term1 * term1 - term2) - term1);
+};
+
+const calculateNormalQuantiles = (data) => {
+  const sorted = [...data].sort((a, b) => a - b);
+  return sorted.map((sample, i) => ({
+    sample,
+    theoretical:
+      Math.sqrt(2) * errorInverse(2 * ((i + 0.5) / sorted.length) - 1),
+  }));
+};
+
+const computeAveraged = (allRepetitionsData) => {
+  const reps = Object.keys(allRepetitionsData).filter((k) =>
+    k.startsWith("rep_"),
+  );
+  if (reps.length === 0) return null;
+  const metricNames = Object.keys(allRepetitionsData[reps[0]]);
+  return Object.fromEntries(
+    metricNames.map((metric) => {
+      const nFolds = allRepetitionsData[reps[0]][metric].length;
+      return [
+        metric,
+        Array.from({ length: nFolds }, (_, i) => {
+          const vals = reps.map(
+            (rep) => allRepetitionsData[rep][metric][i] ?? 0,
+          );
+          return vals.reduce((a, b) => a + b, 0) / vals.length;
+        }),
+      ];
+    }),
+  );
+};
+
+const computeConcatenated = (allRepetitionsData) => {
+  const reps = Object.keys(allRepetitionsData).filter((k) =>
+    k.startsWith("rep_"),
+  );
+  if (reps.length === 0) return null;
+  const metricNames = Object.keys(allRepetitionsData[reps[0]]);
+  return Object.fromEntries(
+    metricNames.map((metric) => [
+      metric,
+      reps.flatMap((rep) => allRepetitionsData[rep][metric]),
+    ]),
+  );
+};
+
+// ─── Trace builders (pure functions, defined outside component) ───────────────
+
+const buildBoxplotTraces = (foldMetrics, selectedMetrics, colors) =>
+  Object.keys(foldMetrics)
+    .sort()
+    .filter((name) => selectedMetrics.includes(name))
+    .map((metricName, index) => ({
+      y: foldMetrics[metricName],
+      name: metricName,
+      type: "box",
+      boxmean: "sd",
+      marker: { color: colors[index % colors.length] },
+      hovertemplate:
+        "<b>%{fullData.name}</b><br>Value: %{y:.4f}<extra></extra>",
+    }));
+
+const buildLineTraces = (foldMetrics, selectedMetrics, colors) =>
+  Object.keys(foldMetrics)
+    .sort()
+    .filter((name) => selectedMetrics.includes(name))
+    .map((metricName, index) => {
+      const values = foldMetrics[metricName];
+      const color = colors[index % colors.length];
+      return {
+        x: Array.from({ length: values.length }, (_, i) => i + 1),
+        y: values,
+        name: metricName,
+        type: "scatter",
+        mode: "lines+markers",
+        line: { color, width: 2 },
+        marker: { size: 6, color },
+        hovertemplate:
+          "<b>%{fullData.name}</b><br>Fold: %{x}<br>Value: %{y:.4f}<extra></extra>",
+      };
+    });
+
+const buildHistogramTraces = (foldMetrics, selectedMetrics, colors) =>
+  Object.keys(foldMetrics)
+    .sort()
+    .filter((name) => selectedMetrics.includes(name))
+    .map((metricName, index) => ({
+      x: foldMetrics[metricName],
+      name: metricName,
+      type: "histogram",
+      nbinsx: Math.max(5, Math.ceil(Math.sqrt(foldMetrics[metricName].length))),
+      marker: { color: colors[index % colors.length], opacity: 0.7 },
+      hovertemplate: "<b>%{fullData.name}</b><br>Count: %{y}<extra></extra>",
+    }));
+
+const buildQQTraces = (foldMetrics, selectedMetrics, colors) => {
+  const traces = [];
+  const allTheoretical = [];
+
+  Object.keys(foldMetrics)
+    .sort()
+    .filter((name) => selectedMetrics.includes(name))
+    .forEach((metricName, index) => {
+      const values = foldMetrics[metricName];
+      if (values.length < 3) return;
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const std = Math.sqrt(
+        values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / values.length,
+      );
+      const quantileData = calculateNormalQuantiles(values);
+      const sampleQ = quantileData.map((q) => q.sample);
+      const theoreticalQ = quantileData.map((q) => mean + q.theoretical * std);
+      allTheoretical.push(...theoreticalQ);
+      traces.push({
+        x: theoreticalQ,
+        y: sampleQ,
+        name: metricName,
+        type: "scatter",
+        mode: "markers",
+        marker: { size: 8, color: colors[index % colors.length] },
+        hovertemplate:
+          "<b>%{fullData.name}</b><br>Theoretical: %{x:.3f}<br>Sample: %{y:.3f}<extra></extra>",
+      });
+    });
+
+  if (allTheoretical.length > 0) {
+    const tMin = Math.min(...allTheoretical);
+    const tMax = Math.max(...allTheoretical);
+    const pad = (tMax - tMin) * 0.1;
+    traces.push({
+      x: [tMin - pad, tMax + pad],
+      y: [tMin - pad, tMax + pad],
+      name: "Reference (Normal)",
+      type: "scatter",
+      mode: "lines",
+      line: { color: "#ff7f0e", dash: "solid", width: 3 },
+      hoverinfo: "skip",
+      showlegend: true,
+    });
+  }
+
+  return traces;
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function FoldMetricsChart({ runId, isNestedCV = false }) {
   const theme = useTheme();
+  const { t } = useTranslation("models");
+  const colors = useMemo(() => THEME_COLORS(theme), [theme]);
+
   const [allRepetitionsData, setAllRepetitionsData] = useState(null);
   const [selectedRepetition, setSelectedRepetition] = useState(null);
+  // Separate "refreshing" from full "loading" — avoids unmounting the chart
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState("boxplot");
-  // "outer" = nested CV evaluation folds, "final" = HPO final training folds
   const [foldScope, setFoldScope] = useState("outer");
-  // Track selected metrics (array of metric names)
+  const [split, setSplit] = useState("TRAIN");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
-  // Ref to always access current selectedRepetition inside async callbacks
-  const selectedRepetitionRef = useRef(selectedRepetition);
-  useEffect(() => {
-    selectedRepetitionRef.current = selectedRepetition;
-  }, [selectedRepetition]);
 
-  // Fetch fold metrics data
+  const selectedMetricsRef = useRef([]);
+  // Track whether we already have data to decide between full-load and refresh
+  const hasDataRef = useRef(false);
+
+  const metricSplit = split === "TRAIN" ? "train" : "test";
+
+  // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!runId) return;
 
-    const fetchFoldMetrics = async () => {
+    // If we already have data (e.g. split change), show a non-blocking overlay
+    // instead of unmounting the chart entirely
+    if (hasDataRef.current) {
+      setRefreshing(true);
+    } else {
       setLoading(true);
-      setError(null);
-      setAllRepetitionsData(null);
-      const previousRepetition = selectedRepetitionRef.current;
+    }
+    setError(null);
+
+    const controller = new AbortController();
+
+    const fetchFoldMetrics = async () => {
       try {
-        // outer-fold-metrics: nested CV evaluation folds
-        // fold-metrics: HPO final training folds (default for non-nested)
         const endpoint =
           isNestedCV && foldScope === "outer"
             ? `/v1/run/${runId}/outer-fold-metrics`
             : `/v1/run/${runId}/fold-metrics`;
         const response = await api.get(endpoint, {
           params: { metric_split: metricSplit },
+          signal: controller.signal,
         });
 
-        // Check if response has multiple repetitions (keys like "rep_0", "rep_1", etc.)
         const hasRepetitions =
           response.data &&
           Object.keys(response.data).some((key) => key.startsWith("rep_"));
 
+        let nextData;
+        let nextRepetition;
+
         if (hasRepetitions) {
-          // Extract repetition keys (e.g., "rep_0", "rep_1", etc.)
           const repKeys = Object.keys(response.data)
             .filter((key) => key.startsWith("rep_"))
-            .sort((a, b) => {
-              const numA = parseInt(a.split("_")[1]);
-              const numB = parseInt(b.split("_")[1]);
-              return numA - numB;
-            });
+            .sort(
+              (a, b) => parseInt(a.split("_")[1]) - parseInt(b.split("_")[1]),
+            );
 
-          setAllRepetitionsData(response.data);
-          // Set default to first repetition
-          if (repKeys.length > 0) {
-            // Keep current repetition if valid, otherwise default to averaged
-            const isValidRep =
-              previousRepetition === "averaged" ||
-              repKeys.includes(previousRepetition);
-            setSelectedRepetition(isValidRep ? previousRepetition : "averaged");
-          }
+          nextData = response.data;
+          // Keep current repetition if still valid
+          const currentRep = selectedRepetition;
+          const isValidRep =
+            currentRep === "averaged" || repKeys.includes(currentRep);
+          nextRepetition = isValidRep ? currentRep : "averaged";
         } else {
-          // Single CV (no repetitions) - treat as rep_0
-          setAllRepetitionsData({ rep_0: response.data });
-          setSelectedRepetition("rep_0");
+          nextData = { rep_0: response.data };
+          nextRepetition = "rep_0";
         }
 
-        // Initialize all metrics as selected
-        if (response.data) {
-          const metricsData =
-            hasRepetitions && response.data.rep_0
-              ? response.data.rep_0
-              : response.data;
-          const allMetricNames = Object.keys(metricsData);
-          setSelectedMetrics(allMetricNames);
-        }
+        setAllRepetitionsData(nextData);
+        setSelectedRepetition(nextRepetition);
+        hasDataRef.current = true;
       } catch (err) {
+        if (err.name === "CanceledError" || err.name === "AbortError") return;
         setError(err.response?.data?.detail || "Failed to load fold metrics");
         console.error("Error fetching fold metrics:", err);
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
 
     fetchFoldMetrics();
+
+    return () => controller.abort();
+    // selectedRepetition intentionally excluded — we only read it as "current value at fetch time"
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId, metricSplit, foldScope, isNestedCV]);
 
-  // Compute per-fold average across all repetitions
-  const computeAveragedData = () => {
-    if (!allRepetitionsData) return null;
-    const reps = Object.keys(allRepetitionsData).filter((k) =>
-      k.startsWith("rep_"),
+  // ── Derived data ───────────────────────────────────────────────────────────
+
+  // Single source of truth for current fold data (covers all chart types)
+  const currentFoldMetrics = useMemo(() => {
+    if (!allRepetitionsData || !selectedRepetition) return null;
+    if (selectedRepetition === "averaged")
+      return computeAveraged(allRepetitionsData);
+    return allRepetitionsData[selectedRepetition] ?? null;
+  }, [allRepetitionsData, selectedRepetition]);
+
+  // For QQ: concatenate all reps when "averaged", otherwise same as current
+  const qqFoldMetrics = useMemo(() => {
+    if (!allRepetitionsData || !selectedRepetition) return null;
+    if (selectedRepetition === "averaged")
+      return computeConcatenated(allRepetitionsData);
+    return allRepetitionsData[selectedRepetition] ?? null;
+  }, [allRepetitionsData, selectedRepetition]);
+
+  const availableMetrics = useMemo(
+    () => (currentFoldMetrics ? Object.keys(currentFoldMetrics).sort() : []),
+    [currentFoldMetrics],
+  );
+
+  const availableReps = useMemo(
+    () =>
+      allRepetitionsData
+        ? Object.keys(allRepetitionsData)
+            .filter((k) => k.startsWith("rep_"))
+            .sort(
+              (a, b) => parseInt(a.split("_")[1]) - parseInt(b.split("_")[1]),
+            )
+        : [],
+    [allRepetitionsData],
+  );
+
+  // ── Selection reconciliation ───────────────────────────────────────────────
+  // Fires when availableMetrics changes (new fetch or rep change).
+  // Keeps user selection if any of the chosen metrics still exist; otherwise selects all.
+  useEffect(() => {
+    if (availableMetrics.length === 0) return;
+    const valid = selectedMetricsRef.current.filter((m) =>
+      availableMetrics.includes(m),
     );
-    if (reps.length === 0) return null;
+    const next = valid.length > 0 ? valid : availableMetrics;
+    selectedMetricsRef.current = next;
+    setSelectedMetrics(next);
+  }, [availableMetrics]);
 
-    const metricNames = Object.keys(allRepetitionsData[reps[0]]);
-    const averaged = {};
+  // ── Metric handlers ────────────────────────────────────────────────────────
+  const handleToggleMetric = useCallback(
+    (name) => {
+      const next = selectedMetrics.includes(name)
+        ? selectedMetrics.filter((m) => m !== name)
+        : availableMetrics.filter((m) =>
+            new Set([...selectedMetrics, name]).has(m),
+          );
+      selectedMetricsRef.current = next;
+      setSelectedMetrics(next);
+    },
+    [selectedMetrics, availableMetrics],
+  );
 
-    metricNames.forEach((metric) => {
-      const nFolds = allRepetitionsData[reps[0]][metric].length;
-      averaged[metric] = Array.from({ length: nFolds }, (_, foldIdx) => {
-        const vals = reps.map(
-          (rep) => allRepetitionsData[rep][metric][foldIdx] ?? 0,
-        );
-        return vals.reduce((a, b) => a + b, 0) / vals.length;
-      });
-    });
+  const handleSelectAll = useCallback(() => {
+    selectedMetricsRef.current = availableMetrics;
+    setSelectedMetrics(availableMetrics);
+  }, [availableMetrics]);
 
-    return averaged;
-  };
+  const handleClearAll = useCallback(() => {
+    selectedMetricsRef.current = [];
+    setSelectedMetrics([]);
+  }, []);
 
-  // Concatenate all fold values across all repetitions (used for Q-Q plot)
-  const computeConcatenatedData = () => {
-    if (!allRepetitionsData) return null;
-    const reps = Object.keys(allRepetitionsData).filter((k) =>
-      k.startsWith("rep_"),
-    );
-    if (reps.length === 0) return null;
-
-    const metricNames = Object.keys(allRepetitionsData[reps[0]]);
-    const concatenated = {};
-    metricNames.forEach((metric) => {
-      concatenated[metric] = reps.flatMap(
-        (rep) => allRepetitionsData[rep][metric],
-      );
-    });
-    return concatenated;
-  };
-
-  // Build boxplot traces
-  const createBoxplotTraces = () => {
-    if (!allRepetitionsData || !selectedRepetition) return [];
-
-    const foldMetrics =
-      selectedRepetition === "averaged"
-        ? computeAveragedData()
-        : allRepetitionsData[selectedRepetition];
-    if (!foldMetrics) return [];
-
-    const traces = [];
-    const metricNames = Object.keys(foldMetrics).sort();
-
-    metricNames.forEach((metricName, index) => {
-      // Skip if metric is not selected
-      if (!selectedMetrics.includes(metricName)) return;
-
-      const metricInfo = metrics.find((m) => m.name === metricName);
-      const values = foldMetrics[metricName];
-
-      const themeColors = [
-        theme.palette.primary.main,
-        theme.palette.secondary.main,
-        theme.palette.success.main,
-        theme.palette.warning.main,
-        theme.palette.error.main,
-      ];
-
-      traces.push({
-        y: values,
-        name: metricName,
-        type: "box",
-        boxmean: "sd", // Show mean and standard deviation
-        marker: {
-          color:
-            metricInfo?.metadata?.color ||
-            themeColors[index % themeColors.length],
-        },
-        hovertemplate:
-          "<b>%{fullData.name}</b><br>Value: %{y:.4f}<extra></extra>",
-      });
-    });
-
-    return traces;
-  };
-
-  // Build line chart traces (one line per metric showing fold progression)
-  const createLineTraces = () => {
-    if (!allRepetitionsData || !selectedRepetition) return [];
-
-    const foldMetrics =
-      selectedRepetition === "averaged"
-        ? computeAveragedData()
-        : allRepetitionsData[selectedRepetition];
-    if (!foldMetrics) return [];
-
-    const traces = [];
-    const metricNames = Object.keys(foldMetrics).sort();
-
-    const themeColors = [
-      theme.palette.primary.main,
-      theme.palette.secondary.main,
-      theme.palette.success.main,
-      theme.palette.warning.main,
-      theme.palette.error.main,
-    ];
-
-    metricNames.forEach((metricName, index) => {
-      // Skip if metric is not selected
-      if (!selectedMetrics.includes(metricName)) return;
-
-      const metricInfo = metrics.find((m) => m.name === metricName);
-      const values = foldMetrics[metricName];
-      const foldNumbers = Array.from(
-        { length: values.length },
-        (_, i) => i + 1,
-      );
-
-      traces.push({
-        x: foldNumbers,
-        y: values,
-        name: metricName,
-        type: "scatter",
-        mode: "lines+markers",
-        line: {
-          color:
-            metricInfo?.metadata?.color ||
-            themeColors[index % themeColors.length],
-          width: 2,
-        },
-        marker: {
-          size: 6,
-          color:
-            metricInfo?.metadata?.color ||
-            themeColors[index % themeColors.length],
-        },
-        hovertemplate:
-          "<b>%{fullData.name}</b><br>" +
-          "Fold: %{x}<br>" +
-          "Value: %{y:.4f}<br>" +
-          "<extra></extra>",
-      });
-    });
-
-    return traces;
-  };
-
-  // Calculate Q-Q plot data
-  const calculateNormalQuantiles = (data) => {
-    const sorted = [...data].sort((a, b) => a - b);
-    const n = sorted.length;
-    const quantiles = [];
-    for (let i = 0; i < n; i++) {
-      // Use median rank to calculate theoretical quantile
-      const p = (i + 0.5) / n;
-      const q = Math.sqrt(2) * errorInverse(2 * p - 1);
-      quantiles.push({ sample: sorted[i], theoretical: q });
+  // ── Traces ─────────────────────────────────────────────────────────────────
+  const traces = useMemo(() => {
+    const fm = chartType === "qq" ? qqFoldMetrics : currentFoldMetrics;
+    if (!fm) return [];
+    switch (chartType) {
+      case "line":
+        return buildLineTraces(fm, selectedMetrics, colors);
+      case "histogram":
+        return buildHistogramTraces(fm, selectedMetrics, colors);
+      case "qq":
+        return buildQQTraces(fm, selectedMetrics, colors);
+      default:
+        return buildBoxplotTraces(fm, selectedMetrics, colors);
     }
-    return quantiles;
-  };
+  }, [chartType, currentFoldMetrics, qqFoldMetrics, selectedMetrics, colors]);
 
-  // Approximate inverse error function (Abramowitz & Stegun, more accurate)
-  const errorInverse = (x) => {
-    const a = 0.147;
-    const ln = Math.log(1 - x * x);
-    const term1 = 2 / (Math.PI * a) + ln / 2;
-    const term2 = ln / a;
-    return Math.sign(x) * Math.sqrt(Math.sqrt(term1 * term1 - term2) - term1);
-  };
+  // ── Layout ─────────────────────────────────────────────────────────────────
+  const layout = useMemo(() => {
+    const isDark = theme.palette.mode === "dark";
+    const textColor = isDark ? "#e0e0e0" : "#424242";
+    const gridColor = isDark ? "#424242" : "#e0e0e0";
 
-  // Build Q-Q plot traces
-  const createQQPlotTraces = () => {
-    if (!allRepetitionsData || !selectedRepetition) return [];
-
-    // For Q-Q, concatenate all repetitions to maximize points
-    // Averaging would reduce points and hide the variability we want to assess
-    const foldMetrics =
-      selectedRepetition === "averaged"
-        ? computeConcatenatedData()
-        : allRepetitionsData[selectedRepetition];
-    if (!foldMetrics) return [];
-
-    const traces = [];
-    const metricNames = Object.keys(foldMetrics).sort();
-
-    const themeColors = [
-      theme.palette.primary.main,
-      theme.palette.secondary.main,
-      theme.palette.success.main,
-      theme.palette.warning.main,
-      theme.palette.error.main,
-    ];
-
-    let allTheoreticalValues = [];
-    let allSampleValues = [];
-
-    metricNames.forEach((metricName, index) => {
-      if (!selectedMetrics.includes(metricName)) return;
-
-      const values = foldMetrics[metricName];
-      if (values.length < 3) return; // Q-Q plot needs at least 3 points
-
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const std = Math.sqrt(
-        values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
-          values.length,
-      );
-
-      const quantileData = calculateNormalQuantiles(values);
-      const sampleQuantiles = quantileData.map((q) => q.sample);
-      const theoreticalQuantiles = quantileData.map(
-        (q) => mean + q.theoretical * std,
-      );
-
-      allTheoreticalValues.push(...theoreticalQuantiles);
-      allSampleValues.push(...sampleQuantiles);
-
-      // Sample points
-      traces.push({
-        x: theoreticalQuantiles,
-        y: sampleQuantiles,
-        name: metricName,
-        type: "scatter",
-        mode: "markers",
-        marker: {
-          size: 8,
-          color:
-            metrics.find((m) => m.name === metricName)?.metadata?.color ||
-            themeColors[index % themeColors.length],
-        },
-        hovertemplate:
-          "<b>%{fullData.name}</b><br>" +
-          "Theoretical: %{x:.3f}<br>" +
-          "Sample: %{y:.3f}<br>" +
-          "<extra></extra>",
-      });
-    });
-
-    // Reference diagonal y=x over theoretical quantile range
-    if (allTheoreticalValues.length > 0) {
-      const tMin = Math.min(...allTheoreticalValues);
-      const tMax = Math.max(...allTheoreticalValues);
-      const padding = (tMax - tMin) * 0.1;
-
-      traces.push({
-        x: [tMin - padding, tMax + padding],
-        y: [tMin - padding, tMax + padding],
-        name: "Reference (Normal)",
-        type: "scatter",
-        mode: "lines",
-        line: {
-          color: theme.palette.mode === "dark" ? "#ff7f0e" : "#ff7f0e",
-          dash: "solid",
-          width: 3,
-        },
-        hoverinfo: "skip",
-        showlegend: true,
-      });
-    }
-
-    return traces;
-  };
-
-  // Build histogram traces
-  const createHistogramTraces = () => {
-    if (!allRepetitionsData || !selectedRepetition) return [];
-
-    const foldMetrics =
-      selectedRepetition === "averaged"
-        ? computeAveragedData()
-        : allRepetitionsData[selectedRepetition];
-    if (!foldMetrics) return [];
-
-    const traces = [];
-    const metricNames = Object.keys(foldMetrics).sort();
-
-    const themeColors = [
-      theme.palette.primary.main,
-      theme.palette.secondary.main,
-      theme.palette.success.main,
-      theme.palette.warning.main,
-      theme.palette.error.main,
-    ];
-
-    metricNames.forEach((metricName, index) => {
-      if (!selectedMetrics.includes(metricName)) return;
-
-      const values = foldMetrics[metricName];
-
-      traces.push({
-        x: values,
-        name: metricName,
-        type: "histogram",
-        nbinsx: Math.max(5, Math.ceil(Math.sqrt(values.length))),
-        marker: {
-          color:
-            metrics.find((m) => m.name === metricName)?.metadata?.color ||
-            themeColors[index % themeColors.length],
-          opacity: 0.7,
-        },
-        hovertemplate:
-          "<b>%{fullData.name}</b><br>" +
-          "Range: [%{x}, %{xbingroup}]<br>" +
-          "Count: %{y}<br>" +
-          "<extra></extra>",
-      });
-    });
-
-    return traces;
-  };
-
-  // Build layout with theme colors
-  const getLayout = () => {
-    const isDarkMode = theme.palette.mode === "dark";
-    const textColor = isDarkMode ? "#e0e0e0" : "#424242";
-    const gridColor = isDarkMode ? "#424242" : "#e0e0e0";
-
-    const baseLayout = {
-      yaxis: {
-        title: "Metric Value",
-        gridcolor: gridColor,
-        titlefont: { color: textColor },
-        tickfont: { color: textColor },
-      },
-      paper_bgcolor: isDarkMode ? "#1e1e1e" : "#ffffff",
-      plot_bgcolor: isDarkMode ? "#2a2a2a" : "#f5f5f5",
+    const base = {
+      paper_bgcolor: isDark ? "#1e1e1e" : "#ffffff",
+      plot_bgcolor: isDark ? "#2a2a2a" : "#f5f5f5",
       font: {
         color: textColor,
         family: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -458,127 +385,53 @@ export default function FoldMetricsChart({
       margin: { l: 30, r: 0, t: 40, b: 50 },
       autosize: true,
       showlegend: false,
-    };
-
-    if (chartType === "line") {
-      return {
-        ...baseLayout,
-        title: {
-          text: `Cross-Validation Fold Progression (${metricSplit})`,
-          font: { size: 14 },
-        },
-        xaxis: {
-          title: "Fold Number",
-          gridcolor: gridColor,
-          titlefont: { color: textColor },
-          tickfont: { color: textColor },
-        },
-      };
-    }
-
-    if (chartType === "qq") {
-      return {
-        ...baseLayout,
-        showlegend: true,
-        title: {
-          text:
-            selectedRepetition === "averaged"
-              ? `Q-Q Plot - All Repetitions (${metricSplit})`
-              : `Q-Q Plot - Normality Assessment (${metricSplit})`,
-          font: { size: 14 },
-        },
-        xaxis: {
-          title: "Theoretical Quantiles",
-          gridcolor: gridColor,
-          titlefont: { color: textColor },
-          tickfont: { color: textColor },
-        },
-        yaxis: {
-          title: "Sample Quantiles",
-          gridcolor: gridColor,
-          titlefont: { color: textColor },
-          tickfont: { color: textColor },
-        },
-      };
-    }
-
-    if (chartType === "histogram") {
-      return {
-        ...baseLayout,
-        title: {
-          text: `Distribution Histogram (${metricSplit})`,
-          font: { size: 14 },
-        },
-        xaxis: {
-          title: "Metric Value",
-          gridcolor: gridColor,
-          titlefont: { color: textColor },
-          tickfont: { color: textColor },
-        },
-        yaxis: {
-          title: "Frequency",
-          gridcolor: gridColor,
-          titlefont: { color: textColor },
-          tickfont: { color: textColor },
-        },
-      };
-    }
-
-    return {
-      ...baseLayout,
-      title: {
-        text: `Cross-Validation Fold Metrics (${metricSplit})`,
-        font: { size: 14 },
-      },
-      xaxis: {
+      yaxis: {
+        title: t("models:label.metricValue"),
+        gridcolor: gridColor,
         titlefont: { color: textColor },
         tickfont: { color: textColor },
       },
     };
-  };
 
-  if (!runId) {
-    return (
-      <Alert severity="info">
-        <AlertTitle>No Run Selected</AlertTitle>
-        Select a run to view fold-level metrics.
-      </Alert>
-    );
-  }
-
-  // Get available metrics from current data
-  const getAvailableMetrics = () => {
-    if (!allRepetitionsData || !selectedRepetition) return [];
-    const foldMetrics =
-      selectedRepetition === "averaged"
-        ? computeAveragedData()
-        : allRepetitionsData[selectedRepetition];
-    return foldMetrics ? Object.keys(foldMetrics).sort() : [];
-  };
-
-  const availableMetrics = getAvailableMetrics();
-
-  // Handle selecting all metrics
-  const handleSelectAll = () => {
-    setSelectedMetrics(availableMetrics);
-  };
-
-  // Handle deselecting all metrics
-  const handleClearAll = () => {
-    setSelectedMetrics([]);
-  };
-
-  // Handle individual metric toggle
-  const handleToggleMetric = (metricName) => {
-    setSelectedMetrics((prev) => {
-      if (prev.includes(metricName)) {
-        return prev.filter((m) => m !== metricName);
-      }
-      const next = new Set([...prev, metricName]);
-      return availableMetrics.filter((m) => next.has(m));
+    const xAxis = (title) => ({
+      ...(title ? { title } : {}),
+      gridcolor: gridColor,
+      titlefont: { color: textColor },
+      tickfont: { color: textColor },
     });
-  };
 
+    const titles = {
+      boxplot: t("models:label.boxplot"),
+      line: t("models:label.foldProgression"),
+      qq:
+        selectedRepetition === "averaged"
+          ? t("models:label.qqPlotAllRepetitions")
+          : t("models:label.qqPlot"),
+      histogram: t("models:label.histogram"),
+    };
+
+    const extra = {
+      boxplot: { xaxis: xAxis() },
+      line: { xaxis: xAxis(t("models:label.foldNumber")) },
+      qq: {
+        showlegend: true,
+        xaxis: xAxis(t("models:label.theoreticalQuantiles")),
+        yaxis: { ...base.yaxis, title: t("models:label.sampleQuantiles") },
+      },
+      histogram: {
+        xaxis: xAxis(t("models:label.metricValue")),
+        yaxis: { ...base.yaxis, title: t("models:label.frequency") },
+      },
+    };
+
+    return {
+      ...base,
+      title: { text: titles[chartType], font: { size: 14 } },
+      ...extra[chartType],
+    };
+  }, [theme, chartType, selectedRepetition, t]);
+
+  // ── Early returns ──────────────────────────────────────────────────────────
   if (!runId) {
     return (
       <Alert severity="info">
@@ -614,24 +467,7 @@ export default function FoldMetricsChart({
     );
   }
 
-  const traces =
-    chartType === "line"
-      ? createLineTraces()
-      : chartType === "qq"
-        ? createQQPlotTraces()
-        : chartType === "histogram"
-          ? createHistogramTraces()
-          : createBoxplotTraces();
-  const availableReps = allRepetitionsData
-    ? Object.keys(allRepetitionsData)
-        .filter((key) => key.startsWith("rep_"))
-        .sort((a, b) => {
-          const numA = parseInt(a.split("_")[1]);
-          const numB = parseInt(b.split("_")[1]);
-          return numA - numB;
-        })
-    : [];
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <Box
       sx={{
@@ -642,21 +478,41 @@ export default function FoldMetricsChart({
         minHeight: 400,
       }}
     >
+      {/* Toolbar */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 1,
           gap: 1.5,
           px: 1.5,
           py: 1,
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-            CV Fold Analysis
-          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            value={split}
+            onChange={(_, v) => {
+              if (v) setSplit(v);
+            }}
+            size="small"
+            sx={{ height: 28 }}
+          >
+            <ToggleButton
+              value="TRAIN"
+              sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+            >
+              {t("models:label.train")}
+            </ToggleButton>
+            <ToggleButton
+              value="TEST"
+              sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+            >
+              {t("models:label.test")}
+            </ToggleButton>
+          </ToggleButtonGroup>
+
           {isNestedCV && (
             <ToggleButtonGroup
               exclusive
@@ -683,6 +539,7 @@ export default function FoldMetricsChart({
               </ToggleButton>
             </ToggleButtonGroup>
           )}
+
           {availableReps.length > 1 && (
             <FormControl sx={{ minWidth: 140 }} size="small">
               <InputLabel sx={{ fontSize: "0.85rem" }}>Rep.</InputLabel>
@@ -695,59 +552,87 @@ export default function FoldMetricsChart({
                 <MenuItem value="averaged">
                   {chartType === "qq" ? "All repetitions" : "Averaged"}
                 </MenuItem>
-                {availableReps.map((rep) => {
-                  const repNum = parseInt(rep.split("_")[1]);
-                  return (
-                    <MenuItem key={rep} value={rep}>
-                      Repetition {repNum + 1}
-                    </MenuItem>
-                  );
-                })}
+                {availableReps.map((rep) => (
+                  <MenuItem key={rep} value={rep}>
+                    Repetition {parseInt(rep.split("_")[1]) + 1}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           )}
         </Box>
+
         <ToggleButtonGroup
           exclusive
           value={chartType}
-          onChange={(_, newChartType) => {
-            if (newChartType) setChartType(newChartType);
+          onChange={(_, v) => {
+            if (v) setChartType(v);
           }}
           size="small"
           sx={{ height: 28 }}
         >
-          <ToggleButton
-            value="boxplot"
-            title="Boxplot with statistics"
-            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-          >
-            Boxplot
-          </ToggleButton>
-          <ToggleButton
-            value="line"
-            title="Line chart showing fold progression"
-            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-          >
-            Lines
-          </ToggleButton>
-          <ToggleButton
-            value="qq"
-            title="Q-Q plot for normality assessment"
-            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-          >
-            Q-Q
-          </ToggleButton>
-          <ToggleButton
-            value="histogram"
-            title="Distribution histogram"
-            sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-          >
-            Hist
-          </ToggleButton>
+          {[
+            {
+              value: "boxplot",
+              label: "Boxplot",
+              title: "Boxplot with statistics",
+            },
+            {
+              value: "line",
+              label: "Lines",
+              title: "Line chart showing fold progression",
+            },
+            {
+              value: "qq",
+              label: "Q-Q",
+              title: "Q-Q plot for normality assessment",
+            },
+            {
+              value: "histogram",
+              label: "Hist",
+              title: "Distribution histogram",
+            },
+          ].map(({ value, label, title }) => (
+            <ToggleButton
+              key={value}
+              value={value}
+              title={title}
+              sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+            >
+              {label}
+            </ToggleButton>
+          ))}
         </ToggleButtonGroup>
       </Box>
-      <Box sx={{ display: "flex", flex: 1, minHeight: 0, width: "100%" }}>
-        {/* Metrics sidebar using shared component */}
+
+      {/* Chart + metrics sidebar — always mounted, overlay during refresh */}
+      <Box
+        sx={{
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        {refreshing && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "action.disabledBackground",
+              borderRadius: 1,
+              opacity: 0.6,
+              pointerEvents: "none",
+            }}
+          >
+            <CircularProgress size={28} />
+          </Box>
+        )}
         <ResultsGraphsParameters
           currentMetrics={availableMetrics}
           selectedMetrics={selectedMetrics}
@@ -755,12 +640,10 @@ export default function FoldMetricsChart({
           handleSelectAll={handleSelectAll}
           handleClearAll={handleClearAll}
         />
-
-        {/* Chart area */}
         <Box sx={{ flex: 1, minHeight: 0, width: "100%", p: 0.5 }}>
           <Plot
             data={traces}
-            layout={getLayout()}
+            layout={layout}
             config={{
               responsive: true,
               displayModeBar: true,
@@ -782,12 +665,5 @@ export default function FoldMetricsChart({
 
 FoldMetricsChart.propTypes = {
   runId: PropTypes.number,
-  metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
-  metrics: PropTypes.arrayOf(
-    PropTypes.shape({
-      name: PropTypes.string,
-      metadata: PropTypes.object,
-    }),
-  ),
   isNestedCV: PropTypes.bool,
 };
