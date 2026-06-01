@@ -57,7 +57,7 @@
   font-size: 11px;
 }
 
-.lean-th-type > span {
+.lean-th-type > span:first-child {
   opacity: 0.65;
 }
 
