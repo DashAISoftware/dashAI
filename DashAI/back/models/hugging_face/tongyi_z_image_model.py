@@ -294,11 +294,17 @@ class TongyiZImageSchema(BaseSchema):
                 "Quantas imagens gerar a partir de um único prompt em um lote. "
                 "Requer proporcionalmente mais memória GPU por imagem adicional."
             ),
+            de=(
+                "Anzahl der Bilder, die aus einem einzelnen Prompt in einem Batch "
+                "generiert werden. Erfordert proportional mehr GPU-Speicher pro "
+                "zusätzlichem Bild."
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
         ),
     )  # type: ignore
 
@@ -324,6 +330,7 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
         en="Tongyi Z-Image",
         es="Tongyi Z-Image",
         pt="Tongyi Z-Image",
+        de="Tongyi Z-Image",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -354,6 +361,16 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
             "de última geração com uma fração do seu tamanho. Destaca-se em "
             "geração fotorrealista de imagens, estilos diversos e renderização "
             "precisa de texto. Modelo disponível em "
+            "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
+        ),
+        de=(
+            "Tongyi Z-Image ist Alibabas 6B-Parameter-Text-zu-Bild-Modell mit "
+            "einer neuartigen S3-DiT-Architektur (Sparse Spatial-Spectral "
+            "Diffusion Transformer). Es ist derzeit eines der am häufigsten "
+            "heruntergeladenen Modelle auf Hugging Face und übertrifft frühere "
+            "Open-Source-Modelle auf dem neuesten Stand bei einem Bruchteil ihrer "
+            "Größe. Hervorragend für fotorealistische Bildgenerierung, diverse "
+            "Stile und genaues Text-Rendering. Modell verfügbar unter "
             "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
         ),
     )
