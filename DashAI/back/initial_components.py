@@ -199,26 +199,24 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.RAG import (
+    BERTDenseRetriever,
     BM25Retriever,
     BM25VectorizerModel,
-    # Chunking Models
     CharacterChunkModel,
-    # DefaultAugmentationPrompt,
     CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
     DefaultQnARAGGenerationPrompt,
-    # Prompts
     DefaultRAGGenerationPrompt,
-    # Retrievers
+    DistilBERTDenseRetriever,
+    E5DenseRetriever,
     FastTextDenseRetriever,
-    # Encodings
-    # DenseEmbedding,
     FastTextEmbedding,
-    HuggingFaceDenseRetriever,
+    GemmaDenseRetriever,
     HuggingFaceEmbedding,
-    # Pipeline
     ParallelRetriever,
     RAGPipeline,
+    RoBERTaDenseRetriever,
+    SentenceTransformerDenseRetriever,
     SequentialRetriever,
     TFIDFRetriever,
     TFIDFVectorizerModel,
@@ -524,7 +522,12 @@ def get_initial_components():
         CustomAugmentationPrompt,
         # Retrievers
         FastTextDenseRetriever,
-        HuggingFaceDenseRetriever,
+        SentenceTransformerDenseRetriever,
+        BERTDenseRetriever,
+        DistilBERTDenseRetriever,
+        RoBERTaDenseRetriever,
+        E5DenseRetriever,
+        GemmaDenseRetriever,
         TFIDFRetriever,
         TFIDFVectorizerModel,
         BM25Retriever,

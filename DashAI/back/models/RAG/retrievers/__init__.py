@@ -20,9 +20,15 @@ from DashAI.back.models.RAG.retrievers.sparse import (
     BM25VectorizerModel,
 )
 from DashAI.back.models.RAG.retrievers.dense import (
+    BERTDenseRetriever,
     DenseRetriever,
+    DistilBERTDenseRetriever,
+    E5DenseRetriever,
     FastTextDenseRetriever,
+    GemmaDenseRetriever,
     HuggingFaceDenseRetriever,
+    RoBERTaDenseRetriever,
+    SentenceTransformerDenseRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite import (
     CompositeRetriever,

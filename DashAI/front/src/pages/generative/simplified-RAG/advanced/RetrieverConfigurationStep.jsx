@@ -38,7 +38,7 @@ function getGroupNameForStep(component, t) {
   if (name.includes("TFIDF") || name.includes("BM25")) {
     return t("generative:simplifiedRag.composite.keywordGroup");
   }
-  if (name.includes("FastText") || name.includes("HuggingFace")) {
+  if (name.endsWith("DenseRetriever")) {
     return t("generative:simplifiedRag.composite.embeddingGroup");
   }
   return t("generative:simplifiedRag.composite.simpleGroup");

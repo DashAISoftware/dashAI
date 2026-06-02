@@ -49,7 +49,7 @@ function getEffectiveTopK(model) {
 
 function buildHybridModel(effectiveK, defaults = {}) {
   const tfidf = defaults.tfidf || {};
-  const hf = defaults.huggingface || {};
+  const embedding = defaults.embedding || {};
   return {
     component: "ParallelRetriever",
     params: {
@@ -60,8 +60,8 @@ function buildHybridModel(effectiveK, defaults = {}) {
           params: { ...tfidf, top_k: Math.max(1, Math.ceil(effectiveK / 2)) },
         },
         {
-          component: "HuggingFaceDenseRetriever",
-          params: { ...hf, top_k: Math.max(1, Math.floor(effectiveK / 2)) },
+          component: "SentenceTransformerDenseRetriever",
+          params: { ...embedding, top_k: Math.max(1, Math.floor(effectiveK / 2)) },
         },
       ],
     },
@@ -159,18 +159,18 @@ export default function RetrieverSection({
         setDefaultsMap(dm);
 
         const tfidfDefaults = dm["TFIDFRetriever"] || {};
-        const hfDefaults = dm["HuggingFaceDenseRetriever"] || {};
-        setHybridDefaults({ tfidf: tfidfDefaults, huggingface: hfDefaults });
+        const embeddingDefaults = dm["SentenceTransformerDenseRetriever"] || {};
+        setHybridDefaults({ tfidf: tfidfDefaults, embedding: embeddingDefaults });
 
         if (
           retrieverModel?.component === "ParallelRetriever" &&
           Object.keys(tfidfDefaults).length > 0 &&
-          Object.keys(hfDefaults).length > 0
+          Object.keys(embeddingDefaults).length > 0
         ) {
           setRetrieverModel(
             buildHybridModel(getEffectiveTopK(retrieverModel), {
               tfidf: tfidfDefaults,
-              huggingface: hfDefaults,
+              embedding: embeddingDefaults,
             }),
           );
         }
@@ -249,13 +249,18 @@ export default function RetrieverSection({
   const getGroupDescription = (key) => {
     if (key === "hybrid") return t("generative:simplifiedRag.composite.hybridDescription");
     const group = groups.find((g) => g.key === key);
-    if (!group) return "";
-    return group.members.map((r) => {
-      const dn = r.display_name;
-      if (!dn) return r.name;
-      if (typeof dn === "string") return dn;
-      return dn.en || r.name;
-    }).join(", ");
+    if (!group || !group.members) return "";
+    if (group.members.length <= 3) {
+      return group.members
+        .map((r) => {
+          const dn = r.display_name;
+          if (!dn) return r.name;
+          if (typeof dn === "string") return dn;
+          return dn.en || r.name;
+        })
+        .join(", ");
+    }
+    return `${group.members.length} options`;
   };
 
   if (loading) {

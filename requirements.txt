@@ -51,6 +51,7 @@ xlrd
 fasttext-wheel
 pypdf2
 openai
+sentence-transformers
 
 filetype
 torchmetrics
