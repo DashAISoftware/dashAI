@@ -37,11 +37,11 @@ export default function GeneratorBody({
 
   const contextStats = useMemo(() => {
     if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
-      return { isValid: true, availableTokens: 0 };
+      return { isValid: false, availableTokens: 0 };
     }
 
-    const contextWindow = generatorModel.params.context_window || DEFAULT_CONTEXT_WINDOW;
-    const maxTokens = generatorModel.params.max_tokens || DEFAULT_MAX_TOKENS;
+    const contextWindow = generatorModel.params.context_window ?? DEFAULT_CONTEXT_WINDOW;
+    const maxTokens = generatorModel.params.max_tokens ?? DEFAULT_MAX_TOKENS;
     const chunkTokens = chunkSize * topK;
     const availableForMessage = contextWindow - chunkTokens - promptTokenCount - maxTokens;
     const isValid = availableForMessage > 0;
@@ -52,9 +52,22 @@ export default function GeneratorBody({
     };
   }, [generatorModel?.params, generatorModel?.component, selectedGenerator, chunkSize, topK, promptTokenCount]);
 
+  const isRemoteModel = useMemo(() => {
+    if (!selectedGenerator || !generatorModel?.component) return false;
+    const name = (selectedGenerator.name || "").toLowerCase();
+    return name.includes("openai") || name.includes("deepseek");
+  }, [selectedGenerator, generatorModel?.component]);
+
+  const isApiKeyMissing = useMemo(() => {
+    if (!isRemoteModel || !generatorModel?.params) return false;
+    return !generatorModel.params.API_key;
+  }, [isRemoteModel, generatorModel?.params]);
+
+  const overallIsValid = contextStats.isValid && !isApiKeyMissing;
+
   useEffect(() => {
-    setIsValid(contextStats.isValid);
-  }, [contextStats.isValid, setIsValid]);
+    setIsValid(overallIsValid);
+  }, [overallIsValid, setIsValid]);
 
   useEffect(() => {
     const loadGenerators = async () => {
@@ -74,7 +87,6 @@ export default function GeneratorBody({
     if (!generators.length) return;
 
     if (!generatorModel?.component) {
-      setSelectedGenerator(null);
       if (setInitialModelParams) setInitialModelParams(null);
       return;
     }
@@ -97,23 +109,26 @@ export default function GeneratorBody({
   }, [generators, generatorModel?.component, generatorModel?.params]);
 
   const handleGeneratorChange = async (event, newValue) => {
-    setSelectedGenerator(newValue);
-    if (newValue) {
-      const initialParams = await resolveDefaults(newValue.name);
-      const overriddenParams = {
-        ...initialParams,
-        max_tokens: DEFAULT_MAX_TOKENS,
-        context_window: DEFAULT_CONTEXT_WINDOW,
-      };
-      if (setInitialModelParams) setInitialModelParams({ ...overriddenParams });
-
-      setGeneratorModel({
-        component: newValue.name,
-        params: { ...overriddenParams },
-      });
-    } else {
+    if (!newValue) {
+      setSelectedGenerator(null);
       if (setInitialModelParams) setInitialModelParams(null);
+      setGeneratorModel({ component: "", params: {} });
+      return;
     }
+
+    const initialParams = await resolveDefaults(newValue.name);
+    const overriddenParams = {
+      ...initialParams,
+      max_tokens: DEFAULT_MAX_TOKENS,
+      context_window: DEFAULT_CONTEXT_WINDOW,
+    };
+    if (setInitialModelParams) setInitialModelParams({ ...overriddenParams });
+
+    setSelectedGenerator(newValue);
+    setGeneratorModel({
+      component: newValue.name,
+      params: { ...overriddenParams },
+    });
   };
 
   if (loading) {
@@ -129,7 +144,7 @@ export default function GeneratorBody({
             options={generators}
             value={selectedGenerator}
             onChange={handleGeneratorChange}
-            getOptionLabel={(option) => option.name || ""}
+            getOptionLabel={(option) => getDescription(option.display_name, i18n) || option.name || ""}
             isOptionEqualToValue={(option, value) => option?.name === value?.name}
             renderInput={(params) => (
               <TextField
@@ -174,6 +189,13 @@ export default function GeneratorBody({
               <Alert severity="error" sx={{ mt: 1 }}>
                 <AlertTitle>{t("generative:validation.insufficientContextTitle")}</AlertTitle>
                 {t("generative:validation.insufficientContextDescription")}
+              </Alert>
+            )}
+
+            {isApiKeyMissing && (
+              <Alert severity="warning" sx={{ mt: 1 }}>
+                <AlertTitle>{t("generative:validation.apiKeyMissingTitle")}</AlertTitle>
+                {t("generative:validation.apiKeyMissingDescription")}
               </Alert>
             )}
 

@@ -151,7 +151,7 @@ export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
 export const getRetrieverComponents = async (
   retrievalParadigm: string,
 ): Promise<IComponent[]> => {
-  const response = await getChildComponents(retrievalParadigm, false);
+  const response = await getChildComponents(retrievalParadigm, true);
 
   if (!response) {
     throw new Error(`Failed to fetch retriever components`);

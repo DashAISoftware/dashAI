@@ -145,9 +145,11 @@
       "keywordGroup": "Keyword Retrievers",
       "embeddingGroup": "Embedding Retrievers",
       "hybridGroup": "Hybrid",
-      "hybridDescription": "TF-IDF + HuggingFace multilingual embeddings",
+      "hybridDescription": "BM25 + HuggingFace multilingual embeddings",
       "compositeGroup": "Composite Retrievers",
-      "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below."
+      "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
+      "allChunks": "All chunks",
+      "selectedChunks": "Selected chunks"
     },
     "generator": {
       "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",
@@ -281,7 +283,9 @@
   "validation": {
     "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
     "insufficientContextTitle": "Insufficient Context Window",
-    "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window."
+    "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window.",
+    "apiKeyMissingTitle": "API Key Required",
+    "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key."
   },
   "documentReferences": {
     "modalTitle": "Document References",

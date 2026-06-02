@@ -69,6 +69,29 @@
       "defaultQnAGenerationPrompt": "Prompt de Geração Q&A Padrão",
       "createNewPrompt": "Criar novo prompt",
       "language": "Idioma"
+    },
+    "composite": {
+      "addChild": "Adicionar nó recuperador",
+      "removeNode": "Remover nó",
+      "configureNode": "Configurar Nó",
+      "selectModel": "Selecionar modelo recuperador",
+      "parameters": "Parâmetros",
+      "simpleGroup": "Recuperadores Simples",
+      "keywordGroup": "Recuperadores por Palavras-chave",
+      "embeddingGroup": "Recuperadores por Embeddings",
+      "hybridGroup": "Híbrido",
+      "hybridDescription": "BM25 + embeddings multilíngues HuggingFace",
+      "compositeGroup": "Recuperadores Compostos",
+      "nestedCompositeNote": "Este é um recuperador composto. Seus filhos podem ser configurados na árvore abaixo.",
+      "allChunks": "Todos os fragments",
+      "selectedChunks": "Fragments selecionados"
     }
+  },
+  "validation": {
+    "contextSpace": "Com sua configuração atual, você tem espaço para suas fontes (chunks) e {{availableChars}} caracteres para sua mensagem.",
+    "insufficientContextTitle": "Janela de Contexto Insuficiente",
+    "insufficientContextDescription": "O modelo selecionado não tem contexto suficiente para lidar com as configurações atuais de Tamanho do Fragmento e Top K. Reduza o Tamanho do Fragmento, o número de resultados (Top K) ou selecione um modelo com uma janela de contexto maior.",
+    "apiKeyMissingTitle": "API Key Necessária",
+    "apiKeyMissingDescription": "Este modelo requer uma API key para funcionar. Abra a Configuração Avançada para adicionar sua API key."
   }
 }

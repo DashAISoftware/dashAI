@@ -161,19 +161,96 @@ export default function CompositeRetrieverBuilder({
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <TreeNodeView
-        node={tree}
-        depth={0}
-        isRoot
-        parentId={null}
-        findComponent={findComponent}
-        onEdit={(id) => setEditing(id)}
-        onAddChild={handleAddChild}
-        onRemoveChild={handleRemoveChild}
-        theme={theme}
-        t={t}
-      />
+    <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "flex-start" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 0.5,
+          mt: 1,
+          minWidth: 90,
+          flexShrink: 0,
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            fontWeight: 600,
+            textAlign: "center",
+            lineHeight: 1.2,
+          }}
+        >
+          {t("generative:simplifiedRag.composite.allChunks")}
+        </Typography>
+
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            my: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: 0,
+              height: 0,
+              borderLeft: "14px solid transparent",
+              borderRight: "14px solid transparent",
+              borderTop: `20px solid ${theme.palette.divider}`,
+            }}
+          />
+          <Box sx={{ width: 2, height: 24, bgcolor: "divider" }} />
+          <Box
+            sx={{
+              width: 0,
+              height: 0,
+              borderLeft: "14px solid transparent",
+              borderRight: "14px solid transparent",
+              borderTop: `20px solid ${theme.palette.divider}`,
+            }}
+          />
+          <Box sx={{ width: 2, height: 24, bgcolor: "divider" }} />
+          <Box
+            sx={{
+              width: 0,
+              height: 0,
+              borderLeft: "14px solid transparent",
+              borderRight: "14px solid transparent",
+              borderTop: `20px solid ${theme.palette.divider}`,
+            }}
+          />
+        </Box>
+
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            fontWeight: 600,
+            textAlign: "center",
+            lineHeight: 1.2,
+          }}
+        >
+          {t("generative:simplifiedRag.composite.selectedChunks")}
+        </Typography>
+      </Box>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <TreeNodeView
+          node={tree}
+          depth={0}
+          isRoot
+          parentId={null}
+          findComponent={findComponent}
+          onEdit={(id) => setEditing(id)}
+          onAddChild={handleAddChild}
+          onRemoveChild={handleRemoveChild}
+          theme={theme}
+          t={t}
+        />
+      </Box>
 
       {editing && (
         <RetrieverNodeConfig

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Box } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
@@ -9,6 +9,7 @@ import SessionBar from "../../../components/generative/SessionBar";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
 import RAGSessionSummary from "../../../components/generative/RAG/RAGSessionSummary";
 import { removeSession } from "../../../api/session";
+import { getGenerativeSession } from "../../../api/generativeTask";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
@@ -20,7 +21,7 @@ import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
 
 function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { id: urlSessionId } = useParams();
   const threePanelLayout = useThreePanelLayout();
   const generative = useGenerative() ?? {};
 
@@ -54,40 +55,34 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
 
   const [setupKey, setSetupKey] = useState(0);
 
-  const sessionSelectionState =
-    location.state?.selectedSessionId != null ? location.state : null;
+  const resolveSessionId = useCallback(
+    (rawId) => {
+      const num = Number(rawId);
+      return Number.isFinite(num) && num > 0 ? num : null;
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (!sessionSelectionState?.selectedSessionId) return;
+    const sid = resolveSessionId(urlSessionId);
+    if (!sid) return;
+    if (sid === globalSelectedSessionId) return;
 
-    const nextTaskName =
-      sessionSelectionState.taskName ??
-      sessionSelectionState.selectedTaskName ??
-      selectedTaskName ??
-      "RAGTask";
-    const nextDisplayName =
-      sessionSelectionState.taskDisplayName ??
-      sessionSelectionState.selectedDisplayName ??
-      null;
-
-    setGlobalSelectedSessionId?.(sessionSelectionState.selectedSessionId);
-    setSelectedTaskName?.(nextTaskName);
-    setSelectedDisplayName?.(nextDisplayName);
-    setStepIndex?.(0);
-    setShowRagChat(false);
-    setActiveRagChatSessionId(null);
-
-    navigate(location.pathname, { replace: true, state: null });
-  }, [
-    sessionSelectionState,
-    selectedTaskName,
-    setGlobalSelectedSessionId,
-    setSelectedTaskName,
-    setSelectedDisplayName,
-    setStepIndex,
-    navigate,
-    location.pathname,
-  ]);
+    const load = async () => {
+      try {
+        const session = await getGenerativeSession(sid);
+        if (!session) return;
+        setGlobalSelectedSessionId?.(sid);
+        setSelectedTaskName?.(session.task_name);
+        setStepIndex?.(0);
+        setShowRagChat(false);
+        setActiveRagChatSessionId(null);
+      } catch {
+        // session not found or error — ignore
+      }
+    };
+    load();
+  }, [urlSessionId, globalSelectedSessionId, resolveSessionId]);
 
   useEffect(() => {
     if (!isRagSessionSelected) {
@@ -106,7 +101,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setActiveRagChatSessionId(globalSelectedSessionId);
   };
 
-  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
+  const handleSessionClick = useCallback((sessionId, taskName, taskDisplayName) => {
     if (onSessionSelect) {
       onSessionSelect(sessionId, taskName, taskDisplayName);
       return;
@@ -119,31 +114,8 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
     setShowRagChat(false);
     setActiveRagChatSessionId(null);
 
-    if (taskName === "RAGTask") {
-      navigate("/app/generative/rag", {
-        replace: true,
-        state: {
-          selectedSessionId: sessionId,
-          taskName,
-          taskDisplayName,
-          fromSessionSelection: true,
-        },
-      });
-      return;
-    }
-
-    if (taskName !== "RAGTask") {
-      navigate("/app/generative", {
-        replace: true,
-        state: {
-          selectedSessionId: sessionId,
-          taskName,
-          taskDisplayName,
-          fromSessionSelection: true,
-        },
-      });
-    }
-  };
+    navigate(`/app/generative/sessions/${sessionId}`, { replace: true });
+  }, [onSessionSelect, navigate, setGlobalSelectedSessionId, setSelectedTaskName, setSelectedDisplayName, setStepIndex]);
 
   const handleNewSessionButton = async () => {
     setGlobalSelectedSessionId?.(null);
@@ -180,15 +152,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
       return nextSessions;
     });
 
-    navigate("/app/generative/rag", {
-      replace: true,
-      state: {
-        selectedSessionId: createdSession.id,
-        taskName: "RAGTask",
-        taskDisplayName: "RAG",
-        fromSessionSelection: true,
-      },
-    });
+    navigate(`/app/generative/sessions/${createdSession.id}`, { replace: true });
   };
 
   const centerContent = isRagSessionSelected ? (

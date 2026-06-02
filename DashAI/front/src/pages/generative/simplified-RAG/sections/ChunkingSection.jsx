@@ -106,7 +106,7 @@ export default function ChunkingSection({
   };
 
   const selectDefaultChunker = (availableChunkers) => {
-    const defaultChunker = availableChunkers.find(c => c.name === "SimpleChunker") || availableChunkers[0];
+    const defaultChunker = availableChunkers.find(c => c.name === "CharacterChunkModel") || availableChunkers[0];
     const preset = CHUNKING_PRESETS.find(p => p.value === "paragraph");
     applyPreset(defaultChunker, preset);
   };

@@ -50,14 +50,19 @@ export default function PromptBody({
   showDetails = true,
 }) {
   const { t, i18n } = useTranslation(["generative"]);
+  const platformLang = useMemo(() => {
+    const lang = (i18n.language || "en").split("-")[0];
+    return ["en", "es", "pt"].includes(lang) ? lang : "en";
+  }, [i18n.language]);
   const [customPrompts, setCustomPrompts] = useState([]);
   const [defaultPrompts, setDefaultPrompts] = useState([]);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [newPromptModalOpen, setNewPromptModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedLanguage, setSelectedLanguage] = useState(platformLang);
   const prevSelectedRef = useRef(null);
+  const isInitializedRef = useRef(false);
 
   const loadPrompts = useCallback(async () => {
     try {
@@ -123,27 +128,30 @@ export default function PromptBody({
   const isDefault = selectedPrompt?._isDefault;
 
   useEffect(() => {
-    if (selectedPrompt) {
-      const promptParams = {
+    if (!selectedPrompt) {
+      if (onTokenCountChange) onTokenCountChange(0);
+      return;
+    }
+
+    if (!isInitializedRef.current && promptModel?.component === (selectedPrompt.class_name || selectedPrompt.name)) {
+      isInitializedRef.current = true;
+      return;
+    }
+    isInitializedRef.current = true;
+
+    setPromptModel({
+      component: selectedPrompt.class_name || selectedPrompt.name,
+      params: {
         template: currentTemplate,
         language: selectedLanguage,
-      };
-      const srcParams = selectedPrompt.parameters;
-      if (selectedPrompt._isDefault || srcParams?.templates) {
-        promptParams.templates = srcParams?.templates;
-      }
-      setPromptModel({
-        component: selectedPrompt.class_name || selectedPrompt.name,
-        params: promptParams,
-      });
-      if (onTokenCountChange) {
-        const tokenCount = Math.ceil(currentTemplate.length / 4);
-        onTokenCountChange(tokenCount);
-      }
-    } else {
-      if (onTokenCountChange) {
-        onTokenCountChange(0);
-      }
+        ...(selectedPrompt._isDefault || selectedPrompt.parameters?.templates
+          ? { templates: selectedPrompt.parameters?.templates }
+          : {}),
+      },
+    });
+    if (onTokenCountChange) {
+      const tokenCount = Math.ceil(currentTemplate.length / 4);
+      onTokenCountChange(tokenCount);
     }
   }, [selectedPrompt, selectedLanguage]);
 
@@ -161,10 +169,14 @@ export default function PromptBody({
           p.parameters?.template === promptModel.params?.template
         );
       });
+      const wasDifferent = found !== selectedPrompt;
       setSelectedPrompt(found || null);
       prevSelectedRef.current = found || null;
       if (found?._isDefault) {
-        setSelectedLanguage(promptModel.params?.language || "en");
+        setSelectedLanguage(promptModel.params?.language || platformLang);
+      }
+      if (wasDifferent) {
+        isInitializedRef.current = false;
       }
       return;
     }
@@ -174,7 +186,7 @@ export default function PromptBody({
         selectable.find((p) => p._isDefault) || selectable[0];
       if (firstDefault) {
         setSelectedPrompt(firstDefault);
-        setSelectedLanguage("en");
+        setSelectedLanguage(platformLang);
         prevSelectedRef.current = firstDefault;
       }
     }
@@ -189,7 +201,7 @@ export default function PromptBody({
     prevSelectedRef.current = newValue;
     setSelectedPrompt(newValue);
     if (newValue?._isDefault) {
-      setSelectedLanguage("en");
+      setSelectedLanguage(platformLang);
     }
   };
 
@@ -260,7 +272,7 @@ export default function PromptBody({
         />
       </Box>
 
-      {(isDefault || selectedPrompt?.parameters?.templates) && showDetails && (
+      {(isDefault || selectedPrompt?.parameters?.templates) && (
         <Box sx={{ mb: 2 }}>
           <TextField
             select

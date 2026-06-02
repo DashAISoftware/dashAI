@@ -18,6 +18,7 @@ import JobQueueWidget from "./components/jobs/JobQueueWidget";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
 import SimplifiedRAGPage from "./pages/generative/simplified-RAG/SimplifiedRAGPage";
+import SessionRouter from "./pages/generative/SessionRouter";
 
 function App() {
   return (
@@ -75,7 +76,7 @@ function App() {
             path="/app/generative/sessions/new/:modelName"
             element={<Generative />}
           />
-          <Route path="/app/generative/sessions/:id" element={<Generative />} />
+          <Route path="/app/generative/sessions/:id" element={<SessionRouter />} />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
           <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
           <Route

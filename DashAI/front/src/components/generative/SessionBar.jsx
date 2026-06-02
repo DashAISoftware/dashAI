@@ -117,11 +117,7 @@ export default function SessionBar({
       return;
     }
 
-    if (session.task_name === "RAGTask") {
-      navigate("/app/generative/rag");
-    } else {
-      navigate(`/app/generative/sessions/${sessionId}`);
-    }
+    navigate(`/app/generative/sessions/${sessionId}`);
   };
 
   const handleSessionDelete = async (id) => {

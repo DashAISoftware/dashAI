@@ -262,9 +262,10 @@ export default function SimplifiedSessionSetup({
     const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
     const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
     const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
+    const isGeneratorSelected = Boolean(sessionData.parameters.generator_model?.component);
     const isPromptValid = sessionData.parameters.prompt?.component;
 
-    return isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isPromptValid;
+    return isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isGeneratorSelected && isPromptValid;
   }, [sessionData, isGeneratorValidState, isDuplicateName]);
 
   const handleSave = async () => {

@@ -48,20 +48,24 @@ function getEffectiveTopK(model) {
 }
 
 function buildHybridModel(effectiveK, defaults = {}) {
-  const tfidf = defaults.tfidf || {};
+  const sparse = defaults.sparseDefault || {};
   const embedding = defaults.embedding || {};
+  const mergeStrategy = defaults.mergeStrategy || "round_robin";
   return {
     component: "ParallelRetriever",
     params: {
-      merge_strategy: "round_robin",
+      merge_strategy: mergeStrategy,
       children: [
         {
-          component: "TFIDFRetriever",
-          params: { ...tfidf, top_k: Math.max(1, Math.ceil(effectiveK / 2)) },
+          component: "BM25Retriever",
+          params: { ...sparse, top_k: Math.max(1, Math.ceil(effectiveK / 2)) },
         },
         {
           component: "SentenceTransformerDenseRetriever",
-          params: { ...embedding, top_k: Math.max(1, Math.floor(effectiveK / 2)) },
+          params: {
+            ...embedding,
+            top_k: Math.max(1, Math.floor(effectiveK / 2)),
+          },
         },
       ],
     },
@@ -87,7 +91,7 @@ export default function RetrieverSection({
   const [topK, setTopK] = useState(retrieverModel?.params?.top_k || 10);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [hybridDefaults, setHybridDefaults] = useState({ tfidf: null, huggingface: null });
+  const [hybridDefaults, setHybridDefaults] = useState({ sparseDefault: null, embedding: null, mergeStrategy: null });
   const [defaultsMap, setDefaultsMap] = useState({});
 
   const effectiveTopK = getEffectiveTopK(retrieverModel);
@@ -99,18 +103,38 @@ export default function RetrieverSection({
     }
   }, [retrieverModel]);
 
+  useEffect(() => {
+    if (!retrieverModel?.component || selectedGroup || groups.length === 0) return;
+    if (retrieverModel.component === "ParallelRetriever" || retrieverModel.component === "SequentialRetriever") {
+      setSelectedGroup("hybrid");
+      setSelectedModel({ name: retrieverModel.component });
+      return;
+    }
+    const grp = groups.find((g) =>
+      g.members.some((m) => m.name === retrieverModel.component)
+    );
+    if (grp) {
+      setSelectedGroup(grp.key);
+      setSelectedModel(grp.members.find((m) => m.name === retrieverModel.component) || null);
+    } else {
+      setSelectedGroup("__custom__");
+    }
+  }, [retrieverModel, groups, selectedGroup]);
+
   const isAdvanced = useMemo(() => {
-    if (!retrieverModel?.params || !retrieverModel?.component || !selectedGroup) return false;
+    if (!retrieverModel?.params || !retrieverModel?.component) return false;
 
     const tk = getEffectiveTopK(retrieverModel);
-    if (tk == null || !TOP_K_OPTIONS.includes(tk)) return true;
+
+    if (selectedGroup === "__custom__") return true;
+
+    if (tk != null && !TOP_K_OPTIONS.includes(tk)) return true;
 
     if (selectedGroup === "hybrid") {
       if (retrieverModel.component !== "ParallelRetriever") return true;
-      const tk = getEffectiveTopK(retrieverModel);
       if (tk == null || !TOP_K_OPTIONS.includes(tk)) return true;
       const def = buildHybridModel(tk, hybridDefaults);
-      return !deepEqual(retrieverModel.params, def.params);
+      return !deepEqual(def.params, retrieverModel.params);
     }
 
     const group = groups.find((g) => g.key === selectedGroup);
@@ -138,9 +162,10 @@ export default function RetrieverSection({
 
         for (const [key, parentName] of Object.entries(API_GROUPS)) {
           const children = await getRetrieverComponents(parentName);
-          if (children.length > 0) {
-            groupResults.push({ key, members: children });
-            allRet.push(...children);
+          const concrete = children.filter(c => !(c.flags || []).includes("abstract"));
+          if (concrete.length > 0) {
+            groupResults.push({ key, members: concrete });
+            allRet.push(...concrete);
           }
         }
 
@@ -156,21 +181,24 @@ export default function RetrieverSection({
             dm[ret.name] = await resolveDefaults(ret.name);
           }
         }
+        const parallelDefaults = await resolveDefaults("ParallelRetriever");
+        const mergeStrategy = parallelDefaults?.merge_strategy || "round_robin";
         setDefaultsMap(dm);
 
-        const tfidfDefaults = dm["TFIDFRetriever"] || {};
+        const bm25Defaults = dm["BM25Retriever"] || {};
         const embeddingDefaults = dm["SentenceTransformerDenseRetriever"] || {};
-        setHybridDefaults({ tfidf: tfidfDefaults, embedding: embeddingDefaults });
+        setHybridDefaults({ sparseDefault: bm25Defaults, embedding: embeddingDefaults, mergeStrategy });
 
         if (
           retrieverModel?.component === "ParallelRetriever" &&
-          Object.keys(tfidfDefaults).length > 0 &&
+          Object.keys(bm25Defaults).length > 0 &&
           Object.keys(embeddingDefaults).length > 0
         ) {
           setRetrieverModel(
             buildHybridModel(getEffectiveTopK(retrieverModel), {
-              tfidf: tfidfDefaults,
+              sparseDefault: bm25Defaults,
               embedding: embeddingDefaults,
+              mergeStrategy,
             }),
           );
         }
@@ -248,6 +276,7 @@ export default function RetrieverSection({
 
   const getGroupDescription = (key) => {
     if (key === "hybrid") return t("generative:simplifiedRag.composite.hybridDescription");
+    if (key === "keyword") return "BM25";
     const group = groups.find((g) => g.key === key);
     if (!group || !group.members) return "";
     if (group.members.length <= 3) {

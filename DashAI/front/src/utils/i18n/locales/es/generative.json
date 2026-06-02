@@ -145,9 +145,11 @@
       "keywordGroup": "Recuperadores por Palabras Clave",
       "embeddingGroup": "Recuperadores por Embeddings",
       "hybridGroup": "Híbrido",
-      "hybridDescription": "TF-IDF + embeddings multilingües HuggingFace",
+      "hybridDescription": "BM25 + embeddings multilingües HuggingFace",
       "compositeGroup": "Recuperadores Compuestos",
-      "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos pueden configurarse en el árbol inferior."
+      "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos pueden configurarse en el árbol inferior.",
+      "allChunks": "Todos los fragments",
+      "selectedChunks": "Fragments seleccionados"
     },
     "generator": {
       "description": "Selecciona el modelo de lenguaje que generará las respuestas basadas en el contexto recuperado y tus prompts.",
@@ -281,7 +283,9 @@
   "validation": {
     "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} carácteres para tu mensaje.",
     "insufficientContextTitle": "Ventana de contexto insuficiente",
-    "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de Tamaño de Fragmento y Top K. Por favor, reduce el Tamaño de Fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande."
+    "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de Tamaño de Fragmento y Top K. Por favor, reduce el Tamaño de Fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande.",
+    "apiKeyMissingTitle": "API Key Requerida",
+    "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la Configuración Avanzada para añadir tu API key."
   },
   "documentReferences": {
     "modalTitle": "Referencias del documento",
