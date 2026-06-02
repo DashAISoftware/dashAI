@@ -1,8 +1,9 @@
-import torch
 from typing import Dict
 
-from DashAI.back.models.RAG.embeddings.dense.huggingface_embedding import (
-    HuggingFaceEmbedding,
+import torch
+
+from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
+    OverfloatHandler,
 )
 
 CLS = "cls"
@@ -22,18 +23,22 @@ POOLING_STRATEGIES: Dict[str, str] = {
 }
 
 
-class _BERTEmbedding(HuggingFaceEmbedding):
+class _BERTEmbedding(OverfloatHandler):
     def __init__(
         self,
         model_name: str,
         device: str,
-        max_length: int,
+        model_max_length: int,
+        overflow_strategy: str,
         pooling_strategy: str,
     ):
-        super().__init__(model_name=model_name, device=device)
-        self.max_length = max_length
+        super().__init__(
+            model_name=model_name,
+            device=device,
+            model_max_length=model_max_length,
+            overflow_strategy=overflow_strategy,
+        )
         self.pooling_strategy = pooling_strategy
-        self.params["max_length"] = max_length
         self.params["pooling_strategy"] = pooling_strategy
 
     def load(self):

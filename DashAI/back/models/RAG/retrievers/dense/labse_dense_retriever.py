@@ -7,14 +7,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.RAG.embeddings.dense._bert_embedding import (
-    CLS,
-    CONCAT_2,
-    CONCAT_3,
-    CONCAT_4,
-    MAX,
-    MEAN,
-    _BERTEmbedding,
+from DashAI.back.models.RAG.embeddings.dense._sentence_transformer_embedding import (
+    _SentenceTransformerEmbedding,
 )
 from DashAI.back.models.RAG.retrievers.dense._hf_metadata_utils import (
     build_retriever_metadata,
@@ -26,57 +20,30 @@ from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import 
 
 TRUNCATE = "truncate"
 AGGREGATE = "aggregate"
-BERT_POOLING_STRATEGIES = [CLS, MEAN, MAX, CONCAT_2, CONCAT_3, CONCAT_4]
 
-BERT_MODELS: Dict[str, dict] = {
-    "google-bert/bert-base-cased": {
-        "languages": ["en"],
-        "max_seq_length": 512,
-    },
-    "google-bert/bert-base-uncased": {
-        "languages": ["en"],
-        "max_seq_length": 512,
-    },
-    "google-bert/bert-large-cased": {
-        "languages": ["en"],
-        "max_seq_length": 512,
-    },
-    "google-bert/bert-large-uncased": {
-        "languages": ["en"],
-        "max_seq_length": 512,
-    },
-    "google-bert/bert-base-multilingual-cased": {
+LABSE_MODELS: Dict[str, dict] = {
+    "sentence-transformers/LaBSE": {
         "languages": [
             "en", "es", "fr", "de", "it", "pt", "nl", "pl", "ca", "fi",
             "ar", "zh", "ja", "ko", "ru", "tr", "hi", "sv", "da", "no",
             "cs", "ro", "el", "he", "hu", "th", "vi", "id", "ms", "bg",
             "hr", "sk", "sl", "sr", "uk", "et", "lv", "lt", "fa", "ur",
-            "mk", "af", "bn", "multi",
-        ],
-        "max_seq_length": 512,
-    },
-    "google-bert/bert-base-multilingual-uncased": {
-        "languages": [
-            "en", "es", "fr", "de", "it", "pt", "nl", "pl", "ca", "fi",
-            "ar", "zh", "ja", "ko", "ru", "tr", "hi", "sv", "da", "no",
-            "cs", "ro", "el", "he", "hu", "th", "vi", "id", "ms", "bg",
-            "hr", "sk", "sl", "sr", "uk", "et", "lv", "lt", "fa", "ur",
-            "mk", "af", "bn", "multi",
+            "mk", "af", "bn", "gu", "ka", "ku", "my", "sq", "multi",
         ],
         "max_seq_length": 512,
     },
 }
 
-BERT_MODEL_NAMES = list(BERT_MODELS.keys())
+LABSE_MODEL_NAMES = list(LABSE_MODELS.keys())
 
 
-class BERTDenseRetrieverSchema(BaseSchema):
+class LaBSEDenseRetrieverSchema(BaseSchema):
     model_name: schema_field(
-        enum_field(BERT_MODEL_NAMES),
-        placeholder="google-bert/bert-base-cased",
+        enum_field(LABSE_MODEL_NAMES),
+        placeholder="sentence-transformers/LaBSE",
         description=MultilingualString(
-            en="BERT model for embedding generation.",
-            es="Modelo BERT para generación de embeddings.",
+            en="LaBSE model for multilingual embedding generation (109 languages).",
+            es="Modelo LaBSE para generación de embeddings multilingües (109 idiomas).",
         ),
     )  # type: ignore
 
@@ -95,15 +62,6 @@ class BERTDenseRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
-        ),
-    )  # type: ignore
-
-    pooling_strategy: schema_field(
-        enum_field(BERT_POOLING_STRATEGIES),
-        placeholder=MEAN,
-        description=MultilingualString(
-            en="Pooling strategy to aggregate token embeddings.",
-            es="Estrategia de pooling para agregar embeddings de tokens.",
         ),
     )  # type: ignore
 
@@ -126,32 +84,31 @@ class BERTDenseRetrieverSchema(BaseSchema):
     )  # type: ignore
 
 
-class BERTDenseRetriever(HuggingFaceDenseRetriever):
+class LaBSEDenseRetriever(HuggingFaceDenseRetriever):
     FLAGS: list[str] = []
-    SCHEMA = BERTDenseRetrieverSchema
+    SCHEMA = LaBSEDenseRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
-        en="BERT Embedding Retriever",
-        es="Recuperador por Embeddings BERT",
+        en="LaBSE Embedding Retriever",
+        es="Recuperador por Embeddings LaBSE",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Dense retriever using BERT embeddings with configurable pooling (CLS, mean, max, concat layers).",
-        es="Recuperador denso que usa embeddings BERT con pooling configurable (CLS, mean, max, concat layers).",
+        en="Dense retriever using LaBSE multilingual embeddings (109 languages).",
+        es="Recuperador denso que usa embeddings multilingües LaBSE (109 idiomas).",
     )
 
     @classmethod
     def get_metadata(cls):
-        return build_retriever_metadata(BERT_MODELS, "BERT", len(BERT_MODEL_NAMES))
+        return build_retriever_metadata(LABSE_MODELS, "LaBSE", len(LABSE_MODEL_NAMES))
 
-    def _create_embedding(self) -> _BERTEmbedding:
+    def _create_embedding(self) -> _SentenceTransformerEmbedding:
         model_name = self.params.pop("model_name")
         device = self.params.pop("device")
         overflow_strategy = self.params.pop("overflow_strategy")
-        pooling_strategy = self.params.pop("pooling_strategy")
-        model_info = BERT_MODELS[model_name]
-        return _BERTEmbedding(
+        model_info = LABSE_MODELS[model_name]
+        return _SentenceTransformerEmbedding(
             model_name=model_name,
             device=device,
             model_max_length=model_info["max_seq_length"],
             overflow_strategy=overflow_strategy,
-            pooling_strategy=pooling_strategy,
+            normalize=True,
         )

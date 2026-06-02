@@ -9,3 +9,5 @@ from DashAI.back.models.RAG.retrievers.dense.distilbert_dense_retriever import D
 from DashAI.back.models.RAG.retrievers.dense.roberta_dense_retriever import RoBERTaDenseRetriever
 from DashAI.back.models.RAG.retrievers.dense.e5_dense_retriever import E5DenseRetriever
 from DashAI.back.models.RAG.retrievers.dense.gemma_dense_retriever import GemmaDenseRetriever
+from DashAI.back.models.RAG.retrievers.dense.instructor_dense_retriever import InstructorDenseRetriever
+from DashAI.back.models.RAG.retrievers.dense.labse_dense_retriever import LaBSEDenseRetriever

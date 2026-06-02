@@ -7,7 +7,10 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.RAG.embeddings.dense._gemma_embedding import _GemmaEmbedding
+from DashAI.back.models.RAG.embeddings.dense._gemma_embedding import (
+    TASK_PROMPTS,
+    _GemmaEmbedding,
+)
 from DashAI.back.models.RAG.retrievers.dense._hf_metadata_utils import (
     build_retriever_metadata,
 )
@@ -16,9 +19,15 @@ from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import 
     HuggingFaceDenseRetriever,
 )
 
+TRUNCATE = "truncate"
+AGGREGATE = "aggregate"
+
+TASK_TYPES = list(TASK_PROMPTS.keys())
+
 GEMMA_MODELS: Dict[str, dict] = {
     "google/embeddinggemma-300m": {
         "languages": ["en"],
+        "max_seq_length": 8192,
     },
 }
 
@@ -35,21 +44,21 @@ class GemmaDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    max_length: schema_field(
-        int_field(ge=1),
-        placeholder=512,
+    task_type: schema_field(
+        enum_field(TASK_TYPES),
+        placeholder="search_result",
         description=MultilingualString(
-            en="Maximum sequence length for tokenization.",
-            es="Longitud máxima de secuencia para tokenización.",
+            en="Task type that optimizes the query embedding for a specific use case.",
+            es="Tipo de tarea que optimiza el embedding de consulta para un caso de uso específico.",
         ),
     )  # type: ignore
 
-    batch_size: schema_field(
-        int_field(ge=1),
-        placeholder=32,
+    overflow_strategy: schema_field(
+        enum_field([TRUNCATE, AGGREGATE]),
+        placeholder=TRUNCATE,
         description=MultilingualString(
-            en="Number of samples to process at once.",
-            es="Número de muestras a procesar a la vez.",
+            en="Strategy for chunks exceeding model max sequence length.",
+            es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
         ),
     )  # type: ignore
 
@@ -100,10 +109,13 @@ class GemmaDenseRetriever(HuggingFaceDenseRetriever):
     def _create_embedding(self) -> _GemmaEmbedding:
         model_name = self.params.pop("model_name")
         device = self.params.pop("device")
-        max_length = self.params.pop("max_length")
-        self.params.pop("batch_size")
+        overflow_strategy = self.params.pop("overflow_strategy")
+        task_type = self.params.pop("task_type")
+        model_info = GEMMA_MODELS[model_name]
         return _GemmaEmbedding(
             model_name=model_name,
             device=device,
-            max_length=max_length,
+            model_max_length=model_info["max_seq_length"],
+            overflow_strategy=overflow_strategy,
+            task_type=task_type,
         )

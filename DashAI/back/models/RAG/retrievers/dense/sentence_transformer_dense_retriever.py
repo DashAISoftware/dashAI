@@ -2,6 +2,7 @@ from typing import Dict
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
+    bool_field,
     enum_field,
     int_field,
     schema_field,
@@ -18,18 +19,78 @@ from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import 
     HuggingFaceDenseRetriever,
 )
 
+TRUNCATE = "truncate"
+AGGREGATE = "aggregate"
+
 ST_MODELS: Dict[str, dict] = {
     "sentence-transformers/all-MiniLM-L6-v2": {
         "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/all-MiniLM-L12-v2": {
+        "languages": ["en"],
+        "max_seq_length": 512,
     },
     "sentence-transformers/all-mpnet-base-v2": {
         "languages": ["en"],
-    },
-    "sentence-transformers/multi-qa-mpnet-base-dot-v1": {
-        "languages": ["en"],
+        "max_seq_length": 512,
     },
     "sentence-transformers/all-distilroberta-v1": {
         "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/multi-qa-mpnet-base-dot-v1": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+        "normalize_default": False,
+    },
+    "sentence-transformers/multi-qa-mpnet-base-cos-v1": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/multi-qa-distilbert-dot-v1": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+        "normalize_default": False,
+    },
+    "sentence-transformers/multi-qa-distilbert-cos-v1": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/multi-qa-MiniLM-L6-dot-v1": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+        "normalize_default": False,
+    },
+    "sentence-transformers/multi-qa-MiniLM-L6-cos-v1": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/msmarco-bert-base-dot-v5": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+        "normalize_default": False,
+    },
+    "sentence-transformers/msmarco-distilbert-dot-v5": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+        "normalize_default": False,
+    },
+    "sentence-transformers/msmarco-distilbert-base-tas-b": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/msmarco-distilbert-cos-v5": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/msmarco-MiniLM-L12-cos-v5": {
+        "languages": ["en"],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/msmarco-MiniLM-L6-cos-v5": {
+        "languages": ["en"],
+        "max_seq_length": 512,
     },
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2": {
         "languages": [
@@ -39,6 +100,7 @@ ST_MODELS: Dict[str, dict] = {
             "hr", "sk", "sl", "sr", "uk", "et", "lv", "lt", "fa", "ur",
             "mk", "af", "bn", "multi",
         ],
+        "max_seq_length": 512,
     },
     "sentence-transformers/paraphrase-multilingual-mpnet-base-v2": {
         "languages": [
@@ -48,6 +110,7 @@ ST_MODELS: Dict[str, dict] = {
             "hr", "sk", "sl", "sr", "uk", "et", "lv", "lt", "fa", "ur",
             "mk", "af", "bn", "multi",
         ],
+        "max_seq_length": 512,
     },
     "sentence-transformers/distiluse-base-multilingual-cased-v2": {
         "languages": [
@@ -57,12 +120,18 @@ ST_MODELS: Dict[str, dict] = {
             "hr", "sk", "sl", "sr", "uk", "et", "lv", "lt", "fa", "ur",
             "mk", "af", "bn", "multi",
         ],
+        "max_seq_length": 512,
     },
     "sentence-transformers/distiluse-base-multilingual-cased-v1": {
         "languages": [
             "en", "es", "fr", "de", "it", "nl", "pt", "ar", "zh", "ja",
             "ko", "pl", "ru", "tr", "multi",
         ],
+        "max_seq_length": 512,
+    },
+    "sentence-transformers/allenai-specter": {
+        "languages": ["en"],
+        "max_seq_length": 512,
     },
 }
 
@@ -79,21 +148,21 @@ class SentenceTransformerDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    max_length: schema_field(
-        int_field(ge=1),
-        placeholder=512,
+    overflow_strategy: schema_field(
+        enum_field([TRUNCATE, AGGREGATE]),
+        placeholder=TRUNCATE,
         description=MultilingualString(
-            en="Maximum sequence length for tokenization.",
-            es="Longitud máxima de secuencia para tokenización.",
+            en="Strategy for chunks exceeding model max sequence length.",
+            es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
         ),
     )  # type: ignore
 
-    batch_size: schema_field(
-        int_field(ge=1),
-        placeholder=32,
+    normalize: schema_field(
+        bool_field(),
+        placeholder=True,
         description=MultilingualString(
-            en="Number of samples to process at once.",
-            es="Número de muestras a procesar a la vez.",
+            en="Whether to L2-normalize the output embeddings.",
+            es="Si normalizar con L2 los embeddings de salida.",
         ),
     )  # type: ignore
 
@@ -144,10 +213,13 @@ class SentenceTransformerDenseRetriever(HuggingFaceDenseRetriever):
     def _create_embedding(self) -> _SentenceTransformerEmbedding:
         model_name = self.params.pop("model_name")
         device = self.params.pop("device")
-        max_length = self.params.pop("max_length")
-        self.params.pop("batch_size")
+        overflow_strategy = self.params.pop("overflow_strategy")
+        normalize = self.params.pop("normalize")
+        model_info = ST_MODELS[model_name]
         return _SentenceTransformerEmbedding(
             model_name=model_name,
             device=device,
-            max_length=max_length,
+            model_max_length=model_info["max_seq_length"],
+            overflow_strategy=overflow_strategy,
+            normalize=normalize if model_info.get("normalize_default", True) else normalize,
         )

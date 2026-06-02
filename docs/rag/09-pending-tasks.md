@@ -10,7 +10,7 @@ Consolidated from the former `pendientes_rag.md` (now removed, content merged he
 - Sparse retriever folder creation: UUID generated before first commit (crash window eliminated)
 - `RAGGenerationModel` cleanup: added to `_cleanup_orphaned_rag_resources`
 
-### Refactoring (May 2026)
+### Refactoring (May-June 2026)
 - Composite retriever pattern (Leaf/Composite/Sequential/Parallel)
 - `score_chunks()` on TF-IDF/BM25/Dense for cascade re-ranking
 - Strict error handling (ExtraKwargsMissingError, MissingParameterError, etc.)
@@ -21,6 +21,15 @@ Consolidated from the former `pendientes_rag.md` (now removed, content merged he
 - `RAGPipeline` simplified to pure orchestration
 - `extra_args_enum.py` reduced from 12 to 3 constants
 - 4 Alembic migrations (composite, uniqueness, FK inversion, chunk_set)
+- **Dense retriever split into 8 families (June 2026):**
+  - Two-level architecture: internal embeddings + registered retrievers
+  - 6 HuggingFace families (SentenceTransformer, BERT, DistilBERT, RoBERTa, E5, Gemma)
+  - 2 new families (INSTRUCTOR, LaBSE)
+  - Language metadata system (44 ISO codes, per-model & per-family summaries)
+  - Overflow strategy (truncate/aggregate) for chunks exceeding model max sequence length
+  - `batch_size` removed from schemas (no-op in retrieval)
+  - `max_length` moved to internal `MODELS` dict (not user-facing)
+  - DeepSeek API model added to remote LLMs
 
 ### Frontend Cleanup (May 2026)
 - **Generic `FormSchemaFieldWithParent` fixed**: Added missing sub-modal Dialog (previously clicking the gear icon on nested model fields did nothing). The component had `openSubModal` state and `handleSubModelSave` handler but the `<Dialog>` JSX was never rendered. Now works for all modules.
@@ -82,7 +91,11 @@ When document parsers become first-class components (currently hardcoded in Base
   - Exception triggering paths (missing kwargs, composite validation, cascade child errors)
   - Cleanup ordering (retriever before chunking)
 
-### 10. Database Migration Verification
+### 11. Cross-Encoder Retrievers (future phase)
+Add cross-encoder dense retrievers for re-ranking. Unlike bi-encoders, cross-encoders process query+document pairs jointly. They would implement `score_chunks()` (raise on `retrieve()`) and be used inside `SequentialRetriever` with `CASCADE` for retrieve → re-rank pipelines.
+- Models: `cross-encoder/ms-marco-MiniLM-L-6-v2`, `cross-encoder/stsb-roberta-base`, etc.
+
+### 12. Database Migration Verification
 The 4 migrations were generated but need end-to-end verification:
 - Fresh DB creation runs all 4 without errors
 - Existing DB with legacy schema migrates without data loss

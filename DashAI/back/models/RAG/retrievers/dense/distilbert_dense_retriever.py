@@ -24,14 +24,18 @@ from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import 
     HuggingFaceDenseRetriever,
 )
 
+TRUNCATE = "truncate"
+AGGREGATE = "aggregate"
 DISTILBERT_POOLING_STRATEGIES = [CLS, MEAN, MAX, CONCAT_2, CONCAT_3, CONCAT_4]
 
 DISTILBERT_MODELS: Dict[str, dict] = {
     "distilbert/distilbert-base-cased": {
         "languages": ["en"],
+        "max_seq_length": 512,
     },
     "distilbert/distilbert-base-uncased": {
         "languages": ["en"],
+        "max_seq_length": 512,
     },
     "distilbert/distilbert-base-multilingual-cased": {
         "languages": [
@@ -41,9 +45,11 @@ DISTILBERT_MODELS: Dict[str, dict] = {
             "hr", "sk", "sl", "sr", "uk", "et", "lv", "lt", "fa", "ur",
             "mk", "af", "bn", "multi",
         ],
+        "max_seq_length": 512,
     },
     "distilbert/distilbert-roberta-base": {
         "languages": ["en"],
+        "max_seq_length": 512,
     },
 }
 
@@ -60,21 +66,12 @@ class DistilBERTDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    max_length: schema_field(
-        int_field(ge=1),
-        placeholder=512,
+    overflow_strategy: schema_field(
+        enum_field([TRUNCATE, AGGREGATE]),
+        placeholder=TRUNCATE,
         description=MultilingualString(
-            en="Maximum sequence length for tokenization.",
-            es="Longitud máxima de secuencia para tokenización.",
-        ),
-    )  # type: ignore
-
-    batch_size: schema_field(
-        int_field(ge=1),
-        placeholder=32,
-        description=MultilingualString(
-            en="Number of samples to process at once.",
-            es="Número de muestras a procesar a la vez.",
+            en="Strategy for chunks exceeding model max sequence length.",
+            es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
         ),
     )  # type: ignore
 
@@ -134,12 +131,13 @@ class DistilBERTDenseRetriever(HuggingFaceDenseRetriever):
     def _create_embedding(self) -> _BERTEmbedding:
         model_name = self.params.pop("model_name")
         device = self.params.pop("device")
-        max_length = self.params.pop("max_length")
+        overflow_strategy = self.params.pop("overflow_strategy")
         pooling_strategy = self.params.pop("pooling_strategy")
-        self.params.pop("batch_size")
+        model_info = DISTILBERT_MODELS[model_name]
         return _BERTEmbedding(
             model_name=model_name,
             device=device,
-            max_length=max_length,
+            model_max_length=model_info["max_seq_length"],
+            overflow_strategy=overflow_strategy,
             pooling_strategy=pooling_strategy,
         )

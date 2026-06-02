@@ -52,6 +52,7 @@ fasttext-wheel
 pypdf2
 openai
 sentence-transformers
+InstructorEmbedding
 
 filetype
 torchmetrics

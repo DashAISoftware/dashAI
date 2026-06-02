@@ -119,13 +119,40 @@ RAGPipeline (BaseGenerativeModel)
     ├── RetrieverModel
     │   ├── UnitRetriever (Leaf)
     │   │   ├── SparseRetriever → TFIDFRetriever | BM25Retriever
-    │   │   └── DenseRetriever (requires DenseEmbedding)
+    │   │   └── DenseRetriever (abstract)
+    │   │        ├── FastTextDenseRetriever
+    │   │        └── HuggingFaceDenseRetriever (abstract)
+    │   │             ├── SentenceTransformerDenseRetriever (21 models)
+    │   │             ├── BERTDenseRetriever (6 models)
+    │   │             ├── DistilBERTDenseRetriever (4 models)
+    │   │             ├── RoBERTaDenseRetriever (4 models)
+    │   │             ├── E5DenseRetriever (5 models)
+    │   │             ├── GemmaDenseRetriever (1 model)
+    │   │             ├── InstructorDenseRetriever (3 models)
+    │   │             └── LaBSEDenseRetriever (1 model)
     │   └── CompositeRetriever (Composite, GoF)
     │       ├── SequentialRetriever (ACCUMULATE | CASCADE)
     │       └── ParallelRetriever (ROUND_ROBIN | INTERLEAVE)
     ├── Prompt (GenerationPrompt | AugmentationPrompt)
     └── TextToTextGenerationTaskModel (LLM)
 ```
+
+### Dense retriever architecture
+
+Dense retrievers use a **two-level abstraction**:
+
+1. **Embedding layer** (`embeddings/dense/`): Internal, non-registered classes that handle model loading, tokenization, family-specific pooling, and overflow strategies. Prefixed with `_`.
+
+2. **Retriever layer** (`retrievers/dense/`): Registered Component classes with `SCHEMA`, `DISPLAY_NAME`, `get_metadata()`. Each wraps a specific embedding via `_create_embedding()` → `init_model()` → `_init_embedding()`.
+
+Families declare per-model metadata (`MODELS` dict: languages, max_seq_length). `_hf_language_utils.py` maps 44 ISO codes to display labels. `get_metadata()` computes language summaries for frontend display.
+
+`OverfloatHandler` supports `truncate` (default) and `aggregate` strategies for chunks exceeding model max sequence length (hidden from user; defined per-model in `MODELS`).
+
+To add a new HuggingFace embedding family:
+1. Subclass `OverfloatHandler` (or `HuggingFaceEmbedding`) with family-specific `_pool()`
+2. Subclass `HuggingFaceDenseRetriever` with `MODELS` dict + `SCHEMA` + `_create_embedding()`
+3. Register in `initial_components.py`
 
 ### RAG flow (backend)
 
@@ -166,6 +193,8 @@ Every retriever gets a **bridge record** in `rag_retriever` (canonical identity 
 - `embeddings/sparse/bm25_encoding.py`, `tfidf_encoding.py` — old interface incompatible with factory pattern
 - `embeddings/trainable_encoding.py` — incomplete intermediate hierarchy, unused
 - RAG-specific code in `GenerativeJob` — now in `RAGJob`
+- Old concrete `HuggingFaceDenseRetriever` (single class with flat `HF_MODELS` list) — split into 8 families (June 2026)
+- Old `HuggingFaceEmbedding` (single class with 28-model enum) — split into abstract base + 6 internal subclasses (June 2026)
 
 ## RAG Design Decisions & Gotchas
 
@@ -235,6 +264,16 @@ After schema changes to RAG models (renamed columns, removed tables), you must:
 1. Delete `sqlite.db` to force full schema rebuild (Alembic migrations cover only production scenarios)
 2. Delete `~/.DashAI/rag/` directory to clear stale embeddings, indices, and sparse retriever files
 The dev server automatically rebuilds the DB on startup with the current ORM models.
+
+### Dense retriever family pattern
+
+Each dense retriever family follows a strict pattern:
+1. Declares `MODELS: Dict[str, dict]` with per-model `languages` and `max_seq_length`
+2. Defines `SCHEMA` with family-specific `model_name: enum_field(models.keys())` + common fields
+3. Implements `_create_embedding()` → pops params, looks up model info, returns embedding instance
+4. `get_metadata()` calls `build_retriever_metadata(MODELS, family_name, len(models))` from `_hf_metadata_utils.py`
+
+`model_max_length` is never in the schema — it's read from `MODELS[model_name]` and injected into the embedding. `batch_size` is intentionally absent (was a no-op in retrieval).
 
 ## Testing
 

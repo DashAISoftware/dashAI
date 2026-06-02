@@ -27,6 +27,8 @@ from DashAI.back.models.RAG.retrievers.dense import (
     FastTextDenseRetriever,
     GemmaDenseRetriever,
     HuggingFaceDenseRetriever,
+    InstructorDenseRetriever,
+    LaBSEDenseRetriever,
     RoBERTaDenseRetriever,
     SentenceTransformerDenseRetriever,
 )
