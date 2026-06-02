@@ -191,7 +191,10 @@ const RetrieverConfigurationStep = forwardRef(
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 0 }}>
-          Select retriever model
+          {t("generative:simplifiedRag.composite.selectModel")}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          {t("generative:simplifiedRag.composite.retrieverDescription")}
         </Typography>
         <Autocomplete
           disablePortal
@@ -218,12 +221,17 @@ const RetrieverConfigurationStep = forwardRef(
         )}
 
         {selectedRetriever && openConfig && isComposite && (
-          <CompositeRetrieverBuilder
+          <>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
+              {t("generative:simplifiedRag.composite.compositeInstructions")}
+            </Typography>
+            <CompositeRetrieverBuilder
             key={`composite-${selectedRetriever.name}`}
             rootComponent={selectedRetriever.name}
             rootParams={retrieverModel.params}
             onChange={handleCompositeChange}
           />
+          </>
         )}
       </Box>
     );

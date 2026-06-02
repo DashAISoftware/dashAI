@@ -149,7 +149,9 @@
       "compositeGroup": "Composite Retrievers",
       "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
       "allChunks": "All chunks",
-      "selectedChunks": "Selected chunks"
+      "selectedChunks": "Selected chunks",
+      "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
+      "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model."
     },
     "generator": {
       "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",

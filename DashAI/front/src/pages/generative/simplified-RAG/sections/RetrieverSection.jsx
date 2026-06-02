@@ -277,6 +277,11 @@ export default function RetrieverSection({
   const getGroupDescription = (key) => {
     if (key === "hybrid") return t("generative:simplifiedRag.composite.hybridDescription");
     if (key === "keyword") return "BM25";
+    if (key === "embedding") {
+      const firstMember = groups.find((g) => g.key === key)?.members?.[0];
+      const modelName = firstMember && defaultsMap[firstMember.name]?.model_name;
+      return modelName || firstMember?.name || "";
+    }
     const group = groups.find((g) => g.key === key);
     if (!group || !group.members) return "";
     if (group.members.length <= 3) {

@@ -84,7 +84,9 @@
       "compositeGroup": "Recuperadores Compostos",
       "nestedCompositeNote": "Este é um recuperador composto. Seus filhos podem ser configurados na árvore abaixo.",
       "allChunks": "Todos os fragments",
-      "selectedChunks": "Fragments selecionados"
+      "selectedChunks": "Fragments selecionados",
+      "retrieverDescription": "Escolha um recuperador para configurar seus parâmetros. Os recuperadores por palavras-chave (BM25, TF-IDF) encontram documentos por frequência de termos. Os recuperadores por embeddings capturam o significado semântico com vetores densos. Os recuperadores compostos encadeiam vários recuperadores, de forma sequencial ou em paralelo.",
+      "compositeInstructions": "Clique no botão + para adicionar um recuperador filho a este composto. Clique em um cartão para editar seus parâmetros ou escolher outro modelo."
     }
   },
   "validation": {

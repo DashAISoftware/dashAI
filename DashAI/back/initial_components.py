@@ -523,7 +523,10 @@ def get_initial_components():
         # DefaultAugmentationPrompt,
         CustomAugmentationPrompt,
         # Retrievers
-        FastTextDenseRetriever,
+        BM25Retriever,
+        BM25VectorizerModel,
+        TFIDFRetriever,
+        TFIDFVectorizerModel,
         SentenceTransformerDenseRetriever,
         BERTDenseRetriever,
         DistilBERTDenseRetriever,
@@ -532,10 +535,7 @@ def get_initial_components():
         GemmaDenseRetriever,
         InstructorDenseRetriever,
         LaBSEDenseRetriever,
-        TFIDFRetriever,
-        TFIDFVectorizerModel,
-        BM25Retriever,
-        BM25VectorizerModel,
+        FastTextDenseRetriever,
         SequentialRetriever,
         ParallelRetriever,
     ]
