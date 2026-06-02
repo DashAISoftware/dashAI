@@ -1248,18 +1248,22 @@ async def rename_dataset_column(
                 # Update nan entries
                 splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
 
-                # Update general info
-                splits_data["general_info"]["dtypes"][new_name] = splits_data[
-                    "general_info"
-                ]["dtypes"].pop(old_name)
+                # Update general info (absent when compute_metadata=False)
+                if "general_info" in splits_data:
+                    splits_data["general_info"]["dtypes"][new_name] = splits_data[
+                        "general_info"
+                    ]["dtypes"].pop(old_name)
 
                 # Update quality info nan per ratio
-                splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
-                    splits_data["quality_info"]["nan_ratio_per_column"].pop(old_name)
-                )
+                if "quality_info" in splits_data:
+                    splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
+                        splits_data["quality_info"]["nan_ratio_per_column"].pop(
+                            old_name
+                        )
+                    )
 
                 # Update numeric_stats if column is numerical
-                if old_name in splits_data["numeric_stats"]:
+                if old_name in splits_data.get("numeric_stats", {}):
                     splits_data["numeric_stats"][new_name] = splits_data[
                         "numeric_stats"
                     ].pop(old_name)
