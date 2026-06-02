@@ -1,19 +1,11 @@
 """DashAI Translation Task."""
 
-from typing import TYPE_CHECKING, List, Union
-
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.types.value_types import Text
 
-if TYPE_CHECKING:
-    from datasets import DatasetDict
-    from numpy import ndarray
 
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-
-
-class TranslationTask(BaseTask):
+class TranslationTask(SupervisedTask):
     """Task for sequence-to-sequence machine translation between languages.
 
     Translation tasks take a single ``Text`` input column (source language) and

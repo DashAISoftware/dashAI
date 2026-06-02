@@ -285,6 +285,7 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
+from DashAI.back.tasks.clustering_task import ClusteringTask
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
@@ -321,6 +322,7 @@ def get_initial_components():
         TextToTextGenerationTask,
         ControlNetTask,
         ImageClassificationTask,
+        ClusteringTask,
         # Models
         AdaBoostClassifier,
         AlbertTransformer,
