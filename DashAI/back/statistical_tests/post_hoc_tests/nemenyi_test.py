@@ -20,6 +20,24 @@ class NemenyiTest(BaseStatisticalTest):
     Data Sets. Journal of Machine Learning Research, 7, 1-30.
     """
 
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Nemenyi Test."""
+        return {
+            "name": "Nemenyi",
+            "is_parametric": False,
+            "min_runs": 3,
+            "max_runs": None,
+            "description": {
+                "en": """Non-parametric post-hoc
+                test with Nemenyi correction""",
+                "es": """Prueba post-hoc no
+                paramétrica con corrección de Nemenyi""",
+                "pt": """Teste post-hoc não-paramétrico
+                com correção de Nemenyi""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],

@@ -3,6 +3,24 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class PairedTTest(BaseStatisticalTest):
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Paired T-Test."""
+        return {
+            "name": "Paired T-Test",
+            "is_parametric": True,
+            "min_runs": 2,
+            "max_runs": 2,
+            "description": {
+                "en": """Parametric test for comparing
+                two models on identical data""",
+                "es": """Prueba paramétrica para comparar
+                dos modelos en datos idénticos""",
+                "pt": """Teste paramétrico para comparar
+                dois modelos nos mesmos dados""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}

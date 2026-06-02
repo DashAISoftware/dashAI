@@ -21,6 +21,24 @@ class CorrectedPairedTTest(BaseStatisticalTest):
     Machine Learning, 52(3), 239-281.
     """
 
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Corrected Paired T-Test."""
+        return {
+            "name": "Corrected Paired t-test",
+            "is_parametric": True,
+            "min_runs": 2,
+            "max_runs": 2,
+            "description": {
+                "en": """Paired t-test with correction
+                for cross-validation dependencies""",
+                "es": """Prueba t pareada con
+                corrección para dependencias de validación cruzada""",
+                "pt": """Teste t pareado com correção
+                para dependências de validação cruzada""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}

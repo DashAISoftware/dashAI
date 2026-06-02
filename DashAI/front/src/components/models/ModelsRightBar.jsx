@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, TextField, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  CircularProgress,
+  Tabs,
+  Tab,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
@@ -12,6 +19,8 @@ import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
+import StatisticalTestsList from "./StatisticalTestsList";
+import StatisticalTestsModal from "./StatisticalTestsModal";
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
@@ -21,6 +30,9 @@ export default function ModelsRightBar({ onToggle }) {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models"]);
+  const [activeTab, setActiveTab] = useState("models");
+  const [showStatisticalTestsModal, setShowStatisticalTestsModal] =
+    useState(false);
 
   const {
     selectedSession: session,
@@ -127,6 +139,10 @@ export default function ModelsRightBar({ onToggle }) {
     );
   }
 
+  // Determine if statistical tests should be shown (only for nested CV sessions)
+  const isCv =
+    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+
   return (
     <SideBar>
       <Box
@@ -138,21 +154,50 @@ export default function ModelsRightBar({ onToggle }) {
           width: "100%",
         }}
       >
-        {/* Header */}
+        {/* Header with tabs */}
         <Box
           sx={{
-            p: 2,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
           }}
         >
-          <Typography variant="h6" color="text.primary">
-            {t("models:label.availableModels")}
-          </Typography>
+          <Box
+            sx={{
+              p: 2,
+              height: 64,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-start",
+            }}
+          >
+            <Typography variant="h6" color="text.primary">
+              {activeTab === "models"
+                ? t("models:label.availableModels")
+                : t("models:label.statisticalTests")}
+            </Typography>
+          </Box>
+          <Tabs
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            sx={{
+              px: 2,
+              borderTop: `1px solid ${theme.palette.ui.border}`,
+            }}
+            variant="fullWidth"
+          >
+            <Tab
+              label={t("models:label.availableModels")}
+              value="models"
+              sx={{ textTransform: "none", fontSize: "0.9rem" }}
+            />
+            {isCv && (
+              <Tab
+                label={t("models:label.statisticalTests")}
+                value="tests"
+                sx={{ textTransform: "none", fontSize: "0.9rem" }}
+              />
+            )}
+          </Tabs>
         </Box>
 
         {/* Content */}
@@ -183,7 +228,7 @@ export default function ModelsRightBar({ onToggle }) {
               </Typography>
             </Box>
           )
-        ) : (
+        ) : activeTab === "models" ? (
           <>
             {/* Search Box */}
             <Box sx={{ p: 4, flexShrink: 0 }}>
@@ -248,9 +293,20 @@ export default function ModelsRightBar({ onToggle }) {
               )}
             </Box>
           </>
+        ) : (
+          /* Statistical Tests Tab */
+          <StatisticalTestsList
+            runs={existingRuns}
+            session={session}
+            onTestSelect={(test, runs) => {
+              setShowStatisticalTestsModal(true);
+            }}
+            loading={loading}
+          />
         )}
       </Box>
-      {/* Modal de modelo */}
+
+      {/* Modals */}
       <AddModelDialog
         open={configOpen}
         onClose={closeConfig}
@@ -258,6 +314,12 @@ export default function ModelsRightBar({ onToggle }) {
         session={session}
         existingRuns={existingRuns}
         onRunCreated={onRunCreated}
+      />
+
+      <StatisticalTestsModal
+        runs={existingRuns}
+        session={session}
+        visible={showStatisticalTestsModal && isCv}
       />
     </SideBar>
   );

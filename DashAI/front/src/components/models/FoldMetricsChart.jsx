@@ -382,45 +382,57 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
         family: '"Roboto", "Helvetica", "Arial", sans-serif',
       },
       hovermode: "closest",
-      margin: { l: 30, r: 0, t: 40, b: 50 },
+      margin: { l: 40, r: 0, t: 40, b: 40 },
       autosize: true,
       showlegend: false,
       yaxis: {
-        title: t("models:label.metricValue"),
+        title: {
+          text: t("models:label.metricValue"),
+          font: { color: textColor },
+        },
         gridcolor: gridColor,
         titlefont: { color: textColor },
         tickfont: { color: textColor },
       },
     };
 
-    const xAxis = (title) => ({
-      ...(title ? { title } : {}),
+    const FormatAxis = (title) => ({
+      ...(title ? { title: { text: title, font: { color: textColor } } } : {}),
       gridcolor: gridColor,
       titlefont: { color: textColor },
       tickfont: { color: textColor },
     });
 
     const titles = {
-      boxplot: t("models:label.boxplot"),
-      line: t("models:label.foldProgression"),
-      qq:
-        selectedRepetition === "averaged"
-          ? t("models:label.qqPlotAllRepetitions")
-          : t("models:label.qqPlot"),
-      histogram: t("models:label.histogram"),
+      boxplot: t("models:label.boxPlot"),
+      line: t("models:label.linesPlot"),
+      qq: t("models:label.qqPlot"),
+      histogram: t("models:label.histogramPlot"),
     };
 
     const extra = {
-      boxplot: { xaxis: xAxis() },
-      line: { xaxis: xAxis(t("models:label.foldNumber")) },
+      boxplot: { xaxis: FormatAxis() },
+      line: { xaxis: FormatAxis(t("models:label.foldNumber")) },
       qq: {
-        showlegend: true,
-        xaxis: xAxis(t("models:label.theoreticalQuantiles")),
-        yaxis: { ...base.yaxis, title: t("models:label.sampleQuantiles") },
+        showlegend: false,
+        xaxis: FormatAxis(t("models:label.theoricalQuantiles")),
+        yaxis: {
+          ...base.yaxis,
+          title: {
+            text: t("models:label.sampleQuantiles"),
+            font: { color: textColor },
+          },
+        },
       },
       histogram: {
-        xaxis: xAxis(t("models:label.metricValue")),
-        yaxis: { ...base.yaxis, title: t("models:label.frequency") },
+        xaxis: FormatAxis(t("models:label.metricValue")),
+        yaxis: {
+          ...base.yaxis,
+          title: {
+            text: t("models:label.frequency"),
+            font: { color: textColor },
+          },
+        },
       },
     };
 
@@ -542,19 +554,24 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
 
           {availableReps.length > 1 && (
             <FormControl sx={{ minWidth: 140 }} size="small">
-              <InputLabel sx={{ fontSize: "0.85rem" }}>Rep.</InputLabel>
+              <InputLabel sx={{ fontSize: "0.85rem" }}>
+                {t("models:label.repetition")}
+              </InputLabel>
               <Select
                 value={selectedRepetition ?? ""}
-                label="Rep."
+                label={t("models:label.repetition")}
                 onChange={(e) => setSelectedRepetition(e.target.value)}
                 sx={{ fontSize: "0.85rem" }}
               >
                 <MenuItem value="averaged">
-                  {chartType === "qq" ? "All repetitions" : "Averaged"}
+                  {chartType === "qq"
+                    ? t("models:label.allRepetitions")
+                    : t("models:label.averaged")}
                 </MenuItem>
                 {availableReps.map((rep) => (
                   <MenuItem key={rep} value={rep}>
-                    Repetition {parseInt(rep.split("_")[1]) + 1}
+                    {t("models:label.repetition")}{" "}
+                    {parseInt(rep.split("_")[1]) + 1}
                   </MenuItem>
                 ))}
               </Select>
@@ -579,7 +596,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
             },
             {
               value: "line",
-              label: "Lines",
+              label: t("models:label.lines"),
               title: "Line chart showing fold progression",
             },
             {

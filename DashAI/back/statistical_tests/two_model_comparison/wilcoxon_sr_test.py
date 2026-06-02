@@ -3,6 +3,24 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class WilcoxonSRTest(BaseStatisticalTest):
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Wilcoxon Signed-Rank Test."""
+        return {
+            "name": "Wilcoxon Signed-Rank",
+            "is_parametric": False,
+            "min_runs": 2,
+            "max_runs": 2,
+            "description": {
+                "en": """Non-parametric alternative to
+                paired t-test for two models""",
+                "es": """Alternativa no paramétrica a la prueba
+                t pareada para dos modelos""",
+                "pt": """Alternativa não-paramétrica
+                ao teste t pareado para dois modelos""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}

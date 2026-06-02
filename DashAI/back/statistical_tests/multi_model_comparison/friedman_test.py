@@ -3,6 +3,24 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class FriedmanTest(BaseStatisticalTest):
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Friedman Test."""
+        return {
+            "name": "Friedman",
+            "is_parametric": False,
+            "min_runs": 3,
+            "max_runs": None,
+            "description": {
+                "en": """Non-parametric alternative to ANOVA
+                for comparing 3+ models""",
+                "es": """Alternativa no paramétrica a ANOVA
+                para comparar 3 o más modelos""",
+                "pt": """Alternativa não-paramétrica ao ANOVA
+                para comparar 3+ modelos""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}

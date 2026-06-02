@@ -15,6 +15,24 @@ class TukeyHSDTest(BaseStatisticalTest):
     Requires the `statsmodels` package.
     """
 
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Tukey HSD Test."""
+        return {
+            "name": "Tukey HSD",
+            "is_parametric": True,
+            "min_runs": 3,
+            "max_runs": None,
+            "description": {
+                "en": """Parametric post-hoc test
+                for pairwise model comparisons""",
+                "es": """Prueba post-hoc
+                paramétrica para comparaciones pareadas de modelos""",
+                "pt": """Teste post-hoc paramétrico
+                para comparações pareadas de modelos""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],

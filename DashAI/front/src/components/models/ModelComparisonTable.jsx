@@ -661,10 +661,14 @@ function ModelComparisonTable({
           {[
             { key: "noHpo", label: t("models:label.runType.noHpo", "Sin HPO") },
             { key: "hpo", label: t("models:label.runType.hpo", "Con HPO") },
-            {
-              key: "nestedCv",
-              label: t("models:label.runType.nestedCv", "Nested CV"),
-            },
+            ...(isCrossValidation
+              ? [
+                  {
+                    key: "nestedCv",
+                    label: t("models:label.runType.nestedCv", "Nested CV"),
+                  },
+                ]
+              : []),
           ].map(({ key, label }) => (
             <Box
               key={key}

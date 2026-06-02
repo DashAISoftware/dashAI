@@ -3,6 +3,24 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class AnovaTest(BaseStatisticalTest):
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for ANOVA Test."""
+        return {
+            "name": "ANOVA",
+            "is_parametric": True,
+            "min_runs": 3,
+            "max_runs": None,
+            "description": {
+                "en": """Parametric test for comparing 3 or more models on
+                identical data""",
+                "es": """Prueba paramétrica para comparar 3 o más modelos en
+                datos idénticos""",
+                "pt": """Teste paramétrico para comparar 3 ou mais modelos nos
+                mesmos dados""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}

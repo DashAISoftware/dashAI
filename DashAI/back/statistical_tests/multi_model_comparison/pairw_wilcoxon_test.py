@@ -23,6 +23,24 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
     Scandinavian Journal of Statistics, 6(2), 65-70.
     """
 
+    @staticmethod
+    def get_metadata() -> dict:
+        """Metadata for Pairwise Wilcoxon Test."""
+        return {
+            "name": "Pairwise Wilcoxon",
+            "is_parametric": False,
+            "min_runs": 3,
+            "max_runs": None,
+            "description": {
+                "en": """Post-hoc non-parametric pairwise
+                comparisons after Friedman test""",
+                "es": """Comparaciones pareadas
+                no paramétricas post-hoc después de la prueba de Friedman""",
+                "pt": """Comparações pareadas
+                não-paramétricas post-hoc após teste de Friedman""",
+            },
+        }
+
     def run(
         self,
         scores: dict[str, list[float]],
