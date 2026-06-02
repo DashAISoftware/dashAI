@@ -9,6 +9,7 @@ from datasets import Dataset
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.utils import (
     arrow_to_dashai_types,
     comma_float_to_float,
@@ -132,49 +133,6 @@ class DashAIDataset(Dataset):
             return list(self.splits["split_indices"].keys())
         return []
 
-    # This method is still used only because Image dataset load
-    # haven't been implemented to be DashAITypes compatible
-    # So categories can't be labeled as Categorical Datatype
-    # Should be removed ASAP when DashAIImageType and its handlers are implemented
-    @beartype
-    def change_columns_type(self, column_types: Dict[str, str]) -> "DashAIDataset":
-        """Change the type of some columns.
-
-        Note: this is a temporal method, and it will probably will delete in the future.
-
-        Parameters
-        ----------
-        column_types : Dict[str, str]
-            dictionary whose keys are the names of the columns to be changed and the
-            values the new types.
-
-        Returns
-        -------
-        DashAIDataset
-            The dataset after columns type changes.
-        """
-        from datasets import Value as HFValue
-
-        if not isinstance(column_types, dict):
-            raise TypeError(f"types should be a dict, got {type(column_types)}")
-
-        for column in column_types:
-            if column in self.column_names:
-                pass
-            else:
-                raise ValueError(
-                    f"Error while changing column types: column '{column}' does not "
-                    "exist in dataset."
-                )
-        new_features = self.features.copy()
-        for column in column_types:
-            if column_types[column] == "Categorical":
-                new_features[column] = encode_labels(self, column)
-            elif column_types[column] == "Numerical":
-                new_features[column] = HFValue("float32")
-        dataset = self.cast(new_features)
-        return dataset
-
     def compute_base_metadata(self) -> "DashAIDataset":
         """Compute basic metadata for the dataset and store it in self.splits.
 
@@ -240,8 +198,6 @@ class DashAIDataset(Dataset):
         dict
             General information including rows, columns, memory usage, and dtypes.
         """
-        from DashAI.back.types.dashai_image import DashAIImage
-
         hashable_cols = [
             c
             for c in dataset_df.columns
@@ -441,8 +397,6 @@ class DashAIDataset(Dataset):
         completeness = 1 - (
             dataset_df.isna().sum().sum() / (len(dataset_df) * len(dataset_df.columns))
         )
-
-        from DashAI.back.types.dashai_image import DashAIImage
 
         hashable_cols = [
             c
@@ -670,8 +624,6 @@ class DashAIDataset(Dataset):
         if not isinstance(result, dict):
             return result
 
-        from DashAI.back.types.dashai_image import DashAIImage
-
         image_cols = [
             c
             for c, t in self._types.items()
@@ -841,8 +793,6 @@ def transform_dataset_with_schema(
                 # Use the dtype from schema for pa_type
                 pa_type = to_arrow_types(dtype)
             elif _type == "Image":
-                from DashAI.back.types.dashai_image import DashAIImage
-
                 dashai_types[column_name] = DashAIImage(dtype=dtype)
                 dai_table[column_name] = table.column(column_name)
                 pa_type = table.schema.field(column_name).type
@@ -970,41 +920,6 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     else:
         splits = {}
     return DashAIDataset(data, splits=splits)
-
-
-# Use it only for Image classification
-# since images are loaded different to tabular data
-# And it's link to DashAIDataTypes is not implemented yet
-# So categorical columns can't be labeled as Categorical Datatype but ClassLabel
-# Should be removed ASAP when DashAIImageType and its handlers are implemented
-@beartype
-def encode_labels(
-    dataset: DashAIDataset,
-    column_name: str,
-) -> object:
-    """Encode a categorical column into numerical labels and
-    return the ClassLabel feature.
-
-    Parameters
-    ----------
-    dataset : DashAIDataset
-        Dataset containing the column to encode.
-    column_name : str
-        Name of the column to encode.
-
-    Returns
-    -------
-    ClassLabel
-        The ClassLabel feature with the mapping of labels to integers.
-    """
-    if column_name not in dataset.column_names:
-        raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
-
-    from datasets import ClassLabel  # local import
-
-    names = list(set(dataset[column_name]))
-    class_label_feature = ClassLabel(names=names)
-    return class_label_feature
 
 
 @beartype

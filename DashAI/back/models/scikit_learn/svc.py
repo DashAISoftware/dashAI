@@ -178,8 +178,14 @@ class SVCSchema(BaseSchema):
                 "O parâmetro 'redução' determina se "
                 "uma heurística de redução é utilizada."
             ),
+            de=(
+                "Der Parameter 'shrinking' bestimmt, ob "
+                "eine Schrumpfungsheuristik verwendet wird."
+            ),
         ),
-        alias=MultilingualString(en="shrinking", es="reducción", pt="redução"),
+        alias=MultilingualString(
+            en="shrinking", es="reducción", pt="redução", de="Schrumpfung"
+        ),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(gt=0.0),
@@ -196,8 +202,11 @@ class SVCSchema(BaseSchema):
                 " la tolerancia para el criterio de detención."
             ),
             pt=("O parâmetro 'tol' determina a tolerância para o critério de parada."),
+            de="Der Parameter 'tol' bestimmt die Toleranz für das Stoppkriterium.",
         ),
-        alias=MultilingualString(en="tolerance", es="tolerancia", pt="tolerância"),
+        alias=MultilingualString(
+            en="tolerance", es="tolerancia", pt="tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
 
@@ -228,6 +237,7 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         es="Máquina de Vectores de Soporte (SVM)",
         pt="Máquina de Vetores de Suporte (SVM)",
         zh="支持向量机（SVM）",
+        de="Support-Vektor-Maschine (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -264,6 +274,17 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         zh=(
             "支持向量机（SVM）是一种监督学习算法，通过在高维特征空间中"
             "寻找最优超平面来最大化类间间隔，支持线性、多项式和径向基函数（RBF）核。"
+        ),
+        de=(
+            "Die Support-Vektor-Maschine (SVM) ist ein überwachter "
+            "Machine-Learning-Algorithmus für Klassifikations- und "
+            "Regressionsaufgaben. Sie findet die optimale Hyperebene, die die "
+            "Margin zwischen verschiedenen Klassen in einem hochdimensionalen "
+            "Merkmalsraum maximiert. SVMs sind besonders effektiv, wenn die Anzahl "
+            "der Merkmale im Verhältnis zur Anzahl der Stichproben groß ist, und "
+            "können komplexe, nichtlineare Entscheidungsgrenzen durch den Einsatz "
+            "von Kernelfunktionen wie linear, polynomial und radialer Basisfunktion "
+            "(RBF) modellieren."
         ),
     )
     COLOR: str = "#FF80AB"

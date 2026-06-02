@@ -13,6 +13,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_image import DashAIImage
 
 
 class ImageDataLoaderSchema(BaseSchema):
@@ -197,9 +199,6 @@ class ImageDataLoader(BaseDataLoader):
         log.debug("Dataset columns: %s", dataset.column_names)
 
         shutil.rmtree(prepared_path[0])
-
-        from DashAI.back.types.categorical import Categorical
-        from DashAI.back.types.dashai_image import DashAIImage
 
         types = {}
         for col in dataset.column_names:

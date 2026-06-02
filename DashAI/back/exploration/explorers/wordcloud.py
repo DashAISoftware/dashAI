@@ -34,12 +34,14 @@ class WordcloudSchema(BaseExplorerSchema):
             es="Número máximo de palabras a mostrar en la nube de palabras.",
             pt="Número máximo de palavras a exibir na nuvem de palavras.",
             zh="词云中显示的最大词数。",
+            de="Maximale Anzahl der anzuzeigenden Wörter in der Wortwolke.",
         ),
         alias=MultilingualString(
             en="Max words",
             es="Máximo de palabras",
             pt="Máximo de palavras",
             zh="最大词数",
+            de="Max. Wörter",
         ),
     )  # type: ignore
     background_color: schema_field(
@@ -56,12 +58,17 @@ class WordcloudSchema(BaseExplorerSchema):
             ),
             pt=("Cor de fundo da nuvem de palavras. Se None, o fundo é transparente."),
             zh="词云的背景颜色。如果为None，则背景透明。",
+            de=(
+                "Hintergrundfarbe der Wortwolke. Bei None ist der Hintergrund "
+                "transparent."
+            ),
         ),
         alias=MultilingualString(
             en="Background color",
             es="Color de fondo",
             pt="Cor de fundo",
             zh="背景颜色",
+            de="Hintergrundfarbe",
         ),
     )  # type: ignore
 
@@ -81,7 +88,11 @@ class WordcloudExplorer(DistributionExplorer):
     """
 
     DISPLAY_NAME = MultilingualString(
-        en="Word Cloud", es="Nube de Palabras", pt="Nuvem de Palavras", zh="词云"
+        en="Word Cloud",
+        es="Nube de Palabras",
+        pt="Nuvem de Palavras",
+        zh="词云",
+        de="Wortwolke",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -99,6 +110,11 @@ class WordcloudExplorer(DistributionExplorer):
             "colunas de texto selecionadas."
         ),
         zh=("文本的可视化表示，词语大小反映频率。通过连接所选文本列生成词云。"),
+        de=(
+            "Visuelle Darstellung von Text, bei der die Wortgröße die Häufigkeit "
+            "widerspiegelt. Erzeugt eine Wortwolke durch Verkettung ausgewählter "
+            "Textspalten."
+        ),
     )
     IMAGE_PREVIEW = "wordcloud.png"
 

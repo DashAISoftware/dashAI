@@ -49,12 +49,17 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "contrário, vertical."
             ),
             zh="如果为True，箱线图将水平显示；否则垂直显示。",
+            de=(
+                "Wenn True, wird das Boxplot horizontal dargestellt; "
+                "andernfalls vertikal."
+            ),
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
             pt="Gráfico horizontal",
             zh="水平图",
+            de="Horizontales Diagramm",
         ),
     )  # type: ignore
     points: schema_field(
@@ -73,12 +78,17 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "são exibidos."
             ),
             zh="'all'、'outliers'或'False'之一。确定显示哪些数据点。",
+            de=(
+                "Eines von 'all', 'outliers' oder 'False'. Bestimmt, welche "
+                "Punkte angezeigt werden."
+            ),
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
             pt="Pontos exibidos",
             zh="显示的点",
+            de="Angezeigte Punkte",
         ),
     )  # type: ignore
     opposite_axis: schema_field(
@@ -91,7 +101,11 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
             zh="用于对立轴的列名或索引。",
         ),
         alias=MultilingualString(
-            en="Opposite axis", es="Eje opuesto", pt="Eixo oposto", zh="对立轴"
+            en="Opposite axis",
+            es="Eje opuesto",
+            pt="Eixo oposto",
+            zh="对立轴",
+            de="Gegenüberliegende Achse",
         ),
     )  # type: ignore
 
@@ -123,6 +137,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         es="Diagrama de Caja Multicolumna",
         pt="Diagrama de Caixa Múltiplo",
         zh="多列箱线图",
+        de="Mehrspaltiges Boxplot",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -138,6 +153,10 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
             "usando outra coluna como eixo oposto (se fornecida)."
         ),
         zh="在一个轴上显示多列箱线图，使用另一列作为对立轴（如果提供）。",
+        de=(
+            "Zeigt ein Boxplot für mehrere Spalten auf einer Achse, "
+            "optional mit einer weiteren Spalte als gegenüberliegende Achse."
+        ),
     )
     IMAGE_PREVIEW = "multi_column_box_plot.png"
 
@@ -145,7 +164,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "numeric_categorical_only": True,
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 1},
     }
 

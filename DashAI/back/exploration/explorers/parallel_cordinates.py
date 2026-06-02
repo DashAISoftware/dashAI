@@ -94,7 +94,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "numeric_categorical_only": True,
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 2},
     }
 

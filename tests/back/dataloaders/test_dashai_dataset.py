@@ -8,7 +8,6 @@ from typing import List
 import datasets
 import pytest
 from datasets import DatasetDict
-from pyarrow.lib import ArrowInvalid
 from sklearn.datasets import load_iris
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -192,70 +191,6 @@ def test_sample_dashaidataset(dashai_datasetdict: list, method: str, n_samples: 
             for key in one_sample:
                 one_sample[key] = sample[key][index]
             assert any(one_sample == data for data in dataset)
-
-
-# ----------------------------------------------------------------------------
-# test change_columns_type
-
-
-@pytest.mark.parametrize(
-    ("col_types", "expected_exception", "match"),
-    [
-        # test case 1 - try to change the type of an unexistant col.
-        (
-            {"unexistant_col": "Categorical"},
-            ValueError,
-            (
-                r"Error while changing column types: column 'unexistant_col' does not "
-                r"exist in dataset."
-            ),
-        ),
-        # test case 2 - try to change a col to an incompatible type.
-        (
-            {"sepal length (cm)": "Categorical"},
-            ArrowInvalid,
-            r"Float value \d+\.\d+ was truncated converting to int64",
-        ),
-    ],
-    ids=[
-        "test_change_columns_type_raises_error_for_unexistant_col",
-        "test_change_columns_type_raises_error_for_incompatible_type_casting",
-    ],
-)
-def test_change_columns_type_errors(
-    dashai_datasetdict: list, col_types, expected_exception, match
-):
-    with pytest.raises(expected_exception, match=match):
-        dashai_datasetdict.change_columns_type(col_types)
-
-
-def test_dashai_datasetdict_change_columns_type_target_col_as_cat(
-    dashai_datasetdict: DashAIDataset,
-):
-    """Test target column casting to a Categorical (ClassLabel) type."""
-
-    original_features = dashai_datasetdict.features.copy()
-
-    dashai_datasetdict = dashai_datasetdict.change_columns_type(
-        {"target": "Categorical"}
-    )
-    new_features = dashai_datasetdict.features
-
-    assert len(original_features) == len(new_features)
-
-    assert original_features["target"].dtype == "int64"
-    assert new_features["target"].dtype == "int64"
-
-    # check the new types.
-    assert isinstance(original_features["target"], datasets.features.Value)
-    assert isinstance(new_features["target"], datasets.features.ClassLabel)
-
-    # check that the rest of the features remain unmodified.
-    for feature_name in original_features:
-        if feature_name != "target":
-            assert isinstance(original_features[feature_name], datasets.features.Value)
-            assert isinstance(new_features[feature_name], datasets.features.Value)
-            assert original_features[feature_name] == new_features[feature_name]
 
 
 # ----------------------------------------------------------------------------
