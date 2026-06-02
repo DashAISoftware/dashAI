@@ -128,11 +128,26 @@
       "advancedApplied": "Advanced Configuration Applied",
       "topKLabel": "Number of Results (Top K)",
       "advancedButton": "Open Advanced Configuration",
+      "modifyFromAdvanced": "Top K must be modified from the advanced configuration view",
       "explanations": {
         "SparseRetriever": "Best for specific keyword and ID search. Useful for finding exact matches in documents.",
         "DenseRetriever": "Contextual search that understands meaning. Great for finding semantically similar content but may miss specific keywords or IDs.",
         "HybridRetriever": "Combines keyword and contextual search for balanced performance across different query types."
       }
+    },
+    "composite": {
+      "addChild": "Add retriever node",
+      "removeNode": "Remove node",
+      "configureNode": "Configure Node",
+      "selectModel": "Select retriever model",
+      "parameters": "Parameters",
+      "simpleGroup": "Simple Retrievers",
+      "keywordGroup": "Keyword Retrievers",
+      "embeddingGroup": "Embedding Retrievers",
+      "hybridGroup": "Hybrid",
+      "hybridDescription": "TF-IDF + HuggingFace multilingual embeddings",
+      "compositeGroup": "Composite Retrievers",
+      "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below."
     },
     "generator": {
       "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",

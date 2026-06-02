@@ -18,8 +18,8 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models.RAG import (
-    DefaultRAGGenerationPrompt,
     DefaultQnARAGGenerationPrompt,
+    DefaultRAGGenerationPrompt,
     Prompt,
 )
 
@@ -91,16 +91,20 @@ async def create_rag_prompt(
                 detail="Prompt parameters are required and must include a template.",
             )
 
-        if "template" not in prompt.parameters:
+        if "templates" in prompt.parameters:
+            for lang, tmpl in prompt.parameters["templates"].items():
+                _validate_prompt_template(prompt.class_name, tmpl, component_registry)
+        elif "template" in prompt.parameters:
+            _validate_prompt_template(
+                prompt.class_name,
+                prompt.parameters["template"],
+                component_registry,
+            )
+        else:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Prompt template is required.",
+                detail="Prompt parameters must include 'template' or 'templates'.",
             )
-        _validate_prompt_template(
-            prompt.class_name,
-            prompt.parameters["template"],
-            component_registry,
-        )
         new_prompt = RAGPrompt(
             class_name=prompt.class_name,
             name=prompt.name,
@@ -143,17 +147,22 @@ async def update_rag_prompt(
                     changed = True
 
             if prompt.parameters is not None:
-                template = prompt.parameters.get("template")
-                if template is None:
+                if "templates" in prompt.parameters:
+                    for lang, tmpl in prompt.parameters["templates"].items():
+                        _validate_prompt_template(
+                            existing_prompt.class_name, tmpl, component_registry,
+                        )
+                elif "template" in prompt.parameters:
+                    _validate_prompt_template(
+                        existing_prompt.class_name,
+                        prompt.parameters["template"],
+                        component_registry,
+                    )
+                else:
                     raise HTTPException(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Prompt parameters must include a template.",
+                        detail="Prompt parameters must include 'template' or 'templates'.",
                     )
-                _validate_prompt_template(
-                    existing_prompt.class_name,
-                    template,
-                    component_registry,
-                )
                 existing_prompt.parameters = prompt.parameters
                 changed = True
 
@@ -204,20 +213,29 @@ async def update_rag_prompt_for_session(
                 )
 
             if prompt.parameters is not None:
-                template = prompt.parameters.get("template")
-                if template is None:
+                if "templates" in prompt.parameters:
+                    for lang, tmpl in prompt.parameters["templates"].items():
+                        _validate_prompt_template(
+                            existing_prompt.class_name, tmpl, component_registry,
+                        )
+                elif "template" in prompt.parameters:
+                    _validate_prompt_template(
+                        existing_prompt.class_name,
+                        prompt.parameters["template"],
+                        component_registry,
+                    )
+                else:
                     raise HTTPException(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Prompt parameters must include a template.",
+                        detail="Prompt parameters must include 'template' or 'templates'.",
                     )
-                _validate_prompt_template(
-                    existing_prompt.class_name,
-                    template,
-                    component_registry,
-                )
                 new_parameters = prompt.parameters
             else:
                 new_parameters = existing_prompt.parameters
+
+            # Make parameters unique per session to avoid UNIQUE constraint
+            new_parameters = dict(new_parameters or {})
+            new_parameters["cloned_for_session"] = session_id
 
             # Choose a base name in an explicit, easy-to-read way
             if prompt.name:
@@ -299,12 +317,18 @@ async def get_all_prompts(
                 default_generation_prompt = RAGPrompt(
                     class_name=DefaultRAGGenerationPrompt.__name__,
                     name="Default RAG Generation Prompt",
-                    parameters={"template": DefaultRAGGenerationPrompt.template},
+                    parameters={
+                        "templates": DefaultRAGGenerationPrompt.metadata["templates"],
+                        "language": "en",
+                    },
                 )
                 default_qa_prompt = RAGPrompt(
                     class_name=DefaultQnARAGGenerationPrompt.__name__,
                     name="Default QnA RAG Generation Prompt",
-                    parameters={"template": DefaultQnARAGGenerationPrompt.template},
+                    parameters={
+                        "templates": DefaultQnARAGGenerationPrompt.metadata["templates"],
+                        "language": "en",
+                    },
                 )
                 """ default_augmentation_prompt = RAGPrompt(
                     class_name=DefaultAugmentationPrompt.__name__,

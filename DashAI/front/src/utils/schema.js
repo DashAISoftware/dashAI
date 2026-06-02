@@ -1,6 +1,20 @@
 import * as Yup from "yup";
 import { getComponents } from "../api/component";
 
+export async function resolveDefaults(modelName) {
+  try {
+    const result = await getComponents({ model: modelName });
+    const info = Array.isArray(result) ? result[0] : result;
+    if (!info?.schema) return {};
+    const formatted = await formattedModel(info.schema);
+    const { initialValues } = generateYupSchema(formatted);
+    return initialValues;
+  } catch (e) {
+    console.warn(`[resolveDefaults] Failed for ${modelName}:`, e);
+    return {};
+  }
+}
+
 // Generate a Yup schema from a JSON schema object based on the JSON schema specification from the api, it also generates the initial values of the form
 export const generateYupSchema = (schemaObj) => {
   const schema = {};

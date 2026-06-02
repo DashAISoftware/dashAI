@@ -5,7 +5,8 @@ export interface IRAGPrompt {
   created?: string;
   last_modified?: string;
   parameters: {
-    template: string;
+    template?: string;
+    templates?: Record<string, string>;
     language?: string;
   };
 }

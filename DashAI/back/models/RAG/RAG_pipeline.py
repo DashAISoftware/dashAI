@@ -9,7 +9,7 @@ retrieval → prompt formatting → LLM generation.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -47,10 +47,10 @@ from DashAI.back.models.text_to_text_generation_model import (
 )
 
 if TYPE_CHECKING:
-    from DashAI.back.models.RAG.prompts import Prompt
     from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
         BaseChunkingModel,
     )
+    from DashAI.back.models.RAG.prompts import Prompt
     from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 
 

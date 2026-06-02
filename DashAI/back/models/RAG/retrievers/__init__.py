@@ -1,6 +1,6 @@
 from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
-from DashAI.back.models.RAG.retrievers.enums import RetrievalStrategy, MergeStrategy
+from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
 from DashAI.back.models.RAG.retrievers.exceptions import (
     RetrieverError,
     MissingParameterError,
@@ -19,7 +19,11 @@ from DashAI.back.models.RAG.retrievers.sparse import (
     BM25Retriever,
     BM25VectorizerModel,
 )
-from DashAI.back.models.RAG.retrievers.dense import DenseRetriever
+from DashAI.back.models.RAG.retrievers.dense import (
+    DenseRetriever,
+    FastTextDenseRetriever,
+    HuggingFaceDenseRetriever,
+)
 from DashAI.back.models.RAG.retrievers.composite import (
     CompositeRetriever,
     SequentialRetriever,

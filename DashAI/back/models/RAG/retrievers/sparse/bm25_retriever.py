@@ -4,7 +4,6 @@ import pickle
 from typing import Dict, List, Tuple
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.schema_fields import (
@@ -22,7 +21,6 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import Chunk
-from DashAI.back.models.RAG.retrievers.persistence import SparsePersistence
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 
 log = logging.getLogger(__name__)
@@ -83,6 +81,40 @@ class BM25VectorizerSchema(BaseSchema):
         ),
     )  # type: ignore
 
+class BM25VectorizerModel(BaseModel):
+    DISPLAY_NAME: str = MultilingualString(
+        en="BM25 Vectorizer",
+        es="Vectorizador BM25",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Vectorizer for BM25Retriever using CountVectorizer with BM25-specific parameters.",
+        es="Vectorizador para BM25Retriever usando CountVectorizer con parámetros específicos de BM25.",
+    )
+
+    SCHEMA = BM25VectorizerSchema
+
+    def __init__(self, **kwargs):
+        from sklearn.feature_extraction.text import CountVectorizer
+
+        validated = self.SCHEMA.model_validate(kwargs)
+        self.params = dict(validated)
+        self.vectorizer = CountVectorizer(
+            strip_accents=self.params.pop("strip_accents"),
+            lowercase=self.params.pop("lowercase"),
+            stop_words=self.params.pop("stop_words"),
+            max_df=self.params.pop("max_df"),
+            min_df=self.params.pop("min_df"),
+            max_features=self.params.pop("max_features"),
+        )
+
+    def load(self):
+        pass
+
+    def save(self):
+        pass
+
+    def train(self):
+        pass
 
 class BM25RetrieverSchema(BaseSchema):
     BM25Vectorizer: schema_field(
@@ -122,36 +154,11 @@ class BM25RetrieverSchema(BaseSchema):
     )  # type: ignore
 
     similarity_function: schema_field(
-        enum_field(
-            [
-                "cityblock",
-                "cosine",
-                "euclidean",
-                "l1",
-                "l2",
-                "manhattan",
-                "nan_euclidean",
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "dice",
-                "hamming",
-                "jaccard",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        ),
+        enum_field(["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
         placeholder="cosine",
         description=MultilingualString(
-            en="Similarity function for comparing BM25-weighted vectors.",
-            es="Función de similitud para comparar vectores ponderados BM25.",
+            en="Distance metric for comparing BM25-weighted vectors.",
+            es="Métrica de distancia para comparar vectores ponderados BM25.",
         ),
     )  # type: ignore
 
@@ -164,39 +171,9 @@ class BM25RetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    similarity_threshold: schema_field(
-        none_type(float_field()),
-        placeholder=None,
-        description=MultilingualString(
-            en="Distance threshold. None disables filtering.",
-            es="Umbral de distancia. None deshabilita el filtrado.",
-        ),
-    )  # type: ignore
-
-
-class BM25VectorizerModel(BaseModel):
-    SCHEMA = BM25VectorizerSchema
-
-    def __init__(self, **kwargs) -> None:
-        self.vectorizer = TfidfVectorizer(
-            **kwargs,
-            norm=None,
-            use_idf=False,
-            smooth_idf=False,
-            sublinear_tf=False,
-        )
-
-    def save(self, filename: str = "") -> None:
-        pass
-
-    def load(self, filename: str = "") -> None:
-        pass
-
-    def train(self, **kwargs):
-        return
-
 
 class BM25Retriever(SparseRetriever):
+    FLAGS: list[str] = []
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Retriever",
         es="Recuperador BM25",
@@ -209,14 +186,6 @@ class BM25Retriever(SparseRetriever):
     SCHEMA = BM25RetrieverSchema
 
     def __init__(self, **kwargs):
-        persistence_raw = kwargs["persistence"]
-        if not isinstance(persistence_raw, SparsePersistence):
-            raise TypeError(
-                f"Expected SparsePersistence, got {type(persistence_raw).__name__}"
-            )
-        kwargs["BM25Vectorizer"] = kwargs["BM25Vectorizer"]["properties"]["params"][
-            "comp"
-        ]
         super().__init__(**kwargs)
 
         self.k1 = self.params.pop("k1")
@@ -224,22 +193,12 @@ class BM25Retriever(SparseRetriever):
         self.delta = self.params.pop("delta")
         self.similarity_function_name = self.params.pop("similarity_function")
         self._top_k = self.params.pop("top_k")
-        self.similarity_threshold = self.params.pop("similarity_threshold")
 
         vectorizer_model = self.params.pop("BM25Vectorizer")
-        if not isinstance(vectorizer_model, BM25VectorizerModel):
-            raise TypeError(
-                f"Expected BM25VectorizerModel, got {type(vectorizer_model).__name__}"
-            )
         self._vectorizer = vectorizer_model.vectorizer
 
-        loaded = self.load()
-        if loaded:
-            log.info(
-                "BM25Retriever loaded from disk at %s.", self._persistence.model_dir
-            )
-        else:
-            log.info("Fitting new BM25 model...")
+    def init_model(self) -> None:
+        if not self.load():
             self._fit()
 
     def load(self) -> bool:
@@ -321,41 +280,31 @@ class BM25Retriever(SparseRetriever):
         return self._top_k
 
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+        self._check_infra()
         k = top_k if top_k is not None else self._top_k
         query_vec = self._vectorizer.transform([query])
-        similarities = pairwise_distances(
-            query_vec,
-            self._bm25_matrix,
+        distances = pairwise_distances(
+            query_vec, self._bm25_matrix,
             metric=self.similarity_function_name,
         ).flatten()
-
-        if self.similarity_threshold is not None:
-            mask = similarities <= self.similarity_threshold
-            filtered = np.where(mask)[0]
-            top_indices = filtered[np.argsort(similarities[filtered])[:k]]
-        else:
-            top_indices = np.argsort(similarities)[:k]
-
+        top_indices = np.argsort(distances)[:k]
         return [self.matrix_row_to_chunk_map[idx] for idx in top_indices]
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        self._check_infra()
         query_vec = self._vectorizer.transform([query])
         chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
-
         rows, valid_ids = [], []
         for cid in chunk_ids:
             row = chunk_id_to_row.get(cid)
             if row is not None:
                 rows.append(row)
                 valid_ids.append(cid)
-
         if not rows:
             return []
-
         chunk_vectors = self._bm25_matrix[rows]
         distances = pairwise_distances(
-            query_vec,
-            chunk_vectors,
+            query_vec, chunk_vectors,
             metric=self.similarity_function_name,
         ).flatten()
         scored = list(zip(valid_ids, distances.tolist()))

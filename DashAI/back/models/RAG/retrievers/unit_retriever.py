@@ -1,37 +1,43 @@
 from abc import ABC
-from typing import Final, List
+from typing import Any, Dict, Final, List
 
-from DashAI.back.models.RAG.extra_args_enum import (
-    CHUNKS,
-    ENV_RAG_PATH,
+from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.persistence import (
+    DensePersistence,
+    SparsePersistence,
 )
-from DashAI.back.models.RAG.retrievers.exceptions import ExtraKwargsMissingError
 from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
-
-_COMMON_INFRA_KEYS = {ENV_RAG_PATH, CHUNKS, "persistence"}
 
 
 class UnitRetriever(RetrieverModel, ABC):
     """Leaf: abstract base for unit retrievers."""
 
     TYPE: Final[str] = "RetrieverModel"
-
-    REQUIRED_EXTRA_KWARGS: list = [ENV_RAG_PATH, CHUNKS, "persistence"]
+    FLAGS: list[str] = ["abstract"]
 
     def __init__(self, **kwargs):
-        missing = _COMMON_INFRA_KEYS - set(kwargs)
-        if missing:
-            raise ExtraKwargsMissingError(
-                missing_keys=missing,
-                retriever_name=self.__class__.__name__,
-            )
-        if "component_registry" in kwargs:
-            kwargs.pop("component_registry")
-        self.env_rag_path = kwargs.pop(ENV_RAG_PATH)
-        self.chunks = kwargs.pop(CHUNKS)
-        self._persistence = kwargs.pop("persistence")
-        self._validate_chunks_dict()
         super().__init__(**kwargs)
+
+    def inject_infra(
+        self,
+        env_rag_path: str,
+        chunks: Dict[int, Dict[int, Chunk]],
+        persistence: Any,
+    ) -> None:
+        if not isinstance(persistence, (SparsePersistence, DensePersistence)):
+            raise TypeError(
+                f"Expected SparsePersistence or DensePersistence, "
+                f"got {type(persistence).__name__}"
+            )
+        super().inject_infra(env_rag_path, chunks, persistence)
+
+    def _check_infra(self) -> None:
+        """Raise if infrastructure has not been injected."""
+        if self._persistence is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__}: infrastructure not injected. "
+                "Call inject_infra() before retrieve()."
+            )
 
     def add(self, child: RetrieverModel) -> None:
         raise TypeError(

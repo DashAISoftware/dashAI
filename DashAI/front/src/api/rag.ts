@@ -141,7 +141,7 @@ export const updateGenerativeSessionParams = async (
 };
 
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
-  const response = getChildComponents("RetrieverModel", true);
+  const response = await getChildComponents("RetrieverModel", true);
   if (!response) {
     throw new Error(`Failed to fetch retrieval options`);
   }
@@ -151,7 +151,7 @@ export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
 export const getRetrieverComponents = async (
   retrievalParadigm: string,
 ): Promise<IComponent[]> => {
-  const response = getChildComponents(retrievalParadigm, false);
+  const response = await getChildComponents(retrievalParadigm, false);
 
   if (!response) {
     throw new Error(`Failed to fetch retriever components`);

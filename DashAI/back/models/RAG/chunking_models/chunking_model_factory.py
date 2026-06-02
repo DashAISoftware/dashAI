@@ -70,6 +70,7 @@ class ChunkingModelFactory:
             model_class = self._registry[component_name]["class"]
             model = model_class(**params)
             model.set_id(existing_record.id)
+            self._update_chunk_ids(model)
             return ChunkingFactoryResult(
                 db_record_id=existing_record.id,
                 model=model,
@@ -143,6 +144,21 @@ class ChunkingModelFactory:
         self._db.commit()
         self._db.flush()
 
+    def _update_chunk_ids(self, model: BaseChunkingModel) -> None:
+        for document_id, document_chunks in model.get_chunks().items():
+            for idx, chunk in document_chunks.items():
+                db_chunk = (
+                    self._db.query(ChunkDBModel)
+                    .filter_by(
+                        document_id=document_id,
+                        chunk_index=idx,
+                        chunk_set_id=self._chunk_set_id,
+                    )
+                    .first()
+                )
+                if db_chunk is not None:
+                    model.chunks[document_id][idx].id = db_chunk.id
+
     def _persist_chunks(self, model: BaseChunkingModel) -> None:
         existing_chunks = self._fetch_chunks_from_db()
         chunks_to_create: Dict[int, Dict[int, Chunk]] = {}
@@ -158,15 +174,4 @@ class ChunkingModelFactory:
 
         self._create_chunks_in_db(chunks_to_create)
 
-        for document_id, document_chunks in model.get_chunks().items():
-            for idx, chunk in document_chunks.items():
-                db_chunk = (
-                    self._db.query(ChunkDBModel)
-                    .filter_by(
-                        document_id=document_id,
-                        chunk_index=idx,
-                        chunk_set_id=self._chunk_set_id,
-                    )
-                    .first()
-                )
-                model.chunks[document_id][idx].id = db_chunk.id
+        self._update_chunk_ids(model)

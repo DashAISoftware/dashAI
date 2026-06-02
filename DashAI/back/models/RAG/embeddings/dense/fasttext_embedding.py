@@ -46,6 +46,9 @@ class FastTextEmbedding(DenseEmbedding):
     def save(self):
         pass
 
+    def train(self, **kwargs):
+        pass
+
     def encode(self, text: str) -> np.ndarray:
         """Encode text into an embedding."""
         token_embeddings = [self.model.get_word_vector(word) for word in text.split()]

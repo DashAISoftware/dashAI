@@ -358,7 +358,9 @@ async def upload_generative_session(
                 params.parameters["documents"] = documents_ids
             # Continue with the session creation
 
-            # Validate the model parameters
+            # Normalise frontend properties wrapper and validate
+            from DashAI.back.core.schema_fields.utils import normalize_payload
+            params.parameters = normalize_payload(params.parameters)
             try:
                 model_class.SCHEMA.model_validate(params.parameters)
             except ValueError as e:
@@ -734,9 +736,18 @@ async def update_generative_session_params(
                 if "prompt" not in updated_parameters:
                     prompt_db = db.get(RAGPrompt, updated_parameters["prompt_id"])
                     if prompt_db:
+                        raw_params = dict(prompt_db.parameters or {})
+                        prompt_params = {
+                            "template": raw_params.get(
+                                "template",
+                                raw_params.get("templates", {}).get("en", ""),
+                            ),
+                        }
+                        if "language" in raw_params:
+                            prompt_params["language"] = raw_params["language"]
                         updated_parameters["prompt"] = {
                             "component": prompt_db.class_name,
-                            "params": prompt_db.parameters or {},
+                            "params": prompt_params,
                         }
                 del updated_parameters["prompt_id"]
 

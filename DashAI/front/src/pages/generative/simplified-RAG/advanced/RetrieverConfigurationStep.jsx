@@ -9,77 +9,87 @@ import {
 } from "react";
 import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
-
-import {
-  getRetrieverComponents,
-  getRetrievalParadigm,
-} from "../../../../api/rag";
+import { useTranslation } from "react-i18next";
+import { getRetrievalParadigm } from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
+import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import {
   FormSchemaProvider,
-  useFormSchemaStore,
 } from "../../../../contexts/schema";
-import { getInitialModelParameters } from "../components/ragFormDefaults";
+import { resolveDefaults } from "../../../../utils/schema";
 
-function FormSchemaInterceptor({ currentFormValuesRef }) {
-  const store = useFormSchemaStore();
+const COMPOSITE_NAMES = ["SequentialRetriever", "ParallelRetriever"];
 
-  useEffect(() => {
-    if (store && store.formValues && currentFormValuesRef) {
-      if (Object.keys(store.formValues).length > 0) {
-        currentFormValuesRef.current = { ...store.formValues };
-      }
-    }
-  }, [store?.formValues, currentFormValuesRef]);
-
-  return null;
+function getDisplayName(component) {
+  if (!component) return "";
+  const dn = component.display_name;
+  if (!dn) return component.name || "";
+  if (typeof dn === "string") return dn;
+  if (dn.en) return dn.en;
+  if (dn.es) return dn.es;
+  return String(dn);
 }
 
-
+function getGroupNameForStep(component, t) {
+  if (COMPOSITE_NAMES.includes(component.name)) {
+    return t("generative:simplifiedRag.composite.compositeGroup");
+  }
+  const name = component.name || "";
+  if (name.includes("TFIDF") || name.includes("BM25")) {
+    return t("generative:simplifiedRag.composite.keywordGroup");
+  }
+  if (name.includes("FastText") || name.includes("HuggingFace")) {
+    return t("generative:simplifiedRag.composite.embeddingGroup");
+  }
+  return t("generative:simplifiedRag.composite.simpleGroup");
+}
 
 function AutoSaveFormSchema({
   selectedRetriever,
   retrieverModel,
   onParametersChange,
-  currentFormValuesRef,
 }) {
   const formikRef = useRef(null);
 
+  const [fetchedDefaults, setFetchedDefaults] = useState(null);
+
+  useEffect(() => {
+    if (!selectedRetriever) return;
+    let cancelled = false;
+    (async () => {
+      const d = await resolveDefaults(selectedRetriever.name);
+      if (!cancelled) setFetchedDefaults(d);
+    })();
+    return () => { cancelled = true; };
+  }, [selectedRetriever]);
+
   const initialValues = useMemo(() => {
-    return getInitialModelParameters({
-      selectedModel: selectedRetriever,
-      currentModelName: retrieverModel?.component,
-      currentParams: retrieverModel?.params,
-    });
-  }, [
-    selectedRetriever,
-    retrieverModel?.component,
-    retrieverModel?.params,
-  ]);
+    if (
+      retrieverModel?.component === selectedRetriever?.name &&
+      retrieverModel?.params &&
+      Object.keys(retrieverModel.params).length > 0
+    ) {
+      return retrieverModel.params;
+    }
+    return fetchedDefaults || {};
+  }, [selectedRetriever, retrieverModel, fetchedDefaults]);
 
   const handleFormSubmit = useCallback(
     (values) => {
-      if (currentFormValuesRef) {
-        currentFormValuesRef.current = values;
-      }
-
       onParametersChange(values);
     },
-    [onParametersChange, currentFormValuesRef],
+    [onParametersChange],
   );
 
   return (
-    <>
-      <FormSchemaInterceptor currentFormValuesRef={currentFormValuesRef} />
-      <FormSchema
-        model={selectedRetriever.name}
-        initialValues={initialValues}
-        autoSave={true}
-        onFormSubmit={handleFormSubmit}
-        formSubmitRef={formikRef}
-        hideButtons
-      />
-    </>
+    <FormSchema
+      model={selectedRetriever.name}
+      initialValues={initialValues}
+      autoSave={true}
+      onFormSubmit={handleFormSubmit}
+      formSubmitRef={formikRef}
+      hideButtons
+    />
   );
 }
 
@@ -88,106 +98,22 @@ const RetrieverConfigurationStep = forwardRef(
     { allParadigms, retrieverModel, setRetrieverModel, setNextEnabled },
     ref,
   ) {
-    const [retrievalParadigms, setRetrievalParadigms] = useState([]);
-    const [selectedRetrievalParadigm, setSelectedRetrievalParadigm] =
-      useState(null);
-
-    const [retrieverOptions, setRetrieverOptions] = useState([]);
+    const { t } = useTranslation(["generative"]);
+    const [allOptions, setAllOptions] = useState([]);
     const [selectedRetriever, setSelectedRetriever] = useState(null);
     const [openConfig, setOpenConfig] = useState(false);
-    const [retrieversLoading, setRetrieversLoading] = useState(false);
-    const currentFormValuesRef = useRef(null);
+    const savedParamsRef = useRef(null);
 
     const saveCurrentFormValues = useCallback(() => {
-      let valuesToSave = currentFormValuesRef.current;
-      console.log(
-        "saveCurrentFormValues - currentFormValuesRef:",
-        currentFormValuesRef.current,
-      );
-
-      if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
-        const formSchemaElement =
-          document.querySelector('[data-testid="form-schema"]') ||
-          document.querySelector("form");
-
-        if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
-          const formData = extractFormDataFromDOM();
-          console.log("formData extracted from DOM:", formData);
-          if (formData && Object.keys(formData).length > 0) {
-            valuesToSave = formData;
-            currentFormValuesRef.current = formData;
-          }
-        }
-      }
-
-      if (
-        valuesToSave &&
-        Object.keys(valuesToSave).length > 0 &&
-        selectedRetriever
-      ) {
+      const values = savedParamsRef.current;
+      if (values && Object.keys(values).length > 0 && selectedRetriever) {
         setRetrieverModel({
           component: selectedRetriever.name,
-          params: valuesToSave,
+          params: values,
         });
       }
     }, [selectedRetriever, setRetrieverModel]);
 
-    const extractFormDataFromDOM = () => {
-      try {
-        const allInputs = document.querySelectorAll("input, select, textarea");
-        const formData = {};
-
-        console.log("allInputs", allInputs);
-
-        allInputs.forEach((input) => {
-          const name = input.name || input.id || "";
-          const value = input.value;
-
-          if (name && value) {
-            console.log("Processing input:", name, value);
-            if (
-              name.includes("similarity_metric") ||
-              name.includes("similarity")
-            ) {
-              formData.similarity_metric = value;
-            } else if (name.includes("top_k") || name.includes("topk")) {
-              formData.top_k = parseInt(value) || 5;
-            } else if (name.includes("model_name")) {
-              console.log("Processing model_name:", name, value);
-              if (!formData.encoding_model) {
-                formData.encoding_model = {
-                  properties: {
-                    component: "DenseEmbedding",
-                    params: {
-                      comp: { component: "FastTextEmbedding", params: {} },
-                    },
-                  },
-                };
-              }
-              formData.encoding_model.properties.params.comp.params.model_name =
-                value;
-            } else if (name.includes("pooling_strategy")) {
-              if (!formData.encoding_model) {
-                formData.encoding_model = {
-                  properties: {
-                    component: "DenseEmbedding",
-                    params: {
-                      comp: { component: "FastTextEmbedding", params: {} },
-                    },
-                  },
-                };
-              }
-              formData.encoding_model.properties.params.comp.params.pooling_strategy =
-                value;
-            }
-          }
-        });
-
-        return Object.keys(formData).length > 0 ? formData : null;
-      } catch (error) {
-        return null;
-      }
-    };
     useEffect(() => {
       return () => {
         saveCurrentFormValues();
@@ -196,254 +122,108 @@ const RetrieverConfigurationStep = forwardRef(
 
     useImperativeHandle(
       ref,
-      () => ({
-        saveFormValues: saveCurrentFormValues,
-      }),
+      () => ({ saveFormValues: saveCurrentFormValues }),
       [saveCurrentFormValues],
     );
 
-    const fetchRetrievalParadigms = async () => {
-      try {
-        const data = allParadigms && allParadigms.length > 0
-          ? allParadigms
-          : await getRetrievalParadigm();
-        setRetrievalParadigms(data);
+    useEffect(() => {
+      const load = async () => {
+        const fetched = await getRetrievalParadigm();
+        setAllOptions(fetched);
 
         if (retrieverModel?.component) {
-          const directParadigm = data.find(
-            (paradigm) => paradigm.name === retrieverModel.component,
-          );
-          if (directParadigm) {
-            setSelectedRetrievalParadigm(directParadigm);
-            if (directParadigm.name !== "SparseRetriever") {
-              setSelectedRetriever(directParadigm);
-              setOpenConfig(true);
-              setNextEnabled(true);
-            }
-          } else {
-            const sparseParadigm = data.find(
-              (paradigm) => paradigm.name === "SparseRetriever",
-            );
-            if (sparseParadigm) {
-              setSelectedRetrievalParadigm(sparseParadigm);
-            }
+          let found = fetched.find((c) => c.name === retrieverModel.component);
+          if (!found && allParadigms) {
+            found = allParadigms.find((c) => c.name === retrieverModel.component);
           }
-        }
-      } catch (error) {
-        console.error("Error fetching retrieval paradigms:", error);
-      }
-    };
-
-    useEffect(() => {
-      fetchRetrievalParadigms();
-    }, []);
-
-    const fetchRetrievers = useCallback(async () => {
-      if (!selectedRetrievalParadigm) {
-        setRetrieverOptions([]);
-        setSelectedRetriever(null);
-        setOpenConfig(false);
-        return;
-      }
-
-      setRetrieversLoading(true);
-      if (selectedRetrievalParadigm.name === "SparseRetriever") {
-        try {
-          const retrievers = await getRetrieverComponents(
-            selectedRetrievalParadigm.name,
-          );
-          const filteredRetrievers = retrievers.filter(
-            (retriever) =>
-              retriever?.name !== selectedRetrievalParadigm.name &&
-              retriever?.configurable_object !== false,
-          );
-          setRetrieverOptions(filteredRetrievers);
-
-          if (retrieverModel?.component) {
-            const existingRetriever = filteredRetrievers.find(
-              (r) => r.name === retrieverModel.component,
-            );
-            if (existingRetriever) {
-              setSelectedRetriever(existingRetriever);
-              setOpenConfig(Boolean(existingRetriever?.schema?.properties));
-              setNextEnabled(true);
-            } else {
-              setSelectedRetriever(null);
-              setOpenConfig(false);
-            }
-          } else {
-            setSelectedRetriever(null);
-            setOpenConfig(false);
+          if (found) {
+            setSelectedRetriever(found);
+            setOpenConfig(true);
+            setNextEnabled(true);
           }
-        } catch (error) {
-          console.error("Error fetching sparse retrievers:", error);
-          setRetrieverOptions([]);
-          setSelectedRetriever(null);
-          setOpenConfig(false);
-        }
-      } else {
-        setRetrieverOptions([selectedRetrievalParadigm]);
-        setSelectedRetriever(selectedRetrievalParadigm);
-        setOpenConfig(Boolean(selectedRetrievalParadigm?.schema?.properties));
-        setNextEnabled(true);
-      }
-      setRetrieversLoading(false);
-    }, [selectedRetrievalParadigm, retrieverModel?.component, setNextEnabled]);
-
-    useEffect(() => {
-      fetchRetrievers();
-    }, [selectedRetrievalParadigm, fetchRetrievers]);
-
-    useEffect(() => {
-      return () => {
-        if (currentFormValuesRef.current && selectedRetriever) {
-          handleRetrieverParametersSave(currentFormValuesRef.current);
         }
       };
-    }, [selectedRetriever]);
+      load();
+    }, []);
 
-    const handleRetrievalParadigmChange = (event, newValue) => {
-      setSelectedRetrievalParadigm(newValue);
-      
-      // Clear current form values and retriever model when switching paradigms
-      currentFormValuesRef.current = null;
-      setRetrieverModel({
-        component: "",
-        params: {}
-      });
-      
-      if (newValue?.name === "SparseRetriever") {
-        setSelectedRetriever(null);
-        setOpenConfig(false);
-        setNextEnabled(false);
-      } else if (newValue) {
-        setRetrieverOptions([newValue]);
-        setSelectedRetriever(newValue);
-        setOpenConfig(Boolean(newValue?.schema?.properties));
-        setRetrieverModel({
-          component: newValue.name,
-          params: getInitialModelParameters({
-            selectedModel: newValue,
-            currentModelName: null,
-            currentParams: null,
-          }),
-        });
-        setNextEnabled(true);
-      } else {
-        setSelectedRetriever(null);
-        setOpenConfig(false);
-        setNextEnabled(false);
-      }
-    };
-
-    const handleRetrieverSelectionChange = (event, newValue) => {
+    const handleRetrieverChange = async (_event, newValue) => {
       setSelectedRetriever(newValue);
+      savedParamsRef.current = null;
+
       if (newValue) {
+        const defaults = await resolveDefaults(newValue.name);
+        setRetrieverModel({ component: newValue.name, params: defaults });
         setOpenConfig(Boolean(newValue?.schema?.properties));
         setNextEnabled(true);
-
-        // Clear previous form values and use only the new retriever's default parameters
-        currentFormValuesRef.current = null;
-        setRetrieverModel({
-          component: newValue.name,
-          params: getInitialModelParameters({
-            selectedModel: newValue,
-            currentModelName: null,
-            currentParams: null,
-          }),
-        });
       } else {
         setRetrieverModel({ component: "", params: {} });
         setOpenConfig(false);
         setNextEnabled(false);
       }
     };
-    const handleRetrieverParametersSave = useCallback(
+
+    const handleParametersSave = useCallback(
       (newParams) => {
-        const newRetrieverModel = {
+        savedParamsRef.current = newParams;
+        setRetrieverModel({
           component: selectedRetriever?.name || "",
           params: newParams,
-        };
-
-        setRetrieverModel(newRetrieverModel);
+        });
         setNextEnabled(true);
       },
       [selectedRetriever?.name, setRetrieverModel, setNextEnabled],
     );
 
+    const handleCompositeChange = useCallback(
+      (updated) => {
+        savedParamsRef.current = updated.params;
+        setRetrieverModel({
+          component: updated.component,
+          params: updated.params,
+        });
+        setNextEnabled(true);
+      },
+      [setRetrieverModel, setNextEnabled],
+    );
+
+    const isComposite = selectedRetriever && COMPOSITE_NAMES.includes(selectedRetriever.name);
+
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 3,
-          p: 2,
-        }}
-      >
-        <Typography variant="subtitle2" sx={{ mb: 2 }}>
-          Select retrieval paradigm
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0 }}>
+          Select retriever model
         </Typography>
         <Autocomplete
           disablePortal
-          options={retrievalParadigms}
-          getOptionLabel={(option) => option.name}
-          value={selectedRetrievalParadigm}
-          onChange={handleRetrievalParadigmChange}
-          isOptionEqualToValue={(option, value) => option.name === value?.name}
+          options={allOptions}
+          getOptionLabel={(opt) => getDisplayName(opt)}
+          groupBy={(opt) => getGroupNameForStep(opt, t)}
+          value={selectedRetriever}
+          onChange={handleRetrieverChange}
+          isOptionEqualToValue={(a, b) => a.name === b.name}
           renderInput={(params) => (
-            <TextField {...params} label="Retrieval paradigm" />
+            <TextField {...params} label="Retriever model" />
           )}
-          sx={{ mb: 2 }}
         />
-        {selectedRetrievalParadigm &&
-          selectedRetrievalParadigm.name === "SparseRetriever" && (
-            <>
-              <Typography variant="subtitle2" sx={{ marginY: 2 }}>
-                Select retriever model
-              </Typography>
-              <Autocomplete
-                disablePortal
-                options={retrieverOptions}
-                loading={retrieversLoading}
-                getOptionLabel={(option) => option.name}
-                noOptionsText={
-                  retrieversLoading
-                    ? "Loading retrievers..."
-                    : "No retrievers available"
-                }
-                value={selectedRetriever}
-                onChange={handleRetrieverSelectionChange}
-                isOptionEqualToValue={(option, value) =>
-                  option.name === value?.name
-                }
-                renderInput={(params) => (
-                  <TextField
-                    sx={{ mb: 3 }}
-                    {...params}
-                    label="Retriever model"
-                  />
-                )}
-              />
-            </>
-          )}
-        {selectedRetriever &&
-          selectedRetriever.schema &&
-          !selectedRetriever.schema.properties && (
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              No parameters available for this retriever.
-            </Typography>
-          )}
 
-        {selectedRetriever && openConfig && (
+        {selectedRetriever && openConfig && !isComposite && (
           <FormSchemaProvider key={`retriever-provider-${selectedRetriever.name}`}>
             <AutoSaveFormSchema
               key={`retriever-form-${selectedRetriever.name}`}
               selectedRetriever={selectedRetriever}
               retrieverModel={retrieverModel}
-              onParametersChange={handleRetrieverParametersSave}
-              currentFormValuesRef={currentFormValuesRef}
+              onParametersChange={handleParametersSave}
             />
           </FormSchemaProvider>
+        )}
+
+        {selectedRetriever && openConfig && isComposite && (
+          <CompositeRetrieverBuilder
+            key={`composite-${selectedRetriever.name}`}
+            rootComponent={selectedRetriever.name}
+            rootParams={retrieverModel.params}
+            onChange={handleCompositeChange}
+          />
         )}
       </Box>
     );

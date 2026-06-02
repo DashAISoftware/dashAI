@@ -1,5 +1,5 @@
-from typing import Any, List, Optional, Tuple
 import json
+from typing import Any, List, Optional, Tuple
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData

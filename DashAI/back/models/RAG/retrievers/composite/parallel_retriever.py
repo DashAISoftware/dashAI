@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -30,18 +30,19 @@ class ParallelRetrieverSchema(BaseSchema):
         placeholder=MergeStrategy.ROUND_ROBIN.value,
         description=MultilingualString(
             en=(
-                f"'{MergeStrategy.ROUND_ROBIN}': alternates results from each retriever. "
-                f"'{MergeStrategy.INTERLEAVE}': merges preserving internal order."
+                f"'{MergeStrategy.ROUND_ROBIN.value}': alternates results from each retriever. "
+                f"'{MergeStrategy.INTERLEAVE.value}': merges preserving internal order."
             ),
             es=(
-                f"'{MergeStrategy.ROUND_ROBIN}': alterna resultados de cada recuperador. "
-                f"'{MergeStrategy.INTERLEAVE}': fusiona preservando el orden interno."
+                f"'{MergeStrategy.ROUND_ROBIN.value}': alterna resultados de cada recuperador. "
+                f"'{MergeStrategy.INTERLEAVE.value}': fusiona preservando el orden interno."
             ),
         ),
     )  # type: ignore
 
 
 class ParallelRetriever(CompositeRetriever):
+    FLAGS: list[str] = []
     SCHEMA = ParallelRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Parallel Retriever",
@@ -71,20 +72,24 @@ class ParallelRetriever(CompositeRetriever):
             return self._merge_round_robin(all_child_results, total_k)
         return self._merge_interleave(all_child_results, total_k)
 
+    @staticmethod
+    def _chunk_key(chunk: Chunk) -> Tuple[str, int]:
+        return (chunk.document_id, chunk.document_position)
+
     def _merge_round_robin(
         self, child_results_list: List[List[Chunk]], total_k: int
     ) -> List[Chunk]:
         results = []
-        seen_ids = set()
+        seen_keys: set[Tuple[str, int]] = set()
         max_len = max(len(r) for r in child_results_list) if child_results_list else 0
 
         for i in range(max_len):
             for child_results in child_results_list:
                 if i < len(child_results):
                     chunk = child_results[i]
-                    cid = chunk.id if hasattr(chunk, "id") else hash(chunk.text)
-                    if cid not in seen_ids:
-                        seen_ids.add(cid)
+                    key = self._chunk_key(chunk)
+                    if key not in seen_keys:
+                        seen_keys.add(key)
                         results.append(chunk)
                         if len(results) >= total_k:
                             return results
@@ -94,13 +99,13 @@ class ParallelRetriever(CompositeRetriever):
         self, child_results_list: List[List[Chunk]], total_k: int
     ) -> List[Chunk]:
         results = []
-        seen_ids = set()
+        seen_keys: set[Tuple[str, int]] = set()
 
         for child_results in child_results_list:
             for chunk in child_results:
-                cid = chunk.id if hasattr(chunk, "id") else hash(chunk.text)
-                if cid not in seen_ids:
-                    seen_ids.add(cid)
+                key = self._chunk_key(chunk)
+                if key not in seen_keys:
+                    seen_keys.add(key)
                     results.append(chunk)
                     if len(results) >= total_k:
                         return results

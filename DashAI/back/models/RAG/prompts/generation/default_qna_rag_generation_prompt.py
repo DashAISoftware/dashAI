@@ -94,6 +94,16 @@ class DefaultQnARAGGenerationPrompt(RAGGenerationPrompt):
     """
 
     SCHEMA = DefaultQnARAGGenerationPromptSchema
+    DESCRIPTION: str = MultilingualString(
+        en="Default prompt template used in the language generation step of RAG for Question Answering tasks.",
+        es="Plantilla de prompt predeterminada utilizada en el paso de generación de lenguaje de RAG para tareas de preguntas y respuestas.",
+        pt="Modelo de prompt padrão usado na etapa de geração de linguagem do RAG para tarefas de perguntas e respostas.",
+    )
+    DISPLAY_NAME: str = MultilingualString(
+        en="Default QnA RAG Generation Prompt",
+        es="Prompt de Generación RAG de Preguntas y Respuestas Predeterminado",
+        pt="Prompt de Geração RAG de Perguntas e Respostas Padrão",
+    )
 
     metadata = {
         "name": "Default QnA RAG Generation Prompt",

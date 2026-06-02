@@ -9,10 +9,7 @@ import {
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { getGeneratorComponents } from "../../../../api/rag";
-import {
-  buildDefaultValuesFromSchemaProperties,
-  getInitialModelParameters,
-} from "../components/ragFormDefaults";
+import { resolveDefaults } from "../../../../utils/schema";
 
 export default function GeneratorConfigurationStep({
   generatorModel,
@@ -22,14 +19,30 @@ export default function GeneratorConfigurationStep({
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
 
+  const [fetchedDefaults, setFetchedDefaults] = useState(null);
+
+  useEffect(() => {
+    if (!selectedGenerator) return;
+    let cancelled = false;
+    (async () => {
+      const d = await resolveDefaults(selectedGenerator.name);
+      if (!cancelled) setFetchedDefaults(d);
+    })();
+    return () => { cancelled = true; };
+  }, [selectedGenerator]);
+
   const formInitialValues = useMemo(
-    () =>
-      getInitialModelParameters({
-        selectedModel: selectedGenerator,
-        currentModelName: generatorModel?.component,
-        currentParams: generatorModel?.params,
-      }),
-    [selectedGenerator, generatorModel?.component, generatorModel?.params],
+    () => {
+      if (
+        generatorModel?.component === selectedGenerator?.name &&
+        generatorModel?.params &&
+        Object.keys(generatorModel.params).length > 0
+      ) {
+        return generatorModel.params;
+      }
+      return fetchedDefaults || {};
+    },
+    [selectedGenerator, generatorModel?.component, generatorModel?.params, fetchedDefaults],
   );
 
   useEffect(() => {
@@ -55,14 +68,13 @@ export default function GeneratorConfigurationStep({
     setNextEnabled(!!generatorModel?.component);
   }, [generators, generatorModel?.component]);
 
-  const handleSelection = (event, newValue) => {
+  const handleSelection = async (event, newValue) => {
     setSelectedGenerator(newValue);
     if (newValue) {
+      const defaults = await resolveDefaults(newValue.name);
       setGeneratorModel({
         component: newValue.name,
-        params: buildDefaultValuesFromSchemaProperties(
-          newValue.schema?.properties || {},
-        ),
+        params: defaults,
       });
       setNextEnabled(true);
     } else {

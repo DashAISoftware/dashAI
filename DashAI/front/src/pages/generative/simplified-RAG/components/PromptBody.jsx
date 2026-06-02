@@ -114,6 +114,9 @@ export default function PromptBody({
     if (selectedPrompt._isDefault) {
       return selectedPrompt.metadata?.templates?.[selectedLanguage] || "";
     }
+    if (selectedPrompt.parameters?.templates) {
+      return selectedPrompt.parameters.templates[selectedLanguage] || "";
+    }
     return selectedPrompt.parameters?.template || "";
   }, [selectedPrompt, selectedLanguage]);
 
@@ -121,16 +124,17 @@ export default function PromptBody({
 
   useEffect(() => {
     if (selectedPrompt) {
+      const promptParams = {
+        template: currentTemplate,
+        language: selectedLanguage,
+      };
+      const srcParams = selectedPrompt.parameters;
+      if (selectedPrompt._isDefault || srcParams?.templates) {
+        promptParams.templates = srcParams?.templates;
+      }
       setPromptModel({
         component: selectedPrompt.class_name || selectedPrompt.name,
-        params: {
-          template: currentTemplate,
-          ...(selectedPrompt._isDefault ? { language: selectedLanguage } : {}),
-          ...(!selectedPrompt._isDefault &&
-          selectedPrompt.parameters?.language
-            ? { language: selectedPrompt.parameters.language }
-            : {}),
-        },
+        params: promptParams,
       });
       if (onTokenCountChange) {
         const tokenCount = Math.ceil(currentTemplate.length / 4);
@@ -256,7 +260,7 @@ export default function PromptBody({
         />
       </Box>
 
-      {isDefault && showDetails && (
+      {(isDefault || selectedPrompt?.parameters?.templates) && showDetails && (
         <Box sx={{ mb: 2 }}>
           <TextField
             select

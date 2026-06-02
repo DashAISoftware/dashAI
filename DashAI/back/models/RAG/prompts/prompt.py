@@ -19,6 +19,8 @@ class Prompt(BaseModel):
     """
 
     SCHEMA = PromptSchema
+    DESCRIPTION: str = "Base class for RAG prompts."
+    DISPLAY_NAME: str = "Base RAG Prompt"
     id: int
     name: str
     REQUIRED_EXTRA_KWARGS = []

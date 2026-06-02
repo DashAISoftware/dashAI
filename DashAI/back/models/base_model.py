@@ -22,6 +22,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "Model"
+    FLAGS: list[str] = []
     DISPLAY_NAME: str = ""
     DESCRIPTION: str = ""
     COLOR: str = "#795548"

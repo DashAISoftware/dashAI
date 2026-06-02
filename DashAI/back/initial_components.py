@@ -210,19 +210,22 @@ from DashAI.back.models.RAG import (
     # Prompts
     DefaultRAGGenerationPrompt,
     # Retrievers
-    DenseRetriever,
+    FastTextDenseRetriever,
     # Encodings
     # DenseEmbedding,
     FastTextEmbedding,
+    HuggingFaceDenseRetriever,
     HuggingFaceEmbedding,
     # Pipeline
     ParallelRetriever,
     RAGPipeline,
     SequentialRetriever,
-    SparseRetriever,
     TFIDFRetriever,
     TFIDFVectorizerModel,
     TokenChunkModel,
+)
+from DashAI.back.models.remote_models.deepseek_text_to_text_generation_model import (
+    DeepSeekTextToTextGenerationModel,
 )
 from DashAI.back.models.remote_models.openai_text_to_text_generation_model import (
     OpenAITextToTextGenerationModel,
@@ -398,6 +401,7 @@ def get_initial_components():
         StableDiffusionXLModel,
         StableDiffusionXLV1ControlNet,
         OpenAITextToTextGenerationModel,
+        DeepSeekTextToTextGenerationModel,
         Phi4MiniInstructModel,
         SVC,
         SVR,
@@ -519,8 +523,8 @@ def get_initial_components():
         # DefaultAugmentationPrompt,
         CustomAugmentationPrompt,
         # Retrievers
-        DenseRetriever,
-        SparseRetriever,
+        FastTextDenseRetriever,
+        HuggingFaceDenseRetriever,
         TFIDFRetriever,
         TFIDFVectorizerModel,
         BM25Retriever,

@@ -1,5 +1,7 @@
 # RAG Frontend Architecture — AI Agent Reference
 
+> **Source**: Originally located at repository root as `RAG_FRONTEND_ARCHITECTURE.md`. Moved here on 2026-06-01 as part of documentation consolidation.
+
 > Auto-generated index of all files involved in the RAG simplified view,
 > session summary, generative chat, and side panels.
 > Last updated: 2026-05-27

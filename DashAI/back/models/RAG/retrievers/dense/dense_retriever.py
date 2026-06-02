@@ -6,7 +6,6 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
-    component_field,
     enum_field,
     int_field,
     schema_field,
@@ -14,7 +13,6 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.embeddings import DenseEmbedding
-from DashAI.back.models.RAG.retrievers.persistence import DensePersistence
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 # NOTE: The entire chunk index (similarity_matrix) is loaded into memory,
@@ -23,43 +21,8 @@ from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 
 class DenseRetrieverSchema(BaseSchema):
-    encoding_model: schema_field(
-        component_field(parent="DenseEmbedding"),
-        placeholder={"component": "FastTextEmbedding", "params": {}},
-        description=MultilingualString(
-            en="Model to convert text into dense vector representations.",
-            es="Modelo para convertir texto en representaciones vectoriales densas.",
-        ),
-    )  # type: ignore
-
     similarity_metric: schema_field(
-        enum_field(
-            enum=[
-                "cityblock",
-                "cosine",
-                "euclidean",
-                "l1",
-                "l2",
-                "manhattan",
-                "nan_euclidean",
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "dice",
-                "hamming",
-                "jaccard",
-                "mahalanobis",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        ),
+        enum_field(enum=["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
         placeholder="cosine",
         description=MultilingualString(
             en="Distance metric for comparing dense vectors.",
@@ -78,48 +41,38 @@ class DenseRetrieverSchema(BaseSchema):
 
 
 class DenseRetriever(UnitRetriever):
+    FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
-        en="Dense Retriever",
-        es="Recuperador Denso",
+        en="Embedding Retriever",
+        es="Recuperador por Embeddings",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Dense retriever using vector embeddings for similarity search.",
-        es="Recuperador denso que usa embeddings vectoriales para búsqueda por similitud.",
+        en="Embedding retriever using vector embeddings for similarity search.",
+        es="Recuperador por embeddings que usa representaciones vectoriales para búsqueda por similitud.",
     )
 
     SCHEMA = DenseRetrieverSchema
 
     def __init__(self, **kwargs):
-        persistence_raw = kwargs["persistence"]
-        if not isinstance(persistence_raw, DensePersistence):
-            raise TypeError(
-                f"Expected DensePersistence, got {type(persistence_raw).__name__}"
-            )
-
-        self.embedding_class_name = kwargs["encoding_model"]["properties"]["params"][
-            "comp"
-        ]["component"]
-        self.embedding_params = kwargs["encoding_model"]["properties"]["params"][
-            "comp"
-        ]["params"]
-        kwargs["encoding_model"] = kwargs["encoding_model"]["properties"]["params"][
-            "comp"
-        ]
-
         super().__init__(**kwargs)
-
-        self.embedding_model = self.params.pop("encoding_model")
-        if not isinstance(self.embedding_model, DenseEmbedding):
-            raise TypeError(
-                f"Expected DenseEmbedding instance, got {type(self.embedding_model).__name__}"
-            )
-        self.params["encoding_model"] = {
-            "class_name": self.embedding_class_name,
-            "parameters": self.embedding_params,
-        }
 
         self.similarity_metric = self.params.pop("similarity_metric")
         self._top_k = self.params.pop("top_k")
+
+    def _init_embedding(self, embedding_model):
+        if not isinstance(embedding_model, DenseEmbedding):
+            raise TypeError(
+                f"Expected DenseEmbedding instance, "
+                f"got {type(embedding_model).__name__}"
+            )
+        self.embedding_model = embedding_model
+        encoding_class_name = embedding_model.__class__.__name__
+        encoding_params = dict(sorted(embedding_model.params.items()))
+
+        self.params["encoding_model"] = {
+            "class_name": encoding_class_name,
+            "parameters": encoding_params,
+        }
 
         self.compute_missing_embeddings()
         self.init_similarity_matrix()
@@ -165,6 +118,7 @@ class DenseRetriever(UnitRetriever):
         return self._top_k
 
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+        self._check_infra()
         if self.similarity_matrix is None:
             raise ValueError("Similarity matrix not initialized.")
         k = top_k if top_k is not None else self._top_k
@@ -186,6 +140,7 @@ class DenseRetriever(UnitRetriever):
         return results
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        self._check_infra()
         if self.similarity_matrix is None:
             raise ValueError("Similarity matrix not initialized.")
         query_embedding = self.embedding_model.encode(query)

@@ -1,6 +1,8 @@
 # DashAI RAG — Documentation Index
 
-This directory contains the complete technical documentation for the Retrieval-Augmented Generation (RAG) module of DashAI. It consolidates knowledge from multiple development sessions, existing markdown files (`RAG_TECHNICAL_GUIDE.md`, `RAG_FRONTEND_ARCHITECTURE.md`, `pendientes_rag.md`), and the current codebase state.
+This directory contains the complete technical documentation for the Retrieval-Augmented Generation (RAG) module of DashAI. It consolidates knowledge from multiple development sessions and the current codebase state.
+
+All RAG-related documentation has been consolidated here from scattered locations (repository root and frontend directory). See each file's header for its origin source.
 
 ## Index
 
@@ -16,6 +18,11 @@ This directory contains the complete technical documentation for the Retrieval-A
 | [`08-migrations.md`](./08-migrations.md) | Alembic migration history (composite support, uniqueness, FK inversion, chunk_set) |
 | [`09-pending-tasks.md`](./09-pending-tasks.md) | Known issues, cleanup TODOs, architectural debt, next steps |
 | [`10-frontend-changes.md`](./10-frontend-changes.md) | Frontend changes needed: prompt_id → prompt ModelRef |
+| [`11-retriever-ui-design.md`](./11-retriever-ui-design.md) | Retriever configuration UI: data model, data flow, form save mechanism, auto-repair, backend-frontend contract, bug history |
+| [`12-testing-guide.md`](./12-testing-guide.md) | Simplified RAG interface testing guide (Spanish): usage flow, data flow, testing checklist |
+| [`13-technical-guide.md`](./13-technical-guide.md) | Comprehensive RAG technical guide: backend architecture, frontend architecture, execution flow, session lifecycle, migration summary |
+| [`14-frontend-architecture.md`](./14-frontend-architecture.md) | Frontend file tree, dependency graph, shared utilities, component responsibilities, architectural decisions |
+| [`15-notes.md`](./15-notes.md) | Design notes about document version tracking (Spanish) |
 
 ## Quick Reference
 

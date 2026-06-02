@@ -1,6 +1,6 @@
 # 09 — Pending Tasks
 
-Consolidated from `pendientes_rag.md` and current codebase analysis.
+Consolidated from the former `pendientes_rag.md` (now removed, content merged here) and current codebase analysis.
 
 ## Completed (reference)
 

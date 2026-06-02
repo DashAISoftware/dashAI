@@ -8,8 +8,7 @@ import {
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
-import { buildDefaultValuesFromSchemaProperties } from "../components/ragFormDefaults";
-import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
+import { resolveDefaults, getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
 import AdvancedConfigCard from "../components/AdvancedConfigCard";
 import PresetCard from "../components/PresetCard";
@@ -112,11 +111,11 @@ export default function ChunkingSection({
     applyPreset(defaultChunker, preset);
   };
 
-  const applyPreset = (chunker, preset) => {
+  const applyPreset = async (chunker, preset) => {
     setSelectedChunker(chunker);
     setSelectedPreset(preset?.value || "custom");
     
-    const defaultParams = buildDefaultValuesFromSchemaProperties(chunker.schema?.properties || {});
+    const defaultParams = await resolveDefaults(chunker.name);
     const params = {
       ...defaultParams,
       ...(preset?.config || {}),

@@ -9,11 +9,7 @@ import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import {
-  buildDefaultValuesFromSchemaProperties,
-  getInitialModelParameters,
-} from "../components/ragFormDefaults";
-import { getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
+import { resolveDefaults, getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 
 export default function ChunkingConfigurationStep({
   chunkingModel,
@@ -24,24 +20,34 @@ export default function ChunkingConfigurationStep({
   const [selectedChunking, setSelectedChunking] = useState(null);
   const [error, setError] = useState(null);
 
+  const [fetchedDefaults, setFetchedDefaults] = useState(null);
+
+  useEffect(() => {
+    if (!selectedChunking) return;
+    let cancelled = false;
+    (async () => {
+      const d = await resolveDefaults(selectedChunking.name);
+      if (!cancelled) setFetchedDefaults(d);
+    })();
+    return () => { cancelled = true; };
+  }, [selectedChunking]);
+
   const formInitialValues = useMemo(
     () => {
-      const modelName = getModelFromSubform(chunkingModel);
-      const params = getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
-      const vals = getInitialModelParameters({
-        selectedModel: selectedChunking,
-        currentModelName: modelName,
-        currentParams: params,
-      });
-      console.log("[ChunkingConfigStep] formInitialValues:", { 
-        modelName, 
-        params, 
-        selectedChunking: selectedChunking?.name,
-        vals
-      });
-      return vals;
+      if (selectedChunking) {
+        const existingModelName = getModelFromSubform(chunkingModel);
+        const existingParams = getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
+        if (
+          existingModelName === selectedChunking.name &&
+          existingParams &&
+          Object.keys(existingParams).length > 0
+        ) {
+          return existingParams;
+        }
+      }
+      return fetchedDefaults || {};
     },
-    [selectedChunking, chunkingModel],
+    [selectedChunking, chunkingModel, fetchedDefaults],
   );
 
   useEffect(() => {
@@ -82,16 +88,15 @@ export default function ChunkingConfigurationStep({
     }
   }, [chunkingOptions, chunkingModel]);
 
-  const handleChunkingSelectionChange = (event, newValue) => {
+  const handleChunkingSelectionChange = async (event, newValue) => {
     setSelectedChunking(newValue);
     setError(null);
 
     if (newValue) {
+      const defaults = await resolveDefaults(newValue.name);
       setChunkingModel({
         component: newValue.name,
-        params: buildDefaultValuesFromSchemaProperties(
-          newValue.schema?.properties || {},
-        ),
+        params: defaults,
       });
       setNextEnabled(true);
     } else {

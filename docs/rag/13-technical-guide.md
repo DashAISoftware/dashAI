@@ -1,5 +1,7 @@
 # DashAI: RAG Implementation Technical Guide
 
+> **Source**: Originally located at repository root as `RAG_TECHNICAL_GUIDE.md`. Moved here on 2026-06-01 as part of documentation consolidation.
+
 This document provides a detailed technical overview of the Retrieval-Augmented Generation (RAG) implementation in DashAI, covering both backend and frontend architectures, user flows, and the differences between the Simplified and Legacy views.
 
 ---
@@ -285,4 +287,3 @@ The legacy `RAGHomePage` and its multi-step wizard (`NewSessionModal`) have been
 
 **Backend:**
 - `DashAI/back/api/api_v1/endpoints/documents.py` — file_url absolute URLs + RFC 5987 encoding
-

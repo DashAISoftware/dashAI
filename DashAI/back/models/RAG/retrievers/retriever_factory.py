@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
+from DashAI.back.core.schema_fields.utils import fill_objects, normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
@@ -30,8 +31,6 @@ from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetr
 
 @dataclass(frozen=True)
 class RetrieverFactoryResult:
-    """Result of retriever creation via RetrieverFactory."""
-
     db_record_id: int
     model: RetrieverModel
 
@@ -39,9 +38,7 @@ class RetrieverFactoryResult:
 class RetrieverFactory:
     """Creates retriever instances with full persistence lifecycle.
 
-    Handles sparse/dense unit retrievers and composite retrievers with
-    recursive child construction. All DB access delegated to
-    ``RetrieverRepository``.
+    All DB access delegated to ``RetrieverRepository``.
     """
 
     def __init__(
@@ -61,16 +58,14 @@ class RetrieverFactory:
         self._chunk_set_id = chunk_set_id
         self._repo = RetrieverRepository(db)
 
+    # ── Public entry point ───────────────────────────────────────────
+
     def create(
         self,
         component_name: str,
         params: Dict[str, Any],
     ) -> RetrieverFactoryResult:
-        """Full lifecycle: resolve → construct → persist.
-
-        Dispatches to ``_create_composite`` or ``_create_unit`` based
-        on the resolved class.
-        """
+        params = normalize_payload(params)
         model_class = self._registry[component_name]["class"]
 
         if issubclass(model_class, CompositeRetriever):
@@ -80,326 +75,243 @@ class RetrieverFactory:
 
     # ── Composite ────────────────────────────────────────────────────
 
-    def _create_composite(
-        self,
-        model_class: type[RetrieverModel],
-        params: Dict[str, Any],
-    ) -> RetrieverFactoryResult:
+    def _create_composite(self, model_class, params):
         existing = self._load_composite_from_db(model_class, params)
         if existing is not None:
             return RetrieverFactoryResult(
-                db_record_id=existing.get_id(),
-                model=existing,
+                db_record_id=existing.get_id(), model=existing,
             )
 
-        children_configs: List[Dict[str, Any]] = params.pop("children")
-        children_instances: List[RetrieverModel] = []
-        for child_config in children_configs:
-            children_instances.append(self._create_child_retriever(child_config))
-
+        children_configs = params.pop("children")
+        children_instances = [
+            self._create_child_retriever(c) for c in children_configs
+        ]
         params["children"] = children_instances
         model = model_class(**params)
-        bridge_record_id = self._save_composite(model)
-        model.set_id(bridge_record_id)
-        return RetrieverFactoryResult(
-            db_record_id=bridge_record_id,
-            model=model,
-        )
+        bridge_id = self._save_composite(model)
+        model.set_id(bridge_id)
+        return RetrieverFactoryResult(db_record_id=bridge_id, model=model)
 
-    def _create_child_retriever(self, child_config: Dict[str, Any]) -> RetrieverModel:
-        result = self.create(
+    def _create_child_retriever(self, child_config):
+        return self.create(
             component_name=child_config["component"],
             params=child_config["params"],
-        )
-        return result.model
+        ).model
 
-    def _load_composite_from_db(
-        self,
-        model_class: type[RetrieverModel],
-        params: Dict[str, Any],
-    ) -> RetrieverModel | None:
-        class_name = model_class.__name__
+    def _load_composite_from_db(self, model_class, params):
         bridge_record = self._repo.find_composite(
-            self._pipeline_id,
-            class_name,
+            self._pipeline_id, model_class.__name__,
         )
         if bridge_record is None:
             return None
-
         child_links = self._repo.find_composite_children(bridge_record.id)
         if not child_links:
             return None
 
-        children: List[RetrieverModel] = []
+        children = []
         for link in child_links:
             child_bridge = self._repo.get_bridge_by_id(link.child_id)
             if child_bridge is None:
                 return None
-            child_result = self.create(
-                component_name=child_bridge.class_name,
-                params={},
+            child_params = self._load_child_params(child_bridge.id, child_bridge.class_name)
+            if child_params is None:
+                return None
+            children.append(
+                self.create(
+                    component_name=child_bridge.class_name,
+                    params=child_params,
+                ).model,
             )
-            children.append(child_result.model)
 
-        composite_params = {k: v for k, v in params.items() if k != "children"}
-        model = model_class(children=children, **composite_params)
+        model = model_class(
+            children=children,
+            **{k: v for k, v in params.items() if k != "children"},
+        )
         model.set_id(bridge_record.id)
         return model
 
-    def _save_composite(self, model: CompositeRetriever) -> int:
-        child_ids: List[int] = []
+    def _load_child_params(
+        self, bridge_id: int, class_name: str,
+    ) -> Dict[str, Any] | None:
+        sparse = self._repo.find_sparse_by_bridge_id(bridge_id)
+        if sparse is not None and sparse.parameters is not None:
+            return dict(sorted(sparse.parameters.items()))
+        dense = self._repo.find_dense_by_bridge_id(bridge_id)
+        if dense is not None and dense.parameters is not None:
+            return dict(sorted(dense.parameters.items()))
+        return None
+
+    def _save_composite(self, model):
+        child_ids = []
         for child in model.get_children():
             cid = child.get_id()
             if cid is None:
                 raise ValueError(f"Child {child.__class__.__name__} has no bridge ID.")
             child_ids.append(cid)
-        bridge_record = self._repo.save_composite(
-            model.__class__.__name__,
-            self._pipeline_id,
-            child_ids,
-        )
-        return bridge_record.id
+        return self._repo.save_composite(
+            model.__class__.__name__, self._pipeline_id, child_ids,
+        ).id
 
     # ── Unit ─────────────────────────────────────────────────────────
 
-    def _create_unit(
-        self,
-        model_class: type[RetrieverModel],
-        params: Dict[str, Any],
-    ) -> RetrieverFactoryResult:
+    def _create_unit(self, model_class, params):
         sorted_params = dict(sorted(params.items()))
-        class_name = model_class.__name__
-
-        self._inject_infra(params)
 
         loaded = self._load_unit_from_db(
-            model_class,
-            class_name,
-            sorted_params,
+            model_class, model_class.__name__, sorted_params,
         )
         if loaded is not None:
             return RetrieverFactoryResult(
-                db_record_id=loaded.get_id(),
-                model=loaded,
+                db_record_id=loaded.get_id(), model=loaded,
             )
+
+        validated = model_class.SCHEMA.model_validate(params)
+        resolved = fill_objects(validated, self._registry)
+        model = model_class(**resolved)
 
         if issubclass(model_class, DenseRetriever):
-            params["persistence"] = DensePersistence(
-                matrix_dirs={}, embedding_model_id=0,
+            model.inject_infra(
+                self._env_rag_path, self._chunks,
+                DensePersistence(matrix_dirs={}, embedding_model_id=0),
             )
+            model.init_model()
+            self._finalize_dense(model, sorted_params)
         elif issubclass(model_class, SparseRetriever):
-            params["persistence"] = SparsePersistence(model_dir=None)
+            model.inject_infra(
+                self._env_rag_path, self._chunks,
+                SparsePersistence(model_dir=None),
+            )
+            model.init_model()
+        else:
+            raise ValueError(
+                f"Unsupported unit retriever: {model_class.__name__}"
+            )
 
-        model = model_class(**params)
-        bridge_record_id = self._save_unit(model, sorted_params)
-        model.set_id(bridge_record_id)
-        return RetrieverFactoryResult(
-            db_record_id=bridge_record_id,
-            model=model,
+        bridge_id = self._save_unit(model, sorted_params)
+        model.set_id(bridge_id)
+        return RetrieverFactoryResult(db_record_id=bridge_id, model=model)
+
+    def _finalize_dense(self, model, sorted_params):
+        """After init_model() for a new dense model: persist embedding
+        model, build persistence with the proper ID, compute matrices."""
+        enc = model.params.get("encoding_model")
+        if not enc:
+            return
+        emb_record = self._repo.find_or_create_embedding_model(
+            enc["class_name"],
+            dict(sorted(enc["parameters"].items())),
+        )
+        model._persistence = self._dense_persistence(emb_record.id)
+        model.compute_missing_embeddings()
+        model.init_similarity_matrix()
+
+    def _dense_persistence(self, embedding_model_id: int) -> DensePersistence:
+        """Build a DensePersistence with matrix dirs for every known doc."""
+        matrix_dirs = {}
+        for doc_id in self._chunks:
+            folder = (
+                f"doc_id-{doc_id}__"
+                f"chunk_set_id-{self._chunk_set_id}__"
+                f"embedding_model_id-{embedding_model_id}"
+            )
+            matrix_dirs[doc_id] = os.path.join(
+                self._env_rag_path, "embeddings", folder,
+            )
+        return DensePersistence(
+            matrix_dirs=matrix_dirs,
+            embedding_model_id=embedding_model_id,
         )
 
-    def _inject_infra(self, params: Dict[str, Any]) -> None:
-        params["env_rag_path"] = self._env_rag_path
-        params["chunks"] = self._chunks
-        if "persistence" not in params:
-            params["persistence"] = None
-
-    def _load_unit_from_db(
-        self,
-        model_class: type[RetrieverModel],
-        class_name: str,
-        sorted_params: Dict[str, Any],
-    ) -> RetrieverModel | None:
+    def _load_unit_from_db(self, model_class, class_name, sorted_params):
         if issubclass(model_class, DenseRetriever):
             return self._load_dense(class_name, sorted_params)
         if issubclass(model_class, SparseRetriever):
             return self._load_sparse(class_name, sorted_params)
         raise ValueError(f"Unsupported unit retriever: {model_class.__name__}")
 
-    def _load_dense(
-        self,
-        class_name: str,
-        sorted_params: Dict[str, Any],
-    ) -> RetrieverModel | None:
-        detail_record = self._repo.find_dense(
-            class_name,
-            sorted_params,
-            self._chunk_set_id,
-        )
-        persistence = self._build_dense_persistence(detail_record)
-        model_class = self._registry[class_name]["class"]
-
-        if detail_record is not None:
-            params = dict(sorted_params)
-            params["chunks"] = self._chunks
-            params["env_rag_path"] = self._env_rag_path
-            params["persistence"] = persistence
-            model = model_class(**params)
-            bridge_record = self._repo.find_bridge_for_sub_table(
-                detail_record,
-                class_name,
-            )
-            if bridge_record is not None:
-                model.set_id(bridge_record.id)
-            return model
-
-        return None
-
-    def _load_sparse(
-        self,
-        class_name: str,
-        sorted_params: Dict[str, Any],
-    ) -> RetrieverModel | None:
-        detail_record = self._repo.find_sparse(
-            class_name,
-            sorted_params,
-            self._chunk_set_id,
-        )
-        persistence = self._build_sparse_persistence(detail_record)
-        model_class = self._registry[class_name]["class"]
-
-        if detail_record is not None:
-            params = dict(sorted_params)
-            params["chunks"] = self._chunks
-            params["env_rag_path"] = self._env_rag_path
-            params["persistence"] = persistence
-            model = model_class(**params)
-            bridge_record = self._repo.find_bridge_for_sub_table(
-                detail_record,
-                class_name,
-            )
-            if bridge_record is not None:
-                model.set_id(bridge_record.id)
-            return model
-
-        return None
-
-    def _build_sparse_persistence(
-        self,
-        detail_record,
-    ) -> SparsePersistence:
-        if detail_record is None:
-            return SparsePersistence(model_dir=None)
-        return SparsePersistence(model_dir=detail_record.storage_folder)
-
-    def _build_dense_persistence(
-        self,
-        detail_record,
-    ) -> DensePersistence:
-        encoding_params = self._extract_encoding_from_detail(detail_record)
-        if encoding_params is None:
-            emb_record_id = 0
-        else:
-            emb_record = self._repo.find_or_create_embedding_model(
-                encoding_params["class"],
-                encoding_params["params"],
-            )
-            emb_record_id = emb_record.id
-
-        existing_matrices = self._repo.find_embedding_matrices(
-            list(self._chunks.keys()),
-            self._chunk_set_id,
-            emb_record_id,
-        )
-        matrix_dirs: Dict[int, str] = {}
-        for doc_id in list(self._chunks.keys()):
-            existing = existing_matrices.get(doc_id)
-            if existing is not None:
-                matrix_dirs[doc_id] = existing.storage_folder
-            else:
-                folder_name = (
-                    f"doc_id-{doc_id}__"
-                    f"chunk_set_id-{self._chunk_set_id}__"
-                    f"embedding_model_id-{emb_record_id}"
-                )
-                matrix_dirs[doc_id] = os.path.join(
-                    self._env_rag_path,
-                    "embeddings",
-                    folder_name,
-                )
-        return DensePersistence(
-            matrix_dirs=matrix_dirs,
-            embedding_model_id=emb_record_id,
-        )
-
-    def _extract_encoding_from_detail(
-        self,
-        detail_record,
-    ) -> Dict[str, Any] | None:
-        if detail_record is None:
+    def _load_dense(self, class_name, sorted_params):
+        record = self._repo.find_dense(class_name, sorted_params, self._chunk_set_id)
+        if record is None:
             return None
-        params = detail_record.parameters or {}
-        encoding = params.get("encoding_model", {})
-        properties = encoding.get("properties", {})
-        inner_params = properties.get("params", {})
-        comp = inner_params.get("comp", {})
-        return {
-            "class": comp.get("component"),
-            "params": comp.get("params", {}),
-        }
+        persistence = self._dense_persistence(record.embedding_model_id)
+        model_class = self._registry[class_name]["class"]
 
-    def _save_unit(self, model: RetrieverModel, sorted_params: Dict[str, Any]) -> int:
+        validated = model_class.SCHEMA.model_validate(dict(sorted_params))
+        resolved = fill_objects(validated, self._registry)
+        model = model_class(**resolved)
+        model.inject_infra(self._env_rag_path, self._chunks, persistence)
+        model.init_model()
+        bridge = self._repo.find_bridge_for_sub_table(record, class_name)
+        if bridge is not None:
+            model.set_id(bridge.id)
+        return model
+
+    def _load_sparse(self, class_name, sorted_params):
+        record = self._repo.find_sparse(class_name, sorted_params, self._chunk_set_id)
+        if record is None:
+            return None
+        persistence = SparsePersistence(model_dir=record.storage_folder)
+        model_class = self._registry[class_name]["class"]
+
+        validated = model_class.SCHEMA.model_validate(dict(sorted_params))
+        resolved = fill_objects(validated, self._registry)
+        model = model_class(**resolved)
+        model.inject_infra(self._env_rag_path, self._chunks, persistence)
+        model.init_model()
+        bridge = self._repo.find_bridge_for_sub_table(record, class_name)
+        if bridge is not None:
+            model.set_id(bridge.id)
+        return model
+
+    # ── Save ─────────────────────────────────────────────────────────
+
+    def _save_unit(self, model, sorted_params):
         if isinstance(model, DenseRetriever):
             return self._save_dense(model, sorted_params)
         if isinstance(model, SparseRetriever):
             return self._save_sparse(model, sorted_params)
         raise ValueError(f"Unsupported retriever: {type(model).__name__}")
 
-    def _save_dense(self, model: DenseRetriever, sorted_params: Dict[str, Any]) -> int:
+    def _save_dense(self, model, sorted_params):
         import numpy as np
 
-        for doc_id, matrix_dir in model._persistence.matrix_dirs.items():
-            matrix_path = os.path.join(matrix_dir, "embeddings.npy")
-            if not os.path.exists(matrix_path):
+        for doc_id, mdir in model._persistence.matrix_dirs.items():
+            path = os.path.join(mdir, "embeddings.npy")
+            if not os.path.exists(path):
                 continue
-            existing = self._repo.find_embedding_matrix(
-                doc_id,
-                self._chunk_set_id,
-                model._persistence.embedding_model_id,
-            )
-            if existing is not None:
+            if self._repo.find_embedding_matrix(
+                doc_id, self._chunk_set_id, model._persistence.embedding_model_id,
+            ):
                 continue
-            loaded = np.load(matrix_path)
             self._repo.save_embedding_matrix(
-                doc_id,
-                self._chunk_set_id,
+                doc_id, self._chunk_set_id,
                 model._persistence.embedding_model_id,
-                matrix_dir,
-                list(loaded.shape),
+                mdir, list(np.load(path).shape),
             )
 
-        bridge_record = self._repo.create_bridge(
-            model.__class__.__name__,
-            self._pipeline_id,
+        bridge = self._repo.create_bridge(
+            model.__class__.__name__, self._pipeline_id,
         )
         self._repo.save_dense(
-            model.__class__.__name__,
-            sorted_params,
-            bridge_record.id,
-            self._chunk_set_id,
+            model.__class__.__name__, sorted_params,
+            bridge.id, self._chunk_set_id,
             model._persistence.embedding_model_id,
         )
-        return bridge_record.id
+        return bridge.id
 
-    def _save_sparse(self, model: SparseRetriever, sorted_params: Dict[str, Any]) -> int:
+    def _save_sparse(self, model, sorted_params):
         folder_id = uuid4().hex
         storage_folder = os.path.join(
-            self._env_rag_path,
-            "sparse_retrievers",
+            self._env_rag_path, "sparse_retrievers",
             f"sparse_retriever_id-{folder_id}",
         )
         model._persistence.model_dir = storage_folder
         model.save()
-
-        bridge_record = self._repo.create_bridge(
-            model.__class__.__name__,
-            self._pipeline_id,
+        bridge = self._repo.create_bridge(
+            model.__class__.__name__, self._pipeline_id,
         )
         self._repo.save_sparse(
-            model.__class__.__name__,
-            sorted_params,
-            storage_folder,
-            bridge_record.id,
-            self._chunk_set_id,
+            model.__class__.__name__, sorted_params,
+            storage_folder, bridge.id, self._chunk_set_id,
         )
-        return bridge_record.id
+        return bridge.id

@@ -16,6 +16,7 @@ class RetrieverModel(BaseModel, ABC):
     """
 
     TYPE: Final[str] = "RetrieverModel"
+    FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
         en="Retriever",
         es="Recuperador",
@@ -34,7 +35,7 @@ class RetrieverModel(BaseModel, ABC):
 
     def __init__(self, **kwargs):
         self._db_id: int | None = None
-        self.params = self.validate_and_transform(kwargs) if kwargs else {}
+        self.params = kwargs
 
     # ── Canonical ID (RAGRetriever.id for all retrievers) ──────────
 
@@ -73,6 +74,35 @@ class RetrieverModel(BaseModel, ABC):
                     raise ValueError(
                         f"Chunk {chunk_id} document_id {chunk.document_id} != doc ID {doc_id}."
                     )
+
+    # ── Infrastructure injection ───────────────────────────────────
+
+    def inject_infra(
+        self,
+        env_rag_path: str | os.PathLike,
+        chunks: Dict[int, Dict[int, Chunk]],
+        persistence: Any,
+    ) -> None:
+        """Inject runtime infrastructure *after* schema validation.
+
+        Subclasses **must** store the three arguments as instance
+        attributes.  Raises ``TypeError`` if any argument has an
+        unexpected type.
+        """
+        self.env_rag_path = env_rag_path
+        self.chunks = chunks
+        self._persistence = persistence
+        self._validate_chunks_dict()
+
+    # ── Post-infra initialisation ────────────────────────────────────
+
+    def init_model(self) -> None:
+        """Called by the factory **after** ``inject_infra()``.
+
+        Subclasses restore saved state (``load()``) or compute initial
+        state (``_fit()``, ``_init_embedding()``).  Default is a no-op.
+        """
+        pass
 
     # ── Retrieval interface ─────────────────────────────────────────
 

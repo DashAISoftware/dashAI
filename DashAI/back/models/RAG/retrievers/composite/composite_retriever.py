@@ -13,6 +13,7 @@ class CompositeRetriever(RetrieverModel, ABC):
     """
 
     TYPE: Final[str] = "RetrieverModel"
+    FLAGS: list[str] = ["abstract"]
     REQUIRED_EXTRA_KWARGS: list = []
 
     def __init__(self, **kwargs):

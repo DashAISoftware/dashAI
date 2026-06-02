@@ -3,8 +3,6 @@ from typing import List
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
-    enum_field,
-    int_field,
     list_field,
     schema_field,
 )
@@ -13,7 +11,6 @@ from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
-from DashAI.back.models.RAG.retrievers.enums import RetrievalStrategy
 from DashAI.back.models.RAG.retrievers.exceptions import (
     CompositeValidationError,
     UnitRetrieverChildError,
@@ -26,122 +23,53 @@ class SequentialRetrieverSchema(BaseSchema):
         list_field(component_field(parent="RetrieverModel"), min_items=2),
         placeholder=[],
         description=MultilingualString(
-            en="Ordered list of child retrievers. Each runs in sequence.",
-            es="Lista ordenada de recuperadores hijos. Cada uno se ejecuta en secuencia.",
-        ),
-    )  # type: ignore
-
-    strategy: schema_field(
-        enum_field(enum=[s.value for s in RetrievalStrategy]),
-        placeholder=RetrievalStrategy.ACCUMULATE.value,
-        description=MultilingualString(
-            en=(
-                f"'{RetrievalStrategy.ACCUMULATE}': each child contributes chunks "
-                f"until the global top_k is reached. "
-                f"'{RetrievalStrategy.CASCADE}': the first child retrieves broadly, "
-                f"each subsequent child re-ranks and tightens."
-            ),
-            es=(
-                f"'{RetrievalStrategy.ACCUMULATE}': cada hijo contribuye fragmentos "
-                f"hasta alcanzar el top_k global. "
-                f"'{RetrievalStrategy.CASCADE}': el primer hijo recupera ampliamente, "
-                f"cada hijo subsiguiente reordena y ajusta."
-            ),
-        ),
-    )  # type: ignore
-
-    top_k: schema_field(
-        int_field(ge=1),
-        placeholder=10,
-        description=MultilingualString(
-            en=(
-                "In accumulate mode: total chunks to return across all children. "
-                "In cascade mode: ignored (last child's top_k determines the count)."
-            ),
-            es=(
-                "En modo acumulación: total de fragmentos a retornar entre todos los hijos. "
-                "En modo cascada: ignorado (el top_k del último hijo determina la cuenta)."
-            ),
+            en="Ordered list of child retrievers. The first child retrieves broadly; "
+            "each subsequent child re-ranks and tightens the results.",
+            es="Lista ordenada de recuperadores hijos. El primero recupera ampliamente; "
+            "cada hijo subsiguiente reordena y ajusta los resultados.",
         ),
     )  # type: ignore
 
 
 class SequentialRetriever(CompositeRetriever):
+    FLAGS: list[str] = []
     SCHEMA = SequentialRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Sequential Retriever",
         es="Recuperador Secuencial",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Queries multiple retrievers in sequence. Supports accumulation and cascade re-ranking.",
-        es="Consulta múltiples recuperadores en secuencia. Soporta acumulación y reordenamiento en cascada.",
+        en="Queries multiple retrievers in sequence, re-ranking at each step.",
+        es="Consulta múltiples recuperadores en secuencia, reordenando en cada paso.",
     )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.strategy = RetrievalStrategy(self.params.pop("strategy"))
-        self.global_top_k = self.params.pop("top_k")
         self._validate()
 
     def _validate(self) -> None:
-        if len(self._children) == 0:
+        children = getattr(self, "_children", [])
+        if len(children) < 2:
             return
 
-        children_k = [c.retrieval_top_k for c in self._children]
+        children_k = [c.retrieval_top_k for c in children]
 
-        if self.strategy == RetrievalStrategy.ACCUMULATE:
-            max_child_k = max(children_k)
-            if self.global_top_k < max_child_k:
-                raise CompositeValidationError(
-                    f"Accumulate mode requires global_top_k ({self.global_top_k}) "
-                    f">= max child top_k ({max_child_k})."
+        for _i, child in enumerate(children):
+            if not isinstance(child, UnitRetriever):
+                raise UnitRetrieverChildError(
+                    child_class=child.__class__.__name__,
+                    strategy="cascade",
                 )
 
-        elif self.strategy == RetrievalStrategy.CASCADE:
-            if len(self._children) < 2:
+        for i in range(1, len(children_k)):
+            if children_k[i] >= children_k[i - 1]:
                 raise CompositeValidationError(
-                    "Cascade mode requires at least 2 children."
+                    f"Cascade requires strictly decreasing top_k. "
+                    f"Child {i} top_k={children_k[i]} >= "
+                    f"child {i - 1} top_k={children_k[i - 1]}"
                 )
-            for i, child in enumerate(self._children):
-                if not isinstance(child, UnitRetriever):
-                    raise UnitRetrieverChildError(
-                        child_class=child.__class__.__name__,
-                        strategy=self.strategy.value,
-                    )
-            for i in range(1, len(children_k)):
-                if children_k[i] >= children_k[i - 1]:
-                    raise CompositeValidationError(
-                        f"Cascade requires strictly decreasing top_k. "
-                        f"Child {i} top_k={children_k[i]} >= "
-                        f"child {i - 1} top_k={children_k[i - 1]}"
-                    )
 
     def retrieve(self, query, **kwargs) -> List[Chunk]:
-        if self.strategy == RetrievalStrategy.ACCUMULATE:
-            return self._retrieve_accumulate(query, **kwargs)
-        return self._retrieve_cascade(query, **kwargs)
-
-    def _retrieve_accumulate(self, query, **kwargs) -> List[Chunk]:
-        seen_ids = set()
-        results = []
-        remaining = self.global_top_k
-
-        for child in self._children:
-            if remaining <= 0:
-                break
-            child_results = child.retrieve(query, **kwargs)
-            for chunk in child_results:
-                cid = chunk.id if hasattr(chunk, "id") else hash(chunk.text)
-                if cid not in seen_ids:
-                    seen_ids.add(cid)
-                    results.append(chunk)
-                    remaining -= 1
-                    if remaining <= 0:
-                        break
-
-        return results
-
-    def _retrieve_cascade(self, query, **kwargs) -> List[Chunk]:
         first = self._children[0]
         results = first.retrieve(query, **kwargs)
 
@@ -156,8 +84,6 @@ class SequentialRetriever(CompositeRetriever):
 
     @property
     def retrieval_top_k(self) -> int:
-        if self.strategy == RetrievalStrategy.ACCUMULATE:
-            return self.global_top_k
         if self._children:
             return self._children[-1].retrieval_top_k
         return 1

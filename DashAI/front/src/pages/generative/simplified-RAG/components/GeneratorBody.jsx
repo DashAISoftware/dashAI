@@ -11,7 +11,7 @@ import {
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getGeneratorComponents } from "../../../../api/rag";
-import { buildDefaultValuesFromSchemaProperties } from "./ragFormDefaults";
+import { resolveDefaults } from "../../../../utils/schema";
 import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
 import AdvancedConfigCard from "./AdvancedConfigCard";
 import { getDescription } from "./sectionUtils";
@@ -96,10 +96,10 @@ export default function GeneratorBody({
     if (setInitialModelParams) setInitialModelParams({ ...generatorModel.params });
   }, [generators, generatorModel?.component, generatorModel?.params]);
 
-  const handleGeneratorChange = (event, newValue) => {
+  const handleGeneratorChange = async (event, newValue) => {
     setSelectedGenerator(newValue);
     if (newValue) {
-      const initialParams = buildDefaultValuesFromSchemaProperties(newValue.schema?.properties || {});
+      const initialParams = await resolveDefaults(newValue.name);
       const overriddenParams = {
         ...initialParams,
         max_tokens: DEFAULT_MAX_TOKENS,

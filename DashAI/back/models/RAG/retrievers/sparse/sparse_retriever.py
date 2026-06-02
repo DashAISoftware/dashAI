@@ -3,9 +3,10 @@ from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 
 class SparseRetriever(UnitRetriever):
+    FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
-        en="Sparse Retriever",
-        es="Recuperador Disperso",
+        en="Keyword Retriever",
+        es="Recuperador por Palabras Clave",
     )
     DESCRIPTION: str = MultilingualString(
         en="Sparse retriever using term-frequency based representations.",

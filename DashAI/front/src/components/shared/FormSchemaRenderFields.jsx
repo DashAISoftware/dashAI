@@ -57,6 +57,7 @@ function FormSchemaRenderFields({
   setError,
   errorsMessage,
   spacing = 1,
+  excludeFields = [],
 }) {
   if (!modelSchema) return null;
 
@@ -76,6 +77,7 @@ function FormSchemaRenderFields({
     const fields = [];
 
     for (const key in modelSchema) {
+      if (excludeFields.includes(key)) continue;
       const fieldSchema = modelSchema[key];
       const objName = key;
       const value = formik?.values?.[objName];
@@ -192,6 +194,7 @@ FormSchemaRenderFields.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   spacing: PropTypes.number,
+  excludeFields: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default FormSchemaRenderFields;

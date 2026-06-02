@@ -15,14 +15,12 @@ from DashAI.back.core.schema_fields import (
     float_field,
     int_field,
     list_field,
-    none_type,
     schema_field,
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import Chunk
-from DashAI.back.models.RAG.retrievers.persistence import SparsePersistence
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 
 log = logging.getLogger(__name__)
@@ -85,7 +83,7 @@ class TFIDFVectorizerSchema(BaseSchema):
 
     min_df: schema_field(
         float_field(ge=0.0, le=1.0),
-        placeholder=1.0,
+        placeholder=0.0,
         description=MultilingualString(
             en="Ignore terms with document frequency below this threshold.",
             es="Ignorar términos con frecuencia de documento inferior a este umbral.",
@@ -94,7 +92,7 @@ class TFIDFVectorizerSchema(BaseSchema):
 
     max_features: schema_field(
         int_field(ge=0),
-        placeholder=0,
+        placeholder=1000,
         description=MultilingualString(
             en="Maximum number of features. 0 means no limit.",
             es="Número máximo de características. 0 significa sin límite.",
@@ -140,9 +138,36 @@ class TFIDFVectorizerSchema(BaseSchema):
 
 class TFIDFVectorizerModel(BaseModel):
     SCHEMA = TFIDFVectorizerSchema
+    DISPLAY_NAME: str = MultilingualString(
+        en="TF-IDF Vectorizer Model",
+        es="Modelo de Vectorización TF-IDF",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Model component that encapsulates a TF-IDF vectorizer.",
+        es="Componente del modelo que encapsula un vectorizador TF-IDF.",
+    )
 
     def __init__(self, **kwargs) -> None:
-        self.model = TfidfVectorizer(**kwargs)
+        validated = self.SCHEMA.model_validate(kwargs)
+        self.params = dict(validated)
+        if self.params.get("strip_accents") == "None":
+            self.params["strip_accents"] = None
+        stop_words = self.params.get("stop_words") or None
+        ngram_range = tuple(self.params.get("ngram_range"))
+        self.model = TfidfVectorizer(
+            strip_accents=self.params.get("strip_accents"),
+            lowercase=self.params.get("lowercase"),
+            analyzer=self.params.get("analyzer"),
+            stop_words=stop_words,
+            ngram_range=ngram_range,
+            max_df=self.params.get("max_df"),
+            min_df=self.params.get("min_df"),
+            max_features=self.params.get("max_features"),
+            norm=self.params.get("norm"),
+            use_idf=self.params.get("use_idf"),
+            smooth_idf=self.params.get("smooth_idf"),
+            sublinear_tf=self.params.get("sublinear_tf"),
+        )
 
     def save(self, filename: str = "") -> None:
         pass
@@ -165,37 +190,11 @@ class TFIDFRetrieverSchema(BaseSchema):
     )  # type: ignore
 
     similarity_function: schema_field(
-        enum_field(
-            [
-                "cityblock",
-                "cosine",
-                "euclidean",
-                "l1",
-                "l2",
-                "manhattan",
-                "nan_euclidean",
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "dice",
-                "hamming",
-                "jaccard",
-                "mahalanobis",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        ),
+        enum_field(["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
         placeholder="cosine",
         description=MultilingualString(
-            en="Similarity function for document retrieval.",
-            es="Función de similitud para la recuperación de documentos.",
+            en="Distance metric for comparing TF-IDF vectors.",
+            es="Métrica de distancia para comparar vectores TF-IDF.",
         ),
     )  # type: ignore
 
@@ -208,17 +207,9 @@ class TFIDFRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    similarity_threshold: schema_field(
-        none_type(float_field()),
-        placeholder=None,
-        description=MultilingualString(
-            en="Distance threshold. None disables filtering.",
-            es="Umbral de distancia. None deshabilita el filtrado.",
-        ),
-    )  # type: ignore
-
 
 class TFIDFRetriever(SparseRetriever):
+    FLAGS: list[str] = []
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF Retriever",
         es="Recuperador TF-IDF",
@@ -231,33 +222,15 @@ class TFIDFRetriever(SparseRetriever):
     SCHEMA = TFIDFRetrieverSchema
 
     def __init__(self, **kwargs):
-        persistence_raw = kwargs["persistence"]
-        if not isinstance(persistence_raw, SparsePersistence):
-            raise TypeError(
-                f"Expected SparsePersistence, got {type(persistence_raw).__name__}"
-            )
-        kwargs["TFIDFVectorizer"] = kwargs["TFIDFVectorizer"]["properties"]["params"][
-            "comp"
-        ]
         super().__init__(**kwargs)
 
         vectorizer_model = self.params.pop("TFIDFVectorizer")
-        if not isinstance(vectorizer_model, TFIDFVectorizerModel):
-            raise TypeError(
-                f"Expected TFIDFVectorizerModel, got {type(vectorizer_model).__name__}"
-            )
         self._vectorizer = vectorizer_model.model
         self.similarity_function_name = self.params.pop("similarity_function")
         self._top_k = self.params.pop("top_k")
-        self.similarity_threshold = self.params.pop("similarity_threshold")
 
-        loaded = self.load()
-        if loaded:
-            log.info(
-                "TFIDFRetriever loaded from disk at %s.", self._persistence.model_dir
-            )
-        else:
-            log.info("Fitting new TFIDF model...")
+    def init_model(self) -> None:
+        if not self.load():
             self._fit()
 
     def load(self) -> bool:
@@ -311,42 +284,35 @@ class TFIDFRetriever(SparseRetriever):
     def retrieval_top_k(self) -> int:
         return self._top_k
 
+
+
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+        self._check_infra()
         k = top_k if top_k is not None else self._top_k
         query_vector = self._vectorizer.transform([query])
-        similarities = pairwise_distances(
+        distances = pairwise_distances(
             query_vector,
             self._tf_idf_matrix,
             metric=self.similarity_function_name,
         ).flatten()
-
-        if self.similarity_threshold is not None:
-            mask = similarities <= self.similarity_threshold
-            filtered = np.where(mask)[0]
-            top_indices = filtered[np.argsort(similarities[filtered])[:k]]
-        else:
-            top_indices = np.argsort(similarities)[:k]
-
+        top_indices = np.argsort(distances)[:k]
         return [self.matrix_row_to_chunk_map[idx] for idx in top_indices]
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        self._check_infra()
         query_vector = self._vectorizer.transform([query])
         chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
-
         rows, valid_ids = [], []
         for cid in chunk_ids:
             row = chunk_id_to_row.get(cid)
             if row is not None:
                 rows.append(row)
                 valid_ids.append(cid)
-
         if not rows:
             return []
-
-        chunk_vectors = self._tf_idf_matrix[rows]
         distances = pairwise_distances(
             query_vector,
-            chunk_vectors,
+            self._tf_idf_matrix[rows],
             metric=self.similarity_function_name,
         ).flatten()
         scored = list(zip(valid_ids, distances.tolist()))

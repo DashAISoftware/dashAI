@@ -1,6 +1,6 @@
 # 07 — Frontend Architecture
 
-> See also: `RAG_FRONTEND_ARCHITECTURE.md` (158 lines) and Section 2 of `RAG_TECHNICAL_GUIDE.md` (288 lines) for full discussions. This document condenses the key information.
+> See also: [`14-frontend-architecture.md`](./14-frontend-architecture.md) and Section 2 of [`13-technical-guide.md`](./13-technical-guide.md) for full discussions. This document condenses the key information.
 
 ## Routes
 

@@ -1,5 +1,7 @@
 # Simplified RAG Interface - Testing Guide
 
+> **Source**: Originally located at `DashAI/front/src/pages/generative/simplified-RAG/TESTING_GUIDE.md`. Moved here on 2026-06-01 as part of documentation consolidation.
+
 ## Acceso a la Nueva Interfaz
 
 **URL**: `http://localhost:3000/app/generative/simplified-rag`
