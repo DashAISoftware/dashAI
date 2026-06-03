@@ -1,25 +1,24 @@
-import React, { useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Box, Card, CardContent, Typography, Chip } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import HoverModelInfo from "./model/HoverModelInfo";
 
 function StatisticalTestItem({ test, isSelected, onSelect, numberOfRuns }) {
   const theme = useTheme();
   const { i18n } = useTranslation();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [hoveredTest, setHoveredTest] = useState(null);
 
-  // Determinar requisitos mínimos basado en metadata
   const minRuns = test.metadata?.min_runs || 2;
-
   const isAvailable = numberOfRuns >= minRuns;
 
-  // Obtener descripción en el idioma actual
   const getDescription = useMemo(() => {
     if (
       test.metadata?.description &&
       typeof test.metadata.description === "object"
     ) {
-      // Obtener el código de idioma (e.g., 'en' from 'en-US')
       const langCode = i18n.language?.split("-")[0] || "en";
       return (
         test.metadata.description[langCode] ||
@@ -30,58 +29,81 @@ function StatisticalTestItem({ test, isSelected, onSelect, numberOfRuns }) {
     return test.description || "No description";
   }, [test, i18n.language]);
 
+  const handleMouseEnter = (event) => {
+    if (isAvailable) {
+      setAnchorEl(event.currentTarget);
+      const testWithDescription = {
+        ...test,
+        description: getDescription,
+        display_name: test.metadata?.name || test.name,
+      };
+      setHoveredTest(testWithDescription);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setAnchorEl(null);
+    setHoveredTest(null);
+  };
+
   return (
-    <Card
-      onClick={() => isAvailable && onSelect(test)}
-      sx={{
-        mb: 1,
-        cursor: isAvailable ? "pointer" : "not-allowed",
-        opacity: isAvailable ? 1 : 0.5,
-        backgroundColor: isSelected ? theme.palette.action.selected : "inherit",
-        border: isSelected
-          ? `2px solid ${theme.palette.primary.main}`
-          : `1px solid ${theme.palette.divider}`,
-        transition: "all 0.2s ease",
-        "&:hover": {
-          backgroundColor: isAvailable ? theme.palette.action.hover : "inherit",
-          transform: isAvailable ? "translateX(4px)" : "none",
-        },
-      }}
-    >
-      <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                color: isAvailable ? "text.primary" : "text.disabled",
-              }}
-            >
-              {test.metadata?.name}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: isAvailable ? "text.secondary" : "text.disabled",
-                display: "block",
-                mt: 0.5,
-              }}
-            >
-              {getDescription}
-            </Typography>
-          </Box>
-          {!isAvailable && (
-            <Chip
-              label={`Min: ${minRuns}+`}
-              size="small"
-              variant="outlined"
-              sx={{ flexShrink: 0 }}
-            />
-          )}
+    <>
+      <Box
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={() => isAvailable && onSelect(test)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 1.5,
+          bgcolor: isAvailable
+            ? theme.palette.ui.box
+            : theme.palette.ui.disabled,
+          border: `1px solid ${theme.palette.ui.border}`,
+          borderRadius: 1,
+          cursor: isAvailable ? "pointer" : "not-allowed",
+          transition: "all 0.2s",
+          opacity: isAvailable ? 1 : 0.5,
+          position: "relative",
+          "&:hover": {
+            bgcolor: isAvailable
+              ? theme.palette.action.hover
+              : theme.palette.ui.disabled,
+            borderColor: isAvailable
+              ? theme.palette.primary.main
+              : theme.palette.ui.border,
+            transform: isAvailable ? "translateX(4px)" : "none",
+          },
+        }}
+      >
+        {/* Content */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: isAvailable
+                ? theme.palette.text.primary
+                : theme.palette.text.disabled,
+              fontWeight: 500,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {test.metadata?.name || test.name}
+          </Typography>
         </Box>
-      </CardContent>
-    </Card>
+      </Box>
+
+      {isAvailable && (
+        <HoverModelInfo
+          anchorEl={anchorEl}
+          hoveredModel={hoveredTest}
+          handleMouseLeave={handleMouseLeave}
+        />
+      )}
+    </>
   );
 }
 

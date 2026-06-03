@@ -1,24 +1,41 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class LeveneTest(BaseStatisticalTest):
-    @staticmethod
-    def get_metadata() -> dict:
+    """Test for homogeneity of variances across groups."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="Levene's Test",
+        es="Prueba de Levene",
+        pt="Teste de Levene",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Test of homogeneity of variances between groups (homoscedasticity), "
+            "robust to deviations from normality."
+        ),
+        es=(
+            "Prueba de homogeneidad de varianzas entre grupos (homocedasticidad), "
+            "robusta ante desviaciones de la normalidad."
+        ),
+        pt=(
+            "Teste de homogeneidade de variâncias entre grupos (homocedasticidade), "
+            "robusto contra desvios da normalidade."
+        ),
+    )
+    ICON: str = "Balance"
+    COLOR: str = "#4CAF50"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Levene's Test."""
         return {
-            "name": "Levene's Test",
+            "icon": cls.ICON,
             "is_parametric": None,
             "posthoc": False,
             "min_runs": 2,
-            "description": {
-                "en": """Test for homogeneity of variances
-                across groups""",
-                "es": """Prueba de homogeneidad de varianzas
-                entre grupos""",
-                "pt": """Teste de homogeneidade de variâncias
-                entre grupos""",
-            },
         }
 
     def run(

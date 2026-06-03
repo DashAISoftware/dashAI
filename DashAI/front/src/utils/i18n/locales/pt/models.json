@@ -197,7 +197,8 @@
     "theoricalQuantiles": "Quantis Teóricos",
     "sampleQuantiles": "Quantis da Amostra",
     "metricValue": "Valor da Métrica",
-    "frequency": "Frequência"
+    "frequency": "Frequência",
+    "helperTests": "Testes de Suposição"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",

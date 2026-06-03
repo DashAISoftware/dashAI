@@ -1,3 +1,4 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import (
     PairwiseResult,
@@ -23,22 +24,39 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
     Scandinavian Journal of Statistics, 6(2), 65-70.
     """
 
-    @staticmethod
-    def get_metadata() -> dict:
+    DISPLAY_NAME: str = MultilingualString(
+        en="Pairwise Wilcoxon",
+        es="Wilcoxon Pareado",
+        pt="Wilcoxon Pareado",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Non-parametric test for pairwise comparisons between related groups. "
+            "Requires paired observations and does not assume normality. "
+            "Applies Holm correction for multiple comparisons."
+        ),
+        es=(
+            "Prueba no paramétrica para comparaciones por pares entre grupos",
+            "relacionados. Requiere observaciones emparejadas y no asume normalidad. "
+            "Aplica corrección de Holm para comparaciones múltiples.",
+        ),
+        pt=(
+            "Teste não-paramétrico para comparações por pares entre grupos",
+            "relacionados. Requer observações emparelhadas e não assume normalidade. "
+            "Aplica correção de Holm para comparações múltiplas.",
+        ),
+    )
+    ICON: str = "CompareArrows"
+    COLOR: str = "#FFD54F"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Pairwise Wilcoxon Test."""
         return {
-            "name": "Pairwise Wilcoxon",
+            "icon": cls.ICON,
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 3,
-            "description": {
-                "en": """Post-hoc non-parametric pairwise
-                comparisons after Friedman test""",
-                "es": """Comparaciones pareadas
-                no paramétricas post-hoc después de la prueba de Friedman""",
-                "pt": """Comparações pareadas
-                não-paramétricas post-hoc após teste de Friedman""",
-            },
         }
 
     def run(

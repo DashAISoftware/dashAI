@@ -1,3 +1,4 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import (
     PairwiseResult,
@@ -15,22 +16,38 @@ class TukeyHSDTest(BaseStatisticalTest):
     Requires the `statsmodels` package.
     """
 
-    @staticmethod
-    def get_metadata() -> dict:
+    DISPLAY_NAME: str = MultilingualString(
+        en="Tukey HSD",
+        es="Tukey HSD",
+        pt="Tukey HSD",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Parametric post-hoc test for pairwise comparisons between groups. ",
+            "Requires normality and homoscedasticity. Usually applied after a ",
+            "significant ANOVA.",
+        ),
+        es=(
+            "Prueba post-hoc paramétrica para comparaciones por pares entre grupos. ",
+            "Requiere normalidad y homocedasticidad. Suele aplicarse después de un ",
+            "ANOVA significativo.",
+        ),
+        pt=(
+            "Teste post-hoc paramétrico para comparações pareadas de modelos. ",
+            "Requer normalidade e homocedasticidade. Geralmente aplicado após um ",
+            "ANOVA significativo.",
+        ),
+    )
+    ICON: str = "CompareArrows"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Tukey HSD Test."""
         return {
-            "name": "Tukey HSD",
+            "icon": cls.ICON,
             "is_parametric": True,
             "posthoc": True,
             "min_runs": 3,
-            "description": {
-                "en": """Parametric post-hoc test
-                for pairwise model comparisons""",
-                "es": """Prueba post-hoc
-                paramétrica para comparaciones pareadas de modelos""",
-                "pt": """Teste post-hoc paramétrico
-                para comparações pareadas de modelos""",
-            },
         }
 
     def run(

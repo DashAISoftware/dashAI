@@ -1,24 +1,44 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class PairedTTest(BaseStatisticalTest):
-    @staticmethod
-    def get_metadata() -> dict:
+    """Parametric test for comparing two models on identical data."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="Paired T-Test",
+        es="Prueba T Pareada",
+        pt="Teste T Pareado",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Parametric test for comparing two related groups. Requires "
+            "normality of pairwise differences and independence between "
+            "observations.",
+        ),
+        es=(
+            "Prueba paramétrica para comparar dos grupos relacionados. Requiere ",
+            "normalidad de las diferencias entre pares e independencia entre ",
+            "observaciones.",
+        ),
+        pt=(
+            "Teste paramétrico para comparar dois grupos relacionados. Requer ",
+            "normalidade das diferenças entre pares e independência entre ",
+            "observações.",
+        ),
+    )
+    ICON: str = "CompareArrows"
+    COLOR: str = "#64B5F6"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Paired T-Test."""
         return {
-            "name": "Paired T-Test",
+            "icon": cls.ICON,
             "is_parametric": True,
             "posthoc": False,
             "min_runs": 2,
-            "description": {
-                "en": """Parametric test for comparing
-                two models on identical data""",
-                "es": """Prueba paramétrica para comparar
-                dos modelos en datos idénticos""",
-                "pt": """Teste paramétrico para comparar
-                dois modelos nos mesmos dados""",
-            },
         }
 
     def run(

@@ -1,3 +1,4 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import (
     PairwiseResult,
@@ -20,22 +21,35 @@ class NemenyiTest(BaseStatisticalTest):
     Data Sets. Journal of Machine Learning Research, 7, 1-30.
     """
 
-    @staticmethod
-    def get_metadata() -> dict:
+    DISPLAY_NAME: str = MultilingualString(
+        en="Nemenyi",
+        es="Nemenyi",
+        pt="Nemenyi",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Non-parametric post-hoc test for pairwise comparisons between groups. ",
+            "Does not assume normality and is usually applied after Friedman test.",
+        ),
+        es=(
+            "Prueba post-hoc no paramétrica para comparaciones por pares entre ",
+            "grupos. No asume normalidad y suele aplicarse tras el test de Friedman.",
+        ),
+        pt=(
+            "Teste post-hoc não-paramétrico para comparações por pares entre grupos. ",
+            "Não assume normalidade e geralmente é aplicado após o teste de Friedman.",
+        ),
+    )
+    ICON: str = "CompareArrows"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Nemenyi Test."""
         return {
-            "name": "Nemenyi",
+            "icon": cls.ICON,
             "is_parametric": False,
             "posthoc": True,
             "min_runs": 3,
-            "description": {
-                "en": """Non-parametric post-hoc
-                test with Nemenyi correction""",
-                "es": """Prueba post-hoc no
-                paramétrica con corrección de Nemenyi""",
-                "pt": """Teste post-hoc não-paramétrico
-                com correção de Nemenyi""",
-            },
         }
 
     def run(

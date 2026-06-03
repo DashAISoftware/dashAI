@@ -1,23 +1,41 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class ShapiroTest(BaseStatisticalTest):
-    @staticmethod
-    def get_metadata() -> dict:
+    """Test for normality of a single set of scores."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="Shapiro-Wilk",
+        es="Shapiro-Wilk",
+        pt="Shapiro-Wilk",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Normality test that assesses whether the data comes from ",
+            "a normal distribution.",
+        ),
+        es=(
+            "Prueba de normalidad que evalúa si los datos provienen de ",
+            "una distribución normal.",
+        ),
+        pt=(
+            "Teste de normalidade que avalia se os dados vêm de uma",
+            "distribuição normal.",
+        ),
+    )
+    ICON: str = "ShowChart"
+    COLOR: str = "#4CAF50"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Shapiro-Wilk Test."""
         return {
-            "name": "Shapiro-Wilk",
+            "icon": cls.ICON,
             "is_parametric": None,
             "posthoc": False,
             "min_runs": 1,
-            "description": {
-                "en": """Test for normality of a single set of scores""",
-                "es": """Prueba de normalidad para un solo
-                conjunto de puntuaciones""",
-                "pt": """Teste de normalidade para um único
-                conjunto de pontuações""",
-            },
         }
 
     def run(

@@ -1,10 +1,12 @@
 from abc import ABCMeta, abstractmethod
+from typing import Any, Dict
 
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class BaseStatisticalTest(metaclass=ABCMeta):
     TYPE = "StatisticalTest"
+    ICON: str = "Science"
 
     @abstractmethod
     def run(
@@ -21,22 +23,14 @@ class BaseStatisticalTest(metaclass=ABCMeta):
         # la configuración (alpha, etc.) dinámicamente
         raise NotImplementedError("Subclasses must implement this method")
 
-    def get_metadata(self) -> dict:
-        """
-        Returns metadata about the statistical test.
-        Subclasses can override this method to customize metadata.
+    @classmethod
+    @abstractmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Get metadata values for the current test.
 
-        Default metadata:
-        - is_parametric: Whether the test is parametric
-        - min_runs: Minimum number of runs required
-        - description: Brief description in multiple languages
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary containing UI metadata
         """
-        return {
-            "is_parametric": False,  # Override in subclasses
-            "min_runs": 2,
-            "description": {
-                "en": "Statistical test",
-                "es": "Prueba estadística",
-                "pt": "Teste estatístico",
-            },
-        }
+        raise NotImplementedError("Subclasses must implement this method")

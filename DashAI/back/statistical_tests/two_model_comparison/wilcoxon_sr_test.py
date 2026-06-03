@@ -1,24 +1,41 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class WilcoxonSRTest(BaseStatisticalTest):
-    @staticmethod
-    def get_metadata() -> dict:
+    """Non-parametric alternative to paired t-test for two models."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="Wilcoxon Signed-Rank",
+        es="Wilcoxon Rango con Signo",
+        pt="Wilcoxon Posto com Sinal",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Non-parametric test for comparing two related groups. ",
+            "Requires paired observations and does not assume normality.",
+        ),
+        es=(
+            "Prueba no paramétrica para comparar dos grupos relacionados. "
+            "Requiere observaciones emparejadas y no asume normalidad."
+        ),
+        pt=(
+            "Alternativa não-paramétrica ao teste t pareado para dois modelos. "
+            "Requer observações emparejadas e não assume normalidade."
+        ),
+    )
+    ICON: str = "CompareArrows"
+    COLOR: str = "#FFD54F"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Wilcoxon Signed-Rank Test."""
         return {
-            "name": "Wilcoxon Signed-Rank",
+            "icon": cls.ICON,
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 2,
-            "description": {
-                "en": """Non-parametric alternative to
-                paired t-test for two models""",
-                "es": """Alternativa no paramétrica a la prueba
-                t pareada para dos modelos""",
-                "pt": """Alternativa não-paramétrica
-                ao teste t pareado para dois modelos""",
-            },
         }
 
     def run(

@@ -1,24 +1,41 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class AnovaTest(BaseStatisticalTest):
-    @staticmethod
-    def get_metadata() -> dict:
+    """Parametric test for comparing 3 or more models on identical data."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="ANOVA",
+        es="ANOVA",
+        pt="ANOVA",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Parametric test for comparing the means of three or more groups. ",
+            "Requires normality and homoscedasticity.",
+        ),
+        es=(
+            "Prueba paramétrica para comparar las medias de tres o más grupos. ",
+            "Requiere normalidad y homocedasticidad.",
+        ),
+        pt=(
+            "Teste paramétrico para comparar as médias de três ou mais grupos. ",
+            "Requer normalidade e homocedasticidade.",
+        ),
+    )
+    ICON: str = "BarChart"
+    COLOR: str = "#64B5F6"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for ANOVA Test."""
         return {
-            "name": "ANOVA",
+            "icon": cls.ICON,
             "is_parametric": True,
             "posthoc": False,
             "min_runs": 3,
-            "description": {
-                "en": """Parametric test for comparing 3 or more models on
-                identical data""",
-                "es": """Prueba paramétrica para comparar 3 o más modelos en
-                datos idénticos""",
-                "pt": """Teste paramétrico para comparar 3 ou mais modelos nos
-                mesmos dados""",
-            },
         }
 
     def run(

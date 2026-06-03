@@ -226,7 +226,8 @@
     "theoricalQuantiles": "Theoretical Quantiles",
     "sampleQuantiles": "Sample Quantiles",
     "metricValue": "Metric Value",
-    "frequency": "Frequency"
+    "frequency": "Frequency",
+    "helperTests": "Assumption Tests"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

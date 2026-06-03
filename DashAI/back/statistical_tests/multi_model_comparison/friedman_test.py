@@ -1,24 +1,41 @@
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
 class FriedmanTest(BaseStatisticalTest):
-    @staticmethod
-    def get_metadata() -> dict:
+    """Non-parametric alternative to ANOVA for comparing 3+ models."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="Friedman",
+        es="Friedman",
+        pt="Friedman",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Non-parametric test for comparing multiple models on the same folds. ",
+            "Does not assume normality.",
+        ),
+        es=(
+            "Prueba no paramétrica para comparar múltiples modelos sobre ",
+            "los mismos folds. No asume normalidad.",
+        ),
+        pt=(
+            "Teste não-paramétrico para comparar múltiplos modelos sobre ",
+            "as mesmas folds. Não assume normalidade.",
+        ),
+    )
+    ICON: str = "Leaderboard"
+    COLOR: str = "#FFD54F"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
         """Metadata for Friedman Test."""
         return {
-            "name": "Friedman",
+            "icon": cls.ICON,
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 3,
-            "description": {
-                "en": """Non-parametric alternative to ANOVA
-                for comparing 3+ models""",
-                "es": """Alternativa no paramétrica a ANOVA
-                para comparar 3 o más modelos""",
-                "pt": """Alternativa não-paramétrica ao ANOVA
-                para comparar 3+ modelos""",
-            },
         }
 
     def run(
@@ -30,8 +47,8 @@ class FriedmanTest(BaseStatisticalTest):
         import numpy as np
         from scipy.stats import friedmanchisquare
 
-        if len(scores) < 2:
-            raise ValueError("Friedman Test requires at least two sets of scores.")
+        if len(scores) < 3:
+            raise ValueError("Friedman Test requires at least three sets of scores.")
 
         run_names = list(scores.keys())
         score_arrays = [np.array(scores[run_name]) for run_name in run_names]
