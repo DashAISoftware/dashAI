@@ -31,7 +31,6 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 3,
-            "max_runs": None,
             "description": {
                 "en": """Post-hoc non-parametric pairwise
                 comparisons after Friedman test""",

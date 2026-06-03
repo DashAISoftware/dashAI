@@ -5,18 +5,6 @@ export interface PairwiseResult {
   significant: boolean;
 }
 
-export interface NormalityTestResult {
-  run_id: number;
-  p_value: number;
-  is_normal: boolean;
-}
-
-export interface NormalityCheckResponse {
-  is_normal: boolean;
-  results_by_run: NormalityTestResult[];
-  test_used: string;
-}
-
 export interface StatisticalTestResponse {
   test_name: string;
   statistic: number | null;

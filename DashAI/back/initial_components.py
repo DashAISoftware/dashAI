@@ -282,6 +282,9 @@ from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSp
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
 
 # Statistical tests
+from DashAI.back.statistical_tests.helper_tests.bartlett_test import BartlettTest
+from DashAI.back.statistical_tests.helper_tests.levene_test import LeveneTest
+from DashAI.back.statistical_tests.helper_tests.shapiro_test import ShapiroTest
 from DashAI.back.statistical_tests.multi_model_comparison.anova_test import AnovaTest
 from DashAI.back.statistical_tests.multi_model_comparison.friedman_test import (
     FriedmanTest,
@@ -525,6 +528,9 @@ def get_initial_components():
         WilcoxonSRTest,
         NemenyiTest,
         TukeyHSDTest,
+        ShapiroTest,
+        LeveneTest,
+        BartlettTest,
     ]
 
     # Obtener plugins instalados

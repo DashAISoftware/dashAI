@@ -10,10 +10,8 @@ function StatisticalTestItem({ test, isSelected, onSelect, numberOfRuns }) {
 
   // Determinar requisitos mínimos basado en metadata
   const minRuns = test.metadata?.min_runs || 2;
-  const maxRuns = test.metadata?.max_runs || null;
 
-  const isAvailable =
-    numberOfRuns >= minRuns && (maxRuns === null || numberOfRuns <= maxRuns);
+  const isAvailable = numberOfRuns >= minRuns;
 
   // Obtener descripción en el idioma actual
   const getDescription = useMemo(() => {
@@ -75,7 +73,7 @@ function StatisticalTestItem({ test, isSelected, onSelect, numberOfRuns }) {
           </Box>
           {!isAvailable && (
             <Chip
-              label={`Min: ${minRuns}${maxRuns ? ` Max: ${maxRuns}` : "+"}`}
+              label={`Min: ${minRuns}+`}
               size="small"
               variant="outlined"
               sx={{ flexShrink: 0 }}

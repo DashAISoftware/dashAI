@@ -1,9 +1,6 @@
 import api from "./api";
 
-import {
-  NormalityCheckResponse,
-  StatisticalTestResponse,
-} from "../types/statisticalTests";
+import { StatisticalTestResponse } from "../types/statisticalTests";
 
 /**
  * Get fold metrics for a specific run and metric split.
@@ -23,30 +20,6 @@ export const getFoldMetrics = async (
           `/v1/run/${runId}/outer-fold-metrics`,
           { params: { metric_split: metricSplit } },
         );
-  return response.data;
-};
-
-/**
- * Check normality for selected runs using Shapiro-Wilk test.
- * Returns overall is_normal flag and per-run results.
- */
-export const checkNormality = async (
-  metricName: string,
-  metricSplit: string,
-  runIds: number[],
-  runNames: Record<string, string>,
-  foldMetrics: Record<string, number[]>,
-): Promise<NormalityCheckResponse> => {
-  const response = await api.post<NormalityCheckResponse>(
-    "/v1/statistical-tests/normality-check",
-    {
-      metric_name: metricName,
-      metric_split: metricSplit,
-      run_ids: runIds,
-      run_names: runNames,
-      fold_metrics: foldMetrics,
-    },
-  );
   return response.data;
 };
 

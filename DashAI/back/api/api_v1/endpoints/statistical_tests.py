@@ -3,15 +3,10 @@
 import logging
 from typing import Dict, List
 
-import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from scipy import stats
 
 from DashAI.back.api.api_v1.schemas.statistical_tests_params import (
-    NormalityCheckRequest,
-    NormalityCheckResponse,
-    NormalityTestResult,
     PairwiseResultResponse,
     StatisticalTestRequest,
     StatisticalTestResponse,
@@ -24,100 +19,6 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-@router.post(
-    "/normality-check",
-    response_model=NormalityCheckResponse,
-    status_code=status.HTTP_200_OK,
-)
-async def check_normality(request: NormalityCheckRequest) -> NormalityCheckResponse:
-    """Check normality for each run individually using Shapiro-Wilk test.
-
-    For each run, performs a Shapiro-Wilk normality test on its fold metrics.
-    Data is considered normal if p-value > 0.05.
-    Overall result is normal only if ALL runs' metrics are normally distributed.
-
-    Parameters
-    ----------
-    request : NormalityCheckRequest
-        Request containing metric name, split, run IDs, and fold metrics.
-
-    Returns
-    -------
-    NormalityCheckResponse
-        Response with overall is_normal flag and individual results per run.
-
-    Raises
-    ------
-    HTTPException
-        If fold_metrics is empty or contains insufficient data.
-    """
-    try:
-        if not request.fold_metrics:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="fold_metrics cannot be empty",
-            )
-
-        results_by_run: List[NormalityTestResult] = []
-
-        # Test normality for each run individually
-        for run_id in request.run_ids:
-            metrics = request.fold_metrics.get(str(run_id), [])
-
-            if not metrics:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"No metrics found for run {run_id}",
-                )
-
-            if len(metrics) < 3:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Run {run_id}: At least 3 data points required for "
-                    f"normality test. Got {len(metrics)}",
-                )
-
-            # Perform Shapiro-Wilk normality test for this run
-            metrics_array = np.array(metrics, dtype=float)
-            _, p_value = stats.shapiro(metrics_array)
-
-            # Data is considered normal if p-value > 0.05
-            is_normal = p_value > 0.05
-
-            results_by_run.append(
-                NormalityTestResult(
-                    run_id=run_id,
-                    p_value=float(p_value),
-                    is_normal=is_normal,
-                )
-            )
-
-            log.info(
-                f"Normality test for run '{run_id}', "
-                f"metric '{request.metric_name}' ({request.metric_split} split): "
-                f"p_value={p_value:.4f}, is_normal={is_normal}"
-            )
-
-        # Overall result: normal only if ALL runs are normal
-        overall_is_normal = all(result.is_normal for result in results_by_run)
-
-        return NormalityCheckResponse(
-            is_normal=overall_is_normal,
-            results_by_run=results_by_run,
-            test_used="shapiro_wilk",
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        log.error(f"Error checking normality: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error checking normality: {str(e)}",
-        ) from e
-
 
 # Tests that trigger automatic post-hoc when significant
 POSTHOC_MAP = {
@@ -185,12 +86,6 @@ async def run_statistical_test(
             for run_id in request.run_ids
             if str(run_id) in request.fold_metrics
         }
-
-        if len(scores) < 2:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="At least two runs with fold metrics are required.",
-            )
 
         # Run the primary test, forwarding any extra params
         result: StatisticalTestResult = test_instance.run(

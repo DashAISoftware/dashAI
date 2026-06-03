@@ -29,11 +29,7 @@ import {
 } from "@mui/material";
 import { ExpandMore, ExpandLess, Help } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
-import {
-  getFoldMetrics,
-  checkNormality,
-  runStatisticalTest,
-} from "../../api/statisticalTests";
+import { getFoldMetrics, runStatisticalTest } from "../../api/statisticalTests";
 import { getHypothesisDecisionMessage } from "../../utils/translateHypothesisDecision";
 
 export default function StatisticalTestsModal({

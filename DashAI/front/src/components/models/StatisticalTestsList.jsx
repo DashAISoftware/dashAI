@@ -60,21 +60,28 @@ export default function StatisticalTestsList({
     }
   }, [finishedRuns.length, enqueueSnackbar, t]);
 
-  // Clasificar tests por tipo (paramétricos vs no-paramétricos)
-  const { parametricTests, nonParametricTests } = useMemo(() => {
+  // Clasificar tests por tipo (paramétricos, no-paramétricos y helpers)
+  const { parametricTests, nonParametricTests, helperTests } = useMemo(() => {
     const parametric = [];
     const nonParametric = [];
+    const helper = [];
 
     tests.forEach((test) => {
       const isParametric = test.metadata?.is_parametric === true;
       if (isParametric) {
         parametric.push(test);
-      } else {
+      } else if (test.metadata?.is_parametric === false) {
         nonParametric.push(test);
+      } else {
+        helper.push(test);
       }
     });
 
-    return { parametricTests: parametric, nonParametricTests: nonParametric };
+    return {
+      parametricTests: parametric,
+      nonParametricTests: nonParametric,
+      helperTests: helper,
+    };
   }, [tests]);
 
   // Filtrar tests por búsqueda
@@ -93,6 +100,14 @@ export default function StatisticalTestsList({
       test.metadata?.name.toLowerCase().includes(query),
     );
   }, [searchQuery, nonParametricTests]);
+
+  const filteredHelperTests = useMemo(() => {
+    if (!searchQuery.trim()) return helperTests;
+    const query = searchQuery.toLowerCase();
+    return helperTests.filter((test) =>
+      test.metadata?.name.toLowerCase().includes(query),
+    );
+  }, [searchQuery, helperTests]);
 
   const handleTestSelect = (test) => {
     setSelectedTest(test);
@@ -185,6 +200,38 @@ export default function StatisticalTestsList({
           </Box>
         ) : (
           <>
+            {/* Helper Tests */}
+            {filteredHelperTests.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    fontWeight: 700,
+                    color: "info.main",
+                    mb: 1,
+                    textTransform: "uppercase",
+                    fontSize: "0.75rem",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {t("models:label.helperTests")}
+                </Typography>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  {filteredHelperTests.map((test) => (
+                    <StatisticalTestItem
+                      key={test.name}
+                      test={test}
+                      isSelected={selectedTest?.name === test.name}
+                      onSelect={handleTestSelect}
+                      numberOfRuns={finishedRuns.length}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
             {/* Parametric Tests */}
             {filteredParametricTests.length > 0 && (
               <Box sx={{ mb: 3 }}>
@@ -251,7 +298,8 @@ export default function StatisticalTestsList({
 
             {/* No results message */}
             {filteredParametricTests.length === 0 &&
-              filteredNonParametricTests.length === 0 && (
+              filteredNonParametricTests.length === 0 &&
+              filteredHelperTests.length === 0 && (
                 <Box
                   sx={{
                     display: "flex",

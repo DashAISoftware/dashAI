@@ -23,7 +23,6 @@ class TukeyHSDTest(BaseStatisticalTest):
             "is_parametric": True,
             "posthoc": True,
             "min_runs": 3,
-            "max_runs": None,
             "description": {
                 "en": """Parametric post-hoc test
                 for pairwise model comparisons""",

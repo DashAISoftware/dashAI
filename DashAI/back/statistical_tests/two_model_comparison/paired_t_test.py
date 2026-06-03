@@ -11,7 +11,6 @@ class PairedTTest(BaseStatisticalTest):
             "is_parametric": True,
             "posthoc": False,
             "min_runs": 2,
-            "max_runs": 2,
             "description": {
                 "en": """Parametric test for comparing
                 two models on identical data""",

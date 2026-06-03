@@ -29,13 +29,11 @@ class BaseStatisticalTest(metaclass=ABCMeta):
         Default metadata:
         - is_parametric: Whether the test is parametric
         - min_runs: Minimum number of runs required
-        - max_runs: Maximum number of runs (None = unlimited)
         - description: Brief description in multiple languages
         """
         return {
             "is_parametric": False,  # Override in subclasses
             "min_runs": 2,
-            "max_runs": None,
             "description": {
                 "en": "Statistical test",
                 "es": "Prueba estadística",

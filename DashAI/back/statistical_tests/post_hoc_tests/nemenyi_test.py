@@ -28,7 +28,6 @@ class NemenyiTest(BaseStatisticalTest):
             "is_parametric": False,
             "posthoc": True,
             "min_runs": 3,
-            "max_runs": None,
             "description": {
                 "en": """Non-parametric post-hoc
                 test with Nemenyi correction""",

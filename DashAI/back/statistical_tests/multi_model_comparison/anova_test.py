@@ -11,7 +11,6 @@ class AnovaTest(BaseStatisticalTest):
             "is_parametric": True,
             "posthoc": False,
             "min_runs": 3,
-            "max_runs": None,
             "description": {
                 "en": """Parametric test for comparing 3 or more models on
                 identical data""",

@@ -29,7 +29,6 @@ class CorrectedPairedTTest(BaseStatisticalTest):
             "is_parametric": True,
             "posthoc": False,
             "min_runs": 2,
-            "max_runs": 2,
             "description": {
                 "en": """Paired t-test with correction
                 for cross-validation dependencies""",

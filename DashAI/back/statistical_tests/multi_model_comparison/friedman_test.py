@@ -11,7 +11,6 @@ class FriedmanTest(BaseStatisticalTest):
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 3,
-            "max_runs": None,
             "description": {
                 "en": """Non-parametric alternative to ANOVA
                 for comparing 3+ models""",
