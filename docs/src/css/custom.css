@@ -1,179 +1,202 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+@font-face {
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-mono/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ── Light theme ── */
 :root {
-  /* DashAI gold as primary */
-  --ifm-color-primary: #b8891c;
-  --ifm-color-primary-dark: #9c7215;
-  --ifm-color-primary-darker: #856010;
-  --ifm-color-primary-darkest: #634708;
-  --ifm-color-primary-light: #d4a033;
-  --ifm-color-primary-lighter: #dfb558;
-  --ifm-color-primary-lightest: #ebcc82;
+  /* DashAI blue as primary */
+  --ifm-color-primary: #2C7AFF;
+  --ifm-color-primary-dark: #1A5FA3;
+  --ifm-color-primary-darker: #0D4880;
+  --ifm-color-primary-darkest: #001C34;
+  --ifm-color-primary-light: #5B9AFF;
+  --ifm-color-primary-lighter: #85B5FF;
+  --ifm-color-primary-lightest: #A7C7FF;
 
   --ifm-code-font-size: 87.5%;
-  --ifm-font-family-base: 'IBM Plex Sans', system-ui, sans-serif;
-  --ifm-heading-font-family: 'Playfair Display', Georgia, serif;
-  --ifm-font-family-monospace: 'IBM Plex Mono', 'Courier New', monospace;
+  --ifm-font-family-base: 'Geist', system-ui, sans-serif;
+  --ifm-heading-font-family: 'Geist', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'Geist Mono', 'Courier New', monospace;
   --ifm-font-size-base: 17.5px;
   --ifm-line-height-base: 1.75;
 
   --ifm-navbar-height: 56px;
-  --ifm-navbar-background-color: rgba(255, 255, 255, 0.92);
+  --ifm-navbar-background-color: rgba(254, 254, 255, 0.92);
 
   /* Surface tokens */
-  --dashai-bg-base: #f5f5f5;
-  --dashai-bg-surface: #ffffff;
-  --dashai-bg-elevated: #fafafa;
-  --dashai-bg-code: #fafafa;
-  --dashai-border: rgba(0, 0, 0, 0.1);
-  --dashai-border-hover: rgba(0, 0, 0, 0.16);
-  --dashai-border-active: #b8891c;
-  --dashai-text-primary: #111111;
-  --dashai-text-secondary: rgba(17, 17, 17, 0.5);
-  --dashai-text-muted: rgba(17, 17, 17, 0.5);
-  --dashai-text-dim: rgba(17, 17, 17, 0.3);
+  --dashai-bg-base: #FEFEFF;
+  --dashai-bg-surface: #FEFEFF;
+  --dashai-bg-elevated: #F5F8FF;
+  --dashai-bg-code: #F5F8FF;
+  --dashai-border: rgba(0, 28, 52, 0.10);
+  --dashai-border-hover: rgba(0, 28, 52, 0.16);
+  --dashai-border-active: #2C7AFF;
+  --dashai-text-primary: #001C34;
+  --dashai-text-secondary: rgba(0, 28, 52, 0.65);
+  --dashai-text-muted: rgba(0, 28, 52, 0.50);
+  --dashai-text-dim: rgba(0, 28, 52, 0.35);
 
-  /* DashAI gold as accent */
-  --dashai-accent: #b8891c;
-  --dashai-accent-light: #d4a033;
-  --dashai-accent-glow: rgba(212, 160, 51, 0.06);
-  --dashai-accent-border: rgba(212, 160, 51, 0.22);
-  --dashai-accent-text: #b8891c;
-  --dashai-scroll-thumb: #bdbdbd;
-  --dashai-scroll-thumb-hover: #9e9e9e;
-  --dashai-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-  --dashai-code-border: #e0e0e0;
-  --dashai-code-header: #f5f5f5;
+  /* DashAI blue as accent */
+  --dashai-accent: #2C7AFF;
+  --dashai-accent-light: #5B9AFF;
+  --dashai-accent-glow: rgba(44, 122, 255, 0.06);
+  --dashai-accent-border: rgba(44, 122, 255, 0.22);
+  --dashai-accent-text: #2C7AFF;
+  --dashai-scroll-thumb: #A7C7FF;
+  --dashai-scroll-thumb-hover: #85B5FF;
+  --dashai-shadow: 0 20px 60px rgba(0, 28, 52, 0.12);
+  --dashai-code-border: rgba(0, 28, 52, 0.12);
+  --dashai-code-header: #F5F8FF;
 
   --dashai-success: #43a047;
   --dashai-warning: #ed6c02;
   --dashai-error: #d32f2f;
-  --dashai-info: #2196f3;
+  --dashai-info: #2C7AFF;
 
-  /* 4 macro-section colors mapped to DashAI semantic palette (light) */
-  /* Blue  = exploration / understanding  → Discover + Deep Dive          */
-  /* Gold  = action / configuration       → Learn                         */
-  /* Lime  = output / results / build     → Build                         */
-  --dashai-discover: #4a7ad4;
-  --dashai-discover-bg: rgba(91, 141, 239, 0.08);
-  --dashai-discover-border: rgba(91, 141, 239, 0.22);
-  --dashai-learn: #b8891c;
-  --dashai-learn-bg: rgba(212, 160, 51, 0.10);
-  --dashai-learn-border: rgba(212, 160, 51, 0.22);
-  --dashai-deep-dive: #4a7ad4;
-  --dashai-deep-dive-bg: rgba(91, 141, 239, 0.08);
-  --dashai-deep-dive-border: rgba(91, 141, 239, 0.22);
-  --dashai-build: #6ea832;
-  --dashai-build-bg: rgba(168, 224, 95, 0.12);
-  --dashai-build-border: rgba(168, 224, 95, 0.28);
+  /* 4 macro-section colors mapped to DashAI brand palette (light) */
+  /* Blue   = exploration / understanding → Discover + Deep Dive */
+  /* Teal   = guides / learning           → Learn                */
+  /* Orange = action / building           → Build                */
+  --dashai-discover: #2C7AFF;
+  --dashai-discover-bg: rgba(44, 122, 255, 0.07);
+  --dashai-discover-border: rgba(44, 122, 255, 0.20);
+  --dashai-learn: #005967;
+  --dashai-learn-bg: rgba(0, 89, 103, 0.09);
+  --dashai-learn-border: rgba(0, 89, 103, 0.22);
+  --dashai-deep-dive: #A54DA9;
+  --dashai-deep-dive-bg: rgba(165, 77, 169, 0.09);
+  --dashai-deep-dive-border: rgba(165, 77, 169, 0.22);
+  --dashai-build: #79310C;
+  --dashai-build-bg: rgba(121, 49, 12, 0.08);
+  --dashai-build-border: rgba(121, 49, 12, 0.20);
   --dashai-section-accent: var(--dashai-learn);
   --dashai-section-bg: var(--dashai-learn-bg);
   --dashai-section-border: var(--dashai-learn-border);
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.07);
 
-  /* DashAI semantic palette */
-  --dashai-blue: #5b8def;
-  --dashai-blue-dim: rgba(91, 141, 239, 0.08);
-  --dashai-blue-border: rgba(91, 141, 239, 0.22);
-  --dashai-gold: #d4a033;
-  --dashai-gold-dim: rgba(212, 160, 51, 0.10);
-  --dashai-gold-border: rgba(212, 160, 51, 0.22);
-  --dashai-lime: #a8e05f;
-  --dashai-lime-dim: rgba(168, 224, 95, 0.08);
-  --dashai-lime-border: rgba(168, 224, 95, 0.22);
+  /* DashAI semantic palette — brand module colors */
+  --dashai-blue: #2C7AFF;
+  --dashai-blue-dim: rgba(44, 122, 255, 0.08);
+  --dashai-blue-border: rgba(44, 122, 255, 0.22);
+  --dashai-teal: #005967;
+  --dashai-teal-dim: rgba(0, 89, 103, 0.09);
+  --dashai-teal-border: rgba(0, 89, 103, 0.22);
+  --dashai-purple: #A54DA9;
+  --dashai-purple-dim: rgba(165, 77, 169, 0.09);
+  --dashai-purple-border: rgba(165, 77, 169, 0.22);
+  --dashai-amber: #79310C;
+  --dashai-amber-dim: rgba(121, 49, 12, 0.08);
+  --dashai-amber-border: rgba(121, 49, 12, 0.20);
 }
 
 /* ── Dark theme — DashAI Dusk palette ── */
 [data-theme='dark'] {
-  /* DashAI gold as primary */
-  --ifm-color-primary: #d4a033;
-  --ifm-color-primary-dark: #b8891c;
-  --ifm-color-primary-darker: #9c7215;
-  --ifm-color-primary-darkest: #7a560e;
-  --ifm-color-primary-light: #dfb558;
-  --ifm-color-primary-lighter: #e8c67a;
-  --ifm-color-primary-lightest: #f0d99f;
+  /* DashAI blue as primary */
+  --ifm-color-primary: #A7C7FF;
+  --ifm-color-primary-dark: #85B5FF;
+  --ifm-color-primary-darker: #5B9AFF;
+  --ifm-color-primary-darkest: #2C7AFF;
+  --ifm-color-primary-light: #C5D9FF;
+  --ifm-color-primary-lighter: #D6E5FF;
+  --ifm-color-primary-lightest: #E8F0FF;
 
   /* DashAI dark backgrounds */
-  --ifm-navbar-background-color: rgba(26, 25, 24, 0.94);
-  --ifm-background-color: #1a1918;
-  --ifm-background-surface-color: #211f1e;
+  --ifm-navbar-background-color: rgba(25, 24, 23, 0.94);
+  --ifm-background-color: #191817;
+  --ifm-background-surface-color: #1F1E1D;
 
-  --dashai-bg-base: #1a1918;
-  --dashai-bg-surface: #211f1e;
-  --dashai-bg-elevated: #282624;
-  --dashai-bg-code: #211f1e;
+  --dashai-bg-base: #191817;
+  --dashai-bg-surface: #1F1E1D;
+  --dashai-bg-elevated: #232221;
+  --dashai-bg-code: #1F1E1D;
 
   /* DashAI border / text */
-  --dashai-border: rgba(240, 235, 224, 0.06);
-  --dashai-border-hover: rgba(240, 235, 224, 0.12);
-  --dashai-border-active: #d4a033;
-  --dashai-text-primary: #f0ebe0;
-  --dashai-text-secondary: rgba(240, 235, 224, 0.65);
-  --dashai-text-muted: rgba(240, 235, 224, 0.5);
-  --dashai-text-dim: rgba(240, 235, 224, 0.15);
+  --dashai-border: rgba(254, 254, 255, 0.10);
+  --dashai-border-hover: rgba(254, 254, 255, 0.16);
+  --dashai-border-active: #A7C7FF;
+  --dashai-text-primary: #FEFEFF;
+  --dashai-text-secondary: rgba(254, 254, 255, 0.70);
+  --dashai-text-muted: rgba(254, 254, 255, 0.50);
+  --dashai-text-dim: rgba(254, 254, 255, 0.40);
 
-  /* DashAI gold as accent */
-  --dashai-accent: #d4a033;
-  --dashai-accent-light: #dfb558;
-  --dashai-accent-glow: rgba(212, 160, 51, 0.06);
-  --dashai-accent-border: rgba(212, 160, 51, 0.22);
-  --dashai-accent-text: #dfb558;
-  --dashai-scroll-thumb: rgba(240, 235, 224, 0.15);
-  --dashai-scroll-thumb-hover: rgba(240, 235, 224, 0.28);
+  /* DashAI blue as accent */
+  --dashai-accent: #A7C7FF;
+  --dashai-accent-light: #C5D9FF;
+  --dashai-accent-glow: rgba(167, 199, 255, 0.06);
+  --dashai-accent-border: rgba(167, 199, 255, 0.22);
+  --dashai-accent-text: #A7C7FF;
+  --dashai-scroll-thumb: rgba(254, 254, 255, 0.20);
+  --dashai-scroll-thumb-hover: rgba(254, 254, 255, 0.35);
   --dashai-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
-  --dashai-code-border: rgba(240, 235, 224, 0.08);
-  --dashai-code-header: #282624;
+  --dashai-code-border: rgba(254, 254, 255, 0.10);
+  --dashai-code-header: #232221;
 
-  --dashai-success: #a8e05f;
-  --dashai-warning: #dfb558;
+  --dashai-success: #90F1C4;
+  --dashai-warning: #FFA578;
   --dashai-error: #ff8383;
-  --dashai-info: #5b8def;
+  --dashai-info: #A7C7FF;
 
-  /* 4 macro-section colors (dark) — DashAI semantic mapping */
-  --dashai-discover: #5b8def;
-  --dashai-discover-bg: rgba(91, 141, 239, 0.07);
-  --dashai-discover-border: rgba(91, 141, 239, 0.2);
-  --dashai-learn: #d4a033;
-  --dashai-learn-bg: rgba(212, 160, 51, 0.10);
-  --dashai-learn-border: rgba(212, 160, 51, 0.18);
-  --dashai-deep-dive: #5b8def;
-  --dashai-deep-dive-bg: rgba(91, 141, 239, 0.07);
-  --dashai-deep-dive-border: rgba(91, 141, 239, 0.2);
-  --dashai-build: #a8e05f;
-  --dashai-build-bg: rgba(168, 224, 95, 0.07);
-  --dashai-build-border: rgba(168, 224, 95, 0.2);
+  /* 4 macro-section colors (dark) — DashAI brand palette */
+  --dashai-discover: #A7C7FF;
+  --dashai-discover-bg: rgba(167, 199, 255, 0.07);
+  --dashai-discover-border: rgba(167, 199, 255, 0.2);
+  --dashai-learn: #90F1C4;
+  --dashai-learn-bg: rgba(144, 241, 196, 0.09);
+  --dashai-learn-border: rgba(144, 241, 196, 0.22);
+  --dashai-deep-dive: #FEE8FF;
+  --dashai-deep-dive-bg: rgba(254, 232, 255, 0.09);
+  --dashai-deep-dive-border: rgba(254, 232, 255, 0.22);
+  --dashai-build: #FFA578;
+  --dashai-build-bg: rgba(255, 165, 120, 0.09);
+  --dashai-build-border: rgba(255, 165, 120, 0.22);
   --dashai-section-accent: var(--dashai-learn);
   --dashai-section-bg: var(--dashai-learn-bg);
   --dashai-section-border: var(--dashai-learn-border);
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
-  /* DashAI semantic palette */
-  --dashai-blue: #5b8def;
-  --dashai-blue-dim: rgba(91, 141, 239, 0.08);
-  --dashai-blue-border: rgba(91, 141, 239, 0.22);
-  --dashai-gold: #d4a033;
-  --dashai-gold-dim: rgba(212, 160, 51, 0.10);
-  --dashai-gold-border: rgba(212, 160, 51, 0.22);
-  --dashai-lime: #a8e05f;
-  --dashai-lime-dim: rgba(168, 224, 95, 0.08);
-  --dashai-lime-border: rgba(168, 224, 95, 0.22);
+  /* DashAI semantic palette — brand module colors */
+  --dashai-blue: #A7C7FF;
+  --dashai-blue-dim: rgba(167, 199, 255, 0.08);
+  --dashai-blue-border: rgba(167, 199, 255, 0.22);
+  --dashai-teal: #90F1C4;
+  --dashai-teal-dim: rgba(144, 241, 196, 0.09);
+  --dashai-teal-border: rgba(144, 241, 196, 0.22);
+  --dashai-purple: #FEE8FF;
+  --dashai-purple-dim: rgba(254, 232, 255, 0.09);
+  --dashai-purple-border: rgba(254, 232, 255, 0.22);
+  --dashai-amber: #FFA578;
+  --dashai-amber-dim: rgba(255, 165, 120, 0.09);
+  --dashai-amber-border: rgba(255, 165, 120, 0.22);
 }
 
-/* DashAI light mode semantic vars — slightly darkened for readability on white */
-:root {
-  --dashai-blue: #4a7ad4;
-  --dashai-blue-dim: rgba(74, 122, 212, 0.08);
-  --dashai-blue-border: rgba(74, 122, 212, 0.22);
-  --dashai-gold: #b8891c;
-  --dashai-gold-dim: rgba(184, 137, 28, 0.10);
-  --dashai-gold-border: rgba(184, 137, 28, 0.22);
-  --dashai-lime: #6ea832;
-  --dashai-lime-dim: rgba(110, 168, 50, 0.10);
-  --dashai-lime-border: rgba(110, 168, 50, 0.25);
+/* DashAI light mode semantic vars — brand palette overrides for white bg */
+:root:not([data-theme='dark']) {
+  --dashai-blue: #2C7AFF;
+  --dashai-blue-dim: rgba(44, 122, 255, 0.08);
+  --dashai-blue-border: rgba(44, 122, 255, 0.22);
+  --dashai-teal: #005967;
+  --dashai-teal-dim: rgba(0, 89, 103, 0.09);
+  --dashai-teal-border: rgba(0, 89, 103, 0.22);
+  --dashai-purple: #A54DA9;
+  --dashai-purple-dim: rgba(165, 77, 169, 0.09);
+  --dashai-purple-border: rgba(165, 77, 169, 0.22);
+  --dashai-amber: #79310C;
+  --dashai-amber-dim: rgba(121, 49, 12, 0.08);
+  --dashai-amber-border: rgba(121, 49, 12, 0.20);
 }
 
 /* ── Base typography ── */
@@ -205,7 +228,7 @@ code, kbd, samp {
 }
 
 a {
-  color: var(--dashai-learn);
+  color: var(--dashai-accent);
 }
 
 a:hover,
@@ -243,6 +266,12 @@ a:focus-visible {
   --dashai-section-border: var(--dashai-build-border);
 }
 
+[data-section='components'] {
+  --dashai-section-accent: var(--dashai-discover);
+  --dashai-section-bg: var(--dashai-discover-bg);
+  --dashai-section-border: var(--dashai-discover-border);
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -268,7 +297,15 @@ a:focus-visible {
 }
 
 .navbar__logo {
-  margin: 0 12px;
+  display: flex;
+  align-items: center;
+  margin: 0 8px;
+}
+
+.navbar__logo img {
+  height: 20px;
+  width: auto;
+  display: block;
 }
 
 .navbar__items--right {
@@ -495,6 +532,11 @@ a:focus-visible {
 .navbar-item--build .navbar__link--active::after,
 .navbar-item--build.navbar__item > .navbar__link--active::after { background: var(--dashai-build); }
 
+.navbar-item--components .navbar__link,
+.navbar-item--components.navbar__item > .navbar__link { color: var(--dashai-discover); }
+.navbar-item--components .navbar__link--active::after,
+.navbar-item--components.navbar__item > .navbar__link--active::after { background: var(--dashai-discover); }
+
 /* ── Sidebar ── */
 .theme-doc-sidebar-container {
   border-right: 1px solid var(--dashai-border) !important;
@@ -547,6 +589,11 @@ a:focus-visible {
   color: var(--dashai-build) !important;
   background: var(--dashai-build-bg) !important;
   border-left-color: var(--dashai-build);
+}
+[data-section='components'] .menu__link--active {
+  color: var(--dashai-discover) !important;
+  background: var(--dashai-discover-bg) !important;
+  border-left-color: var(--dashai-discover);
 }
 
 .menu__list-item-collapsible:hover {
@@ -639,7 +686,7 @@ article {
 
 .table-of-contents__link:hover,
 .table-of-contents__link--active {
-  color: var(--dashai-learn);
+  color: var(--dashai-accent);
   font-weight: 500;
 }
 
@@ -663,6 +710,11 @@ article {
   color: var(--dashai-build);
 }
 
+[data-section='components'] .table-of-contents__link:hover,
+[data-section='components'] .table-of-contents__link--active {
+  color: var(--dashai-discover);
+}
+
 .table-of-contents__left-border {
   border-left: 2px solid var(--dashai-border);
 }
@@ -684,7 +736,7 @@ article {
 .prism-code {
   background: var(--dashai-bg-code) !important;
   border: 1px solid var(--dashai-code-border);
-  border-left: 3px solid var(--dashai-learn);
+  border-left: 3px solid var(--dashai-accent);
   border-radius: 8px;
   font-size: 0.8125rem;
 }
@@ -703,6 +755,10 @@ article {
 
 [data-section='build'] .prism-code {
   border-left-color: var(--dashai-build);
+}
+
+[data-section='components'] .prism-code {
+  border-left-color: var(--dashai-discover);
 }
 
 .codeBlockContainer_node_modules-\@docusaurus-theme-classic-lib-theme-CodeBlock-Content-styles-module {
@@ -790,7 +846,7 @@ pre code {
 
 /* Landing hero gradient banner */
 .dashai-landing-hero {
-  background: linear-gradient(135deg, rgba(184, 137, 28, 0.08) 0%, rgba(74, 122, 212, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(44, 122, 255, 0.07) 0%, rgba(0, 28, 52, 0.05) 100%);
   border: 1px solid var(--dashai-accent-border);
   border-radius: 12px;
   padding: 40px 36px;
@@ -923,18 +979,18 @@ pre code {
 .dashai-cta__btn {
   padding: 7px 18px;
   border-radius: 6px;
-  background: var(--dashai-learn);
-  color: white !important;
+  background: #2C7AFF;
+  color: #FEFEFF !important;
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   text-decoration: none !important;
-  transition: opacity 0.15s;
+  transition: background 0.15s;
 }
 
 .dashai-cta__btn:hover {
-  background: var(--dashai-accent-light);
-  color: #1a1a1a !important;
+  background: #1A5FA3;
+  color: #FEFEFF !important;
   text-decoration: none !important;
 }
 
@@ -1184,7 +1240,7 @@ pre code {
 }
 
 .breadcrumbs__link:hover {
-  color: var(--dashai-learn);
+  color: var(--dashai-accent);
   background: none;
 }
 
@@ -1202,6 +1258,10 @@ pre code {
 
 [data-section='build'] .breadcrumbs__link:hover {
   color: var(--dashai-build);
+}
+
+[data-section='components'] .breadcrumbs__link:hover {
+  color: var(--dashai-discover);
 }
 
 /* ── Pagination ── */
@@ -1235,6 +1295,11 @@ pre code {
 [data-section='build'] .pagination-nav__link:hover {
   border-color: var(--dashai-build-border);
   background: var(--dashai-build-bg);
+}
+
+[data-section='components'] .pagination-nav__link:hover {
+  border-color: var(--dashai-discover-border);
+  background: var(--dashai-discover-bg);
 }
 
 .pagination-nav__sublabel {
@@ -1492,33 +1557,33 @@ tbody tr:hover {
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  background: var(--dashai-gold-dim);
-  color: var(--dashai-gold);
-  border: 1px solid var(--dashai-gold-border);
+  background: var(--dashai-blue-dim);
+  color: var(--dashai-blue);
+  border: 1px solid var(--dashai-blue-border);
   margin-bottom: 14px;
   vertical-align: middle;
   font-family: var(--ifm-font-family-base);
 }
 
-/* Per-type badge tints — gold=action/config, blue=data/explore, lime=output/results */
-.sk-badge--task           { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
-.sk-badge--model          { background: var(--dashai-gold-dim);  color: var(--dashai-gold);  border-color: var(--dashai-gold-border); }
-.sk-badge--generativemodel{ background: var(--dashai-lime-dim);  color: var(--dashai-lime);  border-color: var(--dashai-lime-border); }
-.sk-badge--dataloader     { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
-.sk-badge--metric         { background: var(--dashai-lime-dim);  color: var(--dashai-lime);  border-color: var(--dashai-lime-border); }
-.sk-badge--optimizer      { background: var(--dashai-gold-dim);  color: var(--dashai-gold);  border-color: var(--dashai-gold-border); }
-.sk-badge--explorer       { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
-.sk-badge--globalexplainer{ background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
-.sk-badge--localexplainer { background: var(--dashai-blue-dim);  color: var(--dashai-blue);  border-color: var(--dashai-blue-border); }
-.sk-badge--converter      { background: var(--dashai-gold-dim);  color: var(--dashai-gold);  border-color: var(--dashai-gold-border); }
+/* Per-type badge tints — brand palette: blue=models/data, teal=generative, amber=datasets/converters */
+.sk-badge--task           { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
+.sk-badge--model          { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
+.sk-badge--generativemodel{ background: var(--dashai-teal-dim);   color: var(--dashai-teal);   border-color: var(--dashai-teal-border); }
+.sk-badge--dataloader     { background: var(--dashai-amber-dim);  color: var(--dashai-amber);  border-color: var(--dashai-amber-border); }
+.sk-badge--metric         { background: var(--dashai-teal-dim);   color: var(--dashai-teal);   border-color: var(--dashai-teal-border); }
+.sk-badge--optimizer      { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
+.sk-badge--explorer       { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
+.sk-badge--globalexplainer{ background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
+.sk-badge--localexplainer { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
+.sk-badge--converter      { background: var(--dashai-amber-dim);  color: var(--dashai-amber);  border-color: var(--dashai-amber-border); }
 .sk-badge--job            { background: var(--dashai-bg-elevated); color: var(--dashai-text-muted); border-color: var(--dashai-border); }
-.sk-badge--generativetask { background: var(--dashai-lime-dim);  color: var(--dashai-lime);  border-color: var(--dashai-lime-border); }
+.sk-badge--generativetask { background: var(--dashai-teal-dim);   color: var(--dashai-teal);   border-color: var(--dashai-teal-border); }
 
 /* Class signature block — shows the full dotted module path */
 .sk-sig {
   background: var(--dashai-bg-elevated);
   border: 1px solid var(--dashai-border);
-  border-left: 3px solid var(--dashai-gold);
+  border-left: 3px solid var(--dashai-blue);
   border-radius: 6px;
   padding: 12px 18px;
   font-family: var(--ifm-font-family-monospace);
@@ -1533,7 +1598,7 @@ tbody tr:hover {
 }
 
 .sk-sig__name {
-  color: var(--dashai-gold);
+  color: var(--dashai-blue);
 }
 
 /* Parameter definition list */
@@ -1589,7 +1654,7 @@ tbody tr:hover {
 }
 
 .sk-method__name {
-  color: var(--dashai-lime);
+  color: var(--dashai-teal);
 }
 
 .sk-method__sig {
