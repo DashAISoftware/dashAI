@@ -9,6 +9,7 @@ class PairedTTest(BaseStatisticalTest):
         return {
             "name": "Paired T-Test",
             "is_parametric": True,
+            "posthoc": False,
             "min_runs": 2,
             "max_runs": 2,
             "description": {

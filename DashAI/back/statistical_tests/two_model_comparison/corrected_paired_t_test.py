@@ -27,6 +27,7 @@ class CorrectedPairedTTest(BaseStatisticalTest):
         return {
             "name": "Corrected Paired t-test",
             "is_parametric": True,
+            "posthoc": False,
             "min_runs": 2,
             "max_runs": 2,
             "description": {

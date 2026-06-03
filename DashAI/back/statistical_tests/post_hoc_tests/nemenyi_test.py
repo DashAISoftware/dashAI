@@ -26,6 +26,7 @@ class NemenyiTest(BaseStatisticalTest):
         return {
             "name": "Nemenyi",
             "is_parametric": False,
+            "posthoc": True,
             "min_runs": 3,
             "max_runs": None,
             "description": {

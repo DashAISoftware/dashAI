@@ -9,6 +9,7 @@ class AnovaTest(BaseStatisticalTest):
         return {
             "name": "ANOVA",
             "is_parametric": True,
+            "posthoc": False,
             "min_runs": 3,
             "max_runs": None,
             "description": {

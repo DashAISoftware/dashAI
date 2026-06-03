@@ -44,7 +44,7 @@ export default function StatisticalTestsList({
         const response = await getComponents({
           selectTypes: ["StatisticalTest"],
         });
-        setTests(response);
+        setTests(response.filter((comp) => comp.metadata?.posthoc === false));
       } catch (error) {
         console.error("Error fetching statistical tests:", error);
         enqueueSnackbar(t("models:error.fetchingStatisticalTests"), {

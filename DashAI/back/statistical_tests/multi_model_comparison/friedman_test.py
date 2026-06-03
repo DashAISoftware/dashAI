@@ -9,6 +9,7 @@ class FriedmanTest(BaseStatisticalTest):
         return {
             "name": "Friedman",
             "is_parametric": False,
+            "posthoc": False,
             "min_runs": 3,
             "max_runs": None,
             "description": {

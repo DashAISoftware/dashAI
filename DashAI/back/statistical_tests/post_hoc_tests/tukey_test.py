@@ -21,6 +21,7 @@ class TukeyHSDTest(BaseStatisticalTest):
         return {
             "name": "Tukey HSD",
             "is_parametric": True,
+            "posthoc": True,
             "min_runs": 3,
             "max_runs": None,
             "description": {
