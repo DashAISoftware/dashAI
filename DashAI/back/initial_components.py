@@ -226,6 +226,7 @@ from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
+from DashAI.back.models.scikit_learn.dbscan_clustering import DBSCANClustering
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
@@ -251,6 +252,7 @@ from DashAI.back.models.scikit_learn.hist_gradient_boosting_regression import (
 )
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.k_neighbors_regression import KNeighborsRegression
+from DashAI.back.models.scikit_learn.kmeans_clustering import KMeansClustering
 from DashAI.back.models.scikit_learn.lasso_regression import LassoRegression
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
@@ -285,9 +287,9 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
-from DashAI.back.tasks.clustering_task import ClusteringTask
 
 # Tasks
+from DashAI.back.tasks.clustering_task import ClusteringTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.regression_task import RegressionTask
@@ -336,6 +338,7 @@ def get_initial_components():
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
+        DBSCANClustering,
         DistilBertTransformer,
         DummyClassifier,
         ElasticNetRegression,
@@ -349,6 +352,7 @@ def get_initial_components():
         HistGradientBoostingRegression,
         KNeighborsClassifier,
         KNeighborsRegression,
+        KMeansClustering,
         LassoRegression,
         LinearRegression,
         LinearSVCClassifier,
