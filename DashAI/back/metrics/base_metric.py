@@ -12,9 +12,10 @@ class BaseMetric:
     """Abstract base class for all DashAI evaluation metrics.
 
     Every concrete metric must subclass ``BaseMetric`` (or one of its
-    category subclasses) and implement a static ``score`` method that
-    accepts the true labels/values and model predictions and returns a
-    scalar float.
+    category subclasses) and implement a static ``score`` method. The concrete
+    method signature depends on the evaluation family: supervised metrics use
+    true outputs and predictions, while clustering metrics use feature data and
+    discovered labels.
 
     Class attributes
     ----------------
@@ -50,6 +51,9 @@ class BaseMetric:
         return meta
 
 
+# Legacy metric preparation map kept for backwards compatibility.
+# New metric families should not extend this map. They should define their
+# own input validation/preparation helpers in their family-specific module.
 METRICS_MAP = {
     "classification": ["Accuracy", "F1", "Precision", "Recall"],
     "regression": ["RMSE", "MAE"],
