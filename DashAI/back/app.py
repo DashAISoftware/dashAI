@@ -14,6 +14,7 @@ from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.backfill import backfill_dataset_counts
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
+from DashAI.back.seeds import seed_datasets_if_first_run
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,9 @@ def create_app(
 
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])
+
+    logger.debug("4c. Seeding initial datasets if first run.")
+    seed_datasets_if_first_run()
 
     logger.debug("5. Initializing FastAPI application.")
     app = FastAPI(title="DashAI")
