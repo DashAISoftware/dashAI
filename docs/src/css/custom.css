@@ -81,6 +81,10 @@
   --dashai-build: #79310C;
   --dashai-build-bg: rgba(121, 49, 12, 0.08);
   --dashai-build-border: rgba(121, 49, 12, 0.20);
+  --dashai-discover-glow: rgba(44, 122, 255, 0.04);
+  --dashai-learn-glow: rgba(0, 89, 103, 0.04);
+  --dashai-deep-dive-glow: rgba(165, 77, 169, 0.04);
+  --dashai-build-glow: rgba(121, 49, 12, 0.04);
   --dashai-section-accent: var(--dashai-learn);
   --dashai-section-bg: var(--dashai-learn-bg);
   --dashai-section-border: var(--dashai-learn-border);
@@ -162,6 +166,10 @@
   --dashai-build: #FFA578;
   --dashai-build-bg: rgba(255, 165, 120, 0.09);
   --dashai-build-border: rgba(255, 165, 120, 0.22);
+  --dashai-discover-glow: rgba(167, 199, 255, 0.05);
+  --dashai-learn-glow: rgba(144, 241, 196, 0.05);
+  --dashai-deep-dive-glow: rgba(254, 232, 255, 0.05);
+  --dashai-build-glow: rgba(255, 165, 120, 0.05);
   --dashai-section-accent: var(--dashai-learn);
   --dashai-section-bg: var(--dashai-learn-bg);
   --dashai-section-border: var(--dashai-learn-border);
@@ -837,148 +845,485 @@ pre code {
   color: var(--dashai-text-dim);
 }
 
-/* ── Homepage ── */
+/* ══ Homepage — full-bleed, fills viewport so the footer band sits at the bottom ══ */
 .dashai-home {
-  max-width: 830px;
-  margin: 0 auto;
-  padding: 40px 32px;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--ifm-navbar-height));
 }
 
-/* Landing hero gradient banner */
-.dashai-landing-hero {
-  background: linear-gradient(135deg, rgba(44, 122, 255, 0.07) 0%, rgba(0, 28, 52, 0.05) 100%);
-  border: 1px solid var(--dashai-accent-border);
-  border-radius: 12px;
-  padding: 40px 36px;
+/* Centered inner container for full-bleed sections */
+.dashai-wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Decorative isotype watermark */
+.dashai-wm {
+  position: absolute;
+  pointer-events: none;
+  color: var(--dashai-accent);
+  opacity: 0.05;
+  z-index: 0;
+}
+.dashai-wm svg,
+.dashai-wm.dashai-wm svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.dashai-wm--hero {
+  top: -90px;
+  right: -70px;
+  width: 460px;
+  transform: rotate(-8deg);
+}
+.dashai-wm--cta {
+  bottom: -120px;
+  left: -90px;
+  width: 380px;
+  transform: rotate(-12deg);
+  color: var(--dashai-accent);
+  opacity: 0.05;
+}
+
+/* ── Hero ── */
+.dashai-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--dashai-border);
+  background:
+    radial-gradient(1100px 440px at 82% -12%, var(--dashai-discover-bg), transparent 60%),
+    radial-gradient(820px 360px at -5% 115%, var(--dashai-accent-glow), transparent 60%);
+  padding: 92px 0 84px;
+}
+
+.dashai-hero__inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.dashai-hero__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dashai-text-secondary);
+  background: var(--dashai-bg-surface);
+  border: 1px solid var(--dashai-border);
+  padding: 6px 14px;
+  border-radius: 999px;
   margin-bottom: 28px;
 }
-
-.dashai-landing-hero__title {
-  font-size: 1.857rem; /* 26px */
-  font-weight: 700;
-  font-family: var(--ifm-heading-font-family);
-  color: var(--dashai-text-primary);
-  margin-bottom: 12px;
+.dashai-hero__led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dashai-accent);
+  box-shadow: 0 0 0 4px var(--dashai-accent-glow);
+  flex-shrink: 0;
+}
+.dashai-hero__sep {
+  color: var(--dashai-text-dim);
+}
+.dashai-hero__pill-accent {
+  color: var(--dashai-accent);
 }
 
-.dashai-landing-hero__subtitle {
+.dashai-hero__title {
+  font-size: 3rem;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  font-family: var(--ifm-heading-font-family);
+  color: var(--dashai-text-primary);
+  max-width: 18ch;
+  margin: 0 0 20px;
+}
+.dashai-hero__accent {
+  color: var(--dashai-accent);
+}
+.dashai-hero__sub {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  font-weight: 300;
+  color: var(--dashai-text-secondary);
+  max-width: 58ch;
+  margin: 0 0 32px;
+}
+.dashai-hero__cta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ── */
+.dashai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 4px;
+  border: 1px solid var(--dashai-border-hover);
+  background: var(--dashai-bg-surface);
+  color: var(--dashai-text-primary) !important;
+  text-decoration: none !important;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.dashai-btn:hover {
+  border-color: var(--dashai-border-active);
+  background: var(--dashai-accent-glow);
+  transform: translateY(-1px);
+  text-decoration: none !important;
+}
+.dashai-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.dashai-btn--blue {
+  background: #2c7aff;
+  border-color: #2c7aff;
+  color: #fefeff !important;
+}
+.dashai-btn--blue:hover {
+  background: #1a5fa3;
+  border-color: #1a5fa3;
+}
+
+/* ── Section + section head ── */
+.dashai-section {
+  padding: 76px 0;
+}
+.dashai-section--ack {
+  padding-bottom: 88px;
+}
+
+.dashai-sec-head {
+  max-width: 62ch;
+  margin-bottom: 36px;
+}
+.dashai-sec-head__eyebrow {
+  display: block;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dashai-text-muted);
+  margin-bottom: 14px;
+}
+.dashai-sec-head__eyebrow .num {
+  color: var(--dashai-accent);
+  font-weight: 500;
+}
+.dashai-sec-head__title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--dashai-text-primary);
+  margin: 0 0 10px;
+}
+.dashai-sec-head__lead {
   font-size: 0.9375rem;
   color: var(--dashai-text-secondary);
-  line-height: 1.7;
-  max-width: 600px;
+  line-height: 1.6;
   margin: 0;
 }
 
-/* 4 macro-section cards */
-.dashai-landing-cards {
+/* 4 macro-section cards — wide grid */
+.dashai-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1100px) {
+  .dashai-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .dashai-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
+/* Card — app HomeButton anatomy. Per-section accent flows through --card-* props. */
 .dashai-landing-card {
-  display: block;
-  padding: 20px 18px;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 22px 24px;
   border: 1px solid var(--dashai-border);
+  border-radius: 4px;
   background: var(--dashai-bg-surface);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
 }
 
-[data-theme='dark'] .dashai-landing-card {
-  background: rgba(18, 18, 18, 0.92);
+.dashai-landing-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
 }
 
 .dashai-landing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--dashai-shadow);
+  transform: translateY(-1px);
+  border-color: var(--card-border);
+  background: var(--card-glow);
   text-decoration: none;
   color: inherit;
 }
 
-.dashai-landing-card--discover:hover { border-color: var(--dashai-discover); background: var(--dashai-discover-bg); }
-.dashai-landing-card--learn:hover    { border-color: var(--dashai-learn);    background: var(--dashai-learn-bg); }
-.dashai-landing-card--deep-dive:hover{ border-color: var(--dashai-deep-dive);background: var(--dashai-deep-dive-bg); }
-.dashai-landing-card--build:hover    { border-color: var(--dashai-build);    background: var(--dashai-build-bg); }
+.dashai-landing-card:hover::before {
+  opacity: 1;
+}
+
+.dashai-landing-card:hover .dashai-landing-card__arrow {
+  transform: translateX(3px);
+  color: var(--card-accent);
+}
+
+/* Per-section accent slots */
+.dashai-landing-card--discover {
+  --card-accent: var(--dashai-discover);
+  --card-dim: var(--dashai-discover-bg);
+  --card-border: var(--dashai-discover-border);
+  --card-glow: var(--dashai-discover-glow);
+}
+.dashai-landing-card--learn {
+  --card-accent: var(--dashai-learn);
+  --card-dim: var(--dashai-learn-bg);
+  --card-border: var(--dashai-learn-border);
+  --card-glow: var(--dashai-learn-glow);
+}
+.dashai-landing-card--deep-dive {
+  --card-accent: var(--dashai-deep-dive);
+  --card-dim: var(--dashai-deep-dive-bg);
+  --card-border: var(--dashai-deep-dive-border);
+  --card-glow: var(--dashai-deep-dive-glow);
+}
+.dashai-landing-card--build {
+  --card-accent: var(--dashai-build);
+  --card-dim: var(--dashai-build-bg);
+  --card-border: var(--dashai-build-border);
+  --card-glow: var(--dashai-build-glow);
+}
 
 .dashai-landing-card__header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
-.dashai-landing-card__bar {
-  width: 4px;
-  height: 18px;
-  border-radius: 2px;
+.dashai-landing-card__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-dim);
+  color: var(--card-accent);
   flex-shrink: 0;
 }
 
-.dashai-landing-card__label {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  font-family: var(--ifm-heading-font-family);
+.dashai-landing-card__icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+/* Shared monospace badge — used by status tag and footer chips */
+.dashai-landing-card__badge {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.53125rem; /* 8.5px */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  border-radius: 2px;
+  border: 1px solid var(--card-border);
+  background: var(--card-dim);
+  color: var(--card-accent);
+}
+
+.dashai-landing-card__tag {
+  display: inline-block;
+  padding: 3px 8px;
+}
+
+.dashai-landing-card__chip {
+  padding: 2px 7px;
+}
+
+.dashai-landing-card__title {
+  font-size: 1.25rem; /* 20px, app h4 */
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--dashai-text-primary);
+  line-height: 1.25;
+  margin: 0 0 5px;
 }
 
 .dashai-landing-card__desc {
   font-size: 0.8125rem;
-  color: var(--dashai-text-muted);
-  line-height: 1.5;
-  padding-left: 12px;
+  font-weight: 300;
+  color: var(--dashai-text-secondary);
+  line-height: 1.65;
   margin: 0;
+  flex-grow: 1;
 }
 
-.dashai-landing-card__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--dashai-text-primary);
-  line-height: 1.35;
-  margin: 0 0 6px 12px;
-}
-
-/* "New to DashAI?" CTA strip */
-.dashai-cta {
+.dashai-landing-card__footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--dashai-border);
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 20px;
-  margin-bottom: 24px;
-  padding: 16px 20px;
-  border-radius: 10px;
-  background: var(--dashai-learn-bg);
-  border: 1px solid var(--dashai-learn-border);
+  justify-content: space-between;
 }
 
-.dashai-cta__icon {
-  color: var(--dashai-learn);
+.dashai-landing-card__chips {
   display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.dashai-landing-card__arrow {
+  font-size: 1.375rem; /* 22px */
+  line-height: 1;
+  color: var(--dashai-text-dim);
+  transition: color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+/* "New to DashAI?" — full-bleed branded CTA band (distinct in both themes) */
+/* "New to DashAI?" — teal strip with a filled accent square, below the cards */
+.dashai-startcta {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 22px;
+  border: 1px solid var(--dashai-learn-border);
+  border-radius: 4px;
+  background: var(--dashai-learn-bg);
+}
+.dashai-startcta__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dashai-learn);
+  color: var(--dashai-bg-surface);
   flex-shrink: 0;
 }
-
-.dashai-cta__body {
+.dashai-startcta__icon svg {
+  width: 20px;
+  height: 20px;
+}
+.dashai-startcta__body {
   flex: 1;
+  min-width: 240px;
 }
-
-.dashai-cta__heading {
-  font-size: 0.875rem;
+.dashai-startcta__heading {
+  font-size: 1rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--dashai-text-primary);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+}
+.dashai-startcta__text {
+  font-size: 0.875rem;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--dashai-text-secondary);
 }
 
-.dashai-cta__text {
-  font-size: 0.8125rem;
+/* Full-bleed branded footer band (acknowledgments) */
+.dashai-cta-band {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(820px 320px at 88% 130%, rgba(44, 122, 255, 0.22), transparent 62%),
+    linear-gradient(115deg, #001c34 0%, #191817 100%);
+  border-top: 1px solid rgba(254, 254, 255, 0.12);
+  border-bottom: 1px solid rgba(254, 254, 255, 0.12);
+  padding: 56px 0;
+}
+
+.dashai-footer-band {
+  padding: 64px 0;
+  margin-top: auto;
+  background: transparent;
+  border-top: 1px solid var(--dashai-border);
+  border-bottom: none;
+}
+.dashai-footer-band__inner {
+  position: relative;
+  z-index: 1;
+}
+.dashai-footer-band__head {
+  max-width: 70ch;
+  margin-bottom: 32px;
+}
+.dashai-footer-band__eyebrow {
+  display: block;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--dashai-text-muted);
+  margin-bottom: 14px;
+}
+.dashai-footer-band__eyebrow .num {
+  color: var(--dashai-accent);
+  font-weight: 500;
+}
+.dashai-footer-band__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--dashai-text-primary);
+  margin: 0 0 10px;
+}
+.dashai-footer-band__lead {
+  font-size: 0.9375rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--dashai-text-secondary);
+  margin: 0;
 }
 
 .dashai-cta__btn {
   padding: 7px 18px;
-  border-radius: 6px;
+  border-radius: 4px;
   background: #2C7AFF;
   color: #FEFEFF !important;
   font-size: 0.8125rem;
@@ -994,43 +1339,23 @@ pre code {
   text-decoration: none !important;
 }
 
-/* Acknowledgments */
-.dashai-ack {
-  padding: 16px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--dashai-border);
-  background: var(--dashai-bg-surface);
-}
-
-[data-theme='dark'] .dashai-ack {
-  background: rgba(18, 18, 18, 0.92);
-}
-
-.dashai-ack__label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--dashai-text-muted);
-  margin-bottom: 8px;
-}
-
-.dashai-ack__text {
-  font-size: 0.8125rem;
-  color: var(--dashai-text-secondary);
-  line-height: 1.65;
-  margin: 0 0 24px;
-}
-
+/* Acknowledgments — open section, refined logo row */
 .dashai-ack__logos {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
   width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (max-width: 900px) {
   .dashai-ack__logos {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .dashai-ack__logos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1038,12 +1363,13 @@ pre code {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 110px;
-  padding: 12px;
+  height: 100px;
+  padding: 18px;
   background: #ffffff;
   border: 1px solid var(--dashai-border);
-  border-radius: 10px;
-  transition: border-color 0.3s ease, transform 0.3s ease;
+  border-radius: 4px;
+  transition: border-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
   cursor: pointer;
   text-decoration: none;
   min-width: 0;
@@ -1051,22 +1377,26 @@ pre code {
 
 .dashai-ack__logo-card:hover {
   border-color: var(--dashai-border-active);
+  transform: translateY(-2px);
+  box-shadow: var(--dashai-shadow);
   text-decoration: none;
 }
 
 .dashai-ack__logo {
   max-width: 100%;
-  max-height: 64px;
+  max-height: 52px;
   object-fit: contain;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+  filter: grayscale(1);
+  opacity: 0.55;
+  transition: filter 0.25s ease, opacity 0.25s ease;
 }
 
 .dashai-ack__logo--small {
-  max-height: 88px;
+  max-height: 68px;
 }
 
 .dashai-ack__logo-card:hover .dashai-ack__logo {
+  filter: grayscale(0);
   opacity: 1;
 }
 
