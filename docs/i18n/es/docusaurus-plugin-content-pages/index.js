@@ -9,7 +9,7 @@ const SECTIONS = [
   {
     id: "discover",
     num: "01",
-    title: "¿Qué es DashAI?",
+    title: "¿Qué es dashAI?",
     tag: "EMPIEZA AQUÍ",
     chips: ["VISIÓN GENERAL", "INSTALACIÓN", "CASOS DE USO"],
     desc: "Descripción general, características clave, instalación y casos de uso — para nuevos usuarios.",
@@ -109,7 +109,7 @@ export default function Home() {
             </span>
             <h1 className="dashai-hero__title">
               Tu guía completa de{" "}
-              <span className="dashai-hero__accent">DashAI</span>.
+              <span className="dashai-hero__accent">dashAI</span>.
             </h1>
             <p className="dashai-hero__sub">
               Aprende a entrenar, evaluar y explicar modelos de Machine Learning
@@ -180,7 +180,7 @@ export default function Home() {
               ))}
             </div>
 
-            {/* ¿Nuevo en DashAI? — strip below the cards */}
+            {/* ¿Nuevo en dashAI? — strip below the cards */}
             <div className="dashai-startcta">
               <div className="dashai-startcta__icon">
                 <svg
@@ -197,7 +197,7 @@ export default function Home() {
               </div>
               <div className="dashai-startcta__body">
                 <div className="dashai-startcta__heading">
-                  ¿Nuevo en DashAI?
+                  ¿Nuevo en dashAI?
                 </div>
                 <div className="dashai-startcta__text">
                   Sigue la guía de inicio para configurar el workbench y
