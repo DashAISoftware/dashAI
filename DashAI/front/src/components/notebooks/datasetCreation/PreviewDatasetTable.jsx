@@ -217,26 +217,25 @@ export default function PreviewDatasetTable({
         grow: 1,
         enableSorting: false,
         enableColumnActions: false,
-        ...(isImage && {
-          Cell: ({ cell }) => {
-            const val = cell.getValue();
-            if (typeof val === "string" && val.startsWith("data:image")) {
-              return (
-                <img
-                  src={val}
-                  alt="img"
-                  style={{
-                    maxHeight: 48,
-                    maxWidth: 48,
-                    objectFit: "contain",
-                  }}
-                />
-              );
-            }
-            return val;
-          },
-          size: 80,
-        }),
+        Cell: ({ cell }) => {
+          const val = cell.getValue();
+          if (typeof val === "string" && val.startsWith("data:image")) {
+            return (
+              <img
+                src={val}
+                alt="img"
+                style={{
+                  maxHeight: 48,
+                  maxWidth: 48,
+                  objectFit: "contain",
+                }}
+              />
+            );
+          }
+          if (typeof val === "boolean") return String(val);
+          return val;
+        },
+        ...(isImage && { size: 80 }),
         Header: () => (
           <Box
             sx={{
