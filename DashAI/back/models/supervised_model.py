@@ -5,7 +5,6 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Dict, final
 
 from fastapi import logger
-
 from kink import di
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
