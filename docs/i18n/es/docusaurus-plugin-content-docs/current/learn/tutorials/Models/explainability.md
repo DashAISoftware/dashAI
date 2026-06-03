@@ -5,7 +5,7 @@ sidebar_label: Explicabilidad
 
 # Explicabilidad
 
-La pestaña de Explicabilidad te permite adjuntar explicadores a un modelo entrenado para entender cómo toma sus decisiones. DashAI admite dos tipos de explicadores: **Explicadores Globales** y **Explicadores Locales**.
+La pestaña de Explicabilidad te permite adjuntar explicadores a un modelo entrenado para entender cómo toma sus decisiones. dashAI admite dos tipos de explicadores: **Explicadores Globales** y **Explicadores Locales**.
 
 ---
 
@@ -36,7 +36,7 @@ Producen resultados como rankings de importancia de características o gráficos
 
 Haz clic en **+ NEW GLOBAL EXPLAINER** para abrir el flujo de configuración del explicador.
 
-El flujo sigue el mismo patrón de dos pasos usado en toda DashAI:
+El flujo sigue el mismo patrón de dos pasos usado en toda dashAI:
 
 **Paso 1 — Configurar Alcance**
 

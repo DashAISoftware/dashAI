@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Recorrido por la interfaz
 
-Esta página describe las principales áreas de la interfaz de DashAI y qué hace cada una.
+Esta página describe las principales áreas de la interfaz de dashAI y qué hace cada una.
 
 ---
 

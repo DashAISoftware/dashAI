@@ -21,7 +21,7 @@ Genera texto a partir de un mensaje de texto. Adecuado para generación abierta,
 | Modelo      | Descripción                                                                                                          |
 | ----------- | -------------------------------------------------------------------------------------------------------------------- |
 | `QwenModel` | Modelo de lenguaje de la serie Qwen. Admite generación conversacional y seguimiento de instrucciones                 |
-| Otros LLMs  | Es posible que haya modelos de texto adicionales disponibles según tu instalación de DashAI y los plugins instalados |
+| Otros LLMs  | Es posible que haya modelos de texto adicionales disponibles según tu instalación de dashAI y los plugins instalados |
 
 ### TextToImageGenerationTask
 
@@ -117,7 +117,7 @@ Se recomienda encarecidamente una GPU NVIDIA con soporte CUDA. La mayoría de lo
 - Evita ejecutar múltiples sesiones generativas simultáneamente
 - Si una generación falla con un error de memoria, reducir cualquiera de los parámetros anteriores es el primer paso
 
-**Visibilidad de errores:** Cuando una generación falla, el modal de error en DashAI muestra un mensaje genérico. Para información detallada del error, abre la consola de desarrollador del navegador (F12 → pestaña Consola) donde se registra el seguimiento completo de la pila.
+**Visibilidad de errores:** Cuando una generación falla, el modal de error en dashAI muestra un mensaje genérico. Para información detallada del error, abre la consola de desarrollador del navegador (F12 → pestaña Consola) donde se registra el seguimiento completo de la pila.
 
 ---
 

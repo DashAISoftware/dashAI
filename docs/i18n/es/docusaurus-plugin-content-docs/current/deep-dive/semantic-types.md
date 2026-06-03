@@ -8,7 +8,7 @@ sidebar_position: 4
 
 ## ¿Qué Son los Tipos Semánticos?
 
-Cuando se carga un dataset, DashAI asigna un **tipo semántico** a cada columna. Los tipos semánticos van más allá de los formatos de almacenamiento en bruto (p. ej., `int32` o `string` de PyArrow) para expresar la naturaleza significativa de los datos para el ML: ¿es esta columna una medida continua, una etiqueta discreta, un texto libre, una fecha?
+Cuando se carga un dataset, dashAI asigna un **tipo semántico** a cada columna. Los tipos semánticos van más allá de los formatos de almacenamiento en bruto (p. ej., `int32` o `string` de PyArrow) para expresar la naturaleza significativa de los datos para el ML: ¿es esta columna una medida continua, una etiqueta discreta, un texto libre, una fecha?
 
 Esta clasificación impulsa tres comportamientos críticos en toda la plataforma:
 
@@ -73,13 +73,13 @@ Los tipos `DashAIValue` representan medidas continuas u ordenadas. `Categorical`
 
 ## Inferencia de Tipos
 
-Los tipos se asignan automáticamente cuando se carga un dataset. DashAI soporta dos métodos de inferencia, seleccionables al momento de la carga.
+Los tipos se asignan automáticamente cuando se carga un dataset. dashAI soporta dos métodos de inferencia, seleccionables al momento de la carga.
 
 ### Primario: `DashAIPtype`
 
-Usa el modelo de inferencia de tipos probabilístico **ptype**, que analiza los valores de cada columna para estimar el tipo semántico más probable. Salidas de ptype soportadas y sus mapeos en DashAI:
+Usa el modelo de inferencia de tipos probabilístico **ptype**, que analiza los valores de cada columna para estimar el tipo semántico más probable. Salidas de ptype soportadas y sus mapeos en dashAI:
 
-| Salida ptype | Tipo DashAI |
+| Salida ptype | Tipo dashAI |
 |---|---|
 | `integer` | `Integer` (`int64`) |
 | `float` | `Float` (`float64`) |
@@ -149,7 +149,7 @@ Antes del entrenamiento, `validate_dataset_for_task()` verifica que el tipo sem�
 
 ### Contratos de Tipos de Converters
 
-Cada converter implementa `get_output_type(column_name)` para declarar el tipo semántico de cada columna de salida. Esto permite a DashAI rastrear el tipo de cada columna a través de una pipeline de preprocesamiento de múltiples pasos.
+Cada converter implementa `get_output_type(column_name)` para declarar el tipo semántico de cada columna de salida. Esto permite a dashAI rastrear el tipo de cada columna a través de una pipeline de preprocesamiento de múltiples pasos.
 
 **Contratos de converters comunes:**
 
@@ -170,7 +170,7 @@ Cada converter implementa `get_output_type(column_name)` para declarar el tipo s
 
 ### Codificación de Etiquetas
 
-Las tareas de clasificación requieren una columna de salida `Categorical`, pero la mayoría de los modelos de ML requieren objetivos numéricos. DashAI maneja esto automáticamente:
+Las tareas de clasificación requieren una columna de salida `Categorical`, pero la mayoría de los modelos de ML requieren objetivos numéricos. dashAI maneja esto automáticamente:
 
 1. **Antes del entrenamiento** — `categorical_label_encoder()` convierte cada columna de salida `Categorical` a `Integer` usando el mapa `str2int` del tipo `Categorical`. El mapeo se guarda para poder revertirlo.
 2. **Después de la predicción** — `process_predictions()` aplica el mapa inverso `int2str` para convertir las predicciones enteras de vuelta a sus etiquetas de cadena originales antes de mostrar los resultados o guardarlos en disco.
@@ -203,7 +203,7 @@ Si la conversión no es segura (p. ej., promover una columna de texto de alta ca
 | `DashAI/back/types/dashai_value.py` | Clase intermedia abstracta `DashAIValue` |
 | `DashAI/back/types/value_types.py` | Clases de tipos de valor concretos |
 | `DashAI/back/types/categorical.py` | Tipo `Categorical` con lógica de codificación |
-| `DashAI/back/types/utils.py` | Conversión de tipos Arrow ↔ DashAI, E/S de metadatos |
+| `DashAI/back/types/utils.py` | Conversión de tipos Arrow ↔ dashAI, E/S de metadatos |
 | `DashAI/back/types/type_validation.py` | `validate_type_change()` y verificaciones de idoneidad |
 | `DashAI/back/types/inf/inference_methods.py` | `DashAIPtype` y `DummyCategoricalInference` |
 | `DashAI/back/types/inf/type_inference.py` | Punto de entrada `infer_types()` |

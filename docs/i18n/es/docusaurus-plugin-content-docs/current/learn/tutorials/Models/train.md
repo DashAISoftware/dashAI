@@ -5,11 +5,11 @@ sidebar_label: Entrenar un Modelo
 
 # Entrenar un Modelo
 
-Esta página te guía para crear una sesión, añadir modelos, configurar hiperparámetros y ejecutar el entrenamiento en DashAI.
+Esta página te guía para crear una sesión, añadir modelos, configurar hiperparámetros y ejecutar el entrenamiento en dashAI.
 
 ## Requisitos Previos
 
-- Al menos un dataset cargado en DashAI.
+- Al menos un dataset cargado en dashAI.
 - El dataset debe tener columnas compatibles con la tarea que deseas ejecutar (p. ej., una columna de salida categórica para tareas de clasificación).
 
 ---
@@ -39,7 +39,7 @@ Este paso tiene dos partes: definir columnas y definir la división de datos.
 
 **Columnas de Entrada y Salida**
 
-DashAI valida si el dataset seleccionado es compatible con la tarea elegida. Un banner en la parte superior del paso confirma la compatibilidad y muestra los tipos de columnas requeridos para entradas y salidas.
+dashAI valida si el dataset seleccionado es compatible con la tarea elegida. Un banner en la parte superior del paso confirma la compatibilidad y muestra los tipos de columnas requeridos para entradas y salidas.
 
 - **Input Columns** — Selecciona las características que el modelo usará para aprender. Cada columna se muestra como una etiqueta con su insignia de tipo (Float, Integer, Categorical). Haz clic dentro del campo y selecciona columnas del desplegable. Elimina cualquier columna haciendo clic en la `×` de su etiqueta.
 - **Output Columns** — Selecciona la columna objetivo que el modelo predecirá. La salida debe coincidir con el tipo requerido por la tarea (p. ej., Categorical para tareas de clasificación).
@@ -50,7 +50,7 @@ Cada tarea impone requisitos de tipo específicos. Para Clasificación Tabular, 
 
 **División de Datos**
 
-Define cómo DashAI divide el dataset en subconjuntos de entrenamiento, validación y prueba. Hay tres opciones disponibles:
+Define cómo dashAI divide el dataset en subconjuntos de entrenamiento, validación y prueba. Hay tres opciones disponibles:
 
 | Opción                          | Descripción                                                                                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -96,7 +96,7 @@ Debajo del nombre, cada hiperparámetro configurable se lista con su valor actua
 
 **Optimización de Hiperparámetros**
 
-Cada hiperparámetro numérico tiene un interruptor: **Optimize hyperparameter [nombre]**. Cuando está habilitado, DashAI buscará automáticamente el mejor valor para ese parámetro durante el entrenamiento en lugar de usar el valor fijo que ingresaste. Puedes habilitar la optimización para cualquier combinación de parámetros.
+Cada hiperparámetro numérico tiene un interruptor: **Optimize hyperparameter [nombre]**. Cuando está habilitado, dashAI buscará automáticamente el mejor valor para ese parámetro durante el entrenamiento en lugar de usar el valor fijo que ingresaste. Puedes habilitar la optimización para cualquier combinación de parámetros.
 
 Haz clic en **ADD MODEL** para añadirlo a la sesión. Haz clic en **CANCEL** para descartar.
 

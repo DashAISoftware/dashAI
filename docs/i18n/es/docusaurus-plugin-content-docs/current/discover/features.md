@@ -58,4 +58,4 @@ Busca automáticamente la mejor configuración de hiperparámetros usando los op
 
 ## Sistema de plugins
 
-Extiende DashAI con plugins de terceros distribuidos como paquetes de PyPI. Instálalos directamente desde la interfaz — los nuevos componentes aparecen automáticamente en sus secciones correspondientes.
+Extiende dashAI con plugins de terceros distribuidos como paquetes de PyPI. Instálalos directamente desde la interfaz — los nuevos componentes aparecen automáticamente en sus secciones correspondientes.

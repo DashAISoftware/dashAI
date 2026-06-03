@@ -5,7 +5,7 @@ sidebar_label: Subir un Plugin
 
 # Subir un Plugin a PyPI
 
-Una vez que tu plugin está desarrollado y probado, puedes compartirlo con la comunidad de DashAI en [PyPI](https://pypi.org/).
+Una vez que tu plugin está desarrollado y probado, puedes compartirlo con la comunidad de dashAI en [PyPI](https://pypi.org/).
 
 ## Requisitos Previos
 
@@ -97,7 +97,7 @@ pip install dashai-my-plugin
 
 ### Convención de Nombres
 
-Asegúrate de que tu paquete use el prefijo `dashai-` (ej., `dashai-my-plugin`) para que DashAI lo descubra automáticamente al instalarse.
+Asegúrate de que tu paquete use el prefijo `dashai-` (ej., `dashai-my-plugin`) para que dashAI lo descubra automáticamente al instalarse.
 
 ### Metadatos del Paquete
 

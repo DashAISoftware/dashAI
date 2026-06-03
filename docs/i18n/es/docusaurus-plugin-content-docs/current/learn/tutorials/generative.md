@@ -5,7 +5,7 @@ sidebar_label: IA Generativa
 
 # IA Generativa
 
-El módulo Generativo te permite interactuar con modelos de IA generativa directamente dentro de DashAI — sin escribir ningún código. Puedes generar texto o imágenes, ajustar parámetros del modelo en tiempo real y hacer seguimiento de cada cambio de configuración en el historial de la sesión.
+El módulo Generativo te permite interactuar con modelos de IA generativa directamente dentro de dashAI — sin escribir ningún código. Puedes generar texto o imágenes, ajustar parámetros del modelo en tiempo real y hacer seguimiento de cada cambio de configuración en el historial de la sesión.
 
 :::note Requisito de hardware
 Los modelos generativos son computacionalmente intensivos. Se recomienda encarecidamente una GPU NVIDIA con soporte CUDA. Ejecutar estos modelos en CPU es posible pero significativamente más lento, y algunos modelos más grandes pueden fallar al cargarse por limitaciones de memoria.
@@ -62,11 +62,11 @@ Antes de crear la sesión puedes opcionalmente establecer:
 - **Nombre de sesión** — una etiqueta para identificar esta sesión en la lista de sesiones.
 - **Descripción de sesión** — una nota opcional sobre el propósito de esta sesión.
 
-Ambos campos son opcionales. Si se dejan vacíos, DashAI asigna un nombre por defecto.
+Ambos campos son opcionales. Si se dejan vacíos, dashAI asigna un nombre por defecto.
 
 ### 5. Crear la Sesión
 
-Haz clic en **"Create a session"** para inicializar la sesión. DashAI cargará el modelo seleccionado — esto puede tardar un momento, especialmente en el primer uso cuando los pesos del modelo necesitan descargarse.
+Haz clic en **"Create a session"** para inicializar la sesión. dashAI cargará el modelo seleccionado — esto puede tardar un momento, especialmente en el primer uso cuando los pesos del modelo necesitan descargarse.
 
 Una vez que la sesión esté lista, se abre la interfaz de interacción.
 
