@@ -219,7 +219,11 @@ export default function PreviewDatasetTable({
         enableColumnActions: false,
         Cell: ({ cell }) => {
           const val = cell.getValue();
-          if (typeof val === "string" && val.startsWith("data:image")) {
+          if (
+            isImage &&
+            typeof val === "string" &&
+            val.startsWith("data:image")
+          ) {
             return (
               <img
                 src={val}
