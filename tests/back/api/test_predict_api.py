@@ -12,14 +12,17 @@ from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
+from DashAI.back.job.task_executors.supervised_task_executor import (
+    SupervisedTaskExecutor,
+)
 from DashAI.back.metrics.base_metric import BaseMetric
-from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.supervised_model import SupervisedModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 
 
-class DummyTask(BaseTask):
+class DummyTask(SupervisedTask):
     name: str = "DummyTask"
     metadata: dict = {
         "inputs_types": [ClassLabel, Value],
@@ -28,11 +31,11 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, dataset, output_columns):
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
         return dataset
 
 
-class DummyModel(BaseModel):
+class DummyModel(SupervisedModel):
     COMPATIBLE_COMPONENTS = ["DummyTask"]
 
     def save(self, filename):
@@ -59,6 +62,10 @@ class DummyMetric(BaseMetric):
         return 1
 
 
+class DummyTaskExecutor(SupervisedTaskExecutor):
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     """Setup a test registry with test task, dataloader and model components."""
@@ -72,6 +79,7 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             CSVDataLoader,
             JSONDataLoader,
             ModelJob,
+            DummyTaskExecutor,
             OptunaOptimizer,
             TabularClassificationTask,
         ]
