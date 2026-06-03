@@ -8,12 +8,12 @@ sidebar_position: 9
 
 ## What Is DashAIDataset?
 
-`DashAIDataset` is DashAI's core dataset primitive. It extends the HuggingFace `Dataset` class with two additional responsibilities:
+`DashAIDataset` is dashAI's core dataset primitive. It extends the HuggingFace `Dataset` class with two additional responsibilities:
 
-- **Semantic type metadata** — a `_types` dictionary (`Dict[str, DashAIDataType]`) that maps every column name to its DashAI semantic type (see [Semantic Types](/deep-dive/semantic-types)). This metadata is persisted inside the Apache Arrow schema so it survives save/load round-trips.
+- **Semantic type metadata** — a `_types` dictionary (`Dict[str, DashAIDataType]`) that maps every column name to its dashAI semantic type (see [Semantic Types](/deep-dive/semantic-types)). This metadata is persisted inside the Apache Arrow schema so it survives save/load round-trips.
 - **Split metadata** — a `splits` dictionary that records which row indices belong to which split (`train`, `test`, `validation`), plus aggregate statistics computed during upload.
 
-Every piece of data that flows through DashAI — upload, notebook transformations, model training, predictions — is represented as a `DashAIDataset`.
+Every piece of data that flows through dashAI — upload, notebook transformations, model training, predictions — is represented as a `DashAIDataset`.
 
 ---
 
@@ -249,6 +249,6 @@ DataLoader
 | File                                                | Role                                                                                                |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `DashAI/back/dataloaders/classes/dashai_dataset.py` | `DashAIDataset` class and all module-level functions                                                |
-| `DashAI/back/types/utils.py`                        | Arrow ↔ DashAI type serialisation (`save_types_in_arrow_metadata`, `get_types_from_arrow_metadata`) |
+| `DashAI/back/types/utils.py`                        | Arrow ↔ dashAI type serialisation (`save_types_in_arrow_metadata`, `get_types_from_arrow_metadata`) |
 | `DashAI/back/types/value_types.py`                  | Concrete value type classes used in `_types`                                                        |
 | `DashAI/back/types/categorical.py`                  | `Categorical` type with `str2int` / `int2str` encoding                                              |

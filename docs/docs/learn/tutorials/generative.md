@@ -6,7 +6,7 @@ sidebar_label: Generative AI
 # Generative AI
 
 The Generative module lets you interact with generative AI models directly inside
-DashAI — without writing any code. You can generate text or images, adjust model
+dashAI — without writing any code. You can generate text or images, adjust model
 parameters in real time, and track every configuration change in a session history.
 
 :::note Hardware requirement
@@ -70,11 +70,11 @@ Before creating the session you can optionally set:
 - **Session name** — a label to identify this session in the session list.
 - **Session description** — an optional note about the purpose of this session.
 
-Both fields are optional. If left empty, DashAI assigns a default name.
+Both fields are optional. If left empty, dashAI assigns a default name.
 
 ### 5. Create the Session
 
-Click **"Create a session"** to initialize the session. DashAI will load the
+Click **"Create a session"** to initialize the session. dashAI will load the
 selected model — this may take a moment, especially on first use when model
 weights need to be downloaded.
 

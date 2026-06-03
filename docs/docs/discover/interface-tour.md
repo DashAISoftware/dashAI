@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Interface Tour
 
-This page describes the main areas of the DashAI interface and what each one does.
+This page describes the main areas of the dashAI interface and what each one does.
 
 ---
 
