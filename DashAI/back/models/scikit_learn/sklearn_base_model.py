@@ -66,7 +66,7 @@ class SklearnBaseModel:
 
         Returns
         -------
-        SklearnBaseModel
+        Any
             The loaded model instance.
         """
         import joblib

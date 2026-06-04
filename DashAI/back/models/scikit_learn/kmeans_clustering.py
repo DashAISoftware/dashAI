@@ -3,6 +3,7 @@
 from sklearn.cluster import KMeans as _KMeans
 
 from DashAI.back.core.schema_fields import (
+    enum_field,
     optimizer_int_field,
     schema_field,
 )
@@ -35,6 +36,36 @@ class KMeansClusteringSchema(BaseSchema):
             es="Número de clusters a formar.",
         ),
         alias=MultilingualString(en="Clusters", es="Clusters"),
+    )  # type: ignore
+    init: schema_field(
+        enum_field(["k-means++", "random"]),
+        "k-means++",
+        description=MultilingualString(
+            en=(
+                "Centroid initialisation method. 'k-means++' selects initial centroids "
+                "to speed up convergence; 'random' picks them uniformly at random."
+            ),
+            es=(
+                "Método de inicialización de centroides. "
+                "'k-means++' selecciona centroides iniciales "
+                "para acelerar la convergencia; 'random' los elige al azar."
+            ),
+        ),
+        alias=MultilingualString(en="Init method", es="Método de inicio"),
+    )  # type: ignore
+    max_iter: schema_field(
+        optimizer_int_field(ge=1),
+        placeholder={
+            "optimize": False,
+            "fixed_value": 300,
+            "lower_bound": 10,
+            "upper_bound": 1000,
+        },
+        description=MultilingualString(
+            en="Maximum number of iterations for a single run.",
+            es="Número máximo de iteraciones por ejecución.",
+        ),
+        alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
     )  # type: ignore
     random_state: schema_field(
         optimizer_int_field(ge=0),

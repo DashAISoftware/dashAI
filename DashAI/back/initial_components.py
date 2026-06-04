@@ -222,6 +222,9 @@ from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
+from DashAI.back.models.scikit_learn.agglomerative_clustering import (
+    AgglomerativeClustering,
+)
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
 from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
     BayesianRidgeRegression,
@@ -240,6 +243,9 @@ from DashAI.back.models.scikit_learn.dummy_classifier import DummyClassifier
 from DashAI.back.models.scikit_learn.elastic_net_regression import ElasticNetRegression
 from DashAI.back.models.scikit_learn.extra_trees_classifier import ExtraTreesClassifier
 from DashAI.back.models.scikit_learn.extra_trees_regression import ExtraTreesRegression
+from DashAI.back.models.scikit_learn.gaussian_mixture_clustering import (
+    GaussianMixtureClustering,
+)
 from DashAI.back.models.scikit_learn.gaussian_nb import GaussianNB
 from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
     GradientBoostingClassifier,
@@ -247,6 +253,7 @@ from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
 from DashAI.back.models.scikit_learn.gradient_boosting_regression import (
     GradientBoostingR,
 )
+from DashAI.back.models.scikit_learn.hdbscan_clustering import HDBSCANClustering
 from DashAI.back.models.scikit_learn.hist_gradient_boosting_classifier import (
     HistGradientBoostingClassifier,
 )
@@ -271,6 +278,7 @@ from DashAI.back.models.scikit_learn.random_forest_regression import (
 )
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
 from DashAI.back.models.scikit_learn.sgd_classifier import SGDClassifier
+from DashAI.back.models.scikit_learn.spectral_clustering import SpectralClustering
 from DashAI.back.models.scikit_learn.svc import SVC
 from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
@@ -341,7 +349,11 @@ def get_initial_components():
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
+        AgglomerativeClustering,
         DBSCANClustering,
+        GaussianMixtureClustering,
+        HDBSCANClustering,
+        SpectralClustering,
         DistilBertTransformer,
         DummyClassifier,
         ElasticNetRegression,
