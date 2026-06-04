@@ -212,7 +212,10 @@ export default function ExplorerDetailsModal({
                   <TabColumns data={explorer.columns} />
                 </Box>
                 <Box sx={{ flex: "1 1 240px", minWidth: 0 }}>
-                  <TabParameters data={explorer.parameters} />
+                  <TabParameters
+                    data={explorer.parameters}
+                    schema={explorerComponent?.schema}
+                  />
                 </Box>
               </Box>
             </Box>
