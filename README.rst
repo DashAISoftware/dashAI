@@ -6,7 +6,7 @@ dashAI
         :target: https://pypi.python.org/pypi/dashai
 
 .. image:: https://readthedocs.org/projects/dashai/badge/?version=latest
-        :target: https://dashai.readthedocs.io/en/latest/?version=latest
+        :target: https://docs.dash-ai.com/
         :alt: Documentation Status
 
 
