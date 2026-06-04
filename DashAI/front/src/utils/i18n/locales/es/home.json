@@ -5,12 +5,12 @@
     "generative": "Interactúa con modelos de IA para inferencia y genera nuevo contenido.",
     "models": "Configura tareas, entrena y compara modelos en sesiones organizadas.",
     "pipelines": "Crea y gestiona pipelines.",
-    "plugins": "Explora y gestiona plugins para extender la funcionalidad de DashAI."
+    "plugins": "Explora y gestiona plugins para extender la funcionalidad de dashAI."
   },
   "label": {
     "advanced": "Avanzado",
     "getStarted": "Comenzar",
-    "welcomeDashboardAI": "¡Bienvenido a DashAI!",
+    "welcomeDashboardAI": "¡Bienvenido a dashAI!",
     "welcomeSubtitle": "Selecciona un módulo para comenzar",
     "resources": "Recursos",
     "community": "Comunidad"
@@ -20,7 +20,7 @@
     "tutorials": "Tutoriales",
     "github": "GitHub",
     "website": "Sitio web",
-    "forum": "Foro DashAI",
+    "forum": "Foro dashAI",
     "discord": "Discord",
     "twitter": "Twitter / X"
   },

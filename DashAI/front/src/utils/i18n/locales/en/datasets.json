@@ -13,7 +13,7 @@
     "rule": {
       "boolean": "Boolean columns are always treated as Categorical.",
       "dateExcluded": "Date/time types are excluded from categorical detection.",
-      "dateMappedToText": "Values were detected as dates ({{baseType}} format), but DashAI does not yet have a Date type — the column is stored as Text and not classified as categorical.",
+      "dateMappedToText": "Values were detected as dates ({{baseType}} format), but dashAI does not yet have a Date type — the column is stored as Text and not classified as categorical.",
       "stringLooksLikeDate": "Values look like dates, so the column was kept as text/date instead of categorical.",
       "tooManyUnique": "Too many distinct values to be categorical (above the unique-count threshold).",
       "uniqueRatioAbove": "Unique values represent too large a fraction of the rows — treated as numeric/text instead of categorical.",

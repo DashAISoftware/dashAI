@@ -13,7 +13,7 @@
     "rule": {
       "boolean": "Las columnas booleanas siempre se tratan como Categóricas.",
       "dateExcluded": "Los tipos fecha/hora se excluyen de la detección categórica.",
-      "dateMappedToText": "Los valores se detectaron como fechas (formato {{baseType}}), pero DashAI aún no tiene un tipo Date — la columna se guarda como Text y no se clasifica como categórica.",
+      "dateMappedToText": "Los valores se detectaron como fechas (formato {{baseType}}), pero dashAI aún no tiene un tipo Date — la columna se guarda como Text y no se clasifica como categórica.",
       "stringLooksLikeDate": "Los valores parecen fechas, por eso la columna se mantuvo como texto/fecha y no como categórica.",
       "tooManyUnique": "Demasiados valores distintos para ser categórica (sobre el umbral de cantidad única).",
       "uniqueRatioAbove": "Los valores únicos representan una fracción demasiado alta de las filas — se trata como numérica/texto en lugar de categórica.",
