@@ -19,7 +19,7 @@ function DatasetPreviewStep({
   return (
     <Paper
       variant="outlined"
-      sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
+      sx={{ p: 8, maxHeight: "55vh", overflow: "auto" }}
     >
       <Grid container direction={"column"} alignItems={"center"}>
         <Grid>
@@ -28,7 +28,7 @@ function DatasetPreviewStep({
             item
             variant="caption"
             component="h3"
-            sx={{ mb: 2, color: "grey" }}
+            sx={{ mb: 4, color: "grey" }}
           >
             Summary of the recently uploaded dataset with predefined column
             types. You can modify the type by selecting a different value.

@@ -33,7 +33,7 @@ export default function XAxisForm({
   const tickvalsArray = Array.isArray(data[0]?.x) ? data[0].x : [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Title */}
       <SectionLabel>
         {t("datasets:label.axisTitle", { axis: "X" })}

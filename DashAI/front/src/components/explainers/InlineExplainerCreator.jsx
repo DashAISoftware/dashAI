@@ -3,14 +3,17 @@ import PropTypes from "prop-types";
 import {
   Box,
   Button,
-  ButtonGroup,
-  Collapse,
-  Paper,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   Step,
-  StepButton,
+  StepLabel,
   Stepper,
   Typography,
 } from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
@@ -80,28 +83,13 @@ export default function InlineExplainerCreator({
     () =>
       isLocal
         ? [
-            {
-              name: "selectExplainer",
-              label: t("explainers:label.selectExplainer"),
-            },
-            {
-              name: "selectDataset",
-              label: t("explainers:label.selectDataset"),
-            },
-            {
-              name: "configureExplainer",
-              label: t("explainers:label.configureExplainerParameters"),
-            },
+            t("explainers:label.selectExplainer"),
+            t("explainers:label.selectDataset"),
+            t("explainers:label.configureExplainerParameters"),
           ]
         : [
-            {
-              name: "selectExplainer",
-              label: t("explainers:label.selectExplainer"),
-            },
-            {
-              name: "configureExplainer",
-              label: t("explainers:label.configureExplainerParameters"),
-            },
+            t("explainers:label.selectExplainer"),
+            t("explainers:label.configureExplainerParameters"),
           ],
     [isLocal, t],
   );
@@ -164,10 +152,7 @@ export default function InlineExplainerCreator({
             ? "explainers:message.localExplainerJobCreated"
             : "explainers:message.globalExplainerJobCreated",
         ),
-        {
-          variant: "success",
-          autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-        },
+        { variant: "success", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
       );
 
       if (response && response.id) {
@@ -178,14 +163,9 @@ export default function InlineExplainerCreator({
               t("explainers:message.explainerJobCompleted", {
                 name: newExpl.name,
               }),
-              {
-                variant: "success",
-                autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-              },
+              { variant: "success", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
             );
-            if (onCreated) {
-              onCreated();
-            }
+            if (onCreated) onCreated();
           },
           (result) => {
             console.error(`${scope} explainer job failed:`, result);
@@ -194,18 +174,11 @@ export default function InlineExplainerCreator({
                 isLocal
                   ? "explainers:error.localExplainerJobFailed"
                   : "explainers:error.globalExplainerJobFailed",
-                {
-                  error: result.error || "Unknown error",
-                },
+                { error: result.error || "Unknown error" },
               ),
-              {
-                variant: "error",
-                autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-              },
+              { variant: "error", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
             );
-            if (onCreated) {
-              onCreated();
-            }
+            if (onCreated) onCreated();
           },
         );
       }
@@ -218,10 +191,7 @@ export default function InlineExplainerCreator({
             ? "explainers:error.localExplainerJobEnqueueError"
             : "explainers:error.globalExplainerJobEnqueueError",
         ),
-        {
-          variant: "error",
-          autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-        },
+        { variant: "error", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
       );
       console.error("Error details:", error);
       throw error;
@@ -260,10 +230,7 @@ export default function InlineExplainerCreator({
             ? "explainers:error.localExplainerCreationError"
             : "explainers:error.globalExplainerCreationError",
         ),
-        {
-          variant: "error",
-          autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-        },
+        { variant: "error", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
       );
       console.error("Error details:", error);
       return false;
@@ -272,21 +239,12 @@ export default function InlineExplainerCreator({
     }
   };
 
-  const handleStepButton = (stepIndex) => () => {
-    setActiveStep(stepIndex);
-  };
-
-  const handleBackButton = () => {
-    if (activeStep === 0) {
-      onCancel();
-      return;
-    }
-
+  const handleBack = () => {
     setActiveStep((prev) => prev - 1);
     setNextEnabled(true);
   };
 
-  const handleNextButton = async () => {
+  const handleNext = async () => {
     if (activeStep < steps.length - 1) {
       setActiveStep((prev) => prev + 1);
       setNextEnabled(false);
@@ -301,89 +259,106 @@ export default function InlineExplainerCreator({
   };
 
   return (
-    <Collapse in={open} timeout="auto" unmountOnExit>
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" component="h3" sx={{ mb: 1 }}>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { minHeight: "500px" },
+      }}
+    >
+      <DialogTitle sx={{ bgcolor: "background.paper" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography variant="h6" component="span">
             {t(
               isLocal
                 ? "explainers:label.newLocalExplainer"
                 : "explainers:label.newGlobalExplainer",
             )}
           </Typography>
-          <Stepper nonLinear activeStep={activeStep} sx={{ maxWidth: "100%" }}>
-            {steps.map((step, index) => (
-              <Step
-                key={step.name}
-                completed={activeStep > index}
-                disabled={activeStep < index}
-              >
-                <StepButton color="inherit" onClick={handleStepButton(index)}>
-                  {step.label}
-                </StepButton>
-              </Step>
-            ))}
-          </Stepper>
-        </Box>
-
-        <Box sx={{ mb: 2 }}>
-          {activeStep === 0 && (
-            <SetNameAndExplainerStep
-              newExpl={newExpl}
-              setNewExpl={setNewExpl}
-              setNextEnabled={setNextEnabled}
-              scope={isLocal ? "Local" : "Global"}
-              taskName={taskName}
-              existingExplainers={existingExplainers}
-            />
-          )}
-          {isLocal && activeStep === 1 && (
-            <SelectDatasetStep
-              newExpl={newExpl}
-              setNewExpl={setNewExpl}
-              setNextEnabled={setNextEnabled}
-            />
-          )}
-          {((isLocal && activeStep === 2) ||
-            (!isLocal && activeStep === 1)) && (
-            <ConfigureExplainerStep
-              newExpl={newExpl}
-              setNewExpl={setNewExpl}
-              setNextEnabled={setNextEnabled}
-              formSubmitRef={formSubmitRef}
-              scope={isLocal ? "Local" : "global"}
-            />
-          )}
-        </Box>
-
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton} disabled={isLoading}>
-            {activeStep === 0 ? t("common:cancel") : t("common:back")}
-          </Button>
-          <TimestampWrapper
-            eventName={
-              activeStep === steps.length - 1
-                ? isLocal
-                  ? TIMESTAMP_KEYS.explainer.submitLocal
-                  : TIMESTAMP_KEYS.explainer.submitGlobal
-                : null
-            }
+          <IconButton
+            onClick={onCancel}
+            size="small"
+            sx={{ color: "text.secondary" }}
           >
-            <LoadingButton
-              onClick={handleNextButton}
-              variant="contained"
-              color="primary"
-              disabled={!nextEnabled || isLoading}
-              loading={isLoading}
-            >
-              {activeStep === steps.length - 1
-                ? t("common:save")
-                : t("common:next")}
-            </LoadingButton>
-          </TimestampWrapper>
-        </ButtonGroup>
-      </Paper>
-    </Collapse>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
+        <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+          {steps.map((label) => (
+            <Step key={label} completed={false}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        {activeStep === 0 && (
+          <SetNameAndExplainerStep
+            newExpl={newExpl}
+            setNewExpl={setNewExpl}
+            setNextEnabled={setNextEnabled}
+            scope={isLocal ? "Local" : "Global"}
+            taskName={taskName}
+            existingExplainers={existingExplainers}
+          />
+        )}
+        {isLocal && activeStep === 1 && (
+          <SelectDatasetStep
+            newExpl={newExpl}
+            setNewExpl={setNewExpl}
+            setNextEnabled={setNextEnabled}
+          />
+        )}
+        {((isLocal && activeStep === 2) || (!isLocal && activeStep === 1)) && (
+          <ConfigureExplainerStep
+            newExpl={newExpl}
+            setNewExpl={setNewExpl}
+            setNextEnabled={setNextEnabled}
+            formSubmitRef={formSubmitRef}
+            scope={isLocal ? "Local" : "global"}
+          />
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+        {activeStep > 0 && (
+          <Button variant="outlined" onClick={handleBack} disabled={isLoading}>
+            {t("common:back")}
+          </Button>
+        )}
+        <TimestampWrapper
+          eventName={
+            activeStep === steps.length - 1
+              ? isLocal
+                ? TIMESTAMP_KEYS.explainer.submitLocal
+                : TIMESTAMP_KEYS.explainer.submitGlobal
+              : null
+          }
+        >
+          <LoadingButton
+            onClick={handleNext}
+            variant="contained"
+            color="primary"
+            disabled={!nextEnabled || isLoading}
+            loading={isLoading}
+          >
+            {activeStep === steps.length - 1
+              ? t("common:save")
+              : t("common:next")}
+          </LoadingButton>
+        </TimestampWrapper>
+      </DialogActions>
+    </Dialog>
   );
 }
 

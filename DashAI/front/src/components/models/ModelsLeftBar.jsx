@@ -43,6 +43,13 @@ export default function ModelsLeftBar({ onToggle }) {
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const { t } = useTranslation(["models", "datasets", "common"]);
 
+  const SEARCH_THRESHOLD = 10;
+  const totalItems = datasets.length + sessions.length;
+
+  useEffect(() => {
+    if (totalItems <= SEARCH_THRESHOLD) setSearchQuery("");
+  }, [totalItems]);
+
   const getTaskDisplayName = React.useCallback(
     (taskName) => {
       if (!taskName) return t("common:other");
@@ -218,7 +225,7 @@ export default function ModelsLeftBar({ onToggle }) {
   return (
     <SideBar>
       {/* Create new item button */}
-      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+      <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
@@ -232,13 +239,15 @@ export default function ModelsLeftBar({ onToggle }) {
       </Box>
 
       {/* Search bar global */}
-      <Box px={2} pb={2} flex={"0 0 auto"}>
-        <SearchBar
-          placeholder={t("models:label.searchDatasetsSessions")}
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
-      </Box>
+      {totalItems > SEARCH_THRESHOLD && (
+        <Box px={4} pb={4} flex={"0 0 auto"}>
+          <SearchBar
+            placeholder={t("models:label.searchDatasetsSessions")}
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </Box>
+      )}
 
       <Divider
         sx={{ width: "90%", bgcolor: theme.palette.ui.borderDark, mx: "auto" }}

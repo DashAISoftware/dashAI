@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Grid, CircularProgress } from "@mui/material";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Box, Grid, TextField } from "@mui/material";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { forceRefreshNow } from "../../../utils/jobPoller";
 import { useTourContext } from "../../tour/TourProvider";
-
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -20,7 +20,14 @@ export default function ConfigureAndUploadDatasetStep({
   formValues,
   onPreviewError,
   formHasErrors,
+  existingDatasets = [],
 }) {
+  const { defaultName } = useMemo(
+    () => generateSequentialName({ base: "Dataset", items: existingDatasets }),
+    [existingDatasets],
+  );
+  const [datasetName, setDatasetName] = useState("");
+  const lastAutoFilledRef = useRef(null);
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
@@ -33,6 +40,14 @@ export default function ConfigureAndUploadDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
   const theme = useTheme();
+
+  useEffect(() => {
+    if (!defaultName) return;
+    if (!datasetName || datasetName === lastAutoFilledRef.current) {
+      setDatasetName(defaultName);
+      lastAutoFilledRef.current = defaultName;
+    }
+  }, [defaultName]);
 
   useEffect(() => {
     if (onPreviewError) {
@@ -67,7 +82,7 @@ export default function ConfigureAndUploadDatasetStep({
       // Merge values coming from the form schema and the onValuesChange callback
       const params = { ...refValues, ...(formValues || {}) };
 
-      const name = params.name || datasetFileToUpload.file.name;
+      const name = datasetName.trim() || datasetFileToUpload.file.name;
       params["name"] = name;
 
       // Ensure dataloader is passed as a string (backend expects the dataloader name)
@@ -117,9 +132,11 @@ export default function ConfigureAndUploadDatasetStep({
   }, [
     selectedDataloader,
     datasetFileToUpload,
+    datasetName,
     columnTypes,
     columnRenames,
     formSubmitRef,
+    formValues,
     handleDatasetCreated,
     backHome,
     enqueueSnackbar,
@@ -176,18 +193,35 @@ export default function ConfigureAndUploadDatasetStep({
   ]);
 
   return (
-    <Grid sx={{ width: "100%", height: "100%" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        flex: 1,
+        minHeight: 0,
+      }}
+    >
+      <Box sx={{ mb: 4 }}>
+        <TextField
+          label={t("datasets:label.datasetName")}
+          value={datasetName}
+          onChange={(e) => setDatasetName(e.target.value)}
+          fullWidth
+        />
+      </Box>
+
       <Grid
         container
         direction="column"
         justifyContent="flex-start"
         alignItems="stretch"
-        spacing={2}
+        spacing={4}
         sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
           width: "100%",
-          backgroundColor: theme.palette.background.box,
-          padding: 2,
-          borderRadius: 2,
         }}
       >
         <Upload
@@ -202,25 +236,16 @@ export default function ConfigureAndUploadDatasetStep({
         />
       </Grid>
 
-      {/* Form buttons */}
-      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-        {uploading ? (
-          <CircularProgress />
-        ) : (
-          <FormSchemaButtonGroup
-            onCancel={goToPrevStep}
-            onFormSubmit={submitNewDataset}
-            formik={{
-              errors: uploadEnabled
-                ? {}
-                : { dataset: t("datasets:error.requiredFieldsMissing") },
-            }}
-            saveButtonText={t("common:upload")}
-            backButtonText={t("common:back")}
-            dataTour="dataset-step-upload-button"
-          />
-        )}
-      </Grid>
-    </Grid>
+      <StepperNavigationFooter
+        onBack={goToPrevStep}
+        onNext={submitNewDataset}
+        nextDisabled={!uploadEnabled}
+        nextLabel={t("common:upload")}
+        loading={uploading}
+        nextDataTour={
+          tourContext?.run ? "dataset-step-upload-button" : undefined
+        }
+      />
+    </Box>
   );
 }

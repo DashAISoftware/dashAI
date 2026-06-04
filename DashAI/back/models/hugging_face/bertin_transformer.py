@@ -27,6 +27,8 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="BERTIN Spanish RoBERTa",
         es="BERTIN RoBERTa en Español",
+        pt="BERTIN RoBERTa em Espanhol",
+        de="BERTIN Spanisches RoBERTa",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +38,15 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
         es=(
             "RoBERTa en español (BERTIN) pre-entrenada en grandes corpus en español. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "RoBERTa em espanhol (BERTIN) pré-treinada em grandes corpus em espanhol. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Spanisches RoBERTa (BERTIN) vortrainiert auf großen spanischen Korpora. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#AD1457"

@@ -7,7 +7,7 @@ sidebar_label: Plugin Structure
 
 ## Overview
 
-If you haven't already, start with [What is a Plugin?](./overview) to understand the core concept.
+If you haven't already, start with [What is a Plugin?](/build/plugin-development/overview) to understand the core concept.
 
 This page details how plugins are structured, what files and configurations are required, and how DashAI discovers and loads them.
 
@@ -84,6 +84,6 @@ keywords = [
 
 ## Next Steps
 
-- See [Developing a Plugin](./develop) for step-by-step implementation guidance
-- Check [Plugin Overview](./overview) for a complete working example
-- Learn how to [upload your plugin to PyPI](./upload)
+- See [Developing a Plugin](/build/plugin-development/develop) for step-by-step implementation guidance
+- Check [Plugin Overview](/build/plugin-development/overview) for a complete working example
+- Learn how to [upload your plugin to PyPI](/build/plugin-development/upload)

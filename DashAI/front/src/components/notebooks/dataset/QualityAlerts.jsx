@@ -123,10 +123,10 @@ export const QualityAlerts = ({
         sx={{
           minHeight: 48,
           "&.Mui-expanded": { minHeight: 48 },
-          "& .MuiAccordionSummary-content": { my: 1 },
+          "& .MuiAccordionSummary-content": { my: 2 },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {hasIssues ? (
             <WarningAmberIcon color="warning" sx={{ fontSize: 24 }} />
           ) : (
@@ -154,12 +154,12 @@ export const QualityAlerts = ({
           </Typography>
         </Box>
       </AccordionSummary>
-      <AccordionDetails sx={{ pt: 0, pb: 1.5 }}>
+      <AccordionDetails sx={{ pt: 0, pb: 3 }}>
         {warnings.map((item) => (
           <Alert
             severity={item.severity}
             sx={{
-              mb: 1,
+              mb: 2,
               ...(item.navigateTo && {
                 cursor: "pointer",
                 transition: "opacity 0.2s",
@@ -177,7 +177,7 @@ export const QualityAlerts = ({
           </Alert>
         ))}
         {successes.map((item) => (
-          <Alert severity="success" sx={{ mb: 1 }} key={item.key}>
+          <Alert severity="success" sx={{ mb: 2 }} key={item.key}>
             {item.message}
           </Alert>
         ))}

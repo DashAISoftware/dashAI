@@ -17,7 +17,10 @@ class PreviewInspectionExplorer(BaseExplorer):
     """
 
     CATEGORY: Final[str] = MultilingualString(
-        en="Preview Inspection", es="Inspección Previa"
+        en="Preview Inspection",
+        es="Inspección Previa",
+        pt="Inspeção Prévia",
+        de="Vorschauinspektion",
     )
     ICON: Final[str] = Icon.TableChart.value
     COLOR: Final[str] = "rgb(52, 152, 219)"

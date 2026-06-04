@@ -19,21 +19,6 @@ class JSONDataloaderSchema(BaseSchema):
     ``None``, the entire JSON value is interpreted as the record list.
     """
 
-    name: schema_field(
-        string_field(),
-        "",
-        description=MultilingualString(
-            en=(
-                "Custom name to register your dataset. If no name is specified, "
-                "the name of the uploaded file will be used."
-            ),
-            es=(
-                "Nombre personalizado para registrar su dataset. Si no se especifica "
-                "un nombre, se usará el nombre del archivo subido."
-            ),
-        ),
-        alias=MultilingualString(en="Name", es="Nombre"),
-    )  # type: ignore
     data_key: schema_field(
         none_type(string_field()),
         placeholder="data",
@@ -55,8 +40,28 @@ class JSONDataloaderSchema(BaseSchema):
                 '(también conocido como orientación "records" en pandas), '
                 "establezca este valor como null."
             ),
+            pt=(
+                "Caso os dados tenham a forma "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(também conhecido como "table" no pandas), nome do campo "data", '
+                "onde a lista com dicionários com os dados deve ser encontrada. "
+                "Caso o formato seja apenas uma lista de dicionários "
+                '(também conhecido como orientação "records" no pandas), '
+                "defina este valor como null."
+            ),
+            de=(
+                "Falls die Daten die Form "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(auch bekannt als "table" in pandas) haben, Name des Felds "data", '
+                "wo die Liste mit Wörterbüchern mit den Daten gefunden werden soll. "
+                "Falls das Format nur eine Liste von Wörterbüchern ist "
+                '(auch bekannt als "records"-Orientierung in pandas), '
+                "setzen Sie diesen Wert auf null."
+            ),
         ),
-        alias=MultilingualString(en="Data key", es="Clave de datos"),
+        alias=MultilingualString(
+            en="Data key", es="Clave de datos", pt="Chave de dados", de="Datenschlüssel"
+        ),
     )  # type: ignore
 
 
@@ -72,6 +77,7 @@ class JSONDataLoader(BaseDataLoader):
     are validated before loading to provide early failure feedback.
     """
 
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".json", ".zip"})
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -91,10 +97,24 @@ class JSONDataLoader(BaseDataLoader):
             "diccionarios) como datos JSON anidados donde los registros están "
             "contenidos dentro de una clave específica."
         ),
+        pt=(
+            "Carregador de dados para dados tabulares em arquivos JSON. "
+            "Suporta tanto o formato de array JSON padrão (uma lista de "
+            "dicionários) como dados JSON aninhados onde os registros estão "
+            "contidos dentro de uma chave específica."
+        ),
+        de=(
+            "Datenlader für tabellarische Daten in JSON-Dateien. "
+            "Unterstützt sowohl das Standard-JSON-Array-Format (eine Liste von "
+            "Wörterbüchern) als auch verschachtelte JSON-Daten, bei denen Datensätze "
+            "innerhalb eines bestimmten Schlüssels enthalten sind."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="JSON Data Loader",
         es="Cargador de Datos JSON",
+        pt="Carregador de Dados JSON",
+        de="JSON Datenlader",
     )
 
     def _check_params(self, params: Dict[str, Any]) -> None:

@@ -1,5 +1,6 @@
 {
   "actions": "Actions",
+  "hub": "Hub",
   "add": "Add",
   "addModel": "Add Model",
   "addRow": "Add Row",
@@ -118,6 +119,7 @@
   "started": "Started",
   "startTime": "Start Time",
   "status": "Status",
+  "step": "Step",
   "submit": "Submit",
   "submitting": "Submitting...",
   "table": "Table",
@@ -216,5 +218,7 @@
   "expand": "Expand",
   "optimize": "Optimize",
   "viewMore": "View more",
-  "viewLess": "View less"
+  "viewLess": "View less",
+  "switchToDarkMode": "Switch to dark mode",
+  "switchToLightMode": "Switch to light mode"
 }

@@ -28,6 +28,7 @@ export default function DatasetsContent() {
     notebooks,
     selectedNotebookId,
     selectedDatasetId,
+    selectedOption,
     rightBarContent,
     step,
     selectDataset,
@@ -119,7 +120,10 @@ export default function DatasetsContent() {
                 </RightPanel>
               </>
             </TourProvider>
-          ) : selectedDatasetId ? (
+          ) : selectedDatasetId ||
+            (step === 1 &&
+              selectedOption === OptionsEnum.NOTEBOOK &&
+              location.state?.preselectedDatasetId) ? (
             <TourProvider
               tourKey={TOUR_KEYS.DATASET_VIEW}
               disabled={step !== 0}

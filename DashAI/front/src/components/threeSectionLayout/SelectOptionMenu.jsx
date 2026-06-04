@@ -34,11 +34,11 @@ export default function SelectOptionMenu({
         justifyContent={"flex-start"}
       >
         {showNoDatasetAlert && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
             <AlertTitle>{t("datasets:label.noDatasetsAvailable")}</AlertTitle>
             {t("datasets:label.uploadDatasetBeforeCreatingSession")}
             {onGoToDatasets && (
-              <Box sx={{ mt: 1 }}>
+              <Box sx={{ mt: 2 }}>
                 <Button
                   variant="contained"
                   size="small"
@@ -64,15 +64,14 @@ export default function SelectOptionMenu({
         <Grid
           container
           direction="row"
-          justifyContent="center"
           alignItems="stretch"
-          spacing={1}
-          sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
+          spacing={2}
+          sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
         >
           {loading
             ? Array.from({ length: 6 }).map((_, index) => (
                 <Grid
-                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  size={{ xl: 4, lg: 4, md: 6, sm: 12, xs: 12 }}
                   key={index}
                 >
                   <Skeleton variant="rounded" height={100} />
@@ -86,7 +85,7 @@ export default function SelectOptionMenu({
 
               return (
                 <Grid
-                  size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }}
+                  size={{ xl: 4, lg: 4, md: 6, sm: 12, xs: 12 }}
                   key={index}
                 >
                   <OptionBox

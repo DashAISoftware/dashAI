@@ -8,7 +8,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
@@ -47,8 +46,16 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "Parámetro de regularización. La fuerza de la regularización es "
                 "inversamente proporcional a C. Debe ser estrictamente positivo."
             ),
+            pt=(
+                "Parâmetro de regularização. A força da regularização é "
+                "inversamente proporcional a C. Deve ser estritamente positivo."
+            ),
+            de=(
+                "Regularisierungsparameter. Die Stärke der Regularisierung ist "
+                "umgekehrt proportional zu C. Muss strikt positiv sein."
+            ),
         ),
-        alias=MultilingualString(en="C", es="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
     )  # type: ignore
 
     loss: schema_field(
@@ -63,8 +70,16 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "Especifica la función de pérdida. 'squared_hinge' es el "
                 "predeterminado; 'hinge' es la pérdida estándar de SVM."
             ),
+            pt=(
+                "Especifica a função de perda. 'squared_hinge' é o padrão; "
+                "'hinge' é a perda padrão do SVM."
+            ),
+            de=(
+                "Gibt die Verlustfunktion an. 'squared_hinge' ist der Standard; "
+                "'hinge' ist der Standard-SVM-Verlust."
+            ),
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida"),
+        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda", de="Verlust"),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -78,8 +93,15 @@ class LinearSVCClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum number of iterations to be run.",
             es="El número máximo de iteraciones a ejecutar.",
+            pt="O número máximo de iterações a executar.",
+            de="Die maximale Anzahl der auszuführenden Iterationen.",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Máximas iterações",
+            de="Maximale Iterationen",
+        ),
     )  # type: ignore
 
     tol: schema_field(
@@ -93,8 +115,12 @@ class LinearSVCClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Tolerance for stopping criteria.",
             es="Tolerancia para el criterio de parada.",
+            pt="Tolerância para o critério de parada.",
+            de="Toleranz für das Abbruchkriterium.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -109,12 +135,26 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "Si se calcula el intercepto para este modelo. Si es False, "
                 "se espera que los datos ya estén centrados."
             ),
+            pt=(
+                "Se o intercepto deve ser calculado para este modelo. Se False, "
+                "espera-se que os dados já estejam centrados."
+            ),
+            de=(
+                "Ob der Achsenabschnitt für dieses Modell berechnet werden soll. Bei "
+                "False "
+                "wird erwartet, dass die Daten bereits zentriert sind."
+            ),
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept",
+            es="Ajustar intercepto",
+            pt="Ajustar intercepto",
+            de="Achsenabschnitt anpassen",
+        ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -125,8 +165,23 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+        ),
     )  # type: ignore
 
 
@@ -154,12 +209,22 @@ class LinearSVCClassifier(
     DISPLAY_NAME: str = MultilingualString(
         en="Linear SVC",
         es="SVC Lineal",
+        pt="Classificador SVC Linear",
+        de="Linearer SVC",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast linear support vector classifier with probability calibration.",
         es=(
             "Clasificador de vectores de soporte lineal rápido con "
             "calibración de probabilidades."
+        ),
+        pt=(
+            "Classificador de vetores de suporte linear rápido com "
+            "calibração de probabilidades."
+        ),
+        de=(
+            "Schneller linearer Stützvektor-Klassifikator mit "
+            "Wahrscheinlichkeitskalibrierung."
         ),
     )
     COLOR: str = "#FF7043"

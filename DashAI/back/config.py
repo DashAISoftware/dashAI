@@ -22,3 +22,4 @@ class DefaultSettings(BaseSettings):
     EXPLANATIONS_PATH: str = "explanations"
     NOTEBOOK_PATH: str = "notebook"
     CUSTOM_COMPONENTS_PATH: str = "custom_components"
+    DATAFILE_PATH: str = "datafiles"

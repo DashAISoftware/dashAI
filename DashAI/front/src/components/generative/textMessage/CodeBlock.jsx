@@ -16,7 +16,7 @@ export function CodeBlock({ language, children }) {
       sx={{
         borderRadius: 1,
         overflow: "hidden",
-        my: 1,
+        my: 2,
         border: "1px solid",
         borderColor: "divider",
       }}
@@ -26,12 +26,12 @@ export function CodeBlock({ language, children }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          px: 1.5,
-          py: 0.5,
+          px: 3,
+          py: 1,
           bgcolor: isDark ? "grey.900" : "grey.200",
         }}
       >
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <Typography variant="code" sx={{ color: "text.secondary" }}>
           {language || "code"}
         </Typography>
         <CopyButton text={code} />

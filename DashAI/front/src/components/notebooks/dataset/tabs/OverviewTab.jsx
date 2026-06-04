@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Card, CardContent, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -9,6 +9,7 @@ import {
   YAxis,
   Tooltip,
   Bar,
+  Cell,
 } from "recharts";
 import DatasetTable from "../DatasetTable";
 import ExportableCard from "../ExportableCard";
@@ -27,6 +28,7 @@ const OverviewTab = ({
   const { t } = useTranslation(["datasets", "common"]);
 
   const theme = useTheme();
+  const [activeBarIndex, setActiveBarIndex] = useState(null);
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
     missing: count,
@@ -43,7 +45,7 @@ const OverviewTab = ({
   ]);
 
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
+    <Box display="flex" flexDirection="column" gap={8}>
       {/* Data View */}
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
@@ -53,13 +55,13 @@ const OverviewTab = ({
               alignItems: "center",
               flexWrap: "wrap",
               justifyContent: "space-between",
-              mb: 1,
+              mb: 2,
             }}
           >
             <Typography variant="h6">
               {t("datasets:label.datasetPreview")}
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               {typeCounts.map(([type, count]) => (
                 <Chip
                   key={type}
@@ -82,6 +84,7 @@ const OverviewTab = ({
             initialPageSize={10}
             datasetPath={dataset.file_path}
             datasetId={dataset.id}
+            datasetName={dataset.name}
             onEditColumn={onEditColumnName}
             editableColumns={true}
             columnTypes={
@@ -105,7 +108,7 @@ const OverviewTab = ({
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                mb: 1,
+                mb: 2,
               }}
             >
               <Typography variant="h6">
@@ -134,6 +137,7 @@ const OverviewTab = ({
                   />
                   <YAxis />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: theme.palette.background.paper,
                       borderRadius: 4,
@@ -144,9 +148,26 @@ const OverviewTab = ({
                   />
                   <Bar
                     dataKey="missing"
-                    fill="rgba(136, 132, 216, 0.7)"
+                    fill="#8884d8"
                     name={t("common:missing")}
-                  />
+                    activeBar={false}
+                    onMouseEnter={(_, index) => setActiveBarIndex(index)}
+                    onMouseLeave={() => setActiveBarIndex(null)}
+                  >
+                    {missingData.map((_, index) => (
+                      <Cell
+                        key={index}
+                        fill="#8884d8"
+                        fillOpacity={
+                          index === activeBarIndex
+                            ? 1
+                            : activeBarIndex !== null
+                              ? 0.5
+                              : 0.7
+                        }
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </Box>

@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../../hooks/datasets/useDatasets";
 import { useNotebooks } from "../../../hooks/datasets/useNotebooks";
+import { useDownloads } from "../../../hooks/datasets/useDownloads";
 
 const DatasetsAndNotebooksContext = createContext();
 
@@ -28,10 +29,17 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
   } = useDatasets({ t });
+
+  const {
+    downloads,
+    fetchDownloads,
+    deleteDownloadById,
+    updateDownload,
+    addDownload,
+  } = useDownloads();
 
   const {
     notebooks,
@@ -48,15 +56,23 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW); // "datasets" or "notebooks"
 
   const [rightBarContent, setRightBarContent] = useState(null);
+  const [availableConverters, setAvailableConverters] = useState([]);
+  const [availableExplorers, setAvailableExplorers] = useState([]);
+  const [uploadDataloader, setUploadDataloader] = useState(null);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
+  const [scrollToColumn, setScrollToColumn] = useState(null);
 
   useEffect(() => {
-    fetchDatasets();
     fetchNotebooks();
   }, []);
 
   const value = {
+    downloads,
+    fetchDownloads,
+    deleteDownloadById,
+    updateDownload,
+    addDownload,
     datasets,
     createDataset,
     selectedDatasetId,
@@ -67,7 +83,6 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
     notebooks,
@@ -88,6 +103,10 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     setDatasetInfo,
     datasetTab,
     setDatasetTab,
+    scrollToColumn,
+    setScrollToColumn,
+    uploadDataloader,
+    setUploadDataloader,
   };
 
   return (

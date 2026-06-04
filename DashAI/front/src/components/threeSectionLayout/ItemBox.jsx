@@ -91,7 +91,7 @@ const ItemBox = forwardRef(function ItemBox(
         borderRadius: 1,
         cursor: isSelected || isEditing ? "default" : "pointer",
         bgcolor: isSelected ? theme.palette.action.selected : "transparent",
-        p: 0.5,
+        p: 1,
         "&:hover": {
           backgroundColor: isSelected
             ? theme.palette.action.selected
@@ -135,20 +135,15 @@ const ItemBox = forwardRef(function ItemBox(
               }}
             />
           ) : (
-            <Typography
-              variant="body2"
-              color="text.primary"
-              noWrap
-              sx={{ fontSize: 14 }}
-            >
+            <Typography variant="body1" color="text.primary" noWrap>
               {editedName}
             </Typography>
           )}
           <Typography
-            variant="caption"
+            variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ fontSize: 10, pl: 1 }}
+            sx={{ pl: 1 }}
           >
             {description ? description : ""}
           </Typography>
@@ -158,7 +153,7 @@ const ItemBox = forwardRef(function ItemBox(
         itemId={id}
         onInfo={onInfo}
         onDelete={onDelete}
-        onEdit={handleEdit}
+        onEdit={onEdit ? handleEdit : undefined}
         deleteConfirmationContent={deleteConfirmationContent}
         deleteConfirmationWarning={deleteConfirmationWarning}
       />

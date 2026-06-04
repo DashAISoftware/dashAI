@@ -25,7 +25,7 @@ export default function SessionBox({
         borderRadius: 1,
         cursor: isSelected ? "default" : "pointer",
         bgcolor: isSelected ? "action.selected" : "transparent",
-        p: 0.5,
+        p: 1,
         "&:hover": {
           backgroundColor: isSelected ? "action.selected" : "action.hover",
         },
@@ -42,18 +42,18 @@ export default function SessionBox({
       >
         <Box>
           <Typography
-            variant="body2"
+            variant="body1"
             color="text.primary"
             noWrap
-            sx={{ maxWidth: 180, fontSize: 14 }}
+            sx={{ maxWidth: 180 }}
           >
             {name ? name : t("generative:label.untitledSession")}
           </Typography>
           <Typography
-            variant="caption"
+            variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ maxWidth: 150, fontSize: 10, pl: 1 }}
+            sx={{ maxWidth: 150, pl: 2 }}
           >
             {modelName}
           </Typography>

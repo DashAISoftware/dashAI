@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography, CardContent } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Typography, CardContent, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {
@@ -18,13 +18,20 @@ import { StatBox } from "../StatBox";
 import ExportableCard from "../ExportableCard";
 import { useTranslation } from "react-i18next";
 
+const BATCH_SIZE = 10;
+
 export const CategoricalTab = ({ categoricalStats }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
+  const [activeIndices, setActiveIndices] = useState({});
+  const entries = Object.entries(categoricalStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
 
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
-      {Object.entries(categoricalStats).map(([column, stats]) => (
+    <Box display="flex" flexDirection="column" gap={8}>
+      {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
           filename={`categorical_${column}`}
@@ -33,15 +40,15 @@ export const CategoricalTab = ({ categoricalStats }) => {
         >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Header */}
-            <Box display="flex" alignItems="center" mb={2}>
-              <TitleIcon sx={{ color: "primary.main", mr: 1 }} />
+            <Box display="flex" alignItems="center" mb={4}>
+              <TitleIcon sx={{ color: "primary.main", mr: 2 }} />
               <Typography variant="h6" fontWeight="bold">
                 {column}
               </Typography>
             </Box>
 
             {/* Summary Stats */}
-            <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
+            <Box display="flex" flexWrap="wrap" gap={4} mb={8}>
               <Box flex="1 1 300px" minWidth="250px">
                 <StatBox
                   label={t("datasets:label.uniqueValues")}
@@ -63,7 +70,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
             </Box>
 
             {/* Charts */}
-            <Box display="flex" flexWrap="wrap" gap={4}>
+            <Box display="flex" flexWrap="wrap" gap={8}>
               {/* Value Distribution */}
               <Box flex="1 1 400px" minWidth="300px">
                 <Typography
@@ -85,6 +92,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       />
                       <YAxis />
                       <Tooltip
+                        cursor={false}
                         contentStyle={{
                           backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
@@ -95,9 +103,39 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       />
                       <Bar
                         dataKey="count"
-                        fill="rgba(136, 132, 216, 0.7)"
+                        fill="#8884d8"
                         name={t("common:count")}
-                      />
+                        activeBar={false}
+                        onMouseEnter={(_, index) =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: index,
+                          }))
+                        }
+                        onMouseLeave={() =>
+                          setActiveIndices((prev) => ({
+                            ...prev,
+                            [column]: null,
+                          }))
+                        }
+                      >
+                        {stats.top_5.map((_, index) => {
+                          const activeIndex = activeIndices[column] ?? null;
+                          return (
+                            <Cell
+                              key={index}
+                              fill="#8884d8"
+                              fillOpacity={
+                                index === activeIndex
+                                  ? 1
+                                  : activeIndex !== null
+                                    ? 0.5
+                                    : 0.7
+                              }
+                            />
+                          );
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
@@ -156,6 +194,16 @@ export const CategoricalTab = ({ categoricalStats }) => {
           </CardContent>
         </ExportableCard>
       ))}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

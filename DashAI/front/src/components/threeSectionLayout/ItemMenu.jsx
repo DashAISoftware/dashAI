@@ -101,7 +101,7 @@ export default function ItemMenu({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 0.5,
+            gap: 1,
           }}
         >
           {/* Only show Info button if onInfo is provided */}
@@ -118,17 +118,19 @@ export default function ItemMenu({
               <ListItemText>{t("common:info")}</ListItemText>
             </MenuItem>
           )}
-          <MenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAction(onEdit, itemId);
-            }}
-          >
-            <ListItemIcon>
-              <EditIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>{t("common:edit")}</ListItemText>
-          </MenuItem>
+          {onEdit && (
+            <MenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAction(onEdit, itemId);
+              }}
+            >
+              <ListItemIcon>
+                <EditIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>{t("common:edit")}</ListItemText>
+            </MenuItem>
+          )}
           <Divider />
         </Box>
         <DeleteMenuItem

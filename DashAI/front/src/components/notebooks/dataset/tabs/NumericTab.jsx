@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography, CardContent, Alert } from "@mui/material";
+import React, { useState, useRef, useLayoutEffect } from "react";
+import { Box, Typography, CardContent, Alert, Button } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
@@ -9,9 +9,56 @@ import { MetricRow } from "../MetricRow";
 import ExportableCard from "../ExportableCard";
 import { Trans, useTranslation } from "react-i18next";
 
-export const NumericTab = ({ numericStats }) => {
+const BATCH_SIZE = 10;
+
+export const NumericTab = ({
+  numericStats,
+  scrollToColumn,
+  setScrollToColumn,
+}) => {
   const { t } = useTranslation(["datasets"]);
   const theme = useTheme();
+  const entries = Object.entries(numericStats ?? {});
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const remaining = entries.length - visibleCount;
+  const pendingScrollRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (!scrollToColumn) {
+      if (!pendingScrollRef.current) return;
+      const col = pendingScrollRef.current;
+      const card = document.querySelector(`[data-column-card="${col}"]`);
+      if (!card) return;
+      pendingScrollRef.current = null;
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.style.transition = "box-shadow 0.3s";
+      card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+      setTimeout(() => {
+        card.style.boxShadow = "";
+      }, 2000);
+      return;
+    }
+    const idx = entries.findIndex(([col]) => col === scrollToColumn);
+    if (idx === -1) return;
+    if (idx >= visibleCount) {
+      pendingScrollRef.current = scrollToColumn;
+      setVisibleCount(idx + 1);
+    } else {
+      const card = document.querySelector(
+        `[data-column-card="${scrollToColumn}"]`,
+      );
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      }
+    }
+    setScrollToColumn(null);
+  }, [scrollToColumn, visibleCount]);
 
   const toNumberOrNull = (value) => {
     if (
@@ -32,8 +79,8 @@ export const NumericTab = ({ numericStats }) => {
   };
 
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
-      {Object.entries(numericStats ?? {}).map(([column, stats]) => (
+    <Box display="flex" flexDirection="column" gap={8}>
+      {visibleEntries.map(([column, stats]) => (
         <ExportableCard
           key={column}
           filename={`numeric_${column}`}
@@ -43,15 +90,15 @@ export const NumericTab = ({ numericStats }) => {
         >
           <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Title */}
-            <Box display="flex" alignItems="center" mb={2}>
-              <TrendingUpIcon sx={{ color: "primary.main", mr: 1 }} />
+            <Box display="flex" alignItems="center" mb={4}>
+              <TrendingUpIcon sx={{ color: "primary.main", mr: 2 }} />
               <Typography variant="h6" fontWeight="bold">
                 {column}
               </Typography>
             </Box>
 
             {/* Summary Stats */}
-            <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
+            <Box display="flex" flexWrap="wrap" gap={4} mb={6}>
               <Box flex="1 1 200px" minWidth="150px">
                 <StatBox
                   label={t("datasets:label.mean")}
@@ -79,19 +126,19 @@ export const NumericTab = ({ numericStats }) => {
             </Box>
 
             {/* Two-column metrics */}
-            <Box display="flex" flexWrap="wrap" gap={4}>
+            <Box display="flex" flexWrap="wrap" gap={8}>
               {/* Distribution Metrics */}
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   fontWeight="bold"
                   color="text.primary"
                   gutterBottom
-                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                  sx={{ textTransform: "uppercase" }}
                 >
                   {t("datasets:label.distributionMetrics")}
                 </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
+                <Box display="flex" flexDirection="column" gap={2}>
                   <MetricRow
                     label={t("datasets:label.lowerBound")}
                     value={formatNumber(stats?.lower_bound)}
@@ -126,15 +173,15 @@ export const NumericTab = ({ numericStats }) => {
               {/* Shape Indicators */}
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
-                  variant="subtitle2"
+                  variant="body1"
                   fontWeight="bold"
                   color="text.primary"
                   gutterBottom
-                  sx={{ fontSize: "0.875rem", textTransform: "uppercase" }}
+                  sx={{ textTransform: "uppercase" }}
                 >
                   {t("datasets:label.shapeIndicators")}
                 </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
+                <Box display="flex" flexDirection="column" gap={2}>
                   <MetricRow
                     label={t("datasets:label.skewness")}
                     value={formatNumber(stats?.skew, 3)}
@@ -163,7 +210,7 @@ export const NumericTab = ({ numericStats }) => {
             </Box>
 
             {/* Horizontal Boxplot Visualization */}
-            <Box mt={4}>
+            <Box mt={8}>
               <Typography
                 variant="subtitle2"
                 color="text.secondary"
@@ -309,7 +356,7 @@ export const NumericTab = ({ numericStats }) => {
               <Alert
                 severity="warning"
                 icon={<InfoIcon fontSize="inherit" />}
-                sx={{ mt: 3 }}
+                sx={{ mt: 6 }}
               >
                 <Typography variant="body2">
                   {t("datasets:label.insightOutliers", {
@@ -329,7 +376,7 @@ export const NumericTab = ({ numericStats }) => {
                   <Alert
                     severity="warning"
                     icon={<InfoIcon fontSize="inherit" />}
-                    sx={{ mt: 3 }}
+                    sx={{ mt: 6 }}
                   >
                     <Typography variant="body2">
                       <Trans i18nKey="datasets:label.rightSkewedWarning">
@@ -344,6 +391,16 @@ export const NumericTab = ({ numericStats }) => {
           </CardContent>
         </ExportableCard>
       ))}
+      {remaining > 0 && (
+        <Box display="flex" justifyContent="center" mt={1} mb={2}>
+          <Button
+            variant="outlined"
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
+          >
+            Show more ({remaining} remaining)
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

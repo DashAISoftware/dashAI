@@ -142,7 +142,7 @@ export default function EditableColumnHeader({
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          gap: 0.5,
+          gap: 1,
         }}
       >
         <TextField
@@ -158,25 +158,17 @@ export default function EditableColumnHeader({
             width: "100%",
             "& .MuiInputBase-input": {
               fontSize: "0.875rem",
-              paddingY: 0.5,
+              paddingY: 1,
               textAlign: "center",
             },
           }}
         />
         {error && (
-          <Typography
-            variant="caption"
-            color="error"
-            sx={{ fontSize: "0.7rem" }}
-          >
+          <Typography variant="body2" color="error">
             {error}
           </Typography>
         )}
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ fontSize: "0.7rem" }}
-        >
+        <Typography variant="body2" color="text.secondary">
           {isLoading ? t("common:loading") : columnType || t("common:unknown")}
         </Typography>
       </Box>
@@ -190,17 +182,16 @@ export default function EditableColumnHeader({
         flexDirection: "column",
         alignItems: "center",
         width: "100%",
-        gap: 0.5,
+        gap: 1,
         textAlign: "center",
       }}
     >
       <Tooltip title={!disabled ? t("common:renameColumn") : ""} arrow>
         <Typography
-          variant="subtitle2"
+          variant="body1"
           onDoubleClick={!disabled ? handleEditClick : undefined}
           sx={{
             fontWeight: "bold",
-            fontSize: "0.875rem",
             cursor: !disabled ? "pointer" : "default",
             transition: "all 0.2s",
             "&:hover": !disabled
@@ -211,11 +202,7 @@ export default function EditableColumnHeader({
           {columnName}
         </Typography>
       </Tooltip>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ fontSize: "0.7rem" }}
-      >
+      <Typography variant="body2" color="text.secondary">
         {columnType || t("common:unknown")}
       </Typography>
 
@@ -239,11 +226,7 @@ export default function EditableColumnHeader({
             </span>
           </Tooltip>
           {encoderError && (
-            <Typography
-              variant="caption"
-              color="error"
-              sx={{ fontSize: "0.7rem" }}
-            >
+            <Typography variant="body2" color="error">
               {encoderError}
             </Typography>
           )}

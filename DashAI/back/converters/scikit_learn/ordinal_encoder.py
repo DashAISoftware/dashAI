@@ -35,6 +35,8 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Categories (unique values) per feature.",
             es="Categorías (valores únicos) por característica.",
+            pt="Categorias (valores únicos) por característica.",
+            de="Kategorien (eindeutige Werte) pro Merkmal.",
         ),
     )  # type: ignore
     dtype: schema_field(
@@ -43,6 +45,8 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
+            pt="Tipo de dado de saída desejado.",
+            de="Gewünschter Datentyp der Ausgabe.",
         ),
     )  # type: ignore
     handle_unknown: schema_field(
@@ -57,6 +61,15 @@ class OrdinalEncoderSchema(BaseSchema):
                 "Si se debe lanzar un error o usar un valor codificado específico "
                 "cuando se vea una categoría desconocida."
             ),
+            pt=(
+                "Se deve lançar um erro ou usar um valor codificado específico "
+                "quando uma categoria desconhecida for encontrada."
+            ),
+            de=(
+                "Ob ein Fehler ausgelöst oder ein spezifischer kodierter Wert verwendet"
+                "werden soll, "
+                "wenn eine unbekannte Kategorie gesehen wird."
+            ),
         ),
     )  # type: ignore
     unknown_value: schema_field(
@@ -65,6 +78,8 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="The value to use for unknown categories.",
             es="El valor a usar para categorías desconocidas.",
+            pt="O valor a usar para categorias desconhecidas.",
+            de="Der Wert für unbekannte Kategorien.",
         ),
     )  # type: ignore
     # Added in version 1.3
@@ -74,6 +89,8 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum frequency of a category to be considered as frequent.",
             es="Frecuencia mínima para considerar una categoría como frecuente.",
+            pt="Frequência mínima para considerar uma categoria como frequente.",
+            de="Mindesthäufigkeit einer Kategorie, um als häufig betrachtet zu werden.",
         ),
     )  # type: ignore
     # Added in version 1.3
@@ -83,6 +100,8 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of categories to encode.",
             es="Número máximo de categorías a codificar.",
+            pt="Número máximo de categorias a codificar.",
+            de="Maximale Anzahl der zu kodierenden Kategorien.",
         ),
     )  # type: ignore
 
@@ -117,8 +136,15 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     DESCRIPTION = MultilingualString(
         en="Encode categorical features as an integer array.",
         es="Codifica características categóricas como un arreglo de enteros.",
+        pt="Codifica características categóricas como um array de inteiros.",
+        de="Kategoriale Merkmale als Ganzzahl-Array kodieren.",
     )
-    DISPLAY_NAME = MultilingualString(en="Ordinal Encoder", es="Codificador Ordinal")
+    DISPLAY_NAME = MultilingualString(
+        en="Ordinal Encoder",
+        es="Codificador Ordinal",
+        pt="Codificador Ordinal",
+        de="Ordinaler Kodierer",
+    )
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
     PREFIX = "oe_"

@@ -5,20 +5,17 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 import { formatDate, getColorByStatus } from "../../utils";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { Delete } from "@mui/icons-material";
 
 function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
-  const { t, i18n } = useTranslation(["prediction", "common"]);
+  const { t } = useTranslation(["prediction", "common"]);
 
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const StyledCell = styled("div")(({ theme, color }) => ({
     display: "inline-block",
@@ -74,7 +71,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               sx={{
                 color: theme.palette.text.secondary,
                 lineHeight: 1.1,
-                mt: 0.2,
+                mt: 1,
                 fontSize: "95%",
               }}
             >
@@ -92,7 +89,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
             <Typography
               variant="body2"
               fontWeight={600}
-              sx={{ lineHeight: 1.1, fontSize: "0.75rem" }}
+              sx={{ lineHeight: 1.1 }}
             >
               {t("prediction:label.manualInput")}
             </Typography>
@@ -152,7 +149,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
   if (!predictions || predictions.length === 0) {
     return (
-      <Box sx={{ textAlign: "center", py: 8 }}>
+      <Box sx={{ textAlign: "center", py: 16 }}>
         <Typography sx={{ color: theme.palette.text.secondary }}>
           {t("prediction:label.noPredictionsYet")}
         </Typography>
@@ -188,12 +185,12 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         {t("prediction:label.predictions")}
       </Typography>
       <Typography
         variant="body2"
-        sx={{ color: theme.palette.text.secondary, mb: 2 }}
+        sx={{ color: theme.palette.text.secondary, mb: 4 }}
       >
         {t("prediction:label.clickToViewOrDelete")}
       </Typography>

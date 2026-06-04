@@ -1,13 +1,16 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Switch, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTheme } from "@mui/material/styles";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
-import { generateSequentialName } from "../../../utils/nameGenerator";
 import FormInputWrapper from "../../configurableObject/Inputs/FormInputWrapper";
 import InputWithDebounce from "../../shared/InputWithDebounce";
+import { generateSequentialName } from "../../../utils/nameGenerator";
+import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
 import { useTranslation } from "react-i18next";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
+import { getComponents as getComponentsRequest } from "../../../api/component";
 
 /**
  * Right sidebar component for configuring dataloader parameters
@@ -23,42 +26,94 @@ export default function DataloaderConfigBar({
   selectedDataloader,
   formSubmitRef,
   setError,
-  existingDatasets = [],
   onValuesChange,
 }) {
   const [inferenceRows, setInferenceRows] = useState(1000);
-  // Track FormSchema values separately so we can merge with inference_rows
+  const [supportsNativeTypes, setSupportsNativeTypes] = useState(false);
+  const [useNativeTypes, setUseNativeTypes] = useState(false);
   const schemaValuesRef = useRef({});
   const { t } = useTranslation(["common", "datasets"]);
+  const theme = useTheme();
+  const showInferenceRows = selectedDataloader !== "ImageDataLoader";
 
-  const { defaultName } = useMemo(
-    () =>
-      generateSequentialName({
-        base: "Dataset",
-        items: existingDatasets,
-      }),
-    [existingDatasets],
-  );
+  useEffect(() => {
+    let cancelled = false;
+    setUseNativeTypes(false);
+    if (!selectedDataloader) {
+      setSupportsNativeTypes(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+    getComponentsRequest({ model: selectedDataloader })
+      .then((components) => {
+        if (cancelled) return;
+        const component = Array.isArray(components)
+          ? components[0]
+          : components;
+        const flag = !!component?.metadata?.supports_native_types;
+        setSupportsNativeTypes(flag);
+        if (flag) {
+          setUseNativeTypes(true);
+          if (onValuesChange) {
+            onValuesChange({
+              ...schemaValuesRef.current,
+              inference_rows: inferenceRows,
+              use_native_types: true,
+            });
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSupportsNativeTypes(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDataloader]);
 
-  // Handler for when FormSchema values change - merge with inference_rows
+  // Handler for when FormSchema values change - merge with inference_rows + native flag
   const handleFormSchemaValuesChange = useCallback(() => {
     const values = formSubmitRef?.current?.values || {};
     schemaValuesRef.current = values;
     if (onValuesChange) {
-      onValuesChange({ ...values, inference_rows: inferenceRows });
+      onValuesChange({
+        ...values,
+        inference_rows: inferenceRows,
+        use_native_types: useNativeTypes,
+      });
     }
-  }, [formSubmitRef, inferenceRows, onValuesChange]);
+  }, [formSubmitRef, inferenceRows, useNativeTypes, onValuesChange]);
 
   // Handler for when inference_rows changes - merge with schema values
   const handleInferenceRowsChange = useCallback(
     (val) => {
-      const numeric = val ? Number(val) : undefined;
+      const numeric = val ? Math.max(2, Number(val)) : 2;
       setInferenceRows(numeric);
       if (onValuesChange) {
-        onValuesChange({ ...schemaValuesRef.current, inference_rows: numeric });
+        onValuesChange({
+          ...schemaValuesRef.current,
+          inference_rows: numeric,
+          use_native_types: useNativeTypes,
+        });
       }
     },
-    [onValuesChange],
+    [onValuesChange, useNativeTypes],
+  );
+
+  const handleUseNativeTypesChange = useCallback(
+    (event) => {
+      const next = event.target.checked;
+      setUseNativeTypes(next);
+      if (onValuesChange) {
+        onValuesChange({
+          ...schemaValuesRef.current,
+          inference_rows: inferenceRows,
+          use_native_types: next,
+        });
+      }
+    },
+    [onValuesChange, inferenceRows],
   );
 
   if (!selectedDataloader) {
@@ -72,7 +127,7 @@ export default function DataloaderConfigBar({
         alignItems="center"
         bgcolor="background.box"
         borderBottom={`0.1px solid ${(theme) => theme.palette.divider}`}
-        p={3}
+        p={6}
       >
         <Typography
           variant="body2"
@@ -85,85 +140,84 @@ export default function DataloaderConfigBar({
   }
 
   return (
-    <SideBar>
-      {/* Inferred configuration - displayed above the autogenerated schema form
-          This section is not part of the dataloader schema and can be used to
-          expose inferred/auxiliary parameters (like inference_rows) to the UI.
-      */}
-      <Box overflow="auto">
-        <Box sx={{ px: 2, pt: 2 }}>
-          <Typography
+    <SideBar data-tour="dataloader-config">
+      <Box
+        sx={{
+          p: 4,
+          borderBottom: `1px solid ${theme.palette.ui.border}`,
+          flexShrink: 0,
+          height: 64,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6" color="text.primary">
+          {t("datasets:label.dataloaderConfiguration")}
+        </Typography>
+      </Box>
+
+      <Box sx={{ flex: 1, overflowY: "auto", px: 4, pt: 2, pb: 4 }}>
+        {showInferenceRows && (
+          <Box
             sx={{
-              fontSize: "16px",
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              fontWeight: 500,
-              textAlign: "center",
               pb: 2,
             }}
           >
-            {t("datasets:label.inferredConfiguration")}
-          </Typography>
-          <FormInputWrapper
-            description={t("datasets:label.inferenceRowsDescription")}
-          >
-            <InputWithDebounce
-              variant="outlined"
-              label={t("datasets:label.inferenceRows")}
-              name="inference_rows"
-              value={inferenceRows}
-              onChange={handleInferenceRowsChange}
-              type="number"
-              helperText=" "
-              margin="dense"
-              inputProps={{ min: 1 }}
-            />
-          </FormInputWrapper>
-        </Box>
-
-        {/* Header */}
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          px={2}
-          pt={0}
-          pb={1}
-        >
-          <Typography
-            sx={{
-              fontSize: "16px",
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              fontWeight: 500,
-              textAlign: "center",
-            }}
-          >
-            {t("datasets:label.dataloaderConfiguration")}
-          </Typography>
-        </Box>
-
-        {/* Configuration Form */}
-        <Box sx={{ px: 2, pb: 2, flex: 1 }}>
-          <Typography
-            variant="body2"
-            sx={{ color: "text.secondary", mb: 2, textAlign: "center" }}
-          >
-            {selectedDataloader}
-          </Typography>
-
-          <FormSchemaContainer>
-            <FormSchema
-              autoSave
-              model={selectedDataloader}
-              formSubmitRef={formSubmitRef}
-              setError={setError}
-              initialValues={{ name: defaultName }}
-              onValuesChange={handleFormSchemaValuesChange}
-              showBorder={false}
-            />
-          </FormSchemaContainer>
-        </Box>
+            {supportsNativeTypes && (
+              <Box sx={{ pb: 2 }}>
+                <FormSchemaFieldCard
+                  label={t("datasets:label.useNativeTypes")}
+                  description={t("datasets:label.useNativeTypesDescription")}
+                >
+                  <Box sx={{ pt: 2 }}>
+                    <Switch
+                      checked={useNativeTypes}
+                      onChange={handleUseNativeTypesChange}
+                      size="small"
+                      name="use_native_types"
+                    />
+                  </Box>
+                </FormSchemaFieldCard>
+              </Box>
+            )}
+            <FormSchemaFieldCard
+              label={t(
+                useNativeTypes
+                  ? "datasets:label.previewRows"
+                  : "datasets:label.inferenceRows",
+              )}
+              description={t(
+                useNativeTypes
+                  ? "datasets:label.previewRowsDescription"
+                  : "datasets:label.inferenceRowsDescription",
+              )}
+            >
+              <Box sx={{ pt: 2 }}>
+                <InputWithDebounce
+                  name="inference_rows"
+                  value={inferenceRows}
+                  onChange={handleInferenceRowsChange}
+                  type="number"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  slotProps={{ input: { min: 2 } }}
+                />
+              </Box>
+            </FormSchemaFieldCard>
+          </Box>
+        )}
+        <FormSchemaContainer>
+          <FormSchema
+            autoSave
+            model={selectedDataloader}
+            formSubmitRef={formSubmitRef}
+            setError={setError}
+            initialValues={{}}
+            onValuesChange={handleFormSchemaValuesChange}
+            showBorder={false}
+          />
+        </FormSchemaContainer>
       </Box>
     </SideBar>
   );
@@ -173,6 +227,5 @@ DataloaderConfigBar.propTypes = {
   selectedDataloader: PropTypes.string,
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
   setError: PropTypes.func,
-  existingDatasets: PropTypes.array,
   onValuesChange: PropTypes.func,
 };

@@ -37,6 +37,8 @@ export default function DeleteRun({ run, onRunDelete }) {
           onConfirm={async () => {
             try {
               await deleteRun(run.id);
+              localStorage.removeItem(`run-${run.id}-active-tab`);
+              localStorage.removeItem(`run-${run.id}-results-visible`);
               onRunDelete(run.id);
               enqueueSnackbar(t("message.runDeletedSuccessfully"), {
                 variant: "success",

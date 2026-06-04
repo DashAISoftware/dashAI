@@ -32,7 +32,6 @@ export function ModelsProvider({ children }) {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
   } = useDatasets({ t });
@@ -68,6 +67,8 @@ export function ModelsProvider({ children }) {
     onEditRun,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
   } = useSessions({ t });
 
   const [selectedModel, setSelectedModel] = useState(null);
@@ -76,6 +77,7 @@ export function ModelsProvider({ children }) {
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
+  const [sessionRightContent, setSessionRightContent] = useState(null);
 
   const selectModel = useCallback((model) => {
     setSelectedModel(model);
@@ -113,7 +115,6 @@ export function ModelsProvider({ children }) {
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
-    enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
     tasks,
@@ -148,10 +149,14 @@ export function ModelsProvider({ children }) {
     onDeleteRun,
     handleCancelRetrain,
     handleConfirmRetrain,
+    lastAddedRunId,
+    clearLastAddedRunId,
     datasetInfo,
     setDatasetInfo,
     datasetTab,
     setDatasetTab,
+    sessionRightContent,
+    setSessionRightContent,
   };
 
   return (

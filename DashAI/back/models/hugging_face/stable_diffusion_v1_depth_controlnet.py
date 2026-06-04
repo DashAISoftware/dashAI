@@ -36,9 +36,24 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "típico: 20-30 para resultados rápidos, 40-50 para mayor calidad. "
                 "Valores superiores a 100 raramente mejoran el resultado."
             ),
+            pt=(
+                "Número de passos de eliminação de ruído a executar. Mais passos "
+                "refinam a imagem mas aumentam o tempo de geração. Intervalo típico: "
+                "20-30 para resultados rápidos, 40-50 para maior qualidade. "
+                "Valores acima de 100 raramente melhoram o resultado."
+            ),
+            de=(
+                "Anzahl der Entrauschungsschritte. Mehr Schritte verfeinern das Bild, "
+                "erhöhen aber die Generierungszeit. Typischer Bereich: 20-30 für "
+                "schnelle Ergebnisse, 40-50 für höhere Qualität. Werte über 100 "
+                "verbessern das Ergebnis kaum."
+            ),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
         ),
     )  # type: ignore
 
@@ -61,10 +76,25 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "de 1.5 la restricción de profundidad domina y puede producir "
                 "resultados demasiado rígidos."
             ),
+            pt=(
+                "Peso do condicionamento de profundidade do ControlNet relativo ao "
+                "pipeline de difusão base. Intervalo válido: 0.0-2.0. Em 0.0 o mapa "
+                "de profundidade não tem efeito; em 1.0 (padrão) a saída segue de "
+                "perto a estrutura da imagem de entrada; acima de 1.5 a restrição de "
+                "profundidade domina e pode produzir resultados excessivamente rígidos."
+            ),
+            de=(
+                "Gewichtung des ControlNet-Tiefenkonditionierens (Bereich 0.0-2.0). "
+                "Bei 0.0 hat die Tiefenkarte keinen Effekt; bei 1.0 (Standard) folgt "
+                "die Ausgabe eng der Eingangsbildstruktur; über 1.5 dominiert die "
+                "Tiefenbeschränkung und kann zu übermäßig starren Ergebnissen führen."
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
+            pt="Escala de condicionamento ControlNet",
+            de="ControlNet-Konditionierungsskala",
         ),
     )  # type: ignore
 
@@ -84,8 +114,25 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "de difusión. Seleccione 'CPU' en sistemas sin GPU compatible, pero "
                 "espere tiempos de generación significativamente más largos."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. Selecione uma opção de GPU "
+                "para aceleração por hardware, fortemente recomendada para modelos de "
+                "difusão. Selecione 'CPU' em sistemas sem GPU compatível, mas espere "
+                "tempos de geração significativamente mais longos."
+            ),
+            de=(
+                "Hardware-Gerät für die Inferenz. Wählen Sie eine GPU-Option für "
+                "Hardware-Beschleunigung, die für Diffusionsmodelle dringend empfohlen "
+                "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber rechnen "
+                "Sie mit deutlich längeren Generierungszeiten."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device",
+            es="Dispositivo",
+            pt="Dispositivo",
+            de="Gerät",
+        ),
     )  # type: ignore
 
 
@@ -150,6 +197,8 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL V1 ControlNet",
         es="Stable Diffusion XL V1 ControlNet",
+        pt="Stable Diffusion XL V1 ControlNet",
+        de="Stable Diffusion XL V1 ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -174,6 +223,32 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
             "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
             "madebyollin/sdxl-vae-fp16-fix "
             "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) y "
+            "stabilityai/stable-diffusion-xl-base-1.0 "
+            "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
+        ),
+        pt=(
+            "Combina o condicionamento de profundidade do ControlNet com o pipeline "
+            "do Stable Diffusion XL 1.0 para geração de imagens com reconhecimento "
+            "de estrutura. Recebe uma imagem de entrada e um prompt de texto: um mapa "
+            "de profundidade é extraído usando o modelo DPT-Hybrid-MiDaS da Intel e "
+            "usado como condição espacial para guiar a síntese de imagens. Utiliza "
+            "diffusers/controlnet-depth-sdxl-1.0-small "
+            "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
+            "madebyollin/sdxl-vae-fp16-fix "
+            "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) e "
+            "stabilityai/stable-diffusion-xl-base-1.0 "
+            "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
+        ),
+        de=(
+            "Kombiniert die ControlNet-Tiefenkonditionierung mit der Stable "
+            "Diffusion XL 1.0-Pipeline für strukturbewusste Bildgenerierung. "
+            "Nimmt ein Eingabebild und einen Text-Prompt: Eine Tiefenkarte wird "
+            "mit dem DPT-Hybrid-MiDaS-Modell von Intel extrahiert und als "
+            "räumliche Bedingung zur Steuerung der Bildsynthese verwendet. "
+            "Verwendet diffusers/controlnet-depth-sdxl-1.0-small "
+            "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
+            "madebyollin/sdxl-vae-fp16-fix "
+            "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) und "
             "stabilityai/stable-diffusion-xl-base-1.0 "
             "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
         ),

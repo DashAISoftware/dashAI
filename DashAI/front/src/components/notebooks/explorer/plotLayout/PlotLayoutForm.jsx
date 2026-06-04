@@ -141,7 +141,7 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
       }}
     >
       {/* Header */}
-      <Box sx={{ px: 2, pt: 2, pb: 1, flexShrink: 0 }}>
+      <Box sx={{ px: 4, pt: 4, pb: 2, flexShrink: 0 }}>
         <Typography variant="sectionLabel" sx={{ color: "text.secondary" }}>
           {t("datasets:label.editPlotLayout")}
         </Typography>
@@ -154,8 +154,8 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
         sx={{
           display: "flex",
           flexWrap: "wrap",
-          gap: 0.75,
-          p: 1.5,
+          gap: 3,
+          p: 3,
           borderBottom: "1px solid",
           borderColor: "ui.borderLight",
           flexShrink: 0,
@@ -196,7 +196,7 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
       </Box>
 
       {/* Active section content */}
-      <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", p: 4 }}>
         {validSection === "general" && (
           <GeneralForm layout={layout} handleChange={handleChange} />
         )}
@@ -230,9 +230,9 @@ const PlotLayoutForm = memo(function PlotLayoutForm({
       {/* Save / Cancel footer */}
       <Stack
         direction="row"
-        spacing={2}
+        spacing={4}
         justifyContent="flex-end"
-        sx={{ p: 1.5, flexShrink: 0 }}
+        sx={{ p: 3, flexShrink: 0 }}
       >
         <Button variant="outlined" onClick={handleCancel} disabled={!modified}>
           {t("common:cancel")}

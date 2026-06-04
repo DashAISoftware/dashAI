@@ -1,5 +1,6 @@
 {
   "actions": "Acciones",
+  "hub": "Hub",
   "add": "Agregar",
   "addModel": "Agregar Modelo",
   "addRow": "Agregar Fila",
@@ -118,6 +119,7 @@
   "started": "Iniciado",
   "startTime": "Hora de Inicio",
   "status": "Estado",
+  "step": "Paso",
   "submit": "Enviar",
   "submitting": "Enviando...",
   "table": "Tabla",
@@ -216,5 +218,7 @@
   "expand": "Expandir",
   "optimize": "Optimizar",
   "viewMore": "Ver más",
-  "viewLess": "Ver menos"
+  "viewLess": "Ver menos",
+  "switchToDarkMode": "Cambiar a modo oscuro",
+  "switchToLightMode": "Cambiar a modo claro"
 }

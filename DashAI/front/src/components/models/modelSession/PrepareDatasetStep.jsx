@@ -21,6 +21,7 @@ import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
+import { useModels } from "../ModelsContext";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing
@@ -28,7 +29,8 @@ import { Trans } from "react-i18next";
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
  */
-function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
+function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
+  const { setSessionRightContent } = useModels();
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
@@ -87,11 +89,14 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [splitsReady, setSplitsReady] = useState(false);
 
   const getDatasetInfo = async () => {
+    if (!dataset?.id) return;
     setInfoLoading(true);
+    setInputColumnNames([]);
+    setOutputColumnNames([]);
     try {
       const [fetchedDatasetInfo, fetchedDatasetTypes] = await Promise.all([
-        getDatasetInfoRequest(newExp.dataset.id),
-        getDatasetTypesRequest(newExp.dataset.id),
+        getDatasetInfoRequest(dataset.id),
+        getDatasetTypesRequest(dataset.id),
       ]);
       setDatasetInfo(fetchedDatasetInfo);
       setDatasetTypes(fetchedDatasetTypes);
@@ -201,7 +206,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     try {
       const validation = await validateColumnsRequest(
         newExp.task_name,
-        newExp.dataset.id,
+        dataset.id,
         inputColumnNames,
         outputColumnNames,
       );
@@ -305,8 +310,59 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   useEffect(() => {
     getDatasetInfo();
+  }, [dataset?.id]);
+
+  useEffect(() => {
     getTaskRequirements();
   }, []);
+
+  // Push SplitDatasetRows (or loading spinner) into the right bar
+  useEffect(() => {
+    if (infoLoading) {
+      setSessionRightContent(
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+          }}
+        >
+          <CircularProgress size={32} />
+        </Box>,
+      );
+      return () => setSessionRightContent(null);
+    }
+    setSessionRightContent(
+      <SplitDatasetRows
+        datasetInfo={datasetInfo}
+        rowsPartitionsIndex={rowsPartitionsIndex}
+        setRowsPartitionsIndex={setRowsPartitionsIndex}
+        rowsPartitionsPercentage={rowsPartitionsPercentage}
+        setRowsPartitionsPercentage={setRowsPartitionsPercentage}
+        setSplitsReady={setSplitsReady}
+        splitType={splitType}
+        setSplitType={setSplitType}
+        SPLIT_TYPES={SPLIT_TYPES}
+        shuffle={shuffle}
+        setShuffle={setShuffle}
+        stratify={stratify}
+        setStratify={setStratify}
+        seed={seed}
+        setSeed={setSeed}
+      />,
+    );
+    return () => setSessionRightContent(null);
+  }, [
+    infoLoading,
+    datasetInfo,
+    rowsPartitionsIndex,
+    rowsPartitionsPercentage,
+    splitType,
+    shuffle,
+    stratify,
+    seed,
+  ]);
 
   const renderTypesAsChips = (typesList) => {
     if (!typesList || typesList.length === 0) {
@@ -318,7 +374,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         component="span"
         sx={{
           display: "inline-flex",
-          gap: 0.5,
+          gap: 1,
           flexWrap: "wrap",
           alignItems: "center",
         }}
@@ -352,7 +408,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           <Alert
             severity="warning"
             sx={{
-              mb: 1,
+              mb: 2,
               "& .MuiAlert-icon": { fontSize: 24 },
               bgcolor: (theme) => `${theme.palette.warning.main}40`,
               border: (theme) => `1px solid ${theme.palette.warning.main}`,
@@ -361,7 +417,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             <AlertTitle>
               {t("experiments:label.missingValuesDetected")}
             </AlertTitle>
-            <Grid container spacing={2}>
+            <Grid container spacing={4}>
               {Object.entries(datasetInfo.nan)
                 .filter(([_, count]) => count > 0)
                 .map(([col, count]) => (
@@ -377,7 +433,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       <Alert
         severity={columnsAreValid ? "success" : "error"}
         sx={{
-          mb: 1,
+          mb: 2,
           "& .MuiAlert-icon": { fontSize: 24 },
           bgcolor: (theme) =>
             `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
@@ -396,13 +452,13 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               )
             : null}
         </AlertTitle>
-        <Grid container spacing={2}>
+        <Grid container spacing={4}>
           <Grid size={{ xs: 12 }}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -428,7 +484,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -451,7 +507,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       </Alert>
 
       {!infoLoading ? (
-        <Grid container spacing={1}>
+        <Grid container spacing={2}>
           <DivideDatasetColumns
             allColumnNames={datasetInfo.column_names || []}
             columnTypes={datasetTypes}
@@ -462,24 +518,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             disabled={
               infoLoading || (datasetInfo.column_names || []).length === 0
             }
-          />
-
-          <SplitDatasetRows
-            datasetInfo={datasetInfo}
-            rowsPartitionsIndex={rowsPartitionsIndex}
-            setRowsPartitionsIndex={setRowsPartitionsIndex}
-            rowsPartitionsPercentage={rowsPartitionsPercentage}
-            setRowsPartitionsPercentage={setRowsPartitionsPercentage}
-            setSplitsReady={setSplitsReady}
-            splitType={splitType}
-            setSplitType={setSplitType}
-            SPLIT_TYPES={SPLIT_TYPES}
-            shuffle={shuffle}
-            setShuffle={setShuffle}
-            stratify={stratify}
-            setStratify={setStratify}
-            seed={seed}
-            setSeed={setSeed}
           />
         </Grid>
       ) : (
@@ -507,5 +545,6 @@ PrepareDatasetStep.propTypes = {
   }),
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
+  dataset: PropTypes.object.isRequired,
 };
 export default PrepareDatasetStep;

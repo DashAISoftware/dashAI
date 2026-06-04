@@ -21,10 +21,10 @@ function PluginsCard({
   const { t } = useTranslation(["plugins"]);
   const theme = useTheme();
 
-  const accent = theme.palette.accent.coral;
-  const accentDim = theme.palette.accent.coralDim;
-  const accentBorder = theme.palette.accent.coralBorder;
-  const accentGlow = theme.palette.accent.coralGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${accent}1F`;
+  const accentBorder = `${accent}38`;
+  const accentGlow = `${accent}0A`;
 
   const descRef = React.useRef(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
@@ -72,7 +72,7 @@ function PluginsCard({
           position: "relative",
           overflow: "hidden",
           transition: "border-color 0.2s, background 0.2s, transform 0.15s",
-          gap: 3,
+          gap: 12,
           "&:hover": {
             borderColor: accentBorder,
             background: accentGlow,
@@ -97,7 +97,7 @@ function PluginsCard({
 
         <Typography
           sx={{
-            ...theme.typography.cardTitle,
+            ...theme.typography.h5,
             color: theme.palette.text.primary,
             flexShrink: 0,
           }}
@@ -107,8 +107,8 @@ function PluginsCard({
 
         {version && (
           <Typography
+            variant="body1"
             sx={{
-              fontSize: "13px",
               fontWeight: 300,
               color: theme.palette.text.disabled,
               flexShrink: 0,
@@ -119,8 +119,8 @@ function PluginsCard({
         )}
 
         <Typography
+          variant="body1"
           sx={{
-            fontSize: "14px",
             fontWeight: 300,
             color: theme.palette.text.secondary,
             flexGrow: 1,
@@ -159,7 +159,7 @@ function PluginsCard({
               updatePlugin();
             }}
             sx={{
-              fontSize: "13px",
+              fontSize: "12px",
               fontWeight: 500,
               color: accent,
               cursor: "pointer",
@@ -181,7 +181,7 @@ function PluginsCard({
             fontSize: "18px",
             color: theme.palette.text.disabled,
             flexShrink: 0,
-            ml: 1,
+            ml: 8,
           }}
         >
           →
@@ -236,7 +236,7 @@ function PluginsCard({
       <Box
         sx={{
           display: "flex",
-          mb: "14px",
+          mb: 3,
           width: "100%",
           alignItems: "center",
           justifyContent: "space-between",
@@ -260,8 +260,8 @@ function PluginsCard({
 
         {version && (
           <Typography
+            variant="body1"
             sx={{
-              fontSize: "13px",
               fontWeight: 300,
               color: theme.palette.text.disabled,
             }}
@@ -275,9 +275,9 @@ function PluginsCard({
       <Typography
         noWrap
         sx={{
-          ...theme.typography.cardTitle,
+          ...theme.typography.h5,
           color: theme.palette.text.primary,
-          mb: "5px",
+          mb: 6,
           width: "100%",
         }}
       >
@@ -292,9 +292,9 @@ function PluginsCard({
         placement="bottom"
       >
         <Typography
+          variant="subtitle2"
           ref={descRef}
           sx={{
-            fontSize: "15px",
             fontWeight: 300,
             color: theme.palette.text.secondary,
             lineHeight: 1.65,
@@ -314,8 +314,8 @@ function PluginsCard({
       {/* Footer: tags + install/arrow */}
       <Box
         sx={{
-          mt: "16px",
-          pt: "14px",
+          mt: 4,
+          pt: 3,
           borderTop: `1px solid ${theme.palette.ui.borderLight}`,
           display: "flex",
           alignItems: "center",
@@ -342,7 +342,7 @@ function PluginsCard({
           ))}
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 8 }}>
           {plugin.status === PluginStatus.REGISTERED && (
             <Box
               component="span"
@@ -351,7 +351,7 @@ function PluginsCard({
                 updatePlugin();
               }}
               sx={{
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: 500,
                 color: accent,
                 cursor: "pointer",

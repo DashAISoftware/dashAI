@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -15,12 +15,10 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import DatasetTable from "../dataset/DatasetTable";
 import api from "../../../api/api";
-import {
-  getDatasetFile,
-  getDatasetFileFiltered,
-  getDatasetTypesByFilePath,
-} from "../../../api/datasets";
+import { getDatasetFile, getDatasetFileFiltered } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
+import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
 export default function ConfigureToolModal({
   tool,
@@ -32,15 +30,8 @@ export default function ConfigureToolModal({
   const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
   const [step, setStep] = useState(0);
-  const [columnTypes, setColumnTypes] = useState({});
   const [imageOpen, setImageOpen] = useState(false);
-
-  useEffect(() => {
-    if (!notebook?.file_path) return;
-    getDatasetTypesByFilePath(notebook.file_path)
-      .then(setColumnTypes)
-      .catch(() => {});
-  }, [notebook?.file_path]);
+  const { columnTypes } = useExplorersAndConverters();
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel, sortModel) => {
@@ -101,13 +92,13 @@ export default function ConfigureToolModal({
       {/* HEADER */}
       <Box
         sx={{
-          p: 2,
+          p: 4,
           borderBottom: "1px solid",
           borderColor: theme.palette.ui.borderDark,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 2,
+          gap: 4,
           flexShrink: 0,
         }}
       >
@@ -121,7 +112,7 @@ export default function ConfigureToolModal({
         <Box sx={{ flex: 1 }}>
           <Stepper activeStep={step}>
             {steps.map((label) => (
-              <Step key={label}>
+              <Step key={label} completed={false}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))}
@@ -148,11 +139,12 @@ export default function ConfigureToolModal({
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            overflow: "auto",
-            p: 2,
+            overflow: "hidden",
+            p: 4,
             borderRight: "1px solid",
             borderColor: theme.palette.ui.borderDark,
             minWidth: 0,
+            minHeight: 0,
           }}
         >
           <FormSection
@@ -178,7 +170,7 @@ export default function ConfigureToolModal({
           {/* About section */}
           <Box
             sx={{
-              p: 2,
+              p: 4,
               borderBottom: "1px solid",
               borderColor: theme.palette.ui.borderDark,
               overflow: "auto",
@@ -189,8 +181,8 @@ export default function ConfigureToolModal({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 1.5,
+                gap: 2,
+                mb: 3,
               }}
             >
               <InfoOutlinedIcon
@@ -212,7 +204,7 @@ export default function ConfigureToolModal({
               sx={{
                 color: "text.secondary",
                 lineHeight: 1.6,
-                mb: 2,
+                mb: 4,
               }}
             >
               {tool.description || t("common:noDescription")}
@@ -227,7 +219,7 @@ export default function ConfigureToolModal({
               }}
             >
               <img
-                src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                src={`${api.defaults.baseURL}/v1/component/image/${tool.name}/`}
                 alt={tool.display_name}
                 style={{
                   width: "100%",
@@ -271,7 +263,7 @@ export default function ConfigureToolModal({
                   <Close />
                 </IconButton>
                 <img
-                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}/`}
                   alt={tool.display_name}
                   style={{
                     maxWidth: "90vw",
@@ -292,7 +284,7 @@ export default function ConfigureToolModal({
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
-              p: 2,
+              p: 4,
               minHeight: 0,
             }}
           >
@@ -300,8 +292,8 @@ export default function ConfigureToolModal({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
-                mb: 1,
+                gap: 2,
+                mb: 2,
               }}
             >
               <TableChartIcon

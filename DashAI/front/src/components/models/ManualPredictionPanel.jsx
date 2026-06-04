@@ -1,24 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Divider,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import {
-  PlayArrow as PlayArrowIcon,
-  Save as SaveIcon,
-  Close as CloseIcon,
-} from "@mui/icons-material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import ManualInput from "../predictions/ManualInput";
@@ -44,6 +26,8 @@ export default function ManualPredictionPanel({
   session,
   onSaved,
   onClose,
+  saveRef = null,
+  onStateChange = null,
 }) {
   const [manualRows, setManualRows] = useState([]);
   const [modelSession, setModelSession] = useState(null);
@@ -57,6 +41,24 @@ export default function ManualPredictionPanel({
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "common"]);
+
+  // Keep saveRef pointing to the latest handleSave
+  const handleSaveRef = useRef(null);
+  useEffect(() => {
+    if (saveRef) saveRef.current = () => handleSaveRef.current?.();
+  }, [saveRef]);
+
+  // Notify parent when save-button state changes
+  useEffect(() => {
+    const allRowsHavePrediction =
+      !!previewResults &&
+      manualRows.length > 0 &&
+      manualRows.every((_, i) => previewResults.rows[i] != null);
+    onStateChange?.({
+      canSave: allRowsHavePrediction && !isSaving && !isPreviewing,
+      isSaving,
+    });
+  }, [previewResults, isSaving, isPreviewing, manualRows, onStateChange]);
 
   // Load model session metadata once on mount
   useEffect(() => {
@@ -86,10 +88,49 @@ export default function ManualPredictionPanel({
     fetchSessionData();
   }, [run, session, enqueueSnackbar, t]);
 
-  // Reset preview when rows change so stale results are not shown
-  const handleRowsChange = useCallback((rows) => {
-    setManualRows(rows);
-    setPreviewResults(null);
+  const prevRowsRef = useRef([]);
+
+  const handleRowsChange = useCallback((newRows) => {
+    const prevRows = prevRowsRef.current;
+    prevRowsRef.current = newRows;
+    setManualRows(newRows);
+
+    if (newRows.length > prevRows.length) {
+      // Row added — keep all existing predictions
+      return;
+    }
+
+    if (newRows.length < prevRows.length) {
+      // Row deleted — remove only that row's prediction
+      let deletedIndex = prevRows.length - 1;
+      for (let i = 0; i < newRows.length; i++) {
+        if (JSON.stringify(prevRows[i]) !== JSON.stringify(newRows[i])) {
+          deletedIndex = i;
+          break;
+        }
+      }
+      setPreviewResults((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          rows: prev.rows.filter((_, i) => i !== deletedIndex),
+        };
+      });
+      return;
+    }
+
+    // Row edited — clear only that row's prediction
+    for (let i = 0; i < newRows.length; i++) {
+      if (JSON.stringify(prevRows[i]) !== JSON.stringify(newRows[i])) {
+        setPreviewResults((prev) => {
+          if (!prev) return null;
+          const rows = [...prev.rows];
+          rows[i] = null;
+          return { ...prev, rows };
+        });
+        break;
+      }
+    }
   }, []);
 
   const handleRunPrediction = async () => {
@@ -196,6 +237,7 @@ export default function ManualPredictionPanel({
       setIsSaving(false);
     }
   };
+  handleSaveRef.current = handleSave;
 
   if (loadingSession) {
     return (
@@ -207,7 +249,7 @@ export default function ManualPredictionPanel({
 
   if (!modelSession || !sample || Object.keys(types).length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
         {t("prediction:label.noExperimentDataAvailable")}
       </Typography>
     );
@@ -223,114 +265,12 @@ export default function ManualPredictionPanel({
         sample={sample}
         manualInputData={manualRows}
         setManualInputData={handleRowsChange}
+        predictionResults={previewResults}
+        targetColumn={modelSession?.output_columns?.[0]}
+        onRun={handleRunPrediction}
+        isPreviewing={isPreviewing}
+        isSaving={isSaving}
       />
-
-      {/* Action buttons */}
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-          mt: 2,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={
-            isPreviewing ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <PlayArrowIcon />
-            )
-          }
-          onClick={handleRunPrediction}
-          disabled={isPreviewing || isSaving || manualRows.length === 0}
-        >
-          {t("prediction:button.runPrediction")}
-        </Button>
-
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={
-            isSaving ? (
-              <CircularProgress size={14} color="inherit" />
-            ) : (
-              <SaveIcon />
-            )
-          }
-          onClick={handleSave}
-          disabled={!previewResults || isSaving || isPreviewing}
-        >
-          {t("prediction:button.saveResults")}
-        </Button>
-
-        <Button
-          variant="text"
-          size="small"
-          startIcon={<CloseIcon />}
-          onClick={onClose}
-          disabled={isSaving}
-          color="inherit"
-        >
-          {t("common:cancel")}
-        </Button>
-      </Box>
-
-      {/* Inline preview results table */}
-      {previewResults && (
-        <Box sx={{ mt: 3 }}>
-          <Divider sx={{ mb: 2 }} />
-          <Typography
-            variant="caption"
-            fontWeight="medium"
-            color="text.secondary"
-            sx={{
-              mb: 1,
-              display: "block",
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
-            {t("prediction:label.previewResults")}
-          </Typography>
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ maxHeight: 320, overflow: "auto" }}
-          >
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  {previewResults.columns.map((col) => (
-                    <TableCell
-                      key={col}
-                      sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
-                    >
-                      {col}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {previewResults.rows.map((row, rowIdx) => (
-                  <TableRow key={rowIdx}>
-                    {row.map((cell, cellIdx) => (
-                      <TableCell key={cellIdx}>
-                        {cell !== null && cell !== undefined
-                          ? String(cell)
-                          : "—"}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import {
   MEDIA_KINDS,
@@ -23,13 +23,13 @@ export function MediaOnlyPlaceholder({
         flex: 1,
         minHeight: "104px",
         boxSizing: "border-box",
-        px: 2,
-        py: 1.5,
+        px: 4,
+        py: 3,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 1,
+        gap: 2,
         border: `1px solid ${theme.palette.divider}`,
         borderRadius: 1,
         backgroundColor: "transparent",
@@ -38,13 +38,13 @@ export function MediaOnlyPlaceholder({
     >
       {hasAnyMedia ? (
         <>
-          <Box sx={{ fontSize: "0.875rem" }}>
+          <Typography variant="body1">
             {t(
               "generative:label.attachMediaToContinue",
               "Attach media to continue",
             )}
-          </Box>
-          <Stack direction="row" spacing={1}>
+          </Typography>
+          <Stack direction="row" spacing={2}>
             {MEDIA_ORDER.map((kind) => {
               const { icon, tooltipKey } = MEDIA_KINDS[kind];
               const enabled = isActive(inputsCardinality[kind]);
@@ -65,12 +65,12 @@ export function MediaOnlyPlaceholder({
           </Stack>
         </>
       ) : (
-        <Box sx={{ fontSize: "0.875rem" }}>
+        <Typography variant="body1">
           {t(
             "generative:label.noInputAvailable",
             "No input available for this task",
           )}
-        </Box>
+        </Typography>
       )}
     </Box>
   );

@@ -22,7 +22,9 @@ import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetPreviewStep from "./DatasetPreviewStep";
-import { loadPreview } from "../../api/datasets";
+import { previewWithTypes } from "../../api/datasets";
+
+const SKIP_PREVIEW_DATALOADERS = new Set([]);
 
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },
@@ -69,7 +71,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       newDataset.params["dataloader"] = newDataset.dataloader;
       await enqueueDatasetRequest(newDataset.file, name, newDataset.url, {
         ...newDataset.params,
-        schema: columnsSpec,
+        inferred_types: columnsSpec,
       });
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
@@ -90,17 +92,14 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     formData.append("params", JSON.stringify(newDataset.params));
 
     try {
-      const preview = await loadPreview(formData);
+      const preview = await previewWithTypes(formData);
 
       setPreviewData(preview);
 
-      //Save the columns spec to be used in the preview table
+      const source = preview.inferred_types || preview.schema;
       const initialColumnsSpec = {};
-      Object.keys(preview.schema).forEach((columnName) => {
-        initialColumnsSpec[columnName] = {
-          type: preview.schema[columnName].type,
-          dtype: preview.schema[columnName].dtype,
-        };
+      Object.keys(source).forEach((columnName) => {
+        initialColumnsSpec[columnName] = { ...source[columnName] };
       });
 
       setColumnsSpec(initialColumnsSpec);
@@ -203,13 +202,19 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     setActiveStep(stepIndex);
   };
 
+  const skipPreview = SKIP_PREVIEW_DATALOADERS.has(newDataset.dataloader);
+
   const handleNextButton = () => {
     if (activeStep === 0) {
       setActiveStep(activeStep + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
-      handlePreviewDataset();
-      setActiveStep(2);
+      if (skipPreview) {
+        handleSubmitNewDataset();
+      } else {
+        handlePreviewDataset();
+        setActiveStep(2);
+      }
     } else if (activeStep === 2) {
       handleSubmitNewDataset();
     }
@@ -246,12 +251,12 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     >
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
-        <Grid container direction={"row"} alignItems={"center"} spacing={1}>
+        <Grid container direction={"row"} alignItems={"center"} spacing={2}>
           <Grid size={{ xs: 12, md: 3 }}>
             <Typography
               variant="h6"
               component={"h3"}
-              sx={{ mb: { sm: 2, md: 0 } }}
+              sx={{ mb: { sm: 4, md: 0 } }}
             >
               New dataset
             </Typography>
@@ -265,7 +270,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               {steps.map((step, index) => (
                 <Step
                   key={`${step.name}`}
-                  completed={activeStep > index}
+                  completed={false}
                   disabled={activeStep < index}
                 >
                   <StepButton color="inherit" onClick={handleStepButton(index)}>
@@ -365,7 +370,9 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               {activeStep === 0
                 ? "Next"
                 : activeStep === 1
-                  ? "Preview"
+                  ? skipPreview
+                    ? "Upload"
+                    : "Preview"
                   : "Upload"}
             </Button>
           </ButtonGroup>

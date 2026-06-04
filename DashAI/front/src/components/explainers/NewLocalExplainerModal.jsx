@@ -8,7 +8,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  ButtonGroup,
   Stepper,
   Step,
   StepButton,
@@ -301,7 +300,7 @@ export default function NewLocalExplainerModal({
               {steps.map((step, index) => (
                 <Step
                   key={`${step.name}`}
-                  completed={activeStep > index}
+                  completed={false}
                   disabled={activeStep < index}
                 >
                   <StepButton color="inherit" onClick={handleStepButton(index)}>
@@ -360,27 +359,25 @@ export default function NewLocalExplainerModal({
       </DialogContent>
       {/* Actions - Back and Next */}
       <DialogActions>
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton}>
-            {activeStep === 0 ? t("common:close") : t("common:back")}
-          </Button>
-          <TimestampWrapper
-            eventName={
-              activeStep === 1 ? TIMESTAMP_KEYS.explainer.submitLocal : null
-            }
+        <Button variant="outlined" onClick={handleBackButton}>
+          {activeStep === 0 ? t("common:close") : t("common:back")}
+        </Button>
+        <TimestampWrapper
+          eventName={
+            activeStep === 1 ? TIMESTAMP_KEYS.explainer.submitLocal : null
+          }
+        >
+          <LoadingButton
+            onClick={handleNextButton}
+            autoFocus
+            variant="contained"
+            color="primary"
+            disabled={!nextEnabled}
+            loading={isLoading}
           >
-            <LoadingButton
-              onClick={handleNextButton}
-              autoFocus
-              variant="contained"
-              color="primary"
-              disabled={!nextEnabled}
-              loading={isLoading}
-            >
-              {activeStep === 1 ? t("common:save") : t("common:next")}
-            </LoadingButton>
-          </TimestampWrapper>
-        </ButtonGroup>
+            {activeStep === 1 ? t("common:save") : t("common:next")}
+          </LoadingButton>
+        </TimestampWrapper>
       </DialogActions>
     </Dialog>
   );

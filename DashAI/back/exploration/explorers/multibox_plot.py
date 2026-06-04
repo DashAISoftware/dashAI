@@ -13,6 +13,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -43,10 +44,20 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "Si es True, el diagrama de caja será horizontal; en caso "
                 "contrario, vertical."
             ),
+            pt=(
+                "Se True, o diagrama de caixa será horizontal; caso "
+                "contrário, vertical."
+            ),
+            de=(
+                "Wenn True, wird das Boxplot horizontal dargestellt; "
+                "andernfalls vertikal."
+            ),
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
+            pt="Gráfico horizontal",
+            de="Horizontales Diagramm",
         ),
     )  # type: ignore
     points: schema_field(
@@ -60,10 +71,20 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
             es=(
                 "Una de 'all', 'outliers' o 'False'. Determina qué puntos se muestran."
             ),
+            pt=(
+                "Um de 'all', 'outliers' ou 'False'. Determina quais pontos "
+                "são exibidos."
+            ),
+            de=(
+                "Eines von 'all', 'outliers' oder 'False'. Bestimmt, welche "
+                "Punkte angezeigt werden."
+            ),
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
+            pt="Pontos exibidos",
+            de="Angezeigte Punkte",
         ),
     )  # type: ignore
     opposite_axis: schema_field(
@@ -72,8 +93,15 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index to use for the opposite axis."),
             es=("Nombre o índice de columna para el eje opuesto."),
+            pt=("Nome ou índice de coluna para usar no eixo oposto."),
+            de="Spaltenname oder -index für die gegenüberliegende Achse.",
         ),
-        alias=MultilingualString(en="Opposite axis", es="Eje opuesto"),
+        alias=MultilingualString(
+            en="Opposite axis",
+            es="Eje opuesto",
+            pt="Eixo oposto",
+            de="Gegenüberliegende Achse",
+        ),
     )  # type: ignore
 
 
@@ -102,6 +130,8 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Multiple Column Box Plot",
         es="Diagrama de Caja Multicolumna",
+        pt="Diagrama de Caixa Múltiplo",
+        de="Mehrspaltiges Boxplot",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -112,13 +142,22 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
             "Muestra un diagrama de caja para múltiples columnas en un eje, "
             "usando otra columna como eje opuesto (si se proporciona)."
         ),
+        pt=(
+            "Exibe um diagrama de caixa para múltiplas colunas em um eixo, "
+            "usando outra coluna como eixo oposto (se fornecida)."
+        ),
+        de=(
+            "Zeigt ein Boxplot für mehrere Spalten auf einer Achse, "
+            "optional mit einer weiteren Spalte als gegenüberliegende Achse."
+        ),
     )
     IMAGE_PREVIEW = "multi_column_box_plot.png"
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 1},
     }
 

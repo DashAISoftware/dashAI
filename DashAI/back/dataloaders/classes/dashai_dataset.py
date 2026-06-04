@@ -9,6 +9,7 @@ from datasets import Dataset
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.utils import (
     arrow_to_dashai_types,
     comma_float_to_float,
@@ -132,49 +133,6 @@ class DashAIDataset(Dataset):
             return list(self.splits["split_indices"].keys())
         return []
 
-    # This method is still used only because Image dataset load
-    # haven't been implemented to be DashAITypes compatible
-    # So categories can't be labeled as Categorical Datatype
-    # Should be removed ASAP when DashAIImageType and its handlers are implemented
-    @beartype
-    def change_columns_type(self, column_types: Dict[str, str]) -> "DashAIDataset":
-        """Change the type of some columns.
-
-        Note: this is a temporal method, and it will probably will delete in the future.
-
-        Parameters
-        ----------
-        column_types : Dict[str, str]
-            dictionary whose keys are the names of the columns to be changed and the
-            values the new types.
-
-        Returns
-        -------
-        DashAIDataset
-            The dataset after columns type changes.
-        """
-        from datasets import Value as HFValue
-
-        if not isinstance(column_types, dict):
-            raise TypeError(f"types should be a dict, got {type(column_types)}")
-
-        for column in column_types:
-            if column in self.column_names:
-                pass
-            else:
-                raise ValueError(
-                    f"Error while changing column types: column '{column}' does not "
-                    "exist in dataset."
-                )
-        new_features = self.features.copy()
-        for column in column_types:
-            if column_types[column] == "Categorical":
-                new_features[column] = encode_labels(self, column)
-            elif column_types[column] == "Numerical":
-                new_features[column] = HFValue("float32")
-        dataset = self.cast(new_features)
-        return dataset
-
     def compute_base_metadata(self) -> "DashAIDataset":
         """Compute basic metadata for the dataset and store it in self.splits.
 
@@ -240,11 +198,24 @@ class DashAIDataset(Dataset):
         dict
             General information including rows, columns, memory usage, and dtypes.
         """
+        hashable_cols = [
+            c
+            for c in dataset_df.columns
+            if not isinstance(self.types.get(c), DashAIImage)
+        ]
+        all_categorical = hashable_cols and all(
+            isinstance(self.types.get(c), Categorical) for c in hashable_cols
+        )
+        if hashable_cols and not all_categorical:
+            duplicate_rows = int(dataset_df[hashable_cols].duplicated().sum())
+        else:
+            duplicate_rows = 0
+
         return {
             "n_rows": len(dataset_df),
             "n_columns": len(dataset_df.columns),
             "memory_usage_mb": float(dataset_df.memory_usage(deep=True).sum() / 1e6),
-            "duplicate_rows": int(dataset_df.duplicated().sum()),
+            "duplicate_rows": duplicate_rows,
             "dtypes": {k: v.to_string().get("type") for k, v in self.types.items()},
         }
 
@@ -426,26 +397,52 @@ class DashAIDataset(Dataset):
         completeness = 1 - (
             dataset_df.isna().sum().sum() / (len(dataset_df) * len(dataset_df.columns))
         )
-        duplicate_rows = int(dataset_df.duplicated().sum())
+
+        hashable_cols = [
+            c
+            for c in dataset_df.columns
+            if not isinstance(self.types.get(c), DashAIImage)
+        ]
+        all_categorical = hashable_cols and all(
+            isinstance(self.types.get(c), Categorical) for c in hashable_cols
+        )
+        if hashable_cols and not all_categorical:
+            duplicate_rows = int(dataset_df[hashable_cols].duplicated().sum())
+        else:
+            duplicate_rows = 0
         uniqueness = 1 - (duplicate_rows / len(dataset_df))
         data_quality_score = float((completeness * 0.7 + uniqueness * 0.3) * 100)
 
-        # Compute unique counts
-        nunique_series = dataset_df.nunique(dropna=False)
+        # Compute unique counts (excluding image columns which are unhashable)
+        nunique_series = (
+            dataset_df[hashable_cols].nunique(dropna=False) if hashable_cols else {}
+        )
 
         categorical_keys = self._get_categorical_columns()
-        categorical_cols = dataset_df[categorical_keys]
-        nunique_categorical = categorical_cols.nunique(dropna=False)
+        # Filter categorical columns to only hashable ones
+        hashable_categorical_keys = [k for k in categorical_keys if k in hashable_cols]
+        categorical_cols = (
+            dataset_df[hashable_categorical_keys]
+            if hashable_categorical_keys
+            else dataset_df[[]]
+        )
+        nunique_categorical = (
+            categorical_cols.nunique(dropna=False) if hashable_categorical_keys else {}
+        )
 
         return {
             "constant_columns": [
-                c for c in dataset_df.columns if int(nunique_series[c]) == 1
+                c
+                for c in hashable_cols
+                if c in nunique_series and int(nunique_series[c]) == 1
             ],
             "high_cardinality_columns": [
-                c for c in categorical_cols.columns if int(nunique_categorical[c]) > 100
+                c
+                for c in hashable_categorical_keys
+                if c in nunique_categorical and int(nunique_categorical[c]) > 100
             ],
             "possible_id_columns": [
-                c for c in dataset_df.columns if dataset_df[c].is_unique
+                c for c in hashable_cols if dataset_df[c].is_unique
             ],
             "nan_ratio_per_column": {
                 c: float(dataset_df[c].isna().mean()) for c in dataset_df.columns
@@ -594,7 +591,7 @@ class DashAIDataset(Dataset):
 
         new_splits = {"split_indices": {split_name: indices}}
         arrow_table = subset.arrow_table  # with_format("arrow")[:] ####Check
-        subset = DashAIDataset(arrow_table, splits=new_splits)
+        subset = DashAIDataset(arrow_table, splits=new_splits, types=self._types)
         return subset
 
     @beartype
@@ -621,6 +618,35 @@ class DashAIDataset(Dataset):
         }
 
         return DashAIDataset(table=subset_table, splits=self.splits, types=subset_types)
+
+    def __getitem__(self, key):
+        result = super().__getitem__(key)
+        if not isinstance(result, dict):
+            return result
+
+        image_cols = [
+            c
+            for c, t in self._types.items()
+            if isinstance(t, DashAIImage) and c in result
+        ]
+        if not image_cols:
+            return result
+
+        if isinstance(key, int):
+            for col in image_cols:
+                if isinstance(result[col], dict):
+                    result[col] = DashAIImage(
+                        bytes=result[col].get("bytes"), path=result[col].get("path")
+                    )
+        elif isinstance(key, slice):
+            for col in image_cols:
+                result[col] = [
+                    DashAIImage(bytes=v.get("bytes"), path=v.get("path"))
+                    if isinstance(v, dict)
+                    else v
+                    for v in result[col]
+                ]
+        return result
 
     @beartype
     def select(self, *args, **kwargs) -> "DashAIDataset":
@@ -730,56 +756,70 @@ def transform_dataset_with_schema(
     my_schema = pa.schema([])
     dashai_types = {}
 
-    for column_name, info in schema.items():
-        # Skip columns that don't exist in the dataset
-        if column_name not in dataset.column_names:
-            continue
+    # First, include all columns from the dataset in the order they appear
+    for column_name in dataset.column_names:
+        if column_name not in schema:
+            # Column not in schema - preserve it as-is with inferred type
+            col_data = table.column(column_name)
+            dai_table[column_name] = col_data
+            pa_type = table.schema.field(column_name).type
+            my_schema = my_schema.append(pa.field(column_name, pa_type))
 
-        _type = info.get("type")
-        dtype = info.get("dtype")
-        pa_type = to_arrow_types(dtype)
-        if _type == "Categorical":
-            base_col = table.column(column_name)
-            converted = info.get("converted", False)
-
-            # Always infer categories from actual data to ensure all values are
-            # included. Type inference (ptype) excludes anomalous values from
-            # its suggested categories, which causes KeyErrors during training
-            # when those "anomalous" values appear in the data.
-            col_list = base_col.to_pylist()
-            categories = sorted({v for v in col_list if v is not None})
-
-            encoder = info.get("encoder", "one_hot")
-            dashai_types[column_name] = Categorical(
-                values=categories, converted=converted, dtype=dtype, encoder=encoder
-            )
-            # Keep the column data as-is without converting to string
-            dai_table[column_name] = base_col
-            # Use the dtype from schema for pa_type
-            pa_type = to_arrow_types(dtype)
-        # DashAIImage is currently not fully implemented
-        # This step should be formalized after solving that.
+            # Infer the DashAI type from Arrow type
+            dashai_types[column_name] = arrow_to_dashai_types(pa_type)
         else:
-            if _type in ["Date", "Time", "Timestamp"]:
-                # Since DashAI is not using date, time or timestamp types for its models
-                # we are saving them as strings to preserve the original format.
-                # Can modify classes in value_types.py
-                # if want to use PyArrow date, time or timestamp types.
-                dashai_types[column_name] = arrow_to_dashai_types(
-                    arrow_type=_type, format=dtype
+            # Column is in schema - process according to schema definition
+            info = schema[column_name]
+            _type = info.get("type")
+            dtype = info.get("dtype")
+            pa_type = to_arrow_types(dtype)
+            if _type == "Categorical":
+                base_col = table.column(column_name)
+                converted = info.get("converted", False)
+
+                # Always infer categories from actual data to ensure all values are
+                # included. Type inference (ptype) excludes anomalous values from
+                # its suggested categories, which causes KeyErrors during training
+                # when those "anomalous" values appear in the data.
+                col_list = base_col.to_pylist()
+                categories = sorted({v for v in col_list if v is not None})
+
+                encoder = info.get("encoder", "one_hot")
+                dashai_types[column_name] = Categorical(
+                    values=categories, converted=converted, dtype=dtype, encoder=encoder
                 )
-                pa_type = to_arrow_types("string")
+                # Keep the column data as-is without converting to string
+                dai_table[column_name] = base_col
+                # Use the dtype from schema for pa_type
+                pa_type = to_arrow_types(dtype)
+            elif _type == "Image":
+                dashai_types[column_name] = DashAIImage(dtype=dtype)
                 dai_table[column_name] = table.column(column_name)
-
-            elif _type == "Float":
-                dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-                dai_table[column_name] = comma_float_to_float(table.column(column_name))
-
+                pa_type = table.schema.field(column_name).type
             else:
-                dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-                dai_table[column_name] = table.column(column_name)
+                if _type in ["Date", "Time", "Timestamp"]:
+                    # Since DashAI is not using date, time or timestamp types for its
+                    # models
+                    # we are saving them as strings to preserve the original format.
+                    # Can modify classes in value_types.py
+                    # if want to use PyArrow date, time or timestamp types.
+                    dashai_types[column_name] = arrow_to_dashai_types(
+                        arrow_type=_type, format=dtype
+                    )
+                    pa_type = to_arrow_types("string")
+                    dai_table[column_name] = table.column(column_name)
 
-        my_schema = my_schema.append(pa.field(column_name, pa_type))
+                elif _type == "Float":
+                    dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+                    dai_table[column_name] = comma_float_to_float(
+                        table.column(column_name)
+                    )
+
+                else:
+                    dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+                    dai_table[column_name] = table.column(column_name)
+
+            my_schema = my_schema.append(pa.field(column_name, pa_type))
 
     # Create the transformed table with the new schema
     transformed_table = pa.table(dai_table)
@@ -880,41 +920,6 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     else:
         splits = {}
     return DashAIDataset(data, splits=splits)
-
-
-# Use it only for Image classification
-# since images are loaded different to tabular data
-# And it's link to DashAIDataTypes is not implemented yet
-# So categorical columns can't be labeled as Categorical Datatype but ClassLabel
-# Should be removed ASAP when DashAIImageType and its handlers are implemented
-@beartype
-def encode_labels(
-    dataset: DashAIDataset,
-    column_name: str,
-) -> object:
-    """Encode a categorical column into numerical labels and
-    return the ClassLabel feature.
-
-    Parameters
-    ----------
-    dataset : DashAIDataset
-        Dataset containing the column to encode.
-    column_name : str
-        Name of the column to encode.
-
-    Returns
-    -------
-    ClassLabel
-        The ClassLabel feature with the mapping of labels to integers.
-    """
-    if column_name not in dataset.column_names:
-        raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
-
-    from datasets import ClassLabel  # local import
-
-    names = list(set(dataset[column_name]))
-    class_label_feature = ClassLabel(names=names)
-    return class_label_feature
 
 
 @beartype

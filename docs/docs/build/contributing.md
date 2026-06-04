@@ -15,7 +15,7 @@ The easiest way to extend DashAI is by building and publishing a plugin — a se
 package that adds new models, tasks, metrics, explorers, or other components to the
 platform without touching the core codebase.
 
-See the [Plugin Development](./plugin-development/overview) guide to get started.
+See the [Plugin Development](/build/plugin-development/overview) guide to get started.
 
 ## Fork and Submit a Pull Request
 
@@ -23,7 +23,7 @@ To contribute code directly to the core project:
 
 1. Fork the [DashAI repository on GitHub](https://github.com/DashAISoftware/DashAI).
 2. Create a branch for your change.
-3. Follow the [Dev Setup](./dev-setup) and [Testing](./testing) guides to run the project
+3. Follow the [Dev Setup](/build/dev-setup) and [Testing](/build/testing) guides to run the project
    locally and verify your changes.
 4. Open a pull request against the `develop` branch with a clear description of what
    you changed and why.

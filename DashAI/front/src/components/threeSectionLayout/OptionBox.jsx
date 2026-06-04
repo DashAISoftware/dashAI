@@ -22,10 +22,10 @@ export default function OptionBox({
     }
   }, [description]);
   const theme = useTheme();
-  const accent = theme.palette.accent.amber;
-  const accentDim = theme.palette.accent.amberDim;
-  const accentBorder = theme.palette.accent.amberBorder;
-  const accentGlow = theme.palette.accent.amberGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${theme.palette.primary.main}1F`;
+  const accentBorder = `${theme.palette.primary.main}38`;
+  const accentGlow = `${theme.palette.primary.main}0A`;
 
   return (
     <ButtonBase
@@ -94,8 +94,8 @@ export default function OptionBox({
 
       {/* Title */}
       <Typography
+        variant="h4"
         sx={{
-          ...theme.typography.cardTitle,
           color: theme.palette.text.primary,
           mb: "5px",
           width: "100%",
@@ -113,8 +113,8 @@ export default function OptionBox({
       >
         <Typography
           ref={descRef}
+          variant="body1"
           sx={{
-            fontSize: "15px",
             fontWeight: 300,
             color: theme.palette.text.secondary,
             lineHeight: 1.65,
@@ -161,18 +161,19 @@ export default function OptionBox({
             </Box>
           ))}
         </Box>
-        <Box
+        <Typography
+          component="span"
+          variant="h2"
           className="card-arrow"
           sx={{
-            fontSize: "18px",
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
-            ml: 1,
+            ml: 2,
           }}
         >
           →
-        </Box>
+        </Typography>
       </Box>
     </ButtonBase>
   );

@@ -13,8 +13,9 @@ import HomeIcon from "@mui/icons-material/HomeOutlined";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "./LanguageSelector";
 import { ColorModeContext } from "../contexts/ThemeContext";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import Tooltip from "@mui/material/Tooltip";
 import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 import NavbarTourButton from "./tour/NavbarTourButton";
 
@@ -42,8 +43,8 @@ function ResponsiveAppBar() {
 
   const iconBtnSx = React.useMemo(
     () => ({
-      width: 28,
-      height: 28,
+      width: 32,
+      height: 32,
       borderRadius: "4px",
       border: `1px solid ${theme.palette.divider}`,
       color: theme.palette.text.secondary,
@@ -71,7 +72,7 @@ function ResponsiveAppBar() {
       }}
     >
       <Toolbar
-        sx={{ px: { xs: 1, sm: 2, md: 3 }, minHeight: 52, gap: 0, minWidth: 0 }}
+        sx={{ px: { xs: 2, sm: 4, md: 6 }, minHeight: 52, gap: 0, minWidth: 0 }}
       >
         {/* Logo */}
         <Box
@@ -80,41 +81,22 @@ function ResponsiveAppBar() {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 2,
             textDecoration: "none",
-            mr: { xs: 1, sm: 2 },
+            mr: { xs: 2, sm: 4 },
             flexShrink: 0,
           }}
         >
-          <Typography
-            sx={{
-              fontSize: 16,
-              fontWeight: 600,
-              letterSpacing: "0.02em",
-              color: theme.palette.text.primary,
-              lineHeight: 1,
-            }}
-          >
-            <Box component="span" sx={{ color: theme.palette.primary.main }}>
-              Dash
-            </Box>
-            AI
-          </Typography>
           <Box
+            component="img"
+            src="/dashai-logo.svg"
+            alt="dashAI"
             sx={{
-              display: { xs: "none", sm: "block" },
-              ...theme.typography.statusBadge,
-              color: theme.palette.primary.main,
-              border: `1px solid ${theme.palette.accent.amberBorder}`,
-              background: theme.palette.accent.amberDim,
-              borderRadius: "2px",
-              px: "7px",
-              py: "2px",
-              lineHeight: 1.4,
+              height: 18,
+              width: "auto",
+              flexShrink: 0,
             }}
-          >
-            Workbench
-          </Box>
+          />
         </Box>
 
         {/* Mobile hamburger */}
@@ -181,7 +163,7 @@ function ResponsiveAppBar() {
             component={RouterLink}
             to="/app"
             disableRipple
-            sx={{ ...iconBtnSx, mr: 1, alignSelf: "center" }}
+            sx={{ ...iconBtnSx, mr: 2, alignSelf: "center" }}
             aria-label="home"
           >
             <HomeIcon sx={{ fontSize: 16 }} />
@@ -197,7 +179,7 @@ function ResponsiveAppBar() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  px: "18px",
+                  px: 4,
                   height: "100%",
                   textDecoration: "none",
                   ...theme.typography.tabLabel,
@@ -205,7 +187,7 @@ function ResponsiveAppBar() {
                     ? theme.palette.primary.main
                     : theme.palette.text.secondary,
                   background: active
-                    ? theme.palette.accent.amberGlow
+                    ? `${theme.palette.primary.main}0A`
                     : "transparent",
                   borderBottom: active
                     ? `2px solid ${theme.palette.primary.main}`
@@ -232,24 +214,32 @@ function ResponsiveAppBar() {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: { xs: 0.5, sm: 1 },
+            gap: { xs: 1, sm: 2 },
             flexShrink: 0,
           }}
         >
           <LanguageSelector />
           <HardwareMonitorButton />
           <NavbarTourButton />
-          <IconButton
-            onClick={colorMode.toggleColorMode}
-            aria-label="toggle theme"
-            sx={iconBtnSx}
+          <Tooltip
+            title={
+              theme.palette.mode === "dark"
+                ? t("common:switchToLightMode")
+                : t("common:switchToDarkMode")
+            }
           >
-            {theme.palette.mode === "dark" ? (
-              <Brightness7Icon sx={{ fontSize: 16 }} />
-            ) : (
-              <Brightness4Icon sx={{ fontSize: 16 }} />
-            )}
-          </IconButton>
+            <IconButton
+              onClick={colorMode.toggleColorMode}
+              aria-label="toggle theme"
+              sx={iconBtnSx}
+            >
+              {theme.palette.mode === "dark" ? (
+                <LightModeOutlinedIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <DarkModeOutlinedIcon sx={{ fontSize: 18 }} />
+              )}
+            </IconButton>
+          </Tooltip>
         </Box>
       </Toolbar>
     </AppBar>

@@ -395,7 +395,7 @@ const JobQueueWidget = () => {
               <Tooltip title="Drag to move · Double-click to reset">
                 <DragIndicatorIcon
                   fontSize="small"
-                  sx={{ opacity: 0.6, mr: 0.5 }}
+                  sx={{ opacity: 0.6, mr: 1 }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     setPosition(null);
@@ -406,7 +406,7 @@ const JobQueueWidget = () => {
               <Badge
                 badgeContent={activeJobs.length}
                 color="error"
-                sx={{ mr: 1.5 }}
+                sx={{ mr: 3 }}
               >
                 <TaskAltIcon />
               </Badge>
@@ -426,7 +426,7 @@ const JobQueueWidget = () => {
                     sx={{
                       color: "primary.contrastText",
                       opacity: 0.8,
-                      mr: 0.5,
+                      mr: 1,
                     }}
                   >
                     <DeleteSweepIcon fontSize="small" />
@@ -440,7 +440,7 @@ const JobQueueWidget = () => {
                     e.stopPropagation();
                     handleRefresh();
                   }}
-                  sx={{ color: "primary.contrastText", opacity: 0.8, mr: 0.5 }}
+                  sx={{ color: "primary.contrastText", opacity: 0.8, mr: 1 }}
                 >
                   <RefreshIcon fontSize="small" />
                 </IconButton>
@@ -546,7 +546,7 @@ const JobQueueWidget = () => {
                                     <ErrorIcon
                                       fontSize="inherit"
                                       color="error"
-                                      sx={{ ml: 0.5, fontSize: "1rem" }}
+                                      sx={{ ml: 1, fontSize: "1rem" }}
                                     />
                                   </Tooltip>
                                 )}
@@ -559,7 +559,7 @@ const JobQueueWidget = () => {
                             <Typography
                               variant="caption"
                               color="text.secondary"
-                              sx={{ mr: 1 }}
+                              sx={{ mr: 2 }}
                             >
                               {getRelativeTime(job.last_update)}
                             </Typography>

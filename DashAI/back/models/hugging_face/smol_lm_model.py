@@ -59,8 +59,32 @@ class SmolLMSchema(BaseSchema):
                 "Ambos modelos son entrenados en datasets sintéticos diversos por "
                 "Hugging Face."
             ),
+            pt=(
+                "O checkpoint SmolLM2 Instruct a carregar em formato GGUF. "
+                "'SmolLM2-1.7B' é um modelo de instrução de 1.7B parâmetros com "
+                "forte desempenho para inferência em dispositivos e na borda. "
+                "'SmolLM2-360M' é um modelo ultra-compacto de 360M parâmetros para "
+                "inferência CPU extremamente rápida com uso mínimo de memória "
+                "(~300 MB). "
+                "Ambos os modelos são treinados em conjuntos de dados sintéticos "
+                "diversos pelo Hugging Face."
+            ),
+            de=(
+                "Der im GGUF-Format zu ladende SmolLM2 Instruct-Checkpoint. "
+                "'SmolLM2-1.7B' ist ein 1,7B-Parameter-Instruktionsmodell mit starker "
+                "Leistung für Inferenz auf Endgeräten und Edge-Systemen. "
+                "'SmolLM2-360M' ist ein ultra-kompaktes 360M-Parameter-Modell für "
+                "extrem schnelle CPU-Inferenz mit minimalem Speicherbedarf (~300 MB). "
+                "Beide Modelle werden von Hugging Face auf diversen synthetischen "
+                "Datensätzen trainiert."
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
+        ),
     )  # type: ignore
 
     max_tokens: schema_field(
@@ -77,8 +101,23 @@ class SmolLMSchema(BaseSchema):
                 "Aproximadamente 1 token ≈ 0.75 palabras en español. Los modelos "
                 "SmolLM2 están optimizados para respuestas cortas a medianas."
             ),
+            pt=(
+                "Número máximo de tokens novos que o modelo gerará por resposta. "
+                "Aproximadamente 1 token ≈ 0.75 palavras em português. Os modelos "
+                "SmolLM2 são otimizados para respostas curtas a médias."
+            ),
+            de=(
+                "Maximale Anzahl neuer Token, die das Modell pro Antwort erzeugt. "
+                "Ungefähr 1 Token ≈ 0,75 englische Wörter. SmolLM2-Modelle sind "
+                "für kurze bis mittellange Antworten optimiert."
+            ),
         ),
-        alias=MultilingualString(en="Max tokens", es="Tokens máximos"),
+        alias=MultilingualString(
+            en="Max tokens",
+            es="Tokens máximos",
+            pt="Tokens máximos",
+            de="Maximale neue Token",
+        ),
     )  # type: ignore
 
     temperature: schema_field(
@@ -95,8 +134,20 @@ class SmolLMSchema(BaseSchema):
                 "En 0.0 las salidas son deterministas. Alrededor de 0.7 equilibra "
                 "calidad y creatividad."
             ),
+            pt=(
+                "Temperatura de amostragem que controla a aleatoriedade da saída "
+                "(intervalo 0.0-1.0). Em 0.0 as saídas são determinísticas. "
+                "Em torno de 0.7 equilibra qualidade e criatividade."
+            ),
+            de=(
+                "Stichprobentemperatur zur Steuerung der Ausgabezufälligkeit (0.0-1.0)."
+                "Bei 0.0 sind die Ausgaben deterministisch. Um 0.7 balanciert "
+                "Qualität und Kreativität."
+            ),
         ),
-        alias=MultilingualString(en="Temperature", es="Temperatura"),
+        alias=MultilingualString(
+            en="Temperature", es="Temperatura", pt="Temperatura", de="Temperatur"
+        ),
     )  # type: ignore
 
     frequency_penalty: schema_field(
@@ -112,9 +163,22 @@ class SmolLMSchema(BaseSchema):
                 "frecuencia (rango 0.0-2.0). Valores más altos desincentivan "
                 "la repetición."
             ),
+            pt=(
+                "Penaliza os tokens que já apareceram na saída com base na "
+                "frequência (intervalo 0.0-2.0). Valores mais altos desestimulam "
+                "a repetição."
+            ),
+            de=(
+                "Bestraft Token, die bereits in der Ausgabe erschienen sind, "
+                "basierend auf ihrer Häufigkeit (0.0-2.0). Höhere Werte reduzieren "
+                "Wiederholungen."
+            ),
         ),
         alias=MultilingualString(
-            en="Frequency penalty", es="Penalización de frecuencia"
+            en="Frequency penalty",
+            es="Penalización de frecuencia",
+            pt="Penalização de frequência",
+            de="Häufigkeitsstrafe",
         ),
     )  # type: ignore
 
@@ -132,8 +196,22 @@ class SmolLMSchema(BaseSchema):
                 "respuesta. Los modelos SmolLM2 soportan hasta 8K tokens de "
                 "forma nativa."
             ),
+            pt=(
+                "Orçamento total de tokens por passagem, incluindo prompt e "
+                "resposta. Os modelos SmolLM2 suportam até 8K tokens nativamente."
+            ),
+            de=(
+                "Gesamtes Token-Budget für einen einzelnen Vorwärtsdurchlauf, "
+                "einschließlich Eingabe-Prompt und Antwort. "
+                "SmolLM2-Modelle unterstützen nativ bis zu 8K Token."
+            ),
         ),
-        alias=MultilingualString(en="Context window", es="Ventana de contexto"),
+        alias=MultilingualString(
+            en="Context window",
+            es="Ventana de contexto",
+            pt="Janela de contexto",
+            de="Kontextfenster",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -152,8 +230,21 @@ class SmolLMSchema(BaseSchema):
                 "incluso "
                 "en hardware modesto."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência com llama.cpp. 'CPU' executa "
+                "o modelo na RAM sem requisito de GPU. Os modelos SmolLM2 são "
+                "pequenos o suficiente para rodar eficientemente em CPU "
+                "mesmo em hardware modesto."
+            ),
+            de=(
+                "Hardware-Gerät für die llama.cpp-Inferenz. 'CPU' führt das Modell "
+                "im RAM ohne GPU-Anforderung aus. SmolLM2-Modelle sind klein genug, "
+                "um auch auf bescheidener Hardware effizient auf der CPU zu laufen."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
 
@@ -190,6 +281,8 @@ class SmolLMModel(TextToTextGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="SmolLM Model",
         es="Modelo SmolLM",
+        pt="Modelo SmolLM",
+        de="SmolLM-Modell",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -209,6 +302,25 @@ class SmolLMModel(TextToTextGenerationTaskModel):
             "con muy pocos parámetros. La variante de 360M requiere menos de 300 MB de "
             "RAM, ideal para entornos con recursos limitados. Disponible en variantes "
             "de 360M y 1.7B. Modelos en https://huggingface.co/HuggingFaceTB."
+        ),
+        pt=(
+            "SmolLM2 é uma família de modelos de linguagem compactos ajustados para "
+            "instruções pelo Hugging Face, carregados em formato GGUF para inferência "
+            "eficiente em CPU e GPU via llama.cpp. Projetados para implantação em "
+            "dispositivos e na borda, SmolLM2 alcança fortes resultados de benchmark "
+            "com pouquíssimos parâmetros. A variante de 360M requer menos de 300 MB de "
+            "RAM, ideal para ambientes com recursos limitados. "
+            "Disponível nas variantes "
+            "360M e 1.7B. Modelos disponíveis em https://huggingface.co/HuggingFaceTB."
+        ),
+        de=(
+            "SmolLM2 ist eine Familie kompakter instruktionsoptimierter Sprachmodelle "
+            "von Hugging Face, im GGUF-Format für effiziente CPU- und GPU-Inferenz "
+            "über llama.cpp geladen. Für Deployment auf Endgeräten und Edge-Systemen "
+            "konzipiert, erzielt SmolLM2 starke Benchmark-Ergebnisse mit sehr wenigen "
+            "Parametern. Die 360M-Variante benötigt weniger als 300 MB RAM und ist "
+            "ideal für ressourcenbeschränkte Umgebungen. Verfügbar in den Varianten "
+            "360M und 1,7B. Modelle unter https://huggingface.co/HuggingFaceTB."
         ),
     )
 

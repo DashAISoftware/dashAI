@@ -50,16 +50,19 @@ const SIDEBAR_LINKS = {
 function SidebarSection({ label, links, t, theme }) {
   return (
     <Box
-      sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
+      sx={{ pb: 4, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
     >
       <Typography
+        variant="caption"
         sx={{
           color: theme.palette.text.disabled,
-          px: "20px",
-          py: "10px",
-          pb: "6px",
+          px: 4,
+          py: 2,
+          pb: 1,
           display: "block",
-          ...theme.typography.sectionLabel,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          fontFamily: '"Geist Mono", monospace',
         }}
       >
         {label}
@@ -74,9 +77,9 @@ function SidebarSection({ label, links, t, theme }) {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            px: "20px",
-            py: "8px",
+            gap: 2,
+            px: 4,
+            py: 2,
             borderLeft: "2px solid transparent",
             textDecoration: "none",
             color: theme.palette.text.secondary,
@@ -85,7 +88,7 @@ function SidebarSection({ label, links, t, theme }) {
             "&:hover": {
               background: theme.palette.ui.hover,
               color: theme.palette.text.primary,
-              borderLeftColor: theme.palette.accent.amberBorder,
+              borderLeftColor: `${theme.palette.primary.main}38`,
             },
             "&:hover .ext-icon": { opacity: 1 },
           }}
@@ -203,7 +206,7 @@ function Home() {
         <Box
           component="aside"
           sx={{
-            width: 220,
+            width: 230,
             flexShrink: 0,
             borderRight: `1px solid ${theme.palette.divider}`,
             background: theme.palette.background.box,
@@ -228,20 +231,19 @@ function Home() {
           <Box
             sx={{
               mt: "auto",
-              px: "20px",
-              py: "16px",
+              px: 4,
+              py: 4,
               borderTop: `1px solid ${theme.palette.divider}`,
             }}
           >
             <Typography
+              variant="sectionLabel"
               sx={{
-                fontSize: "9px",
                 color: theme.palette.text.disabled,
-                letterSpacing: "0.04em",
                 lineHeight: 1.9,
               }}
             >
-              v0.2.1-beta · MIT License
+              v0.9.3-alpha - MIT License
             </Typography>
           </Box>
         </Box>
@@ -258,29 +260,23 @@ function Home() {
           {/* Page header */}
           <Box
             sx={{
-              px: "28px",
-              py: "20px",
-              pb: "18px",
+              px: 6,
+              py: 4,
+              pb: 4,
               borderBottom: `1px solid ${theme.palette.divider}`,
-              background:
-                theme.palette.mode === "dark"
-                  ? "rgba(12,12,10,0.7)"
-                  : theme.palette.background.box,
+              background: theme.palette.background.default,
             }}
           >
-            <Typography
-              sx={{
-                color: theme.palette.text.primary,
-                ...theme.typography.pageTitle,
-              }}
-            >
+            <Typography variant="h3" sx={{ color: theme.palette.text.primary }}>
               {t("home:label.welcomeDashboardAI")}
             </Typography>
             <Typography
+              variant="body2"
               sx={{
                 color: theme.palette.text.disabled,
-                ...theme.typography.description,
-                mt: "3px",
+                fontWeight: 300,
+                lineHeight: 1.65,
+                mt: 1,
               }}
             >
               {t("home:label.welcomeSubtitle")}
@@ -290,11 +286,11 @@ function Home() {
           {/* 2x2 module card grid */}
           <Box
             sx={{
-              p: "14px",
+              p: 4,
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gridTemplateRows: "1fr 1fr",
-              gap: "14px",
+              gap: 4,
               height: "70%",
               width: "80%",
               minHeight: 0,

@@ -10,6 +10,7 @@ export default function ParameterStepExplorer({
   initialParams,
   handleSaveExplorer,
   setStep,
+  hideButtons = false,
 }) {
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets"]);
@@ -45,14 +46,20 @@ export default function ParameterStepExplorer({
   }, []);
 
   return (
-    <Box flex={1} data-tour="explorer-parameters">
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+      }}
+      data-tour="explorer-parameters"
+    >
       <Typography
         variant="h6"
-        sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+        sx={{ fontWeight: 700, color: "primary.main", mb: 2 }}
       >
-        {t("datasets:label.configureParametersStep", {
-          step: 2,
-        })}
+        {t("datasets:label.configureParameters")}
       </Typography>
       <FormSchemaContainer>
         <FormSchemaWithSelectedModel
@@ -61,6 +68,7 @@ export default function ParameterStepExplorer({
           initialValues={initialParams}
           onCancel={() => setStep(0)}
           saveButtonText={t("datasets:button.createExplorer")}
+          hideButtons={hideButtons}
         />
       </FormSchemaContainer>
     </Box>

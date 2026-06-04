@@ -13,7 +13,7 @@ export function MessageContent({ messages, isUser, isWaiting }) {
       sx={{
         backgroundColor: theme.palette.ui.box,
         color: "text.primary",
-        padding: theme.spacing(1.5, 2),
+        padding: theme.spacing(1.5, 4),
         maxWidth: "100%",
         borderRadius: 2,
         borderTopRightRadius: isUser ? 0 : "inherit",
@@ -24,7 +24,7 @@ export function MessageContent({ messages, isUser, isWaiting }) {
       {isWaiting ? (
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {messages?.map((message) => {
             const type = message["data_type"];
             return (

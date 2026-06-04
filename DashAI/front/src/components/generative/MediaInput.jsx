@@ -11,6 +11,7 @@ import { MediaPreviewList } from "./mediaInput/MediaPreviewList";
 import { MediaAttachPopper } from "./mediaInput/MediaAttachPopper";
 import { MediaOnlyPlaceholder } from "./mediaInput/MediaOnlyPlaceholder";
 import { useMediaFiles } from "./mediaInput/useMediaFiles";
+import { useTourContext } from "../tour/TourProvider";
 
 export function MediaInput({
   onSendMessage,
@@ -18,6 +19,7 @@ export function MediaInput({
   inputsCardinality = { str: 1 },
 }) {
   const { t } = useTranslation(["generative"]);
+  const tourContext = useTourContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const {
     text,
@@ -44,6 +46,10 @@ export function MediaInput({
     if (!requirementsMet) return;
     onSendMessage(collectPayload());
     reset();
+    const currentTarget = tourContext?.steps?.[tourContext?.stepIndex]?.target;
+    if (tourContext?.run && currentTarget === '[data-tour="chat-input"]') {
+      tourContext.nextStep();
+    }
   };
 
   useEffect(() => {
@@ -75,7 +81,7 @@ export function MediaInput({
         onRemove={removeFile}
       />
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         {wantsText ? (
           <TextField
             fullWidth
@@ -108,7 +114,7 @@ export function MediaInput({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 1,
+            gap: 2,
             alignItems: "center",
             position: "relative",
           }}

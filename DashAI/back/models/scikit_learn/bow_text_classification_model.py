@@ -37,8 +37,21 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Modelo tabular usado como el modelo subyacente "
                 "para generar el clasificador de texto."
             ),
+            pt=(
+                "Modelo tabular usado como o modelo subjacente "
+                "para gerar o classificador de texto."
+            ),
+            de=(
+                "Tabellarisches Modell, das als zugrunde liegendes Modell "
+                "zur Erstellung des Textklassifikators verwendet wird."
+            ),
         ),
-        alias=MultilingualString(en="Tabular classifier", es="Clasificador tabular"),
+        alias=MultilingualString(
+            en="Tabular classifier",
+            es="Clasificador tabular",
+            pt="Classificador tabular",
+            de="Tabellarischer Klassifikator",
+        ),
     )  # type: ignore
     ngram_min_n: schema_field(
         int_field(ge=1),
@@ -54,8 +67,22 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "de palabras o caracteres a extraer. Debe ser un entero mayor o "
                 "igual a 1"
             ),
+            pt=(
+                "O limite inferior do intervalo de valores n para diferentes n-gramas "
+                "de palavras ou caracteres a extrair. Deve ser um inteiro maior ou "
+                "igual a 1"
+            ),
+            de=(
+                "Die untere Grenze des Bereichs der n-Werte für verschiedene Wort- "
+                "oder Zeichen-N-Gramme. Muss eine ganze Zahl größer oder gleich 1 sein."
+            ),
         ),
-        alias=MultilingualString(en="Ngram min N", es="Ngrama mínimo N"),
+        alias=MultilingualString(
+            en="Ngram min N",
+            es="Ngrama mínimo N",
+            pt="N-grama mínimo N",
+            de="N-Gramm min N",
+        ),
     )  # type: ignore
     ngram_max_n: schema_field(
         int_field(ge=1),
@@ -71,8 +98,22 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "de palabras o caracteres a extraer. Debe ser un entero mayor o "
                 "igual a 1"
             ),
+            pt=(
+                "O limite superior do intervalo de valores n para diferentes n-gramas "
+                "de palavras ou caracteres a extrair. Deve ser um inteiro maior ou "
+                "igual a 1"
+            ),
+            de=(
+                "Die obere Grenze des Bereichs der n-Werte für verschiedene Wort- "
+                "oder Zeichen-N-Gramme. Muss eine ganze Zahl größer oder gleich 1 sein."
+            ),
         ),
-        alias=MultilingualString(en="Ngram max N", es="Ngrama máximo N"),
+        alias=MultilingualString(
+            en="Ngram max N",
+            es="Ngrama máximo N",
+            pt="N-grama máximo N",
+            de="N-Gramm max N",
+        ),
     )  # type: ignore
 
 
@@ -101,12 +142,22 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Bag of Words Text Classifier",
         es="Clasificador de Texto Bolsa de Palabras",
+        pt="Classificador de Texto BOW",
+        de="Bag-of-Words-Textklassifikator",
     )
     DESCRIPTION: str = MultilingualString(
         en="Text classification using bag-of-words features and tabular classifiers.",
         es=(
             "Clasificación de texto usando bolsa de palabras y "
             "clasificadores tabulares."
+        ),
+        pt=(
+            "Classificação de texto usando características de BOW e "
+            "classificadores tabulares."
+        ),
+        de=(
+            "Textklassifikation mit Bag-of-Words-Merkmalen und tabellarischen "
+            "Klassifikatoren."
         ),
     )
     COLOR: str = "#FF5722"

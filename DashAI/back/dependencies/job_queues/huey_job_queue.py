@@ -112,11 +112,12 @@ class HueyJobQueue(BaseJobQueue):
     @staticmethod
     def _normalize_to_utc_str(ts: str) -> str:
         """
-        Accepts ISO8601 or 'YYYY-MM-DD HH:MM:SS[.ffffff]' with optional 'Z' or offset.
-        Returns UTC as 'YYYY-MM-DD HH:MM:SS.ffffff'
+        Accepts ISO8601 or 'YYYY-MM-DD HH:MM:SS[.fff]' with optional 'Z' or offset.
+        Returns UTC as 'YYYY-MM-DD HH:MM:SS.sss' (millisecond precision) to match
+        SQLite's STRFTIME('%Y-%m-%d %H:%M:%f','now') format used in last_update.
         """
         if not ts:
-            return "1970-01-01 00:00:00.000000"
+            return "1970-01-01 00:00:00.000"
 
         s = ts.strip()
 
@@ -142,14 +143,15 @@ class HueyJobQueue(BaseJobQueue):
                     continue
 
         if dt is None:
-            return "1970-01-01 00:00:00.000000"
+            return "1970-01-01 00:00:00.000"
 
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         else:
             dt = dt.astimezone(timezone.utc)
 
-        return dt.strftime("%Y-%m-%d %H:%M:%S.%f")
+        ms = dt.microsecond // 1000
+        return dt.strftime(f"%Y-%m-%d %H:%M:%S.{ms:03d}")
 
     def _register_signals(self):
         """Attach Huey lifecycle signal handlers to keep 'task_copy' in sync:
@@ -318,7 +320,7 @@ class HueyJobQueue(BaseJobQueue):
                 SELECT id, task_type, job_name, enqueued_at, status, last_update,
                         error_msg
                 FROM task_copy
-                WHERE last_update > ?
+                WHERE last_update >= ?
                 ORDER BY last_update DESC
                 """,
                 (cutoff,),

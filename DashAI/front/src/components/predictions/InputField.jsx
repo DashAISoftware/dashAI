@@ -1,7 +1,27 @@
 import React from "react";
-import { TextField, Select, MenuItem, FormControl } from "@mui/material";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  Box,
+  Button,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import {
+  MIN_INPUT_WIDTH,
+  CHAR_WIDTH_PX,
+  INPUT_PADDING_PX,
+} from "./inputFieldConstants";
+
+function computeWidth(val, placeholder) {
+  const len = Math.max(
+    String(val ?? "").length,
+    String(placeholder ?? "").length,
+  );
+  return Math.max(MIN_INPUT_WIDTH, len * CHAR_WIDTH_PX + INPUT_PADDING_PX);
+}
 
 function InputField({
   handleChange,
@@ -40,7 +60,7 @@ function InputField({
 
   if (effectiveType === "Categorical" && categories && categories.length > 0) {
     return (
-      <FormControl fullWidth size="small">
+      <FormControl size="small" sx={{ minWidth: MIN_INPUT_WIDTH }}>
         <Select
           value={value || ""}
           onChange={(e) => handleChange(rowIndex, col, e.target.value)}
@@ -91,7 +111,6 @@ function InputField({
 
     return (
       <TextField
-        fullWidth
         size="small"
         type="number"
         value={value}
@@ -108,24 +127,7 @@ function InputField({
                 : parseFloat(e.target.value);
           handleChange(rowIndex, col, val);
         }}
-        sx={commonStyles}
-      />
-    );
-  }
-
-  if (
-    effectiveType === "Text" ||
-    effectiveType === "string" ||
-    dtype === "string"
-  ) {
-    return (
-      <TextField
-        fullWidth
-        size="small"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-        sx={commonStyles}
+        sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
       />
     );
   }
@@ -136,31 +138,67 @@ function InputField({
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          gap: 2,
         }}
       >
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
-          style={{
-            fontSize: "0.875rem",
-            color: theme.palette.text.primary,
-            padding: "4px 0",
-          }}
-        />
+        {value instanceof File && (
+          <img
+            src={URL.createObjectURL(value)}
+            alt="preview"
+            style={{
+              maxHeight: 40,
+              maxWidth: 40,
+              objectFit: "contain",
+              borderRadius: 4,
+            }}
+          />
+        )}
+        <Button
+          variant="outlined"
+          component="label"
+          size="small"
+          sx={{ textTransform: "none", fontSize: "0.8rem" }}
+        >
+          {value instanceof File
+            ? t("prediction:label.changeImage")
+            : t("prediction:label.uploadImage")}
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleChange(rowIndex, col, file);
+            }}
+          />
+        </Button>
       </Box>
+    );
+  }
+
+  if (
+    effectiveType === "Text" ||
+    effectiveType === "string" ||
+    dtype === "string"
+  ) {
+    return (
+      <TextField
+        size="small"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => handleChange(rowIndex, col, e.target.value)}
+        sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
+      />
     );
   }
 
   return (
     <TextField
-      fullWidth
       size="small"
       value={value}
       placeholder={placeholder}
       onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-      sx={commonStyles}
+      sx={{ width: computeWidth(value, placeholder), ...commonStyles }}
     />
   );
 }

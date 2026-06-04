@@ -43,8 +43,8 @@ export default function NavbarTourButton() {
         onClick={isDisabled ? undefined : handleClick}
         aria-label="start tour"
         sx={{
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           borderRadius: "4px",
           border: `1px solid ${theme.palette.divider}`,
           color: isDisabled
@@ -60,7 +60,7 @@ export default function NavbarTourButton() {
               },
         }}
       >
-        <HelpOutlineIcon sx={{ fontSize: 16 }} />
+        <HelpOutlineIcon sx={{ fontSize: 18 }} />
       </IconButton>
     </Tooltip>
   );

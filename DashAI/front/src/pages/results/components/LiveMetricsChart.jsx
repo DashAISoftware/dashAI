@@ -292,8 +292,8 @@ export function LiveMetricsChart({ run }) {
 
   /* ---------------- Render ---------------- */
   return (
-    <Box p={2}>
-      <Box display="flex" gap={2} mb={2}>
+    <Box p={4}>
+      <Box display="flex" gap={4} mb={4}>
         <FormControl
           size="small"
           sx={{ minWidth: 250 }}
@@ -316,7 +316,7 @@ export function LiveMetricsChart({ run }) {
         </FormControl>
       </Box>
 
-      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
+      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 4 }}>
         <Tab label={t("common:train")} value="TRAIN" />
         <Tab label={t("common:validation")} value="VALIDATION" />
         <Tab label={t("common:test")} value="TEST" />
@@ -364,7 +364,7 @@ export function LiveMetricsChart({ run }) {
         </ResponsiveContainer>
       )}
 
-      <Box display="flex" justifyContent="flex-end" mt={2}>
+      <Box display="flex" justifyContent="flex-end" mt={4}>
         <ButtonGroup size="small" variant="outlined">
           <Button
             variant={level === "TRIAL" ? "contained" : "outlined"}

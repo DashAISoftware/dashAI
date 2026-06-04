@@ -11,6 +11,7 @@
     "failedToFetchSessionInfo": "Failed to fetch session information",
     "failedToFetchSessions": "Failed to fetch sessions",
     "failedToFetchTasks": "Failed to fetch generative tasks",
+    "failedToLoadModels": "Failed to load models",
     "failedToUpdateSession": "Failed to update session",
     "nameRequired": "Name is required",
     "processError": "The process has failed. Deleting it... {{error}}",
@@ -24,7 +25,16 @@
     "showLess": "Show less",
     "readMore": "Read more",
     "generativeModule": "Generative Module",
+    "createNewSession": "Create a New Session",
+    "createNewSessionDescription": "Pick a model, configure its parameters, and start chatting.",
+    "configureSession": "Configure session",
+    "modelHasNoParameters": "This model has no configurable parameters.",
+    "nameAndDescribeYourSession": "Name your session. Tweak parameters on the right. You can change them at any time during the session.",
     "nameYourSession": "Name your session",
+    "newSession": "New Session",
+    "pickAModelGroupedByTask": "Pick a model. Models are grouped by task.",
+    "searchModels": "Search models...",
+    "startBySelectingATask": "Start by selecting a generative task.",
     "noSessionsFound": "No sessions found",
     "parameterChangeEvent": "Parameters updated: <1></1>",
     "parameterChangeHistory": "Parameter change history for the current session",
@@ -45,9 +55,9 @@
     "attachVideo": "Attach video",
     "attachMedia": "Attach media",
     "attachMediaToContinue": "Attach media to continue",
-    "noInputAvailable": "No input available for this task"
+    "noInputAvailable": "No input available for this task",
+    "selectModelCrumb": "Select Model"
   },
-
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",
     "sessionDeleted": "Session deleted successfully",

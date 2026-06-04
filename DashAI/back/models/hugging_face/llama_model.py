@@ -61,8 +61,32 @@ class LlamaSchema(BaseSchema):
                 "velocidad y calidad. 'Meta-Llama-3.1-8B' (~8B parámetros) entrega "
                 "la mayor calidad a costa de más RAM e inferencia más lenta."
             ),
+            pt=(
+                "O checkpoint Meta Llama 3.x Instruct para carregar em formato GGUF "
+                "via quantizações comunitárias de bartowski. "
+                "'Llama-3.2-1B' (~1B parâmetros) é o menor e mais rápido, "
+                "ideal para sistemas apenas com CPU. "
+                "'Llama-3.2-3B' (~3B parâmetros) oferece um bom equilíbrio entre "
+                "velocidade e qualidade. 'Meta-Llama-3.1-8B' (~8B parâmetros) "
+                "entrega a maior qualidade ao custo de mais RAM e "
+                "inferência mais lenta."
+            ),
+            de=(
+                "Der im GGUF-Format zu ladende Meta Llama 3.x Instruct-Checkpoint "
+                "über bartowskis Community-Quantisierungen. "
+                "'Llama-3.2-1B' (~1B Parameter) ist der kleinste und schnellste, "
+                "ideal für reine CPU-Systeme. "
+                "'Llama-3.2-3B' (~3B Parameter) bietet ein gutes Geschwindigkeit-"
+                "Qualitäts-Verhältnis. 'Meta-Llama-3.1-8B' (~8B Parameter) liefert "
+                "die höchste Qualität auf Kosten von mehr RAM und langsamerer Inferenz."
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
+        ),
     )  # type: ignore
 
     max_tokens: schema_field(
@@ -82,8 +106,27 @@ class LlamaSchema(BaseSchema):
                 "código. No debe superar la ventana de contexto menos la longitud "
                 "del prompt."
             ),
+            pt=(
+                "Número máximo de tokens novos que o modelo gerará por resposta. "
+                "Aproximadamente 1 token ≈ 0.75 palavras em português. Use 100-200 "
+                "para respostas curtas, 500-1000 para explicações detalhadas ou "
+                "código. Não deve exceder a janela de contexto menos o comprimento "
+                "do prompt."
+            ),
+            de=(
+                "Maximale Anzahl neuer Token, die das Modell pro Antwort erzeugt. "
+                "Ungefähr 1 Token ≈ 0,75 englische Wörter. 100-200 für kurze "
+                "Antworten, 500-1000 für ausführliche Erklärungen oder Code. "
+                "Darf die Kontextfenstergröße abzüglich der Prompt-Länge nicht "
+                "überschreiten."
+            ),
         ),
-        alias=MultilingualString(en="Max tokens", es="Tokens máximos"),
+        alias=MultilingualString(
+            en="Max tokens",
+            es="Tokens máximos",
+            pt="Tokens máximos",
+            de="Maximale neue Token",
+        ),
     )  # type: ignore
 
     temperature: schema_field(
@@ -103,8 +146,24 @@ class LlamaSchema(BaseSchema):
                 "un buen equilibrio para tareas conversacionales. En 1.0 las "
                 "salidas son máximamente variadas e impredecibles."
             ),
+            pt=(
+                "Temperatura de amostragem que controla a aleatoriedade da saída "
+                "(intervalo 0.0-1.0). Em 0.0 o modelo sempre escolhe o token mais "
+                "provável (greedy, totalmente determinístico). Em torno de 0.7 é "
+                "um bom equilíbrio para tarefas conversacionais. Em 1.0 as "
+                "saídas são maximamente variadas e imprevisíveis."
+            ),
+            de=(
+                "Stichprobentemperatur zur Steuerung der Ausgabezufälligkeit (0.0-1.0)."
+                "Bei 0.0 wählt das Modell stets den wahrscheinlichsten Token (greedy, "
+                "vollständig deterministisch). Um 0.7 ist ein gutes Gleichgewicht für "
+                "Konversationsaufgaben. Bei 1.0 sind Ausgaben maximal variiert und "
+                "unvorhersehbar."
+            ),
         ),
-        alias=MultilingualString(en="Temperature", es="Temperatura"),
+        alias=MultilingualString(
+            en="Temperature", es="Temperatura", pt="Temperatura", de="Temperatur"
+        ),
     )  # type: ignore
 
     frequency_penalty: schema_field(
@@ -126,9 +185,27 @@ class LlamaSchema(BaseSchema):
                 "fuertemente la reutilización de palabras, lo que puede producir "
                 "texto menos coherente."
             ),
+            pt=(
+                "Penaliza tokens que já apareceram na saída com base em sua "
+                "frequência (intervalo 0.0-2.0). Em 0.0 não há penalização e o modelo "
+                "pode se repetir. Valores em torno de 0.1-0.3 desencorajam "
+                "suavemente a repetição. Valores altos (1.5+) impedem fortemente "
+                "o reuso de palavras, o que pode produzir texto menos coerente."
+            ),
+            de=(
+                "Bestraft Token, die bereits in der Ausgabe erschienen sind, "
+                "basierend auf ihrer Häufigkeit (0.0-2.0). Bei 0.0 gibt es keine "
+                "Strafe und das Modell kann sich wiederholen. Werte um 0.1-0.3 "
+                "hemmen Wiederholungen sanft. Hohe Werte (1.5+) verhindern die "
+                "Wiederverwendung von Wörtern stark, was zu weniger kohärentem Text "
+                "führen kann."
+            ),
         ),
         alias=MultilingualString(
-            en="Frequency penalty", es="Penalización de frecuencia"
+            en="Frequency penalty",
+            es="Penalización de frecuencia",
+            pt="Penalidade de frequência",
+            de="Häufigkeitsstrafe",
         ),
     )  # type: ignore
 
@@ -149,8 +226,27 @@ class LlamaSchema(BaseSchema):
                 "Llama 3.1 soporta hasta 128K tokens de forma nativa; los modelos "
                 "Llama 3.2 soportan hasta 128K tokens."
             ),
+            pt=(
+                "Orçamento total de tokens para uma única passagem, incluindo tanto "
+                "o prompt de entrada quanto a resposta gerada. Valores maiores "
+                "permitem conversas mais longas mas consomem mais RAM/VRAM. "
+                "Llama 3.1 suporta até 128K tokens nativamente; os modelos "
+                "Llama 3.2 suportam até 128K tokens."
+            ),
+            de=(
+                "Gesamtes Token-Budget für einen einzelnen Vorwärtsdurchlauf, "
+                "einschließlich Eingabe-Prompt und generierter Antwort. Größere Werte "
+                "ermöglichen längere Gespräche, verbrauchen jedoch mehr RAM/VRAM. "
+                "Llama 3.1 unterstützt nativ bis zu 128K Token; Llama-3.2-Modelle "
+                "unterstützen ebenfalls bis zu 128K Token."
+            ),
         ),
-        alias=MultilingualString(en="Context window", es="Ventana de contexto"),
+        alias=MultilingualString(
+            en="Context window",
+            es="Ventana de contexto",
+            pt="Janela de contexto",
+            de="Kontextfenster",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -170,8 +266,23 @@ class LlamaSchema(BaseSchema):
                 "inferencia más rápida, estableciendo n_gpu_layers=-1 para que "
                 "cada capa del transformer sea acelerada por GPU."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência com llama.cpp. 'CPU' "
+                "executa o modelo completamente em RAM sem requisito de GPU. "
+                "Selecionar uma opção de GPU descarrega todas as camadas para "
+                "inferência mais rápida, definindo n_gpu_layers=-1 para que "
+                "cada camada do transformer seja acelerada por GPU."
+            ),
+            de=(
+                "Hardware-Gerät für die llama.cpp-Inferenz. 'CPU' führt das Modell "
+                "vollständig im RAM ohne GPU-Anforderung aus. Eine GPU-Option "
+                "lagert alle Schichten für schnellere Inferenz aus und setzt "
+                "n_gpu_layers=-1, damit jede Transformer-Schicht GPU-beschleunigt wird."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
 
@@ -197,6 +308,8 @@ class LlamaModel(TextToTextGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Llama Model",
         es="Modelo Llama",
+        pt="Modelo Llama",
+        de="Llama-Modell",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -215,6 +328,22 @@ class LlamaModel(TextToTextGenerationTaskModel):
             "programación y generación de texto en general. Disponible en tamaños de "
             "1B, 3B y 8B parámetros. Los modelos están en "
             "https://huggingface.co/bartowski."
+        ),
+        pt=(
+            "Meta Llama 3.x é uma família de modelos de linguagem grande de código "
+            "aberto ajustados para instruções, desenvolvidos pela Meta AI, carregados "
+            "em formato GGUF para inferência eficiente em CPU e GPU via a biblioteca "
+            "llama.cpp. Suporta conversação multi-turno, raciocínio, programação e "
+            "geração de texto em geral. Disponível nos tamanhos de parâmetros 1B, 3B "
+            "e 8B. Os modelos estão em https://huggingface.co/bartowski."
+        ),
+        de=(
+            "Meta Llama 3.x ist eine Familie offener instruktionsoptimierter großer "
+            "Sprachmodelle von Meta AI, im GGUF-Format für effiziente CPU- und "
+            "GPU-Inferenz über die llama.cpp-Bibliothek geladen. Unterstützt "
+            "Mehrfachdialog, Schlussfolgerung, Programmierung und allgemeine "
+            "Textgenerierung. Verfügbar in den Parametergrößen 1B, 3B und 8B. "
+            "Modelle unter https://huggingface.co/bartowski."
         ),
     )
 

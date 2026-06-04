@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -33,10 +34,14 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
+            pt=("Nome ou índice de coluna para agrupar pontos por cor."),
+            de=("Spaltenname oder -index zur Farbgruppierung der Punkte."),
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
+            pt="Coluna para grupo de cor",
+            de="Farbgruppen-Spalte",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -45,10 +50,14 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
+            pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
+            de=("Spaltenname oder -index zur Symbolgruppierung der Punkte."),
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
+            pt="Coluna para grupo de símbolo",
+            de="Symbolgruppen-Spalte",
         ),
     )  # type: ignore
     point_size: schema_field(
@@ -57,8 +66,15 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index to set the size of each point."),
             es=("Nombre o índice de columna para definir el tamaño de cada punto."),
+            pt=("Nome ou índice de coluna para definir o tamanho de cada ponto."),
+            de=("Spaltenname oder -index zur Festlegung der Punktgröße."),
         ),
-        alias=MultilingualString(en="Point size column", es="Columna tamaño punto"),
+        alias=MultilingualString(
+            en="Point size column",
+            es="Columna tamaño punto",
+            pt="Coluna tamanho ponto",
+            de="Punktgröße-Spalte",
+        ),
     )  # type: ignore
 
 
@@ -75,7 +91,12 @@ class ScatterPlotExplorer(RelationshipExplorer):
     or discrete groupings in the joint distribution.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Scatter Plot", es="Gráfico de Dispersión")
+    DISPLAY_NAME = MultilingualString(
+        en="Scatter Plot",
+        es="Gráfico de Dispersión",
+        pt="Gráfico de Dispersão",
+        de="Streudiagramm",
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Displays a scatter plot for two selected columns to explore their "
@@ -85,13 +106,22 @@ class ScatterPlotExplorer(RelationshipExplorer):
             "Muestra un gráfico de dispersión para dos columnas seleccionadas "
             "a fin de explorar su relación."
         ),
+        pt=(
+            "Exibe um gráfico de dispersão para duas colunas selecionadas "
+            "para explorar sua relação."
+        ),
+        de=(
+            "Zeigt ein Streudiagramm für zwei ausgewählte Spalten zur Erkundung "
+            "ihrer Beziehung an."
+        ),
     )
     IMAGE_PREVIEW = "scatter_plot.png"
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"exact": 2},
     }
 

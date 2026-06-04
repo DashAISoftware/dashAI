@@ -4,7 +4,7 @@ import type { IModelSession } from "../types/modelSession";
 const endpointURL = "/v1/model-session";
 
 export const getModelSessions = async (): Promise<IModelSession[]> => {
-  const response = await api.get<IModelSession[]>(endpointURL);
+  const response = await api.get<IModelSession[]>(`${endpointURL}/`);
   return response.data;
 };
 

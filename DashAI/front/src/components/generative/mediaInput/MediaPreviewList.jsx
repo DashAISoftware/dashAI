@@ -1,4 +1,4 @@
-import { Box, IconButton } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 export function MediaPreviewList({ activeKinds, previewsByKind, onRemove }) {
@@ -9,7 +9,7 @@ export function MediaPreviewList({ activeKinds, previewsByKind, onRemove }) {
     return (
       <Box
         key={`previews-${kind}`}
-        sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+        sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}
       >
         {previews.map((preview, index) => (
           <Box key={`${kind}-${index}`} sx={{ position: "relative" }}>
@@ -26,22 +26,23 @@ export function MediaPreviewList({ activeKinds, previewsByKind, onRemove }) {
                 }}
               />
             ) : (
-              <Box
+              <Typography
+                variant="body2"
+                component="div"
                 sx={{
                   height: 80,
                   minWidth: 80,
-                  px: 1,
+                  px: 2,
                   borderRadius: 1,
                   border: 1,
                   borderColor: "divider",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "0.75rem",
                 }}
               >
                 {kind} #{index + 1}
-              </Box>
+              </Typography>
             )}
             <IconButton
               size="small"

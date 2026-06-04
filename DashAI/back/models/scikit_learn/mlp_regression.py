@@ -40,8 +40,15 @@ class MLPRegressorSchema(BaseSchema):
         description=MultilingualString(
             en="Number of neurons in the hidden layer.",
             es="Número de neuronas en la capa oculta.",
+            pt="Número de neurônios na camada oculta.",
+            de="Anzahl der Neuronen in der verdeckten Schicht.",
         ),
-        alias=MultilingualString(en="Hidden size", es="Tamaño oculto"),
+        alias=MultilingualString(
+            en="Hidden size",
+            es="Tamaño oculto",
+            pt="Tamanho oculto",
+            de="Verdeckte Schichtgröße",
+        ),
     )  # type: ignore
 
     activation: schema_field(
@@ -50,8 +57,12 @@ class MLPRegressorSchema(BaseSchema):
         description=MultilingualString(
             en="Activation function.",
             es="Función de activación.",
+            pt="Função de ativação.",
+            de="Aktivierungsfunktion.",
         ),
-        alias=MultilingualString(en="Activation", es="Activación"),
+        alias=MultilingualString(
+            en="Activation", es="Activación", pt="Ativação", de="Aktivierung"
+        ),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -65,8 +76,15 @@ class MLPRegressorSchema(BaseSchema):
         description=MultilingualString(
             en="Initial learning rate for the optimizer.",
             es="Tasa de aprendizaje inicial para el optimizador.",
+            pt="Taxa de aprendizado inicial para o otimizador.",
+            de="Anfängliche Lernrate für den Optimierer.",
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
+        ),
     )  # type: ignore
 
     epochs: schema_field(
@@ -80,8 +98,10 @@ class MLPRegressorSchema(BaseSchema):
         description=MultilingualString(
             en="Total number of training passes over the dataset.",
             es="Número total de pasadas de entrenamiento sobre el conjunto de datos.",
+            pt="Número total de passagens de treinamento sobre o conjunto de dados.",
+            de="Gesamtanzahl der Trainingsdurchläufe über den Datensatz.",
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas"),
+        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas", de="Epochen"),
     )  # type: ignore
 
     batch_size: schema_field(
@@ -97,8 +117,20 @@ class MLPRegressorSchema(BaseSchema):
                 "entrenamiento. Si es mayor que el tamaño del dataset o None, "
                 "usa el dataset completo."
             ),
+            pt=(
+                "Número de amostras por atualização de gradiente durante o "
+                "treinamento. Se maior que o tamanho do conjunto ou None, "
+                "usa o conjunto completo."
+            ),
+            de=(
+                "Anzahl der Stichproben pro Gradienten-Update während des Trainings. "
+                "Bei größer als Datensatzgröße oder None wird der vollständige "
+                "Datensatz verwendet."
+            ),
         ),
-        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
+        alias=MultilingualString(
+            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote", de="Stapelgröße"
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -107,8 +139,12 @@ class MLPRegressorSchema(BaseSchema):
         description=MultilingualString(
             en="Hardware device (CPU/GPU).",
             es="Dispositivo de hardware (CPU/GPU).",
+            pt="Dispositivo de hardware (CPU/GPU).",
+            de="Hardwaregerät (CPU/GPU).",
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
     log_train_every_n_epochs: schema_field(
@@ -123,9 +159,20 @@ class MLPRegressorSchema(BaseSchema):
                 "Registrar métricas del split de entrenamiento cada n épocas. "
                 "Si es None, no registrará por época."
             ),
+            pt=(
+                "Registrar métricas do split de treinamento a cada n épocas. "
+                "Se None, não registrará por época."
+            ),
+            de=(
+                "Trainingsmetriken jede n-te Epoche protokollieren. "
+                "Bei None keine Protokollierung pro Epoche."
+            ),
         ),
         alias=MultilingualString(
-            en="Log train every N epochs", es="Registrar entrenamiento cada N épocas"
+            en="Log train every N epochs",
+            es="Registrar entrenamiento cada N épocas",
+            pt="Registrar treinamento a cada N épocas",
+            de="Training alle N Epochen protokollieren",
         ),
     )  # type: ignore
 
@@ -141,9 +188,20 @@ class MLPRegressorSchema(BaseSchema):
                 "Registrar métricas del split de entrenamiento cada n pasos. "
                 "Si es None, no registrará por paso."
             ),
+            pt=(
+                "Registrar métricas do split de treinamento a cada n passos. "
+                "Se None, não registrará por passo."
+            ),
+            de=(
+                "Trainingsmetriken jeden n-ten Schritt protokollieren. "
+                "Bei None keine Protokollierung pro Schritt."
+            ),
         ),
         alias=MultilingualString(
-            en="Log train every N steps", es="Registrar entrenamiento cada N pasos"
+            en="Log train every N steps",
+            es="Registrar entrenamiento cada N pasos",
+            pt="Registrar treinamento a cada N passos",
+            de="Training alle N Schritte protokollieren",
         ),
     )  # type: ignore
 
@@ -159,9 +217,20 @@ class MLPRegressorSchema(BaseSchema):
                 "Registrar métricas del split de validación cada n épocas. "
                 "Si es None, no registrará por época."
             ),
+            pt=(
+                "Registrar métricas do split de validação a cada n épocas. "
+                "Se None, não registrará por época."
+            ),
+            de=(
+                "Validierungsmetriken jede n-te Epoche protokollieren. "
+                "Bei None keine Protokollierung pro Epoche."
+            ),
         ),
         alias=MultilingualString(
-            en="Log validation every N epochs", es="Registrar validación cada N épocas"
+            en="Log validation every N epochs",
+            es="Registrar validación cada N épocas",
+            pt="Registrar validação a cada N épocas",
+            de="Validierung alle N Epochen protokollieren",
         ),
     )  # type: ignore
 
@@ -177,9 +246,20 @@ class MLPRegressorSchema(BaseSchema):
                 "Registrar métricas del split de validación cada n pasos. "
                 "Si es None, no registrará por paso."
             ),
+            pt=(
+                "Registrar métricas do split de validação a cada n passos. "
+                "Se None, não registrará por passo."
+            ),
+            de=(
+                "Validierungsmetriken jeden n-ten Schritt protokollieren. "
+                "Bei None keine Protokollierung pro Schritt."
+            ),
         ),
         alias=MultilingualString(
-            en="Log validation every N steps", es="Registrar validación cada N pasos"
+            en="Log validation every N steps",
+            es="Registrar validación cada N pasos",
+            pt="Registrar validação a cada N passos",
+            de="Validierung alle N Schritte protokollieren",
         ),
     )  # type: ignore
 
@@ -212,10 +292,14 @@ class MLPRegression(RegressionModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Multi-layer Perceptron (MLP) Regression",
         es="Perceptrón Multicapa (MLP) Regresión",
+        pt="Regressor MLP",
+        de="Mehrschichtiges Perzeptron (MLP) Regression",
     )
     DESCRIPTION: str = MultilingualString(
         en="Neural network with multiple hidden layers for regression.",
         es="Red neuronal con múltiples capas ocultas para regresión.",
+        pt="Rede neural com múltiplas camadas ocultas para regressão.",
+        de="Neuronales Netz mit mehreren verdeckten Schichten für Regression.",
     )
     COLOR: str = "#FF7043"
     ICON: str = "Psychology"

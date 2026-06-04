@@ -26,6 +26,8 @@ class MultilingualBertTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="Multilingual BERT Transformer",
         es="Transformer BERT Multilingüe",
+        pt="Transformer BERT Multilingual",
+        de="Mehrsprachiger BERT Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +38,16 @@ class MultilingualBertTransformer(HuggingFaceTextClassificationTransformer):
             "BERT pre-entrenado en 104 idiomas para clasificación de texto "
             "multilingüe. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "BERT pré-treinado em 104 idiomas para classificação de texto "
+            "multilingual. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "BERT vortrainiert auf 104 Sprachen für mehrsprachige Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
         ),
     )
     COLOR: str = "#283593"

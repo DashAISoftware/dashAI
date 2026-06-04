@@ -7,7 +7,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
@@ -36,8 +35,15 @@ class BaggingClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The number of base estimators in the ensemble.",
             es="El número de estimadores base en el conjunto.",
+            pt="O número de estimadores base no conjunto.",
+            de="Die Anzahl der Basis-Schätzer im Ensemble.",
         ),
-        alias=MultilingualString(en="N estimators", es="N estimadores"),
+        alias=MultilingualString(
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
+        ),
     )  # type: ignore
 
     max_samples: schema_field(
@@ -57,8 +63,21 @@ class BaggingClassifierSchema(BaseSchema):
                 "Fracción de muestras de entrenamiento para cada estimador base "
                 "(0 < max_samples ≤ 1.0)."
             ),
+            pt=(
+                "Fração de amostras de treinamento para cada estimador base "
+                "(0 < max_samples ≤ 1.0)."
+            ),
+            de=(
+                "Anteil der Trainingsstichproben für jeden Basis-Schätzer "
+                "(0 < max_samples ≤ 1.0)."
+            ),
         ),
-        alias=MultilingualString(en="Max samples", es="Máximas muestras"),
+        alias=MultilingualString(
+            en="Max samples",
+            es="Máximas muestras",
+            pt="Máximo de amostras",
+            de="Maximale Stichproben",
+        ),
     )  # type: ignore
 
     max_features: schema_field(
@@ -78,8 +97,20 @@ class BaggingClassifierSchema(BaseSchema):
                 "Fracción de características para cada estimador base "
                 "(0 < max_features ≤ 1.0)."
             ),
+            pt=(
+                "Fração de características para cada estimador base "
+                "(0 < max_features ≤ 1.0)."
+            ),
+            de=(
+                "Anteil der Merkmale für jeden Basis-Schätzer (0 < max_features ≤ 1.0)."
+            ),
         ),
-        alias=MultilingualString(en="Max features", es="Máximas características"),
+        alias=MultilingualString(
+            en="Max features",
+            es="Máximas características",
+            pt="Máximo de características",
+            de="Maximale Merkmale",
+        ),
     )  # type: ignore
 
     bootstrap: schema_field(
@@ -88,8 +119,12 @@ class BaggingClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Whether to draw samples with replacement.",
             es="Si se extraen muestras con reemplazo.",
+            pt="Se as amostras são extraídas com reposição.",
+            de="Ob Stichproben mit Zurücklegen gezogen werden.",
         ),
-        alias=MultilingualString(en="Bootstrap", es="Bootstrap"),
+        alias=MultilingualString(
+            en="Bootstrap", es="Bootstrap", pt="Bootstrap", de="Bootstrap"
+        ),
     )  # type: ignore
 
     bootstrap_features: schema_field(
@@ -98,14 +133,19 @@ class BaggingClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="Whether to draw features with replacement.",
             es="Si se extraen características con reemplazo.",
+            pt="Se as características são extraídas com reposição.",
+            de="Ob Merkmale mit Zurücklegen gezogen werden.",
         ),
         alias=MultilingualString(
-            en="Bootstrap features", es="Bootstrap características"
+            en="Bootstrap features",
+            es="Bootstrap características",
+            pt="Bootstrap características",
+            de="Bootstrap-Merkmale",
         ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -116,8 +156,23 @@ class BaggingClassifierSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+        ),
     )  # type: ignore
 
 
@@ -145,10 +200,14 @@ class BaggingClassifier(
     DISPLAY_NAME: str = MultilingualString(
         en="Bagging Classifier",
         es="Clasificador Bagging",
+        pt="Classificador Bagging",
+        de="Bagging-Klassifikator",
     )
     DESCRIPTION: str = MultilingualString(
         en="Bootstrap aggregating ensemble to reduce variance.",
         es="Conjunto de bootstrap aggregating para reducir la varianza.",
+        pt="Conjunto de bootstrap aggregating para reduzir a variância.",
+        de="Bagging-Ensemble zur Varianzreduktion.",
     )
     COLOR: str = "#26C6DA"
     ICON: str = "Inventory"

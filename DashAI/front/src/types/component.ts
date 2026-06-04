@@ -8,4 +8,6 @@ export interface IComponent {
   schema: IParameterJsonSchema;
   metadata: ITaskMetadataParameters;
   description: string;
+  display_name?: string;
+  color?: string;
 }

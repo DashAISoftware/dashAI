@@ -105,8 +105,8 @@ function HomeButton({
 
       {/* Title */}
       <Typography
+        variant="h4"
         sx={{
-          ...theme.typography.cardTitle,
           color: theme.palette.text.primary,
           mb: "5px",
         }}
@@ -116,8 +116,8 @@ function HomeButton({
 
       {/* Description */}
       <Typography
+        variant="body1"
         sx={{
-          fontSize: "15px",
           fontWeight: 300,
           color: theme.palette.text.secondary,
           lineHeight: 1.65,
@@ -159,11 +159,11 @@ function HomeButton({
         <Box
           className="card-arrow"
           sx={{
-            fontSize: "18px",
+            fontSize: "22px",
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
-            ml: 1,
+            ml: 2,
           }}
         >
           →

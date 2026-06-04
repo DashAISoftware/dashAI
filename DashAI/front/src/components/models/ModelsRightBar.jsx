@@ -32,6 +32,7 @@ export default function ModelsRightBar({ onToggle }) {
     closeConfig,
     datasetInfo,
     setDatasetTab,
+    sessionRightContent,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -51,7 +52,7 @@ export default function ModelsRightBar({ onToggle }) {
     } finally {
       setLoading(false);
     }
-  }, [session?.task_name, enqueueSnackbar]);
+  }, [session?.task_name, enqueueSnackbar, t]);
 
   useEffect(() => {
     if (session) {
@@ -101,6 +102,30 @@ export default function ModelsRightBar({ onToggle }) {
       setTimeout(waitForElement, 300);
     }
   };
+
+  if (sessionRightContent) {
+    return (
+      <SideBar>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
+            flexShrink: 0,
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" color="text.primary">
+            {t("models:label.configureSession")}
+          </Typography>
+        </Box>
+        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+          {sessionRightContent}
+        </Box>
+      </SideBar>
+    );
+  }
 
   return (
     <SideBar>
@@ -161,7 +186,7 @@ export default function ModelsRightBar({ onToggle }) {
         ) : (
           <>
             {/* Search Box */}
-            <Box sx={{ p: 2, flexShrink: 0 }}>
+            <Box sx={{ p: 4, flexShrink: 0 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -171,7 +196,7 @@ export default function ModelsRightBar({ onToggle }) {
                 slotProps={{
                   input: {
                     startAdornment: (
-                      <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
+                      <SearchIcon sx={{ mr: 2, color: "text.secondary" }} />
                     ),
                   },
                 }}
@@ -179,7 +204,7 @@ export default function ModelsRightBar({ onToggle }) {
             </Box>
 
             {/* Models List */}
-            <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+            <Box sx={{ flex: 1, overflow: "auto", p: 4 }}>
               {loading ? (
                 <Box
                   sx={{

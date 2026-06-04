@@ -307,7 +307,7 @@ class ModelJob(BaseJob):
                             n_params=len(run_optimizable_parameters),
                             goal_metric=goal_metric,
                         )
-                        for filename, plot in zip(plot_filenames, plots):
+                        for filename, plot in zip(plot_filenames, plots, strict=False):
                             plot_path = os.path.join(config["RUNS_PATH"], filename)
                             with open(plot_path, "wb") as file:
                                 pickle.dump(plot, file)

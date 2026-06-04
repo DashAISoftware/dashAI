@@ -45,6 +45,14 @@ class Recall(ClassificationMetric):
             "Fracción de positivos reales correctamente identificados, "
             "importante cuando los falsos negativos son costosos."
         ),
+        pt=(
+            "Fração dos positivos reais corretamente identificados, "
+            "importante quando os falsos negativos são custosos."
+        ),
+        de=(
+            "Anteil der tatsächlich positiven Fälle, die korrekt identifiziert wurden, "
+            "wichtig wenn falsch-negative Ergebnisse kostspielig sind."
+        ),
     )
 
     @staticmethod

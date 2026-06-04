@@ -32,6 +32,14 @@ class RUSchema(BaseSchema):
                 "Estrategia de muestreo (float o 'auto') para reducir la clase "
                 "mayoritaria."
             ),
+            pt=(
+                "Estratégia de amostragem (float ou 'auto') para reduzir a classe "
+                "majoritária."
+            ),
+            de=(
+                "Abtaststrategie (float oder 'auto') zur Reduzierung der "
+                "Mehrheitsklasse."
+            ),
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -40,6 +48,8 @@ class RUSchema(BaseSchema):
         description=MultilingualString(
             en="Seed for reproducibility.",
             es="Semilla para reproducibilidad.",
+            pt="Semente para reprodutibilidade.",
+            de="Startwert für die Reproduzierbarkeit.",
         ),
     )  # type: ignore
 
@@ -75,9 +85,20 @@ class RandomUnderSamplerConverter(
     DESCRIPTION = MultilingualString(
         en="Randomly remove samples from the majority class to balance the dataset.",
         es="Elimina aleatoriamente muestras de la clase mayoritaria para balancear.",
+        pt=(
+            "Remove aleatoriamente amostras da classe majoritária para "
+            "balancear o conjunto de dados."
+        ),
+        de=(
+            "Entfernt zufällig Stichproben der Mehrheitsklasse, um den "
+            "Datensatz auszubalancieren."
+        ),
     )
     DISPLAY_NAME = MultilingualString(
-        en="Random Under-Sampler", es="Submuestreador Aleatorio"
+        en="Random Under-Sampler",
+        es="Submuestreador Aleatorio",
+        pt="Sub-amostrador Aleatório",
+        de="Zufälliger Unterabtaster",
     )
     IMAGE_PREVIEW = "random_under_sampler.png"
 

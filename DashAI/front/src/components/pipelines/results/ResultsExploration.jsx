@@ -183,7 +183,7 @@ function Results({ pipelineId }) {
         display: "flex",
         flexDirection: "column",
         gap: 4,
-        padding: 2,
+        padding: 4,
       }}
     >
       {Object.entries(explorationResults).map(

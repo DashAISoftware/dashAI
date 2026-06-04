@@ -16,10 +16,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 import TooltipedCellItem from "../../shared/TooltipedCellItem";
 
@@ -76,11 +74,8 @@ function EditColumnsDialog({
   explorerType,
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const [open, setOpen] = useState(false);
   const handleClose = () => {
@@ -215,6 +210,7 @@ function EditColumnsDialog({
     enableDensityToggle: false,
     enableFullScreenToggle: false,
     enableHiding: false,
+    autoResetPageIndex: false,
     initialState: {
       density: "compact",
       pagination: { pageIndex: 0, pageSize: 5 },
@@ -260,7 +256,7 @@ function EditColumnsDialog({
               <IconButton onClick={handleClose}>
                 <ArrowBackOutlined />
               </IconButton>
-              <Typography variant="h5" sx={{ ml: 2 }}>
+              <Typography variant="h5" sx={{ ml: 4 }}>
                 Update Column Selection
               </Typography>
             </Box>
@@ -269,15 +265,15 @@ function EditColumnsDialog({
             <Box sx={{ height: "100%", width: "100%" }}>
               <Typography
                 variant="body1"
-                sx={{ mb: 2, whiteSpace: "pre-line" }}
+                sx={{ mb: 4, whiteSpace: "pre-line" }}
               >
                 {`Select the columns you want to use for the ${explorerType.label} exploration`}
               </Typography>
 
               <Stack
                 direction="row"
-                spacing={1}
-                sx={{ mb: 1, display: "flex", justifyContent: "space-evenly" }}
+                spacing={2}
+                sx={{ mb: 2, display: "flex", justifyContent: "space-evenly" }}
               >
                 {inputCardinality.min && (
                   <Typography variant="body2">
@@ -299,10 +295,10 @@ function EditColumnsDialog({
               {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
                 <Box
                   sx={{
-                    mb: 1,
+                    mb: 2,
                     display: "flex",
                     flexDirection: "row",
-                    gap: 1,
+                    gap: 2,
                     alignItems: "center",
                   }}
                 >
@@ -320,10 +316,10 @@ function EditColumnsDialog({
               {restrictedDtypes?.length > 0 && (
                 <Box
                   sx={{
-                    mb: 1,
+                    mb: 2,
                     display: "flex",
                     flexDirection: "row",
-                    gap: 1,
+                    gap: 2,
                     alignItems: "center",
                   }}
                 >

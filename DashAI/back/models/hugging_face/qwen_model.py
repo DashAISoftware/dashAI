@@ -50,8 +50,27 @@ class QwenSchema(BaseSchema):
                 "es más capaz y produce respuestas de mayor calidad a costa de "
                 "más memoria e inferencia levemente más lenta."
             ),
+            pt=(
+                "O checkpoint Qwen 2.5 Instruct a carregar em formato GGUF. "
+                "'0.5B' (500M parâmetros) é mais rápido e usa menos memória, "
+                "adequado para tarefas leves em CPU. '1.5B' (1.5B parâmetros) "
+                "é mais capaz e produz respostas de maior qualidade ao custo de "
+                "mais memória e inferência levemente mais lenta."
+            ),
+            de=(
+                "Der im GGUF-Format zu ladende Qwen 2.5 Instruct-Checkpoint. "
+                "'0.5B' (500M Parameter) ist schneller und verbraucht weniger Speicher,"
+                "geeignet für leichte CPU-Aufgaben. '1.5B' (1,5B Parameter) ist "
+                "leistungsfähiger und liefert qualitativ hochwertigere Antworten "
+                "auf Kosten von mehr Speicher und etwas langsamerer Inferenz."
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
+        ),
     )  # type: ignore
 
     max_tokens: schema_field(
@@ -71,8 +90,27 @@ class QwenSchema(BaseSchema):
                 "código. No debe superar la ventana de contexto menos la longitud "
                 "del prompt."
             ),
+            pt=(
+                "Número máximo de tokens novos que o modelo gerará por resposta. "
+                "Aproximadamente 1 token ≈ 0.75 palavras em português. Use 100-200 "
+                "para respostas curtas, 500-1000 para explicações detalhadas ou "
+                "código. Não deve exceder a janela de contexto menos o comprimento "
+                "do prompt."
+            ),
+            de=(
+                "Maximale Anzahl neuer Token, die das Modell pro Antwort erzeugt. "
+                "Ungefähr 1 Token ≈ 0,75 englische Wörter. 100-200 für kurze "
+                "Antworten, 500-1000 für ausführliche Erklärungen oder Code. "
+                "Darf die Kontextfenstergröße abzüglich der Prompt-Länge nicht "
+                "überschreiten."
+            ),
         ),
-        alias=MultilingualString(en="Max tokens", es="Tokens máximos"),
+        alias=MultilingualString(
+            en="Max tokens",
+            es="Tokens máximos",
+            pt="Tokens máximos",
+            de="Maximale neue Token",
+        ),
     )  # type: ignore
 
     temperature: schema_field(
@@ -92,8 +130,24 @@ class QwenSchema(BaseSchema):
                 "un buen equilibrio para tareas conversacionales. En 1.0 las "
                 "salidas son máximamente variadas e impredecibles."
             ),
+            pt=(
+                "Temperatura de amostragem que controla a aleatoriedade da saída "
+                "(intervalo 0.0-1.0). Em 0.0 o modelo sempre escolhe o token mais "
+                "provável (greedy, totalmente determinístico). Em torno de 0.7 é "
+                "um bom equilíbrio para tarefas conversacionais. Em 1.0 as "
+                "saídas são maximamente variadas e imprevisíveis."
+            ),
+            de=(
+                "Stichprobentemperatur zur Steuerung der Ausgabezufälligkeit (0.0-1.0)."
+                "Bei 0.0 wählt das Modell stets den wahrscheinlichsten Token (greedy, "
+                "vollständig deterministisch). Um 0.7 ist ein gutes Gleichgewicht für "
+                "Konversationsaufgaben. Bei 1.0 sind Ausgaben maximal variiert und "
+                "unvorhersehbar."
+            ),
         ),
-        alias=MultilingualString(en="Temperature", es="Temperatura"),
+        alias=MultilingualString(
+            en="Temperature", es="Temperatura", pt="Temperatura", de="Temperatur"
+        ),
     )  # type: ignore
 
     frequency_penalty: schema_field(
@@ -115,9 +169,27 @@ class QwenSchema(BaseSchema):
                 "fuertemente la reutilización de palabras, lo que puede producir "
                 "texto menos coherente."
             ),
+            pt=(
+                "Penaliza os tokens que já apareceram na saída com base em "
+                "sua frequência (intervalo 0.0-2.0). Em 0.0 não há penalização e o "
+                "modelo pode se repetir. Valores em torno de 0.1-0.3 desestimulam "
+                "suavemente a repetição. Valores altos (1.5+) impedem fortemente a "
+                "reutilização de palavras, o que pode produzir texto menos coerente."
+            ),
+            de=(
+                "Bestraft Token, die bereits in der Ausgabe erschienen sind, "
+                "basierend auf ihrer Häufigkeit (0.0-2.0). Bei 0.0 gibt es keine "
+                "Strafe und das Modell kann sich wiederholen. Werte um 0.1-0.3 "
+                "hemmen Wiederholungen sanft. Hohe Werte (1.5+) verhindern die "
+                "Wiederverwendung von Wörtern stark, was zu weniger kohärentem Text "
+                "führen kann."
+            ),
         ),
         alias=MultilingualString(
-            en="Frequency penalty", es="Penalización de frecuencia"
+            en="Frequency penalty",
+            es="Penalización de frecuencia",
+            pt="Penalização de frequência",
+            de="Häufigkeitsstrafe",
         ),
     )  # type: ignore
 
@@ -138,8 +210,27 @@ class QwenSchema(BaseSchema):
                 "Qwen 2.5 soporta hasta 32768 tokens de forma nativa; mantenga "
                 "este valor igual o por debajo de ese límite."
             ),
+            pt=(
+                "Orçamento total de tokens para uma única passagem, incluindo tanto "
+                "o prompt de entrada quanto a resposta gerada. Valores maiores "
+                "permitem conversas mais longas mas consomem mais RAM/VRAM. "
+                "Qwen 2.5 suporta até 32768 tokens nativamente; mantenha "
+                "este valor igual ou abaixo desse limite."
+            ),
+            de=(
+                "Gesamtes Token-Budget für einen einzelnen Vorwärtsdurchlauf, "
+                "einschließlich Eingabe-Prompt und generierter Antwort. Größere Werte "
+                "ermöglichen längere Gespräche, verbrauchen jedoch mehr RAM/VRAM. "
+                "Qwen 2.5 unterstützt nativ bis zu 32768 Token; halten Sie "
+                "diesen Wert gleich oder unter diesem Limit."
+            ),
         ),
-        alias=MultilingualString(en="Context window", es="Ventana de contexto"),
+        alias=MultilingualString(
+            en="Context window",
+            es="Ventana de contexto",
+            pt="Janela de contexto",
+            de="Kontextfenster",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -159,8 +250,23 @@ class QwenSchema(BaseSchema):
                 "inferencia más rápida, estableciendo n_gpu_layers=-1 para que "
                 "cada capa del transformer sea acelerada por GPU."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência com llama.cpp. 'CPU' "
+                "executa o modelo completamente na RAM sem requisito de GPU. "
+                "Selecionar uma opção de GPU descarrega todas as camadas para "
+                "inferência mais rápida, definindo n_gpu_layers=-1 para que "
+                "cada camada do transformer seja acelerada por GPU."
+            ),
+            de=(
+                "Hardware-Gerät für die llama.cpp-Inferenz. 'CPU' führt das Modell "
+                "vollständig im RAM ohne GPU-Anforderung aus. Eine GPU-Option "
+                "lagert alle Schichten für schnellere Inferenz aus und setzt "
+                "n_gpu_layers=-1, damit jede Transformer-Schicht GPU-beschleunigt wird."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
 
@@ -187,6 +293,8 @@ class QwenModel(TextToTextGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Qwen Model",
         es="Modelo Qwen",
+        pt="Modelo Qwen",
+        de="Qwen-Modell",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -206,6 +314,24 @@ class QwenModel(TextToTextGenerationTaskModel):
             "general. Disponible en tamaños de 0.5B y 1.5B parámetros. Los modelos "
             "están disponibles en "
             "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF y "
+            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF."
+        ),
+        pt=(
+            "Qwen 2.5 é um modelo de linguagem grande ajustado para instruções "
+            "pela Alibaba Cloud, carregado em formato GGUF para inferência eficiente "
+            "em CPU e GPU via biblioteca llama.cpp. Suporta conversa multi-turno, "
+            "raciocínio, programação e geração de texto em geral. Disponível nos "
+            "tamanhos 0.5B e 1.5B parâmetros. Os modelos estão disponíveis em "
+            "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF e "
+            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF."
+        ),
+        de=(
+            "Qwen 2.5 ist ein instruktionsoptimiertes großes Sprachmodell von "
+            "Alibaba Cloud, im GGUF-Format für effiziente CPU- und GPU-Inferenz über "
+            "die llama.cpp-Bibliothek geladen. Unterstützt Mehrfachdialog, "
+            "Schlussfolgerung, Programmierung und allgemeine Textgenerierung. "
+            "Verfügbar in den Parametergrößen 0,5B und 1,5B. Modelle verfügbar unter "
+            "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF und "
             "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF."
         ),
     )

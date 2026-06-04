@@ -17,9 +17,9 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
     <Box
       display="flex"
       alignItems="center"
-      gap={2}
-      px={2}
-      py={1}
+      gap={4}
+      px={4}
+      py={4}
       sx={{ borderBottom: `1px solid ${theme.palette.ui.border}` }}
     >
       <Typography

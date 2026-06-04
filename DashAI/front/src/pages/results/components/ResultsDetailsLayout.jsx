@@ -33,7 +33,7 @@ function ResultsDetailsLayout({
         {t("common:close")}
       </Button>
 
-      <Paper sx={{ mt: 2 }}>
+      <Paper sx={{ mt: 4 }}>
         <Tabs value={currentTab} onChange={handleTabChange}>
           {updatedTabs.map((tab) => (
             <Tab
@@ -44,7 +44,7 @@ function ResultsDetailsLayout({
             />
           ))}
         </Tabs>
-        <Box sx={{ p: 3, height: "100%" }}>
+        <Box sx={{ p: 6, height: "100%" }}>
           {currentTab === 0 && (
             <ResultsTabInfo runData={runData} handleRun={handleRun} />
           )}

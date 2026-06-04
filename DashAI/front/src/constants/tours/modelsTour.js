@@ -111,24 +111,6 @@ export const modelsTourSteps = [
     maxWidth: "320px",
   },
   {
-    target: '[data-tour="models-next-button"]',
-    content: (
-      <Trans i18nKey="modelsTour:continueConfig">
-        <div>
-          <h3></h3>
-          <p>
-            <strong></strong>
-          </p>
-        </div>
-      </Trans>
-    ),
-    placement: "top",
-    disableBeacon: true,
-    spotlightClicks: true,
-    isInteractive: true,
-    disableBackButton: true,
-  },
-  {
     target: '[data-tour="models-validation-alert"]',
     content: (
       <Trans i18nKey="modelsTour:columnValidation">
@@ -145,7 +127,7 @@ export const modelsTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
     disableBackButton: true,
   },
@@ -222,7 +204,7 @@ export const modelsTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "left",
     disableBeacon: true,
     maxWidth: "320px",
   },
@@ -239,9 +221,7 @@ export const modelsTourSteps = [
           <p>
             <strong></strong>
           </p>
-          <p
-            style={{ marginTop: "10px", fontSize: "0.9em", color: "#666" }}
-          ></p>
+          <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}></p>
         </div>
       </Trans>
     ),

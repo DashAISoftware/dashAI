@@ -7,6 +7,7 @@ import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueConverterJob } from "../../../api/job";
+import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 export default function FormConverterSection({
@@ -15,12 +16,17 @@ export default function FormConverterSection({
   handleClose,
   tool,
   notebook,
+  hideButtons = false,
 }) {
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    setExplorersAndConverters,
+    setColumnTypes,
+    setLastAddedItemId,
+  } = useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
 
@@ -43,6 +49,7 @@ export default function FormConverterSection({
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
+        setLastAddedItemId({ id: data.id, type: "converter" });
         enqueueSnackbar(
           t("datasets:message.converterCreated", { name: tool.name }),
           {
@@ -73,6 +80,12 @@ export default function FormConverterSection({
                         : item,
                     ),
                   );
+
+                  if (notebook?.file_path) {
+                    getDatasetTypesByFilePath(notebook.file_path)
+                      .then((types) => setColumnTypes(types ?? {}))
+                      .catch(console.error);
+                  }
                 },
 
                 (result) => {
@@ -119,8 +132,9 @@ export default function FormConverterSection({
         overflow: "visible",
         display: "flex",
         flexDirection: "column",
-        flexGrow: 1,
+        flex: 1,
         maxHeight: "100%",
+        minHeight: 0,
       }}
     >
       {step === 0 && (
@@ -139,6 +153,7 @@ export default function FormConverterSection({
               ? () => setStep((s) => s + 1)
               : () => handleSaveConverter({})
           }
+          hideButtons={hideButtons}
         />
       )}
 
@@ -148,6 +163,7 @@ export default function FormConverterSection({
           initialParams={{}}
           handleSaveConverter={handleSaveConverter}
           setStep={setStep}
+          hideButtons={hideButtons}
         />
       )}
     </Box>
