@@ -169,18 +169,8 @@ function FormSchemaFieldCard({
             fontWeight={600}
             color={errorMessage ? "error.main" : "text.primary"}
           >
-            {label}
+            {label ?? paramKey}
           </Typography>
-          {paramKey && paramKey !== label && (
-            <Typography
-              component="span"
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontFamily: "monospace" }}
-            >
-              {paramKey}
-            </Typography>
-          )}
         </Box>
 
         {headerRight}
