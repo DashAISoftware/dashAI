@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -62,6 +62,7 @@ export default function StatisticalTestsModal({
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const resultsRef = useRef(null);
 
   // ----- Test-driven config (all from backend metadata) -----
   const minRuns = test?.metadata?.min_runs ?? 2;
@@ -130,6 +131,18 @@ export default function StatisticalTestsModal({
       }
     }
   }, [selectedSplit, finishedRuns, selectedMetric]);
+
+  // Smoothly scroll to the results as soon as they appear
+  useEffect(() => {
+    if (results && resultsRef.current) {
+      requestAnimationFrame(() => {
+        resultsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    }
+  }, [results]);
 
   const handleRunToggle = (run) => {
     setSelectedRuns((prev) => {
@@ -436,6 +449,7 @@ export default function StatisticalTestsModal({
         {/* Results */}
         {results && (
           <Box
+            ref={resultsRef}
             sx={{
               mt: 3,
               pt: 2,
@@ -509,14 +523,16 @@ export default function StatisticalTestsModal({
             {results.p_value !== null && !isNaN(results.p_value) && (
               <Alert
                 severity={results.significant ? "success" : "info"}
-                sx={{ mb: 2 }}
+                sx={{ mb: 2, whiteSpace: "pre-line" }}
               >
                 {getHypothesisDecisionMessage(
                   results.significant,
                   formatPValue(results.p_value),
                   results.alpha,
                   t,
-                )}
+                ) +
+                  "\n\n" +
+                  results.interpretation}
               </Alert>
             )}
 

@@ -57,6 +57,40 @@ class CorrectedPairedTTest(BaseStatisticalTest):
             "min_runs": 2,
             "max_runs": 2,
             "supports_alternative": True,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "There is a significant difference between the two models. "
+                        "The results are statistically significantly different."
+                    ),
+                    "not_significant": (
+                        "No significant difference between the two models. "
+                        "They perform similarly."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Hay una diferencia significativa entre los dos modelos. "
+                        "Los resultados son estadísticamente significativamente "
+                        "diferentes."
+                    ),
+                    "not_significant": (
+                        "No hay diferencia significativa entre los dos modelos. "
+                        "Tienen un rendimiento similar."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Há uma diferença significativa entre os dois modelos. "
+                        "Os resultados são estatisticamente significativamente "
+                        "diferentes."
+                    ),
+                    "not_significant": (
+                        "Não há diferença significativa entre os dois modelos. "
+                        "Eles têm desempenho similar."
+                    ),
+                },
+            ),
         }
 
     def run(

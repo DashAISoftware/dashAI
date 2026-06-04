@@ -38,6 +38,38 @@ class ShapiroTest(BaseStatisticalTest):
             "min_runs": 1,
             "max_runs": 1,
             "supports_alternative": False,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "Data does not follow a normal distribution. "
+                        "The assumption of normality is violated."
+                    ),
+                    "not_significant": (
+                        "Data appears to follow a normal distribution. "
+                        "The assumption of normality is satisfied."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Los datos no siguen una distribución normal. "
+                        "Se viola el supuesto de normalidad."
+                    ),
+                    "not_significant": (
+                        "Los datos parecen seguir una distribución normal. "
+                        "Se cumple el supuesto de normalidad."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Os dados não seguem uma distribuição normal. "
+                        "A suposição de normalidade é violada."
+                    ),
+                    "not_significant": (
+                        "Os dados parecem seguir uma distribuição normal. "
+                        "A suposição de normalidade é satisfeita."
+                    ),
+                },
+            ),
         }
 
     def get_schema(self) -> dict:

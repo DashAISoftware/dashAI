@@ -59,6 +59,45 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "Significant pairwise differences detected. Check "
+                        "individual comparisons in the table to identify which "
+                        "model pairs differ significantly."
+                    ),
+                    "not_significant": (
+                        "No significant pairwise differences detected. Models "
+                        "perform similarly across all comparisons."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Se detectaron diferencias pareadas significativas. "
+                        "Revise las comparaciones individuales en la tabla para "
+                        "identificar qué pares de modelos difieren "
+                        "significativamente."
+                    ),
+                    "not_significant": (
+                        "No se detectaron diferencias pareadas significativas. "
+                        "Los modelos tienen un rendimiento similar en todas las "
+                        "comparaciones."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Diferenças pareadas significativas detectadas. "
+                        "Verifique as comparações individuais na tabela para "
+                        "identificar quais pares de modelos diferem "
+                        "significativamente."
+                    ),
+                    "not_significant": (
+                        "Nenhuma diferença pareada significativa detectada. "
+                        "Os modelos têm desempenho similar em todas as "
+                        "comparações."
+                    ),
+                },
+            ),
         }
 
     def run(

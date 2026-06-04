@@ -50,6 +50,40 @@ class TukeyHSDTest(BaseStatisticalTest):
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "Pairwise comparisons are shown in the table. Pairs with "
+                        "p < α indicate significant differences."
+                    ),
+                    "not_significant": (
+                        "This is a post-hoc test automatically run after ANOVA. "
+                        "Results appear only when ANOVA is significant."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Las comparaciones pareadas se muestran en la tabla. Los "
+                        "pares con p < α indican diferencias significativas."
+                    ),
+                    "not_significant": (
+                        "Esta es una prueba post-hoc ejecutada automáticamente "
+                        "después de ANOVA. Los resultados aparecen solo cuando "
+                        "ANOVA es significativo."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Comparações pareadas são mostradas na tabela. Pares "
+                        "com p < α indicam diferenças significativas."
+                    ),
+                    "not_significant": (
+                        "Este é um teste post-hoc executado automaticamente "
+                        "após ANOVA. Os resultados aparecem apenas quando ANOVA "
+                        "é significativo."
+                    ),
+                },
+            ),
         }
 
     def run(

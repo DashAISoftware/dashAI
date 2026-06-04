@@ -52,6 +52,40 @@ class NemenyiTest(BaseStatisticalTest):
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "Pairwise comparisons are shown in the table. Pairs with "
+                        "p < α indicate significant differences."
+                    ),
+                    "not_significant": (
+                        "This is a post-hoc test automatically run after Friedman "
+                        "test. Results appear only when Friedman is significant."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Las comparaciones pareadas se muestran en la tabla. Los "
+                        "pares con p < α indican diferencias significativas."
+                    ),
+                    "not_significant": (
+                        "Esta es una prueba post-hoc ejecutada automáticamente "
+                        "después de la prueba de Friedman. Los resultados "
+                        "aparecen solo cuando Friedman es significativo."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Comparações pareadas são mostradas na tabela. Pares "
+                        "com p < α indicam diferenças significativas."
+                    ),
+                    "not_significant": (
+                        "Este é um teste post-hoc executado automaticamente após "
+                        "o teste de Friedman. Os resultados aparecem apenas "
+                        "quando Friedman é significativo."
+                    ),
+                },
+            ),
         }
 
     def run(

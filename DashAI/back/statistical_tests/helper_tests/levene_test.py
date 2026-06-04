@@ -38,6 +38,38 @@ class LeveneTest(BaseStatisticalTest):
             "min_runs": 2,
             "max_runs": None,
             "supports_alternative": False,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "No homogeneity of variances detected. "
+                        "The samples have different variances (heteroscedasticity)."
+                    ),
+                    "not_significant": (
+                        "Homogeneity of variances is supported. "
+                        "The samples have similar variances (homoscedasticity)."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "No se detecta homogeneidad de varianzas. "
+                        "Las muestras tienen varianzas diferentes (heterocedasticidad)."
+                    ),
+                    "not_significant": (
+                        "Se confirma homogeneidad de varianzas. "
+                        "Las muestras tienen varianzas similares (homocedasticidad)."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Não há homogeneidade de variâncias detectada. "
+                        "As amostras têm variâncias diferentes (heterocedasticidade)."
+                    ),
+                    "not_significant": (
+                        "Há homogeneidade de variâncias. "
+                        "As amostras têm variâncias similares (homocedasticidade)."
+                    ),
+                },
+            ),
         }
 
     def get_schema(self) -> dict:

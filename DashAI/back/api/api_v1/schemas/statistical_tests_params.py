@@ -43,3 +43,5 @@ class StatisticalTestResponse(BaseModel):
     details: Optional[Dict] = None
     # Populated for post-hoc tests (Nemenyi, Tukey, PairwiseWilcoxon)
     posthoc: Optional[List[PairwiseResultResponse]] = None
+    # Interpretation message from the test's metadata
+    interpretation: Optional[str] = None

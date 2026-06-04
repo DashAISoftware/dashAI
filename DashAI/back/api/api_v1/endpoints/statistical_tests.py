@@ -1,9 +1,9 @@
 """Statistical tests endpoints"""
 
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from kink import di
 
 from DashAI.back.api.api_v1.schemas.statistical_tests_params import (
@@ -11,6 +11,7 @@ from DashAI.back.api.api_v1.schemas.statistical_tests_params import (
     StatisticalTestRequest,
     StatisticalTestResponse,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
@@ -27,6 +28,54 @@ POSTHOC_MAP = {
 }
 
 
+def _get_interpretation(
+    metadata: Optional[Dict],
+    significant: bool,
+    accept_language: Optional[str] = None,
+) -> Optional[str]:
+    """Extract test interpretation from metadata based on result significance.
+
+    Parameters
+    ----------
+    metadata : Optional[Dict]
+        Test metadata containing interpretation MultilingualString
+    significant : bool
+        Whether the test result is significant
+    accept_language : Optional[str]
+        Language code from Accept-Language header (e.g., 'en', 'es', 'pt')
+
+    Returns
+    -------
+    Optional[str]
+        Localized interpretation message or None if not available
+    """
+    if not metadata or "interpretation" not in metadata:
+        return None
+
+    interpretation = metadata["interpretation"]
+    if not isinstance(interpretation, MultilingualString):
+        return None
+
+    # Extract language code from header (e.g., 'en' from 'en-US')
+    lang_code = "en"
+    if accept_language:
+        lang_code = accept_language.split("-")[0].lower()
+
+    # Get the interpretation for the appropriate outcome (significant/not_significant)
+    outcome = "significant" if significant else "not_significant"
+
+    try:
+        # interpretation is a MultilingualString where each language maps to a dict
+        # with 'significant' and 'not_significant' keys
+        lang_dict = interpretation.get(lang_code)
+        if isinstance(lang_dict, dict) and outcome in lang_dict:
+            return lang_dict[outcome]
+    except (AttributeError, KeyError, TypeError):
+        pass
+
+    return None
+
+
 @router.post(
     "/run",
     response_model=StatisticalTestResponse,
@@ -34,6 +83,7 @@ POSTHOC_MAP = {
 )
 async def run_statistical_test(
     request: StatisticalTestRequest,
+    accept_language: Optional[str] = Header(default=None),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> StatisticalTestResponse:
     """Run a statistical test on fold metrics from selected runs.
@@ -147,6 +197,19 @@ async def run_statistical_test(
             f"p={result.p_value}, significant={result.significant}"
         )
 
+        # Get test metadata for interpretation
+        test_metadata = None
+        try:
+            test_component = component_registry[request.test_name]
+            test_metadata = test_component.get("metadata")
+        except (KeyError, AttributeError):
+            pass
+
+        # Extract interpretation based on result significance
+        interpretation = _get_interpretation(
+            test_metadata, result.significant, accept_language
+        )
+
         return StatisticalTestResponse(
             test_name=request.test_name,
             statistic=result.statistic,
@@ -155,6 +218,7 @@ async def run_statistical_test(
             alpha=result.alpha,
             details=result.details,
             posthoc=posthoc_results,
+            interpretation=interpretation,
         )
 
     except HTTPException:

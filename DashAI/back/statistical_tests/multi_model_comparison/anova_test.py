@@ -38,6 +38,41 @@ class AnovaTest(BaseStatisticalTest):
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "There are significant differences between the models. "
+                        "Post-hoc pairwise comparisons (Tukey HSD) identify which "
+                        "pairs differ."
+                    ),
+                    "not_significant": (
+                        "No significant differences between the models. "
+                        "They perform similarly."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Hay diferencias significativas entre los modelos. "
+                        "Las comparaciones post-hoc (Tukey HSD) identifican qué "
+                        "pares difieren."
+                    ),
+                    "not_significant": (
+                        "No hay diferencias significativas entre los modelos. "
+                        "Tienen un rendimiento similar."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Há diferenças significativas entre os modelos. "
+                        "Comparações post-hoc (Tukey HSD) identificam quais "
+                        "pares diferem."
+                    ),
+                    "not_significant": (
+                        "Não há diferenças significativas entre os modelos. "
+                        "Eles têm desempenho similar."
+                    ),
+                },
+            ),
         }
 
     def run(
