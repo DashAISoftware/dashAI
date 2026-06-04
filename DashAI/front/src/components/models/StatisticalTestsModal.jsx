@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -50,7 +50,7 @@ export default function StatisticalTestsModal({
   open = false,
   onClose,
 }) {
-  const { t, i18n } = useTranslation(["models", "common"]);
+  const { t } = useTranslation(["models", "common"]);
 
   const [selectedMetric, setSelectedMetric] = useState("");
   const [selectedSplit, setSelectedSplit] = useState("test");
@@ -69,15 +69,6 @@ export default function StatisticalTestsModal({
   const supportsAlternative = test?.metadata?.supports_alternative === true;
   const testIdentifier = test?.name; // registry name expected by the API
   const testTitle = test?.metadata?.name || test?.display_name || test?.name;
-
-  const resolveDescription = useCallback(() => {
-    const raw = test?.description ?? test?.metadata?.description;
-    if (raw && typeof raw === "object") {
-      const lang = i18n.language?.split("-")[0] || "en";
-      return raw[lang] || raw.en || "";
-    }
-    return raw || "";
-  }, [test, i18n.language]);
 
   const finishedRuns = useMemo(
     () => runs.filter((run) => run.status === 3),
@@ -205,8 +196,6 @@ export default function StatisticalTestsModal({
 
   if (!test) return null;
 
-  const description = resolveDescription();
-
   return (
     <Dialog
       open={open}
@@ -235,16 +224,6 @@ export default function StatisticalTestsModal({
       </DialogTitle>
 
       <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-        {description && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 2, lineHeight: 1.5 }}
-          >
-            {description}
-          </Typography>
-        )}
-
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {typeof error === "string"
@@ -381,9 +360,9 @@ export default function StatisticalTestsModal({
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Alpha + alternative hypothesis */}
-        <Stack spacing={3}>
-          <Box sx={{ minWidth: 0 }}>
+        {/* Alpha + alternative hypothesis (single horizontal row) */}
+        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box
               sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
             >
@@ -413,8 +392,8 @@ export default function StatisticalTestsModal({
             />
           </Box>
 
-          {supportsAlternative && (
-            <Box>
+          {supportsAlternative ? (
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>
                   {t("models:label.alternativeHypothesis")}
@@ -449,8 +428,10 @@ export default function StatisticalTestsModal({
                 </Typography>
               )}
             </Box>
+          ) : (
+            <Box sx={{ flex: 1 }} />
           )}
-        </Stack>
+        </Box>
 
         {/* Results */}
         {results && (

@@ -223,7 +223,9 @@
     "sampleQuantiles": "Cuantiles de la Muestra",
     "metricValue": "Valor de la Métrica",
     "frequency": "Frecuencia",
-    "helperTests": "Tests de Supuestos"
+    "helperTests": "Tests de Supuestos",
+    "selectAtLeastRuns": "Seleccione al menos {{min}} modelos",
+    "selectExactlyRuns": "Seleccione exactamente {{count}} modelos"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

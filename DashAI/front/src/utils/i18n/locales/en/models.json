@@ -227,7 +227,9 @@
     "sampleQuantiles": "Sample Quantiles",
     "metricValue": "Metric Value",
     "frequency": "Frequency",
-    "helperTests": "Assumption Tests"
+    "helperTests": "Assumption Tests",
+    "selectAtLeastRuns": "Select at least {{min}} models",
+    "selectExactlyRuns": "Select exactly {{count}} models"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
