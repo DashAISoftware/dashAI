@@ -11,6 +11,18 @@ class FoldSplitter(BaseSplitter):
         super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)
 
+    @classmethod
+    def get_metadata(cls) -> dict:
+        """Metadata for the fold splitter."""
+        metadata = {
+            "hasFolds": getattr(cls, "FOLDS", False),
+            "hasRepeats": getattr(cls, "REPEATS", False),
+            "hasShuffle": getattr(cls, "SHUFFLE", False),
+            "hasGroups": getattr(cls, "GROUPS", False),
+        }
+
+        return metadata
+
     @abstractmethod
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
         raise NotImplementedError(

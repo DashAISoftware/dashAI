@@ -1,10 +1,25 @@
 import numpy as np
 from sklearn.model_selection import KFold
 
+from DashAI.back.core.utils import MultilingualString
+
 from .fold_splitter import FoldSplitter
 
 
 class KFoldSplitter(FoldSplitter):
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "RegressionTask",
+    ]
+    DISPLAY_NAME: str = MultilingualString(
+        en="K-Fold",
+        es="K-Fold",
+        pt="K-Fold",
+    )
+    FOLDS: bool = True
+    SHUFFLE: bool = True
+
     def __init__(self, splits_data):
         super().__init__(splits_data)
 

@@ -70,7 +70,7 @@ function PrepareDatasetStep({
   const [seed, setSeed] = useState(42);
 
   // Cross-Validation configuration states
-  const [cvType, setCvType] = useState("KFold");
+  const [cvType, setCvType] = useState(null);
   const [numFolds, setNumFolds] = useState(5);
   const [numRepeats, setNumRepeats] = useState(2);
   const [groupColumn, setGroupColumn] = useState("");
@@ -279,38 +279,14 @@ function PrepareDatasetStep({
         };
       }
     } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
-      if (cvType === "GroupKFold" || cvType === "StratifiedGroupKFold") {
-        updatedExpData.splits = {
-          splitter_name: cvType + "Splitter",
-          n_splits: numFolds,
-          seed: seed === "" || seed == null ? 42 : Number(seed),
-          shuffle: shuffle,
-          group_column: groupColumn,
-        };
-      } else if (
-        cvType === "RepeatedKFold" ||
-        cvType === "RepeatedStratifiedKFold"
-      ) {
-        updatedExpData.splits = {
-          splitter_name: cvType + "Splitter",
-          n_splits: numFolds,
-          n_repeats: numRepeats,
-          seed: seed === "" || seed == null ? 42 : Number(seed),
-          shuffle: shuffle,
-        };
-      } else if (cvType === "KFold" || cvType === "StratifiedKFold") {
-        updatedExpData.splits = {
-          splitter_name: cvType + "Splitter",
-          n_splits: numFolds,
-          seed: seed === "" || seed == null ? 42 : Number(seed),
-          shuffle: shuffle,
-        };
-      } else if (cvType === "LeaveOneOut") {
-        updatedExpData.splits = {
-          splitter_name: cvType + "Splitter",
-          seed: seed === "" || seed == null ? 42 : Number(seed),
-        };
-      }
+      updatedExpData.splits = {
+        splitter_name: cvType.name,
+        seed: seed === "" || seed == null ? 42 : Number(seed),
+        ...(cvType.metadata?.hasFolds ? { n_splits: numFolds } : {}),
+        ...(cvType.metadata?.hasRepeats ? { n_repeats: numRepeats } : {}),
+        ...(cvType.metadata?.hasGroups ? { group_column: groupColumn } : {}),
+        ...(cvType.metadata?.hasShuffle ? { shuffle: shuffle } : {}),
+      };
     }
 
     setNewExp(updatedExpData);

@@ -1,10 +1,21 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
+from DashAI.back.core.utils import MultilingualString
+
 from .fold_splitter import FoldSplitter
 
 
 class StratifiedKFoldSplitter(FoldSplitter):
+    COMPATIBLE_COMPONENTS = ["TabularClassificationTask", "TextClassificationTask"]
+    DISPLAY_NAME: str = MultilingualString(
+        en="Stratified K-Fold",
+        es="K-Fold Estratificado",
+        pt="K-Fold Estratificado",
+    )
+    FOLDS: bool = True
+    SHUFFLE: bool = True
+
     def __init__(self, splits_data):
         super().__init__(splits_data)
 

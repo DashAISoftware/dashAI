@@ -1,10 +1,22 @@
 import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold
 
+from DashAI.back.core.utils import MultilingualString
+
 from .fold_splitter import FoldSplitter
 
 
 class StratifiedGroupKFoldSplitter(FoldSplitter):
+    COMPATIBLE_COMPONENTS = ["TabularClassificationTask", "TextClassificationTask"]
+    DISPLAY_NAME: str = MultilingualString(
+        en="Stratified Group K-Fold",
+        es="K-Fold Estratificado por Grupos",
+        pt="K-Fold Estratificado por Grupos",
+    )
+    FOLDS: bool = True
+    GROUPS: bool = True
+    SHUFFLE: bool = True
+
     def __init__(self, splits_data):
         super().__init__(splits_data)
         self.group_column = splits_data.get("group_column", None)

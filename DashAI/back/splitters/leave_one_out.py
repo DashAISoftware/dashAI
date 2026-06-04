@@ -1,10 +1,24 @@
 import numpy as np
 from sklearn.model_selection import LeaveOneOut
 
+from DashAI.back.core.utils import MultilingualString
+
 from .fold_splitter import FoldSplitter
 
 
 class LeaveOneOutSplitter(FoldSplitter):
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "RegressionTask",
+    ]
+    DISPLAY_NAME: str = MultilingualString(
+        en="Leave-One-Out",
+        es="Dejar Uno Fuera",
+        pt="Deixar Um Fora",
+    )
+    SHUFFLE: bool = True
+
     def __init__(self, splits_data):
         super().__init__(splits_data)
 

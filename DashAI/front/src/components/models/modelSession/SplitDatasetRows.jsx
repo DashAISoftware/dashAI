@@ -21,6 +21,8 @@ import BooleanInput from "../../configurableObject/Inputs/BooleanInput";
 import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
 import { useTranslation } from "react-i18next";
 import { SplitscreenOutlined } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
+import { getComponents } from "../../../api/component";
 
 /**
  * Splits card shell — same Paper/header visual as FormSchemaFieldCard but WITHOUT
@@ -106,57 +108,7 @@ function SplitDatasetRows({
   taskName,
 }) {
   const { t } = useTranslation(["experiments", "common"]);
-
-  // Determine which CV types are allowed based on task type
-  const getAllowedCvTypes = () => {
-    if (!taskName)
-      return [
-        "KFold",
-        "StratifiedKFold",
-        "RepeatedKFold",
-        "RepeatedStratifiedKFold",
-        "GroupKFold",
-        "StratifiedGroupKFold",
-        "LeaveOneOut",
-      ];
-
-    // For regression tasks: only allow non-stratified CV types
-    if (taskName.toLowerCase().includes("regression")) {
-      return [
-        "KFold",
-        "RepeatedKFold",
-        "GroupKFold",
-        "RepeatedGroupKFold",
-        "LeaveOneOut",
-      ];
-    }
-
-    // For classification tasks (tabular or text): allow all CV types
-    if (taskName.toLowerCase().includes("classification")) {
-      return [
-        "KFold",
-        "StratifiedKFold",
-        "RepeatedKFold",
-        "RepeatedStratifiedKFold",
-        "GroupKFold",
-        "StratifiedGroupKFold",
-        "LeaveOneOut",
-      ];
-    }
-
-    // Default: all CV types
-    return [
-      "KFold",
-      "StratifiedKFold",
-      "RepeatedKFold",
-      "RepeatedStratifiedKFold",
-      "GroupKFold",
-      "StratifiedGroupKFold",
-      "LeaveOneOut",
-    ];
-  };
-
-  const allowedCvTypes = getAllowedCvTypes();
+  const { enqueueSnackbar } = useSnackbar();
 
   const totalRows = datasetInfo.total_rows;
   const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
@@ -185,6 +137,32 @@ function SplitDatasetRows({
   const [cvRepeatError, setCvRepeatError] = useState(false);
   const [cvRepeatErrorText, setCvRepeatErrorText] = useState("");
   const [groupColumnError, setGroupColumnError] = useState(true);
+  const [allowedCvTypes, setAllowedCvTypes] = useState([]);
+
+  // Update allowed CV types when task changes
+  useEffect(() => {
+    const getSplittersForTask = async () => {
+      try {
+        const response = await getComponents({
+          selectTypes: ["Splitter"],
+          relatedComponent: taskName,
+        });
+        setAllowedCvTypes(response);
+      } catch (error) {
+        console.error("Error fetching splitters:", error);
+        enqueueSnackbar(t("models:error.fetchingStatisticalTests"), {
+          variant: "error",
+        });
+      }
+    };
+
+    getSplittersForTask();
+  }, [taskName]);
+
+  // Set default CV type when allowedCvTypes changes
+  useEffect(() => {
+    setCvType(allowedCvTypes.length > 0 ? allowedCvTypes[0] : null);
+  }, [allowedCvTypes]);
 
   const handleSplitTypeChange = (_e, newType) => {
     if (!newType) return;
@@ -284,20 +262,6 @@ function SplitDatasetRows({
     setSeed(value);
   };
 
-  // Cross-Validation handlers
-  const handleCvTypeChange = (event) => {
-    setCvType(event.target.value);
-    if (
-      event.target.value === "StratifiedKFold" ||
-      event.target.value === "RepeatedStratifiedKFold" ||
-      event.target.value === "StratifiedGroupKFold"
-    ) {
-      setStratify(true);
-    } else {
-      setStratify(false);
-    }
-  };
-
   const handleGroupColumnChange = (event) => {
     const value = event.target.value;
     setGroupColumn(value);
@@ -353,21 +317,6 @@ function SplitDatasetRows({
     }
     setCvRepeatError(true);
     return;
-  };
-
-  // Check if current cvType is a repeated CV type
-  const isRepeatedCvType = () => {
-    return cvType?.includes("Repeated");
-  };
-
-  // Check if current cvType is a grouping CV type
-  const isGroupingCvType = () => {
-    return cvType?.includes("Group");
-  };
-
-  // Check if LeaveOneOut
-  const isLeaveOneOut = () => {
-    return cvType === "LeaveOneOut";
   };
 
   useEffect(() => {
@@ -434,16 +383,9 @@ function SplitDatasetRows({
     { id: "test", label: t("common:test") },
   ];
 
-  // Reset cvType if it's not allowed for the current task
-  useEffect(() => {
-    if (!allowedCvTypes.includes(cvType)) {
-      setCvType(allowedCvTypes[0]);
-    }
-  }, [allowedCvTypes, cvType, setCvType]);
-
   // Validate group column when grouping CV type is selected
   useEffect(() => {
-    const isGrouping = cvType?.includes("Group");
+    const isGrouping = cvType?.metadata?.hasGroups || false;
     if (isGrouping && !groupColumn) {
       setGroupColumnError(true);
     } else {
@@ -688,18 +630,21 @@ function SplitDatasetRows({
           {/* CV Type Selector */}
           <SplitsCard label={t("experiments:label.cvType")}>
             <FormControl fullWidth size="small">
-              <Select value={cvType} onChange={handleCvTypeChange}>
+              <Select
+                value={cvType}
+                onChange={(e) => setCvType(e.target.value)}
+              >
                 {allowedCvTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
+                  <MenuItem key={type.name} value={type}>
+                    {type.display_name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </SplitsCard>
 
-          {/* Number of Folds - not for LeaveOneOut */}
-          {!isLeaveOneOut() && (
+          {/* Number of Folds */}
+          {cvType?.metadata?.hasFolds && (
             <SplitsCard
               label={t("experiments:label.numFolds")}
               description={t("experiments:label.numFoldsDescription")}
@@ -718,8 +663,8 @@ function SplitDatasetRows({
             </SplitsCard>
           )}
 
-          {/* Number of Repeats - only for Repeated CV types */}
-          {isRepeatedCvType() && (
+          {/* Number of Repeats */}
+          {cvType?.metadata?.hasRepeats && (
             <SplitsCard
               label={t("experiments:label.numRepeats")}
               description={t("experiments:label.numRepeatsDescription")}
@@ -738,8 +683,8 @@ function SplitDatasetRows({
             </SplitsCard>
           )}
 
-          {/* Group Column - only for GroupKFold types */}
-          {isGroupingCvType() && (
+          {/* Group Column */}
+          {cvType?.metadata?.hasGroups && (
             <SplitsCard
               label={t("experiments:label.groupColumn")}
               description={t("experiments:label.groupColumnDescription")}
@@ -765,8 +710,8 @@ function SplitDatasetRows({
             </SplitsCard>
           )}
 
-          {/* Shuffle - only if NOT a repeated CV type */}
-          {!isRepeatedCvType() && (
+          {/* Shuffle */}
+          {cvType?.metadata?.hasShuffle && (
             <FormSchemaFieldCard
               label={t("experiments:label.shuffle")}
               description={t("experiments:label.shuffleDescription")}
