@@ -1,5 +1,5 @@
 ============
-DashAI
+dashAI
 ============
 
 .. image:: https://img.shields.io/pypi/v/dashai.svg
@@ -14,13 +14,13 @@ A graphical toolbox for training, evaluating and deploying state-of-the-art
 AI models
 
 .. image:: ./images/dashai-logo.svg
-   :alt: DashAI Logo
+   :alt: dashAI Logo
 
 Quick installation (Pypi)
 =========================
 
 
-DashAI needs Python 3.10 or greater to be installed. Once that requirement is satisfied, you can install DashAI via pip:
+dashAI needs Python 3.10 or greater to be installed. Once that requirement is satisfied, you can install dashAI via pip:
 
 .. code:: bash
 
@@ -32,20 +32,20 @@ Then, to initialize the server and the graphical interface, run:
 
     $ dashai
 
-Finally, go to `http://localhost:3000/ <http://localhost:3000/>`_ in your browser to access to the DashAI graphical interface.
+Finally, go to `http://localhost:3000/ <http://localhost:3000/>`_ in your browser to access to the dashAI graphical interface.
 
 
 Test datasets
 =============
 
-Some datasets you can use to try DashAI are available `here <https://github.com/DashAISoftware/DashAI_Datasets>`_.
+Some datasets you can use to try dashAI are available `here <https://github.com/DashAISoftware/DashAI_Datasets>`_.
 
 
 Development
 ===========
 
 
-To download and run the development version of DashAI, first, download the repository
+To download and run the development version of dashAI, first, download the repository
 and switch to the developing branch:
 
 .. code:: bash
@@ -126,9 +126,9 @@ Later, install the requirements:
 Running the Backend
 ~~~~~~~~~~~~~~~~~~~
 
-There are two ways to run DashAI:
+There are two ways to run dashAI:
 
-1. By executing DashAI as a module from the root of the repository:
+1. By executing dashAI as a module from the root of the repository:
 
 .. code:: bash
 
@@ -147,7 +147,7 @@ Optional Flags
 
 **Setting the local execution path**
 
-With the `--local-path` (alias `-lp`) option you can determine where DashAI will save its local
+With the `--local-path` (alias `-lp`) option you can determine where dashAI will save its local
 files, such as datasets, experiments, runs and others.
 The following example shows how to set the folder in the local `.DashAI` directory:
 
@@ -158,7 +158,7 @@ The following example shows how to set the folder in the local `.DashAI` directo
 
 **Setting the logging level**
 
-Through the `--logging-level` (alias `-ll`) parameter, you can set which logging level the DashAI
+Through the `--logging-level` (alias `-ll`) parameter, you can set which logging level the dashAI
 backend server will have.
 
 .. code:: bash
@@ -167,14 +167,14 @@ backend server will have.
 
 The possible levels available are: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
 
-Note that the `--logging-level` not only affects the DashAI loggers, but also
-the datasets (which is set to the same level as DashAI) and the
+Note that the `--logging-level` not only affects the dashAI loggers, but also
+the datasets (which is set to the same level as dashAI) and the
 SQLAlchemy (which is only activated when logging level is DEBUG).
 
 
 **Disabling automatic browser opening**
 
-By default, DashAI will open a browser window pointing to the application
+By default, dashAI will open a browser window pointing to the application
 after starting. If you prefer to disable this behavior, you can use the
 `--no-browser` (alias `-nb`) flag:
 
@@ -197,7 +197,7 @@ Database Migrations
 
 Migrations are managed through `Alembic <https://alembic.sqlalchemy.org/en/latest/>`_.
 
-They are automatically executed when starting DashAI. However, if you want to
+They are automatically executed when starting dashAI. However, if you want to
 run them manually, you can do so using the following command (inside the
 `DashAI/` folder):
 
@@ -289,7 +289,7 @@ Testing
 Execute tests
 -------------
 
-DashAI uses `pytest <https://docs.pytest.org/>`_ to perform the backend
+dashAI uses `pytest <https://docs.pytest.org/>`_ to perform the backend
 tests.
 To execute the backend tests
 
@@ -320,7 +320,7 @@ This project is sponsored by the `National Center for Artificial Intelligence - 
 
 The core of the development is carried out by students from the Computer Science Department of the University of Chile and the Federico Santa Maria Technical University.
 
-To see the full list of contributors, visit in `Contributors <https://github.com/DashAISoftware/DashAI/graphs/contributors>`_ the DashAI repository on Github.
+To see the full list of contributors, visit in `Contributors <https://github.com/DashAISoftware/DashAI/graphs/contributors>`_ the dashAI repository on Github.
 
 .. image:: ./images/logos.png
    :alt: Collaboration Logos
