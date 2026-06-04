@@ -9,3 +9,4 @@ recursive-include DashAI/back/dataloaders/description_schemas *
 recursive-include DashAI/back/dataloaders/params_schemas *
 recursive-include DashAI/back/types *
 prune tests/
+recursive-include DashAI/back/static/images/ *
