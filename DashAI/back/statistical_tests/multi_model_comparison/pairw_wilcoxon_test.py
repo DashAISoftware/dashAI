@@ -25,9 +25,9 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
     """
 
     DISPLAY_NAME: str = MultilingualString(
-        en="Pairwise Wilcoxon",
-        es="Wilcoxon Pareado",
-        pt="Wilcoxon Pareado",
+        en="Pairwise Wilcoxon (multiple comparisons)",
+        es="Wilcoxon Pareado (comparaciones múltiples)",
+        pt="Wilcoxon Pareado (comparações múltiplas)",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,7 +36,7 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
             "Applies Holm correction for multiple comparisons."
         ),
         es=(
-            "Prueba no paramétrica para comparaciones por pares entre grupos",
+            "Prueba no paramétrica para comparaciones por pares entre grupos ",
             "relacionados. Requiere observaciones emparejadas y no asume normalidad. "
             "Aplica corrección de Holm para comparaciones múltiples.",
         ),
@@ -57,6 +57,8 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 3,
+            "max_runs": None,
+            "supports_alternative": False,
         }
 
     def run(

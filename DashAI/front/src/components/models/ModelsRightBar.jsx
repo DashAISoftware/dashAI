@@ -33,6 +33,7 @@ export default function ModelsRightBar({ onToggle }) {
   const [activeTab, setActiveTab] = useState("models");
   const [showStatisticalTestsModal, setShowStatisticalTestsModal] =
     useState(false);
+  const [activeTest, setActiveTest] = useState(null);
 
   const {
     selectedSession: session,
@@ -296,12 +297,10 @@ export default function ModelsRightBar({ onToggle }) {
         ) : (
           /* Statistical Tests Tab */
           <StatisticalTestsList
-            runs={existingRuns}
-            session={session}
-            onTestSelect={(test, runs) => {
+            onTestSelect={(test) => {
+              setActiveTest(test);
               setShowStatisticalTestsModal(true);
             }}
-            loading={loading}
           />
         )}
       </Box>
@@ -317,9 +316,14 @@ export default function ModelsRightBar({ onToggle }) {
       />
 
       <StatisticalTestsModal
+        test={activeTest}
         runs={existingRuns}
         session={session}
-        visible={showStatisticalTestsModal && isCv}
+        open={showStatisticalTestsModal && isCv}
+        onClose={() => {
+          setShowStatisticalTestsModal(false);
+          setActiveTest(null);
+        }}
       />
     </SideBar>
   );

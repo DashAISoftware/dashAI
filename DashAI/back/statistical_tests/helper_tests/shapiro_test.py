@@ -36,6 +36,23 @@ class ShapiroTest(BaseStatisticalTest):
             "is_parametric": None,
             "posthoc": False,
             "min_runs": 1,
+            "max_runs": 1,
+            "supports_alternative": False,
+        }
+
+    def get_schema(self) -> dict:
+        """Schema for Shapiro-Wilk Test configuration."""
+        return {
+            "type": "object",
+            "properties": {
+                "alpha": {
+                    "type": "number",
+                    "default": 0.05,
+                    "minimum": 0.001,
+                    "maximum": 0.2,
+                    "description": "Significance level for the hypothesis test.",
+                },
+            },
         }
 
     def run(
@@ -61,4 +78,5 @@ class ShapiroTest(BaseStatisticalTest):
             p_value=float(p_value),
             significant=significant,
             alpha=alpha,
+            details={"run": run_name, "data": data.tolist()},
         )

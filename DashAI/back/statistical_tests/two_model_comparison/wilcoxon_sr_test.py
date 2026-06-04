@@ -36,6 +36,8 @@ class WilcoxonSRTest(BaseStatisticalTest):
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 2,
+            "max_runs": 2,
+            "supports_alternative": True,
         }
 
     def run(

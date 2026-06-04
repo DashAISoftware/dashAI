@@ -197,6 +197,7 @@ function CreateSessionSteps({
         newExp.evaluation_strategy,
         JSON.stringify(newExp.splits),
       );
+      console.log(newExp.splits);
 
       enqueueSnackbar(t("models:message.sessionCreatedSuccess"), {
         variant: "success",

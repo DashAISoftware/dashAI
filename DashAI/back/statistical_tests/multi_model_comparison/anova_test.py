@@ -36,6 +36,8 @@ class AnovaTest(BaseStatisticalTest):
             "is_parametric": True,
             "posthoc": False,
             "min_runs": 3,
+            "max_runs": None,
+            "supports_alternative": False,
         }
 
     def run(

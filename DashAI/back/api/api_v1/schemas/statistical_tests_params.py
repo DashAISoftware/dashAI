@@ -5,32 +5,6 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 
 
-class NormalityCheckRequest(BaseModel):
-    """Request schema for normality check endpoint."""
-
-    metric_name: str
-    metric_split: str
-    run_ids: List[int]
-    run_names: Dict[str, str]  # Mapping of run_id to run_name
-    fold_metrics: Dict[str, List[float]]
-
-
-class NormalityTestResult(BaseModel):
-    """Normality test result for a single run."""
-
-    run_id: int
-    p_value: float
-    is_normal: bool
-
-
-class NormalityCheckResponse(BaseModel):
-    """Response schema for normality check endpoint."""
-
-    is_normal: bool
-    results_by_run: List[NormalityTestResult]
-    test_used: str = "shapiro_wilk"
-
-
 class StatisticalTestRequest(BaseModel):
     """Request schema for running a statistical test."""
 

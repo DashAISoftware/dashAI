@@ -309,7 +309,7 @@ function SplitDatasetRows({
   };
 
   const handleNumFoldsChange = (event) => {
-    const value = event.target.value;
+    const value = event.target.value === "" ? "" : Number(event.target.value);
     setNumFolds(value);
     if (value !== "" && value > 1 && value <= datasetInfo.total_rows) {
       setCvFoldError(false);
@@ -339,7 +339,7 @@ function SplitDatasetRows({
   };
 
   const handleNumRepeatsChange = (event) => {
-    const value = event.target.value;
+    const value = event.target.value === "" ? "" : Number(event.target.value);
     setNumRepeats(value);
     if (value !== "" && value > 1) {
       setCvRepeatError(false);

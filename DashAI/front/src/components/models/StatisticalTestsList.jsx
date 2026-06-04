@@ -7,15 +7,12 @@ import { useSnackbar } from "notistack";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
 
-export default function StatisticalTestsList({
-  onTestSelect,
-  loading: initialLoading = false,
-}) {
+export default function StatisticalTestsList({ onTestSelect }) {
   const { t } = useTranslation(["models"]);
   const { enqueueSnackbar } = useSnackbar();
 
   const [tests, setTests] = useState([]);
-  const [loading, setLoading] = useState(initialLoading);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Traer tests estadísticos del backend

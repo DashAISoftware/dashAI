@@ -36,6 +36,23 @@ class BartlettTest(BaseStatisticalTest):
             "is_parametric": None,
             "posthoc": False,
             "min_runs": 2,
+            "max_runs": None,
+            "supports_alternative": False,
+        }
+
+    def get_schema(self) -> dict:
+        """Schema for Bartlett's Test configuration."""
+        return {
+            "type": "object",
+            "properties": {
+                "alpha": {
+                    "type": "number",
+                    "default": 0.05,
+                    "minimum": 0.001,
+                    "maximum": 0.2,
+                    "description": "Significance level for the hypothesis test.",
+                },
+            },
         }
 
     def run(
@@ -60,4 +77,5 @@ class BartlettTest(BaseStatisticalTest):
             p_value=float(p_value),
             significant=significant,
             alpha=alpha,
+            details={},
         )

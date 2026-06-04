@@ -36,6 +36,8 @@ class FriedmanTest(BaseStatisticalTest):
             "is_parametric": False,
             "posthoc": False,
             "min_runs": 3,
+            "max_runs": None,
+            "supports_alternative": False,
         }
 
     def run(
