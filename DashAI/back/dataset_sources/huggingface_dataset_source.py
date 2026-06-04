@@ -34,7 +34,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             "collections across NLP, computer vision, audio, and tabular tasks. "
             "Datasets range from classic benchmarks to cutting-edge research "
             "splits, and many include multiple configurations or language "
-            "variants. Search by name, download directly to DashAI, "
+            "variants. Search by name, download directly to dashAI, "
             "and start training in minutes. "
             "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
         ),
@@ -45,7 +45,7 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             "computadora, audio y datos tabulares. Los datasets van desde "
             "benchmarks clásicos hasta particiones de investigación de vanguardia, "
             "y muchos incluyen múltiples configuraciones o variantes de idioma. "
-            "Busca por nombre, descarga directamente a DashAI y comienza "
+            "Busca por nombre, descarga directamente a dashAI y comienza "
             "a entrenar en minutos. "
             "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
         ),

@@ -79,7 +79,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             "classification, regression, and clustering tasks. Datasets are "
             "standardized and versioned, making them ideal for comparing models "
             "and reproducing published results. Search by name and download "
-            "directly to DashAI. "
+            "directly to dashAI. "
             "[https://www.openml.org](https://www.openml.org)"
         ),
         es=(
@@ -90,7 +90,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
             "clasificación, regresión y agrupamiento. Los datasets están "
             "estandarizados y versionados, lo que los hace ideales para comparar "
             "modelos y reproducir resultados publicados. Busca por nombre y "
-            "descarga directamente a DashAI. "
+            "descarga directamente a dashAI. "
             "[https://www.openml.org](https://www.openml.org)"
         ),
     )
