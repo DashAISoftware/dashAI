@@ -216,6 +216,7 @@ def _make_image_dataset(x_dataset, y_dataset=None, image_size=64):
             self.y_dataset = y_ds
             self.transforms = transforms.Compose(
                 [
+                    transforms.Lambda(lambda img: img.convert("RGB")),
                     transforms.Resize((img_size, img_size)),
                     transforms.ToTensor(),
                 ]
@@ -229,7 +230,11 @@ def _make_image_dataset(x_dataset, y_dataset=None, image_size=64):
             self.label_to_idx = {}
             self.idx_to_label = {}
             if self.label_col_name:
-                unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
+                y_cat = (getattr(y_ds, "types", {}) or {}).get(self.label_col_name)
+                if y_cat is not None and getattr(y_cat, "categories", None):
+                    unique_labels = sorted(y_cat.categories)
+                else:
+                    unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
                 self.label_to_idx = {
                     label: idx for idx, label in enumerate(unique_labels)
                 }
@@ -419,7 +424,7 @@ class CNNImageClassifier(BaseModel):
             return dataset
 
         col_name = dataset.column_names[0]
-        encoded = [self.label_to_idx.get(lbl, lbl) for lbl in dataset[col_name]]
+        encoded = [self.label_to_idx.get(lbl, -1) for lbl in dataset[col_name]]
         return DashAIDataset(pa.table({col_name: encoded}))
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
