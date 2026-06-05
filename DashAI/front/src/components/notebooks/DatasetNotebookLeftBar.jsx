@@ -4,6 +4,7 @@ import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -163,7 +164,8 @@ export default function DatasetsNotebooksLeftBar({
         {selectedDatasetId || selectedNotebookId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title={t("datasets:button.newDatasetNotebook")}
+            title={t("datasets:button.datasetHub")}
+            EndIcon={ViewModuleIcon}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
