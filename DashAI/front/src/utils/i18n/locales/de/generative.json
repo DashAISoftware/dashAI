@@ -1,7 +1,8 @@
 {
   "button": {
     "backToTaskSelection": "Zurück zur Aufgabenauswahl",
-    "createSession": "Sitzung erstellen"
+    "createSession": "Sitzung erstellen",
+    "generativeHub": "Generative Zentrale"
   },
   "error": {
     "failedToCreateSession": "Sitzung konnte nicht erstellt werden",
