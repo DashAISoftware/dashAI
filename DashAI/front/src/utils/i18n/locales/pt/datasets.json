@@ -390,5 +390,15 @@
     "noChangesMade": "Nenhuma alteração realizada",
     "notebookCreated": "Caderno criado com sucesso",
     "notebookUpdateSuccess": "Caderno atualizado com sucesso"
+  },
+  "computeMetadata": {
+    "label": "Calcular metadados estendidos (EDA)",
+    "helper": "Desative para conjuntos de dados grandes acelerarem o envio. Estatísticas estendidas (correlações, qualidade, etc.) não estarão disponíveis para este conjunto.",
+    "recommendation": "Recomendado desativar: este conjunto tem {{colCount}} colunas e {{estRows}} linhas. Calcular os metadados pode levar vários minutos.",
+    "confirmTitle": "Calcular metadados mesmo assim?",
+    "confirmBody": "Este conjunto tem {{colCount}} colunas e {{estRows}} linhas. Calcular os metadados pode levar vários minutos e consumir muita memória.",
+    "skipButton": "Pular metadados",
+    "computeButton": "Calcular mesmo assim",
+    "missingNotice": "Os metadados estendidos não foram calculados para este conjunto de dados. Envie-o novamente com os metadados ativados para ver esta seção."
   }
 }

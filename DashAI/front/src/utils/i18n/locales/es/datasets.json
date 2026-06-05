@@ -393,5 +393,15 @@
     "noChangesMade": "No se realizaron cambios",
     "notebookCreated": "Cuaderno creado exitosamente",
     "notebookUpdateSuccess": "Cuaderno actualizado exitosamente"
+  },
+  "computeMetadata": {
+    "label": "Calcular metadatos extendidos (EDA)",
+    "helper": "Desactívalo para conjuntos de datos grandes y acelerar la subida. Las estadísticas extendidas (correlaciones, calidad, etc.) no estarán disponibles para este conjunto.",
+    "recommendation": "Recomendado desactivar: este conjunto tiene {{colCount}} columnas y {{estRows}} filas. Calcular los metadatos podría tardar varios minutos.",
+    "confirmTitle": "¿Calcular metadatos de todas formas?",
+    "confirmBody": "Este conjunto tiene {{colCount}} columnas y {{estRows}} filas. Calcular los metadatos podría tardar varios minutos y consumir mucha memoria.",
+    "skipButton": "Omitir metadatos",
+    "computeButton": "Calcular de todas formas",
+    "missingNotice": "No se calcularon los metadatos extendidos para este conjunto de datos. Vuélvelo a subir con los metadatos habilitados para ver esta sección."
   }
 }

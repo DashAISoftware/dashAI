@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   Typography,
   Select,
@@ -48,7 +48,7 @@ const ENCODER_OPTIONS = ["one_hot", "label"];
  * @param {Function} onColumnRename - Callback when a column is renamed (oldName, newName) => void
  * @param {Function} onEncoderChange - Callback when encoder changes (columnName, encoder) => void
  */
-export default function PreviewDatasetTable({
+function PreviewDatasetTable({
   rows,
   columnTypes,
   file,
@@ -393,3 +393,5 @@ export default function PreviewDatasetTable({
     </>
   );
 }
+
+export default memo(PreviewDatasetTable);
