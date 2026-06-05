@@ -299,12 +299,13 @@ function Home() {
           <Box
             sx={{
               p: 4,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridTemplateRows: "1fr 1fr",
-              gap: 4,
-              height: "70%",
-              width: "80%",
+              display: { xs: "flex", lg: "grid" },
+              flexDirection: { xs: "column", lg: "row" },
+              gridTemplateColumns: { lg: "1fr 1fr" },
+              gridTemplateRows: { lg: "1fr 1fr" },
+              gap: { xs: 2, lg: 4 },
+              height: { xs: "auto", lg: "70%" },
+              width: { xs: "100%", lg: "80%" },
               minHeight: 0,
             }}
           >
@@ -312,7 +313,11 @@ function Home() {
               <Box
                 key={mod.to}
                 data-tour={mod.tourAttr || undefined}
-                sx={{ minHeight: 0, height: "100%" }}
+                sx={{
+                  minHeight: 0,
+                  height: { xs: "auto", lg: "100%" },
+                  flexShrink: { xs: 0, lg: 1 },
+                }}
               >
                 <HomeButton
                   title={mod.title}
