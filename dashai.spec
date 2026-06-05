@@ -51,6 +51,7 @@ exe = EXE(
     upx=False,
     console=True,
     argv_emulation=True,
+    icon="installer/dashAI.ico",
 )
 
 coll = COLLECT(
@@ -67,7 +68,7 @@ if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
         name='dashAI.app',
-        icon=None,
+        icon='installer/dashAI.icns',
         bundle_identifier='com.dashai.app',
         info_plist={
             'NSHighResolutionCapable': 'True',
