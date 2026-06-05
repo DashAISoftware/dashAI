@@ -260,12 +260,14 @@ export default function SessionVisualization() {
       <Box
         data-session-viz
         onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("Files")) e.preventDefault();
           if (!e.dataTransfer.types.includes("application/x-dashai-model"))
             return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "copy";
         }}
         onDragEnter={(e) => {
+          if (e.dataTransfer.types.includes("Files")) e.preventDefault();
           if (!e.dataTransfer.types.includes("application/x-dashai-model"))
             return;
           e.preventDefault();

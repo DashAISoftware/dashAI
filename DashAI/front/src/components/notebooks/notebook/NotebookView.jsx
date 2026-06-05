@@ -305,12 +305,14 @@ export default function NotebookView({ notebook }) {
   }
 
   const handleDragOver = (e) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
     if (!e.dataTransfer.types.includes("application/x-dashai-tool")) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
   };
 
   const handleDragEnter = (e) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
     if (!e.dataTransfer.types.includes("application/x-dashai-tool")) return;
     e.preventDefault();
     setIsDragOver(true);
