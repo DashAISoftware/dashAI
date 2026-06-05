@@ -87,6 +87,7 @@ class T5SmallTransformer(TranslationModel):
         es="Transformer de Traducción T5-Small",
         pt="Transformer de Tradução T5-Small",
         de="T5-Small Übersetzungs-Transformer",
+        zh="T5-Small 翻译 Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -109,6 +110,10 @@ class T5SmallTransformer(TranslationModel):
             "Übersetzung mit Aufgabenpräfixen. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "谷歌 T5-small 模型，通过任务前缀实现英语到德语/法语/罗马尼亚语翻译。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#00695C"

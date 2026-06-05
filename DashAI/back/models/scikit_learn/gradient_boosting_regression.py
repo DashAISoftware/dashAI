@@ -524,6 +524,7 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
         es="Regresión Gradient Boosting",
         pt="Regressor por Gradient Boosting",
         de="Gradient-Boosting-Regression",
+        zh="梯度提升回归",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -541,6 +542,7 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
             "Ensemble-Methode, die Bäume sequenziell aufbaut, um vorherige Fehler zu "
             "korrigieren."
         ),
+        zh="顺序构建决策树以纠正前次误差的集成回归方法。",
     )
     COLOR: str = "#4CAF50"
     ICON: str = "AutoGraph"

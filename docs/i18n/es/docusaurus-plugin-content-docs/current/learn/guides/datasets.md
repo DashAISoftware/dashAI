@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Guía del Módulo: Datasets
 
-El módulo de Datasets es el punto de entrada para todos los datos en DashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
+El módulo de Datasets es el punto de entrada para todos los datos en dashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
 
 ---
 
@@ -20,7 +20,7 @@ El botón **Nuevo Dataset/Notebook** en la parte superior de la barra lateral es
 
 ## Carga de Datos
 
-DashAI admite cuatro formatos de archivo. Cada uno tiene un cargador de datos dedicado que controla cómo se analiza el archivo.
+dashAI admite cuatro formatos de archivo. Cada uno tiene un cargador de datos dedicado que controla cómo se analiza el archivo.
 
 ### Formatos Admitidos y Cargadores de Datos
 
@@ -34,7 +34,7 @@ El flujo de carga es en línea — todo ocurre dentro de la página de Datasets 
 
 ### Inferencia de Tipos
 
-Después de cargar un archivo, DashAI lee una cantidad configurable de filas (**Filas de Inferencia**, por defecto 1000) y asigna automáticamente un tipo semántico a cada columna: `Categorical`, `Float` o `Integer`. Estos tipos se utilizan en toda la plataforma — en las pestañas del Explorador, en el módulo de Modelos para verificar la compatibilidad de columnas, y en los convertidores de Notebook para filtrar las operaciones aplicables.
+Después de cargar un archivo, dashAI lee una cantidad configurable de filas (**Filas de Inferencia**, por defecto 1000) y asigna automáticamente un tipo semántico a cada columna: `Categorical`, `Float` o `Integer`. Estos tipos se utilizan en toda la plataforma — en las pestañas del Explorador, en el módulo de Modelos para verificar la compatibilidad de columnas, y en los convertidores de Notebook para filtrar las operaciones aplicables.
 
 Puedes sobrescribir cualquier tipo inferido directamente en la vista previa de carga haciendo clic en el menú desplegable del encabezado de cada columna. Corregir los tipos en el momento de la carga previene problemas posteriores en experimentos y transformaciones.
 
@@ -42,7 +42,7 @@ Puedes sobrescribir cualquier tipo inferido directamente en la vista previa de c
 
 | Parámetro  | Por defecto | Descripción                                                                                                                           |
 | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Nombre     | nombre del archivo | Nombre para mostrar del dataset dentro de DashAI                                                                   |
+| Nombre     | nombre del archivo | Nombre para mostrar del dataset dentro de dashAI                                                                   |
 | Separador  | `,`         | Carácter que separa los valores de columna. Usa `;` para exportaciones de Excel con configuración regional europea                    |
 | Encabezado | `infer`     | Fila que contiene los nombres de las columnas. `infer` detecta automáticamente; establece un número para archivos con filas de metadatos antes del encabezado |
 | Nombres    | Null        | Sobrescribir los nombres de columnas manualmente                                                                                      |
@@ -96,7 +96,7 @@ Las cinco tarjetas de resumen en la parte superior de cada vista de dataset ofre
 
 ### Pestaña de Análisis Numérico
 
-Para cada columna `Float` o `Integer`, DashAI calcula y muestra:
+Para cada columna `Float` o `Integer`, dashAI calcula y muestra:
 
 **Estadísticas descriptivas:** Media, Mediana, Desviación Estándar, Conteo de únicos
 
@@ -106,7 +106,7 @@ Para cada columna `Float` o `Integer`, DashAI calcula y muestra:
 
 **Diagrama de caja:** Resumen visual de cinco números. Los valores atípicos aparecen como puntos más allá de los bigotes.
 
-**Alertas inteligentes:** DashAI detecta patrones de distribución comunes y sugiere acciones automáticamente. Por ejemplo:
+**Alertas inteligentes:** dashAI detecta patrones de distribución comunes y sugiere acciones automáticamente. Por ejemplo:
 
 > ⚠️ Distribución sesgada a la derecha: Considera aplicar una transformación logarítmica.
 
@@ -253,7 +253,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 
 ### Guardar un Dataset Transformado
 
-Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARDAR COMO NUEVO DATASET**. Esto crea un nuevo dataset independiente en DashAI con los datos en su estado actual. El nuevo dataset está disponible inmediatamente para experimentos sin afectar el dataset fuente.
+Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARDAR COMO NUEVO DATASET**. Esto crea un nuevo dataset independiente en dashAI con los datos en su estado actual. El nuevo dataset está disponible inmediatamente para experimentos sin afectar el dataset fuente.
 
 ---
 

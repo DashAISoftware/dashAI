@@ -79,6 +79,7 @@ class GaussianNB(TabularClassificationModel, SklearnLikeClassifier, _GaussianNB)
         es="Naïve Bayes Gaussiano",
         pt="Gaussiano Naive Bayes",
         de="Gaussscher Naiver Bayes",
+        zh="高斯朴素贝叶斯",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -97,6 +98,7 @@ class GaussianNB(TabularClassificationModel, SklearnLikeClassifier, _GaussianNB)
             "Probabilistischer Klassifikator basierend auf dem Bayes-Theorem "
             "mit Gauß-Wahrscheinlichkeiten."
         ),
+        zh="基于贝叶斯定理和高斯似然的概率分类器。",
     )
     COLOR: str = "#AB47BC"
     ICON: str = "Functions"

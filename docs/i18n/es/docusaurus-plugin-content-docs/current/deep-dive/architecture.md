@@ -3,11 +3,11 @@ title: Arquitectura
 sidebar_label: Arquitectura
 ---
 
-DashAI es una plataforma modular y extensible para flujos de trabajo de aprendizaje automático. Provee una interfaz web para entrenar modelos, explorar datasets, explicar predicciones y más. Este documento describe el funcionamiento interno de DashAI.
+dashAI es una plataforma modular y extensible para flujos de trabajo de aprendizaje automático. Provee una interfaz web para entrenar modelos, explorar datasets, explicar predicciones y más. Este documento describe el funcionamiento interno de dashAI.
 
 ## Visión General
 
-DashAI sigue una arquitectura cliente-servidor con tres procesos de ejecución principales:
+dashAI sigue una arquitectura cliente-servidor con tres procesos de ejecución principales:
 
 1. **Backend FastAPI** — sirve la API REST en el puerto 8000. En producción también sirve la SPA compilada de React en `/app/`.
 2. **Consumidor Huey** — un trabajador en segundo plano que procesa tareas de larga duración (entrenamiento, exploración, predicción, etc.).

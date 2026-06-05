@@ -317,7 +317,10 @@ async def import_dataset(
     dataset_id : str
         Source-specific dataset identifier (URL-encoded).
     body : ImportRequest
-        Contains the DashAI dataset_id and params.
+        Contains the DashAI dataset_id and params. ``params`` may include
+        ``compute_metadata: bool`` (default True). When False, ``DatasetJob``
+        only computes base metadata (column names, row count, NaN counts) —
+        extended EDA fields (correlations, stats, quality) are omitted.
     registry : ComponentRegistry
         Injected component registry.
     job_queue : BaseJobQueue

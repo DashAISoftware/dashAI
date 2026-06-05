@@ -60,6 +60,10 @@ class R2(RegressionMetric):
             "die tatsächlichen Datenpunkte annähern. Sie gibt einen Hinweis auf "
             "die Güte der Anpassung des Modells."
         ),
+        zh=(
+            "R2 分数（决定系数）衡量回归模型的预测值与实际数据点的吻合程度，"
+            "反映模型的拟合优度。"
+        ),
     )
 
     @staticmethod

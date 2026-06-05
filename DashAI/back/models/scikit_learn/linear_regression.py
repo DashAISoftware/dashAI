@@ -140,12 +140,14 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
         es="Regresión Lineal",
         pt="Regressão Linear",
         de="Lineare Regression",
+        zh="线性回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Ordinary least squares linear regression.",
         es="Regresión lineal de mínimos cuadrados ordinarios.",
         pt="Regressão linear de mínimos quadrados ordinários.",
         de="Lineare Regression der gewöhnlichen kleinsten Quadrate.",
+        zh="普通最小二乘线性回归。",
     )
     COLOR: str = "#3F51B5"
     ICON: str = "ShowChart"

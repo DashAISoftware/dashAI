@@ -159,6 +159,7 @@ class TfIdfLogRegTextClassificationModel(TextClassificationModel):
         es="TF-IDF + Regresión Logística",
         pt="TF-IDF + Regressão Logística",
         de="TF-IDF + Logistische Regression",
+        zh="TF-IDF + 逻辑回归",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -177,6 +178,7 @@ class TfIdfLogRegTextClassificationModel(TextClassificationModel):
             "TF-IDF-Tokenisierer kombiniert mit Logistischer Regression "
             "für Textklassifikation."
         ),
+        zh="TF-IDF 向量化器与逻辑回归结合进行文本分类。",
     )
     COLOR: str = "#00695C"
     ICON: str = "Article"

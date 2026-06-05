@@ -196,12 +196,14 @@ class DecisionTreeClassifier(
         es="Árbol de Decisión",
         pt="Árvore de Decisão",
         de="Entscheidungsbaum",
+        zh="决策树",
     )
     DESCRIPTION: str = MultilingualString(
         en="Decision tree classifier using CART algorithm.",
         es=("Clasificador de árbol de decisión usando el algoritmo CART."),
         pt="Classificador de árvore de decisão usando o algoritmo CART.",
         de="Entscheidungsbaum-Klassifikator mit dem CART-Algorithmus.",
+        zh="使用 CART 算法的决策树分类器。",
     )
     COLOR: str = "#4CAF50"
     ICON: str = "AccountTree"

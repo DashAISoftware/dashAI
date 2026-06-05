@@ -138,12 +138,14 @@ class LogisticRegression(
         es="Regresión Logística",
         pt="Regressão Logística",
         de="Logistische Regression",
+        zh="逻辑回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear model for classification using logistic function.",
         es="Modelo lineal para clasificación usando la función logística.",
         pt="Modelo linear para classificação usando a função logística.",
         de="Lineares Modell zur Klassifikation mit der logistischen Funktion.",
+        zh="使用逻辑函数进行分类的线性模型。",
     )
     COLOR: str = "#64B5F6"
     ICON: str = "TrendingUp"

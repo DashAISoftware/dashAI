@@ -45,6 +45,7 @@ class Bleu(TranslationMetric):
             "misst die Ähnlichkeit zwischen generiertem und Referenztext "
             "basierend auf N-Gramm-Überlappung."
         ),
+        zh="BLEU（双语评估替代）基于 n-gram 重叠度衡量生成文本与参考文本的相似度。",
     )
 
     @staticmethod

@@ -19,7 +19,7 @@ export const OptionsEnum = Object.freeze({
 });
 
 export function ModelsProvider({ children }) {
-  const { t } = useTranslation(["models", "datasets", "common"]);
+  const { t, i18n } = useTranslation(["models", "datasets", "common"]);
 
   const {
     datasets,
@@ -96,7 +96,7 @@ export function ModelsProvider({ children }) {
 
   useEffect(() => {
     fetchTasks();
-  }, [t]);
+  }, [i18n.language]);
 
   const value = {
     selectedModel,

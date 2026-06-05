@@ -57,12 +57,14 @@ class DummyClassifier(
         es="Clasificador Dummy",
         pt="Classificador Fictício",
         de="Dummy-Klassifikator",
+        zh="基准分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Baseline classifier using simple rules for comparison.",
         es=("Clasificador base que utiliza reglas simples para comparación."),
         pt=("Classificador de referência que usa regras simples para comparação."),
         de=("Basis-Klassifikator, der einfache Regeln zum Vergleich verwendet."),
+        zh="使用简单规则进行对比的基准分类器。",
     )
     COLOR: str = "#4DB6AC"
     ICON: str = "Science"

@@ -5,12 +5,12 @@
     "generative": "Interact with AI models to inference and generate new content.",
     "models": "Configure tasks, train and compare models in organized sessions.",
     "pipelines": "Create and manage pipelines.",
-    "plugins": "Browse and manage plugins to extend DashAI's functionality."
+    "plugins": "Browse and manage plugins to extend dashAI's functionality."
   },
   "label": {
     "advanced": "Advanced",
     "getStarted": "Getting Started",
-    "welcomeDashboardAI": "Welcome to DashAI!",
+    "welcomeDashboardAI": "Welcome to dashAI!",
     "welcomeSubtitle": "Select a module to get started",
     "resources": "Resources",
     "community": "Community"

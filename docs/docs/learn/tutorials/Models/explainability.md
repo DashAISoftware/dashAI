@@ -6,7 +6,7 @@ sidebar_label: Explainability
 # Explainability
 
 The Explainability tab lets you attach explainers to a trained model to understand
-how it makes decisions. DashAI supports two types of explainers: **Global Explainers**
+how it makes decisions. dashAI supports two types of explainers: **Global Explainers**
 and **Local Explainers**.
 
 ---
@@ -39,7 +39,7 @@ describe the model's overall decision-making patterns across the training or tes
 
 Click **+ NEW GLOBAL EXPLAINER** to open the explainer configuration flow.
 
-The flow follows the same two-step pattern used throughout DashAI:
+The flow follows the same two-step pattern used throughout dashAI:
 
 **Step 1 — Configure Scope**
 

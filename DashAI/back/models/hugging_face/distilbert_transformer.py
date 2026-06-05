@@ -268,12 +268,14 @@ class DistilBertTransformer(HuggingFaceTextClassificationTransformer):
         es="Transformer DistilBERT",
         pt="Transformer DistilBERT",
         de="DistilBERT Transformer",
+        zh="DistilBERT Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en="Distilled BERT model for efficient text classification.",
         es="Modelo BERT destilado para clasificación de texto eficiente.",
         pt="Modelo BERT destilado para classificação de texto eficiente.",
         de="Destilliertes BERT-Modell für effiziente Textklassifikation.",
+        zh="蒸馏 BERT 模型，用于高效文本分类。",
     )
     COLOR: str = "#96008E"
     ICON: str = "Psychology"

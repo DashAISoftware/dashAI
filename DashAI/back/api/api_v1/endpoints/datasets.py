@@ -1248,18 +1248,22 @@ async def rename_dataset_column(
                 # Update nan entries
                 splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
 
-                # Update general info
-                splits_data["general_info"]["dtypes"][new_name] = splits_data[
-                    "general_info"
-                ]["dtypes"].pop(old_name)
+                # Update general info (absent when compute_metadata=False)
+                if "general_info" in splits_data:
+                    splits_data["general_info"]["dtypes"][new_name] = splits_data[
+                        "general_info"
+                    ]["dtypes"].pop(old_name)
 
                 # Update quality info nan per ratio
-                splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
-                    splits_data["quality_info"]["nan_ratio_per_column"].pop(old_name)
-                )
+                if "quality_info" in splits_data:
+                    splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
+                        splits_data["quality_info"]["nan_ratio_per_column"].pop(
+                            old_name
+                        )
+                    )
 
                 # Update numeric_stats if column is numerical
-                if old_name in splits_data["numeric_stats"]:
+                if old_name in splits_data.get("numeric_stats", {}):
                     splits_data["numeric_stats"][new_name] = splits_data[
                         "numeric_stats"
                     ].pop(old_name)
@@ -1842,6 +1846,7 @@ async def preview_with_types(
         ) as tmp_file:
             content = await file.read()
             tmp_file.write(content)
+            previewed_bytes = len(content)
             tmp_file_path = tmp_file.name
 
         try:
@@ -1937,6 +1942,7 @@ async def preview_with_types(
                             "inferred_types": inferred_types,
                             "preview_row_count": total_images,
                             "types_inferred": False,
+                            "previewed_bytes": previewed_bytes,
                         }
 
                     if matched_file is None:
@@ -1999,6 +2005,7 @@ async def preview_with_types(
                 "inferred_types": inferred_types,
                 "preview_row_count": len(loaded_dataset),
                 "types_inferred": True,
+                "previewed_bytes": previewed_bytes,
             }
 
         finally:

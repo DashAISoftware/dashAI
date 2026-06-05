@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Database Migrations
 
-DashAI uses **Alembic** for database schema migrations. Migrations run automatically on application startup.
+dashAI uses **Alembic** for database schema migrations. Migrations run automatically on application startup.
 
 ## Apply Migrations
 

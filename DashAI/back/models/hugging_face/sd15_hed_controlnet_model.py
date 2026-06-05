@@ -179,6 +179,7 @@ class SD15HEDControlNetModel(BaseControlNetModel):
         es="SD 1.5 ControlNet HED",
         pt="SD 1.5 ControlNet HED",
         de="SD 1.5 HED ControlNet",
+        zh="SD 1.5 HED ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -232,6 +233,11 @@ class SD15HEDControlNetModel(BaseControlNetModel):
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
             "Erfordert controlnet_aux: pip install controlnet_aux."
+        ),
+        zh=(
+            "结合 ControlNet HED 软边缘条件与 Stable Diffusion 1.5，"
+            "实现边缘引导的图像生成，适用于保留结构轮廓的艺术再创作。"
+            "需要 controlnet_aux。"
         ),
     )
 

@@ -29,6 +29,7 @@ class AlbertTransformer(HuggingFaceTextClassificationTransformer):
         es="Transformer ALBERT",
         pt="Transformer ALBERT",
         de="ALBERT Transformer",
+        zh="ALBERT Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -48,6 +49,10 @@ class AlbertTransformer(HuggingFaceTextClassificationTransformer):
             "Parametereffiziente BERT-Variante für englische Textklassifikation. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "参数高效的 BERT 变体，用于英文文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#00838F"

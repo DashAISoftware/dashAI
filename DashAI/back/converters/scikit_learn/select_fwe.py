@@ -30,6 +30,7 @@ class SelectFweSchema(BaseSchema):
                 "seja mantida."
             ),
             de="Der höchste unkorrigierte p-Wert für beizubehaltende Merkmale.",
+            zh="保留特征的最高未校正 p 值。",
         ),
     )  # type: ignore
 
@@ -82,10 +83,15 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
             "Filter: Merkmale gemäß einem Test der familienweisen Fehlerrate (FWE) "
             "auswählen."
         ),
+        zh="过滤器：根据族错误率（FWE）检验选择特征。",
     )
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(
-        en="Select FWE", es="Seleccionar FWE", pt="Seleção por FWE", de="FWE-Auswahl"
+        en="Select FWE",
+        es="Seleccionar FWE",
+        pt="Seleção por FWE",
+        de="FWE-Auswahl",
+        zh="FWE 特征选择",
     )
     IMAGE_PREVIEW = "select_fwe.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

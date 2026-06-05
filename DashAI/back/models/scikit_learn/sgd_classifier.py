@@ -240,12 +240,14 @@ class SGDClassifier(TabularClassificationModel, SklearnLikeClassifier, _SGDClass
         es="Clasificador SGD",
         pt="Classificador SGD",
         de="SGD-Klassifikator",
+        zh="随机梯度下降分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear classifier trained with stochastic gradient descent.",
         es="Clasificador lineal entrenado con descenso de gradiente estocástico.",
         pt="Classificador linear treinado com descida de gradiente estocástico.",
         de="Linearer Klassifikator, trainiert mit stochastischem Gradientenabstieg.",
+        zh="使用随机梯度下降训练的线性分类器。",
     )
     COLOR: str = "#78909C"
     ICON: str = "TrendingDown"

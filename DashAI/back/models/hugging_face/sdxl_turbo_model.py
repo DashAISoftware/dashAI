@@ -290,6 +290,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
         es="SDXL Turbo",
         pt="SDXL Turbo",
         de="SDXL Turbo",
+        zh="SDXL Turbo",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -333,6 +334,10 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
             "Ideal für interaktive und Echtzeit-Anwendungen. Hinweis: verwendet keine "
             "classifier-free guidance (guidance_scale=0 intern). Modell verfügbar unter"
             "https://huggingface.co/stabilityai/sdxl-turbo."
+        ),
+        zh=(
+            "SDXL Turbo 是 Stability AI 的 Stable Diffusion XL 蒸馏版本，"
+            "利用对抗扩散蒸馏（ADD）在单步降噪中生成高质量图像，比标准 SDXL 快 30 倍。"
         ),
     )
 

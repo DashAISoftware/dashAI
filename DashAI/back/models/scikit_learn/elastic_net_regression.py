@@ -212,12 +212,14 @@ class ElasticNetRegression(RegressionModel, SklearnLikeRegressor, _ElasticNet):
         es="Regresión Elastic Net",
         pt="Regressão Elastic Net",
         de="ElasticNet-Regression",
+        zh="弹性网络回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression combining L1 and L2 regularisation.",
         es="Regresión lineal que combina regularización L1 y L2.",
         pt="Regressão linear que combina regularização L1 e L2.",
         de="Lineare Regression mit kombinierter L1- und L2-Regularisierung.",
+        zh="结合 L1 和 L2 正则化的线性回归。",
     )
     COLOR: str = "#26A69A"
     ICON: str = "Hub"

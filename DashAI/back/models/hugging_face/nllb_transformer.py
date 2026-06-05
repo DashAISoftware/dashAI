@@ -132,12 +132,14 @@ class NllbTransformer(TranslationModel):
         es="Transformer NLLB",
         pt="Transformer NLLB",
         de="NLLB Transformer",
+        zh="NLLB Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=("NLLB multilingual model for configurable source-target translation."),
         es=("Modelo multilenguaje NLLB para traduccion configurable origen-destino."),
         pt=("Modelo multilingual NLLB para tradução configurável origem-destino."),
         de=("Mehrsprachiges NLLB-Modell für konfigurierbare Quell-Ziel-Übersetzung."),
+        zh="NLLB 多语言模型，支持可配置的源语言到目标语言翻译。",
     )
     COLOR: str = "#5E35B1"
     ICON: str = "Translate"

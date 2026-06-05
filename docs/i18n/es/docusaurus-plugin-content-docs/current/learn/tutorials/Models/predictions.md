@@ -5,7 +5,7 @@ sidebar_label: Predicciones
 
 # Predicciones
 
-Una vez que un modelo ha sido entrenado, puedes usarlo para generar predicciones sobre nuevos datos. DashAI admite dos modos de predicción: **Predicciones de Dataset** y **Predicciones Manuales**. Ambas se acceden desde la pestaña **PREDICTIONS** dentro de cada tarjeta de modelo.
+Una vez que un modelo ha sido entrenado, puedes usarlo para generar predicciones sobre nuevos datos. dashAI admite dos modos de predicción: **Predicciones de Dataset** y **Predicciones Manuales**. Ambas se acceden desde la pestaña **PREDICTIONS** dentro de cada tarjeta de modelo.
 
 ---
 
@@ -19,7 +19,7 @@ La pestaña está dividida en dos secciones:
 
 | Sección                     | Descripción                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------- |
-| **Dataset Predictions**     | Ejecuta el modelo contra un dataset completo cargado en DashAI.       |
+| **Dataset Predictions**     | Ejecuta el modelo contra un dataset completo cargado en dashAI.       |
 | **Manual Predictions**      | Ingresa una o más filas de datos manualmente y obtén una predicción de inmediato. |
 
 Cada sección muestra una insignia de conteo con el número de predicciones ya creadas, y un botón para añadir una nueva.
@@ -36,7 +36,7 @@ Haz clic en **NEW DATASET PREDICTION** para abrir el modal **Create New Predicti
 
 **Paso 1 — Configurar Entrada**
 
-- **Select a dataset** — Elige entre los datasets disponibles en DashAI. El desplegable muestra el nombre del dataset y el conteo de filas (p. ej., `Dataset_1 (45000 Rows)`).
+- **Select a dataset** — Elige entre los datasets disponibles en dashAI. El desplegable muestra el nombre del dataset y el conteo de filas (p. ej., `Dataset_1 (45000 Rows)`).
 - Una vez seleccionado un dataset, un panel **Prediction Information** muestra:
   - **Input Columns** — las columnas de características que el modelo espera, mostradas como etiquetas.
   - **Target Column** — la columna que el modelo predecirá, resaltada en teal.
@@ -117,7 +117,7 @@ Un botón de descarga (↓) y un botón de eliminación (🗑) están disponible
 - Para **Predicciones de Dataset**, el dataset seleccionado debe tener las mismas columnas de entrada (mismos nombres y tipos) que el dataset con el que se entrenó el modelo. Si los nombres de las columnas difieren, la predicción fallará.
 - Usa **Predicciones Manuales** para validar rápidamente que el comportamiento del modelo tenga sentido intuitivo en ejemplos específicos antes de ejecutarlo sobre un dataset completo.
 - Puedes crear múltiples predicciones del mismo modelo entrenado — cada una se almacena de forma independiente y puede descargarse por separado.
-- Las predicciones persisten en la sesión incluso después de cerrar y volver a abrir DashAI.
+- Las predicciones persisten en la sesión incluso después de cerrar y volver a abrir dashAI.
 
 ## Solución de Problemas
 

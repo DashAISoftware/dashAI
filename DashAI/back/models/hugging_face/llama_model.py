@@ -310,6 +310,7 @@ class LlamaModel(TextToTextGenerationTaskModel):
         es="Modelo Llama",
         pt="Modelo Llama",
         de="Llama-Modell",
+        zh="Llama 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -344,6 +345,12 @@ class LlamaModel(TextToTextGenerationTaskModel):
             "Mehrfachdialog, Schlussfolgerung, Programmierung und allgemeine "
             "Textgenerierung. Verfügbar in den Parametergrößen 1B, 3B und 8B. "
             "Modelle unter https://huggingface.co/bartowski."
+        ),
+        zh=(
+            "Meta Llama 3.x 是 Meta AI 开发的开放指令微调大语言模型系列，"
+            "以 GGUF 格式加载，通过 llama.cpp 库实现高效的 CPU 和 GPU 推理。"
+            "支持多轮对话、推理、编程和通用文本生成。提供 1B、3B 和 8B 参数规格。"
+            "模型托管于 https://huggingface.co/bartowski。"
         ),
     )
 

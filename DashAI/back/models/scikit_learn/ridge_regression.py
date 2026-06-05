@@ -249,12 +249,14 @@ class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
         es="Regresión Ridge",
         pt="Regressão Ridge",
         de="Ridge-Regression",
+        zh="岭回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression with L2 regularization.",
         es="Regresión lineal con regularización L2.",
         pt="Regressão linear com regularização L2.",
         de="Lineare Regression mit L2-Regularisierung.",
+        zh="使用 L2 正则化的线性回归。",
     )
     COLOR: str = "#2196F3"
     ICON: str = "ShowChart"

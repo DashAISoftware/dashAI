@@ -33,6 +33,7 @@ class BaseDataLoader(ConfigObject):
         es="Carga de Archivos",
         pt="Carregamento de Arquivos",
         de="Datei-Upload",
+        zh="文件上传",
     )
     SUPPORTED_EXTENSIONS: frozenset[str] = frozenset()
     SUPPORTS_NATIVE_TYPES: bool = False

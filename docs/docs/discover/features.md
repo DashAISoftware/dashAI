@@ -58,4 +58,4 @@ Automatically search for the best hyperparameter configuration using Optuna or H
 
 ## Plugin System
 
-Extend DashAI with third-party plugins distributed as PyPI packages. Install directly from the UI — new components appear automatically in their respective sections.
+Extend dashAI with third-party plugins distributed as PyPI packages. Install directly from the UI — new components appear automatically in their respective sections.
