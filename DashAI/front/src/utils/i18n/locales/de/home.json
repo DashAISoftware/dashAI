@@ -20,9 +20,9 @@
     "tutorials": "Tutorials",
     "github": "GitHub",
     "website": "Webseite",
-    "forum": "dashAI Forum",
     "discord": "Discord",
-    "twitter": "Twitter / X"
+    "mailingList": "Mailingliste",
+    "directMail": "E-Mail senden"
   },
   "tag": {
     "beginner": "Erste Schritte",

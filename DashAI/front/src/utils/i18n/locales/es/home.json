@@ -20,9 +20,9 @@
     "tutorials": "Tutoriales",
     "github": "GitHub",
     "website": "Sitio web",
-    "forum": "Foro dashAI",
     "discord": "Discord",
-    "twitter": "Twitter / X"
+    "mailingList": "Lista de correo",
+    "directMail": "Escríbenos"
   },
   "tag": {
     "beginner": "Comenzar",
