@@ -44,7 +44,7 @@ exe = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name="DashAI-launcher-cpu",
+    name="dashAI-launcher-cpu",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -60,13 +60,13 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="DashAI-launcher-cpu",
+    name="dashAI-launcher-cpu",
 )
 
 if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
-        name='DashAI.app',
+        name='dashAI.app',
         icon=None,
         bundle_identifier='com.dashai.app',
         info_plist={
