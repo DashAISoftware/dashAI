@@ -98,8 +98,8 @@ def create_app(
         seed_datasets_if_first_run()
 
     logger.debug("5. Initializing FastAPI application.")
-    app = FastAPI(title="DashAI")
-    api_v1 = FastAPI(title="DashAI API v1")
+    app = FastAPI(title="dashAI")
+    api_v1 = FastAPI(title="dashAI API v1")
 
     logger.debug("6. Mounting API router.")
     api_v1.include_router(api_router_v1)

@@ -13,7 +13,7 @@
     "rule": {
       "boolean": "Boolesche Spalten werden immer als kategorisch behandelt.",
       "dateExcluded": "Datum/Uhrzeit-Typen werden von der kategorischen Erkennung ausgeschlossen.",
-      "dateMappedToText": "Werte wurden als Datumsangaben erkannt ({{baseType}} Format), aber DashAI hat noch keinen Datumstyp — die Spalte wird als Text gespeichert und nicht als kategorisch klassifiziert.",
+      "dateMappedToText": "Werte wurden als Datumsangaben erkannt ({{baseType}} Format), aber dashAI hat noch keinen Datumstyp — die Spalte wird als Text gespeichert und nicht als kategorisch klassifiziert.",
       "stringLooksLikeDate": "Werte sehen wie Datumsangaben aus, daher wurde die Spalte als Text/Datum statt kategorisch behalten.",
       "tooManyUnique": "Zu viele unterschiedliche Werte für kategorisch (über dem Schwellenwert).",
       "uniqueRatioAbove": "Eindeutige Werte stellen einen zu großen Anteil der Zeilen dar — als numerisch/text statt kategorisch behandelt.",

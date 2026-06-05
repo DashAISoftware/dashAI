@@ -56,7 +56,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
             "any file format, making it a go-to archive for datasets published "
             "alongside academic papers. Every record gets a DOI, ensuring "
             "long-term citability. Search by keyword and download directly to "
-            "DashAI. "
+            "dashAI. "
             "[https://zenodo.org](https://zenodo.org)"
         ),
         es=(
@@ -67,7 +67,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
             "el archivo de referencia para datasets publicados junto a artículos "
             "académicos. Cada registro obtiene un DOI que garantiza su "
             "citabilidad a largo plazo. Busca por palabra clave y descarga "
-            "directamente a DashAI. "
+            "directamente a dashAI. "
             "[https://zenodo.org](https://zenodo.org)"
         ),
         zh=(
