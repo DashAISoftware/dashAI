@@ -156,8 +156,6 @@ class PairwiseWilcoxonTest(BaseStatisticalTest):
             significant=overall_significant,
             alpha=alpha,
             details={
-                "runs": run_names,
-                "score_arrays": [a.tolist() for a in score_arrays],
                 "posthoc_matrix": posthoc_matrix.to_dict(),
                 "p_adjust": "holm",
             },

@@ -20,28 +20,13 @@ import {
   Alert,
   Divider,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Collapse,
   IconButton,
 } from "@mui/material";
-import {
-  Close as CloseIcon,
-  ExpandMore,
-  ExpandLess,
-} from "@mui/icons-material";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { getFoldMetrics, runStatisticalTest } from "../../api/statisticalTests";
-import { getHypothesisDecisionMessage } from "../../utils/translateHypothesisDecision";
-
-const POSTHOC_TEST_LABELS = {
-  FriedmanTest: "models:label.nemenyiPairwiseComparisons",
-  AnovaTest: "models:label.tukeyPairwiseComparisons",
-  PairwiseWilcoxonTest: "models:label.wilcoxonPairwiseComparisons",
-};
+import SingleTestResult from "./SingleTestResult";
+import PerRunResults from "./PerRunResults";
 
 export default function StatisticalTestsModal({
   test,
@@ -62,7 +47,6 @@ export default function StatisticalTestsModal({
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
   const [perRunResults, setPerRunResults] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
   const resultsRef = useRef(null);
 
   // ----- Test-driven config (all from backend metadata) -----
@@ -99,11 +83,6 @@ export default function StatisticalTestsModal({
     return t("models:label.selectBetweenRuns", { min: minRuns, max: maxRuns });
   }, [minRuns, maxRuns, t]);
 
-  const formatPValue = (p) => {
-    if (p < 0.0001) return p.toExponential(2);
-    return p.toFixed(4);
-  };
-
   // Reset state each time the modal opens for a (possibly new) test
   useEffect(() => {
     if (open) {
@@ -114,7 +93,6 @@ export default function StatisticalTestsModal({
       setAlternative("two-sided");
       setSelectedMetric("");
       setSelectedSplit("test");
-      setShowDetails(false);
     }
   }, [open, testIdentifier]);
 
@@ -175,8 +153,9 @@ export default function StatisticalTestsModal({
 
     try {
       if (isPerRun) {
-        // One independent request per selected run, in parallel.
+        // Fan-out: one independent request per selected run, in parallel.
         // Each request sends a single run, so len(scores) == 1 on the backend
+        // and the per-test contract stays unchanged.
         const perRun = await Promise.all(
           selectedRuns.map(async (run) => {
             const metrics = await getFoldMetrics(run.id, selectedSplit);
@@ -476,302 +455,19 @@ export default function StatisticalTestsModal({
 
         {/* Results */}
         {!isPerRun && results && (
-          <Box
+          <SingleTestResult
             ref={resultsRef}
-            sx={{
-              mt: 3,
-              pt: 2,
-              borderTop: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
-            >
-              <Typography variant="h6">{testTitle}</Typography>
-              <Chip
-                label={
-                  results.significant
-                    ? t("models:label.significant")
-                    : t("models:label.notSignificant")
-                }
-                color={results.significant ? "success" : "default"}
-                size="small"
-              />
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                gap: 3,
-                mb: 2,
-                p: 1.5,
-                bgcolor: "action.hover",
-                borderRadius: 1,
-              }}
-            >
-              {results.statistic !== null && !isNaN(results.statistic) && (
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("models:label.statistic")}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {results.statistic?.toFixed(4)}
-                  </Typography>
-                </Box>
-              )}
-              {results.p_value !== null && !isNaN(results.p_value) && (
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    p-value
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: 600,
-                      color: results.significant
-                        ? "success.main"
-                        : "text.primary",
-                    }}
-                  >
-                    {formatPValue(results.p_value)}
-                  </Typography>
-                </Box>
-              )}
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  α
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {results.alpha}
-                </Typography>
-              </Box>
-            </Box>
-
-            {results.p_value !== null && !isNaN(results.p_value) && (
-              <Alert
-                severity={results.significant ? "success" : "info"}
-                sx={{ mb: 2, whiteSpace: "pre-line" }}
-              >
-                {getHypothesisDecisionMessage(
-                  results.significant,
-                  formatPValue(results.p_value),
-                  results.alpha,
-                  t,
-                ) +
-                  "\n\n" +
-                  results.interpretation}
-              </Alert>
-            )}
-
-            {results.posthoc && results.posthoc.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                  {t(
-                    POSTHOC_TEST_LABELS[results.test_name] ||
-                      "models:label.pairwiseComparisons",
-                  )}
-                </Typography>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t("models:label.model1")}</TableCell>
-                      <TableCell>{t("models:label.model2")}</TableCell>
-                      <TableCell align="right">p-value</TableCell>
-                      <TableCell align="center">
-                        {t("models:label.result")}
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {results.posthoc.map((pair, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{pair.run_1_name || pair.run_1}</TableCell>
-                        <TableCell>{pair.run_2_name || pair.run_2}</TableCell>
-                        <TableCell align="right">
-                          {formatPValue(pair.p_value)}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={
-                              pair.significant
-                                ? t("models:label.significant")
-                                : t("models:label.notSignificant")
-                            }
-                            color={pair.significant ? "success" : "default"}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            )}
-
-            <Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  color: "text.secondary",
-                }}
-                onClick={() => setShowDetails((v) => !v)}
-              >
-                <IconButton size="small">
-                  {showDetails ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-                <Typography variant="caption">
-                  {t("models:label.technicalDetails")}
-                </Typography>
-              </Box>
-              <Collapse in={showDetails}>
-                <Box
-                  sx={{
-                    bgcolor: "background.paper",
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    fontFamily: "monospace",
-                    fontSize: "0.75rem",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    maxHeight: 200,
-                    overflow: "auto",
-                    mt: 1,
-                  }}
-                >
-                  {JSON.stringify(results.details, null, 2)}
-                </Box>
-              </Collapse>
-            </Box>
-          </Box>
+            result={results}
+            title={testTitle}
+          />
         )}
 
-        {/* Per-run results (e.g. normality checked independently per run) */}
         {isPerRun && perRunResults && (
-          <Box
+          <PerRunResults
             ref={resultsRef}
-            sx={{
-              mt: 3,
-              pt: 2,
-              borderTop: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 1.5 }}>
-              {testTitle}
-            </Typography>
-
-            <Alert severity="info" sx={{ mb: 2 }}>
-              {t("models:label.normalityByRunSummary", {
-                normal: perRunResults.filter((r) => !r.resp.significant).length,
-                total: perRunResults.length,
-                alpha,
-                defaultValue:
-                  "{{normal}} of {{total}} runs appear to follow a normal " +
-                  "distribution (α = {{alpha}}).",
-              })}
-            </Alert>
-
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t("models:label.run", "Run")}</TableCell>
-                  <TableCell align="right">
-                    {t("models:label.statistic")}
-                  </TableCell>
-                  <TableCell align="right">p-value</TableCell>
-                  <TableCell align="center">
-                    {t("models:label.result")}
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {perRunResults.map(({ id, name, resp }) => (
-                  <TableRow key={id}>
-                    <TableCell>{name}</TableCell>
-                    <TableCell align="right">
-                      {resp.statistic !== null && !isNaN(resp.statistic)
-                        ? resp.statistic.toFixed(4)
-                        : "—"}
-                    </TableCell>
-                    <TableCell align="right">
-                      {resp.p_value !== null && !isNaN(resp.p_value)
-                        ? formatPValue(resp.p_value)
-                        : "—"}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        // In Shapiro-Wilk, significant === data is NOT normal
-                        label={
-                          resp.significant
-                            ? t("models:label.notNormal", "Not normal")
-                            : t("models:label.normal", "Normal")
-                        }
-                        color={resp.significant ? "warning" : "success"}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            <Box sx={{ mt: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  color: "text.secondary",
-                }}
-                onClick={() => setShowDetails((v) => !v)}
-              >
-                <IconButton size="small">
-                  {showDetails ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-                <Typography variant="caption">
-                  {t("models:label.technicalDetails")}
-                </Typography>
-              </Box>
-              <Collapse in={showDetails}>
-                <Box
-                  sx={{
-                    bgcolor: "background.paper",
-                    p: 1.5,
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    fontFamily: "monospace",
-                    fontSize: "0.75rem",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    maxHeight: 200,
-                    overflow: "auto",
-                    mt: 1,
-                  }}
-                >
-                  {JSON.stringify(
-                    perRunResults.map(({ name, resp }) => ({
-                      run: name,
-                      statistic: resp.statistic,
-                      p_value: resp.p_value,
-                      significant: resp.significant,
-                      alpha: resp.alpha,
-                      details: resp.details,
-                    })),
-                    null,
-                    2,
-                  )}
-                </Box>
-              </Collapse>
-            </Box>
-          </Box>
+            results={perRunResults}
+            title={testTitle}
+          />
         )}
       </DialogContent>
 

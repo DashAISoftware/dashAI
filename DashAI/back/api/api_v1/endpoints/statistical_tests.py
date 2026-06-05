@@ -210,13 +210,18 @@ async def run_statistical_test(
             test_metadata, result.significant, accept_language
         )
 
+        details = {
+            "run_names": request.run_names,
+            "scores": scores,
+        }
+
         return StatisticalTestResponse(
             test_name=request.test_name,
             statistic=result.statistic,
             p_value=result.p_value,
             significant=result.significant,
             alpha=result.alpha,
-            details=result.details,
+            details=details,
             posthoc=posthoc_results,
             interpretation=interpretation,
         )

@@ -110,10 +110,7 @@ class AnovaTest(BaseStatisticalTest):
             p_value=float(p_value),
             significant=significant,
             alpha=alpha,
-            details={
-                "runs": run_names,
-                "score_arrays": [a.tolist() for a in score_arrays],
-            },
+            details={},
         )
 
     def get_schema(self) -> dict:

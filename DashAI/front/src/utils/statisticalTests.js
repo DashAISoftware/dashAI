@@ -19,3 +19,17 @@ export const getHypothesisDecisionMessage = (significant, pValue, alpha, t) => {
     alpha,
   });
 };
+
+/**
+ * Format a p-value for display.
+ * Uses scientific notation for very small values and a fixed 4-decimal
+ * representation otherwise. Returns an em dash for missing/invalid values.
+ *
+ * @param {number|null|undefined} p
+ * @returns {string}
+ */
+export const formatPValue = (p) => {
+  if (p === null || p === undefined || isNaN(p)) return "—";
+  if (p < 0.0001) return p.toExponential(2);
+  return p.toFixed(4);
+};

@@ -116,7 +116,7 @@ class PairedTTest(BaseStatisticalTest):
                 "All values are identical, making the t-test undefined."
             )
 
-        statistic, p_value = ttest_rel(scores1, scores2, alternative=alternative)
+        statistic, p_value, deg = ttest_rel(scores1, scores2, alternative=alternative)
 
         significant = p_value < alpha
 
@@ -126,10 +126,7 @@ class PairedTTest(BaseStatisticalTest):
             significant=significant,
             alpha=alpha,
             details={
-                "run_1": run_names[0],
-                "run_2": run_names[1],
-                "scores_run_1": scores1.tolist(),
-                "scores_run_2": scores2.tolist(),
+                "degrees_of_freedom": deg,
                 "alternative": alternative,
             },
         )

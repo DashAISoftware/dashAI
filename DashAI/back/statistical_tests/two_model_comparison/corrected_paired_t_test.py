@@ -156,13 +156,8 @@ class CorrectedPairedTTest(BaseStatisticalTest):
             significant=significant,
             alpha=alpha,
             details={
-                "run_1": run_names[0],
-                "run_2": run_names[1],
-                "scores_run_1": scores1.tolist(),
-                "scores_run_2": scores2.tolist(),
                 "differences": differences.tolist(),
                 "mean_difference": float(mean_diff),
-                "n_folds": k,
                 "correction_factor": float(correction_factor),
                 "corrected_variance": float(corrected_var),
                 "degrees_of_freedom": k - 1,

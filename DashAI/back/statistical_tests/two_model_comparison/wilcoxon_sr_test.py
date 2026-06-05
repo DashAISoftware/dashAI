@@ -111,10 +111,6 @@ class WilcoxonSRTest(BaseStatisticalTest):
             significant=significant,
             alpha=alpha,
             details={
-                "run_1": run_names[0],
-                "run_2": run_names[1],
-                "scores_run_1": scores1.tolist(),
-                "scores_run_2": scores2.tolist(),
                 "score_differences": score_differences.tolist(),
                 "alternative": alternative,
             },
