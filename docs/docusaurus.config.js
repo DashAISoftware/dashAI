@@ -5,7 +5,7 @@ const { themes: prismThemes } = require("prism-react-renderer");
 const config = {
   title: "DashAI Documentation",
   tagline: "Open-source ML platform for developers",
-  favicon: "img/favicon.ico",
+  favicon: "img/dashai-isotype.svg",
 
   url: "https://DashAISoftware.github.io",
   baseUrl: "/",
@@ -60,7 +60,8 @@ const config = {
       navbar: {
         logo: {
           alt: "DashAI",
-          src: "img/logo.png",
+          src: "img/dashai-logo.svg",
+          height: 20,
         },
         items: [
           {
@@ -96,6 +97,7 @@ const config = {
             sidebarId: "componentsSidebar",
             position: "left",
             label: "Components",
+            className: "navbar-item--components",
           },
           {
             type: "localeDropdown",
