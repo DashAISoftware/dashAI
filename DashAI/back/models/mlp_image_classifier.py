@@ -295,6 +295,7 @@ class MLPImageClassifier(BaseModel):
         es="Clasificador de Imágenes MLP",
         pt="Classificador de Imagens MLP",
         de="MLP-Bildklassifikator",
+        zh="多层感知机图像分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -316,6 +317,10 @@ class MLPImageClassifier(BaseModel):
             "Ein Bildklassifikator auf Basis eines Mehrschichtigen Perzeptrons (MLP), "
             "der Bildpixel abflacht und durch konfigurierbare vollständig verbundene "
             "verdeckte Schichten mit ReLU-Aktivierung zur Klassifikation leitet."
+        ),
+        zh=(
+            "基于多层感知机（MLP）的图像分类器，将图像像素展平后"
+            "通过可配置的全连接隐藏层（ReLU激活）进行分类。"
         ),
     )
     COLOR: str = "#E91E63"

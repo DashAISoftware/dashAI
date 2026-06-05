@@ -144,6 +144,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         es="Clasificador de Texto Bolsa de Palabras",
         pt="Classificador de Texto BOW",
         de="Bag-of-Words-Textklassifikator",
+        zh="词袋文本分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Text classification using bag-of-words features and tabular classifiers.",
@@ -159,6 +160,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
             "Textklassifikation mit Bag-of-Words-Merkmalen und tabellarischen "
             "Klassifikatoren."
         ),
+        zh="使用词袋特征和表格分类器进行文本分类。",
     )
     COLOR: str = "#FF5722"
     ICON: str = "TextFields"

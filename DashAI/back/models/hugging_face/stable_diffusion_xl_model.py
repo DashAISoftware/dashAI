@@ -369,6 +369,7 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
         es="Stable Diffusion XL",
         pt="Stable Diffusion XL",
         de="Stable Diffusion XL",
+        zh="Stable Diffusion XL",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -413,6 +414,10 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
             "Community-Fine-Tune optimiert für fotorealistische Porträts und "
             "Fotografie. Basismodell unter "
             "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0."
+        ),
+        zh=(
+            "Stable Diffusion XL（SDXL）是 Stability AI 的潜扩散模型，"
+            "用于 1024x1024px 高分辨率文本到图像生成，图像质量和排版精度显著提升。"
         ),
     )
 

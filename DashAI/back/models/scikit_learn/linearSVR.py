@@ -317,12 +317,14 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
         es="Regresión de Vectores de Soporte Lineal",
         pt="SVR Linear",
         de="Lineare Stützvektor-Regression",
+        zh="线性支持向量回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Support Vector Regression with linear kernel.",
         es="Regresión de Vectores de Soporte con kernel lineal.",
         pt="Regressão de Vetores de Suporte com kernel linear.",
         de="Stützvektor-Regression mit linearem Kernel.",
+        zh="使用线性核的支持向量回归。",
     )
     COLOR: str = "#2196F3"
     ICON: str = "Timeline"

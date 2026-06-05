@@ -182,6 +182,7 @@ class SVR(RegressionModel, SklearnLikeRegressor, _SVR):
         es="Regresión de Vectores de Soporte",
         pt="Regressão de Vetores de Suporte",
         de="Stützvektor-Regression",
+        zh="支持向量回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Kernel-based SVR that finds a function within an epsilon-insensitive tube.",
@@ -197,6 +198,7 @@ class SVR(RegressionModel, SklearnLikeRegressor, _SVR):
             "Kernelbasierter SVR, der eine Funktion innerhalb eines "
             "Epsilon-unempfindlichen Schlauchs findet."
         ),
+        zh="基于核函数的支持向量回归，在 epsilon 不敏感管内寻找拟合函数。",
     )
     COLOR: str = "#EF5350"
     ICON: str = "ControlPoint"

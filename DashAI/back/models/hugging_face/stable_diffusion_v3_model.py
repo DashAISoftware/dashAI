@@ -424,6 +424,7 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
         es="Stable Diffusion V3",
         pt="Stable Diffusion V3",
         de="Stable Diffusion V3",
+        zh="Stable Diffusion V3",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -464,6 +465,11 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
             "Ein Hugging Face API-Schlüssel ist erforderlich, um auf diese geschützten "
             "Modelle zuzugreifen. Modelle verfügbar unter "
             "https://huggingface.co/stabilityai."
+        ),
+        zh=(
+            "Stable Diffusion 3 和 3.5 是 Stability AI 的新一代文本到图像模型，"
+            "采用多模态扩散 Transformer（MMDiT）架构，提升了提示遵循度和图像质量。"
+            "需要 Hugging Face API 密钥访问受限模型。"
         ),
     )
 

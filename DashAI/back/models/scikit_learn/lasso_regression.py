@@ -182,12 +182,14 @@ class LassoRegression(RegressionModel, SklearnLikeRegressor, _Lasso):
         es="Regresión Lasso",
         pt="Regressão Lasso",
         de="Lasso-Regression",
+        zh="Lasso 回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression with L1 regularisation for feature selection.",
         es="Regresión lineal con regularización L1 para selección de características.",
         pt="Regressão linear com regularização L1 para seleção de características.",
         de="Lineare Regression mit L1-Regularisierung für Merkmalsselektion.",
+        zh="使用 L1 正则化进行特征选择的线性回归。",
     )
     COLOR: str = "#29B6F6"
     ICON: str = "SelectAll"

@@ -349,6 +349,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
         es="PixArt-Sigma",
         pt="PixArt-Sigma",
         de="PixArt-Sigma",
+        zh="PixArt-Sigma",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -399,6 +400,12 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             "als vergleichbare Modelle. Modelle unter "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS und "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS."
+        ),
+        zh=(
+            "PixArt-Sigma 是 PixArt 团队开发的高效"
+            "扩散 Transformer（DiT）文本到图像生成模型，"
+            "使用 T5 文本编码器实现丰富的语义理解，支持最高 2048px 的多分辨率，"
+            "提供 512px 和 1024px 两种规格。"
         ),
     )
 

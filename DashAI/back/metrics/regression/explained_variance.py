@@ -61,6 +61,10 @@ class ExplainedVariance(RegressionMetric):
             "Modell "
             "die Variabilität der Daten erfasst."
         ),
+        zh=(
+            "解释方差衡量回归模型中因变量的方差可由自变量预测的比例，"
+            "反映模型捕获数据变异性的能力。"
+        ),
     )
 
     @staticmethod

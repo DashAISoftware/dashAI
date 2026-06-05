@@ -251,6 +251,7 @@ class GradientBoostingClassifier(
         es="Clasificador Gradient Boosting",
         pt="Classificador por Gradient Boosting",
         de="Gradient-Boosting-Klassifikator",
+        zh="梯度提升分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Ensemble that builds trees sequentially to correct previous errors.",
@@ -266,6 +267,7 @@ class GradientBoostingClassifier(
             "Ensemble, das Bäume sequenziell aufbaut, um vorherige Fehler zu "
             "korrigieren."
         ),
+        zh="顺序构建决策树以纠正前次误差的集成方法。",
     )
     COLOR: str = "#4CAF50"
     ICON: str = "AutoGraph"

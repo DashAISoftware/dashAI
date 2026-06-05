@@ -324,6 +324,7 @@ class CNNImageClassifier(BaseModel):
         en="CNN Image Classifier",
         es="Clasificador de Imágenes CNN",
         pt="Classificador de Imagens CNN",
+        zh="卷积神经网络图像分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -340,6 +341,10 @@ class CNNImageClassifier(BaseModel):
             "Um classificador de imagens baseado em Rede Neural Convolucional "
             "(CNN) que aprende características espaciais por meio de blocos "
             "conv→ReLU→pool configuráveis, dobrando os filtros em cada etapa."
+        ),
+        zh=(
+            "基于卷积神经网络（CNN）的图像分类器，通过可配置的卷积→ReLU→池化块"
+            "学习空间特征，每阶段滤波器数量翻倍。"
         ),
     )
     COLOR: str = "#1565C0"

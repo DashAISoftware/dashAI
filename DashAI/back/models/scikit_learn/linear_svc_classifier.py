@@ -211,6 +211,7 @@ class LinearSVCClassifier(
         es="SVC Lineal",
         pt="Classificador SVC Linear",
         de="Linearer SVC",
+        zh="线性支持向量分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast linear support vector classifier with probability calibration.",
@@ -226,6 +227,7 @@ class LinearSVCClassifier(
             "Schneller linearer Stützvektor-Klassifikator mit "
             "Wahrscheinlichkeitskalibrierung."
         ),
+        zh="带概率校准的快速线性支持向量分类器。",
     )
     COLOR: str = "#FF7043"
     ICON: str = "LinearScale"

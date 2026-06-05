@@ -295,6 +295,7 @@ class QwenModel(TextToTextGenerationTaskModel):
         es="Modelo Qwen",
         pt="Modelo Qwen",
         de="Qwen-Modell",
+        zh="Qwen 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -333,6 +334,11 @@ class QwenModel(TextToTextGenerationTaskModel):
             "Verfügbar in den Parametergrößen 0,5B und 1,5B. Modelle verfügbar unter "
             "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF und "
             "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF."
+        ),
+        zh=(
+            "Qwen 2.5 是阿里云开发的指令微调大语言模型，"
+            "以 GGUF 格式加载，通过 llama.cpp 库实现高效的 CPU 和 GPU 推理。"
+            "支持多轮对话、推理、编程和通用文本生成。提供 0.5B 和 1.5B 参数规格。"
         ),
     )
 

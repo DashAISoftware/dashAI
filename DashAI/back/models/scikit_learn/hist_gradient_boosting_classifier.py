@@ -249,12 +249,14 @@ class HistGradientBoostingClassifier(
         es="Gradient Boosting basado en histogramas",
         pt="Classificador por Gradient Boosting Histogramado",
         de="Histogramm-basiertes Gradient Boosting",
+        zh="基于直方图的梯度提升",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast gradient boosting using histogram-based algorithms.",
         es=("Gradient boosting rápido usando algoritmos basados en histogramas."),
         pt=("Gradient boosting rápido usando algoritmos baseados em histogramas."),
         de=("Schnelles Gradient Boosting mit histogrammbasierten Algorithmen."),
+        zh="使用基于直方图算法的快速梯度提升分类器。",
     )
     COLOR: str = "#9575CD"
     ICON: str = "RocketLaunch"

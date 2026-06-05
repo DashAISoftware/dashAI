@@ -65,8 +65,8 @@ class BaseDatasetSource(ConfigObject, ABC):
     """
 
     TYPE: Final[str] = "DatasetSource"
-    DISPLAY_NAME: Final = MultilingualString(en="", es="")
-    DESCRIPTION: Final = MultilingualString(en="", es="")
+    DISPLAY_NAME: Final = MultilingualString(en="", es="", zh="")
+    DESCRIPTION: Final = MultilingualString(en="", es="", zh="")
 
     @abstractmethod
     def search(

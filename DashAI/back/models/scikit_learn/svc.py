@@ -236,6 +236,7 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         en="Support Vector Machine (SVM)",
         es="Máquina de Vectores de Soporte (SVM)",
         pt="Máquina de Vetores de Suporte (SVM)",
+        zh="支持向量机（SVM）",
         de="Support-Vektor-Maschine (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
@@ -269,6 +270,10 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
             "número de características é grande em relação ao número de amostras e "
             "podem modelar fronteiras de decisão complexas e não lineares mediante "
             "o uso de funções kernel como linear, polinomial e de base radial (RBF)."
+        ),
+        zh=(
+            "支持向量机（SVM）是一种监督学习算法，通过在高维特征空间中"
+            "寻找最优超平面来最大化类间间隔，支持线性、多项式和径向基函数（RBF）核。"
         ),
         de=(
             "Die Support-Vektor-Maschine (SVM) ist ein überwachter "

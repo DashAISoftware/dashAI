@@ -30,6 +30,7 @@ class NormalizerSchema(BaseSchema):
                 "Die Norm, die zur Normalisierung jeder nicht-null Stichprobe verwendet"
                 "wird."
             ),
+            zh="用于归一化每个非零样本的范数。",
         ),
     )  # type: ignore
 
@@ -68,9 +69,14 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
         es="Normaliza muestras individualmente a norma unitaria.",
         pt="Normaliza amostras individualmente para norma unitária.",
         de="Stichproben individuell auf Einheitsnorm normalisieren.",
+        zh="将每个样本单独归一化为单位范数。",
     )
     DISPLAY_NAME = MultilingualString(
-        en="Normalizer", es="Normalizador", pt="Normalizador", de="Normalisierer"
+        en="Normalizer",
+        es="Normalizador",
+        pt="Normalizador",
+        de="Normalisierer",
+        zh="归一化器",
     )
     IMAGE_PREVIEW = "normalizer.png"
 

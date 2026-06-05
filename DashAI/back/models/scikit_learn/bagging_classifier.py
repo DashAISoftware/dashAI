@@ -202,12 +202,14 @@ class BaggingClassifier(
         es="Clasificador Bagging",
         pt="Classificador Bagging",
         de="Bagging-Klassifikator",
+        zh="Bagging 分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Bootstrap aggregating ensemble to reduce variance.",
         es="Conjunto de bootstrap aggregating para reducir la varianza.",
         pt="Conjunto de bootstrap aggregating para reduzir a variância.",
         de="Bagging-Ensemble zur Varianzreduktion.",
+        zh="自助聚合集成方法，用于降低模型方差。",
     )
     COLOR: str = "#26C6DA"
     ICON: str = "Inventory"

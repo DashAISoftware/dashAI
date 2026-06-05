@@ -383,6 +383,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         es="Stable Diffusion V2",
         pt="Stable Diffusion V2",
         de="Stable Diffusion V2",
+        zh="Stable Diffusion V2",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -432,6 +433,11 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "sd2-community (https://huggingface.co/sd2-community) bereitgestellt, einem"
             "Community-Spiegel der originalen Stability AI-Gewichte, die von "
             "https://huggingface.co/stabilityai veraltet und entfernt wurden."
+        ),
+        zh=(
+            "Stable Diffusion 2.x 是 Stability AI 的潜扩散模型，"
+            "用于高分辨率文本到图像生成。"
+            "支持 stable-diffusion-2、stable-diffusion-2-1 等变体。"
         ),
     )
 

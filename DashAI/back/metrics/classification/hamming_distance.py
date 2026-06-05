@@ -63,6 +63,7 @@ class HammingDistance(ClassificationMetric):
             "falsch vorhergesagten Zielgrößen. "
             "Sie ist besonders nützlich für Multi-Label-Klassifikationsaufgaben."
         ),
+        zh="汉明距离衡量预测错误的标签比例，特别适用于多标签分类任务。",
     )
 
     @staticmethod
