@@ -5,6 +5,7 @@ import { t } from "i18next";
 export default function NewItemButton({
   onClick,
   title = t("common:newItem", "New Item"),
+  EndIcon = AddIcon,
 }) {
   return (
     <Button
@@ -24,7 +25,7 @@ export default function NewItemButton({
         "&:hover": { bgcolor: "primary.light" },
       }}
       onClick={onClick}
-      endIcon={<AddIcon />}
+      endIcon={<EndIcon />}
     >
       {title}
     </Button>
