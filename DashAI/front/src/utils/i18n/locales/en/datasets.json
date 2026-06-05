@@ -59,7 +59,7 @@
     "errorCreatingNotebook": "Error creating notebook",
     "errorProcessingExplorer": "Error processing explorer: {{error}}",
     "explorerFailed": "An error occurred during processing the explorer.",
-    "failedToCreateDataset": "Error creating dataset: {{error}}",
+    "failedToCreateDataset": "Could not create the dataset. Please check your file and configuration, then try again.",
     "failedToCreateDatasetFromNotebook": "Failed to create dataset from notebook",
     "failedToCreateExplorer": "Failed to create explorer",
     "failedToDeleteDataset": "Failed to delete dataset",

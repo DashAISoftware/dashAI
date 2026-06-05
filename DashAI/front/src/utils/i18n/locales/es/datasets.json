@@ -59,7 +59,7 @@
     "errorCreatingNotebook": "Error al crear cuaderno",
     "errorProcessingExplorer": "Error al procesar explorador: {{error}}",
     "explorerFailed": "Ocurrió un error durante el procesamiento del explorador.",
-    "failedToCreateDataset": "Error al crear dataset: {{error}}",
+    "failedToCreateDataset": "No se pudo crear el dataset. Revisa tu archivo y la configuracion, y vuelve a intentarlo.",
     "failedToCreateDatasetFromNotebook": "Fallo al crear dataset desde cuaderno",
     "failedToCreateExplorer": "Fallo al crear explorador",
     "failedToDeleteDataset": "Fallo al eliminar dataset",
