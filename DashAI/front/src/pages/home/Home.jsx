@@ -8,9 +8,9 @@ import {
   SchoolOutlined as TutorialsIcon,
   GitHub as GitHubIcon,
   LanguageOutlined as WebsiteIcon,
-  ForumOutlined as ForumIcon,
   ChatBubbleOutlineOutlined as DiscordIcon,
-  AlternateEmailOutlined as TwitterIcon,
+  CampaignOutlined as MailingListIcon,
+  MailOutlineOutlined as MailIcon,
   OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
 import Box from "@mui/material/Box";
@@ -41,9 +41,21 @@ const SIDEBAR_LINKS = {
     { key: "website", href: "https://www.dash-ai.com", Icon: WebsiteIcon },
   ],
   community: [
-    { key: "forum", href: "#", Icon: ForumIcon },
-    { key: "discord", href: "#", Icon: DiscordIcon },
-    { key: "twitter", href: "#", Icon: TwitterIcon },
+    {
+      key: "discord",
+      href: "https://discord.gg/n9y2hEjFng",
+      Icon: DiscordIcon,
+    },
+    {
+      key: "mailingList",
+      href: "https://groups.google.com/g/dashai-updates",
+      Icon: MailingListIcon,
+    },
+    {
+      key: "directMail",
+      href: "mailto:dashai.nocode@gmail.com",
+      Icon: MailIcon,
+    },
   ],
 };
 
@@ -72,7 +84,7 @@ function SidebarSection({ label, links, t, theme }) {
           key={key}
           component="a"
           href={href}
-          target={href !== "#" ? "_blank" : undefined}
+          target={href.startsWith("http") ? "_blank" : undefined}
           rel="noopener noreferrer"
           sx={{
             display: "flex",
