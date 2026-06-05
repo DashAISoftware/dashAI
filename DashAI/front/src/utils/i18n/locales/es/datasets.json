@@ -403,5 +403,42 @@
     "skipButton": "Omitir metadatos",
     "computeButton": "Calcular de todas formas",
     "missingNotice": "No se calcularon los metadatos extendidos para este conjunto de datos. Vuélvelo a subir con los metadatos habilitados para ver esta sección."
+  },
+  "table": {
+    "showHideColumns": "Mostrar / ocultar columnas",
+    "showFilters": "Mostrar filtros",
+    "hideFilters": "Ocultar filtros",
+    "exportTooltipFiltered": "Exportar filas filtradas como CSV",
+    "exportTooltipAll": "Exportar todas las filas como CSV",
+    "exportFiltered": "Exportar filtrado",
+    "export": "Exportar",
+    "hiddenCount": "{{count}} ocultas",
+    "search": "Buscar",
+    "showAll": "Mostrar todas",
+    "hideAll": "Ocultar todas",
+    "noRows": "Sin filas",
+    "doubleClickToRename": "Doble clic para renombrar",
+    "sortedAsc": "Orden ascendente - clic para descendente",
+    "sortedDesc": "Orden descendente - clic para quitar",
+    "clickToSort": "Clic para ordenar ascendente",
+    "nameAlreadyExists": "El nombre ya existe",
+    "failedToRename": "Error al renombrar {{columnName}}",
+    "failedToUpdateEncoder": "Error al actualizar el encoder de {{columnName}}",
+    "failedToExport": "Error al exportar {{datasetName}}",
+    "filterMin": "mín",
+    "filterMax": "máx",
+    "op": {
+      "equals": "Igual a",
+      "between": "Entre",
+      "greaterThan": "Mayor que",
+      "greaterThanOrEqualTo": "Mayor o igual a",
+      "lessThan": "Menor que",
+      "lessThanOrEqualTo": "Menor o igual a",
+      "empty": "Vacío",
+      "notEmpty": "No vacío",
+      "contains": "Contiene",
+      "startsWith": "Empieza con",
+      "endsWith": "Termina con"
+    }
   }
 }

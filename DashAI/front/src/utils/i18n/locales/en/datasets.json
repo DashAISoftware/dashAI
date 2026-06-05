@@ -397,5 +397,42 @@
     "skipButton": "Skip metadata",
     "computeButton": "Compute anyway",
     "missingNotice": "Extended metadata was not computed for this dataset. Re-upload it with metadata enabled to see this section."
+  },
+  "table": {
+    "showHideColumns": "Show / hide columns",
+    "showFilters": "Show filters",
+    "hideFilters": "Hide filters",
+    "exportTooltipFiltered": "Export filtered rows as CSV",
+    "exportTooltipAll": "Export all rows as CSV",
+    "exportFiltered": "Export filtered",
+    "export": "Export",
+    "hiddenCount": "{{count}} hidden",
+    "search": "Search",
+    "showAll": "Show all",
+    "hideAll": "Hide all",
+    "noRows": "No rows",
+    "doubleClickToRename": "Double-click to rename",
+    "sortedAsc": "Sorted ascending - click for descending",
+    "sortedDesc": "Sorted descending - click to clear",
+    "clickToSort": "Click to sort ascending",
+    "nameAlreadyExists": "Name already exists",
+    "failedToRename": "Failed to rename {{columnName}}",
+    "failedToUpdateEncoder": "Failed to update encoder for {{columnName}}",
+    "failedToExport": "Failed to export {{datasetName}}",
+    "filterMin": "min",
+    "filterMax": "max",
+    "op": {
+      "equals": "Equals",
+      "between": "Between",
+      "greaterThan": "Greater Than",
+      "greaterThanOrEqualTo": "Greater Than Or Equal To",
+      "lessThan": "Less Than",
+      "lessThanOrEqualTo": "Less Than Or Equal To",
+      "empty": "Empty",
+      "notEmpty": "Not Empty",
+      "contains": "Contains",
+      "startsWith": "Starts With",
+      "endsWith": "Ends With"
+    }
   }
 }

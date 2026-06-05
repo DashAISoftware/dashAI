@@ -400,5 +400,42 @@
     "skipButton": "Pular metadados",
     "computeButton": "Calcular mesmo assim",
     "missingNotice": "Os metadados estendidos não foram calculados para este conjunto de dados. Envie-o novamente com os metadados ativados para ver esta seção."
+  },
+  "table": {
+    "showHideColumns": "Mostrar / ocultar colunas",
+    "showFilters": "Mostrar filtros",
+    "hideFilters": "Ocultar filtros",
+    "exportTooltipFiltered": "Exportar linhas filtradas como CSV",
+    "exportTooltipAll": "Exportar todas as linhas como CSV",
+    "exportFiltered": "Exportar filtrado",
+    "export": "Exportar",
+    "hiddenCount": "{{count}} ocultas",
+    "search": "Pesquisar",
+    "showAll": "Mostrar todas",
+    "hideAll": "Ocultar todas",
+    "noRows": "Sem linhas",
+    "doubleClickToRename": "Clique duplo para renomear",
+    "sortedAsc": "Ordem crescente - clique para decrescente",
+    "sortedDesc": "Ordem decrescente - clique para remover",
+    "clickToSort": "Clique para ordenar crescente",
+    "nameAlreadyExists": "Nome já existe",
+    "failedToRename": "Falha ao renomear {{columnName}}",
+    "failedToUpdateEncoder": "Falha ao atualizar encoder de {{columnName}}",
+    "failedToExport": "Falha ao exportar {{datasetName}}",
+    "filterMin": "mín",
+    "filterMax": "máx",
+    "op": {
+      "equals": "Igual a",
+      "between": "Entre",
+      "greaterThan": "Maior que",
+      "greaterThanOrEqualTo": "Maior ou igual a",
+      "lessThan": "Menor que",
+      "lessThanOrEqualTo": "Menor ou igual a",
+      "empty": "Vazio",
+      "notEmpty": "Não vazio",
+      "contains": "Contém",
+      "startsWith": "Começa com",
+      "endsWith": "Termina com"
+    }
   }
 }
