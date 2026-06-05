@@ -27,7 +27,16 @@ export default function NewItemButton({
       onClick={onClick}
       endIcon={<EndIcon />}
     >
-      {title}
+      <Box
+        component="span"
+        sx={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {title}
+      </Box>
     </Button>
   );
 }
