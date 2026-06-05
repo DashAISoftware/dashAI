@@ -490,6 +490,7 @@ function RunCard({
         <Box sx={{ mt: 4 }}>
           <RunResults
             run={run}
+            model={model}
             session={session}
             onRefresh={onOperationsRefresh}
             explainerRefreshTrigger={explainerRefreshTrigger}
