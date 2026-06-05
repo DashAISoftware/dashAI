@@ -5,7 +5,7 @@ sidebar_label: Job System
 
 ## Job Queue
 
-The **Job Queue** handles asynchronous execution of long-running tasks. DashAI uses
+The **Job Queue** handles asynchronous execution of long-running tasks. dashAI uses
 **Huey** — a lightweight Python task queue — backed by a SQLite database.
 
 ### Architecture

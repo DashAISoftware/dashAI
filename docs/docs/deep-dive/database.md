@@ -3,7 +3,7 @@ title: Database
 sidebar_label: Database
 ---
 
-DashAI uses **SQLite** as its database (stored at `~/.DashAI/db.sqlite`) with
+dashAI uses **SQLite** as its database (stored at `~/.DashAI/db.sqlite`) with
 **SQLAlchemy** as ORM and **Alembic** for schema migrations.
 
 ## Key Tables

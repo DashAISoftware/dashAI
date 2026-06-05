@@ -6,11 +6,11 @@ sidebar_label: Train a Model
 # Train a Model
 
 This page walks you through creating a session, adding models, configuring
-hyperparameters, and running training in DashAI.
+hyperparameters, and running training in dashAI.
 
 ## Prerequisites
 
-- At least one dataset uploaded to DashAI.
+- At least one dataset uploaded to dashAI.
 - The dataset must have columns compatible with the task you want to run
   (e.g., a categorical output column for classification tasks).
 
@@ -47,7 +47,7 @@ This step has two parts: defining columns and defining the data split.
 
 **Input and Output Columns**
 
-DashAI validates whether the selected dataset is compatible with the chosen task.
+dashAI validates whether the selected dataset is compatible with the chosen task.
 A banner at the top of the step confirms compatibility and shows the required column
 types for inputs and outputs.
 
@@ -67,7 +67,7 @@ in the Dataset Explorer before creating the session.
 
 **Data Split**
 
-Define how DashAI divides the dataset into training, validation, and test subsets.
+Define how dashAI divides the dataset into training, validation, and test subsets.
 Three options are available:
 
 | Option                          | Description                                                                                                                                 |
@@ -121,7 +121,7 @@ and a **?** help icon. Parameters vary by model — for example:
 **Hyperparameter Optimization**
 
 Each numeric hyperparameter has a toggle: **Optimize hyperparameter [name]**.
-When enabled, DashAI will automatically search for the best value for that parameter
+When enabled, dashAI will automatically search for the best value for that parameter
 during training instead of using the fixed value you entered. You can enable
 optimization for any combination of parameters.
 

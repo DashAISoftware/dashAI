@@ -9,7 +9,7 @@ const SECTIONS = [
   {
     id: "discover",
     num: "01",
-    title: "What is DashAI?",
+    title: "What is dashAI?",
     tag: "START HERE",
     chips: ["OVERVIEW", "INSTALL", "USE CASES"],
     desc: "Overview, key features, installation, and use cases — for new users.",
@@ -109,7 +109,7 @@ export default function Home() {
             </span>
             <h1 className="dashai-hero__title">
               Your complete guide to{" "}
-              <span className="dashai-hero__accent">DashAI</span>.
+              <span className="dashai-hero__accent">dashAI</span>.
             </h1>
             <p className="dashai-hero__sub">
               Learn to train, evaluate, and explain machine-learning models — no
@@ -180,7 +180,7 @@ export default function Home() {
               ))}
             </div>
 
-            {/* New to DashAI? — inline strip below the cards */}
+            {/* New to dashAI? — inline strip below the cards */}
             <div className="dashai-startcta">
               <div className="dashai-startcta__icon">
                 <svg
@@ -196,7 +196,7 @@ export default function Home() {
                 </svg>
               </div>
               <div className="dashai-startcta__body">
-                <div className="dashai-startcta__heading">New to DashAI?</div>
+                <div className="dashai-startcta__heading">New to dashAI?</div>
                 <div className="dashai-startcta__text">
                   Follow the Getting Started guide to set up the workbench and
                   train your first model — step by step.

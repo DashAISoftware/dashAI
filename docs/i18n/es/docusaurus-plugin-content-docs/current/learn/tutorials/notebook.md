@@ -5,7 +5,7 @@ sidebar_label: Notebooks
 
 # Notebooks
 
-Un Notebook es el espacio de trabajo interactivo de DashAI para explorar y transformar un dataset.
+Un Notebook es el espacio de trabajo interactivo de dashAI para explorar y transformar un dataset.
 Proporciona un entorno en vivo y temporal donde puedes aplicar herramientas de análisis y
 transformaciones de datos, observar su efecto en los datos en tiempo real, y registrar cada operación
 como una línea de tiempo secuencial — sin modificar el dataset original hasta que decidas guardar.
@@ -137,7 +137,7 @@ La tabla de selector de columnas muestra:
 | -------------- | ---------------------------------------------------------------------------- |
 | Index          | La posición de la columna en el dataset (basada en cero).          |
 | Column Name    | El nombre de la columna.                                                     |
-| Value Type     | El tipo semántico asignado en DashAI (Categorical, Float, Integer).          |
+| Value Type     | El tipo semántico asignado en dashAI (Categorical, Float, Integer).          |
 | Data Type      | El tipo de datos subyacente (float64, string, int64, etc.).                  |
 | Selected Order | El orden en que las columnas seleccionadas se pasarán a la herramienta.      |
 
@@ -291,7 +291,7 @@ La pestaña CONVERT organiza las herramientas en ocho categorías:
 Cuando estés satisfecho con las transformaciones aplicadas en el notebook, haz clic en
 **SAVE AS NEW DATASET** en la esquina superior derecha del notebook.
 
-Esto crea un nuevo dataset independiente en DashAI que contiene los datos en su
+Esto crea un nuevo dataset independiente en dashAI que contiene los datos en su
 estado transformado actual. El nuevo dataset aparece en la lista de **Available Datasets**
 en la barra lateral izquierda y puede usarse para experimentos igual que cualquier dataset cargado.
 

@@ -3,7 +3,7 @@ const { themes: prismThemes } = require("prism-react-renderer");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "DashAI Documentation",
+  title: "dashAI Documentation",
   tagline: "Open-source ML platform for developers",
   favicon: "img/dashai-isotype.svg",
 
@@ -59,7 +59,7 @@ const config = {
     ({
       navbar: {
         logo: {
-          alt: "DashAI",
+          alt: "dashAI",
           src: "img/dashai-logo.svg",
           height: 20,
         },

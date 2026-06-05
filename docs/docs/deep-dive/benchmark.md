@@ -1,18 +1,18 @@
 ---
 title: Comparative Benchmark
-description: Comparison of DashAI with KNIME, Orange, and WEKA on licensing, extensibility, and task coverage.
+description: Comparison of dashAI with KNIME, Orange, and WEKA on licensing, extensibility, and task coverage.
 sidebar_label: Comparative Benchmark
 ---
 
 # Comparative Benchmark
 
-This section compares DashAI with KNIME Analytics Platform, Orange Data Mining, and WEKA — the leading open-source no-code ML platforms with comparable architecture.
+This section compares dashAI with KNIME Analytics Platform, Orange Data Mining, and WEKA — the leading open-source no-code ML platforms with comparable architecture.
 
 ---
 
 ## Methodology
 
-The platform subset was scoped to tools that simultaneously meet three conditions: open-source distribution, code-free operation for the end user, and an extensible catalog architecture by third parties. KNIME Analytics Platform, Orange Data Mining, and WEKA satisfy that criterion alongside DashAI.
+The platform subset was scoped to tools that simultaneously meet three conditions: open-source distribution, code-free operation for the end user, and an extensible catalog architecture by third parties. KNIME Analytics Platform, Orange Data Mining, and WEKA satisfy that criterion alongside dashAI.
 
 The comparison is structured along three measurable dimensions: licensing terms, architectural cost of extension, and paradigmatic coverage of the native catalog. For the extensibility dimension, the reported boilerplate corresponds to reference components implemented on each platform from their official repositories; sources are listed at the end of this page.
 
@@ -20,7 +20,7 @@ The comparison is structured along three measurable dimensions: licensing terms,
 
 ## Licensing
 
-DashAI is distributed under the **MIT** license, allowing use, modification, and distribution without restrictions in commercial or institutional projects.
+dashAI is distributed under the **MIT** license, allowing use, modification, and distribution without restrictions in commercial or institutional projects.
 
 KNIME and Orange use GPLv3; WEKA, GPL. All three licenses include copyleft on distributed derivative works. KNIME also presents additional features — scheduling, governed deployment, RBAC, and the AI Extension — available only through KNIME Business Hub under commercial licensing.
 
@@ -28,7 +28,7 @@ KNIME and Orange use GPLv3; WEKA, GPL. All three licenses include copyleft on di
 
 ## Extensibility
 
-DashAI exposes twelve base classes organized by functional role: `BaseModel`, `BaseMetric`, `BaseTask`, `BaseExplainer`, among others. A new component is implemented by subclassing the corresponding abstraction and declaring its parameters via a Pydantic schema. From the schema, the platform automatically generates the configuration form in the interface, without requiring any frontend code. The component is distributed via PyPI and installed directly from the DashAI interface.
+dashAI exposes twelve base classes organized by functional role: `BaseModel`, `BaseMetric`, `BaseTask`, `BaseExplainer`, among others. A new component is implemented by subclassing the corresponding abstraction and declaring its parameters via a Pydantic schema. From the schema, the platform automatically generates the configuration form in the interface, without requiring any frontend code. The component is distributed via PyPI and installed directly from the dashAI interface.
 
 The resulting boilerplate is approximately **20–40 lines of code** for simple components (metrics, basic classifiers) and **70–110 lines** for models with multiple hyperparameters, where most of the code corresponds to the parameter schema declaration.
 
@@ -40,7 +40,7 @@ For reference, the extension mechanisms of the other evaluated platforms are as 
 
 ### Interface Architecture
 
-DashAI adopts a client-server architecture: a FastAPI server exposes the component catalog, datasets, training jobs, and results; a React frontend consumes that API via HTTP. When a new component is registered, the server exposes its JSON schema and the frontend renders the configuration form without prior knowledge of the component. The server can run on any machine and be accessed from a browser, even from another device on the same local network.
+dashAI adopts a client-server architecture: a FastAPI server exposes the component catalog, datasets, training jobs, and results; a React frontend consumes that API via HTTP. When a new component is registered, the server exposes its JSON schema and the frontend renders the configuration form without prior knowledge of the component. The server can run on any machine and be accessed from a browser, even from another device on the same local network.
 
 KNIME is built on Eclipse RCP, Orange on PyQt, and WEKA on Java Swing. In all three cases the interface and business logic run in the same process; adding a new component also requires modifying the presentation layer.
 
@@ -48,7 +48,7 @@ KNIME is built on Eclipse RCP, Orange on PyQt, and WEKA on Java Swing. In all th
 
 ## Task Coverage
 
-DashAI's native catalog covers four predictive tasks — tabular classification, regression, text classification, and translation — with approximately fifteen models each, along with five LLMs and eleven image generation models, all runnable locally. Hyperparameter optimization integrates Optuna and HyperOpt.
+dashAI's native catalog covers four predictive tasks — tabular classification, regression, text classification, and translation — with approximately fifteen models each, along with five LLMs and eleven image generation models, all runnable locally. Hyperparameter optimization integrates Optuna and HyperOpt.
 
 The interface is available in Spanish and English.
 
@@ -56,7 +56,7 @@ The interface is available in Spanish and English.
 
 ## Comparison Table
 
-| Criterion                       |              KNIME              |       Orange       |         WEKA         |        **DashAI**         |
+| Criterion                       |              KNIME              |       Orange       |         WEKA         |        **dashAI**         |
 | ------------------------------- | :-----------------------------: | :----------------: | :------------------: | :-----------------------: |
 | **Licensing**                   |                                 |                    |                      |                           |
 | License                         |              GPLv3              |       GPLv3        |         GPL          |          **MIT**          |
@@ -85,10 +85,10 @@ The official KNIME path (Java) requires programming `NodeDialog` and `NodeView` 
 :::
 
 :::note Boilerplate per component
-The 150–250 LoC for KNIME correspond to the official Java path. The Python path (Labs) reduces that number but adds its own configuration files (`knime.yml`, `pixi.toml`). In DashAI: ≈20–40 LoC for simple components; ≈70–110 LoC for complex models with multiple hyperparameters, where most of the code is the parameter schema declaration.
+The 150–250 LoC for KNIME correspond to the official Java path. The Python path (Labs) reduces that number but adds its own configuration files (`knime.yml`, `pixi.toml`). In dashAI: ≈20–40 LoC for simple components; ≈70–110 LoC for complex models with multiple hyperparameters, where most of the code is the parameter schema declaration.
 :::
 
-:::note Task overlap (DashAI)
+:::note Task overlap (dashAI)
 9 of the 15 tabular classification models have a regression counterpart (Random Forest, Gradient Boosting, SVM, among others); each task has its own independent implementation and configuration. In WEKA, regression and classification both inherit from `AbstractClassifier` and are differentiated by capability flag.
 :::
 

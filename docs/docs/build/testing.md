@@ -8,7 +8,7 @@ sidebar_position: 4
 
 ## Backend Tests
 
-DashAI uses **pytest** for backend testing.
+dashAI uses **pytest** for backend testing.
 
 ### Run All Tests
 
