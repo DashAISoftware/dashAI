@@ -45,13 +45,14 @@ exe = EXE(
     pyz,
     a.scripts,
     exclude_binaries=True,
-    name="DashAI-launcher-cpu",
+    name="dashAI-launcher-cpu",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
     console=True,
     argv_emulation=True,
+    icon="installer/dashAI.ico",
 )
 
 coll = COLLECT(
@@ -61,14 +62,14 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="DashAI-launcher-cpu",
+    name="dashAI-launcher-cpu",
 )
 
 if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
-        name='DashAI.app',
-        icon=None,
+        name='dashAI.app',
+        icon='installer/dashAI.icns',
         bundle_identifier='com.dashai.app',
         info_plist={
             'NSHighResolutionCapable': 'True',
