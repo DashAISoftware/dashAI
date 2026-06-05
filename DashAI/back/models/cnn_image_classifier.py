@@ -531,6 +531,7 @@ class CNNImageClassifier(BaseModel):
             collate_fn=self._collate_fn_no_labels,
         )
 
+        self.model.to(self.device)
         self.model.eval()
         all_probs = []
         with torch.no_grad():
