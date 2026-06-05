@@ -61,6 +61,7 @@ export default function StatisticalTestsModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
+  const [perRunResults, setPerRunResults] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const resultsRef = useRef(null);
 
@@ -68,6 +69,9 @@ export default function StatisticalTestsModal({
   const minRuns = test?.metadata?.min_runs ?? 2;
   const maxRuns = test?.metadata?.max_runs ?? Infinity;
   const supportsAlternative = test?.metadata?.supports_alternative === true;
+  // Per-run tests (e.g. Shapiro-Wilk normality) run independently on each
+  // selected run instead of producing a single omnibus result.
+  const isPerRun = test?.metadata?.per_run === true;
   const testIdentifier = test?.name; // registry name expected by the API
   const testTitle = test?.metadata?.name || test?.display_name || test?.name;
 
@@ -105,6 +109,7 @@ export default function StatisticalTestsModal({
     if (open) {
       setSelectedRuns([]);
       setResults(null);
+      setPerRunResults(null);
       setError(null);
       setAlternative("two-sided");
       setSelectedMetric("");
@@ -134,7 +139,7 @@ export default function StatisticalTestsModal({
 
   // Smoothly scroll to the results as soon as they appear
   useEffect(() => {
-    if (results && resultsRef.current) {
+    if ((results || perRunResults) && resultsRef.current) {
       requestAnimationFrame(() => {
         resultsRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -142,7 +147,7 @@ export default function StatisticalTestsModal({
         });
       });
     }
-  }, [results]);
+  }, [results, perRunResults]);
 
   const handleRunToggle = (run) => {
     setSelectedRuns((prev) => {
@@ -166,8 +171,34 @@ export default function StatisticalTestsModal({
     setLoading(true);
     setError(null);
     setResults(null);
+    setPerRunResults(null);
 
     try {
+      if (isPerRun) {
+        // One independent request per selected run, in parallel.
+        // Each request sends a single run, so len(scores) == 1 on the backend
+        const perRun = await Promise.all(
+          selectedRuns.map(async (run) => {
+            const metrics = await getFoldMetrics(run.id, selectedSplit);
+            const data = metrics[selectedMetric] || [];
+            const resp = await runStatisticalTest(
+              testIdentifier,
+              selectedMetric,
+              selectedSplit,
+              [run.id],
+              { [run.id.toString()]: run.name },
+              { [run.id]: data },
+              alpha,
+              {},
+            );
+            return { id: run.id, name: run.name, resp };
+          }),
+        );
+        setPerRunResults(perRun);
+        setError(null);
+        return;
+      }
+
       const runNames = {};
       selectedRuns.forEach((run) => {
         runNames[run.id.toString()] = run.name;
@@ -175,11 +206,7 @@ export default function StatisticalTestsModal({
 
       const foldMetricsData = {};
       for (const run of selectedRuns) {
-        const metrics = await getFoldMetrics(
-          run.id,
-          selectedSplit,
-          run.nested ? "outer" : "fold",
-        );
+        const metrics = await getFoldMetrics(run.id, selectedSplit);
         foldMetricsData[run.id] = metrics[selectedMetric] || [];
       }
 
@@ -202,6 +229,7 @@ export default function StatisticalTestsModal({
         err.response?.data?.detail || t("models:error.failedToExecuteTest"),
       );
       setResults(null);
+      setPerRunResults(null);
     } finally {
       setLoading(false);
     }
@@ -447,7 +475,7 @@ export default function StatisticalTestsModal({
         </Box>
 
         {/* Results */}
-        {results && (
+        {!isPerRun && results && (
           <Box
             ref={resultsRef}
             sx={{
@@ -460,7 +488,7 @@ export default function StatisticalTestsModal({
             <Box
               sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
             >
-              <Typography variant="h6">{results.test_name}</Typography>
+              <Typography variant="h6">{testTitle}</Typography>
               <Chip
                 label={
                   results.significant
@@ -617,6 +645,129 @@ export default function StatisticalTestsModal({
                   }}
                 >
                   {JSON.stringify(results.details, null, 2)}
+                </Box>
+              </Collapse>
+            </Box>
+          </Box>
+        )}
+
+        {/* Per-run results (e.g. normality checked independently per run) */}
+        {isPerRun && perRunResults && (
+          <Box
+            ref={resultsRef}
+            sx={{
+              mt: 3,
+              pt: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1.5 }}>
+              {testTitle}
+            </Typography>
+
+            <Alert severity="info" sx={{ mb: 2 }}>
+              {t("models:label.normalityByRunSummary", {
+                normal: perRunResults.filter((r) => !r.resp.significant).length,
+                total: perRunResults.length,
+                alpha,
+                defaultValue:
+                  "{{normal}} of {{total}} runs appear to follow a normal " +
+                  "distribution (α = {{alpha}}).",
+              })}
+            </Alert>
+
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t("models:label.run", "Run")}</TableCell>
+                  <TableCell align="right">
+                    {t("models:label.statistic")}
+                  </TableCell>
+                  <TableCell align="right">p-value</TableCell>
+                  <TableCell align="center">
+                    {t("models:label.result")}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {perRunResults.map(({ id, name, resp }) => (
+                  <TableRow key={id}>
+                    <TableCell>{name}</TableCell>
+                    <TableCell align="right">
+                      {resp.statistic !== null && !isNaN(resp.statistic)
+                        ? resp.statistic.toFixed(4)
+                        : "—"}
+                    </TableCell>
+                    <TableCell align="right">
+                      {resp.p_value !== null && !isNaN(resp.p_value)
+                        ? formatPValue(resp.p_value)
+                        : "—"}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        // In Shapiro-Wilk, significant === data is NOT normal
+                        label={
+                          resp.significant
+                            ? t("models:label.notNormal", "Not normal")
+                            : t("models:label.normal", "Normal")
+                        }
+                        color={resp.significant ? "warning" : "success"}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <Box sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  color: "text.secondary",
+                }}
+                onClick={() => setShowDetails((v) => !v)}
+              >
+                <IconButton size="small">
+                  {showDetails ? <ExpandLess /> : <ExpandMore />}
+                </IconButton>
+                <Typography variant="caption">
+                  {t("models:label.technicalDetails")}
+                </Typography>
+              </Box>
+              <Collapse in={showDetails}>
+                <Box
+                  sx={{
+                    bgcolor: "background.paper",
+                    p: 1.5,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    fontFamily: "monospace",
+                    fontSize: "0.75rem",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    maxHeight: 200,
+                    overflow: "auto",
+                    mt: 1,
+                  }}
+                >
+                  {JSON.stringify(
+                    perRunResults.map(({ name, resp }) => ({
+                      run: name,
+                      statistic: resp.statistic,
+                      p_value: resp.p_value,
+                      significant: resp.significant,
+                      alpha: resp.alpha,
+                      details: resp.details,
+                    })),
+                    null,
+                    2,
+                  )}
                 </Box>
               </Collapse>
             </Box>

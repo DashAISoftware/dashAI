@@ -36,7 +36,8 @@ class ShapiroTest(BaseStatisticalTest):
             "is_parametric": None,
             "posthoc": False,
             "min_runs": 1,
-            "max_runs": 1,
+            "max_runs": None,
+            "per_run": True,
             "supports_alternative": False,
             "interpretation": MultilingualString(
                 en={
