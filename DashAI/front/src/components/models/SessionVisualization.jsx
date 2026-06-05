@@ -65,7 +65,11 @@ export default function SessionVisualization() {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    const onStart = () => setIsDragging(true);
+    const onStart = (e) => {
+      if (e.dataTransfer.types.includes("application/x-dashai-model")) {
+        setIsDragging(true);
+      }
+    };
     const onEnd = () => {
       setIsDragging(false);
       setIsDragOver(false);
@@ -256,10 +260,14 @@ export default function SessionVisualization() {
       <Box
         data-session-viz
         onDragOver={(e) => {
+          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+            return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "copy";
         }}
         onDragEnter={(e) => {
+          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+            return;
           e.preventDefault();
           setIsDragOver(true);
         }}
