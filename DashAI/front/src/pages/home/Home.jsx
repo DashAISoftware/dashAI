@@ -227,7 +227,7 @@ function Home() {
             t={t}
             theme={theme}
           />
-          {/* Version string pinned to bottom */}
+          {/* Copyright pinned to bottom */}
           <Box
             sx={{
               mt: "auto",
@@ -243,7 +243,7 @@ function Home() {
                 lineHeight: 1.9,
               }}
             >
-              v0.9.3-alpha - MIT License
+              {`© ${new Date().getFullYear()} dashAI - MIT License`}
             </Typography>
           </Box>
         </Box>
