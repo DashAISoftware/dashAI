@@ -59,7 +59,7 @@
     "errorCreatingNotebook": "Fehler beim Erstellen des Notizbuchs",
     "errorProcessingExplorer": "Fehler beim Verarbeiten des Explorers: {{error}}",
     "explorerFailed": "Beim Verarbeiten des Explorers ist ein Fehler aufgetreten.",
-    "failedToCreateDataset": "Fehler beim Erstellen des Datensatzes: {{error}}",
+    "failedToCreateDataset": "Der Datensatz konnte nicht erstellt werden. Bitte pruefe deine Datei und Konfiguration und versuche es erneut.",
     "failedToCreateDatasetFromNotebook": "Datensatz konnte nicht aus Notizbuch erstellt werden",
     "failedToCreateExplorer": "Explorer konnte nicht erstellt werden",
     "failedToDeleteDataset": "Datensatz konnte nicht gelöscht werden",
