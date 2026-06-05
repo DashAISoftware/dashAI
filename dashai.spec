@@ -32,6 +32,7 @@ a = Analysis(
             "DashAI/back/user_models/temp_checkpoints",
             "DashAI/back/user_models/temp_checkpoints",
         ),
+        ("DashAI/back/seeds", "DashAI/back/seeds"),
         (f"{SITEPKG}/transformers", "transformers"),
     ] + webview_datas,
     hiddenimports=webview_hiddenimports,

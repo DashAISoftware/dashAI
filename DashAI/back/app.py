@@ -14,6 +14,7 @@ from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.backfill import backfill_dataset_counts
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
+from DashAI.back.seeds import seed_datasets_if_first_run
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ def create_app(
     logging_level: Literal[
         "NOTSET", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"
     ] = "INFO",
+    enable_seeding: bool = True,
 ) -> FastAPI:
     """Create the main application.
 
@@ -50,8 +52,10 @@ def create_app(
     local_path : Union[pathlib.Path, None], optional
         Path where DashAI files will be stored , by default None
     logging_level : Literal['NOTSET', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL']
-        Set the package logging level. It affects all subpackages loggers that does
-        not specifies mannualy the logging level, by default "INFO"
+        Set the package logging level. It affects all subpackages loggers that
+        does not specifies mannualy the logging level, by default "INFO"
+    enable_seeding : bool, optional
+        Seed bundled datasets on first run, by default True
 
     Returns
     -------
@@ -88,6 +92,10 @@ def create_app(
 
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])
+
+    if enable_seeding:
+        logger.debug("4c. Seeding initial datasets if first run.")
+        seed_datasets_if_first_run()
 
     logger.debug("5. Initializing FastAPI application.")
     app = FastAPI(title="DashAI")
