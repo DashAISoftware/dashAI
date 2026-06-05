@@ -122,7 +122,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DashAI-windows-installer
-          path: installer/DashAI-Installer.exe
+          path: installer/dashAI-Installer.exe
           retention-days: 1
 
   # ============================================================
@@ -154,7 +154,7 @@ jobs:
 
       - name: Sign App Bundle (ad-hoc)
         run: |
-          codesign --force --deep --sign - dist/DashAI.app
+          codesign --force --deep --sign - dist/dashAI.app
 
       - name: Create DMG
         run: |
@@ -165,10 +165,10 @@ jobs:
             --window-pos 200 120 \
             --window-size 800 400 \
             --app-drop-link 600 185 \
-            --hide-extension "DashAI.app" \
+            --hide-extension "dashAI.app" \
             --no-internet-enable \
             "DashAI-macos-arm64.dmg" \
-            "dist/DashAI.app"
+            "dist/dashAI.app"
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
@@ -206,7 +206,7 @@ jobs:
 
       - name: Sign App Bundle (ad-hoc)
         run: |
-          codesign --force --deep --sign - dist/DashAI.app
+          codesign --force --deep --sign - dist/dashAI.app
 
       - name: Create DMG
         run: |
@@ -217,10 +217,10 @@ jobs:
             --window-pos 200 120 \
             --window-size 800 400 \
             --app-drop-link 600 185 \
-            --hide-extension "DashAI.app" \
+            --hide-extension "dashAI.app" \
             --no-internet-enable \
             "DashAI-macos-x86_64.dmg" \
-            "dist/DashAI.app"
+            "dist/dashAI.app"
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
@@ -273,7 +273,7 @@ jobs:
         run: |
           V="${{ steps.version.outputs.version }}"
           mkdir -p release
-          cp "artifacts/windows/DashAI-Installer.exe"         "release/DashAI-${V}-x64-windows.exe"
+          cp "artifacts/windows/dashAI-Installer.exe"         "release/DashAI-${V}-x64-windows.exe"
           cp "artifacts/macos-arm64/DashAI-macos-arm64.dmg"   "release/DashAI-${V}-arm-osx.dmg"
           cp "artifacts/macos-x86_64/DashAI-macos-x86_64.dmg" "release/DashAI-${V}-x64-osx.dmg"
 
