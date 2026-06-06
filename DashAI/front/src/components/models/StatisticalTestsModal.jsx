@@ -22,9 +22,13 @@ import {
   Chip,
   IconButton,
 } from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
+import { Close as CloseIcon, Check as CheckIcon } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
-import { getFoldMetrics, runStatisticalTest } from "../../api/statisticalTests";
+import {
+  getFoldMetrics,
+  runStatisticalTest,
+  saveStatisticalTestResults,
+} from "../../api/statisticalTests";
 import SingleTestResult from "./SingleTestResult";
 import PerRunResults from "./PerRunResults";
 
@@ -47,6 +51,8 @@ export default function StatisticalTestsModal({
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
   const [perRunResults, setPerRunResults] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const resultsRef = useRef(null);
 
   // ----- Test-driven config (all from backend metadata) -----
@@ -69,6 +75,14 @@ export default function StatisticalTestsModal({
     [selectedRuns],
   );
 
+  const runNames = useMemo(() => {
+    const names = {};
+    selectedRuns.forEach((run) => {
+      names[run.id.toString()] = run.name;
+    });
+    return names;
+  }, [selectedRuns]);
+
   const countValid =
     selectedRuns.length >= minRuns && selectedRuns.length <= maxRuns;
   const atMax = selectedRuns.length >= maxRuns;
@@ -89,6 +103,7 @@ export default function StatisticalTestsModal({
       setSelectedRuns([]);
       setResults(null);
       setPerRunResults(null);
+      setSaved(false);
       setError(null);
       setAlternative("two-sided");
       setSelectedMetric("");
@@ -150,6 +165,7 @@ export default function StatisticalTestsModal({
     setError(null);
     setResults(null);
     setPerRunResults(null);
+    setSaved(false);
 
     try {
       if (isPerRun) {
@@ -160,16 +176,16 @@ export default function StatisticalTestsModal({
           selectedRuns.map(async (run) => {
             const metrics = await getFoldMetrics(run.id, selectedSplit);
             const data = metrics[selectedMetric] || [];
-            const resp = await runStatisticalTest(
-              testIdentifier,
-              selectedMetric,
-              selectedSplit,
-              [run.id],
-              { [run.id.toString()]: run.name },
-              { [run.id]: data },
+            const resp = await runStatisticalTest({
+              test_name: testIdentifier,
+              metric_name: selectedMetric,
+              metric_split: selectedSplit,
+              run_ids: [run.id],
+              run_names: { [run.id.toString()]: run.name },
+              fold_metrics: { [run.id]: data },
               alpha,
-              {},
-            );
+              params: {},
+            });
             return { id: run.id, name: run.name, resp };
           }),
         );
@@ -178,27 +194,22 @@ export default function StatisticalTestsModal({
         return;
       }
 
-      const runNames = {};
-      selectedRuns.forEach((run) => {
-        runNames[run.id.toString()] = run.name;
-      });
-
       const foldMetricsData = {};
       for (const run of selectedRuns) {
         const metrics = await getFoldMetrics(run.id, selectedSplit);
         foldMetricsData[run.id] = metrics[selectedMetric] || [];
       }
 
-      const testResponse = await runStatisticalTest(
-        testIdentifier,
-        selectedMetric,
-        selectedSplit,
-        runIds,
-        runNames,
-        foldMetricsData,
+      const testResponse = await runStatisticalTest({
+        test_name: testIdentifier,
+        metric_name: selectedMetric,
+        metric_split: selectedSplit,
+        run_ids: runIds,
+        run_names: runNames,
+        fold_metrics: foldMetricsData,
         alpha,
-        supportsAlternative ? { alternative } : {},
-      );
+        params: supportsAlternative ? { alternative } : {},
+      });
 
       setResults(testResponse);
       setError(null);
@@ -211,6 +222,73 @@ export default function StatisticalTestsModal({
       setPerRunResults(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Assemble the payload(s) to persist from the currently displayed result(s).
+  // Single omnibus result -> one item; per-run batch (Shapiro) -> one per run.
+  const buildSavePayload = () => {
+    const modelSessionId = session?.id ?? null;
+
+    if (isPerRun && perRunResults) {
+      return perRunResults.map(({ id, name, resp }) => ({
+        test_name: resp.test_name,
+        metric_name: selectedMetric,
+        metric_split: selectedSplit,
+        alpha: resp.alpha,
+        significant: resp.significant,
+        run_ids: [id],
+        run_names: { [id.toString()]: name },
+        statistic: resp.statistic ?? null,
+        p_value: resp.p_value ?? null,
+        interpretation: resp.interpretation ?? null,
+        params: {},
+        details: resp.details ?? null,
+        posthoc: resp.posthoc ?? null,
+        model_session_id: modelSessionId,
+      }));
+    }
+
+    if (results) {
+      return [
+        {
+          test_name: results.test_name,
+          metric_name: selectedMetric,
+          metric_split: selectedSplit,
+          alpha: results.alpha,
+          significant: results.significant,
+          run_ids: selectedRuns.map((run) => run.id),
+          run_names: runNames,
+          statistic: results.statistic ?? null,
+          p_value: results.p_value ?? null,
+          interpretation: results.interpretation ?? null,
+          params: supportsAlternative ? { alternative } : {},
+          details: results.details ?? null,
+          posthoc: results.posthoc ?? null,
+          model_session_id: modelSessionId,
+        },
+      ];
+    }
+
+    return [];
+  };
+
+  const handleSave = async () => {
+    const payload = buildSavePayload();
+    if (payload.length === 0) return;
+
+    setSaving(true);
+    setError(null);
+    try {
+      await saveStatisticalTestResults(payload);
+      setSaved(true);
+    } catch (err) {
+      console.error("Error saving statistical test:", err);
+      setError(
+        err.response?.data?.detail || t("models:error.failedToSaveTest"),
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -455,11 +533,7 @@ export default function StatisticalTestsModal({
 
         {/* Results */}
         {!isPerRun && results && (
-          <SingleTestResult
-            ref={resultsRef}
-            result={results}
-            title={testTitle}
-          />
+          <SingleTestResult ref={resultsRef} result={results} />
         )}
 
         {isPerRun && perRunResults && (
@@ -467,6 +541,7 @@ export default function StatisticalTestsModal({
             ref={resultsRef}
             results={perRunResults}
             title={testTitle}
+            alpha={alpha}
           />
         )}
       </DialogContent>
@@ -475,6 +550,28 @@ export default function StatisticalTestsModal({
         <Button variant="outlined" onClick={onClose} disabled={loading}>
           {t("common:cancel")}
         </Button>
+
+        {(results || perRunResults) && (
+          <Button
+            variant="outlined"
+            color="success"
+            onClick={handleSave}
+            disabled={saving || saved}
+            startIcon={
+              saving ? (
+                <CircularProgress size={18} />
+              ) : saved ? (
+                <CheckIcon />
+              ) : null
+            }
+            sx={{ minWidth: 160 }}
+          >
+            {saved
+              ? t("models:label.resultSaved", "Guardado")
+              : t("models:label.saveResult", "Guardar resultado")}
+          </Button>
+        )}
+
         <Button
           variant="contained"
           onClick={handleExecuteTest}

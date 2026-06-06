@@ -1,7 +1,7 @@
 import logging
 import pathlib
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     JSON,
@@ -723,3 +723,44 @@ class Explorer(Base):
             self.delivery_time = None
             self.start_time = None
             self.end_time = None
+
+
+class StatisticalTest(Base):
+    __tablename__ = "statistical_test"
+    """
+    A saved statistical test result.
+    """
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    # Shared by every row of a per-run batch (e.g. a Shapiro fan-out) so they
+    # can be listed together. its null for single row results
+    group_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    model_session_id: Mapped[int] = mapped_column(
+        ForeignKey("model_session.id", ondelete="CASCADE")
+    )
+
+    # What was tested
+    test_name: Mapped[str] = mapped_column(String, nullable=False)
+    metric_name: Mapped[str] = mapped_column(String, nullable=False)
+    metric_split: Mapped[str] = mapped_column(String, nullable=False)
+    alpha: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # Participating runs + a name map
+    run_ids: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    run_names: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+
+    # Extra test-specific input params (e.g. {"alternative": "two-sided"})
+    params: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Outcome. statistic / p_value nullable: not every test reports them.
+    statistic: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    p_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    significant: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    interpretation: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    # Free-form JSON payloads keep the table test-agnostic.
+    details: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    posthoc: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+    created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)

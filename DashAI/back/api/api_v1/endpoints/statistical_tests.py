@@ -1,20 +1,28 @@
 """Statistical tests endpoints"""
 
 import logging
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
-from kink import di
+from kink import di, inject
+from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.statistical_tests_params import (
     PairwiseResultResponse,
+    StatisticalTestParams,
+    StatisticalTestRead,
     StatisticalTestRequest,
     StatisticalTestResponse,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.database.models import StatisticalTest
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -234,3 +242,154 @@ async def run_statistical_test(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error running statistical test: {str(e)}",
         ) from e
+
+
+@router.post(
+    "/save",
+    response_model=List[StatisticalTestRead],
+    status_code=status.HTTP_201_CREATED,
+)
+@inject
+async def save_statistical_tests(
+    items: List[StatisticalTestParams],
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Persist one or more statistical test results chosen by the user.
+
+    Accepts a list so a single omnibus result ([1 item]) and a per-run batch
+    (e.g. Shapiro, [N items]) share the same path. When more than one item is
+    sent and no group_id is provided, a shared group_id is generated so the
+    batch can be retrieved together.
+
+    Parameters
+    ----------
+    items : List[StatisticalTestParams]
+        Results to store (assembled client-side from the displayed result).
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory that yields a context-managed SQLAlchemy session.
+
+    Returns
+    -------
+    List[StatisticalTest]
+        The persisted rows.
+
+    Raises
+    ------
+    HTTPException
+        400 if the list is empty, 500 on a database error.
+    """
+    if not items:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No results to save.",
+        )
+
+    with session_factory() as db:
+        try:
+            batch_group_id = uuid4().hex if len(items) > 1 else None
+
+            rows = []
+            for item in items:
+                row = StatisticalTest(**item.model_dump())
+                if batch_group_id and not row.group_id:
+                    row.group_id = batch_group_id
+                db.add(row)
+                rows.append(row)
+
+            db.commit()
+            for row in rows:
+                db.refresh(row)
+            return rows
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get(
+    "/saved",
+    response_model=List[StatisticalTestRead],
+)
+@inject
+async def list_saved_statistical_tests(
+    model_session_id: Optional[int] = None,
+    group_id: Optional[str] = None,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """List saved results, optionally filtered by model session or batch group.
+
+    Parameters
+    ----------
+    model_session_id : Optional[int]
+        If given, only results tied to that model session are returned.
+    group_id : Optional[str]
+        If given, only results of that batch are returned.
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory that yields a context-managed SQLAlchemy session.
+
+    Returns
+    -------
+    List[StatisticalTest]
+        Stored results, most recent first.
+    """
+    with session_factory() as db:
+        try:
+            stmt = select(StatisticalTest)
+            if model_session_id is not None:
+                stmt = stmt.where(StatisticalTest.model_session_id == model_session_id)
+            if group_id is not None:
+                stmt = stmt.where(StatisticalTest.group_id == group_id)
+            stmt = stmt.order_by(StatisticalTest.created_at.desc())
+            return db.scalars(stmt).all()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.delete("/saved/{result_id}")
+@inject
+async def delete_saved_statistical_test(
+    result_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Delete a saved statistical test result by id.
+
+    Parameters
+    ----------
+    result_id : int
+        ID of the stored result to delete.
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory that yields a context-managed SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        {"deleted": True, "id": <result_id>}.
+
+    Raises
+    ------
+    HTTPException
+        404 if not found, 500 on a database error.
+    """
+    with session_factory() as db:
+        try:
+            row = db.get(StatisticalTest, result_id)
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Saved statistical test not found",
+                )
+            db.delete(row)
+            db.commit()
+            return {"deleted": True, "id": result_id}
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e

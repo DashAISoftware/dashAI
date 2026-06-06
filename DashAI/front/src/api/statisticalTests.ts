@@ -1,6 +1,11 @@
 import api from "./api";
 
-import { StatisticalTestResponse } from "../types/statisticalTests";
+import {
+  SavedStatisticalTest,
+  StatisticalTestResponse,
+  StatisticalTestSavePayload,
+  StatisticalTestRequest,
+} from "../types/statisticalTests";
 
 /**
  * Get fold metrics for a specific run and metric split.
@@ -27,30 +32,47 @@ export const getFoldMetrics = async (
  * Run a statistical test on selected runs.
  * Automatically includes post-hoc results when applicable
  * (Nemenyi after significant Friedman, Tukey after significant ANOVA).
- *
- * @param params - Extra test-specific params (e.g. { alternative: "two-sided" })
  */
 export const runStatisticalTest = async (
-  testName: string,
-  metricName: string,
-  metricSplit: string,
-  runIds: number[],
-  runNames: Record<string, string>,
-  foldMetrics: Record<string, number[]>,
-  alpha: number = 0.05,
-  params: Record<string, unknown> = {},
+  request: StatisticalTestRequest,
 ): Promise<StatisticalTestResponse> => {
   const response = await api.post<StatisticalTestResponse>(
     "/v1/statistical-tests/run",
+    request,
+  );
+  return response.data;
+};
+
+/**
+ * Save one or more statistical test results to the database.
+ * Send a single-element array for an omnibus result, or N elements for a
+ * per-run batch (e.g. Shapiro); the backend groups a batch under one group_id.
+ */
+export const saveStatisticalTestResults = async (
+  results: StatisticalTestSavePayload[],
+): Promise<SavedStatisticalTest[]> => {
+  const response = await api.post<SavedStatisticalTest[]>(
+    "/v1/statistical-tests/save",
+    results,
+  );
+  return response.data;
+};
+
+/**
+ * List saved statistical test results, optionally filtered by model session or
+ * batch group.
+ */
+export const getSavedStatisticalTests = async (
+  modelSessionId?: number,
+  groupId?: string,
+): Promise<SavedStatisticalTest[]> => {
+  const response = await api.get<SavedStatisticalTest[]>(
+    "/v1/statistical-tests/saved",
     {
-      test_name: testName,
-      metric_name: metricName,
-      metric_split: metricSplit,
-      run_ids: runIds,
-      run_names: runNames,
-      fold_metrics: foldMetrics,
-      alpha,
-      params,
+      params: {
+        ...(modelSessionId != null ? { model_session_id: modelSessionId } : {}),
+        ...(groupId != null ? { group_id: groupId } : {}),
+      },
     },
   );
   return response.data;
