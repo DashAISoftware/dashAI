@@ -95,7 +95,7 @@ export default function TraceForm({
             type="number"
             value={colorbarSrc?.borderwidth || 0}
             onChange={(e) =>
-              setColorbarField("borderwidth", parseInt(e.target.value))
+              setColorbarField("borderwidth", parseInt(e.target.value, 10) || 0)
             }
             fullWidth
           />
