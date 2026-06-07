@@ -294,12 +294,14 @@ class MLPRegression(RegressionModel):
         es="Perceptrón Multicapa (MLP) Regresión",
         pt="Regressor MLP",
         de="Mehrschichtiges Perzeptron (MLP) Regression",
+        zh="多层感知机（MLP）回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Neural network with multiple hidden layers for regression.",
         es="Red neuronal con múltiples capas ocultas para regresión.",
         pt="Rede neural com múltiplas camadas ocultas para regressão.",
         de="Neuronales Netz mit mehreren verdeckten Schichten für Regression.",
+        zh="具有多个隐藏层的神经网络，用于回归任务。",
     )
     COLOR: str = "#FF7043"
     ICON: str = "Psychology"

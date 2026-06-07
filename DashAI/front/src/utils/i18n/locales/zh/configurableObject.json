@@ -1,0 +1,10 @@
+{
+  "advancedConfiguration": "高级配置",
+  "enterValue": "输入值",
+  "error": {
+    "splitsParams": "各划分比例之和必须等于 1"
+  },
+  "lowerBound": "搜索空间下界",
+  "optimize": "优化超参数 {{name}}",
+  "upperBound": "搜索空间上界"
+}

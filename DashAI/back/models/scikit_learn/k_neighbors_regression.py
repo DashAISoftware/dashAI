@@ -158,6 +158,7 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
         es="Regresión K-Vecinos Más Cercanos",
         pt="Regressor K-Vizinhos",
         de="K-Nächste-Nachbarn-Regression",
+        zh="K 近邻回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Non-parametric regression that predicts by averaging nearest neighbours.",
@@ -172,6 +173,7 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
             "Nicht-parametrische Regression, die durch Mittelung der nächsten "
             "Nachbarn vorhersagt."
         ),
+        zh="通过对最近邻样本取平均进行预测的非参数回归方法。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "ScatterPlot"

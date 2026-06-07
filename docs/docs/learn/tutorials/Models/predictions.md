@@ -6,7 +6,7 @@ sidebar_label: Predictions
 # Predictions
 
 Once a model has been trained, you can use it to generate predictions on new data.
-DashAI supports two prediction modes: **Dataset Predictions** and **Manual Predictions**.
+dashAI supports two prediction modes: **Dataset Predictions** and **Manual Predictions**.
 Both are accessed from the **PREDICTIONS** tab inside each model card.
 
 ---
@@ -21,7 +21,7 @@ The tab is divided into two sections:
 
 | Section                 | Description                                                              |
 | ----------------------- | ------------------------------------------------------------------------ |
-| **Dataset Predictions** | Run the model against an entire dataset loaded in DashAI.                |
+| **Dataset Predictions** | Run the model against an entire dataset loaded in dashAI.                |
 | **Manual Predictions**  | Enter one or more rows of data manually and get an immediate prediction. |
 
 Each section shows a count badge with the number of predictions already created,
@@ -41,7 +41,7 @@ The modal has two steps.
 
 **Step 1 — Configure Input**
 
-- **Select a dataset** — Choose from the datasets available in DashAI. The dropdown
+- **Select a dataset** — Choose from the datasets available in dashAI. The dropdown
   shows the dataset name and row count (e.g., `Dataset_1 (45000 Rows)`).
 - Once a dataset is selected, a **Prediction Information** panel shows:
   - **Input Columns** — the feature columns the model expects, shown as tags.
@@ -138,7 +138,7 @@ A download button (↓) and delete button (🗑) are available on each result ca
   intuitive sense on specific examples before running it on a full dataset.
 - You can create multiple predictions from the same trained model — each is stored
   independently and can be downloaded separately.
-- Predictions persist in the session even after you close and reopen DashAI.
+- Predictions persist in the session even after you close and reopen dashAI.
 
 ## Troubleshooting
 

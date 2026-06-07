@@ -121,8 +121,8 @@ jobs:
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: DashAI-windows-installer
-          path: installer/DashAI-Installer.exe
+          name: dashAI-windows-installer
+          path: installer/dashAI-Installer.exe
           retention-days: 1
 
   # ============================================================
@@ -154,27 +154,27 @@ jobs:
 
       - name: Sign App Bundle (ad-hoc)
         run: |
-          codesign --force --deep --sign - dist/DashAI.app
+          codesign --force --deep --sign - dist/dashAI.app
 
       - name: Create DMG
         run: |
-          rm -f DashAI-macos-arm64.dmg
+          rm -f dashAI-macos-arm64.dmg
 
           create-dmg \
-            --volname "DashAI Installer" \
+            --volname "dashAI Installer" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --app-drop-link 600 185 \
-            --hide-extension "DashAI.app" \
+            --hide-extension "dashAI.app" \
             --no-internet-enable \
-            "DashAI-macos-arm64.dmg" \
-            "dist/DashAI.app"
+            "dashAI-macos-arm64.dmg" \
+            "dist/dashAI.app"
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DashAI-dmg-arm64
-          path: DashAI-macos-arm64.dmg
+          name: dashAI-dmg-arm64
+          path: dashAI-macos-arm64.dmg
           retention-days: 1
 
   # ============================================================
@@ -206,27 +206,27 @@ jobs:
 
       - name: Sign App Bundle (ad-hoc)
         run: |
-          codesign --force --deep --sign - dist/DashAI.app
+          codesign --force --deep --sign - dist/dashAI.app
 
       - name: Create DMG
         run: |
-          rm -f DashAI-macos-x86_64.dmg
+          rm -f dashAI-macos-x86_64.dmg
 
           create-dmg \
-            --volname "DashAI Installer" \
+            --volname "dashAI Installer" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --app-drop-link 600 185 \
-            --hide-extension "DashAI.app" \
+            --hide-extension "dashAI.app" \
             --no-internet-enable \
-            "DashAI-macos-x86_64.dmg" \
-            "dist/DashAI.app"
+            "dashAI-macos-x86_64.dmg" \
+            "dist/dashAI.app"
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DashAI-dmg-x86_64
-          path: DashAI-macos-x86_64.dmg
+          name: dashAI-dmg-x86_64
+          path: dashAI-macos-x86_64.dmg
           retention-days: 1
 
   # ============================================================
@@ -254,28 +254,28 @@ jobs:
       - name: Download Windows installer
         uses: actions/download-artifact@v4
         with:
-          name: DashAI-windows-installer
+          name: dashAI-windows-installer
           path: artifacts/windows
 
       - name: Download macOS ARM64 DMG
         uses: actions/download-artifact@v4
         with:
-          name: DashAI-dmg-arm64
+          name: dashAI-dmg-arm64
           path: artifacts/macos-arm64
 
       - name: Download macOS x86_64 DMG
         uses: actions/download-artifact@v4
         with:
-          name: DashAI-dmg-x86_64
+          name: dashAI-dmg-x86_64
           path: artifacts/macos-x86_64
 
       - name: Stage release files with OS/arch tags
         run: |
           V="${{ steps.version.outputs.version }}"
           mkdir -p release
-          cp "artifacts/windows/DashAI-Installer.exe"         "release/DashAI-${V}-x64-windows.exe"
-          cp "artifacts/macos-arm64/DashAI-macos-arm64.dmg"   "release/DashAI-${V}-arm-osx.dmg"
-          cp "artifacts/macos-x86_64/DashAI-macos-x86_64.dmg" "release/DashAI-${V}-x64-osx.dmg"
+          cp "artifacts/windows/dashAI-Installer.exe"         "release/dashAI-${V}-x64-windows.exe"
+          cp "artifacts/macos-arm64/dashAI-macos-arm64.dmg"   "release/dashAI-${V}-arm-osx.dmg"
+          cp "artifacts/macos-x86_64/dashAI-macos-x86_64.dmg" "release/dashAI-${V}-x64-osx.dmg"
 
       - name: Create / update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -285,6 +285,6 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            release/DashAI-${{ steps.version.outputs.version }}-x64-windows.exe
-            release/DashAI-${{ steps.version.outputs.version }}-arm-osx.dmg
-            release/DashAI-${{ steps.version.outputs.version }}-x64-osx.dmg
+            release/dashAI-${{ steps.version.outputs.version }}-x64-windows.exe
+            release/dashAI-${{ steps.version.outputs.version }}-arm-osx.dmg
+            release/dashAI-${{ steps.version.outputs.version }}-x64-osx.dmg

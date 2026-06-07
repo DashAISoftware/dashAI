@@ -5,7 +5,7 @@ sidebar_label: Upload a Dataset
 
 # Upload a Dataset
 
-This tutorial walks you through uploading a dataset to DashAI.
+This tutorial walks you through uploading a dataset to dashAI.
 Uploading a dataset is always the first step — once loaded, it becomes available
 across the platform for exploration, preprocessing, and model training.
 
@@ -37,7 +37,7 @@ Click the dataloader that matches your file (e.g., **CSVDataLoader**) and click 
 
 :::tip What is a Dataloader?
 A Dataloader is the component that knows how to read a specific file format.
-Selecting the right one ensures DashAI can parse your file correctly and expose
+Selecting the right one ensures dashAI can parse your file correctly and expose
 the appropriate configuration parameters for that format.
 :::
 
@@ -46,14 +46,14 @@ the appropriate configuration parameters for that format.
 Once a dataloader is selected, the file upload button becomes available.
 Click **"Upload a File"** and select your dataset file from your computer.
 
-After the file is processed, DashAI displays a **Dataset Preview** in the center of the screen.
+After the file is processed, dashAI displays a **Dataset Preview** in the center of the screen.
 
 ---
 
 ### 4. Review the Dataset Preview
 
 The preview table shows the first 5 rows of a **100-row sample** taken from your file.
-This sample is used by DashAI to automatically infer the data type of each column.
+This sample is used by dashAI to automatically infer the data type of each column.
 
 ```
 Showing 100 of 1000 rows analyzed for type inference.
@@ -93,7 +93,7 @@ This section appears for all dataloaders.
 
 | Parameter          | Type    | Description                                                                                                                                                                                                                                           |
 | ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Inference Rows** | Integer | The number of rows DashAI reads to automatically determine each column's data type. Default is `1000`. Increasing this value improves inference accuracy on datasets with inconsistent or mixed values, at the cost of a slightly longer upload time. |
+| **Inference Rows** | Integer | The number of rows dashAI reads to automatically determine each column's data type. Default is `1000`. Increasing this value improves inference accuracy on datasets with inconsistent or mixed values, at the cost of a slightly longer upload time. |
 
 #### Dataloader Configuration
 
@@ -105,9 +105,9 @@ The parameters in this section depend on the dataloader you selected.
 
 | Parameter     | Type          | Description                                                                                                                                                                                                    |
 | ------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**      | String        | The name that will identify this dataset inside DashAI. Pre-filled from your filename — you can change it here.                                                                                                |
+| **Name**      | String        | The name that will identify this dataset inside dashAI. Pre-filled from your filename — you can change it here.                                                                                                |
 | **Separator** | Dropdown      | The character that separates column values in your CSV. Default is `,` (comma). Switch to `;` (semicolon) for files exported from Excel in Spanish or European locales, where comma is the decimal separator.  |
-| **Header**    | String        | How DashAI identifies the row containing column names. Default `infer` detects it automatically (usually the first row). Set a row number explicitly if your file has metadata lines before the actual header. |
+| **Header**    | String        | How dashAI identifies the row containing column names. Default `infer` detects it automatically (usually the first row). Set a row number explicitly if your file has metadata lines before the actual header. |
 | **Names**     | String / Null | Optional list of column names to assign manually, overriding the names found in the file. Leave as `Null` to use the file's own column names.                                                                  |
 | **Encoding**  | Dropdown      | Character encoding of your file. Default is `utf-8`. Change to `latin-1` or `ISO-8859-1` if special characters (accents, symbols) appear garbled after upload.                                                 |
 | **NA values** | String / Null | Additional strings to treat as missing values. For example, `"?"` or `"N/A"`. Leave as `Null` to rely on default behavior.                                                                                     |
@@ -118,11 +118,11 @@ The parameters in this section depend on the dataloader you selected.
 
 | Parameter    | Type   | Description                                                                                                                                                                                                          |
 | ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**     | String | The name that will identify this dataset inside DashAI. Pre-filled from your filename — you can change it here.                                                                                                      |
+| **Name**     | String | The name that will identify this dataset inside dashAI. Pre-filled from your filename — you can change it here.                                                                                                      |
 | **Data key** | String | The key inside your JSON file that contains the actual data records. Default is `data`. Change this to match the key in your file where the rows or records are located (e.g., `"results"`, `"records"`, `"items"`). |
 
 :::note JSON structure
-DashAI expects your JSON file to contain a top-level object with a key pointing to
+dashAI expects your JSON file to contain a top-level object with a key pointing to
 an array of records. For example: `{ "data": [ {...}, {...} ] }`.
 If your data is stored under a different key, set **Data key** accordingly.
 :::
@@ -133,7 +133,7 @@ If your data is stored under a different key, set **Data key** accordingly.
 
 | Parameter           | Type           | Description                                                                                                                                                                                                    |
 | ------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | String         | The name that will identify this dataset inside DashAI. Pre-filled from your filename — you can change it here.                                                                                                |
+| **Name**            | String         | The name that will identify this dataset inside dashAI. Pre-filled from your filename — you can change it here.                                                                                                |
 | **Sheet**           | Integer        | The index of the sheet to load, starting at `0`. Default is `0` (the first sheet). Change this if your data is on a different sheet.                                                                           |
 | **Header**          | Integer / Null | The row number (zero-indexed) that contains the column names. Default is `0` (first row). Set to `Null` if your file has no header row.                                                                        |
 | **Use columns**     | String / Null  | Specifies which columns to load. Leave as `Null` to load all columns. You can enter a comma-separated list of column names or indices to load only specific columns.                                           |
@@ -141,7 +141,7 @@ If your data is stored under a different key, set **Data key** accordingly.
 | **N rows**          | Integer / Null | Maximum number of rows to load. Leave as `Null` to load the entire sheet. Useful for testing with a large file.                                                                                                |
 | **Names**           | String / Null  | Optional list of column names to assign manually. Leave as `Null` to use the column names found in the file.                                                                                                   |
 | **NA values**       | String / Null  | Additional strings to treat as missing values. Leave as `Null` to use default behavior.                                                                                                                        |
-| **Keep default NA** | Checkbox       | When enabled (default), DashAI recognizes a built-in list of common NA strings (`"NA"`, `"NaN"`, `"null"`, empty strings, etc.) as missing values automatically. Disable only if you need full manual control. |
+| **Keep default NA** | Checkbox       | When enabled (default), dashAI recognizes a built-in list of common NA strings (`"NA"`, `"NaN"`, `"null"`, empty strings, etc.) as missing values automatically. Disable only if you need full manual control. |
 | **True values**     | String / Null  | Strings to interpret as boolean `True` (e.g., `"yes"`, `"Y"`, `"1"`). Leave as `Null` if your data has no boolean columns encoded as text.                                                                     |
 | **False values**    | String / Null  | Strings to interpret as boolean `False` (e.g., `"no"`, `"N"`, `"0"`). Leave as `Null` if not applicable.                                                                                                       |
 
@@ -159,7 +159,7 @@ defined strings will be treated as missing.
 Once you have reviewed the column types and configured the parameters, click **"UPLOAD"**
 to finalize the process.
 
-DashAI will process the file and add it to the **Available Datasets** list in the left
+dashAI will process the file and add it to the **Available Datasets** list in the left
 sidebar, showing the total number of rows and columns.
 
 Click **"BACK"** at any point to return to the previous step without losing your configuration.

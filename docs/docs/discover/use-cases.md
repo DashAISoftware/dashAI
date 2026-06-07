@@ -8,7 +8,7 @@ sidebar_position: 4
 
 ## In Teaching
 
-DashAI enables instructors of non-computational courses (general education, bridge courses, diploma programs) to incorporate ML as a practical tool:
+dashAI enables instructors of non-computational courses (general education, bridge courses, diploma programs) to incorporate ML as a practical tool:
 
 - Students experiment with real data without any programming barrier
 - Every action produces visible evidence — charts, metrics, and comparisons
@@ -16,7 +16,7 @@ DashAI enables instructors of non-computational courses (general education, brid
 - Instructors can design activities where the goal is to compare and justify decisions, not implement algorithms
 
 :::info
-DashAI is being adopted in university courses in Chile as a support tool for applied ML teaching.
+dashAI is being adopted in university courses in Chile as a support tool for applied ML teaching.
 :::
 
 ## In Applied Research

@@ -42,6 +42,7 @@ export default function HubImportPanel({
   formHasErrors = false,
   onCancel,
   onImported,
+  computeMetadata = true,
 }) {
   const { t } = useTranslation(["hub", "common", "datasets"]);
   const { enqueueSnackbar } = useSnackbar();
@@ -146,13 +147,15 @@ export default function HubImportPanel({
       ? Math.min(Math.max(2, rows), 500)
       : 100;
 
+    // eslint-disable-next-line no-unused-vars
+    const { compute_metadata, ...previewFormValues } = formValues || {};
     previewDebounceRef.current = setTimeout(() => {
       previewHubDataset(
         sourceName,
         dataset.id,
         effectiveRows,
         selectedValue?.name,
-        formValues,
+        previewFormValues,
         datafile?.id,
         selectedFile ?? undefined,
       )
@@ -181,7 +184,15 @@ export default function HubImportPanel({
     selectedValue?.name,
     datafile?.id,
     selectedFile,
-    JSON.stringify(formValues || {}),
+    // Exclude compute_metadata from the dep — it doesn't affect the preview
+    // and toggling it must not re-fetch.
+    JSON.stringify(
+      (() => {
+        // eslint-disable-next-line no-unused-vars
+        const { compute_metadata, ...rest } = formValues || {};
+        return rest;
+      })(),
+    ),
   ]);
 
   const handleColumnRename = useCallback((oldName, newName) => {
@@ -193,11 +204,14 @@ export default function HubImportPanel({
     setImporting(true);
     try {
       const created = await createDataset(name.trim());
+      // eslint-disable-next-line no-unused-vars
+      const { compute_metadata, ...dataloaderParams } = formValues || {};
       const importParams = {
         dataloader: selectedValue.name,
-        dataloader_params: formValues,
+        dataloader_params: dataloaderParams,
         inferred_types: columnTypes,
         column_renames: columnRenames,
+        compute_metadata: computeMetadata,
       };
       if (datafile) {
         importParams.datafile_id = datafile.id;

@@ -223,6 +223,7 @@ class DecisionTreeRegression(
         es="Regresión Árbol de Decisión",
         pt="Regressão Árvore de Decisão",
         de="Entscheidungsbaum-Regression",
+        zh="决策树回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Interpretable tree-based regressor that partitions the feature space.",
@@ -238,6 +239,7 @@ class DecisionTreeRegression(
             "Interpretierbarer baumbasierter Regressor, der den Merkmalsraum "
             "partitioniert."
         ),
+        zh="可解释的决策树回归器，对特征空间进行划分。",
     )
     COLOR: str = "#66BB6A"
     ICON: str = "AccountTree"

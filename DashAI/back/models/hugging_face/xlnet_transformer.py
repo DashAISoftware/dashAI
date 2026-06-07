@@ -29,6 +29,7 @@ class XlnetTransformer(HuggingFaceTextClassificationTransformer):
         es="Transformer XLNet",
         pt="Transformer XLNet",
         de="XLNet Transformer",
+        zh="XLNet Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -47,6 +48,10 @@ class XlnetTransformer(HuggingFaceTextClassificationTransformer):
             "Autoregressives XLNet-Modell für englische Textklassifikation. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "自回归 XLNet 模型，用于英文文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#37474F"

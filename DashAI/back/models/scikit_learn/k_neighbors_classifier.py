@@ -111,6 +111,7 @@ class KNeighborsClassifier(
         es="K-Vecinos más Cercanos (KNN)",
         pt="Classificador K-Vizinhos",
         de="K-Nächste-Nachbarn (KNN)",
+        zh="K 近邻分类器（KNN）",
     )
     DESCRIPTION: str = MultilingualString(
         en="Classification based on k nearest training examples in feature space.",
@@ -126,6 +127,7 @@ class KNeighborsClassifier(
             "Klassifikation basierend auf den k nächsten Trainingsbeispielen im "
             "Merkmalsraum."
         ),
+        zh="基于特征空间中 k 个最近训练样本的分类方法。",
     )
     COLOR: str = "#FFD54F"
     ICON: str = "ScatterPlot"

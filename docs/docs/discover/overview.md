@@ -1,14 +1,14 @@
 ---
-title: What is DashAI?
+title: What is dashAI?
 sidebar_label: Overview
 sidebar_position: 1
 ---
 
-# What is DashAI?
+# What is dashAI?
 
-DashAI is an innovative open-source platform that empowers users to explore a wide range of Machine Learning (ML) algorithms through an interactive graphical interface — no programming required.
+dashAI is an innovative open-source platform that empowers users to explore a wide range of Machine Learning (ML) algorithms through an interactive graphical interface — no programming required.
 
-The platform unifies interaction with ML models across different application domains, including tabular data analysis and natural language processing. DashAI aims to democratize ML adoption, making it more accessible for organizations and educational institutions.
+The platform unifies interaction with ML models across different application domains, including tabular data analysis and natural language processing. dashAI aims to democratize ML adoption, making it more accessible for organizations and educational institutions.
 
 ## Key Capabilities
 
@@ -20,6 +20,6 @@ The platform unifies interaction with ML models across different application dom
 
 ## Open Source
 
-DashAI is hosted on [GitHub](https://github.com/DashAISoftware/DashAI) under the MIT license. Contributions from the community are welcome — whether adding new ML components, improving the interface, or extending documentation.
+dashAI is hosted on [GitHub](https://github.com/DashAISoftware/DashAI) under the MIT license. Contributions from the community are welcome — whether adding new ML components, improving the interface, or extending documentation.
 
 Sponsored by CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.

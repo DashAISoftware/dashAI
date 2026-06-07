@@ -25,13 +25,13 @@ A task defines the type of machine learning problem. It determines which models 
 
 ### Sessions
 
-A session ties together a dataset, a task configuration (input/output columns, data split), and all the models trained within that context. Sessions are persistent — closing DashAI and reopening it returns you to the same state.
+A session ties together a dataset, a task configuration (input/output columns, data split), and all the models trained within that context. Sessions are persistent — closing dashAI and reopening it returns you to the same state.
 
 The left sidebar organizes sessions by task type. Each session entry shows its name and the dataset it was created from. You can maintain multiple sessions for the same dataset and task to explore different column configurations or split strategies.
 
 ### Data Splits
 
-DashAI supports three split strategies:
+dashAI supports three split strategies:
 
 | Strategy                  | When to use                                                              |
 | ------------------------- | ------------------------------------------------------------------------ |
@@ -97,7 +97,7 @@ Set a fixed value for each parameter. This is the default mode — suitable when
 
 ### Hyperparameter Optimization
 
-Each numeric parameter has an **Optimize** toggle. Enabling it tells DashAI to automatically search for the best value for that parameter instead of using the fixed value. You can enable optimization on any subset of parameters simultaneously.
+Each numeric parameter has an **Optimize** toggle. Enabling it tells dashAI to automatically search for the best value for that parameter instead of using the fixed value. You can enable optimization on any subset of parameters simultaneously.
 
 Two optimizers are available:
 
@@ -106,7 +106,7 @@ Two optimizers are available:
 | **OptunaOptimizer**   | Bayesian optimization using Optuna's TPE sampler. Efficient — focuses trials on promising regions of the parameter space |
 | **HyperOptOptimizer** | Tree-structured Parzen Estimator (TPE) via HyperOpt. Similar strategy to Optuna                                          |
 
-During optimization, DashAI records per-trial metrics and generates visualization plots:
+During optimization, dashAI records per-trial metrics and generates visualization plots:
 
 - **History plot** — metric value across all trials
 - **Parallel coordinates** — relationship between parameter combinations and metric values
@@ -196,7 +196,7 @@ After training, each model can generate predictions in two modes, accessed from 
 
 ### Dataset Predictions
 
-Run the model against an entire dataset loaded in DashAI. Useful for batch scoring — applying the model to a validation set, a holdout set, or new incoming data.
+Run the model against an entire dataset loaded in dashAI. Useful for batch scoring — applying the model to a validation set, a holdout set, or new incoming data.
 
 The modal shows a preview of the selected dataset with its input columns and target column highlighted, so you can verify compatibility before submitting. Results are available as an inline preview (first 100 rows) and as a full CSV download.
 

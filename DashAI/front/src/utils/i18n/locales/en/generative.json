@@ -1,7 +1,8 @@
 {
   "button": {
     "backToTaskSelection": "Back to Task Selection",
-    "createSession": "Create a session"
+    "createSession": "Create a session",
+    "generativeHub": "Generative Hub"
   },
   "error": {
     "failedToCreateSession": "Failed to create session",

@@ -167,6 +167,7 @@ def _make_image_dataset(x_dataset, y_dataset=None, image_size=32):
             self.y_dataset = y_ds
             self.transforms = transforms.Compose(
                 [
+                    transforms.Lambda(lambda img: img.convert("RGB")),
                     transforms.Resize((img_size, img_size)),
                     transforms.ToTensor(),
                 ]
@@ -180,7 +181,11 @@ def _make_image_dataset(x_dataset, y_dataset=None, image_size=32):
             self.label_to_idx = {}
             self.idx_to_label = {}
             if self.label_col_name:
-                unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
+                y_cat = (getattr(y_ds, "types", {}) or {}).get(self.label_col_name)
+                if y_cat is not None and getattr(y_cat, "categories", None):
+                    unique_labels = sorted(y_cat.categories)
+                else:
+                    unique_labels = sorted(set(self.y_dataset[self.label_col_name]))
                 self.label_to_idx = {
                     label: idx for idx, label in enumerate(unique_labels)
                 }
@@ -260,6 +265,7 @@ class LeNet5ImageClassifier(BaseModel):
         en="LeNet-5",
         es="LeNet-5",
         pt="LeNet-5",
+        zh="LeNet-5",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -276,6 +282,10 @@ class LeNet5ImageClassifier(BaseModel):
             "A arquitetura CNN original (LeCun et al., 1998). Dois blocos "
             "conv→tanh→pool seguidos de três camadas completamente conectadas. "
             "Ideal para imagens pequenas e uso educacional."
+        ),
+        zh=(
+            "原始卷积神经网络架构（LeCun 等，1998）。两个卷积→tanh→池化块，"
+            "后接三个全连接层。适用于小图像和教学用途。"
         ),
     )
     COLOR: str = "#7B1FA2"
@@ -337,7 +347,7 @@ class LeNet5ImageClassifier(BaseModel):
             return dataset
 
         col_name = dataset.column_names[0]
-        encoded = [self.label_to_idx.get(lbl, lbl) for lbl in dataset[col_name]]
+        encoded = [self.label_to_idx.get(lbl, -1) for lbl in dataset[col_name]]
         return DashAIDataset(pa.table({col_name: encoded}))
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
@@ -450,6 +460,7 @@ class LeNet5ImageClassifier(BaseModel):
             collate_fn=self._collate_fn_no_labels,
         )
 
+        self.model.to(self.device)
         self.model.eval()
         all_probs = []
         with torch.no_grad():

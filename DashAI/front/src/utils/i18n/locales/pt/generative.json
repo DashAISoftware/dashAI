@@ -1,7 +1,8 @@
 {
   "button": {
     "backToTaskSelection": "Voltar para Seleção de Tarefa",
-    "createSession": "Criar uma sessão"
+    "createSession": "Criar uma sessão",
+    "generativeHub": "Central Generativa"
   },
   "error": {
     "failedToCreateSession": "Erro ao criar a sessão",

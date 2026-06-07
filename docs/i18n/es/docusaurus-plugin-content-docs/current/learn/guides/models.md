@@ -25,13 +25,13 @@ Una tarea define el tipo de problema de aprendizaje automático. Determina qué 
 
 ### Sesiones
 
-Una sesión une un dataset, una configuración de tarea (columnas de entrada/salida, división de datos) y todos los modelos entrenados dentro de ese contexto. Las sesiones son persistentes — cerrar DashAI y volver a abrirlo te regresa al mismo estado.
+Una sesión une un dataset, una configuración de tarea (columnas de entrada/salida, división de datos) y todos los modelos entrenados dentro de ese contexto. Las sesiones son persistentes — cerrar dashAI y volver a abrirlo te regresa al mismo estado.
 
 La barra lateral izquierda organiza las sesiones por tipo de tarea. Cada entrada de sesión muestra su nombre y el dataset desde el que fue creada. Puedes mantener múltiples sesiones para el mismo dataset y tarea para explorar diferentes configuraciones de columnas o estrategias de división.
 
 ### Divisiones de Datos
 
-DashAI admite tres estrategias de división:
+dashAI admite tres estrategias de división:
 
 | Estrategia                       | Cuándo usarla                                                                   |
 | -------------------------------- | ------------------------------------------------------------------------------- |
@@ -97,7 +97,7 @@ Establece un valor fijo para cada parámetro. Este es el modo predeterminado —
 
 ### Optimización de Hiperparámetros
 
-Cada parámetro numérico tiene un interruptor **Optimizar**. Habilitarlo le indica a DashAI que busque automáticamente el mejor valor para ese parámetro en lugar de usar el valor fijo. Puedes habilitar la optimización en cualquier subconjunto de parámetros simultáneamente.
+Cada parámetro numérico tiene un interruptor **Optimizar**. Habilitarlo le indica a dashAI que busque automáticamente el mejor valor para ese parámetro en lugar de usar el valor fijo. Puedes habilitar la optimización en cualquier subconjunto de parámetros simultáneamente.
 
 Hay dos optimizadores disponibles:
 
@@ -106,7 +106,7 @@ Hay dos optimizadores disponibles:
 | **OptunaOptimizer**   | Optimización bayesiana usando el muestreador TPE de Optuna. Eficiente — enfoca los ensayos en regiones prometedoras del espacio de parámetros |
 | **HyperOptOptimizer** | Estimador de Parzen estructurado en árbol (TPE) a través de HyperOpt. Estrategia similar a Optuna                               |
 
-Durante la optimización, DashAI registra métricas por ensayo y genera gráficos de visualización:
+Durante la optimización, dashAI registra métricas por ensayo y genera gráficos de visualización:
 
 - **Gráfico de historial** — valor de la métrica a través de todos los ensayos
 - **Coordenadas paralelas** — relación entre combinaciones de parámetros y valores de métricas
@@ -196,7 +196,7 @@ Después del entrenamiento, cada modelo puede generar predicciones en dos modos,
 
 ### Predicciones sobre Dataset
 
-Ejecuta el modelo contra un dataset completo cargado en DashAI. Útil para puntuación por lotes — aplicar el modelo a un conjunto de validación, un conjunto de retención o nuevos datos entrantes.
+Ejecuta el modelo contra un dataset completo cargado en dashAI. Útil para puntuación por lotes — aplicar el modelo a un conjunto de validación, un conjunto de retención o nuevos datos entrantes.
 
 El modal muestra una vista previa del dataset seleccionado con sus columnas de entrada y columna objetivo resaltadas, para que puedas verificar la compatibilidad antes de enviar. Los resultados están disponibles como vista previa en línea (primeras 100 filas) y como descarga CSV completa.
 

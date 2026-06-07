@@ -207,6 +207,7 @@ class ExtraTreesClassifier(
         es="Clasificador Extra-Trees",
         pt="Classificador de Árvores Extras",
         de="Extra-Trees-Klassifikator",
+        zh="极端随机树分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -225,6 +226,7 @@ class ExtraTreesClassifier(
             "Ensemble vollständig zufälliger Entscheidungsbäume für schnelle "
             "Klassifikation mit geringer Varianz."
         ),
+        zh="完全随机决策树集成，用于快速低方差分类。",
     )
     COLOR: str = "#66BB6A"
     ICON: str = "Park"

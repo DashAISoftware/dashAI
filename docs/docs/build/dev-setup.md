@@ -82,7 +82,7 @@ yarn lint
 
 ## Pre-commit Hooks
 
-DashAI uses pre-commit hooks for consistent code quality:
+dashAI uses pre-commit hooks for consistent code quality:
 
 ```bash
 # Run all hooks manually

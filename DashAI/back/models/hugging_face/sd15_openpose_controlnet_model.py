@@ -173,6 +173,7 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
         es="SD 1.5 ControlNet OpenPose",
         pt="SD 1.5 ControlNet OpenPose",
         de="SD 1.5 OpenPose ControlNet",
+        zh="SD 1.5 OpenPose ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -224,6 +225,11 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
             "Erfordert die controlnet_aux-Bibliothek: pip install controlnet_aux."
+        ),
+        zh=(
+            "结合 ControlNet 姿态条件与 Stable Diffusion 1.5，"
+            "实现姿态引导的图像生成，适用于特定人体姿态的图像合成。"
+            "需要 controlnet_aux。"
         ),
     )
 

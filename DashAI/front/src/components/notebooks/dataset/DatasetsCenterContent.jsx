@@ -169,12 +169,6 @@ export default function DatasetsCenterContent() {
             Icon: NotebookIcon,
             "data-tour": "notebook-option",
           },
-          {
-            name: "hub",
-            display_name: t("datasets:label.importFromHub"),
-            description: t("datasets:label.importFromHubDescription"),
-            Icon: HubIcon,
-          },
         ]}
         searchBar={false}
         goToNextStep={goToNextStep}

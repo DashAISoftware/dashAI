@@ -3,13 +3,13 @@ title: Architecture
 sidebar_label: Architecture
 ---
 
-DashAI is a modular, extensible platform for machine learning workflows. It provides a
+dashAI is a modular, extensible platform for machine learning workflows. It provides a
 web-based interface for training models, exploring datasets, explaining predictions, and
-more. This document describes how DashAI works internally.
+more. This document describes how dashAI works internally.
 
 ## High-Level Overview
 
-DashAI follows a client-server architecture with three main runtime processes:
+dashAI follows a client-server architecture with three main runtime processes:
 
 1. **FastAPI backend** — serves the REST API on port 8000. In production it also serves
    the compiled React SPA at `/app/`.

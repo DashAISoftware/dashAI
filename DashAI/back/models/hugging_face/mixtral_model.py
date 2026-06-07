@@ -323,6 +323,7 @@ class MixtralModel(TextToTextGenerationTaskModel):
         es="Modelo Mixtral",
         pt="Modelo Mixtral",
         de="Mixtral-Modell",
+        zh="Mixtral 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -371,6 +372,12 @@ class MixtralModel(TextToTextGenerationTaskModel):
             "Q4_K_M-Quantisierung. "
             "Modell unter "
             "https://huggingface.co/mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF."
+        ),
+        zh=(
+            "Mixtral 8x7B Instruct 是 Mistral AI 的稀疏混合专家（SMoE）模型，"
+            "以 GGUF 格式加载，通过 llama.cpp 库高效推理。"
+            "支持多轮对话、推理、编程和通用文本生成。"
+            "注意：Q4_K_M 量化需要约 26 GB 内存。"
         ),
     )
 

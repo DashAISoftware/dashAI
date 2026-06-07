@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Module Guide: Datasets
 
-The Datasets module is the entry point for all data in DashAI. Every other module — Models, Notebooks, Generative — depends on a dataset being loaded here first. This guide covers what the module does, how its components work, and how to get the most out of each feature.
+The Datasets module is the entry point for all data in dashAI. Every other module — Models, Notebooks, Generative — depends on a dataset being loaded here first. This guide covers what the module does, how its components work, and how to get the most out of each feature.
 
 ---
 
@@ -20,7 +20,7 @@ The **New Dataset/Notebook** button at the top of the sidebar is the entry point
 
 ## Uploading Data
 
-DashAI supports four file formats. Each has a dedicated dataloader that controls how the file is parsed.
+dashAI supports four file formats. Each has a dedicated dataloader that controls how the file is parsed.
 
 ### Supported Formats and Dataloaders
 
@@ -34,7 +34,7 @@ The upload flow is inline — everything happens within the Datasets page withou
 
 ### Type Inference
 
-After uploading a file, DashAI reads a configurable number of rows (**Inference Rows**, default 1000) and automatically assigns a semantic type to each column: `Categorical`, `Float`, or `Integer`. These types are used throughout the platform — by the Explorer tabs, the Models module for column compatibility checks, and Notebook converters for filtering applicable operations.
+After uploading a file, dashAI reads a configurable number of rows (**Inference Rows**, default 1000) and automatically assigns a semantic type to each column: `Categorical`, `Float`, or `Integer`. These types are used throughout the platform — by the Explorer tabs, the Models module for column compatibility checks, and Notebook converters for filtering applicable operations.
 
 You can override any inferred type directly in the upload preview by clicking the dropdown in each column header. Correcting types at upload time prevents downstream issues in experiments and transformations.
 
@@ -42,7 +42,7 @@ You can override any inferred type directly in the upload preview by clicking th
 
 | Parameter | Default  | Description                                                                                                             |
 | --------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Name      | filename | Display name for the dataset inside DashAI                                                                              |
+| Name      | filename | Display name for the dataset inside dashAI                                                                              |
 | Separator | `,`      | Character separating column values. Use `;` for European-locale Excel exports                                           |
 | Header    | `infer`  | Row containing column names. `infer` detects automatically; set a number for files with metadata rows before the header |
 | Names     | Null     | Override column names manually                                                                                          |
@@ -96,7 +96,7 @@ The five summary cards at the top of every dataset view give an immediate health
 
 ### Numerical Analysis Tab
 
-For every `Float` or `Integer` column, DashAI computes and displays:
+For every `Float` or `Integer` column, dashAI computes and displays:
 
 **Descriptive statistics:** Mean, Median, Standard Deviation, Unique count
 
@@ -106,7 +106,7 @@ For every `Float` or `Integer` column, DashAI computes and displays:
 
 **Boxplot:** Visual five-number summary. Outliers appear as points beyond the whiskers.
 
-**Intelligent alerts:** DashAI detects common distribution patterns and suggests actions automatically. For example:
+**Intelligent alerts:** dashAI detects common distribution patterns and suggests actions automatically. For example:
 
 > ⚠️ Right-skewed distribution: Consider applying a log transformation.
 
@@ -253,7 +253,7 @@ Converters modify the data. Each is applied to a configurable set of columns and
 
 ### Saving a Transformed Dataset
 
-When the notebook contains the transformations you want, click **SAVE AS NEW DATASET**. This creates a new independent dataset in DashAI with the data in its current state. The new dataset is immediately available for experiments without affecting the source dataset.
+When the notebook contains the transformations you want, click **SAVE AS NEW DATASET**. This creates a new independent dataset in dashAI with the data in its current state. The new dataset is immediately available for experiments without affecting the source dataset.
 
 ---
 

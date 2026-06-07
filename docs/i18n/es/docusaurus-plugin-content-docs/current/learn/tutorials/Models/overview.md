@@ -5,7 +5,7 @@ sidebar_label: Descripción General
 
 # Módulo de Modelos
 
-El módulo de Modelos es el entorno de DashAI para entrenar, evaluar, comparar y desplegar modelos de aprendizaje automático. Todo está organizado alrededor de **Sesiones** — una sesión agrupa uno o más modelos entrenados sobre el mismo dataset y tarea, manteniendo todos los resultados, predicciones y herramientas de explicabilidad en un solo lugar.
+El módulo de Modelos es el entorno de dashAI para entrenar, evaluar, comparar y desplegar modelos de aprendizaje automático. Todo está organizado alrededor de **Sesiones** — una sesión agrupa uno o más modelos entrenados sobre el mismo dataset y tarea, manteniendo todos los resultados, predicciones y herramientas de explicabilidad en un solo lugar.
 
 ---
 

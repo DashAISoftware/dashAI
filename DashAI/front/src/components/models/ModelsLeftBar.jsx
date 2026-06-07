@@ -4,6 +4,7 @@ import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
@@ -229,7 +230,8 @@ export default function ModelsLeftBar({ onToggle }) {
         {selectedDatasetId || selectedSessionId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title={t("models:button.newSession")}
+            title={t("models:button.modelsHub")}
+            EndIcon={ViewModuleIcon}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">

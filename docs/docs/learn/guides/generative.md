@@ -21,7 +21,7 @@ Generates text from a text prompt. Suitable for open-ended generation, summariza
 | Model | Description |
 |-------|-------------|
 | `QwenModel` | Qwen-series language model. Supports instruction-following and conversational generation |
-| Other LLMs | Additional text models may be available depending on your DashAI installation and installed plugins |
+| Other LLMs | Additional text models may be available depending on your dashAI installation and installed plugins |
 
 ### TextToImageGenerationTask
 
@@ -116,7 +116,7 @@ A NVIDIA GPU with CUDA support is strongly recommended. Most text generation mod
 - Avoid running multiple generative sessions simultaneously
 - If a generation fails with a memory error, reducing any of the above parameters is the first step
 
-**Error visibility:** When a generation fails, the error modal in DashAI shows a generic message. For detailed error information, open the browser developer console (F12 → Console tab) where the full stack trace is logged.
+**Error visibility:** When a generation fails, the error modal in dashAI shows a generic message. For detailed error information, open the browser developer console (F12 → Console tab) where the full stack trace is logged.
 
 ---
 
