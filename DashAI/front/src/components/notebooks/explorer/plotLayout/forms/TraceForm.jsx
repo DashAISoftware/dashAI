@@ -85,6 +85,32 @@ export default function TraceForm({
             }
             fullWidth
           />
+
+          <DebouncedColorPicker
+            label={t("datasets:label.colorbarTickFontColor")}
+            value={trace.colorbar?.tickfont?.color || "#444444"}
+            onChange={(color) =>
+              handleTraceChange(index, "colorbar.tickfont", {
+                ...trace.colorbar?.tickfont,
+                color,
+              })
+            }
+          />
+          <TextField
+            label={t("datasets:label.colorbarTickFontSize")}
+            variant="outlined"
+            size="small"
+            type="number"
+            value={trace.colorbar?.tickfont?.size ?? 12}
+            onChange={(e) =>
+              handleTraceChange(index, "colorbar.tickfont", {
+                ...trace.colorbar?.tickfont,
+                size: parseInt(e.target.value, 10) || 12,
+              })
+            }
+            fullWidth
+            slotProps={{ htmlInput: { min: 8, max: 72 } }}
+          />
         </>
       )}
     </Box>
