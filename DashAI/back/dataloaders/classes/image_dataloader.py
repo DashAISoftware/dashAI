@@ -38,13 +38,13 @@ def _find_imagefolder_root(base_path: str) -> str:
     import os
 
     while True:
-        entries = [
+        children = [
             e
             for e in os.listdir(base_path)
             if not e.startswith(".") and e != "__MACOSX"
         ]
-        if len(entries) == 1 and os.path.isdir(os.path.join(base_path, entries[0])):
-            base_path = os.path.join(base_path, entries[0])
+        if len(children) == 1 and os.path.isdir(os.path.join(base_path, children[0])):
+            base_path = os.path.join(base_path, children[0])
         else:
             break
     return base_path
@@ -62,22 +62,22 @@ def _load_images_from_directory(data_dir: str, n_sample=None):
     from PIL import Image as PILImage
 
     records = []
-    entries = [
-        e
-        for e in sorted(os.listdir(data_dir))
-        if not e.startswith(".") and e != "__MACOSX"
+    top_level_dirs = [
+        entry
+        for entry in sorted(os.listdir(data_dir))
+        if not entry.startswith(".") and entry != "__MACOSX"
     ]
 
-    for class_name in entries:
-        class_path = os.path.join(data_dir, class_name)
-        if not os.path.isdir(class_path):
+    for top_level_dir in top_level_dirs:
+        top_level_dir_path = os.path.join(data_dir, top_level_dir)
+        if not os.path.isdir(top_level_dir_path):
             continue
-        for root, _dirs, files in os.walk(class_path):
+        for dirpath, _subdirs, files in os.walk(top_level_dir_path):
             for fname in sorted(files):
                 ext = os.path.splitext(fname)[1].lower()
                 if ext not in IMAGE_EXTENSIONS:
                     continue
-                fpath = os.path.join(root, fname)
+                fpath = os.path.join(dirpath, fname)
                 try:
                     img = PILImage.open(fpath)
                     img.load()
@@ -94,7 +94,7 @@ def _load_images_from_directory(data_dir: str, n_sample=None):
                                 "bytes": buf.getvalue(),
                                 "path": fname,
                             },
-                            "label": class_name,
+                            "label": os.path.basename(dirpath),
                         }
                     )
                 except Exception:
