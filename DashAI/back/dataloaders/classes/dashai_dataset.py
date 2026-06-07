@@ -881,6 +881,9 @@ def save_dataset(
         }
     )
 
+    if "general_info" in metadata:
+        metadata["general_info"]["file_size_mb"] = os.path.getsize(data_filepath) / 1e6
+
     with open(metadata_filepath, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
