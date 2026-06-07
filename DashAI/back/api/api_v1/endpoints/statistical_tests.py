@@ -341,7 +341,7 @@ async def list_saved_statistical_tests(
                 stmt = stmt.where(StatisticalTest.model_session_id == model_session_id)
             if group_id is not None:
                 stmt = stmt.where(StatisticalTest.group_id == group_id)
-            stmt = stmt.order_by(StatisticalTest.created_at.desc())
+            stmt = stmt.order_by(StatisticalTest.created.desc())
             return db.scalars(stmt).all()
         except exc.SQLAlchemyError as e:
             log.exception(e)

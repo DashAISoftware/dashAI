@@ -51,6 +51,8 @@ export interface StatisticalTestSavePayload {
   posthoc?: Record<string, unknown>[] | null;
   group_id?: string | null;
   model_session_id?: number | null;
+  name?: string | null;
+  description?: string | null;
 }
 
 /** A stored statistical test result returned by the backend. */

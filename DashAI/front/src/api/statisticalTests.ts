@@ -77,3 +77,15 @@ export const getSavedStatisticalTests = async (
   );
   return response.data;
 };
+
+/**
+ * Delete a saved statistical test result by id.
+ */
+export const deleteSavedStatisticalTest = async (
+  resultId: number,
+): Promise<{ deleted: boolean; id: number }> => {
+  const response = await api.delete<{ deleted: boolean; id: number }>(
+    `/v1/statistical-tests/saved/${resultId}`,
+  );
+  return response.data;
+};

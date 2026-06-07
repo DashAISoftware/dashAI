@@ -19,9 +19,11 @@ import {
   TableChart,
   BarChart,
   ExpandMore,
+  Science,
 } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
+import StatisticalTestTable from "./StatisticalTestTable";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
@@ -35,7 +37,7 @@ export default function SessionVisualization() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
-  const [showTable, setShowTable] = useState(true);
+  const [view, setView] = useState("table");
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
   const [tableCollapsed, setTableCollapsed] = useState(false);
@@ -80,18 +82,20 @@ export default function SessionVisualization() {
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
-    (isTable) => {
-      if (!isTable && showTable) {
-        // Switching from Table to Graphs
-        setPreviousTableHeight(tableHeight);
-        setTableHeight(Math.max(tableHeight, 600));
-      } else if (isTable && !showTable) {
-        // Switching from Graphs to Table
-        setTableHeight(previousTableHeight);
-      }
-      setShowTable(isTable);
+    (nextView) => {
+      setView((current) => {
+        if (nextView === "graphs" && current !== "graphs") {
+          // Switching to Graphs: remember height and expand
+          setPreviousTableHeight(tableHeight);
+          setTableHeight(Math.max(tableHeight, 600));
+        } else if (nextView !== "graphs" && current === "graphs") {
+          // Leaving Graphs: restore previous height
+          setTableHeight(previousTableHeight);
+        }
+        return nextView;
+      });
     },
-    [showTable, tableHeight, previousTableHeight],
+    [tableHeight, previousTableHeight],
   );
 
   const fetchModels = React.useCallback(async () => {
@@ -380,51 +384,59 @@ export default function SessionVisualization() {
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Metric Split Selector — controls both table and graph views */}
-                {(hasTrainMetrics ||
-                  hasValidationMetrics ||
-                  hasTestMetrics) && (
-                  <ToggleButtonGroup
-                    value={metricSplit}
-                    exclusive
-                    onChange={(e, newValue) => {
-                      if (newValue !== null) setMetricSplit(newValue);
-                    }}
-                    size="small"
-                  >
-                    {hasTrainMetrics && (
-                      <ToggleButton value="train">
-                        {t("common:train")}
-                      </ToggleButton>
-                    )}
-                    {hasValidationMetrics && (
-                      <ToggleButton value="validation">
-                        {t("common:validation")}
-                      </ToggleButton>
-                    )}
-                    {hasTestMetrics && (
-                      <ToggleButton value="test">
-                        {t("common:test")}
-                      </ToggleButton>
-                    )}
-                  </ToggleButtonGroup>
-                )}
+                {view !== "tests" &&
+                  (hasTrainMetrics ||
+                    hasValidationMetrics ||
+                    hasTestMetrics) && (
+                    <ToggleButtonGroup
+                      value={metricSplit}
+                      exclusive
+                      onChange={(e, newValue) => {
+                        if (newValue !== null) setMetricSplit(newValue);
+                      }}
+                      size="small"
+                    >
+                      {hasTrainMetrics && (
+                        <ToggleButton value="train">
+                          {t("common:train")}
+                        </ToggleButton>
+                      )}
+                      {hasValidationMetrics && (
+                        <ToggleButton value="validation">
+                          {t("common:validation")}
+                        </ToggleButton>
+                      )}
+                      {hasTestMetrics && (
+                        <ToggleButton value="test">
+                          {t("common:test")}
+                        </ToggleButton>
+                      )}
+                    </ToggleButtonGroup>
+                  )}
 
-                {/* Toggle between Table and Graphs */}
+                {/* Toggle between Table, Graphs and saved Tests */}
                 <ButtonGroup size="small" variant="outlined">
                   <Button
-                    variant={showTable ? "contained" : "outlined"}
-                    onClick={() => handleToggleView(true)}
+                    variant={view === "table" ? "contained" : "outlined"}
+                    onClick={() => handleToggleView("table")}
                     startIcon={<TableChart />}
                   >
                     {t("common:table")}
                   </Button>
                   <Button
                     data-tour="graphs-button"
-                    variant={!showTable ? "contained" : "outlined"}
-                    onClick={() => handleToggleView(false)}
+                    variant={view === "graphs" ? "contained" : "outlined"}
+                    onClick={() => handleToggleView("graphs")}
                     startIcon={<BarChart />}
                   >
                     {t("common:graphs")}
+                  </Button>
+                  <Button
+                    variant={view === "tests" ? "contained" : "outlined"}
+                    onClick={() => handleToggleView("tests")}
+                    startIcon={<Science />}
+                  >
+                    {t("models:button.statisticalTests", "Test")}
                   </Button>
                 </ButtonGroup>
 
@@ -456,7 +468,11 @@ export default function SessionVisualization() {
               position: "relative",
             }}
           >
-            {runs.length === 0 ? (
+            {view === "tests" ? (
+              <Box sx={{ height: "100%", overflow: "auto" }}>
+                <StatisticalTestTable session={session} />
+              </Box>
+            ) : runs.length === 0 ? (
               <Box
                 sx={{
                   display: "flex",
@@ -471,7 +487,7 @@ export default function SessionVisualization() {
               </Box>
             ) : (
               <Box sx={{ height: "100%", overflow: "auto" }}>
-                {showTable ? (
+                {view === "table" ? (
                   <ModelComparisonTable
                     runs={runs}
                     session={session}

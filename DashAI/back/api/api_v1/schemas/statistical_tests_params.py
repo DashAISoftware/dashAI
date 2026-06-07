@@ -57,6 +57,9 @@ class StatisticalTestParams(BaseModel):
     alpha: float
     significant: bool
 
+    name: Optional[str] = None
+    description: Optional[str] = None
+
     run_ids: List[int] = []
     run_names: Dict[str, str] = {}
 
@@ -76,6 +79,6 @@ class StatisticalTestRead(StatisticalTestParams):
     """A stored result returned by the API"""
 
     id: int
-    created_at: datetime
-    # Enables StatisticalTestRead.model_validate(orm_row).
+    created: datetime
+
     model_config = ConfigDict(from_attributes=True)

@@ -740,6 +740,10 @@ class StatisticalTest(Base):
         ForeignKey("model_session.id", ondelete="CASCADE")
     )
 
+    # optional name and description when test is saved by the user
+    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
     # What was tested
     test_name: Mapped[str] = mapped_column(String, nullable=False)
     metric_name: Mapped[str] = mapped_column(String, nullable=False)

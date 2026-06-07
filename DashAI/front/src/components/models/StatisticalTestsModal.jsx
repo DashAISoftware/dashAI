@@ -21,6 +21,7 @@ import {
   Divider,
   Chip,
   IconButton,
+  TextField,
 } from "@mui/material";
 import { Close as CloseIcon, Check as CheckIcon } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
@@ -53,9 +54,11 @@ export default function StatisticalTestsModal({
   const [perRunResults, setPerRunResults] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
   const resultsRef = useRef(null);
 
-  // ----- Test-driven config (all from backend metadata) -----
+  // backend metadata
   const minRuns = test?.metadata?.min_runs ?? 2;
   const maxRuns = test?.metadata?.max_runs ?? Infinity;
   const supportsAlternative = test?.metadata?.supports_alternative === true;
@@ -97,7 +100,7 @@ export default function StatisticalTestsModal({
     return t("models:label.selectBetweenRuns", { min: minRuns, max: maxRuns });
   }, [minRuns, maxRuns, t]);
 
-  // Reset state each time the modal opens for a (possibly new) test
+  // Reset state each time the modal opens
   useEffect(() => {
     if (open) {
       setSelectedRuns([]);
@@ -105,6 +108,8 @@ export default function StatisticalTestsModal({
       setPerRunResults(null);
       setSaved(false);
       setError(null);
+      setCustomName("");
+      setCustomDescription("");
       setAlternative("two-sided");
       setSelectedMetric("");
       setSelectedSplit("test");
@@ -166,6 +171,8 @@ export default function StatisticalTestsModal({
     setResults(null);
     setPerRunResults(null);
     setSaved(false);
+    setCustomName("");
+    setCustomDescription("");
 
     try {
       if (isPerRun) {
@@ -226,19 +233,21 @@ export default function StatisticalTestsModal({
   };
 
   // Assemble the payload(s) to persist from the currently displayed result(s).
-  // Single omnibus result -> one item; per-run batch (Shapiro) -> one per run.
+  // Single omnibus result is one item, per-run batch (Shapiro) is one per run.
   const buildSavePayload = () => {
     const modelSessionId = session?.id ?? null;
+    const name = customName.trim() || null;
+    const description = customDescription.trim() || null;
 
     if (isPerRun && perRunResults) {
-      return perRunResults.map(({ id, name, resp }) => ({
-        test_name: resp.test_name,
+      return perRunResults.map(({ id, name: runName, resp }) => ({
+        test_name: test.display_name,
         metric_name: selectedMetric,
         metric_split: selectedSplit,
         alpha: resp.alpha,
         significant: resp.significant,
         run_ids: [id],
-        run_names: { [id.toString()]: name },
+        run_names: { [id.toString()]: runName },
         statistic: resp.statistic ?? null,
         p_value: resp.p_value ?? null,
         interpretation: resp.interpretation ?? null,
@@ -246,13 +255,15 @@ export default function StatisticalTestsModal({
         details: resp.details ?? null,
         posthoc: resp.posthoc ?? null,
         model_session_id: modelSessionId,
+        name,
+        description,
       }));
     }
 
     if (results) {
       return [
         {
-          test_name: results.test_name,
+          test_name: test.display_name,
           metric_name: selectedMetric,
           metric_split: selectedSplit,
           alpha: results.alpha,
@@ -266,6 +277,8 @@ export default function StatisticalTestsModal({
           details: results.details ?? null,
           posthoc: results.posthoc ?? null,
           model_session_id: modelSessionId,
+          name,
+          description,
         },
       ];
     }
@@ -543,6 +556,52 @@ export default function StatisticalTestsModal({
             title={testTitle}
             alpha={alpha}
           />
+        )}
+
+        {/* Optional custom name + description for the saved result */}
+        {(results || perRunResults) && (
+          <Box
+            sx={{
+              mt: 3,
+              pt: 2,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+              {t("models:label.saveDetails", "Detalles para guardar")}
+            </Typography>
+            <Stack spacing={2}>
+              <TextField
+                label={t("models:label.testName", "Nombre (opcional)")}
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder={testTitle}
+                size="small"
+                fullWidth
+                disabled={saved}
+                inputProps={{ maxLength: 120 }}
+                helperText={t(
+                  "models:label.testNameHelp",
+                  "Si lo dejas vacío se usará el nombre del test.",
+                )}
+              />
+              <TextField
+                label={t(
+                  "models:label.testDescription",
+                  "Descripción (opcional)",
+                )}
+                value={customDescription}
+                onChange={(e) => setCustomDescription(e.target.value)}
+                size="small"
+                fullWidth
+                multiline
+                minRows={2}
+                disabled={saved}
+                inputProps={{ maxLength: 500 }}
+              />
+            </Stack>
+          </Box>
         )}
       </DialogContent>
 
