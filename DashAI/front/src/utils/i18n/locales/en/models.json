@@ -287,8 +287,6 @@
     "runStartedSuccessfully": "Run {{runId}} started successfully",
     "sessionCreatedSuccess": "Session successfully created.",
     "sessionUpdated": "Session updated successfully",
-    "nestedCVEnabled": "Hyperparameters are tuned and evaluated on separate data splits, giving a more reliable performance estimate.",
-    "nestedCVDisabled": "For each tested combination, the model is trained using cross-validation and the average score across folds is reported. The combination with the best score is selected.",
     "processChosenNestedCV": "Chosen process to perform: Hyperparameters are tuned and evaluated on separate data splits, giving a more reliable performance estimate.",
     "processChosenNormalHPO": "Chosen process to perform: For each tested combination, the model is trained using cross-validation and the average score across folds is reported.",
     "computationalCostNestedCV": "Computational cost: High O(Outer folds x Inner folds x Trials)",
