@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StatisticalTestRequest(BaseModel):
@@ -57,8 +57,8 @@ class StatisticalTestParams(BaseModel):
     alpha: float
     significant: bool
 
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: Optional[str] = Field(default=None, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=500)
 
     run_ids: List[int] = []
     run_names: Dict[str, str] = {}

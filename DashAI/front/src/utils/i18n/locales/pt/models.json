@@ -56,12 +56,21 @@
     "selectOptimizerRequired": "Por favor, selecione um otimizador para os parâmetros otimizáveis",
     "selectSessionFirst": "Por favor, selecione uma sessão primeiro",
     "sessionNameEmpty": "O nome da sessão não pode estar vazio",
-    "sessionNameExists": "Já existe uma sessão com este nome"
+    "sessionNameExists": "Já existe uma sessão com este nome",
+    "failedToLoadTests": "Não foi possível carregar os testes salvos.",
+    "failedToDeleteTest": "Não foi possível excluir o teste.",
+    "failedToSaveTest": "Não foi possível salvar os resultados do teste."
   },
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",
     "confirmDeleteSession": "Tem certeza de que deseja excluir a sessão \"{{name}}\"? Esta ação não pode ser desfeita.",
     "availableModels": "Modelos Disponíveis",
+    "savedStatisticalTests": "Testes salvos",
+    "noSavedTests": "Ainda não há testes salvos.",
+    "name": "Nome",
+    "metric": "Métrica",
+    "metricSplit": "Divisão",
+    "significantsCount": "{{count}} / {{total}} Significativo",
     "bar": "Barra",
     "heatmap": "Mapa de calor",
     "chooseTaskForSessionWithDataset": "Escolha a tarefa de aprendizado de máquina para sua sessão com o conjunto de dados \"{{datasetName}}\".",
@@ -200,7 +209,18 @@
     "frequency": "Frequência",
     "helperTests": "Testes de Suposição",
     "selectAtLeastRuns": "Selecione pelo menos {{min}} modelos",
-    "selectExactlyRuns": "Selecione exatamente {{count}} modelos"
+    "selectExactlyRuns": "Seleccione exatamente {{count}} modelos",
+    "normalityByRunSummary": "{{normal}} de {{total}} execuções parecem seguir uma distribuição normal (α = {{alpha}}).",
+    "notNormal": "Não normal",
+    "normal": "Normal",
+    "selectBetweenRuns": "Selecione entre {{min}} e {{max}} modelos",
+    "saveDetails": "Detalhes para salvar",
+    "testName": "Nome do Teste (opcional)",
+    "testNameHelp": "Se deixado em branco, o nome do teste será usado.",
+    "testDescription": "Descrição (opcional)",
+    "resultSaved": "Salvo",
+    "saveResult": "Salvar resultado",
+    "result": "Resultado"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",

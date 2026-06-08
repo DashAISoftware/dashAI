@@ -569,28 +569,34 @@ export default function StatisticalTestsModal({
             }}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
-              {t("models:label.saveDetails", "Detalles para guardar")}
+              {t("models:label.saveDetails")}
             </Typography>
             <Stack spacing={2}>
               <TextField
-                label={t("models:label.testName", "Nombre (opcional)")}
+                label={t("models:label.testName")}
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 placeholder={testTitle}
                 size="small"
                 fullWidth
                 disabled={saved}
-                inputProps={{ maxLength: 120 }}
-                helperText={t(
-                  "models:label.testNameHelp",
-                  "Si lo dejas vacío se usará el nombre del test.",
-                )}
+                inputProps={{ maxLength: 100 }}
+                helperText={
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 1,
+                    }}
+                  >
+                    <span>{t("models:label.testNameHelp")}</span>
+                    <span>{customName.length}/100</span>
+                  </Box>
+                }
               />
               <TextField
-                label={t(
-                  "models:label.testDescription",
-                  "Descripción (opcional)",
-                )}
+                label={t("models:label.testDescription")}
                 value={customDescription}
                 onChange={(e) => setCustomDescription(e.target.value)}
                 size="small"
@@ -599,6 +605,8 @@ export default function StatisticalTestsModal({
                 minRows={2}
                 disabled={saved}
                 inputProps={{ maxLength: 500 }}
+                helperText={`${customDescription.length}/500`}
+                FormHelperTextProps={{ sx: { textAlign: "right", mx: 0 } }}
               />
             </Stack>
           </Box>
@@ -626,8 +634,8 @@ export default function StatisticalTestsModal({
             sx={{ minWidth: 160 }}
           >
             {saved
-              ? t("models:label.resultSaved", "Guardado")
-              : t("models:label.saveResult", "Guardar resultado")}
+              ? t("models:label.resultSaved")
+              : t("models:label.saveResult")}
           </Button>
         )}
 

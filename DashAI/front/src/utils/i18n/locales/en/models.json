@@ -64,12 +64,21 @@
     "selectTest": "Please select a statistical test",
     "failedToExecuteTest": "Failed to execute statistical test",
     "selectRunsAndMetric": "Please select runs and a metric to check normality",
-    "failedToCheckNormality": "Failed to check normality. Please try again."
+    "failedToCheckNormality": "Failed to check normality. Please try again.",
+    "failedToLoadTests": "Could not load saved tests.",
+    "failedToDeleteTest": "Could not delete the test.",
+    "failedToSaveTest": "Failed to save the test results."
   },
   "label": {
     "addModelToSession": "Add Model to Session",
     "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
     "availableModels": "Available Models",
+    "savedStatisticalTests": "Saved tests",
+    "noSavedTests": "No saved tests yet.",
+    "name": "Name",
+    "metric": "Metric",
+    "metricSplit": "Split",
+    "significantsCount": "{{count}} / {{total}} Significant",
     "bar": "Bar",
     "heatmap": "Heatmap",
     "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",
@@ -229,7 +238,17 @@
     "frequency": "Frequency",
     "helperTests": "Assumption Tests",
     "selectAtLeastRuns": "Select at least {{min}} models",
-    "selectExactlyRuns": "Select exactly {{count}} models"
+    "selectExactlyRuns": "Select exactly {{count}} models",
+    "normalityByRunSummary": "{{normal}} of {{total}} runs appear to follow a normal distribution (α = {{alpha}}).",
+    "notNormal": "Not normal",
+    "normal": "Normal",
+    "selectBetweenRuns": "Select between {{min}} and {{max}} models",
+    "saveDetails": "Save Details",
+    "testName": "Test Name (optional)",
+    "testNameHelp": "If left empty, the test name will be used.",
+    "testDescription": "Description (optional)",
+    "resultSaved": "Saved",
+    "saveResult": "Save Result"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

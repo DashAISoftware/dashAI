@@ -59,16 +59,13 @@ const PerRunResults = forwardRef(function PerRunResults(
           normal: normalCount,
           total: results.length,
           alpha: effectiveAlpha,
-          defaultValue:
-            "{{normal}} of {{total}} runs appear to follow a normal " +
-            "distribution (α = {{alpha}}).",
         })}
       </Alert>
 
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>{t("models:label.run", "Run")}</TableCell>
+            <TableCell>Run</TableCell>
             <TableCell align="right">{t("models:label.statistic")}</TableCell>
             <TableCell align="right">p-value</TableCell>
             <TableCell align="center">{t("models:label.result")}</TableCell>
@@ -91,8 +88,8 @@ const PerRunResults = forwardRef(function PerRunResults(
                   <Chip
                     label={
                       resp.significant
-                        ? t("models:label.notNormal", "Not normal")
-                        : t("models:label.normal", "Normal")
+                        ? t("models:label.notNormal")
+                        : t("models:label.normal")
                     }
                     color={resp.significant ? "warning" : "success"}
                     size="small"

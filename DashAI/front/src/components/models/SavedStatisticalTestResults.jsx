@@ -37,34 +37,40 @@ export default function SavedStatisticalTestResults({ open, onClose, group }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box>
-          <Typography variant="h6" component="span">
-            {title}
-          </Typography>
-          {head.name && head.test_name && (
-            <Typography variant="body2" color="text.secondary">
-              {head.test_name}
+      <DialogTitle sx={{ bgcolor: "background.paper" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography variant="h6" component="span">
+              {title}
             </Typography>
-          )}
+            {head.name && head.test_name && (
+              <Typography variant="body2" color="text.secondary">
+                {head.test_name}
+              </Typography>
+            )}
+          </Box>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{ color: "text.secondary" }}
+          >
+            <CloseIcon />
+          </IconButton>
         </Box>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
         {head.description && (
           <Typography
-            variant="body2"
+            variant="body1"
             color="text.secondary"
-            sx={{ mb: 1, fontStyle: "italic" }}
+            sx={{ mb: 1.5, fontStyle: "italic" }}
           >
             {head.description}
           </Typography>
@@ -77,8 +83,10 @@ export default function SavedStatisticalTestResults({ open, onClose, group }) {
         )}
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>{t("common:close", "Cerrar")}</Button>
+      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+        <Button variant="outlined" onClick={onClose}>
+          {t("common:close", "Cerrar")}
+        </Button>
       </DialogActions>
     </Dialog>
   );

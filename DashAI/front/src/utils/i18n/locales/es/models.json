@@ -62,12 +62,21 @@
     "selectTest": "Por favor seleccione un test estadístico",
     "failedToExecuteTest": "Error al ejecutar el test estadístico",
     "selectRunsAndMetric": "Por favor seleccione ejecuciones y una métrica para verificar la normalidad",
-    "failedToCheckNormality": "Error al verificar la normalidad. Por favor intente nuevamente."
+    "failedToCheckNormality": "Error al verificar la normalidad. Por favor intente nuevamente.",
+    "failedToLoadTests": "No se pudieron cargar los tests guardados.",
+    "failedToDeleteTest": "No se pudo eliminar el test.",
+    "failedToSaveTest": "No se pudieron guardar los resultados del test."
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
     "confirmDeleteSession": "¿Seguro que quieres eliminar la sesión \"{{name}}\"? Esta acción no se puede deshacer.",
     "availableModels": "Modelos Disponibles",
+    "savedStatisticalTests": "Tests guardados",
+    "noSavedTests": "Aún no hay tests guardados.",
+    "name": "Nombre",
+    "metric": "Métrica",
+    "metricSplit": "División",
+    "significantsCount": "{{count}} / {{total}} Significativo",
     "bar": "Barra",
     "heatmap": "Mapa de calor",
     "chooseTaskForSessionWithDataset": "Elija la tarea de aprendizaje automático para su sesión con el dataset \"{{datasetName}}\".",
@@ -225,7 +234,17 @@
     "frequency": "Frecuencia",
     "helperTests": "Tests de Supuestos",
     "selectAtLeastRuns": "Seleccione al menos {{min}} modelos",
-    "selectExactlyRuns": "Seleccione exactamente {{count}} modelos"
+    "selectExactlyRuns": "Seleccione exactamente {{count}} modelos",
+    "normalityByRunSummary": "{{normal}} de {{total}} ejecuciones parecen seguir una distribución normal (α = {{alpha}}).",
+    "notNormal": "No normal",
+    "normal": "Normal",
+    "selectBetweenRuns": "Seleccione entre {{min}} y {{max}} modelos",
+    "saveDetails": "Detalles para guardar",
+    "testName": "Nombre del Test (opcional)",
+    "testNameHelp": "Si lo dejas vacío, se usará el nombre del test.",
+    "testDescription": "Descripción (opcional)",
+    "resultSaved": "Guardado",
+    "saveResult": "Guardar resultado"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

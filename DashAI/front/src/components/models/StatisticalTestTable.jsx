@@ -71,8 +71,7 @@ export default function StatisticalTestTable({ session }) {
       setTests(data);
     } catch (err) {
       setError(
-        err.response?.data?.detail ||
-          t("models:error.failedToLoadTests", "Could not load saved tests."),
+        err.response?.data?.detail || t("models:error.failedToLoadTests"),
       );
     } finally {
       setLoading(false);
@@ -93,8 +92,7 @@ export default function StatisticalTestTable({ session }) {
       setTests((prev) => prev.filter((x) => !list.includes(x.id)));
     } catch (err) {
       setError(
-        err.response?.data?.detail ||
-          t("models:error.failedToDeleteTest", "Could not delete the test."),
+        err.response?.data?.detail || t("models:error.failedToDeleteTest"),
       );
     } finally {
       setDeletingId(null);
@@ -106,13 +104,16 @@ export default function StatisticalTestTable({ session }) {
   const resultCell = (items) => {
     const head = items[0];
     if (items.length > 1) {
-      const sig = items.filter((i) => i.significant).length;
+      const significants = items.filter((i) => i.significant).length;
       return (
         <Chip
-          label={`${sig} / ${items.length}`}
+          label={t("models:label.significantsCount", {
+            count: significants,
+            total: items.length,
+          })}
           size="small"
           variant="outlined"
-          color={sig > 0 ? "success" : "default"}
+          color={significants > 0 ? "success" : "default"}
         />
       );
     }
@@ -120,8 +121,8 @@ export default function StatisticalTestTable({ session }) {
       <Chip
         label={
           head.significant
-            ? t("models:label.significant", "Significant")
-            : t("models:label.notSignificant", "Not significant")
+            ? t("models:label.significant")
+            : t("models:label.notSignificant")
         }
         size="small"
         variant="outlined"
@@ -141,9 +142,9 @@ export default function StatisticalTestTable({ session }) {
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {t("models:label.savedStatisticalTests", "Saved tests")}
+          {t("models:label.savedStatisticalTests")}
         </Typography>
-        <Tooltip title={t("common:refresh", "Refresh")}>
+        <Tooltip title={t("common:refresh")}>
           <span>
             <IconButton size="small" onClick={fetchTests} disabled={loading}>
               <Refresh />
@@ -165,7 +166,7 @@ export default function StatisticalTestTable({ session }) {
       ) : groups.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 6 }}>
           <Typography variant="body2" color="text.secondary">
-            {t("models:label.noSavedTests", "No saved tests yet.")}
+            {t("models:label.noSavedTests")}
           </Typography>
         </Box>
       ) : (
@@ -173,13 +174,12 @@ export default function StatisticalTestTable({ session }) {
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>{t("models:label.name", "Name")}</TableCell>
-                <TableCell>{t("models:label.test", "Test")}</TableCell>
-                <TableCell>{t("models:label.metric", "Metric")}</TableCell>
-                <TableCell align="center">
-                  {t("models:label.result", "Result")}
-                </TableCell>
-                <TableCell align="right">{t("common:date", "Date")}</TableCell>
+                <TableCell>{t("models:label.name")}</TableCell>
+                <TableCell>{t("models:label.test")}</TableCell>
+                <TableCell>{t("models:label.metric")}</TableCell>
+                <TableCell>{t("models:label.metricSplit")}</TableCell>
+                <TableCell align="center">{t("models:label.result")}</TableCell>
+                <TableCell align="right">{t("common:date")}</TableCell>
                 <TableCell sx={{ width: 48 }} />
               </TableRow>
             </TableHead>
@@ -197,21 +197,11 @@ export default function StatisticalTestTable({ session }) {
                     onClick={() => setSelectedGroup(items)}
                   >
                     <TableCell>{head.name || "—"}</TableCell>
-                    <TableCell>
-                      {head.test_name}
-                      {isBatch && (
-                        <Chip
-                          label={t("models:label.batchCount", {
-                            count: items.length,
-                            defaultValue: "Batch · {{count}}",
-                          })}
-                          size="small"
-                          variant="outlined"
-                          sx={{ ml: 1 }}
-                        />
-                      )}
-                    </TableCell>
+                    <TableCell>{head.test_name}</TableCell>
                     <TableCell>{head.metric_name}</TableCell>
+                    <TableCell>
+                      {t("models:label." + head.metric_split)}
+                    </TableCell>
                     <TableCell align="center">{resultCell(items)}</TableCell>
                     <TableCell align="right">
                       <Typography variant="caption" color="text.secondary">
@@ -219,7 +209,7 @@ export default function StatisticalTestTable({ session }) {
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Tooltip title={t("common:delete", "Delete")}>
+                      <Tooltip title={t("common:delete")}>
                         <span>
                           <IconButton
                             size="small"

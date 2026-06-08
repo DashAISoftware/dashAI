@@ -741,8 +741,8 @@ class StatisticalTest(Base):
     )
 
     # optional name and description when test is saved by the user
-    name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # What was tested
     test_name: Mapped[str] = mapped_column(String, nullable=False)
