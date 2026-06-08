@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_metrics_for_run(db, run_id: int):
+def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
     """Retrieve metrics associated with a specific run.
 
     Parameters
@@ -48,7 +48,7 @@ def get_metrics_for_run(db, run_id: int):
     """
     metrics = (
         db.query(Metric)
-        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
+        .filter(Metric.run_id == run_id, Metric.level == level_enum)
         .all()
     )
 
@@ -883,6 +883,48 @@ async def get_fold_metrics(
     with session_factory() as db:
         try:
             return _group_fold_metrics(db, run_id, level_enum, split_enum)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get("/{run_id}/outer-averaged-metrics")
+@inject
+async def get_outer_averaged_metrics(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve averaged metrics across outer folds for a nested CV run."""
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Run not found",
+                )
+
+            if not run.nested:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Run is not nested CV",
+                )
+
+            outer_averaged_metrics = get_metrics_for_run(
+                db, run_id, level_enum=LevelEnum.LAST_OUTER
+            )
+
+            return {
+                "train_metrics": outer_averaged_metrics["train_metrics"],
+                "test_metrics": outer_averaged_metrics["test_metrics"],
+                "train_metrics_std": outer_averaged_metrics["train_metrics_std"],
+                "test_metrics_std": outer_averaged_metrics["test_metrics_std"],
+            }
+
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

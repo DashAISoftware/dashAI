@@ -141,3 +141,13 @@ export function isRepeatedFoldMetrics(
 ): data is Record<string, Record<string, number[]>> {
   return Object.keys(data).some((key) => key.startsWith("rep_"));
 }
+
+export async function getOuterAveragedMetrics(
+  runId: string,
+  { signal }: { signal?: AbortSignal } = {},
+) {
+  const response = await api.get(`/v1/run/${runId}/outer-averaged-metrics`, {
+    signal,
+  });
+  return response.data;
+}

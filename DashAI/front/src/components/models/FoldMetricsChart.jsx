@@ -23,6 +23,7 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getFoldMetrics, isRepeatedFoldMetrics } from "../../api/run";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
+import OuterFoldMetricsTable from "./OuterFoldMetricsTable";
 
 // ─── Pure helpers (defined outside component — stable references) ─────────────
 
@@ -200,6 +201,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState("boxplot");
   const [foldScope, setFoldScope] = useState("default");
+  const [viewMode, setViewMode] = useState("charts");
   const [split, setSplit] = useState("TRAIN");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
 
@@ -227,7 +229,6 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     const fetchFoldMetrics = async () => {
       try {
         const scope = isNestedCV && foldScope === "outer" ? "outer" : "default";
-        console.log(scope, metricSplit);
         const data = await getFoldMetrics(runId, {
           metricSplit,
           scope,
@@ -448,7 +449,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  if (loading) {
+  if (viewMode === "charts" && loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <CircularProgress />
@@ -456,7 +457,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  if (error) {
+  if (viewMode === "charts" && error) {
     return (
       <Alert severity="warning">
         <AlertTitle>No Fold Data Available</AlertTitle>
@@ -465,7 +466,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  if (!allRepetitionsData || !selectedRepetition) {
+  if (viewMode === "charts" && (!allRepetitionsData || !selectedRepetition)) {
     return (
       <Alert severity="info">
         <AlertTitle>No Fold Metrics</AlertTitle>
@@ -485,192 +486,225 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
         minHeight: 400,
       }}
     >
-      {/* Toolbar */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 1.5,
-          px: 1.5,
-          py: 1,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+      {isNestedCV && (
+        <Box sx={{ px: 1.5, pt: 1 }}>
           <ToggleButtonGroup
             exclusive
-            value={split}
+            value={viewMode}
             onChange={(_, v) => {
-              if (v) setSplit(v);
+              if (v) setViewMode(v);
             }}
             size="small"
             sx={{ height: 28 }}
           >
             <ToggleButton
-              value="TRAIN"
+              value="charts"
               sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
             >
-              {t("models:label.train")}
+              {t("models:label.graphs", "Gráficos")}
             </ToggleButton>
             <ToggleButton
-              value="TEST"
+              value="nested"
               sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
             >
-              {t("models:label.test")}
+              Nested CV
             </ToggleButton>
           </ToggleButtonGroup>
+        </Box>
+      )}
 
-          {isNestedCV && (
+      {isNestedCV && viewMode === "nested" ? (
+        <OuterFoldMetricsTable runId={runId} />
+      ) : (
+        <>
+          {/* Toolbar */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 1.5,
+              px: 1.5,
+              py: 1,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <ToggleButtonGroup
+                exclusive
+                value={split}
+                onChange={(_, v) => {
+                  if (v) setSplit(v);
+                }}
+                size="small"
+                sx={{ height: 28 }}
+              >
+                <ToggleButton
+                  value="TRAIN"
+                  sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+                >
+                  {t("models:label.train")}
+                </ToggleButton>
+                <ToggleButton
+                  value="TEST"
+                  sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+                >
+                  {t("models:label.test")}
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              {isNestedCV && (
+                <ToggleButtonGroup
+                  exclusive
+                  value={foldScope}
+                  onChange={(_, v) => {
+                    if (v) setFoldScope(v);
+                  }}
+                  size="small"
+                  sx={{ height: 28 }}
+                >
+                  <ToggleButton
+                    value="outer"
+                    title="Outer folds — reliable generalization estimate from nested CV"
+                    sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
+                  >
+                    Outer
+                  </ToggleButton>
+                  <ToggleButton
+                    value="default"
+                    title="Folds used during final HPO training to produce the model"
+                    sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
+                  >
+                    Default
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              )}
+
+              {availableReps.length > 1 && (
+                <FormControl sx={{ minWidth: 140 }} size="small">
+                  <InputLabel sx={{ fontSize: "0.85rem" }}>
+                    {t("models:label.repetition")}
+                  </InputLabel>
+                  <Select
+                    value={selectedRepetition ?? ""}
+                    label={t("models:label.repetition")}
+                    onChange={(e) => setSelectedRepetition(e.target.value)}
+                    sx={{ fontSize: "0.85rem" }}
+                  >
+                    <MenuItem value="averaged">
+                      {chartType === "qq"
+                        ? t("models:label.allRepetitions")
+                        : t("models:label.averaged")}
+                    </MenuItem>
+                    {availableReps.map((rep) => (
+                      <MenuItem key={rep} value={rep}>
+                        {t("models:label.repetition")}{" "}
+                        {parseInt(rep.split("_")[1]) + 1}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </Box>
+
             <ToggleButtonGroup
               exclusive
-              value={foldScope}
+              value={chartType}
               onChange={(_, v) => {
-                if (v) setFoldScope(v);
+                if (v) setChartType(v);
               }}
               size="small"
               sx={{ height: 28 }}
             >
-              <ToggleButton
-                value="outer"
-                title="Outer folds — reliable generalization estimate from nested CV"
-                sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
-              >
-                Outer
-              </ToggleButton>
-              <ToggleButton
-                value="default"
-                title="Folds used during final HPO training to produce the model"
-                sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
-              >
-                Default
-              </ToggleButton>
+              {[
+                {
+                  value: "boxplot",
+                  label: "Boxplot",
+                  title: "Boxplot with statistics",
+                },
+                {
+                  value: "line",
+                  label: t("models:label.lines"),
+                  title: "Line chart showing fold progression",
+                },
+                {
+                  value: "qq",
+                  label: "Q-Q",
+                  title: "Q-Q plot for normality assessment",
+                },
+                {
+                  value: "histogram",
+                  label: "Hist",
+                  title: "Distribution histogram",
+                },
+              ].map(({ value, label, title }) => (
+                <ToggleButton
+                  key={value}
+                  value={value}
+                  title={title}
+                  sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
+                >
+                  {label}
+                </ToggleButton>
+              ))}
             </ToggleButtonGroup>
-          )}
+          </Box>
 
-          {availableReps.length > 1 && (
-            <FormControl sx={{ minWidth: 140 }} size="small">
-              <InputLabel sx={{ fontSize: "0.85rem" }}>
-                {t("models:label.repetition")}
-              </InputLabel>
-              <Select
-                value={selectedRepetition ?? ""}
-                label={t("models:label.repetition")}
-                onChange={(e) => setSelectedRepetition(e.target.value)}
-                sx={{ fontSize: "0.85rem" }}
-              >
-                <MenuItem value="averaged">
-                  {chartType === "qq"
-                    ? t("models:label.allRepetitions")
-                    : t("models:label.averaged")}
-                </MenuItem>
-                {availableReps.map((rep) => (
-                  <MenuItem key={rep} value={rep}>
-                    {t("models:label.repetition")}{" "}
-                    {parseInt(rep.split("_")[1]) + 1}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
-        </Box>
-
-        <ToggleButtonGroup
-          exclusive
-          value={chartType}
-          onChange={(_, v) => {
-            if (v) setChartType(v);
-          }}
-          size="small"
-          sx={{ height: 28 }}
-        >
-          {[
-            {
-              value: "boxplot",
-              label: "Boxplot",
-              title: "Boxplot with statistics",
-            },
-            {
-              value: "line",
-              label: t("models:label.lines"),
-              title: "Line chart showing fold progression",
-            },
-            {
-              value: "qq",
-              label: "Q-Q",
-              title: "Q-Q plot for normality assessment",
-            },
-            {
-              value: "histogram",
-              label: "Hist",
-              title: "Distribution histogram",
-            },
-          ].map(({ value, label, title }) => (
-            <ToggleButton
-              key={value}
-              value={value}
-              title={title}
-              sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-            >
-              {label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Box>
-
-      {/* Chart + metrics sidebar — always mounted, overlay during refresh */}
-      <Box
-        sx={{
-          display: "flex",
-          flex: 1,
-          minHeight: 0,
-          width: "100%",
-          position: "relative",
-        }}
-      >
-        {refreshing && (
+          {/* Chart + metrics sidebar — always mounted, overlay during refresh */}
           <Box
             sx={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "action.disabledBackground",
-              borderRadius: 1,
-              opacity: 0.6,
-              pointerEvents: "none",
+              flex: 1,
+              minHeight: 0,
+              width: "100%",
+              position: "relative",
             }}
           >
-            <CircularProgress size={28} />
+            {refreshing && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: "action.disabledBackground",
+                  borderRadius: 1,
+                  opacity: 0.6,
+                  pointerEvents: "none",
+                }}
+              >
+                <CircularProgress size={28} />
+              </Box>
+            )}
+            <ResultsGraphsParameters
+              currentMetrics={availableMetrics}
+              selectedMetrics={selectedMetrics}
+              handleToggleMetric={handleToggleMetric}
+              handleSelectAll={handleSelectAll}
+              handleClearAll={handleClearAll}
+            />
+            <Box sx={{ flex: 1, minHeight: 0, width: "100%", p: 0.5 }}>
+              <Plot
+                data={traces}
+                layout={layout}
+                config={{
+                  responsive: true,
+                  displayModeBar: true,
+                  displaylogo: false,
+                  modeBarButtonsToRemove: [
+                    "select2d",
+                    "lasso2d",
+                    "zoomIn2d",
+                    "autoScale2d",
+                  ],
+                }}
+                style={{ width: "100%", height: "100%" }}
+              />
+            </Box>
           </Box>
-        )}
-        <ResultsGraphsParameters
-          currentMetrics={availableMetrics}
-          selectedMetrics={selectedMetrics}
-          handleToggleMetric={handleToggleMetric}
-          handleSelectAll={handleSelectAll}
-          handleClearAll={handleClearAll}
-        />
-        <Box sx={{ flex: 1, minHeight: 0, width: "100%", p: 0.5 }}>
-          <Plot
-            data={traces}
-            layout={layout}
-            config={{
-              responsive: true,
-              displayModeBar: true,
-              displaylogo: false,
-              modeBarButtonsToRemove: [
-                "select2d",
-                "lasso2d",
-                "zoomIn2d",
-                "autoScale2d",
-              ],
-            }}
-            style={{ width: "100%", height: "100%" }}
-          />
-        </Box>
-      </Box>
+        </>
+      )}
     </Box>
   );
 }
