@@ -14,7 +14,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { getOuterAveragedMetrics } from "../../api/run";
 
-// "mean ± std" (or just mean, or em dash when missing).
 const fmt = (mean, std) => {
   if (mean == null) return "—";
   const m = mean.toFixed(4);
@@ -22,9 +21,7 @@ const fmt = (mean, std) => {
 };
 
 /**
- * Table with the averaged metrics across the outer folds of a nested-CV run,
- * read straight from the /outer-averaged-metrics endpoint (mean and std are
- * computed server-side). Shows train and test side by side.
+ * Table with the averaged metrics across the outer folds of a nested-CV run
  */
 export default function OuterFoldMetricsTable({ runId }) {
   const { t } = useTranslation("models");
@@ -78,10 +75,7 @@ export default function OuterFoldMetricsTable({ runId }) {
   if (error || metricNames.length === 0) {
     return (
       <Alert severity="info" sx={{ m: 1.5 }}>
-        {t(
-          "models:message.noOuterMetrics",
-          "No hay métricas de outer folds para esta run.",
-        )}
+        {t("models:message.noOuterMetrics")}
       </Alert>
     );
   }
@@ -93,13 +87,13 @@ export default function OuterFoldMetricsTable({ runId }) {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600 }}>
-                {t("models:label.metric", "Métrica")}
+                {t("models:label.metric")}
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {t("models:label.train", "Entrenamiento")}
+                {t("models:label.train")}
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {t("models:label.test", "Prueba")}
+                {t("models:label.test")}
               </TableCell>
             </TableRow>
           </TableHead>

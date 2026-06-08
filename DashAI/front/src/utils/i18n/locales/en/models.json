@@ -236,6 +236,7 @@
     "sampleQuantiles": "Sample Quantiles",
     "metricValue": "Metric Value",
     "frequency": "Frequency",
+    "graphs": "Graphs",
     "helperTests": "Assumption Tests",
     "selectAtLeastRuns": "Select at least {{min}} models",
     "selectExactlyRuns": "Select exactly {{count}} models",
@@ -300,7 +301,8 @@
     "normalityCheckTooltip": "Checks if metric values follow a normal distribution using Shapiro-Wilk test with significance level α=0.05. It's recommended to analyze the Q-Q plot to visually confirm data normality.",
     "hypothesis_reject": "reject",
     "hypothesis_failToReject": "fail to reject",
-    "hypothesisDecision": "With a p-value of {{pValue}}, we {{decision}} the null hypothesis at the alpha level of {{alpha}}."
+    "hypothesisDecision": "With a p-value of {{pValue}}, we {{decision}} the null hypothesis at the alpha level of {{alpha}}.",
+    "noOuterMetrics": "There are no outer fold metrics for this run."
   },
   "test": {
     "pairedTTest": "Paired t-test",

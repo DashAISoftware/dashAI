@@ -236,6 +236,7 @@
     "sampleQuantiles": "Quantis da Amostra",
     "metricValue": "Valor da Métrica",
     "frequency": "Frequência",
+    "graphs": "Gráficos",
     "helperTests": "Testes de Pressupostos",
     "selectAtLeastRuns": "Selecione pelo menos {{min}} modelos",
     "selectExactlyRuns": "Selecione exatamente {{count}} modelos",
@@ -301,7 +302,8 @@
     "recommendParametricTests": "Os dados atendem aos requisitos de normalidade. Testes paramétricos (ex: teste t pareado, ANOVA) são recomendados para maior poder estatístico.",
     "normalityNotDetected": "Condição de Normalidade Não Atendida",
     "recommendNonParametricTests": "Os dados não atendem aos requisitos de normalidade. Testes não paramétricos (ex: Wilcoxon, Friedman) são recomendados pela sua robustez.",
-    "normalityCheckTooltip": "Verifica se os valores da métrica seguem uma distribuição normal usando o teste Shapiro-Wilk com nível de significância α=0,05. É recomendado analisar o gráfico Q-Q para confirmar visualmente a normalidade dos dados."
+    "normalityCheckTooltip": "Verifica se os valores da métrica seguem uma distribuição normal usando o teste Shapiro-Wilk com nível de significância α=0,05. É recomendado analisar o gráfico Q-Q para confirmar visualmente a normalidade dos dados.",
+    "noOuterMetrics": "Não há métricas de folds externos para esta execução."
   },
   "test": {
     "pairedTTest": "Teste t pareado",

@@ -14,6 +14,8 @@ import {
   AlertTitle,
   ToggleButton,
   ToggleButtonGroup,
+  Tabs,
+  Tab,
   FormControl,
   InputLabel,
   Select,
@@ -475,7 +477,6 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <Box
       sx={{
@@ -487,29 +488,23 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
       }}
     >
       {isNestedCV && (
-        <Box sx={{ px: 1.5, pt: 1 }}>
-          <ToggleButtonGroup
-            exclusive
+        <Box sx={{ borderBottom: 1, borderColor: "divider", px: 1.5 }}>
+          <Tabs
             value={viewMode}
-            onChange={(_, v) => {
-              if (v) setViewMode(v);
-            }}
-            size="small"
-            sx={{ height: 28 }}
+            onChange={(_, v) => setViewMode(v)}
+            sx={{ minHeight: 36 }}
           >
-            <ToggleButton
+            <Tab
               value="charts"
-              sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-            >
-              {t("models:label.graphs", "Gráficos")}
-            </ToggleButton>
-            <ToggleButton
+              label={t("models:label.graphs")}
+              sx={{ textTransform: "none", minHeight: 36, py: 0 }}
+            />
+            <Tab
               value="nested"
-              sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-            >
-              Nested CV
-            </ToggleButton>
-          </ToggleButtonGroup>
+              label="Nested CV"
+              sx={{ textTransform: "none", minHeight: 36, py: 0 }}
+            />
+          </Tabs>
         </Box>
       )}
 
@@ -649,7 +644,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
             </ToggleButtonGroup>
           </Box>
 
-          {/* Chart + metrics sidebar — always mounted, overlay during refresh */}
+          {/* Chart and metrics sidebar */}
           <Box
             sx={{
               display: "flex",

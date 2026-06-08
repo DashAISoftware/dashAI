@@ -236,6 +236,7 @@
     "sampleQuantiles": "Cuantiles de la Muestra",
     "metricValue": "Valor de la Métrica",
     "frequency": "Frecuencia",
+    "graphs": "Gráficos",
     "helperTests": "Tests de Supuestos",
     "selectAtLeastRuns": "Seleccione al menos {{min}} modelos",
     "selectExactlyRuns": "Seleccione exactamente {{count}} modelos",
@@ -301,7 +302,8 @@
     "normalityCheckTooltip": "Verifica si los valores de la métrica siguen una distribución normal usando el test Shapiro-Wilk con nivel de significancia α=0.05. Se recomienda analizar el grafico Q-Q para confirmar visualmente la normalidad de los datos.",
     "hypothesis_reject": "rechazamos",
     "hypothesis_failToReject": "no rechazamos",
-    "hypothesisDecision": "Con un p-valor de {{pValue}}, {{decision}} la hipótesis nula a un nivel de significancia de {{alpha}}."
+    "hypothesisDecision": "Con un p-valor de {{pValue}}, {{decision}} la hipótesis nula a un nivel de significancia de {{alpha}}.",
+    "noOuterMetrics": "No hay métricas de outer folds para esta run."
   },
   "test": {
     "pairedTTest": "Test t pareado",
