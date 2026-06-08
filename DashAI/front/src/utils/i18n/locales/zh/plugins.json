@@ -22,6 +22,7 @@
     "oldest": "最旧",
     "plugins": "{{label}} - 插件",
     "tags": "标签",
+    "verified": "来自 dashAI 的已验证插件",
     "version": "版本：{{version}}",
     "versionInstalledLatestAvailable": "已安装版本：<1></1> | 最新可用版本：<3></3>"
   },
