@@ -105,3 +105,39 @@ export const getRunOperationsCount = async (
 export const deleteRunOperations = async (runId: string): Promise<void> => {
   await api.delete<void>(`/v1/run/${runId}/operations`);
 };
+
+// ─── Fold Metrics ────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch fold-level metrics for a run.
+ *
+ * Returns either { metric: number[] } (single repetition) or
+ * { rep_N: { metric: number[] } } (repeated CV).
+ */
+export async function getFoldMetrics(
+  runId: number,
+  {
+    metricSplit = "test",
+    scope = "default",
+    signal,
+  }: {
+    metricSplit?: "train" | "test";
+    scope?: "default" | "outer";
+    signal?: AbortSignal;
+  } = {},
+) {
+  const response = await api.get<
+    Record<string, number[]> | Record<string, Record<string, number[]>>
+  >(`/v1/run/${runId}/fold-metrics`, {
+    params: { metric_split: metricSplit, scope },
+    signal,
+  });
+  return response.data;
+}
+
+/** True when the response is grouped by repetition ("rep_*"). */
+export function isRepeatedFoldMetrics(
+  data: Record<string, number[]> | Record<string, Record<string, number[]>>,
+): data is Record<string, Record<string, number[]>> {
+  return Object.keys(data).some((key) => key.startsWith("rep_"));
+}

@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import api from "../../api/api";
+import { getFoldMetrics, isRepeatedFoldMetrics } from "../../api/run";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 
 // ─── Pure helpers (defined outside component — stable references) ─────────────
@@ -199,7 +199,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState("boxplot");
-  const [foldScope, setFoldScope] = useState("outer");
+  const [foldScope, setFoldScope] = useState("default");
   const [split, setSplit] = useState("TRAIN");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
 
@@ -226,37 +226,32 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
 
     const fetchFoldMetrics = async () => {
       try {
-        const endpoint =
-          isNestedCV && foldScope === "outer"
-            ? `/v1/run/${runId}/outer-fold-metrics`
-            : `/v1/run/${runId}/fold-metrics`;
-        const response = await api.get(endpoint, {
-          params: { metric_split: metricSplit },
+        const scope = isNestedCV && foldScope === "outer" ? "outer" : "default";
+        console.log(scope, metricSplit);
+        const data = await getFoldMetrics(runId, {
+          metricSplit,
+          scope,
           signal: controller.signal,
         });
-
-        const hasRepetitions =
-          response.data &&
-          Object.keys(response.data).some((key) => key.startsWith("rep_"));
 
         let nextData;
         let nextRepetition;
 
-        if (hasRepetitions) {
-          const repKeys = Object.keys(response.data)
+        if (isRepeatedFoldMetrics(data)) {
+          const repKeys = Object.keys(data)
             .filter((key) => key.startsWith("rep_"))
             .sort(
               (a, b) => parseInt(a.split("_")[1]) - parseInt(b.split("_")[1]),
             );
 
-          nextData = response.data;
+          nextData = data;
           // Keep current repetition if still valid
           const currentRep = selectedRepetition;
           const isValidRep =
             currentRep === "averaged" || repKeys.includes(currentRep);
           nextRepetition = isValidRep ? currentRep : "averaged";
         } else {
-          nextData = { rep_0: response.data };
+          nextData = { rep_0: data };
           nextRepetition = "rep_0";
         }
 
@@ -370,16 +365,16 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
 
   // ── Layout ─────────────────────────────────────────────────────────────────
   const layout = useMemo(() => {
-    const isDark = theme.palette.mode === "dark";
-    const textColor = isDark ? "#e0e0e0" : "#424242";
-    const gridColor = isDark ? "#424242" : "#e0e0e0";
+    const { palette, typography } = theme;
+    const textColor = palette.text.primary;
+    const gridColor = palette.divider;
 
     const base = {
-      paper_bgcolor: isDark ? "#1e1e1e" : "#ffffff",
-      plot_bgcolor: isDark ? "#2a2a2a" : "#f5f5f5",
+      paper_bgcolor: palette.background.paper,
+      plot_bgcolor: palette.background.default,
       font: {
         color: textColor,
-        family: '"Roboto", "Helvetica", "Arial", sans-serif',
+        family: typography.fontFamily,
       },
       hovermode: "closest",
       margin: { l: 40, r: 0, t: 40, b: 40 },
@@ -441,7 +436,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
       title: { text: titles[chartType], font: { size: 14 } },
       ...extra[chartType],
     };
-  }, [theme, chartType, selectedRepetition, t]);
+  }, [theme, chartType, t]);
 
   // ── Early returns ──────────────────────────────────────────────────────────
   if (!runId) {
@@ -543,11 +538,11 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
                 Outer
               </ToggleButton>
               <ToggleButton
-                value="final"
+                value="default"
                 title="Folds used during final HPO training to produce the model"
                 sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
               >
-                HPO
+                Default
               </ToggleButton>
             </ToggleButtonGroup>
           )}

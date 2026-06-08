@@ -251,197 +251,6 @@ async def get_run_by_id(
         return run
 
 
-@router.get("/{run_id}/fold-metrics")
-@inject
-async def get_fold_metrics(
-    run_id: int,
-    metric_split: Literal["train", "validation", "test"] = Query("test"),
-    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-):
-    """Retrieve fold-level metrics for cross-validation visualization.
-
-    Parameters
-    ----------
-    run_id : int
-        ID of the run to retrieve fold metrics for.
-    metric_split : str, optional
-        Which metrics to use: "train", "validation", or "test", by default "test".
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy session.
-
-    Returns
-    -------
-    dict
-        A dictionary mapping metric names to lists of fold values.
-        Format: {
-            "accuracy": [fold_value_1, fold_value_2, ...
-            "precision": [fold_value_1, fold_value_2, ...
-
-        {"rep_0": {"accuracy": [0.92, 0.94, 0.91, 0.93],
-                    "precision": [0.89, 0.91, 0.88, 0.90]}}
-
-    Raises
-    ------
-    HTTPException
-        If the run is not found or has no fold metrics.
-    """
-    from DashAI.back.core.enums.metrics import SplitEnum
-
-    split_map = {
-        "train": SplitEnum.TRAIN,
-        "validation": SplitEnum.VALIDATION,
-        "test": SplitEnum.TEST,
-    }
-    split_enum = split_map.get(metric_split, SplitEnum.TEST)
-
-    with session_factory() as db:
-        try:
-            run = db.get(Run, run_id)
-            if not run:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Run not found",
-                )
-
-            # Get all fold-level metrics for this run and split
-            fold_metrics = (
-                db.query(Metric)
-                .filter(
-                    Metric.run_id == run_id,
-                    Metric.level == LevelEnum.FOLD,
-                    Metric.split == split_enum,
-                )
-                .order_by(Metric.name, Metric.fold_index)
-                .all()
-            )
-
-            if not fold_metrics:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="No fold metrics found for this run",
-                )
-
-            splits_data = json.loads(run.model_session.splits)
-            repetitions = splits_data.get("n_repeats", 1)
-
-            if repetitions > 1:
-                folds = splits_data.get("n_splits", None)
-                # Group values by metric name and fold index, then sort by fold index
-                metrics_by_name = {}
-                for metric in fold_metrics:
-                    repetition = metric.fold_index // folds if folds else 0
-                    rep_str = f"rep_{repetition}"
-
-                    if rep_str not in metrics_by_name:
-                        metrics_by_name[rep_str] = {}
-                    if metric.name not in metrics_by_name[rep_str]:
-                        metrics_by_name[rep_str][metric.name] = []
-                    metrics_by_name[rep_str][metric.name].append(metric.value)
-
-                return metrics_by_name
-
-            # Group values by metric name
-            metrics_by_name = {}
-            for metric in fold_metrics:
-                if metric.name not in metrics_by_name:
-                    metrics_by_name[metric.name] = []
-                metrics_by_name[metric.name].append(metric.value)
-
-            return metrics_by_name
-
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal database error",
-            ) from e
-
-
-@router.get("/{run_id}/outer-fold-metrics")
-@inject
-async def get_outer_fold_metrics(
-    run_id: int,
-    metric_split: Literal["train", "validation", "test"] = Query("test"),
-    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-):
-    """Retrieve outer fold-level metrics for nested CV visualization.
-
-    Returns fold values from the outer loop of nested cross-validation
-    (LevelEnum.OUTER_FOLD). Only available for runs that used nested CV.
-
-    Returns
-    -------
-    dict
-        Format: {"accuracy": [fold_1, fold_2, ...], ...}
-        Returns 404 if the run has no outer fold metrics.
-    """
-    from DashAI.back.core.enums.metrics import SplitEnum
-
-    split_map = {
-        "train": SplitEnum.TRAIN,
-        "validation": SplitEnum.VALIDATION,
-        "test": SplitEnum.TEST,
-    }
-    split_enum = split_map.get(metric_split, SplitEnum.TEST)
-
-    with session_factory() as db:
-        try:
-            run = db.get(Run, run_id)
-            if not run:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Run not found",
-                )
-
-            outer_fold_metrics = (
-                db.query(Metric)
-                .filter(
-                    Metric.run_id == run_id,
-                    Metric.level == LevelEnum.OUTER_FOLD,
-                    Metric.split == split_enum,
-                )
-                .order_by(Metric.name, Metric.fold_index)
-                .all()
-            )
-
-            if not outer_fold_metrics:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="No outer fold metrics found for this run",
-                )
-
-            splits_data = json.loads(run.model_session.splits)
-            repetitions = splits_data.get("n_repeats", 1)
-
-            if repetitions > 1:
-                folds = splits_data.get("n_splits", None)
-                metrics_by_name = {}
-                for metric in outer_fold_metrics:
-                    repetition = metric.fold_index // folds if folds else 0
-                    rep_str = f"rep_{repetition}"
-                    if rep_str not in metrics_by_name:
-                        metrics_by_name[rep_str] = {}
-                    if metric.name not in metrics_by_name[rep_str]:
-                        metrics_by_name[rep_str][metric.name] = []
-                    metrics_by_name[rep_str][metric.name].append(metric.value)
-                return metrics_by_name
-
-            metrics_by_name = {}
-            for metric in outer_fold_metrics:
-                if metric.name not in metrics_by_name:
-                    metrics_by_name[metric.name] = []
-                metrics_by_name[metric.name].append(metric.value)
-
-            return metrics_by_name
-
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal database error",
-            ) from e
-
-
 @router.get("/plot/{run_id}/{plot_type}")
 @inject
 async def get_hyperparameter_optimization_plot(
@@ -964,3 +773,119 @@ def remove_path(path):
         shutil.rmtree(path)
     else:
         raise ValueError("file {} is not a file or dir.".format(path))
+
+
+# ─── Fold metrics ─────────────────────────────────────────────
+
+
+def _group_fold_metrics(db, run_id: int, level, split_enum):
+    """Fetch fold-level metrics for a run and group them for charting.
+
+    Returns either {metric_name: [values...]} for single-repetition runs, or
+    {rep_N: {metric_name: [values...]}} when the run used repeated CV.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist or has no metrics at the given level/split.
+    """
+    run = db.get(Run, run_id)
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Run not found",
+        )
+
+    fold_metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.run_id == run_id,
+            Metric.level == level,
+            Metric.split == split_enum,
+        )
+        .order_by(Metric.name, Metric.fold_index)
+        .all()
+    )
+    if not fold_metrics:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fold metrics found for this run",
+        )
+
+    splits_data = json.loads(run.model_session.splits)
+    repetitions = splits_data.get("n_repeats", 1)
+
+    if repetitions > 1:
+        folds = splits_data.get("n_splits", None)
+        metrics_by_name = {}
+        for metric in fold_metrics:
+            repetition = metric.fold_index // folds if folds else 0
+            rep_str = f"rep_{repetition}"
+            metrics_by_name.setdefault(rep_str, {}).setdefault(metric.name, []).append(
+                metric.value
+            )
+        return metrics_by_name
+
+    metrics_by_name = {}
+    for metric in fold_metrics:
+        metrics_by_name.setdefault(metric.name, []).append(metric.value)
+    return metrics_by_name
+
+
+@router.get("/{run_id}/fold-metrics")
+@inject
+async def get_fold_metrics(
+    run_id: int,
+    metric_split: Literal["train", "test"] = Query("test"),
+    scope: Literal["default", "outer"] = Query("default"),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve fold-level metrics for cross-validation visualization.
+
+    Parameters
+    ----------
+    run_id : int
+        ID of the run to retrieve fold metrics for.
+    metric_split : str, optional
+        Which metrics to use: "train", "validation", or "test", by default "test".
+    scope : Literal["default", "outer"], optional
+        "default" returns the standard per-fold metrics (LevelEnum.FOLD).
+        "outer" returns the outer-loop metrics of a nested CV run
+        (LevelEnum.OUTER_FOLD); only available for runs that used nested CV.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        {metric_name: [fold_value, ...]} for single-repetition runs, or
+        {rep_N: {metric_name: [fold_value, ...]}} when the run used repeated CV.
+
+    Raises
+    ------
+    HTTPException
+        If the run is not found or has no fold metrics for the given scope.
+    """
+    from DashAI.back.core.enums.metrics import SplitEnum
+
+    split_map = {
+        "train": SplitEnum.TRAIN,
+        "test": SplitEnum.TEST,
+    }
+    level_map = {
+        "default": LevelEnum.FOLD,
+        "outer": LevelEnum.OUTER_FOLD,
+    }
+
+    split_enum = split_map.get(metric_split, SplitEnum.TEST)
+    level_enum = level_map.get(scope, LevelEnum.FOLD)
+
+    with session_factory() as db:
+        try:
+            return _group_fold_metrics(db, run_id, level_enum, split_enum)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
