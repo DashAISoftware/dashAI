@@ -411,6 +411,8 @@ function LeanDatasetTable({
         count={total}
         page={page}
         rowsPerPage={pageSize}
+        showFirstButton
+        showLastButton
         onPageChange={(_e, p) => setPage(p)}
         onRowsPerPageChange={(e) => {
           setPageSize(parseInt(e.target.value, 10));

@@ -303,6 +303,9 @@ class Plugin(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     author: Mapped[str] = mapped_column(String, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     installed_version: Mapped[str] = mapped_column(String, nullable=False)
     lastest_version: Mapped[str] = mapped_column(String, nullable=False)
     tags: Mapped[List["Tag"]] = relationship(
