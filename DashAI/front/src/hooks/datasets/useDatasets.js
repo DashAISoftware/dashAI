@@ -138,6 +138,23 @@ export function useDatasets({ t }) {
     );
   };
 
+  const moveDatasetToFolder = async (id, folderId) => {
+    const prevFolderId = datasets.find((d) => d.id === id)?.folder_id ?? null;
+    setDatasets((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, folder_id: folderId } : d)),
+    );
+    try {
+      await updateDataset(id, { folder_id: folderId });
+    } catch (error) {
+      setDatasets((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, folder_id: prevFolderId } : d)),
+      );
+      enqueueSnackbar(t("datasets:error.failedToMoveDataset"), {
+        variant: "error",
+      });
+    }
+  };
+
   const replaceDatasets = (datasets) => {
     setDatasets(datasets);
   };
@@ -152,6 +169,7 @@ export function useDatasets({ t }) {
     deleteDataset,
     deleteDatasetById,
     editDataset,
+    moveDatasetToFolder,
     addDatasetOptimistically,
     startDatasetPolling,
     replaceDatasets,

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
+import { useFolders } from "../../hooks/datasets/useFolders";
 import { useSessions } from "../../hooks/models/useSessions";
 const ModelsContext = createContext(null);
 
@@ -34,7 +35,16 @@ export function ModelsProvider({ children }) {
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
+    moveDatasetToFolder,
   } = useDatasets({ t });
+
+  const {
+    folders,
+    fetchFolders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
+  } = useFolders({ t });
 
   const {
     tasks,
@@ -92,6 +102,7 @@ export function ModelsProvider({ children }) {
   useEffect(() => {
     fetchDatasets();
     fetchSessions();
+    fetchFolders();
   }, []);
 
   useEffect(() => {
@@ -117,6 +128,12 @@ export function ModelsProvider({ children }) {
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
+    moveDatasetToFolder,
+    folders,
+    fetchFolders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
     tasks,
     loadingTasks,
     selectedTask,

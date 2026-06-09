@@ -24,7 +24,7 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
     DatasetRenameColumnParams,
     DatasetUpdateParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
 
 if TYPE_CHECKING:
     from sqlalchemy.orm.session import sessionmaker
@@ -1071,27 +1071,36 @@ async def update_dataset(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
             )
 
-        if not params.name or not params.name.strip():
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Name cannot be empty",
-            )
+        if params.name is not None:
+            if not params.name.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Name cannot be empty",
+                )
+            new_name = params.name.strip()
+            if new_name != dataset.name:
+                exists = db.execute(
+                    select(Dataset.id).where(
+                        Dataset.name == new_name, Dataset.id != dataset_id
+                    )
+                ).scalar()
+                if exists:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Dataset name already exists",
+                    )
+                dataset.name = new_name
 
-        new_name = params.name.strip()
+        if "folder_id" in params.model_fields_set:
+            if params.folder_id is not None:
+                folder = db.get(Folder, params.folder_id)
+                if folder is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Folder not found",
+                    )
+            dataset.folder_id = params.folder_id
 
-        if new_name == dataset.name:
-            return dataset
-
-        exists = db.execute(
-            select(Dataset.id).where(Dataset.name == new_name, Dataset.id != dataset_id)
-        ).scalar()
-        if exists:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Dataset name already exists",
-            )
-
-        dataset.name = new_name
         try:
             db.commit()
             db.refresh(dataset)

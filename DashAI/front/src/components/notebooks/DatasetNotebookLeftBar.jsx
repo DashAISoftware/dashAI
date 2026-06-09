@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useMatch } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
-import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
+import DatasetFolderList from "../threeSectionLayout/DatasetFolderList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -27,10 +27,15 @@ export default function DatasetsNotebooksLeftBar({
     deleteDatasetById,
     removeNotebooksByDatasetId,
     editDataset,
+    moveDatasetToFolder,
     editNotebook,
     deleteNotebookById,
     downloads,
     deleteDownloadById,
+    folders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
   } = useDatasetsAndNotebooks();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -189,15 +194,18 @@ export default function DatasetsNotebooksLeftBar({
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
-        <CollapsibleList
-          items={filteredDatasets}
+        <DatasetFolderList
+          datasets={filteredDatasets}
+          folders={folders}
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
           onItemEdit={editDataset}
-          defaultOpen={true}
+          onMoveDataset={moveDatasetToFolder}
+          onCreateFolder={createFolder}
+          onRenameFolder={renameFolder}
+          onDeleteFolder={deleteFolderById}
           title={t("datasets:label.availableDatasets")}
-          Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
           getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
           getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
