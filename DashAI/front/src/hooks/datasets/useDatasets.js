@@ -147,7 +147,11 @@ export function useDatasets({ t }) {
       await updateDataset(id, { folder_id: folderId });
     } catch (error) {
       setDatasets((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, folder_id: prevFolderId } : d)),
+        prev.map((d) =>
+          d.id === id && (d.folder_id ?? null) === folderId
+            ? { ...d, folder_id: prevFolderId }
+            : d,
+        ),
       );
       enqueueSnackbar(t("datasets:error.failedToMoveDataset"), {
         variant: "error",

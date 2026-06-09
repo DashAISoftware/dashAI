@@ -22,8 +22,8 @@ def upgrade() -> None:
         "folder",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("created", sa.DateTime(), nullable=True),
-        sa.Column("last_modified", sa.DateTime(), nullable=True),
+        sa.Column("created", sa.DateTime(), nullable=False),
+        sa.Column("last_modified", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_folder")),
         sa.UniqueConstraint("name", name=op.f("uq_folder_name")),
     )

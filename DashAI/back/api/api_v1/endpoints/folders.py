@@ -1,9 +1,12 @@
 import logging
+from typing import TYPE_CHECKING, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 from kink import di, inject
 from sqlalchemy import exc, select
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.folders_params import (
     Folder as FolderSchema,
@@ -19,15 +22,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=List[FolderSchema])
 @inject
 async def get_folders(
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Retrieve all folders."""
+    """Retrieve all folders ordered by name."""
     with session_factory() as db:
         try:
-            folders = db.query(Folder).all()
+            folders = db.query(Folder).order_by(Folder.name).all()
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -145,6 +148,8 @@ async def delete_folder(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Folder not found"
             )
         try:
+            for dataset in folder.datasets:
+                dataset.folder_id = None
             db.delete(folder)
             db.commit()
         except exc.SQLAlchemyError as e:
