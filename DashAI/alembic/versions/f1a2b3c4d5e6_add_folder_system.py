@@ -1,7 +1,7 @@
 """Add folder system for datasets
 
 Revision ID: f1a2b3c4d5e6
-Revises: 3db684f4090a
+Revises: e2a9c4f1b8d3
 Create Date: 2026-06-09 00:00:00.000000
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "f1a2b3c4d5e6"
-down_revision: Union[str, None] = "3db684f4090a"
+down_revision: Union[str, None] = "e2a9c4f1b8d3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
