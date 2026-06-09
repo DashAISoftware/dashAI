@@ -102,7 +102,6 @@ export function ModelsProvider({ children }) {
   useEffect(() => {
     fetchDatasets();
     fetchSessions();
-    fetchFolders();
   }, []);
 
   useEffect(() => {

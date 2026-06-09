@@ -67,7 +67,7 @@ def seed_datasets_if_first_run() -> None:
     logger.info("Dataset seeding complete.")
 
 
-def _get_or_create_example_folder(session_factory) -> int:
+def _get_or_create_example_folder(session_factory) -> int | None:
     """Get or create the 'Example datasets' folder and return its id."""
     folder_name = "Example datasets"
     try:

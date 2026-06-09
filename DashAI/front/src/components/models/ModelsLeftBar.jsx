@@ -268,6 +268,7 @@ export default function ModelsLeftBar({ onToggle }) {
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
           onItemEdit={editDataset}
+          title={t("datasets:label.availableDatasets")}
           getItemDescription={getDatasetDescription}
           getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
           getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}

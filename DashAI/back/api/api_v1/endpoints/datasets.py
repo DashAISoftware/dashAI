@@ -1045,7 +1045,7 @@ async def update_dataset(
     params: DatasetUpdateParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Updates the name of a dataset with the provided ID.
+    """Updates the name and/or folder of a dataset with the provided ID.
 
     Parameters
     ----------

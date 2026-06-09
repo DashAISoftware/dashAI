@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class FolderCreateParams(BaseModel):
@@ -12,10 +12,9 @@ class FolderUpdateParams(BaseModel):
 
 
 class Folder(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     created: datetime
     last_modified: datetime
-
-    class Config:
-        from_attributes = True
