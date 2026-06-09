@@ -21,29 +21,20 @@ class ImageClassificationTask(ClassificationTask):
 
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Image classification in machine learning involves predicting "
-            "categorical labels for image data. Models are trained to learn "
-            "visual patterns and features in images, enabling accurate "
-            "classification of new instances."
+            "Predict categorical labels from image data by learning visual "
+            "patterns and features."
         ),
         es=(
-            "La clasificación de imágenes en el aprendizaje automático implica "
-            "predecir etiquetas categóricas para datos de imágenes. Los modelos "
-            "se entrenan para aprender patrones visuales y características en "
-            "las imágenes, lo que permite una clasificación precisa de nuevas "
-            "instancias."
+            "Predice etiquetas categóricas para imágenes aprendiendo patrones "
+            "y características visuales."
         ),
         pt=(
-            "A classificação de imagens no aprendizado de máquina envolve a "
-            "previsão de rótulos categóricos para dados de imagem. Os modelos "
-            "são treinados para aprender padrões visuais e características nas "
-            "imagens, permitindo uma classificação precisa de novas instâncias."
+            "Prevê rótulos categóricos para imagens aprendendo padrões "
+            "e características visuais."
         ),
         de=(
-            "Bildklassifikation im maschinellen Lernen umfasst die Vorhersage "
-            "kategorialer Zielgrößen für Bilddaten. Modelle werden trainiert, um "
-            "visuelle Muster und Merkmale in Bildern zu erlernen, was eine genaue "
-            "Klassifikation neuer Instanzen ermöglicht."
+            "Sagt kategoriale Zielgrößen für Bilddaten vorher, indem visuelle "
+            "Muster erlernt werden."
         ),
         zh=(
             "机器学习中的图像分类涉及预测图像数据的分类标签。"
