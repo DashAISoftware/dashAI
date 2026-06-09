@@ -222,9 +222,8 @@ class ScoringService:
 
         Parameters
         ----------
-        metrics_dict : Dict[str, dict]
-            Metrics for this model, keyed by metric name
-            (e.g., {"Accuracy": {"value": 0.95, "std_value": 0.05}}).
+        metrics_dict : Dict[str, float]
+            Metrics for this model, keyed by metric name (e.g., {"Accuracy": 0.95}).
         profile_id : str
             ID of the profile to use.
         metric_ranges : Optional[Dict[str, List[float]]]
@@ -263,7 +262,7 @@ class ScoringService:
 
         for metric_name, weight in available_entries:
             normalized_weight = weight / total_weight
-            value = float(metrics_dict[metric_name]["value"])
+            value = float(metrics_dict[metric_name])
             meta = metric_metadata.get(metric_name, {})
             maximize = meta.get("maximize")
             normalize_ref = meta.get("normalize_ref")
@@ -324,9 +323,7 @@ class ScoringService:
             metrics = run_data.get("metrics", {})
             for metric_name in profile_weights:
                 if metric_name in metrics and metrics[metric_name] is not None:
-                    metric_ranges[metric_name].append(
-                        float(metrics[metric_name]["value"])
-                    )
+                    metric_ranges[metric_name].append(float(metrics[metric_name]))
 
         # Compute scores
         result = {}
