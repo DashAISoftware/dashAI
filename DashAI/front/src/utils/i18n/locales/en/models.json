@@ -251,7 +251,10 @@
     "testNameHelp": "If left empty, the test name will be used.",
     "testDescription": "Description (optional)",
     "resultSaved": "Saved",
-    "saveResult": "Save Result"
+    "saveResult": "Save Result",
+    "withHpo": "With HPO",
+    "withoutHpo": "Without HPO",
+    "nestedCv": "Nested CV"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

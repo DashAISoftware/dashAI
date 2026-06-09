@@ -251,7 +251,10 @@
     "testNameHelp": "Si lo dejas vacío, se usará el nombre del test.",
     "testDescription": "Descripción (opcional)",
     "resultSaved": "Guardado",
-    "saveResult": "Guardar resultado"
+    "saveResult": "Guardar resultado",
+    "withHpo": "Con HPO",
+    "withoutHpo": "Sin HPO",
+    "nestedCv": "CV Anidada"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

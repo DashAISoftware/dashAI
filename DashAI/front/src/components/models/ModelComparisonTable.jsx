@@ -178,9 +178,9 @@ function ModelComparisonTable({
 
   const runTypeStyles = {
     noHpo: {
-      bg: theme.palette.accent.amberDim,
-      border: theme.palette.accent.amberBorder,
-      color: theme.palette.accent.amber,
+      bg: theme.palette.dataType.default,
+      border: theme.palette.dataType.default,
+      color: theme.palette.dataType.default,
     },
     hpo: {
       bg: theme.palette.accent.tealDim,
@@ -188,9 +188,9 @@ function ModelComparisonTable({
       color: theme.palette.accent.teal,
     },
     nestedCv: {
-      bg: theme.palette.accent.purpleDim,
-      border: theme.palette.accent.purpleBorder,
-      color: theme.palette.accent.purple,
+      bg: "#585370",
+      border: "#585370",
+      color: "#585370",
     },
   };
 
@@ -659,13 +659,13 @@ function ModelComparisonTable({
           }}
         >
           {[
-            { key: "noHpo", label: t("models:label.runType.noHpo", "Sin HPO") },
-            { key: "hpo", label: t("models:label.runType.hpo", "Con HPO") },
+            { key: "noHpo", label: t("models:label.withoutHpo") },
+            { key: "hpo", label: t("models:label.withHpo") },
             ...(isCrossValidation
               ? [
                   {
                     key: "nestedCv",
-                    label: t("models:label.runType.nestedCv", "Nested CV"),
+                    label: t("models:label.nestedCv"),
                   },
                 ]
               : []),
