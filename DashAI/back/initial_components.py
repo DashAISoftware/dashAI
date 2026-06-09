@@ -146,6 +146,8 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 )
 
 # Models
+from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
+from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -337,6 +339,8 @@ def get_initial_components():
         ImageClassificationTask,
         ClusteringTask,
         # Models
+        FaissDBSCANClustering,
+        FaissKMeansClustering,
         AdaBoostClassifier,
         AlbertTransformer,
         AdaBoostRegression,

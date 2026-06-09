@@ -59,6 +59,7 @@ protobuf
 imblearn
 numba
 llvmlite
+faiss-cpu
 greenery==3.2
 filetype
 huey

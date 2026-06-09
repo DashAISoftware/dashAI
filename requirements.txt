@@ -40,6 +40,7 @@ protobuf
 imblearn
 numba
 llvmlite
+faiss-cpu
 huey
 ijson
 greenery==3.2
