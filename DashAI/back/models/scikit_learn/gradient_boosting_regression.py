@@ -32,8 +32,9 @@ class GradientBoostingRSchema(BaseSchema):
             en="Loss function to be optimized.",
             es="Función de pérdida a optimizar.",
             pt="Função de perda a ser otimizada.",
+            de="Zu optimierende Verlustfunktion.",
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda"),
+        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda", de="Verlust"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -48,9 +49,13 @@ class GradientBoostingRSchema(BaseSchema):
             en="Learning rate shrinks the contribution of each tree.",
             es="La tasa de aprendizaje reduce la contribución de cada árbol.",
             pt="A taxa de aprendizado reduz a contribuição de cada árvore.",
+            de="Die Lernrate verringert den Beitrag jedes Baums.",
         ),
         alias=MultilingualString(
-            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
         ),
     )  # type: ignore
 
@@ -66,9 +71,13 @@ class GradientBoostingRSchema(BaseSchema):
             en="The number of boosting stages to be run.",
             es="El número de etapas de boosting a ejecutar.",
             pt="O número de etapas de boosting a executar.",
+            de="Die Anzahl der auszuführenden Boosting-Stufen.",
         ),
         alias=MultilingualString(
-            en="N estimators", es="N estimadores", pt="N estimadores"
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
         ),
     )  # type: ignore
 
@@ -93,8 +102,11 @@ class GradientBoostingRSchema(BaseSchema):
                 "A fração de amostras a usar para ajustar os "
                 "aprendizes base individuais."
             ),
+            de=("Der Anteil der Stichproben zum Anpassen der einzelnen Basislerner."),
         ),
-        alias=MultilingualString(en="Subsample", es="Submuestreo", pt="Subamostra"),
+        alias=MultilingualString(
+            en="Subsample", es="Submuestreo", pt="Subamostra", de="Teilstichprobe"
+        ),
     )  # type: ignore
 
     criterion: schema_field(
@@ -104,8 +116,11 @@ class GradientBoostingRSchema(BaseSchema):
             en="The function to measure the quality of a split.",
             es="La función para medir la calidad de una división.",
             pt="A função para medir a qualidade de uma divisão.",
+            de="Die Funktion zur Messung der Qualität einer Aufteilung.",
         ),
-        alias=MultilingualString(en="Criterion", es="Criterio", pt="Critério"),
+        alias=MultilingualString(
+            en="Criterion", es="Criterio", pt="Critério", de="Kriterium"
+        ),
     )  # type: ignore
 
     min_samples_split: schema_field(
@@ -120,11 +135,13 @@ class GradientBoostingRSchema(BaseSchema):
             en="The minimum number of samples required to split an internal node.",
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
             pt="O número mínimo de amostras necessárias para dividir um nó interno.",
+            de="Mindestanzahl von Stichproben zum Aufteilen eines internen Knotens.",
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mínimas amostras de divisão",
+            de="Minimale Aufteilungsstichproben",
         ),
     )  # type: ignore
 
@@ -140,11 +157,13 @@ class GradientBoostingRSchema(BaseSchema):
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
             pt="O número mínimo de amostras necessárias para estar em um nó folha.",
+            de="Mindestanzahl von Stichproben an einem Blattknoten.",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mínimas amostras para folha",
+            de="Minimale Stichproben für Blatt",
         ),
     )  # type: ignore
 
@@ -165,11 +184,17 @@ class GradientBoostingRSchema(BaseSchema):
                 "(de todas as amostras de entrada) necessária para estar em "
                 "um nó folha."
             ),
+            de=(
+                "Der minimale gewichtete Anteil der Gesamtgewichte "
+                "(aller Eingangsstichproben), der an einem Blattknoten erforderlich "
+                "ist."
+            ),
         ),
         alias=MultilingualString(
             en="Min weight fraction leaf",
             es="Fracción de peso mínima para hoja",
             pt="Fração mínima de peso para folha",
+            de="Minimaler Gewichtsanteil für Blatt",
         ),
     )  # type: ignore
 
@@ -180,9 +205,13 @@ class GradientBoostingRSchema(BaseSchema):
             en="The maximum depth of the individual regression estimators.",
             es="La profundidad máxima de los estimadores de regresión individuales.",
             pt="A profundidade máxima dos estimadores de regressão individuais.",
+            de="Die maximale Tiefe der einzelnen Regressionsschätzer.",
         ),
         alias=MultilingualString(
-            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
         ),
     )  # type: ignore
 
@@ -202,11 +231,16 @@ class GradientBoostingRSchema(BaseSchema):
                 "Um nó será dividido se esta divisão induzir uma diminuição da "
                 "impureza maior ou igual a este valor."
             ),
+            de=(
+                "Ein Knoten wird aufgeteilt, wenn diese Aufteilung eine Verringerung "
+                "der Unreinheit größer oder gleich diesem Wert bewirkt."
+            ),
         ),
         alias=MultilingualString(
             en="Min impurity decrease",
             es="Disminución mínima de impureza",
             pt="Diminuição mínima de impureza",
+            de="Minimale Unreinheitsabnahme",
         ),
     )  # type: ignore
 
@@ -226,9 +260,13 @@ class GradientBoostingRSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios a usar "
                 "ao embaralhar os dados."
             ),
+            de=("Der Seed des Pseudozufallszahlengenerators beim Mischen der Daten."),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -244,11 +282,16 @@ class GradientBoostingRSchema(BaseSchema):
                 "El número de características a considerar al buscar la mejor división."
             ),
             pt=("O número de características a considerar ao buscar a melhor divisão."),
+            de=(
+                "Die Anzahl der Merkmale, die bei der Suche nach der besten Aufteilung "
+                "berücksichtigt werden."
+            ),
         ),
         alias=MultilingualString(
             en="Max features",
             es="Máximas características",
             pt="Máximo de características",
+            de="Maximale Merkmale",
         ),
     )  # type: ignore
 
@@ -273,8 +316,12 @@ class GradientBoostingRSchema(BaseSchema):
                 "O quantil alfa da função de perda de Huber e "
                 "da função de perda quantil."
             ),
+            de=(
+                "Das Alpha-Quantil der Huber-Verlustfunktion und "
+                "der Quantil-Verlustfunktion."
+            ),
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
     )  # type: ignore
 
     verbose: schema_field(
@@ -289,8 +336,11 @@ class GradientBoostingRSchema(BaseSchema):
             en="Enable verbose output.",
             es="Habilitar salida detallada.",
             pt="Habilitar saída detalhada.",
+            de="Ausführliche Ausgabe aktivieren.",
         ),
-        alias=MultilingualString(en="Verbose", es="Verboso", pt="Verboso"),
+        alias=MultilingualString(
+            en="Verbose", es="Verboso", pt="Verboso", de="Ausführlich"
+        ),
     )  # type: ignore
 
     max_leaf_nodes: schema_field(
@@ -300,9 +350,13 @@ class GradientBoostingRSchema(BaseSchema):
             en="Grow trees with max_leaf_nodes in best-first fashion.",
             es="Crecer árboles con max_leaf_nodes de manera best-first.",
             pt="Crescer árvores com max_leaf_nodes de maneira melhor-primeiro.",
+            de="Bäume mit max_leaf_nodes nach dem Best-First-Verfahren wachsen lassen.",
         ),
         alias=MultilingualString(
-            en="Max leaf nodes", es="Máximos nodos hoja", pt="Máximos nós folha"
+            en="Max leaf nodes",
+            es="Máximos nodos hoja",
+            pt="Máximos nós folha",
+            de="Maximale Blattknoten",
         ),
     )  # type: ignore
 
@@ -322,9 +376,16 @@ class GradientBoostingRSchema(BaseSchema):
                 "Quando definido como True, reutiliza a solução da chamada anterior "
                 "a fit e adiciona mais estimadores ao conjunto."
             ),
+            de=(
+                "Wenn True, wird die Lösung des vorherigen fit-Aufrufs wiederverwendet "
+                "und dem Ensemble weitere Schätzer hinzugefügt."
+            ),
         ),
         alias=MultilingualString(
-            en="Warm start", es="Inicio en caliente", pt="Início a quente"
+            en="Warm start",
+            es="Inicio en caliente",
+            pt="Início a quente",
+            de="Warmer Start",
         ),
     )  # type: ignore
 
@@ -349,11 +410,16 @@ class GradientBoostingRSchema(BaseSchema):
                 "A proporção dos dados de treinamento a reservar como "
                 "conjunto de validação para parada antecipada."
             ),
+            de=(
+                "Der Anteil der Trainingsdaten, der als Validierungsmenge "
+                "für frühzeitigen Stopp zurückgehalten wird."
+            ),
         ),
         alias=MultilingualString(
             en="Validation fraction",
             es="Fracción de validación",
             pt="Fração de validação",
+            de="Validierungsanteil",
         ),
     )  # type: ignore
 
@@ -373,11 +439,16 @@ class GradientBoostingRSchema(BaseSchema):
                 "O número de iterações sem melhora a aguardar "
                 "antes de interromper o treinamento."
             ),
+            de=(
+                "Die Anzahl der Iterationen ohne Verbesserung, die "
+                "vor dem Trainingsabbruch abgewartet werden."
+            ),
         ),
         alias=MultilingualString(
             en="N iterations no change",
             es="N iteraciones sin cambio",
             pt="N iterações sem mudança",
+            de="N Iterationen ohne Änderung",
         ),
     )  # type: ignore
 
@@ -393,8 +464,11 @@ class GradientBoostingRSchema(BaseSchema):
             en="Tolerance for the early stopping.",
             es="Tolerancia para la detención temprana.",
             pt="Tolerância para a parada antecipada.",
+            de="Toleranz für den frühzeitigen Stopp.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
     ccp_alpha: schema_field(
@@ -412,8 +486,11 @@ class GradientBoostingRSchema(BaseSchema):
                 "Parâmetro de complexidade usado para poda de "
                 "custo-complexidade mínima."
             ),
+            de="Komplexitätsparameter für minimales Kosten-Komplexitäts-Pruning.",
         ),
-        alias=MultilingualString(en="CCP alpha", es="CCP alfa", pt="CCP alfa"),
+        alias=MultilingualString(
+            en="CCP alpha", es="CCP alfa", pt="CCP alfa", de="CCP Alpha"
+        ),
     )  # type: ignore
 
 
@@ -446,6 +523,8 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
         en="Gradient Boosting Regression",
         es="Regresión Gradient Boosting",
         pt="Regressor por Gradient Boosting",
+        de="Gradient-Boosting-Regression",
+        zh="梯度提升回归",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -459,6 +538,11 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
             "Método de conjunto que constrói árvores sequencialmente para corrigir "
             "erros anteriores."
         ),
+        de=(
+            "Ensemble-Methode, die Bäume sequenziell aufbaut, um vorherige Fehler zu "
+            "korrigieren."
+        ),
+        zh="顺序构建决策树以纠正前次误差的集成回归方法。",
     )
     COLOR: str = "#4CAF50"
     ICON: str = "AutoGraph"

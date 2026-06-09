@@ -54,6 +54,16 @@ class R2(RegressionMetric):
             "se aproximam dos dados reais. Fornece uma indicação da "
             "qualidade do ajuste do modelo."
         ),
+        de=(
+            "R2-Wertung, auch bekannt als Bestimmtheitsmaß, "
+            "misst, wie gut die vorhergesagten Werte eines Regressionsmodells "
+            "die tatsächlichen Datenpunkte annähern. Sie gibt einen Hinweis auf "
+            "die Güte der Anpassung des Modells."
+        ),
+        zh=(
+            "R2 分数（决定系数）衡量回归模型的预测值与实际数据点的吻合程度，"
+            "反映模型的拟合优度。"
+        ),
     )
 
     @staticmethod

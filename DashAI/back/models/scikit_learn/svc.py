@@ -48,8 +48,12 @@ class SVCSchema(BaseSchema):
                 "O parâmetro 'C' é um parâmetro de regularização. "
                 "A força da regularização é inversamente proporcional a C"
             ),
+            de=(
+                "Der Parameter 'C' ist ein Regularisierungsparameter. "
+                "Die Stärke der Regularisierung ist umgekehrt proportional zu C."
+            ),
         ),
-        alias=MultilingualString(en="C", es="C", pt="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
     )  # type: ignore
     coef0: schema_field(
         optimizer_float_field(),
@@ -75,8 +79,13 @@ class SVCSchema(BaseSchema):
                 "função kernel. "
                 "É significativo apenas para kernels poly e sigmoid. "
             ),
+            de=(
+                "Der Parameter 'coef0' ist ein unabhängiger Term in der "
+                "Kernelfunktion. "
+                "Er ist nur für die Kernel poly und sigmoid relevant. "
+            ),
         ),
-        alias=MultilingualString(en="coef0", es="coef0", pt="coef0"),
+        alias=MultilingualString(en="coef0", es="coef0", pt="coef0", de="coef0"),
     )  # type: ignore
     degree: schema_field(
         optimizer_float_field(ge=0.0),
@@ -90,8 +99,9 @@ class SVCSchema(BaseSchema):
             en="The 'degree' parameter is only significant for 'poly' kernel.",
             es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
             pt="O parâmetro 'grau' só é significativo para o kernel 'poly'.",
+            de="Der Parameter 'degree' ist nur für den 'poly'-Kernel relevant.",
         ),
-        alias=MultilingualString(en="degree", es="grado", pt="grau"),
+        alias=MultilingualString(en="degree", es="grado", pt="grau", de="Grad"),
     )  # type: ignore
     gamma: schema_field(
         enum_field(enum=["scale", "auto"]),
@@ -100,8 +110,9 @@ class SVCSchema(BaseSchema):
             en="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels.",
             es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
             pt="Coeficiente para kernels 'rbf', 'poly' e 'sigmoid'.",
+            de="Koeffizient für 'rbf'-, 'poly'- und 'sigmoid'-Kernel.",
         ),
-        alias=MultilingualString(en="gamma", es="gamma", pt="gamma"),
+        alias=MultilingualString(en="gamma", es="gamma", pt="gamma", de="Gamma"),
     )  # type: ignore
     kernel: schema_field(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
@@ -110,8 +121,9 @@ class SVCSchema(BaseSchema):
             en="The 'kernel' parameter is the kernel used in the model.",
             es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
             pt="O parâmetro 'kernel' é o kernel utilizado no modelo.",
+            de="Der Parameter 'kernel' gibt den im Modell verwendeten Kernel an.",
         ),
-        alias=MultilingualString(en="kernel", es="kernel", pt="kernel"),
+        alias=MultilingualString(en="kernel", es="kernel", pt="kernel", de="Kernel"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=-1),
@@ -137,9 +149,17 @@ class SVCSchema(BaseSchema):
                 "solucionador. Deve ser um inteiro positivo "
                 "ou -1 para indicar sem limite."
             ),
+            de=(
+                "Der Parameter 'max_iter' bestimmt das Iterationslimit für den "
+                "Löser. Muss eine positive ganze Zahl oder "
+                "-1 für kein Limit sein."
+            ),
         ),
         alias=MultilingualString(
-            en="max iterations", es="max iteraciones", pt="máx iterações"
+            en="max iterations",
+            es="max iteraciones",
+            pt="máx iterações",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
     shrinking: schema_field(
@@ -158,8 +178,14 @@ class SVCSchema(BaseSchema):
                 "O parâmetro 'redução' determina se "
                 "uma heurística de redução é utilizada."
             ),
+            de=(
+                "Der Parameter 'shrinking' bestimmt, ob "
+                "eine Schrumpfungsheuristik verwendet wird."
+            ),
         ),
-        alias=MultilingualString(en="shrinking", es="reducción", pt="redução"),
+        alias=MultilingualString(
+            en="shrinking", es="reducción", pt="redução", de="Schrumpfung"
+        ),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(gt=0.0),
@@ -176,8 +202,11 @@ class SVCSchema(BaseSchema):
                 " la tolerancia para el criterio de detención."
             ),
             pt=("O parâmetro 'tol' determina a tolerância para o critério de parada."),
+            de="Der Parameter 'tol' bestimmt die Toleranz für das Stoppkriterium.",
         ),
-        alias=MultilingualString(en="tolerance", es="tolerancia", pt="tolerância"),
+        alias=MultilingualString(
+            en="tolerance", es="tolerancia", pt="tolerância", de="Toleranz"
+        ),
     )  # type: ignore
 
 
@@ -207,6 +236,8 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         en="Support Vector Machine (SVM)",
         es="Máquina de Vectores de Soporte (SVM)",
         pt="Máquina de Vetores de Suporte (SVM)",
+        zh="支持向量机（SVM）",
+        de="Support-Vektor-Maschine (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -239,6 +270,21 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
             "número de características é grande em relação ao número de amostras e "
             "podem modelar fronteiras de decisão complexas e não lineares mediante "
             "o uso de funções kernel como linear, polinomial e de base radial (RBF)."
+        ),
+        zh=(
+            "支持向量机（SVM）是一种监督学习算法，通过在高维特征空间中"
+            "寻找最优超平面来最大化类间间隔，支持线性、多项式和径向基函数（RBF）核。"
+        ),
+        de=(
+            "Die Support-Vektor-Maschine (SVM) ist ein überwachter "
+            "Machine-Learning-Algorithmus für Klassifikations- und "
+            "Regressionsaufgaben. Sie findet die optimale Hyperebene, die die "
+            "Margin zwischen verschiedenen Klassen in einem hochdimensionalen "
+            "Merkmalsraum maximiert. SVMs sind besonders effektiv, wenn die Anzahl "
+            "der Merkmale im Verhältnis zur Anzahl der Stichproben groß ist, und "
+            "können komplexe, nichtlineare Entscheidungsgrenzen durch den Einsatz "
+            "von Kernelfunktionen wie linear, polynomial und radialer Basisfunktion "
+            "(RBF) modellieren."
         ),
     )
     COLOR: str = "#FF80AB"

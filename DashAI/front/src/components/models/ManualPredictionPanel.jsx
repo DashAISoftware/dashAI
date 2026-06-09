@@ -249,7 +249,7 @@ export default function ManualPredictionPanel({
 
   if (!modelSession || !sample || Object.keys(types).length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
         {t("prediction:label.noExperimentDataAvailable")}
       </Typography>
     );

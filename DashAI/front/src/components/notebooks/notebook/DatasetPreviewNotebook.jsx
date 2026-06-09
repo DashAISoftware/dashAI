@@ -18,7 +18,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
-import { getDatasetFileFiltered } from "../../../api/datasets";
+import { getDataset, getDatasetFileFiltered } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -129,6 +129,22 @@ export default function DatasetPreviewNotebook({
 
       //Failure
       async (result) => {
+        // The poller can fire onError when a job finishes too quickly to be
+        // observed in the changes stream. Confirm the dataset actually failed
+        // before deleting it / surfacing the error.
+        try {
+          const persisted = await getDataset(datasetId);
+          if (persisted && persisted.status === "finished") {
+            enqueueSnackbar(
+              t("datasets:message.datasetCreationSuccess", { datasetName }),
+              { variant: "success" },
+            );
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to verify dataset state after poll error:", e);
+        }
+
         console.error("Dataset job failed:", result);
 
         enqueueSnackbar(
@@ -148,7 +164,11 @@ export default function DatasetPreviewNotebook({
     );
   };
 
-  const handleAddDatasetFromNotebook = async (name, notebookId) => {
+  const handleAddDatasetFromNotebook = async (
+    name,
+    notebookId,
+    options = {},
+  ) => {
     try {
       const dataset = await createDataset(name);
 
@@ -160,7 +180,16 @@ export default function DatasetPreviewNotebook({
       replaceDatasets((prev) => [...prev, dataset]);
       navigate(`/app/data/datasets/${dataset.id}`);
 
-      const job = await enqueueDatasetJob(dataset.id, null, "", {}, notebookId);
+      const params = {
+        compute_metadata: options.compute_metadata ?? true,
+      };
+      const job = await enqueueDatasetJob(
+        dataset.id,
+        null,
+        "",
+        params,
+        notebookId,
+      );
 
       pollForDataset(
         { datasetId: dataset.id, datasetName: name },
@@ -212,7 +241,7 @@ export default function DatasetPreviewNotebook({
           <Typography variant="h6">
             {t("datasets:label.datasetPreviewFor", { name: getDatasetName() })}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button
               variant="contained"
               size="small"
@@ -228,8 +257,8 @@ export default function DatasetPreviewNotebook({
               }}
               sx={{
                 fontSize: "0.7rem",
-                px: 1.5,
-                py: 0.5,
+                px: 3,
+                py: 1,
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
@@ -239,7 +268,7 @@ export default function DatasetPreviewNotebook({
             </Button>
             <IconButton
               size="small"
-              sx={{ color: "primary.main", ml: 1 }}
+              sx={{ color: "primary.main", ml: 2 }}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowNotebookHistoryModal(true);
@@ -270,8 +299,8 @@ export default function DatasetPreviewNotebook({
       <SaveDatasetModal
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
-        onSaveDataset={(name) =>
-          handleAddDatasetFromNotebook(name, notebook.id)
+        onSaveDataset={(name, options) =>
+          handleAddDatasetFromNotebook(name, notebook.id, options)
         }
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,

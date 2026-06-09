@@ -34,8 +34,11 @@ class LogisticRegressionSchema(BaseSchema):
             en="Specify the norm of the penalty",
             es="Especifica la norma de la penalización",
             pt="Especifica a norma da penalidade",
+            de="Gibt die Norm der Bestrafung an",
         ),
-        alias=MultilingualString(en="Penalty", es="Penalización", pt="Penalidade"),
+        alias=MultilingualString(
+            en="Penalty", es="Penalización", pt="Penalidade", de="Bestrafung"
+        ),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(ge=0.0),
@@ -49,8 +52,11 @@ class LogisticRegressionSchema(BaseSchema):
             en="Tolerance for stopping criteria.",
             es="Tolerancia para el criterio de detención.",
             pt="Tolerância para o critério de parada.",
+            de="Toleranz für das Abbruchkriterium.",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia", pt="Tolerância"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+        ),
     )  # type: ignore
     C: schema_field(
         optimizer_float_field(gt=0.0),
@@ -74,8 +80,12 @@ class LogisticRegressionSchema(BaseSchema):
                 "Inverso da força de regularização, valores menores especificam "
                 "regularização mais forte. Deve ser um número positivo."
             ),
+            de=(
+                "Kehrwert der Regularisierungsstärke; kleinere Werte bedeuten stärkere "
+                "Regularisierung. Muss eine positive Zahl sein."
+            ),
         ),
-        alias=MultilingualString(en="C", es="C", pt="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=50),
@@ -89,11 +99,13 @@ class LogisticRegressionSchema(BaseSchema):
             en=("Maximum number of iterations taken for the solvers to converge."),
             es=("Número máximo de iteraciones para que los solucionadores converjan."),
             pt=("Número máximo de iterações para os solvers convergirem."),
+            de=("Maximale Anzahl von Iterationen für die Konvergenz der Löser."),
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
 
@@ -125,11 +137,15 @@ class LogisticRegression(
         en="Logistic Regression",
         es="Regresión Logística",
         pt="Regressão Logística",
+        de="Logistische Regression",
+        zh="逻辑回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear model for classification using logistic function.",
         es="Modelo lineal para clasificación usando la función logística.",
         pt="Modelo linear para classificação usando a função logística.",
+        de="Lineares Modell zur Klassifikation mit der logistischen Funktion.",
+        zh="使用逻辑函数进行分类的线性模型。",
     )
     COLOR: str = "#64B5F6"
     ICON: str = "TrendingUp"

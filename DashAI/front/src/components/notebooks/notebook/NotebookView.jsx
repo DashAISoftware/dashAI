@@ -2,6 +2,7 @@ import { useTourContext } from "../../tour/TourProvider";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   getExplorersByNotebookId,
   getConvertersByNotebookId,
@@ -27,7 +28,7 @@ const RowItem = React.memo(function RowItem({
   return (
     <Box
       sx={{
-        my: 2,
+        my: 4,
         p: 1.5,
         height: "394px",
       }}
@@ -79,8 +80,30 @@ export default function NotebookView({ notebook }) {
     setColumnTypes,
     lastAddedItemId,
     setLastAddedItemId,
+    setPendingDropTool,
   } = useExplorersAndConverters();
+  const theme = useTheme();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [highlightedItemId, setHighlightedItemId] = useState(null);
+
+  useEffect(() => {
+    const onStart = (e) => {
+      if (e.dataTransfer.types.includes("application/x-dashai-tool")) {
+        setIsDragging(true);
+      }
+    };
+    const onEnd = () => {
+      setIsDragging(false);
+      setIsDragOver(false);
+    };
+    window.addEventListener("dragstart", onStart);
+    window.addEventListener("dragend", onEnd);
+    return () => {
+      window.removeEventListener("dragstart", onStart);
+      window.removeEventListener("dragend", onEnd);
+    };
+  }, []);
   const explorersAndConvertersRef = useRef(explorersAndConverters);
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
@@ -281,16 +304,92 @@ export default function NotebookView({ notebook }) {
     );
   }
 
+  const handleDragOver = (e) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+    if (!e.dataTransfer.types.includes("application/x-dashai-tool")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDragEnter = (e) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+    if (!e.dataTransfer.types.includes("application/x-dashai-tool")) return;
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    const related = e.relatedTarget;
+    if (!related || !e.currentTarget.contains(related)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    try {
+      const tool = JSON.parse(
+        e.dataTransfer.getData("application/x-dashai-tool"),
+      );
+      if (tool?.name) setPendingDropTool(tool);
+    } catch {
+      // ignore invalid drops
+    }
+  };
+
   return (
     <Box
+      className="explorer-converter-box"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       sx={{
-        className: "explorer-converter-box",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         overflow: "auto",
+        position: "relative",
+        outline: isDragOver
+          ? `2px dashed ${theme.palette.primary.main}`
+          : isDragging
+            ? `2px dashed ${theme.palette.divider}`
+            : "none",
+        transition: "outline 0.15s",
       }}
     >
+      {isDragging && (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: isDragOver
+              ? `${theme.palette.primary.main}14`
+              : `${theme.palette.action.hover}`,
+            pointerEvents: "none",
+            transition: "background-color 0.15s",
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              color: isDragOver
+                ? theme.palette.primary.main
+                : theme.palette.text.secondary,
+              fontWeight: 600,
+              pointerEvents: "none",
+              transition: "color 0.15s",
+            }}
+          >
+            {t("datasets:label.dropToolHere")}
+          </Typography>
+        </Box>
+      )}
       {explorersAndConverters.length === 0 ? (
         <Box
           sx={{

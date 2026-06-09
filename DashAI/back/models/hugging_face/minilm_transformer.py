@@ -28,6 +28,8 @@ class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
         en="MiniLM Transformer",
         es="Transformer MiniLM",
         pt="Transformer MiniLM",
+        de="MiniLM Transformer",
+        zh="MiniLM Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +43,15 @@ class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "Modelo MiniLM compacto e rápido para classificação de texto eficiente. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Kompaktes, schnelles MiniLM-Modell für effiziente Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "紧凑快速的 MiniLM 模型，用于高效文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#0277BD"

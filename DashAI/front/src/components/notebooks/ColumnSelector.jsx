@@ -39,6 +39,7 @@ function ColumnSelector({
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
+  typesDtypeRestrictions = {},
   onSelectionChange = () => {},
   onValidationChange = () => {},
   columnTypes = null,
@@ -160,10 +161,16 @@ function ColumnSelector({
         if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
           return false;
         }
+        const forbiddenDtypes = typesDtypeRestrictions[row.valueType];
+        if (forbiddenDtypes) {
+          const dtypeKey =
+            row.dataType === t("common:unknown") ? "" : row.dataType;
+          if (forbiddenDtypes.includes(dtypeKey)) return false;
+        }
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, allowedTypes]);
+  }, [rows, allowedDtypes, allowedTypes, typesDtypeRestrictions]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -283,6 +290,7 @@ function ColumnSelector({
     enableFullScreenToggle: false,
     enableHiding: false,
     enablePagination: true,
+    autoResetPageIndex: false,
     muiPaginationProps: { rowsPerPageOptions: [10, 15, 20] },
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
@@ -324,8 +332,8 @@ function ColumnSelector({
       {/* Column requirements */}
       <Box
         sx={{
-          mb: 1.5,
-          p: 1.5,
+          mb: 3,
+          p: 3,
           borderRadius: 2,
           backgroundColor: theme.palette.ui.hover,
           border: `1px solid ${theme.palette.ui.divider}`,
@@ -333,7 +341,7 @@ function ColumnSelector({
         }}
       >
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
@@ -369,7 +377,7 @@ function ColumnSelector({
             sx={{
               color: "text.secondary",
               fontStyle: "italic",
-              mt: 1,
+              mt: 2,
             }}
           >
             <Trans i18nKey="datasets:label.allowedValueTypes">
@@ -387,7 +395,7 @@ function ColumnSelector({
         {allowedDtypes.length > 0 && (
           <Typography
             variant="caption"
-            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+            sx={{ color: "text.disabled", mt: 1, display: "block" }}
           >
             {t("common:allowedTypes")}:{" "}
             <Box
@@ -440,6 +448,7 @@ ColumnSelector.propTypes = {
   }),
   allowedDtypes: PropTypes.array,
   allowedTypes: PropTypes.array,
+  typesDtypeRestrictions: PropTypes.object,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };

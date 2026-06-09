@@ -21,6 +21,8 @@ class DimensionalityReductionConverter(BaseConverter):
         en="Dimensionality Reduction",
         es="Reducción de Dimensionalidad",
         pt="Redução de Dimensionalidade",
+        de="Dimensionsreduktion",
+        zh="降维",
     )
     ICON: Final[str] = Icon.Layers.value
     COLOR: Final[str] = "rgb(255, 99, 132)"

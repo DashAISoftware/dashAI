@@ -2,6 +2,7 @@ import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
@@ -138,14 +139,15 @@ export default function SessionBar({ onToggle }) {
         minHeight={0}
       >
         <Box
-          p={2}
+          p={4}
           sx={{ height: "64px", display: "flex", alignItems: "center" }}
         >
           {/* Create new session button */}
           {selectedSessionId ? (
             <NewItemButton
               onClick={handleNewSessionButton}
-              title={t("generative:button.createSession")}
+              title={t("generative:button.generativeHub")}
+              EndIcon={ViewModuleIcon}
             />
           ) : (
             <Typography variant="body1" color="textSecondary">
@@ -156,7 +158,7 @@ export default function SessionBar({ onToggle }) {
 
         {/* Search Bar */}
         {sessions.length > SEARCH_THRESHOLD && (
-          <Box px={2} pb={2} flex={"0 0 auto"}>
+          <Box px={4} pb={4} flex={"0 0 auto"}>
             <SearchBar
               placeholder={t("generative:label.searchSessions")}
               value={searchQuery}

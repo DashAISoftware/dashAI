@@ -38,9 +38,17 @@ class RandomForestClassifierSchema(BaseSchema):
                 "O parâmetro 'n_estimators' corresponde ao número de árvores de "
                 "decisão. Deve ser um inteiro maior ou igual a 1."
             ),
+            de=(
+                "Der Parameter 'n_estimators' entspricht der Anzahl der "
+                "Entscheidungsbäume. "
+                "Er muss eine ganze Zahl größer oder gleich 1 sein."
+            ),
         ),
         alias=MultilingualString(
-            en="N estimators", es="N estimadores", pt="N estimadores"
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
         ),
     )  # type: ignore
     max_depth: schema_field(
@@ -64,9 +72,16 @@ class RandomForestClassifierSchema(BaseSchema):
                 "O parâmetro corresponde à profundidade máxima da "
                 "árvore. Deve ser um inteiro maior ou igual a 1."
             ),
+            de=(
+                "Der Parameter entspricht der maximalen Tiefe des Baums. "
+                "Er muss eine ganze Zahl größer oder gleich 1 sein."
+            ),
         ),
         alias=MultilingualString(
-            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
         ),
     )  # type: ignore
     min_samples_split: schema_field(
@@ -93,11 +108,17 @@ class RandomForestClassifierSchema(BaseSchema):
                 "necessárias para dividir um nó interno. Deve ser um número maior ou "
                 "igual a 2."
             ),
+            de=(
+                "Dieser Parameter legt die Mindestanzahl von Stichproben fest, "
+                "die zum Aufteilen eines internen Knotens erforderlich sind. "
+                "Er muss eine Zahl größer oder gleich 2 sein."
+            ),
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mínimas amostras de divisão",
+            de="Minimale Aufteilungsstichproben",
         ),
     )  # type: ignore
     min_samples_leaf: schema_field(
@@ -124,11 +145,17 @@ class RandomForestClassifierSchema(BaseSchema):
                 "necessárias para estar em um nó folha. Deve ser um número maior ou "
                 "igual a 1."
             ),
+            de=(
+                "Dieser Parameter legt die Mindestanzahl von Stichproben fest, "
+                "die an einem Blattknoten erforderlich sind. "
+                "Er muss eine Zahl größer oder gleich 1 sein."
+            ),
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mínimas amostras para folha",
+            de="Minimale Stichproben für Blatt",
         ),
     )  # type: ignore
     max_leaf_nodes: schema_field(
@@ -152,11 +179,16 @@ class RandomForestClassifierSchema(BaseSchema):
                 "Este parâmetro define o número máximo de nós folha. Deve ser um "
                 "inteiro maior ou igual a 2."
             ),
+            de=(
+                "Dieser Parameter legt die maximale Anzahl von Blattknoten fest. "
+                "Er muss eine ganze Zahl größer oder gleich 2 sein."
+            ),
         ),
         alias=MultilingualString(
             en="Max leaf nodes",
             es="Máximos nodos para hoja",
             pt="Máximos nós folha",
+            de="Maximale Blattknoten",
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -171,9 +203,13 @@ class RandomForestClassifierSchema(BaseSchema):
             en=("This parameter must be an integer greater than or equal to 0."),
             es=("Este parámetro debe ser un entero mayor o igual a 0."),
             pt=("Este parâmetro deve ser um inteiro maior ou igual a 0."),
+            de=("Dieser Parameter muss eine ganze Zahl größer oder gleich 0 sein."),
         ),
         alias=MultilingualString(
-            en="Random State", es="Estado Aleatorio", pt="Estado Aleatório"
+            en="Random State",
+            es="Estado Aleatorio",
+            pt="Estado Aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -206,6 +242,8 @@ class RandomForestClassifier(
         en="Random Forest",
         es="Bosque Aleatorio",
         pt="Classificador de Floresta Aleatória",
+        de="Random Forest",
+        zh="随机森林",
     )
     DESCRIPTION: str = MultilingualString(
         en="An ensemble learning method using multiple decision trees.",
@@ -217,6 +255,8 @@ class RandomForestClassifier(
             "Um método de aprendizado em conjunto que utiliza múltiplas árvores de "
             "decisão."
         ),
+        de=("Eine Ensemble-Lernmethode, die mehrere Entscheidungsbäume verwendet."),
+        zh="使用多棵决策树的集成学习方法。",
     )
     COLOR: str = "#FF8A65"
     ICON: str = "Forest"

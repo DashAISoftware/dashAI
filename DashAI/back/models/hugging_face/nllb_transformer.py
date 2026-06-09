@@ -33,23 +33,35 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
             en=(
                 "Source language code for NLLB tokenizer (e.g. spa_Latn for Spanish, "
                 "eng_Latn for English). It uses BCP-47 language tags in the format"
-                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             es=(
                 "Código de idioma de origen para el tokenizer NLLB (ej. spa_Latn para "
                 "español, eng_Latn para inglés). Utiliza etiquetas de idioma BCP-47 "
                 "en el formato "
-                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             pt=(
                 "Código do idioma de origem para o tokenizer NLLB (ex. spa_Latn para "
                 "espanhol, eng_Latn para inglês). Utiliza tags de idioma BCP-47 "
                 "no formato "
-                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
+            ),
+            de=(
+                "Quellsprachcode für den NLLB-Tokenisierer (z.B. spa_Latn für Spanisch,"
+                "eng_Latn für Englisch). Verwendet BCP-47-Sprach-Tags im Format "
+                "[Beispiele](https://dl-translate.readthedocs.io/en/latest/available_lan"
+                "guages/#nllb-200)"
             ),
         ),
         alias=MultilingualString(
-            en="Source language", es="Idioma de origen", pt="Idioma de origem"
+            en="Source language",
+            es="Idioma de origen",
+            pt="Idioma de origem",
+            de="Quellsprache",
         ),
     )  # type: ignore
     target_language: schema_field(
@@ -59,23 +71,35 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
             en=(
                 "Target language code for NLLB generation (e.g. eng_Latn for English, "
                 "fra_Latn for French). It uses BCP-47 language tags in the format "
-                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             es=(
                 "Código de idioma destino para la generación NLLB (ej. eng_Latn para "
                 "inglés, fra_Latn para francés). Utiliza etiquetas de idioma BCP-47 "
                 "en el formato "
-                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             pt=(
                 "Código do idioma de destino para a geração NLLB (ex. eng_Latn para "
                 "inglês, fra_Latn para francês). Utiliza tags de idioma BCP-47 "
                 "no formato "
-                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
+            ),
+            de=(
+                "Zielsprachcode für die NLLB-Erzeugung (z.B. eng_Latn für Englisch, "
+                "fra_Latn für Französisch). Verwendet BCP-47-Sprach-Tags im Format "
+                "[Beispiele](https://dl-translate.readthedocs.io/en/latest/available_lan"
+                "guages/#nllb-200)"
             ),
         ),
         alias=MultilingualString(
-            en="Target language", es="Idioma destino", pt="Idioma de destino"
+            en="Target language",
+            es="Idioma destino",
+            pt="Idioma de destino",
+            de="Zielsprache",
         ),
     )  # type: ignore
 
@@ -107,11 +131,15 @@ class NllbTransformer(TranslationModel):
         en="NLLB Transformer",
         es="Transformer NLLB",
         pt="Transformer NLLB",
+        de="NLLB Transformer",
+        zh="NLLB Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=("NLLB multilingual model for configurable source-target translation."),
         es=("Modelo multilenguaje NLLB para traduccion configurable origen-destino."),
         pt=("Modelo multilingual NLLB para tradução configurável origem-destino."),
+        de=("Mehrsprachiges NLLB-Modell für konfigurierbare Quell-Ziel-Übersetzung."),
+        zh="NLLB 多语言模型，支持可配置的源语言到目标语言翻译。",
     )
     COLOR: str = "#5E35B1"
     ICON: str = "Translate"

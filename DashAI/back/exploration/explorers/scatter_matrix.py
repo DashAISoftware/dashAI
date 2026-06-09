@@ -35,11 +35,15 @@ class ScatterMatrixSchema(BaseExplorerSchema):
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
             pt=("Nome ou índice de coluna para agrupar pontos por cor."),
+            de=("Spaltenname oder -index zur Farbgruppierung der Punkte."),
+            zh="用于按颜色分组数据点的列名或索引。",
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
             pt="Coluna para grupo de cor",
+            de="Farbgruppen-Spalte",
+            zh="颜色分组列",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -49,11 +53,15 @@ class ScatterMatrixSchema(BaseExplorerSchema):
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
             pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
+            de=("Spaltenname oder -index zur Symbolgruppierung der Punkte."),
+            zh="用于按符号分组数据点的列名或索引。",
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
             pt="Coluna para grupo de símbolo",
+            de="Symbolgruppen-Spalte",
+            zh="符号分组列",
         ),
     )  # type: ignore
 
@@ -76,6 +84,8 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         en="Multiple Scatter Plot",
         es="Matriz de Dispersión",
         pt="Matriz de Dispersão",
+        de="Streudiagramm-Matrix",
+        zh="散点矩阵",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -92,6 +102,12 @@ class ScatterMatrixExplorer(RelationshipExplorer):
             "gerados gráficos de dispersão para cada par, com histogramas na "
             "diagonal."
         ),
+        de=(
+            "Gibt eine Streudiagramm-Matrix für ausgewählte Spalten zurück. Für "
+            "jedes Paar werden Streudiagramme erzeugt, mit Histogrammen auf der "
+            "Diagonale."
+        ),
+        zh=("返回所选列的散点矩阵。为每对列生成散点图，对角线为直方图。"),
     )
     IMAGE_PREVIEW = "scatter_matrix.png"
 
@@ -99,13 +115,15 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         en="Display a scatter matrix plot of selected columns.",
         es="Muestra una matriz de dispersión de columnas seleccionadas.",
         pt="Exibe uma matriz de dispersão das colunas selecionadas.",
+        de="Zeigt eine Streudiagramm-Matrix der ausgewählten Spalten an.",
+        zh="显示所选列的散点矩阵图。",
     )
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "numeric_categorical_only": True,
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 2},
     }
 

@@ -3,7 +3,7 @@ title: Base de Datos
 sidebar_label: Base de Datos
 ---
 
-DashAI usa **SQLite** como base de datos (almacenada en `~/.DashAI/db.sqlite`) con **SQLAlchemy** como ORM y **Alembic** para las migraciones de esquema.
+dashAI usa **SQLite** como base de datos (almacenada en `~/.DashAI/db.sqlite`) con **SQLAlchemy** como ORM y **Alembic** para las migraciones de esquema.
 
 ## Tablas Principales
 

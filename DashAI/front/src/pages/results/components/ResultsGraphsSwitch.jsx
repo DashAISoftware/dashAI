@@ -8,7 +8,7 @@ function ResultsGraphsSwitch({ showCustomMetrics, handleToggleMetrics }) {
   const { t } = useTranslation(["models"]);
   const theme = useTheme();
   return (
-    <Box mb={2} display="flex" justifyContent="flex-start" width="100%">
+    <Box mb={4} display="flex" justifyContent="flex-start" width="100%">
       <Box display="flex" alignItems="center">
         <Typography variant="body1">
           {t("models:label.generalMetrics")}

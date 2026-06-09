@@ -4,6 +4,7 @@ import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
@@ -225,11 +226,12 @@ export default function ModelsLeftBar({ onToggle }) {
   return (
     <SideBar>
       {/* Create new item button */}
-      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+      <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title={t("models:button.newSession")}
+            title={t("models:button.modelsHub")}
+            EndIcon={ViewModuleIcon}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
@@ -240,7 +242,7 @@ export default function ModelsLeftBar({ onToggle }) {
 
       {/* Search bar global */}
       {totalItems > SEARCH_THRESHOLD && (
-        <Box px={2} pb={2} flex={"0 0 auto"}>
+        <Box px={4} pb={4} flex={"0 0 auto"}>
           <SearchBar
             placeholder={t("models:label.searchDatasetsSessions")}
             value={searchQuery}

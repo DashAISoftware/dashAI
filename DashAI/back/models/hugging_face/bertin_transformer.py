@@ -28,6 +28,8 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
         en="BERTIN Spanish RoBERTa",
         es="BERTIN RoBERTa en Español",
         pt="BERTIN RoBERTa em Espanhol",
+        de="BERTIN Spanisches RoBERTa",
+        zh="BERTIN 西班牙语 RoBERTa",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +43,15 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "RoBERTa em espanhol (BERTIN) pré-treinada em grandes corpus em espanhol. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Spanisches RoBERTa (BERTIN) vortrainiert auf großen spanischen Korpora. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "在大型西班牙语语料库上预训练的 RoBERTa（BERTIN）模型。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#AD1457"

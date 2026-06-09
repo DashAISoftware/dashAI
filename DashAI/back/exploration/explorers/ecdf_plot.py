@@ -51,9 +51,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Column used to color the ECDF plot."),
             es=("Columna usada para colorear el gráfico ECDF."),
             pt=("Coluna usada para colorir o gráfico ECDF."),
+            de=("Spalte zur Einfärbung des ECDF-Diagramms."),
+            zh="用于为ECDF图着色的列。",
         ),
         alias=MultilingualString(
-            en="Color column", es="Columna de color", pt="Coluna de cor"
+            en="Color column",
+            es="Columna de color",
+            pt="Coluna de cor",
+            de="Farbspalte",
+            zh="颜色列",
         ),
     )  # type: ignore
     facet_col: schema_field(
@@ -63,9 +69,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Column used to facet the ECDF plot by columns."),
             es=("Columna usada para facetar el gráfico ECDF por columnas."),
             pt=("Coluna usada para facetar o gráfico ECDF por colunas."),
+            de=("Spalte zur spaltenseitigen Facettierung des ECDF-Diagramms."),
+            zh="用于按列对ECDF图进行分面的列。",
         ),
         alias=MultilingualString(
-            en="Facet column", es="Facetear por columnas", pt="Facetar por colunas"
+            en="Facet column",
+            es="Facetear por columnas",
+            pt="Facetar por colunas",
+            de="Facettenspalte",
+            zh="分面列",
         ),
     )  # type: ignore
     facet_row: schema_field(
@@ -75,9 +87,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Column used to facet the ECDF plot by rows."),
             es=("Columna usada para facetar el gráfico ECDF por filas."),
             pt=("Coluna usada para facetar o gráfico ECDF por linhas."),
+            de=("Spalte zur zeilenseitigen Facettierung des ECDF-Diagramms."),
+            zh="用于按行对ECDF图进行分面的列。",
         ),
         alias=MultilingualString(
-            en="Facet row", es="Facetear por filas", pt="Facetar por linhas"
+            en="Facet row",
+            es="Facetear por filas",
+            pt="Facetar por linhas",
+            de="Facettenzeile",
+            zh="分面行",
         ),
     )  # type: ignore
     ecdf_norm: schema_field(
@@ -87,9 +105,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Type of normalization used for the ECDF plot."),
             es=("Tipo de normalización usada en el gráfico ECDF."),
             pt=("Tipo de normalização usada no gráfico ECDF."),
+            de=("Normalisierungstyp für das ECDF-Diagramm."),
+            zh="ECDF图使用的归一化类型。",
         ),
         alias=MultilingualString(
-            en="ECDF normalization", es="Normalización ECDF", pt="Normalização ECDF"
+            en="ECDF normalization",
+            es="Normalización ECDF",
+            pt="Normalização ECDF",
+            de="ECDF-Normalisierung",
+            zh="ECDF归一化",
         ),
     )  # type: ignore
 
@@ -118,6 +142,8 @@ class ECDFPlotExplorer(DistributionExplorer):
         en="Empirical Cumulative Distribution Plot",
         es="Gráfico ECDF (Distribución Acumulada Empírica)",
         pt="Gráfico ECDF",
+        de="Empirisches Kumulatives Verteilungsdiagramm",
+        zh="经验累积分布函数图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -132,6 +158,11 @@ class ECDFPlotExplorer(DistributionExplorer):
             "Gráfico não paramétrico que mostra a proporção ou a contagem de "
             "observações abaixo de cada valor único."
         ),
+        de=(
+            "Nicht-parametrisches Diagramm, das den Anteil oder die Anzahl der "
+            "Beobachtungen unterhalb jedes eindeutigen Wertes zeigt."
+        ),
+        zh="非参数图，显示每个唯一值以下的观测比例或计数。",
     )
     IMAGE_PREVIEW = "ecdf_plot.png"
 
@@ -139,7 +170,7 @@ class ECDFPlotExplorer(DistributionExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "numeric_categorical_only": True,
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 1},
     }
 

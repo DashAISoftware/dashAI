@@ -359,7 +359,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             )
 
         sorted_items = sorted(importances.items(), key=lambda item: item[1])
-        param_names, importance_values = zip(*sorted_items)
+        param_names, importance_values = zip(*sorted_items, strict=False)
         fig = go.Figure(
             data=[
                 go.Bar(

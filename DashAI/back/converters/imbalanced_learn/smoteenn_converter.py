@@ -37,6 +37,11 @@ class SMOTEENNSchema(BaseSchema):
                 "Estratégia de amostragem para aplicar SMOTE e limpar o "
                 "conjunto de dados."
             ),
+            de=(
+                "Abtaststrategie zur Anwendung von SMOTE und Bereinigung des "
+                "Datensatzes."
+            ),
+            zh="应用SMOTE并清理数据集的采样策略。",
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -46,6 +51,8 @@ class SMOTEENNSchema(BaseSchema):
             en="Seed used for reproducibility.",
             es="Semilla usada para reproducibilidad.",
             pt="Semente usada para reprodutibilidade.",
+            de="Startwert für die Reproduzierbarkeit.",
+            zh="用于可重复性的随机种子。",
         ),
     )  # type: ignore
     k_neighbors: schema_field(
@@ -55,6 +62,8 @@ class SMOTEENNSchema(BaseSchema):
             en="Number of neighbors used by SMOTE.",
             es="Número de vecinos utilizados por SMOTE.",
             pt="Número de vizinhos utilizados pelo SMOTE.",
+            de="Anzahl der von SMOTE verwendeten Nachbarn.",
+            zh="SMOTE使用的邻居数量。",
         ),
     )  # type: ignore
 
@@ -96,11 +105,15 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
         pt=(
             "SMOTEENN: SMOTE com redução de ruído via Vizinhos Mais Próximos Editados."
         ),
+        de="SMOTEENN: SMOTE mit Rauschreduzierung durch Edited Nearest Neighbors.",
+        zh="SMOTEENN：通过编辑最近邻进行降噪的SMOTE（合成少数类过采样技术）。",
     )
     DISPLAY_NAME = MultilingualString(
         en="SMOTE-ENN (Hybrid Sampling)",
         es="SMOTE-ENN (Muestreo Híbrido)",
         pt="SMOTEENN (Amostragem Híbrida)",
+        de="SMOTE-ENN (Hybride Abtastung)",
+        zh="SMOTE-ENN（混合采样）",
     )
     IMAGE_PREVIEW = "smoteenn.png"
 

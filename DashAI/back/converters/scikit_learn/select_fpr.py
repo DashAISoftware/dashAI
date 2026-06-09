@@ -23,6 +23,8 @@ class SelectFprSchema(BaseSchema):
             en="The highest p-value for features to be kept.",
             es="El p-valor más alto para conservar características.",
             pt="O p-valor mais alto para manter características.",
+            de="Der höchste p-Wert für beizubehaltende Merkmale.",
+            zh="保留特征的最高 p 值。",
         ),
     )  # type: ignore
 
@@ -69,10 +71,16 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
             "Filtro: Seleciona características de acordo com um teste de taxa "
             "de falso positivo (FPR)."
         ),
+        de="Filter: Merkmale gemäß einem Test der Falsch-Positiv-Rate (FPR) auswählen.",
+        zh="过滤器：根据假阳性率（FPR）检验选择特征。",
     )
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(
-        en="Select FPR", es="Seleccionar FPR", pt="Seleção por FPR"
+        en="Select FPR",
+        es="Seleccionar FPR",
+        pt="Seleção por FPR",
+        de="FPR-Auswahl",
+        zh="FPR 特征选择",
     )
     IMAGE_PREVIEW = "select_fpr.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

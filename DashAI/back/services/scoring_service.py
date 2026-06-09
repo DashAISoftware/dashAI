@@ -90,7 +90,12 @@ class ScoringService:
 
         return all_profiles
 
-    def get_available_profiles(self, task_name: Optional[str]) -> List[Dict[str, Any]]:
+    @inject
+    def get_available_profiles(
+        self,
+        task_name: Optional[str],
+        component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
+    ) -> List[Dict[str, Any]]:
         """Get profiles available for a given task.
 
         Fetches profiles from the task's SCORING_PROFILES class attribute
@@ -101,39 +106,49 @@ class ScoringService:
         task_name : Optional[str]
             Task class name (e.g., "TabularClassificationTask") or None.
             If None, returns all profiles from all tasks.
+        component_registry : ComponentRegistry
+            Registry to look up task class (injected).
 
         Returns
         -------
         List[Dict[str, Any]]
             List of profile dicts with keys: id, description, weights.
         """
+        if task_name:
+            # Access the task class directly to avoid profile-ID collisions
+            # that occur when multiple tasks share the same profile ID keys
+            # (e.g. TabularClassificationTask and ImageClassificationTask both
+            # define "balanced").
+            try:
+                full_task_dict = component_registry[task_name]
+                task_class = full_task_dict.get("class")
+                if task_class and hasattr(task_class, "SCORING_PROFILES"):
+                    return [
+                        {
+                            "id": profile_id,
+                            "description": profile_data["description"],
+                            "weights": profile_data["weights"],
+                        }
+                        for profile_id, profile_data in (
+                            task_class.SCORING_PROFILES.items()
+                        )
+                    ]
+            except KeyError:
+                log.debug(f"Task {task_name} not found in registry")
+            except Exception as e:
+                log.warning(f"Error accessing SCORING_PROFILES for {task_name}: {e}")
+            return []
+
+        # No task specified — return one entry per unique profile ID across all tasks.
         all_profiles = self._get_all_profiles()
-
-        if not task_name:
-            # No task specified; return all profiles
-            return [
-                {
-                    "id": profile_id,
-                    "description": profile_data["description"],
-                    "weights": profile_data["weights"],
-                }
-                for profile_id, profile_data in all_profiles.items()
-            ]
-
-        # Filter profiles by task
-        result = []
-        for profile_id, profile_data in all_profiles.items():
-            if profile_data.get("task_name") == task_name:
-                result.append(
-                    {
-                        "id": profile_id,
-                        "description": profile_data["description"],
-                        "weights": profile_data["weights"],
-                    }
-                )
-
-        # If no profiles found for this task, return empty (graceful fallback)
-        return result
+        return [
+            {
+                "id": profile_id,
+                "description": profile_data["description"],
+                "weights": profile_data["weights"],
+            }
+            for profile_id, profile_data in all_profiles.items()
+        ]
 
     def normalize_metric_value(
         self,

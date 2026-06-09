@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useMatch } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -13,7 +15,10 @@ import { useTranslation } from "react-i18next";
 
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
 
-export default function DatasetsNotebooksLeftBar({ onToggle }) {
+export default function DatasetsNotebooksLeftBar({
+  onToggle,
+  onDownloadDelete,
+}) {
   const {
     datasets,
     notebooks,
@@ -24,17 +29,26 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     editDataset,
     editNotebook,
     deleteNotebookById,
+    downloads,
+    deleteDownloadById,
   } = useDatasetsAndNotebooks();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isHub = pathname.startsWith("/app/data/hub");
+  const datafileMatch = useMatch("/app/data/hub/import/:datafileId/*");
+  const selectedDatafileId = datafileMatch
+    ? parseInt(datafileMatch.params.datafileId)
+    : null;
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
+  const [filteredDownloads, setFilteredDownloads] = useState(downloads);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const { t } = useTranslation(["datasets", "common"]);
+  const { t } = useTranslation(["datasets", "common", "hub"]);
 
   const SEARCH_THRESHOLD = 10;
-  const totalItems = datasets.length + notebooks.length;
+  const totalItems = datasets.length + notebooks.length + downloads.length;
 
   useEffect(() => {
     if (totalItems <= SEARCH_THRESHOLD) setSearchQuery("");
@@ -46,6 +60,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     if (!q) {
       setFilteredDatasets(datasets);
       setFilteredNotebooks(notebooks);
+      setFilteredDownloads(downloads);
       return;
     }
 
@@ -53,7 +68,8 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
 
     setFilteredDatasets(datasets.filter(match));
     setFilteredNotebooks(notebooks.filter(match));
-  }, [searchQuery, datasets, notebooks]);
+    setFilteredDownloads(downloads.filter(match));
+  }, [searchQuery, datasets, notebooks, downloads]);
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
@@ -62,6 +78,11 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     if (notebook) {
       setSelectedInfoNotebook(notebook);
     }
+  };
+
+  const handleDeleteDownload = async (id) => {
+    const success = await deleteDownloadById(id);
+    if (success) onDownloadDelete?.(id);
   };
 
   const getDatasetDeleteConfirmationContent = (dataset) =>
@@ -139,11 +160,12 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
   return (
     <SideBar>
       {/* Create new item button */}
-      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+      <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedNotebookId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title={t("datasets:button.newDatasetNotebook")}
+            title={t("datasets:button.datasetHub")}
+            EndIcon={ViewModuleIcon}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
@@ -154,7 +176,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
 
       {/* Search bar global */}
       {totalItems > SEARCH_THRESHOLD && (
-        <Box px={2} pb={2} flex={"0 0 auto"}>
+        <Box px={4} pb={4} flex={"0 0 auto"}>
           <SearchBar
             placeholder={t("datasets:label.searchDatasetsNotebooks")}
             value={searchQuery}
@@ -181,22 +203,49 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
           getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
         />
 
-        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+        {!isHub && (
+          <>
+            <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
-        <CollapsibleList
-          items={filteredNotebooks}
-          selectedItemId={selectedNotebookId}
-          onItemClick={onNotebookClick}
-          onItemDelete={onNotebookDelete}
-          onItemEdit={editNotebook}
-          onItemInfo={handleNotebookInfo}
-          defaultOpen={true}
-          title={t("datasets:label.notebooks")}
-          Icon={DescriptionIcon}
-          datasets={datasets}
-          getItemDescription={getNotebookDescription}
-          getDeleteConfirmationContent={getNotebookDeleteConfirmationContent}
-        />
+            <CollapsibleList
+              items={filteredNotebooks}
+              selectedItemId={selectedNotebookId}
+              onItemClick={onNotebookClick}
+              onItemDelete={onNotebookDelete}
+              onItemEdit={editNotebook}
+              onItemInfo={handleNotebookInfo}
+              defaultOpen={true}
+              title={t("datasets:label.notebooks")}
+              Icon={DescriptionIcon}
+              datasets={datasets}
+              getItemDescription={getNotebookDescription}
+              getDeleteConfirmationContent={
+                getNotebookDeleteConfirmationContent
+              }
+            />
+          </>
+        )}
+
+        {isHub && (
+          <>
+            <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+
+            <CollapsibleList
+              items={filteredDownloads}
+              selectedItemId={selectedDatafileId}
+              onItemClick={(id) => {
+                navigate(`/app/data/hub/import/${id}`);
+              }}
+              onItemDelete={handleDeleteDownload}
+              defaultOpen={true}
+              title={t("hub:downloadedDatasets")}
+              Icon={CloudDownloadIcon}
+              getItemDescription={(dl) =>
+                t("hub:fromSource", { source: dl.source_name })
+              }
+            />
+          </>
+        )}
       </Box>
 
       {/* Footer */}

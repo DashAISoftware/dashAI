@@ -26,6 +26,8 @@ class AdditiveChi2SamplerSchema(BaseSchema):
             en="The number of sample steps (shuffling) to perform.",
             es="Número de pasos de muestreo (mezcla) a realizar.",
             pt="O número de passos de amostragem (embaralhamento) a realizar.",
+            de="Die Anzahl der Stichprobenschritte (Mischen) zur Durchführung.",
+            zh="要执行的采样步骤（混洗）数量。",
         ),
     )  # type: ignore
     sample_interval: schema_field(
@@ -35,6 +37,11 @@ class AdditiveChi2SamplerSchema(BaseSchema):
             en="The number of samples generated between each original sample.",
             es="Número de muestras generadas entre cada muestra original.",
             pt="O número de amostras geradas entre cada amostra original.",
+            de=(
+                "Die Anzahl der zwischen jeder ursprünglichen Stichprobe generierten "
+                "Stichproben."
+            ),
+            zh="每个原始样本之间生成的样本数量。",
         ),
     )  # type: ignore
 
@@ -63,11 +70,18 @@ class AdditiveChi2Sampler(
             "Utiliza amostragem da transformada de Fourier da característica do "
             "kernel em intervalos regulares."
         ),
+        de=(
+            "Verwendet Stichproben der Fourier-Transformation der Kerneleigenschaft "
+            "in regelmäßigen Abständen."
+        ),
+        zh="以规则间隔对核特征的傅里叶变换进行采样。",
     )
     DISPLAY_NAME = MultilingualString(
         en="Additive Chi² Sampler",
         es="Muestreador Chi²",
         pt="Amostrador Qui-2 Aditivo",
+        de="Additiver Chi²-Stichprobennehmer",
+        zh="加性卡方采样器",
     )
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
 

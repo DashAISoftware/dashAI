@@ -5,7 +5,7 @@ sidebar_label: Components
 
 ## What is a Component?
 
-A **component** is the fundamental building block of DashAI. Every pluggable piece of
+A **component** is the fundamental building block of dashAI. Every pluggable piece of
 functionality — models, tasks, metrics, explorers, explainers, converters, data loaders,
 optimizers, and jobs — is a component.
 

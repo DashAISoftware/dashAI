@@ -12,14 +12,14 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
   return (
     <Box
       sx={{
-        mt: 2,
-        p: 2,
+        mt: 4,
+        p: 4,
         bgcolor: theme.palette.ui.panelDark,
         borderRadius: 1,
         border: `1px solid ${theme.palette.ui.border}`,
       }}
     >
-      <Typography variant="subtitle2" sx={{ color: "error.main", mb: 1 }}>
+      <Typography variant="subtitle2" sx={{ color: "error.main", mb: 2 }}>
         {t("common:itemsToBeDeleted")}
       </Typography>
       <Box sx={{ maxHeight: 200, overflow: "auto" }}>
@@ -38,7 +38,7 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                py: 0.5,
+                py: 1,
                 fontWeight: isSelected ? "bold" : "normal",
               }}
             >

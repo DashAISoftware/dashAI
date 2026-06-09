@@ -34,11 +34,11 @@ export default function SelectOptionMenu({
         justifyContent={"flex-start"}
       >
         {showNoDatasetAlert && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
             <AlertTitle>{t("datasets:label.noDatasetsAvailable")}</AlertTitle>
             {t("datasets:label.uploadDatasetBeforeCreatingSession")}
             {onGoToDatasets && (
-              <Box sx={{ mt: 1 }}>
+              <Box sx={{ mt: 2 }}>
                 <Button
                   variant="contained"
                   size="small"
@@ -65,8 +65,8 @@ export default function SelectOptionMenu({
           container
           direction="row"
           alignItems="stretch"
-          spacing={1}
-          sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
+          spacing={2}
+          sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
         >
           {loading
             ? Array.from({ length: 6 }).map((_, index) => (

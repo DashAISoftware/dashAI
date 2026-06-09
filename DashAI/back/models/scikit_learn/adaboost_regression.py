@@ -42,9 +42,16 @@ class AdaBoostRegressionSchema(BaseSchema):
                 "O número máximo de estimadores em que o boosting é encerrado. "
                 "Em caso de ajuste perfeito, o procedimento é interrompido antes."
             ),
+            de=(
+                "Die maximale Anzahl von Schätzern, bei der das Boosting beendet wird. "
+                "Bei perfekter Anpassung wird das Lernverfahren vorzeitig gestoppt."
+            ),
         ),
         alias=MultilingualString(
-            en="N estimators", es="N estimadores", pt="N estimadores"
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
         ),
     )  # type: ignore
 
@@ -69,9 +76,17 @@ class AdaBoostRegressionSchema(BaseSchema):
                 "Peso aplicado a cada regressor em cada iteração de boosting. "
                 "Existe um trade-off entre learning_rate e n_estimators."
             ),
+            de=(
+                "Gewicht, das bei jeder Boosting-Iteration auf jeden Regressor "
+                "angewendet wird. "
+                "Es gibt einen Trade-off zwischen Lernrate und Anzahl Schätzer."
+            ),
         ),
         alias=MultilingualString(
-            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
         ),
     )  # type: ignore
 
@@ -91,8 +106,12 @@ class AdaBoostRegressionSchema(BaseSchema):
                 "A função de perda a usar ao atualizar os pesos após cada "
                 "iteração de boosting."
             ),
+            de=(
+                "Die Verlustfunktion, die beim Aktualisieren der Gewichte nach jeder "
+                "Boosting-Iteration verwendet wird."
+            ),
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda"),
+        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda", de="Verlust"),
     )  # type: ignore
 
     random_state: schema_field(
@@ -111,9 +130,18 @@ class AdaBoostRegressionSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int para "
                 "saída reproduzível, ou None para não definir uma semente específica."
             ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -140,11 +168,18 @@ class AdaBoostRegression(RegressionModel, SklearnLikeRegressor, _AdaBoostRegress
         en="AdaBoost Regression",
         es="Regresión AdaBoost",
         pt="Regressão AdaBoost",
+        de="AdaBoost Regression",
+        zh="AdaBoost 回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Adaptive boosting that focuses on samples with large residuals.",
         es="Boosting adaptivo que se enfoca en muestras con grandes residuos.",
         pt="Boosting adaptivo que se concentra em amostras com grandes resíduos.",
+        de=(
+            "Adaptives Boosting, das sich auf Stichproben mit großen Residuen "
+            "konzentriert."
+        ),
+        zh="自适应提升回归，专注于残差较大的样本。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "Bolt"

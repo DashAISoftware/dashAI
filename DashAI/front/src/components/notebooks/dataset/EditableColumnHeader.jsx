@@ -142,7 +142,7 @@ export default function EditableColumnHeader({
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          gap: 0.5,
+          gap: 1,
         }}
       >
         <TextField
@@ -158,7 +158,7 @@ export default function EditableColumnHeader({
             width: "100%",
             "& .MuiInputBase-input": {
               fontSize: "0.875rem",
-              paddingY: 0.5,
+              paddingY: 1,
               textAlign: "center",
             },
           }}
@@ -182,7 +182,7 @@ export default function EditableColumnHeader({
         flexDirection: "column",
         alignItems: "center",
         width: "100%",
-        gap: 0.5,
+        gap: 1,
         textAlign: "center",
       }}
     >
@@ -206,13 +206,13 @@ export default function EditableColumnHeader({
         {columnType || t("common:unknown")}
       </Typography>
 
-      {/* Encoder chip — only for Categorical columns */}
+      {/* Encoder chip - only for Categorical columns */}
       {columnType === "Categorical" && columnEncoder && (
         <>
           <Tooltip title={t("common:changeEncoder")} arrow>
             <span style={{ display: "inline-flex" }}>
               <Chip
-                label={encoderLoading ? "…" : encoderLabel(columnEncoder)}
+                label={encoderLoading ? "..." : encoderLabel(columnEncoder)}
                 size="small"
                 onClick={handleEncoderClick}
                 disabled={disabled || !onEncoderChange}

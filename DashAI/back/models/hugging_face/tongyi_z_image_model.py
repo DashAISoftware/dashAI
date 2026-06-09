@@ -56,9 +56,20 @@ class TongyiZImageSchema(BaseSchema):
                 "Hugging Face. Supera modelos anteriores de última geração com "
                 "uma fração de sua quantidade de parâmetros."
             ),
+            de=(
+                "Der zu ladende Tongyi Z-Image-Checkpoint. "
+                "'Tongyi-Z-Image' ist Alibabas 6B-Parameter-Text-zu-Bild-Modell "
+                "mit einer einzigartigen S3-DiT-Architektur (Sparse Spatial-Spectral "
+                "Diffusion Transformer), eines der am häufigsten heruntergeladenen "
+                "Modelle auf Hugging Face. Es übertrifft frühere Open-Source-Modelle "
+                "auf dem neuesten Stand bei einem Bruchteil deren Parameteranzahl."
+            ),
         ),
         alias=MultilingualString(
-            en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
         ),
     )  # type: ignore
 
@@ -84,9 +95,18 @@ class TongyiZImageSchema(BaseSchema):
                     "marca d'água'. "
                     "Deixe vazio para omitir o condicionamento negativo."
                 ),
+                de=(
+                    "Text, der beschreibt, was aus dem generierten Bild ausgeschlossen "
+                    "werden soll. Häufige Werte: 'unscharf, geringe Qualität, verzerrt,"
+                    "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
+                    "überspringen."
+                ),
             ),
             alias=MultilingualString(
-                en="Negative prompt", es="Prompt negativo", pt="Prompt negativo"
+                en="Negative prompt",
+                es="Prompt negativo",
+                pt="Prompt negativo",
+                de="Negativer Prompt",
             ),
         )  # type: ignore
     ]
@@ -110,11 +130,17 @@ class TongyiZImageSchema(BaseSchema):
                 "de alta qualidade com 20-30 etapas. Mais etapas refinam o detalhe "
                 "ao custo do tempo de geração."
             ),
+            de=(
+                "Anzahl der Entrauschungsschritte. Tongyi Z-Image erzielt mit "
+                "20-30 Schritten hochwertige Ergebnisse. Mehr Schritte verfeinern "
+                "Details auf Kosten der Generierungszeit."
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de etapas de inferência",
+            de="Anzahl Inferenzschritte",
         ),
     )  # type: ignore
 
@@ -137,9 +163,16 @@ class TongyiZImageSchema(BaseSchema):
                 "estritamente a imagem segue o prompt. Valores entre 4-7 funcionam "
                 "bem para o Tongyi Z-Image."
             ),
+            de=(
+                "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
+                "dem Prompt folgt. Werte 4-7 funktionieren gut für Tongyi Z-Image."
+            ),
         ),
         alias=MultilingualString(
-            en="Guidance scale", es="Escala de guía", pt="Escala de orientação"
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+            de="Führungsskala",
         ),
     )  # type: ignore
 
@@ -161,8 +194,15 @@ class TongyiZImageSchema(BaseSchema):
                 "recomendada para este modelo de 6B parâmetros. A inferência em "
                 "CPU é possível, mas muito lenta."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. GPU wird für dieses "
+                "6B-Parameter-Modell "
+                "dringend empfohlen. CPU-Inferenz ist möglich, aber sehr langsam."
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+        ),
     )  # type: ignore
 
     seed: schema_field(
@@ -181,8 +221,13 @@ class TongyiZImageSchema(BaseSchema):
                 "Semente aleatória para geração reproduzível. Um inteiro positivo "
                 "fixo sempre produz a mesma imagem. Use -1 para uma semente aleatória."
             ),
+            de=(
+                "Zufalls-Seed für reproduzierbare Generierung. Ein fester positiver "
+                "Integer erzeugt stets dasselbe Bild. Verwenden Sie -1 für einen "
+                "zufälligen Seed."
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente"),
+        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
     )  # type: ignore
 
     width: schema_field(
@@ -201,8 +246,12 @@ class TongyiZImageSchema(BaseSchema):
                 "Largura da imagem em pixels. Deve ser múltiplo de 8. "
                 "Tongyi Z-Image tem como alvo nativo 1024x1024 px."
             ),
+            de=(
+                "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "Tongyi Z-Image zielt nativ auf 1024x1024 px ab."
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura"),
+        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
     )  # type: ignore
 
     height: schema_field(
@@ -221,8 +270,12 @@ class TongyiZImageSchema(BaseSchema):
                 "Altura da imagem em pixels. Deve ser múltiplo de 8. "
                 "Tongyi Z-Image tem como alvo nativo 1024x1024 px."
             ),
+            de=(
+                "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "Tongyi Z-Image zielt nativ auf 1024x1024 px ab."
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura"),
+        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -241,11 +294,17 @@ class TongyiZImageSchema(BaseSchema):
                 "Quantas imagens gerar a partir de um único prompt em um lote. "
                 "Requer proporcionalmente mais memória GPU por imagem adicional."
             ),
+            de=(
+                "Anzahl der Bilder, die aus einem einzelnen Prompt in einem Batch "
+                "generiert werden. Erfordert proportional mehr GPU-Speicher pro "
+                "zusätzlichem Bild."
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
         ),
     )  # type: ignore
 
@@ -271,6 +330,8 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
         en="Tongyi Z-Image",
         es="Tongyi Z-Image",
         pt="Tongyi Z-Image",
+        zh="通义 Z-Image",
+        de="Tongyi Z-Image",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -301,6 +362,20 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
             "de última geração com uma fração do seu tamanho. Destaca-se em "
             "geração fotorrealista de imagens, estilos diversos e renderização "
             "precisa de texto. Modelo disponível em "
+            "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
+        ),
+        zh=(
+            "通义 Z-Image 是阿里巴巴的 60 亿参数文本到图像模型，"
+            "采用创新的 S3-DiT 架构，擅长真实感图像生成、多样风格和精确文字渲染。"
+        ),
+        de=(
+            "Tongyi Z-Image ist Alibabas 6B-Parameter-Text-zu-Bild-Modell mit "
+            "einer neuartigen S3-DiT-Architektur (Sparse Spatial-Spectral "
+            "Diffusion Transformer). Es ist derzeit eines der am häufigsten "
+            "heruntergeladenen Modelle auf Hugging Face und übertrifft frühere "
+            "Open-Source-Modelle auf dem neuesten Stand bei einem Bruchteil ihrer "
+            "Größe. Hervorragend für fotorealistische Bildgenerierung, diverse "
+            "Stile und genaues Text-Rendering. Modell verfügbar unter "
             "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
         ),
     )

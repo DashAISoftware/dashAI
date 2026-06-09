@@ -10,6 +10,8 @@ import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
+import ComputeMetadataConfirmDialog from "../../datasets/ComputeMetadataConfirmDialog";
+import { shouldRecommendDisableMetadata } from "../../../utils/metadataRecommendation";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -21,6 +23,8 @@ export default function ConfigureAndUploadDatasetStep({
   onPreviewError,
   formHasErrors,
   existingDatasets = [],
+  computeMetadata = true,
+  onPreviewMetrics,
 }) {
   const { defaultName } = useMemo(
     () => generateSequentialName({ base: "Dataset", items: existingDatasets }),
@@ -35,6 +39,11 @@ export default function ConfigureAndUploadDatasetStep({
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
   const [columnTypes, setColumnTypes] = useState(null);
   const [columnRenames, setColumnRenames] = useState({});
+  const [previewMetrics, setPreviewMetrics] = useState({
+    colCount: 0,
+    estRows: 0,
+  });
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -63,85 +72,109 @@ export default function ConfigureAndUploadDatasetStep({
     }
   }, [previewError, enqueueSnackbar]);
 
-  const submitNewDataset = useCallback(async () => {
-    if (!datasetFileToUpload || !datasetFileToUpload.file) {
-      enqueueSnackbar(t("datasets:error.noDatasetFileAvailable"), {
-        variant: "error",
-      });
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      // Safely read values from the form ref (may be undefined briefly)
-      const refValues =
-        formSubmitRef && formSubmitRef.current
-          ? formSubmitRef.current.values || {}
-          : {};
-      // Merge values coming from the form schema and the onValuesChange callback
-      const params = { ...refValues, ...(formValues || {}) };
-
-      const name = datasetName.trim() || datasetFileToUpload.file.name;
-      params["name"] = name;
-
-      // Ensure dataloader is passed as a string (backend expects the dataloader name)
-      let dataloaderName = selectedDataloader;
-      if (selectedDataloader && typeof selectedDataloader === "object") {
-        dataloaderName =
-          selectedDataloader.name || selectedDataloader.display_name || null;
-      }
-      params["dataloader"] = dataloaderName;
-
-      if (columnTypes) {
-        params["inferred_types"] = columnTypes;
+  const doSubmit = useCallback(
+    async (effectiveComputeMetadata) => {
+      if (!datasetFileToUpload || !datasetFileToUpload.file) {
+        enqueueSnackbar(t("datasets:error.noDatasetFileAvailable"), {
+          variant: "error",
+        });
+        return;
       }
 
-      if (Object.keys(columnRenames).length > 0) {
-        params["column_renames"] = columnRenames;
-      }
-
-      const { file, url } = datasetFileToUpload;
-
-      const data = await createDataset(name);
+      setUploading(true);
 
       try {
-        const job = await enqueueDatasetRequest(data.id, file, url, params);
-        forceRefreshNow();
-        handleDatasetCreated(data, job);
+        // Safely read values from the form ref (may be undefined briefly)
+        const refValues =
+          formSubmitRef && formSubmitRef.current
+            ? formSubmitRef.current.values || {}
+            : {};
+        // Merge values coming from the form schema and the onValuesChange callback
+        const params = { ...refValues, ...(formValues || {}) };
 
-        if (tourContext?.run) {
-          tourContext.nextStep();
+        const name = datasetName.trim() || datasetFileToUpload.file.name;
+        params["name"] = name;
+
+        // Ensure dataloader is passed as a string (backend expects the dataloader name)
+        let dataloaderName = selectedDataloader;
+        if (selectedDataloader && typeof selectedDataloader === "object") {
+          dataloaderName =
+            selectedDataloader.name || selectedDataloader.display_name || null;
         }
-      } catch (err) {
-        console.error("Error enqueuing dataset job:", err);
-        enqueueSnackbar(t("datasets:error.enqueueDatasetJob"), {
+        params["dataloader"] = dataloaderName;
+
+        if (columnTypes) {
+          params["inferred_types"] = columnTypes;
+        }
+
+        if (Object.keys(columnRenames).length > 0) {
+          params["column_renames"] = columnRenames;
+        }
+
+        params["compute_metadata"] = effectiveComputeMetadata;
+
+        const { file, url } = datasetFileToUpload;
+
+        const data = await createDataset(name);
+
+        try {
+          const job = await enqueueDatasetRequest(data.id, file, url, params);
+          forceRefreshNow();
+          handleDatasetCreated(data, job);
+
+          if (tourContext?.run) {
+            tourContext.nextStep();
+          }
+        } catch (err) {
+          console.error("Error enqueuing dataset job:", err);
+          enqueueSnackbar(t("datasets:error.enqueueDatasetJob"), {
+            variant: "error",
+          });
+          backHome();
+        }
+      } catch (error) {
+        console.error("Error creating dataset:", error);
+        enqueueSnackbar(t("datasets:error.createDatasetError"), {
           variant: "error",
         });
         backHome();
+      } finally {
+        setUploading(false);
       }
-    } catch (error) {
-      console.error("Error creating dataset:", error);
-      enqueueSnackbar(t("datasets:error.createDatasetError"), {
-        variant: "error",
-      });
-      backHome();
-    } finally {
-      setUploading(false);
+    },
+    [
+      selectedDataloader,
+      datasetFileToUpload,
+      datasetName,
+      columnTypes,
+      columnRenames,
+      formSubmitRef,
+      formValues,
+      handleDatasetCreated,
+      backHome,
+      enqueueSnackbar,
+      tourContext,
+      t,
+    ],
+  );
+
+  const submitNewDataset = useCallback(async () => {
+    if (computeMetadata && shouldRecommendDisableMetadata(previewMetrics)) {
+      setConfirmOpen(true);
+      return;
     }
-  }, [
-    selectedDataloader,
-    datasetFileToUpload,
-    datasetName,
-    columnTypes,
-    columnRenames,
-    formSubmitRef,
-    formValues,
-    handleDatasetCreated,
-    backHome,
-    enqueueSnackbar,
-    tourContext,
-  ]);
+    await doSubmit(computeMetadata);
+  }, [computeMetadata, previewMetrics, doSubmit]);
+
+  const handlePreviewMetrics = useCallback(
+    (metrics) => {
+      setPreviewMetrics(metrics);
+      if (onPreviewMetrics) {
+        onPreviewMetrics(metrics);
+      }
+    },
+    [onPreviewMetrics],
+  );
 
   const handleFileUpload = (file, url) => {
     setDatasetFileToUpload({ file, url });
@@ -202,7 +235,7 @@ export default function ConfigureAndUploadDatasetStep({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <TextField
           label={t("datasets:label.datasetName")}
           value={datasetName}
@@ -216,7 +249,7 @@ export default function ConfigureAndUploadDatasetStep({
         direction="column"
         justifyContent="flex-start"
         alignItems="stretch"
-        spacing={2}
+        spacing={4}
         sx={{
           flex: 1,
           minHeight: 0,
@@ -233,6 +266,7 @@ export default function ConfigureAndUploadDatasetStep({
           onPreviewError={setPreviewError}
           onTypesChanged={handleTypesChanged}
           onPreviewLoaded={handlePreviewLoaded}
+          onPreviewMetrics={handlePreviewMetrics}
         />
       </Grid>
 
@@ -245,6 +279,16 @@ export default function ConfigureAndUploadDatasetStep({
         nextDataTour={
           tourContext?.run ? "dataset-step-upload-button" : undefined
         }
+      />
+      <ComputeMetadataConfirmDialog
+        open={confirmOpen}
+        colCount={previewMetrics.colCount}
+        estRows={previewMetrics.estRows}
+        onConfirm={async () => {
+          setConfirmOpen(false);
+          await doSubmit(true);
+        }}
+        onCancel={() => setConfirmOpen(false)}
       />
     </Box>
   );

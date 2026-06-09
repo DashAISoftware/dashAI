@@ -23,6 +23,7 @@ export default function ColumnInsights({
   const { t } = useTranslation(["datasets"]);
   const context = useDatasetsAndNotebooks();
   const setDatasetTab = onNavigateTab ?? context?.setDatasetTab ?? (() => {});
+  const setScrollToColumn = context?.setScrollToColumn ?? (() => {});
 
   const insights = useMemo(() => {
     const items = [];
@@ -78,24 +79,23 @@ export default function ColumnInsights({
 
   const handleClick = useCallback(
     (insight) => {
-      setDatasetTab(insight.tab);
-      // Wait for the tab content to render, then scroll to the card
-      setTimeout(() => {
-        const card = document.querySelector(
-          `[data-column-card="${insight.column}"]`,
-        );
-        if (card) {
-          card.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Brief highlight effect
-          card.style.transition = "box-shadow 0.3s";
-          card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
-          setTimeout(() => {
-            card.style.boxShadow = "";
-          }, 2000);
-        }
-      }, 100);
+      const card = document.querySelector(
+        `[data-column-card="${insight.column}"]`,
+      );
+      if (card) {
+        setDatasetTab(insight.tab);
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.transition = "box-shadow 0.3s";
+        card.style.boxShadow = `0 0 0 2px ${theme.palette.warning.main}`;
+        setTimeout(() => {
+          card.style.boxShadow = "";
+        }, 2000);
+      } else {
+        setDatasetTab(insight.tab);
+        setScrollToColumn(insight.column);
+      }
     },
-    [setDatasetTab, theme],
+    [setDatasetTab, setScrollToColumn, theme],
   );
 
   const colorMap = {
@@ -111,9 +111,9 @@ export default function ColumnInsights({
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1,
-          px: 2,
-          py: 1.5,
+          gap: 4,
+          px: 8,
+          py: 6,
         }}
       >
         <LightbulbOutlinedIcon
@@ -132,7 +132,7 @@ export default function ColumnInsights({
       </Box>
 
       {insights.length === 0 ? (
-        <Box sx={{ px: 2, pb: 2 }}>
+        <Box sx={{ px: 8, pb: 8 }}>
           <Typography variant="caption" color="text.secondary">
             {t("datasets:label.insightEmptyMessage")}
           </Typography>
@@ -143,9 +143,9 @@ export default function ColumnInsights({
           sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 1.5,
-            px: 2,
-            pb: 2,
+            gap: 6,
+            px: 8,
+            pb: 8,
           }}
         >
           {insights.map((insight, index) => {
@@ -155,7 +155,7 @@ export default function ColumnInsights({
                 key={`${insight.column}-${insight.tag}-${index}`}
                 onClick={() => handleClick(insight)}
                 sx={{
-                  p: 1.5,
+                  p: 6,
                   borderRadius: 1.5,
                   bgcolor: `${palette.main}15`,
                   border: `1px solid ${palette.main}30`,
@@ -172,8 +172,8 @@ export default function ColumnInsights({
                     display: "flex",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: 1,
-                    mb: 0.5,
+                    gap: 4,
+                    mb: 2,
                   }}
                 >
                   <Typography

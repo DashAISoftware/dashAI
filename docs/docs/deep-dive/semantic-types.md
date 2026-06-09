@@ -8,7 +8,7 @@ sidebar_position: 4
 
 ## What Are Semantic Types?
 
-When you upload a dataset, DashAI assigns a **semantic type** to each column. Semantic types go beyond raw storage formats (e.g., PyArrow `int32` or `string`) to express the ML-meaningful nature of the data: is this column a continuous measurement, a discrete label, a free-form text, a date?
+When you upload a dataset, dashAI assigns a **semantic type** to each column. Semantic types go beyond raw storage formats (e.g., PyArrow `int32` or `string`) to express the ML-meaningful nature of the data: is this column a continuous measurement, a discrete label, a free-form text, a date?
 
 This classification drives three critical behaviours throughout the platform:
 
@@ -73,13 +73,13 @@ DashAIDataType
 
 ## Type Inference
 
-Types are assigned automatically when a dataset is loaded. DashAI supports two inference methods, selectable at upload time.
+Types are assigned automatically when a dataset is loaded. dashAI supports two inference methods, selectable at upload time.
 
 ### Primary: `DashAIPtype`
 
-Uses the **ptype** probabilistic type-inference model, which analyses each column's values to estimate the most likely semantic type. Supported ptype outputs and their DashAI mappings:
+Uses the **ptype** probabilistic type-inference model, which analyses each column's values to estimate the most likely semantic type. Supported ptype outputs and their dashAI mappings:
 
-| ptype output | DashAI type |
+| ptype output | dashAI type |
 |---|---|
 | `integer` | `Integer` (`int64`) |
 | `float` | `Float` (`float64`) |
@@ -149,7 +149,7 @@ Before training, `validate_dataset_for_task()` checks that every selected column
 
 ### Converter Type Contracts
 
-Each converter implements `get_output_type(column_name)` to declare the semantic type of each output column. This allows DashAI to track the type of every column through a multi-step preprocessing pipeline.
+Each converter implements `get_output_type(column_name)` to declare the semantic type of each output column. This allows dashAI to track the type of every column through a multi-step preprocessing pipeline.
 
 **Common converter contracts:**
 
@@ -170,7 +170,7 @@ Each converter implements `get_output_type(column_name)` to declare the semantic
 
 ### Label Encoding
 
-Classification tasks require a `Categorical` output column, but most ML models require numeric targets. DashAI handles this automatically:
+Classification tasks require a `Categorical` output column, but most ML models require numeric targets. dashAI handles this automatically:
 
 1. **Before training** — `categorical_label_encoder()` converts each `Categorical` output column to `Integer` using the `Categorical` type's `str2int` map. The mapping is saved so that it can be reversed.
 2. **After prediction** — `process_predictions()` applies the reverse `int2str` map to convert integer predictions back to their original string labels before displaying results or saving to disk.
@@ -203,7 +203,7 @@ If the conversion is not safe (e.g., promoting a high-cardinality text column to
 | `DashAI/back/types/dashai_value.py` | Abstract intermediate class `DashAIValue` |
 | `DashAI/back/types/value_types.py` | Concrete value type classes |
 | `DashAI/back/types/categorical.py` | `Categorical` type with encoding logic |
-| `DashAI/back/types/utils.py` | Arrow ↔ DashAI type conversion, metadata I/O |
+| `DashAI/back/types/utils.py` | Arrow ↔ dashAI type conversion, metadata I/O |
 | `DashAI/back/types/type_validation.py` | `validate_type_change()` and suitability checks |
 | `DashAI/back/types/inf/inference_methods.py` | `DashAIPtype` and `DummyCategoricalInference` |
 | `DashAI/back/types/inf/type_inference.py` | `infer_types()` entry point |

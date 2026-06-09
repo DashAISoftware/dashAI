@@ -1,34 +1,18 @@
-import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  IconButton,
-} from "@mui/material";
+import React, { useCallback, useState } from "react";
+import { Box, Button, IconButton, Typography } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   AddCircleOutline,
   DeleteOutline,
   PlayArrow as PlayArrowIcon,
 } from "@mui/icons-material";
-import { CircularProgress } from "@mui/material";
-import InputField from "./InputField";
-import { MIN_INPUT_WIDTH } from "./inputFieldConstants";
 import { useTranslation } from "react-i18next";
+
+import InputField from "./InputField";
 
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 52;
-
-const cellBase = {
-  padding: "6px 12px",
-  whiteSpace: "nowrap",
-  minWidth: 110,
-};
 
 export default function ManualInputForm({
   types,
@@ -44,16 +28,14 @@ export default function ManualInputForm({
   isSaving = false,
 }) {
   const theme = useTheme();
-  const [rows, setRows] = useState(createInitialRows());
-  const { t } = useTranslation(["prediction"]);
+  const [rows, setRows] = useState(createInitialRows);
+  const { t } = useTranslation(["prediction", "common"]);
 
   function createInitialRows() {
-    if (manualInputData && manualInputData.length > 0) {
-      return manualInputData;
-    }
-    const initialRow = createEmptyRow();
-    setManualInputData([initialRow]);
-    return [initialRow];
+    if (manualInputData && manualInputData.length > 0) return manualInputData;
+    const initial = createEmptyRow();
+    setManualInputData([initial]);
+    return [initial];
   }
 
   function createEmptyRow() {
@@ -78,12 +60,17 @@ export default function ManualInputForm({
     return row;
   }
 
-  const handleChange = (rowIndex, col, value) => {
-    const newRows = [...rows];
-    newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
-    setRows(newRows);
-    setManualInputData(newRows);
-  };
+  const handleChange = useCallback(
+    (rowIndex, col, value) => {
+      setRows((prev) => {
+        const newRows = [...prev];
+        newRows[rowIndex] = { ...newRows[rowIndex], [col]: value };
+        setManualInputData(newRows);
+        return newRows;
+      });
+    },
+    [setManualInputData],
+  );
 
   const handleAddRow = () => {
     const newRows = [...rows, createEmptyRow()];
@@ -104,18 +91,47 @@ export default function ManualInputForm({
 
   const headerBg =
     theme.palette.mode === "dark"
-      ? "rgba(255, 255, 255, 0.05)"
-      : "rgba(0, 0, 0, 0.02)";
+      ? "rgba(255,255,255,0.05)"
+      : "rgba(0,0,0,0.02)";
+
+  const divider = theme.palette.divider;
+  const textPrimary = theme.palette.text.primary;
+  const textSecondary = theme.palette.text.secondary;
 
   const targetLabel = predictionResults
     ? predictionResults.columns[predictionResults.columns.length - 1]
     : targetColumn;
 
+  // Shared plain-<td> styles - no Emotion per-cell cost.
+  const thStyle = {
+    padding: "8px 12px",
+    whiteSpace: "nowrap",
+    minWidth: 120,
+    fontWeight: 600,
+    fontSize: "0.875rem",
+    color: textPrimary,
+    height: HEADER_HEIGHT,
+    background: headerBg,
+    borderBottom: `2px solid ${divider}`,
+    verticalAlign: "middle",
+    textAlign: "left",
+  };
+
+  const tdStyle = {
+    padding: "6px 12px",
+    whiteSpace: "nowrap",
+    minWidth: 120,
+    color: textPrimary,
+    height: ROW_HEIGHT,
+    borderBottom: `1px solid ${divider}`,
+    verticalAlign: "middle",
+  };
+
   return (
     <Box
       sx={{
         borderRadius: 1,
-        color: theme.palette.text.primary,
+        color: textPrimary,
         maxWidth: "100%",
         mx: "auto",
         height: "100%",
@@ -123,14 +139,10 @@ export default function ManualInputForm({
       component="form"
       onSubmit={handleSubmit}
     >
-      <Typography variant="h6" mb={2} fontWeight={600}>
+      <Typography variant="h6" mb={4} fontWeight={600}>
         {t("prediction:label.manualInputData")}
       </Typography>
-      <Typography
-        variant="body2"
-        mb={3}
-        sx={{ color: theme.palette.text.secondary }}
-      >
+      <Typography variant="body2" mb={6} sx={{ color: textSecondary }}>
         {t("prediction:label.provideManualInput")}
       </Typography>
 
@@ -167,7 +179,7 @@ export default function ManualInputForm({
       <Box
         sx={{
           display: "flex",
-          border: `1px solid ${theme.palette.divider}`,
+          border: `1px solid ${divider}`,
           borderRadius: 1,
           overflow: "auto",
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
@@ -175,56 +187,35 @@ export default function ManualInputForm({
       >
         {/* Scrollable input columns */}
         <Box sx={{ flex: 1, overflowX: "auto" }}>
-          <Table
-            size="small"
-            sx={{
-              "& .MuiTableCell-root": {
-                borderBottom: `1px solid ${theme.palette.divider}`,
-              },
+          <table
+            style={{
+              borderCollapse: "collapse",
+              tableLayout: "auto",
+              width: "max-content",
+              minWidth: "100%",
             }}
           >
-            <TableHead>
-              <TableRow
-                sx={{ backgroundColor: headerBg, height: HEADER_HEIGHT }}
-              >
+            <thead>
+              <tr>
                 {inputColumns.map((col) => (
-                  <TableCell
-                    key={col}
-                    sx={{
-                      ...cellBase,
-                      fontWeight: 600,
-                      fontSize: "0.875rem",
-                      color: theme.palette.text.primary,
-                      height: HEADER_HEIGHT,
-                    }}
-                  >
+                  <th key={col} style={thStyle}>
                     {col}
-                  </TableCell>
+                  </th>
                 ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
+              </tr>
+            </thead>
+            <tbody>
               {rows.map((row, rowIndex) => (
-                <TableRow
-                  key={rowIndex}
-                  sx={{
-                    height: ROW_HEIGHT,
-                    "&:hover": {
-                      backgroundColor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(255, 255, 255, 0.03)"
-                          : "rgba(0, 0, 0, 0.01)",
-                    },
-                    "&:last-child .MuiTableCell-root": { borderBottom: "none" },
-                  }}
-                >
+                <tr key={rowIndex}>
                   {inputColumns.map((col) => (
-                    <TableCell
+                    <td
                       key={col}
-                      sx={{
-                        ...cellBase,
-                        color: theme.palette.text.primary,
-                        height: ROW_HEIGHT,
+                      style={{
+                        ...tdStyle,
+                        borderBottom:
+                          rowIndex === rows.length - 1
+                            ? "none"
+                            : `1px solid ${divider}`,
                       }}
                     >
                       <InputField
@@ -235,62 +226,47 @@ export default function ManualInputForm({
                         value={row[col]}
                         placeholder={sample[col][0]}
                       />
-                    </TableCell>
+                    </td>
                   ))}
-                </TableRow>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </Box>
 
         {/* Fixed: target + delete */}
         <Box
           sx={{
             flexShrink: 0,
-            borderLeft: `2px solid ${predictionResults ? theme.palette.primary.main : theme.palette.divider}`,
+            borderLeft: `2px solid ${predictionResults ? theme.palette.primary.main : divider}`,
           }}
         >
-          <Table
-            size="small"
-            sx={{
-              "& .MuiTableCell-root": {
-                borderBottom: `1px solid ${theme.palette.divider}`,
-              },
-            }}
-          >
-            <TableHead>
-              <TableRow
-                sx={{ backgroundColor: headerBg, height: HEADER_HEIGHT }}
-              >
-                <TableCell
-                  sx={{
-                    ...cellBase,
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
+          <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
+            <thead>
+              <tr>
+                <th
+                  style={{
+                    ...thStyle,
                     color: theme.palette.primary.main,
                     minWidth: 120,
-                    height: HEADER_HEIGHT,
+                    textAlign: "left",
                   }}
                 >
                   {targetLabel ?? ""}
-                </TableCell>
-                <TableCell
-                  sx={{
-                    ...cellBase,
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    color: theme.palette.text.primary,
+                </th>
+                <th
+                  style={{
+                    ...thStyle,
                     width: 60,
                     textAlign: "center",
-                    borderLeft: `1px solid ${theme.palette.divider}`,
-                    height: HEADER_HEIGHT,
+                    borderLeft: `1px solid ${divider}`,
                   }}
                 >
                   {t("common:remove")}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
               {rows.map((row, rowIndex) => {
                 const predVal = predictionResults
                   ? predictionResults.rows[rowIndex]?.[
@@ -298,35 +274,30 @@ export default function ManualInputForm({
                     ]
                   : undefined;
                 return (
-                  <TableRow
-                    key={rowIndex}
-                    sx={{
-                      height: ROW_HEIGHT,
-                      "&:last-child .MuiTableCell-root": {
-                        borderBottom: "none",
-                      },
-                    }}
-                  >
-                    <TableCell
-                      sx={{
-                        ...cellBase,
+                  <tr key={rowIndex}>
+                    <td
+                      style={{
+                        ...tdStyle,
                         fontWeight: 500,
-                        fontSize: "0.875rem",
                         color: theme.palette.primary.main,
                         minWidth: 120,
-                        height: ROW_HEIGHT,
+                        borderBottom:
+                          rowIndex === rows.length - 1
+                            ? "none"
+                            : `1px solid ${divider}`,
                       }}
                     >
-                      {predVal !== null && predVal !== undefined
-                        ? String(predVal)
-                        : ""}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        ...cellBase,
+                      {predVal != null ? String(predVal) : ""}
+                    </td>
+                    <td
+                      style={{
+                        ...tdStyle,
                         textAlign: "center",
-                        borderLeft: `1px solid ${theme.palette.divider}`,
-                        height: ROW_HEIGHT,
+                        borderLeft: `1px solid ${divider}`,
+                        borderBottom:
+                          rowIndex === rows.length - 1
+                            ? "none"
+                            : `1px solid ${divider}`,
                       }}
                     >
                       <IconButton
@@ -342,12 +313,12 @@ export default function ManualInputForm({
                       >
                         <DeleteOutline fontSize="small" />
                       </IconButton>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 );
               })}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </Box>
       </Box>
     </Box>

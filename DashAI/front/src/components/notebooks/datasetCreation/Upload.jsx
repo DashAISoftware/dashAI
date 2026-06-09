@@ -43,6 +43,7 @@ function Upload({
   onTypesChanged,
   onColumnRename,
   onPreviewLoaded,
+  onPreviewMetrics,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -247,7 +248,9 @@ function Upload({
     setFile(null);
   }, [onFileUpload]);
 
-  // memoize datasetData object so its reference stays stable across renders
+  // memoize datasetData object so its reference stays stable across renders.
+  // `compute_metadata` is intentionally stripped: it only affects the upload
+  // job, not the preview, so toggling it must not trigger a preview re-fetch.
   const datasetDataMemo = useMemo(() => {
     let dataloaderName = selectedDataloader;
     if (selectedDataloader && typeof selectedDataloader === "object") {
@@ -255,11 +258,14 @@ function Upload({
         selectedDataloader.name || selectedDataloader.display_name || null;
     }
 
+    // eslint-disable-next-line no-unused-vars
+    const { compute_metadata, ...previewFormValues } = formValues || {};
+
     const params = {
-      ...formValues,
+      ...previewFormValues,
       inference_rows:
-        formValues && formValues.inference_rows != null
-          ? formValues.inference_rows
+        previewFormValues.inference_rows != null
+          ? previewFormValues.inference_rows
           : 1000,
       ...(dataloaderName ? { dataloader_name: dataloaderName } : {}),
     };
@@ -347,6 +353,7 @@ function Upload({
                 onTypesChanged={onTypesChanged}
                 onColumnRename={onColumnRename}
                 onPreviewLoaded={onPreviewLoaded}
+                onPreviewMetrics={onPreviewMetrics}
               />
             </Box>
           );
@@ -369,11 +376,11 @@ function Upload({
       ref={uploadGridRef}
       container
       direction="column"
-      rowSpacing={1}
+      rowSpacing={4}
       sx={{
         width: "100%",
         bgcolor: theme.palette.ui.box,
-        p: 2,
+        p: 8,
         borderRadius: 2,
       }}
       data-tour="upload-area"
@@ -431,7 +438,7 @@ function Upload({
         >
           <Grid
             container
-            rowSpacing={1}
+            rowSpacing={4}
             direction="column"
             alignItems="center"
             justifyContent="center"
@@ -458,6 +465,9 @@ Upload.propTypes = {
   selectedDataloader: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
+  onColumnRename: PropTypes.func,
+  onPreviewLoaded: PropTypes.func,
+  onPreviewMetrics: PropTypes.func,
 };
 
 export default Upload;

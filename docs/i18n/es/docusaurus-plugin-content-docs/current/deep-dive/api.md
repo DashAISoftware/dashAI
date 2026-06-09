@@ -3,7 +3,7 @@ title: API
 sidebar_label: API
 ---
 
-DashAI expone una API RESTful en `/api/v1`. Todos los endpoints devuelven JSON. La API está construida con **FastAPI** y soporta documentación OpenAPI en `/docs` (Swagger UI) y `/redoc`.
+dashAI expone una API RESTful en `/api/v1`. Todos los endpoints devuelven JSON. La API está construida con **FastAPI** y soporta documentación OpenAPI en `/docs` (Swagger UI) y `/redoc`.
 
 ## Estructura de Rutas
 
@@ -187,7 +187,7 @@ La API soporta respuestas multilingües. Los nombres de visualización y descrip
 
 ## Documentación Interactiva
 
-Al ejecutar DashAI localmente, puedes explorar la API completa de forma interactiva:
+Al ejecutar dashAI localmente, puedes explorar la API completa de forma interactiva:
 
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`

@@ -27,6 +27,8 @@ class StandardScalerSchema(BaseSchema):
             en="If True, center the data before scaling.",
             es="Si es True, centra los datos antes de escalar.",
             pt="Se True, centraliza os dados antes de escalonar.",
+            de="Wenn True, werden die Daten vor der Skalierung zentriert.",
+            zh="如果为 True，则在缩放前对数据进行中心化。",
         ),
     )  # type: ignore
     with_std: schema_field(
@@ -45,6 +47,11 @@ class StandardScalerSchema(BaseSchema):
                 "Se True, escala os dados para variância unitária (ou "
                 "equivalentemente, desvio padrão unitário)."
             ),
+            de=(
+                "Wenn True, werden die Daten auf Einheitsvarianz skaliert (oder "
+                "äquivalent, Einheitsstandardabweichung)."
+            ),
+            zh="如果为 True，则将数据缩放到单位方差（或等价地，单位标准差）。",
         ),
     )  # type: ignore
 
@@ -85,11 +92,18 @@ class StandardScaler(
             "Padroniza as características removendo a média e escalonando "
             "para variância unitária."
         ),
+        de=(
+            "Merkmale standardisieren, indem der Mittelwert entfernt und auf "
+            "Einheitsvarianz skaliert wird."
+        ),
+        zh="通过去除均值并缩放到单位方差来标准化特征。",
     )
     DISPLAY_NAME = MultilingualString(
         en="Standard Scaler",
         es="Estandarizador",
         pt="Normalizador Padrão",
+        de="Standardisierer",
+        zh="标准化缩放器",
     )
 
     metadata = {

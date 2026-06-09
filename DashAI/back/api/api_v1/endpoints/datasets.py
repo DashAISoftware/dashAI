@@ -1,4 +1,6 @@
+import asyncio
 import hashlib
+import io
 import logging
 import os
 import time
@@ -1246,18 +1248,22 @@ async def rename_dataset_column(
                 # Update nan entries
                 splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
 
-                # Update general info
-                splits_data["general_info"]["dtypes"][new_name] = splits_data[
-                    "general_info"
-                ]["dtypes"].pop(old_name)
+                # Update general info (absent when compute_metadata=False)
+                if "general_info" in splits_data:
+                    splits_data["general_info"]["dtypes"][new_name] = splits_data[
+                        "general_info"
+                    ]["dtypes"].pop(old_name)
 
                 # Update quality info nan per ratio
-                splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
-                    splits_data["quality_info"]["nan_ratio_per_column"].pop(old_name)
-                )
+                if "quality_info" in splits_data:
+                    splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
+                        splits_data["quality_info"]["nan_ratio_per_column"].pop(
+                            old_name
+                        )
+                    )
 
                 # Update numeric_stats if column is numerical
-                if old_name in splits_data["numeric_stats"]:
+                if old_name in splits_data.get("numeric_stats", {}):
                     splits_data["numeric_stats"][new_name] = splits_data[
                         "numeric_stats"
                     ].pop(old_name)
@@ -1536,11 +1542,88 @@ async def get_dataset_file(
     return JSONResponse(content={"rows": rows, "total": total_rows})
 
 
-def _build_export_response(table: "pa.Table", dataset_name: str) -> StreamingResponse:
+def _build_image_zip(table: "pa.Table") -> io.BytesIO:
+    """Build a ZIP buffer from an image dataset table.
+
+    Uses ZIP_STORED (no compression) because image formats (JPEG, PNG) are
+    already compressed — DEFLATE gains nothing but wastes significant CPU time.
+    """
+    label_col = next(
+        (
+            col
+            for col in table.column_names
+            if not pa.types.is_struct(table.schema.field(col).type)
+            and (
+                pa.types.is_string(table.schema.field(col).type)
+                or pa.types.is_large_string(table.schema.field(col).type)
+                or pa.types.is_dictionary(table.schema.field(col).type)
+            )
+        ),
+        None,
+    )
+
+    image_cols = [
+        col
+        for col in table.column_names
+        if pa.types.is_struct(table.schema.field(col).type)
+    ]
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_STORED) as zf:
+        seen_paths: set = set()
+        for col in image_cols:
+            arr_col = table.column(col)
+            label_arr = table.column(label_col) if label_col else None
+            for i in range(table.num_rows):
+                val = arr_col[i].as_py()
+                if not (isinstance(val, dict) and val.get("bytes")):
+                    continue
+                img_bytes = val["bytes"]
+                raw_path = val.get("path") or ""
+                raw_ext = os.path.splitext(raw_path)[1].lstrip(".").lower()
+                ext = raw_ext if raw_ext else "png"
+                orig_fname = os.path.basename(raw_path) or f"{col}_{i}.{ext}"
+
+                if label_arr is not None:
+                    label_val = str(label_arr[i].as_py())
+                    entry = f"{label_val}/{orig_fname}"
+                else:
+                    entry = f"images/{orig_fname}"
+
+                if entry in seen_paths:
+                    stem, dot_ext = os.path.splitext(orig_fname)
+                    entry_base = (
+                        f"{label_val}/{stem}"
+                        if label_arr is not None
+                        else f"images/{stem}"
+                    )
+                    entry = f"{entry_base}_{i}{dot_ext}"
+                seen_paths.add(entry)
+                zf.writestr(entry, img_bytes)
+
+    zip_buffer.seek(0)
+    return zip_buffer
+
+
+def _iter_buffer(buf: io.BytesIO, chunk_size: int = 65536):
+    """Yield a BytesIO in fixed-size chunks for StreamingResponse."""
+    while True:
+        chunk = buf.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
+
+
+async def _build_export_response(
+    table: "pa.Table", dataset_name: str
+) -> StreamingResponse:
     """Build a StreamingResponse for dataset export.
 
     For image datasets (struct columns), produces a ZIP in ImageFolder format:
     ``<label>/<original_filename>``. For tabular datasets, produces a plain CSV.
+
+    The CPU-bound work (ZIP/CSV construction) runs in a thread-pool executor so
+    it does not block FastAPI's async event loop.
 
     Parameters
     ----------
@@ -1554,10 +1637,6 @@ def _build_export_response(table: "pa.Table", dataset_name: str) -> StreamingRes
     StreamingResponse
         ZIP (image datasets) or CSV (tabular datasets).
     """
-    import io
-    import os
-    import zipfile
-
     import pyarrow.csv as csv
 
     image_cols = [
@@ -1566,59 +1645,12 @@ def _build_export_response(table: "pa.Table", dataset_name: str) -> StreamingRes
         if pa.types.is_struct(table.schema.field(col).type)
     ]
 
+    loop = asyncio.get_event_loop()
+
     if image_cols:
-        # Find the label column: first non-image string/dictionary column.
-        label_col = next(
-            (
-                col
-                for col in table.column_names
-                if col not in image_cols
-                and (
-                    pa.types.is_string(table.schema.field(col).type)
-                    or pa.types.is_large_string(table.schema.field(col).type)
-                    or pa.types.is_dictionary(table.schema.field(col).type)
-                )
-            ),
-            None,
-        )
-
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-            seen_paths: set = set()
-            for col in image_cols:
-                arr_col = table.column(col)
-                label_arr = table.column(label_col) if label_col else None
-                for i in range(table.num_rows):
-                    val = arr_col[i].as_py()
-                    if not (isinstance(val, dict) and val.get("bytes")):
-                        continue
-                    img_bytes = val["bytes"]
-                    raw_path = val.get("path") or ""
-                    raw_ext = os.path.splitext(raw_path)[1].lstrip(".").lower()
-                    ext = raw_ext if raw_ext else "png"
-                    orig_fname = os.path.basename(raw_path) or f"{col}_{i}.{ext}"
-
-                    if label_arr is not None:
-                        label_val = str(label_arr[i].as_py())
-                        entry = f"{label_val}/{orig_fname}"
-                    else:
-                        entry = f"images/{orig_fname}"
-
-                    # Avoid collisions within the same folder.
-                    if entry in seen_paths:
-                        stem, dot_ext = os.path.splitext(orig_fname)
-                        entry_base = (
-                            f"{label_val}/{stem}"
-                            if label_arr is not None
-                            else f"images/{stem}"
-                        )
-                        entry = f"{entry_base}_{i}{dot_ext}"
-                    seen_paths.add(entry)
-                    zf.writestr(entry, img_bytes)
-
-        zip_buffer.seek(0)
+        zip_buffer = await loop.run_in_executor(None, _build_image_zip, table)
         return StreamingResponse(
-            zip_buffer,
+            _iter_buffer(zip_buffer),
             media_type="application/zip",
             headers={"Content-Disposition": f"attachment; filename={dataset_name}.zip"},
         )
@@ -1631,11 +1663,16 @@ def _build_export_response(table: "pa.Table", dataset_name: str) -> StreamingRes
         ]
         if drop_cols:
             table = table.drop(drop_cols)
-        output = io.BytesIO()
-        csv.write_csv(table, output)
-        output.seek(0)
+
+        def _build_csv():
+            output = io.BytesIO()
+            csv.write_csv(table, output)
+            output.seek(0)
+            return output
+
+        csv_buffer = await loop.run_in_executor(None, _build_csv)
         return StreamingResponse(
-            output,
+            _iter_buffer(csv_buffer),
             media_type="text/csv",
             headers={"Content-Disposition": f"attachment; filename={dataset_name}.csv"},
         )
@@ -1676,7 +1713,7 @@ async def export_dataset_as_csv(
             path, filter_model, sort_model
         )
         dataset_name = os.path.basename(path.rstrip("/"))
-        return _build_export_response(table, dataset_name)
+        return await _build_export_response(table, dataset_name)
     except HTTPException:
         raise
     except FileNotFoundError as e:
@@ -1742,7 +1779,7 @@ async def export_dataset_csv_by_id(
                 )
 
             table, _total, _was_filtered = _load_and_filter_table(file_path, None, None)
-            return _build_export_response(table, dataset.name)
+            return await _build_export_response(table, dataset.name)
 
         except HTTPException:
             raise
@@ -1809,10 +1846,12 @@ async def preview_with_types(
         ) as tmp_file:
             content = await file.read()
             tmp_file.write(content)
+            previewed_bytes = len(content)
             tmp_file_path = tmp_file.name
 
         try:
             inference_rows = parsed_params.get("inference_rows", 1000)
+            use_native_types = parsed_params.get("use_native_types", False)
             dataloader_name = parsed_params.get("dataloader_name")
 
             if not dataloader_name:
@@ -1829,6 +1868,11 @@ async def preview_with_types(
 
             dataloader_cls = component_registry[dataloader_name]["class"]
             dataloader = dataloader_cls()
+
+            native_types = None
+            should_use_native = (
+                use_native_types and dataloader_cls.SUPPORTS_NATIVE_TYPES
+            )
 
             if file.filename.endswith(".zip"):
                 allowed_exts = dataloader_cls.SUPPORTED_EXTENSIONS
@@ -1898,6 +1942,7 @@ async def preview_with_types(
                             "inferred_types": inferred_types,
                             "preview_row_count": total_images,
                             "types_inferred": False,
+                            "previewed_bytes": previewed_bytes,
                         }
 
                     if matched_file is None:
@@ -1915,6 +1960,11 @@ async def preview_with_types(
                         n_rows=inference_rows,
                     )
 
+                    if should_use_native:
+                        native_types = dataloader.extract_native_types(
+                            matched_file, parsed_params
+                        )
+
                 finally:
                     with contextlib.suppress(Exception):
                         shutil.rmtree(extract_dir, ignore_errors=True)
@@ -1926,17 +1976,25 @@ async def preview_with_types(
                     n_rows=inference_rows,
                 )
 
+                if should_use_native:
+                    native_types = dataloader.extract_native_types(
+                        tmp_file_path, parsed_params
+                    )
+
             sample_df = loaded_dataset.head(100)
 
             table = pa.Table.from_pandas(loaded_dataset)
             arrow_schema = arrow_to_dashai_schema(table)
 
-            methods = parsed_params.get("methods", ["DashAIPtype"])
-            inferred_types = {}
+            if native_types is not None:
+                inferred_types = native_types
+            else:
+                methods = parsed_params.get("methods", ["DashAIPtype"])
+                inferred_types = {}
 
-            for method in methods:
-                method_types = infer_types(loaded_dataset, method=method)
-                inferred_types.update(method_types)
+                for method in methods:
+                    method_types = infer_types(loaded_dataset, method=method)
+                    inferred_types.update(method_types)
 
             sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
             sample = sample_df.to_dict(orient="records")
@@ -1947,6 +2005,7 @@ async def preview_with_types(
                 "inferred_types": inferred_types,
                 "preview_row_count": len(loaded_dataset),
                 "types_inferred": True,
+                "previewed_bytes": previewed_bytes,
             }
 
         finally:

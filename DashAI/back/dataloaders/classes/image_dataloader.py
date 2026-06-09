@@ -13,6 +13,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_image import DashAIImage
 
 
 class ImageDataLoaderSchema(BaseSchema):
@@ -123,10 +125,21 @@ class ImageDataLoader(BaseDataLoader):
             "ZIP con imágenes organizadas en subdirectorios por etiqueta "
             "de clase (formato imagefolder)."
         ),
+        de=(
+            "Datenlader für Bilddatensätze. Laden Sie eine ZIP-Datei hoch, die "
+            "Bilder in Unterverzeichnissen nach Klassenbezeichnung "
+            "organisiert enthält (imagefolder-Format)."
+        ),
+        zh=(
+            "图像数据集加载器。上传一个ZIP文件，其中图像按类别标签组织在子目录中"
+            "（imagefolder格式）。"
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Image Data Loader",
         es="Cargador de Datos de Imágenes",
+        de="Bild Datenlader",
+        zh="图像数据加载器",
     )
 
     @beartype
@@ -186,9 +199,6 @@ class ImageDataLoader(BaseDataLoader):
         log.debug("Dataset columns: %s", dataset.column_names)
 
         shutil.rmtree(prepared_path[0])
-
-        from DashAI.back.types.categorical import Categorical
-        from DashAI.back.types.dashai_image import DashAIImage
 
         types = {}
         for col in dataset.column_names:

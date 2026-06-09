@@ -15,6 +15,7 @@ import { useSnackbar } from "notistack";
 import { previewWithTypes } from "../../../api/datasets";
 import PreviewDatasetTable from "./PreviewDatasetTable";
 import { useTranslation } from "react-i18next";
+import { estimateTotalRows } from "../../../utils/metadataRecommendation";
 
 /**
  * This component shows a preview of the dataset before final upload.
@@ -25,6 +26,7 @@ import { useTranslation } from "react-i18next";
  * @param {function} onTypesChanged - Callback to notify parent when column types change
  * @param {function} onColumnRename - Callback to notify parent when columns are renamed (oldName, newName)
  * @param {function} onPreviewLoaded - Callback to notify parent when preview is loaded
+ * @param {object} initialData - Pre-fetched preview data; when provided, skips the previewWithTypes API call
  */
 function PreviewDataset({
   datasetData,
@@ -33,6 +35,8 @@ function PreviewDataset({
   onTypesChanged,
   onColumnRename,
   onPreviewLoaded,
+  initialData = null,
+  onPreviewMetrics,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -60,6 +64,17 @@ function PreviewDataset({
   }, [loading, error, onPreviewLoaded]);
 
   useEffect(() => {
+    if (initialData) {
+      setPreviewData(initialData);
+      setColumnTypes(initialData.inferred_types);
+      if (onTypesChangedRef.current) {
+        onTypesChangedRef.current(initialData.inferred_types);
+      }
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     const loadPreview = async () => {
       if (!datasetData) {
         setError(t("datasets:error.noDatasetDataAvailable"));
@@ -101,7 +116,11 @@ function PreviewDataset({
     // Re-run preview when the file changes OR when params change. We stringify params to
     // create a stable dependency so changes to configuration in the right sidebar
     // trigger a new preview request.
-  }, [datasetData?.file, JSON.stringify(datasetData?.params || {})]);
+  }, [
+    initialData,
+    datasetData?.file,
+    JSON.stringify(datasetData?.params || {}),
+  ]);
 
   const handleTypeChange = useCallback(
     (typeChanges) => {
@@ -166,6 +185,23 @@ function PreviewDataset({
     [onColumnRename],
   );
 
+  const colCount = previewData
+    ? Object.keys(previewData.inferred_types || previewData.schema || {}).length
+    : 0;
+  const estRows = previewData
+    ? estimateTotalRows({
+        previewRowCount: previewData.preview_row_count,
+        previewedBytes: previewData.previewed_bytes,
+        fileSize: datasetData?.file?.size ?? 0,
+      })
+    : 0;
+
+  useEffect(() => {
+    if (previewData && onPreviewMetrics) {
+      onPreviewMetrics({ colCount, estRows });
+    }
+  }, [previewData, colCount, estRows, onPreviewMetrics]);
+
   return (
     <Grid
       sx={{
@@ -173,7 +209,7 @@ function PreviewDataset({
         boxShadow: "none",
       }}
     >
-      <Grid sx={{ p: 4 }}>
+      <Grid sx={{ p: 8 }}>
         {loading && (
           <Box
             sx={{
@@ -246,8 +282,8 @@ function PreviewDataset({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "flex-start",
-                gap: 2,
-                mb: 2,
+                gap: 4,
+                mb: 4,
                 flexShrink: 0,
               }}
             >
@@ -265,35 +301,36 @@ function PreviewDataset({
                 {t("datasets:label.changeColumnTypesInfo")}
               </Typography>
 
-              <Tooltip title={t("datasets:button.reUploadDataset")}>
-                <IconButton
-                  onClick={onChangeDataset}
-                  size="small"
-                  sx={{
-                    flexShrink: 0,
-                    border: `1px solid ${theme.palette.action.disabled}`,
-                    borderRadius: 2,
-                    color: "text.secondary",
-                    padding: "4px",
-                    transition: "color 0.2s, border-color 0.2s",
-                    "&:hover": {
-                      backgroundColor: "transparent",
-                      color: "primary.main",
-                      borderColor: theme.palette.primary.main,
-                    },
-                  }}
-                >
-                  <UploadFileIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              {onChangeDataset && (
+                <Tooltip title={t("datasets:button.reUploadDataset")}>
+                  <IconButton
+                    onClick={onChangeDataset}
+                    size="small"
+                    sx={{
+                      flexShrink: 0,
+                      border: `1px solid ${theme.palette.action.disabled}`,
+                      borderRadius: 2,
+                      color: "text.secondary",
+                      padding: "4px",
+                      transition: "color 0.2s, border-color 0.2s",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                        color: "primary.main",
+                        borderColor: theme.palette.primary.main,
+                      },
+                    }}
+                  >
+                    <UploadFileIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
-
             <Box sx={{ width: "100%" }}>
               <PreviewDatasetTable
                 rows={previewData.sample}
                 columnTypes={columnTypes}
-                file={datasetData.file}
-                params={datasetData.params}
+                file={datasetData?.file ?? null}
+                params={datasetData?.params ?? {}}
                 onTypeChange={handleTypeChange}
                 onColumnRename={handleColumnRename}
                 onEncoderChange={handleEncoderChange}
@@ -312,6 +349,13 @@ PreviewDataset.propTypes = {
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
   onColumnRename: PropTypes.func,
+  onPreviewLoaded: PropTypes.func,
+  initialData: PropTypes.shape({
+    sample: PropTypes.array.isRequired,
+    inferred_types: PropTypes.object.isRequired,
+    preview_row_count: PropTypes.number,
+  }),
+  onPreviewMetrics: PropTypes.func,
 };
 
 export default PreviewDataset;

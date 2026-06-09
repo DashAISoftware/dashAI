@@ -8,7 +8,7 @@ sidebar_position: 4
 
 ## En la enseñanza
 
-DashAI permite a los docentes de cursos no computacionales (educación general, cursos puente, programas de diplomado) incorporar el ML como herramienta práctica:
+dashAI permite a los docentes de cursos no computacionales (educación general, cursos puente, programas de diplomado) incorporar el ML como herramienta práctica:
 
 - Los estudiantes experimentan con datos reales sin ninguna barrera de programación
 - Cada acción produce evidencia visible — gráficos, métricas y comparaciones
@@ -16,7 +16,7 @@ DashAI permite a los docentes de cursos no computacionales (educación general, 
 - Los docentes pueden diseñar actividades donde el objetivo sea comparar y justificar decisiones, no implementar algoritmos
 
 :::info
-DashAI está siendo adoptado en cursos universitarios en Chile como herramienta de apoyo para la enseñanza aplicada del ML.
+dashAI está siendo adoptado en cursos universitarios en Chile como herramienta de apoyo para la enseñanza aplicada del ML.
 :::
 
 ## En la investigación aplicada

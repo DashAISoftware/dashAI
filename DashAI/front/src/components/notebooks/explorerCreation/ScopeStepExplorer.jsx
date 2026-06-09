@@ -18,6 +18,7 @@ export default function ScopeStepExplorer({
   const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
+  const typesDtypeRestrictions = tool?.metadata?.type_dtype_restrictions || {};
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -32,6 +33,7 @@ export default function ScopeStepExplorer({
         flexDirection: "column",
         flex: 1,
         height: "100%",
+        gap: 2,
         minHeight: 0,
       }}
       data-tour="column-selector-explorer-container"
@@ -40,7 +42,7 @@ export default function ScopeStepExplorer({
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.primary, mb: 1.5 }}
+          sx={{ color: theme.palette.text.primary, mb: 3 }}
         >
           {t("datasets:label.selectColumnsForExplorerScope")}
         </Typography>
@@ -50,6 +52,7 @@ export default function ScopeStepExplorer({
           inputCardinality={inputCardinality}
           allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
+          typesDtypeRestrictions={typesDtypeRestrictions}
           onSelectionChange={(selected) => setScopeColumns(selected)}
           onValidationChange={(isValid) => setIsSelectionValid(isValid)}
         />

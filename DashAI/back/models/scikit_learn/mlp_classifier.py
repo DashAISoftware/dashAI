@@ -45,11 +45,16 @@ class MLPClassifierSchema(BaseSchema):
                 "Número de neurônios na camada oculta única. O modelo utiliza uma "
                 "camada oculta deste tamanho."
             ),
+            de=(
+                "Anzahl der Neuronen in der einzelnen verdeckten Schicht. Das Modell "
+                "verwendet eine verdeckte Schicht dieser Größe."
+            ),
         ),
         alias=MultilingualString(
             en="Hidden layer size",
             es="Tamaño de capa oculta",
             pt="Tamanho da camada oculta",
+            de="Größe der verdeckten Schicht",
         ),
     )  # type: ignore
 
@@ -60,8 +65,11 @@ class MLPClassifierSchema(BaseSchema):
             en="Activation function for the hidden layer.",
             es="Función de activación para la capa oculta.",
             pt="Função de ativação para a camada oculta.",
+            de="Aktivierungsfunktion für die verdeckte Schicht.",
         ),
-        alias=MultilingualString(en="Activation", es="Activación", pt="Ativação"),
+        alias=MultilingualString(
+            en="Activation", es="Activación", pt="Ativação", de="Aktivierung"
+        ),
     )  # type: ignore
 
     solver: schema_field(
@@ -83,8 +91,15 @@ class MLPClassifierSchema(BaseSchema):
                 "conjuntos de dados grandes; 'lbfgs' converge mais rápido em "
                 "conjuntos pequenos; 'sgd' requer mais ajuste."
             ),
+            de=(
+                "Der Löser für die Gewichtsoptimierung. 'adam' eignet sich für große "
+                "Datensätze; 'lbfgs' konvergiert schneller bei kleinen Datensätzen; "
+                "'sgd' erfordert mehr Feinabstimmung."
+            ),
         ),
-        alias=MultilingualString(en="Solver", es="Solucionador", pt="Solucionador"),
+        alias=MultilingualString(
+            en="Solver", es="Solucionador", pt="Solucionador", de="Löser"
+        ),
     )  # type: ignore
 
     alpha: schema_field(
@@ -99,8 +114,9 @@ class MLPClassifierSchema(BaseSchema):
             en="L2 regularisation term (penalty parameter).",
             es="Término de regularización L2 (parámetro de penalización).",
             pt="Termo de regularização L2 (parâmetro de penalidade).",
+            de="L2-Regularisierungsterm (Strafparameter).",
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa"),
+        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
     )  # type: ignore
 
     learning_rate_init: schema_field(
@@ -115,11 +131,13 @@ class MLPClassifierSchema(BaseSchema):
             en="The initial learning rate used for weight updates.",
             es="La tasa de aprendizaje inicial usada para actualizar los pesos.",
             pt="A taxa de aprendizado inicial usada para atualizar os pesos.",
+            de="Die anfängliche Lernrate für Gewichtsaktualisierungen.",
         ),
         alias=MultilingualString(
             en="Learning rate init",
             es="Tasa de aprendizaje inicial",
             pt="Taxa de aprendizado inicial",
+            de="Anfängliche Lernrate",
         ),
     )  # type: ignore
 
@@ -144,9 +162,16 @@ class MLPClassifierSchema(BaseSchema):
                 "Número máximo de iterações. O solucionador itera até "
                 "convergência ou este limite."
             ),
+            de=(
+                "Maximale Anzahl von Iterationen. Der Löser iteriert bis zur "
+                "Konvergenz oder diesem Limit."
+            ),
         ),
         alias=MultilingualString(
-            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Máximas iterações",
+            de="Maximale Iterationen",
         ),
     )  # type: ignore
 
@@ -166,9 +191,18 @@ class MLPClassifierSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int para "
                 "saída reproduzível, ou None para não definir uma semente específica."
             ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
         ),
     )  # type: ignore
 
@@ -195,11 +229,15 @@ class MLPClassifier(TabularClassificationModel, SklearnLikeClassifier, _MLPClass
         en="MLP Classifier",
         es="Clasificador MLP",
         pt="Classificador MLP",
+        de="MLP-Klassifikator",
+        zh="多层感知机分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Multi-layer perceptron neural network for tabular classification.",
         es="Red neuronal perceptrón multicapa para clasificación tabular.",
         pt="Rede neural perceptrón multicamada para classificação tabular.",
+        de="Mehrschichtiges Perzeptron-Netz für tabellarische Klassifikation.",
+        zh="用于表格分类的多层感知机神经网络。",
     )
     COLOR: str = "#EF5350"
     ICON: str = "AccountTree"

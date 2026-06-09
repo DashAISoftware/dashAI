@@ -1,5 +1,7 @@
 """Base Model abstract class."""
 
+import logging
+import math
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Final, final
 
@@ -11,6 +13,8 @@ from DashAI.back.dependencies.database.models import Metric
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+logger = logging.getLogger(__name__)
 
 
 class BaseModel(ConfigObject, metaclass=ABCMeta):
@@ -283,6 +287,15 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         results = {}
         for metric in metrics:
             score = metric.score(y_transformed, y_pred)
+            if not math.isfinite(score):
+                logger.warning(
+                    "Metric %s returned a non-finite value (%s) for split %s "
+                    "(e.g. only one class present in the split). Skipping.",
+                    metric.__name__,
+                    score,
+                    split,
+                )
+                continue
             results[metric.__name__] = score
 
         # Save to database

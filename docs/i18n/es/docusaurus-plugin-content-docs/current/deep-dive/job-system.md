@@ -5,7 +5,7 @@ sidebar_label: Sistema de Trabajos
 
 ## Cola de Trabajos
 
-La **Cola de Trabajos** maneja la ejecución asíncrona de tareas de larga duración. DashAI usa **Huey** — una cola de tareas Python ligera — respaldada por una base de datos SQLite.
+La **Cola de Trabajos** maneja la ejecución asíncrona de tareas de larga duración. dashAI usa **Huey** — una cola de tareas Python ligera — respaldada por una base de datos SQLite.
 
 ### Arquitectura
 

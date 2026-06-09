@@ -309,7 +309,7 @@ function ModelComparisonTable({
                 gap: 0.25,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {isBest && (
                   <Tooltip title={t("models:label.bestModel")} placement="top">
                     <Box

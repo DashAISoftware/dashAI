@@ -33,8 +33,8 @@ function SplitsCard({ label, description, errorMessage, children, warning }) {
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
       <Box
         sx={{
-          px: 2,
-          py: 0.75,
+          px: 4,
+          py: 3,
           borderBottom: "1px solid",
           borderColor: "divider",
         }}
@@ -53,11 +53,11 @@ function SplitsCard({ label, description, errorMessage, children, warning }) {
           {label}
         </Typography>
       </Box>
-      <Box sx={{ px: 2, pt: 0.5, pb: description || errorMessage ? 0.5 : 1 }}>
+      <Box sx={{ px: 8, pt: 2, pb: description || errorMessage ? 2 : 4 }}>
         {children}
       </Box>
       {(description || errorMessage || warning) && (
-        <Box sx={{ px: 2, pb: 0.5 }}>
+        <Box sx={{ px: 8, pb: 2 }}>
           <Typography
             component="span"
             variant="caption"
@@ -394,13 +394,13 @@ function SplitDatasetRows({
   }, [cvType, groupColumn, t]);
 
   return (
-    <Stack spacing={1} data-tour="exp-dataset-splits">
+    <Stack spacing={4} data-tour="exp-dataset-splits">
       {/* Evaluation Strategy Selector */}
       <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
         <Box
           sx={{
-            px: 2,
-            py: 0.75,
+            px: 8,
+            py: 3,
             borderBottom: "1px solid",
             borderColor: "divider",
           }}
@@ -409,7 +409,7 @@ function SplitDatasetRows({
             {t("experiments:label.selectEvaluationStrategy")}
           </Typography>
         </Box>
-        <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
+        <Box sx={{ px: 8, pt: 2, pb: 4 }}>
           <ToggleButtonGroup
             value={evaluationStrategy}
             exclusive={true}
@@ -477,7 +477,7 @@ function SplitDatasetRows({
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ display: "block", mb: 0.75 }}
+                sx={{ display: "block", mb: 3 }}
               >
                 {t("experiments:label.selectHowToDivideDataset")}
               </Typography>
@@ -490,7 +490,7 @@ function SplitDatasetRows({
               label={t("experiments:label.splits")}
               description={t("experiments:label.splitsDescription")}
             >
-              <Grid container spacing={1}>
+              <Grid container spacing={2}>
                 {[
                   { id: "train", value: trainDatasetPercentage },
                   { id: "validation", value: validationDatasetPercentage },
@@ -528,7 +528,7 @@ function SplitDatasetRows({
                   randomSplitError ? randomSplitErrorText : undefined
                 }
               >
-                <Grid container spacing={1}>
+                <Grid container spacing={4}>
                   {splitFields.map(({ id, label }) => (
                     <Grid key={id} size={{ xs: 4 }}>
                       <TextField
@@ -540,7 +540,10 @@ function SplitDatasetRows({
                         fullWidth
                         error={randomSplitError}
                         onChange={handleRowsChange}
-                        slotProps={{ inputLabel: { shrink: true } }}
+                        slotProps={{
+                          inputLabel: { shrink: true },
+                          htmlInput: { step: 0.1 },
+                        }}
                       />
                     </Grid>
                   ))}
@@ -601,7 +604,7 @@ function SplitDatasetRows({
               description={t("experiments:label.rowIndexesDescription")}
               errorMessage={manualSplitError ? manualSplitErrorText : undefined}
             >
-              <Grid container spacing={1}>
+              <Grid container spacing={2}>
                 {splitFields.map(({ id, label }) => (
                   <Grid key={id} size={{ xs: 4 }}>
                     <TextField
@@ -611,10 +614,7 @@ function SplitDatasetRows({
                       fullWidth
                       error={manualSplitError}
                       onChange={handleRowsChange}
-                      slotProps={{
-                        inputLabel: { shrink: true },
-                        htmlInput: { step: 0.1 },
-                      }}
+                      slotProps={{ inputLabel: { shrink: true } }}
                     />
                   </Grid>
                 ))}

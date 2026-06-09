@@ -5,7 +5,7 @@ sidebar_label: Uploading a Plugin
 
 # Uploading a Plugin to PyPI
 
-Once your plugin is developed and tested, you can share it with the DashAI community on [PyPI](https://pypi.org/).
+Once your plugin is developed and tested, you can share it with the dashAI community on [PyPI](https://pypi.org/).
 
 ## Prerequisites
 
@@ -97,7 +97,7 @@ pip install dashai-my-plugin
 
 ### Naming Convention
 
-Ensure your package uses the `dashai-` prefix (e.g., `dashai-my-plugin`) so DashAI automatically discovers it when installed.
+Ensure your package uses the `dashai-` prefix (e.g., `dashai-my-plugin`) so dashAI automatically discovers it when installed.
 
 ### Package Metadata
 

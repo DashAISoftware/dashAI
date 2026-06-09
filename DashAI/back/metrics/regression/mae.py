@@ -44,6 +44,12 @@ class MAE(RegressionMetric):
             "Média das diferenças absolutas entre valores previstos e reais, "
             "fornece uma medida clara da acurácia de previsão."
         ),
+        de=(
+            "Durchschnitt der absoluten Differenzen zwischen vorhergesagten und "
+            "tatsächlichen Werten, "
+            "bietet ein klares Maß für die Vorhersagegenauigkeit."
+        ),
+        zh=("预测值与实际值之间绝对差的平均值，提供预测精度的直观度量。"),
     )
 
     @staticmethod

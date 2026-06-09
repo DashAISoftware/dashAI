@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Migraciones de Base de Datos
 
-DashAI usa **Alembic** para las migraciones del esquema de base de datos. Las migraciones se ejecutan automáticamente al iniciar la aplicación.
+dashAI usa **Alembic** para las migraciones del esquema de base de datos. Las migraciones se ejecutan automáticamente al iniciar la aplicación.
 
 ## Aplicar Migraciones
 

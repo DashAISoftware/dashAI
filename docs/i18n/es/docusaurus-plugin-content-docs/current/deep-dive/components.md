@@ -5,7 +5,7 @@ sidebar_label: Componentes
 
 ## ¿Qué es un Componente?
 
-Un **componente** es el bloque de construcción fundamental de DashAI. Toda pieza de funcionalidad conectable — modelos, tareas, métricas, exploradores, explicadores, converters, cargadores de datos, optimizadores y trabajos — es un componente.
+Un **componente** es el bloque de construcción fundamental de dashAI. Toda pieza de funcionalidad conectable — modelos, tareas, métricas, exploradores, explicadores, converters, cargadores de datos, optimizadores y trabajos — es un componente.
 
 ## Tipos de Componentes
 

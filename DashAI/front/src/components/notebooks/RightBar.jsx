@@ -32,10 +32,10 @@ function SectionHeader({ icon: Icon, label, count, mt, theme, t }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1,
-        mb: 1.5,
+        gap: 2,
+        mb: 3,
         mt: mt ?? 0,
-        pb: 0.5,
+        pb: 1,
         borderBottom: "1px solid",
         borderColor: theme.palette.divider,
       }}
@@ -66,7 +66,7 @@ function RightBarDatasetView() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          p: 2,
+          p: 4,
         }}
       >
         <Typography
@@ -147,6 +147,8 @@ export default function RightBar({ notebook, onToggle }) {
     const allowedTypes = explorer?.metadata?.allowed_types || [];
     const allowedDtypes = explorer?.metadata?.allowed_dtypes || [];
     const inputCardinality = explorer?.metadata?.input_cardinality || {};
+    const typesDtypeRestrictions =
+      explorer?.metadata?.type_dtype_restrictions || {};
 
     let validColumns = datasetColumns;
     let disabled = false;
@@ -165,6 +167,17 @@ export default function RightBar({ notebook, onToggle }) {
       validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
+    }
+
+    // Apply per-type dtype exclusions declared by the backend
+    if (Object.keys(typesDtypeRestrictions).length > 0) {
+      validColumns = validColumns.filter((col) => {
+        const forbidden = typesDtypeRestrictions[col.valueType];
+        if (!forbidden) return true;
+        const dtypeKey =
+          col.dataType === t("common:unknown") ? "" : col.dataType;
+        return !forbidden.includes(dtypeKey);
+      });
     }
 
     // Check cardinality requirements
@@ -336,7 +349,7 @@ export default function RightBar({ notebook, onToggle }) {
       >
         <Box
           sx={{
-            p: 2,
+            p: 4,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
@@ -362,7 +375,7 @@ export default function RightBar({ notebook, onToggle }) {
               <Tab
                 data-tour="explorers-tab"
                 label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
                     {t("datasets:label.explore")}
                   </Box>
@@ -371,7 +384,7 @@ export default function RightBar({ notebook, onToggle }) {
               <Tab
                 data-tour="converters-tab"
                 label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
                     {t("datasets:label.convert")}
                   </Box>
@@ -391,7 +404,7 @@ export default function RightBar({ notebook, onToggle }) {
               {/* Search bar */}
               <Box
                 sx={{
-                  p: 2,
+                  p: 4,
                   borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
@@ -409,8 +422,8 @@ export default function RightBar({ notebook, onToggle }) {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  px: 2,
-                  py: 1,
+                  px: 4,
+                  py: 2,
                   borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
@@ -465,10 +478,10 @@ export default function RightBar({ notebook, onToggle }) {
                           flex: 1,
                           overflowY: "auto",
                           overflowX: "hidden",
-                          p: 2,
+                          p: 4,
                           minWidth: 0,
                         }
-                      : { flex: 1, overflow: "auto", p: 2 };
+                      : { flex: 1, overflow: "auto", p: 4 };
 
                   const hasExplorers = filteredExplorers.length > 0;
                   const hasConverters = filteredConverters.length > 0;
@@ -499,7 +512,7 @@ export default function RightBar({ notebook, onToggle }) {
                                 icon={TransformIcon}
                                 label={t("datasets:label.convert")}
                                 count={filteredConverters.length}
-                                mt={hasExplorers ? 3 : 0}
+                                mt={hasExplorers ? 6 : 0}
                                 theme={theme}
                                 t={t}
                               />
@@ -516,7 +529,7 @@ export default function RightBar({ notebook, onToggle }) {
                               sx={{
                                 color: "text.secondary",
                                 textAlign: "center",
-                                py: 2,
+                                py: 4,
                               }}
                             >
                               {t("datasets:label.noToolsMatched")}

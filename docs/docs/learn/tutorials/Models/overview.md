@@ -5,7 +5,7 @@ sidebar_label: Overview
 
 # Models Module
 
-The Models module is DashAI's environment for training, evaluating, comparing, and
+The Models module is dashAI's environment for training, evaluating, comparing, and
 deploying machine learning models. Everything is organized around **Sessions** — a
 session groups one or more models trained on the same dataset and task, keeping all
 results, predictions, and explainability tools in one place.

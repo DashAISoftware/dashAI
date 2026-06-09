@@ -1,18 +1,18 @@
 ---
 title: Benchmark comparativo
-description: Comparación de DashAI con KNIME, Orange y WEKA en licencia, extensibilidad y cobertura de tareas.
+description: Comparación de dashAI con KNIME, Orange y WEKA en licencia, extensibilidad y cobertura de tareas.
 sidebar_label: Benchmark comparativo
 ---
 
 # Benchmark comparativo
 
-Esta sección compara DashAI con KNIME Analytics Platform, Orange Data Mining y WEKA — las principales plataformas no-code ML open-source con arquitectura comparable.
+Esta sección compara dashAI con KNIME Analytics Platform, Orange Data Mining y WEKA — las principales plataformas no-code ML open-source con arquitectura comparable.
 
 ---
 
 ## Metodología
 
-El subconjunto de plataformas se delimitó a herramientas que cumplen simultáneamente tres condiciones: distribución open-source, operación sin código para el usuario final y arquitectura de catálogo extensible por terceros. KNIME Analytics Platform, Orange Data Mining y WEKA satisfacen ese criterio junto a DashAI.
+El subconjunto de plataformas se delimitó a herramientas que cumplen simultáneamente tres condiciones: distribución open-source, operación sin código para el usuario final y arquitectura de catálogo extensible por terceros. KNIME Analytics Platform, Orange Data Mining y WEKA satisfacen ese criterio junto a dashAI.
 
 La comparación se estructura en tres dimensiones medibles: condiciones de licencia, costo arquitectónico de extensión y cobertura paradigmática del catálogo nativo. Para la dimensión de extensibilidad, el boilerplate reportado corresponde a componentes de referencia implementados en cada plataforma a partir de sus repositorios oficiales; las fuentes están listadas al final de esta página.
 
@@ -20,7 +20,7 @@ La comparación se estructura en tres dimensiones medibles: condiciones de licen
 
 ## Licencia
 
-DashAI se distribuye bajo licencia **MIT**, lo que permite su uso, modificación y distribución sin restricciones en proyectos comerciales o institucionales.
+dashAI se distribuye bajo licencia **MIT**, lo que permite su uso, modificación y distribución sin restricciones en proyectos comerciales o institucionales.
 
 KNIME y Orange utilizan GPLv3; WEKA, GPL. Las tres licencias incluyen copyleft sobre obras derivadas distribuidas. KNIME presenta además funcionalidades adicionales — scheduling, despliegue gobernado, RBAC y la AI Extension — disponibles únicamente a través de KNIME Business Hub bajo licenciamiento comercial.
 
@@ -28,7 +28,7 @@ KNIME y Orange utilizan GPLv3; WEKA, GPL. Las tres licencias incluyen copyleft s
 
 ## Extensibilidad
 
-DashAI expone doce clases base organizadas por rol funcional: `BaseModel`, `BaseMetric`, `BaseTask`, `BaseExplainer`, entre otras. Un nuevo componente se implementa subclasificando la abstracción correspondiente y declarando sus parámetros mediante un schema Pydantic. A partir del schema, la plataforma genera automáticamente el formulario de configuración en la interfaz, sin requerir código de frontend. El componente se distribuye vía PyPI e instala directamente desde la interfaz de DashAI.
+dashAI expone doce clases base organizadas por rol funcional: `BaseModel`, `BaseMetric`, `BaseTask`, `BaseExplainer`, entre otras. Un nuevo componente se implementa subclasificando la abstracción correspondiente y declarando sus parámetros mediante un schema Pydantic. A partir del schema, la plataforma genera automáticamente el formulario de configuración en la interfaz, sin requerir código de frontend. El componente se distribuye vía PyPI e instala directamente desde la interfaz de dashAI.
 
 El boilerplate resultante es de aproximadamente **20–40 líneas de código** para componentes simples (métricas, clasificadores básicos) y **70–110 líneas** para modelos con múltiples hiperparámetros, donde la mayor parte del código corresponde a la declaración del schema de parámetros.
 
@@ -40,7 +40,7 @@ Para referencia, los mecanismos de extensión de las otras plataformas evaluadas
 
 ### Arquitectura de interfaz
 
-DashAI adopta una arquitectura cliente-servidor: un servidor FastAPI expone el catálogo de componentes, datasets, jobs de entrenamiento y resultados; un frontend React consume esa API vía HTTP. Cuando se registra un componente nuevo, el servidor expone su schema JSON y el frontend renderiza el formulario de configuración sin conocimiento previo del componente. El servidor puede ejecutarse en cualquier máquina y accederse desde un navegador, incluso desde otro dispositivo en la misma red local.
+dashAI adopta una arquitectura cliente-servidor: un servidor FastAPI expone el catálogo de componentes, datasets, jobs de entrenamiento y resultados; un frontend React consume esa API vía HTTP. Cuando se registra un componente nuevo, el servidor expone su schema JSON y el frontend renderiza el formulario de configuración sin conocimiento previo del componente. El servidor puede ejecutarse en cualquier máquina y accederse desde un navegador, incluso desde otro dispositivo en la misma red local.
 
 KNIME está construido sobre Eclipse RCP, Orange sobre PyQt y WEKA sobre Java Swing. En los tres casos la interfaz y la lógica de negocio corren en el mismo proceso; añadir un componente nuevo implica modificar también la capa de presentación.
 
@@ -48,7 +48,7 @@ KNIME está construido sobre Eclipse RCP, Orange sobre PyQt y WEKA sobre Java Sw
 
 ## Cobertura de tareas
 
-El catálogo nativo de DashAI cubre cuatro tareas predictivas — clasificación tabular, regresión, clasificación de texto y traducción — con aproximadamente quince modelos cada una, junto con cinco LLMs y once modelos de generación de imagen, todos ejecutables localmente. La optimización de hiperparámetros integra Optuna y HyperOpt.
+El catálogo nativo de dashAI cubre cuatro tareas predictivas — clasificación tabular, regresión, clasificación de texto y traducción — con aproximadamente quince modelos cada una, junto con cinco LLMs y once modelos de generación de imagen, todos ejecutables localmente. La optimización de hiperparámetros integra Optuna y HyperOpt.
 
 La interfaz está disponible en español e inglés.
 
@@ -56,7 +56,7 @@ La interfaz está disponible en español e inglés.
 
 ## Tabla comparativa
 
-| Criterio                        |             KNIME              |       Orange        |         WEKA         |        **DashAI**         |
+| Criterio                        |             KNIME              |       Orange        |         WEKA         |        **dashAI**         |
 | ------------------------------- | :----------------------------: | :-----------------: | :------------------: | :-----------------------: |
 | **Licenciamiento**              |                                |                     |                      |                           |
 | Licencia                        |             GPLv3              |        GPLv3        |         GPL          |          **MIT**          |
@@ -85,10 +85,10 @@ La vía oficial de KNIME (Java) requiere programar `NodeDialog` y `NodeView` man
 :::
 
 :::note Boilerplate por componente
-Las 150–250 LdC de KNIME corresponden a la vía Java oficial. La vía Python (Labs) reduce ese número pero añade archivos de configuración propios (`knime.yml`, `pixi.toml`). En DashAI: ≈20–40 LdC para componentes simples; ≈70–110 LdC para modelos complejos con múltiples hiperparámetros, donde la mayor parte del código es la declaración del schema de parámetros.
+Las 150–250 LdC de KNIME corresponden a la vía Java oficial. La vía Python (Labs) reduce ese número pero añade archivos de configuración propios (`knime.yml`, `pixi.toml`). En dashAI: ≈20–40 LdC para componentes simples; ≈70–110 LdC para modelos complejos con múltiples hiperparámetros, donde la mayor parte del código es la declaración del schema de parámetros.
 :::
 
-:::note Solapamiento entre tasks (DashAI)
+:::note Solapamiento entre tasks (dashAI)
 9 de los 15 modelos de clasificación tabular tienen contraparte en regresión (Random Forest, Gradient Boosting, SVM, entre otros); cada task dispone de su propia implementación y configuración independiente. En WEKA, regresión y clasificación heredan de `AbstractClassifier` y se diferencian por capability flag.
 :::
 

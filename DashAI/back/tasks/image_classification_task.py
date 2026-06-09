@@ -33,9 +33,30 @@ class ImageClassificationTask(ClassificationTask):
             "las imágenes, lo que permite una clasificación precisa de nuevas "
             "instancias."
         ),
+        pt=(
+            "A classificação de imagens no aprendizado de máquina envolve a "
+            "previsão de rótulos categóricos para dados de imagem. Os modelos "
+            "são treinados para aprender padrões visuais e características nas "
+            "imagens, permitindo uma classificação precisa de novas instâncias."
+        ),
+        de=(
+            "Bildklassifikation im maschinellen Lernen umfasst die Vorhersage "
+            "kategorialer Zielgrößen für Bilddaten. Modelle werden trainiert, um "
+            "visuelle Muster und Merkmale in Bildern zu erlernen, was eine genaue "
+            "Klassifikation neuer Instanzen ermöglicht."
+        ),
+        zh=(
+            "机器学习中的图像分类涉及预测图像数据的分类标签。"
+            "模型被训练以学习图像中的视觉模式和特征，"
+            "从而实现对新实例的精确分类。"
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Image Classification", es="Clasificación de Imágenes"
+        en="Image Classification",
+        es="Clasificación de Imágenes",
+        pt="Classificação de Imagens",
+        de="Bildklassifikation",
+        zh="图像分类",
     )
     SCORING_PROFILES = {
         "balanced": {

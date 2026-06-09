@@ -34,8 +34,11 @@ class KNeighborsRegressionSchema(BaseSchema):
             en="Number of neighbours to use for the prediction.",
             es="Número de vecinos a usar para la predicción.",
             pt="Número de vizinhos a usar para a previsão.",
+            de="Anzahl der Nachbarn für die Vorhersage.",
         ),
-        alias=MultilingualString(en="N neighbors", es="N vecinos", pt="N vizinhos"),
+        alias=MultilingualString(
+            en="N neighbors", es="N vecinos", pt="N vizinhos", de="Anzahl Nachbarn"
+        ),
     )  # type: ignore
 
     weights: schema_field(
@@ -54,8 +57,12 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Função de pesos usada na previsão. 'uniform' pondera igualmente "
                 "todos os vizinhos; 'distance' pondera pela distância inversa."
             ),
+            de=(
+                "Gewichtungsfunktion für die Vorhersage. 'uniform' gewichtet alle "
+                "Nachbarn gleich; 'distance' gewichtet nach inverser Distanz."
+            ),
         ),
-        alias=MultilingualString(en="Weights", es="Pesos", pt="Pesos"),
+        alias=MultilingualString(en="Weights", es="Pesos", pt="Pesos", de="Gewichte"),
     )  # type: ignore
 
     algorithm: schema_field(
@@ -74,8 +81,14 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Algoritmo para calcular os vizinhos mais próximos. 'auto' seleciona "
                 "o melhor com base nos valores passados ao fit."
             ),
+            de=(
+                "Algorithmus zur Berechnung der nächsten Nachbarn. 'auto' wählt den "
+                "besten basierend auf den an fit übergebenen Werten."
+            ),
         ),
-        alias=MultilingualString(en="Algorithm", es="Algoritmo", pt="Algoritmo"),
+        alias=MultilingualString(
+            en="Algorithm", es="Algoritmo", pt="Algoritmo", de="Algorithmus"
+        ),
     )  # type: ignore
 
     leaf_size: schema_field(
@@ -99,9 +112,14 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Tamanho de folha passado ao BallTree ou KDTree. Afeta a velocidade "
                 "de consulta e a memória necessária para armazenar a árvore."
             ),
+            de=(
+                "Blattgröße für BallTree oder KDTree. Beeinflusst die "
+                "Abfragegeschwindigkeit "
+                "und den Speicherbedarf für den Baum."
+            ),
         ),
         alias=MultilingualString(
-            en="Leaf size", es="Tamaño de hoja", pt="Tamanho de folha"
+            en="Leaf size", es="Tamaño de hoja", pt="Tamanho de folha", de="Blattgröße"
         ),
     )  # type: ignore
 
@@ -112,8 +130,9 @@ class KNeighborsRegressionSchema(BaseSchema):
             en="Distance metric to use for the neighbour search.",
             es="Métrica de distancia para la búsqueda de vecinos.",
             pt="Métrica de distância para a busca de vizinhos.",
+            de="Distanzmetrik für die Nachbarsuche.",
         ),
-        alias=MultilingualString(en="Metric", es="Métrica", pt="Métrica"),
+        alias=MultilingualString(en="Metric", es="Métrica", pt="Métrica", de="Metrik"),
     )  # type: ignore
 
 
@@ -138,6 +157,8 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
         en="K-Nearest Neighbours Regression",
         es="Regresión K-Vecinos Más Cercanos",
         pt="Regressor K-Vizinhos",
+        de="K-Nächste-Nachbarn-Regression",
+        zh="K 近邻回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Non-parametric regression that predicts by averaging nearest neighbours.",
@@ -148,6 +169,11 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
             "Regressão não paramétrica que prevê calculando a média dos vizinhos "
             "mais próximos."
         ),
+        de=(
+            "Nicht-parametrische Regression, die durch Mittelung der nächsten "
+            "Nachbarn vorhersagt."
+        ),
+        zh="通过对最近邻样本取平均进行预测的非参数回归方法。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "ScatterPlot"

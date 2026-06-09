@@ -36,6 +36,8 @@ class OneHotEncoderSchema(BaseSchema):
             en="The categories of each feature.",
             es="Las categorías de cada característica.",
             pt="As categorias de cada característica.",
+            de="Die Kategorien jedes Merkmals.",
+            zh="每个特征的类别。",
         ),
     )  # type: ignore
     drop: schema_field(
@@ -51,6 +53,11 @@ class OneHotEncoderSchema(BaseSchema):
                 "Especifica uma metodologia para eliminar uma categoria por "
                 "característica."
             ),
+            de=(
+                "Gibt eine Methodik an, um eine der Kategorien pro Merkmal zu "
+                "entfernen."
+            ),
+            zh="指定每个特征删除一个类别的方法。",
         ),
     )  # type: ignore
     dtype: schema_field(
@@ -60,6 +67,8 @@ class OneHotEncoderSchema(BaseSchema):
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
             pt="Tipo de dado de saída desejado.",
+            de="Gewünschter Datentyp der Ausgabe.",
+            zh="所需的输出数据类型。",
         ),
     )  # type: ignore
     handle_unknown: schema_field(
@@ -69,6 +78,8 @@ class OneHotEncoderSchema(BaseSchema):
             en=("How to handle unknown categories during transform."),
             es=("Cómo manejar categorías desconocidas durante la transformación."),
             pt=("Como lidar com categorias desconhecidas durante a transformação."),
+            de="Wie unbekannte Kategorien während der Transformation behandelt werden.",
+            zh="转换过程中如何处理未知类别。",
         ),
     )  # type: ignore
     min_frequency: schema_field(
@@ -78,6 +89,8 @@ class OneHotEncoderSchema(BaseSchema):
             en="Minimum frequency of a category to be considered as frequent.",
             es="Frecuencia mínima para considerar una categoría como frecuente.",
             pt="Frequência mínima para considerar uma categoria como frequente.",
+            de="Mindesthäufigkeit einer Kategorie, um als häufig betrachtet zu werden.",
+            zh="将类别视为频繁类别的最低频率。",
         ),
     )  # type: ignore
     max_categories: schema_field(
@@ -87,6 +100,8 @@ class OneHotEncoderSchema(BaseSchema):
             en="Maximum number of categories to encode.",
             es="Número máximo de categorías a codificar.",
             pt="Número máximo de categorias a codificar.",
+            de="Maximale Anzahl der zu kodierenden Kategorien.",
+            zh="要编码的最大类别数。",
         ),
     )  # type: ignore
     feature_name_combiner: schema_field(
@@ -96,6 +111,8 @@ class OneHotEncoderSchema(BaseSchema):
             en="Method used to combine feature names.",
             es="Método usado para combinar nombres de características.",
             pt="Método usado para combinar nomes de características.",
+            de="Methode zur Kombination von Merkmalsnamen.",
+            zh="用于组合特征名称的方法。",
         ),
     )  # type: ignore
 
@@ -137,11 +154,15 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
             "Codifica características categóricas inteiras como um array "
             "numérico One-Hot."
         ),
+        de=("Kategoriale ganzzahlige Merkmale als One-Hot-numerisches Array kodieren."),
+        zh="将类别整数特征编码为独热编码数值数组。",
     )
     DISPLAY_NAME = MultilingualString(
         en="One-Hot Encoder",
         es="Codificador One-Hot",
         pt="Codificador One-Hot",
+        de="One-Hot-Kodierer",
+        zh="独热编码器",
     )
     IMAGE_PREVIEW = "one_hot_encoder.png"
 

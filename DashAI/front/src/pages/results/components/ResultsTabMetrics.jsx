@@ -13,7 +13,7 @@ function ResultsTabMetrics({ runData }) {
   const [displaySet, setDisplaySet] = useState("test_metrics");
 
   return (
-    <Grid container direction="column" rowSpacing={2}>
+    <Grid container direction="column" rowSpacing={4}>
       {/* Toggle to select the set on which the metrics are applied.  */}
       <ResultsTabMetricsToggle
         displaySet={displaySet}

@@ -43,6 +43,8 @@ class EmbeddingSchema(BaseSchema):
             en="Name of the pre-trained model to use",
             es="Nombre del modelo preentrenado a usar",
             pt="Nome do modelo pré-treinado a usar",
+            de="Name des vortrainierten Modells, das verwendet werden soll",
+            zh="要使用的预训练模型名称",
         ),
     )  # type: ignore
 
@@ -53,6 +55,8 @@ class EmbeddingSchema(BaseSchema):
             en="Maximum sequence length for tokenization",
             es="Longitud máxima de secuencia para la tokenización",
             pt="Comprimento máximo de sequência para a tokenização",
+            de="Maximale Sequenzlänge für die Tokenisierung",
+            zh="分词的最大序列长度",
         ),
     )  # type: ignore
 
@@ -63,6 +67,8 @@ class EmbeddingSchema(BaseSchema):
             en="Number of samples to process at once",
             es="Número de muestras a procesar a la vez",
             pt="Número de amostras a processar de uma vez",
+            de="Anzahl der gleichzeitig zu verarbeitenden Stichproben",
+            zh="每次处理的样本数量",
         ),
     )  # type: ignore
 
@@ -73,6 +79,8 @@ class EmbeddingSchema(BaseSchema):
             en="Device to use for computation",
             es="Dispositivo a usar para el cómputo",
             pt="Dispositivo a usar para o processamento",
+            de="Gerät für die Berechnung",
+            zh="用于计算的设备",
         ),
     )  # type: ignore
 
@@ -83,6 +91,11 @@ class EmbeddingSchema(BaseSchema):
             en="Strategy to pool token embeddings into sentence embedding",
             es="Estrategia para agrupar embeddings de tokens en uno de oración",
             pt="Estratégia para agregar embeddings de tokens em embedding de sentença",
+            de=(
+                "Strategie zum Zusammenführen von Token-Einbettungen zu "
+                "Satz-Einbettungen"
+            ),
+            zh="将词元嵌入汇聚为句子嵌入的策略",
         ),
     )  # type: ignore
 
@@ -98,8 +111,15 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             "Converte texto em embeddings usando modelos de transformadores "
             "HuggingFace."
         ),
+        de=(
+            "Text in Einbettungen konvertieren mithilfe von "
+            "HuggingFace-Transformermodellen."
+        ),
+        zh="使用HuggingFace（保留英文）transformer模型将文本转换为嵌入向量。",
     )
-    DISPLAY_NAME = MultilingualString(en="Embedding", es="Embedding", pt="Embedding")
+    DISPLAY_NAME = MultilingualString(
+        en="Embedding", es="Embedding", pt="Embedding", de="Einbettung", zh="嵌入"
+    )
     IMAGE_PREVIEW = "embedding.png"
 
     metadata = {

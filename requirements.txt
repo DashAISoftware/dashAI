@@ -47,3 +47,5 @@ xlrd
 filetype
 torchmetrics
 pywebview
+openml
+oslo.concurrency

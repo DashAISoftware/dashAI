@@ -41,6 +41,8 @@ class BagOfWordsConverterSchema(BaseSchema):
             pt=(
                 "Número máximo de características (palavras mais frequentes) a manter."
             ),
+            de="Maximale Anzahl der beizubehaltenden Merkmale (häufigste Wörter).",
+            zh="保留的最大特征数（最常见的词）。",
         ),
     )  # type: ignore
     lowercase: schema_field(
@@ -53,6 +55,11 @@ class BagOfWordsConverterSchema(BaseSchema):
                 "Se todos os caracteres devem ser convertidos para "
                 "minúsculas antes de tokenizar."
             ),
+            de=(
+                "Ob alle Zeichen vor der Tokenisierung in Kleinbuchstaben umgewandelt "
+                "werden sollen."
+            ),
+            zh="是否在分词前将所有字符转换为小写。",
         ),
     )  # type: ignore
     stop_words: schema_field(
@@ -62,6 +69,8 @@ class BagOfWordsConverterSchema(BaseSchema):
             en="Stop word set to remove. Use 'english' or None.",
             es="Conjunto de stopwords a eliminar. Usa 'english' o None.",
             pt="Conjunto de stopwords a remover. Use 'english' ou None.",
+            de="Stoppwort-Set zum Entfernen. Verwende 'english' oder None.",
+            zh="要删除的停用词集。使用 'english' 或 None。",
         ),
     )  # type: ignore
     lower_bound_ngrams: schema_field(
@@ -71,6 +80,8 @@ class BagOfWordsConverterSchema(BaseSchema):
             en="Lower bound for n-grams. Must be <= upper bound.",
             es="Límite inferior de n-grams. Debe ser <= al límite superior.",
             pt="Limite inferior para n-grams. Deve ser <= ao limite superior.",
+            de="Untergrenze für N-Gramme. Muss <= Obergrenze sein.",
+            zh="n-gram 的下界。必须 <= 上界。",
         ),
     )  # type: ignore
     upper_bound_ngrams: schema_field(
@@ -80,6 +91,8 @@ class BagOfWordsConverterSchema(BaseSchema):
             en="Upper bound for n-grams. Must be >= lower bound.",
             es="Límite superior de n-grams. Debe ser >= al límite inferior.",
             pt="Limite superior para n-grams. Deve ser >= ao limite inferior.",
+            de="Obergrenze für N-Gramme. Muss >= Untergrenze sein.",
+            zh="n-gram 的上界。必须 >= 下界。",
         ),
     )  # type: ignore
 
@@ -111,7 +124,11 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     SCHEMA = BagOfWordsConverterSchema
     DISPLAY_NAME = MultilingualString(
-        en="Bag of Words", es="Bolsa de Palabras", pt="Bag of Words"
+        en="Bag of Words",
+        es="Bolsa de Palabras",
+        pt="Bag of Words",
+        de="Bag of Words",
+        zh="词袋模型",
     )
     IMAGE_PREVIEW = "bag_of_words.png"
 
@@ -132,6 +149,11 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
             "Converte texto em uma representação Bag of Words com uma coluna "
             "por token (frequência por token)."
         ),
+        de=(
+            "Konvertiert Text in eine Bag-of-Words-Darstellung mit einer Spalte "
+            "pro Token (Häufigkeit pro Token)."
+        ),
+        zh="将文本转换为词袋模型表示，每个词元对应一列（每词元的频率）。",
     )
 
     def __init__(self, **kwargs):

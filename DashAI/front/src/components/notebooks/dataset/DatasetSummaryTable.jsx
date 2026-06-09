@@ -94,7 +94,7 @@ function DatasetSummaryTable({ file }) {
   return (
     <Box>
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
           <CircularProgress />
         </Box>
       ) : (

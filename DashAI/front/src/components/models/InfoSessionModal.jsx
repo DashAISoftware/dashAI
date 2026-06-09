@@ -94,20 +94,20 @@ export default function InfoSessionModal({
           </IconButton>
         </Box>
 
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 6 }}>
           {/* Description Section - Only show if description exists */}
           {sessionData.description && sessionData.description.trim() && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            <Box sx={{ mb: 6 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2 }}>
                 {t("common:description")}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
                 {sessionData.description}
               </Typography>
             </Box>
           )}
 
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
             {t("common:metadata")}
           </Typography>
           <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>

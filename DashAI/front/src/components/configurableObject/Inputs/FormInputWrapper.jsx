@@ -21,9 +21,9 @@ function FormInputWrapper({ description, disabledPadding = false, children }) {
   }
 
   return (
-    <Box display="flex" alignItems="flex-start" gap={2} width="100%">
+    <Box display="flex" alignItems="flex-start" gap={4} width="100%">
       <Box sx={{ flex: 1, width: "80%" }}>{children}</Box>
-      <Box sx={{ pt: disabledPadding ? 0 : 2, width: "auto" }}>
+      <Box sx={{ pt: disabledPadding ? 0 : 4, width: "auto" }}>
         <FormTooltip contentStr={description} />
       </Box>
     </Box>

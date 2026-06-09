@@ -1,0 +1,14 @@
+{
+  "inferenceMethods": "推理方法",
+  "selectAnItemToShowInfo": "选择一个项目以查看描述。",
+  "selectInferenceMethods": "选择您想要应用的推理方法",
+  "search": "搜索",
+  "noItemsFound": "未找到组件",
+  "tryAdjustingSearch": "尝试调整搜索条件或筛选器",
+  "componentsAvailable_one": "{{count}} 个可用组件",
+  "componentsAvailable_other": "{{count}} 个可用组件",
+  "componentDetails": "组件详情",
+  "description": "描述",
+  "tags": "标签",
+  "noDescriptionAvailable": "暂无描述。"
+}

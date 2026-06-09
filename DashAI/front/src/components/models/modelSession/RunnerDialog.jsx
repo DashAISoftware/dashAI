@@ -353,7 +353,7 @@ function RunnerDialog({
       enableSorting: false,
       enableColumnFilter: false,
       Cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <SingleRun run={row.original} onRun={handleSingleRun} />
           <EditRunDialog
             experiment={experiment}
@@ -451,19 +451,19 @@ function RunnerDialog({
         </DialogTitle>
         <DialogContent>
           <Paper
-            sx={{ px: 3, py: 2 }}
+            sx={{ px: 12, py: 8 }}
             onClick={(event) => {
               event.target = document.body;
             }}
           >
-            <Typography variant="subtitle1" component="h3" sx={{ pb: 1 }}>
+            <Typography variant="subtitle1" component="h3" sx={{ pb: 4 }}>
               Select models to run
             </Typography>
             <MaterialReactTable table={table} />
           </Paper>
         </DialogContent>
         <DialogActions>
-          <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 2 }}>
+          <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 8 }}>
             <Button
               variant="outlined"
               onClick={handleCloseAndAdvance}

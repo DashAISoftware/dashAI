@@ -8,12 +8,12 @@ sidebar_position: 9
 
 ## ¿Qué Es DashAIDataset?
 
-`DashAIDataset` es el primitivo central de datos de DashAI. Extiende la clase `Dataset` de HuggingFace con dos responsabilidades adicionales:
+`DashAIDataset` es el primitivo central de datos de dashAI. Extiende la clase `Dataset` de HuggingFace con dos responsabilidades adicionales:
 
-- **Metadatos de tipo semántico** — un diccionario `_types` (`Dict[str, DashAIDataType]`) que mapea cada nombre de columna a su tipo semántico DashAI (ver [Tipos Semánticos](/deep-dive/semantic-types)). Estos metadatos se persisten dentro del esquema Apache Arrow para sobrevivir ciclos de guardado/carga.
+- **Metadatos de tipo semántico** — un diccionario `_types` (`Dict[str, DashAIDataType]`) que mapea cada nombre de columna a su tipo semántico dashAI (ver [Tipos Semánticos](/deep-dive/semantic-types)). Estos metadatos se persisten dentro del esquema Apache Arrow para sobrevivir ciclos de guardado/carga.
 - **Metadatos de splits** — un diccionario `splits` que registra qué índices de fila pertenecen a qué split (`train`, `test`, `validation`), junto con estadísticas agregadas calculadas durante la carga del dataset.
 
-Cada pieza de datos que fluye por DashAI — carga, transformaciones en el notebook, entrenamiento de modelos, predicciones — se representa como un `DashAIDataset`.
+Cada pieza de datos que fluye por dashAI — carga, transformaciones en el notebook, entrenamiento de modelos, predicciones — se representa como un `DashAIDataset`.
 
 ---
 
@@ -249,6 +249,6 @@ DataLoader
 | Archivo                                             | Rol                                                                                                     |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `DashAI/back/dataloaders/classes/dashai_dataset.py` | Clase `DashAIDataset` y todas las funciones a nivel de módulo                                           |
-| `DashAI/back/types/utils.py`                        | Serialización de tipos Arrow ↔ DashAI (`save_types_in_arrow_metadata`, `get_types_from_arrow_metadata`) |
+| `DashAI/back/types/utils.py`                        | Serialización de tipos Arrow ↔ dashAI (`save_types_in_arrow_metadata`, `get_types_from_arrow_metadata`) |
 | `DashAI/back/types/value_types.py`                  | Clases de tipos de valor concretos usados en `_types`                                                   |
 | `DashAI/back/types/categorical.py`                  | Tipo `Categorical` con codificación `str2int` / `int2str`                                               |

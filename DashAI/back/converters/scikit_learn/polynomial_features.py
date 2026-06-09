@@ -30,6 +30,8 @@ class PolynomialFeaturesSchema(BaseSchema):
             en="The degree of the polynomial features.",
             es="El grado de las características polinomiales.",
             pt="O grau das características polinomiais.",
+            de="Der Grad der polynomialen Merkmale.",
+            zh="多项式特征的次数。",
         ),
     )  # type: ignore
     interaction_only: schema_field(
@@ -48,6 +50,11 @@ class PolynomialFeaturesSchema(BaseSchema):
                 "Se True, somente características de interação são produzidas: "
                 "produtos de até 'degree' características de entrada distintas."
             ),
+            de=(
+                "Wenn True, werden nur Interaktionsmerkmale erzeugt: Produkte von "
+                "höchstens 'degree' verschiedenen Eingangsmerkmalen."
+            ),
+            zh="如果为 True，则只生成交叉特征：至多为 degree 个不同输入特征的乘积。",
         ),
     )  # type: ignore
     include_bias: schema_field(
@@ -66,6 +73,11 @@ class PolynomialFeaturesSchema(BaseSchema):
                 "Se True (padrão), inclui uma coluna de viés (coluna de uns que "
                 "atua como termo de intercepto)."
             ),
+            de=(
+                "Wenn True (Standard), wird eine Bias-Spalte einbezogen "
+                "(eine Spalte aus Einsen, die als Achsenabschnitt wirkt)."
+            ),
+            zh="如果为 True（默认），则包含偏置列（全 1 列，用作截距项）。",
         ),
     )  # type: ignore
     order: schema_field(
@@ -85,6 +97,12 @@ class PolynomialFeaturesSchema(BaseSchema):
                 "Ordem do array de saída no caso denso. A ordem 'F' é mais "
                 "rápida de calcular, mas pode lentificar estimadores posteriores."
             ),
+            de=(
+                "Reihenfolge des Ausgabe-Arrays im dichten Fall. Reihenfolge 'F' "
+                "ist schneller zu berechnen, kann aber nachfolgende Schätzer "
+                "verlangsamen."
+            ),
+            zh="稠密情况下输出数组的存储顺序。'F' 顺序计算更快，但可能减慢后续估计器。",
         ),
     )  # type: ignore
 
@@ -136,11 +154,22 @@ class PolynomialFeatures(
             "uma amostra de entrada é [a, b], as características de grau 2 são "
             "[1, a, b, a^2, ab, b^2]."
         ),
+        de=(
+            "Polynomiale und Interaktionsmerkmale generieren. Zum Beispiel, wenn "
+            "eine Eingabe [a, b] ist, sind die Grad-2-Polynommerkmale "
+            "[1, a, b, a^2, ab, b^2]."
+        ),
+        zh=(
+            "生成多项式特征和交叉特征。例如，输入样本为 [a, b] 时，"
+            "2 次多项式特征为 [1, a, b, a^2, ab, b^2]。"
+        ),
     )
     DISPLAY_NAME = MultilingualString(
         en="Polynomial Features",
         es="Características Polinomiales",
         pt="Características Polinomiais",
+        de="Polynomiale Merkmale",
+        zh="多项式特征",
     )
     IMAGE_PREVIEW = "polynomial_features.png"
 

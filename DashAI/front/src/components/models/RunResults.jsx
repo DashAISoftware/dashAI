@@ -49,6 +49,7 @@ import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
 export default function RunResults({
   run,
+  model,
   session,
   onRefresh,
   explainerRefreshTrigger,
@@ -102,6 +103,11 @@ export default function RunResults({
     canSave: false,
     isSaving: false,
   });
+
+  // Map a parameter key to its display name using the matching model's schema
+  // (the model comes from the right side bar list, so no extra backend fetch).
+  const paramProperties = model?.schema?.properties ?? {};
+  const getParamLabel = (key) => paramProperties[key]?.title ?? key;
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
@@ -254,7 +260,7 @@ export default function RunResults({
                       <TableBody>
                         {Object.entries(run.parameters).map(([key, value]) => (
                           <TableRow key={key}>
-                            <TableCell>{key}</TableCell>
+                            <TableCell>{getParamLabel(key)}</TableCell>
                             <TableCell>{renderParamValue(value)}</TableCell>
                           </TableRow>
                         ))}
@@ -898,6 +904,11 @@ RunResults.propTypes = {
     model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     test_metrics: PropTypes.object,
   }).isRequired,
+  model: PropTypes.shape({
+    name: PropTypes.string,
+    display_name: PropTypes.string,
+    schema: PropTypes.object,
+  }),
   session: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

@@ -45,6 +45,11 @@ class RMSE(RegressionMetric):
             "Raiz quadrada da média das diferenças ao quadrado entre "
             "valores previstos e reais, penaliza mais os erros grandes."
         ),
+        de=(
+            "Quadratwurzel des Durchschnitts der quadrierten Differenzen zwischen "
+            "vorhergesagten und tatsächlichen Werten, bestraft größere Fehler stärker."
+        ),
+        zh=("预测值与实际值平方差均值的平方根，对较大误差的惩罚更重。"),
     )
 
     @staticmethod

@@ -12,9 +12,9 @@ export function ChatTimestamp({ timestamp, isUser }) {
       sx={{
         color: theme.palette.text.secondary,
         display: "block",
-        mt: 0.5,
+        mt: 1,
         textAlign: isUser ? "right" : "left",
-        px: 1,
+        px: 2,
       }}
     >
       {timestamp}

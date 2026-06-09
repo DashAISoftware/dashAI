@@ -68,6 +68,13 @@ from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
+# Dataset Sources
+from DashAI.back.dataset_sources.huggingface_dataset_source import (
+    HuggingFaceDatasetSource,
+)
+from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
+from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
+
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
@@ -101,6 +108,7 @@ from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
 from DashAI.back.job.converter_job import ConverterJob
+from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
@@ -127,6 +135,10 @@ from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
+from DashAI.back.models.cnn_image_classifier import CNNImageClassifier
+from DashAI.back.models.efficientnet_b0_image_classifier import (
+    EfficientNetB0ImageClassifier,
+)
 
 # Models
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
@@ -199,7 +211,10 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
+from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
+from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
@@ -409,12 +424,21 @@ def get_initial_components():
         XlmRobertaTransformer,
         XlnetTransformer,
         MLPImageClassifier,
+        CNNImageClassifier,
+        LeNet5ImageClassifier,
+        ResNet18ImageClassifier,
+        ResNet50ImageClassifier,
+        EfficientNetB0ImageClassifier,
         # Dataloaders
         ARFFDataLoader,
         CSVDataLoader,
         ExcelDataLoader,
         ImageDataLoader,
         JSONDataLoader,
+        # Dataset Sources
+        HuggingFaceDatasetSource,
+        OpenMLDatasetSource,
+        ZenodoDatasetSource,
         # Metrics
         F1,
         Accuracy,
@@ -437,6 +461,7 @@ def get_initial_components():
         OptunaOptimizer,
         HyperOptOptimizer,
         # Jobs
+        DatafileJob,
         ExplainerJob,
         ModelJob,
         ExplorerJob,
