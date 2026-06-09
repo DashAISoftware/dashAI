@@ -328,6 +328,7 @@
     "showingRowsInference": "显示用于类型推断的 {{previewRowCount}} 行中的 {{sampleLength}} 行。",
     "showingRowsPreview": "显示 {{previewRowCount}} 行中的 {{sampleLength}} 行。",
     "showLegend": "显示图例",
+    "showMore": "显示更多（剩余 {{count}} 个）",
     "showZeroLine": "{{axis}} 轴显示零线",
     "skewness": "偏度",
     "someTypeChangesCannotBeApplied": "某些类型更改无法应用：",

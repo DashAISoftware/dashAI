@@ -333,6 +333,7 @@
     "showGrid": "Mostrar Grade do Eixo {{axis}}",
     "showingRowsInference": "Mostrando {{sampleLength}} de {{previewRowCount}} linhas analisadas para inferência de tipo.",
     "showLegend": "Mostrar Legenda",
+    "showMore": "Mostrar mais ({{count}} restantes)",
     "showZeroLine": "Mostrar Linha Zero do Eixo {{axis}}",
     "skewness": "Assimetria",
     "someTypeChangesCannotBeApplied": "Algumas alterações de tipo não podem ser aplicadas:",

@@ -327,6 +327,7 @@
     "showingRowsInference": "{{sampleLength}} von {{previewRowCount}} Zeilen für die Typinferenz analysiert.",
     "showingRowsPreview": "{{sampleLength}} von {{previewRowCount}} Zeilen werden angezeigt.",
     "showLegend": "Legende anzeigen",
+    "showMore": "Mehr anzeigen ({{count}} verbleibend)",
     "showZeroLine": "{{axis}}-Achse Nulllinie anzeigen",
     "skewness": "Schiefe",
     "someTypeChangesCannotBeApplied": "Einige Typänderungen können nicht angewendet werden:",

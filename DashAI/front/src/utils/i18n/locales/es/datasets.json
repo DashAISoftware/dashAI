@@ -334,6 +334,7 @@
     "showingRowsInference": "Mostrando {{sampleLength}} de {{previewRowCount}} filas analizadas para inferencia de tipo.",
     "showingRowsPreview": "Mostrando {{sampleLength}} de {{previewRowCount}} filas.",
     "showLegend": "Mostrar Leyenda",
+    "showMore": "Mostrar más ({{count}} restantes)",
     "showZeroLine": "Mostrar Línea Cero del Eje {{axis}}",
     "skewness": "Asimetría",
     "someTypeChangesCannotBeApplied": "Algunos cambios de tipo no se pueden aplicar:",
