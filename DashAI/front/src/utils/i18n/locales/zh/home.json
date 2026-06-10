@@ -5,12 +5,12 @@
     "generative": "与 AI 模型交互以进行推理并生成新内容。",
     "models": "在有组织的会话中配置任务、训练并比较模型。",
     "pipelines": "创建和管理流水线。",
-    "plugins": "浏览和管理插件以扩展 DashAI 的功能。"
+    "plugins": "浏览和管理插件以扩展 dashAI 的功能。"
   },
   "label": {
     "advanced": "高级",
     "getStarted": "快速入门",
-    "welcomeDashboardAI": "欢迎使用 DashAI！",
+    "welcomeDashboardAI": "欢迎使用 dashAI！",
     "welcomeSubtitle": "选择一个模块开始使用",
     "resources": "资源",
     "community": "社区"
@@ -20,7 +20,7 @@
     "tutorials": "教程",
     "github": "GitHub",
     "website": "官方网站",
-    "forum": "DashAI 论坛",
+    "forum": "dashAI 论坛",
     "discord": "Discord",
     "twitter": "Twitter / X"
   },

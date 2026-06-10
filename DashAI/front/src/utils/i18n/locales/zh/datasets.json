@@ -13,7 +13,7 @@
     "rule": {
       "boolean": "布尔列始终被视为分类型。",
       "dateExcluded": "日期/时间类型被排除在分类检测之外。",
-      "dateMappedToText": "值被检测为日期（{{baseType}} 格式），但 DashAI 目前没有日期类型——该列被存储为文本且不归类为分类型。",
+      "dateMappedToText": "值被检测为日期（{{baseType}} 格式），但 dashAI 目前没有日期类型——该列被存储为文本且不归类为分类型。",
       "stringLooksLikeDate": "值看起来像日期，因此该列保留为文本/日期而非分类型。",
       "tooManyUnique": "唯一值过多，不适合作为分类型（超过唯一值数量阈值）。",
       "uniqueRatioAbove": "唯一值占行数的比例过大——被视为数值/文本而非分类型。",
