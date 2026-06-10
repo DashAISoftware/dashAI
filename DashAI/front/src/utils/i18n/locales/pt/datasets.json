@@ -5,6 +5,9 @@
     "baseType": "(tipo base detectado: {{type}})",
     "stats": "Estatísticas da amostra",
     "uniqueCount": "Valores únicos: {{count}} de {{total}} linhas",
+    "uniqueCount_one": "Valores únicos: {{count}} de {{total}} linhas",
+    "uniqueCount_many": "Valores únicos: {{count}} de {{total}} linhas",
+    "uniqueCount_other": "Valores únicos: {{count}} de {{total}} linhas",
     "uniqueRatio": "Proporção única: {{ratio}}% (limiar categórico: ≤{{threshold}}%)",
     "uniqueRatioNoThreshold": "Proporção única: {{ratio}}%",
     "stringLength": "Comprimento médio do texto: {{mean}} caracteres (desvio {{std}})",
@@ -151,6 +154,7 @@
     "correlation": "Correlação",
     "correlationAnalysis": "Análise de Correlação",
     "correlations": "Correlações",
+    "createDataset": "Criar Conjunto de Dados",
     "createNewNotebook": "Caderno",
     "createNewNotebookDescription": "Inicia uma nova sessão de análise com um conjunto de dados existente.",
     "customArray": "Array Personalizado",
@@ -334,6 +338,10 @@
     "showingRowsInference": "Mostrando {{sampleLength}} de {{previewRowCount}} linhas analisadas para inferência de tipo.",
     "showLegend": "Mostrar Legenda",
     "showMore": "Mostrar mais ({{count}} restantes)",
+    "showMore_one": "Mostrar mais ({{count}} restante)",
+    "showMore_many": "Mostrar mais ({{count}} restantes)",
+    "showMore_other": "Mostrar mais ({{count}} restantes)",
+    "showingRowsPreview": "Mostrando {{sampleLength}} de {{previewRowCount}} linhas.",
     "showZeroLine": "Mostrar Linha Zero do Eixo {{axis}}",
     "skewness": "Assimetria",
     "someTypeChangesCannotBeApplied": "Algumas alterações de tipo não podem ser aplicadas:",
@@ -367,6 +375,8 @@
     "uniqueValues": "Valores Únicos",
     "unknownDataset": "Conjunto de dados desconhecido",
     "uploadAndConfigure": "Envie seu conjunto de dados e configure os parâmetros",
+    "importFromHub": "Central de Arquivos",
+    "importFromHubDescription": "Navegue e baixe conjuntos de dados de fontes externas como HuggingFace e OpenML.",
     "uploadDataset": "Conjunto de Dados",
     "uploadDatasetBeforeCreatingSession": "Você precisa enviar um conjunto de dados antes de criar uma sessão. Por favor, vá ao Módulo de Conjuntos de Dados para enviar seus dados.",
     "uploadDatasetDescription": "Importe seus dados de várias fontes e formatos",
@@ -415,6 +425,9 @@
     "exportFiltered": "Exportar filtrado",
     "export": "Exportar",
     "hiddenCount": "{{count}} ocultas",
+    "hiddenCount_one": "{{count}} oculta",
+    "hiddenCount_many": "{{count}} ocultas",
+    "hiddenCount_other": "{{count}} ocultas",
     "search": "Pesquisar",
     "showAll": "Mostrar todas",
     "hideAll": "Ocultar todas",
@@ -442,5 +455,6 @@
       "startsWith": "Começa com",
       "endsWith": "Termina com"
     }
-  }
+  },
+  "searchDataloaders": "Pesquisar carregadores de dados..."
 }

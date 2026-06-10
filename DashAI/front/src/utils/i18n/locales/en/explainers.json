@@ -20,7 +20,9 @@
     "localExplainerJobEnqueueError": "Error while trying to enqueue the local explainer job.",
     "localExplainerJobFailed": "Local explainer job failed: {{error}}",
     "nameTooShort": "The explainer name must have at least 4 alphanumeric characters.",
-    "validateDataset": "Error while trying to validate the selected dataset."
+    "validateDataset": "Error while trying to validate the selected dataset.",
+    "noData": "No data available",
+    "nameAlreadyExists": "Name already exists"
   },
   "label": {
     "configureExplainer": "Configure your Explainer",
@@ -53,7 +55,8 @@
     "selectExplainer": "Set name and explainer",
     "selectExplainerAndName": "Select a explainer and enter a name",
     "explainerInProgress": "Explainer in progress...",
-    "splitSelectionSummary": "Percentage: {{percentage}}% | Rows selected: {{rowsSelected}} / {{totalRows}}"
+    "splitSelectionSummary": "Percentage: {{percentage}}% | Rows selected: {{rowsSelected}} / {{totalRows}}",
+    "searchExplainers": "Search explainers..."
   },
   "message": {
     "explainerJobCompleted": "Explainer {{name}} completed successfully",

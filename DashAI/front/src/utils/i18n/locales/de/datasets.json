@@ -5,6 +5,8 @@
     "baseType": "(erkannter Basistyp: {{type}})",
     "stats": "Statistiken aus der Stichprobe",
     "uniqueCount": "Eindeutige Werte: {{count}} von {{total}} Zeilen",
+    "uniqueCount_one": "Eindeutiger Wert: {{count}} von {{total}} Zeilen",
+    "uniqueCount_other": "Eindeutige Werte: {{count}} von {{total}} Zeilen",
     "uniqueRatio": "Eindeutigkeitsrate: {{ratio}}% (kategorische Schwelle: ≤{{threshold}}%)",
     "uniqueRatioNoThreshold": "Eindeutigkeitsrate: {{ratio}}%",
     "stringLength": "Durchschn. Textlänge: {{mean}} Zeichen (Std {{std}})",
@@ -149,6 +151,7 @@
     "correlation": "Korrelation",
     "correlationAnalysis": "Korrelationsanalyse",
     "correlations": "Korrelationen",
+    "createDataset": "Datensatz erstellen",
     "createNewNotebook": "Notizbuch",
     "createNewNotebookDescription": "Starten Sie eine neue Analysesitzung mit einem vorhandenen Datensatz.",
     "customArray": "Benutzerdefiniertes Array",
@@ -328,6 +331,8 @@
     "showingRowsPreview": "{{sampleLength}} von {{previewRowCount}} Zeilen werden angezeigt.",
     "showLegend": "Legende anzeigen",
     "showMore": "Mehr anzeigen ({{count}} verbleibend)",
+    "showMore_one": "Mehr anzeigen ({{count}} verbleibend)",
+    "showMore_other": "Mehr anzeigen ({{count}} verbleibend)",
     "showZeroLine": "{{axis}}-Achse Nulllinie anzeigen",
     "skewness": "Schiefe",
     "someTypeChangesCannotBeApplied": "Einige Typänderungen können nicht angewendet werden:",
@@ -360,6 +365,8 @@
     "uniqueValues": "Eindeutige Werte",
     "unknownDataset": "Unbekannter Datensatz",
     "uploadAndConfigure": "Laden Sie Ihren Datensatz hoch und konfigurieren Sie Parameter",
+    "importFromHub": "Datei-Hub",
+    "importFromHubDescription": "Datensätze aus externen Quellen wie HuggingFace und OpenML durchsuchen und herunterladen.",
     "uploadDataset": "Datensatz",
     "uploadDatasetBeforeCreatingSession": "Sie müssen einen Datensatz hochladen, bevor Sie eine Sitzung erstellen. Gehen Sie zum Datensatz-Modul, um Ihre Daten hochzuladen.",
     "uploadDatasetDescription": "Importieren Sie Ihre Daten aus verschiedenen Quellen und Formaten",
@@ -371,7 +378,11 @@
     "valueType": "Wertetyp",
     "viewMode": "Ansichtsmodus",
     "xAxis": "X-Achse",
-    "yAxis": "Y-Achse"
+    "yAxis": "Y-Achse",
+    "previewRows": "Vorschauzeilen",
+    "previewRowsDescription": "Anzahl der Zeilen für die Vorschau (Minimum 2).",
+    "useNativeTypes": "Native Typen verwenden",
+    "useNativeTypesDescription": "Spaltentypen aus der Datei verwenden statt statistische Inferenz. Schneller und exakt für selbstbeschreibende Formate."
   },
   "message": {
     "columnTypesUpdated": "Spaltentypen erfolgreich aktualisiert",
@@ -406,6 +417,8 @@
     "exportFiltered": "Gefiltert exportieren",
     "export": "Exportieren",
     "hiddenCount": "{{count}} ausgeblendet",
+    "hiddenCount_one": "{{count}} ausgeblendet",
+    "hiddenCount_other": "{{count}} ausgeblendet",
     "search": "Suchen",
     "showAll": "Alle anzeigen",
     "hideAll": "Alle ausblenden",
@@ -433,5 +446,6 @@
       "startsWith": "Beginnt mit",
       "endsWith": "Endet mit"
     }
-  }
+  },
+  "searchDataloaders": "Datenlader suchen..."
 }

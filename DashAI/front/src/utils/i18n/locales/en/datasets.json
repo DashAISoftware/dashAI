@@ -149,6 +149,7 @@
     "correlation": "Correlation",
     "correlationAnalysis": "Correlation Analysis",
     "correlations": "Correlations",
+    "createDataset": "Create Dataset",
     "createNewNotebook": "Notebook",
     "createNewNotebookDescription": "Start a new analysis session with an existing dataset.",
     "customArray": "Custom Array",
@@ -439,5 +440,6 @@
       "startsWith": "Starts With",
       "endsWith": "Ends With"
     }
-  }
+  },
+  "searchDataloaders": "Search data loaders..."
 }

@@ -1,7 +1,8 @@
 {
   "button": {
     "backToTaskSelection": "返回任务选择",
-    "createSession": "创建会话"
+    "createSession": "创建会话",
+    "generativeHub": "生成式中心"
   },
   "error": {
     "failedToCreateSession": "创建会话失败",

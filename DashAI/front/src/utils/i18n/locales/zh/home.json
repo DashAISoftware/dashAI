@@ -22,7 +22,9 @@
     "website": "官方网站",
     "forum": "dashAI 论坛",
     "discord": "Discord",
-    "twitter": "Twitter / X"
+    "twitter": "Twitter / X",
+    "mailingList": "邮件列表",
+    "directMail": "发送邮件"
   },
   "tag": {
     "beginner": "入门",
