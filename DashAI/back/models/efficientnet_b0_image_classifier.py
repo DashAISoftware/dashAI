@@ -21,6 +21,7 @@ class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
         en="EfficientNet-B0",
         es="EfficientNet-B0",
         pt="EfficientNet-B0",
+        de="EfficientNet-B0",
         zh="EfficientNet-B0",
     )
     DESCRIPTION: str = MultilingualString(
@@ -38,6 +39,12 @@ class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
             "EfficientNet-B0 (Tan & Le, 2019). Escala largura, profundidade e "
             "resolução da rede de forma conjunta para o melhor equilíbrio entre "
             "acurácia e eficiência. Menor e mais rápido que o ResNet-18."
+        ),
+        de=(
+            "EfficientNet-B0 (Tan & Le, 2019). Skaliert Netzwerkbreite, Tiefe und "
+            "Auflösung gemeinsam für das beste Verhältnis zwischen Genauigkeit und "
+            "Effizienz. "
+            "Kleiner und schneller als ResNet-18 bei vergleichbarer Genauigkeit."
         ),
         zh=(
             "EfficientNet-B0（Tan 和 Le，2019）。联合缩放网络宽度、深度和分辨率，"
