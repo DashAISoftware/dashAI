@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "18.x"
+          node-version: "20.x"
           cache: "yarn"
           cache-dependency-path: DashAI/front/yarn.lock
 
@@ -26,7 +26,7 @@ jobs:
 
       - name: Frontend translation lint
         working-directory: DashAI/front
-        run: npx i18next-cli status
+        run: yarn i18next-cli status
 
       # ---- Backend -------------------------------------------------
       - uses: actions/setup-python@v5
