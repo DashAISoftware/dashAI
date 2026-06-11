@@ -1,24 +1,24 @@
 """DashAI Image Dataloader."""
 
 import shutil
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from beartype import beartype
-from datasets import Dataset
 
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.dashai_image import DashAIImage
 
 
 class ImageDataLoaderSchema(BaseSchema):
     pass
+
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import (
+        DashAIDataset,
+    )
 
 
 IMAGE_EXTENSIONS = {
@@ -149,7 +149,7 @@ class ImageDataLoader(BaseDataLoader):
         temp_path: str,
         params: Dict[str, Any],  # noqa: ARG002
         n_sample: int | None = None,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load an image dataset.
 
         Parameters
@@ -172,6 +172,13 @@ class ImageDataLoader(BaseDataLoader):
         """
         import logging
         import os
+
+        from datasets import Dataset
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            to_dashai_dataset,
+        )
+        from DashAI.back.types.dashai_image import DashAIImage
 
         log = logging.getLogger(__name__)
 
