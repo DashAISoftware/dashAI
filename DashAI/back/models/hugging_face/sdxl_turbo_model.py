@@ -60,12 +60,19 @@ class SDXLTurboSchema(BaseSchema):
                     "Wirkung. "
                     "Leer lassen für beste Ergebnisse."
                 ),
+                zh=(
+                    "描述要从生成图像中排除的内容的文本。"
+                    "注意：SDXL Turbo 使用蒸馏训练且 guidance_scale=0，"
+                    "因此负向提示效果极小。"
+                    "留空以获得最佳结果。"
+                ),
             ),
             alias=MultilingualString(
                 en="Negative prompt",
                 es="Prompt negativo",
                 pt="Prompt negativo",
                 de="Negativer Prompt",
+                zh="负向提示",
             ),
         )  # type: ignore
     ]
@@ -100,12 +107,17 @@ class SDXLTurboSchema(BaseSchema):
                 "am schnellsten; 2-4 Schritte verbessern die Qualität leicht. "
                 "Werte über 4 bieten für dieses Modell abnehmende Erträge."
             ),
+            zh=(
+                "去噪步骤数。SDXL Turbo 是一个蒸馏模型，仅需 1-4 步即可生成高质量图像。"
+                "1 步最快；2-4 步可略微提升质量。超过 4 步对此模型收益递减。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de etapas de inferência",
             de="Anzahl Inferenzschritte",
+            zh="推理步骤数",
         ),
     )  # type: ignore
 
@@ -135,9 +147,13 @@ class SDXLTurboSchema(BaseSchema):
                 "dass CPU-Inferenz machbar ist (30-60 Sekunden pro Bild). GPU wird "
                 "für Echtzeit- oder Stapelgenerierung dennoch empfohlen."
             ),
+            zh=(
+                "推理硬件设备。SDXL Turbo 足够快，CPU 推理可行（每张图约 30-60 秒）。"
+                "实时或批量生成仍推荐使用 GPU。"
+            ),
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -168,8 +184,14 @@ class SDXLTurboSchema(BaseSchema):
                 "Verwenden Sie einen negativen Wert (z.B. -1) für einen zufälligen "
                 "Seed bei jedem Durchlauf."
             ),
+            zh=(
+                "用于可复现生成的随机种子。固定正整数在相同设置下始终产生相同图像。"
+                "使用负值（如 -1）可在每次运行时随机取种。"
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
+        alias=MultilingualString(
+            en="Seed", es="Semilla", pt="Semente", de="Seed", zh="随机种子"
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -198,8 +220,14 @@ class SDXLTurboSchema(BaseSchema):
                 "Auflösungen können die Qualität verringern, da das Modell bei "
                 "512 px trainiert wurde."
             ),
+            zh=(
+                "输出图像宽度（像素），须为 8 的倍数。"
+                "SDXL Turbo 最佳分辨率为 512x512 px，更高分辨率可能降低质量。"
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
+        alias=MultilingualString(
+            en="Width", es="Ancho", pt="Largura", de="Breite", zh="宽度"
+        ),
     )  # type: ignore
 
     height: schema_field(
@@ -222,8 +250,14 @@ class SDXLTurboSchema(BaseSchema):
                 "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
                 "Die optimale Auflösung von SDXL Turbo ist 512x512 px."
             ),
+            zh=(
+                "输出图像高度（像素），须为 8 的倍数。"
+                "SDXL Turbo 最佳分辨率为 512x512 px。"
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
+        alias=MultilingualString(
+            en="Height", es="Altura", pt="Altura", de="Höhe", zh="高度"
+        ),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -250,12 +284,17 @@ class SDXLTurboSchema(BaseSchema):
                 "werden sollen. Da SDXL Turbo schnell ist, ist die Generierung mehrerer"
                 "Bilder pro Prompt sehr effizient."
             ),
+            zh=(
+                "单次批量从一个提示词生成的图像数量。"
+                "由于 SDXL Turbo 速度快，每个提示词生成多张图像非常高效。"
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
             de="Bilder pro Prompt",
+            zh="每提示词图像数",
         ),
     )  # type: ignore
 

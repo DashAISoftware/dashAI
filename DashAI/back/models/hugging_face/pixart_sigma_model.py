@@ -67,12 +67,20 @@ class PixArtSigmaSchema(BaseSchema):
                 "'PixArt-Sigma-XL-2-512-MS' ist die 512px-Variante, schneller und "
                 "leichter bei dennoch scharfen Ergebnissen."
             ),
+            zh=(
+                "要加载的 PixArt-Sigma 检查点。"
+                "'PixArt-Sigma-XL-2-1024-MS' 是以 1024px 训练的高分辨率变体，"
+                "支持多尺度，图像质量最佳。"
+                "'PixArt-Sigma-XL-2-512-MS' 是 512px 变体，速度更快、更轻量，"
+                "同样能产生清晰效果。"
+            ),
         ),
         alias=MultilingualString(
             en="Model name",
             es="Nombre del modelo",
             pt="Nome do modelo",
             de="Modellname",
+            zh="模型名称",
         ),
     )  # type: ignore
 
@@ -104,12 +112,18 @@ class PixArtSigmaSchema(BaseSchema):
                     "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
                     "überspringen."
                 ),
+                zh=(
+                    "描述要从生成图像中排除的内容的文本。"
+                    "常用值：'模糊、低质量、失真、水印'。"
+                    "留空以跳过负向条件引导。"
+                ),
             ),
             alias=MultilingualString(
                 en="Negative prompt",
                 es="Prompt negativo",
                 pt="Prompt negativo",
                 de="Negativer Prompt",
+                zh="负向提示词",
             ),
         )  # type: ignore
     ]
@@ -138,12 +152,18 @@ class PixArtSigmaSchema(BaseSchema):
                 "effizienten Transformer-Architektur mit 14-25 Schritten gute Qualität."
                 "Mehr Schritte verfeinern Details, erhöhen aber die Generierungszeit."
             ),
+            zh=(
+                "去噪步数。PixArt-Sigma 凭借其高效的 Transformer 架构，"
+                "使用 14-25 步即可获得良好质量。"
+                "步数越多，细节越精细，但生成时间也会增加。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de etapas de inferência",
             de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -177,12 +197,19 @@ class PixArtSigmaSchema(BaseSchema):
                 "übersättigen. "
                 "Der Standardwert 4,5 wird empfohlen."
             ),
+            zh=(
+                "无分类器引导（CFG）缩放值。与 U-Net 模型相比，PixArt-Sigma "
+                "在较低值（3.5-5.5）下效果最佳。"
+                "较高的值会更严格地执行提示词，但可能导致颜色过饱和。"
+                "推荐使用默认值 4.5。"
+            ),
         ),
         alias=MultilingualString(
             en="Guidance scale",
             es="Escala de guía",
             pt="Escala de orientação",
             de="Führungsskala",
+            zh="引导缩放值",
         ),
     )  # type: ignore
 
@@ -211,9 +238,14 @@ class PixArtSigmaSchema(BaseSchema):
                 "PixArt-Sigma verwendet eine DiT (Diffusion Transformer)-Architektur "
                 "mit T5-Textkodierung, die auf GPU schneller als U-Net ist."
             ),
+            zh=(
+                "推理所用硬件设备。强烈推荐使用 GPU。"
+                "PixArt-Sigma 采用 DiT（扩散 Transformer）架构"
+                "和 T5 文本编码，在 GPU 上比 U-Net 更快。"
+            ),
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -238,8 +270,14 @@ class PixArtSigmaSchema(BaseSchema):
                 "Integer erzeugt stets dasselbe Bild. Verwenden Sie -1 für einen "
                 "zufälligen Seed."
             ),
+            zh=(
+                "用于可复现生成的随机种子。"
+                "固定的正整数始终生成相同的图像。使用 -1 表示随机种子。"
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
+        alias=MultilingualString(
+            en="Seed", es="Semilla", pt="Semente", de="Seed", zh="随机种子"
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -262,8 +300,14 @@ class PixArtSigmaSchema(BaseSchema):
                 "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
                 "PixArt-Sigma unterstützt flexible Auflösungen bis zu 2048px."
             ),
+            zh=(
+                "输出图像的宽度（像素）。必须是 8 的倍数。"
+                "PixArt-Sigma 支持最高 2048px 的灵活分辨率。"
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
+        alias=MultilingualString(
+            en="Width", es="Ancho", pt="Largura", de="Breite", zh="宽度"
+        ),
     )  # type: ignore
 
     height: schema_field(
@@ -286,8 +330,14 @@ class PixArtSigmaSchema(BaseSchema):
                 "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
                 "PixArt-Sigma unterstützt flexible Auflösungen bis zu 2048px."
             ),
+            zh=(
+                "输出图像的高度（像素）。必须是 8 的倍数。"
+                "PixArt-Sigma 支持最高 2048px 的灵活分辨率。"
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
+        alias=MultilingualString(
+            en="Height", es="Altura", pt="Altura", de="Höhe", zh="高度"
+        ),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -311,12 +361,17 @@ class PixArtSigmaSchema(BaseSchema):
                 "werden sollen. Erfordert proportional mehr GPU-Speicher pro "
                 "zusätzlichem Bild."
             ),
+            zh=(
+                "单批次从一个提示词生成的图像数量。"
+                "每增加一张图像，GPU 显存需求成比例增加。"
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
             de="Bilder pro Prompt",
+            zh="每提示词图像数",
         ),
     )  # type: ignore
 
