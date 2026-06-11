@@ -43,12 +43,17 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "alle Blätter rein sind oder weniger als min_samples_split Proben übrig"
                 "sind."
             ),
+            zh=(
+                "树的最大深度。若为 None，则节点持续展开，直到所有叶节点纯净或"
+                "剩余样本数少于 min_samples_split。"
+            ),
         ),
         alias=MultilingualString(
             en="Max depth",
             es="Profundidad máxima",
             pt="Profundidade máxima",
             de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
 
@@ -68,12 +73,14 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "Mindestanzahl an Proben, die zum Aufteilen eines internen Knotens "
                 "erforderlich sind."
             ),
+            zh="分裂内部节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mínimo de amostras para divisão",
             de="Mindestproben Aufteilung",
+            zh="最小分裂样本数",
         ),
     )  # type: ignore
 
@@ -93,12 +100,14 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "Mindestanzahl an Proben, die in einem Blattknoten vorhanden sein "
                 "müssen."
             ),
+            zh="叶节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mínimo de amostras na folha",
             de="Mindestproben Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
 
@@ -123,12 +132,17 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "Best-First-Strategie wachsen. "
                 "Wenn None, unbegrenzte Blattknoten."
             ),
+            zh=(
+                "以最优优先方式生长最多 max_leaf_nodes 个叶节点的树。"
+                "若为 None，则叶节点数不受限制。"
+            ),
         ),
         alias=MultilingualString(
             en="Max leaf nodes",
             es="Máximos nodos hoja",
             pt="Máximo de nós folha",
             de="Maximale Blattknoten",
+            zh="最大叶节点数",
         ),
     )  # type: ignore
 
@@ -157,12 +171,14 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "Ein Knoten wird aufgeteilt, wenn die Aufteilung eine Verringerung der "
                 "Unreinheit größer oder gleich diesem Wert bewirkt."
             ),
+            zh="若分裂导致的不纯度降低量大于或等于该值，则对节点进行分裂。",
         ),
         alias=MultilingualString(
             en="Min impurity decrease",
             es="Disminución mínima de impureza",
             pt="Diminuição mínima de impureza",
             de="Mindest-Unreinheitsverringerung",
+            zh="最小不纯度降低",
         ),
     )  # type: ignore
 
@@ -187,12 +203,17 @@ class DecisionTreeRegressionSchema(BaseSchema):
                 "ganze Zahl für reproduzierbare Ausgaben oder None für keinen "
                 "bestimmten Startwert."
             ),
+            zh=(
+                "伪随机数生成器的种子。传入整数可获得可复现的输出，"
+                "传入 None 则不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 

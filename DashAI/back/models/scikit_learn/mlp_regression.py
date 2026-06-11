@@ -42,12 +42,14 @@ class MLPRegressorSchema(BaseSchema):
             es="Número de neuronas en la capa oculta.",
             pt="Número de neurônios na camada oculta.",
             de="Anzahl der Neuronen in der verdeckten Schicht.",
+            zh="隐藏层的神经元数量。",
         ),
         alias=MultilingualString(
             en="Hidden size",
             es="Tamaño oculto",
             pt="Tamanho oculto",
             de="Verdeckte Schichtgröße",
+            zh="隐藏层大小",
         ),
     )  # type: ignore
 
@@ -59,9 +61,14 @@ class MLPRegressorSchema(BaseSchema):
             es="Función de activación.",
             pt="Função de ativação.",
             de="Aktivierungsfunktion.",
+            zh="激活函数。",
         ),
         alias=MultilingualString(
-            en="Activation", es="Activación", pt="Ativação", de="Aktivierung"
+            en="Activation",
+            es="Activación",
+            pt="Ativação",
+            de="Aktivierung",
+            zh="激活函数",
         ),
     )  # type: ignore
 
@@ -78,12 +85,14 @@ class MLPRegressorSchema(BaseSchema):
             es="Tasa de aprendizaje inicial para el optimizador.",
             pt="Taxa de aprendizado inicial para o otimizador.",
             de="Anfängliche Lernrate für den Optimierer.",
+            zh="优化器的初始学习率。",
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
             de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
 
@@ -100,8 +109,11 @@ class MLPRegressorSchema(BaseSchema):
             es="Número total de pasadas de entrenamiento sobre el conjunto de datos.",
             pt="Número total de passagens de treinamento sobre o conjunto de dados.",
             de="Gesamtanzahl der Trainingsdurchläufe über den Datensatz.",
+            zh="对数据集的总训练轮数。",
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas", de="Epochen"),
+        alias=MultilingualString(
+            en="Epochs", es="Épocas", pt="Épocas", de="Epochen", zh="训练轮数"
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
@@ -127,9 +139,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Bei größer als Datensatzgröße oder None wird der vollständige "
                 "Datensatz verwendet."
             ),
+            zh="训练时每次梯度更新的样本数。若大于数据集大小或为None，则使用全部数据集。",
         ),
         alias=MultilingualString(
-            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote", de="Stapelgröße"
+            en="Batch size",
+            es="Tamaño de lote",
+            pt="Tamanho do lote",
+            de="Stapelgröße",
+            zh="批量大小",
         ),
     )  # type: ignore
 
@@ -141,9 +158,10 @@ class MLPRegressorSchema(BaseSchema):
             es="Dispositivo de hardware (CPU/GPU).",
             pt="Dispositivo de hardware (CPU/GPU).",
             de="Hardwaregerät (CPU/GPU).",
+            zh="硬件设备（CPU/GPU）。",
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -167,12 +185,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Trainingsmetriken jede n-te Epoche protokollieren. "
                 "Bei None keine Protokollierung pro Epoche."
             ),
+            zh="训练时每n个轮次记录训练集指标。若为None，则不按轮次记录。",
         ),
         alias=MultilingualString(
             en="Log train every N epochs",
             es="Registrar entrenamiento cada N épocas",
             pt="Registrar treinamento a cada N épocas",
             de="Training alle N Epochen protokollieren",
+            zh="每N轮记录训练指标",
         ),
     )  # type: ignore
 
@@ -196,12 +216,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Trainingsmetriken jeden n-ten Schritt protokollieren. "
                 "Bei None keine Protokollierung pro Schritt."
             ),
+            zh="训练时每n步记录训练集指标。若为None，则不按步数记录。",
         ),
         alias=MultilingualString(
             en="Log train every N steps",
             es="Registrar entrenamiento cada N pasos",
             pt="Registrar treinamento a cada N passos",
             de="Training alle N Schritte protokollieren",
+            zh="每N步记录训练指标",
         ),
     )  # type: ignore
 
@@ -225,12 +247,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Validierungsmetriken jede n-te Epoche protokollieren. "
                 "Bei None keine Protokollierung pro Epoche."
             ),
+            zh="训练时每n个轮次记录验证集指标。若为None，则不按轮次记录。",
         ),
         alias=MultilingualString(
             en="Log validation every N epochs",
             es="Registrar validación cada N épocas",
             pt="Registrar validação a cada N épocas",
             de="Validierung alle N Epochen protokollieren",
+            zh="每N轮记录验证指标",
         ),
     )  # type: ignore
 
@@ -254,12 +278,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Validierungsmetriken jeden n-ten Schritt protokollieren. "
                 "Bei None keine Protokollierung pro Schritt."
             ),
+            zh="训练时每n步记录验证集指标。若为None，则不按步数记录。",
         ),
         alias=MultilingualString(
             en="Log validation every N steps",
             es="Registrar validación cada N pasos",
             pt="Registrar validação a cada N passos",
             de="Validierung alle N Schritte protokollieren",
+            zh="每N步记录验证指标",
         ),
     )  # type: ignore
 

@@ -52,8 +52,9 @@ class SVCSchema(BaseSchema):
                 "Der Parameter 'C' ist ein Regularisierungsparameter. "
                 "Die Stärke der Regularisierung ist umgekehrt proportional zu C."
             ),
+            zh="参数'C'是正则化参数，正则化强度与C成反比。",
         ),
-        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
     coef0: schema_field(
         optimizer_float_field(),
@@ -84,8 +85,11 @@ class SVCSchema(BaseSchema):
                 "Kernelfunktion. "
                 "Er ist nur für die Kernel poly und sigmoid relevant. "
             ),
+            zh="参数'coef0'是核函数中的独立项，仅对poly和sigmoid核有意义。",
         ),
-        alias=MultilingualString(en="coef0", es="coef0", pt="coef0", de="coef0"),
+        alias=MultilingualString(
+            en="coef0", es="coef0", pt="coef0", de="coef0", zh="coef0"
+        ),
     )  # type: ignore
     degree: schema_field(
         optimizer_float_field(ge=0.0),
@@ -100,8 +104,11 @@ class SVCSchema(BaseSchema):
             es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
             pt="O parâmetro 'grau' só é significativo para o kernel 'poly'.",
             de="Der Parameter 'degree' ist nur für den 'poly'-Kernel relevant.",
+            zh="参数'degree'仅对'poly'核有意义。",
         ),
-        alias=MultilingualString(en="degree", es="grado", pt="grau", de="Grad"),
+        alias=MultilingualString(
+            en="degree", es="grado", pt="grau", de="Grad", zh="次数"
+        ),
     )  # type: ignore
     gamma: schema_field(
         enum_field(enum=["scale", "auto"]),
@@ -111,8 +118,11 @@ class SVCSchema(BaseSchema):
             es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
             pt="Coeficiente para kernels 'rbf', 'poly' e 'sigmoid'.",
             de="Koeffizient für 'rbf'-, 'poly'- und 'sigmoid'-Kernel.",
+            zh="'rbf'、'poly'和'sigmoid'核的系数。",
         ),
-        alias=MultilingualString(en="gamma", es="gamma", pt="gamma", de="Gamma"),
+        alias=MultilingualString(
+            en="gamma", es="gamma", pt="gamma", de="Gamma", zh="gamma"
+        ),
     )  # type: ignore
     kernel: schema_field(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
@@ -122,8 +132,11 @@ class SVCSchema(BaseSchema):
             es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
             pt="O parâmetro 'kernel' é o kernel utilizado no modelo.",
             de="Der Parameter 'kernel' gibt den im Modell verwendeten Kernel an.",
+            zh="参数'kernel'是模型中使用的核函数。",
         ),
-        alias=MultilingualString(en="kernel", es="kernel", pt="kernel", de="Kernel"),
+        alias=MultilingualString(
+            en="kernel", es="kernel", pt="kernel", de="Kernel", zh="核函数"
+        ),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=-1),
@@ -154,12 +167,14 @@ class SVCSchema(BaseSchema):
                 "Löser. Muss eine positive ganze Zahl oder "
                 "-1 für kein Limit sein."
             ),
+            zh="参数'max_iter'确定求解器的最大迭代次数，正整数或-1表示无限制。",
         ),
         alias=MultilingualString(
             en="max iterations",
             es="max iteraciones",
             pt="máx iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
     shrinking: schema_field(
@@ -182,9 +197,10 @@ class SVCSchema(BaseSchema):
                 "Der Parameter 'shrinking' bestimmt, ob "
                 "eine Schrumpfungsheuristik verwendet wird."
             ),
+            zh="参数'shrinking'决定是否使用收缩启发式方法。",
         ),
         alias=MultilingualString(
-            en="shrinking", es="reducción", pt="redução", de="Schrumpfung"
+            en="shrinking", es="reducción", pt="redução", de="Schrumpfung", zh="收缩"
         ),
     )  # type: ignore
     tol: schema_field(
@@ -203,9 +219,10 @@ class SVCSchema(BaseSchema):
             ),
             pt=("O parâmetro 'tol' determina a tolerância para o critério de parada."),
             de="Der Parameter 'tol' bestimmt die Toleranz für das Stoppkriterium.",
+            zh="参数'tol'确定停止准则的容差。",
         ),
         alias=MultilingualString(
-            en="tolerance", es="tolerancia", pt="tolerância", de="Toleranz"
+            en="tolerance", es="tolerancia", pt="tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
 

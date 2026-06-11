@@ -35,9 +35,14 @@ class LogisticRegressionSchema(BaseSchema):
             es="Especifica la norma de la penalización",
             pt="Especifica a norma da penalidade",
             de="Gibt die Norm der Bestrafung an",
+            zh="指定惩罚项的范数",
         ),
         alias=MultilingualString(
-            en="Penalty", es="Penalización", pt="Penalidade", de="Bestrafung"
+            en="Penalty",
+            es="Penalización",
+            pt="Penalidade",
+            de="Bestrafung",
+            zh="惩罚项",
         ),
     )  # type: ignore
     tol: schema_field(
@@ -53,9 +58,10 @@ class LogisticRegressionSchema(BaseSchema):
             es="Tolerancia para el criterio de detención.",
             pt="Tolerância para o critério de parada.",
             de="Toleranz für das Abbruchkriterium.",
+            zh="停止准则的容差。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
     C: schema_field(
@@ -84,8 +90,9 @@ class LogisticRegressionSchema(BaseSchema):
                 "Kehrwert der Regularisierungsstärke; kleinere Werte bedeuten stärkere "
                 "Regularisierung. Muss eine positive Zahl sein."
             ),
+            zh=("正则化强度的倒数，较小的值表示更强的正则化。必须为正数。"),
         ),
-        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=50),
@@ -100,12 +107,14 @@ class LogisticRegressionSchema(BaseSchema):
             es=("Número máximo de iteraciones para que los solucionadores converjan."),
             pt=("Número máximo de iterações para os solvers convergirem."),
             de=("Maximale Anzahl von Iterationen für die Konvergenz der Löser."),
+            zh=("求解器收敛所需的最大迭代次数。"),
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 

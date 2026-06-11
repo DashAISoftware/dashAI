@@ -34,12 +34,14 @@ class ExtraTreesRegressionSchema(BaseSchema):
             es="El número de árboles en el bosque.",
             pt="O número de árvores na floresta.",
             de="Die Anzahl der Bäume im Wald.",
+            zh="森林中的树木数量。",
         ),
         alias=MultilingualString(
             en="N estimators",
             es="N estimadores",
             pt="N estimadores",
             de="Anzahl Schätzer",
+            zh="估计器数量",
         ),
     )  # type: ignore
 
@@ -66,12 +68,17 @@ class ExtraTreesRegressionSchema(BaseSchema):
                 "alle Blätter rein sind oder weniger als min_samples_split Stichproben "
                 "verbleiben."
             ),
+            zh=(
+                "树的最大深度。若为None，则扩展节点直到所有叶子纯净或"
+                "剩余样本数少于min_samples_split。"
+            ),
         ),
         alias=MultilingualString(
             en="Max depth",
             es="Profundidad máxima",
             pt="Profundidade máxima",
             de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
 
@@ -88,12 +95,14 @@ class ExtraTreesRegressionSchema(BaseSchema):
             es="Número mínimo de muestras requeridas para dividir un nodo interno.",
             pt="Número mínimo de amostras necessárias para dividir um nó interno.",
             de="Mindestanzahl von Stichproben zum Aufteilen eines internen Knotens.",
+            zh="拆分内部节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mínimas amostras de divisão",
             de="Minimale Aufteilungsstichproben",
+            zh="最小拆分样本数",
         ),
     )  # type: ignore
 
@@ -110,12 +119,14 @@ class ExtraTreesRegressionSchema(BaseSchema):
             es="Número mínimo de muestras requeridas para estar en una hoja.",
             pt="Número mínimo de amostras necessárias para estar em um nó folha.",
             de="Mindestanzahl von Stichproben an einem Blattknoten.",
+            zh="叶节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mínimas amostras para folha",
             de="Minimale Stichproben für Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
 
@@ -139,9 +150,14 @@ class ExtraTreesRegressionSchema(BaseSchema):
                 "Ob Bootstrap-Stichproben beim Aufbau von Bäumen verwendet werden. "
                 "Bei False wird der gesamte Datensatz für jeden Baum verwendet."
             ),
+            zh=("构建树时是否使用自助采样。若为False，则每棵树使用完整数据集。"),
         ),
         alias=MultilingualString(
-            en="Bootstrap", es="Bootstrap", pt="Bootstrap", de="Bootstrap"
+            en="Bootstrap",
+            es="Bootstrap",
+            pt="Bootstrap",
+            de="Bootstrap",
+            zh="自助采样",
         ),
     )  # type: ignore
 
@@ -167,12 +183,17 @@ class ExtraTreesRegressionSchema(BaseSchema):
                 "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
                 "festzulegen."
             ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "或传入None不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 

@@ -37,12 +37,14 @@ class BaggingClassifierSchema(BaseSchema):
             es="El número de estimadores base en el conjunto.",
             pt="O número de estimadores base no conjunto.",
             de="Die Anzahl der Basis-Schätzer im Ensemble.",
+            zh="集成中基础估计器的数量。",
         ),
         alias=MultilingualString(
             en="N estimators",
             es="N estimadores",
             pt="N estimadores",
             de="Anzahl Schätzer",
+            zh="估计器数量",
         ),
     )  # type: ignore
 
@@ -71,12 +73,14 @@ class BaggingClassifierSchema(BaseSchema):
                 "Anteil der Trainingsstichproben für jeden Basis-Schätzer "
                 "(0 < max_samples ≤ 1.0)."
             ),
+            zh="每个基础估计器抽取的训练样本比例（0 < max_samples ≤ 1.0）。",
         ),
         alias=MultilingualString(
             en="Max samples",
             es="Máximas muestras",
             pt="Máximo de amostras",
             de="Maximale Stichproben",
+            zh="最大样本数",
         ),
     )  # type: ignore
 
@@ -104,12 +108,14 @@ class BaggingClassifierSchema(BaseSchema):
             de=(
                 "Anteil der Merkmale für jeden Basis-Schätzer (0 < max_features ≤ 1.0)."
             ),
+            zh="每个基础估计器抽取的特征比例（0 < max_features ≤ 1.0）。",
         ),
         alias=MultilingualString(
             en="Max features",
             es="Máximas características",
             pt="Máximo de características",
             de="Maximale Merkmale",
+            zh="最大特征数",
         ),
     )  # type: ignore
 
@@ -121,9 +127,10 @@ class BaggingClassifierSchema(BaseSchema):
             es="Si se extraen muestras con reemplazo.",
             pt="Se as amostras são extraídas com reposição.",
             de="Ob Stichproben mit Zurücklegen gezogen werden.",
+            zh="是否有放回地抽取样本。",
         ),
         alias=MultilingualString(
-            en="Bootstrap", es="Bootstrap", pt="Bootstrap", de="Bootstrap"
+            en="Bootstrap", es="Bootstrap", pt="Bootstrap", de="Bootstrap", zh="自助法"
         ),
     )  # type: ignore
 
@@ -135,12 +142,14 @@ class BaggingClassifierSchema(BaseSchema):
             es="Si se extraen características con reemplazo.",
             pt="Se as características são extraídas com reposição.",
             de="Ob Merkmale mit Zurücklegen gezogen werden.",
+            zh="是否有放回地抽取特征。",
         ),
         alias=MultilingualString(
             en="Bootstrap features",
             es="Bootstrap características",
             pt="Bootstrap características",
             de="Bootstrap-Merkmale",
+            zh="自助法特征",
         ),
     )  # type: ignore
 
@@ -166,12 +175,17 @@ class BaggingClassifierSchema(BaseSchema):
                 "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
                 "festzulegen."
             ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的结果，"
+                "或传入 None 不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 

@@ -49,9 +49,14 @@ class KNeighborsClassifierSchema(BaseSchema):
                 "Die Anzahl der Nachbarn, die für jede Eingabe bei der Klassifikation "
                 "berücksichtigt werden. "
             ),
+            zh="分类时每个输入所考虑的邻居数量。",
         ),
         alias=MultilingualString(
-            en="N neighbors", es="N vecinos", pt="N vizinhos", de="Anzahl Nachbarn"
+            en="N neighbors",
+            es="N vecinos",
+            pt="N vizinhos",
+            de="Anzahl Nachbarn",
+            zh="邻居数",
         ),
     )  # type: ignore
     weights: schema_field(
@@ -62,8 +67,11 @@ class KNeighborsClassifierSchema(BaseSchema):
             es="El parámetro debe ser 'uniform' o 'distance'.",
             pt="O parâmetro deve ser 'uniform' ou 'distance'.",
             de="Der Parameter muss 'uniform' oder 'distance' sein.",
+            zh="参数必须为 'uniform' 或 'distance'。",
         ),
-        alias=MultilingualString(en="Weights", es="Pesos", pt="Pesos", de="Gewichte"),
+        alias=MultilingualString(
+            en="Weights", es="Pesos", pt="Pesos", de="Gewichte", zh="权重"
+        ),
     )  # type: ignore
     algorithm: schema_field(
         enum_field(enum=["auto", "ball_tree", "kd_tree", "brute"]),
@@ -73,9 +81,14 @@ class KNeighborsClassifierSchema(BaseSchema):
             es=("El parámetro debe ser 'auto', 'ball_tree', 'kd_tree' o 'brute'.",),
             pt=("O parâmetro deve ser 'auto', 'ball_tree', 'kd_tree' ou 'brute'."),
             de=("Der Parameter muss 'auto', 'ball_tree', 'kd_tree' oder 'brute' sein."),
+            zh="参数必须为 'auto'、'ball_tree'、'kd_tree' 或 'brute'。",
         ),
         alias=MultilingualString(
-            en="Algorithm", es="Algoritmo", pt="Algoritmo", de="Algorithmus"
+            en="Algorithm",
+            es="Algoritmo",
+            pt="Algoritmo",
+            de="Algorithmus",
+            zh="算法",
         ),
     )  # type: ignore
 
