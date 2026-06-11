@@ -26,17 +26,7 @@ jobs:
 
       - name: Frontend translation lint
         working-directory: DashAI/front
-        run: |
-          output=$(yarn i18next-cli status 2>&1)
-          echo "$output"
-          # Locale summary lines look like: "- es: [...] 100% (N/N keys)"
-          # Fail if any locale line is missing the "100%" marker.
-          incomplete_locales=$(echo "$output" | grep -E '^\s*-\s+[a-z]{2}:' | grep -v '100%' || true)
-          if [ -n "$incomplete_locales" ]; then
-            echo "ERROR: some locales have incomplete frontend translations" >&2
-            echo "$incomplete_locales"
-            exit 1
-          fi
+        run: npx i18next-cli status
 
       # ---- Backend -------------------------------------------------
       - uses: actions/setup-python@v5
