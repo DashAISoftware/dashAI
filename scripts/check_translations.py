@@ -227,7 +227,7 @@ def main() -> int:
     instances, plain_labels, no_en = scan(args.back_dir)
     total = len(instances)
 
-    print("Backend i18n Status")
+    print("Backend translation Status")
     print("-" * 40)
     print(f"MultilingualString literals: {total}")
     print("Primary language:            en")
