@@ -71,6 +71,8 @@ class OpenMLDatasetSource(BaseDatasetSource):
         en="OpenML",
         es="OpenML",
         zh="OpenML",
+        de="OpenML",
+        pt="OpenML",
     )
     DESCRIPTION: Final = MultilingualString(
         en=(
@@ -99,6 +101,28 @@ class OpenMLDatasetSource(BaseDatasetSource):
             "它托管了数千个精心整理的基准就绪数据集，广泛用于学术论文和竞赛，"
             "涵盖分类、回归和聚类任务。数据集经过标准化和版本控制，"
             "非常适合比较模型和重现已发布结果。按名称搜索，直接下载到DashAI。"
+            "[https://www.openml.org](https://www.openml.org)"
+        ),
+        de=(
+            "OpenML ist eine Open-Science-Plattform für reproduzierbare "
+            "maschinelle Lernforschung. Sie hostet Tausende kuratierter, "
+            "benchmark-fähiger Datensätze, die in wissenschaftlichen Arbeiten "
+            "und Wettbewerben weit verbreitet sind und Klassifikations-, "
+            "Regressions- sowie Clustering-Aufgaben abdecken. Datensätze sind "
+            "standardisiert und versioniert, was sie ideal zum Vergleich von "
+            "Modellen und zur Reproduktion veröffentlichter Ergebnisse macht. "
+            "Nach Namen suchen und direkt in dashAI herunterladen. "
+            "[https://www.openml.org](https://www.openml.org)"
+        ),
+        pt=(
+            "OpenML é uma plataforma de ciência aberta dedicada à pesquisa "
+            "reproduzível em aprendizado de máquina. Hospeda milhares de "
+            "conjuntos de dados curados e prontos para benchmarking, amplamente "
+            "utilizados em artigos acadêmicos e competições, cobrindo tarefas de "
+            "classificação, regressão e agrupamento. Os conjuntos de dados são "
+            "padronizados e versionados, tornando-os ideais para comparar modelos "
+            "e reproduzir resultados publicados. Pesquise por nome e baixe "
+            "diretamente para o dashAI. "
             "[https://www.openml.org](https://www.openml.org)"
         ),
     )

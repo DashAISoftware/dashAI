@@ -134,12 +134,18 @@ class ImageDataLoader(BaseDataLoader):
             "图像数据集加载器。上传一个ZIP文件，其中图像按类别标签组织在子目录中"
             "（imagefolder格式）。"
         ),
+        pt=(
+            "Carregador de dados para conjuntos de dados de imagens. Faça upload "
+            "de um arquivo ZIP contendo imagens organizadas em subdiretórios por "
+            "rótulo de classe (formato imagefolder)."
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Image Data Loader",
         es="Cargador de Datos de Imágenes",
         de="Bild Datenlader",
         zh="图像数据加载器",
+        pt="Carregador de Dados de Imagens",
     )
 
     @beartype

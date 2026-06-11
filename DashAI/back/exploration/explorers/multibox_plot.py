@@ -99,6 +99,7 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
             es=("Nombre o índice de columna para el eje opuesto."),
             pt=("Nome ou índice de coluna para usar no eixo oposto."),
             zh="用于对立轴的列名或索引。",
+            de="Spaltenname oder Index für die gegenüberliegende Achse.",
         ),
         alias=MultilingualString(
             en="Opposite axis",
