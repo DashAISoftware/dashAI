@@ -3,8 +3,6 @@
 import shutil
 from typing import TYPE_CHECKING, Any, Dict
 
-from beartype import beartype
-
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
@@ -16,9 +14,7 @@ class ImageDataLoaderSchema(BaseSchema):
 
 
 if TYPE_CHECKING:
-    from DashAI.back.dataloaders.classes.dashai_dataset import (
-        DashAIDataset,
-    )
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 IMAGE_EXTENSIONS = {
@@ -142,7 +138,6 @@ class ImageDataLoader(BaseDataLoader):
         zh="图像数据加载器",
     )
 
-    @beartype
     def load_data(
         self,
         filepath_or_buffer: str,
