@@ -10,8 +10,6 @@ from fastapi.exceptions import HTTPException
 from kink import di
 from pydantic import BaseModel
 
-from DashAI.back.types.inf.type_inference import infer_types
-
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry import ComponentRegistry
 
@@ -186,6 +184,8 @@ async def preview_dataset_with_params(
     dict
         ``{"sample": [...], "inferred_types": {...}, "preview_row_count": int}``.
     """
+    from DashAI.back.types.inf.type_inference import infer_types
+
     _get_source(source_name, registry)  # validate source exists
     decoded_id = unquote(dataset_id)
     n_rows = max(1, min(body.n_rows, 500))
