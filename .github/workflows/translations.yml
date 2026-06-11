@@ -1,0 +1,45 @@
+name: Translation coverage
+
+on:
+  pull_request:
+
+jobs:
+  check-translations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---- Frontend ------------------------------------------------
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+          cache: "yarn"
+          cache-dependency-path: DashAI/front/yarn.lock
+
+      - name: Install frontend dependencies
+        working-directory: DashAI/front
+        run: yarn install --frozen-lockfile
+
+      - name: Frontend translation lint
+        working-directory: DashAI/front
+        run: |
+          output=$(yarn i18next-cli status 2>&1)
+          echo "$output"
+          # Locale summary lines look like: "- es: [...] 100% (N/N keys)"
+          # Fail if any locale line is missing the "100%" marker.
+          if echo "$output" | grep -E '^\s*-\s+\w+:' | grep -qv ' 100%'; then
+            echo "ERROR: some locales have incomplete frontend translations" >&2
+            exit 1
+          fi
+
+      # ---- Backend -------------------------------------------------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Backend translation lint
+        run: python scripts/check_translations.py lint
