@@ -62,8 +62,11 @@ const ArrowIcon = () => (
 );
 
 export default function Home() {
-  const { siteConfig } = useDocusaurusContext();
+  const { siteConfig, i18n } = useDocusaurusContext();
   const baseUrl = useBaseUrl("/");
+  const ackText =
+    institutionsData.acknowledgments.text[i18n.currentLocale] ||
+    institutionsData.acknowledgments.text.en;
   const logos = [
     ...institutionsData.institutions,
     ...institutionsData.acknowledgments.logos,
@@ -204,9 +207,7 @@ export default function Home() {
               <h2 className="dashai-footer-band__title">
                 Built across institutions
               </h2>
-              <p className="dashai-footer-band__lead">
-                {institutionsData.acknowledgments.text}
-              </p>
+              <p className="dashai-footer-band__lead">{ackText}</p>
             </div>
             <div className="dashai-ack__logos">
               {logos.map((logo) => (

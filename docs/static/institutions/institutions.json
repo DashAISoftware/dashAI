@@ -36,7 +36,11 @@
     }
   ],
   "acknowledgments": {
-    "text": "Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P-0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.",
+    "text": {
+      "en": "Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P-0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.",
+      "es": "Financiado por ANID a través de Fondef IDEA ID25I10330, Fondef VIU23P-0110 y los fondos que apoyan a los centros CENIA (FB210017) e IMFD (ICN17_002). Desarrollado por estudiantes del DCC UChile y la UTFSM.",
+      "pt": "Financiado pela ANID por meio do Fondef IDEA ID25I10330, do Fondef VIU23P-0110 e dos fundos que apoiam os centros CENIA (FB210017) e IMFD (ICN17_002). Desenvolvido por estudantes do DCC UChile e da UTFSM."
+    },
     "grants": ["ID25I10330", "VIU23P-0110", "FB210017", "ICN17_002"],
     "logos": [
       {

@@ -163,7 +163,7 @@ def render_block(data):
         lines.append(f"* `{inst['name']} <{inst['url']}>`_ - {inst['role']}")
     lines.append("")
 
-    lines.append(data["acknowledgments"]["text"])
+    lines.append(data["acknowledgments"]["text"]["en"])
     lines.append("")
 
     lines.extend(
