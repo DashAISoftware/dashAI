@@ -11,12 +11,6 @@ import {
   Divider,
   Tooltip,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
   styled,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -39,6 +33,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { t } from "i18next";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import ItemBox from "./ItemBox";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -103,7 +98,6 @@ function FolderSection({
   getDeleteConfirmationWarning,
   onRenameFolder,
   onDeleteFolder,
-  isVirtualFolder,
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen ?? true);
@@ -184,20 +178,9 @@ function FolderSection({
             />
           )}
 
-          {!isVirtualFolder && (
-            <FolderIconComp
-              sx={{ fontSize: 18, color: theme.palette.primary.main, mr: 2 }}
-            />
-          )}
-          {isVirtualFolder && (
-            <StorageIcon
-              sx={{
-                fontSize: 18,
-                color: theme.palette.text.secondary,
-                mr: 2,
-              }}
-            />
-          )}
+          <FolderIconComp
+            sx={{ fontSize: 18, color: theme.palette.primary.main, mr: 2 }}
+          />
 
           {isRenaming ? (
             <TextField
@@ -223,7 +206,7 @@ function FolderSection({
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
               }}
-              color={isVirtualFolder ? "text.secondary" : "text.primary"}
+              color="text.primary"
             >
               {folderName}
             </Typography>
@@ -235,9 +218,7 @@ function FolderSection({
             sx={{
               ml: 1,
               mr: 1,
-              bgcolor: isVirtualFolder
-                ? theme.palette.grey[500]
-                : "primary.main",
+              bgcolor: "primary.main",
               color: "primary.contrastText",
               borderRadius: "50%",
               width: 18,
@@ -252,51 +233,49 @@ function FolderSection({
             {count}
           </Typography>
 
-          {!isVirtualFolder && (
-            <>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuAnchorEl(e.currentTarget);
+          <>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuAnchorEl(e.currentTarget);
+              }}
+              sx={{ ml: 1, flexShrink: 0 }}
+            >
+              <MoreHorizIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={() => setMenuAnchorEl(null)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MenuItem
+                onClick={() => {
+                  setMenuAnchorEl(null);
+                  setRenameValue(folderName);
+                  setIsRenaming(true);
                 }}
-                sx={{ ml: 1, flexShrink: 0 }}
               >
-                <MoreHorizIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-              <Menu
-                anchorEl={menuAnchorEl}
-                open={Boolean(menuAnchorEl)}
-                onClose={() => setMenuAnchorEl(null)}
-                onClick={(e) => e.stopPropagation()}
+                <ListItemIcon>
+                  <EditIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t("common:edit", "Edit")}</ListItemText>
+              </MenuItem>
+              <Divider />
+              <DeleteMenuItem
+                onClick={() => {
+                  setMenuAnchorEl(null);
+                  setDeleteDialogOpen(true);
+                }}
               >
-                <MenuItem
-                  onClick={() => {
-                    setMenuAnchorEl(null);
-                    setRenameValue(folderName);
-                    setIsRenaming(true);
-                  }}
-                >
-                  <ListItemIcon>
-                    <EditIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>{t("common:edit", "Edit")}</ListItemText>
-                </MenuItem>
-                <Divider />
-                <DeleteMenuItem
-                  onClick={() => {
-                    setMenuAnchorEl(null);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <ListItemIcon>
-                    <DeleteIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>{t("common:delete", "Delete")}</ListItemText>
-                </DeleteMenuItem>
-              </Menu>
-            </>
-          )}
+                <ListItemIcon>
+                  <DeleteIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{t("common:delete", "Delete")}</ListItemText>
+              </DeleteMenuItem>
+            </Menu>
+          </>
         </Box>
 
         {/* Items */}
@@ -350,38 +329,19 @@ function FolderSection({
         </Collapse>
       </Box>
 
-      {/* Delete folder confirmation */}
-      <Dialog
+      <DeleteConfirmationModal
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>
-          {t("datasets:label.confirmDeleteFolder", "Delete folder")}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t(
-              "datasets:label.confirmDeleteFolderContent",
-              'Are you sure you want to delete the folder "{{name}}"? Datasets inside will be moved to no folder.',
-              { name: folderName },
-            )}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            {t("common:cancel", "Cancel")}
-          </Button>
-          <Button
-            color="error"
-            onClick={() => {
-              setDeleteDialogOpen(false);
-              onDeleteFolder(folderId);
-            }}
-          >
-            {t("common:delete", "Delete")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={() => {
+          setDeleteDialogOpen(false);
+          onDeleteFolder(folderId);
+        }}
+        content={t(
+          "datasets:label.confirmDeleteFolderContent",
+          'Are you sure you want to delete the folder "{{name}}"? Datasets inside will be moved to no folder.',
+          { name: folderName },
+        )}
+      />
     </DroppableFolder>
   );
 }
@@ -598,30 +558,41 @@ export default function DatasetFolderList({
                 getDeleteConfirmationWarning={getDeleteConfirmationWarning}
                 onRenameFolder={onRenameFolder}
                 onDeleteFolder={onDeleteFolder}
-                isVirtualFolder={false}
               />
             );
           })}
 
-          {/* No-folder section */}
-          <FolderSection
-            folderId={NO_FOLDER_ID}
-            folderName={t("datasets:label.noFolder", "No folder")}
-            items={noFolderDatasets}
-            isOver={overId === NO_FOLDER_ID}
-            defaultOpen={true}
-            selectedItemId={selectedItemId}
-            onItemClick={onItemClick}
-            onItemDelete={onItemDelete}
-            onItemEdit={onItemEdit}
-            onItemInfo={onItemInfo}
-            getItemDescription={getItemDescription}
-            getDeleteConfirmationContent={getDeleteConfirmationContent}
-            getDeleteConfirmationWarning={getDeleteConfirmationWarning}
-            onRenameFolder={onRenameFolder}
-            onDeleteFolder={onDeleteFolder}
-            isVirtualFolder={true}
-          />
+          {/* Loose datasets — no folder */}
+          <DroppableFolder id={NO_FOLDER_ID} isOver={overId === NO_FOLDER_ID}>
+            {noFolderDatasets.map((item) => (
+              <DraggableDataset key={item.id} dataset={item}>
+                <ItemBox
+                  isSelected={item.id === selectedItemId}
+                  name={item.name}
+                  description={
+                    getItemDescription ? getItemDescription(item) : ""
+                  }
+                  id={item.id}
+                  onClick={() => onItemClick(item.id)}
+                  onDelete={() => onItemDelete(item.id)}
+                  onEdit={
+                    onItemEdit ? (name) => onItemEdit(item.id, name) : undefined
+                  }
+                  onInfo={onItemInfo ? () => onItemInfo(item.id) : undefined}
+                  deleteConfirmationContent={
+                    getDeleteConfirmationContent
+                      ? getDeleteConfirmationContent(item)
+                      : undefined
+                  }
+                  deleteConfirmationWarning={
+                    getDeleteConfirmationWarning
+                      ? getDeleteConfirmationWarning(item)
+                      : undefined
+                  }
+                />
+              </DraggableDataset>
+            ))}
+          </DroppableFolder>
 
           {/* Drag overlay — ghost item while dragging */}
           <DragOverlay>
