@@ -328,7 +328,7 @@ This project is developed in collaboration with:
 * `IMFD <https://imfd.cl/en/>`_ - Collaborator
 * `Unholster <https://unholster.com/>`_ - Industry Partner
 
-Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P-0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.
+Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P 0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.
 
 .. image:: images/logos.png
    :alt: Logos of collaborating institutions
