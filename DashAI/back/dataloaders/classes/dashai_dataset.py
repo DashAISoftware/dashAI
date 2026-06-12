@@ -214,7 +214,7 @@ class DashAIDataset(Dataset):
         return {
             "n_rows": len(dataset_df),
             "n_columns": len(dataset_df.columns),
-            "file_size_mb": float(self.arrow_table.nbytes / 1e6),
+            "memory_usage_mb": float(self.arrow_table.nbytes / 1e6),
             "duplicate_rows": duplicate_rows,
             "dtypes": {k: v.to_string().get("type") for k, v in self.types.items()},
         }
@@ -882,7 +882,9 @@ def save_dataset(
     )
 
     if "general_info" in metadata:
-        metadata["general_info"]["file_size_mb"] = os.path.getsize(data_filepath) / 1e6
+        metadata["general_info"]["memory_usage_mb"] = (
+            os.path.getsize(data_filepath) / 1e6
+        )
 
     with open(metadata_filepath, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
