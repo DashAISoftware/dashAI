@@ -316,11 +316,42 @@ To execute the backend tests
 Acknowledgments
 ===============
 
-This project is sponsored by the `National Center for Artificial Intelligence - CENIA <https://cenia.cl/en/>`_ (FB210017), and the `Millennium Institute for Foundational Data Research - IMFD <https://imfd.cl/en/>`_ (ICN17_002).
+.. INSTITUTIONS-BLOCK:START
 
-The core of the development is carried out by students from the Computer Science Department of the University of Chile and the Federico Santa Maria Technical University.
+.. This block is auto-generated from docs/static/institutions/institutions.json.
+   Edit that file and run ``python scripts/render_institutions.py``. Do not edit by hand.
+
+This project is developed in collaboration with:
+
+* `University of Chile <https://uchile.cl/>`_ - Leading Institution
+* `CENIA <https://www.cenia.cl/>`_ - Associated Institution
+* `IMFD <https://imfd.cl/en/>`_ - Collaborator
+* `Unholster <https://unholster.com/>`_ - Industry Partner
+
+Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P-0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.
+
+.. |logo-uchile| image:: docs/static/img/institutions/dcc-logo.png
+   :height: 45
+   :target: https://uchile.cl/
+   :alt: Universidad de Chile
+
+.. |logo-cenia| image:: docs/static/img/institutions/cenia-logo.png
+   :height: 60
+   :target: https://www.cenia.cl/
+   :alt: National Center for Artificial Intelligence
+
+.. |logo-imfd| image:: docs/static/img/institutions/imfd-logo.png
+   :height: 60
+   :target: https://imfd.cl/en/
+   :alt: Millennium Institute for Foundational Data Research
+
+.. |logo-anid| image:: docs/static/img/institutions/anid-logo.png
+   :height: 60
+   :target: https://anid.cl/
+   :alt: Agencia Nacional de Investigación y Desarrollo
+
+|logo-uchile| |logo-cenia| |logo-imfd| |logo-anid|
+
+.. INSTITUTIONS-BLOCK:END
 
 To see the full list of contributors, visit in `Contributors <https://github.com/DashAISoftware/DashAI/graphs/contributors>`_ the dashAI repository on Github.
-
-.. image:: ./images/logos.png
-   :alt: Collaboration Logos

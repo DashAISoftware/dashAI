@@ -4,6 +4,7 @@ import useBaseUrl from "@docusaurus/useBaseUrl";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import { ICONS, Watermark } from "../components/HomeIcons";
+import institutionsData from "@site/static/institutions/institutions.json";
 
 const SECTIONS = [
   {
@@ -62,35 +63,18 @@ const ArrowIcon = () => (
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
+  const baseUrl = useBaseUrl("/");
   const logos = [
-    {
-      name: "DCC Universidad de Chile",
-      url: "https://dcc.uchile.cl/",
-      src: useBaseUrl("/img/institutions/dcc-logo.png"),
-      small: true,
-    },
-    {
-      name: "Universidad Técnica Federico Santa María",
-      url: "https://www.usm.cl/",
-      src: useBaseUrl("/img/institutions/utfsm-logo.png"),
-      small: true,
-    },
-    {
-      name: "Centro Nacional de Inteligencia Artificial",
-      url: "https://www.cenia.cl/",
-      src: useBaseUrl("/img/institutions/cenia-logo.png"),
-    },
-    {
-      name: "Instituto Milenio Fundamentos de los Datos",
-      url: "https://www.imfd.cl/",
-      src: useBaseUrl("/img/institutions/imfd-logo.png"),
-    },
-    {
-      name: "Agencia Nacional de Investigación y Desarrollo (ANID)",
-      url: "https://www.anid.cl/",
-      src: useBaseUrl("/img/institutions/anid-logo.png"),
-    },
-  ];
+    ...institutionsData.institutions,
+    ...institutionsData.acknowledgments.logos,
+  ]
+    .filter((inst) => inst.logo)
+    .map((inst) => ({
+      name: inst.fullName || inst.name,
+      url: inst.url,
+      src: baseUrl + inst.logo,
+      small: inst.small,
+    }));
 
   return (
     <Layout title="Documentation" description={siteConfig.tagline}>
@@ -221,9 +205,7 @@ export default function Home() {
                 Built across institutions
               </h2>
               <p className="dashai-footer-band__lead">
-                This work is sponsored by ANID through Fondef IDEA ID25I10330
-                and grants supporting the centers CENIA (FB210017) and IMFD
-                (ICN17_002). Developed by students of DCC UChile and UTFSM.
+                {institutionsData.acknowledgments.text}
               </p>
             </div>
             <div className="dashai-ack__logos">
