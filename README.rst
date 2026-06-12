@@ -345,12 +345,17 @@ Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P-0110, and grants
    :target: https://imfd.cl/en/
    :alt: Millennium Institute for Foundational Data Research
 
+.. |logo-unholster| image:: docs/static/img/institutions/unholster-logo.png
+   :height: 60
+   :target: https://unholster.com/
+   :alt: Unholster
+
 .. |logo-anid| image:: docs/static/img/institutions/anid-logo.png
    :height: 60
    :target: https://anid.cl/
    :alt: Agencia Nacional de Investigación y Desarrollo
 
-|logo-uchile| |logo-cenia| |logo-imfd| |logo-anid|
+|logo-uchile| |logo-cenia| |logo-imfd| |logo-unholster| |logo-anid|
 
 .. INSTITUTIONS-BLOCK:END
 
