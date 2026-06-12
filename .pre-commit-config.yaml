@@ -35,7 +35,7 @@ repos:
         name: institutions readme sync
         entry: python scripts/render_institutions.py --check
         language: system
-        files: "docs/static/institutions/institutions\\.json|README\\.rst|images/logos\\.png|scripts/render_institutions\\.py"
+        files: "docs/static/institutions/institutions\\.json|README\\.rst|scripts/render_institutions\\.py"
         pass_filenames: false
       - id: eslint
         name: eslint
