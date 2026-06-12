@@ -16,8 +16,9 @@ Run it after editing the JSON file or any logo image:
 
     python scripts/render_institutions.py
 
-Use ``--check`` (e.g. in CI) to fail without writing when README.rst or
-images/logos.png is out of date.
+Use ``--check`` (e.g. in CI) to fail without writing when README.rst is
+out of date. The check does not cover images/logos.png, because PNG
+bytes vary across platforms and Pillow versions.
 """
 
 import argparse
@@ -184,7 +185,7 @@ def main():
     -------
     int
         Process exit code: 0 on success or no changes needed, 1 when
-        ``--check`` finds README.rst or images/logos.png out of date.
+        ``--check`` finds README.rst out of date.
 
     Raises
     ------
@@ -195,8 +196,7 @@ def main():
     parser.add_argument(
         "--check",
         action="store_true",
-        help="exit 1 if README.rst or images/logos.png is out of date "
-        "instead of writing them",
+        help="exit 1 if README.rst is out of date instead of writing files",
     )
     args = parser.parse_args()
 
@@ -212,23 +212,23 @@ def main():
     updated = readme[:start] + block + readme[end + len(END_MARKER) :]
     readme_stale = updated != readme
 
-    png = build_logos_png(data)
-    png_stale = not LOGOS_PNG_PATH.exists() or LOGOS_PNG_PATH.read_bytes() != png
-
-    if not readme_stale and not png_stale:
-        print("README.rst and images/logos.png are up to date.")
-        return 0
     if args.check:
-        print(
-            "README.rst or images/logos.png is out of date. "
-            "Run: python scripts/render_institutions.py"
-        )
-        return 1
+        if readme_stale:
+            print(
+                "README.rst is out of date. Run: python scripts/render_institutions.py"
+            )
+            return 1
+        print("README.rst is up to date.")
+        return 0
 
     if readme_stale:
         README_PATH.write_text(updated, encoding="utf-8")
         print("README.rst updated.")
-    if png_stale:
+    else:
+        print("README.rst is up to date.")
+
+    png = build_logos_png(data)
+    if not LOGOS_PNG_PATH.exists() or LOGOS_PNG_PATH.read_bytes() != png:
         LOGOS_PNG_PATH.write_bytes(png)
         print("images/logos.png updated.")
     return 0
