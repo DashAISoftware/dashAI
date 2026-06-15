@@ -7,6 +7,7 @@ from DashAI.back.api.api_v1.endpoints.dataset_source import router as dataset_so
 from DashAI.back.api.api_v1.endpoints.datasets import router as datasets
 from DashAI.back.api.api_v1.endpoints.explainers import router as explainers
 from DashAI.back.api.api_v1.endpoints.explorers import router as explorers
+from DashAI.back.api.api_v1.endpoints.folders import router as folders
 from DashAI.back.api.api_v1.endpoints.generative_process import (
     router as generative_process,
 )
@@ -44,3 +45,4 @@ api_router_v1.include_router(hardware, prefix="/hardware")
 api_router_v1.include_router(scoring, prefix="/scoring")
 api_router_v1.include_router(dataset_source, prefix="/dataset-source")
 api_router_v1.include_router(datafile_router, prefix="/datafile")
+api_router_v1.include_router(folders, prefix="/folder")

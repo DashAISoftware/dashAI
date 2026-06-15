@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
-import CollapsibleList from "../threeSectionLayout/CollapsibleList";
+import DatasetFolderList from "../threeSectionLayout/DatasetFolderList";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
@@ -33,6 +32,11 @@ export default function ModelsLeftBar({ onToggle }) {
     deleteDataset,
     editDataset,
     editSession,
+    folders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
+    moveDatasetToFolder,
   } = useModels();
   const navigate = useNavigate();
 
@@ -257,18 +261,21 @@ export default function ModelsLeftBar({ onToggle }) {
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
-        <CollapsibleList
-          items={filteredDatasets}
+        <DatasetFolderList
+          datasets={filteredDatasets}
+          folders={folders}
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
           onItemEdit={editDataset}
-          defaultOpen={true}
           title={t("datasets:label.availableDatasets")}
-          Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
           getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
           getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
+          onCreateFolder={createFolder}
+          onRenameFolder={renameFolder}
+          onDeleteFolder={deleteFolderById}
+          onMoveDataset={moveDatasetToFolder}
         />
 
         <Divider
