@@ -34,13 +34,25 @@ def test_auth_invalid_key_returns_400(client):
     ):
         response = client.post(
             "/api/v1/credential/HuggingFaceCredential/auth",
-            json={"key": "bad"},
+            json={"key": "bad-secret-key"},
         )
     assert response.status_code == 400
+    # the error must never echo the submitted key
+    assert "bad-secret-key" not in response.text
 
 
 def test_auth_unknown_credential_returns_404(client):
     response = client.post("/api/v1/credential/NotACredential/auth", json={"key": "x"})
+    assert response.status_code == 404
+
+
+def test_get_unknown_credential_returns_404(client):
+    response = client.get("/api/v1/credential/NotACredential")
+    assert response.status_code == 404
+
+
+def test_delete_unknown_credential_returns_404(client):
+    response = client.delete("/api/v1/credential/NotACredential")
     assert response.status_code == 404
 
 

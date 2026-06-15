@@ -45,7 +45,9 @@ def _credential_components(registry: "ComponentRegistry") -> Dict[str, Dict[str,
     return registry._registry.get("Credential", {})
 
 
-def _status_payload(name: str, component_dict: Dict[str, Any]) -> Dict[str, Any]:
+def _status_payload(
+    name: str, component_dict: Dict[str, Any], is_authenticated: bool
+) -> Dict[str, Any]:
     """Build the public status payload for a credential.
 
     Parameters
@@ -54,6 +56,8 @@ def _status_payload(name: str, component_dict: Dict[str, Any]) -> Dict[str, Any]
         Credential component name.
     component_dict : Dict[str, Any]
         The registry component dict.
+    is_authenticated : bool
+        Whether the credential is currently verified.
 
     Returns
     -------
@@ -66,7 +70,7 @@ def _status_payload(name: str, component_dict: Dict[str, Any]) -> Dict[str, Any]
     return {
         "name": name,
         "display_name": display_name or name,
-        "is_authenticated": di["credential_store"].is_verified(name),
+        "is_authenticated": is_authenticated,
     }
 
 
@@ -87,7 +91,11 @@ async def list_credentials(
         Credential status payloads (never includes keys).
     """
     creds = _credential_components(registry)
-    return [_status_payload(name, cdict) for name, cdict in creds.items()]
+    statuses = di["credential_store"].all_statuses()
+    return [
+        _status_payload(name, cdict, statuses.get(name, False))
+        for name, cdict in creds.items()
+    ]
 
 
 @router.get("/{name}")
@@ -120,7 +128,8 @@ async def get_credential_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Credential '{name}' not found.",
         )
-    return _status_payload(name, creds[name])
+    is_authenticated = di["credential_store"].is_verified(name)
+    return _status_payload(name, creds[name], is_authenticated)
 
 
 @router.post("/{name}/auth")
@@ -162,11 +171,11 @@ async def authenticate_credential(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+            detail="Invalid credential key.",
         ) from exc
 
-    affected = registry._relationship_manager.get(name, "required_credentials")
-    sync_credentials_status(only=affected or None)
+    affected = registry.get_required_credentials(name)
+    sync_credentials_status(only=affected)
     return {"is_authenticated": True}
 
 
@@ -201,6 +210,6 @@ async def delete_credential(
             detail=f"Credential '{name}' not found.",
         )
     di["credential_store"].delete(name)
-    affected = registry._relationship_manager.get(name, "required_credentials")
-    sync_credentials_status(only=affected or None)
+    affected = registry.get_required_credentials(name)
+    sync_credentials_status(only=affected)
     return {"is_authenticated": False}
