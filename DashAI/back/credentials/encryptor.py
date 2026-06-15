@@ -93,5 +93,10 @@ class CredentialEncryptor:
         -------
         str
             The decrypted plaintext.
+
+        Raises
+        ------
+        cryptography.fernet.InvalidToken
+            If the token is invalid or was encrypted with a different key.
         """
         return self._fernet.decrypt(token.encode()).decode()
