@@ -27,7 +27,7 @@ function CredentialRow({ credential, onChanged }) {
   const { t } = useTranslation("credentials");
   const { enqueueSnackbar } = useSnackbar();
   const [key, setKey] = useState(credential.key ?? "");
-  const [showKey, setShowKey] = useState(true);
+  const [showKey, setShowKey] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const handleVerify = async () => {
