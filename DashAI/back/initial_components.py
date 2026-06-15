@@ -61,6 +61,11 @@ from DashAI.back.converters.simple_converters.character_replacer import (
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 
+# Credentials
+from DashAI.back.credentials.github_credential import GithubCredential
+from DashAI.back.credentials.huggingface_credential import HuggingFaceCredential
+from DashAI.back.credentials.kaggle_credential import KaggleCredential
+
 # DataLoaders
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -402,6 +407,10 @@ def get_initial_components():
         HuggingFaceDatasetSource,
         OpenMLDatasetSource,
         ZenodoDatasetSource,
+        # Credentials
+        HuggingFaceCredential,
+        KaggleCredential,
+        GithubCredential,
         # Metrics
         F1,
         Accuracy,
