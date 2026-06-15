@@ -1,0 +1,55 @@
+{
+  "_comment": "Single source of truth for collaborating institutions and acknowledgments (funding + development credit). Consumed by: docs homepage (docs/src/pages/index.js, build-time import), the website repository (fetches the published URL), and README.rst (generated block; run `python scripts/render_institutions.py` after editing this file). Logo paths are relative to the docs site root (docs/static/).",
+  "institutions": [
+    {
+      "id": "uchile",
+      "name": "University of Chile",
+      "fullName": "Universidad de Chile",
+      "role": "Leading Institution",
+      "url": "https://uchile.cl/",
+      "logo": "img/institutions/dcc-logo.png",
+      "small": true
+    },
+    {
+      "id": "cenia",
+      "name": "CENIA",
+      "fullName": "National Center for Artificial Intelligence",
+      "role": "Associated Institution",
+      "url": "https://www.cenia.cl/",
+      "logo": "img/institutions/cenia-logo.png"
+    },
+    {
+      "id": "imfd",
+      "name": "IMFD",
+      "fullName": "Millennium Institute for Foundational Data Research",
+      "role": "Collaborator",
+      "url": "https://imfd.cl/en/",
+      "logo": "img/institutions/imfd-logo.png"
+    },
+    {
+      "id": "unholster",
+      "name": "Unholster",
+      "fullName": "Unholster",
+      "role": "Industry Partner",
+      "url": "https://unholster.com/",
+      "logo": "img/institutions/unholster-logo.png"
+    }
+  ],
+  "acknowledgments": {
+    "text": {
+      "en": "Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P 0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.",
+      "es": "Financiado por ANID a través de Fondef IDEA ID25I10330, Fondef VIU23P 0110 y los fondos que apoyan a los centros CENIA (FB210017) e IMFD (ICN17_002). Desarrollado por estudiantes del DCC UChile y la UTFSM.",
+      "pt": "Financiado pela ANID por meio do Fondef IDEA ID25I10330, do Fondef VIU23P 0110 e dos fundos que apoiam os centros CENIA (FB210017) e IMFD (ICN17_002). Desenvolvido por estudantes do DCC UChile e da UTFSM."
+    },
+    "grants": ["ID25I10330", "VIU23P 0110", "FB210017", "ICN17_002"],
+    "logos": [
+      {
+        "id": "anid",
+        "name": "ANID",
+        "fullName": "Agencia Nacional de Investigación y Desarrollo",
+        "url": "https://anid.cl/",
+        "logo": "img/institutions/anid-logo.png"
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@ import useBaseUrl from "@docusaurus/useBaseUrl";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import { ICONS, Watermark } from "@site/src/components/HomeIcons";
+import institutionsData from "@site/static/institutions/institutions.json";
 
 const SECTIONS = [
   {
@@ -61,36 +62,22 @@ const ArrowIcon = () => (
 );
 
 export default function Home() {
-  const { siteConfig } = useDocusaurusContext();
+  const { siteConfig, i18n } = useDocusaurusContext();
+  const baseUrl = useBaseUrl("/");
+  const ackText =
+    institutionsData.acknowledgments.text[i18n.currentLocale] ||
+    institutionsData.acknowledgments.text.en;
   const logos = [
-    {
-      name: "DCC Universidad de Chile",
-      url: "https://dcc.uchile.cl/",
-      src: useBaseUrl("/img/institutions/dcc-logo.png"),
-      small: true,
-    },
-    {
-      name: "Universidad Técnica Federico Santa María",
-      url: "https://www.usm.cl/",
-      src: useBaseUrl("/img/institutions/utfsm-logo.png"),
-      small: true,
-    },
-    {
-      name: "Centro Nacional de Inteligencia Artificial",
-      url: "https://www.cenia.cl/",
-      src: useBaseUrl("/img/institutions/cenia-logo.png"),
-    },
-    {
-      name: "Instituto Milenio Fundamentos de los Datos",
-      url: "https://www.imfd.cl/",
-      src: useBaseUrl("/img/institutions/imfd-logo.png"),
-    },
-    {
-      name: "Agencia Nacional de Investigación y Desarrollo (ANID)",
-      url: "https://www.anid.cl/",
-      src: useBaseUrl("/img/institutions/anid-logo.png"),
-    },
-  ];
+    ...institutionsData.institutions,
+    ...institutionsData.acknowledgments.logos,
+  ]
+    .filter((inst) => inst.logo)
+    .map((inst) => ({
+      name: inst.fullName || inst.name,
+      url: inst.url,
+      src: baseUrl + inst.logo,
+      small: inst.small,
+    }));
 
   return (
     <Layout title="Documentación" description={siteConfig.tagline}>
@@ -222,12 +209,7 @@ export default function Home() {
               <h2 className="dashai-footer-band__title">
                 Construido entre instituciones
               </h2>
-              <p className="dashai-footer-band__lead">
-                Este trabajo es patrocinado por ANID a través de Fondef IDEA
-                ID25I10330 y por subvenciones a los centros CENIA (FB210017) e
-                IMFD (ICN17_002). Desarrollado por estudiantes de DCC UChile y
-                UTFSM.
-              </p>
+              <p className="dashai-footer-band__lead">{ackText}</p>
             </div>
             <div className="dashai-ack__logos">
               {logos.map((logo) => (

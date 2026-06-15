@@ -316,11 +316,23 @@ To execute the backend tests
 Acknowledgments
 ===============
 
-This project is sponsored by the `National Center for Artificial Intelligence - CENIA <https://cenia.cl/en/>`_ (FB210017), and the `Millennium Institute for Foundational Data Research - IMFD <https://imfd.cl/en/>`_ (ICN17_002).
+.. INSTITUTIONS-BLOCK:START
 
-The core of the development is carried out by students from the Computer Science Department of the University of Chile and the Federico Santa Maria Technical University.
+.. This block is auto-generated from docs/static/institutions/institutions.json.
+   Edit that file and run ``python scripts/render_institutions.py``. Do not edit by hand.
+
+This project is developed in collaboration with:
+
+* `University of Chile <https://uchile.cl/>`_ - Leading Institution
+* `CENIA <https://www.cenia.cl/>`_ - Associated Institution
+* `IMFD <https://imfd.cl/en/>`_ - Collaborator
+* `Unholster <https://unholster.com/>`_ - Industry Partner
+
+Supported by ANID through Fondef IDEA ID25I10330, Fondef VIU23P 0110, and grants supporting the centers CENIA (FB210017) and IMFD (ICN17_002). Developed by students of DCC UChile and UTFSM.
+
+.. image:: images/logos.png
+   :alt: Logos of collaborating institutions
+
+.. INSTITUTIONS-BLOCK:END
 
 To see the full list of contributors, visit in `Contributors <https://github.com/DashAISoftware/DashAI/graphs/contributors>`_ the dashAI repository on Github.
-
-.. image:: ./images/logos.png
-   :alt: Collaboration Logos
