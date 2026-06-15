@@ -8,13 +8,16 @@ import {
   TextField,
   Button,
   Typography,
-  Chip,
   Box,
   IconButton,
   InputAdornment,
+  Tooltip,
 } from "@mui/material";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CloseIcon from "@mui/icons-material/Close";
+import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
@@ -29,6 +32,8 @@ function CredentialRow({ credential, onChanged }) {
   const [key, setKey] = useState(credential.key ?? "");
   const [showKey, setShowKey] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const authed = credential.is_authenticated;
 
   const handleVerify = async () => {
     setBusy(true);
@@ -55,20 +60,52 @@ function CredentialRow({ credential, onChanged }) {
   };
 
   return (
-    <Box sx={{ borderBottom: 1, borderColor: "divider", py: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="subtitle2">{credential.display_name}</Typography>
-        <Chip
-          size="small"
-          color={credential.is_authenticated ? "success" : "default"}
-          label={
-            credential.is_authenticated
-              ? t("authenticated")
-              : t("notAuthenticated")
-          }
-        />
+    <Box
+      sx={(theme) => ({
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 2,
+        p: 2,
+        transition: "border-color 0.15s, background 0.15s",
+        "&:hover": { borderColor: theme.palette.text.disabled },
+      })}
+    >
+      {/* Identity + status */}
+      <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, flexGrow: 1 }}>
+          {credential.display_name}
+        </Typography>
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Box
+            sx={(theme) => ({
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              backgroundColor: authed
+                ? theme.palette.success.main
+                : theme.palette.text.disabled,
+            })}
+          />
+          <Typography
+            variant="caption"
+            sx={(theme) => ({
+              color: authed
+                ? theme.palette.success.main
+                : theme.palette.text.secondary,
+              fontWeight: 500,
+            })}
+          >
+            {authed ? t("authenticated") : t("notAuthenticated")}
+          </Typography>
+        </Stack>
       </Stack>
-      <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+
+      {/* Key input + actions */}
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        sx={{ mt: 1.75 }}
+      >
         <TextField
           size="small"
           fullWidth
@@ -76,6 +113,7 @@ function CredentialRow({ credential, onChanged }) {
           placeholder={t("keyPlaceholder")}
           value={key}
           onChange={(e) => setKey(e.target.value)}
+          sx={{ "& input": { fontFamily: "monospace", fontSize: 13 } }}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -99,13 +137,25 @@ function CredentialRow({ credential, onChanged }) {
           onClick={handleVerify}
           disabled={busy || !key}
           variant="contained"
+          disableElevation
+          sx={{ minWidth: 96, height: 40, flexShrink: 0 }}
         >
           {t("verify")}
         </Button>
-        {credential.is_authenticated && (
-          <Button onClick={handleRemove} disabled={busy} color="error">
-            {t("remove")}
-          </Button>
+        {authed && (
+          <Tooltip title={t("remove")}>
+            <span>
+              <IconButton
+                onClick={handleRemove}
+                disabled={busy}
+                color="error"
+                aria-label={t("remove")}
+                sx={{ flexShrink: 0 }}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         )}
       </Stack>
     </Box>
@@ -137,19 +187,58 @@ export default function CredentialsDialog({ open, onClose }) {
   }, [open]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{t("title")}</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {t("subtitle")}
-        </Typography>
-        {credentials.map((credential) => (
-          <CredentialRow
-            key={credential.name}
-            credential={credential}
-            onChanged={refresh}
-          />
-        ))}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: 3 } }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Stack direction="row" alignItems="flex-start" spacing={1.5}>
+          <Box
+            sx={(theme) => ({
+              width: 36,
+              height: 36,
+              borderRadius: 1.5,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: theme.palette.primary.main,
+              backgroundColor: theme.palette.ui.hover,
+            })}
+          >
+            <VpnKeyOutlinedIcon fontSize="small" />
+          </Box>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {t("title")}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t("subtitle")}
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={onClose}
+            aria-label="close"
+            size="small"
+            sx={{ mt: -0.5, mr: -0.5 }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      </DialogTitle>
+      <DialogContent sx={{ pb: 3 }}>
+        <Stack spacing={1.5} sx={{ mt: 0.5 }}>
+          {credentials.map((credential) => (
+            <CredentialRow
+              key={credential.name}
+              credential={credential}
+              onChanged={refresh}
+            />
+          ))}
+        </Stack>
       </DialogContent>
     </Dialog>
   );
