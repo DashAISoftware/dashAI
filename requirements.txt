@@ -49,3 +49,4 @@ torchmetrics
 pywebview
 openml
 oslo.concurrency
+cryptography
