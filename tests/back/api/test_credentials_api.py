@@ -8,7 +8,8 @@ def test_list_credentials(client):
     assert "HuggingFaceCredential" in names
     for cred in response.json():
         assert "is_authenticated" in cred
-        assert "key" not in cred  # never leak keys
+        # the stored key is exposed so the config modal can display it
+        assert "key" in cred
 
 
 def test_auth_success_marks_authenticated(client):

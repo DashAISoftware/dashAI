@@ -10,7 +10,11 @@ import {
   Typography,
   Chip,
   Box,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
@@ -22,7 +26,8 @@ import {
 function CredentialRow({ credential, onChanged }) {
   const { t } = useTranslation("credentials");
   const { enqueueSnackbar } = useSnackbar();
-  const [key, setKey] = useState("");
+  const [key, setKey] = useState(credential.key ?? "");
+  const [showKey, setShowKey] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const handleVerify = async () => {
@@ -30,7 +35,6 @@ function CredentialRow({ credential, onChanged }) {
     try {
       await authenticateCredential(credential.name, key);
       enqueueSnackbar(t("verifySuccess"), { variant: "success" });
-      setKey("");
       onChanged();
     } catch {
       enqueueSnackbar(t("verifyError"), { variant: "error" });
@@ -43,6 +47,7 @@ function CredentialRow({ credential, onChanged }) {
     setBusy(true);
     try {
       await deleteCredential(credential.name);
+      setKey("");
       onChanged();
     } finally {
       setBusy(false);
@@ -67,10 +72,28 @@ function CredentialRow({ credential, onChanged }) {
         <TextField
           size="small"
           fullWidth
-          type="password"
+          type={showKey ? "text" : "password"}
           placeholder={t("keyPlaceholder")}
           value={key}
           onChange={(e) => setKey(e.target.value)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  aria-label="toggle key visibility"
+                  onClick={() => setShowKey((prev) => !prev)}
+                  edge="end"
+                >
+                  {showKey ? (
+                    <VisibilityOffOutlinedIcon fontSize="small" />
+                  ) : (
+                    <VisibilityOutlinedIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
         <Button
           onClick={handleVerify}

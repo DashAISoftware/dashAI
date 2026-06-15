@@ -11,7 +11,6 @@ from kink import di
 from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
 from DashAI.back.container import build_container
-from DashAI.back.credentials.sync import sync_credentials_status
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.backfill import backfill_dataset_counts
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
@@ -93,9 +92,6 @@ def create_app(
 
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])
-
-    logger.debug("4d. Syncing credential availability flags.")
-    sync_credentials_status()
 
     if enable_seeding:
         logger.debug("4c. Seeding initial datasets if first run.")

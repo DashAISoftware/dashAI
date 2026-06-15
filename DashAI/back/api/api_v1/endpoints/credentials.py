@@ -1,7 +1,7 @@
 """Credential API endpoints."""
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
@@ -46,9 +46,16 @@ def _credential_components(registry: "ComponentRegistry") -> Dict[str, Dict[str,
 
 
 def _status_payload(
-    name: str, component_dict: Dict[str, Any], is_authenticated: bool
+    name: str,
+    component_dict: Dict[str, Any],
+    is_authenticated: bool,
+    key: Union[str, None],
 ) -> Dict[str, Any]:
-    """Build the public status payload for a credential.
+    """Build the status payload for a credential.
+
+    The stored key is included so the configuration modal can display it. This
+    is acceptable for DashAI's local-first, single-user desktop model where the
+    database already lives on the user's machine.
 
     Parameters
     ----------
@@ -58,11 +65,13 @@ def _status_payload(
         The registry component dict.
     is_authenticated : bool
         Whether the credential is currently verified.
+    key : Union[str, None]
+        The stored decrypted key, or None if nothing is stored.
 
     Returns
     -------
     Dict[str, Any]
-        Public, key-free status payload.
+        Status payload including the stored key.
     """
     display_name = component_dict.get("display_name")
     if hasattr(display_name, "get"):
@@ -71,6 +80,7 @@ def _status_payload(
         "name": name,
         "display_name": display_name or name,
         "is_authenticated": is_authenticated,
+        "key": key,
     }
 
 
@@ -88,12 +98,13 @@ async def list_credentials(
     Returns
     -------
     list[dict]
-        Credential status payloads (never includes keys).
+        Credential status payloads, each including the stored key.
     """
     creds = _credential_components(registry)
-    statuses = di["credential_store"].all_statuses()
+    store = di["credential_store"]
+    statuses = store.all_statuses()
     return [
-        _status_payload(name, cdict, statuses.get(name, False))
+        _status_payload(name, cdict, statuses.get(name, False), store.load(name))
         for name, cdict in creds.items()
     ]
 
@@ -128,8 +139,9 @@ async def get_credential_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Credential '{name}' not found.",
         )
-    is_authenticated = di["credential_store"].is_verified(name)
-    return _status_payload(name, creds[name], is_authenticated)
+    store = di["credential_store"]
+    is_authenticated = store.is_verified(name)
+    return _status_payload(name, creds[name], is_authenticated, store.load(name))
 
 
 @router.post("/{name}/auth")
