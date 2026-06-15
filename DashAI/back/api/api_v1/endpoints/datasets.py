@@ -9,7 +9,6 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-import pyarrow as pa
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
@@ -27,6 +26,7 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
 from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
 
 if TYPE_CHECKING:
+    import pyarrow as pa
     from sqlalchemy.orm.session import sessionmaker
 
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -131,7 +131,7 @@ class _FilteredTableCache:
     """LRU cache for filtered/sorted PyArrow tables with TTL eviction."""
 
     def __init__(self, max_size: int = _CACHE_MAX_SIZE, ttl: int = _CACHE_TTL_SECONDS):
-        self._store: OrderedDict[str, tuple[float, pa.Table, int]] = OrderedDict()
+        self._store: OrderedDict[str, tuple[float, "pa.Table", int]] = OrderedDict()
         self._max_size = max_size
         self._ttl = ttl
 
@@ -164,7 +164,7 @@ class _FilteredTableCache:
         path: str,
         filter_model: str | None,
         sort_model: str | None,
-        table: pa.Table,
+        table: "pa.Table",
         total: int,
     ):
         key = self._make_key(path, filter_model, sort_model)
@@ -185,7 +185,7 @@ def _load_and_filter_table(
     path: str,
     filter_model: str | None,
     sort_model: str | None,
-) -> tuple[pa.Table, int, bool]:
+) -> tuple["pa.Table", int, bool]:
     """Load arrow file, apply filters and sorting.
 
     Returns (table, total, was_filtered).
