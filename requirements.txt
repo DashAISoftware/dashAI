@@ -50,3 +50,4 @@ pywebview
 openml
 oslo.concurrency
 cryptography
+kaggle

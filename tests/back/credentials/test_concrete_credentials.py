@@ -1,8 +1,36 @@
+import sys
+import types
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 from DashAI.back.credentials.github_credential import GithubCredential
 from DashAI.back.credentials.huggingface_credential import HuggingFaceCredential
 from DashAI.back.credentials.kaggle_credential import KaggleCredential
+
+
+@contextmanager
+def fake_kaggle(api_instance):
+    """Install a stub ``kaggle`` package so the real one is never imported.
+
+    The official ``kaggle`` package authenticates at import time and exits the
+    process without credentials, so tests inject a fake module tree exposing a
+    ``KaggleApi`` that returns ``api_instance``.
+    """
+    module_names = ("kaggle", "kaggle.api", "kaggle.api.kaggle_api_extended")
+    saved = {name: sys.modules.get(name) for name in module_names}
+    sys.modules["kaggle"] = types.ModuleType("kaggle")
+    sys.modules["kaggle.api"] = types.ModuleType("kaggle.api")
+    extended = types.ModuleType("kaggle.api.kaggle_api_extended")
+    extended.KaggleApi = MagicMock(return_value=api_instance)
+    sys.modules["kaggle.api.kaggle_api_extended"] = extended
+    try:
+        yield
+    finally:
+        for name, module in saved.items():
+            if module is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = module
 
 
 def test_huggingface_verify_success():
@@ -35,15 +63,18 @@ def test_github_verify_failure():
 
 def test_kaggle_verify_success():
     cred = KaggleCredential()
-    with patch("requests.get") as get:
-        get.return_value = MagicMock(status_code=200)
+    api = MagicMock()
+    api.authenticate.return_value = None
+    api.competitions_list.return_value = []
+    with fake_kaggle(api):
         assert cred.verify("user:key") is True
 
 
 def test_kaggle_verify_failure():
     cred = KaggleCredential()
-    with patch("requests.get") as get:
-        get.return_value = MagicMock(status_code=401)
+    api = MagicMock()
+    api.competitions_list.side_effect = Exception("401")
+    with fake_kaggle(api):
         assert cred.verify("user:badkey") is False
 
 
