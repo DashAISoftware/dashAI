@@ -18,8 +18,8 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 class StableDiffusionSchema(BaseSchema):
     """Configuration schema for Stable Diffusion V3 text-to-image generation.
 
-    Configures the checkpoint variant (``model_name``), HuggingFace access key
-    (``huggingface_key``), prompt conditioning (``negative_prompt``),
+    Configures the checkpoint variant (``model_name``),
+    prompt conditioning (``negative_prompt``),
     denoising schedule (``num_inference_steps``), prompt adherence
     (``guidance_scale``), output dimensions (``width``, ``height``),
     reproducibility (``seed``), hardware target (``device``), and batch size
@@ -84,52 +84,6 @@ class StableDiffusionSchema(BaseSchema):
             pt="Nome do modelo",
             de="Modellname",
             zh="模型名称",
-        ),
-    )  # type: ignore
-
-    huggingface_key: schema_field(
-        string_field(),
-        placeholder="",
-        description=MultilingualString(
-            en=(
-                "Hugging Face read-access token required to download these gated "
-                "models. To obtain one: accept the model license on "
-                "huggingface.co/stabilityai, then go to Settings → Access Tokens "
-                "and generate a token with 'Read' scope."
-            ),
-            es=(
-                "Token de acceso de lectura de Hugging Face necesario para descargar "
-                "estos modelos protegidos. Para obtenerlo: acepte la licencia del "
-                "modelo en huggingface.co/stabilityai, luego vaya a "
-                "Configuración → Tokens de Acceso y genere un token con alcance "
-                "'Read'."
-            ),
-            pt=(
-                "Token de acesso de leitura do Hugging Face necessário para baixar "
-                "esses modelos protegidos. Para obtê-lo: aceite a licença do "
-                "modelo em huggingface.co/stabilityai, depois vá em "
-                "Configurações → Tokens de Acesso e gere um token com escopo "
-                "'Read'."
-            ),
-            de=(
-                "Hugging Face Lesezugriffs-Token, der zum Herunterladen dieser "
-                "geschützten Modelle erforderlich ist. So erhalten Sie ihn: Akzeptieren"
-                "Sie die Modell-Lizenz auf huggingface.co/stabilityai, dann gehen Sie "
-                "zu Einstellungen → Zugriffstoken und generieren Sie einen Token "
-                "mit 'Read'-Umfang."
-            ),
-            zh=(
-                "下载受限模型所需的 Hugging Face 只读访问令牌。获取方式：在 "
-                "huggingface.co/stabilityai 接受模型许可证，然后进入"
-                "设置 → 访问令牌，生成具有 'Read' 权限的令牌。"
-            ),
-        ),
-        alias=MultilingualString(
-            en="Hugging Face key",
-            es="Clave Hugging Face",
-            pt="Chave Hugging Face",
-            de="Hugging Face-Schlüssel",
-            zh="Hugging Face 密钥",
         ),
     )  # type: ignore
 
@@ -477,6 +431,7 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = StableDiffusionSchema
+    REQUIRED_CREDENTIALS = ["HuggingFaceCredential"]
     COLOR: str = "#6a1b9a"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion V3",
@@ -537,7 +492,6 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
 
         import torch
         from diffusers import DiffusionPipeline
-        from huggingface_hub import login
 
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
@@ -547,15 +501,9 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
         self.model_name = kwargs.get(
             "model_name", "stabilityai/stable-diffusion-3-medium-diffusers"
         )
-        self.huggingface_key = kwargs.get("huggingface_key")
-
-        if self.huggingface_key:
-            try:
-                login(token=self.huggingface_key)
-            except Exception as e:
-                raise ValueError(
-                    "Failed to login to Hugging Face. Please check your API key."
-                ) from e
+        # Log in to HuggingFace using the stored credential so the gated
+        # checkpoints can be downloaded.
+        self.get_credential("HuggingFaceCredential").apply()
 
         try:
             self.model = DiffusionPipeline.from_pretrained(
