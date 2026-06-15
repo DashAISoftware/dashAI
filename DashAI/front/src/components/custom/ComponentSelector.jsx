@@ -10,12 +10,14 @@ import {
   Typography,
   Collapse,
   Paper,
+  Tooltip,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   Clear as ClearIcon,
   ExpandMore as ExpandMoreIcon,
   Check as CheckIcon,
+  LockOutlined as LockIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
@@ -30,6 +32,13 @@ function getDescription(component, fallback = "") {
   return component.description ?? fallback;
 }
 
+// Derive a human label from a credential component name, e.g.
+// "HuggingFaceCredential" -> "HuggingFace". Falls back to the raw name so it
+// works for any backend-registered credential without frontend changes.
+function credentialLabel(name) {
+  return name.replace(/Credential$/, "") || name;
+}
+
 function ComponentSelector({
   components,
   selected = null,
@@ -42,7 +51,7 @@ function ComponentSelector({
   tourDataFor = null,
   tourDataMatchFn = null,
 }) {
-  const { t } = useTranslation("custom");
+  const { t } = useTranslation(["custom", "credentials"]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
 
@@ -107,6 +116,12 @@ function ComponentSelector({
   const renderCard = (component) => {
     const isSelected = selected?.name === component.name;
     const icon = getIcon?.(component);
+    const requiredCredentials = component.required_credentials ?? [];
+    const credentialsSatisfied = component.credentials_satisfied !== false;
+    const showLock = !credentialsSatisfied && requiredCredentials.length > 0;
+    const requiredPlatforms = requiredCredentials
+      .map(credentialLabel)
+      .join(", ");
     const isCsvComponent =
       tourDataFor &&
       (tourDataMatchFn
@@ -165,13 +180,23 @@ function ComponentSelector({
             {getDescription(component, t("noDescriptionAvailable"))}
           </Typography>
         </Box>
-        {isSelected && (
-          <CheckIcon
-            fontSize="small"
-            color="primary"
-            sx={{ flexShrink: 0, mt: 1 }}
-          />
-        )}
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ flexShrink: 0, mt: 1 }}
+        >
+          {showLock && (
+            <Tooltip
+              title={t("credentials:requiredTooltip", {
+                platform: requiredPlatforms,
+              })}
+            >
+              <LockIcon fontSize="small" color="warning" />
+            </Tooltip>
+          )}
+          {isSelected && <CheckIcon fontSize="small" color="primary" />}
+        </Stack>
       </Paper>
     );
   };
