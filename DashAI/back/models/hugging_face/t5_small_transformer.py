@@ -54,12 +54,18 @@ class T5SmallTransformerSchema(OpusMtEnESTransformerSchema):
                 "Unterstützt: 'German', 'French', 'Romanian'. "
                 "T5-small übersetzt nur aus dem Englischen."
             ),
+            zh=(
+                "翻译的目标语言。"
+                "支持：'German'、'French'、'Romanian'。"
+                "T5-small 仅从英语翻译。"
+            ),
         ),
         alias=MultilingualString(
             en="Target language",
             es="Idioma destino",
             pt="Idioma de destino",
             de="Zielsprache",
+            zh="目标语言",
         ),
     )  # type: ignore
 

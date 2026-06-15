@@ -46,12 +46,14 @@ class GaussianNBSchema(BaseSchema):
                 "Anteil der größten Varianz aller Merkmale, der den Varianzen "
                 "zur Berechnungsstabilität hinzugefügt wird."
             ),
+            zh="取所有特征中最大方差的一部分，加到各特征方差上以保持计算稳定性。",
         ),
         alias=MultilingualString(
             en="Var smoothing",
             es="Suavizado de varianza",
             pt="Suavização de variância",
             de="Varianzglättung",
+            zh="方差平滑",
         ),
     )  # type: ignore
 

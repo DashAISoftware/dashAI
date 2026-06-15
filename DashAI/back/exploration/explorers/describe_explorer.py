@@ -49,6 +49,10 @@ class DescribeExplorerSchema(BaseExplorerSchema):
                 "100. Exemplo: '25, 50, 75'"
             ),
             zh="探索中包含的百分位数。使用0到100之间的整数。示例：'25, 50, 75'",
+            de=(
+                "Perzentile, die in die Exploration einbezogen werden. "
+                "Verwenden Sie ganze Zahlen zwischen 0 und 100. Beispiel: '25, 50, 75'"
+            ),
         ),
         alias=MultilingualString(
             en="Percentiles",

@@ -23,6 +23,7 @@ class ResNet50ImageClassifier(TorchvisionImageClassifier):
         es="ResNet-50",
         pt="ResNet-50",
         zh="ResNet-50",
+        de="ResNet-50",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -43,6 +44,12 @@ class ResNet50ImageClassifier(TorchvisionImageClassifier):
         zh=(
             "ResNet-50（He 等，2015）。具有瓶颈块和跳跃连接的50层残差网络，"
             "是学术论文中引用最多的卷积神经网络变体；支持 ImageNet 预训练权重。"
+        ),
+        de=(
+            "ResNet-50 (He et al., 2015). Ein residuales Netzwerk mit 50 Schichten, "
+            "Bottleneck-Bloecken und Skip-Verbindungen. Die meistzitierte CNN-Variante "
+            "in akademischen Publikationen; unterstuetzt ImageNet-vortrainierte "
+            "Gewichte."
         ),
     )
     COLOR: str = "#1B5E20"

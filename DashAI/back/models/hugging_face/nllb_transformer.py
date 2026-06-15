@@ -56,12 +56,19 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
                 "[Beispiele](https://dl-translate.readthedocs.io/en/latest/available_lan"
                 "guages/#nllb-200)"
             ),
+            zh=(
+                "NLLB 分词器的源语言代码（例如 spa_Latn 表示西班牙语，"
+                "eng_Latn 表示英语）。使用 BCP-47 语言标签格式 "
+                "[示例](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
+            ),
         ),
         alias=MultilingualString(
             en="Source language",
             es="Idioma de origen",
             pt="Idioma de origem",
             de="Quellsprache",
+            zh="源语言",
         ),
     )  # type: ignore
     target_language: schema_field(
@@ -94,12 +101,19 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
                 "[Beispiele](https://dl-translate.readthedocs.io/en/latest/available_lan"
                 "guages/#nllb-200)"
             ),
+            zh=(
+                "NLLB 生成的目标语言代码（例如 eng_Latn 表示英语，"
+                "fra_Latn 表示法语）。使用 BCP-47 语言标签格式 "
+                "[示例](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
+            ),
         ),
         alias=MultilingualString(
             en="Target language",
             es="Idioma destino",
             pt="Idioma de destino",
             de="Zielsprache",
+            zh="目标语言",
         ),
     )  # type: ignore
 

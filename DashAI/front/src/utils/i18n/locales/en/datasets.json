@@ -159,6 +159,7 @@
     "correlation": "Correlation",
     "correlationAnalysis": "Correlation Analysis",
     "correlations": "Correlations",
+    "createDataset": "Create Dataset",
     "createNewNotebook": "Notebook",
     "createNewNotebookDescription": "Start a new analysis session with an existing dataset.",
     "customArray": "Custom Array",
@@ -339,6 +340,7 @@
     "showingRowsInference": "Showing {{sampleLength}} of {{previewRowCount}} rows analyzed for type inference.",
     "showingRowsPreview": "Showing {{sampleLength}} of {{previewRowCount}} rows.",
     "showLegend": "Show Legend",
+    "showMore": "Show more ({{count}} remaining)",
     "showZeroLine": "{{axis}} Axis Show Zero Line",
     "skewness": "Skewness",
     "someTypeChangesCannotBeApplied": "Some type changes cannot be applied:",
@@ -451,5 +453,6 @@
       "startsWith": "Starts With",
       "endsWith": "Ends With"
     }
-  }
+  },
+  "searchDataloaders": "Search data loaders..."
 }

@@ -37,12 +37,14 @@ class BayesianRidgeRegressionSchema(BaseSchema):
             es="Número máximo de iteraciones sobre el conjunto de datos completo.",
             pt="Número máximo de iterações sobre o conjunto de dados completo.",
             de="Maximale Anzahl von Iterationen über den vollständigen Datensatz.",
+            zh="对完整数据集的最大迭代次数。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Iterações máximas",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 
@@ -62,9 +64,10 @@ class BayesianRidgeRegressionSchema(BaseSchema):
                 "Den Algorithmus stoppen, wenn die Gewichtsaktualisierung kleiner als "
                 "tol ist."
             ),
+            zh="若权重更新小于 tol，则停止算法。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
 
@@ -81,8 +84,11 @@ class BayesianRidgeRegressionSchema(BaseSchema):
             es=("Parámetro de forma para la distribución Gamma previa sobre alfa."),
             pt=("Parâmetro de forma para a distribuição Gamma a priori sobre alfa."),
             de=("Formparameter für die Gamma-Verteilungs-Prior über Alpha."),
+            zh="Alpha 先验 Gamma 分布的形状参数。",
         ),
-        alias=MultilingualString(en="Alpha 1", es="Alfa 1", pt="Alfa 1", de="Alpha 1"),
+        alias=MultilingualString(
+            en="Alpha 1", es="Alfa 1", pt="Alfa 1", de="Alpha 1", zh="Alpha 1"
+        ),
     )  # type: ignore
 
     alpha_2: schema_field(
@@ -98,8 +104,11 @@ class BayesianRidgeRegressionSchema(BaseSchema):
             es=("Parámetro de tasa para la distribución Gamma previa sobre alfa."),
             pt=("Parâmetro de taxa para a distribuição Gamma a priori sobre alfa."),
             de=("Ratenparameter für die Gamma-Verteilungs-Prior über Alpha."),
+            zh="Alpha 先验 Gamma 分布的速率参数。",
         ),
-        alias=MultilingualString(en="Alpha 2", es="Alfa 2", pt="Alfa 2", de="Alpha 2"),
+        alias=MultilingualString(
+            en="Alpha 2", es="Alfa 2", pt="Alfa 2", de="Alpha 2", zh="Alpha 2"
+        ),
     )  # type: ignore
 
     lambda_1: schema_field(
@@ -115,9 +124,10 @@ class BayesianRidgeRegressionSchema(BaseSchema):
             es=("Parámetro de forma para la distribución Gamma previa sobre lambda."),
             pt=("Parâmetro de forma para a distribuição Gamma a priori sobre lambda."),
             de=("Formparameter für die Gamma-Verteilungs-Prior über Lambda."),
+            zh="Lambda 先验 Gamma 分布的形状参数。",
         ),
         alias=MultilingualString(
-            en="Lambda 1", es="Lambda 1", pt="Lambda 1", de="Lambda 1"
+            en="Lambda 1", es="Lambda 1", pt="Lambda 1", de="Lambda 1", zh="Lambda 1"
         ),
     )  # type: ignore
 
@@ -134,9 +144,10 @@ class BayesianRidgeRegressionSchema(BaseSchema):
             es=("Parámetro de tasa para la distribución Gamma previa sobre lambda."),
             pt=("Parâmetro de taxa para a distribuição Gamma a priori sobre lambda."),
             de=("Ratenparameter für die Gamma-Verteilungs-Prior über Lambda."),
+            zh="Lambda 先验 Gamma 分布的速率参数。",
         ),
         alias=MultilingualString(
-            en="Lambda 2", es="Lambda 2", pt="Lambda 2", de="Lambda 2"
+            en="Lambda 2", es="Lambda 2", pt="Lambda 2", de="Lambda 2", zh="Lambda 2"
         ),
     )  # type: ignore
 
@@ -161,12 +172,14 @@ class BayesianRidgeRegressionSchema(BaseSchema):
                 "False "
                 "wird erwartet, dass die Daten bereits zentriert sind."
             ),
+            zh="是否为该模型计算截距。若为 False，则期望数据已被中心化。",
         ),
         alias=MultilingualString(
             en="Fit intercept",
             es="Ajustar intercepto",
             pt="Ajustar intercepto",
             de="Achsenabschnitt anpassen",
+            zh="拟合截距",
         ),
     )  # type: ignore
 

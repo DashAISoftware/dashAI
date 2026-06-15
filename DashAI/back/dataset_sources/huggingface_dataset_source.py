@@ -27,6 +27,8 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
         en="HuggingFace Hub",
         es="HuggingFace Hub",
         zh="HuggingFace Hub",
+        de="HuggingFace Hub",
+        pt="HuggingFace Hub",
     )
     DESCRIPTION: Final = MultilingualString(
         en=(
@@ -54,6 +56,26 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             "HuggingFace Hub是最大的机器学习数据集开放仓库，托管了数十万个社区贡献的"
             "NLP、计算机视觉、音频和表格任务数据集。数据集涵盖经典基准到前沿研究划分，"
             "许多包含多种配置或语言变体。按名称搜索，直接下载到DashAI，数分钟内开始训练。"
+            "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
+        ),
+        de=(
+            "HuggingFace Hub ist das größte offene Repository für maschinelles "
+            "Lernen und hostet Hunderttausende von Community-Beiträgen zu NLP-, "
+            "Computer-Vision-, Audio- und tabellarischen Aufgaben. Die Datensätze "
+            "reichen von klassischen Benchmarks bis hin zu aktuellen "
+            "Forschungsaufteilungen, viele mit mehreren Konfigurationen oder "
+            "Sprachvarianten. Nach Name suchen, direkt in dashAI herunterladen "
+            "und in Minuten mit dem Training beginnen. "
+            "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
+        ),
+        pt=(
+            "HuggingFace Hub e o maior repositorio aberto de conjuntos de dados "
+            "para aprendizado de maquina, hospedando centenas de milhares de "
+            "colecoes contribuidas pela comunidade para tarefas de NLP, visao "
+            "computacional, audio e dados tabulares. Os conjuntos de dados variam "
+            "de benchmarks classicos a divisoes de pesquisa de ponta, e muitos "
+            "incluem multiplas configuracoes ou variantes de idioma. Pesquise por "
+            "nome, baixe diretamente para o dashAI e comece a treinar em minutos. "
             "[https://huggingface.co/datasets](https://huggingface.co/datasets)"
         ),
     )

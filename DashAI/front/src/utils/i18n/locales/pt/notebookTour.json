@@ -1,5 +1,6 @@
 {
   "configureParameters": "<0><0>Configurar Parâmetros</0><1>Aqui você pode personalizar os parâmetros do Explorador, como o número de bins para o histograma.</1><2>Por enquanto, usaremos a configuração padrão. Funciona bem para a maioria dos casos!</2></0>",
+  "configureParametersAndCreate": "<0><0>Configurar Parâmetros e Criar Explorador</0><1>Aqui você pode personalizar os parâmetros do Explorador, como o número de bins para o histograma.</1><2>Por enquanto, usaremos a configuração padrão. Funciona bem para a maioria dos casos!</2><3>Quando estiver pronto, clique no botão <0>Criar Explorador</0> para gerar a visualização do histograma.</3></0>",
   "converterApplied": "<0><0>Conversor Aplicado!</0><1>Excelente! Seu Label Encoder agora está processando as colunas selecionadas.</1><2>Após concluir, você verá os detalhes da transformação aqui. Todos os Exploradores e Conversores posteriores usarão estes dados transformados.</2></0>",
   "convertersTab": "<0><0>Aba de Conversores</0><1>Clique na aba \"Conversores\" para ver as ferramentas de transformação disponíveis.</1><2>Usaremos um Label Encoder para converter dados categóricos em valores numéricos.</2></0>",
   "createExplorer": "<0><0>Criar o Explorador</0><1>Agora clique no botão \"Criar Explorador\" para gerar a visualização do histograma.</1></0>",

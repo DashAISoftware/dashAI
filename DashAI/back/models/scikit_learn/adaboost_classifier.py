@@ -50,12 +50,14 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "Die maximale Anzahl von Schätzern, bei der das Boosting beendet wird. "
                 "Bei perfekter Anpassung wird das Lernverfahren vorzeitig gestoppt."
             ),
+            zh=("终止提升的最大估计器数量。若出现完美拟合，学习过程将提前停止。"),
         ),
         alias=MultilingualString(
             en="N estimators",
             es="N estimadores",
             pt="N estimadores",
             de="Anzahl Schätzer",
+            zh="估计器数量",
         ),
     )  # type: ignore
 
@@ -86,12 +88,16 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "Gewicht für jeden Klassifikator bei jeder Boosting-Iteration. "
                 "Eine höhere Lernrate erhöht den Beitrag jedes Klassifikators."
             ),
+            zh=(
+                "每次提升迭代中施加给每个分类器的权重。学习率越高，每个分类器的贡献越大。"
+            ),
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
             de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
 
@@ -117,12 +123,17 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
                 "festzulegen."
             ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "或传入 None 以不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 

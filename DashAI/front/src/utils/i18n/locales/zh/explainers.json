@@ -20,7 +20,9 @@
     "localExplainerJobEnqueueError": "将局部解释器任务加入队列时出错。",
     "localExplainerJobFailed": "局部解释器任务失败：{{error}}",
     "nameTooShort": "解释器名称至少需要 4 个字母或数字字符。",
-    "validateDataset": "验证所选数据集时出错。"
+    "validateDataset": "验证所选数据集时出错。",
+    "noData": "暂无数据",
+    "nameAlreadyExists": "名称已存在"
   },
   "label": {
     "configureExplainer": "配置解释器",
@@ -53,7 +55,8 @@
     "selectExplainer": "设置名称和解释器",
     "selectExplainerAndName": "选择解释器并输入名称",
     "explainerInProgress": "解释器运行中...",
-    "splitSelectionSummary": "百分比：{{percentage}}% | 已选行数：{{rowsSelected}} / {{totalRows}}"
+    "splitSelectionSummary": "百分比：{{percentage}}% | 已选行数：{{rowsSelected}} / {{totalRows}}",
+    "searchExplainers": "搜索解释器..."
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",

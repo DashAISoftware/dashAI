@@ -45,12 +45,14 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Tabellarisches Modell, das als zugrunde liegendes Modell "
                 "zur Erstellung des Textklassifikators verwendet wird."
             ),
+            zh="用作生成文本分类器的底层表格模型。",
         ),
         alias=MultilingualString(
             en="Tabular classifier",
             es="Clasificador tabular",
             pt="Classificador tabular",
             de="Tabellarischer Klassifikator",
+            zh="表格分类器",
         ),
     )  # type: ignore
     ngram_min_n: schema_field(
@@ -76,12 +78,14 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Die untere Grenze des Bereichs der n-Werte für verschiedene Wort- "
                 "oder Zeichen-N-Gramme. Muss eine ganze Zahl größer oder gleich 1 sein."
             ),
+            zh="提取的词n-gram或字符n-gram的n值范围下界，必须为大于等于1的整数。",
         ),
         alias=MultilingualString(
             en="Ngram min N",
             es="Ngrama mínimo N",
             pt="N-grama mínimo N",
             de="N-Gramm min N",
+            zh="N-gram 最小 N",
         ),
     )  # type: ignore
     ngram_max_n: schema_field(
@@ -107,12 +111,14 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Die obere Grenze des Bereichs der n-Werte für verschiedene Wort- "
                 "oder Zeichen-N-Gramme. Muss eine ganze Zahl größer oder gleich 1 sein."
             ),
+            zh="提取的词n-gram或字符n-gram的n值范围上界，必须为大于等于1的整数。",
         ),
         alias=MultilingualString(
             en="Ngram max N",
             es="Ngrama máximo N",
             pt="N-grama máximo N",
             de="N-Gramm max N",
+            zh="N-gram 最大 N",
         ),
     )  # type: ignore
 

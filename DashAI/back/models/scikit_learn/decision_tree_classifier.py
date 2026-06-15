@@ -49,9 +49,13 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "Kriterien sind 'gini' für die Gini-Unreinheit sowie 'log_loss' und "
                 "'entropy' für den Shannon-Informationsgewinn."
             ),
+            zh=(
+                "衡量分裂质量的函数。支持的准则有：'gini'（基尼不纯度）、"
+                "'log_loss' 和 'entropy'（香农信息增益）。"
+            ),
         ),
         alias=MultilingualString(
-            en="Criterion", es="Criterio", pt="Critério", de="Kriterium"
+            en="Criterion", es="Criterio", pt="Critério", de="Kriterium", zh="准则"
         ),
     )  # type: ignore
     max_depth: schema_field(
@@ -83,12 +87,17 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "alle Blätter rein sind oder weniger als min_samples_split Stichproben "
                 "enthalten."
             ),
+            zh=(
+                "树的最大深度。若为 None，则扩展节点直至所有叶节点纯净，"
+                "或叶节点包含的样本数少于 min_samples_split。"
+            ),
         ),
         alias=MultilingualString(
             en="Max depth",
             es="Profundidad máxima",
             pt="Profundidade máxima",
             de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
     min_samples_split: schema_field(
@@ -104,12 +113,14 @@ class DecisionTreeClassifierSchema(BaseSchema):
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
             pt="O número mínimo de amostras necessárias para dividir um nó interno.",
             de="Mindestanzahl von Stichproben zum Aufteilen eines internen Knotens.",
+            zh="分裂内部节点所需的最少样本数。",
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mín. amostras de divisão",
             de="Minimale Aufteilungsstichproben",
+            zh="最小分裂样本数",
         ),
     )  # type: ignore
     min_samples_leaf: schema_field(
@@ -125,12 +136,14 @@ class DecisionTreeClassifierSchema(BaseSchema):
             es="El número mínimo de muestras requeridas para estar en una hoja.",
             pt="O número mínimo de amostras necessárias para estar em uma folha.",
             de="Mindestanzahl von Stichproben an einem Blattknoten.",
+            zh="叶节点所需的最少样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mín. amostras para folha",
             de="Minimale Stichproben für Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
     max_features: schema_field(
@@ -158,12 +171,17 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "berücksichtigt werden. Als Float ist max_features ein Prozentsatz "
                 "der Gesamtzahl der Merkmale."
             ),
+            zh=(
+                "寻找最佳分裂时考虑的特征数量。若为浮点数，"
+                "则 max_features 表示特征总数的百分比。"
+            ),
         ),
         alias=MultilingualString(
             en="Max features",
             es="Máximas características",
             pt="Máx. características",
             de="Maximale Merkmale",
+            zh="最大特征数",
         ),
     )  # type: ignore
 

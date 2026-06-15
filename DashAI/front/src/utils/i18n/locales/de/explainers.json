@@ -20,7 +20,9 @@
     "localExplainerJobEnqueueError": "Fehler beim Einreihen des lokalen Erklärungsmodell-Jobs.",
     "localExplainerJobFailed": "Lokaler Erklärungsmodell-Job fehlgeschlagen: {{error}}",
     "nameTooShort": "Der Name des Erklärungsmodells muss mindestens 4 alphanumerische Zeichen enthalten.",
-    "validateDataset": "Fehler beim Validieren des ausgewählten Datensatzes."
+    "validateDataset": "Fehler beim Validieren des ausgewählten Datensatzes.",
+    "noData": "Keine Daten verfügbar",
+    "nameAlreadyExists": "Name existiert bereits"
   },
   "label": {
     "configureExplainer": "Erklärungsmodell konfigurieren",
@@ -53,7 +55,8 @@
     "selectExplainer": "Name und Erklärungsmodell festlegen",
     "selectExplainerAndName": "Erklärungsmodell auswählen und Namen eingeben",
     "explainerInProgress": "Erklärungsmodell wird verarbeitet...",
-    "splitSelectionSummary": "Prozentsatz: {{percentage}}% | Ausgewählte Zeilen: {{rowsSelected}} / {{totalRows}}"
+    "splitSelectionSummary": "Prozentsatz: {{percentage}}% | Ausgewählte Zeilen: {{rowsSelected}} / {{totalRows}}",
+    "searchExplainers": "Erklärungsmodelle suchen..."
   },
   "message": {
     "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",

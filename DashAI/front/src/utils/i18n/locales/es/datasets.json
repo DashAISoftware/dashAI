@@ -5,6 +5,9 @@
     "baseType": "(tipo base detectado: {{type}})",
     "stats": "Estadísticas de la muestra",
     "uniqueCount": "Valores únicos: {{count}} de {{total}} filas",
+    "uniqueCount_one": "Valores únicos: {{count}} de {{total}} filas",
+    "uniqueCount_many": "Valores únicos: {{count}} de {{total}} filas",
+    "uniqueCount_other": "Valores únicos: {{count}} de {{total}} filas",
     "uniqueRatio": "Proporción única: {{ratio}}% (umbral categórico: ≤{{threshold}}%)",
     "uniqueRatioNoThreshold": "Proporción única: {{ratio}}%",
     "stringLength": "Largo medio de texto: {{mean}} caracteres (std {{std}})",
@@ -161,6 +164,7 @@
     "correlation": "Correlación",
     "correlationAnalysis": "Análisis de Correlación",
     "correlations": "Correlaciones",
+    "createDataset": "Crear Dataset",
     "createNewNotebook": "Cuaderno",
     "createNewNotebookDescription": "Inicia una nueva sesión de análisis con un dataset existente.",
     "customArray": "Arreglo Personalizado",
@@ -344,6 +348,10 @@
     "showingRowsInference": "Mostrando {{sampleLength}} de {{previewRowCount}} filas analizadas para inferencia de tipo.",
     "showingRowsPreview": "Mostrando {{sampleLength}} de {{previewRowCount}} filas.",
     "showLegend": "Mostrar Leyenda",
+    "showMore": "Mostrar más ({{count}} restantes)",
+    "showMore_one": "Mostrar más ({{count}} restante)",
+    "showMore_many": "Mostrar más ({{count}} restantes)",
+    "showMore_other": "Mostrar más ({{count}} restantes)",
     "showZeroLine": "Mostrar Línea Cero del Eje {{axis}}",
     "skewness": "Asimetría",
     "someTypeChangesCannotBeApplied": "Algunos cambios de tipo no se pueden aplicar:",
@@ -430,6 +438,9 @@
     "exportFiltered": "Exportar filtrado",
     "export": "Exportar",
     "hiddenCount": "{{count}} ocultas",
+    "hiddenCount_one": "{{count}} oculta",
+    "hiddenCount_many": "{{count}} ocultas",
+    "hiddenCount_other": "{{count}} ocultas",
     "search": "Buscar",
     "showAll": "Mostrar todas",
     "hideAll": "Ocultar todas",
@@ -457,5 +468,6 @@
       "startsWith": "Empieza con",
       "endsWith": "Termina con"
     }
-  }
+  },
+  "searchDataloaders": "Buscar cargadores de datos..."
 }

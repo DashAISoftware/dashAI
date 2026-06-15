@@ -47,6 +47,8 @@ class ZenodoDatasetSource(BaseDatasetSource):
         en="Zenodo",
         es="Zenodo",
         zh="Zenodo",
+        de="Zenodo",
+        pt="Zenodo",
     )
     DESCRIPTION: Final = MultilingualString(
         en=(
@@ -75,6 +77,28 @@ class ZenodoDatasetSource(BaseDatasetSource):
             "论文、软件和其他科学成果。它涵盖所有学科并接受任何文件格式，"
             "是学术论文配套数据集的首选档案。每条记录都获得DOI，确保长期可引用性。"
             "按关键词搜索，直接下载到DashAI。"
+            "[https://zenodo.org](https://zenodo.org)"
+        ),
+        de=(
+            "Zenodo ist ein Open-Access-Repositorium des CERN, das "
+            "Forschungsdatensätze, Artikel, Software und andere wissenschaftliche "
+            "Ergebnisse von Forschenden weltweit bereitstellt. Es deckt alle "
+            "Disziplinen ab und akzeptiert jedes Dateiformat, wodurch es zum "
+            "bevorzugten Archiv für Datensätze wird, die zusammen mit "
+            "wissenschaftlichen Publikationen veröffentlicht werden. Jeder "
+            "Eintrag erhält einen DOI, der langfristige Zitierbarkeit sicherstellt. "
+            "Suche nach Schlagworten und lade direkt in dashAI herunter. "
+            "[https://zenodo.org](https://zenodo.org)"
+        ),
+        pt=(
+            "Zenodo e um repositorio de acesso aberto operado pelo CERN que "
+            "hospeda conjuntos de dados de pesquisa, artigos, software e outros "
+            "resultados cientificos de pesquisadores de todo o mundo. Abrange "
+            "todas as disciplinas e aceita qualquer formato de arquivo, sendo o "
+            "arquivo de referencia para conjuntos de dados publicados junto a "
+            "artigos academicos. Cada registro recebe um DOI, garantindo "
+            "citabilidade a longo prazo. Busque por palavra-chave e baixe "
+            "diretamente para o dashAI. "
             "[https://zenodo.org](https://zenodo.org)"
         ),
     )

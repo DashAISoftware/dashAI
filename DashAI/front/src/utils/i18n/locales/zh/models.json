@@ -21,7 +21,8 @@
     "saveAndRunModel": "保存并运行模型",
     "showOperations": "显示操作",
     "showParameters": "显示参数",
-    "updateAndRetrain": "更新并重新训练"
+    "updateAndRetrain": "更新并重新训练",
+    "modelsHub": "模型中心"
   },
   "error": {
     "completeRequiredFields": "请填写所有必填字段",
@@ -171,7 +172,9 @@
     "profile_text_balanced": "均衡",
     "profile_text_detectPositives": "检测正例",
     "profile_text_avoidFalseAlarms": "避免误报",
-    "profile_text_probabilityQuality": "概率质量"
+    "profile_text_probabilityQuality": "概率质量",
+    "editRun": "编辑运行",
+    "chartType": "图表类型"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",

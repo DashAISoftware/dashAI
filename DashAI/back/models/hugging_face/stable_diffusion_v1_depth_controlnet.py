@@ -48,12 +48,18 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "schnelle Ergebnisse, 40-50 für höhere Qualität. Werte über 100 "
                 "verbessern das Ergebnis kaum."
             ),
+            zh=(
+                "去噪步骤数。步骤越多图像越精细，但生成时间越长。"
+                "典型范围：20-30步获得快速结果，40-50步获得更高质量。"
+                "超过100步几乎不再改善输出效果。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
             de="Anzahl Inferenzschritte",
+            zh="推理步骤数",
         ),
     )  # type: ignore
 
@@ -89,12 +95,18 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "die Ausgabe eng der Eingangsbildstruktur; über 1.5 dominiert die "
                 "Tiefenbeschränkung und kann zu übermäßig starren Ergebnissen führen."
             ),
+            zh=(
+                "ControlNet深度条件权重（范围0.0-2.0）。"
+                "0.0时深度图无效果；1.0（默认）时输出紧密跟随输入图像结构；"
+                "超过1.5时深度约束主导，可能产生过于刚硬的结果。"
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
             pt="Escala de condicionamento ControlNet",
             de="ControlNet-Konditionierungsskala",
+            zh="ControlNet条件强度",
         ),
     )  # type: ignore
 
@@ -126,12 +138,17 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber rechnen "
                 "Sie mit deutlich längeren Generierungszeiten."
             ),
+            zh=(
+                "推理硬件设备。强烈建议为扩散模型选择GPU选项以进行硬件加速。"
+                "在没有兼容GPU的系统上选择'CPU'，但预期生成时间将显著更长。"
+            ),
         ),
         alias=MultilingualString(
             en="Device",
             es="Dispositivo",
             pt="Dispositivo",
             de="Gerät",
+            zh="设备",
         ),
     )  # type: ignore
 

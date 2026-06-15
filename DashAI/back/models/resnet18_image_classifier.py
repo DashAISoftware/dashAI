@@ -22,6 +22,7 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
         es="ResNet-18",
         pt="ResNet-18",
         zh="ResNet-18",
+        de="ResNet-18",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -42,6 +43,11 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
         zh=(
             "ResNet-18（He 等，2015）。具有跳跃连接的18层残差网络，"
             "可训练非常深的网络。学术文献中引用最多的卷积神经网络。"
+        ),
+        de=(
+            "ResNet-18 (He et al., 2015). Ein 18-schichtiges residuales Netz mit "
+            "Skip-Verbindungen, das das Training sehr tiefer Netzwerke ermoglicht. "
+            "Das meistzitierte CNN in der akademischen Literatur."
         ),
     )
     COLOR: str = "#2E7D32"

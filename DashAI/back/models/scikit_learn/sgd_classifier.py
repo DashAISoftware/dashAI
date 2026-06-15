@@ -66,9 +66,14 @@ class SGDClassifierSchema(BaseSchema):
                 "'squared_hinge' ist wie hinge aber quadratisch bestraft; "
                 "'perceptron' ist der lineare Verlust des Perceptron-Algorithmus."
             ),
+            zh=(
+                "使用的损失函数。'hinge'给出线性SVM；'log_loss'给出逻辑回归；"
+                "'modified_huber'更平滑；'squared_hinge'类似hinge但使用二次惩罚；"
+                "'perceptron'是感知机算法使用的线性损失。"
+            ),
         ),
         alias=MultilingualString(
-            en="Loss", es="Pérdida", pt="Perda", de="Verlustfunktion"
+            en="Loss", es="Pérdida", pt="Perda", de="Verlustfunktion", zh="损失函数"
         ),
     )  # type: ignore
 
@@ -97,8 +102,11 @@ class SGDClassifierSchema(BaseSchema):
                 "Regularisierungsparameter. Höhere Werte führen zu stärkerer "
                 "Regularisierung."
             ),
+            zh="正则化参数。值越大，正则化越强。",
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
+        alias=MultilingualString(
+            en="Alpha", es="Alfa", pt="Alfa", de="Alpha", zh="Alpha"
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -114,12 +122,14 @@ class SGDClassifierSchema(BaseSchema):
             es="El número máximo de pasadas sobre los datos de entrenamiento (épocas).",
             pt="O número máximo de passagens sobre os dados de treinamento (épocas).",
             de="Die maximale Anzahl von Durchläufen über die Trainingsdaten (Epochen).",
+            zh="对训练数据的最大遍历次数（轮次）。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Iterações máximas",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 
@@ -145,9 +155,10 @@ class SGDClassifierSchema(BaseSchema):
                 "Das Abbruchkriterium. Das Training stoppt, wenn Verlust > "
                 "bester_Verlust - tol."
             ),
+            zh="停止准则。当损失 > 最优损失 - tol 时训练停止。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
 
@@ -177,12 +188,17 @@ class SGDClassifierSchema(BaseSchema):
                 "'constant' hält eta0 konstant; 'invscaling' sinkt als "
                 "1/t^power; 'adaptive' halbiert die Rate, wenn das Training stagniert."
             ),
+            zh=(
+                "学习率调度方案。'optimal'使用1/(alpha*(t+t0))；'constant'保持eta0不变；"
+                "'invscaling'按1/t^power递减；'adaptive'在训练停滞时将学习率减半。"
+            ),
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
             de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
 
@@ -207,12 +223,17 @@ class SGDClassifierSchema(BaseSchema):
                 "ganze Zahl für reproduzierbare Ausgaben oder None für keinen "
                 "bestimmten Startwert."
             ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "传入None则不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 

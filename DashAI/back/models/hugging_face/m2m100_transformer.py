@@ -47,12 +47,16 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
                 "ISO 639-1-Code der Quellsprache (z.B. 'en', 'es', 'fr', 'de'). "
                 "Unterstützt 100 Sprachen."
             ),
+            zh=(
+                "源语言 ISO 639-1 代码（如 'en'、'es'、'fr'、'de'）。支持 100 种语言。"
+            ),
         ),
         alias=MultilingualString(
             en="Source language",
             es="Idioma de origen",
             pt="Idioma de origem",
             de="Quellsprache",
+            zh="源语言",
         ),
     )  # type: ignore
     target_language: schema_field(
@@ -75,12 +79,17 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
                 "ISO 639-1-Code der Zielsprache (z.B. 'en', 'es', 'fr', 'de'). "
                 "Unterstützt 100 Sprachen."
             ),
+            zh=(
+                "目标语言 ISO 639-1 代码（如 'en'、'es'、'fr'、'de'）。"
+                "支持 100 种语言。"
+            ),
         ),
         alias=MultilingualString(
             en="Target language",
             es="Idioma destino",
             pt="Idioma destino",
             de="Zielsprache",
+            zh="目标语言",
         ),
     )  # type: ignore
 
