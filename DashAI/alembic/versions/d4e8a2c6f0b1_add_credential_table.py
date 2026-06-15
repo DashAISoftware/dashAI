@@ -30,8 +30,8 @@ def upgrade() -> None:
             server_default="0",
             nullable=False,
         ),
-        sa.Column("created", sa.DateTime(), nullable=True),
-        sa.Column("last_modified", sa.DateTime(), nullable=True),
+        sa.Column("created", sa.DateTime(), nullable=False),
+        sa.Column("last_modified", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id", name="pk_credential"),
         sa.UniqueConstraint("name", name="uq_credential_name"),
     )
