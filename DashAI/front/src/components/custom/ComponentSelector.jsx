@@ -18,6 +18,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   Check as CheckIcon,
   LockOutlined as LockIcon,
+  VpnKeyOutlined as KeyIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
@@ -117,9 +118,14 @@ function ComponentSelector({
     const isSelected = selected?.name === component.name;
     const icon = getIcon?.(component);
     const requiredCredentials = component.required_credentials ?? [];
+    const optionalCredentials = component.optional_credentials ?? [];
     const credentialsSatisfied = component.credentials_satisfied !== false;
-    const showLock = !credentialsSatisfied && requiredCredentials.length > 0;
+    // Unmet required credentials make the component unusable: lock and disable.
+    const locked = !credentialsSatisfied && requiredCredentials.length > 0;
     const requiredPlatforms = requiredCredentials
+      .map(credentialLabel)
+      .join(", ");
+    const optionalPlatforms = optionalCredentials
       .map(credentialLabel)
       .join(", ");
     const isCsvComponent =
@@ -131,19 +137,23 @@ function ComponentSelector({
       <Paper
         key={component.name}
         elevation={0}
-        onClick={() => handleSelect(component)}
+        onClick={() => {
+          if (!locked) handleSelect(component);
+        }}
+        aria-disabled={locked}
         data-tour={isCsvComponent ? tourDataFor : undefined}
         sx={{
           p: 3,
           display: "flex",
           gap: 3,
           alignItems: "flex-start",
-          cursor: "pointer",
+          cursor: locked ? "not-allowed" : "pointer",
+          opacity: locked ? 0.55 : 1,
           border: 1,
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
           transition: "border-color 0.15s, background 0.15s",
-          "&:hover": { borderColor: "primary.light" },
+          "&:hover": locked ? undefined : { borderColor: "primary.light" },
         }}
       >
         {icon && (
@@ -186,13 +196,22 @@ function ComponentSelector({
           alignItems="center"
           sx={{ flexShrink: 0, mt: 1 }}
         >
-          {showLock && (
+          {locked && (
             <Tooltip
               title={t("credentials:requiredTooltip", {
                 platform: requiredPlatforms,
               })}
             >
               <LockIcon fontSize="small" color="warning" />
+            </Tooltip>
+          )}
+          {!locked && optionalCredentials.length > 0 && (
+            <Tooltip
+              title={t("credentials:optionalTooltip", {
+                platform: optionalPlatforms,
+              })}
+            >
+              <KeyIcon fontSize="small" color="action" />
             </Tooltip>
           )}
           {isSelected && <CheckIcon fontSize="small" color="primary" />}
