@@ -1,7 +1,7 @@
 """Credential API endpoints."""
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Dict
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
@@ -45,76 +45,16 @@ def _credential_components(registry: "ComponentRegistry") -> Dict[str, Dict[str,
     return registry._registry.get("Credential", {})
 
 
-def _status_payload(
-    name: str,
-    component_dict: Dict[str, Any],
-    is_authenticated: bool,
-    key: Union[str, None],
-) -> Dict[str, Any]:
-    """Build the status payload for a credential.
-
-    The stored key is included so the configuration modal can display it. This
-    is acceptable for DashAI's local-first, single-user desktop model where the
-    database already lives on the user's machine.
-
-    Parameters
-    ----------
-    name : str
-        Credential component name.
-    component_dict : Dict[str, Any]
-        The registry component dict.
-    is_authenticated : bool
-        Whether the credential is currently verified.
-    key : Union[str, None]
-        The stored decrypted key, or None if nothing is stored.
-
-    Returns
-    -------
-    Dict[str, Any]
-        Status payload including the stored key.
-    """
-    display_name = component_dict.get("display_name")
-    if hasattr(display_name, "get"):
-        display_name = display_name.get("en")
-    return {
-        "name": name,
-        "display_name": display_name or name,
-        "is_authenticated": is_authenticated,
-        "key": key,
-    }
-
-
-@router.get("/")
-async def list_credentials(
-    registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
-) -> List[Dict[str, Any]]:
-    """List all credential components and their authentication status.
-
-    Parameters
-    ----------
-    registry : ComponentRegistry
-        Injected component registry.
-
-    Returns
-    -------
-    list[dict]
-        Credential status payloads, each including the stored key.
-    """
-    creds = _credential_components(registry)
-    store = di["credential_store"]
-    statuses = store.all_statuses()
-    return [
-        _status_payload(name, cdict, statuses.get(name, False), store.load(name))
-        for name, cdict in creds.items()
-    ]
-
-
 @router.get("/{name}")
 async def get_credential_status(
     name: str,
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
-    """Return the status of a single credential.
+    """Return the authentication state of a single credential.
+
+    The catalog metadata (display name, description) is served by the
+    components endpoint; this endpoint only reports credential-specific state:
+    whether it is authenticated and the stored key.
 
     Parameters
     ----------
@@ -126,7 +66,9 @@ async def get_credential_status(
     Returns
     -------
     dict
-        Status payload.
+        ``{"name", "is_authenticated", "key"}``. The stored key is included so
+        the configuration modal can display it, which is acceptable for
+        DashAI's local-first, single-user desktop model.
 
     Raises
     ------
@@ -140,8 +82,11 @@ async def get_credential_status(
             detail=f"Credential '{name}' not found.",
         )
     store = di["credential_store"]
-    is_authenticated = store.is_verified(name)
-    return _status_payload(name, creds[name], is_authenticated, store.load(name))
+    return {
+        "name": name,
+        "is_authenticated": store.is_verified(name),
+        "key": store.load(name),
+    }
 
 
 @router.post("/{name}/auth")

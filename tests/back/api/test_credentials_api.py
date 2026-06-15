@@ -1,15 +1,25 @@
 from unittest.mock import patch
 
 
-def test_list_credentials(client):
-    response = client.get("/api/v1/credential/")
+def test_get_credential_status_shape(client):
+    # the catalog (display name, description) comes from the components
+    # endpoint; this endpoint only reports auth state plus the stored key
+    response = client.get("/api/v1/credential/HuggingFaceCredential")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["name"] == "HuggingFaceCredential"
+    assert "is_authenticated" in body
+    assert "key" in body
+
+
+def test_credential_components_listed_by_components_endpoint(client):
+    response = client.get("/api/v1/component?select_types=Credential")
     assert response.status_code == 200
     names = {c["name"] for c in response.json()}
     assert "HuggingFaceCredential" in names
-    for cred in response.json():
-        assert "is_authenticated" in cred
-        # the stored key is exposed so the config modal can display it
-        assert "key" in cred
+    for component in response.json():
+        # description is served here, not by the credential endpoint
+        assert "description" in component
 
 
 def test_auth_success_marks_authenticated(client):

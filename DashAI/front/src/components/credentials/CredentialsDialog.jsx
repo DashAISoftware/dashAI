@@ -70,11 +70,27 @@ function CredentialRow({ credential, onChanged }) {
       })}
     >
       {/* Identity + status */}
-      <Stack direction="row" alignItems="center" spacing={1.5}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, flexGrow: 1 }}>
-          {credential.display_name}
-        </Typography>
-        <Stack direction="row" alignItems="center" spacing={0.75}>
+      <Stack direction="row" alignItems="flex-start" spacing={1.5}>
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {credential.display_name}
+          </Typography>
+          {credential.description && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 0.25, lineHeight: 1.4 }}
+            >
+              {credential.description}
+            </Typography>
+          )}
+        </Box>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={0.75}
+          sx={{ flexShrink: 0, mt: 0.25 }}
+        >
           <Box
             sx={(theme) => ({
               width: 8,
