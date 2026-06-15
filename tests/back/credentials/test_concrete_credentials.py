@@ -35,13 +35,18 @@ def test_github_verify_failure():
 
 def test_kaggle_verify_success():
     cred = KaggleCredential()
-    with patch("kaggle.api.kaggle_api_extended.KaggleApi") as api:
-        api.return_value.authenticate.return_value = None
+    with patch("requests.get") as get:
+        get.return_value = MagicMock(status_code=200)
         assert cred.verify("user:key") is True
 
 
 def test_kaggle_verify_failure():
     cred = KaggleCredential()
-    with patch("kaggle.api.kaggle_api_extended.KaggleApi") as api:
-        api.return_value.authenticate.side_effect = Exception("bad")
-        assert cred.verify("nope") is False
+    with patch("requests.get") as get:
+        get.return_value = MagicMock(status_code=401)
+        assert cred.verify("user:badkey") is False
+
+
+def test_kaggle_verify_malformed_key():
+    cred = KaggleCredential()
+    assert cred.verify("no-separator") is False
