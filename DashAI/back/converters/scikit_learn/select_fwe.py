@@ -50,7 +50,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     settings where downstream analysis of each selected feature is expensive.
     Because the correction grows more conservative as the number of features
     increases, it may discard many truly informative features in very
-    high-dimensional problems; in such cases FDR control may be preferable.
+    high dimensional problems; in such cases FDR control may be preferable.
 
     Key properties:
 

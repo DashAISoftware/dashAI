@@ -40,7 +40,7 @@ class EmbeddingSchema(BaseSchema):
         ),
         "sentence-transformers/all-MiniLM-L6-v2",
         description=MultilingualString(
-            en="Name of the pre-trained model to use",
+            en="Name of the pretrained model to use",
             es="Nombre del modelo preentrenado a usar",
             pt="Nome do modelo pré-treinado a usar",
             de="Name des vortrainierten Modells, das verwendet werden soll",
@@ -164,7 +164,7 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         Parameters
         ----------
         column_name : str or None, optional
-            Name of the output column. Not used — all embedding columns
+            Name of the output column. Not used, since all embedding columns
             receive the same ``Float32`` type. Default ``None``.
 
         Returns

@@ -99,7 +99,7 @@ class SkewedChi2Sampler(
     """Approximate the skewed chi-squared kernel feature map
     via random Fourier features.
 
-    The skewed chi-squared kernel is well-suited for histogram-based features
+    The skewed chi-squared kernel is well suited for histogram-based features
     (e.g. visual bag-of-words, colour histograms) and is defined as:
 
         K(x, y) = prod_j  2 * sqrt(x_j + c) * sqrt(y_j + c) /

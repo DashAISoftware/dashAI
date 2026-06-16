@@ -94,11 +94,11 @@ class SimpleImputer(
 
     Each feature is imputed independently using one of four strategies:
 
-    * ``"mean"`` — replace missing values with the column mean (numeric only).
-    * ``"median"`` — replace with the column median (numeric only).
-    * ``"most_frequent"`` — replace with the most common value (works with
+    * ``"mean"``: replace missing values with the column mean (numeric only).
+    * ``"median"``: replace with the column median (numeric only).
+    * ``"most_frequent"``: replace with the most common value (works with
       strings and numeric data).
-    * ``"constant"`` — replace with a fixed ``fill_value`` supplied by the
+    * ``"constant"``: replace with a fixed ``fill_value`` supplied by the
       user.
 
     Columns with all-missing values are handled according to the

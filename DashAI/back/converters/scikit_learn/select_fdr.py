@@ -45,7 +45,7 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     offering a less conservative rejection policy than Family-Wise Error control
     while still providing statistical guarantees.
 
-    This filter is well suited to high-dimensional settings (e.g. genomics,
+    This filter is well suited to high dimensional settings (e.g. genomics,
     metabolomics) where many features are tested simultaneously and a small
     fraction of false positives among the selected set is acceptable in
     exchange for higher sensitivity.

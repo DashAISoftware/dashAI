@@ -14,7 +14,7 @@ from DashAI.back.types.value_types import Float, Integer
 class NormalizerSchema(BaseSchema):
     """Schema for Normalizer hyperparameters.
 
-    Configures the norm used for row-wise unit-norm scaling and the copy
+    Configures the norm used for row wise unit norm scaling and the copy
     semantics for sklearn's ``Normalizer``. The ``norm`` field selects between
     the L1, L2, and max norms applied to each individual sample.
     """
@@ -38,7 +38,7 @@ class NormalizerSchema(BaseSchema):
 class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOperation):
     """Normalize each sample (row) independently to unit norm.
 
-    Unlike column-wise scalers such as ``StandardScaler`` or
+    Unlike column wise scalers such as ``StandardScaler`` or
     ``MinMaxScaler``, this transformer operates along the sample axis.
     For each row vector ``x`` the transformation is::
 
@@ -46,14 +46,14 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
 
     where ``p`` is chosen by the ``norm`` parameter:
 
-    * ``"l2"`` (default) — Euclidean norm; the dot product of any two
+    * ``"l2"`` (default): Euclidean norm; the dot product of any two
       normalized samples equals the cosine of the angle between them.
-    * ``"l1"`` — Manhattan norm; useful when the direction of the feature
+    * ``"l1"``: Manhattan norm; useful when the direction of the feature
       vector matters more than relative magnitudes.
-    * ``"max"`` — divides by the largest absolute element; guarantees the
+    * ``"max"``: divides by the largest absolute element; guarantees the
       output lies in [-1, 1].
 
-    Row-wise normalization is particularly effective for text classification
+    Row wise normalization is particularly effective for text classification
     and clustering algorithms that rely on the dot product or cosine
     similarity (e.g. k-means on TF-IDF vectors, linear SVMs on bag-of-words
     features).

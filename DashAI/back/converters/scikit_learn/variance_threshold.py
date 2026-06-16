@@ -57,13 +57,13 @@ class VarianceThreshold(
 
     Common use cases include:
 
-    * **Constant-feature removal** — with the default ``threshold=0.0`` any
+    * **Constant-feature removal**: with the default ``threshold=0.0`` any
       feature that takes the same value in every training sample is dropped.
-    * **Near-constant-feature removal** — for binary features, a threshold
+    * **Near-constant-feature removal**: for binary features, a threshold
       of ``p * (1 - p)`` drops features that are ``True`` in fewer than a
       fraction ``p`` of samples (e.g. ``threshold=0.8 * 0.2 = 0.16``
       removes features that are ``True`` in less than 20 % of samples).
-    * **Pre-filtering before expensive selectors** — quickly reducing
+    * **Pre-filtering before expensive selectors**: quickly reducing
       dimensionality before applying supervised selection methods such as
       ``SelectKBest`` or ``RFECV``.
 

@@ -32,7 +32,7 @@ class TokenizerSchema(BaseSchema):
         ),
         "bert-base-uncased",
         description=MultilingualString(
-            en="Name of the pre-trained tokenizer model",
+            en="Name of the pretrained tokenizer model",
             es="Nombre del modelo de tokenización preentrenado",
             pt="Nome do modelo de tokenizer pré-treinado",
             de="Name des vortrainierten Tokenizer-Modells",
