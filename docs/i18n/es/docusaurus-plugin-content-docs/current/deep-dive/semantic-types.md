@@ -45,17 +45,17 @@ Los tipos `DashAIValue` representan medidas continuas u ordenadas. `Categorical`
 
 ### Tipos de Valor
 
-| Tipo | Atributos clave | Uso típico |
-|------|----------------|------------|
-| `Integer` | `dtype` (p. ej. `int64`), `signed` | Características de conteo, etiquetas con codificación ordinal |
-| `Float` | `dtype` (p. ej. `float64`) | Medidas continuas, objetivos de regresión |
-| `Text` | `dtype` (`string`), `encoding` | Texto libre, tareas de NLP |
-| `Date` | `format` (por defecto `YYYY-MM-DD`) | Fechas de calendario |
-| `Time` | `format` (por defecto `HH:mm:ss`) | Valores de hora del día |
-| `Timestamp` | `format`, `timezone` | Fecha y hora con zona horaria |
-| `Duration` | `unit` (`s`, `ms`, `us`, `ns`) | Intervalos de tiempo |
-| `Decimal` | `precision`, `scale`, `bit_width` | Numéricos de alta precisión |
-| `Binary` | - | Cargas útiles de bytes en bruto |
+| Tipo        | Atributos clave                     | Uso típico                                                    |
+| ----------- | ----------------------------------- | ------------------------------------------------------------- |
+| `Integer`   | `dtype` (p. ej. `int64`), `signed`  | Características de conteo, etiquetas con codificación ordinal |
+| `Float`     | `dtype` (p. ej. `float64`)          | Medidas continuas, objetivos de regresión                     |
+| `Text`      | `dtype` (`string`), `encoding`      | Texto libre, tareas de NLP                                    |
+| `Date`      | `format` (por defecto `YYYY-MM-DD`) | Fechas de calendario                                          |
+| `Time`      | `format` (por defecto `HH:mm:ss`)   | Valores de hora del día                                       |
+| `Timestamp` | `format`, `timezone`                | Fecha y hora con zona horaria                                 |
+| `Duration`  | `unit` (`s`, `ms`, `us`, `ns`)      | Intervalos de tiempo                                          |
+| `Decimal`   | `precision`, `scale`, `bit_width`   | Numéricos de alta precisión                                   |
+| `Binary`    | -                                   | Cargas útiles de bytes en bruto                               |
 
 ### Categorical
 
@@ -79,16 +79,16 @@ Los tipos se asignan automáticamente cuando se carga un dataset. dashAI soporta
 
 Usa el modelo de inferencia de tipos probabilístico **ptype**, que analiza los valores de cada columna para estimar el tipo semántico más probable. Salidas de ptype soportadas y sus mapeos en dashAI:
 
-| Salida ptype | Tipo dashAI |
-|---|---|
-| `integer` | `Integer` (`int64`) |
-| `float` | `Float` (`float64`) |
-| `string` | `Text` (`string`, UTF-8) |
-| `boolean` | `Categorical` (`string`) |
-| `categorical` | `Categorical` (`string`) |
+| Salida ptype    | Tipo dashAI                                   |
+| --------------- | --------------------------------------------- |
+| `integer`       | `Integer` (`int64`)                           |
+| `float`         | `Float` (`float64`)                           |
+| `string`        | `Text` (`string`, UTF-8)                      |
+| `boolean`       | `Categorical` (`string`)                      |
+| `categorical`   | `Categorical` (`string`)                      |
 | `date-iso-8601` | `Text` (análisis de fechas aún no automático) |
-| `date-eu` | `Text` |
-| `float_comma` | `Float` (coma decimal normalizada) |
+| `date-eu`       | `Text`                                        |
+| `float_comma`   | `Float` (coma decimal normalizada)            |
 
 Después de la clasificación con ptype, cualquier columna cuyo conteo y proporción de valores únicos estén dentro de los umbrales configurables se promueve adicionalmente a `Categorical`, independientemente de la salida original de ptype.
 
@@ -140,12 +140,12 @@ Antes del entrenamiento, `validate_dataset_for_task()` verifica que el tipo sem�
 
 **Requisitos de tipos por tarea:**
 
-| Tarea | Tipos de entrada permitidos | Tipo de salida requerido |
-|-------|----------------------------|--------------------------|
-| `TabularClassificationTask` | `Float`, `Integer`, `Categorical` | `Categorical` |
-| `RegressionTask` | `Float`, `Integer`, `Categorical` | `Float` o `Integer` |
-| `TextClassificationTask` | `Text` (exactamente 1 columna) | `Categorical` (exactamente 1 columna) |
-| `TranslationTask` | `Text` (exactamente 1 columna) | `Text` (exactamente 1 columna) |
+| Tarea                       | Tipos de entrada permitidos       | Tipo de salida requerido              |
+| --------------------------- | --------------------------------- | ------------------------------------- |
+| `TabularClassificationTask` | `Float`, `Integer`, `Categorical` | `Categorical`                         |
+| `RegressionTask`            | `Float`, `Integer`, `Categorical` | `Float` o `Integer`                   |
+| `TextClassificationTask`    | `Text` (exactamente 1 columna)    | `Categorical` (exactamente 1 columna) |
+| `TranslationTask`           | `Text` (exactamente 1 columna)    | `Text` (exactamente 1 columna)        |
 
 ### Contratos de Tipos de Converters
 
@@ -153,20 +153,20 @@ Cada converter implementa `get_output_type(column_name)` para declarar el tipo s
 
 **Contratos de converters comunes:**
 
-| Converter | Tipo de entrada | Tipo de salida |
-|-----------|----------------|----------------|
-| `OneHotEncoder` | `Categorical` | `Integer` (una columna binaria por categoría) |
-| `OrdinalEncoder` | `Categorical` | `Integer` |
-| `LabelEncoder` | `Categorical` | `Integer` |
-| `LabelBinarizer` | `Categorical` | `Integer` |
-| `StandardScaler` | `Integer`, `Float` | `Float` |
-| `MinMaxScaler` | `Integer`, `Float` | `Float` |
-| `Normalizer` | `Integer`, `Float` | `Float` |
-| `Binarizer` | `Integer`, `Float` | `Integer` |
-| `TFIDFConverter` | `Text` | `Float` |
-| `BagOfWordsConverter` | `Text` | `Float` |
-| `TokenizerConverter` | `Text` | `Integer` |
-| `PCA`, `TruncatedSVD`, `FastICA` | `Integer`, `Float` | `Float` |
+| Converter                        | Tipo de entrada    | Tipo de salida                                |
+| -------------------------------- | ------------------ | --------------------------------------------- |
+| `OneHotEncoder`                  | `Categorical`      | `Integer` (una columna binaria por categoría) |
+| `OrdinalEncoder`                 | `Categorical`      | `Integer`                                     |
+| `LabelEncoder`                   | `Categorical`      | `Integer`                                     |
+| `LabelBinarizer`                 | `Categorical`      | `Integer`                                     |
+| `StandardScaler`                 | `Integer`, `Float` | `Float`                                       |
+| `MinMaxScaler`                   | `Integer`, `Float` | `Float`                                       |
+| `Normalizer`                     | `Integer`, `Float` | `Float`                                       |
+| `Binarizer`                      | `Integer`, `Float` | `Integer`                                     |
+| `TFIDFConverter`                 | `Text`             | `Float`                                       |
+| `BagOfWordsConverter`            | `Text`             | `Float`                                       |
+| `TokenizerConverter`             | `Text`             | `Integer`                                     |
+| `PCA`, `TruncatedSVD`, `FastICA` | `Integer`, `Float` | `Float`                                       |
 
 ### Codificación de Etiquetas
 
@@ -181,15 +181,15 @@ No se necesita ningún paso de codificación manual por parte del usuario.
 
 Cuando un usuario cambia manualmente el tipo semántico de una columna en la UI, `validate_type_change()` verifica si la conversión es segura y factible:
 
-| De \ A | `Integer` | `Float` | `Text` | `Categorical` | `Date` | `Time` | `Timestamp` |
-|--------|:---------:|:-------:|:------:|:-------------:|:------:|:------:|:-----------:|
-| `Integer` | - | ✓ | ✓ | ✓ (si baja cardinalidad) | - | - | - |
-| `Float` | ✓ (si números enteros) | - | ✓ | ✓ (si baja cardinalidad) | - | - | - |
-| `Text` | ✓ (si analizable) | ✓ (si analizable) | - | ✓ (si baja cardinalidad) | ✓ | ✓ | ✓ |
-| `Categorical` | ✓ | ✓ | ✓ | - | - | - | - |
-| `Date` | - | - | ✓ | - | - | - | - |
-| `Time` | - | - | ✓ | - | - | - | - |
-| `Timestamp` | - | - | ✓ | - | - | - | - |
+| De \ A        |        `Integer`        |      `Float`       | `Text` |       `Categorical`       | `Date` | `Time` | `Timestamp` |
+| ------------- | :---------------------: | :----------------: | :----: | :-----------------------: | :----: | :----: | :---------: |
+| `Integer`     |            -            |         Sí         |   Sí   | Sí (si baja cardinalidad) |   -    |   -    |      -      |
+| `Float`       | Sí (si números enteros) |         -          |   Sí   | Sí (si baja cardinalidad) |   -    |   -    |      -      |
+| `Text`        |   Sí (si analizable)    | Sí (si analizable) |   -    | Sí (si baja cardinalidad) |   Sí   |   Sí   |     Sí      |
+| `Categorical` |           Sí            |         Sí         |   Sí   |             -             |   -    |   -    |      -      |
+| `Date`        |            -            |         -          |   Sí   |             -             |   -    |   -    |      -      |
+| `Time`        |            -            |         -          |   Sí   |             -             |   -    |   -    |      -      |
+| `Timestamp`   |            -            |         -          |   Sí   |             -             |   -    |   -    |      -      |
 
 Si la conversión no es segura (p. ej., promover una columna de texto de alta cardinalidad a `Categorical`), el validador devuelve un error descriptivo antes de que se modifique ningún dato.
 
@@ -197,13 +197,13 @@ Si la conversión no es segura (p. ej., promover una columna de texto de alta ca
 
 ## Archivos Fuente
 
-| Archivo | Rol |
-|---------|-----|
-| `DashAI/back/types/dashai_data_type.py` | Clase base abstracta `DashAIDataType` |
-| `DashAI/back/types/dashai_value.py` | Clase intermedia abstracta `DashAIValue` |
-| `DashAI/back/types/value_types.py` | Clases de tipos de valor concretos |
-| `DashAI/back/types/categorical.py` | Tipo `Categorical` con lógica de codificación |
-| `DashAI/back/types/utils.py` | Conversión de tipos Arrow ↔ dashAI, E/S de metadatos |
-| `DashAI/back/types/type_validation.py` | `validate_type_change()` y verificaciones de idoneidad |
-| `DashAI/back/types/inf/inference_methods.py` | `DashAIPtype` y `DummyCategoricalInference` |
-| `DashAI/back/types/inf/type_inference.py` | Punto de entrada `infer_types()` |
+| Archivo                                      | Rol                                                    |
+| -------------------------------------------- | ------------------------------------------------------ |
+| `DashAI/back/types/dashai_data_type.py`      | Clase base abstracta `DashAIDataType`                  |
+| `DashAI/back/types/dashai_value.py`          | Clase intermedia abstracta `DashAIValue`               |
+| `DashAI/back/types/value_types.py`           | Clases de tipos de valor concretos                     |
+| `DashAI/back/types/categorical.py`           | Tipo `Categorical` con lógica de codificación          |
+| `DashAI/back/types/utils.py`                 | Conversión de tipos Arrow ↔ dashAI, E/S de metadatos   |
+| `DashAI/back/types/type_validation.py`       | `validate_type_change()` y verificaciones de idoneidad |
+| `DashAI/back/types/inf/inference_methods.py` | `DashAIPtype` y `DummyCategoricalInference`            |
+| `DashAI/back/types/inf/type_inference.py`    | Punto de entrada `infer_types()`                       |
