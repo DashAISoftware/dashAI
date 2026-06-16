@@ -89,10 +89,10 @@ export default function Home() {
             <span className="dashai-hero__pill">
               <span className="dashai-hero__led" />
               DOCUMENTATION
-              <span className="dashai-hero__sep">·</span>
-              <span className="dashai-hero__pill-accent">
-                OPEN SOURCE · MIT
-              </span>
+              <span className="dashai-hero__sep">|</span>
+              <span className="dashai-hero__pill-accent">OPEN SOURCE</span>
+              <span className="dashai-hero__sep">|</span>
+              <span className="dashai-hero__pill-accent">MIT</span>
             </span>
             <h1 className="dashai-hero__title">
               Your complete guide to{" "}
