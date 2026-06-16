@@ -38,7 +38,7 @@ def _strip_html(text: str) -> str:
 class ZenodoDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from Zenodo.
 
-    Uses the Zenodo REST API — no authentication required for public records.
+    Uses the Zenodo REST API, with no authentication required for public records.
     Pagination is page-based; the cursor encodes the current page number as a
     string.
     """
@@ -115,7 +115,7 @@ class ZenodoDatasetSource(BaseDatasetSource):
         Parameters
         ----------
         query : str
-            Free-text search string.
+            Free text search string.
         limit : int, optional
             Maximum number of results per page, by default 20.
         cursor : str or None, optional

@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class HuggingFaceDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from HuggingFace Hub.
 
-    Uses ``huggingface_hub.HfApi`` — no authentication required for public
+    Uses ``huggingface_hub.HfApi``, with no authentication required for public
     datasets.  ``HfApi.list_datasets`` exposes an iterator rather than native
     cursors, so pagination is implemented by treating the cursor as a numeric
     offset and slicing the iterator.
