@@ -1557,6 +1557,8 @@ def _build_image_zip(table: "pa.Table") -> io.BytesIO:
     Uses ZIP_STORED (no compression) because image formats (JPEG, PNG) are
     already compressed — DEFLATE gains nothing but wastes significant CPU time.
     """
+    import pyarrow as pa
+
     label_col = next(
         (
             col
@@ -1646,6 +1648,7 @@ async def _build_export_response(
     StreamingResponse
         ZIP (image datasets) or CSV (tabular datasets).
     """
+    import pyarrow as pa
     import pyarrow.csv as csv
 
     image_cols = [
