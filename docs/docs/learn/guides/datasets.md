@@ -60,7 +60,7 @@ You can override any inferred type directly in the upload preview by clicking th
 | N rows          | Null    | Maximum rows to load; Null loads all                    |
 | Names           | Null    | Override column names                                   |
 | NA values       | Null    | Additional NA strings                                   |
-| Keep default NA | ✓       | Recognize built in NA strings automatically             |
+| Keep default NA | Yes     | Recognize built in NA strings automatically             |
 | True values     | Null    | Strings to interpret as boolean `True`                  |
 | False values    | Null    | Strings to interpret as boolean `False`                 |
 
@@ -134,11 +134,11 @@ A **low uniqueness warning** appears when a text column has very few distinct va
 
 Reports three structural issue categories:
 
-| Issue                   | What it means                                                         | What to do                                                      |
-| ----------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------- |
-| **Constant Columns**    | Every row has the same value, so no predictive information            | Remove before training                                          |
-| **High Cardinality**    | A categorical column has an unusually large number of distinct values | Investigate; may be a free text field or ID column in disguise  |
-| **Possible ID Columns** | Column appears to be a unique row identifier                          | Exclude from model input columns                                |
+| Issue                   | What it means                                                         | What to do                                                     |
+| ----------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **Constant Columns**    | Every row has the same value, so no predictive information            | Remove before training                                         |
+| **High Cardinality**    | A categorical column has an unusually large number of distinct values | Investigate; may be a free text field or ID column in disguise |
+| **Possible ID Columns** | Column appears to be a unique row identifier                          | Exclude from model input columns                               |
 
 The **Missing Data Patterns** panel shows whether missing values are randomly distributed or concentrated in specific columns. Concentrated missing values may indicate a systematic data collection issue worth addressing before modeling.
 
@@ -205,14 +205,14 @@ Converters modify the data. Each is applied to a configurable set of columns and
 
 **Dimensionality Reduction**
 
-| Converter                      | What it does                                                    |
-| ------------------------------ | --------------------------------------------------------------- |
-| `Principal Component Analysis` | Reduces to n components explaining maximum variance             |
-| `Incremental PCA`              | PCA for large datasets processed in memory efficient batches    |
-| `Truncated SVD`                | SVD based reduction, works with sparse matrices                 |
-| `Fast ICA`                     | Independent Component Analysis                                  |
+| Converter                      | What it does                                                   |
+| ------------------------------ | -------------------------------------------------------------- |
+| `Principal Component Analysis` | Reduces to n components explaining maximum variance            |
+| `Incremental PCA`              | PCA for large datasets processed in memory efficient batches   |
+| `Truncated SVD`                | SVD based reduction, works with sparse matrices                |
+| `Fast ICA`                     | Independent Component Analysis                                 |
 | `Nystroem Approximation`       | Approximates a kernel feature map for nonlinear representation |
-| `Variance Threshold`           | Removes features with variance below a threshold                |
+| `Variance Threshold`           | Removes features with variance below a threshold               |
 
 **Feature Selection**
 
@@ -231,7 +231,7 @@ Converters modify the data. Each is applied to a configurable set of columns and
 | ----------------------- | -------------------------------------------------------------------- |
 | `Polynomial Features`   | Generates polynomial and interaction terms from input features       |
 | `RBF Sampler`           | Approximates an RBF kernel feature map using random Fourier features |
-| `Additive Chi² Sampler` | Approximates the additive chi-squared kernel for nonnegative data   |
+| `Additive Chi² Sampler` | Approximates the additive chi-squared kernel for nonnegative data    |
 | `Skewed Chi² Sampler`   | Variant of chi-squared kernel approximation with a shift parameter   |
 
 **Resampling & Class Balancing**

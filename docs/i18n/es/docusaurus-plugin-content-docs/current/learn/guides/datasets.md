@@ -24,11 +24,11 @@ dashAI admite cuatro formatos de archivo. Cada uno tiene un cargador de datos de
 
 ### Formatos Admitidos y Cargadores de Datos
 
-| Formato | Cargador de Datos  | Extensiones     |
-| ------- | ------------------ | --------------- |
-| CSV     | `CSVDataLoader`    | `.csv`          |
-| Excel   | `ExcelDataLoader`  | `.xlsx`, `.xls` |
-| JSON    | `JSONDataLoader`   | `.json`         |
+| Formato | Cargador de Datos | Extensiones     |
+| ------- | ----------------- | --------------- |
+| CSV     | `CSVDataLoader`   | `.csv`          |
+| Excel   | `ExcelDataLoader` | `.xlsx`, `.xls` |
+| JSON    | `JSONDataLoader`  | `.json`         |
 
 El flujo de carga es en línea. Todo ocurre dentro de la página de Datasets sin navegar a otra página.
 
@@ -40,36 +40,36 @@ Puedes sobrescribir cualquier tipo inferido directamente en la vista previa de c
 
 ### Parámetros de CSVDataLoader
 
-| Parámetro  | Por defecto | Descripción                                                                                                                           |
-| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Nombre     | nombre del archivo | Nombre para mostrar del dataset dentro de dashAI                                                                   |
-| Separador  | `,`         | Carácter que separa los valores de columna. Usa `;` para exportaciones de Excel con configuración regional europea                    |
-| Encabezado | `infer`     | Fila que contiene los nombres de las columnas. `infer` detecta automáticamente; establece un número para archivos con filas de metadatos antes del encabezado |
-| Nombres    | Null        | Sobrescribir los nombres de columnas manualmente                                                                                      |
-| Codificación | `utf-8`  | Codificación de caracteres del archivo. Usa `latin-1` o `ISO-8859-1` para archivos con caracteres acentuados                         |
-| Valores NA | Null        | Cadenas adicionales a tratar como valores faltantes (p. ej. `"?"`, `"N/A"`)                                                          |
+| Parámetro    | Por defecto        | Descripción                                                                                                                                                   |
+| ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nombre       | nombre del archivo | Nombre para mostrar del dataset dentro de dashAI                                                                                                              |
+| Separador    | `,`                | Carácter que separa los valores de columna. Usa `;` para exportaciones de Excel con configuración regional europea                                            |
+| Encabezado   | `infer`            | Fila que contiene los nombres de las columnas. `infer` detecta automáticamente; establece un número para archivos con filas de metadatos antes del encabezado |
+| Nombres      | Null               | Sobrescribir los nombres de columnas manualmente                                                                                                              |
+| Codificación | `utf-8`            | Codificación de caracteres del archivo. Usa `latin-1` o `ISO-8859-1` para archivos con caracteres acentuados                                                  |
+| Valores NA   | Null               | Cadenas adicionales a tratar como valores faltantes (p. ej. `"?"`, `"N/A"`)                                                                                   |
 
 ### Parámetros de ExcelDataLoader
 
-| Parámetro          | Por defecto | Descripción                                                                    |
-| ------------------ | ----------- | ------------------------------------------------------------------------------ |
-| Hoja               | `0`         | Índice basado en cero de la hoja a cargar                                      |
-| Encabezado         | `0`         | Índice de fila basado en cero del encabezado de columna                        |
-| Usar columnas      | Null        | Lista de columnas separadas por coma a cargar; Null carga todas                |
-| Omitir filas       | Null        | Filas a omitir al inicio de la hoja                                            |
-| N filas            | Null        | Máximo de filas a cargar; Null carga todas                                     |
-| Nombres            | Null        | Sobrescribir nombres de columnas                                                |
-| Valores NA         | Null        | Cadenas NA adicionales                                                         |
-| Mantener NA por defecto | ✓      | Reconocer cadenas NA integradas automáticamente                                |
-| Valores verdaderos | Null        | Cadenas a interpretar como `True` booleano                                     |
-| Valores falsos     | Null        | Cadenas a interpretar como `False` booleano                                    |
+| Parámetro               | Por defecto | Descripción                                                     |
+| ----------------------- | ----------- | --------------------------------------------------------------- |
+| Hoja                    | `0`         | Índice basado en cero de la hoja a cargar                       |
+| Encabezado              | `0`         | Índice de fila basado en cero del encabezado de columna         |
+| Usar columnas           | Null        | Lista de columnas separadas por coma a cargar; Null carga todas |
+| Omitir filas            | Null        | Filas a omitir al inicio de la hoja                             |
+| N filas                 | Null        | Máximo de filas a cargar; Null carga todas                      |
+| Nombres                 | Null        | Sobrescribir nombres de columnas                                |
+| Valores NA              | Null        | Cadenas NA adicionales                                          |
+| Mantener NA por defecto | Sí          | Reconocer cadenas NA integradas automáticamente                 |
+| Valores verdaderos      | Null        | Cadenas a interpretar como `True` booleano                      |
+| Valores falsos          | Null        | Cadenas a interpretar como `False` booleano                     |
 
 ### Parámetros de JSONDataLoader
 
-| Parámetro   | Por defecto    | Descripción                                                              |
-| ----------- | -------------- | ------------------------------------------------------------------------ |
-| Nombre      | nombre del archivo | Nombre para mostrar                                                 |
-| Clave de datos | `data`      | Clave dentro del objeto JSON que contiene el arreglo de registros        |
+| Parámetro      | Por defecto        | Descripción                                                       |
+| -------------- | ------------------ | ----------------------------------------------------------------- |
+| Nombre         | nombre del archivo | Nombre para mostrar                                               |
+| Clave de datos | `data`             | Clave dentro del objeto JSON que contiene el arreglo de registros |
 
 El JSONDataLoader espera una estructura como `{ "data": [{...}, {...}] }`. Cambia `Clave de datos` para que coincida con la clave real en tu archivo si difiere de `data`.
 
@@ -134,11 +134,11 @@ Aparece una **advertencia de baja unicidad** cuando una columna de texto tiene m
 
 Reporta tres categorías de problemas estructurales:
 
-| Problema                     | Qué significa                                                                          | Qué hacer                                                         |
-| ---------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **Columnas Constantes**      | Cada fila tiene el mismo valor, sin ninguna información predictiva                     | Eliminar antes del entrenamiento                                  |
-| **Alta Cardinalidad**        | Una columna categórica tiene un número inusualmente grande de valores distintos        | Investigar; puede ser un campo de texto libre o una columna ID disfrazada |
-| **Posibles Columnas ID**     | La columna parece ser un identificador único de fila                                   | Excluir de las columnas de entrada del modelo                     |
+| Problema                 | Qué significa                                                                   | Qué hacer                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Columnas Constantes**  | Cada fila tiene el mismo valor, sin ninguna información predictiva              | Eliminar antes del entrenamiento                                          |
+| **Alta Cardinalidad**    | Una columna categórica tiene un número inusualmente grande de valores distintos | Investigar; puede ser un campo de texto libre o una columna ID disfrazada |
+| **Posibles Columnas ID** | La columna parece ser un identificador único de fila                            | Excluir de las columnas de entrada del modelo                             |
 
 El panel de **Patrones de Datos Faltantes** muestra si los valores faltantes están distribuidos aleatoriamente o concentrados en columnas específicas. Los valores faltantes concentrados pueden indicar un problema sistemático de recolección de datos que vale la pena abordar antes del modelado.
 
@@ -160,13 +160,13 @@ El dataset original nunca se modifica. Todos los cambios están aislados en la c
 
 Los Exploradores generan visualizaciones y resúmenes estadísticos del estado actual de los datos. No modifican los datos. Los exploradores disponibles están organizados en cinco categorías:
 
-| Categoría                       | Qué contiene                                                                                  |
-| ------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Inspección de Vista Previa**  | Describir Dataset (tabla de resumen estadístico), Mostrar Filas (vista paginada de registros) |
-| **Análisis de Relaciones**      | Mapa de calor de densidad, Gráfico de dispersión múltiple, Gráfico de dispersión             |
-| **Análisis Estadístico**        | Matriz de correlación, Matriz de covarianza                                                   |
-| **Análisis de Distribución**    | Diagrama de caja, Distribución empírica acumulada, Histograma, Nube de palabras              |
-| **Análisis Multidimensional**   | Gráfico de columnas múltiples, Categorías paralelas, Coordenadas paralelas                   |
+| Categoría                      | Qué contiene                                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------------------- |
+| **Inspección de Vista Previa** | Describir Dataset (tabla de resumen estadístico), Mostrar Filas (vista paginada de registros) |
+| **Análisis de Relaciones**     | Mapa de calor de densidad, Gráfico de dispersión múltiple, Gráfico de dispersión              |
+| **Análisis Estadístico**       | Matriz de correlación, Matriz de covarianza                                                   |
+| **Análisis de Distribución**   | Diagrama de caja, Distribución empírica acumulada, Histograma, Nube de palabras               |
+| **Análisis Multidimensional**  | Gráfico de columnas múltiples, Categorías paralelas, Coordenadas paralelas                    |
 
 Cada explorador tiene una configuración de dos pasos: primero seleccionar qué columnas incluir (alcance) y luego establecer los parámetros del explorador. Los resultados se renderizan en línea en la línea de tiempo del notebook debajo de la vista previa de datos.
 
@@ -176,80 +176,80 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 
 **Preprocesamiento Básico**
 
-| Convertidor          | Qué hace                                                                     |
-| -------------------- | ---------------------------------------------------------------------------- |
-| `NaN Remover`        | Elimina filas que contienen al menos un valor faltante                       |
-| `Simple Imputer`     | Rellena valores faltantes con media, mediana, más frecuente o una constante  |
-| `KNN Imputer`        | Rellena valores faltantes usando k vecinos más cercanos                      |
-| `Missing Indicator`  | Agrega columnas binarias que marcan qué valores faltaban                     |
-| `Column Remover`     | Elimina completamente las columnas seleccionadas del dataset        |
-| `Character Replacer` | Reemplaza caracteres o cadenas específicas en columnas de texto              |
+| Convertidor          | Qué hace                                                                    |
+| -------------------- | --------------------------------------------------------------------------- |
+| `NaN Remover`        | Elimina filas que contienen al menos un valor faltante                      |
+| `Simple Imputer`     | Rellena valores faltantes con media, mediana, más frecuente o una constante |
+| `KNN Imputer`        | Rellena valores faltantes usando k vecinos más cercanos                     |
+| `Missing Indicator`  | Agrega columnas binarias que marcan qué valores faltaban                    |
+| `Column Remover`     | Elimina completamente las columnas seleccionadas del dataset                |
+| `Character Replacer` | Reemplaza caracteres o cadenas específicas en columnas de texto             |
 
 **Codificación**
 
-| Convertidor       | Qué hace                                                               |
-| ----------------- | ---------------------------------------------------------------------- |
-| `Binarizer`       | Mapea valores numéricos a 0 o 1 basándose en un umbral                |
-| `Label Binarizer` | Binariza etiquetas en un esquema uno contra todos                      |
-| `Label Encoder`   | Codifica etiquetas categóricas como enteros (para columnas objetivo)   |
-| `One-Hot Encoder` | Crea una columna binaria para cada valor de categoría                  |
-| `Ordinal Encoder` | Codifica categorías como enteros ordenados                             |
+| Convertidor       | Qué hace                                                             |
+| ----------------- | -------------------------------------------------------------------- |
+| `Binarizer`       | Mapea valores numéricos a 0 o 1 basándose en un umbral               |
+| `Label Binarizer` | Binariza etiquetas en un esquema uno contra todos                    |
+| `Label Encoder`   | Codifica etiquetas categóricas como enteros (para columnas objetivo) |
+| `One-Hot Encoder` | Crea una columna binaria para cada valor de categoría                |
+| `Ordinal Encoder` | Codifica categorías como enteros ordenados                           |
 
 **Escalado y Normalización**
 
-| Convertidor      | Qué hace                                                                    |
-| ---------------- | --------------------------------------------------------------------------- |
-| `Max Abs Scaler` | Escala cada característica por su valor absoluto máximo (rango: -1 a 1)    |
-| `Min-Max Scaler` | Escala características a un rango especificado (por defecto: 0 a 1)        |
-| `Normalizer`     | Escala cada fila (registro) a norma unitaria                                |
+| Convertidor      | Qué hace                                                                |
+| ---------------- | ----------------------------------------------------------------------- |
+| `Max Abs Scaler` | Escala cada característica por su valor absoluto máximo (rango: -1 a 1) |
+| `Min-Max Scaler` | Escala características a un rango especificado (por defecto: 0 a 1)     |
+| `Normalizer`     | Escala cada fila (registro) a norma unitaria                            |
 
 **Reducción de Dimensionalidad**
 
-| Convertidor                    | Qué hace                                                                         |
-| ------------------------------ | -------------------------------------------------------------------------------- |
-| `Principal Component Analysis` | Reduce a n componentes explicando la máxima varianza                             |
-| `Incremental PCA`              | PCA para datasets grandes procesados en lotes eficientes en memoria    |
-| `Truncated SVD`                | Reducción basada en SVD, funciona con matrices dispersas                         |
-| `Fast ICA`                     | Análisis de Componentes Independientes                                           |
-| `Nystroem Approximation`       | Aproxima un mapa de características del kernel para representación no lineal     |
-| `Variance Threshold`           | Elimina características con varianza por debajo de un umbral                     |
+| Convertidor                    | Qué hace                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| `Principal Component Analysis` | Reduce a n componentes explicando la máxima varianza                         |
+| `Incremental PCA`              | PCA para datasets grandes procesados en lotes eficientes en memoria          |
+| `Truncated SVD`                | Reducción basada en SVD, funciona con matrices dispersas                     |
+| `Fast ICA`                     | Análisis de Componentes Independientes                                       |
+| `Nystroem Approximation`       | Aproxima un mapa de características del kernel para representación no lineal |
+| `Variance Threshold`           | Elimina características con varianza por debajo de un umbral                 |
 
 **Selección de Características**
 
-| Convertidor                 | Qué hace                                                                           |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `Select K Best`             | Mantiene las K características con las puntuaciones estadísticas más altas         |
-| `Select Percentile`         | Mantiene el X% superior de características por puntuación                          |
-| `Select FDR`                | Selecciona características controlando la tasa de falsos descubrimientos           |
-| `Select FPR`                | Selecciona características por umbral de significancia del valor p                 |
-| `Select FWE`                | Selecciona características con corrección estricta de error por familia            |
-| `Generic Univariate Filter` | Selector univariante configurable que combina puntuación y modo de selección       |
+| Convertidor                 | Qué hace                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `Select K Best`             | Mantiene las K características con las puntuaciones estadísticas más altas   |
+| `Select Percentile`         | Mantiene el X% superior de características por puntuación                    |
+| `Select FDR`                | Selecciona características controlando la tasa de falsos descubrimientos     |
+| `Select FPR`                | Selecciona características por umbral de significancia del valor p           |
+| `Select FWE`                | Selecciona características con corrección estricta de error por familia      |
+| `Generic Univariate Filter` | Selector univariante configurable que combina puntuación y modo de selección |
 
 **Métodos Polinomiales y de Kernel**
 
-| Convertidor             | Qué hace                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------- |
-| `Polynomial Features`   | Genera términos polinomiales y de interacción a partir de las características de entrada |
+| Convertidor             | Qué hace                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `Polynomial Features`   | Genera términos polinomiales y de interacción a partir de las características de entrada       |
 | `RBF Sampler`           | Aproxima un mapa de características de kernel RBF usando características de Fourier aleatorias |
-| `Additive Chi² Sampler` | Aproxima el kernel chi-cuadrado aditivo para datos no negativos                   |
-| `Skewed Chi² Sampler`   | Variante de la aproximación del kernel chi-cuadrado con un parámetro de desplazamiento |
+| `Additive Chi² Sampler` | Aproxima el kernel chi-cuadrado aditivo para datos no negativos                                |
+| `Skewed Chi² Sampler`   | Variante de la aproximación del kernel chi-cuadrado con un parámetro de desplazamiento         |
 
 **Remuestreo y Balanceo de Clases**
 
-| Convertidor            | Qué hace                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------- |
-| `SMOTE`                | Genera registros sintéticos de la clase minoritaria por interpolación           |
-| `SMOTE-ENN`            | SMOTE seguido de limpieza por Vecinos Editados más Cercanos                     |
+| Convertidor            | Qué hace                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `SMOTE`                | Genera registros sintéticos de la clase minoritaria por interpolación              |
+| `SMOTE-ENN`            | SMOTE seguido de limpieza por Vecinos Editados más Cercanos                        |
 | `Random Under-Sampler` | Elimina aleatoriamente registros de la clase mayoritaria para balancear el dataset |
 
 **Preprocesamiento Avanzado**
 
-| Convertidor    | Qué hace                                                                           |
-| -------------- | ---------------------------------------------------------------------------------- |
+| Convertidor    | Qué hace                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------ |
 | `TF-IDF`       | Convierte texto en vectores de características TF-IDF (frecuencias de palabras ponderadas) |
-| `Bag of Words` | Convierte texto en vectores de conteo de palabras sin procesar                     |
-| `Tokenizer`    | Convierte texto en secuencias de índices de tokens enteros                         |
-| `Embedding`    | Mapea secuencias de tokens a representaciones vectoriales semánticas densas        |
+| `Bag of Words` | Convierte texto en vectores de conteo de palabras sin procesar                             |
+| `Tokenizer`    | Convierte texto en secuencias de índices de tokens enteros                                 |
+| `Embedding`    | Mapea secuencias de tokens a representaciones vectoriales semánticas densas                |
 
 ### Guardar un Dataset Transformado
 
