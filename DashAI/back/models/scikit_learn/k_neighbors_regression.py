@@ -161,8 +161,8 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
 
     KNeighborsRegressor predicts the target value by computing the (weighted)
     mean of the ``n_neighbors`` closest training points. It is a non-parametric
-    method: no training phase is needed, and predictions can capture non-linear
-    patterns. Performance degrades in high-dimensional spaces.
+    method: no training phase is needed, and predictions can capture nonlinear
+    patterns. Performance degrades in high dimensional spaces.
 
     Key hyperparameters include ``n_neighbors``, ``weights``, ``algorithm``, and
     ``metric``. The implementation wraps scikit-learn's ``KNeighborsRegressor``.

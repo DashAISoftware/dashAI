@@ -200,7 +200,7 @@ class TorchvisionImageClassifierSchema(BaseSchema):
         placeholder=True,
         description=MultilingualString(
             en=(
-                "If True, loads weights pre-trained on ImageNet. "
+                "If True, loads weights pretrained on ImageNet. "
                 "Recommended when your dataset is small or similar to natural images."
             ),
             es=(
@@ -341,8 +341,8 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
     """Abstract base for torchvision image classifiers.
 
     Subclasses must implement:
-    - ``_build_backbone(num_classes, pretrained)`` — return the adapted model.
-    - ``_classifier_head()`` — return the head module unfrozen when
+    - ``_build_backbone(num_classes, pretrained)``: return the adapted model.
+    - ``_classifier_head()``: return the head module unfrozen when
       ``freeze_backbone=True``.
     """
 
@@ -508,7 +508,7 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
         return self
 
     def predict(self, x):
-        """Return per-class probability matrix for each image.
+        """Return per class probability matrix for each image.
 
         Parameters
         ----------

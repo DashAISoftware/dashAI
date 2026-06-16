@@ -83,7 +83,7 @@ class SDXLTurboSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Number of denoising steps. SDXL Turbo is a distilled model that "
-                "generates high-quality images in just 1-4 steps. Using 1 step is "
+                "generates high quality images in just 1-4 steps. Using 1 step is "
                 "fastest; 2-4 steps improve quality slightly. Values above 4 provide "
                 "diminishing returns for this model."
             ),
@@ -128,7 +128,7 @@ class SDXLTurboSchema(BaseSchema):
             en=(
                 "Hardware device for inference. SDXL Turbo is fast enough that CPU "
                 "inference is feasible (30-60 seconds per image). GPU is still "
-                "recommended for real-time or batch generation."
+                "recommended for real time or batch generation."
             ),
             es=(
                 "Dispositivo de hardware para inferencia. SDXL Turbo es lo "
@@ -300,7 +300,7 @@ class SDXLTurboSchema(BaseSchema):
 
 
 class SDXLTurboModel(TextToImageGenerationTaskModel):
-    """Distilled SDXL model for near-real-time text-to-image generation.
+    """Distilled SDXL model for near real time text-to-image generation.
 
     Wraps ``stabilityai/sdxl-turbo``, a version of Stable Diffusion XL
     trained with Adversarial Diffusion Distillation (ADD) by Stability AI.
@@ -308,11 +308,11 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     can produce photorealistic 512 px images in as few as one denoising step,
     up to 30x faster than standard SDXL.
 
-    Because ADD bakes guidance directly into the model weights, classifier-free
+    Because ADD bakes guidance directly into the model weights, classifier free
     guidance is disabled (``guidance_scale=0`` is enforced internally) and
     negative prompts have minimal effect.
 
-    Ideal for interactive and real-time applications where latency matters
+    Ideal for interactive and real time applications where latency matters
     more than absolute peak quality.
 
     References
@@ -334,11 +334,11 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     DESCRIPTION: str = MultilingualString(
         en=(
             "SDXL Turbo is a distilled version of Stable Diffusion XL by Stability AI "
-            "that generates high-quality images in a single denoising step using "
+            "that generates high quality images in a single denoising step using "
             "Adversarial Diffusion Distillation (ADD). It produces photorealistic "
             "images at 512x512 px resolution up to 30x faster than standard SDXL. "
-            "Ideal for interactive and real-time applications. Note: does not use "
-            "classifier-free guidance (guidance_scale=0 internally). Model available "
+            "Ideal for interactive and real time applications. Note: does not use "
+            "classifier free guidance (guidance_scale=0 internally). Model available "
             "at https://huggingface.co/stabilityai/sdxl-turbo."
         ),
         es=(
@@ -436,7 +436,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
 
     def generate(self, input: str) -> List[Any]:
-        """Generate images from a text prompt using single-step distillation.
+        """Generate images from a text prompt using single step distillation.
 
         Parameters
         ----------

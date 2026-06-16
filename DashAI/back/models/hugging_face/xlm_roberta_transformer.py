@@ -10,11 +10,11 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained XLM-RoBERTa model for multilingual text classification.
+    """Pretrained XLM-RoBERTa model for multilingual text classification.
 
     XLM-RoBERTa is a multilingual version of RoBERTa trained on 2.5 TB of
     filtered CommonCrawl data covering 100 languages. It achieves strong
-    performance on cross-lingual classification without language-specific
+    performance on crosslingual classification without language specific
     fine-tuning. Requires the ``sentencepiece`` package for its tokeniser.
 
     References
@@ -33,7 +33,7 @@ class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Multilingual RoBERTa for cross-lingual text classification "
+            "Multilingual RoBERTa for crosslingual text classification "
             "(100 languages). "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),

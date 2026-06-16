@@ -274,7 +274,7 @@ class DistilBertTransformerSchema(BaseSchema):
 
 
 class DistilBertTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained transformer DistilBERT allowing English text classification.
+    """Pretrained transformer DistilBERT allowing English text classification.
 
     DistilBERT is a small, fast, cheap and light Transformer model trained by
     distilling BERT base.

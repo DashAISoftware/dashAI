@@ -306,7 +306,7 @@ class SmolLMModel(TextToTextGenerationTaskModel):
 
     References
     ----------
-    - [1] Allal, L.B. et al. (2024). "SmolLM2 — with great data, comes great
+    - [1] Allal, L.B. et al. (2024). "SmolLM2: with great data, comes great
            performance." Hugging Face Blog.
            https://huggingface.co/blog/smollm2
     - [2] https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF

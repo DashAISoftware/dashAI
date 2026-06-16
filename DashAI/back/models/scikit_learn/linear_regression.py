@@ -135,7 +135,7 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     This model has no regularisation, so it can overfit when the number of features
     is large or predictors are highly collinear (consider ``RidgeRegression`` in those
     cases). Key hyperparameters are ``fit_intercept``, ``positive`` (constraint to
-    non-negative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
+    nonnegative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
     scikit-learn's ``LinearRegression``.
 
     References

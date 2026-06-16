@@ -19,7 +19,7 @@ class OpusMtTransformerMixin(TranslationModel):
 
     Subclasses must define ``MODEL_NAME`` (the HuggingFace checkpoint ID) and
     ``SCHEMA``. ``TEMP_CHECKPOINT_DIR`` defaults to a generic path but should
-    be overridden with a model-specific directory to avoid collisions between
+    be overridden with a model specific directory to avoid collisions between
     concurrent training runs of different language pairs.
 
     All seq2seq training, tokenization, inference, save, and load logic lives
@@ -39,7 +39,7 @@ class OpusMtTransformerMixin(TranslationModel):
         Parameters
         ----------
         model : transformers.PreTrainedModel or None
-            Pre-loaded model to reuse instead of downloading weights.
+            Preloaded model to reuse instead of downloading weights.
         **kwargs
             Training hyperparameters forwarded to ``validate_and_transform``.
         """

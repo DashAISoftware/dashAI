@@ -28,11 +28,11 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
 
     - Automatic tokenizer and model loading from Hugging Face Hub.
     - Training via ``transformers.Trainer`` with DashAI metric callbacks.
-    - Inference returning per-class probability matrices.
+    - Inference returning per class probability matrices.
     - Save/load utilities that preserve custom training parameters.
 
     .. note::
-        Requires internet access on first use to download pre-trained weights
+        Requires internet access on first use to download pretrained weights
         from the Hugging Face Hub.
     """
 
@@ -45,15 +45,15 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer model.
 
-        The process includes the instantiation of the pre-trained model and the
-        associated tokenizer. When ``model`` is ``None`` a fresh pre-trained
+        The process includes the instantiation of the pretrained model and the
+        associated tokenizer. When ``model`` is ``None`` a fresh pretrained
         model checkpoint is loaded from HuggingFace; when a model object
-        is supplied the tokenizer is reused without re-downloading weights.
+        is supplied the tokenizer is reused without redownloading weights.
 
         Parameters
         ----------
         model : transformers.PreTrainedModel or None, optional
-            An already-loaded HuggingFace model to reuse. If ``None`,
+            An already loaded HuggingFace model to reuse. If ``None`,
             the model will be loaded from the Hugging Face Hub based on
             ``MODEL_NAME``.
         **kwargs : dict

@@ -247,7 +247,7 @@ class DecisionTreeRegression(
         zh="决策树回归",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Interpretable tree-based regressor that partitions the feature space.",
+        en="Interpretable tree based regressor that partitions the feature space.",
         es=(
             "Regresor basado en árbol interpretable que particiona el espacio "
             "de características."
