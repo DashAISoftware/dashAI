@@ -60,25 +60,25 @@ La interfaz está disponible en español e inglés.
 | ------------------------------- | :----------------------------: | :-----------------: | :------------------: | :-----------------------: |
 | **Licenciamiento**              |                                |                     |                      |                           |
 | Licencia                        |             GPLv3              |        GPLv3        |         GPL          |          **MIT**          |
-| Sin paywall productivo          |               ✗                |          ✓          |          ✓           |           **✓**           |
+| Sín paywall productivo          |               No               |         Sí          |          Sí          |          **Sí**           |
 | **Extensibilidad**              |                                |                     |                      |                           |
 | Lenguaje de extensión           | Java (oficial) / Python (Labs) |  Python + Qt/PyQt   |         Java         |        **Python**         |
 | Abstracciones por rol funcional |       1 (nodo genérico)        | 1 (widget genérico) |  6 jerarquías Java   |    **12 clases base**     |
 | Tipo de interfaz                |       Desktop (Eclipse)        |   Desktop (PyQt)    | Desktop (Java Swing) | **Web (React + FastAPI)** |
-| UI generada automáticamente     |               ⚠                |          ✗          |          ✗           |           **✓**           |
+| UI generada automáticamente     |            Parcial             |         No          |          No          |          **Sí**           |
 | Boilerplate por componente      |       150–250 LdC (Java)       |      50–70 LdC      |      80–120 LdC      |       **20–40 LdC**       |
-| Soporte GPU                     |               ⚠                |          ⚠          |          ⚠           |           **⚠**           |
-| Interfaz multiidioma (ES/EN)    |               ✗                |          ✗          |          ✗           |           **✓**           |
+| Soporte GPU                     |            Parcial             |       Parcial       |       Parcial        |        **Partial**        |
+| Interfaz multiidioma (ES/EN)    |               No               |         No          |          No          |          **Sí**           |
 | **Catálogo nativo**             |                                |                     |                      |                           |
 | Modelos clasificación tabular   |              ~11               |         ~12         |         ~39          |          **15**           |
 | Modelos de regresión            |               ~9               |         ~12         |         ~32          |          **15**           |
-| Modelos clasificación de texto  |               ⚠                |          ⚠          |      33 (BoW)†       |          **15**           |
-| Modelos de traducción           |               ⚠                |          ✗          |          ✗           |           **9**           |
-| LLMs ejecutados localmente      |               ✗                |          ✗          |          ✗           |           **5**           |
-| Modelos de generación de imagen |               ⚠                |          ✗          |          ✗           |          **11**           |
+| Modelos clasificación de texto  |            Parcial             |       Parcial       |       33 (BoW)       |          **15**           |
+| Modelos de traducción           |            Parcial             |         No          |          No          |           **9**           |
+| LLMs ejecutados localmente      |               No               |         No          |          No          |           **5**           |
+| Modelos de generación de imagen |            Parcial             |         No          |          No          |          **11**           |
 | Frameworks de HPO integrados    |               1                |          0          |          1           |           **2**           |
 
-**Convenciones:** ✓ soporte nativo completo · ⚠ parcial o requiere extensiones adicionales · ✗ no soportado · LdC = líneas de código.
+**Convenciones:** Sí = soporte nativo completo, Parcial = parcial o requiere extensiones adicionales, No = no soportado, LdC = líneas de código.
 
 :::note UI generada automáticamente
 La vía oficial de KNIME (Java) requiere programar `NodeDialog` y `NodeView` manualmente. La vía experimental Python (Labs, desde v4.6) genera UI desde declaraciones de parámetros, pero no es el camino oficial. Orange y WEKA requieren código de interfaz manual en todos los casos.
