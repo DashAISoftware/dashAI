@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Guía del Módulo: Datasets
 
-El módulo de Datasets es el punto de entrada para todos los datos en dashAI. Todos los demás módulos — Modelos, Notebooks, Generativo — dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
+El módulo de Datasets es el punto de entrada para todos los datos en dashAI. Todos los demás módulos (Modelos, Notebooks, Generativo) dependen de que un dataset esté cargado aquí primero. Esta guía cubre qué hace el módulo, cómo funcionan sus componentes y cómo sacar el máximo provecho de cada funcionalidad.
 
 ---
 
@@ -30,11 +30,11 @@ dashAI admite cuatro formatos de archivo. Cada uno tiene un cargador de datos de
 | Excel   | `ExcelDataLoader`  | `.xlsx`, `.xls` |
 | JSON    | `JSONDataLoader`   | `.json`         |
 
-El flujo de carga es en línea — todo ocurre dentro de la página de Datasets sin navegar a otra página.
+El flujo de carga es en línea. Todo ocurre dentro de la página de Datasets sin navegar a otra página.
 
 ### Inferencia de Tipos
 
-Después de cargar un archivo, dashAI lee una cantidad configurable de filas (**Filas de Inferencia**, por defecto 1000) y asigna automáticamente un tipo semántico a cada columna: `Categorical`, `Float` o `Integer`. Estos tipos se utilizan en toda la plataforma — en las pestañas del Explorador, en el módulo de Modelos para verificar la compatibilidad de columnas, y en los convertidores de Notebook para filtrar las operaciones aplicables.
+Después de cargar un archivo, dashAI lee una cantidad configurable de filas (**Filas de Inferencia**, por defecto 1000) y asigna automáticamente un tipo semántico a cada columna: `Categorical`, `Float` o `Integer`. Estos tipos se utilizan en toda la plataforma: en las pestañas del Explorador, en el módulo de Modelos para verificar la compatibilidad de columnas, y en los convertidores de Notebook para filtrar las operaciones aplicables.
 
 Puedes sobrescribir cualquier tipo inferido directamente en la vista previa de carga haciendo clic en el menú desplegable del encabezado de cada columna. Corregir los tipos en el momento de la carga previene problemas posteriores en experimentos y transformaciones.
 
@@ -77,7 +77,7 @@ El JSONDataLoader espera una estructura como `{ "data": [{...}, {...}] }`. Cambi
 
 ## Explorador de Datasets (EDA)
 
-Al hacer clic en un dataset se abre su panel EDA integrado — un conjunto de análisis automáticos que se ejecutan de inmediato sin ninguna configuración. El panel está organizado en seis pestañas.
+Al hacer clic en un dataset se abre su panel EDA integrado, un conjunto de análisis automáticos que se ejecutan de inmediato sin ninguna configuración. El panel está organizado en seis pestañas.
 
 ### Puntuación de Calidad
 
@@ -87,10 +87,10 @@ Un porcentaje que se muestra en la parte superior derecha de cada vista de datas
 
 Muestra una tabla de **Vista Previa del Dataset** con las filas de datos reales. Hay cuatro controles de barra de herramientas disponibles:
 
-- **COLUMNAS** — mostrar/ocultar columnas específicas para enfocarse en lo que importa
-- **FILTROS** — aplicar filtros a nivel de fila para inspeccionar subconjuntos
-- **DENSIDAD** — alternar la altura de fila entre compacta y cómoda
-- **EXPORTAR** — descargar la vista actual
+- **COLUMNAS**: mostrar/ocultar columnas específicas para enfocarse en lo que importa
+- **FILTROS**: aplicar filtros a nivel de fila para inspeccionar subconjuntos
+- **DENSIDAD**: alternar la altura de fila entre compacta y cómoda
+- **EXPORTAR**: descargar la vista actual
 
 Las cinco tarjetas de resumen en la parte superior de cada vista de dataset ofrecen un chequeo inmediato de salud: Total de Filas, Total de Columnas, Tamaño del Archivo (MB), Filas Duplicadas y Valores Faltantes. Los valores distintos de cero en Filas Duplicadas o Valores Faltantes indican que puede ser necesario trabajar en la calidad de datos antes del entrenamiento.
 
@@ -110,17 +110,17 @@ Para cada columna `Float` o `Integer`, dashAI calcula y muestra:
 
 > ⚠️ Distribución sesgada a la derecha: Considera aplicar una transformación logarítmica.
 
-Estas sugerencias son accionables — si ves una, el convertidor de Notebook correspondiente (p. ej., una transformación logarítmica) es el siguiente paso recomendado.
+Estas sugerencias son accionables: si ves una, el convertidor de Notebook correspondiente (p. ej., una transformación logarítmica) es el siguiente paso recomendado.
 
 ### Pestaña Categórica
 
 Para cada columna `Categorical`:
 
-- **Valores Únicos** — cuántas categorías distintas existen
-- **Más Frecuente** — el valor de categoría dominante
-- **Conteo del Valor Principal** — cuántas veces aparece el valor dominante
-- **Distribución de Valores** — gráfico de barras de todos los conteos de categorías
-- **Proporción** — gráfico circular que muestra la participación de cada categoría
+- **Valores Únicos**: cuántas categorías distintas existen
+- **Más Frecuente**: el valor de categoría dominante
+- **Conteo del Valor Principal**: cuántas veces aparece el valor dominante
+- **Distribución de Valores**: gráfico de barras de todos los conteos de categorías
+- **Proporción**: gráfico circular que muestra la participación de cada categoría
 
 Una distribución muy desequilibrada (donde una categoría domina) en tu columna objetivo es una señal para considerar convertidores de remuestreo (SMOTE, RandomUnderSampler) antes de entrenar modelos de clasificación.
 
@@ -128,7 +128,7 @@ Una distribución muy desequilibrada (donde una categoría domina) en tu columna
 
 Activa solo cuando existen columnas de tipo texto. Muestra estadísticas basadas en longitud por columna: Longitud Promedio, Longitud Mediana, Promedio de Palabras, Valores Únicos, Longitud Mínima/Máxima, Rango.
 
-Aparece una **advertencia de baja unicidad** cuando una columna de texto tiene muy pocos valores distintos — esto generalmente significa que la columna fue clasificada incorrectamente como texto y debería ser `Categorical`. Corregir esto a nivel del dataset (volviendo a cargar el archivo) evita problemas posteriores.
+Aparece una **advertencia de baja unicidad** cuando una columna de texto tiene muy pocos valores distintos. Esto generalmente significa que la columna fue clasificada incorrectamente como texto y debería ser `Categorical`. Corregir esto a nivel del dataset (volviendo a cargar el archivo) evita problemas posteriores.
 
 ### Pestaña de Calidad de Datos
 
@@ -136,8 +136,8 @@ Reporta tres categorías de problemas estructurales:
 
 | Problema                     | Qué significa                                                                          | Qué hacer                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **Columnas Constantes**      | Cada fila tiene el mismo valor — ninguna información predictiva                        | Eliminar antes del entrenamiento                                  |
-| **Alta Cardinalidad**        | Una columna categórica tiene un número inusualmente grande de valores distintos        | Investigar — puede ser un campo de texto libre o una columna ID disfrazada |
+| **Columnas Constantes**      | Cada fila tiene el mismo valor, sin ninguna información predictiva                     | Eliminar antes del entrenamiento                                  |
+| **Alta Cardinalidad**        | Una columna categórica tiene un número inusualmente grande de valores distintos        | Investigar; puede ser un campo de texto libre o una columna ID disfrazada |
 | **Posibles Columnas ID**     | La columna parece ser un identificador único de fila                                   | Excluir de las columnas de entrada del modelo                     |
 
 El panel de **Patrones de Datos Faltantes** muestra si los valores faltantes están distribuidos aleatoriamente o concentrados en columnas específicas. Los valores faltantes concentrados pueden indicar un problema sistemático de recolección de datos que vale la pena abordar antes del modelado.
@@ -146,7 +146,7 @@ El panel de **Patrones de Datos Faltantes** muestra si los valores faltantes est
 
 Calcula correlaciones de Pearson por pares entre todas las columnas numéricas. El gráfico de barras interactivo muestra cada par de columnas con barras codificadas por color (verde = positivo, rojo/rosa = negativo). Al pasar el cursor se muestra el valor exacto de correlación.
 
-Las **Correlaciones Fuertes (|r| > 0.5)** se listan por separado — estas son las relaciones con mayor probabilidad de ser significativas. Una alta correlación entre dos características de entrada sugiere posible redundancia; una alta correlación entre una característica y la columna objetivo sugiere valor predictivo.
+Las **Correlaciones Fuertes (|r| > 0.5)** se listan por separado, ya que estas son las relaciones con mayor probabilidad de ser significativas. Una alta correlación entre dos características de entrada sugiere posible redundancia; una alta correlación entre una característica y la columna objetivo sugiere valor predictivo.
 
 ---
 
@@ -180,7 +180,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 | -------------------- | ---------------------------------------------------------------------------- |
 | `NaN Remover`        | Elimina filas que contienen al menos un valor faltante                       |
 | `Simple Imputer`     | Rellena valores faltantes con media, mediana, más frecuente o una constante  |
-| `KNN Imputer`        | Rellena valores faltantes usando k-vecinos más cercanos                      |
+| `KNN Imputer`        | Rellena valores faltantes usando k vecinos más cercanos                      |
 | `Missing Indicator`  | Agrega columnas binarias que marcan qué valores faltaban                     |
 | `Column Remover`     | Elimina completamente las columnas seleccionadas del dataset        |
 | `Character Replacer` | Reemplaza caracteres o cadenas específicas en columnas de texto              |
@@ -190,7 +190,7 @@ Los Convertidores modifican los datos. Cada uno se aplica a un conjunto configur
 | Convertidor       | Qué hace                                                               |
 | ----------------- | ---------------------------------------------------------------------- |
 | `Binarizer`       | Mapea valores numéricos a 0 o 1 basándose en un umbral                |
-| `Label Binarizer` | Binariza etiquetas en un esquema uno-contra-todos                      |
+| `Label Binarizer` | Binariza etiquetas en un esquema uno contra todos                      |
 | `Label Encoder`   | Codifica etiquetas categóricas como enteros (para columnas objetivo)   |
 | `One-Hot Encoder` | Crea una columna binaria para cada valor de categoría                  |
 | `Ordinal Encoder` | Codifica categorías como enteros ordenados                             |
@@ -260,7 +260,7 @@ Cuando el notebook contiene las transformaciones que deseas, haz clic en **GUARD
 ## Consejos
 
 - Usa la **Puntuación de Calidad** como verificación de salud de primera pasada antes de hacer cualquier análisis. Una puntuación por debajo del 100% siempre tiene una causa específica visible en la pestaña de Calidad de Datos.
-- Las **Alertas Inteligentes** en el Análisis Numérico son sugerencias priorizadas — abórdalas con el convertidor de Notebook correspondiente antes del entrenamiento para mejorar el rendimiento del modelo.
+- Las **Alertas Inteligentes** en el Análisis Numérico son sugerencias priorizadas. Abórdalas con el convertidor de Notebook correspondiente antes del entrenamiento para mejorar el rendimiento del modelo.
 - Construye pipelines de transformación en Notebooks de forma incremental: agrega un convertidor a la vez y verifica la vista previa antes de agregar el siguiente.
-- Los convertidores de remuestreo (SMOTE, RandomUnderSampler) solo deben aplicarse a la partición de entrenamiento, no al dataset completo — ten esto en cuenta al guardar un dataset transformado para usar en experimentos.
+- Los convertidores de remuestreo (SMOTE, RandomUnderSampler) solo deben aplicarse a la partición de entrenamiento, no al dataset completo. Ten esto en cuenta al guardar un dataset transformado para usar en experimentos.
 - Para datos de texto, aplica **TF-IDF** o **Bag of Words** cuando trabajes con modelos de ML tradicionales (Regresión Logística, SVM, Random Forest). Los modelos neuronales que aceptan texto sin procesar (como DistilBERT) no requieren estos pasos de preprocesamiento.
