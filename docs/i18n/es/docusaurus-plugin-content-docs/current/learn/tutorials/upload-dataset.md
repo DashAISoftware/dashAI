@@ -6,7 +6,7 @@ sidebar_label: Cargar un dataset
 # Cargar un dataset
 
 Este tutorial te guía a través del proceso de carga de un dataset en dashAI.
-Cargar un dataset es siempre el primer paso — una vez cargado, queda disponible
+Cargar un dataset es siempre el primer paso. Una vez cargado, queda disponible
 en toda la plataforma para exploración, preprocesamiento y entrenamiento de modelos.
 
 ## Formatos compatibles
@@ -26,7 +26,7 @@ en toda la plataforma para exploración, preprocesamiento y entrenamiento de mod
 En la barra de navegación superior, haz clic en **DATASETS**.
 En el área principal, haz clic en la opción **"Upload Dataset"** en el centro de la pantalla.
 
-Esto abre el flujo de carga en línea — permaneces en la misma pantalla durante todo el proceso.
+Esto abre el flujo de carga en línea, así que permaneces en la misma pantalla durante todo el proceso.
 
 ### 2. Seleccionar un Dataloader
 
@@ -105,7 +105,7 @@ Los parámetros de esta sección dependen del dataloader que hayas seleccionado.
 
 | Parámetro     | Tipo          | Descripción                                                                                                                                                                                                          |
 | ------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**      | Cadena        | El nombre que identificará este dataset dentro de dashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                      |
+| **Name**      | Cadena        | El nombre que identificará este dataset dentro de dashAI. Se rellena previamente con el nombre de tu archivo, y puedes cambiarlo aquí.                                                                      |
 | **Separator** | Desplegable   | El carácter que separa los valores de las columnas en tu CSV. El valor predeterminado es `,` (coma). Cambia a `;` (punto y coma) para archivos exportados desde Excel en configuraciones regionales en español o europeas, donde la coma es el separador decimal. |
 | **Header**    | Cadena        | Cómo dashAI identifica la fila que contiene los nombres de las columnas. El valor predeterminado `infer` lo detecta automáticamente (generalmente la primera fila). Establece un número de fila explícito si tu archivo tiene líneas de metadatos antes del encabezado real. |
 | **Names**     | Cadena / Null | Lista opcional de nombres de columna para asignar manualmente, reemplazando los nombres encontrados en el archivo. Deja como `Null` para usar los nombres de columna propios del archivo.                             |
@@ -118,7 +118,7 @@ Los parámetros de esta sección dependen del dataloader que hayas seleccionado.
 
 | Parámetro    | Tipo   | Descripción                                                                                                                                                                                                                                         |
 | ------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**     | Cadena | El nombre que identificará este dataset dentro de dashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                                                     |
+| **Name**     | Cadena | El nombre que identificará este dataset dentro de dashAI. Se rellena previamente con el nombre de tu archivo, y puedes cambiarlo aquí.                                                                                                     |
 | **Data key** | Cadena | La clave dentro de tu archivo JSON que contiene los registros de datos reales. El valor predeterminado es `data`. Cambia esto para que coincida con la clave de tu archivo donde se encuentran las filas o registros (p. ej., `"results"`, `"records"`, `"items"`). |
 
 :::note Estructura JSON
@@ -133,7 +133,7 @@ Si tus datos están almacenados bajo una clave diferente, establece **Data key**
 
 | Parámetro           | Tipo           | Descripción                                                                                                                                                                                                          |
 | ------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Cadena         | El nombre que identificará este dataset dentro de dashAI. Se rellena previamente con el nombre de tu archivo — puedes cambiarlo aquí.                                                                      |
+| **Name**            | Cadena         | El nombre que identificará este dataset dentro de dashAI. Se rellena previamente con el nombre de tu archivo, y puedes cambiarlo aquí.                                                                      |
 | **Sheet**           | Entero         | El índice de la hoja a cargar, comenzando en `0`. El valor predeterminado es `0` (la primera hoja). Cámbialo si tus datos están en una hoja diferente.                                                               |
 | **Header**          | Entero / Null  | El número de fila (indexado desde cero) que contiene los nombres de las columnas. El valor predeterminado es `0` (primera fila). Establece en `Null` si tu archivo no tiene fila de encabezado.                      |
 | **Use columns**     | Cadena / Null  | Especifica qué columnas cargar. Deja como `Null` para cargar todas las columnas. Puedes ingresar una lista separada por comas de nombres o índices de columnas para cargar solo columnas específicas.                |
@@ -147,7 +147,7 @@ Si tus datos están almacenados bajo una clave diferente, establece **Data key**
 
 :::note Keep default NA + NA values
 Estos dos parámetros funcionan juntos. Cuando **Keep default NA** está habilitado y también
-defines **NA values** personalizados, ambos conjuntos se combinan — tus cadenas personalizadas se agregan
+defines **NA values** personalizados, ambos conjuntos se combinan, y tus cadenas personalizadas se agregan
 encima de los valores predeterminados. Deshabilitar **Keep default NA** significa que solo tus cadenas
 definidas explícitamente serán tratadas como faltantes.
 :::
@@ -171,7 +171,7 @@ Haz clic en **"BACK"** en cualquier momento para volver al paso anterior sin per
 - Después de cargar, usa el módulo **Explorations** para verificar visualmente que las columnas
   se cargaron correctamente antes de ejecutar cualquier experimento.
 - Si una columna numérica aparece como `Categorical`, probablemente contiene caracteres no numéricos
-  (espacios, símbolos o valores mixtos) — revisa el archivo fuente y vuelve a cargarlo después de limpiar.
+  (espacios, símbolos o valores mixtos), así que revisa el archivo fuente y vuelve a cargarlo después de limpiar.
 - Usa el parámetro **N rows** (disponible en algunos dataloaders) para cargar solo una parte
   de un archivo grande mientras pruebas tu configuración.
 - El parámetro **Separator** es la fuente más común de errores de carga de una sola columna
