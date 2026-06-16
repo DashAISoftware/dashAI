@@ -69,13 +69,13 @@ class ScatterMatrixSchema(BaseExplorerSchema):
 class ScatterMatrixExplorer(RelationshipExplorer):
     """Display pairwise scatter plots for all selected numeric columns.
 
-    Generates a grid of scatter plots (also known as a SPLOM — Scatter PLOt
-    Matrix) where each cell shows the relationship between one pair of numeric
+    Generates a grid of scatter plots (also known as a SPLOM, short for Scatter
+    PLOt Matrix) where each cell shows the relationship between one pair of numeric
     columns. The diagonal cells can optionally show the distribution of a single
     variable. Colour and symbol encodings can be mapped to a grouping column to
     reveal class separation or cluster structure across all feature pairs at once.
 
-    This explorer is the standard first step for discovering linear and non-linear
+    This explorer is the standard first step for discovering linear and nonlinear
     pairwise correlations in tabular datasets before applying feature selection or
     dimensionality reduction.
     """

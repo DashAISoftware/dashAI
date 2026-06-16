@@ -148,8 +148,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     uncertainty.
 
     Unlike impurity-based importance (from decision trees), PFI is computed on
-    held-out data and is therefore not biased towards high-cardinality features.
-    It is model-agnostic and captures interaction effects, but assumes that
+    held out data and is therefore not biased towards high cardinality features.
+    It is model agnostic and captures interaction effects, but assumes that
     permuting a feature does not violate important correlations in the data.
 
     References
@@ -238,7 +238,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         """Map logical feature names to their column indices, grouping OHE columns.
 
         When the underlying model has a ``one_hot_encoder`` attribute, all
-        one-hot-encoded dummy columns that originated from the same categorical
+        one hot encoded dummy columns that originated from the same categorical
         feature are collected into a single group so that permutation importance
         is computed jointly. Non-encoded columns get a single-element group.
 
@@ -413,7 +413,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         """Compute permutation feature importance for the fitted model.
 
         Extracts the test split from ``dataset``, optionally encodes the
-        target column, groups one-hot-encoded columns, and computes importance
+        target column, groups one hot encoded columns, and computes importance
         scores by permuting each feature group and measuring the resulting
         drop in the configured scoring metric.
 

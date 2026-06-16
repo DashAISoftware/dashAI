@@ -54,11 +54,11 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     flowing through a series of vertical axes, one per selected column. The width
     of each ribbon is proportional to the number of samples that share that
     combination of categories. An optional colour axis further segments the flows
-    by a continuous or categorical variable, making patterns of co-occurrence and
+    by a continuous or categorical variable, making patterns of cooccurrence and
     class distribution immediately visible.
 
     Best suited for exploring relationships between three or more categorical
-    columns, such as demographic cross-tabulations or multi-label feature analysis.
+    columns, such as demographic cross tabulations or multilabel feature analysis.
     """
 
     DISPLAY_NAME = MultilingualString(
@@ -70,7 +70,7 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Visualizes high-dimensional categorical data. Each vertical line is "
+            "Visualizes high dimensional categorical data. Each vertical line is "
             "a category level and connections show combinations across columns."
         ),
         es=(
@@ -151,8 +151,8 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         """Generate a Plotly parallel categories plot for the selected columns.
 
         Each line represents a flow between category values across multiple
-        categorical axes, making it easy to visualize co-occurrence patterns
-        in high-dimensional categorical data.
+        categorical axes, making it easy to visualize cooccurrence patterns
+        in high dimensional categorical data.
 
         Parameters
         ----------

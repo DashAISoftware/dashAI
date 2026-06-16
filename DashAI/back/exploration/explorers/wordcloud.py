@@ -79,7 +79,7 @@ class WordcloudExplorer(DistributionExplorer):
     Concatenates the values of all selected text columns across every row of the
     dataset and produces a word cloud image where each word is rendered at a
     size proportional to its term frequency. Stop words are not removed
-    automatically; pre-processing should be applied via converters before
+    automatically; preprocessing should be applied via converters before
     running this explorer if stop-word filtering is desired.
 
     Word clouds are a quick way to identify the most common terms in a text

@@ -35,7 +35,7 @@ class ECDFPlotSchema(BaseExplorerSchema):
     ``color_column`` splits the ECDF into separate colour-coded traces for each
     distinct value of the chosen column, making it easy to compare distributions
     across groups on the same axes.  ``facet_col`` and ``facet_row`` create a
-    grid of sub-plots, one per category, for column-wise and row-wise faceting
+    grid of subplots, one per category, for column wise and row wise faceting
     respectively.
 
     ``ecdf_norm`` sets how the y-axis is scaled: ``"probability"`` maps the
@@ -184,9 +184,9 @@ class ECDFPlotExplorer(DistributionExplorer):
             color_column (str or int, optional): Column name or zero-based index
             used to split the ECDF into color-coded traces. Defaults to None.
             facet_col (str or int, optional): Column name or zero-based index used
-            to create column-wise subplot facets. Defaults to None.
+            to create column wise subplot facets. Defaults to None.
             facet_row (str or int, optional): Column name or zero-based index used
-            to create row-wise subplot facets. Defaults to None.
+            to create row wise subplot facets. Defaults to None.
             ecdf_norm (str, optional): Y-axis normalization. One of ``"none"``
             (cumulative count), ``"percent"``, or ``"probability"``.
             Defaults to ``"probability"``.

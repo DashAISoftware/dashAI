@@ -17,7 +17,7 @@ class ExplainedVariance(RegressionMetric):
     The Explained Variance Score quantifies how much of the variability in
     the dependent variable is captured by the model's predictions. It is
     closely related to R², but does not penalise for a systematic bias
-    (constant offset) in the predictions — a model with a fixed offset can
+    (constant offset) in the predictions. A model with a fixed offset can
     achieve a high Explained Variance score while having a lower R².
 
     ::

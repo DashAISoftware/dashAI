@@ -19,9 +19,9 @@ class Precision(ClassificationMetric):
 
     Precision (also called positive predictive value) measures the ability
     of the classifier to avoid labelling negative samples as positive. It is
-    the metric of choice when the cost of false positives is high — e.g. in
-    spam detection, flagging a legitimate email is more costly than missing
-    a spam.
+    the metric of choice when the cost of false positives is high. For
+    example, in spam detection, flagging a legitimate email is more costly
+    than missing a spam.
 
     For binary tasks the standard binary precision is used. For multiclass
     tasks, macro averaging (unweighted mean over all classes) is applied.
