@@ -68,6 +68,7 @@ export default function HubImportPanel({
   const [selectedFile, setSelectedFile] = useState(null);
 
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
@@ -100,6 +101,7 @@ export default function HubImportPanel({
   useEffect(() => {
     if (!dataset || !sourceName) return;
     setName(dataset.name || "");
+    setNameError(null);
     setLocalSelectedLoader(null);
     setPreviewData(null);
     setPreviewError(false);
@@ -225,8 +227,12 @@ export default function HubImportPanel({
       );
       enqueueSnackbar(t("hub:importSuccess"), { variant: "success" });
       onImported?.(created, importResult);
-    } catch {
-      enqueueSnackbar(t("hub:importError"), { variant: "error" });
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        setNameError(t("hub:datasetNameExists"));
+      } else {
+        enqueueSnackbar(t("hub:importError"), { variant: "error" });
+      }
     } finally {
       setImporting(false);
     }
@@ -400,8 +406,13 @@ export default function HubImportPanel({
             <TextField
               label={t("hub:datasetName")}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameError(null);
+              }}
               fullWidth
+              error={Boolean(nameError)}
+              helperText={nameError}
             />
 
             {previewLoading && (
