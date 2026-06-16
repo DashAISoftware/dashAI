@@ -70,7 +70,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
 
     SCHEMA = SelectFweSchema
     DESCRIPTION = MultilingualString(
-        en="Filter: Select features according to a family-wise error rate test.",
+        en="Filter: Select features according to a family wise error rate test.",
         es=(
             "Filtro: Selecciona características según una prueba de tasa de "
             "error familiar (FWE)."

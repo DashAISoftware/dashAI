@@ -147,7 +147,7 @@ class ECDFPlotExplorer(DistributionExplorer):
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Non-parametric plot showing the proportion or count of "
+            "Nonparametric plot showing the proportion or count of "
             "observations below each unique value."
         ),
         es=(

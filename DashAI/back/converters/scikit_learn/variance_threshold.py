@@ -74,7 +74,7 @@ class VarianceThreshold(
 
     SCHEMA = VarianceThresholdSchema
     DESCRIPTION = MultilingualString(
-        en="Feature selector that removes all low-variance features.",
+        en="Feature selector that removes all low variance features.",
         es="Selector de características que elimina todas las de baja varianza.",
         pt="Seletor de características que remove todas as de baixa variância.",
         de="Merkmalsselektor, der alle Merkmale mit niedriger Varianz entfernt.",

@@ -148,11 +148,11 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
         en="Encode categorical integer features as a one hot numeric array.",
         es=(
             "Codifica características categóricas enteras como un arreglo "
-            "numérico one-hot."
+            "numérico one hot."
         ),
         pt=(
             "Codifica características categóricas inteiras como um array "
-            "numérico One-Hot."
+            "numérico One Hot."
         ),
         de=("Kategoriale ganzzahlige Merkmale als One-Hot-numerisches Array kodieren."),
         zh="将类别整数特征编码为独热编码数值数组。",
