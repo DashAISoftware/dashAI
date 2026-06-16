@@ -12,9 +12,9 @@ Cuando se carga un dataset, dashAI asigna un **tipo semántico** a cada columna.
 
 Esta clasificación impulsa tres comportamientos críticos en toda la plataforma:
 
-- **Compatibilidad de tareas** — solo las columnas cuyos tipos coinciden con los requisitos de una tarea pueden seleccionarse como entradas o salidas.
-- **Encadenamiento de converters** — los converters declaran el tipo que aceptan y el tipo que producen, habilitando pipelines de preprocesamiento seguras.
-- **Codificación de etiquetas** — las columnas de salida categóricas se codifican automáticamente como enteros antes del entrenamiento y se decodifican de vuelta a etiquetas de cadena tras la predicción.
+- **Compatibilidad de tareas**: solo las columnas cuyos tipos coinciden con los requisitos de una tarea pueden seleccionarse como entradas o salidas.
+- **Encadenamiento de converters**: los converters declaran el tipo que aceptan y el tipo que producen, habilitando pipelines de preprocesamiento seguras.
+- **Codificación de etiquetas**: las columnas de salida categóricas se codifican automáticamente como enteros antes del entrenamiento y se decodifican de vuelta a etiquetas de cadena tras la predicción.
 
 ---
 
@@ -55,17 +55,17 @@ Los tipos `DashAIValue` representan medidas continuas u ordenadas. `Categorical`
 | `Timestamp` | `format`, `timezone` | Fecha y hora con zona horaria |
 | `Duration` | `unit` (`s`, `ms`, `us`, `ns`) | Intervalos de tiempo |
 | `Decimal` | `precision`, `scale`, `bit_width` | Numéricos de alta precisión |
-| `Binary` | — | Cargas útiles de bytes en bruto |
+| `Binary` | - | Cargas útiles de bytes en bruto |
 
 ### Categorical
 
 `Categorical` es el tipo estructuralmente más rico. Almacena:
 
-- `categories` — lista ordenada de valores de cadena únicos (`["cat", "dog", "bird"]`)
-- `dtype` — tipo de almacenamiento subyacente de PyArrow (`string`, `int64`, etc.)
-- `encoding` / `str2int` — diccionario que mapea cada categoría a un entero (`{"cat": 0, "dog": 1, "bird": 2}`)
-- `decoding` / `int2str` — mapeo inverso (`{0: "cat", 1: "dog", 2: "bird"}`)
-- `converted` — indicador de si la columna ya ha sido codificada como entero
+- `categories`: lista ordenada de valores de cadena únicos (`["cat", "dog", "bird"]`)
+- `dtype`: tipo de almacenamiento subyacente de PyArrow (`string`, `int64`, etc.)
+- `encoding` / `str2int`: diccionario que mapea cada categoría a un entero (`{"cat": 0, "dog": 1, "bird": 2}`)
+- `decoding` / `int2str`: mapeo inverso (`{0: "cat", 1: "dog", 2: "bird"}`)
+- `converted`: indicador de si la columna ya ha sido codificada como entero
 
 `Categorical` se usa para todas las columnas de destino de clasificación y para cualquier columna de característica que contenga un conjunto discreto de etiquetas (p. ej., país, categoría de producto).
 
@@ -113,7 +113,7 @@ Una heurística ligera utilizada cuando ptype no está disponible:
 
 Los tipos semánticos se serializan en los **metadatos de la tabla Apache Arrow** bajo la clave `dashai_types` y se almacenan junto al archivo Arrow IPC del dataset. Esto significa:
 
-- Los tipos sobreviven a ciclos de guardado/carga sin necesidad de re-inferencia.
+- Los tipos sobreviven a ciclos de guardado/carga sin necesidad de reinferencia.
 - Los Notebooks heredan los tipos de su dataset fuente.
 - Los converters que cambian el tipo de una columna actualizan los metadatos en el lugar.
 
@@ -172,8 +172,8 @@ Cada converter implementa `get_output_type(column_name)` para declarar el tipo s
 
 Las tareas de clasificación requieren una columna de salida `Categorical`, pero la mayoría de los modelos de ML requieren objetivos numéricos. dashAI maneja esto automáticamente:
 
-1. **Antes del entrenamiento** — `categorical_label_encoder()` convierte cada columna de salida `Categorical` a `Integer` usando el mapa `str2int` del tipo `Categorical`. El mapeo se guarda para poder revertirlo.
-2. **Después de la predicción** — `process_predictions()` aplica el mapa inverso `int2str` para convertir las predicciones enteras de vuelta a sus etiquetas de cadena originales antes de mostrar los resultados o guardarlos en disco.
+1. **Antes del entrenamiento**: `categorical_label_encoder()` convierte cada columna de salida `Categorical` a `Integer` usando el mapa `str2int` del tipo `Categorical`. El mapeo se guarda para poder revertirlo.
+2. **Después de la predicción**: `process_predictions()` aplica el mapa inverso `int2str` para convertir las predicciones enteras de vuelta a sus etiquetas de cadena originales antes de mostrar los resultados o guardarlos en disco.
 
 No se necesita ningún paso de codificación manual por parte del usuario.
 
@@ -183,13 +183,13 @@ Cuando un usuario cambia manualmente el tipo semántico de una columna en la UI,
 
 | De \ A | `Integer` | `Float` | `Text` | `Categorical` | `Date` | `Time` | `Timestamp` |
 |--------|:---------:|:-------:|:------:|:-------------:|:------:|:------:|:-----------:|
-| `Integer` | — | ✓ | ✓ | ✓ (si baja cardinalidad) | — | — | — |
-| `Float` | ✓ (si números enteros) | — | ✓ | ✓ (si baja cardinalidad) | — | — | — |
-| `Text` | ✓ (si analizable) | ✓ (si analizable) | — | ✓ (si baja cardinalidad) | ✓ | ✓ | ✓ |
-| `Categorical` | ✓ | ✓ | ✓ | — | — | — | — |
-| `Date` | — | — | ✓ | — | — | — | — |
-| `Time` | — | — | ✓ | — | — | — | — |
-| `Timestamp` | — | — | ✓ | — | — | — | — |
+| `Integer` | - | ✓ | ✓ | ✓ (si baja cardinalidad) | - | - | - |
+| `Float` | ✓ (si números enteros) | - | ✓ | ✓ (si baja cardinalidad) | - | - | - |
+| `Text` | ✓ (si analizable) | ✓ (si analizable) | - | ✓ (si baja cardinalidad) | ✓ | ✓ | ✓ |
+| `Categorical` | ✓ | ✓ | ✓ | - | - | - | - |
+| `Date` | - | - | ✓ | - | - | - | - |
+| `Time` | - | - | ✓ | - | - | - | - |
+| `Timestamp` | - | - | ✓ | - | - | - | - |
 
 Si la conversión no es segura (p. ej., promover una columna de texto de alta cardinalidad a `Categorical`), el validador devuelve un error descriptivo antes de que se modifique ningún dato.
 
