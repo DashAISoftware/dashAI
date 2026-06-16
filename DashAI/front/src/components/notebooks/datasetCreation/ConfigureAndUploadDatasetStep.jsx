@@ -31,6 +31,7 @@ export default function ConfigureAndUploadDatasetStep({
     [existingDatasets],
   );
   const [datasetName, setDatasetName] = useState("");
+  const [nameError, setNameError] = useState(null);
   const lastAutoFilledRef = useRef(null);
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -134,10 +135,14 @@ export default function ConfigureAndUploadDatasetStep({
         }
       } catch (error) {
         console.error("Error creating dataset:", error);
-        enqueueSnackbar(t("datasets:error.createDatasetError"), {
-          variant: "error",
-        });
-        backHome();
+        if (error?.response?.status === 409) {
+          setNameError(t("datasets:error.datasetNameExists"));
+        } else {
+          enqueueSnackbar(t("datasets:error.createDatasetError"), {
+            variant: "error",
+          });
+          backHome();
+        }
       } finally {
         setUploading(false);
       }
@@ -239,8 +244,13 @@ export default function ConfigureAndUploadDatasetStep({
         <TextField
           label={t("datasets:label.datasetName")}
           value={datasetName}
-          onChange={(e) => setDatasetName(e.target.value)}
+          onChange={(e) => {
+            setDatasetName(e.target.value);
+            setNameError(null);
+          }}
           fullWidth
+          error={Boolean(nameError)}
+          helperText={nameError}
         />
       </Box>
 
