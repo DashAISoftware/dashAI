@@ -13,7 +13,7 @@ const SECTIONS = [
     title: "What is dashAI?",
     tag: "START HERE",
     chips: ["OVERVIEW", "INSTALL", "USE CASES"],
-    desc: "Overview, key features, installation, and use cases — for new users.",
+    desc: "For new users: overview, key features, installation, and use cases.",
     to: "/discover/overview",
   },
   {
@@ -22,7 +22,7 @@ const SECTIONS = [
     title: "Tutorials & Guides",
     tag: "GUIDES",
     chips: ["TUTORIALS", "MODULES", "ML FLOWS"],
-    desc: "Step-by-step tutorials, module guides, and complete ML flows.",
+    desc: "Step by step tutorials, module guides, and complete ML flows.",
     to: "/learn/tutorials/upload-dataset",
   },
   {
@@ -99,8 +99,8 @@ export default function Home() {
               <span className="dashai-hero__accent">dashAI</span>.
             </h1>
             <p className="dashai-hero__sub">
-              Learn to train, evaluate, and explain machine-learning models — no
-              code required. Browse tutorials, architecture deep-dives, and the
+              Learn to train, evaluate, and explain machine learning models, no
+              code required. Browse tutorials, architecture deep dives, and the
               full component reference.
             </p>
             <div className="dashai-hero__cta">
@@ -117,7 +117,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Section 01 — doc sections ── */}
+        {/* ── Section 01 - doc sections ── */}
         <section className="dashai-section">
           <div className="dashai-wrap">
             <div className="dashai-sec-head">
@@ -128,7 +128,7 @@ export default function Home() {
                 Where do you want to start?
               </h2>
               <p className="dashai-sec-head__lead">
-                Four paths through the docs — from your first dataset to the
+                Four paths through the docs, from your first dataset to the
                 platform's internals and API.
               </p>
             </div>
@@ -167,7 +167,7 @@ export default function Home() {
               ))}
             </div>
 
-            {/* New to dashAI? — inline strip below the cards */}
+            {/* New to dashAI? - inline strip below the cards */}
             <div className="dashai-startcta">
               <div className="dashai-startcta__icon">
                 <svg
@@ -186,7 +186,7 @@ export default function Home() {
                 <div className="dashai-startcta__heading">New to dashAI?</div>
                 <div className="dashai-startcta__text">
                   Follow the Getting Started guide to set up the workbench and
-                  train your first model — step by step.
+                  train your first model, step by step.
                 </div>
               </div>
               <Link to="/discover/workbench" className="dashai-cta__btn">
@@ -196,7 +196,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Acknowledgments — dark branded footer band ── */}
+        {/* ── Acknowledgments - dark branded footer band ── */}
         <section className="dashai-cta-band dashai-footer-band">
           <Watermark className="dashai-wm dashai-wm--cta" />
           <div className="dashai-wrap dashai-footer-band__inner">

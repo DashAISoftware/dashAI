@@ -13,7 +13,7 @@ const SECTIONS = [
     title: "¿Qué es dashAI?",
     tag: "EMPIEZA AQUÍ",
     chips: ["VISIÓN GENERAL", "INSTALACIÓN", "CASOS DE USO"],
-    desc: "Descripción general, características clave, instalación y casos de uso — para nuevos usuarios.",
+    desc: "Para nuevos usuarios: descripción general, características clave, instalación y casos de uso.",
     to: "/discover/overview",
   },
   {
@@ -100,7 +100,7 @@ export default function Home() {
             </h1>
             <p className="dashai-hero__sub">
               Aprende a entrenar, evaluar y explicar modelos de Machine Learning
-              — sin escribir código. Explora tutoriales, arquitectura y la
+              sin escribir código. Explora tutoriales, arquitectura y la
               referencia completa de componentes.
             </p>
             <div className="dashai-hero__cta">
@@ -117,7 +117,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Section 01 — doc sections ── */}
+        {/* ── Section 01 - doc sections ── */}
         <section className="dashai-section">
           <div className="dashai-wrap">
             <div className="dashai-sec-head">
@@ -128,7 +128,7 @@ export default function Home() {
                 ¿Por dónde quieres empezar?
               </h2>
               <p className="dashai-sec-head__lead">
-                Cuatro caminos por la documentación — desde tu primer dataset
+                Cuatro caminos por la documentación, desde tu primer dataset
                 hasta los internos y la API de la plataforma.
               </p>
             </div>
@@ -167,7 +167,7 @@ export default function Home() {
               ))}
             </div>
 
-            {/* ¿Nuevo en dashAI? — strip below the cards */}
+            {/* ¿Nuevo en dashAI? - strip below the cards */}
             <div className="dashai-startcta">
               <div className="dashai-startcta__icon">
                 <svg
@@ -188,7 +188,7 @@ export default function Home() {
                 </div>
                 <div className="dashai-startcta__text">
                   Sigue la guía de inicio para configurar el workbench y
-                  entrenar tu primer modelo — paso a paso.
+                  entrenar tu primer modelo, paso a paso.
                 </div>
               </div>
               <Link to="/discover/workbench" className="dashai-cta__btn">
@@ -198,7 +198,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Acknowledgments — dark branded footer band ── */}
+        {/* ── Acknowledgments - dark branded footer band ── */}
         <section className="dashai-cta-band dashai-footer-band">
           <Watermark className="dashai-wm dashai-wm--cta" />
           <div className="dashai-wrap dashai-footer-band__inner">
