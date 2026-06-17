@@ -254,7 +254,7 @@ const getTheme = (mode) => ({
       styleOverrides: {
         colorPrimary: ({ theme }) => ({
           "&:hover": {
-            backgroundColor: `${theme.palette.primary.light}1A`,
+            backgroundColor: `${theme.palette.secondary.main}1A`,
           },
         }),
       },
@@ -263,7 +263,7 @@ const getTheme = (mode) => ({
       styleOverrides: {
         containedPrimary: ({ theme }) => ({
           "&:hover": {
-            backgroundColor: theme.palette.primary.light,
+            backgroundColor: theme.palette.secondary.main,
           },
         }),
       },

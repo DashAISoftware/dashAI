@@ -128,7 +128,7 @@ function ComponentSelector({
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
           transition: "border-color 0.15s, background 0.15s",
-          "&:hover": { borderColor: "primary.light" },
+          "&:hover": { borderColor: "secondary.main" },
         }}
       >
         {icon && (
