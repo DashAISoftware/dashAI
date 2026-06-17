@@ -20,6 +20,8 @@ import {
   listDatafileFiles,
   previewHubDataset,
 } from "../../api/hub";
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+import { getNextAvailableName } from "../../utils/nameGenerator";
 import { getComponents } from "../../api/component";
 import ComponentSelector from "../custom/ComponentSelector";
 import PreviewDataset from "../notebooks/datasetCreation/PreviewDataset";
@@ -47,6 +49,7 @@ export default function HubImportPanel({
   const { t } = useTranslation(["hub", "common", "datasets"]);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const { datasets } = useDatasetsAndNotebooks();
   const [localStep, setLocalStep] = useState(0);
   const [localSelectedLoader, setLocalSelectedLoader] = useState(null);
   const stepValue = step ?? localStep;
@@ -68,7 +71,6 @@ export default function HubImportPanel({
   const [selectedFile, setSelectedFile] = useState(null);
 
   const [name, setName] = useState("");
-  const [nameError, setNameError] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
@@ -101,7 +103,6 @@ export default function HubImportPanel({
   useEffect(() => {
     if (!dataset || !sourceName) return;
     setName(dataset.name || "");
-    setNameError(null);
     setLocalSelectedLoader(null);
     setPreviewData(null);
     setPreviewError(false);
@@ -205,7 +206,20 @@ export default function HubImportPanel({
     if (!name.trim() || !dataset || !selectedValue || formHasErrors) return;
     setImporting(true);
     try {
-      const created = await createDataset(name.trim());
+      let effectiveName = name.trim();
+      let created;
+      try {
+        created = await createDataset(effectiveName);
+      } catch (createError) {
+        if (createError?.response?.status === 409) {
+          effectiveName = getNextAvailableName(effectiveName, datasets);
+          setName(effectiveName);
+          created = await createDataset(effectiveName);
+        } else {
+          throw createError;
+        }
+      }
+
       // eslint-disable-next-line no-unused-vars
       const { compute_metadata, ...dataloaderParams } = formValues || {};
       const importParams = {
@@ -227,12 +241,8 @@ export default function HubImportPanel({
       );
       enqueueSnackbar(t("hub:importSuccess"), { variant: "success" });
       onImported?.(created, importResult);
-    } catch (error) {
-      if (error?.response?.status === 409) {
-        setNameError(t("hub:datasetNameExists"));
-      } else {
-        enqueueSnackbar(t("hub:importError"), { variant: "error" });
-      }
+    } catch {
+      enqueueSnackbar(t("hub:importError"), { variant: "error" });
     } finally {
       setImporting(false);
     }
@@ -406,13 +416,8 @@ export default function HubImportPanel({
             <TextField
               label={t("hub:datasetName")}
               value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setNameError(null);
-              }}
+              onChange={(e) => setName(e.target.value)}
               fullWidth
-              error={Boolean(nameError)}
-              helperText={nameError}
             />
 
             {previewLoading && (
