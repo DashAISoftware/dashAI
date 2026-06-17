@@ -19,6 +19,11 @@ log = logging.getLogger(__name__)
 _ZENODO_API = "https://zenodo.org/api"
 
 
+def _escape_lucene_phrase(s: str) -> str:
+    """Escape backslash and double-quote inside a Lucene quoted-string phrase."""
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def _strip_html(text: str) -> str:
     """Remove HTML tags from a string.
 
@@ -122,7 +127,10 @@ class ZenodoDatasetSource(BaseDatasetSource):
             Opaque pagination token (encodes the page number as a string).
             Pass ``None`` to fetch the first page.
         **filters : Any
-            Unused; reserved for future filters.
+            Supported keys:
+              tags (list[str]): Filter by Zenodo keywords. Each tag is
+                appended to the query using Lucene ``keywords:"<tag>"``
+                syntax (AND logic).
 
         Returns
         -------
@@ -131,8 +139,18 @@ class ZenodoDatasetSource(BaseDatasetSource):
         """
         try:
             page = int(cursor) if cursor else 1
+            tags: list[str] = filters.get("tags") or []
+            keyword_clauses = " AND ".join(
+                f'keywords:"{_escape_lucene_phrase(t)}"' for t in tags
+            )
+            if query and tags:
+                zenodo_q = f"({query}) AND {keyword_clauses}"
+            elif tags:
+                zenodo_q = keyword_clauses
+            else:
+                zenodo_q = query
             params: dict[str, Any] = {
-                "q": query,
+                "q": zenodo_q,
                 "type": "dataset",
                 "page": page,
                 "size": limit,

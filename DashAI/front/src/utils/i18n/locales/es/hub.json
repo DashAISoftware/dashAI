@@ -60,5 +60,6 @@
   "datasetDetails": "Detalles del Datafile",
   "checkQueue": "Revisa la cola de trabajos para más detalles",
   "deleteSuccess": "Datafile \"{{name}}\" eliminado.",
-  "deleteError": "Error al eliminar el datafile."
+  "deleteError": "Error al eliminar el datafile.",
+  "tagFilterPlaceholder": "Filtrar por etiqueta, presiona Enter para agregar..."
 }

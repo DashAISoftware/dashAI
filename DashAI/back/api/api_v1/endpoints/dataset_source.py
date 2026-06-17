@@ -52,6 +52,7 @@ async def search_datasets(
     q: str = Query(default="", description="Search query"),
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str = Query(default="", description="Pagination cursor from previous page"),
+    tags: list[str] = Query(default=[]),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
     """Search for datasets in a registered source.
@@ -67,6 +68,9 @@ async def search_datasets(
     cursor : str
         Opaque pagination token returned by the previous call.  Empty string
         means first page.
+    tags : list[str]
+        Repeated tag filter strings (e.g. ``?tags=nlp&tags=tabular``).  Passed
+        through to the datasource via ``**filters``.
     registry : ComponentRegistry
         Injected component registry.
 
@@ -76,7 +80,7 @@ async def search_datasets(
         ``{"results": [...], "next_cursor": str | null}``
     """
     source = _get_source(source_name, registry)
-    page = source.search(q, limit=limit, cursor=cursor or None)
+    page = source.search(q, limit=limit, cursor=cursor or None, tags=tags)
     return {
         "results": [
             {

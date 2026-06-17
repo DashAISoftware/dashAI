@@ -60,5 +60,6 @@
   "datasetDetails": "数据文件详情",
   "checkQueue": "在任务队列中查看详情",
   "deleteSuccess": "数据文件 \"{{name}}\" 已删除。",
-  "deleteError": "删除数据文件失败。"
+  "deleteError": "删除数据文件失败。",
+  "tagFilterPlaceholder": "按标签过滤，按 Enter 添加..."
 }
