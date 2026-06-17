@@ -38,8 +38,8 @@ automatically.
 pip installation below.
 
 
-Quick installation (Pypi)
-=========================
+Installation (PyPI)
+===================
 
 dashAI needs Python 3.10 or greater. We strongly recommend installing it inside
 an isolated environment (``venv`` or ``conda``) to avoid clashes with other
