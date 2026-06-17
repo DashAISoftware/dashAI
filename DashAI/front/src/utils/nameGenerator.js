@@ -1,3 +1,11 @@
+export function getNextAvailableName(name, existingDatasets) {
+  const base = name.replace(/\s*\(\d+\)$/, "").trim();
+  const existingNames = new Set(existingDatasets.map((d) => d.name));
+  let i = 1;
+  while (existingNames.has(`${base} (${i})`)) i++;
+  return `${base} (${i})`;
+}
+
 export function generateSequentialName({
   base,
   items = [],
