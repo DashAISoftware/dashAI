@@ -175,6 +175,38 @@ Then open `http://localhost:8000/ <http://localhost:8000/>`_ in your browser to
 access the dashAI graphical interface.
 
 
+Docker
+======
+
+dashAI can also run inside a container. Two Dockerfiles are provided at the
+repository root.
+
+CPU image
+---------
+
+``Dockerfile`` builds a CPU only image (CPU PyTorch). Build and run it with:
+
+.. code:: bash
+
+    $ docker build -t dashai .
+    $ docker run -p 8000:8000 dashai
+
+NVIDIA GPU image (CUDA)
+-----------------------
+
+``Dockerfile.cuda`` builds a CUDA enabled image (CUDA 12.8 PyTorch and
+``llama-cpp-python`` compiled with CUDA offload). It needs the NVIDIA drivers
+and the `NVIDIA Container Toolkit <https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html>`_
+installed on the host. Build and run it with:
+
+.. code:: bash
+
+    $ docker build -t dashai:cuda -f Dockerfile.cuda .
+    $ docker run --gpus all -p 8000:8000 dashai:cuda
+
+Then open `http://localhost:8000/ <http://localhost:8000/>`_ in your browser.
+
+
 Test datasets
 =============
 
