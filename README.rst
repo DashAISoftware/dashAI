@@ -195,9 +195,7 @@ NVIDIA GPU image (CUDA)
 -----------------------
 
 ``Dockerfile.cuda`` builds a CUDA enabled image (CUDA 12.8 PyTorch and
-``llama-cpp-python`` compiled with CUDA offload). It needs the NVIDIA drivers
-and the `NVIDIA Container Toolkit <https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html>`_
-installed on the host. Build and run it with:
+``llama-cpp-python`` compiled with CUDA offload). Build and run it with:
 
 .. code:: bash
 
@@ -205,6 +203,21 @@ installed on the host. Build and run it with:
     $ docker run --gpus all -p 8000:8000 dashai:cuda
 
 Then open `http://localhost:8000/ <http://localhost:8000/>`_ in your browser.
+
+To pass the host GPU into the container with ``--gpus all`` you need the NVIDIA
+drivers plus the runtime that wires the GPU into Docker. How you get that
+runtime depends on your setup:
+
+* **Native Linux Docker:** install the
+  `NVIDIA Container Toolkit <https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html>`_
+  on the host.
+* **Docker Desktop (Windows / macOS):** the GPU runtime is bundled with the
+  WSL 2 backend, so you only install the NVIDIA driver on Windows and enable the
+  WSL 2 backend. See the
+  `Docker Desktop GPU docs <https://docs.docker.com/desktop/features/gpu/>`_.
+* **Docker Engine inside a WSL 2 distro (without Docker Desktop):** install the
+  NVIDIA Container Toolkit inside the WSL distro, following the
+  `CUDA on WSL guide <https://docs.nvidia.com/cuda/wsl-user-guide/index.html>`_.
 
 
 Test datasets
