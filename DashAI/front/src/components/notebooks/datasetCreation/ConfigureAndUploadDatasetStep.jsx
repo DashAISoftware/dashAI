@@ -5,7 +5,10 @@ import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { forceRefreshNow } from "../../../utils/jobPoller";
 import { useTourContext } from "../../tour/TourProvider";
-import { generateSequentialName } from "../../../utils/nameGenerator";
+import {
+  generateSequentialName,
+  getNextAvailableName,
+} from "../../../utils/nameGenerator";
 import { createDataset } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
@@ -31,7 +34,6 @@ export default function ConfigureAndUploadDatasetStep({
     [existingDatasets],
   );
   const [datasetName, setDatasetName] = useState("");
-  const [nameError, setNameError] = useState(null);
   const lastAutoFilledRef = useRef(null);
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -116,7 +118,23 @@ export default function ConfigureAndUploadDatasetStep({
 
         const { file, url } = datasetFileToUpload;
 
-        const data = await createDataset(name);
+        let effectiveName = name;
+        let data;
+        try {
+          data = await createDataset(effectiveName);
+        } catch (createError) {
+          if (createError?.response?.status === 409) {
+            effectiveName = getNextAvailableName(
+              effectiveName,
+              existingDatasets,
+            );
+            setDatasetName(effectiveName);
+            params["name"] = effectiveName;
+            data = await createDataset(effectiveName);
+          } else {
+            throw createError;
+          }
+        }
 
         try {
           const job = await enqueueDatasetRequest(data.id, file, url, params);
@@ -135,14 +153,10 @@ export default function ConfigureAndUploadDatasetStep({
         }
       } catch (error) {
         console.error("Error creating dataset:", error);
-        if (error?.response?.status === 409) {
-          setNameError(t("datasets:error.datasetNameExists"));
-        } else {
-          enqueueSnackbar(t("datasets:error.createDatasetError"), {
-            variant: "error",
-          });
-          backHome();
-        }
+        enqueueSnackbar(t("datasets:error.createDatasetError"), {
+          variant: "error",
+        });
+        backHome();
       } finally {
         setUploading(false);
       }
@@ -244,13 +258,8 @@ export default function ConfigureAndUploadDatasetStep({
         <TextField
           label={t("datasets:label.datasetName")}
           value={datasetName}
-          onChange={(e) => {
-            setDatasetName(e.target.value);
-            setNameError(null);
-          }}
+          onChange={(e) => setDatasetName(e.target.value)}
           fullWidth
-          error={Boolean(nameError)}
-          helperText={nameError}
         />
       </Box>
 
