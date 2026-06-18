@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Any, Dict, Sequence, Type
 
 from DashAI.back.models.base_model import BaseModel
 
@@ -20,6 +20,41 @@ class ClusteringModel(BaseModel):
     """
 
     COMPATIBLE_COMPONENTS = ["ClusteringTask"]
+
+    @classmethod
+    def get_registry(cls) -> Dict[str, Type["ClusteringModel"]]:
+        """Return concrete clustering algorithm classes keyed by class name.
+
+        Any subclass that declares its own ``SCHEMA`` is treated as a concrete
+        algorithm and included automatically.  New algorithms become available
+        to the ``Clustering`` converter as soon as their module is imported —
+        no manual registration step is required.
+        """
+        result: Dict[str, Type["ClusteringModel"]] = {}
+
+        def _collect(base: Type["ClusteringModel"]) -> None:
+            for sub in base.__subclasses__():
+                if "SCHEMA" in sub.__dict__:
+                    result[sub.__name__] = sub
+                _collect(sub)
+
+        _collect(cls)
+        return result
+
+    def get_fit_attributes(self) -> Dict[str, Any]:
+        """Return algorithm-specific post-fit attributes for the converter report.
+
+        Override in concrete subclasses to expose attributes that are
+        specific to the clustering algorithm (e.g. cluster centres for K-Means,
+        linkage data for Agglomerative). The converter calls this after ``train``
+        and includes the result in the execution report consumed by explorers.
+
+        Returns
+        -------
+        Dict[str, Any]
+            JSON-serializable dict of algorithm-specific attributes.
+        """
+        return {}
 
     @abstractmethod
     def train(self, x: "DashAIDataset") -> "ClusteringModel":

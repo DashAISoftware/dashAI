@@ -5,8 +5,8 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
-from DashAI.back.converters.results_metadata import (
-    save_converter_results_metadata,
+from DashAI.back.converters.converter_report import (
+    save_converter_report,
 )
 from DashAI.back.dependencies.database.models import Converter
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
@@ -385,12 +385,12 @@ class ConverterJob(BaseJob):
                             f"Error transforming data with {converter_name}: {e}"
                         ) from e
 
-                    results_metadata = converter_instance.get_results_metadata()
-                    if results_metadata is not None:
-                        save_converter_results_metadata(
+                    report = converter_instance.get_report()
+                    if report is not None:
+                        save_converter_report(
                             notebook_path=converter.notebook.file_path,
                             converter_id=converter.id,
-                            metadata=results_metadata,
+                            report=report,
                         )
 
                     if type(converter_instance).CHANGES_ROW_COUNT:

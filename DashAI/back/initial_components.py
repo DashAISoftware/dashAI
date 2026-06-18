@@ -1,5 +1,7 @@
 import logging
 
+from DashAI.back.converters.clustering.clustering import Clustering
+
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
 from DashAI.back.converters.hugging_face.tokenizer import TokenizerConverter
@@ -490,6 +492,7 @@ def get_initial_components():
         ParallelCordinatesExplorer,
         # Converters
         ColumnRemover,
+        Clustering,
         NanRemover,
         CharacterReplacer,
         FastICA,

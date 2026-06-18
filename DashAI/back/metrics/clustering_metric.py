@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Type
 
 from DashAI.back.metrics.base_metric import BaseMetric
 
@@ -25,6 +25,25 @@ class ClusteringMetric(BaseMetric):
     """
 
     COMPATIBLE_COMPONENTS = ["ClusteringTask"]
+
+    @classmethod
+    def get_registry(cls) -> Dict[str, Type["ClusteringMetric"]]:
+        """Return concrete clustering metric classes keyed by class name.
+
+        Any subclass that defines its own ``score`` method is treated as a
+        concrete metric and included automatically. New metrics are picked up
+        as soon as their module is imported — no manual registration needed.
+        """
+        result: Dict[str, Type["ClusteringMetric"]] = {}
+
+        def _collect(base: Type["ClusteringMetric"]) -> None:
+            for sub in base.__subclasses__():
+                if "score" in sub.__dict__:
+                    result[sub.__name__] = sub
+                _collect(sub)
+
+        _collect(cls)
+        return result
 
 
 def validate_inputs(

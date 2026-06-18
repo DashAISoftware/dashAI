@@ -99,32 +99,31 @@ class BaseConverter(ConfigObject, ABC):
         """
         return False
 
-    def get_results_metadata(self) -> Union[Dict[str, Any], None]:
-        """Return optional execution metadata produced by this converter.
+    def get_report(self) -> Union[Dict[str, Any], None]:
+        """Return the converter report produced after execution, if any.
 
-        This metadata is intended to complement the transformed dataset with
-        converter-specific information that helps interpret what happened during
-        the step execution. Metadata is persisted per converter execution and is
-        optional for all converters.
+        The report complements the transformed dataset with information that
+        helps downstream tools (explorers, visualisations) interpret what the
+        converter did during its pipeline step. Persisted to disk per converter
+        execution. Optional — converters that produce no supplementary
+        information return ``None``.
 
         Returns
         -------
         Dict[str, Any] or None
-            A JSON-serializable dictionary with execution metadata, or ``None``
-            when the converter does not expose extra metadata.
+            JSON-serializable report dict, or ``None`` when the converter does
+            not produce one.
         """
         return None
 
-    def build_results_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Wrap converter-specific results with the producer converter name.
+    def build_report(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Wrap converter-specific data with the producer converter name.
 
-        The returned dictionary is meant to be consumed by downstream tools such
-        as explorers and visualizations. Converter subclasses should pass only
-        execution outputs that are useful after the conversion has finished.
-        Configuration parameters are already persisted with the converter row.
+        Subclasses pass only information that is useful after the conversion
+        has finished. Configuration parameters are already persisted with the
+        converter DB row.
         """
-
-        return {"converter": self.__class__.__name__, **metadata}
+        return {"converter": self.__class__.__name__, **data}
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
