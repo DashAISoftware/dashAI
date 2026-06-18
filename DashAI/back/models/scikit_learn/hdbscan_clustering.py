@@ -109,3 +109,13 @@ class HDBSCANClustering(SklearnLikeClusterer, _HDBSCAN):
             the associated schema class for available keys and their defaults.
         """
         super().__init__(**kwargs)
+
+    def get_fit_attributes(self) -> dict:
+        """Return HDBSCAN post-fit attributes for the converter report."""
+        import numpy as np
+
+        attrs = {"cluster_persistence": self.cluster_persistence_.tolist()}
+        n_noise = int(np.sum(self._labels == -1))
+        if n_noise > 0:
+            attrs["n_noise_points"] = n_noise
+        return attrs

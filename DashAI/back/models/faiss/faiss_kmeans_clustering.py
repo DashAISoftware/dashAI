@@ -217,6 +217,13 @@ class FaissKMeansClustering(FaissLikeClusterer):
             )
         return self._labels
 
+    def get_fit_attributes(self) -> dict:
+        """Return FAISS K-Means post-fit attributes for the converter report."""
+        return {
+            "cluster_centers": self._centroids.tolist(),
+            "inertia": self._final_inertia,
+        }
+
     @property
     def cluster_centers_(self) -> np.ndarray:
         """Fitted cluster centroids, shape (n_clusters, n_features).

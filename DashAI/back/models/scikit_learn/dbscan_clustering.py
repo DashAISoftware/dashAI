@@ -103,3 +103,10 @@ class DBSCANClustering(SklearnLikeClusterer, _DBSCAN):
             the associated schema class for available keys and their defaults.
         """
         super().__init__(**kwargs)
+
+    def get_fit_attributes(self) -> dict:
+        """Return DBSCAN post-fit attributes for the converter report."""
+        import numpy as np
+
+        n_noise = int(np.sum(self._labels == -1))
+        return {"n_noise_points": n_noise} if n_noise > 0 else {}

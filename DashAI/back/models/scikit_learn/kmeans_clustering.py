@@ -122,3 +122,10 @@ class KMeansClustering(SklearnLikeClusterer, _KMeans):
             the associated schema class for available keys and their defaults.
         """
         super().__init__(**kwargs)
+
+    def get_fit_attributes(self) -> dict:
+        """Return K-Means post-fit attributes for the converter report."""
+        return {
+            "cluster_centers": self.cluster_centers_.tolist(),
+            "inertia": float(self.inertia_),
+        }

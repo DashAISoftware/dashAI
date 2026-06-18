@@ -3,6 +3,7 @@
 from sklearn.cluster import AgglomerativeClustering as _AgglomerativeClustering
 
 from DashAI.back.core.schema_fields import (
+    bool_field,
     enum_field,
     optimizer_int_field,
     schema_field,
@@ -69,6 +70,23 @@ class AgglomerativeClusteringSchema(BaseSchema):
         ),
         alias=MultilingualString(en="Metric", es="Métrica"),
     )  # type: ignore
+    compute_distances: schema_field(
+        bool_field(),
+        True,
+        description=MultilingualString(
+            en=(
+                "Whether to compute and store merge distances during fitting. "
+                "Required to render a dendrogram. Has a small memory cost "
+                "proportional to the number of samples."
+            ),
+            es=(
+                "Si se calculan y almacenan las distancias de fusión durante el "
+                "ajuste. Necesario para renderizar el dendrograma. Tiene un "
+                "pequeño costo de memoria proporcional al número de muestras."
+            ),
+        ),
+        alias=MultilingualString(en="Compute distances", es="Calcular distancias"),
+    )  # type: ignore
 
 
 class AgglomerativeClustering(SklearnLikeClusterer, _AgglomerativeClustering):
@@ -111,3 +129,18 @@ class AgglomerativeClustering(SklearnLikeClusterer, _AgglomerativeClustering):
             the associated schema class for available keys and their defaults.
         """
         super().__init__(**kwargs)
+
+    def get_fit_attributes(self) -> dict:
+        """Return Agglomerative post-fit attributes for the converter report."""
+        distances = (
+            self.distances_.tolist()
+            if hasattr(self, "distances_")
+            else list(range(len(self.children_)))
+        )
+        return {
+            "linkage_data": {
+                "children": self.children_.tolist(),
+                "distances": distances,
+                "n_leaves": len(self._labels),
+            }
+        }

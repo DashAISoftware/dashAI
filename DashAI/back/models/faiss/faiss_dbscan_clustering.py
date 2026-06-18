@@ -124,6 +124,11 @@ class FaissDBSCANClustering(FaissLikeClusterer):
         self.eps = eps
         self.min_samples = min_samples
 
+    def get_fit_attributes(self) -> dict:
+        """Return FAISS-DBSCAN post-fit attributes for the converter report."""
+        n_noise = int(np.sum(self._labels == -1))
+        return {"n_noise_points": n_noise} if n_noise > 0 else {}
+
     def train(self, x_train: "DashAIDataset") -> "FaissDBSCANClustering":
         """Fit FAISS-DBSCAN: build index, run range search, label clusters.
 
