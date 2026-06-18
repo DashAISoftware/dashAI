@@ -46,6 +46,12 @@ requires glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, Fedora 36+, and most
 distributions from 2022 on) and FUSE 2 to mount. If FUSE is missing, run it
 with ``./dashAI-<version>-x64-linux.AppImage --appimage-extract-and-run``.
 
+When double clicked, the AppImage opens a terminal window to show the server
+logs. This needs a terminal emulator, which every standard desktop (GNOME, KDE,
+XFCE, and others) already provides, so no setup is required. On a minimal system
+with no terminal emulator the log window is skipped, but the app still starts
+and opens the browser as usual.
+
 **Note:** the desktop installers ship with CPU only PyTorch and
 ``llama-cpp-python``. For NVIDIA (CUDA) or AMD (ROCm) GPU acceleration, use the
 pip installation below.
