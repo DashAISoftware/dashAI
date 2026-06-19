@@ -62,7 +62,6 @@ from DashAI.back.converters.simple_converters.column_remover import ColumnRemove
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 
 # Credentials
-from DashAI.back.credentials.github_credential import GithubCredential
 from DashAI.back.credentials.huggingface_credential import HuggingFaceCredential
 from DashAI.back.credentials.kaggle_credential import KaggleCredential
 
@@ -410,7 +409,6 @@ def get_initial_components():
         # Credentials
         HuggingFaceCredential,
         KaggleCredential,
-        GithubCredential,
         # Metrics
         F1,
         Accuracy,
