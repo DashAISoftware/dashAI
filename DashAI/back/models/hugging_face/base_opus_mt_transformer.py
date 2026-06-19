@@ -193,6 +193,12 @@ class OpusMtTransformerMixin(TranslationModel):
                 "Call 'train' with appropriate arguments before using this estimator."
             )
 
+        if self.device.lower() == "gpu":
+            self.model.to("cuda")
+        else:
+            self.model.to("cpu")
+        self.model.eval()
+
         dataset = self.tokenize_data(x_pred)
         dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
 
