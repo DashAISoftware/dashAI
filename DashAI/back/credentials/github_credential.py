@@ -12,9 +12,19 @@ logger = logging.getLogger(__name__)
 class GithubCredential(BaseCredential):
     """Credential for the GitHub API."""
 
-    DISPLAY_NAME: Final = MultilingualString(en="GitHub")
+    DISPLAY_NAME: Final = MultilingualString(
+        en="GitHub",
+        es="GitHub",
+        pt="GitHub",
+        de="GitHub",
+        zh="GitHub",
+    )
     DESCRIPTION: Final = MultilingualString(
-        en="Personal access token for the GitHub API."
+        en="Personal access token for the GitHub API.",
+        es="Token de acceso personal para la API de GitHub.",
+        pt="Token de acesso pessoal para a API do GitHub.",
+        de="Persönliches Zugriffstoken für die GitHub API.",
+        zh="用于 GitHub API 的个人访问令牌。",
     )
     ICON: str = "Key"
 

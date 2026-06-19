@@ -16,9 +16,19 @@ class KaggleCredential(BaseCredential):
     The key is expected in the form ``"username:api_key"``.
     """
 
-    DISPLAY_NAME: Final = MultilingualString(en="Kaggle")
+    DISPLAY_NAME: Final = MultilingualString(
+        en="Kaggle",
+        es="Kaggle",
+        pt="Kaggle",
+        de="Kaggle",
+        zh="Kaggle",
+    )
     DESCRIPTION: Final = MultilingualString(
-        en="Kaggle API credential in the form 'username:key'."
+        en="Kaggle API credential in the form 'username:key'.",
+        es="Credencial de la API de Kaggle en el formato 'usuario:clave'.",
+        pt="Credencial da API do Kaggle no formato 'usuario:chave'.",
+        de="Zugangsdaten für die Kaggle API im Format 'benutzername:schluessel'.",
+        zh="Kaggle API 凭证，格式为 'username:key'。",
     )
     ICON: str = "Key"
 

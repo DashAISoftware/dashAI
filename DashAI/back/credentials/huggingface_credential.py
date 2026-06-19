@@ -12,10 +12,23 @@ logger = logging.getLogger(__name__)
 class HuggingFaceCredential(BaseCredential):
     """Credential for the HuggingFace Hub."""
 
-    DISPLAY_NAME: Final = MultilingualString(en="HuggingFace")
+    DISPLAY_NAME: Final = MultilingualString(
+        en="HuggingFace",
+        es="HuggingFace",
+        pt="HuggingFace",
+        de="HuggingFace",
+        zh="HuggingFace",
+    )
     DESCRIPTION: Final = MultilingualString(
         en="Access token for the HuggingFace Hub. Required for gated models and "
-        "datasets."
+        "datasets.",
+        es="Token de acceso para el HuggingFace Hub. Necesario para modelos y "
+        "conjuntos de datos restringidos.",
+        pt="Token de acesso para o HuggingFace Hub. Necessário para modelos e "
+        "conjuntos de dados restritos.",
+        de="Zugriffstoken für den HuggingFace Hub. Erforderlich für "
+        "eingeschränkte Modelle und Datensätze.",
+        zh="用于 HuggingFace Hub 的访问令牌。访问受限模型和数据集时需要。",
     )
     ICON: str = "Key"
 
