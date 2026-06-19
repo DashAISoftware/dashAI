@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import CredentialsDialog from "./CredentialsDialog";
@@ -31,7 +31,7 @@ export default function CredentialsButton() {
           aria-label="credentials"
           sx={iconBtnSx}
         >
-          <SettingsOutlinedIcon sx={{ fontSize: 18 }} />
+          <VpnKeyOutlinedIcon sx={{ fontSize: 18 }} />
         </IconButton>
       </Tooltip>
       <CredentialsDialog open={open} onClose={() => setOpen(false)} />
