@@ -356,13 +356,7 @@ export const NumericTab = ({
               <Alert
                 severity="warning"
                 icon={<InfoIcon fontSize="inherit" />}
-                sx={{
-                  mt: 6,
-                  ...(theme.palette.mode === "light" && {
-                    bgcolor: `${theme.palette.warning.main}35`,
-                    border: `1px solid ${theme.palette.warning.main}70`,
-                  }),
-                }}
+                sx={{ mt: 6 }}
               >
                 <Typography variant="body2">
                   {t("datasets:label.insightOutliers", {
@@ -382,13 +376,7 @@ export const NumericTab = ({
                   <Alert
                     severity="warning"
                     icon={<InfoIcon fontSize="inherit" />}
-                    sx={{
-                      mt: 6,
-                      ...(theme.palette.mode === "light" && {
-                        bgcolor: `${theme.palette.warning.main}35`,
-                        border: `1px solid ${theme.palette.warning.main}70`,
-                      }),
-                    }}
+                    sx={{ mt: 6 }}
                   >
                     <Typography variant="body2">
                       <Trans i18nKey="datasets:label.rightSkewedWarning">
