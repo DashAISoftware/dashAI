@@ -232,7 +232,7 @@ export default function DatasetGrid({
           <Box
             sx={{
               display: "grid",
-              gap: 1.5,
+              gap: 2,
               gridTemplateColumns: {
                 xs: "1fr",
                 md: "repeat(2, 1fr)",
