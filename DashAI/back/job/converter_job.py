@@ -199,6 +199,7 @@ class ConverterJob(BaseJob):
 
         session_factory = di["session_factory"]
         component_registry = di["component_registry"]
+        config = di["config"]
 
         def instantiate_converters(
             converter_name: str,
@@ -388,7 +389,8 @@ class ConverterJob(BaseJob):
                     report = converter_instance.get_report()
                     if report is not None:
                         save_converter_report(
-                            notebook_path=converter.notebook.file_path,
+                            notebook_path=config["NOTEBOOK_PATH"]
+                            / str(converter.notebook.id),
                             converter_id=converter.id,
                             report=report,
                         )

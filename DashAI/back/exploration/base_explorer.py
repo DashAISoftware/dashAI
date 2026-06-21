@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
@@ -31,7 +31,7 @@ class BaseExplorer(ConfigObject, ABC):
     - Create a new class that extends `BaseExplorer` and assign the
         previous schema to the `SCHEMA` attribute.
     - Implement the `launch_exploration` method.
-    - Implement the `save_exploration` method.
+    - Implement the `save_notebook` method.
     - Implement the `get_results` method.
 
     You can also optionally:
@@ -43,6 +43,12 @@ class BaseExplorer(ConfigObject, ABC):
         name in the frontend.
     - Add a description to the `DESCRIPTION` attribute to show a custom
         description in the frontend.
+    - Set ``REQUIRES_CONVERTER_REPORT`` to ``True`` if the explorer needs
+        the report produced by a converter execution.
+    - Set ``REQUIRES_CONVERTER_CLASS`` to the converter class name string
+        (e.g. ``"Clustering"``) to restrict metadata loading to a specific
+        converter type instead of the most recently finished converter of any
+        type.
     """
 
     TYPE: Final[str] = "Explorer"
@@ -53,6 +59,8 @@ class BaseExplorer(ConfigObject, ABC):
     CATEGORY: Final[str] = "Other"
     ICON: Final[str] = Icon.Extension.value
     COLOR: Final[str] = "rgb(255, 255, 255)"
+    REQUIRES_CONVERTER_REPORT: Final[bool] = False
+    REQUIRES_CONVERTER_CLASS: Final[Optional[str]] = None
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
 
@@ -66,6 +74,16 @@ class BaseExplorer(ConfigObject, ABC):
             explorer's SCHEMA.
         """
         self.kwargs = kwargs
+        self.context: Dict[str, Any] = {}
+
+    def set_context(self, context: Dict[str, Any]) -> None:
+        """Set optional runtime context for explorers that need extra inputs.
+
+        The default explorer contract remains dataset + columns + parameters.
+        This context is an opt-in extension for explorers that declare extra
+        runtime needs, such as converter execution report.
+        """
+        self.context = context
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -76,7 +94,8 @@ class BaseExplorer(ConfigObject, ABC):
         Dict[str, Any]
             Dictionary containing display name, description,
             image preview path, category, icon, color, allowed semantic
-            types, allowed dtypes, and input cardinality constraints.
+            types, allowed dtypes, input cardinality constraints, and any
+            optional capability flags declared by the explorer.
         """
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["display_name"] = cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
@@ -87,6 +106,12 @@ class BaseExplorer(ConfigObject, ABC):
         meta["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
         meta["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
         meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
+        meta["requires_converter_report"] = (
+            cls.REQUIRES_CONVERTER_REPORT if cls.REQUIRES_CONVERTER_REPORT else False
+        )
+        meta["requires_converter_class"] = (
+            cls.REQUIRES_CONVERTER_CLASS if cls.REQUIRES_CONVERTER_CLASS else None
+        )
 
         if meta.get("input_cardinality") is None:
             meta["input_cardinality"] = {"min": 1}
