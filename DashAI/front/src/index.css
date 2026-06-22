@@ -11,3 +11,18 @@ code {
   font-family: "IBM Plex Mono", source-code-pro, Menlo, Monaco, Consolas,
     "Courier New", monospace;
 }
+
+.react-flow__edge.edge-error .react-flow__edge-path {
+  stroke: #d32f2f;
+  stroke-width: 2;
+}
+
+.react-flow__edge.edge-warning .react-flow__edge-path {
+  stroke: #f57c00;
+  stroke-width: 2;
+}
+
+.react-flow__edge.edge-ok .react-flow__edge-path {
+  stroke: #4caf50;
+  stroke-width: 2;
+}

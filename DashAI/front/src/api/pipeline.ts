@@ -23,6 +23,11 @@ export const getNodes = async () => {
   return response.data;
 };
 
+export const getNodeContracts = async () => {
+  const response = await api.get(`${pipelineEndpoint}/contracts`);
+  return response.data;
+};
+
 export const updatePipeline = async (
   id: number,
   formData: object,
@@ -58,6 +63,11 @@ export const validatePipeline = async (
     nodes: nodes,
     edges: edges,
   });
+  return response.data;
+};
+
+export const validateEdge = async (payload: object) => {
+  const response = await api.post(`${pipelineEndpoint}/validate_edge`, payload);
   return response.data;
 };
 

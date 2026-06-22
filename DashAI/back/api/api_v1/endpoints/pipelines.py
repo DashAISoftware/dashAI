@@ -9,10 +9,12 @@ from DashAI.back.api.api_v1.schemas.pipelines_params import (
     DatasetFilterParams,
     PipelineCreateParams,
     PipelineUpdateParams,
+    ValidateEdgeParams,
     ValidateNodeParams,
     ValidatePipelineParams,
 )
 from DashAI.back.dependencies.database.models import Dataset, Pipeline
+from DashAI.back.pipeline.contracts import get_contracts_payload, validate_edge
 from DashAI.back.pipeline.validator.nodes_definitions import NODES
 from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
 from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
@@ -73,6 +75,18 @@ async def get_nodes() -> List[Dict[str, Any]]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to load node definitions",
+        ) from e
+
+
+@router.get("/contracts")
+async def get_node_contracts() -> List[Dict[str, Any]]:
+    """Retrieve pipeline node contracts."""
+    try:
+        return get_contracts_payload()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load node contracts",
         ) from e
 
 
@@ -645,6 +659,20 @@ async def validate_pipeline(
     """
     validator = PipelineValidator(params.nodes, params.edges)
     return validator.validate()
+
+
+@router.post("/validate_edge")
+async def validate_edge_connection(params: ValidateEdgeParams) -> Dict[str, Any]:
+    """Validate a single edge connection between two node ports."""
+    result = validate_edge(
+        source_type=params.source.type,
+        target_type=params.target.type,
+        source_port=params.source.port,
+        target_port=params.target.port,
+        source_current_outputs=params.source.currentConnections,
+        target_current_inputs=params.target.currentConnections,
+    )
+    return result
 
 
 @router.post("/filter_models")

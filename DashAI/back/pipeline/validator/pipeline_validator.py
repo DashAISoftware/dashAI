@@ -14,6 +14,7 @@ class PipelineValidator:
             nt["type"]: {
                 "predecessors": set(nt.get("predecessors", [])),
                 "successors": set(nt.get("successors", [])),
+                "max_inputs": nt.get("maxInputs"),
                 "max_outputs": nt.get("maxOutputs"),
             }
             for nt in NODE_TYPES
@@ -43,10 +44,13 @@ class PipelineValidator:
             expected_predecessors = rule["predecessors"]
             predecessors = [e for e in self.edges if e["target"] == node_id]
 
-            if len(predecessors) > 1:
-                self.errors.setdefault(node_id, []).append(
-                    f"{node_name} cannot have more than one input."
-                )
+            max_inputs = rule.get("max_inputs", 1)
+            if max_inputs is not None and len(predecessors) > max_inputs:
+                if max_inputs == 1:
+                    message = f"{node_name} cannot have more than one input."
+                else:
+                    message = f"{node_name} supports up to {max_inputs} inputs."
+                self.errors.setdefault(node_id, []).append(message)
 
             predecessor_types = [
                 self.node_map[e["source"]]["type"]
