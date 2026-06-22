@@ -6,6 +6,7 @@ export default function ModuleContainer({ children, ...props }) {
       height="calc(100vh - 74px)"
       width="100%"
       display="flex"
+      position="relative"
       data-container="datasets"
       {...props}
     >

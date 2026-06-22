@@ -14,7 +14,6 @@ import {
   Visibility as ViewIcon,
 } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
-import { ChevronLeft } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { DataGrid, GridActionsCellItem, GridToolbar } from "@mui/x-data-grid";
 import { Menu, MenuItem } from "@mui/material";
@@ -26,7 +25,7 @@ import { deletePipeline, getPipelines } from "../../api/pipeline";
 import { formatDate } from "../../utils";
 import DeleteItemModal from "../custom/DeleteItemModal";
 
-function PipelineHistorySidebar({ currentPipelineId, onToggle }) {
+function PipelineHistorySidebar({ currentPipelineId }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -132,15 +131,6 @@ function PipelineHistorySidebar({ currentPipelineId, onToggle }) {
           <HistoryIcon fontSize="small" sx={{ color: theme.palette.text.primary }} />
           <Typography variant="subtitle1">Pipelines History</Typography>
         </Box>
-        {onToggle && (
-          <IconButton
-            size="small"
-            onClick={onToggle}
-            sx={{ color: "text.secondary" }}
-          >
-            <ChevronLeft />
-          </IconButton>
-        )}
       </Box>
       <Divider sx={{ width: "100%", bgcolor: theme.palette.ui.borderDark }} />
 

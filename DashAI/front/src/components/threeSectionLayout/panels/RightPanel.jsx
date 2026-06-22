@@ -1,6 +1,7 @@
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useThreePanelLayoutContext } from "./ThreePanelLayoutContext";
+
 export default function RightPanel({
   toggleButtonTop = "50%",
   children,
@@ -12,7 +13,21 @@ export default function RightPanel({
     isTogglingRight,
     bindRightResize,
     handleToggleRight,
+    isRightOverlayActive,
   } = useThreePanelLayoutContext();
+
+  const toggleRightOffset = rightBarVisible
+    ? isRightOverlayActive
+      ? 8
+      : `calc(${rightBarWidth}% - 9px)`
+    : 8;
+
+  const panelWidth = rightBarVisible
+    ? isRightOverlayActive
+      ? "100%"
+      : `${rightBarWidth}%`
+    : "0%";
+
   return (
     <>
       <IconButton
@@ -20,7 +35,7 @@ export default function RightPanel({
         size="small"
         sx={{
           position: "absolute",
-          right: rightBarVisible ? `calc(${rightBarWidth}% - 9px)` : 8,
+          right: toggleRightOffset,
           top: toggleButtonTop,
           transform: "translateY(-50%)",
           bgcolor: "primary.main",
@@ -46,36 +61,43 @@ export default function RightPanel({
         )}
       </IconButton>
       <Box
-        width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
-        position="relative"
+        width={panelWidth}
+        position={isRightOverlayActive ? "absolute" : "relative"}
+        right={isRightOverlayActive ? 0 : undefined}
+        top={isRightOverlayActive ? 0 : undefined}
+        height={isRightOverlayActive ? "100%" : "auto"}
         sx={{
           transition: isTogglingRight
             ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
             : "none",
           opacity: rightBarVisible ? 1 : 0,
           overflow: "hidden",
+          boxShadow: isRightOverlayActive ? 6 : "none",
+          zIndex: isRightOverlayActive ? 12 : "auto",
         }}
         data-tour={dataTour}
       >
         {rightBarVisible && (
           <>
-            <Box
-              {...bindRightResize}
-              sx={{
-                position: "absolute",
-                left: -2,
-                top: 0,
-                bottom: 0,
-                width: "5px",
-                cursor: "col-resize",
-                bgcolor: "transparent",
-                transition: "background-color 0.2s ease",
-                "&:hover": {
-                  bgcolor: "primary.main",
-                },
-                zIndex: 10,
-              }}
-            />
+            {!isRightOverlayActive && (
+              <Box
+                {...bindRightResize}
+                sx={{
+                  position: "absolute",
+                  left: -2,
+                  top: 0,
+                  bottom: 0,
+                  width: "5px",
+                  cursor: "col-resize",
+                  bgcolor: "transparent",
+                  transition: "background-color 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "primary.main",
+                  },
+                  zIndex: 10,
+                }}
+              />
+            )}
             {children}
           </>
         )}

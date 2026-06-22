@@ -8,12 +8,8 @@ import {
   Chip,
   Grid,
   Typography,
-  Dialog,
-  DialogTitle,
-  IconButton,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import CloseIcon from "@mui/icons-material/Close";
 import { ReactFlowProvider } from "reactflow";
 import CustomLayout from "../../components/custom/CustomLayout";
 import ModuleContainer from "../../components/layout/ModuleContainer";
@@ -33,7 +29,7 @@ import {
   PipelineDesigner,
   NodeSidebar,
   PipelineHistorySidebar,
-  PipelineChatSidebar,
+  PipelineNodeConfigSidebar,
   nodeRegistry,
 } from "../../components/pipelines";
 
@@ -71,6 +67,8 @@ function NewPipeline() {
   const threePanelLayout = useThreePanelLayout({
     initialLeftWidth: 20,
     initialRightWidth: 20,
+    overlayRightOnCompact: true,
+    compactBreakpoint: "md",
   });
 
   const {
@@ -118,6 +116,8 @@ function NewPipeline() {
     onNodeMouseEnter,
     onNodeMouseLeave,
     onPaneClick,
+    handleConnect,
+    handleEdgeRemove,
     handlePipelineNameChange,
   } = usePipelineState(pipelineId, location, navigate);
 
@@ -214,7 +214,22 @@ function NewPipeline() {
     }
   }, [isWorkspaceOpen]);
 
-  const renderNodeDialogContent = () => {
+  const handleNodeConfigOpen = (event, node) => {
+    if (!threePanelLayout.rightBarVisible) {
+      threePanelLayout.handleToggleRight();
+    }
+    onNodeClick(event, node);
+  };
+
+  const renderNodeConfigContent = () => {
+    if (activeTab !== "flow") {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          Switch to the Flow tab to configure nodes.
+        </Typography>
+      );
+    }
+
     if (!selectedNode) return null;
 
     const { type, id, data } = selectedNode;
@@ -227,11 +242,18 @@ function NewPipeline() {
       NodeComponent = nodeRegistry["Configurable"];
     }
 
-    if (!NodeComponent) return null;
+    if (!NodeComponent) {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          This node does not require configuration.
+        </Typography>
+      );
+    }
 
     return (
       <NodeComponent
         open={!!selectedNode}
+        displayMode="panel"
         onClose={handleCloseDialog}
         onSave={(data) => handleSaveNodeData(id, data)}
         savedConfig={nodeData[id]}
@@ -249,7 +271,6 @@ function NewPipeline() {
             <LeftPanel>
               <PipelineHistorySidebar
                 currentPipelineId={pipelineId}
-                onToggle={threePanelLayout.handleToggleLeft}
               />
             </LeftPanel>
 
@@ -431,8 +452,10 @@ function NewPipeline() {
                           setEdges={setEdges}
                           onNodesChange={onNodesChange}
                           onEdgesChange={onEdgesChange}
+                          onConnect={handleConnect}
+                          onEdgeDoubleClick={handleEdgeRemove}
                           nodeTypes={nodeTypes}
-                          onNodeClick={onNodeClick}
+                          onNodeClick={handleNodeConfigOpen}
                           onNodeHelp={onNodeHelp}
                           onNodeMouseEnter={onNodeMouseEnter}
                           onNodeMouseLeave={onNodeMouseLeave}
@@ -464,64 +487,13 @@ function NewPipeline() {
             </CenterPanel>
 
             <RightPanel toggleButtonTop="50%">
-              <PipelineChatSidebar
-                onToggle={threePanelLayout.handleToggleRight}
-              />
-            </RightPanel>
-
-            {isWorkspaceOpen && renderNodeDialogContent() && (
-              <Dialog
-                open={true}
-                onClose={() => {}}
-                disableEscapeKeyDown
-                maxWidth={
-                  selectedNode?.type === "TaskAndModel" ||
-                  selectedNode?.type === "MetricsEval"
-                    ? "lg"
-                    : "md"
-                }
-                fullWidth
-                PaperProps={{
-                  sx:
-                    selectedNode?.type === "TaskAndModel" ||
-                    selectedNode?.type === "MetricsEval"
-                      ? {
-                          width: { xs: "calc(100% - 24px)", md: 920 },
-                          maxWidth: { xs: "calc(100% - 24px)", md: 920 },
-                        }
-                      : undefined,
-                }}
+              <PipelineNodeConfigSidebar
+                selectedNode={selectedNode}
+                onClose={handleCloseDialog}
               >
-                <DialogTitle>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography variant="h6">
-                      {selectedNode?.type === "Train"
-                        ? "Select Train Parameters"
-                        : selectedNode?.type === "Exploration"
-                          ? "Exploration Configuration"
-                          : selectedNode?.type === "SplitData"
-                            ? "Configure Data Splits"
-                            : selectedNode?.type === "TaskAndModel"
-                              ? "Select Task & Model"
-                              : selectedNode?.type === "MetricsEval"
-                                ? "Select Metrics"
-                                : `Configure ${selectedNode?.type || "Node"}`}
-                    </Typography>
-                    <IconButton
-                      onClick={handleCloseDialog}
-                      sx={{ position: "absolute", right: 8, top: 8 }}
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  </Box>
-                </DialogTitle>
-                {renderNodeDialogContent()}
-              </Dialog>
-            )}
+                {renderNodeConfigContent()}
+              </PipelineNodeConfigSidebar>
+            </RightPanel>
           </ModuleContainer>
         </ThreePanelLayoutContext.Provider>
       </ReactFlowProvider>

@@ -6,6 +6,7 @@ export { default as NodeSidebar } from "./NodeSidebar";
 export { default as PipelineHistorySidebar } from "./PipelineHistorySidebar";
 export { default as PipelineTemplatesSidebar } from "./PipelineTemplatesSidebar";
 export { default as PipelineChatSidebar } from "./PipelineChatSidebar";
+export { default as PipelineNodeConfigSidebar } from "./PipelineNodeConfigSidebar";
 export { default as PipelinesTable } from "./PipelinesTable";
 export { default as CustomNode } from "./CustomNode";
 export { default as Run } from "./Run";
