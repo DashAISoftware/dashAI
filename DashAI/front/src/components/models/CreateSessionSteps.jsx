@@ -261,7 +261,9 @@ function CreateSessionSteps({
         onNext={formik.handleSubmit}
         nextDisabled={!isNextEnabled}
         nextLabel={t("models:button.createSession")}
-        nextDataTour={tourContext?.run ? "models-next-button" : undefined}
+        nextDataTour={
+          tourContext?.run ? "models-next-button" : "create-session-button"
+        }
       />
     </Box>
   );

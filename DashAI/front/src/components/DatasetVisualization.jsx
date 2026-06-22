@@ -12,7 +12,13 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { AddCircleOutline as AddIcon } from "@mui/icons-material";
+import {
+  AddCircleOutline as AddIcon,
+  SchoolOutlined as TutorialIcon,
+} from "@mui/icons-material";
+import Joyride from "react-joyride";
+import { getTourStyles } from "./tour/tourStyles";
+import { CustomTooltip } from "./tour/CustomTooltip";
 import {
   getDatasetInfo,
   getDatasetFile,
@@ -32,6 +38,10 @@ import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
 import { useModels } from "./models/ModelsContext";
+import {
+  energyTutorialSteps,
+  energyTutorialConfig,
+} from "../constants/tours/tutorials/energyTutorial";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
@@ -69,7 +79,15 @@ export default function DatasetVisualization({
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
+  const [energyTourRun, setEnergyTourRun] = useState(false);
+  const [energyTourStep, setEnergyTourStep] = useState(0);
   const tourContext = useTourContext();
+
+  useEffect(() => {
+    if (energyTourRun && energyTourStep === 1) {
+      sessionStorage.setItem("energyTutorialContinue", "true");
+    }
+  }, [energyTourRun, energyTourStep]);
 
   useEffect(() => {
     if (sessionStorage.getItem("startDatasetViewTour") === "true") {
@@ -287,6 +305,19 @@ export default function DatasetVisualization({
                     justifyContent: "flex-start",
                   }}
                 >
+                  {dataset.name.toLowerCase() === "energy" && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<TutorialIcon />}
+                      onClick={() => {
+                        setEnergyTourStep(0);
+                        setEnergyTourRun(true);
+                      }}
+                      sx={{ height: "40px" }}
+                    >
+                      Tutorial
+                    </Button>
+                  )}
                   <Button
                     variant="contained"
                     endIcon={<AddIcon />}
@@ -479,6 +510,34 @@ export default function DatasetVisualization({
             )}
           </Box>
         )}
+
+        {/* Energy dataset tutorial */}
+        <Joyride
+          steps={energyTutorialSteps}
+          run={energyTourRun}
+          stepIndex={energyTourStep}
+          continuous={energyTutorialConfig.continuous}
+          showProgress={energyTutorialConfig.showProgress}
+          showSkipButton={energyTutorialConfig.showSkipButton}
+          showBackButton={energyTutorialConfig.showBackButton}
+          disableOverlayClose={energyTutorialConfig.disableOverlayClose}
+          disableCloseOnEsc={energyTutorialConfig.disableCloseOnEsc}
+          styles={getTourStyles(theme)}
+          tooltipComponent={CustomTooltip}
+          disableScrollParentFix
+          floaterProps={{ disableFlip: true, hideArrow: true, offset: 18 }}
+          callback={({ status, type, action, index }) => {
+            if (status === "skipped" || action === "close") {
+              setEnergyTourRun(false);
+            } else if (type === "step:after") {
+              if (action === "next" || action === "start") {
+                setEnergyTourStep(index + 1);
+              } else if (action === "prev") {
+                setEnergyTourStep(Math.max(index - 1, 0));
+              }
+            }
+          }}
+        />
 
         {/* Processing placeholder */}
         {isProcessing && (

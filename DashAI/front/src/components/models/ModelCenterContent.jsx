@@ -1,12 +1,21 @@
 import { useModels } from "./ModelsContext";
 import { useTranslation } from "react-i18next";
 import { Box } from "@mui/material";
+import { useState, useEffect } from "react";
+import Joyride from "react-joyride";
 import CreateSessionSteps from "./CreateSessionSteps";
 import DatasetVisualization from "../DatasetVisualization";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import { useTourContext } from "../tour/TourProvider";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTheme } from "@mui/material/styles";
+import { getTourStyles } from "../tour/tourStyles";
+import { CustomTooltip } from "../tour/CustomTooltip";
+import {
+  energyModelsSteps,
+  energyTutorialConfig,
+} from "../../constants/tours/tutorials/energyTutorial";
 import {
   Category as ClassificationIcon,
   ShowChart as RegressionIcon,
@@ -30,6 +39,27 @@ export default function ModelsCenterContent() {
   const { t } = useTranslation(["models", "datasets", "common"]);
   const tourContext = useTourContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const [energyStep3Run, setEnergyStep3Run] = useState(false);
+  const [energyStep3Index, setEnergyStep3Index] = useState(0);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("energyTutorialContinue") === "true") {
+      sessionStorage.removeItem("energyTutorialContinue");
+      const waitForRegressionTask = (attempts = 0) => {
+        const element = document.querySelector(
+          '[data-tour-extra="regression-task"]',
+        );
+        if (element) {
+          setEnergyStep3Run(true);
+        } else if (attempts < 30) {
+          setTimeout(() => waitForRegressionTask(attempts + 1), 200);
+        }
+      };
+      setTimeout(() => waitForRegressionTask(), 300);
+    }
+  }, [location.pathname]);
   const {
     sessions,
     setSessions,
@@ -43,6 +73,20 @@ export default function ModelsCenterContent() {
 
   const goToNextStep = (taskName) => {
     navigate(`/app/models/sessions/new/${taskName}`);
+
+    if (energyStep3Run) {
+      const waitForDatasetSelection = (attempts = 0) => {
+        const element = document.querySelector(
+          '[data-tour="models-dataset-selection"]',
+        );
+        if (element) {
+          setEnergyStep3Index(1);
+        } else if (attempts < 30) {
+          setTimeout(() => waitForDatasetSelection(attempts + 1), 100);
+        }
+      };
+      setTimeout(waitForDatasetSelection, 100);
+    }
 
     if (tourContext?.run && tourContext?.stepIndex === 4) {
       const waitForElement = () => {
@@ -68,6 +112,10 @@ export default function ModelsCenterContent() {
   };
 
   const handleSessionCreated = (newSession) => {
+    if (energyStep3Run) {
+      sessionStorage.setItem("energyTutorialSessionContinue", "true");
+      setEnergyStep3Run(false);
+    }
     setSessions((prev) => [...prev, newSession]);
     navigate(`/app/models/sessions/${newSession.id}`);
   };
@@ -88,6 +136,35 @@ export default function ModelsCenterContent() {
 
   return (
     <>
+      <Joyride
+        steps={energyModelsSteps}
+        run={energyStep3Run}
+        stepIndex={energyStep3Index}
+        continuous={energyTutorialConfig.continuous}
+        showProgress={energyTutorialConfig.showProgress}
+        showSkipButton={energyTutorialConfig.showSkipButton}
+        showBackButton={energyTutorialConfig.showBackButton}
+        disableOverlayClose={energyTutorialConfig.disableOverlayClose}
+        disableCloseOnEsc={energyTutorialConfig.disableCloseOnEsc}
+        disableOverlay={energyStep3Index === 1}
+        styles={getTourStyles(theme)}
+        tooltipComponent={CustomTooltip}
+        disableScrollParentFix
+        floaterProps={{ disableFlip: true, hideArrow: true, offset: 18 }}
+        callback={({ status, type, action, index }) => {
+          if (status === "skipped" || action === "close") {
+            setEnergyStep3Run(false);
+          } else if (type === "step:after") {
+            if (action === "next" || action === "start") {
+              if (index < energyModelsSteps.length - 1) {
+                setEnergyStep3Index(index + 1);
+              }
+            } else if (action === "prev") {
+              setEnergyStep3Index(Math.max(index - 1, 0));
+            }
+          }
+        }}
+      />
       {step === 1 && selectedTask ? (
         <Box
           sx={{
@@ -145,6 +222,9 @@ export default function ModelsCenterContent() {
             description:
               task.description || task.metadata?.short_description || "",
             Icon: TASK_ICONS[task.name] || DefaultTaskIcon,
+            ...(task.name === "RegressionTask"
+              ? { dataTourExtra: "regression-task" }
+              : {}),
           }))}
           searchBar={false}
           goToPrevStep={selectedDatasetId ? handleBackToDataset : null}

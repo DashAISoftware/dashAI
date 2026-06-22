@@ -10,6 +10,7 @@ export default function OptionBox({
   Icon = null,
   chips = [],
   dataTour,
+  dataTourExtra,
   ...otherProps
 }) {
   const descRef = useRef(null);
@@ -30,6 +31,7 @@ export default function OptionBox({
   return (
     <ButtonBase
       data-tour={dataTour}
+      data-tour-extra={dataTourExtra}
       onClick={onClick}
       sx={{
         width: "100%",

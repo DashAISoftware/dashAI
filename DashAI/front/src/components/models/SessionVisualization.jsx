@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -14,6 +14,13 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import Joyride from "react-joyride";
+import { getTourStyles } from "../tour/tourStyles";
+import { CustomTooltip } from "../tour/CustomTooltip";
+import {
+  energySessionSteps,
+  energyTutorialConfig,
+} from "../../constants/tours/tutorials/energyTutorial";
 import {
   PlayArrow,
   TableChart,
@@ -58,7 +65,13 @@ export default function SessionVisualization() {
     lastAddedRunId,
     clearLastAddedRunId,
     selectModel,
+    configOpen,
   } = useModels();
+
+  const [energySessionRun, setEnergySessionRun] = useState(false);
+  const [energySessionIndex, setEnergySessionIndex] = useState(0);
+  const prevConfigOpen = useRef(false);
+  const prevRunsLength = useRef(0);
 
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -138,6 +151,83 @@ export default function SessionVisualization() {
     }
   }, [sessionTourContext]);
 
+  // Start energy session tour
+  useEffect(() => {
+    if (sessionStorage.getItem("energyTutorialSessionContinue") === "true") {
+      sessionStorage.removeItem("energyTutorialSessionContinue");
+      const waitForFirstModel = (attempts = 0) => {
+        const element = document.querySelector('[data-tour="first-model"]');
+        if (element) {
+          prevRunsLength.current = runs.length;
+          setEnergySessionRun(true);
+        } else if (attempts < 30) {
+          setTimeout(() => waitForFirstModel(attempts + 1), 200);
+        }
+      };
+      setTimeout(() => waitForFirstModel(), 500);
+    }
+  }, []);
+
+  // Advance from model-click step to add-model-button step when dialog opens
+  useEffect(() => {
+    if (!energySessionRun) return;
+    if (configOpen && !prevConfigOpen.current) {
+      if (energySessionIndex === 0) {
+        const waitForButton = (attempts = 0) => {
+          const el = document.querySelector('[data-tour="add-model-button"]');
+          if (el) {
+            setEnergySessionIndex(1);
+          } else if (attempts < 30) {
+            setTimeout(() => waitForButton(attempts + 1), 100);
+          }
+        };
+        setTimeout(() => waitForButton(), 150);
+      }
+    }
+    prevConfigOpen.current = configOpen;
+  }, [configOpen, energySessionRun, energySessionIndex]);
+
+  // Advance to manual prediction step when Predictions tab is clicked
+  useEffect(() => {
+    const handler = () => {
+      if (energySessionRun && energySessionIndex === 3) {
+        const waitForButton = (attempts = 0) => {
+          const el = document.querySelector(
+            '[data-tour="new-manual-prediction"]',
+          );
+          if (el) {
+            setEnergySessionIndex(4);
+          } else if (attempts < 30) {
+            setTimeout(() => waitForButton(attempts + 1), 100);
+          }
+        };
+        setTimeout(() => waitForButton(), 150);
+      }
+    };
+    window.addEventListener("energyPredictionTabActivated", handler);
+    return () =>
+      window.removeEventListener("energyPredictionTabActivated", handler);
+  }, [energySessionRun, energySessionIndex]);
+
+  // Advance to train step after the model run is added
+  useEffect(() => {
+    if (!energySessionRun) return;
+    if (runs.length > prevRunsLength.current) {
+      prevRunsLength.current = runs.length;
+      if (energySessionIndex === 1) {
+        const waitForTrainButton = (attempts = 0) => {
+          const el = document.querySelector('[data-tour="train-button"]');
+          if (el) {
+            setEnergySessionIndex(2);
+          } else if (attempts < 30) {
+            setTimeout(() => waitForTrainButton(attempts + 1), 200);
+          }
+        };
+        setTimeout(() => waitForTrainButton(), 400);
+      }
+    }
+  }, [runs.length, energySessionRun, energySessionIndex]);
+
   // Scroll to and highlight a newly added run card
   useEffect(() => {
     if (!lastAddedRunId) return;
@@ -192,6 +282,17 @@ export default function SessionVisualization() {
 
   const handleTrainWithTour = (run) => {
     if (onTrain) onTrain(run);
+    if (energySessionRun && energySessionIndex === 2) {
+      const waitForPredictionsTab = (attempts = 0) => {
+        const el = document.querySelector('[data-tour="predictions-tab"]');
+        if (el) {
+          setEnergySessionIndex(3);
+        } else if (attempts < 30) {
+          setTimeout(() => waitForPredictionsTab(attempts + 1), 200);
+        }
+      };
+      setTimeout(() => waitForPredictionsTab(), 300);
+    }
     if (sessionTourContext?.run && sessionTourContext?.stepIndex === 5) {
       setTimeout(() => {
         sessionTourContext.nextStep();
@@ -257,6 +358,31 @@ export default function SessionVisualization() {
 
   return (
     <>
+      <Joyride
+        steps={energySessionSteps}
+        run={energySessionRun}
+        stepIndex={energySessionIndex}
+        continuous={energyTutorialConfig.continuous}
+        showProgress={energyTutorialConfig.showProgress}
+        showSkipButton={energyTutorialConfig.showSkipButton}
+        showBackButton={energyTutorialConfig.showBackButton}
+        disableOverlayClose={energyTutorialConfig.disableOverlayClose}
+        disableCloseOnEsc={energyTutorialConfig.disableCloseOnEsc}
+        disableOverlay={energySessionIndex % 2 === 1}
+        styles={getTourStyles(theme)}
+        tooltipComponent={CustomTooltip}
+        disableScrollParentFix
+        floaterProps={{ disableFlip: true, hideArrow: true, offset: 18 }}
+        callback={({ status, action }) => {
+          if (
+            status === "skipped" ||
+            status === "finished" ||
+            action === "close"
+          ) {
+            setEnergySessionRun(false);
+          }
+        }}
+      />
       <Box
         data-session-viz
         onDragOver={(e) => {

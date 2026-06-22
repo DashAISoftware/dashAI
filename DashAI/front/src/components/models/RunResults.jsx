@@ -314,7 +314,14 @@ export default function RunResults({
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
           <Tabs
             value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
+            onChange={(e, newValue) => {
+              setActiveTab(newValue);
+              if (newValue === 2) {
+                window.dispatchEvent(
+                  new CustomEvent("energyPredictionTabActivated"),
+                );
+              }
+            }}
             aria-label="Results tabs"
           >
             <Tab label={t("models:label.liveMetrics")} />
@@ -334,6 +341,7 @@ export default function RunResults({
               disabled={!isFinished}
             />
             <Tab
+              data-tour="predictions-tab"
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <span>{t("models:label.predictions")}</span>
@@ -582,6 +590,7 @@ export default function RunResults({
               </Grid>
               <Grid item xs={6}>
                 <Button
+                  data-tour="new-manual-prediction"
                   variant="outlined"
                   size="small"
                   startIcon={<TrendingUpIcon />}
