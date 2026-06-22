@@ -86,6 +86,9 @@ from DashAI.back.explainability.explainers.permutation_feature_importance import
 
 # Explorers
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
+from DashAI.back.exploration.explorers.clustering_profile import (
+    ClusteringProfileExplorer,
+)
 from DashAI.back.exploration.explorers.corr_matrix import CorrelationMatrixExplorer
 from DashAI.back.exploration.explorers.cov_matrix import CovarianceMatrixExplorer
 from DashAI.back.exploration.explorers.density_heatmap import DensityHeatmapExplorer
@@ -490,6 +493,7 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        ClusteringProfileExplorer,
         # Converters
         ColumnRemover,
         Clustering,

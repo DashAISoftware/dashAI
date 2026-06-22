@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, CircularProgress } from "@mui/material";
 import { visualizersKeys } from "../useExplorerResults";
+import ClusteringProfileVisualizer from "../visualizations/ClusteringProfileVisualizer";
 import ImageVisualizer from "../visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "../visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "../visualizations/TabularVisualizer";
@@ -62,6 +63,10 @@ function Results({ id, minimalist = false, loading, data, dataType }) {
 
       {!loading && dataType === visualizersKeys.image_url && (
         <ImageVisualizer data={data} minimalist={minimalist} />
+      )}
+
+      {!loading && dataType === visualizersKeys.clustering_profile && (
+        <ClusteringProfileVisualizer data={data} minimalist={minimalist} />
       )}
     </Box>
   );

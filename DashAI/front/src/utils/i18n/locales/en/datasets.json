@@ -288,6 +288,7 @@
     "requiredColumns": "Required columns",
     "requiredColumns_exact": "Required columns: exactly {{exact}}",
     "requiredColumns_min": "Required columns: at least {{min}}",
+    "requiredColumns_none": "No columns required",
     "requiredColumns_range": "Required columns: between {{min}} and {{max}}",
     "restrictedDataTypes": "Restricted data types: <1><0></0></1>",
     "rightSkewedWarning": "<0>Right-skewed distribution:</0> Consider applying a log transformation.",

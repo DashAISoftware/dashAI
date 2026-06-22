@@ -1,6 +1,7 @@
 import { Box, Typography, Tooltip } from "@mui/material";
 import { useState, useEffect } from "react";
 import { getExplorerResults } from "../../../api/explorer";
+import ClusteringProfileVisualizer from "./visualizations/ClusteringProfileVisualizer";
 import ImageVisualizer from ".//visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "./visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "./visualizations/TabularVisualizer";
@@ -37,6 +38,7 @@ const visualizers = {
   plotly_json: PlotlyJsonVisualizer,
   image_base64: ImageVisualizer,
   image_url: ImageVisualizer,
+  clustering_profile: ClusteringProfileVisualizer,
 };
 
 const visualizersKeys = {
@@ -44,6 +46,7 @@ const visualizersKeys = {
   plotly_json: "plotly_json",
   image_base64: "image_base64",
   image_url: "image_url",
+  clustering_profile: "clustering_profile",
 };
 
 const ORIENTATIONS = {
@@ -93,6 +96,8 @@ export function useExplorerResults(explorer) {
         });
       } else if (results.type === visualizersKeys.plotly_json) {
         setData(JSON.parse(results.data));
+      } else if (results.type === visualizersKeys.clustering_profile) {
+        setData(results.data);
       } else if (
         results.type === visualizersKeys.image_base64 ||
         results.type === visualizersKeys.image_url

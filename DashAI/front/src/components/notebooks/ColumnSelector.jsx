@@ -130,11 +130,11 @@ function ColumnSelector({
   const isValidSelection = useCallback(
     (selection) => {
       if (selection.length === 0) {
-        return false;
+        return inputCardinality.exact === 0;
       }
 
       if (
-        inputCardinality.exact &&
+        inputCardinality.exact != null &&
         selection.length !== inputCardinality.exact
       ) {
         return false;
@@ -153,6 +153,7 @@ function ColumnSelector({
     [inputCardinality],
   );
   const getValidColumnIds = useCallback(() => {
+    if (inputCardinality.exact === 0) return [];
     return rows
       .filter((row) => {
         if (allowedTypes.length > 0 && !allowedTypes.includes(row.valueType)) {
@@ -346,11 +347,14 @@ function ColumnSelector({
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
               max: inputCardinality.max,
-              context: inputCardinality.exact
-                ? "exact"
-                : inputCardinality.max
-                  ? "range"
-                  : "min",
+              context:
+                inputCardinality.exact === 0
+                  ? "none"
+                  : inputCardinality.exact
+                    ? "exact"
+                    : inputCardinality.max
+                      ? "range"
+                      : "min",
             })}
           </Typography>
         )}
