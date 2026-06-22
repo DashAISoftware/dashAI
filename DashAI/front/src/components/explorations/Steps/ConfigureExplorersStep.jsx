@@ -89,9 +89,10 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
    */
   const validateOptions = useCallback((data) => {
     const options = data.map((explorer, index) => {
-      const allowedDtypes = explorer.metadata.allowed_dtypes;
-      const restrictedDtypes = explorer.metadata.restricted_dtypes;
-      const inputCardinality = explorer.metadata.input_cardinality;
+      const metadata = explorer.metadata || {};
+      const allowedDtypes = metadata.allowed_dtypes || [];
+      const restrictedDtypes = metadata.restricted_dtypes || [];
+      const inputCardinality = metadata.input_cardinality || {};
       let disabled = false;
       let tooltip = "";
 
@@ -100,29 +101,31 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         tooltip += `\n`;
       }
 
-      let validColumns = datasetColumns;
-      // check the valid dataset columns for the explorer
-      if (!allowedDtypes.includes("*")) {
-        validColumns = datasetColumns.filter((col) =>
+      let validColumns = datasetColumns || [];
+      const hasDtypeRestriction =
+        allowedDtypes.length > 0 && !allowedDtypes.includes("*");
+      if (hasDtypeRestriction) {
+        validColumns = validColumns.filter((col) =>
           allowedDtypes.includes(col.dataType),
         );
       }
 
       // check the restricted dataset columns for the explorer
-      if (
-        restrictedDtypes.some((dtype) =>
-          datasetColumns.some((col) => col.dataType === dtype),
-        )
-      ) {
-        validColumns = validColumns.filter(
-          (col) => !restrictedDtypes.includes(col.dataType),
+      if (restrictedDtypes.length > 0) {
+        const hasRestricted = restrictedDtypes.some((dtype) =>
+          (datasetColumns || []).some((col) => col.dataType === dtype),
         );
+        if (hasRestricted) {
+          validColumns = validColumns.filter(
+            (col) => !restrictedDtypes.includes(col.dataType),
+          );
+        }
       }
 
       // check the input cardinality
       if (
-        inputCardinality.exact != undefined &&
-        inputCardinality.exact != null
+        inputCardinality.exact !== undefined &&
+        inputCardinality.exact !== null
       ) {
         // if (tooltip) tooltip += "\n";
         // tooltip += `This explorer requires exactly ${
@@ -130,7 +133,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         // } valid ${inputCardinality.exact === 1 ? "column" : "columns"}.`;
         if (validColumns.length < inputCardinality.exact) disabled = true;
       } else {
-        if (inputCardinality.min != undefined && inputCardinality.min != null) {
+        if (inputCardinality.min !== undefined && inputCardinality.min !== null) {
           // if (tooltip) tooltip += "\n";
           // tooltip += `This explorer requires at least ${
           //   inputCardinality.min
@@ -139,7 +142,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
           if (validColumns.length < inputCardinality.min) disabled = true;
         }
 
-        if (inputCardinality.max != undefined && inputCardinality.max != null) {
+        if (inputCardinality.max !== undefined && inputCardinality.max !== null) {
           // if (tooltip) tooltip += "\n";
           // tooltip += `This explorer requires at most ${
           //   inputCardinality.max
@@ -308,10 +311,9 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         </Typography>
       </Grid>
 
-      {/* Form to add a single explorer to the exploration */}
       <Grid size={{ xs: 12 }}>
-        <Grid container direction="row" columnSpacing={3} wrap="nowrap">
-          <Grid size={{ xs: 4, md: 12 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Name (optional)"
               value={explorerData.name}
@@ -322,7 +324,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
             />
           </Grid>
 
-          <Grid size={{ xs: 4, md: 12 }}>
+          <Grid size={{ xs: 12, sm: 9 }}>
             <Autocomplete
               loading={loading}
               disablePortal
@@ -343,13 +345,14 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
             />
           </Grid>
 
-          <Grid size={{ xs: 1, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <Button
               variant="outlined"
               disabled={!value || value.disabled}
               startIcon={<AddIcon />}
               onClick={handleAddButton}
               sx={{ height: "100%" }}
+              fullWidth
             >
               Add
             </Button>
@@ -357,7 +360,6 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         </Grid>
       </Grid>
 
-      {/* Explorers table */}
       <Grid size={{ xs: 12 }}>
         {loading && (
           <Box
