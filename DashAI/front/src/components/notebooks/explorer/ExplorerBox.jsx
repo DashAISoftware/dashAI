@@ -153,7 +153,7 @@ export default function ExplorerBox({
                   color="primary"
                   icon={<Info />}
                   sx={{
-                    "&:hover": { bgcolor: "primary.light" },
+                    "&:hover": { bgcolor: "secondary.main" },
                   }}
                 />
               )}
