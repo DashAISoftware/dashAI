@@ -268,6 +268,17 @@ const getTheme = (mode) => ({
         }),
       },
     },
+    MuiAlert: {
+      styleOverrides: {
+        standardWarning: ({ theme }) =>
+          theme.palette.mode === "light"
+            ? {
+                backgroundColor: `${theme.palette.warning.main}35`,
+                border: `1px solid ${theme.palette.warning.main}70`,
+              }
+            : {},
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: `
         ::-webkit-scrollbar { width: 12px; }
