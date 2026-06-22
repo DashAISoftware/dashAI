@@ -61,5 +61,6 @@
   "datasetDetails": "Dateidetails",
   "checkQueue": "Details in der Aufgabenwarteschlange prüfen",
   "deleteSuccess": "Datei \"{{name}}\" gelöscht.",
-  "deleteError": "Fehler beim Löschen der Datei."
+  "deleteError": "Fehler beim Löschen der Datei.",
+  "tagFilterPlaceholder": "Nach Tag filtern, Enter drücken zum Hinzufügen..."
 }

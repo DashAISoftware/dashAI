@@ -61,5 +61,6 @@
   "datasetDetails": "Datafile Details",
   "checkQueue": "Check the job queue for details",
   "deleteSuccess": "Datafile \"{{name}}\" deleted.",
-  "deleteError": "Failed to delete datafile."
+  "deleteError": "Failed to delete datafile.",
+  "tagFilterPlaceholder": "Filter by tag, press Enter to add..."
 }
