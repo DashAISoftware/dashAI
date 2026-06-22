@@ -16,23 +16,208 @@ AI models
 .. image:: ./images/dashai-logo.svg
    :alt: dashAI Logo
 
-Quick installation (Pypi)
-=========================
+Desktop installers (Windows / macOS)
+=====================================
+
+The easiest way to get started. Desktop installers, ready to use, are
+published with every release. They are **CPU only** and bundle everything you
+need, so no Python or extra setup is required.
+
+Download the file for your system from the
+`latest release <https://github.com/DashAISoftware/DashAI/releases/latest>`_:
+
+* **Windows (x64):** ``dashAI-<version>-x64-windows.exe``
+* **macOS (Apple Silicon):** ``dashAI-<version>-arm-osx.dmg``
+* **macOS (Intel):** ``dashAI-<version>-x64-osx.dmg``
+
+Run the installer, launch dashAI, and the graphical interface opens
+automatically.
+
+**Note:** the desktop installers ship with CPU only PyTorch and
+``llama-cpp-python``. For NVIDIA (CUDA) or AMD (ROCm) GPU acceleration, use the
+pip installation below.
 
 
-dashAI needs Python 3.10 or greater to be installed. Once that requirement is satisfied, you can install dashAI via pip:
+Installation (PyPI)
+===================
+
+dashAI needs Python 3.10 or greater. We strongly recommend installing it inside
+an isolated environment (``venv`` or ``conda``) to avoid clashes with other
+packages.
+
+Installing dashAI also installs PyTorch with the default build for your
+platform, which works out of the box on CPU. To enable GPU acceleration (NVIDIA
+CUDA or AMD ROCm), or to force a CPU only build, reinstall PyTorch from the
+matching index as shown in step 3. ``llama-cpp-python`` is required to run LLM
+models (GGUF / Llama, Mistral, Qwen, and similar) inside the app, but it is
+never installed automatically, so install it in step 3 if you need those models.
+
+
+1. Create an environment
+-------------------------
+
+**Linux / macOS (venv)**
+
+.. code:: bash
+
+    $ python3 -m venv .venv
+    $ source .venv/bin/activate
+
+**Windows (venv, PowerShell)**
+
+.. code:: powershell
+
+    > python -m venv .venv
+    > .venv\Scripts\Activate.ps1
+
+**Any OS (conda)**
+
+.. code:: bash
+
+    $ conda create -n dashai python=3.12
+    $ conda activate dashai
+
+
+2. Install dashAI
+-----------------
+
+With the environment active:
 
 .. code:: bash
 
     $ pip install dashai
 
-Then, to initialize the server and the graphical interface, run:
+
+3. Select a PyTorch build and (optional) llama-cpp
+--------------------------------------------------
+
+This step is optional on CPU (step 2 already installed a working PyTorch).
+Run the section below that matches your hardware to pick a specific build.
+
+CPU only (Linux / macOS / Windows)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On Linux the default PyTorch ships the large CUDA build; reinstall from the CPU
+index if you want a smaller CPU only install:
+
+.. code:: bash
+
+    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+    # Optional, for GGUF / Llama models (precompiled CPU wheel, no build tools):
+    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+
+NVIDIA GPU (CUDA 12.8)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+    # Torch CUDA 12.8 (prebuilt wheels)
+    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+    # Llama compiled with CUDA offload (requires build tools, see below)
+    $ pip install llama-cpp-python -C cmake.args="-DGGML_CUDA=on"
+
+AMD GPU (ROCm 6.4)
+~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+    # Torch ROCm (prebuilt wheels)
+    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+
+    # Llama compiled with HIP/ROCm offload (requires build tools, see below)
+    $ pip install llama-cpp-python -C cmake.args="-DGGML_HIP=on"
+
+
+Build tools for GPU llama-cpp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``-C cmake.args=...`` commands above compile ``llama-cpp-python`` from
+source. They require:
+
+* `CMake <https://cmake.org/>`_ (required to drive the build)
+* A C compiler:
+
+  * **Linux:** ``gcc`` or ``clang``
+  * **Windows:** Visual Studio (C++ build tools / MSVC) or MinGW
+  * **macOS:** Xcode
+
+* **NVIDIA (CUDA):** NVIDIA drivers and the NVIDIA CUDA Toolkit. Use version
+  ``>=12.8`` for RTX 5000 series GPUs to work.
+* **AMD (ROCm):** the ROCm / HIP SDK and AMD drivers.
+
+If you want to skip compilation, precompiled ``llama-cpp-python`` wheels are
+available for CPU and CUDA:
+
+.. code:: bash
+
+    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/<cuda-version>
+
+Replace ``<cuda-version>`` with your CUDA tag. Prebuilt wheels are published for
+``cu118``, ``cu121``, ``cu122``, ``cu123``, ``cu124``, ``cu125``, ``cu130`` and
+``cu132`` (for example ``cu124``). See the
+`llama-cpp-python installation docs <https://llama-cpp-python.readthedocs.io/en/latest/>`_
+for the available wheels and other backend options.
+
+
+4. Run dashAI
+-------------
+
+Start the server and graphical interface with:
 
 .. code:: bash
 
     $ dashai
 
-Finally, go to `http://localhost:3000/ <http://localhost:3000/>`_ in your browser to access to the dashAI graphical interface.
+Then open `http://localhost:8000/ <http://localhost:8000/>`_ in your browser to
+access the dashAI graphical interface.
+
+
+Docker
+======
+
+dashAI can also run inside a container. Two Dockerfiles are provided at the
+repository root.
+
+CPU image
+---------
+
+``Dockerfile`` builds a CPU only image (CPU PyTorch). Build and run it with:
+
+.. code:: bash
+
+    $ docker build -t dashai .
+    $ docker run -p 8000:8000 dashai
+
+NVIDIA GPU image (CUDA)
+-----------------------
+
+``Dockerfile.cuda`` builds a CUDA enabled image (CUDA 12.8 PyTorch and
+``llama-cpp-python`` compiled with CUDA offload). Build and run it with:
+
+.. code:: bash
+
+    $ docker build -t dashai:cuda -f Dockerfile.cuda .
+    $ docker run --gpus all -p 8000:8000 dashai:cuda
+
+Then open `http://localhost:8000/ <http://localhost:8000/>`_ in your browser.
+
+To pass the host GPU into the container with ``--gpus all`` you need the NVIDIA
+drivers plus the runtime that wires the GPU into Docker. How you get that
+runtime depends on your setup:
+
+* **Native Linux Docker:** install the
+  `NVIDIA Container Toolkit <https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html>`_
+  on the host.
+* **Docker Desktop (Windows / macOS):** the GPU runtime is bundled with the
+  WSL 2 backend, so you only install the NVIDIA driver on Windows and enable the
+  WSL 2 backend. See the
+  `Docker Desktop GPU docs <https://docs.docker.com/desktop/features/gpu/>`_.
+* **Docker Engine inside a WSL 2 distro (without Docker Desktop):** install the
+  NVIDIA Container Toolkit inside the WSL distro, following the
+  `CUDA on WSL guide <https://docs.nvidia.com/cuda/wsl-user-guide/index.html>`_.
 
 
 Test datasets
@@ -112,7 +297,7 @@ First, set the python enviroment, for that you can use
 
 .. code: bash
 
-    $ conda create -n dashai python=3.10
+    $ conda create -n dashai python=3.12
     $ conda activate dashai
 
 Later, install the requirements:
