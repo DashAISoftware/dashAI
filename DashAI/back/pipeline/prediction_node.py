@@ -41,61 +41,8 @@ class Prediction(BaseJob):
 
         import numpy as np
 
-        loaded_dataset = context["dataset"]
-        model = context["model_class"]
         config = di["config"]
-
         sqlite_local = config["LOCAL_PATH"]
-        pipeline_id = context.get("pipeline_id")
-        model_node_id = context.get("model_node_id")
-
-        model_path = context["model_path"]
-        if pipeline_id is not None and model_node_id:
-            node_model_path = os.path.join(
-                sqlite_local,
-                "pipelines",
-                "train",
-                str(pipeline_id),
-                str(model_node_id),
-                "model",
-            )
-            if os.path.exists(node_model_path):
-                model_path = node_model_path
-
-        try:
-            trained_model: BaseModel = model.load(model_path)
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                "Failed to load trained model for Prediction. "
-                f"model_name={context.get('model_name')}, "
-                f"model_path={model_path}, "
-                f"model_node_id={model_node_id}, "
-                f"pipeline_id={pipeline_id}"
-            ) from e
-
-        try:
-            prepared_dataset = loaded_dataset.select_columns(context["input_columns"])
-            y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-
-            if isinstance(y_pred_proba[0], str):
-                y_pred = y_pred_proba
-            elif y_pred_proba.ndim == 2:
-                y_pred = np.argmax(y_pred_proba, axis=1)
-            else:
-                y_pred = y_pred_proba
-
-        except ValueError as ve:
-            log.error(f"Validation Error: {ve}")
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid columns selected: {str(ve)}",
-            ) from ve
-        except Exception as e:
-            log.error(e)
-            raise JobError(
-                "Model prediction failed",
-            ) from e
 
         try:
             path = os.path.join(sqlite_local, "pipelines", "predictions")
@@ -111,22 +58,94 @@ class Prediction(BaseJob):
                             continue
 
             next_id = max(existing_ids, default=0) + 1
-            json_name = f"prediction_{next_id}.json"
 
-            json_data = {
-                "metadata": {
-                    "id": next_id,
-                    "model_name": context["model_name"],
-                    "dataset_name": context["dataset_name"],
-                    "task_name": context["task_name"],
-                },
-                "prediction": y_pred.tolist(),
-            }
+            def _predict_for_context(pred_context: Dict[str, Any]) -> Dict[str, Any]:
+                nonlocal next_id
+                loaded_dataset = pred_context["dataset"]
+                model = pred_context["model_class"]
+                pipeline_id = pred_context.get("pipeline_id")
+                model_node_id = pred_context.get("model_node_id")
 
-            with open(os.path.join(path, json_name), "w") as json_file:
-                json.dump(json_data, json_file, indent=4)
+                model_path = pred_context["model_path"]
+                if pipeline_id is not None and model_node_id:
+                    node_model_path = os.path.join(
+                        sqlite_local,
+                        "pipelines",
+                        "train",
+                        str(pipeline_id),
+                        str(model_node_id),
+                        "model",
+                    )
+                    if os.path.exists(node_model_path):
+                        model_path = node_model_path
 
-            return {"prediction": json_name}
+                try:
+                    trained_model: BaseModel = model.load(model_path)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        "Failed to load trained model for Prediction. "
+                        f"model_name={pred_context.get('model_name')}, "
+                        f"model_path={model_path}, "
+                        f"model_node_id={model_node_id}, "
+                        f"pipeline_id={pipeline_id}"
+                    ) from e
+
+                try:
+                    prepared_dataset = loaded_dataset.select_columns(
+                        pred_context["input_columns"]
+                    )
+                    y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+
+                    if isinstance(y_pred_proba[0], str):
+                        y_pred = y_pred_proba
+                    elif y_pred_proba.ndim == 2:
+                        y_pred = np.argmax(y_pred_proba, axis=1)
+                    else:
+                        y_pred = y_pred_proba
+
+                except ValueError as ve:
+                    log.error(f"Validation Error: {ve}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid columns selected: {str(ve)}",
+                    ) from ve
+                except Exception as e:
+                    log.error(e)
+                    raise JobError(
+                        "Model prediction failed",
+                    ) from e
+
+                json_name = f"prediction_{next_id}.json"
+                json_data = {
+                    "metadata": {
+                        "id": next_id,
+                        "model_name": pred_context["model_name"],
+                        "dataset_name": pred_context["dataset_name"],
+                        "task_name": pred_context["task_name"],
+                    },
+                    "prediction": y_pred.tolist(),
+                }
+
+                with open(os.path.join(path, json_name), "w") as json_file:
+                    json.dump(json_data, json_file, indent=4)
+
+                next_id += 1
+                return {
+                    "prediction": json_name,
+                    "model_node_id": pred_context.get("model_node_id"),
+                    "dataset_name": pred_context.get("dataset_name"),
+                    "model_name": pred_context.get("model_name"),
+                    "task_name": pred_context.get("task_name"),
+                }
+
+            branches = context.get("_branches")
+            if branches:
+                entries = [_predict_for_context(branch) for branch in branches]
+                return {"prediction": entries}
+
+            entry = _predict_for_context(context)
+            return {"prediction": entry["prediction"]}
         except Exception as e:
             log.exception(e)
             raise JobError("Can not save prediction to json file") from e

@@ -9,7 +9,6 @@ from DashAI.back.metrics.base_metric import BaseMetric
 
 log = logging.getLogger(__name__)
 
-
 class MetricsEval(BaseJob):
     """Pipeline node that evaluates the trained model with selected metrics.
 
@@ -28,8 +27,6 @@ class MetricsEval(BaseJob):
         super().__init__(kwargs={"metrics": metrics})
         self.metrics = metrics
 
-    # -- BaseJob interface ---------------------------------------------------
-
     def set_status_as_delivered(self) -> None:
         log.debug("MetricsEval executed successfully.")
 
@@ -38,8 +35,6 @@ class MetricsEval(BaseJob):
 
     def get_job_name(self) -> str:
         return "MetricsEval"
-
-    # -- Execution -----------------------------------------------------------
 
     async def run(
         self,
@@ -57,17 +52,6 @@ class MetricsEval(BaseJob):
         dict
             ``{"metrics_result": { ... }}`` with per-metric scores.
         """
-        factory = context.get("model_factory")
-        x = context.get("trained_x")
-        y = context.get("trained_y")
-
-        if factory is None or x is None or y is None:
-            raise JobError(
-                "MetricsEval requires a trained model. "
-                "Make sure TaskAndModel runs before this node."
-            )
-
-        # Resolve metric classes from registry
         all_metrics = {
             component_dict["name"]: component_dict
             for component_dict in component_registry(di).get_components_by_types(
@@ -85,6 +69,55 @@ class MetricsEval(BaseJob):
 
         if not metric_classes:
             raise JobError("No valid metrics found to evaluate.")
+
+        branches = context.get("_branches")
+        if branches:
+            entries: List[Dict[str, Any]] = []
+            for branch in branches:
+                factory = branch.get("model_factory")
+                x = branch.get("trained_x")
+                y = branch.get("trained_y")
+
+                if factory is None or x is None or y is None:
+                    log.warning(
+                        "Skipping metrics for branch without a trained model."
+                    )
+                    continue
+
+                try:
+                    model_metrics = factory.evaluate(x, y, metric_classes)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError("Metrics calculation failed") from e
+
+                entries.append(
+                    {
+                        "model_node_id": branch.get("model_node_id"),
+                        "dataset_name": branch.get("dataset_name"),
+                        "model_name": branch.get("model_name"),
+                        "task_name": branch.get("task_name"),
+                        "metric_names": self.metrics,
+                        "results": model_metrics,
+                    }
+                )
+
+            if not entries:
+                raise JobError(
+                    "MetricsEval requires a trained model. "
+                    "Make sure TaskAndModel runs before this node."
+                )
+
+            return {"metrics_result": entries}
+
+        factory = context.get("model_factory")
+        x = context.get("trained_x")
+        y = context.get("trained_y")
+
+        if factory is None or x is None or y is None:
+            raise JobError(
+                "MetricsEval requires a trained model. "
+                "Make sure TaskAndModel runs before this node."
+            )
 
         try:
             model_metrics = factory.evaluate(x, y, metric_classes)
