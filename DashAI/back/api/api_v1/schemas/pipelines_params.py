@@ -38,10 +38,10 @@ class ValidatePipelineParams(BaseModel):
 
 
 class EdgeEndpointRef(BaseModel):
-    nodeId: Optional[str] = None
+    nodeId: Optional[str] = None  # noqa: N815
     type: str
     port: Optional[str] = None
-    currentConnections: Optional[int] = None
+    currentConnections: Optional[int] = None  # noqa: N815
 
 
 class ValidateEdgeParams(BaseModel):

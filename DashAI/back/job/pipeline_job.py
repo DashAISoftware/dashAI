@@ -3,7 +3,6 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from kink import di, inject
-
 from sqlalchemy import exc
 
 from DashAI.back.dependencies.database.models import NodeRun, Pipeline, PipelineRun
@@ -95,9 +94,7 @@ class PipelineJob(BaseJob):
                     raise JobError("Pipeline steps are missing ids.")
 
                 ready = [
-                    node_id
-                    for node_id in pending
-                    if not predecessor_map.get(node_id)
+                    node_id for node_id in pending if not predecessor_map.get(node_id)
                 ]
                 if not ready:
                     raise JobError(
@@ -136,9 +133,7 @@ class PipelineJob(BaseJob):
                             node_run_id = node_run.id
                     except exc.OperationalError as e:
                         if "database is locked" in str(e).lower():
-                            log.warning(
-                                "NodeRun insert skipped due to database lock."
-                            )
+                            log.warning("NodeRun insert skipped due to database lock.")
                             node_run_id = None
                         else:
                             raise
@@ -182,7 +177,7 @@ class PipelineJob(BaseJob):
                         try:
                             task.result()
                         except Exception as e:
-                            for pending_task in task_map.keys():
+                            for pending_task in task_map:
                                 pending_task.cancel()
                             raise JobError(
                                 f"Error executing node {node_id}: {str(e)}"
@@ -207,9 +202,7 @@ class PipelineJob(BaseJob):
                 db.add(pipeline_run)
                 NodeJob._commit_with_retry(db, readd=[pipeline_run, pipeline])
                 self.set_status_as_delivered()
-                log.info(
-                    f"Pipeline {pipeline_id} execution completed successfully."
-                )
+                log.info(f"Pipeline {pipeline_id} execution completed successfully.")
             except Exception as e:
                 pipeline_run.set_status_as_error(str(e))
                 db.add(pipeline_run)
@@ -312,7 +305,9 @@ class PipelineJob(BaseJob):
                 if isinstance(pipeline.exploration, dict)
                 else {}
             )
-            exploration_key = node_id or f"DataExploration-{len(aggregated_exploration)}"
+            exploration_key = (
+                node_id or f"DataExploration-{len(aggregated_exploration)}"
+            )
             aggregated_exploration[exploration_key] = {
                 "dataset_name": context.get("dataset_name")
                 or output.get("dataset_name")

@@ -5,7 +5,7 @@ import threading
 import time
 from typing import TYPE_CHECKING, Any, Dict
 
-from kink import di, inject
+from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.dependencies.database.models import NodeRun
@@ -43,7 +43,9 @@ class NodeJob(BaseJob):
                 self._commit_with_retry(db)
             except exc.SQLAlchemyError as e:
                 log.exception(e)
-                raise JobError("Error while setting node run status as delivered.") from e
+                raise JobError(
+                    "Error while setting node run status as delivered."
+                ) from e
 
     @inject
     def set_status_as_error(
@@ -96,9 +98,7 @@ class NodeJob(BaseJob):
             try:
                 node_instance = node_class(**node_config)
             except Exception as e:
-                raise JobError(
-                    f"Error instantiating node {node_type}: {str(e)}"
-                ) from e
+                raise JobError(f"Error instantiating node {node_type}: {str(e)}") from e
 
             return self._run_node_instance(node_instance, context)
 
@@ -123,9 +123,7 @@ class NodeJob(BaseJob):
         try:
             node_instance = node_class(**node_config)
         except Exception as e:
-            raise JobError(
-                f"Error instantiating node {node_type}: {str(e)}"
-            ) from e
+            raise JobError(f"Error instantiating node {node_type}: {str(e)}") from e
 
         try:
             output = self._run_node_instance(node_instance, context)
@@ -159,12 +157,16 @@ class NodeJob(BaseJob):
                 self._commit_with_retry(db)
             except exc.SQLAlchemyError as e:
                 log.exception(e)
-                raise JobError("Error while setting node run status as finished.") from e
+                raise JobError(
+                    "Error while setting node run status as finished."
+                ) from e
 
         return output
 
     @staticmethod
-    def _run_node_instance(node_instance: Any, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _run_node_instance(
+        node_instance: Any, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         result = node_instance.run(context=context)
         if asyncio.iscoroutine(result):
             return asyncio.run(result)

@@ -14,7 +14,11 @@ import { ChevronRight } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 
-function PipelineTemplatesSidebar({ onToggle, templates = [], onSelectTemplate }) {
+function PipelineTemplatesSidebar({
+  onToggle,
+  templates = [],
+  onSelectTemplate,
+}) {
   const theme = useTheme();
 
   return (
@@ -29,7 +33,10 @@ function PipelineTemplatesSidebar({ onToggle, templates = [], onSelectTemplate }
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <AutoAwesomeIcon fontSize="small" sx={{ color: theme.palette.text.primary }} />
+          <AutoAwesomeIcon
+            fontSize="small"
+            sx={{ color: theme.palette.text.primary }}
+          />
           <Typography variant="subtitle1">Prefabricated Pipelines</Typography>
         </Box>
         {onToggle && (
@@ -43,7 +50,9 @@ function PipelineTemplatesSidebar({ onToggle, templates = [], onSelectTemplate }
         )}
       </Box>
 
-      <Box sx={{ p: 1.5, overflowY: "auto", display: "grid", gap: 1.5, flex: 1 }}>
+      <Box
+        sx={{ p: 1.5, overflowY: "auto", display: "grid", gap: 1.5, flex: 1 }}
+      >
         {templates.map((template) => (
           <Card
             key={template.id}

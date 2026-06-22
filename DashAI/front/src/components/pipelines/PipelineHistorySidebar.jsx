@@ -128,7 +128,10 @@ function PipelineHistorySidebar({ currentPipelineId }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <HistoryIcon fontSize="small" sx={{ color: theme.palette.text.primary }} />
+          <HistoryIcon
+            fontSize="small"
+            sx={{ color: theme.palette.text.primary }}
+          />
           <Typography variant="subtitle1">Pipelines History</Typography>
         </Box>
       </Box>
@@ -153,7 +156,9 @@ function PipelineHistorySidebar({ currentPipelineId }) {
         </Button>
       </Box>
 
-      <Divider sx={{ width: "90%", bgcolor: theme.palette.ui.borderDark, mx: "auto" }} />
+      <Divider
+        sx={{ width: "90%", bgcolor: theme.palette.ui.borderDark, mx: "auto" }}
+      />
 
       <Box sx={{ flex: 1, minHeight: 0, p: 1.5 }}>
         <DataGrid
@@ -193,10 +198,12 @@ function PipelineHistorySidebar({ currentPipelineId }) {
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
           <MenuItem disabled>
-            Created: {rowMenuPipeline ? formatDate(rowMenuPipeline.created) : "-"}
+            Created:{" "}
+            {rowMenuPipeline ? formatDate(rowMenuPipeline.created) : "-"}
           </MenuItem>
           <MenuItem disabled>
-            Edited: {rowMenuPipeline ? formatDate(rowMenuPipeline.last_modified) : "-"}
+            Edited:{" "}
+            {rowMenuPipeline ? formatDate(rowMenuPipeline.last_modified) : "-"}
           </MenuItem>
         </Menu>
       </Box>

@@ -89,9 +89,7 @@ function ConfigurableNode({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Configure Node</DialogTitle>
-      <DialogContent dividers>
-        {fields}
-      </DialogContent>
+      <DialogContent dividers>{fields}</DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button variant="contained" onClick={handleSubmit}>

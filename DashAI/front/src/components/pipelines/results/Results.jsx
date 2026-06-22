@@ -55,7 +55,12 @@ function normalizeNodeResults(raw, valueKey = null) {
   return [{ node_id: "legacy", ...raw }];
 }
 
-function buildBranchResults({ trainEntries, taskEntries, metricsEntries, predictionEntries }) {
+function buildBranchResults({
+  trainEntries,
+  taskEntries,
+  metricsEntries,
+  predictionEntries,
+}) {
   const branches = new Map();
 
   const ensureBranch = (branchKey) => {
@@ -94,7 +99,8 @@ function buildBranchResults({ trainEntries, taskEntries, metricsEntries, predict
   });
 
   predictionEntries.forEach((entry, idx) => {
-    const branchKey = entry.model_node_id || entry.node_id || `prediction-${idx}`;
+    const branchKey =
+      entry.model_node_id || entry.node_id || `prediction-${idx}`;
     const branch = ensureBranch(branchKey);
 
     branch.datasetName = entry.dataset_name || branch.datasetName;
@@ -180,7 +186,10 @@ function PipelineResults({ pipelineId, onClose }) {
   const taskEntries = normalizeNodeResults(results.task_and_model);
   const trainEntries = normalizeNodeResults(results.train);
   const metricsEntries = normalizeNodeResults(results.metrics_result);
-  const predictionEntries = normalizeNodeResults(results.prediction, "prediction");
+  const predictionEntries = normalizeNodeResults(
+    results.prediction,
+    "prediction",
+  );
 
   const branchResults = buildBranchResults({
     trainEntries,
@@ -192,7 +201,8 @@ function PipelineResults({ pipelineId, onClose }) {
   const hasExploration =
     results.exploration && results.exploration !== "No exploration data";
   const hasTrain =
-    branchResults.filter((branch) => branch.parameters || branch.metrics).length > 0;
+    branchResults.filter((branch) => branch.parameters || branch.metrics)
+      .length > 0;
   const hasPrediction =
     branchResults.filter((branch) => !!branch.prediction).length > 0;
 
@@ -276,7 +286,9 @@ function PipelineResults({ pipelineId, onClose }) {
                       <Box sx={{ p: 3 }}>
                         {trainTab === 0 && (
                           <Box>
-                            <Typography variant="subtitle1">Model Name</Typography>
+                            <Typography variant="subtitle1">
+                              Model Name
+                            </Typography>
                             <Typography variant="p" sx={{ color: "gray" }}>
                               {branch.modelName}
                             </Typography>
@@ -289,7 +301,9 @@ function PipelineResults({ pipelineId, onClose }) {
                         )}
                         {trainTab === 2 && (
                           <Box>
-                            <PipelineResultsMetrics metricsData={branch.metrics} />
+                            <PipelineResultsMetrics
+                              metricsData={branch.metrics}
+                            />
                           </Box>
                         )}
                         {trainTab === 3 && (

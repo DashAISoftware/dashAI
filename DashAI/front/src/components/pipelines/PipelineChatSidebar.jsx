@@ -28,7 +28,10 @@ function PipelineChatSidebar({ onToggle }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <SmartToyIcon fontSize="small" sx={{ color: theme.palette.text.primary }} />
+          <SmartToyIcon
+            fontSize="small"
+            sx={{ color: theme.palette.text.primary }}
+          />
           <Typography variant="subtitle1">Pipeline Chatbot</Typography>
         </Box>
         {onToggle && (

@@ -13,25 +13,31 @@ export interface IPipeline {
   last_modified: Date;
   steps: IStep[];
   exploration?: Record<string, unknown> | string;
-  train?: {
-    info?: string;
-    parameters?: Record<string, unknown>;
-    metrics?: Record<string, unknown>;
-    model_path?: string;
-    input_columns?: string[];
-    task?: string;
-  } | Record<string, unknown>;
-  task_and_model?: {
-    task?: string;
-    model?: string;
-    parameters?: Record<string, unknown>;
-    model_path?: string;
-    input_columns?: string[];
-  } | Record<string, unknown>;
-  metrics_result?: {
-    metric_names?: string[];
-    results?: Record<string, unknown>;
-  } | Record<string, unknown>;
+  train?:
+    | {
+        info?: string;
+        parameters?: Record<string, unknown>;
+        metrics?: Record<string, unknown>;
+        model_path?: string;
+        input_columns?: string[];
+        task?: string;
+      }
+    | Record<string, unknown>;
+  task_and_model?:
+    | {
+        task?: string;
+        model?: string;
+        parameters?: Record<string, unknown>;
+        model_path?: string;
+        input_columns?: string[];
+      }
+    | Record<string, unknown>;
+  metrics_result?:
+    | {
+        metric_names?: string[];
+        results?: Record<string, unknown>;
+      }
+    | Record<string, unknown>;
   split_data?: Record<string, unknown>;
   prediction?: string | Record<string, unknown>;
 }

@@ -374,12 +374,16 @@ export function usePipelineState(pipelineId, location, navigate) {
     const currentOutputs = edges.filter(
       (edge) =>
         edge.source === params.source &&
-        (params.sourceHandle ? edge.sourceHandle === params.sourceHandle : true),
+        (params.sourceHandle
+          ? edge.sourceHandle === params.sourceHandle
+          : true),
     ).length;
     const currentInputs = edges.filter(
       (edge) =>
         edge.target === params.target &&
-        (params.targetHandle ? edge.targetHandle === params.targetHandle : true),
+        (params.targetHandle
+          ? edge.targetHandle === params.targetHandle
+          : true),
     ).length;
 
     let validation = null;
@@ -417,7 +421,10 @@ export function usePipelineState(pipelineId, location, navigate) {
         {
           ...params,
           className: shouldWarn ? edgeClass : undefined,
-          style: shouldWarn && edgeColor ? { stroke: edgeColor, strokeWidth: 2 } : undefined,
+          style:
+            shouldWarn && edgeColor
+              ? { stroke: edgeColor, strokeWidth: 2 }
+              : undefined,
           markerEnd: {
             type: "arrowclosed",
             color: shouldWarn && edgeColor ? edgeColor : undefined,

@@ -43,8 +43,20 @@ const PIPELINE_TEMPLATES = [
   {
     id: "train_model",
     name: "Train Model",
-    steps: ["DataSelector", "SplitData", "TaskAndModel", "MetricsEval", "Prediction"],
-    labels: ["Data Selector", "Split Data", "Task & Model", "Metrics", "Prediction"],
+    steps: [
+      "DataSelector",
+      "SplitData",
+      "TaskAndModel",
+      "MetricsEval",
+      "Prediction",
+    ],
+    labels: [
+      "Data Selector",
+      "Split Data",
+      "Task & Model",
+      "Metrics",
+      "Prediction",
+    ],
   },
   {
     id: "retrieve_model",
@@ -124,11 +136,15 @@ function NewPipeline() {
   const { getConnectedNodeData } = useConnectedNodeData(nodes, nodeData, edges);
 
   const handleApplyTemplate = (templateId) => {
-    const selectedTemplate = PIPELINE_TEMPLATES.find((t) => t.id === templateId);
+    const selectedTemplate = PIPELINE_TEMPLATES.find(
+      (t) => t.id === templateId,
+    );
     if (!selectedTemplate) return;
 
     if (!isWorkspaceOpen) {
-      navigate("/app/pipelines/new", { state: { initialTemplateId: templateId } });
+      navigate("/app/pipelines/new", {
+        state: { initialTemplateId: templateId },
+      });
       return;
     }
 
@@ -162,7 +178,9 @@ function NewPipeline() {
               return newData;
             });
             setEdges((eds) =>
-              eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+              eds.filter(
+                (edge) => edge.source !== nodeId && edge.target !== nodeId,
+              ),
             );
           },
         },
@@ -269,9 +287,7 @@ function NewPipeline() {
         <ThreePanelLayoutContext.Provider value={threePanelLayout}>
           <ModuleContainer>
             <LeftPanel>
-              <PipelineHistorySidebar
-                currentPipelineId={pipelineId}
-              />
+              <PipelineHistorySidebar currentPipelineId={pipelineId} />
             </LeftPanel>
 
             <CenterPanel>
@@ -348,7 +364,9 @@ function NewPipeline() {
                                   color="text.secondary"
                                   sx={{ mb: 1.5 }}
                                 >
-                                  {(template.labels || template.steps).join(" + ")}
+                                  {(template.labels || template.steps).join(
+                                    " + ",
+                                  )}
                                 </Typography>
                                 <Box
                                   sx={{
@@ -357,9 +375,15 @@ function NewPipeline() {
                                     flexWrap: "wrap",
                                   }}
                                 >
-                                  {(template.labels || template.steps).map((step) => (
-                                    <Chip size="small" label={step} key={step} />
-                                  ))}
+                                  {(template.labels || template.steps).map(
+                                    (step) => (
+                                      <Chip
+                                        size="small"
+                                        label={step}
+                                        key={step}
+                                      />
+                                    ),
+                                  )}
                                 </Box>
                               </CardContent>
                               <CardActions sx={{ px: 2, pb: 1.5, pt: 0 }}>
@@ -397,7 +421,13 @@ function NewPipeline() {
                   )}
                 </Box>
               ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "100%",
+                  }}
+                >
                   <Box sx={{ px: 2, pt: 1, pb: 1 }}>
                     <PipelineHeader
                       activeTab={activeTab}

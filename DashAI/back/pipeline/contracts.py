@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Literal, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -17,6 +17,7 @@ DataKind = Literal[
     "Any",
 ]
 
+
 class PortSpec(BaseModel):
     name: str
     kind: DataKind
@@ -31,17 +32,17 @@ class NodeContract(BaseModel):
     name: str
     icon: str
     description: str
-    requiresConfiguration: bool
+    requiresConfiguration: bool  # noqa: N815
     source: bool
     target: bool
     predecessors: List[str]
     successors: List[str]
     input: Optional[str] = None
     output: Optional[str] = None
-    sourceHandles: int = 1
-    maxInputs: Optional[int] = 1
-    maxOutputs: Optional[int] = None
-    configType: str = "custom"
+    sourceHandles: int = 1  # noqa: N815
+    maxInputs: Optional[int] = 1  # noqa: N815
+    maxOutputs: Optional[int] = None  # noqa: N815
+    configType: str = "custom"  # noqa: N815
     inputs: List[PortSpec]
     outputs: List[PortSpec]
 
@@ -292,7 +293,9 @@ def get_contracts_payload() -> List[Dict[str, object]]:
     return payload
 
 
-def _resolve_port(ports: List[PortSpec], port_name: Optional[str], role: str) -> PortSpec:
+def _resolve_port(
+    ports: List[PortSpec], port_name: Optional[str], role: str
+) -> PortSpec:
     if port_name:
         for port in ports:
             if port.name == port_name:
@@ -358,25 +361,31 @@ def validate_edge(
     except ValueError as exc:
         return _error_response(str(exc), reason="INVALID_PORT")
 
-    if target_port_spec.max_connections is not None and target_current_inputs is not None:
-        if target_current_inputs >= target_port_spec.max_connections:
-            return _error_response(
-                f"{target_contract.name} does not allow more connections on this input.",
-                reason="MAX_INPUTS_EXCEEDED",
-                severity="warning",
-                edge_color="#F57C00",
-                edge_class="edge-warning",
-            )
+    if (
+        target_port_spec.max_connections is not None
+        and target_current_inputs is not None
+        and target_current_inputs >= target_port_spec.max_connections
+    ):
+        return _error_response(
+            f"{target_contract.name} does not allow more connections on this input.",
+            reason="MAX_INPUTS_EXCEEDED",
+            severity="warning",
+            edge_color="#F57C00",
+            edge_class="edge-warning",
+        )
 
-    if source_current_outputs is not None and source_port_spec.max_connections is not None:
-        if source_current_outputs >= source_port_spec.max_connections:
-            return _error_response(
-                f"{source_contract.name} does not allow more outputs on this port.",
-                reason="MAX_OUTPUTS_EXCEEDED",
-                severity="warning",
-                edge_color="#F57C00",
-                edge_class="edge-warning",
-            )
+    if (
+        source_current_outputs is not None
+        and source_port_spec.max_connections is not None
+        and source_current_outputs >= source_port_spec.max_connections
+    ):
+        return _error_response(
+            f"{source_contract.name} does not allow more outputs on this port.",
+            reason="MAX_OUTPUTS_EXCEEDED",
+            severity="warning",
+            edge_color="#F57C00",
+            edge_class="edge-warning",
+        )
 
     accepts = target_port_spec.accepts or [target_port_spec.kind]
     if source_port_spec.kind not in accepts:

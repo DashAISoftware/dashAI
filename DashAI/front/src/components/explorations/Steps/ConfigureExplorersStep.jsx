@@ -133,7 +133,10 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         // } valid ${inputCardinality.exact === 1 ? "column" : "columns"}.`;
         if (validColumns.length < inputCardinality.exact) disabled = true;
       } else {
-        if (inputCardinality.min !== undefined && inputCardinality.min !== null) {
+        if (
+          inputCardinality.min !== undefined &&
+          inputCardinality.min !== null
+        ) {
           // if (tooltip) tooltip += "\n";
           // tooltip += `This explorer requires at least ${
           //   inputCardinality.min
@@ -142,7 +145,10 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
           if (validColumns.length < inputCardinality.min) disabled = true;
         }
 
-        if (inputCardinality.max !== undefined && inputCardinality.max !== null) {
+        if (
+          inputCardinality.max !== undefined &&
+          inputCardinality.max !== null
+        ) {
           // if (tooltip) tooltip += "\n";
           // tooltip += `This explorer requires at most ${
           //   inputCardinality.max

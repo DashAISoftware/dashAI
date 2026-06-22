@@ -9,7 +9,7 @@ class NodeDefinition(BaseModel):
     type: str
     name: str
     icon: str
-    requiresConfiguration: bool
+    requiresConfiguration: bool  # noqa: N815
     source: bool
     target: bool
     predecessors: List[str]
@@ -17,10 +17,10 @@ class NodeDefinition(BaseModel):
     description: str
     input: Optional[str] = None
     output: Optional[str] = None
-    sourceHandles: int = 1
-    maxInputs: Optional[int] = 1
-    maxOutputs: Optional[int] = None
-    configType: str
+    sourceHandles: int = 1  # noqa: N815
+    maxInputs: Optional[int] = 1  # noqa: N815
+    maxOutputs: Optional[int] = None  # noqa: N815
+    configType: str  # noqa: N815
 
 
 NODES: List[NodeDefinition] = contracts_to_node_definitions()

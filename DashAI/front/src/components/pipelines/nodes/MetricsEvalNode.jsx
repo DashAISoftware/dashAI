@@ -102,7 +102,11 @@ const MetricsEvalNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
                   renderValue: (selected) => (
                     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
                       {selected.map((metricName) => (
-                        <Chip key={metricName} label={metricName} size="small" />
+                        <Chip
+                          key={metricName}
+                          label={metricName}
+                          size="small"
+                        />
                       ))}
                     </Box>
                   ),

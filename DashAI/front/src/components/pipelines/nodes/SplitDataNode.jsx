@@ -262,7 +262,10 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
                 fullWidth
                 value={splits.validation}
                 onChange={(e) =>
-                  setSplits({ ...splits, validation: parseFloat(e.target.value) })
+                  setSplits({
+                    ...splits,
+                    validation: parseFloat(e.target.value),
+                  })
                 }
                 margin="normal"
                 inputProps={{ step: 0.05, min: 0, max: 1 }}

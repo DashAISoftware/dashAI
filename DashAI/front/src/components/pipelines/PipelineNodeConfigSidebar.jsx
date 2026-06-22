@@ -22,7 +22,10 @@ function PipelineNodeConfigSidebar({ selectedNode, onClose, children }) {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <SettingsIcon fontSize="small" sx={{ color: theme.palette.text.primary }} />
+          <SettingsIcon
+            fontSize="small"
+            sx={{ color: theme.palette.text.primary }}
+          />
           <Typography variant="subtitle1">
             {nodeTitle ? "Node Configuration" : "Pipeline Node Configuration"}
           </Typography>
