@@ -14,7 +14,10 @@ import {
   createGenerativeSession,
   getRelatedComponents,
 } from "../../api/generativeTask";
-import { generateSequentialName } from "../../utils/nameGenerator";
+import {
+  generateSequentialName,
+  getNextAvailableName,
+} from "../../utils/nameGenerator";
 import {
   buildYupSchema,
   formatTaskNameForSession,
@@ -115,13 +118,34 @@ export function CreateSessionProvider({ children }) {
       if (!selectedModel) return;
       setSubmitting(true);
       try {
-        const created = await createGenerativeSession({
-          name: values.name,
-          description: values.description,
-          task_name: selectedModel.task_name,
-          model_name: selectedModel.name,
-          parameters: values,
-        });
+        let effectiveName = values.name;
+        let created;
+        try {
+          created = await createGenerativeSession({
+            name: effectiveName,
+            description: values.description,
+            task_name: selectedModel.task_name,
+            model_name: selectedModel.name,
+            parameters: values,
+          });
+        } catch (createError) {
+          if (createError?.response?.status === 409) {
+            effectiveName = getNextAvailableName(
+              effectiveName,
+              existingSessions,
+            );
+            formik.setFieldValue("name", effectiveName);
+            created = await createGenerativeSession({
+              name: effectiveName,
+              description: values.description,
+              task_name: selectedModel.task_name,
+              model_name: selectedModel.name,
+              parameters: { ...values, name: effectiveName },
+            });
+          } else {
+            throw createError;
+          }
+        }
         setSessions((prev) => [...prev, created]);
         enqueueSnackbar(t("generative:message.sessionCreatedSuccess"), {
           variant: "success",
@@ -129,19 +153,9 @@ export function CreateSessionProvider({ children }) {
         navigate(`/app/generative/sessions/${created.id}`);
       } catch (error) {
         console.error("Error creating session:", error);
-        const detail = error?.response?.data?.detail || "";
-        if (
-          error?.response?.status === 409 ||
-          detail.includes("already exists")
-        ) {
-          enqueueSnackbar(t("generative:error.sessionNameExists"), {
-            variant: "error",
-          });
-        } else {
-          enqueueSnackbar(t("generative:error.failedToCreateSession"), {
-            variant: "error",
-          });
-        }
+        enqueueSnackbar(t("generative:error.failedToCreateSession"), {
+          variant: "error",
+        });
       } finally {
         setSubmitting(false);
       }

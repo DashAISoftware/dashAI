@@ -18,6 +18,7 @@
   "importing": "Importando...",
   "importSuccess": "Arquivo importado com sucesso.",
   "importError": "Falha ao importar o arquivo.",
+  "datasetNameExists": "Já existe um dataset com este nome.",
   "previewError": "Falha ao carregar a pré-visualização do arquivo.",
   "selectDatasetToPreview": "Selecione um arquivo para ver os detalhes.",
   "stepFormat": "Formato",

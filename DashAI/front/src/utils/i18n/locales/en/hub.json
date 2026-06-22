@@ -18,6 +18,7 @@
   "importing": "Importing...",
   "importSuccess": "Datafile imported successfully.",
   "importError": "Failed to import datafile.",
+  "datasetNameExists": "A dataset with this name already exists.",
   "previewError": "Failed to load datafile preview.",
   "selectDatasetToPreview": "Select a datafile to see details.",
   "stepFormat": "Format",
