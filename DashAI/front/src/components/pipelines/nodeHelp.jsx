@@ -2,7 +2,8 @@ let nodeHelp = {
   Pipeline: {
     description: `Design a machine learning workflow by dragging and connecting nodes.
     Single-click a node to see more information.
-    Double-click a node to configure parameters.`,
+    Double-click a node to configure parameters.
+    Double-click an edge to remove the connection.`,
   },
 };
 

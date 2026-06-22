@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useEdgesState, useNodesState } from "reactflow";
+import { addEdge, useEdgesState, useNodesState } from "reactflow";
 import { useSnackbar } from "notistack";
 import {
   validatePipeline,
@@ -8,7 +8,7 @@ import {
   getNodeTypesMap,
   buildNodeHelp,
 } from "../components/pipelines";
-import { getPipelineById, getPipelines } from "../api/pipeline";
+import { getPipelineById, getPipelines, validateEdge } from "../api/pipeline";
 import { generateSequentialName } from "../utils/nameGenerator";
 import RunPipeline from "../components/pipelines/Run";
 
@@ -56,8 +56,6 @@ export function usePipelineState(pipelineId, location, navigate) {
   const [nodeHelp, setNodeHelp] = useState({});
   const [availableNodes, setAvailableNodes] = useState([]);
   const [nodeTypesMap, setNodeTypesMap] = useState([]);
-
-  // Name validation states
   const [nameError, setNameError] = useState(false);
   const [nameErrorMessage, setNameErrorMessage] = useState("");
   const [userHasModifiedName, setUserHasModifiedName] = useState(false);
@@ -65,7 +63,6 @@ export function usePipelineState(pipelineId, location, navigate) {
   const [nodeIdCounter, setNodeIdCounter] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
 
-  // Generate default name for new pipelines
   const { defaultName } = useMemo(() => {
     if (pipelineId) return { defaultName: null };
 
@@ -77,7 +74,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     return result;
   }, [existingPipelines, pipelineId]);
 
-  // Load existing pipelines for name generation
   useEffect(() => {
     const fetchPipelines = async () => {
       try {
@@ -93,7 +89,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [pipelineId]);
 
-  // Load node types and available nodes
   useEffect(() => {
     const fetchData = async () => {
       const nodes = normalizeNodeHandles(await getNodeTypes());
@@ -116,7 +111,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     [nodeTypesMap],
   );
 
-  // Set initial name validation and default value for new pipelines
   useEffect(() => {
     if (defaultName && !userHasModifiedName && !pipelineId) {
       if (
@@ -133,20 +127,16 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [defaultName, pipelineName, userHasModifiedName, pipelineId]);
 
-  // Handle active tab changes
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state?.activeTab]);
 
-  // Load existing pipeline
   useEffect(() => {
     if (pipelineId) {
       (async () => {
         const pipeline = await getPipelineById(pipelineId);
-
-        // Get node types to assign source/target properties
         const nodeTypes = normalizeNodeHandles(await getNodeTypes());
 
         const loadedNodes = pipeline.steps.map((step, idx) => {
@@ -191,7 +181,6 @@ export function usePipelineState(pipelineId, location, navigate) {
         setPipelineName(pipeline.name);
         setUserHasModifiedName(false);
 
-        // Update nodeIdCounter
         const maxCounter = Math.max(
           ...loadedNodes.map((node) => {
             const match = node.id.match(/-(\d+)$/);
@@ -204,7 +193,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [pipelineId]);
 
-  // Reset editor when switching to new pipeline route
   useEffect(() => {
     if (!pipelineId) {
       setNodes([]);
@@ -222,7 +210,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [pipelineId]);
 
-  // Validate pipeline
   useEffect(() => {
     const validate = async () => {
       const errors = await validatePipeline(nodes, edges);
@@ -231,7 +218,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     validate();
   }, [nodes.length, edges]);
 
-  // Update node data with validation info
   useEffect(() => {
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
@@ -262,14 +248,12 @@ export function usePipelineState(pipelineId, location, navigate) {
     );
   }, [validationErrors, nodeData, availableNodes]);
 
-  // Event handlers
   const onDragStart = (event, nodeType) => {
     setDragging(nodeType);
     event.dataTransfer.setData("text/plain", nodeType);
     event.dataTransfer.effectAllowed = "move";
   };
 
-  // Handle pipeline name input changes with validation
   const handlePipelineNameChange = (event) => {
     setPipelineName(event.target.value);
     setUserHasModifiedName(true);
@@ -296,7 +280,6 @@ export function usePipelineState(pipelineId, location, navigate) {
   };
 
   const handleRun = async () => {
-    // Check if name is valid
     if (
       !pipelineName ||
       pipelineName.trim() === "" ||
@@ -350,7 +333,101 @@ export function usePipelineState(pipelineId, location, navigate) {
     setNodeHelp(null);
   };
 
-  // Clean up hovered node when nodes change
+  const handleEdgeRemove = (event, edge) => {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    setEdges((eds) =>
+      eds.filter((e) => {
+        if (edge?.id && e.id === edge.id) {
+          return false;
+        }
+        return !(
+          e.source === edge.source &&
+          e.target === edge.target &&
+          e.sourceHandle === edge.sourceHandle &&
+          e.targetHandle === edge.targetHandle
+        );
+      }),
+    );
+  };
+
+  const handleConnect = async (params) => {
+    const sourceNode = nodes.find((node) => node.id === params.source);
+    const targetNode = nodes.find((node) => node.id === params.target);
+
+    if (!sourceNode || !targetNode) {
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            markerEnd: {
+              type: "arrowclosed",
+            },
+          },
+          eds,
+        ),
+      );
+      return;
+    }
+
+    const currentOutputs = edges.filter(
+      (edge) =>
+        edge.source === params.source &&
+        (params.sourceHandle ? edge.sourceHandle === params.sourceHandle : true),
+    ).length;
+    const currentInputs = edges.filter(
+      (edge) =>
+        edge.target === params.target &&
+        (params.targetHandle ? edge.targetHandle === params.targetHandle : true),
+    ).length;
+
+    let validation = null;
+    try {
+      validation = await validateEdge({
+        source: {
+          nodeId: params.source,
+          type: sourceNode.type,
+          port: params.sourceHandle || null,
+          currentConnections: currentOutputs,
+        },
+        target: {
+          nodeId: params.target,
+          type: targetNode.type,
+          port: params.targetHandle || null,
+          currentConnections: currentInputs,
+        },
+      });
+    } catch (error) {
+      console.error("Edge validation error:", error);
+    }
+
+    const shouldWarn = validation && validation.ok === false;
+    const edgeColor = validation?.style?.edgeColor;
+    const edgeClass = validation?.style?.edgeClass;
+
+    if (shouldWarn && validation?.message) {
+      enqueueSnackbar(validation.message, {
+        variant: validation.severity === "warning" ? "warning" : "error",
+      });
+    }
+
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          className: shouldWarn ? edgeClass : undefined,
+          style: shouldWarn && edgeColor ? { stroke: edgeColor, strokeWidth: 2 } : undefined,
+          markerEnd: {
+            type: "arrowclosed",
+            color: shouldWarn && edgeColor ? edgeColor : undefined,
+          },
+        },
+        eds,
+      ),
+    );
+  };
+
   useEffect(() => {
     if (
       hoveredNode &&
@@ -406,6 +483,8 @@ export function usePipelineState(pipelineId, location, navigate) {
     onNodeMouseEnter,
     onNodeMouseLeave,
     onPaneClick,
+    handleConnect,
+    handleEdgeRemove,
     handlePipelineNameChange,
   };
 }

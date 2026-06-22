@@ -50,7 +50,6 @@ const TaskAndModelNode = ({
   const { enqueueSnackbar } = useSnackbar();
   const hasWarnedRef = useRef(false);
 
-  // Try to locate the dataset info from a SplitData or DataSelector upstream
   const splitDataNode = prevNodes?.find(
     (node) => node?.input_columns || node?.splits,
   );
@@ -59,7 +58,6 @@ const TaskAndModelNode = ({
   const inputColumnsRaw = splitDataNode?.input_columns;
   const outputColumnsRaw = splitDataNode?.output_columns;
 
-  // ---------- Fetch dataset info ----------
   useEffect(() => {
     if (!datasetId) {
       setInfoLoading(false);
@@ -86,7 +84,6 @@ const TaskAndModelNode = ({
     fetchInfo();
   }, [datasetId]);
 
-  // ---------- Fetch available tasks / models ----------
   useEffect(() => {
     const fetchComponents = async () => {
       try {
@@ -104,7 +101,6 @@ const TaskAndModelNode = ({
     fetchComponents();
   }, [task]);
 
-  // ---------- Model schema ----------
   const { defaultValues, modelSchema, yupSchema, loading } = useSchema({
     modelName: model,
   });
@@ -139,7 +135,6 @@ const TaskAndModelNode = ({
 
   const handleChange = (newValues) => setModelParams(newValues);
 
-  // ---------- Validate available tasks against columns ----------
   useEffect(() => {
     const validateAvailableTasks = async () => {
       if (!datasetId || !inputColumnsRaw || !outputColumnsRaw) {
@@ -227,7 +222,6 @@ const TaskAndModelNode = ({
     datasetInfo,
   ]);
 
-  // ---------- Save ----------
   const handleSave = async () => {
     const payload = {
       task,
@@ -255,15 +249,37 @@ const TaskAndModelNode = ({
     <>
       <DialogContent
         sx={{
-          width: { xs: "100%", md: 760 },
+          width: "100%",
           maxWidth: "100%",
+          alignSelf: "stretch",
+          "& .MuiFormControl-root": {
+            width: "100%",
+          },
         }}
       >
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ width: "100%" }}>
           <Grid item xs={12}>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              Task and Model
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+              }}
+            >
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                Task and Model
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<SettingsIcon />}
+                onClick={() => setOpenSettings(true)}
+                disabled={!model}
+              >
+                Model Settings
+              </Button>
+            </Box>
           </Grid>
 
           {validTasks.length === 0 &&
@@ -287,115 +303,116 @@ const TaskAndModelNode = ({
               </Grid>
             )}
 
-          <Grid item xs={12}>
-            <Grid container spacing={1.5} alignItems="center">
-              <Grid item xs={11}>
-                <TextField
-                  label="Task"
-                  select
-                  fullWidth
-                  value={task}
-                  onChange={(e) => {
-                    setTask(e.target.value);
-                    setModel("");
-                    setModelParams({});
-                  }}
-                  margin="normal"
-                  disabled={validTasks.length === 0}
-                  slotProps={{
-                    select: {
-                      MenuProps: {
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 420,
-                            minWidth: 560,
-                          },
+          <Grid item xs={12} sx={{ width: "100%", minWidth: 0 }}>
+            <Box sx={{ width: "100%", display: "flex" }}>
+              <TextField
+                label="Task"
+                select
+                fullWidth
+                value={task}
+                onChange={(e) => {
+                  setTask(e.target.value);
+                  setModel("");
+                  setModelParams({});
+                }}
+                margin="normal"
+                disabled={validTasks.length === 0}
+                slotProps={{
+                  select: {
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          maxHeight: 420,
                         },
                       },
                     },
-                  }}
-                  sx={{
-                    minWidth: { xs: "100%", md: 560 },
-                    "& .MuiInputBase-root": {
-                      minHeight: 58,
-                    },
-                    "& .MuiSelect-select": {
-                      whiteSpace: "normal",
-                      minHeight: "1.4375em !important",
-                      display: "flex",
-                      alignItems: "center",
-                    },
-                  }}
-                >
-                  {availableTasks.map((taskObj) => (
-                    <MenuItem
-                      key={taskObj.name}
-                      value={taskObj.name}
-                      disabled={!validTasks.includes(taskObj.name)}
-                    >
-                      {taskObj.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={1}>
-                <IconButton
-                  onClick={() => setOpenSettings(true)}
-                  disabled={!model}
-                  aria-label="model settings"
-                  sx={{ mt: "8px", ml: { xs: 0, md: 0.5 } }}
-                >
-                  <SettingsIcon />
-                </IconButton>
-              </Grid>
-            </Grid>
+                  },
+                }}
+                sx={{
+                  width: "100%",
+                  minWidth: 0,
+                  display: "block",
+                  "& .MuiInputBase-root": {
+                    width: "100%",
+                    minHeight: 58,
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    width: "100%",
+                  },
+                  "& .MuiInputBase-input": {
+                    width: "100%",
+                  },
+                  "& .MuiSelect-select": {
+                    whiteSpace: "normal",
+                    minHeight: "1.4375em !important",
+                    display: "flex",
+                    alignItems: "center",
+                  },
+                }}
+              >
+                {availableTasks.map((taskObj) => (
+                  <MenuItem
+                    key={taskObj.name}
+                    value={taskObj.name}
+                    disabled={!validTasks.includes(taskObj.name)}
+                  >
+                    {taskObj.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
           </Grid>
 
-          <Grid item xs={12}>
-            <Grid container spacing={1.5} alignItems="center">
-              <Grid item xs={11}>
-                <TextField
-                  label="Model"
-                  select
-                  fullWidth
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  margin="normal"
-                  disabled={!task}
-                  slotProps={{
-                    select: {
-                      MenuProps: {
-                        PaperProps: {
-                          sx: {
-                            maxHeight: 420,
-                            minWidth: 560,
-                          },
+          <Grid item xs={12} sx={{ width: "100%", minWidth: 0 }}>
+            <Box sx={{ width: "100%", display: "flex" }}>
+              <TextField
+                label="Model"
+                select
+                fullWidth
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                margin="normal"
+                disabled={!task}
+                slotProps={{
+                  select: {
+                    MenuProps: {
+                      PaperProps: {
+                        sx: {
+                          maxHeight: 420,
                         },
                       },
                     },
-                  }}
-                  sx={{
-                    minWidth: { xs: "100%", md: 560 },
-                    "& .MuiInputBase-root": {
-                      minHeight: 58,
-                    },
-                    "& .MuiSelect-select": {
-                      whiteSpace: "normal",
-                      minHeight: "1.4375em !important",
-                      display: "flex",
-                      alignItems: "center",
-                    },
-                  }}
-                >
-                  {availableModels.map((m) => (
-                    <MenuItem key={m.name} value={m.name}>
-                      {m.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={1} />
-            </Grid>
+                  },
+                }}
+                sx={{
+                  width: "100%",
+                  minWidth: 0,
+                  display: "block",
+                  "& .MuiInputBase-root": {
+                    width: "100%",
+                    minHeight: 58,
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    width: "100%",
+                  },
+                  "& .MuiInputBase-input": {
+                    width: "100%",
+                  },
+                  "& .MuiSelect-select": {
+                    whiteSpace: "normal",
+                    minHeight: "1.4375em !important",
+                    display: "flex",
+                    alignItems: "center",
+                  },
+                }}
+              >
+                {availableModels.map((m) => (
+                  <MenuItem key={m.name} value={m.name}>
+                    {m.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
           </Grid>
         </Grid>
 

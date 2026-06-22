@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import DatasetModal from "../../../components/datasets/DatasetModal";
 import { validateNode } from "../../../api/pipeline";
@@ -20,6 +20,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [openModal, setOpenModal] = useState(false);
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const pollingRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
   const [validationStatus, setValidationStatus] = useState("");
   const { i18n } = useTranslation();
@@ -49,11 +50,8 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
     const latestDatasets = await fetchDatasets();
     if (newDatasetId) {
       setDatasetId(newDatasetId);
-
-      // Check if the dataset is still processing (file_path not yet set)
       const newDs = latestDatasets.find((d) => d.id === newDatasetId);
       if (!newDs || !newDs.file_path) {
-        // Poll every 2 s until the background job sets file_path
         if (pollingRef.current) clearInterval(pollingRef.current);
         pollingRef.current = setInterval(async () => {
           try {
@@ -76,7 +74,6 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const handleCloseModal = () => setOpenModal(false);
 
   const handleSave = async () => {
-    // Re-fetch to obtain the latest file_path (set by the background job)
     let latestDatasets;
     try {
       latestDatasets = await getDatasets();

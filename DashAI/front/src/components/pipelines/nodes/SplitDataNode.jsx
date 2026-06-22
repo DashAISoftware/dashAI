@@ -58,7 +58,6 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const { enqueueSnackbar } = useSnackbar();
   const hasWarnedRef = useRef(false);
 
-  // ---------- Fetch dataset info ----------
   const getDatasetInfo = async () => {
     setInfoLoading(true);
     try {
@@ -91,7 +90,6 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
     getDatasetInfo();
   }, [datasetId]);
 
-  // ---------- Re-apply saved config when dataset info arrives ----------
   useEffect(() => {
     const total = datasetInfo?.total_columns;
     setInputColumns(
@@ -112,7 +110,6 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
     );
   }, [savedConfig, datasetInfo]);
 
-  // ---------- Validate column ranges on change ----------
   useEffect(() => {
     const maxValue = datasetInfo?.total_columns;
     if (!maxValue) return;
@@ -136,7 +133,6 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
     }
   }, [inputColumns, outputColumns, datasetInfo]);
 
-  // ---------- Save ----------
   const handleSave = async () => {
     const maxValue = datasetInfo?.total_columns;
     const columnNames = datasetInfo?.column_names || [];
@@ -193,85 +189,86 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
 
   return (
     <DialogContent>
-      <Grid container spacing={2}>
-        {/* ---- Column selection ---- */}
+      <Grid container spacing={2} direction="column">
         <Grid item xs={12}>
           <Typography variant="body1" sx={{ fontWeight: 600 }}>
             Column Selection
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Input Columns"
-            fullWidth
-            value={inputColumns}
-            onChange={(e) => setInputColumns(e.target.value)}
-            margin="normal"
-            error={inputError}
-            helperText={inputError ? inputErrorMessage : "e.g. 1-4 or 1,3,5"}
-          />
+        <Grid item xs={12}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Input Columns"
+              fullWidth
+              value={inputColumns}
+              onChange={(e) => setInputColumns(e.target.value)}
+              margin="normal"
+              error={inputError}
+              helperText={inputError ? inputErrorMessage : "e.g. 1-4 or 1,3,5"}
+            />
+            <TextField
+              label="Output Columns"
+              fullWidth
+              value={outputColumns}
+              onChange={(e) => setOutputColumns(e.target.value)}
+              margin="normal"
+              error={outputError}
+              helperText={outputError ? outputErrorMessage : "e.g. 5 or 5-6"}
+            />
+          </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Output Columns"
-            fullWidth
-            value={outputColumns}
-            onChange={(e) => setOutputColumns(e.target.value)}
-            margin="normal"
-            error={outputError}
-            helperText={outputError ? outputErrorMessage : "e.g. 5 or 5-6"}
-          />
-        </Grid>
-
-        {/* ---- Splits ---- */}
         <Grid item xs={12}>
           <Typography variant="body1" sx={{ fontWeight: 600, mt: 1 }}>
             Data Splits
           </Typography>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Training"
-            type="number"
-            fullWidth
-            value={splits.train}
-            onChange={(e) =>
-              setSplits({ ...splits, train: parseFloat(e.target.value) })
-            }
-            margin="normal"
-            inputProps={{ step: 0.05, min: 0, max: 1 }}
-          />
-        </Grid>
+        <Grid item xs={12}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Testing"
+                type="number"
+                fullWidth
+                value={splits.test}
+                onChange={(e) =>
+                  setSplits({ ...splits, test: parseFloat(e.target.value) })
+                }
+                margin="normal"
+                inputProps={{ step: 0.05, min: 0, max: 1 }}
+              />
+            </Grid>
 
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Validation"
-            type="number"
-            fullWidth
-            value={splits.validation}
-            onChange={(e) =>
-              setSplits({ ...splits, validation: parseFloat(e.target.value) })
-            }
-            margin="normal"
-            inputProps={{ step: 0.05, min: 0, max: 1 }}
-          />
-        </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Training"
+                type="number"
+                fullWidth
+                value={splits.train}
+                onChange={(e) =>
+                  setSplits({ ...splits, train: parseFloat(e.target.value) })
+                }
+                margin="normal"
+                inputProps={{ step: 0.05, min: 0, max: 1 }}
+              />
+            </Grid>
 
-        <Grid item xs={12} md={4}>
-          <TextField
-            label="Testing"
-            type="number"
-            fullWidth
-            value={splits.test}
-            onChange={(e) =>
-              setSplits({ ...splits, test: parseFloat(e.target.value) })
-            }
-            margin="normal"
-            inputProps={{ step: 0.05, min: 0, max: 1 }}
-          />
+            <Grid item xs={12} sm={4}>
+              <TextField
+                label="Validation"
+                type="number"
+                fullWidth
+                value={splits.validation}
+                onChange={(e) =>
+                  setSplits({ ...splits, validation: parseFloat(e.target.value) })
+                }
+                margin="normal"
+                inputProps={{ step: 0.05, min: 0, max: 1 }}
+              />
+            </Grid>
+          </Grid>
         </Grid>
 
         {!splitsValid && (
@@ -283,28 +280,36 @@ const SplitDataNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
         )}
 
         <Grid item xs={12}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={splits.shuffle}
-                onChange={(e) =>
-                  setSplits({ ...splits, shuffle: e.target.checked })
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={splits.shuffle}
+                    onChange={(e) =>
+                      setSplits({ ...splits, shuffle: e.target.checked })
+                    }
+                  />
                 }
+                label="Shuffle"
+                sx={{ m: 0 }}
               />
-            }
-            label="Shuffle"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={splits.stratify}
-                onChange={(e) =>
-                  setSplits({ ...splits, stratify: e.target.checked })
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={splits.stratify}
+                    onChange={(e) =>
+                      setSplits({ ...splits, stratify: e.target.checked })
+                    }
+                  />
                 }
+                label="Stratify"
+                sx={{ m: 0 }}
               />
-            }
-            label="Stratify"
-          />
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
 

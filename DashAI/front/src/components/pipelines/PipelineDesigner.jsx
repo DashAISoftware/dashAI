@@ -16,6 +16,8 @@ function PipelineDesigner({
   setEdges,
   onNodesChange,
   onEdgesChange,
+  onConnect,
+  onEdgeDoubleClick,
   nodeTypes,
   onNodeClick,
   onNodeHelp,
@@ -53,19 +55,27 @@ function PipelineDesigner({
     );
   }, [canvasMode, setNodes]);
 
-  const onConnect = (params) => {
-    setEdges((eds) =>
-      addEdge(
-        {
-          ...params,
-          markerEnd: {
-            type: "arrowclosed",
+  const handleConnect = useCallback(
+    (params) => {
+      if (onConnect) {
+        onConnect(params);
+        return;
+      }
+
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            markerEnd: {
+              type: "arrowclosed",
+            },
           },
-        },
-        eds,
-      ),
-    );
-  };
+          eds,
+        ),
+      );
+    },
+    [onConnect, setEdges],
+  );
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -144,7 +154,8 @@ function PipelineDesigner({
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
+        onEdgeDoubleClick={onEdgeDoubleClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
         onNodeClick={onNodeHelp}

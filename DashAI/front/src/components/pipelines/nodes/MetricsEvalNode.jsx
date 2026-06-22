@@ -1,59 +1,52 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
   Button,
   Chip,
   DialogContent,
-  Typography,
-  TextField,
-  MenuItem,
   Grid,
+  MenuItem,
+  TextField,
+  Typography,
 } from "@mui/material";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import { validateNode } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
 
-/**
- * MetricsEvalNode – selects metrics to evaluate the trained model.
- *
- * Expects a TaskAndModel upstream node (via prevNodes) so it can filter
- * compatible metrics by the selected task.
- */
 const MetricsEvalNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const [metrics, setMetrics] = useState(savedConfig?.metrics || []);
   const [availableMetrics, setAvailableMetrics] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
 
-  // Locate the task from an upstream TaskAndModel (or Train) node
   const taskNode = prevNodes?.find((node) => node?.task);
   const task = taskNode?.task || "";
 
-  // ---------- Fetch compatible metrics ----------
+  useEffect(() => {
+    setMetrics(savedConfig?.metrics || []);
+  }, [savedConfig]);
+
   useEffect(() => {
     const fetchMetrics = async () => {
-      if (!task) return;
+      if (!task) {
+        setAvailableMetrics([]);
+        return;
+      }
+
       try {
-        const metricsResult = await getComponentsRequest({
+        const metricsList = await getComponentsRequest({
           selectTypes: ["Metric"],
           relatedComponent: task,
         });
-        setAvailableMetrics(metricsResult);
+        setAvailableMetrics(metricsList);
       } catch (error) {
         console.error("Error fetching metrics:", error);
       }
     };
+
     fetchMetrics();
   }, [task]);
 
-  // Restore saved selection
-  useEffect(() => {
-    if (savedConfig?.metrics) {
-      setMetrics(savedConfig.metrics);
-    }
-  }, [savedConfig]);
-
-  // ---------- Save ----------
   const handleSave = async () => {
     const payload = { metrics };
 
@@ -80,63 +73,59 @@ const MetricsEvalNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
         maxWidth: "100%",
       }}
     >
-      <Grid container spacing={2}>
+      <Grid container spacing={2} direction="column">
         <Grid item xs={12}>
-          <Grid container spacing={1.5} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                Metric Evaluation
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={8}>
-              <TextField
-                label="Metrics"
-                select
-                fullWidth
-                value={metrics}
-                onChange={(e) => setMetrics(e.target.value)}
-                margin="normal"
-                disabled={!task}
-                slotProps={{
-                  select: {
-                    multiple: true,
-                    MenuProps: {
-                      PaperProps: {
-                        sx: {
-                          maxHeight: 420,
-                          minWidth: 560,
-                        },
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            Metric Evaluation
+          </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Box sx={{ width: "100%", maxWidth: "calc(100% - 8px)" }}>
+            <TextField
+              label="Metrics"
+              select
+              fullWidth
+              value={metrics}
+              onChange={(e) => setMetrics(e.target.value)}
+              margin="normal"
+              disabled={!task}
+              slotProps={{
+                select: {
+                  multiple: true,
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        maxHeight: 420,
                       },
                     },
-                    renderValue: (selected) => (
-                      <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                        {selected.map((metricName) => (
-                          <Chip key={metricName} label={metricName} size="small" />
-                        ))}
-                      </Box>
-                    ),
                   },
-                }}
-                sx={{
-                  minWidth: { xs: "100%", md: 560 },
-                  "& .MuiInputBase-root": {
-                    minHeight: 58,
-                  },
-                  "& .MuiSelect-select": {
-                    minHeight: "56px",
-                    display: "flex",
-                    alignItems: "center",
-                  },
-                }}
-              >
-                {availableMetrics.map((metric) => (
-                  <MenuItem key={metric.name} value={metric.name}>
-                    {metric.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-          </Grid>
+                  renderValue: (selected) => (
+                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                      {selected.map((metricName) => (
+                        <Chip key={metricName} label={metricName} size="small" />
+                      ))}
+                    </Box>
+                  ),
+                },
+              }}
+              sx={{
+                "& .MuiInputBase-root": {
+                  minHeight: 58,
+                },
+                "& .MuiSelect-select": {
+                  minHeight: "56px",
+                  display: "flex",
+                  alignItems: "center",
+                },
+              }}
+            >
+              {availableMetrics.map((metric) => (
+                <MenuItem key={metric.name} value={metric.name}>
+                  {metric.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
 
           {!task && (
             <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
