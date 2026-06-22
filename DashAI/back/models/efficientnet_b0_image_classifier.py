@@ -12,7 +12,7 @@ class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
 
     Compact baseline of the EfficientNet family, which scales network width,
     depth, and resolution jointly. The classifier head is replaced to match
-    the number of target classes. Supports ImageNet pre-trained weights.
+    the number of target classes. Supports ImageNet pretrained weights.
     """
 
     SCHEMA = TorchvisionImageClassifierSchema

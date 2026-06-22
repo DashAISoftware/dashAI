@@ -20,7 +20,7 @@ class TongyiZImageSchema(BaseSchema):
 
     Configures the checkpoint variant (``model_name``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
-    classifier-free guidance strength (``guidance_scale``), output dimensions
+    classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``TongyiZImageModel``.
@@ -32,10 +32,10 @@ class TongyiZImageSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "The Tongyi Z-Image checkpoint to load. "
-                "'Tongyi-Z-Image' is Alibaba's 6B-parameter text-to-image model "
+                "'Tongyi-Z-Image' is Alibaba's 6B parameter text-to-image model "
                 "using a unique S3-DiT (Sparse Spatial-Spectral Diffusion Transformer) "
                 "architecture, one of the most downloaded models on "
-                "Hugging Face. It outperforms previous open-source state-of-the-art "
+                "Hugging Face. It outperforms previous open source state of the art "
                 "models at a fraction of their parameter count."
             ),
             es=(
@@ -130,7 +130,7 @@ class TongyiZImageSchema(BaseSchema):
         placeholder=20,
         description=MultilingualString(
             en=(
-                "Number of denoising steps. Tongyi Z-Image achieves high-quality "
+                "Number of denoising steps. Tongyi Z-Image achieves high quality "
                 "results with 20-30 steps. More steps refine detail at the cost "
                 "of generation time."
             ),
@@ -206,7 +206,7 @@ class TongyiZImageSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Hardware device for inference. GPU is strongly recommended for "
-                "this 6B-parameter model. CPU inference is possible but very slow."
+                "this 6B parameter model. CPU inference is possible but very slow."
             ),
             es=(
                 "Dispositivo de hardware para inferencia. Se recomienda GPU para "
@@ -361,13 +361,13 @@ class TongyiZImageSchema(BaseSchema):
 
 
 class TongyiZImageModel(TextToImageGenerationTaskModel):
-    """Tongyi Z-Image S3-DiT model for high-quality text-to-image generation.
+    """Tongyi Z-Image S3-DiT model for high quality text-to-image generation.
 
-    Wraps Alibaba's 6B-parameter Tongyi Z-Image pipeline. The model uses a
+    Wraps Alibaba's 6B parameter Tongyi Z-Image pipeline. The model uses a
     novel Sparse Spatial-Spectral Diffusion Transformer (S3-DiT) architecture
     that processes image tokens in both spatial and spectral domains for
-    efficient high-fidelity generation. It outperforms previous open-source
-    state-of-the-art models while being more parameter-efficient, and excels
+    efficient high fidelity generation. It outperforms previous open source
+    state of the art models while being more parameter efficient, and excels
     at photorealism, diverse artistic styles, and accurate text rendering.
 
     References
@@ -386,11 +386,11 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Tongyi Z-Image is Alibaba's 6B-parameter text-to-image model using a "
+            "Tongyi Z-Image is Alibaba's 6B parameter text-to-image model using a "
             "novel S3-DiT (Sparse Spatial-Spectral Diffusion Transformer) "
             "architecture. It is currently one of the most downloaded models on "
             "Hugging Face and "
-            "outperforms previous open-source state-of-the-art models at a fraction "
+            "outperforms previous open source state of the art models at a fraction "
             "of their size. Excels at photorealistic image generation, diverse styles, "
             "and accurate text rendering. Model available at "
             "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."

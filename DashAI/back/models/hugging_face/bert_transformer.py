@@ -10,9 +10,9 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class BertTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained BERT model for English text classification.
+    """Pretrained BERT model for English text classification.
 
-    BERT (Bidirectional Encoder Representations from Transformers) pre-trains deep
+    BERT (Bidirectional Encoder Representations from Transformers) pretrains deep
     bidirectional representations by jointly conditioning on both left and right
     context in all layers. Fine-tuned BERT achieves strong results on a wide range
     of text classification tasks.

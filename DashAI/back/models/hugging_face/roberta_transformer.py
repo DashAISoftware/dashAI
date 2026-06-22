@@ -10,10 +10,10 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class RobertaTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained RoBERTa model for English text classification.
+    """Pretrained RoBERTa model for English text classification.
 
     RoBERTa (Robustly Optimised BERT Pre-training Approach) improves upon BERT
-    by training longer with larger mini-batches, removing the next-sentence
+    by training longer with larger mini-batches, removing the next sentence
     prediction objective, and using dynamic masking. It achieves consistently
     higher performance on NLP benchmarks than BERT.
 

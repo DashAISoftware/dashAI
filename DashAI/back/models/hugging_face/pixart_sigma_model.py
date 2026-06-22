@@ -20,7 +20,7 @@ class PixArtSigmaSchema(BaseSchema):
 
     Configures the checkpoint variant (``model_name``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
-    classifier-free guidance strength (``guidance_scale``), output dimensions
+    classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``PixArtSigmaModel``.
@@ -37,8 +37,8 @@ class PixArtSigmaSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "The PixArt-Sigma checkpoint to load. "
-                "'PixArt-Sigma-XL-2-1024-MS' is the high-resolution variant "
-                "trained at 1024px with multi-scale support, delivering the best "
+                "'PixArt-Sigma-XL-2-1024-MS' is the high resolution variant "
+                "trained at 1024px with multiscale support, delivering the best "
                 "image quality. "
                 "'PixArt-Sigma-XL-2-512-MS' is the 512px variant, faster and lighter "
                 "while still producing sharp results."
@@ -46,7 +46,7 @@ class PixArtSigmaSchema(BaseSchema):
             es=(
                 "El checkpoint PixArt-Sigma a cargar. "
                 "'PixArt-Sigma-XL-2-1024-MS' es la variante de alta resolución "
-                "entrenada a 1024px con soporte multi-escala, entregando la mejor "
+                "entrenada a 1024px con soporte multiescala, entregando la mejor "
                 "calidad de imagen. "
                 "'PixArt-Sigma-XL-2-512-MS' es la variante de 512px, más rápida y "
                 "ligera manteniendo resultados nítidos."
@@ -54,7 +54,7 @@ class PixArtSigmaSchema(BaseSchema):
             pt=(
                 "O checkpoint PixArt-Sigma a carregar. "
                 "'PixArt-Sigma-XL-2-1024-MS' é a variante de alta resolução "
-                "treinada a 1024px com suporte multi-escala, entregando a melhor "
+                "treinada a 1024px com suporte multiescala, entregando a melhor "
                 "qualidade de imagem. "
                 "'PixArt-Sigma-XL-2-512-MS' é a variante de 512px, mais rápida e "
                 "leve, mantendo resultados nítidos."
@@ -377,16 +377,16 @@ class PixArtSigmaSchema(BaseSchema):
 
 
 class PixArtSigmaModel(TextToImageGenerationTaskModel):
-    """Diffusion Transformer model for high-efficiency text-to-image generation.
+    """Diffusion Transformer model for high efficiency text-to-image generation.
 
     Wraps the PixArt-Sigma pipeline, which replaces the U-Net backbone used
     in Stable Diffusion with a scalable Diffusion Transformer (DiT)
     architecture. Text conditioning is provided by a T5-XXL encoder,
     enabling richer semantic understanding than CLIP-based models.
 
-    PixArt-Sigma achieves state-of-the-art image quality with 14-25 denoising
+    PixArt-Sigma achieves state of the art image quality with 14-25 denoising
     steps (compared to 20-50 for comparable U-Net models) and supports
-    flexible multi-scale resolutions up to 2048 px. Two checkpoint sizes are
+    flexible multiscale resolutions up to 2048 px. Two checkpoint sizes are
     available: 512 px (lighter) and 1024 px (best quality).
 
     References
@@ -408,13 +408,13 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "PixArt-Sigma is a high-efficiency Diffusion Transformer (DiT) model for "
+            "PixArt-Sigma is a high efficiency Diffusion Transformer (DiT) model for "
             "text-to-image generation, developed by the PixArt team. It uses a T5 "
             "text encoder for rich semantic understanding and achieves "
-            "state-of-the-art image quality with fewer inference steps than "
+            "state of the art image quality with fewer inference steps than "
             "U-Net models. Supports "
-            "flexible multi-scale resolutions up to 2048px. Available in 512px and "
-            "1024px variants. Significantly more parameter-efficient than comparable "
+            "flexible multiscale resolutions up to 2048px. Available in 512px and "
+            "1024px variants. Significantly more parameter efficient than comparable "
             "models. Models at "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS and "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS."
@@ -424,7 +424,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             "para generación de imágenes a partir de texto, desarrollado por el equipo "
             "PixArt. Usa un codificador de texto T5 para rica comprensión semántica y "
             "logra calidad de imagen de última generación con menos pasos de "
-            "inferencia que los modelos U-Net. Soporta resoluciones multi-escala "
+            "inferencia que los modelos U-Net. Soporta resoluciones multiescala "
             "flexibles hasta "
             "2048px. Disponible en variantes de 512px y 1024px. "
             "Significativamente más eficiente en parámetros que modelos comparables. "
@@ -437,7 +437,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             "para geração de imagens a partir de texto, desenvolvido pela equipe "
             "PixArt. Usa um codificador de texto T5 para rica compreensão semântica e "
             "atinge qualidade de imagem de última geração com menos etapas de "
-            "inferência do que modelos U-Net. Suporta resoluções multi-escala "
+            "inferência do que modelos U-Net. Suporta resoluções multiescala "
             "flexíveis até "
             "2048px. Disponível nas variantes de 512px e 1024px. "
             "Significativamente mais eficiente em parâmetros do que modelos "

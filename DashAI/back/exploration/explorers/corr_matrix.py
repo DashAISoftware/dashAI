@@ -36,7 +36,7 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
     The ``method`` field selects between three estimators: ``"pearson"``
     measures linear association and assumes approximately normal distributions;
     ``"spearman"`` measures monotonic association using rank-transformed data
-    and is more robust to non-linear relationships and outliers; ``"kendall"``
+    and is more robust to nonlinear relationships and outliers; ``"kendall"``
     uses concordance/discordance counts and is preferred for small samples or
     heavily tied data.  Use ``"numeric_only"`` to exclude non-numeric columns
     from the calculation automatically.
@@ -209,7 +209,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         **kwargs
             Keyword arguments matching
             ``CorrelationMatrixExplorerSchema`` fields:
-            method (str): Correlation method — ``"pearson"``,
+            method (str): Correlation method, one of ``"pearson"``,
             ``"kendall"``, or ``"spearman"``.
             min_periods (int): Minimum observations required per column
             pair. Applied only for ``"pearson"`` and ``"spearman"``.
@@ -230,8 +230,8 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         """Compute a correlation matrix and optionally render it as a Plotly heatmap.
 
         Converts the dataset to a pandas DataFrame, computes pairwise column
-        correlations using the configured method, and — when ``self.plot`` is
-        ``True`` — wraps the result in a Plotly ``imshow`` heatmap figure.
+        correlations using the configured method, and, when ``self.plot`` is
+        ``True``, wraps the result in a Plotly ``imshow`` heatmap figure.
 
         Parameters
         ----------
@@ -296,7 +296,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         save_path : Path
             Directory where the file will be saved.
         result : Any
-            The result returned by ``launch_exploration`` — either
+            The result returned by ``launch_exploration``, either
             a ``plotly.graph_objs.Figure`` or a ``pandas.DataFrame``.
 
         Returns

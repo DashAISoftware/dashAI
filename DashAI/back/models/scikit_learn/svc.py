@@ -232,8 +232,8 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
 
     SVC constructs a maximum-margin hyperplane in a (possibly kernel-transformed)
     feature space. Training data points that lie on or inside the margin are called
-    support vectors; they fully define the decision boundary. Non-linearly separable
-    problems are addressed by mapping the input space into a higher-dimensional space
+    support vectors; they fully define the decision boundary. Nonlinearly separable
+    problems are addressed by mapping the input space into a higher dimensional space
     via kernel functions (linear, polynomial, RBF, or sigmoid).
 
     Regularisation is controlled by ``C``: smaller values allow more misclassified
@@ -261,9 +261,9 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
             "Support Vector Machine (SVM) is a supervised machine learning algorithm "
             "used for classification and regression tasks. It works by finding the "
             "optimal hyperplane that maximizes the margin between different classes "
-            "in a high-dimensional feature space. SVMs are effective in cases where "
+            "in a high dimensional feature space. SVMs are effective in cases where "
             "the number of features is large relative to the number of samples and "
-            "can model complex, non-linear decision boundaries through the use of "
+            "can model complex, nonlinear decision boundaries through the use of "
             "kernel functions such as linear, polynomial, and radial basis function "
             "(RBF) kernels."
         ),
@@ -294,7 +294,7 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         ),
         de=(
             "Die Support-Vektor-Maschine (SVM) ist ein überwachter "
-            "Machine-Learning-Algorithmus für Klassifikations- und "
+            "Machine Learning Algorithmus für Klassifikations- und "
             "Regressionsaufgaben. Sie findet die optimale Hyperebene, die die "
             "Margin zwischen verschiedenen Klassen in einem hochdimensionalen "
             "Merkmalsraum maximiert. SVMs sind besonders effektiv, wenn die Anzahl "

@@ -139,7 +139,7 @@ class ScoringService:
                 log.warning(f"Error accessing SCORING_PROFILES for {task_name}: {e}")
             return []
 
-        # No task specified — return one entry per unique profile ID across all tasks.
+        # No task specified, so return one entry per unique profile ID across all tasks.
         all_profiles = self._get_all_profiles()
         return [
             {

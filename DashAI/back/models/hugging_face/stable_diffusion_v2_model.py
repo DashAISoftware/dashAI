@@ -20,7 +20,7 @@ class StableDiffusionSchema(BaseSchema):
 
     Configures the checkpoint variant (``model_name``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
-    classifier-free guidance strength (``guidance_scale``), output dimensions
+    classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``StableDiffusionV2Model``.
@@ -40,7 +40,7 @@ class StableDiffusionSchema(BaseSchema):
             en=(
                 "The specific Stable Diffusion 2.x checkpoint to load. "
                 "The '-base' variants are trained at 512x512 px and are faster; "
-                "the non-base variants target 768x768 px and produce sharper detail. "
+                "the nonbase variants target 768x768 px and produce sharper detail. "
                 "The '2-1' variants are fine-tuned further "
                 "and generally outperform '2'."
             ),
@@ -404,19 +404,19 @@ class StableDiffusionSchema(BaseSchema):
 
 
 class StableDiffusionV2Model(TextToImageGenerationTaskModel):
-    """Latent diffusion model for high-resolution text-to-image generation.
+    """Latent diffusion model for high resolution text-to-image generation.
 
     Wraps the Stable Diffusion 2.x family of checkpoints released by
     Stability AI. The pipeline uses a U-Net denoiser conditioned on OpenCLIP
     text embeddings (ViT-H/14) and a variational autoencoder (VAE) to
-    iteratively denoise a latent representation into a high-resolution image.
+    iteratively denoise a latent representation into a high resolution image.
 
     Four checkpoints are supported:
 
-    * ``stable-diffusion-2`` / ``stable-diffusion-2-1`` — trained at 768 px,
+    * ``stable-diffusion-2`` / ``stable-diffusion-2-1``: trained at 768 px,
       produce sharper detail; '2-1' is further fine-tuned and generally
       outperforms '2'.
-    * ``stable-diffusion-2-base`` / ``stable-diffusion-2-1-base`` — trained at
+    * ``stable-diffusion-2-base`` / ``stable-diffusion-2-1-base``: trained at
       512 px, faster and lower memory; best for rapid prototyping.
 
     Models are served from the ``sd2-community`` HuggingFace organisation,
@@ -442,7 +442,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Stable Diffusion 2.x is a latent diffusion model by Stability AI for "
-            "high-resolution text-to-image generation. It uses a U-Net denoiser "
+            "high resolution text-to-image generation. It uses a U-Net denoiser "
             "conditioned on CLIP text embeddings and a variational autoencoder (VAE) "
             "to produce detailed images from text prompts. "
             "Supports stable-diffusion-2, "

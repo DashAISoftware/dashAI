@@ -92,7 +92,7 @@ class ScatterPlotExplorer(RelationshipExplorer):
     can be mapped to further columns to reveal clustering, class separation, or a
     third quantitative dimension without requiring a higher-dimensional plot.
 
-    A scatter plot is the primary tool for detecting linear and non-linear
+    A scatter plot is the primary tool for detecting linear and nonlinear
     correlations between two variables and for spotting outliers, heteroscedasticity,
     or discrete groupings in the joint distribution.
     """

@@ -10,7 +10,7 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class BertinTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained BERTIN model (Spanish RoBERTa) for Spanish text classification.
+    """Pretrained BERTIN model (Spanish RoBERTa) for Spanish text classification.
 
     BERTIN is a Spanish RoBERTa model trained on the Spanish portion of mC4 and
     additional Spanish corpora. It applies RoBERTa's improved training recipe to
@@ -33,11 +33,11 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Spanish RoBERTa (BERTIN) pre-trained on large Spanish corpora. "
+            "Spanish RoBERTa (BERTIN) pretrained on large Spanish corpora. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
-            "RoBERTa en español (BERTIN) pre-entrenada en grandes corpus en español. "
+            "RoBERTa en español (BERTIN) preentrenada en grandes corpus en español. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
         ),
         pt=(

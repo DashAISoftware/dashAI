@@ -3,7 +3,7 @@
 This module provides a DashAI wrapper around the Hugging Face
 ``microsoft/deberta-v3-base`` checkpoint for sequence classification tasks.
 It reuses the shared training and inference flow from
-``HuggingFaceTextClassificationTransformer`` and exposes DashAI-specific UI
+``HuggingFaceTextClassificationTransformer`` and exposes DashAI specific UI
 metadata and schema configuration.
 """
 
@@ -27,7 +27,7 @@ class DebertaV3TransformerSchema(DistilBertTransformerSchema):
 
 
 class DebertaV3Transformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained DeBERTa-v3 transformer for text classification.
+    """Pretrained DeBERTa-v3 transformer for text classification.
 
     DeBERTa-v3 improves language understanding by combining disentangled
     attention and improved pretraining objectives, which often yields strong

@@ -315,7 +315,7 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     deviations beyond that are penalised linearly. The regularisation parameter
     ``C`` controls the trade-off between margin width and training error. Because it
     uses a linear kernel and relies on liblinear internally, LinearSVR scales to
-    large datasets much more efficiently than ``SVR`` with a non-linear kernel.
+    large datasets much more efficiently than ``SVR`` with a nonlinear kernel.
 
     Key hyperparameters include ``C``, ``epsilon``, ``loss`` (epsilon-insensitive or
     squared epsilon-insensitive), ``fit_intercept``, ``dual``, ``tol``, and

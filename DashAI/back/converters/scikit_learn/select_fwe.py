@@ -50,7 +50,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     settings where downstream analysis of each selected feature is expensive.
     Because the correction grows more conservative as the number of features
     increases, it may discard many truly informative features in very
-    high-dimensional problems; in such cases FDR control may be preferable.
+    high dimensional problems; in such cases FDR control may be preferable.
 
     Key properties:
 
@@ -70,7 +70,7 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
 
     SCHEMA = SelectFweSchema
     DESCRIPTION = MultilingualString(
-        en="Filter: Select features according to a family-wise error rate test.",
+        en="Filter: Select features according to a family wise error rate test.",
         es=(
             "Filtro: Selecciona características según una prueba de tasa de "
             "error familiar (FWE)."

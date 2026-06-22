@@ -507,7 +507,7 @@ class LeNet5ImageClassifier(BaseModel):
         return self
 
     def predict(self, x):
-        """Return per-class probability matrix for each image.
+        """Return per class probability matrix for each image.
 
         Parameters
         ----------

@@ -1,4 +1,4 @@
-"""OpusMtEnDeTransformer model for English-to-German translation."""
+"""OpusMtEnDeTransformer model for English to German translation."""
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.hugging_face.base_opus_mt_transformer import (
@@ -10,14 +10,14 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
 
 
 class OpusMtEnDeTransformerSchema(OpusMtEnESTransformerSchema):
-    """Schema for the English-to-German Opus-MT model."""
+    """Schema for the English to German Opus-MT model."""
 
 
 class OpusMtEnDeTransformer(OpusMtTransformerMixin):
-    """Pre-trained transformer for English-to-German translation.
+    """Pretrained transformer for English to German translation.
 
     Fine-tunes the Helsinki-NLP ``opus-mt-en-de`` checkpoint, a MarianMT
-    seq2seq model trained on parallel English-German corpora from the OPUS
+    seq2seq model trained on parallel English to German corpora from the OPUS
     collection.
 
     References
@@ -38,11 +38,11 @@ class OpusMtEnDeTransformer(OpusMtTransformerMixin):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Pre-trained transformer for English-German translation. "
+            "Pretrained transformer for English to German translation. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
-            "Transformer pre-entrenado para traducción inglés-alemán. "
+            "Transformer preentrenado para traducción inglés-alemán. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
         ),
         pt=(

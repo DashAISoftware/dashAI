@@ -10,12 +10,12 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained MiniLM model for lightweight English text classification.
+    """Pretrained MiniLM model for lightweight English text classification.
 
     MiniLM is a compressed BERT-like model distilled from a larger teacher
     network using deep self-attention distillation. It achieves competitive
     performance while being significantly smaller and faster than BERT, making
-    it a good choice for resource-constrained deployments.
+    it a good choice for resource constrained deployments.
 
     References
     ----------

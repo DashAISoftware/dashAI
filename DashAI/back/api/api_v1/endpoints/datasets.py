@@ -1555,7 +1555,7 @@ def _build_image_zip(table: "pa.Table") -> io.BytesIO:
     """Build a ZIP buffer from an image dataset table.
 
     Uses ZIP_STORED (no compression) because image formats (JPEG, PNG) are
-    already compressed — DEFLATE gains nothing but wastes significant CPU time.
+    already compressed, so DEFLATE gains nothing but wastes significant CPU time.
     """
     import pyarrow as pa
 

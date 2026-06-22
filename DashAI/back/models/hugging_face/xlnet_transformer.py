@@ -10,7 +10,7 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class XlnetTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained XLNet model for English text classification.
+    """Pretrained XLNet model for English text classification.
 
     XLNet is an autoregressive language model that maximises the expected
     log-likelihood over all permutations of the factorisation order. Unlike BERT,

@@ -27,7 +27,7 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
 
     Configures the layout and optional grouping axis for the multi-column box
     plot.  ``horizontal`` flips all boxes so that the value axis runs
-    left-to-right, which is convenient when column names are long.  ``points``
+    left to right, which is convenient when column names are long.  ``points``
     controls whether individual data points are overlaid on each box (``"all"``
     shows every point, ``"outliers"`` shows only outliers, and ``"False"``
     hides all points).  ``opposite_axis`` specifies a column whose distinct
@@ -117,7 +117,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     While the single-column BoxPlotExplorer is suited to examining one variable
     at a time, this explorer places multiple box plot traces side by side in the
     same figure, making it straightforward to compare the distributional
-    properties — median, spread, and outliers — of several numeric columns
+    properties (median, spread, and outliers) of several numeric columns
     simultaneously.
 
     Each box trace summarises its column through the five-number summary (Q1,

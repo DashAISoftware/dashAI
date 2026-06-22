@@ -266,7 +266,7 @@ class RandomForestRegressionSchema(BaseSchema):
         placeholder=False,
         description=MultilingualString(
             en=(
-                "Whether to use out-of-bag samples to estimate the "
+                "Whether to use out of bag samples to estimate the "
                 "generalization score."
             ),
             es=(

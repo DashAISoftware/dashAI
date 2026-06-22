@@ -225,7 +225,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         """Compute a covariance matrix and optionally render it as a Plotly heatmap.
 
         Converts the dataset to a pandas DataFrame, computes pairwise column
-        covariances, and — when ``self.plot`` is ``True`` — wraps the result
+        covariances, and, when ``self.plot`` is ``True``, wraps the result
         in a Plotly ``imshow`` heatmap figure.
 
         Parameters
@@ -287,7 +287,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         save_path : Path
             Directory where the file will be saved.
         result : Any
-            The result returned by ``launch_exploration`` — either
+            The result returned by ``launch_exploration``, either
             a ``plotly.graph_objs.Figure`` or a ``pandas.DataFrame``.
 
         Returns

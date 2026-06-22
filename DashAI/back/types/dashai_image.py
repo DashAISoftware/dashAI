@@ -30,7 +30,7 @@ class DashAIImage(DashAIDataType):
     """Image type for DashAI datasets.
 
     Serves dual roles:
-    - Column type descriptor: ``DashAIImage()`` — bytes/path are None.
+    - Column type descriptor: ``DashAIImage()`` (bytes/path are None).
     - Data instance returned by ``DashAIDataset.__getitem__``:
       ``DashAIImage(bytes=b"...", path="cat.jpg")``.
     """

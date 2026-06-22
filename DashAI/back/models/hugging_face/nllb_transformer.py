@@ -119,13 +119,13 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
 
 
 class NllbTransformer(TranslationModel):
-    """Pre-trained transformer for configurable multilingual translation.
+    """Pretrained transformer for configurable multilingual translation.
 
     This model fine-tunes the ``facebook/nllb-200-distilled-600M`` checkpoint from
     Meta AI's No Language Left Behind (NLLB) project. The base model supports
     translation across 200 languages using a single unified model, identified by
     NLLB language codes of the form ``<iso639>_<script>`` (e.g. ``spa_Latn``,
-    ``eng_Latn``). The 600M-parameter distilled variant provides a balance between
+    ``eng_Latn``). The 600M parameter distilled variant provides a balance between
     translation quality and computational cost.
 
     Target language generation is guided by ``forced_bos_token_id``, which forces
@@ -149,7 +149,7 @@ class NllbTransformer(TranslationModel):
         zh="NLLB Transformer",
     )
     DESCRIPTION: str = MultilingualString(
-        en=("NLLB multilingual model for configurable source-target translation."),
+        en=("NLLB multilingual model for configurable source to target translation."),
         es=("Modelo multilenguaje NLLB para traduccion configurable origen-destino."),
         pt=("Modelo multilingual NLLB para tradução configurável origem-destino."),
         de=("Mehrsprachiges NLLB-Modell für konfigurierbare Quell-Ziel-Übersetzung."),
@@ -209,7 +209,7 @@ class NllbTransformer(TranslationModel):
         Parameters
         ----------
         model : transformers.PreTrainedModel or None, optional
-            An already-loaded HuggingFace seq2seq model to reuse. If ``None``,
+            An already loaded HuggingFace seq2seq model to reuse. If ``None``,
             the ``facebook/nllb-200-distilled-600M`` checkpoint is downloaded
             and initialised. Default ``None``.
         **kwargs : dict
@@ -279,16 +279,16 @@ class NllbTransformer(TranslationModel):
 
         Sets ``tokenizer.src_lang`` to ``source_language`` before tokenizing
         so the NLLB tokenizer inserts the correct language prefix token. Each
-        sample is tokenized with truncation and max-length padding to 512
+        sample is tokenized with truncation and max length padding to 512
         tokens. When ``y`` is provided, target tokens are stored under the
         ``labels`` key.
 
         Parameters
         ----------
         x : DashAIDataset
-            Source-language dataset. Only the first column is used.
+            Source language dataset. Only the first column is used.
         y : DashAIDataset, optional
-            Target-language dataset. When provided, tokenized targets are added
+            Target language dataset. When provided, tokenized targets are added
             as ``labels``. When ``None``, only ``input_ids`` and
             ``attention_mask`` are returned (inference mode).
 
@@ -350,14 +350,14 @@ class NllbTransformer(TranslationModel):
         Parameters
         ----------
         x_train : DashAIDataset
-            Input source-language text features for training.
+            Input source language text features for training.
         y_train : DashAIDataset
-            Target-language translation labels for training.
+            Target language translation labels for training.
         x_validation : DashAIDataset, optional
-            Input source-language text features for validation. Default
+            Input source language text features for validation. Default
             ``None``.
         y_validation : DashAIDataset, optional
-            Target-language translation labels for validation. Default ``None``.
+            Target language translation labels for validation. Default ``None``.
 
         Returns
         -------
@@ -429,7 +429,7 @@ class NllbTransformer(TranslationModel):
         Parameters
         ----------
         x_pred : DashAIDataset
-            Source-language dataset. Only the first column is used.
+            Source language dataset. Only the first column is used.
 
         Returns
         -------
@@ -474,7 +474,7 @@ class NllbTransformer(TranslationModel):
     ) -> "DashAIDataset":
         """Return the dataset unchanged.
 
-        No pre-processing transformations are required for this model. The
+        No preprocessing transformations are required for this model. The
         method exists for compatibility with the DashAI model interface.
 
         Parameters

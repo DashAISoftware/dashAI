@@ -88,7 +88,7 @@ class IncrementalPCA(
     Key properties:
 
     - Constant memory footprint regardless of dataset size.
-    - Supports the ``partial_fit`` API for true out-of-core usage.
+    - Supports the ``partial_fit`` API for true out of core usage.
     - The ``whiten`` option rescales components to unit variance, which can
       improve downstream estimators that assume spherical features.
     - Produces output numerically close to full-batch PCA when the batch size

@@ -58,7 +58,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     separation or clustering structure across all dimensions simultaneously.
 
     Parallel coordinates are particularly effective for identifying correlated
-    features, detecting outliers, and exploring high-dimensional datasets where
+    features, detecting outliers, and exploring high dimensional datasets where
     a scatter matrix would become too large to interpret.
     """
 
@@ -71,7 +71,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Common way to visualize high-dimensional numeric data. Each line is "
+            "Common way to visualize high dimensional numeric data. Each line is "
             "a data point crossing axes for each feature."
         ),
         es=(

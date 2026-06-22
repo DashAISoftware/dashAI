@@ -20,7 +20,7 @@ class SVRSchema(BaseSchema):
 
     SVR (Support Vector Regression) finds a function that deviates from the
     observed targets by at most ``epsilon`` while being as flat as possible. It
-    uses kernel functions to handle non-linear relationships. The underlying
+    uses kernel functions to handle nonlinear relationships. The underlying
     implementation is ``sklearn.svm.SVR``.
     """
 
@@ -177,7 +177,7 @@ class SVR(RegressionModel, SklearnLikeRegressor, _SVR):
 
     SVR seeks a function that deviates from the targets by at most ``epsilon``
     (the insensitive tube) while maintaining flatness (controlled by ``C``).
-    Kernel functions allow SVR to capture non-linear relationships. The RBF kernel
+    Kernel functions allow SVR to capture nonlinear relationships. The RBF kernel
     is effective in many practical scenarios.
 
     Key hyperparameters include ``kernel``, ``C``, ``epsilon``, ``gamma``, and

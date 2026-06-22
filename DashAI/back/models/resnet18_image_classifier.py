@@ -12,7 +12,7 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
 
     18-layer residual network with skip connections that solve the vanishing
     gradient problem. The final fully-connected layer is replaced to match the
-    number of target classes. Supports ImageNet pre-trained weights.
+    number of target classes. Supports ImageNet pretrained weights.
     """
 
     SCHEMA = TorchvisionImageClassifierSchema

@@ -74,10 +74,10 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
 
     SMOTE-ENN is a two-stage resampling strategy for imbalanced classification:
 
-    1. **Over-sampling** — SMOTE generates synthetic minority-class examples by
+    1. **Over-sampling**: SMOTE generates synthetic minority-class examples by
        interpolating between each minority sample and its k-nearest minority
        neighbours, increasing the minority class size.
-    2. **Cleaning** — Edited Nearest Neighbours (ENN) removes any sample (from
+    2. **Cleaning**: Edited Nearest Neighbours (ENN) removes any sample (from
        either class) whose class label disagrees with the majority vote of its
        nearest neighbours, reducing class overlap and borderline noise.
 

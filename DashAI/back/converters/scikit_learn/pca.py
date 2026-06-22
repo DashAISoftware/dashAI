@@ -208,9 +208,9 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     matrix X of shape (n_samples, n_features), the method computes the
     eigen-decomposition of the covariance matrix X^T X / (n-1), retaining only
     the top ``n_components`` eigenvectors. The data are then projected onto this
-    lower-dimensional subspace.
+    lower dimensional subspace.
 
-    PCA is well suited for preprocessing high-dimensional continuous data before
+    PCA is well suited for preprocessing high dimensional continuous data before
     applying machine learning models, for visualisation of multivariate datasets,
     and for noise reduction. The ``whiten`` option rescales each component to
     unit variance, which can improve the performance of downstream estimators that

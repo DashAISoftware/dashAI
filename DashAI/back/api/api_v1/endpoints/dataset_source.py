@@ -164,7 +164,7 @@ async def preview_dataset_with_params(
     """Fetch a sample preview using a DataLoader and params.
 
     If ``hub_download_id`` is provided the already-downloaded local file is
-    used directly — no re-download from the source occurs.
+    used directly; no redownload from the source occurs.
 
     Parameters
     ----------
@@ -319,7 +319,7 @@ async def import_dataset(
     body : ImportRequest
         Contains the DashAI dataset_id and params. ``params`` may include
         ``compute_metadata: bool`` (default True). When False, ``DatasetJob``
-        only computes base metadata (column names, row count, NaN counts) —
+        only computes base metadata (column names, row count, NaN counts),
         extended EDA fields (correlations, stats, quality) are omitted.
     registry : ComponentRegistry
         Injected component registry.
@@ -329,7 +329,7 @@ async def import_dataset(
     Returns
     -------
     dict
-        ``{"job_id": int, "dataset_id": int}`` — the enqueued job and dataset IDs.
+        ``{"job_id": int, "dataset_id": int}``: the enqueued job and dataset IDs.
     """
     from DashAI.back.job.dataset_job import DatasetJob
 

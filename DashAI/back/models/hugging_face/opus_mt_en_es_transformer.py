@@ -1,4 +1,4 @@
-"""OpusMtEnESTransformer model for English-to-Spanish translation."""
+"""OpusMtEnESTransformer model for English to Spanish translation."""
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -18,9 +18,9 @@ from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 class OpusMtEnESTransformerSchema(BaseSchema):
     """Schema for Opus-MT translation models (MarianMT architecture).
 
-    Shared by all Helsinki-NLP Opus-MT language-pair wrappers. Controls
+    Shared by all Helsinki-NLP Opus-MT language pair wrappers. Controls
     training duration, batch size, learning rate, device, regularization, and
-    metric-logging frequency.
+    metric logging frequency.
     """
 
     num_train_epochs: schema_field(
@@ -255,10 +255,10 @@ class OpusMtEnESTransformerSchema(BaseSchema):
 
 
 class OpusMtEnESTransformer(OpusMtTransformerMixin):
-    """Pre-trained transformer for English-to-Spanish translation.
+    """Pretrained transformer for English to Spanish translation.
 
     Fine-tunes the Helsinki-NLP ``opus-mt-en-es`` checkpoint, a MarianMT
-    seq2seq model trained on parallel English-Spanish corpora from the OPUS
+    seq2seq model trained on parallel English to Spanish corpora from the OPUS
     collection. Supports direct translation without pivot languages.
 
     References
@@ -279,11 +279,11 @@ class OpusMtEnESTransformer(OpusMtTransformerMixin):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Pre-trained transformer for English-Spanish translation. "
+            "Pretrained transformer for English to Spanish translation. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
-            "Transformer pre-entrenado para traducción inglés-español. "
+            "Transformer preentrenado para traducción inglés-español. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
         ),
         pt=(

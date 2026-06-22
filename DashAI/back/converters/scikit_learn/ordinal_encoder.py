@@ -127,7 +127,7 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
 
     * The categories have a meaningful rank (e.g. education level, severity
       score, shirt size).
-    * The downstream model can exploit ordinal structure (e.g. tree-based
+    * The downstream model can exploit ordinal structure (e.g. tree based
       models such as gradient-boosted trees or random forests).
 
     For unordered nominal categories, ``OneHotEncoder`` is typically

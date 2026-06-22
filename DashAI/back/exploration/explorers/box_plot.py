@@ -18,7 +18,7 @@ class BoxPlotSchema(BaseExplorerSchema):
 
     Configures the orientation and point-visibility options of the box plot.
     The ``horizontal`` flag flips the plot axis so that the value axis runs
-    left-to-right instead of bottom-to-top, which can be useful when column
+    left to right instead of bottom to top, which can be useful when column
     names are long.  The ``points`` option controls whether individual data
     points are drawn on top of each box, letting users inspect the raw
     distribution alongside the summary statistics.
