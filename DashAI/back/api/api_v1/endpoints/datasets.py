@@ -9,7 +9,6 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-import pyarrow as pa
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
@@ -27,6 +26,7 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
 from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
 
 if TYPE_CHECKING:
+    import pyarrow as pa
     from sqlalchemy.orm.session import sessionmaker
 
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -362,6 +362,8 @@ async def filter_dataset_file(
     pagination over the same filter+sort combination avoids re-reading
     and re-filtering the Arrow file.
     """
+    import pyarrow as pa
+
     cached = _filtered_table_cache.get(path, filter_model, sort_model)
     if cached is not None:
         table, total = cached
