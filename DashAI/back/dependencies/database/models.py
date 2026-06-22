@@ -24,6 +24,8 @@ from DashAI.back.core.enums.status import (
     DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
+    NodeRunStatus,
+    PipelineRunStatus,
     PluginStatus,
     PredictionStatus,
     RunStatus,
@@ -112,8 +114,6 @@ class ModelSession(Base):
     task_name: Mapped[str] = mapped_column(String, nullable=False)
     input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
     output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
-
-    # Metrics per split
     train_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     validation_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     test_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
@@ -147,22 +147,17 @@ class Run(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-    # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
     split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
-    # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
     plot_history_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_slice_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_contour_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_importance_path: Mapped[str] = mapped_column(String, nullable=True)
-    # goal metrics
     goal_metric: Mapped[str] = mapped_column(String)
-    # artifacts
     artifacts: Mapped[str] = mapped_column(JSON, nullable=True)
-    # metadata
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String, nullable=True)
     run_path: Mapped[str] = mapped_column(String, nullable=True)
@@ -220,8 +215,6 @@ class Prediction(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-
-    # Relationships
     run: Mapped["Run"] = relationship("Run", back_populates="predictions")
     dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="predictions")
 
@@ -408,7 +401,6 @@ class GenerativeProcess(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-    # metadata
     session_id: Mapped[int] = mapped_column(
         ForeignKey("generative_session.id", ondelete="CASCADE")
     )
@@ -496,16 +488,12 @@ class GenerativeSession(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-    # task name
     task_name: Mapped[str] = mapped_column(String, nullable=False)
-    # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
-    # metadata
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=True)
 
-    # Relationship with GenerativeSessionParameterHistory
     parameters_history: Mapped[List["GenerativeSessionParameterHistory"]] = (
         relationship(
             "GenerativeSessionParameterHistory",
@@ -514,7 +502,6 @@ class GenerativeSession(Base):
         )
     )
 
-    # Relationship with GenerativeProcess
     processes: Mapped[List["GenerativeProcess"]] = relationship(
         "GenerativeProcess", cascade="all, delete-orphan", back_populates="session"
     )
@@ -532,13 +519,10 @@ class Pipeline(Base):
     exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-
-    # New JSON columns for atomized Train sub-node results
     split_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     task_and_model: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     metrics_result: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
 
-    # Relationships to new node tables
     split_data_nodes: Mapped[List["SplitDataNode"]] = relationship(
         "SplitDataNode", cascade="all, delete-orphan", back_populates="pipeline"
     )
@@ -547,6 +531,9 @@ class Pipeline(Base):
     )
     metrics_nodes: Mapped[List["MetricsNode"]] = relationship(
         "MetricsNode", cascade="all, delete-orphan", back_populates="pipeline"
+    )
+    pipeline_runs: Mapped[List["PipelineRun"]] = relationship(
+        "PipelineRun", cascade="all, delete-orphan", back_populates="pipeline"
     )
 
 
@@ -625,6 +612,139 @@ class MetricsNode(Base):
     )
 
 
+class PipelineRun(Base):
+    __tablename__ = "pipeline_run"
+    """
+    Table to store execution runs for a pipeline.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline.id", ondelete="CASCADE"), nullable=False
+    )
+    steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(PipelineRunStatus),
+        nullable=False,
+        default=PipelineRunStatus.NOT_STARTED,
+    )
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+
+    pipeline: Mapped["Pipeline"] = relationship(
+        "Pipeline", back_populates="pipeline_runs"
+    )
+    node_runs: Mapped[List["NodeRun"]] = relationship(
+        "NodeRun", cascade="all, delete-orphan", back_populates="pipeline_run"
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """
+        Update the status of the pipeline run to delivered and set delivery_time to now.
+        """
+        self.status = PipelineRunStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the pipeline run to started and set start_time to now."""
+        self.status = PipelineRunStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the pipeline run to finished and set end_time to now."""
+        self.status = PipelineRunStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self, error_message: str | None = None) -> None:
+        """Update the status of the pipeline run to error."""
+        self.status = PipelineRunStatus.ERROR
+        self.error_message = error_message
+        self.end_time = datetime.now()
+
+
+class NodeRun(Base):
+    __tablename__ = "pipeline_node_run"
+    """
+    Table to store execution runs for individual pipeline nodes.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pipeline_run_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline_run.id", ondelete="CASCADE"), nullable=False
+    )
+    node_id: Mapped[str] = mapped_column(String, nullable=False)
+    node_type: Mapped[str] = mapped_column(String, nullable=False)
+    config: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    input: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    output: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(NodeRunStatus),
+        nullable=False,
+        default=NodeRunStatus.NOT_STARTED,
+    )
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+
+    pipeline_run: Mapped["PipelineRun"] = relationship(
+        "PipelineRun", back_populates="node_runs"
+    )
+    artifacts: Mapped[List["NodeArtifact"]] = relationship(
+        "NodeArtifact", cascade="all, delete-orphan", back_populates="node_run"
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """
+        Update the status of the node run to delivered and set delivery_time to now.
+        """
+        self.status = NodeRunStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the node run to started and set start_time to now."""
+        self.status = NodeRunStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the node run to finished and set end_time to now."""
+        self.status = NodeRunStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self, error_message: str | None = None) -> None:
+        """Update the status of the node run to error."""
+        self.status = NodeRunStatus.ERROR
+        self.error_message = error_message
+        self.end_time = datetime.now()
+
+
+class NodeArtifact(Base):
+    __tablename__ = "pipeline_node_artifact"
+    """
+    Table to store artifacts emitted by a node run.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    node_run_id: Mapped[int] = mapped_column(
+        ForeignKey("pipeline_node_run.id", ondelete="CASCADE"), nullable=False
+    )
+    key: Mapped[str] = mapped_column(String, nullable=False)
+    value: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+
+    node_run: Mapped["NodeRun"] = relationship(
+        "NodeRun", back_populates="artifacts"
+    )
+
+
 class Converter(Base):
     __tablename__ = "converter"
     """
@@ -651,8 +771,6 @@ class Converter(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-
-    # Relationships
     notebook: Mapped["Notebook"] = relationship(back_populates="converters")
 
     def set_status_as_delivered(self) -> None:
@@ -699,7 +817,6 @@ class Notebook(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
-    # Relationships
     explorers: Mapped[List["Explorer"]] = relationship(
         back_populates="notebook", cascade="all, delete-orphan"
     )
@@ -725,8 +842,6 @@ class GenerativeSessionParameterHistory(Base):
         DateTime,
         default=datetime.now,
     )
-
-    # Relationship with GenerativeSession
     session = relationship(
         "GenerativeSession",
         back_populates="parameters_history",
@@ -750,21 +865,17 @@ class Explorer(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-    # explorer
     columns: Mapped[JSON] = mapped_column(JSON, nullable=False)
     exploration_type: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
     exploration_path: Mapped[str] = mapped_column(String, nullable=True)
-    # Metadata
     name: Mapped[str] = mapped_column(String, nullable=True)
-
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     status: Mapped[Enum] = mapped_column(
         Enum(ExplorerStatus), nullable=False, default=ExplorerStatus.NOT_STARTED
     )
-    # Relationships
     notebook: Mapped["Notebook"] = relationship(back_populates="explorers")
 
     def set_status_as_delivered(self) -> None:
