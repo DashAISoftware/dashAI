@@ -362,6 +362,8 @@ async def filter_dataset_file(
     pagination over the same filter+sort combination avoids re-reading
     and re-filtering the Arrow file.
     """
+    import pyarrow as pa
+
     cached = _filtered_table_cache.get(path, filter_model, sort_model)
     if cached is not None:
         table, total = cached
