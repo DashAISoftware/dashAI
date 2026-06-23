@@ -1,12 +1,14 @@
 import asyncio
 import hashlib
 import io
+import json
 import logging
 import os
 import time
 import zipfile
 from collections import OrderedDict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
@@ -118,6 +120,21 @@ def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> 
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+_SEED_MANIFEST_PATH = (
+    Path(__file__).parent.parent.parent.parent / "seeds" / "manifest.json"
+)
+
+
+def _load_seed_tasks() -> dict:
+    try:
+        with _SEED_MANIFEST_PATH.open() as f:
+            return {name: meta.get("task") for name, meta in json.load(f).items()}
+    except Exception:
+        return {}
+
+
+_SEED_TASKS: dict = _load_seed_tasks()
 
 
 # ---------------------------------------------------------------------------
@@ -495,7 +512,12 @@ async def get_datasets(
                 detail="Internal database error",
             ) from e
 
-    return datasets
+    result = []
+    for ds in datasets:
+        data = jsonable_encoder(ds)
+        data["task"] = _SEED_TASKS.get(ds.name)
+        result.append(data)
+    return result
 
 
 @router.get("/{dataset_id}")

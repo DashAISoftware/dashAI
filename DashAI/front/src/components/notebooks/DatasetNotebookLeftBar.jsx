@@ -111,12 +111,12 @@ export default function DatasetsNotebooksLeftBar({
     );
 
   const getDatasetDescription = (dataset) => {
-    return (
+    const base =
       dataset.description ||
       `${dataset.total_rows} ${t("common:rows")}, ${dataset.total_columns} ${t(
         "common:columns",
-      )}`
-    );
+      )}`;
+    return dataset.task ? `${dataset.task} | ${base}` : base;
   };
 
   const getNotebookDescription = (notebook) => {

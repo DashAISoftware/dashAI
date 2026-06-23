@@ -138,10 +138,11 @@ export default function ModelsLeftBar({ onToggle }) {
     );
 
   const getDatasetDescription = (dataset) => {
-    return t("datasets:label.datasetDescription", {
+    const base = t("datasets:label.datasetDescription", {
       rows: dataset.total_rows || 0,
       columns: dataset.total_columns || 0,
     });
+    return dataset.task ? `${dataset.task} | ${base}` : base;
   };
 
   const getSessionDescription = (session) => {
