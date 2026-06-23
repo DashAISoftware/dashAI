@@ -1,5 +1,4 @@
 {
-  "ai-vs-human":        {"total_rows": 2000, "total_columns": 9,  "task": "EDA"},
   "languages":          {"total_rows": 80,   "total_columns": 2,  "task": "Translation"},
   "students":           {"total_rows": 10000,"total_columns": 8,  "task": "Tabular Classification"},
   "spanish-mnist":      {"total_rows": 800,  "total_columns": 2,  "task": "Image Classification"},
