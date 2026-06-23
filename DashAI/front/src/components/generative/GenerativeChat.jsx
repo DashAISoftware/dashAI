@@ -41,6 +41,7 @@ export default function GenerativeChat() {
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
+  const isAtBottomRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
@@ -64,6 +65,9 @@ export default function GenerativeChat() {
     const el = chatContainerRef.current;
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // Remember the user's position before any content change repaints, so the
+    // scroll effect can decide whether to follow without re measuring stale.
+    isAtBottomRef.current = distanceFromBottom <= 100;
     setShowScrollButton(distanceFromBottom > 100);
   };
 
@@ -124,7 +128,9 @@ export default function GenerativeChat() {
     const isNewMessage =
       messagesWithHistory.length > prevMessageCountRef.current;
     prevMessageCountRef.current = messagesWithHistory.length;
-    scrollToBottom(isNewMessage);
+    // Follow on a new message, or when the user was pinned to the bottom
+    // before this update (e.g. the model reply replacing the waiting bubble).
+    scrollToBottom(isNewMessage || isAtBottomRef.current);
   }, [messagesWithHistory]);
 
   useEffect(() => {
