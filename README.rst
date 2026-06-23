@@ -16,8 +16,8 @@ AI models
 .. image:: ./images/dashai-logo.svg
    :alt: dashAI Logo
 
-Desktop installers (Windows / macOS)
-=====================================
+Desktop installers (Windows / macOS / Linux)
+=============================================
 
 The easiest way to get started. Desktop installers, ready to use, are
 published with every release. They are **CPU only** and bundle everything you
@@ -29,9 +29,28 @@ Download the file for your system from the
 * **Windows (x64):** ``dashAI-<version>-x64-windows.exe``
 * **macOS (Apple Silicon):** ``dashAI-<version>-arm-osx.dmg``
 * **macOS (Intel):** ``dashAI-<version>-x64-osx.dmg``
+* **Linux (x64):** ``dashAI-<version>-x64-linux.AppImage``
 
-Run the installer, launch dashAI, and the graphical interface opens
-automatically.
+On Windows and macOS, run the installer, launch dashAI, and the graphical
+interface opens automatically.
+
+On Linux, make the AppImage executable and run it:
+
+.. code:: bash
+
+    $ chmod +x dashAI-<version>-x64-linux.AppImage
+    $ ./dashAI-<version>-x64-linux.AppImage
+
+The AppImage bundles its own Python, so nothing needs to be installed. It
+requires glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, Fedora 36+, and most
+distributions from 2022 on) and FUSE 2 to mount. If FUSE is missing, run it
+with ``./dashAI-<version>-x64-linux.AppImage --appimage-extract-and-run``.
+
+When double clicked, the AppImage opens a terminal window to show the server
+logs. This needs a terminal emulator, which every standard desktop (GNOME, KDE,
+XFCE, and others) already provides, so no setup is required. On a minimal system
+with no terminal emulator the log window is skipped, but the app still starts
+and opens the browser as usual.
 
 **Note:** the desktop installers ship with CPU only PyTorch and
 ``llama-cpp-python``. For NVIDIA (CUDA) or AMD (ROCm) GPU acceleration, use the
