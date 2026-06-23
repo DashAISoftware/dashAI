@@ -457,5 +457,13 @@
     "notebookCreated": "笔记本创建成功",
     "notebookUpdateSuccess": "笔记本更新成功"
   },
-  "searchDataloaders": "搜索数据加载器..."
+  "searchDataloaders": "搜索数据加载器...",
+  "task": {
+    "tabularClassification": "表格分类",
+    "imageClassification": "图像分类",
+    "textClassification": "文本分类",
+    "translation": "翻译",
+    "regression": "回归",
+    "eda": "EDA"
+  }
 }

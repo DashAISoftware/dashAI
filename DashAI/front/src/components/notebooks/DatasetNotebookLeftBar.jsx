@@ -110,13 +110,27 @@ export default function DatasetsNotebooksLeftBar({
       { name: notebook.name },
     );
 
+  const TASK_KEY_MAP = {
+    "Tabular Classification": "tabularClassification",
+    "Image Classification": "imageClassification",
+    "Text Classification": "textClassification",
+    Translation: "translation",
+    Regression: "regression",
+    EDA: "eda",
+  };
+
   const getDatasetDescription = (dataset) => {
     const base =
       dataset.description ||
       `${dataset.total_rows} ${t("common:rows")}, ${dataset.total_columns} ${t(
         "common:columns",
       )}`;
-    return dataset.task ? `${dataset.task} | ${base}` : base;
+    if (!dataset.task) return base;
+    const key = TASK_KEY_MAP[dataset.task];
+    const taskLabel = key
+      ? t(`datasets:task.${key}`, dataset.task)
+      : dataset.task;
+    return `${taskLabel} | ${base}`;
   };
 
   const getNotebookDescription = (notebook) => {

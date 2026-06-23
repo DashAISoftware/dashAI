@@ -469,5 +469,13 @@
       "endsWith": "Termina con"
     }
   },
-  "searchDataloaders": "Buscar cargadores de datos..."
+  "searchDataloaders": "Buscar cargadores de datos...",
+  "task": {
+    "tabularClassification": "Clasificación Tabular",
+    "imageClassification": "Clasificación de Imágenes",
+    "textClassification": "Clasificación de Texto",
+    "translation": "Traducción",
+    "regression": "Regresión",
+    "eda": "EDA"
+  }
 }

@@ -454,5 +454,13 @@
       "endsWith": "Ends With"
     }
   },
-  "searchDataloaders": "Search data loaders..."
+  "searchDataloaders": "Search data loaders...",
+  "task": {
+    "tabularClassification": "Tabular Classification",
+    "imageClassification": "Image Classification",
+    "textClassification": "Text Classification",
+    "translation": "Translation",
+    "regression": "Regression",
+    "eda": "EDA"
+  }
 }
