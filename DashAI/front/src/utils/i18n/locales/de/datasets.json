@@ -96,6 +96,7 @@
     "zipContentsNotCompatible": "ZIP enthält keine mit dem ausgewählten Datenlader kompatiblen Dateien"
   },
   "label": {
+    "task": "Aufgabe",
     "all": "alle",
     "allowedDataTypes": "Zulässige Datentypen: <1><0></0></1>",
     "allowedValueTypes": "Zulässige Wertetypen: <1><0></0></1>",

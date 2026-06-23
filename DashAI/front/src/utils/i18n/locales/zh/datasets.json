@@ -95,6 +95,7 @@
     "zipContentsNotCompatible": "ZIP 文件不包含与所选数据加载器兼容的文件"
   },
   "label": {
+    "task": "任务",
     "all": "全部",
     "allowedDataTypes": "允许的数据类型：<1><0></0></1>",
     "allowedValueTypes": "允许的值类型：<1><0></0></1>",

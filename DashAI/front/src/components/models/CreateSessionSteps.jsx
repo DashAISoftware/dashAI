@@ -54,7 +54,14 @@ function CreateSessionSteps({
 
   const handleDatasetChange = (newDataset) => {
     setSelectedDataset(newDataset);
-    setNewExp((prev) => ({ ...prev, dataset: newDataset }));
+    setNextEnabled(false);
+    setNewExp((prev) => ({
+      ...prev,
+      dataset: newDataset,
+      input_columns: [],
+      output_columns: [],
+      splits: {},
+    }));
     if (
       tourContext?.run &&
       tourContext?.stepIndex === 5 &&
@@ -252,6 +259,7 @@ function CreateSessionSteps({
         />
         {selectedDataset && (
           <PrepareDatasetStep
+            key={selectedDataset.id}
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}

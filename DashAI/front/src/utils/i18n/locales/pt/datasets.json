@@ -99,6 +99,7 @@
     "zipContentsNotCompatible": "O arquivo ZIP não contém arquivos compatíveis com o dataloader selecionado"
   },
   "label": {
+    "task": "Tarefa",
     "all": "todos",
     "allowedDataTypes": "Tipos de dados permitidos: <1><0></0></1>",
     "allowedValueTypes": "Tipos de valores permitidos: <1><0></0></1>",
