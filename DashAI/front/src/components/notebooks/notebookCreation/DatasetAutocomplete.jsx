@@ -19,10 +19,19 @@ export default function DatasetAutocomplete({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
 
+  const TASK_TRANSLATIONS = {
+    tabularClassification: () => t("datasets:task.tabularClassification"),
+    imageClassification: () => t("datasets:task.imageClassification"),
+    textClassification: () => t("datasets:task.textClassification"),
+    translation: () => t("datasets:task.translation"),
+    regression: () => t("datasets:task.regression"),
+    eda: () => t("datasets:task.eda"),
+  };
+
   const getTaskLabel = (dataset) => {
     if (!dataset?.task) return null;
     const key = TASK_KEY_MAP[dataset.task];
-    return key ? t(`datasets:task.${key}`, dataset.task) : dataset.task;
+    return TASK_TRANSLATIONS[key] ? TASK_TRANSLATIONS[key]() : dataset.task;
   };
 
   return (

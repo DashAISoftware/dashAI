@@ -110,6 +110,15 @@ export default function DatasetsNotebooksLeftBar({
       { name: notebook.name },
     );
 
+  const TASK_TRANSLATIONS = {
+    tabularClassification: () => t("datasets:task.tabularClassification"),
+    imageClassification: () => t("datasets:task.imageClassification"),
+    textClassification: () => t("datasets:task.textClassification"),
+    translation: () => t("datasets:task.translation"),
+    regression: () => t("datasets:task.regression"),
+    eda: () => t("datasets:task.eda"),
+  };
+
   const TASK_KEY_MAP = {
     "Tabular Classification": "tabularClassification",
     "Image Classification": "imageClassification",
@@ -127,8 +136,8 @@ export default function DatasetsNotebooksLeftBar({
       )}`;
     if (!dataset.task) return base;
     const key = TASK_KEY_MAP[dataset.task];
-    const taskLabel = key
-      ? t(`datasets:task.${key}`, dataset.task)
+    const taskLabel = TASK_TRANSLATIONS[key]
+      ? TASK_TRANSLATIONS[key]()
       : dataset.task;
     return `${taskLabel} | ${base}`;
   };
