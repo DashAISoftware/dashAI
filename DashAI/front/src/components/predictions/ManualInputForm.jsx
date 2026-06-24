@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import InputField from "./InputField";
+import { getTargetDecimals } from "../../utils/predictionFormat";
 
 const HEADER_HEIGHT = 40;
 const ROW_HEIGHT = 52;
@@ -29,6 +30,7 @@ export default function ManualInputForm({
 }) {
   const theme = useTheme();
   const [rows, setRows] = useState(createInitialRows);
+  const targetDecimals = getTargetDecimals(sample, targetColumn);
   const { t } = useTranslation(["prediction", "common"]);
 
   function createInitialRows() {
@@ -287,7 +289,13 @@ export default function ManualInputForm({
                             : `1px solid ${divider}`,
                       }}
                     >
-                      {predVal != null ? String(predVal) : ""}
+                      {predVal != null
+                        ? typeof predVal === "number"
+                          ? targetDecimals !== null
+                            ? predVal.toFixed(targetDecimals)
+                            : String(parseFloat(predVal.toPrecision(12)))
+                          : String(predVal)
+                        : ""}
                     </td>
                     <td
                       style={{
