@@ -99,6 +99,7 @@
     "zipContentsNotCompatible": "El ZIP no contiene archivos compatibles con el dataloader seleccionado"
   },
   "label": {
+    "task": "Tarea",
     "all": "todos",
     "allowedDataTypes": "Tipos de datos permitidos: <1><0></0></1>",
     "allowedValueTypes": "Tipos de valores permitidos: <1><0></0></1>",
@@ -469,5 +470,13 @@
       "endsWith": "Termina con"
     }
   },
-  "searchDataloaders": "Buscar cargadores de datos..."
+  "searchDataloaders": "Buscar cargadores de datos...",
+  "task": {
+    "tabularClassification": "Clasificación Tabular",
+    "imageClassification": "Clasificación de Imágenes",
+    "textClassification": "Clasificación de Texto",
+    "translation": "Traducción",
+    "regression": "Regresión",
+    "eda": "EDA"
+  }
 }

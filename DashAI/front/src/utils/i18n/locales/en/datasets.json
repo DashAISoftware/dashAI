@@ -94,6 +94,7 @@
     "zipContentsNotCompatible": "ZIP does not contain files compatible with the selected dataloader"
   },
   "label": {
+    "task": "Task",
     "all": "all",
     "allowedDataTypes": "Allowed data types: <1><0></0></1>",
     "allowedValueTypes": "Allowed value types: <1><0></0></1>",
@@ -454,5 +455,13 @@
       "endsWith": "Ends With"
     }
   },
-  "searchDataloaders": "Search data loaders..."
+  "searchDataloaders": "Search data loaders...",
+  "task": {
+    "tabularClassification": "Tabular Classification",
+    "imageClassification": "Image Classification",
+    "textClassification": "Text Classification",
+    "translation": "Translation",
+    "regression": "Regression",
+    "eda": "EDA"
+  }
 }

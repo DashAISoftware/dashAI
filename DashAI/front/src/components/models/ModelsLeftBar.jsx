@@ -137,11 +137,35 @@ export default function ModelsLeftBar({ onToggle }) {
       { name: session.name },
     );
 
+  const TASK_TRANSLATIONS = {
+    tabularClassification: () => t("datasets:task.tabularClassification"),
+    imageClassification: () => t("datasets:task.imageClassification"),
+    textClassification: () => t("datasets:task.textClassification"),
+    translation: () => t("datasets:task.translation"),
+    regression: () => t("datasets:task.regression"),
+    eda: () => t("datasets:task.eda"),
+  };
+
+  const TASK_KEY_MAP = {
+    "Tabular Classification": "tabularClassification",
+    "Image Classification": "imageClassification",
+    "Text Classification": "textClassification",
+    Translation: "translation",
+    Regression: "regression",
+    EDA: "eda",
+  };
+
   const getDatasetDescription = (dataset) => {
-    return t("datasets:label.datasetDescription", {
+    const base = t("datasets:label.datasetDescription", {
       rows: dataset.total_rows || 0,
       columns: dataset.total_columns || 0,
     });
+    if (!dataset.task) return base;
+    const key = TASK_KEY_MAP[dataset.task];
+    const taskLabel = TASK_TRANSLATIONS[key]
+      ? TASK_TRANSLATIONS[key]()
+      : dataset.task;
+    return `${taskLabel} | ${base}`;
   };
 
   const getSessionDescription = (session) => {
