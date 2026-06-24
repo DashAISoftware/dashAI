@@ -31,6 +31,11 @@ exclude = [
 [tool.ruff.lint.pydocstyle]
 convention = "numpy" # use numpy-style docstrings.
 
+[tool.ruff.lint.isort]
+# `alembic` is the PyPI package; the local `alembic/` migrations directory makes
+# import sorting non-deterministic across platforms unless pinned as third-party.
+known-third-party = ["alembic"]
+
 [tool.ruff.format]
 docstring-code-format = true
 
