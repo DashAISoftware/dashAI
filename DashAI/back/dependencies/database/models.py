@@ -652,7 +652,9 @@ class PipelineRun(Base):
         self.delivery_time = datetime.now()
 
     def set_status_as_started(self) -> None:
-        """Update the status of the pipeline run to started and set start_time to now."""
+        """
+        Update the status of the pipeline run to started and set start_time to now.
+        """
         self.status = PipelineRunStatus.STARTED
         self.start_time = datetime.now()
 
@@ -740,9 +742,7 @@ class NodeArtifact(Base):
     value: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
 
-    node_run: Mapped["NodeRun"] = relationship(
-        "NodeRun", back_populates="artifacts"
-    )
+    node_run: Mapped["NodeRun"] = relationship("NodeRun", back_populates="artifacts")
 
 
 class Converter(Base):

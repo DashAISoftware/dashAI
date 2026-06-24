@@ -9,6 +9,7 @@ from DashAI.back.metrics.base_metric import BaseMetric
 
 log = logging.getLogger(__name__)
 
+
 class MetricsEval(BaseJob):
     """Pipeline node that evaluates the trained model with selected metrics.
 
@@ -79,9 +80,7 @@ class MetricsEval(BaseJob):
                 y = branch.get("trained_y")
 
                 if factory is None or x is None or y is None:
-                    log.warning(
-                        "Skipping metrics for branch without a trained model."
-                    )
+                    log.warning("Skipping metrics for branch without a trained model.")
                     continue
 
                 try:
