@@ -274,8 +274,9 @@ jobs:
           PIP_INDEX_URL: https://download.pytorch.org/whl/cpu
           PIP_EXTRA_INDEX_URL: "https://pypi.org/simple https://abetlen.github.io/llama-cpp-python/whl/cpu"
         run: |
+          # python-appimage names the output dashAI-x86_64.AppImage
+          # (.desktop Name + arch), which is the name uploaded below.
           python-appimage build app -p 3.12 appimage/
-          mv ./*.AppImage dashAI-x86_64.AppImage
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
         with:
