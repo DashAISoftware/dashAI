@@ -50,8 +50,11 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "Regularisierungsstärke-Multiplikator. alpha=0 entspricht OLS; "
                 "größere Werte erhöhen die Regularisierung."
             ),
+            zh="正则化强度乘数。alpha=0 等同于 OLS；增大 alpha 会增强正则化。",
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
+        alias=MultilingualString(
+            en="Alpha", es="Alfa", pt="Alfa", de="Alpha", zh="Alpha"
+        ),
     )  # type: ignore
 
     l1_ratio: schema_field(
@@ -79,9 +82,14 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "Der Mischungsparameter. l1_ratio=0 ist reines Ridge; "
                 "l1_ratio=1 ist reines Lasso."
             ),
+            zh="混合参数。l1_ratio=0 为纯 Ridge；l1_ratio=1 为纯 Lasso。",
         ),
         alias=MultilingualString(
-            en="L1 ratio", es="Ratio L1", pt="Razão L1", de="L1-Verhältnis"
+            en="L1 ratio",
+            es="Ratio L1",
+            pt="Razão L1",
+            de="L1-Verhältnis",
+            zh="L1 比率",
         ),
     )  # type: ignore
 
@@ -106,12 +114,14 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "False "
                 "wird erwartet, dass die Daten bereits zentriert sind."
             ),
+            zh="是否为模型计算截距。若为 False，则假定数据已中心化。",
         ),
         alias=MultilingualString(
             en="Fit intercept",
             es="Ajustar intercepto",
             pt="Ajustar intercepto",
             de="Achsenabschnitt anpassen",
+            zh="拟合截距",
         ),
     )  # type: ignore
 
@@ -128,12 +138,14 @@ class ElasticNetRegressionSchema(BaseSchema):
             es="El número máximo de iteraciones.",
             pt="O número máximo de iterações.",
             de="Die maximale Anzahl der Iterationen.",
+            zh="最大迭代次数。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Iterações máximas",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 
@@ -150,9 +162,10 @@ class ElasticNetRegressionSchema(BaseSchema):
             es="La tolerancia para la optimización.",
             pt="A tolerância para a otimização.",
             de="Die Toleranz für die Optimierung.",
+            zh="优化的收敛容差。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
 
@@ -178,12 +191,17 @@ class ElasticNetRegressionSchema(BaseSchema):
                 "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
                 "festzulegen."
             ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "传入 None 则不设定特定种子。"
+            ),
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 
@@ -212,12 +230,14 @@ class ElasticNetRegression(RegressionModel, SklearnLikeRegressor, _ElasticNet):
         es="Regresión Elastic Net",
         pt="Regressão Elastic Net",
         de="ElasticNet-Regression",
+        zh="弹性网络回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression combining L1 and L2 regularisation.",
         es="Regresión lineal que combina regularización L1 y L2.",
         pt="Regressão linear que combina regularização L1 e L2.",
         de="Lineare Regression mit kombinierter L1- und L2-Regularisierung.",
+        zh="结合 L1 和 L2 正则化的线性回归。",
     )
     COLOR: str = "#26A69A"
     ICON: str = "Hub"

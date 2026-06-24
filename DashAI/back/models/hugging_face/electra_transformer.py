@@ -10,12 +10,12 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class ElectraTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained ELECTRA model for efficient English text classification.
+    """Pretrained ELECTRA model for efficient English text classification.
 
-    ELECTRA uses a replaced-token-detection pre-training objective: a generator
+    ELECTRA uses a replaced token detection pretraining objective: a generator
     produces plausible token replacements while a discriminator is trained to
     identify which tokens were replaced. This allows ELECTRA to train on all
-    input tokens rather than only masked ones, making pre-training more efficient.
+    input tokens rather than only masked ones, making pretraining more efficient.
 
     References
     ----------
@@ -29,10 +29,11 @@ class ElectraTransformer(HuggingFaceTextClassificationTransformer):
         es="Transformer ELECTRA",
         pt="Transformer ELECTRA",
         de="ELECTRA Transformer",
+        zh="ELECTRA Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Sample-efficient ELECTRA discriminator for text classification. "
+            "Sample efficient ELECTRA discriminator for text classification. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
@@ -47,6 +48,10 @@ class ElectraTransformer(HuggingFaceTextClassificationTransformer):
             "Stichprobeneffizienter ELECTRA-Diskriminator für Textklassifikation. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "样本高效的 ELECTRA 判别器，用于文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#558B2F"

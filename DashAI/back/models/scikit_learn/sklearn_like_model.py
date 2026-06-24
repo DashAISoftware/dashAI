@@ -27,7 +27,7 @@ class SklearnLikeModel(BaseModel):
     """Abstract base class for scikit-learn-compatible DashAI models.
 
     Provides ``save`` / ``load`` via joblib, categorical encoding helpers
-    (label or one-hot), and the ``prepare_dataset`` / ``prepare_output``
+    (label or one hot), and the ``prepare_dataset`` / ``prepare_output``
     pipeline expected by the DashAI training loop. Concrete subclasses
     (classifiers and regressors) inherit this mixin and supply ``train`` and
     ``predict`` implementations backed by scikit-learn estimators.
@@ -230,7 +230,7 @@ class SklearnLikeModel(BaseModel):
     ) -> "DashAIDataset":
         """Prepare dataset using label encoding for categorical columns.
 
-        This is appropriate for tree-based models that don't assume
+        This is appropriate for tree based models that don't assume
         ordinal relationships between encoded values.
 
         Parameters
@@ -271,7 +271,7 @@ class SklearnLikeModel(BaseModel):
     def _prepare_one_hot(
         self, dataset: "DashAIDataset", is_fit: bool, columns: list = None
     ) -> "DashAIDataset":
-        """Prepare dataset using one-hot encoding for categorical columns.
+        """Prepare dataset using one hot encoding for categorical columns.
 
         Parameters
         ----------
@@ -280,12 +280,12 @@ class SklearnLikeModel(BaseModel):
         is_fit : bool
             If True, fit the encoder. If False, use existing encoder.
         columns : list, optional
-            If given, only one-hot encode the specified columns.
+            If given, only one hot encode the specified columns.
 
         Returns
         -------
         DashAIDataset
-            Dataset with categorical columns replaced by one-hot columns.
+            Dataset with categorical columns replaced by one hot columns.
         """
         from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
             apply_categorical_one_hot_encoder,

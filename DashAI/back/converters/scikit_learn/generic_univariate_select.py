@@ -35,6 +35,7 @@ class GenericUnivariateSelectSchema(BaseSchema):
                 "pontuações mais altas."
             ),
             de="Merkmale gemäß einem Perzentil der höchsten Bewertungen auswählen.",
+            zh="根据最高得分的百分位数选择特征。",
         ),
     )  # type: ignore
     param: schema_field(
@@ -47,6 +48,7 @@ class GenericUnivariateSelectSchema(BaseSchema):
             es="Parámetro del modo.",
             pt="Parâmetro do modo.",
             de="Parameter des Modus.",
+            zh="模式的参数。",
         ),
     )  # type: ignore
 
@@ -69,6 +71,7 @@ class GenericUnivariateSelect(
         es="Selector univariante de características con estrategia configurable.",
         pt="Seletor univariado de características com estratégia configurável.",
         de="Univariater Merkmalsselektor mit konfigurierbarer Strategie.",
+        zh="具有可配置策略的单变量特征选择器。",
     )
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(
@@ -76,6 +79,7 @@ class GenericUnivariateSelect(
         es="Selección Univariante Genérica",
         pt="Seletor Univariado Genérico",
         de="Generische Univariate Auswahl",
+        zh="通用单变量特征选择",
     )
     IMAGE_PREVIEW = "generic_univariate_select.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}

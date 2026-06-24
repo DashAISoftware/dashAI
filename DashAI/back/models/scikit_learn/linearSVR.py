@@ -52,9 +52,10 @@ class LinearSVRSchema(BaseSchema):
                 "Epsilon-Parameter, der den Epsilon-Schlauch angibt, innerhalb "
                 "dessen keine Bestrafung angewendet wird."
             ),
+            zh="Epsilon参数，指定不关联惩罚的epsilon管范围。",
         ),
         alias=MultilingualString(
-            en="Epsilon", es="Epsilon", pt="Épsilon", de="Epsilon"
+            en="Epsilon", es="Epsilon", pt="Épsilon", de="Epsilon", zh="Epsilon"
         ),
     )  # type: ignore
 
@@ -71,9 +72,10 @@ class LinearSVRSchema(BaseSchema):
             es="Tolerancia para el criterio de detención.",
             pt="Tolerância para o critério de parada.",
             de="Toleranz für das Abbruchkriterium.",
+            zh="停止准则的容差。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
 
@@ -102,8 +104,9 @@ class LinearSVRSchema(BaseSchema):
                 "Regularisierungsparameter. Die Stärke der Regularisierung "
                 "ist umgekehrt proportional zu C."
             ),
+            zh="正则化参数，正则化强度与C成反比。",
         ),
-        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
 
     loss: schema_field(
@@ -126,8 +129,11 @@ class LinearSVRSchema(BaseSchema):
                 "Gibt die Verlustfunktion an. 'epsilon_insensitive' ist "
                 "der Standard-SVR-Verlust."
             ),
+            zh="指定损失函数，'epsilon_insensitive'为标准SVR损失。",
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda", de="Verlust"),
+        alias=MultilingualString(
+            en="Loss", es="Pérdida", pt="Perda", de="Verlust", zh="损失函数"
+        ),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -138,12 +144,14 @@ class LinearSVRSchema(BaseSchema):
             es="Si se debe calcular el intercepto para este modelo.",
             pt="Se o intercepto deve ser calculado para este modelo.",
             de="Ob der Achsenabschnitt für dieses Modell berechnet werden soll.",
+            zh="是否为该模型计算截距。",
         ),
         alias=MultilingualString(
             en="Fit intercept",
             es="Ajustar intercepto",
             pt="Ajustar intercepto",
             de="Achsenabschnitt anpassen",
+            zh="拟合截距",
         ),
     )  # type: ignore
 
@@ -172,12 +180,17 @@ class LinearSVRSchema(BaseSchema):
                 "Wenn fit_intercept True ist, wird der Instanzvektor x zu "
                 "[x, self.intercept_scaling] im primalen Problem."
             ),
+            zh=(
+                "当fit_intercept为True时，实例向量x在原始问题中变为"
+                "[x, self.intercept_scaling]。"
+            ),
         ),
         alias=MultilingualString(
             en="Intercept scaling",
             es="Escala del intercepto",
             pt="Escala do intercepto",
             de="Achsenabschnitt-Skalierung",
+            zh="截距缩放",
         ),
     )  # type: ignore
 
@@ -201,8 +214,9 @@ class LinearSVRSchema(BaseSchema):
                 "Wählt den Algorithmus zur Lösung des dualen oder primalen "
                 "Optimierungsproblems."
             ),
+            zh="选择求解对偶或原始优化问题的算法。",
         ),
-        alias=MultilingualString(en="Dual", es="Dual", pt="Dual", de="Dual"),
+        alias=MultilingualString(en="Dual", es="Dual", pt="Dual", de="Dual", zh="对偶"),
     )  # type: ignore
 
     verbose: schema_field(
@@ -230,9 +244,10 @@ class LinearSVRSchema(BaseSchema):
                 "Ausführliche Ausgabe aktivieren. Beachten Sie, dass diese Einstellung "
                 "eine prozessweite Laufzeiteinstellung in libsvm nutzt."
             ),
+            zh="启用详细输出，该设置利用libsvm中的每进程运行时设置。",
         ),
         alias=MultilingualString(
-            en="Verbose", es="Verboso", pt="Verboso", de="Ausführlich"
+            en="Verbose", es="Verboso", pt="Verboso", de="Ausführlich", zh="详细输出"
         ),
     )  # type: ignore
 
@@ -256,12 +271,14 @@ class LinearSVRSchema(BaseSchema):
                 "Der Seed des Pseudozufallszahlengenerators, der beim "
                 "Mischen der Daten verwendet wird."
             ),
+            zh="数据混洗时使用的伪随机数生成器种子。",
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 
@@ -278,12 +295,14 @@ class LinearSVRSchema(BaseSchema):
             es="El número máximo de iteraciones a ejecutar.",
             pt="O número máximo de iterações a executar.",
             de="Die maximale Anzahl der auszuführenden Iterationen.",
+            zh="最大迭代次数。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 
@@ -296,7 +315,7 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     deviations beyond that are penalised linearly. The regularisation parameter
     ``C`` controls the trade-off between margin width and training error. Because it
     uses a linear kernel and relies on liblinear internally, LinearSVR scales to
-    large datasets much more efficiently than ``SVR`` with a non-linear kernel.
+    large datasets much more efficiently than ``SVR`` with a nonlinear kernel.
 
     Key hyperparameters include ``C``, ``epsilon``, ``loss`` (epsilon-insensitive or
     squared epsilon-insensitive), ``fit_intercept``, ``dual``, ``tol``, and
@@ -317,12 +336,14 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
         es="Regresión de Vectores de Soporte Lineal",
         pt="SVR Linear",
         de="Lineare Stützvektor-Regression",
+        zh="线性支持向量回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Support Vector Regression with linear kernel.",
         es="Regresión de Vectores de Soporte con kernel lineal.",
         pt="Regressão de Vetores de Suporte com kernel linear.",
         de="Stützvektor-Regression mit linearem Kernel.",
+        zh="使用线性核的支持向量回归。",
     )
     COLOR: str = "#2196F3"
     ICON: str = "Timeline"

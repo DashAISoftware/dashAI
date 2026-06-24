@@ -37,6 +37,7 @@ class VarianceThresholdSchema(BaseSchema):
                 "Merkmale mit einer Varianz unterhalb dieses Schwellenwerts werden "
                 "entfernt."
             ),
+            zh="方差低于此阈值的特征将被删除。",
         ),
     )  # type: ignore
 
@@ -56,13 +57,13 @@ class VarianceThreshold(
 
     Common use cases include:
 
-    * **Constant-feature removal** — with the default ``threshold=0.0`` any
+    * **Constant-feature removal**: with the default ``threshold=0.0`` any
       feature that takes the same value in every training sample is dropped.
-    * **Near-constant-feature removal** — for binary features, a threshold
+    * **Near-constant-feature removal**: for binary features, a threshold
       of ``p * (1 - p)`` drops features that are ``True`` in fewer than a
       fraction ``p`` of samples (e.g. ``threshold=0.8 * 0.2 = 0.16``
       removes features that are ``True`` in less than 20 % of samples).
-    * **Pre-filtering before expensive selectors** — quickly reducing
+    * **Pre-filtering before expensive selectors**: quickly reducing
       dimensionality before applying supervised selection methods such as
       ``SelectKBest`` or ``RFECV``.
 
@@ -73,16 +74,18 @@ class VarianceThreshold(
 
     SCHEMA = VarianceThresholdSchema
     DESCRIPTION = MultilingualString(
-        en="Feature selector that removes all low-variance features.",
+        en="Feature selector that removes all low variance features.",
         es="Selector de características que elimina todas las de baja varianza.",
         pt="Seletor de características que remove todas as de baixa variância.",
         de="Merkmalsselektor, der alle Merkmale mit niedriger Varianz entfernt.",
+        zh="删除所有低方差特征的特征选择器。",
     )
     DISPLAY_NAME = MultilingualString(
         en="Variance Threshold",
         es="Umbral de Varianza",
         pt="Limiar de Variância",
         de="Varianz-Schwellenwert",
+        zh="方差阈值",
     )
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

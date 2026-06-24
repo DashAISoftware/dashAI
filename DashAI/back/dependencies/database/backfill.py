@@ -23,7 +23,7 @@ def backfill_dataset_counts(session_factory: "sessionmaker") -> None:
             db.query(Dataset)
             .filter(
                 Dataset.status == DatasetStatus.FINISHED,
-                Dataset.total_rows == None,  # noqa: E711 — SQLAlchemy ORM requires == for column IS NULL
+                Dataset.total_rows == None,  # noqa: E711 (SQLAlchemy ORM requires == for column IS NULL)
             )
             .all()
         )

@@ -41,6 +41,8 @@ import LiveMetricsChart from "./LiveMetricsChart";
 import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
+import { getModelSessionById } from "../../api/modelSession";
+import { getDatasetSample } from "../../api/datasets";
 import { checkHowManyOptimazers } from "../../utils/schema";
 import { useTranslation } from "react-i18next";
 import TimestampWrapper from "../shared/TimestampWrapper";
@@ -48,6 +50,7 @@ import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
 export default function RunResults({
   run,
+  model,
   session,
   onRefresh,
   explainerRefreshTrigger,
@@ -83,6 +86,9 @@ export default function RunResults({
     return 0;
   });
 
+  const [trainingDatasetSample, setTrainingDatasetSample] = useState(null);
+  const [outputColumn, setOutputColumn] = useState(null);
+
   const [globalCreatorOpen, setGlobalCreatorOpen] = useState(false);
   const [localCreatorOpen, setLocalCreatorOpen] = useState(false);
   const [globalExpanded, setGlobalExpanded] = useState(true);
@@ -101,6 +107,11 @@ export default function RunResults({
     canSave: false,
     isSaving: false,
   });
+
+  // Map a parameter key to its display name using the matching model's schema
+  // (the model comes from the right side bar list, so no extra backend fetch).
+  const paramProperties = model?.schema?.properties ?? {};
+  const getParamLabel = (key) => paramProperties[key]?.title ?? key;
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
@@ -129,6 +140,25 @@ export default function RunResults({
   useEffect(() => {
     fetchOperations();
   }, [fetchOperations, explainerRefreshTrigger]);
+
+  useEffect(() => {
+    const sessionId = run.model_session_id || session?.id;
+    if (!sessionId) return;
+    let cancelled = false;
+    getModelSessionById(sessionId)
+      .then((sessionData) => {
+        if (cancelled) return null;
+        setOutputColumn(sessionData.output_columns?.[0] ?? null);
+        return getDatasetSample(sessionData.dataset_id);
+      })
+      .then((sample) => {
+        if (!cancelled && sample) setTrainingDatasetSample(sample);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [run.model_session_id, session?.id]);
 
   // Refetch when run parameters change (after editing)
   useEffect(() => {
@@ -250,7 +280,7 @@ export default function RunResults({
                       <TableBody>
                         {Object.entries(run.parameters).map(([key, value]) => (
                           <TableRow key={key}>
-                            <TableCell>{key}</TableCell>
+                            <TableCell>{getParamLabel(key)}</TableCell>
                             <TableCell>{renderParamValue(value)}</TableCell>
                           </TableRow>
                         ))}
@@ -776,6 +806,8 @@ export default function RunResults({
                             prediction={prediction}
                             onDelete={handlePredictionDeleted}
                             onUpdate={fetchOperations}
+                            targetColumn={outputColumn}
+                            datasetSample={trainingDatasetSample}
                           />
                         ))}
                     </Box>
@@ -848,6 +880,8 @@ export default function RunResults({
                             prediction={prediction}
                             onDelete={handlePredictionDeleted}
                             onUpdate={fetchOperations}
+                            targetColumn={outputColumn}
+                            datasetSample={trainingDatasetSample}
                           />
                         ))}
                     </Box>
@@ -879,6 +913,11 @@ RunResults.propTypes = {
     model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     test_metrics: PropTypes.object,
   }).isRequired,
+  model: PropTypes.shape({
+    name: PropTypes.string,
+    display_name: PropTypes.string,
+    schema: PropTypes.object,
+  }),
   session: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

@@ -35,9 +35,14 @@ class KNeighborsRegressionSchema(BaseSchema):
             es="Número de vecinos a usar para la predicción.",
             pt="Número de vizinhos a usar para a previsão.",
             de="Anzahl der Nachbarn für die Vorhersage.",
+            zh="用于预测的邻居数量。",
         ),
         alias=MultilingualString(
-            en="N neighbors", es="N vecinos", pt="N vizinhos", de="Anzahl Nachbarn"
+            en="N neighbors",
+            es="N vecinos",
+            pt="N vizinhos",
+            de="Anzahl Nachbarn",
+            zh="邻居数",
         ),
     )  # type: ignore
 
@@ -61,8 +66,14 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Gewichtungsfunktion für die Vorhersage. 'uniform' gewichtet alle "
                 "Nachbarn gleich; 'distance' gewichtet nach inverser Distanz."
             ),
+            zh=(
+                "预测中使用的权重函数。'uniform' 对所有邻居等权；"
+                "'distance' 按距离倒数加权。"
+            ),
         ),
-        alias=MultilingualString(en="Weights", es="Pesos", pt="Pesos", de="Gewichte"),
+        alias=MultilingualString(
+            en="Weights", es="Pesos", pt="Pesos", de="Gewichte", zh="权重"
+        ),
     )  # type: ignore
 
     algorithm: schema_field(
@@ -85,9 +96,10 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Algorithmus zur Berechnung der nächsten Nachbarn. 'auto' wählt den "
                 "besten basierend auf den an fit übergebenen Werten."
             ),
+            zh=("用于计算最近邻的算法。'auto' 根据传入 fit 的值自动选择最优算法。"),
         ),
         alias=MultilingualString(
-            en="Algorithm", es="Algoritmo", pt="Algoritmo", de="Algorithmus"
+            en="Algorithm", es="Algoritmo", pt="Algoritmo", de="Algorithmus", zh="算法"
         ),
     )  # type: ignore
 
@@ -117,9 +129,14 @@ class KNeighborsRegressionSchema(BaseSchema):
                 "Abfragegeschwindigkeit "
                 "und den Speicherbedarf für den Baum."
             ),
+            zh="传递给 BallTree 或 KDTree 的叶子大小，影响查询速度和树的内存占用。",
         ),
         alias=MultilingualString(
-            en="Leaf size", es="Tamaño de hoja", pt="Tamanho de folha", de="Blattgröße"
+            en="Leaf size",
+            es="Tamaño de hoja",
+            pt="Tamanho de folha",
+            de="Blattgröße",
+            zh="叶子大小",
         ),
     )  # type: ignore
 
@@ -131,8 +148,11 @@ class KNeighborsRegressionSchema(BaseSchema):
             es="Métrica de distancia para la búsqueda de vecinos.",
             pt="Métrica de distância para a busca de vizinhos.",
             de="Distanzmetrik für die Nachbarsuche.",
+            zh="用于邻居搜索的距离度量。",
         ),
-        alias=MultilingualString(en="Metric", es="Métrica", pt="Métrica", de="Metrik"),
+        alias=MultilingualString(
+            en="Metric", es="Métrica", pt="Métrica", de="Metrik", zh="距离度量"
+        ),
     )  # type: ignore
 
 
@@ -141,8 +161,8 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
 
     KNeighborsRegressor predicts the target value by computing the (weighted)
     mean of the ``n_neighbors`` closest training points. It is a non-parametric
-    method: no training phase is needed, and predictions can capture non-linear
-    patterns. Performance degrades in high-dimensional spaces.
+    method: no training phase is needed, and predictions can capture nonlinear
+    patterns. Performance degrades in high dimensional spaces.
 
     Key hyperparameters include ``n_neighbors``, ``weights``, ``algorithm``, and
     ``metric``. The implementation wraps scikit-learn's ``KNeighborsRegressor``.
@@ -158,6 +178,7 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
         es="Regresión K-Vecinos Más Cercanos",
         pt="Regressor K-Vizinhos",
         de="K-Nächste-Nachbarn-Regression",
+        zh="K 近邻回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Non-parametric regression that predicts by averaging nearest neighbours.",
@@ -172,6 +193,7 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
             "Nicht-parametrische Regression, die durch Mittelung der nächsten "
             "Nachbarn vorhersagt."
         ),
+        zh="通过对最近邻样本取平均进行预测的非参数回归方法。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "ScatterPlot"

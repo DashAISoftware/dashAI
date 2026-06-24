@@ -10,10 +10,10 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class BetoTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained BETO model for Spanish text classification.
+    """Pretrained BETO model for Spanish text classification.
 
     BETO is a Spanish BERT trained on the Spanish Wikipedia and other Spanish
-    corpora using the whole-word masking strategy. It achieves state-of-the-art
+    corpora using the whole word masking strategy. It achieves state of the art
     results on several Spanish NLP benchmarks. Particularly useful for tasks
     involving Spanish text.
 
@@ -29,14 +29,15 @@ class BetoTransformer(HuggingFaceTextClassificationTransformer):
         es="BETO BERT en Español",
         pt="BETO BERT em Espanhol",
         de="BETO Spanisches BERT",
+        zh="BETO 西班牙语 BERT",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Spanish BERT (BETO) pre-trained on Spanish corpora. "
+            "Spanish BERT (BETO) pretrained on Spanish corpora. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
-            "BERT en español (BETO) pre-entrenado en corpus en español. "
+            "BERT en español (BETO) preentrenado en corpus en español. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
         ),
         pt=(
@@ -47,6 +48,10 @@ class BetoTransformer(HuggingFaceTextClassificationTransformer):
             "Spanisches BERT (BETO) vortrainiert auf spanischen Korpora. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "在西班牙语语料库上预训练的 BERT（BETO）模型。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#C62828"

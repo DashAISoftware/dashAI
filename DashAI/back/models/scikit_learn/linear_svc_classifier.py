@@ -54,8 +54,9 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "Regularisierungsparameter. Die Stärke der Regularisierung ist "
                 "umgekehrt proportional zu C. Muss strikt positiv sein."
             ),
+            zh="正则化参数。正则化强度与C成反比，必须严格为正。",
         ),
-        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
 
     loss: schema_field(
@@ -78,8 +79,11 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "Gibt die Verlustfunktion an. 'squared_hinge' ist der Standard; "
                 "'hinge' ist der Standard-SVM-Verlust."
             ),
+            zh="指定损失函数。'squared_hinge'为默认值；'hinge'为标准SVM损失。",
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida", pt="Perda", de="Verlust"),
+        alias=MultilingualString(
+            en="Loss", es="Pérdida", pt="Perda", de="Verlust", zh="损失函数"
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -95,12 +99,14 @@ class LinearSVCClassifierSchema(BaseSchema):
             es="El número máximo de iteraciones a ejecutar.",
             pt="O número máximo de iterações a executar.",
             de="Die maximale Anzahl der auszuführenden Iterationen.",
+            zh="最大迭代次数。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 
@@ -117,9 +123,10 @@ class LinearSVCClassifierSchema(BaseSchema):
             es="Tolerancia para el criterio de parada.",
             pt="Tolerância para o critério de parada.",
             de="Toleranz für das Abbruchkriterium.",
+            zh="停止准则的容差。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
 
@@ -144,12 +151,14 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "False "
                 "wird erwartet, dass die Daten bereits zentriert sind."
             ),
+            zh="是否为模型计算截距。若为False，则数据应已中心化。",
         ),
         alias=MultilingualString(
             en="Fit intercept",
             es="Ajustar intercepto",
             pt="Ajustar intercepto",
             de="Achsenabschnitt anpassen",
+            zh="拟合截距",
         ),
     )  # type: ignore
 
@@ -175,12 +184,14 @@ class LinearSVCClassifierSchema(BaseSchema):
                 "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
                 "festzulegen."
             ),
+            zh="伪随机数生成器的随机种子。传入整数以获得可复现的输出，或传入None不固定种子。",
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 
@@ -211,6 +222,7 @@ class LinearSVCClassifier(
         es="SVC Lineal",
         pt="Classificador SVC Linear",
         de="Linearer SVC",
+        zh="线性支持向量分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast linear support vector classifier with probability calibration.",
@@ -226,6 +238,7 @@ class LinearSVCClassifier(
             "Schneller linearer Stützvektor-Klassifikator mit "
             "Wahrscheinlichkeitskalibrierung."
         ),
+        zh="带概率校准的快速线性支持向量分类器。",
     )
     COLOR: str = "#FF7043"
     ICON: str = "LinearScale"

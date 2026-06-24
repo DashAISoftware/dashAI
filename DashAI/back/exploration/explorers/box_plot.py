@@ -18,7 +18,7 @@ class BoxPlotSchema(BaseExplorerSchema):
 
     Configures the orientation and point-visibility options of the box plot.
     The ``horizontal`` flag flips the plot axis so that the value axis runs
-    left-to-right instead of bottom-to-top, which can be useful when column
+    left to right instead of bottom to top, which can be useful when column
     names are long.  The ``points`` option controls whether individual data
     points are drawn on top of each box, letting users inspect the raw
     distribution alongside the summary statistics.
@@ -41,12 +41,14 @@ class BoxPlotSchema(BaseExplorerSchema):
                 "Wenn True, wird das Boxdiagramm horizontal dargestellt; sonst "
                 "vertikal."
             ),
+            zh="如果为True，箱线图将水平显示；否则垂直显示。",
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
             pt="Gráfico horizontal",
             de="Horizontales Diagramm",
+            zh="水平图",
         ),
     )  # type: ignore
     points: schema_field(
@@ -68,12 +70,14 @@ class BoxPlotSchema(BaseExplorerSchema):
                 "Eines von 'all', 'outliers' oder 'False'. Bestimmt, welche "
                 "Punkte angezeigt werden."
             ),
+            zh="'all'、'outliers'或'False'之一。确定显示哪些数据点。",
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
             pt="Pontos exibidos",
             de="Angezeigte Punkte",
+            zh="显示的点",
         ),
     )  # type: ignore
 
@@ -101,6 +105,7 @@ class BoxPlotExplorer(DistributionExplorer):
         es="Diagrama de Caja",
         pt="Diagrama de Caixa",
         de="Boxdiagramm",
+        zh="箱线图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -119,6 +124,7 @@ class BoxPlotExplorer(DistributionExplorer):
             "Gibt ein Boxdiagramm der ausgewählten Spalten im Datensatz zurück, "
             "um Verteilung und Ausreißer zu visualisieren."
         ),
+        zh="返回数据集中所选列的箱线图，以可视化分布和异常值。",
     )
     IMAGE_PREVIEW = "box_plot.png"
 

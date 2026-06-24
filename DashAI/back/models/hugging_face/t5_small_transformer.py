@@ -54,12 +54,18 @@ class T5SmallTransformerSchema(OpusMtEnESTransformerSchema):
                 "Unterstützt: 'German', 'French', 'Romanian'. "
                 "T5-small übersetzt nur aus dem Englischen."
             ),
+            zh=(
+                "翻译的目标语言。"
+                "支持：'German'、'French'、'Romanian'。"
+                "T5-small 仅从英语翻译。"
+            ),
         ),
         alias=MultilingualString(
             en="Target language",
             es="Idioma destino",
             pt="Idioma de destino",
             de="Zielsprache",
+            zh="目标语言",
         ),
     )  # type: ignore
 
@@ -87,6 +93,7 @@ class T5SmallTransformer(TranslationModel):
         es="Transformer de Traducción T5-Small",
         pt="Transformer de Tradução T5-Small",
         de="T5-Small Übersetzungs-Transformer",
+        zh="T5-Small 翻译 Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -109,6 +116,10 @@ class T5SmallTransformer(TranslationModel):
             "Übersetzung mit Aufgabenpräfixen. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "谷歌 T5-small 模型，通过任务前缀实现英语到德语/法语/罗马尼亚语翻译。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#00695C"
@@ -263,6 +274,12 @@ class T5SmallTransformer(TranslationModel):
                 f"This {self.__class__.__name__} instance is not fitted yet. "
                 "Call 'train' before using this estimator."
             )
+
+        if self.device.lower() == "gpu":
+            self.model.to("cuda")
+        else:
+            self.model.to("cpu")
+        self.model.eval()
 
         dataset = self.tokenize_data(x_pred)
         dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])

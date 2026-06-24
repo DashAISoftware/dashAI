@@ -14,7 +14,7 @@ from DashAI.back.types.value_types import Float, Integer
 class NormalizerSchema(BaseSchema):
     """Schema for Normalizer hyperparameters.
 
-    Configures the norm used for row-wise unit-norm scaling and the copy
+    Configures the norm used for row wise unit norm scaling and the copy
     semantics for sklearn's ``Normalizer``. The ``norm`` field selects between
     the L1, L2, and max norms applied to each individual sample.
     """
@@ -30,6 +30,7 @@ class NormalizerSchema(BaseSchema):
                 "Die Norm, die zur Normalisierung jeder nicht-null Stichprobe verwendet"
                 "wird."
             ),
+            zh="用于归一化每个非零样本的范数。",
         ),
     )  # type: ignore
 
@@ -37,7 +38,7 @@ class NormalizerSchema(BaseSchema):
 class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOperation):
     """Normalize each sample (row) independently to unit norm.
 
-    Unlike column-wise scalers such as ``StandardScaler`` or
+    Unlike column wise scalers such as ``StandardScaler`` or
     ``MinMaxScaler``, this transformer operates along the sample axis.
     For each row vector ``x`` the transformation is::
 
@@ -45,14 +46,14 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
 
     where ``p`` is chosen by the ``norm`` parameter:
 
-    * ``"l2"`` (default) — Euclidean norm; the dot product of any two
+    * ``"l2"`` (default): Euclidean norm; the dot product of any two
       normalized samples equals the cosine of the angle between them.
-    * ``"l1"`` — Manhattan norm; useful when the direction of the feature
+    * ``"l1"``: Manhattan norm; useful when the direction of the feature
       vector matters more than relative magnitudes.
-    * ``"max"`` — divides by the largest absolute element; guarantees the
+    * ``"max"``: divides by the largest absolute element; guarantees the
       output lies in [-1, 1].
 
-    Row-wise normalization is particularly effective for text classification
+    Row wise normalization is particularly effective for text classification
     and clustering algorithms that rely on the dot product or cosine
     similarity (e.g. k-means on TF-IDF vectors, linear SVMs on bag-of-words
     features).
@@ -68,9 +69,14 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
         es="Normaliza muestras individualmente a norma unitaria.",
         pt="Normaliza amostras individualmente para norma unitária.",
         de="Stichproben individuell auf Einheitsnorm normalisieren.",
+        zh="将每个样本单独归一化为单位范数。",
     )
     DISPLAY_NAME = MultilingualString(
-        en="Normalizer", es="Normalizador", pt="Normalizador", de="Normalisierer"
+        en="Normalizer",
+        es="Normalizador",
+        pt="Normalizador",
+        de="Normalisierer",
+        zh="归一化器",
     )
     IMAGE_PREVIEW = "normalizer.png"
 

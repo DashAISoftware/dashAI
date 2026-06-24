@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../../hooks/datasets/useDatasets";
+import { useFolders } from "../../../hooks/datasets/useFolders";
 import { useNotebooks } from "../../../hooks/datasets/useNotebooks";
 import { useDownloads } from "../../../hooks/datasets/useDownloads";
 
@@ -28,10 +29,19 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDataset,
     deleteDatasetById,
     editDataset,
+    moveDatasetToFolder,
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
   } = useDatasets({ t });
+
+  const {
+    folders,
+    fetchFolders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
+  } = useFolders({ t });
 
   const {
     downloads,
@@ -82,9 +92,15 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     deleteDataset,
     deleteDatasetById,
     editDataset,
+    moveDatasetToFolder,
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
+    folders,
+    fetchFolders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
     notebooks,
     selectedNotebookId,
     fetchNotebooks,

@@ -254,7 +254,7 @@ const getTheme = (mode) => ({
       styleOverrides: {
         colorPrimary: ({ theme }) => ({
           "&:hover": {
-            backgroundColor: `${theme.palette.primary.light}1A`,
+            backgroundColor: `${theme.palette.secondary.main}1A`,
           },
         }),
       },
@@ -263,9 +263,20 @@ const getTheme = (mode) => ({
       styleOverrides: {
         containedPrimary: ({ theme }) => ({
           "&:hover": {
-            backgroundColor: theme.palette.primary.light,
+            backgroundColor: theme.palette.secondary.main,
           },
         }),
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        standardWarning: ({ theme }) =>
+          theme.palette.mode === "light"
+            ? {
+                backgroundColor: `${theme.palette.warning.main}35`,
+                border: `1px solid ${theme.palette.warning.main}70`,
+              }
+            : {},
       },
     },
     MuiCssBaseline: {

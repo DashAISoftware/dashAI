@@ -78,12 +78,20 @@ class SmolLMSchema(BaseSchema):
                 "Beide Modelle werden von Hugging Face auf diversen synthetischen "
                 "Datensätzen trainiert."
             ),
+            zh=(
+                "以 GGUF 格式加载的 SmolLM2 Instruct 检查点。"
+                "'SmolLM2-1.7B' 是 17 亿参数指令模型，适用于端侧和边缘推理。"
+                "'SmolLM2-360M' 是 3.6 亿参数超紧凑模型，CPU 推理极快，"
+                "内存占用极低（约 300 MB）。"
+                "两款模型均由 Hugging Face 在多样化合成数据集上训练。"
+            ),
         ),
         alias=MultilingualString(
             en="Model name",
             es="Nombre del modelo",
             pt="Nome do modelo",
             de="Modellname",
+            zh="模型名称",
         ),
     )  # type: ignore
 
@@ -111,12 +119,18 @@ class SmolLMSchema(BaseSchema):
                 "Ungefähr 1 Token ≈ 0,75 englische Wörter. SmolLM2-Modelle sind "
                 "für kurze bis mittellange Antworten optimiert."
             ),
+            zh=(
+                "模型每次响应生成的最大新词元数。"
+                "约 1 词元 ≈ 0.75 个英文单词。"
+                "SmolLM2 模型针对短至中等长度的响应进行了优化。"
+            ),
         ),
         alias=MultilingualString(
             en="Max tokens",
             es="Tokens máximos",
             pt="Tokens máximos",
             de="Maximale neue Token",
+            zh="最大词元数",
         ),
     )  # type: ignore
 
@@ -144,9 +158,17 @@ class SmolLMSchema(BaseSchema):
                 "Bei 0.0 sind die Ausgaben deterministisch. Um 0.7 balanciert "
                 "Qualität und Kreativität."
             ),
+            zh=(
+                "控制输出随机性的采样温度（范围 0.0-1.0）。"
+                "0.0 时输出为确定性结果，0.7 左右可平衡质量与创造力。"
+            ),
         ),
         alias=MultilingualString(
-            en="Temperature", es="Temperatura", pt="Temperatura", de="Temperatur"
+            en="Temperature",
+            es="Temperatura",
+            pt="Temperatura",
+            de="Temperatur",
+            zh="温度",
         ),
     )  # type: ignore
 
@@ -173,12 +195,17 @@ class SmolLMSchema(BaseSchema):
                 "basierend auf ihrer Häufigkeit (0.0-2.0). Höhere Werte reduzieren "
                 "Wiederholungen."
             ),
+            zh=(
+                "根据词元在输出中出现的频率对其进行惩罚（范围 0.0-2.0）。"
+                "较高的值可抑制重复内容。"
+            ),
         ),
         alias=MultilingualString(
             en="Frequency penalty",
             es="Penalización de frecuencia",
             pt="Penalização de frequência",
             de="Häufigkeitsstrafe",
+            zh="频率惩罚",
         ),
     )  # type: ignore
 
@@ -205,12 +232,17 @@ class SmolLMSchema(BaseSchema):
                 "einschließlich Eingabe-Prompt und Antwort. "
                 "SmolLM2-Modelle unterstützen nativ bis zu 8K Token."
             ),
+            zh=(
+                "单次前向传播的词元总预算，包含输入提示和生成响应。"
+                "SmolLM2 模型原生支持最多 8K 词元。"
+            ),
         ),
         alias=MultilingualString(
             en="Context window",
             es="Ventana de contexto",
             pt="Janela de contexto",
             de="Kontextfenster",
+            zh="上下文窗口",
         ),
     )  # type: ignore
 
@@ -241,9 +273,14 @@ class SmolLMSchema(BaseSchema):
                 "im RAM ohne GPU-Anforderung aus. SmolLM2-Modelle sind klein genug, "
                 "um auch auf bescheidener Hardware effizient auf der CPU zu laufen."
             ),
+            zh=(
+                "llama.cpp 推理所用的硬件设备。'CPU' 将模型完全加载至内存运行，"
+                "无需 GPU。"
+                "SmolLM2 模型体积小巧，即使在普通硬件上也能高效地在 CPU 上运行。"
+            ),
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -269,7 +306,7 @@ class SmolLMModel(TextToTextGenerationTaskModel):
 
     References
     ----------
-    - [1] Allal, L.B. et al. (2024). "SmolLM2 — with great data, comes great
+    - [1] Allal, L.B. et al. (2024). "SmolLM2: with great data, comes great
            performance." Hugging Face Blog.
            https://huggingface.co/blog/smollm2
     - [2] https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF
@@ -283,6 +320,7 @@ class SmolLMModel(TextToTextGenerationTaskModel):
         es="Modelo SmolLM",
         pt="Modelo SmolLM",
         de="SmolLM-Modell",
+        zh="SmolLM 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -321,6 +359,11 @@ class SmolLMModel(TextToTextGenerationTaskModel):
             "Parametern. Die 360M-Variante benötigt weniger als 300 MB RAM und ist "
             "ideal für ressourcenbeschränkte Umgebungen. Verfügbar in den Varianten "
             "360M und 1,7B. Modelle unter https://huggingface.co/HuggingFaceTB."
+        ),
+        zh=(
+            "SmolLM2 是 Hugging Face 推出的紧凑型指令微调语言模型系列，"
+            "以 GGUF 格式加载，通过 llama.cpp 库高效推理。"
+            "专为端侧和边缘部署设计，提供 360M 和 1.7B 两种规格。"
         ),
     )
 

@@ -36,12 +36,14 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
             es=("Columna usada para colorear los puntos."),
             pt=("Coluna usada para colorir os pontos de dados."),
             de=("Spalte zur Einfärbung der Datenpunkte."),
+            zh="用于为数据点着色的列。",
         ),
         alias=MultilingualString(
             en="Color column",
             es="Columna de color",
             pt="Coluna de cor",
             de="Farbspalte",
+            zh="颜色列",
         ),
     )  # type: ignore
 
@@ -56,7 +58,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     separation or clustering structure across all dimensions simultaneously.
 
     Parallel coordinates are particularly effective for identifying correlated
-    features, detecting outliers, and exploring high-dimensional datasets where
+    features, detecting outliers, and exploring high dimensional datasets where
     a scatter matrix would become too large to interpret.
     """
 
@@ -65,10 +67,11 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
         es="Gráfico de Coordenadas Paralelas",
         pt="Coordenadas Paralelas",
         de="Parallele Koordinatendiagramm",
+        zh="平行坐标图",
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Common way to visualize high-dimensional numeric data. Each line is "
+            "Common way to visualize high dimensional numeric data. Each line is "
             "a data point crossing axes for each feature."
         ),
         es=(
@@ -83,6 +86,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
             "Gängige Methode zur Visualisierung hochdimensionaler numerischer Daten. "
             "Jede Linie ist ein Datenpunkt, der die Achsen jedes Merkmals kreuzt."
         ),
+        zh="可视化高维数值数据的常用方法。每条线是一个数据点，穿越每个特征的轴。",
     )
     IMAGE_PREVIEW = "parallel_cordinates.png"
 
@@ -90,7 +94,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "numeric_categorical_only": True,
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 2},
     }
 

@@ -67,12 +67,19 @@ class MistralSchema(BaseSchema):
                 "mit NVIDIA entwickelt, mit einem 128K-Kontextfenster und verbesserten "
                 "mehrsprachigen Fähigkeiten."
             ),
+            zh=(
+                "要加载的 Mistral Instruct 检查点（GGUF 格式）。"
+                "'Mistral-7B-Instruct-v0.3' 是 7B 参数指令模型，性能出色。"
+                "'Mistral-Nemo-Instruct-2407' 是与 NVIDIA 联合开发的 12B 参数模型，"
+                "支持 128K 上下文窗口，多语言能力更强。"
+            ),
         ),
         alias=MultilingualString(
             en="Model name",
             es="Nombre del modelo",
             pt="Nome do modelo",
             de="Modellname",
+            zh="模型名称",
         ),
     )  # type: ignore
 
@@ -102,12 +109,18 @@ class MistralSchema(BaseSchema):
                 "Ungefähr 1 Token ≈ 0,75 englische Wörter. 100-200 für kurze "
                 "Antworten, 500-1000 für ausführliche Erklärungen oder Code."
             ),
+            zh=(
+                "模型每次响应生成的最大新 token 数。"
+                "大约 1 token 约等于 0.75 个英文单词。"
+                "短回答设为 100-200，详细解释或代码设为 500-1000。"
+            ),
         ),
         alias=MultilingualString(
             en="Max tokens",
             es="Tokens máximos",
             pt="Tokens máximos",
             de="Maximale neue Token",
+            zh="最大 token 数",
         ),
     )  # type: ignore
 
@@ -141,9 +154,18 @@ class MistralSchema(BaseSchema):
                 "Ca. 0.7 balanciert Qualität und Kreativität. Bei 1.0 sind Ausgaben "
                 "maximal variiert."
             ),
+            zh=(
+                "控制输出随机性的采样温度（范围 0.0-1.0）。"
+                "0.0 时模型选择最可能的 token（确定性）。"
+                "0.7 左右在质量与创造性之间取得平衡。1.0 时输出变化最大。"
+            ),
         ),
         alias=MultilingualString(
-            en="Temperature", es="Temperatura", pt="Temperatura", de="Temperatur"
+            en="Temperature",
+            es="Temperatura",
+            pt="Temperatura",
+            de="Temperatur",
+            zh="温度",
         ),
     )  # type: ignore
 
@@ -170,12 +192,17 @@ class MistralSchema(BaseSchema):
                 "basierend auf ihrer Häufigkeit (0.0-2.0). Höhere Werte reduzieren "
                 "Wiederholungen."
             ),
+            zh=(
+                "根据频率对已出现在输出中的 token 施加惩罚（范围 0.0-2.0）。"
+                "较高值可抑制重复。"
+            ),
         ),
         alias=MultilingualString(
             en="Frequency penalty",
             es="Penalización de frecuencia",
             pt="Penalidade de frequência",
             de="Häufigkeitsstrafe",
+            zh="频率惩罚",
         ),
     )  # type: ignore
 
@@ -203,12 +230,17 @@ class MistralSchema(BaseSchema):
                 "einschließlich Eingabeaufforderung und Antwort. Mistral-7B unterstützt"
                 "bis zu 32K Token; Mistral-Nemo bis zu 128K Token."
             ),
+            zh=(
+                "单次前向传播的总 token 预算，包含提示词和回复。"
+                "Mistral-7B 支持最多 32K token；Mistral-Nemo 支持最多 128K token。"
+            ),
         ),
         alias=MultilingualString(
             en="Context window",
             es="Ventana de contexto",
             pt="Janela de contexto",
             de="Kontextfenster",
+            zh="上下文窗口",
         ),
     )  # type: ignore
 
@@ -235,9 +267,17 @@ class MistralSchema(BaseSchema):
                 "vollständig im RAM aus. Eine GPU-Option lagert alle Schichten für "
                 "schnellere Inferenz aus."
             ),
+            zh=(
+                "llama.cpp 推理所用的硬件设备。'CPU' 完全在内存中运行模型。"
+                "选择 GPU 选项可卸载所有层以加快推理速度。"
+            ),
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device",
+            es="Dispositivo",
+            pt="Dispositivo",
+            de="Gerät",
+            zh="设备",
         ),
     )  # type: ignore
 
@@ -268,6 +308,7 @@ class MistralModel(TextToTextGenerationTaskModel):
         es="Modelo Mistral",
         pt="Modelo Mistral",
         de="Mistral-Modell",
+        zh="Mistral 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -306,6 +347,11 @@ class MistralModel(TextToTextGenerationTaskModel):
             "Schlussfolgerung und allgemeine Textgenerierung. Verfügbar in 7B "
             "(Mistral-7B-v0.3) und 12B (Mistral-Nemo-2407) Varianten. Modelle unter "
             "https://huggingface.co/bartowski."
+        ),
+        zh=(
+            "Mistral AI 的指令微调模型，以 GGUF 格式加载，"
+            "通过 llama.cpp 库实现高效的 CPU 和 GPU 推理。"
+            "支持多轮对话、推理和通用文本生成。提供 7B 和 12B 两种规格。"
         ),
     )
 

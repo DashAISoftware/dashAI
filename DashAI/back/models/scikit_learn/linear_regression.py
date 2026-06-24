@@ -48,12 +48,18 @@ class LinearRegressionSchema(BaseSchema):
                 "Bei False wird kein Achsenabschnitt in den Berechnungen verwendet "
                 "(z.B. wird erwartet, dass die Daten zentriert sind)."
             ),
+            zh=(
+                "是否为该模型计算截距。"
+                "若设为 False，则计算中不使用截距"
+                "（即假设数据已中心化）。"
+            ),
         ),
         alias=MultilingualString(
             en="Fit intercept",
             es="Ajustar intercepto",
             pt="Ajustar intercepto",
             de="Achsenabschnitt anpassen",
+            zh="拟合截距",
         ),
     )  # type: ignore
 
@@ -65,9 +71,10 @@ class LinearRegressionSchema(BaseSchema):
             es="Si es True, X será copiado; si no, puede ser sobrescrito.",
             pt="Se True, X será copiado; caso contrário, pode ser sobrescrito.",
             de="Wenn True, wird X kopiert; andernfalls kann es überschrieben werden.",
+            zh="若为 True，则复制 X；否则可能被覆盖。",
         ),
         alias=MultilingualString(
-            en="Copy X", es="Copiar X", pt="Copiar X", de="X kopieren"
+            en="Copy X", es="Copiar X", pt="Copiar X", de="X kopieren", zh="复制 X"
         ),
     )  # type: ignore
 
@@ -93,9 +100,10 @@ class LinearRegressionSchema(BaseSchema):
                 "Die Anzahl der Jobs für die Berechnung. "
                 "None bedeutet 1 Job, -1 bedeutet alle Prozessoren verwenden."
             ),
+            zh=("用于计算的并行作业数。None 表示 1 个作业，-1 表示使用所有处理器。"),
         ),
         alias=MultilingualString(
-            en="N jobs", es="N trabajos", pt="N jobs", de="Anzahl Jobs"
+            en="N jobs", es="N trabajos", pt="N jobs", de="Anzahl Jobs", zh="并行作业数"
         ),
     )  # type: ignore
 
@@ -107,9 +115,10 @@ class LinearRegressionSchema(BaseSchema):
             es="Cuando se establece en True, fuerza los coeficientes a ser positivos.",
             pt="Quando definido como True, força os coeficientes a serem positivos.",
             de="Wenn True, werden die Koeffizienten auf positive Werte gezwungen.",
+            zh="若设为 True，则强制系数为非负值。",
         ),
         alias=MultilingualString(
-            en="Positive", es="Positivo", pt="Positivo", de="Positiv"
+            en="Positive", es="Positivo", pt="Positivo", de="Positiv", zh="正系数"
         ),
     )  # type: ignore
 
@@ -126,7 +135,7 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     This model has no regularisation, so it can overfit when the number of features
     is large or predictors are highly collinear (consider ``RidgeRegression`` in those
     cases). Key hyperparameters are ``fit_intercept``, ``positive`` (constraint to
-    non-negative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
+    nonnegative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
     scikit-learn's ``LinearRegression``.
 
     References
@@ -140,12 +149,14 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
         es="Regresión Lineal",
         pt="Regressão Linear",
         de="Lineare Regression",
+        zh="线性回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Ordinary least squares linear regression.",
         es="Regresión lineal de mínimos cuadrados ordinarios.",
         pt="Regressão linear de mínimos quadrados ordinários.",
         de="Lineare Regression der gewöhnlichen kleinsten Quadrate.",
+        zh="普通最小二乘线性回归。",
     )
     COLOR: str = "#3F51B5"
     ICON: str = "ShowChart"

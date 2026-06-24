@@ -20,7 +20,9 @@
     "localExplainerJobEnqueueError": "Erro ao tentar enfileirar o trabalho do explicador local.",
     "localExplainerJobFailed": "O trabalho do explicador local falhou: {{error}}",
     "nameTooShort": "O nome do explicador deve ter pelo menos 4 caracteres alfanuméricos.",
-    "validateDataset": "Erro ao tentar validar o conjunto de dados selecionado."
+    "validateDataset": "Erro ao tentar validar o conjunto de dados selecionado.",
+    "noData": "Sem dados disponíveis",
+    "nameAlreadyExists": "O nome já existe"
   },
   "label": {
     "configureExplainer": "Configure seu Explicador",
@@ -53,7 +55,8 @@
     "selectExplainer": "Definir nome e explicador",
     "selectExplainerAndName": "Selecione um explicador e insira um nome",
     "explainerInProgress": "Explicador em andamento...",
-    "splitSelectionSummary": "Percentual: {{percentage}}% | Linhas selecionadas: {{rowsSelected}} / {{totalRows}}"
+    "splitSelectionSummary": "Percentual: {{percentage}}% | Linhas selecionadas: {{rowsSelected}} / {{totalRows}}",
+    "searchExplainers": "Pesquisar explicadores..."
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} concluído com sucesso",

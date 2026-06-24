@@ -49,12 +49,14 @@ class MLPClassifierSchema(BaseSchema):
                 "Anzahl der Neuronen in der einzelnen verdeckten Schicht. Das Modell "
                 "verwendet eine verdeckte Schicht dieser Größe."
             ),
+            zh="单隐藏层中的神经元数量。模型使用此大小的单隐藏层。",
         ),
         alias=MultilingualString(
             en="Hidden layer size",
             es="Tamaño de capa oculta",
             pt="Tamanho da camada oculta",
             de="Größe der verdeckten Schicht",
+            zh="隐藏层大小",
         ),
     )  # type: ignore
 
@@ -66,9 +68,14 @@ class MLPClassifierSchema(BaseSchema):
             es="Función de activación para la capa oculta.",
             pt="Função de ativação para a camada oculta.",
             de="Aktivierungsfunktion für die verdeckte Schicht.",
+            zh="隐藏层的激活函数。",
         ),
         alias=MultilingualString(
-            en="Activation", es="Activación", pt="Ativação", de="Aktivierung"
+            en="Activation",
+            es="Activación",
+            pt="Ativação",
+            de="Aktivierung",
+            zh="激活函数",
         ),
     )  # type: ignore
 
@@ -96,9 +103,14 @@ class MLPClassifierSchema(BaseSchema):
                 "Datensätze; 'lbfgs' konvergiert schneller bei kleinen Datensätzen; "
                 "'sgd' erfordert mehr Feinabstimmung."
             ),
+            zh="权重优化求解器。'adam'适用于大型数据集；'lbfgs'在小型数据集上收敛更快；'sgd'需要更多调参。",
         ),
         alias=MultilingualString(
-            en="Solver", es="Solucionador", pt="Solucionador", de="Löser"
+            en="Solver",
+            es="Solucionador",
+            pt="Solucionador",
+            de="Löser",
+            zh="求解器",
         ),
     )  # type: ignore
 
@@ -115,8 +127,11 @@ class MLPClassifierSchema(BaseSchema):
             es="Término de regularización L2 (parámetro de penalización).",
             pt="Termo de regularização L2 (parâmetro de penalidade).",
             de="L2-Regularisierungsterm (Strafparameter).",
+            zh="L2正则化项（惩罚参数）。",
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa", pt="Alfa", de="Alpha"),
+        alias=MultilingualString(
+            en="Alpha", es="Alfa", pt="Alfa", de="Alpha", zh="Alpha"
+        ),
     )  # type: ignore
 
     learning_rate_init: schema_field(
@@ -132,12 +147,14 @@ class MLPClassifierSchema(BaseSchema):
             es="La tasa de aprendizaje inicial usada para actualizar los pesos.",
             pt="A taxa de aprendizado inicial usada para atualizar os pesos.",
             de="Die anfängliche Lernrate für Gewichtsaktualisierungen.",
+            zh="用于权重更新的初始学习率。",
         ),
         alias=MultilingualString(
             en="Learning rate init",
             es="Tasa de aprendizaje inicial",
             pt="Taxa de aprendizado inicial",
             de="Anfängliche Lernrate",
+            zh="初始学习率",
         ),
     )  # type: ignore
 
@@ -166,12 +183,14 @@ class MLPClassifierSchema(BaseSchema):
                 "Maximale Anzahl von Iterationen. Der Löser iteriert bis zur "
                 "Konvergenz oder diesem Limit."
             ),
+            zh="最大迭代次数。求解器迭代至收敛或达到此上限。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
 
@@ -197,12 +216,14 @@ class MLPClassifierSchema(BaseSchema):
                 "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
                 "festzulegen."
             ),
+            zh="伪随机数生成器的种子。传入整数以获得可重复输出，或传入None不设置特定种子。",
         ),
         alias=MultilingualString(
             en="Random state",
             es="Estado aleatorio",
             pt="Estado aleatório",
             de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 
@@ -230,12 +251,14 @@ class MLPClassifier(TabularClassificationModel, SklearnLikeClassifier, _MLPClass
         es="Clasificador MLP",
         pt="Classificador MLP",
         de="MLP-Klassifikator",
+        zh="多层感知机分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Multi-layer perceptron neural network for tabular classification.",
         es="Red neuronal perceptrón multicapa para clasificación tabular.",
         pt="Rede neural perceptrón multicamada para classificação tabular.",
         de="Mehrschichtiges Perzeptron-Netz für tabellarische Klassifikation.",
+        zh="用于表格分类的多层感知机神经网络。",
     )
     COLOR: str = "#EF5350"
     ICON: str = "AccountTree"

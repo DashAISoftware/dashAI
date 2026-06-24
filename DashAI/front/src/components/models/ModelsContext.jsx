@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
+import { useFolders } from "../../hooks/datasets/useFolders";
 import { useSessions } from "../../hooks/models/useSessions";
 const ModelsContext = createContext(null);
 
@@ -19,7 +20,7 @@ export const OptionsEnum = Object.freeze({
 });
 
 export function ModelsProvider({ children }) {
-  const { t } = useTranslation(["models", "datasets", "common"]);
+  const { t, i18n } = useTranslation(["models", "datasets", "common"]);
 
   const {
     datasets,
@@ -34,7 +35,16 @@ export function ModelsProvider({ children }) {
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
+    moveDatasetToFolder,
   } = useDatasets({ t });
+
+  const {
+    folders,
+    fetchFolders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
+  } = useFolders({ t });
 
   const {
     tasks,
@@ -96,7 +106,7 @@ export function ModelsProvider({ children }) {
 
   useEffect(() => {
     fetchTasks();
-  }, [t]);
+  }, [i18n.language]);
 
   const value = {
     selectedModel,
@@ -117,6 +127,12 @@ export function ModelsProvider({ children }) {
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
+    moveDatasetToFolder,
+    folders,
+    fetchFolders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
     tasks,
     loadingTasks,
     selectedTask,

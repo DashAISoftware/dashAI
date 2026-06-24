@@ -2,6 +2,7 @@ import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
@@ -145,7 +146,8 @@ export default function SessionBar({ onToggle }) {
           {selectedSessionId ? (
             <NewItemButton
               onClick={handleNewSessionButton}
-              title={t("generative:button.createSession")}
+              title={t("generative:button.generativeHub")}
+              EndIcon={ViewModuleIcon}
             />
           ) : (
             <Typography variant="body1" color="textSecondary">

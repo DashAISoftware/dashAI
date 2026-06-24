@@ -20,7 +20,7 @@ class TongyiZImageSchema(BaseSchema):
 
     Configures the checkpoint variant (``model_name``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
-    classifier-free guidance strength (``guidance_scale``), output dimensions
+    classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``TongyiZImageModel``.
@@ -32,10 +32,10 @@ class TongyiZImageSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "The Tongyi Z-Image checkpoint to load. "
-                "'Tongyi-Z-Image' is Alibaba's 6B-parameter text-to-image model "
+                "'Tongyi-Z-Image' is Alibaba's 6B parameter text-to-image model "
                 "using a unique S3-DiT (Sparse Spatial-Spectral Diffusion Transformer) "
                 "architecture, one of the most downloaded models on "
-                "Hugging Face. It outperforms previous open-source state-of-the-art "
+                "Hugging Face. It outperforms previous open source state of the art "
                 "models at a fraction of their parameter count."
             ),
             es=(
@@ -64,12 +64,20 @@ class TongyiZImageSchema(BaseSchema):
                 "Modelle auf Hugging Face. Es übertrifft frühere Open-Source-Modelle "
                 "auf dem neuesten Stand bei einem Bruchteil deren Parameteranzahl."
             ),
+            zh=(
+                "要加载的 Tongyi Z-Image 检查点。"
+                "'Tongyi-Z-Image' 是阿里巴巴的 60 亿参数文本到图像模型，"
+                "采用独特的 S3-DiT 架构（稀疏空间-频谱扩散变换器），"
+                "是 Hugging Face 上下载量最高的模型之一。"
+                "以更少的参数量超越了此前的开源最先进模型。"
+            ),
         ),
         alias=MultilingualString(
             en="Model name",
             es="Nombre del modelo",
             pt="Nome do modelo",
             de="Modellname",
+            zh="模型名称",
         ),
     )  # type: ignore
 
@@ -101,12 +109,18 @@ class TongyiZImageSchema(BaseSchema):
                     "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
                     "überspringen."
                 ),
+                zh=(
+                    "描述需从生成图像中排除内容的文本。"
+                    "常用值：'模糊、低质量、失真、水印'。"
+                    "留空以跳过负向条件引导。"
+                ),
             ),
             alias=MultilingualString(
                 en="Negative prompt",
                 es="Prompt negativo",
                 pt="Prompt negativo",
                 de="Negativer Prompt",
+                zh="负向提示词",
             ),
         )  # type: ignore
     ]
@@ -116,7 +130,7 @@ class TongyiZImageSchema(BaseSchema):
         placeholder=20,
         description=MultilingualString(
             en=(
-                "Number of denoising steps. Tongyi Z-Image achieves high-quality "
+                "Number of denoising steps. Tongyi Z-Image achieves high quality "
                 "results with 20-30 steps. More steps refine detail at the cost "
                 "of generation time."
             ),
@@ -135,12 +149,17 @@ class TongyiZImageSchema(BaseSchema):
                 "20-30 Schritten hochwertige Ergebnisse. Mehr Schritte verfeinern "
                 "Details auf Kosten der Generierungszeit."
             ),
+            zh=(
+                "去噪步数。Tongyi Z-Image 在 20-30 步时可达到高质量效果。"
+                "步数越多细节越精细，但生成时间也越长。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de etapas de inferência",
             de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -167,12 +186,17 @@ class TongyiZImageSchema(BaseSchema):
                 "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
                 "dem Prompt folgt. Werte 4-7 funktionieren gut für Tongyi Z-Image."
             ),
+            zh=(
+                "无分类器引导（CFG）比例。控制图像与文本提示的匹配程度。"
+                "对 Tongyi Z-Image 而言，4-7 的值效果较好。"
+            ),
         ),
         alias=MultilingualString(
             en="Guidance scale",
             es="Escala de guía",
             pt="Escala de orientação",
             de="Führungsskala",
+            zh="引导比例",
         ),
     )  # type: ignore
 
@@ -182,7 +206,7 @@ class TongyiZImageSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "Hardware device for inference. GPU is strongly recommended for "
-                "this 6B-parameter model. CPU inference is possible but very slow."
+                "this 6B parameter model. CPU inference is possible but very slow."
             ),
             es=(
                 "Dispositivo de hardware para inferencia. Se recomienda GPU para "
@@ -199,9 +223,13 @@ class TongyiZImageSchema(BaseSchema):
                 "6B-Parameter-Modell "
                 "dringend empfohlen. CPU-Inferenz ist möglich, aber sehr langsam."
             ),
+            zh=(
+                "推理所用的硬件设备。对于此 60 亿参数模型，强烈建议使用 GPU。"
+                "CPU 推理可行，但速度极慢。"
+            ),
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -226,8 +254,14 @@ class TongyiZImageSchema(BaseSchema):
                 "Integer erzeugt stets dasselbe Bild. Verwenden Sie -1 für einen "
                 "zufälligen Seed."
             ),
+            zh=(
+                "用于可复现生成的随机种子。固定的正整数始终生成相同图像。"
+                "使用 -1 表示随机种子。"
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
+        alias=MultilingualString(
+            en="Seed", es="Semilla", pt="Semente", de="Seed", zh="随机种子"
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -250,8 +284,14 @@ class TongyiZImageSchema(BaseSchema):
                 "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
                 "Tongyi Z-Image zielt nativ auf 1024x1024 px ab."
             ),
+            zh=(
+                "输出图像的宽度（像素）。必须是 8 的倍数。"
+                "Tongyi Z-Image 原生目标分辨率为 1024x1024 px。"
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
+        alias=MultilingualString(
+            en="Width", es="Ancho", pt="Largura", de="Breite", zh="宽度"
+        ),
     )  # type: ignore
 
     height: schema_field(
@@ -274,8 +314,14 @@ class TongyiZImageSchema(BaseSchema):
                 "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
                 "Tongyi Z-Image zielt nativ auf 1024x1024 px ab."
             ),
+            zh=(
+                "输出图像的高度（像素）。必须是 8 的倍数。"
+                "Tongyi Z-Image 原生目标分辨率为 1024x1024 px。"
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
+        alias=MultilingualString(
+            en="Height", es="Altura", pt="Altura", de="Höhe", zh="高度"
+        ),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -294,23 +340,34 @@ class TongyiZImageSchema(BaseSchema):
                 "Quantas imagens gerar a partir de um único prompt em um lote. "
                 "Requer proporcionalmente mais memória GPU por imagem adicional."
             ),
+            de=(
+                "Anzahl der Bilder, die aus einem einzelnen Prompt in einem Batch "
+                "generiert werden. Erfordert proportional mehr GPU-Speicher pro "
+                "zusätzlichem Bild."
+            ),
+            zh=(
+                "每个提示词在一批次中生成的图像数量。"
+                "每增加一张图像，所需 GPU 显存按比例增加。"
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
+            zh="每提示词图像数",
         ),
     )  # type: ignore
 
 
 class TongyiZImageModel(TextToImageGenerationTaskModel):
-    """Tongyi Z-Image S3-DiT model for high-quality text-to-image generation.
+    """Tongyi Z-Image S3-DiT model for high quality text-to-image generation.
 
-    Wraps Alibaba's 6B-parameter Tongyi Z-Image pipeline. The model uses a
+    Wraps Alibaba's 6B parameter Tongyi Z-Image pipeline. The model uses a
     novel Sparse Spatial-Spectral Diffusion Transformer (S3-DiT) architecture
     that processes image tokens in both spatial and spectral domains for
-    efficient high-fidelity generation. It outperforms previous open-source
-    state-of-the-art models while being more parameter-efficient, and excels
+    efficient high fidelity generation. It outperforms previous open source
+    state of the art models while being more parameter efficient, and excels
     at photorealism, diverse artistic styles, and accurate text rendering.
 
     References
@@ -324,14 +381,16 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
         en="Tongyi Z-Image",
         es="Tongyi Z-Image",
         pt="Tongyi Z-Image",
+        zh="通义 Z-Image",
+        de="Tongyi Z-Image",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Tongyi Z-Image is Alibaba's 6B-parameter text-to-image model using a "
+            "Tongyi Z-Image is Alibaba's 6B parameter text-to-image model using a "
             "novel S3-DiT (Sparse Spatial-Spectral Diffusion Transformer) "
             "architecture. It is currently one of the most downloaded models on "
             "Hugging Face and "
-            "outperforms previous open-source state-of-the-art models at a fraction "
+            "outperforms previous open source state of the art models at a fraction "
             "of their size. Excels at photorealistic image generation, diverse styles, "
             "and accurate text rendering. Model available at "
             "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
@@ -354,6 +413,20 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
             "de última geração com uma fração do seu tamanho. Destaca-se em "
             "geração fotorrealista de imagens, estilos diversos e renderização "
             "precisa de texto. Modelo disponível em "
+            "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
+        ),
+        zh=(
+            "通义 Z-Image 是阿里巴巴的 60 亿参数文本到图像模型，"
+            "采用创新的 S3-DiT 架构，擅长真实感图像生成、多样风格和精确文字渲染。"
+        ),
+        de=(
+            "Tongyi Z-Image ist Alibabas 6B-Parameter-Text-zu-Bild-Modell mit "
+            "einer neuartigen S3-DiT-Architektur (Sparse Spatial-Spectral "
+            "Diffusion Transformer). Es ist derzeit eines der am häufigsten "
+            "heruntergeladenen Modelle auf Hugging Face und übertrifft frühere "
+            "Open-Source-Modelle auf dem neuesten Stand bei einem Bruchteil ihrer "
+            "Größe. Hervorragend für fotorealistische Bildgenerierung, diverse "
+            "Stile und genaues Text-Rendering. Modell verfügbar unter "
             "https://huggingface.co/Tongyi-AI/Tongyi-Z-Image."
         ),
     )

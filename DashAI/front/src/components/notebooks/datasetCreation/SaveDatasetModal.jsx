@@ -1,6 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Modal, TextField, Box, Typography, IconButton } from "@mui/material";
+import {
+  Modal,
+  TextField,
+  Box,
+  Typography,
+  IconButton,
+  Switch,
+} from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { shouldRecommendDisableMetadata } from "../../../utils/metadataRecommendation";
+import ComputeMetadataConfirmDialog from "../../datasets/ComputeMetadataConfirmDialog";
+import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
 import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
@@ -32,6 +42,15 @@ export function SaveDatasetModal({
   const [converterToDelete, setConverterToDelete] = useState(null);
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [itemsToDelete, setItemsToDelete] = useState([]);
+  const [computeMetadata, setComputeMetadata] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const notebookColCount = notebook?.total_columns ?? 0;
+  const notebookRowCount = notebook?.total_rows ?? 0;
+  const exceedsThreshold = shouldRecommendDisableMetadata({
+    colCount: notebookColCount,
+    estRows: notebookRowCount,
+  });
 
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
@@ -134,20 +153,27 @@ export function SaveDatasetModal({
     setItemsToDelete([]);
   }, []);
 
-  const handleSubmit = () => {
+  const doSubmit = (effectiveComputeMetadata) => {
     const datasetName = name.trim();
-
-    if (datasetName) {
-      if (existingDatasets.some((dataset) => dataset.name === datasetName)) {
-        enqueueSnackbar(t("datasets:error.datasetExists"), {
-          variant: "warning",
-        });
-        return;
-      }
-
-      onSaveDataset(datasetName);
-      handleClose();
+    if (!datasetName) return;
+    if (existingDatasets.some((dataset) => dataset.name === datasetName)) {
+      enqueueSnackbar(t("datasets:error.datasetExists"), {
+        variant: "warning",
+      });
+      return;
     }
+    onSaveDataset(datasetName, {
+      compute_metadata: effectiveComputeMetadata,
+    });
+    handleClose();
+  };
+
+  const handleSubmit = () => {
+    if (computeMetadata && exceedsThreshold) {
+      setConfirmOpen(true);
+      return;
+    }
+    doSubmit(computeMetadata);
   };
 
   const handleClose = () => {
@@ -238,6 +264,20 @@ export function SaveDatasetModal({
               helperText={nameError}
             />
 
+            <FormSchemaFieldCard
+              label={t("datasets:computeMetadata.label")}
+              description={t("datasets:computeMetadata.helper")}
+            >
+              <Box sx={{ pt: 2 }}>
+                <Switch
+                  checked={computeMetadata}
+                  onChange={(e) => setComputeMetadata(e.target.checked)}
+                  size="small"
+                  name="compute_metadata"
+                />
+              </Box>
+            </FormSchemaFieldCard>
+
             <Box>
               <Typography variant="subtitle2" gutterBottom>
                 {t("datasets:label.appliedTransformations")}
@@ -261,9 +301,9 @@ export function SaveDatasetModal({
             <StepperNavigationFooter
               onBack={handleClose}
               onNext={handleSubmit}
-              nextDisabled={Boolean(nameError) || localConverters.length === 0}
+              nextDisabled={Boolean(nameError)}
               backLabel={t("common:cancel")}
-              nextLabel={t("datasets:button.saveDataset")}
+              nextLabel={t("common:upload")}
               variant="save"
             />
           </Box>
@@ -280,6 +320,17 @@ export function SaveDatasetModal({
             <ItemsToDeleteList items={itemsToDelete} />
           </Box>
         }
+      />
+
+      <ComputeMetadataConfirmDialog
+        open={confirmOpen}
+        colCount={notebookColCount}
+        estRows={notebookRowCount}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          doSubmit(true);
+        }}
+        onCancel={() => setConfirmOpen(false)}
       />
     </>
   );

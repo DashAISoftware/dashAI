@@ -66,7 +66,6 @@ def load_csv_into_datasetdict_iris_extra(file_name):
 def test_validate_tabular_task():
     dataset = to_dashai_dataset(load_csv_into_datasetdict_iris("iris.csv"))
 
-    dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
     tabular_task = TabularClassificationTask()
     inputs_columns = [
         "SepalLengthCm",
