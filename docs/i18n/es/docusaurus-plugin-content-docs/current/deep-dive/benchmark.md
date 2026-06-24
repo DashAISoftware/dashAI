@@ -30,13 +30,13 @@ KNIME y Orange utilizan GPLv3; WEKA, GPL. Las tres licencias incluyen copyleft s
 
 dashAI expone doce clases base organizadas por rol funcional: `BaseModel`, `BaseMetric`, `BaseTask`, `BaseExplainer`, entre otras. Un nuevo componente se implementa subclasificando la abstracción correspondiente y declarando sus parámetros mediante un schema Pydantic. A partir del schema, la plataforma genera automáticamente el formulario de configuración en la interfaz, sin requerir código de frontend. El componente se distribuye vía PyPI e instala directamente desde la interfaz de dashAI.
 
-El boilerplate resultante es de aproximadamente **20–40 líneas de código** para componentes simples (métricas, clasificadores básicos) y **70–110 líneas** para modelos con múltiples hiperparámetros, donde la mayor parte del código corresponde a la declaración del schema de parámetros.
+El boilerplate resultante es de aproximadamente **20-40 líneas de código** para componentes simples (métricas, clasificadores básicos) y **70-110 líneas** para modelos con múltiples hiperparámetros, donde la mayor parte del código corresponde a la declaración del schema de parámetros.
 
 Para referencia, los mecanismos de extensión de las otras plataformas evaluadas son los siguientes:
 
-- **Orange** permite extensiones en Python, pero cada widget requiere acoplarse a Qt/PyQt e instanciar manualmente los controles de interfaz (≈50–70 líneas de código).
-- **WEKA** se extiende en Java heredando de `AbstractClassifier` e implementando `buildClassifier(Instances)` y `distributionForInstance(Instance)` sobre la abstracción `Instances` (≈80–120 líneas de código).
-- **KNIME**, en su vía oficial, requiere un plugin OSGi/Eclipse con cuatro clases Java (`NodeFactory`, `NodeModel`, `NodeDialog` y `NodeView`), además de descriptores `plugin.xml` y `MANIFEST.MF`, y build con Maven/Tycho (≈150–250 líneas de código). Desde la versión 4.6 existe una vía experimental en Python (Labs) que genera UI desde declaraciones de parámetros, pero no reemplaza al camino Java como vía oficial y requiere herramientas de empaquetado propias (`pixi`, `knime.yml`).
+- **Orange** permite extensiones en Python, pero cada widget requiere acoplarse a Qt/PyQt e instanciar manualmente los controles de interfaz (≈50-70 líneas de código).
+- **WEKA** se extiende en Java heredando de `AbstractClassifier` e implementando `buildClassifier(Instances)` y `distributionForInstance(Instance)` sobre la abstracción `Instances` (≈80-120 líneas de código).
+- **KNIME**, en su vía oficial, requiere un plugin OSGi/Eclipse con cuatro clases Java (`NodeFactory`, `NodeModel`, `NodeDialog` y `NodeView`), además de descriptores `plugin.xml` y `MANIFEST.MF`, y build con Maven/Tycho (≈150-250 líneas de código). Desde la versión 4.6 existe una vía experimental en Python (Labs) que genera UI desde declaraciones de parámetros, pero no reemplaza al camino Java como vía oficial y requiere herramientas de empaquetado propias (`pixi`, `knime.yml`).
 
 ### Arquitectura de interfaz
 
@@ -66,7 +66,7 @@ La interfaz está disponible en español e inglés.
 | Abstracciones por rol funcional |       1 (nodo genérico)        | 1 (widget genérico) |  6 jerarquías Java   |    **12 clases base**     |
 | Tipo de interfaz                |       Desktop (Eclipse)        |   Desktop (PyQt)    | Desktop (Java Swing) | **Web (React + FastAPI)** |
 | UI generada automáticamente     |            Parcial             |         No          |          No          |          **Sí**           |
-| Boilerplate por componente      |       150–250 LdC (Java)       |      50–70 LdC      |      80–120 LdC      |       **20–40 LdC**       |
+| Boilerplate por componente      |       150-250 LdC (Java)       |      50-70 LdC      |      80-120 LdC      |       **20-40 LdC**       |
 | Soporte GPU                     |            Parcial             |       Parcial       |       Parcial        |        **Partial**        |
 | Interfaz multiidioma (ES/EN)    |               No               |         No          |          No          |          **Sí**           |
 | **Catálogo nativo**             |                                |                     |                      |                           |
@@ -85,7 +85,7 @@ La vía oficial de KNIME (Java) requiere programar `NodeDialog` y `NodeView` man
 :::
 
 :::note Boilerplate por componente
-Las 150–250 LdC de KNIME corresponden a la vía Java oficial. La vía Python (Labs) reduce ese número pero añade archivos de configuración propios (`knime.yml`, `pixi.toml`). En dashAI: ≈20–40 LdC para componentes simples; ≈70–110 LdC para modelos complejos con múltiples hiperparámetros, donde la mayor parte del código es la declaración del schema de parámetros.
+Las 150-250 LdC de KNIME corresponden a la vía Java oficial. La vía Python (Labs) reduce ese número pero añade archivos de configuración propios (`knime.yml`, `pixi.toml`). En dashAI: ≈20-40 LdC para componentes simples; ≈70-110 LdC para modelos complejos con múltiples hiperparámetros, donde la mayor parte del código es la declaración del schema de parámetros.
 :::
 
 :::note Solapamiento entre tasks (dashAI)
