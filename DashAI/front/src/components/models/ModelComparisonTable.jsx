@@ -44,7 +44,7 @@ function ModelComparisonTable({
   const [runs, setRuns] = useState(initialRuns);
   const [runToDelete, setRunToDelete] = useState(null);
 
-  const { t } = useTranslation(["models", "common"]);
+  const { t, i18n } = useTranslation(["models", "common"]);
   const theme = useTheme();
   const localization = useTableLocalization();
 
@@ -70,7 +70,7 @@ function ModelComparisonTable({
       }
     };
     fetchModels();
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -82,7 +82,7 @@ function ModelComparisonTable({
       }
     };
     fetchMetrics();
-  }, []);
+  }, [i18n.language]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Fetch scoring profiles for this session's task
