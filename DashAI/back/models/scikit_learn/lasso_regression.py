@@ -10,9 +10,6 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -206,7 +203,6 @@ class LassoRegression(RegressionModel, SklearnLikeRegressor, _Lasso):
     )
     COLOR: str = "#29B6F6"
     ICON: str = "SelectAll"
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.
