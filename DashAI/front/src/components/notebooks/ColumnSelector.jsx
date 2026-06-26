@@ -29,6 +29,7 @@ import { useTableLocalization } from "../../utils/useTableLocalization";
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
  * @param {Array} props.allowedDtypes - Array of allowed dtype strings (optional)
  * @param {Array} props.allowedTypes - Array of allowed semantic type names (optional)
+ * @param {Array} props.nonAllowedDtypes - Array of forbidden dtype strings (optional)
  * @param {Function} props.onSelectionChange - Callback when selection changes (selectedColumns) (optional)
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
@@ -39,7 +40,7 @@ function ColumnSelector({
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
-  typesDtypeRestrictions = {},
+  nonAllowedDtypes = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
   columnTypes = null,
@@ -161,16 +162,15 @@ function ColumnSelector({
         if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
           return false;
         }
-        const forbiddenDtypes = typesDtypeRestrictions[row.valueType];
-        if (forbiddenDtypes) {
+        if (nonAllowedDtypes.length > 0) {
           const dtypeKey =
             row.dataType === t("common:unknown") ? "" : row.dataType;
-          if (forbiddenDtypes.includes(dtypeKey)) return false;
+          if (nonAllowedDtypes.includes(dtypeKey)) return false;
         }
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, allowedTypes, typesDtypeRestrictions]);
+  }, [rows, allowedDtypes, allowedTypes, nonAllowedDtypes]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -413,6 +413,20 @@ function ColumnSelector({
             </Box>
           </Typography>
         )}
+
+        {/* Excluded data types */}
+        {nonAllowedDtypes.length > 0 && (
+          <Typography
+            variant="caption"
+            sx={{ color: "warning.main", mt: 1, display: "block" }}
+          >
+            {t("datasets:label.excludedDataTypes", {
+              dtypes: nonAllowedDtypes
+                .map((d) => (d === "" ? t("common:unknown") : d))
+                .join(", "),
+            })}
+          </Typography>
+        )}
       </Box>
 
       {tool?.metadata?.changes_row_count && (
@@ -455,7 +469,7 @@ ColumnSelector.propTypes = {
   }),
   allowedDtypes: PropTypes.array,
   allowedTypes: PropTypes.array,
-  typesDtypeRestrictions: PropTypes.object,
+  nonAllowedDtypes: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };
