@@ -273,6 +273,7 @@
     "missingValuesOverview": "Resumo de Valores Ausentes",
     "mostFrequent": "Mais Frequente",
     "nameYourNotebook": "Nomeie seu Caderno",
+    "nComponentsColumnInfo": "Você selecionou {{count}} coluna(s). n_components deve ser menor ou igual a {{count}}. Reduza n_components ou adicione mais colunas para evitar erros.",
     "newDatasetCreatedWithTransformations": "Um novo conjunto de dados será criado com estas transformações. Pode ser usado com outros módulos sem afetar o original.",
     "noDataQualityIssuesDetected": "Nenhum problema de qualidade de dados detectado",
     "noDuplicateRows": "Nenhuma linha duplicada detectada no conjunto de dados.",

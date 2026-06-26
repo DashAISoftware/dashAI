@@ -273,6 +273,7 @@
     "missingValuesOverview": "Resumen de Valores Faltantes",
     "mostFrequent": "Más Frecuente",
     "nameYourNotebook": "Nombre su Cuaderno",
+    "nComponentsColumnInfo": "Seleccionaste {{count}} columna(s). n_components debe ser menor o igual a {{count}}. Reduce n_components o agrega más columnas para evitar errores.",
     "newDatasetCreatedWithTransformations": "Se creará un nuevo dataset con estas transformaciones. Puede usarse con otros módulos sin afectar el original.",
     "noDataQualityIssuesDetected": "No se detectaron problemas de calidad de datos",
     "noDuplicateRows": "No se detectaron filas duplicadas en el dataset.",

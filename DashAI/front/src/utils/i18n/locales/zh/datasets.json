@@ -268,6 +268,7 @@
     "missingValuesOverview": "缺失值概览",
     "mostFrequent": "最频繁",
     "nameYourNotebook": "为笔记本命名",
+    "nComponentsColumnInfo": "您选择了 {{count}} 列。n_components 必须小于或等于 {{count}}。请减少 n_components 或选择更多列以避免错误。",
     "newDatasetCreatedWithTransformations": "将使用这些变换创建新数据集。可在其他模块中使用，不影响原始数据。",
     "noDataQualityIssuesDetected": "未检测到数据质量问题",
     "noDuplicateRows": "数据集中未检测到重复行。",

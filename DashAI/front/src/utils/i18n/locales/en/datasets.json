@@ -267,6 +267,7 @@
     "missingValuesOverview": "Missing Values Overview",
     "mostFrequent": "Most Frequent",
     "nameYourNotebook": "Name your Notebook",
+    "nComponentsColumnInfo": "You selected {{count}} column(s). n_components must be less than or equal to {{count}}. Reduce n_components or add more columns to avoid errors.",
     "newDatasetCreatedWithTransformations": "A new dataset will be created with these transformations. It can be used with other modules without affecting the original.",
     "noDataQualityIssuesDetected": "No data quality issues detected",
     "noDuplicateRows": "No duplicate rows detected in the dataset.",
