@@ -206,13 +206,15 @@ function ColumnSelector({
   );
 
   const handleSelectAllRows = useCallback(() => {
+    const limit = inputCardinality.exact || inputCardinality.max;
     const validIds = getValidColumnIds();
-    const allValidSelected =
-      validIds.length > 0 &&
-      validIds.every((id) => rowSelectionModel.includes(id));
+    const selectableIds = limit ? validIds.slice(0, limit) : validIds;
+    const allSelectableSelected =
+      selectableIds.length > 0 &&
+      selectableIds.every((id) => rowSelectionModel.includes(id));
 
-    handleSelection(allValidSelected ? {} : toMRT(validIds));
-  }, [getValidColumnIds, rowSelectionModel]);
+    handleSelection(allSelectableSelected ? {} : toMRT(selectableIds));
+  }, [getValidColumnIds, rowSelectionModel, inputCardinality]);
 
   // Effect to update selection data and validation whenever rowSelectionModel changes
   useEffect(() => {
@@ -313,15 +315,20 @@ function ColumnSelector({
           }
         : {},
     }),
-    muiSelectAllCheckboxProps: () => ({
-      checked:
-        getValidColumnIds().length > 0 &&
-        getValidColumnIds().every((id) => rowSelectionModel.includes(id)),
-      indeterminate:
-        rowSelectionModel.length > 0 &&
-        rowSelectionModel.length < getValidColumnIds().length,
-      onChange: handleSelectAllRows,
-    }),
+    muiSelectAllCheckboxProps: () => {
+      const limit = inputCardinality.exact || inputCardinality.max;
+      const validIds = getValidColumnIds();
+      const selectableIds = limit ? validIds.slice(0, limit) : validIds;
+      return {
+        checked:
+          selectableIds.length > 0 &&
+          selectableIds.every((id) => rowSelectionModel.includes(id)),
+        indeterminate:
+          rowSelectionModel.length > 0 &&
+          rowSelectionModel.length < selectableIds.length,
+        onChange: handleSelectAllRows,
+      };
+    },
     localization,
   });
 
