@@ -37,7 +37,6 @@ function PipelineDesigner({
 }) {
   const theme = useTheme();
   const { screenToFlowPosition } = useReactFlow();
-  const theme = useTheme();
 
   const isLightCanvas = canvasMode === "light";
   const canvasBg = isLightCanvas ? "#ffffff" : theme.palette.background.box;

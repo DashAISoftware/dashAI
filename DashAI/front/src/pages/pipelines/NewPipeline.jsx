@@ -75,7 +75,6 @@ function NewPipeline() {
   const isNewPipelineRoute = location.pathname.endsWith("/new");
   const isWorkspaceOpen = Boolean(pipelineId) || isNewPipelineRoute;
   const flowWrapperRef = useRef(null);
-  const theme = useTheme();
   const [canvasMode, setCanvasMode] = useState("dark");
   const [centerMenuView, setCenterMenuView] = useState("home");
   const threePanelLayout = useThreePanelLayout({
