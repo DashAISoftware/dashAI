@@ -6,7 +6,7 @@ from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dependencies.database.models import Dataset, Notebook
+from DashAI.back.dependencies.database.models import Converter, Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
 
 if TYPE_CHECKING:
@@ -141,6 +141,7 @@ class DatasetJob(BaseJob):
                         f"A dataset with the name {random_name} already exists."
                     ) from e
 
+            from_notebook_no_converters = False
             try:
                 if notebook_id is not None:
                     log.debug(f"Copying dataset from notebook id {notebook_id}.")
@@ -157,30 +158,108 @@ class DatasetJob(BaseJob):
                                 " has no associated dataset."
                             )
                             raise JobError(msg)
+                        # Detect whether any converters have been applied to
+                        # this notebook. When none, the saved data is byte-
+                        # identical to the source dataset, so we can reuse
+                        # the source's metadata directly instead of
+                        # recomputing.
+                        has_converters = (
+                            db.query(Converter)
+                            .filter(Converter.notebook_id == notebook_id)
+                            .first()
+                            is not None
+                        )
+                        from_notebook_no_converters = not has_converters
                         new_dataset = load_dataset(
                             os.path.join(notebook_dataset.file_path, "dataset")
                         )
 
                 else:
-                    parsed_params = parse_params(DatasetParams, json.dumps(params))
-                    dataloader = component_registry[parsed_params.dataloader]["class"]()
-                    log.debug("Storing dataset in %s", folder_path)
-                    new_dataset = dataloader.load_data(
-                        filepath_or_buffer=(
-                            str(file_path) if file_path is not None else url
-                        ),
-                        temp_path=str(temp_dir),
-                        params=parsed_params.model_dump(),
-                        n_sample=n_sample,
-                    )
+                    source_name = self.kwargs.get("source_name")
 
-                    if "inferred_types" in params:
+                    if source_name:
+                        # --- Hub import path ---
+                        from DashAI.back.core.enums.status import DatafileStatus
+                        from DashAI.back.dependencies.database.models import (
+                            Datafile,
+                        )
+
+                        datafile_id = params.get("datafile_id")
+                        selected_file = params.get("selected_file")
+
+                        if datafile_id is None:
+                            raise JobError("datafile_id is required for hub imports.")
+
+                        with session_factory() as db:
+                            hub_row = db.get(Datafile, datafile_id)
+                        if hub_row is None or hub_row.status != DatafileStatus.READY:
+                            raise JobError(f"Datafile {datafile_id} is not ready.")
+                        hub_work_dir = hub_row.local_path
+                        if selected_file:
+                            file_path_hub = str(Path(hub_work_dir) / selected_file)
+                        else:
+                            hub_base = Path(hub_work_dir)
+                            files = sorted(
+                                str(p)
+                                for p in hub_base.rglob("*")
+                                if p.is_file()
+                                and not any(
+                                    part.startswith(".")
+                                    for part in p.relative_to(hub_base).parts
+                                )
+                            )
+                            if not files:
+                                raise JobError("Hub download directory is empty.")
+                            file_path_hub = files[0]
+
+                        selected_dataloader = params.get("dataloader", "")
+                        _reg = component_registry._registry
+                        dl_registry = _reg.get("DataLoader", {})
+                        if selected_dataloader not in dl_registry:
+                            raise JobError(
+                                f"DataLoader '{selected_dataloader}'"
+                                " not found in registry."
+                            )
+                        dataloader = dl_registry[selected_dataloader]["class"]()
+                        log.debug(
+                            "Loading hub dataset from %s using %s",
+                            file_path_hub,
+                            selected_dataloader,
+                        )
+                        hub_loader_params = params.get("dataloader_params", {})
+                        new_dataset = dataloader.load_data(
+                            filepath_or_buffer=file_path_hub,
+                            temp_path=hub_work_dir,
+                            params=hub_loader_params,
+                            n_sample=None,
+                        )
+                    else:
+                        # --- File / URL upload path (unchanged) ---
+                        parsed_params = parse_params(DatasetParams, json.dumps(params))
+                        dataloader = component_registry[parsed_params.dataloader][
+                            "class"
+                        ]()
+                        log.debug("Storing dataset in %s", folder_path)
+                        new_dataset = dataloader.load_data(
+                            filepath_or_buffer=(
+                                str(file_path) if file_path is not None else url
+                            ),
+                            temp_path=str(temp_dir),
+                            params=parsed_params.model_dump(),
+                            n_sample=n_sample,
+                        )
+
+                    if params.get("inferred_types"):
                         schema = params["inferred_types"]
+                    elif new_dataset.types:
+                        schema = {
+                            col: typ.to_string()
+                            for col, typ in new_dataset.types.items()
+                        }
                     else:
                         schema = infer_types(
                             new_dataset.to_pandas(), method="DashAIPtype"
                         )
-
                     if "column_renames" in params:
                         renames = params["column_renames"]
                         original_names = new_dataset.arrow_table.schema.names
@@ -211,7 +290,41 @@ class DatasetJob(BaseJob):
 
                     new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
-                new_dataset.compute_metadata()
+                compute_meta = params.get("compute_metadata", True)
+                extended_keys = (
+                    "general_info",
+                    "numeric_stats",
+                    "categorical_stats",
+                    "text_stats",
+                    "quality_info",
+                    "correlations",
+                )
+
+                if from_notebook_no_converters:
+                    # No converters applied - saved data matches the source
+                    # dataset byte-for-byte. Reuse the source's splits.json
+                    # (already loaded into ``new_dataset.splits`` by
+                    # ``load_dataset``) instead of recomputing.
+                    has_extended = any(k in new_dataset.splits for k in extended_keys)
+                    if compute_meta:
+                        # Use source's full metadata if present, else compute.
+                        if not has_extended:
+                            new_dataset.compute_metadata()
+                    else:
+                        # Keep only base metadata; drop any inherited extended.
+                        if "total_rows" not in new_dataset.splits:
+                            new_dataset.compute_base_metadata()
+                        for stale_key in extended_keys:
+                            new_dataset.splits.pop(stale_key, None)
+                elif compute_meta:
+                    new_dataset.compute_metadata()
+                else:
+                    new_dataset.compute_base_metadata()
+                    # Defensive: strip any extended keys that may have been
+                    # inherited from a source dataset (e.g. notebook flow
+                    # with converters that ran before this rule existed).
+                    for stale_key in extended_keys:
+                        new_dataset.splits.pop(stale_key, None)
                 gc.collect()
 
                 dataset_save_path = folder_path / "dataset"
@@ -229,6 +342,10 @@ class DatasetJob(BaseJob):
                     folder_path = os.path.realpath(folder_path)
                     dataset = db.get(Dataset, dataset_id)
                     dataset.file_path = folder_path
+                    dataset.total_rows = new_dataset.splits.get("total_rows")
+                    dataset.total_columns = len(
+                        new_dataset.splits.get("column_names", [])
+                    )
                     dataset.set_status_as_finished()
                     db.commit()
                     db.refresh(dataset)

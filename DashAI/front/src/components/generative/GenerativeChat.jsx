@@ -2,6 +2,7 @@ import { Box, Divider, IconButton, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
 import {
   getProcessById,
@@ -40,17 +41,34 @@ export default function GenerativeChat() {
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
+  const isAtBottomRef = useRef(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
   const tourContext = useTourContext();
 
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+  const scrollToBottom = (force = false) => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+
+    // Force on new message; otherwise only follow if user is already near
+    // the bottom, so polling updates don't yank the view down mid read.
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (force || distanceFromBottom <= 100) {
+      el.scrollTop = el.scrollHeight;
     }
+  };
+
+  const handleScroll = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // Remember the user's position before any content change repaints, so the
+    // scroll effect can decide whether to follow without re measuring stale.
+    isAtBottomRef.current = distanceFromBottom <= 100;
+    setShowScrollButton(distanceFromBottom > 100);
   };
 
   const getSessionInfo = () => {
@@ -105,8 +123,14 @@ export default function GenerativeChat() {
     setMessages([]);
   }, [taskName]);
 
+  const prevMessageCountRef = useRef(0);
   useEffect(() => {
-    scrollToBottom();
+    const isNewMessage =
+      messagesWithHistory.length > prevMessageCountRef.current;
+    prevMessageCountRef.current = messagesWithHistory.length;
+    // Follow on a new message, or when the user was pinned to the bottom
+    // before this update (e.g. the model reply replacing the waiting bubble).
+    scrollToBottom(isNewMessage || isAtBottomRef.current);
   }, [messagesWithHistory]);
 
   useEffect(() => {
@@ -229,10 +253,10 @@ export default function GenerativeChat() {
           flexDirection="row"
           alignItems="center"
           justifyContent="space-between"
-          gap={0.5}
+          gap={2}
           width={"100%"}
           height={"32px"}
-          mb={2}
+          mb={8}
         >
           <Typography>
             {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
@@ -258,74 +282,93 @@ export default function GenerativeChat() {
 
       {/* Chat display */}
       <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-start"
-        alignItems="flex-start"
-        gap={1}
-        width={"100%"}
-        flex={1}
-        minHeight={0}
-        overflow={"auto"}
-        mt={1}
-        p={2}
-        ref={chatContainerRef}
         sx={{
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.palette.ui.border,
-            borderRadius: "4px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: theme.palette.ui.hover,
-          },
+          position: "relative",
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          width: "100%",
         }}
       >
-        {messagesWithHistory?.map((message) => {
-          return (
-            <Box
-              key={`${message.type}_${message.id}`}
-              display="flex"
-              flexDirection="column"
-              justifyContent="flex-start"
-              flexGrow={0}
-              gap={1}
-              width={"100%"}
-              //height={"100%"}
-              mt={1}
-            >
-              {message.type === "history" ? (
-                <Typography variant="body1" sx={{ opacity: 0.8 }}>
-                  <Trans i18nKey="generative:label.parameterChangeEvent">
-                    Parameters updated: <span>{message.changedMessage}</span>
-                  </Trans>
-                </Typography>
-              ) : (
-                <>
-                  <ChatBubble
-                    messages={message.input}
-                    sender={"User"}
-                    timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    isUser={true}
-                  />
-                  {message.status === 3 ? (
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="flex-start"
+          alignItems="flex-start"
+          gap={4}
+          width={"100%"}
+          flex={1}
+          minHeight={0}
+          overflow={"auto"}
+          mt={4}
+          p={8}
+          ref={chatContainerRef}
+          onScroll={handleScroll}
+        >
+          {messagesWithHistory?.map((message) => {
+            return (
+              <Box
+                key={`${message.type}_${message.id}`}
+                display="flex"
+                flexDirection="column"
+                justifyContent="flex-start"
+                flexGrow={0}
+                gap={4}
+                width={"100%"}
+                //height={"100%"}
+                mt={4}
+              >
+                {message.type === "history" ? (
+                  <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                    <Trans i18nKey="generative:label.parameterChangeEvent">
+                      Parameters updated: <span>{message.changedMessage}</span>
+                    </Trans>
+                  </Typography>
+                ) : (
+                  <>
                     <ChatBubble
-                      messages={message.output}
-                      sender={"Model"}
+                      messages={message.input}
+                      sender={"User"}
                       timestamp={new Date(
-                        message.end_time,
+                        message.timestamp,
                       ).toLocaleTimeString()}
+                      isUser={true}
                     />
-                  ) : (
-                    <ChatBubble isWaiting={true} sender="Model" />
-                  )}
-                </>
-              )}
-            </Box>
-          );
-        })}
+                    {message.status === 3 ? (
+                      <ChatBubble
+                        messages={message.output}
+                        sender={"Model"}
+                        timestamp={new Date(
+                          message.end_time,
+                        ).toLocaleTimeString()}
+                      />
+                    ) : (
+                      <ChatBubble isWaiting={true} sender="Model" />
+                    )}
+                  </>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+
+        {showScrollButton && (
+          <IconButton
+            onClick={() => scrollToBottom(true)}
+            sx={{
+              position: "absolute",
+              bottom: 16,
+              right: 16,
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
+              boxShadow: 2,
+              "&:hover": { bgcolor: "background.paper" },
+            }}
+          >
+            <KeyboardArrowDownIcon />
+          </IconButton>
+        )}
       </Box>
 
       {/* Chat input */}

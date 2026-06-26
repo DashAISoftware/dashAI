@@ -32,8 +32,11 @@ class TokenizerSchema(BaseSchema):
         ),
         "bert-base-uncased",
         description=MultilingualString(
-            en="Name of the pre-trained tokenizer model",
+            en="Name of the pretrained tokenizer model",
             es="Nombre del modelo de tokenización preentrenado",
+            pt="Nome do modelo de tokenizer pré-treinado",
+            de="Name des vortrainierten Tokenizer-Modells",
+            zh="预训练分词器模型的名称",
         ),
     )  # type: ignore
 
@@ -43,6 +46,9 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum sequence length for tokenization",
             es="Longitud máxima de secuencia para la tokenización",
+            pt="Comprimento máximo de sequência para a tokenização",
+            de="Maximale Sequenzlänge für die Tokenisierung",
+            zh="分词的最大序列长度",
         ),
     )  # type: ignore
 
@@ -52,6 +58,9 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Number of samples to process at once",
             es="Número de muestras a procesar a la vez",
+            pt="Número de amostras a processar de uma vez",
+            de="Anzahl der gleichzeitig zu verarbeitenden Stichproben",
+            zh="每次处理的样本数量",
         ),
     )  # type: ignore
 
@@ -61,6 +70,9 @@ class TokenizerSchema(BaseSchema):
         description=MultilingualString(
             en="Device to use for computation",
             es="Dispositivo a usar para el cómputo",
+            pt="Dispositivo a usar para o processamento",
+            de="Gerät für die Berechnung",
+            zh="用于计算的设备",
         ),
     )  # type: ignore
 
@@ -78,8 +90,20 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             "Tokeniza texto a IDs de entrada; cada ID va en su propia columna. "
             "Se ignora la máscara de atención."
         ),
+        pt=(
+            "Tokeniza texto em IDs de entrada; cada ID de token vai para sua própria "
+            "coluna. A máscara de atenção é ignorada."
+        ),
+        de=(
+            "Text in Eingabe-IDs tokenisieren; jede Token-ID geht in ihre eigene "
+            "Spalte. "
+            "Die Aufmerksamkeitsmaske wird ignoriert."
+        ),
+        zh=("将文本分词为输入ID；每个词元ID存入独立列。注意力掩码被忽略。"),
     )
-    DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
+    DISPLAY_NAME = MultilingualString(
+        en="Tokenizer", es="Tokenizador", pt="Tokenizer", de="Tokenisierer", zh="分词器"
+    )
     IMAGE_PREVIEW = "tokenizer.png"
 
     metadata = {

@@ -5,15 +5,12 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { filterModels } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
 import { validateNode } from "../../../api/pipeline";
 import { useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-
 function RetrieveModelNode({
   onClose,
   onSave,
@@ -28,11 +25,8 @@ function RetrieveModelNode({
   const { enqueueSnackbar } = useSnackbar();
   const { pipelineId } = useParams();
   const hasWarnedRef = useRef(false);
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   useEffect(() => {
     if (savedConfig?.model_path && pipelines.length > 0) {
@@ -134,8 +128,8 @@ function RetrieveModelNode({
   });
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Grid container spacing={2}>
+    <Paper sx={{ p: 6 }}>
+      <Grid container spacing={4}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="h6">Select a trained model</Typography>
           <Typography variant="body2" color="textSecondary">

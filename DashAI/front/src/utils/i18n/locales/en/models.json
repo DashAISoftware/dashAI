@@ -13,6 +13,7 @@
     "newPrediction": "New Prediction",
     "newDatasetPrediction": "New Dataset Prediction",
     "newManualPrediction": "New Manual Prediction",
+    "modelsHub": "Models Hub",
     "newSession": "New Session",
     "retrain": "Re-train",
     "runAll": "Run All",
@@ -98,6 +99,7 @@
     "nameYourSession": "Name Your Session",
     "selectDatasetAndPrepare": "Name your session, select a dataset and configure its columns and splits.",
     "noCompatibleModelsFound": "No compatible models found",
+    "dropModelHere": "Drop here to add",
     "noDatasetPredictionsYet": "No dataset predictions yet",
     "noGlobalExplainersYet": "No global explainers yet",
     "noLocalExplainersYet": "No local explainers yet",
@@ -170,7 +172,9 @@
     "profile_text_balanced": "Balanced",
     "profile_text_detectPositives": "Detect Positives",
     "profile_text_avoidFalseAlarms": "Avoid False Alarms",
-    "profile_text_probabilityQuality": "Probability Quality"
+    "profile_text_probabilityQuality": "Probability Quality",
+    "editRun": "Edit Run",
+    "chartType": "Chart type"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

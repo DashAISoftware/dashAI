@@ -32,8 +32,17 @@ class WordcloudSchema(BaseExplorerSchema):
         description=MultilingualString(
             en="Maximum number of words to display in the word cloud.",
             es="Número máximo de palabras a mostrar en la nube de palabras.",
+            pt="Número máximo de palavras a exibir na nuvem de palavras.",
+            zh="词云中显示的最大词数。",
+            de="Maximale Anzahl der anzuzeigenden Wörter in der Wortwolke.",
         ),
-        alias=MultilingualString(en="Max words", es="Máximo de palabras"),
+        alias=MultilingualString(
+            en="Max words",
+            es="Máximo de palabras",
+            pt="Máximo de palavras",
+            zh="最大词数",
+            de="Max. Wörter",
+        ),
     )  # type: ignore
     background_color: schema_field(
         t=none_type(string_field()),
@@ -47,10 +56,19 @@ class WordcloudSchema(BaseExplorerSchema):
                 "Color de fondo de la nube de palabras. Si es None, el fondo es "
                 "transparente."
             ),
+            pt=("Cor de fundo da nuvem de palavras. Se None, o fundo é transparente."),
+            zh="词云的背景颜色。如果为None，则背景透明。",
+            de=(
+                "Hintergrundfarbe der Wortwolke. Bei None ist der Hintergrund "
+                "transparent."
+            ),
         ),
         alias=MultilingualString(
             en="Background color",
             es="Color de fondo",
+            pt="Cor de fundo",
+            zh="背景颜色",
+            de="Hintergrundfarbe",
         ),
     )  # type: ignore
 
@@ -61,7 +79,7 @@ class WordcloudExplorer(DistributionExplorer):
     Concatenates the values of all selected text columns across every row of the
     dataset and produces a word cloud image where each word is rendered at a
     size proportional to its term frequency. Stop words are not removed
-    automatically; pre-processing should be applied via converters before
+    automatically; preprocessing should be applied via converters before
     running this explorer if stop-word filtering is desired.
 
     Word clouds are a quick way to identify the most common terms in a text
@@ -69,7 +87,13 @@ class WordcloudExplorer(DistributionExplorer):
     dominant topics in a dataset to non-technical audiences.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Word Cloud", es="Nube de Palabras")
+    DISPLAY_NAME = MultilingualString(
+        en="Word Cloud",
+        es="Nube de Palabras",
+        pt="Nuvem de Palavras",
+        zh="词云",
+        de="Wortwolke",
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Visual representation of text where word size reflects frequency. "
@@ -79,6 +103,17 @@ class WordcloudExplorer(DistributionExplorer):
             "Representación visual del texto donde el tamaño de la palabra "
             "refleja su frecuencia. Genera una nube de palabras concatenando "
             "columnas de texto seleccionadas."
+        ),
+        pt=(
+            "Representação visual do texto onde o tamanho da palavra "
+            "reflete sua frequência. Gera uma nuvem de palavras concatenando "
+            "colunas de texto selecionadas."
+        ),
+        zh=("文本的可视化表示，词语大小反映频率。通过连接所选文本列生成词云。"),
+        de=(
+            "Visuelle Darstellung von Text, bei der die Wortgröße die Häufigkeit "
+            "widerspiegelt. Erzeugt eine Wortwolke durch Verkettung ausgewählter "
+            "Textspalten."
         ),
     )
     IMAGE_PREVIEW = "wordcloud.png"

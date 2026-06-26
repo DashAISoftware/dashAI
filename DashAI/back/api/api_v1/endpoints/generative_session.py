@@ -88,7 +88,16 @@ async def upload_generative_session(
                 description=params.description,
             )
             db.add(session)
-            db.commit()
+            try:
+                db.commit()
+            except exc.IntegrityError as e:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"Generative session with name '{params.name}' already exists."
+                    ),
+                ) from e
             db.refresh(session)
 
             session_params_entry = GenerativeSessionParameterHistory(
@@ -190,7 +199,7 @@ async def get_all_generative_sessions(
         try:
             sessions = (
                 db.query(GenerativeSession)
-                .order_by(GenerativeSession.created.desc())
+                .order_by(GenerativeSession.created.asc())
                 .all()
             )
         except exc.SQLAlchemyError as e:

@@ -95,11 +95,11 @@ export default function ColorscaleSelector({ value, onChange }) {
     <Box
       sx={{
         bgcolor: theme.palette.ui.panelDark,
-        p: 1.5,
+        p: 3,
         borderBottom: `1px solid ${theme.palette.ui.borderLight}`,
       }}
     >
-      <Stack spacing={2}>
+      <Stack spacing={4}>
         <Box>
           <Typography
             variant="body2"
@@ -108,7 +108,7 @@ export default function ColorscaleSelector({ value, onChange }) {
               fontWeight: 600,
               textTransform: "uppercase",
               letterSpacing: "0.5px",
-              mb: 1,
+              mb: 2,
             }}
           >
             {t("datasets:label.colorscaleMode")}
@@ -218,19 +218,19 @@ export default function ColorscaleSelector({ value, onChange }) {
               {t("datasets:label.colorStops")}
             </Typography>
             {localArray.length < 2 && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
+              <Alert severity="warning" sx={{ mb: 4 }}>
                 {t("datasets:label.atLeastTwoColorStopsRequired")}
               </Alert>
             )}
             {localArray.length >= 2 &&
               (localArray[0][0] !== 0 ||
                 localArray[localArray.length - 1][0] !== 1) && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
+                <Alert severity="warning" sx={{ mb: 4 }}>
                   {t("datasets:label.firstLastStopsAtExtremes")}
                 </Alert>
               )}
 
-            <Stack spacing={2}>
+            <Stack spacing={4}>
               {localArray.map((item, i) => (
                 <Card
                   key={i}
@@ -251,10 +251,10 @@ export default function ColorscaleSelector({ value, onChange }) {
                     },
                   }}
                 >
-                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                  <CardContent sx={{ p: 4, "&:last-child": { pb: 4 } }}>
                     <Stack
                       direction="row"
-                      spacing={2}
+                      spacing={4}
                       alignItems="center"
                       sx={{ width: "100%" }}
                     >

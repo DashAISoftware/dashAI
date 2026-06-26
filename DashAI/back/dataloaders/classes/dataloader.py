@@ -16,19 +16,64 @@ if TYPE_CHECKING:
 
 
 class BaseDataLoader(ConfigObject):
-    """Abstract class with base methods for DashAI dataloaders."""
+    """Abstract class with base methods for DashAI dataloaders.
+
+    Subclasses that handle self-describing formats (formats whose files carry
+    explicit column-type metadata, e.g. ARFF, Parquet, Feather) may set
+    ``SUPPORTS_NATIVE_TYPES = True`` and implement ``extract_native_types``
+    to expose those native types directly, bypassing statistical type
+    inference. Subclasses may also declare a ``NATIVE_TYPE_MAPPING`` class
+    attribute as a convenient lookup from format-specific type names to
+    DashAI type dicts (the same shape produced by ``DashAIPtype.infer_types``).
+    """
 
     TYPE: Final[str] = "DataLoader"
     CATEGORY: Final = MultilingualString(
         en="File Uploading",
         es="Carga de Archivos",
+        pt="Carregamento de Arquivos",
+        de="Datei-Upload",
+        zh="文件上传",
     )
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset()
+    SUPPORTS_NATIVE_TYPES: bool = False
+    NATIVE_TYPE_MAPPING: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         return {
             "category": cls.CATEGORY if cls.CATEGORY else "File Uploading",
+            "supported_extensions": sorted(cls.SUPPORTED_EXTENSIONS),
+            "supports_native_types": cls.SUPPORTS_NATIVE_TYPES,
         }
+
+    def extract_native_types(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+    ) -> Dict[str, Dict[str, Any]] | None:
+        """Extract column types from the file's own metadata, if available.
+
+        Default implementation returns ``None``, meaning the format does not
+        carry native type info. Subclasses for self-describing formats
+        override this and return one entry per column with the same dict
+        shape produced by ``DashAIPtype.infer_types`` (keys: ``type``,
+        ``dtype``, plus ``categories``/``encoder`` for ``Categorical``).
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to the file already prepared on disk (post-ZIP extraction).
+        params : Dict[str, Any]
+            Dataloader parameters, same dict that ``load_preview`` receives.
+
+        Returns
+        -------
+        Dict[str, Dict[str, Any]] | None
+            Column name -> DashAI type dict, or ``None`` if the format does
+            not provide native types.
+        """
+        return None
 
     @abstractmethod
     def load_data(
@@ -95,7 +140,7 @@ class BaseDataLoader(ConfigObject):
         Downloads and extracts remote URLs via ``DownloadManager``, extracts
         ZIP archives to a temporary directory, or returns local file paths
         unchanged. The returned tuple distinguishes between directory results
-        (multi-file or extracted archives) and single-file results.
+        (multifile or extracted archives) and single-file results.
 
         Parameters
         ----------

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
@@ -9,9 +9,13 @@ import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
-import { generateSequentialName } from "../../utils/nameGenerator";
+import {
+  generateSequentialName,
+  getNextAvailableName,
+} from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
+import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 
 function CreateSessionSteps({
   backHome,
@@ -50,7 +54,14 @@ function CreateSessionSteps({
 
   const handleDatasetChange = (newDataset) => {
     setSelectedDataset(newDataset);
-    setNewExp((prev) => ({ ...prev, dataset: newDataset }));
+    setNextEnabled(false);
+    setNewExp((prev) => ({
+      ...prev,
+      dataset: newDataset,
+      input_columns: [],
+      output_columns: [],
+      splits: {},
+    }));
     if (
       tourContext?.run &&
       tourContext?.stepIndex === 5 &&
@@ -116,7 +127,7 @@ function CreateSessionSteps({
           height: "100%",
           justifyContent: "center",
           alignItems: "center",
-          p: 2,
+          p: 4,
         }}
       >
         <Typography variant="body2" color="text.secondary" textAlign="center">
@@ -127,29 +138,8 @@ function CreateSessionSteps({
     return () => setSessionRightContent(null);
   }, [selectedDataset]);
 
-  const getNameError = () => {
-    const currentName = formik.values.name.trim();
-    if (!currentName || currentName.length < 4) {
-      return null;
-    }
-
-    const nameExists = existingSessions.some(
-      (session) =>
-        session.name &&
-        session.name.toLowerCase() === currentName.toLowerCase(),
-    );
-    if (nameExists) {
-      return t("models:error.sessionNameExists");
-    }
-
-    return null;
-  };
-
-  const nameError = getNameError();
-
   const isNextEnabled =
     formik.values.name.trim().length >= 4 &&
-    !nameError &&
     selectedDataset !== null &&
     nextEnabled;
 
@@ -176,17 +166,39 @@ function CreateSessionSteps({
       const hasTest =
         newExp.splits.test !== undefined && newExp.splits.test !== 0;
 
-      const response = await createModelSession(
-        selectedDataset.id,
-        selectedTask?.name || newExp.task_name,
-        sessionName,
-        newExp.input_columns,
-        newExp.output_columns,
-        hasTrain ? allMetricNames : [],
-        hasValidation ? allMetricNames : [],
-        hasTest ? allMetricNames : [],
-        JSON.stringify(newExp.splits),
-      );
+      let effectiveName = sessionName;
+      let response;
+      try {
+        response = await createModelSession(
+          selectedDataset.id,
+          selectedTask?.name || newExp.task_name,
+          effectiveName,
+          newExp.input_columns,
+          newExp.output_columns,
+          hasTrain ? allMetricNames : [],
+          hasValidation ? allMetricNames : [],
+          hasTest ? allMetricNames : [],
+          JSON.stringify(newExp.splits),
+        );
+      } catch (createError) {
+        if (createError?.response?.status === 409) {
+          effectiveName = getNextAvailableName(effectiveName, existingSessions);
+          formik.setFieldValue("name", effectiveName);
+          response = await createModelSession(
+            selectedDataset.id,
+            selectedTask?.name || newExp.task_name,
+            effectiveName,
+            newExp.input_columns,
+            newExp.output_columns,
+            hasTrain ? allMetricNames : [],
+            hasValidation ? allMetricNames : [],
+            hasTest ? allMetricNames : [],
+            JSON.stringify(newExp.splits),
+          );
+        } else {
+          throw createError;
+        }
+      }
 
       enqueueSnackbar(t("models:message.sessionCreatedSuccess"), {
         variant: "success",
@@ -219,7 +231,7 @@ function CreateSessionSteps({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 4 }}>
         <Typography variant="h5" component="h1">
           {t("models:label.prepareDataset")}
         </Typography>
@@ -233,13 +245,13 @@ function CreateSessionSteps({
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
-          pt: 1,
+          pt: 2,
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 4,
         }}
       >
-        <SetNameAndDatasetStep formik={formik} nameError={nameError} />
+        <SetNameAndDatasetStep formik={formik} />
         <DatasetAutocomplete
           datasets={datasets}
           selectedDataset={selectedDataset}
@@ -247,6 +259,7 @@ function CreateSessionSteps({
         />
         {selectedDataset && (
           <PrepareDatasetStep
+            key={selectedDataset.id}
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
@@ -255,30 +268,13 @@ function CreateSessionSteps({
         )}
       </Box>
 
-      <Box
-        sx={{
-          mt: 2,
-          pt: 2,
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 1,
-        }}
-      >
-        <Button variant="outlined" onClick={backHome}>
-          {t("common:back")}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={formik.handleSubmit}
-          disabled={!isNextEnabled}
-          data-tour="models-next-button"
-        >
-          {t("models:button.createSession")}
-        </Button>
-      </Box>
+      <StepperNavigationFooter
+        onBack={backHome}
+        onNext={formik.handleSubmit}
+        nextDisabled={!isNextEnabled}
+        nextLabel={t("models:button.createSession")}
+        nextDataTour={tourContext?.run ? "models-next-button" : undefined}
+      />
     </Box>
   );
 }

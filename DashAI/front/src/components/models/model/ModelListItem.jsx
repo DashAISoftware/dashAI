@@ -3,6 +3,7 @@ import { Box, Typography, Tooltip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import HoverModelInfo from "./HoverModelInfo";
 import { ModelIcon } from "./ModelIcon";
+import { setCustomDragImage } from "../../../utils/dragImage";
 
 export default function ModelListItem({
   model,
@@ -58,6 +59,19 @@ export default function ModelListItem({
       >
         <Box
           key={model.id}
+          draggable={!disabled}
+          onDragStart={
+            !disabled
+              ? (e) => {
+                  e.dataTransfer.setData(
+                    "application/x-dashai-model",
+                    JSON.stringify(model),
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                  setCustomDragImage(e);
+                }
+              : undefined
+          }
           onMouseEnter={(e) => handleMouseEnter(e, model)}
           onMouseLeave={handleMouseLeave}
           onClick={disabled ? null : onClick}
@@ -65,14 +79,14 @@ export default function ModelListItem({
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
+            gap: 3,
+            p: 3,
             bgcolor: disabled
               ? theme.palette.ui.disabled
               : theme.palette.ui.box,
             border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1,
-            cursor: disabled ? "not-allowed" : "pointer",
+            cursor: disabled ? "not-allowed" : "grab",
             transition: "all 0.2s",
             opacity: disabled ? 0.5 : 1,
             filter: disabled ? "grayscale(0.6)" : "none",

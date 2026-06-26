@@ -201,3 +201,91 @@ def test_validate_columns_missing_column_in_spec_passes_when_unrestricted():
     explorer_info = _MockExplorerInfo([{"columnName": "missing_col"}])
     column_spec = {}  # no restrictions → passes regardless
     assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+# --- type_dtype_restrictions tests ---
+
+
+def test_type_dtype_restrictions_passes_allowed_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        type_dtype_restrictions={"Categorical": ["string", "bool", ""]},
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_num"}])
+    column_spec = {"cat_num": {"type": "Categorical", "dtype": "int64"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+def test_type_dtype_restrictions_passes_float_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        type_dtype_restrictions={"Categorical": ["string", "bool", ""]},
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_num"}])
+    column_spec = {"cat_num": {"type": "Categorical", "dtype": "float64"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+def test_type_dtype_restrictions_blocks_string_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        type_dtype_restrictions={"Categorical": ["string", "bool", ""]},
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_str"}])
+    column_spec = {"cat_str": {"type": "Categorical", "dtype": "string"}}
+    assert cls.validate_columns(explorer_info, column_spec) is False
+
+
+def test_type_dtype_restrictions_blocks_bool_dtype():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        type_dtype_restrictions={"Categorical": ["string", "bool", ""]},
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_bool"}])
+    column_spec = {"cat_bool": {"type": "Categorical", "dtype": "bool"}}
+    assert cls.validate_columns(explorer_info, column_spec) is False
+
+
+def test_type_dtype_restrictions_absent_allows_string_categorical():
+    cls = _make_explorer(
+        allowed_types=[Float, Integer, Categorical],
+        allowed_dtypes=[],
+        input_cardinality={"min": 1},
+    )
+    explorer_info = _MockExplorerInfo([{"columnName": "cat_str"}])
+    column_spec = {"cat_str": {"type": "Categorical", "dtype": "string"}}
+    assert cls.validate_columns(explorer_info, column_spec) is True
+
+
+def test_get_metadata_includes_type_dtype_restrictions():
+    cls = _make_explorer(
+        allowed_types=[],
+        allowed_dtypes=[],
+        type_dtype_restrictions={"Categorical": ["string", "bool", ""]},
+    )
+    meta = cls.get_metadata()
+    assert meta["type_dtype_restrictions"] == {"Categorical": ["string", "bool", ""]}
+
+
+def test_get_metadata_type_dtype_restrictions_defaults_to_empty():
+    cls = _make_explorer(allowed_types=[], allowed_dtypes=[])
+    meta = cls.get_metadata()
+    assert meta["type_dtype_restrictions"] == {}
+
+
+def test_get_metadata_drops_numeric_categorical_only():
+    cls = _make_explorer(
+        allowed_types=[],
+        allowed_dtypes=[],
+        numeric_categorical_only=True,
+    )
+    meta = cls.get_metadata()
+    assert "numeric_categorical_only" not in meta

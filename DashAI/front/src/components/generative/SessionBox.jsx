@@ -25,7 +25,7 @@ export default function SessionBox({
         borderRadius: 1,
         cursor: isSelected ? "default" : "pointer",
         bgcolor: isSelected ? "action.selected" : "transparent",
-        p: 0.5,
+        p: 1,
         "&:hover": {
           backgroundColor: isSelected ? "action.selected" : "action.hover",
         },
@@ -53,7 +53,7 @@ export default function SessionBox({
             variant="body2"
             color="text.secondary"
             noWrap
-            sx={{ maxWidth: 150, pl: 1 }}
+            sx={{ maxWidth: 150, pl: 2 }}
           >
             {modelName}
           </Typography>

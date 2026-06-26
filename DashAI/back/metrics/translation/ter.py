@@ -3,8 +3,7 @@
 from typing import TYPE_CHECKING
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.metrics.base_metric import prepare_to_metric
-from DashAI.back.metrics.translation_metric import TranslationMetric
+from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
 
 if TYPE_CHECKING:
     import numpy as np
@@ -20,7 +19,7 @@ class Ter(TranslationMetric):
 
     References
     ----------
-    - [1] https://huggingface.co/spaces/evaluate-metric/ter
+    - [1] https://lightning.ai/docs/torchmetrics/stable/text/translation_edit_rate.html
     """
 
     MAXIMIZE: bool = False
@@ -34,6 +33,17 @@ class Ter(TranslationMetric):
             "necesarias para transformar la salida del sistema "
             "en una de las referencias."
         ),
+        pt=(
+            "TER (Translation Edit Rate) mede o número de edições "
+            "necessárias para transformar a saída do sistema "
+            "em uma das referências."
+        ),
+        de=(
+            "TER (Translation Edit Rate) misst die Anzahl der Bearbeitungen, "
+            "die erforderlich sind, um eine Systemausgabe in eine der Referenzen "
+            "umzuwandeln."
+        ),
+        zh="TER（翻译编辑率）衡量将系统输出转换为参考译文之一所需的编辑次数。",
     )
 
     @staticmethod
@@ -55,12 +65,17 @@ class Ter(TranslationMetric):
         float
             The calculated score.
         """
-        import evaluate
+        from torchmetrics.text.ter import TranslationEditRate
 
-        metric = evaluate.load("ter")
+        ter_metric = TranslationEditRate()
         source_sentences, target_sentences = prepare_to_metric(
-            source_sentences, target_sentences, "Ter"
+            source_sentences, target_sentences
         )
-        return metric.compute(
-            references=source_sentences, predictions=target_sentences
-        )["score"]
+        return (
+            ter_metric(
+                target_sentences,
+                source_sentences,
+            )
+            .numpy()
+            .item()
+        )

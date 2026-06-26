@@ -7,7 +7,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
@@ -54,8 +53,28 @@ class SGDClassifierSchema(BaseSchema):
                 "'squared_hinge' es como hinge pero penalizado cuadráticamente; "
                 "'perceptron' es la pérdida lineal usada por el algoritmo perceptrón."
             ),
+            pt=(
+                "A função de perda a usar. 'hinge' dá um SVM linear; 'log_loss' "
+                "dá regressão logística; 'modified_huber' é mais suave; "
+                "'squared_hinge' é como hinge mas penalizado quadraticamente; "
+                "'perceptron' é a perda linear usada pelo algoritmo perceptron."
+            ),
+            de=(
+                "Die zu verwendende Verlustfunktion. 'hinge' ergibt ein lineares SVM; "
+                "'log_loss' "
+                "ergibt logistische Regression; 'modified_huber' ist glatter; "
+                "'squared_hinge' ist wie hinge aber quadratisch bestraft; "
+                "'perceptron' ist der lineare Verlust des Perceptron-Algorithmus."
+            ),
+            zh=(
+                "使用的损失函数。'hinge'给出线性SVM；'log_loss'给出逻辑回归；"
+                "'modified_huber'更平滑；'squared_hinge'类似hinge但使用二次惩罚；"
+                "'perceptron'是感知机算法使用的线性损失。"
+            ),
         ),
-        alias=MultilingualString(en="Loss", es="Pérdida"),
+        alias=MultilingualString(
+            en="Loss", es="Pérdida", pt="Perda", de="Verlustfunktion", zh="损失函数"
+        ),
     )  # type: ignore
 
     alpha: schema_field(
@@ -75,8 +94,19 @@ class SGDClassifierSchema(BaseSchema):
                 "Parámetro de regularización. Valores más altos resultan en "
                 "regularización más fuerte."
             ),
+            pt=(
+                "Parâmetro de regularização. Valores mais altos resultam em "
+                "regularização mais forte."
+            ),
+            de=(
+                "Regularisierungsparameter. Höhere Werte führen zu stärkerer "
+                "Regularisierung."
+            ),
+            zh="正则化参数。值越大，正则化越强。",
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa"),
+        alias=MultilingualString(
+            en="Alpha", es="Alfa", pt="Alfa", de="Alpha", zh="Alpha"
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -90,8 +120,17 @@ class SGDClassifierSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum number of passes over the training data (epochs).",
             es="El número máximo de pasadas sobre los datos de entrenamiento (épocas).",
+            pt="O número máximo de passagens sobre os dados de treinamento (épocas).",
+            de="Die maximale Anzahl von Durchläufen über die Trainingsdaten (Epochen).",
+            zh="对训练数据的最大遍历次数（轮次）。",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Iterações máximas",
+            de="Maximale Iterationen",
+            zh="最大迭代次数",
+        ),
     )  # type: ignore
 
     tol: schema_field(
@@ -108,8 +147,19 @@ class SGDClassifierSchema(BaseSchema):
                 "El criterio de parada. El entrenamiento se detiene cuando "
                 "pérdida > mejor_pérdida - tol."
             ),
+            pt=(
+                "O critério de parada. O treinamento para quando "
+                "perda > melhor_perda - tol."
+            ),
+            de=(
+                "Das Abbruchkriterium. Das Training stoppt, wenn Verlust > "
+                "bester_Verlust - tol."
+            ),
+            zh="停止准则。当损失 > 最优损失 - tol 时训练停止。",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
+        ),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -127,12 +177,33 @@ class SGDClassifierSchema(BaseSchema):
                 "'invscaling' decrece como 1/t^power; 'adaptive' reduce a la "
                 "mitad la tasa cuando el entrenamiento deja de mejorar."
             ),
+            pt=(
+                "O esquema de taxa de aprendizado. 'optimal' usa "
+                "1/(alpha*(t+t0)); 'constant' mantém eta0 constante; "
+                "'invscaling' decresce como 1/t^power; 'adaptive' reduz à "
+                "metade a taxa quando o treinamento para de melhorar."
+            ),
+            de=(
+                "Der Lernraten-Zeitplan. 'optimal' verwendet 1/(alpha*(t+t0)); "
+                "'constant' hält eta0 konstant; 'invscaling' sinkt als "
+                "1/t^power; 'adaptive' halbiert die Rate, wenn das Training stagniert."
+            ),
+            zh=(
+                "学习率调度方案。'optimal'使用1/(alpha*(t+t0))；'constant'保持eta0不变；"
+                "'invscaling'按1/t^power递减；'adaptive'在训练停滞时将学习率减半。"
+            ),
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
+            zh="学习率",
+        ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -143,8 +214,27 @@ class SGDClassifierSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int "
+                "para saída reproduzível, ou None para não definir uma semente."
+            ),
+            de=(
+                "Der Startwert des Pseudo-Zufallszahlengenerators. Übergeben Sie eine "
+                "ganze Zahl für reproduzierbare Ausgaben oder None für keinen "
+                "bestimmten Startwert."
+            ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "传入None则不设置特定种子。"
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
 
@@ -169,10 +259,16 @@ class SGDClassifier(TabularClassificationModel, SklearnLikeClassifier, _SGDClass
     DISPLAY_NAME: str = MultilingualString(
         en="SGD Classifier",
         es="Clasificador SGD",
+        pt="Classificador SGD",
+        de="SGD-Klassifikator",
+        zh="随机梯度下降分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear classifier trained with stochastic gradient descent.",
         es="Clasificador lineal entrenado con descenso de gradiente estocástico.",
+        pt="Classificador linear treinado com descida de gradiente estocástico.",
+        de="Linearer Klassifikator, trainiert mit stochastischem Gradientenabstieg.",
+        zh="使用随机梯度下降训练的线性分类器。",
     )
     COLOR: str = "#78909C"
     ICON: str = "TrendingDown"

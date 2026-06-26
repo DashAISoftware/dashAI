@@ -67,16 +67,16 @@ function SelectDataloaderStep({ newDataset, setNewDataset, setNextEnabled }) {
       direction="column"
       justifyContent="space-around"
       alignItems="stretch"
-      spacing={2}
+      spacing={4}
     >
       {/* Title */}
       <Grid>
         <Typography
-          sx={{ mb: 3 }}
+          sx={{ mb: 6 }}
         >{`Select a way to upload your data`}</Typography>
         {/* General information about supported formats */}
 
-        <Typography variant="subtitle2" sx={{ mb: 2 }} color="text.secondary">
+        <Typography variant="subtitle2" sx={{ mb: 4 }} color="text.secondary">
           <strong>Supported formats:</strong>
           <br />
           • Single files: Upload individual data files

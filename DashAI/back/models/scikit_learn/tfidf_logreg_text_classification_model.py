@@ -28,8 +28,17 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum n-gram size for the TF-IDF vectorizer (≥ 1).",
             es="Tamaño mínimo de n-grama para el vectorizador TF-IDF (≥ 1).",
+            pt="Tamanho mínimo de n-grama para o vetorizador TF-IDF (≥ 1).",
+            de="Minimale N-Gramm-Größe für den TF-IDF-Tokenisierer (≥ 1).",
+            zh="TF-IDF 向量化器的最小 n-gram 大小（≥ 1）。",
         ),
-        alias=MultilingualString(en="Min n-gram", es="N-grama mínimo"),
+        alias=MultilingualString(
+            en="Min n-gram",
+            es="N-grama mínimo",
+            pt="N-grama mínimo",
+            de="Minimales N-Gramm",
+            zh="最小 n-gram",
+        ),
     )  # type: ignore
     ngram_max_n: schema_field(
         int_field(ge=1),
@@ -37,8 +46,17 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum n-gram size for the TF-IDF vectorizer (≥ 1).",
             es="Tamaño máximo de n-grama para el vectorizador TF-IDF (≥ 1).",
+            pt="Tamanho máximo de n-grama para o vetorizador TF-IDF (≥ 1).",
+            de="Maximale N-Gramm-Größe für den TF-IDF-Tokenisierer (≥ 1).",
+            zh="TF-IDF 向量化器的最大 n-gram 大小（≥ 1）。",
         ),
-        alias=MultilingualString(en="Max n-gram", es="N-grama máximo"),
+        alias=MultilingualString(
+            en="Max n-gram",
+            es="N-grama máximo",
+            pt="N-grama máximo",
+            de="Maximales N-Gramm",
+            zh="最大 n-gram",
+        ),
     )  # type: ignore
     use_idf: schema_field(
         bool_field(),
@@ -46,8 +64,17 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
         description=MultilingualString(
             en="Enable inverse-document-frequency re-weighting.",
             es="Activar re-ponderación por frecuencia inversa de documento.",
+            pt="Ativar re-ponderação por frequência inversa de documento.",
+            de="Inverse-Dokumenten-Häufigkeits-Neugewichtung aktivieren.",
+            zh="启用逆文档频率重加权。",
         ),
-        alias=MultilingualString(en="Use IDF", es="Usar IDF"),
+        alias=MultilingualString(
+            en="Use IDF",
+            es="Usar IDF",
+            pt="Usar IDF",
+            de="IDF verwenden",
+            zh="使用 IDF",
+        ),
     )  # type: ignore
     sublinear_tf: schema_field(
         bool_field(),
@@ -55,8 +82,19 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
         description=MultilingualString(
             en=("Apply sublinear TF scaling (replace TF with 1 + log(TF))."),
             es=("Aplicar escalado sublineal de TF (reemplazar TF con 1 + log(TF))."),
+            pt=(
+                "Aplicar escalonamento sublinear de TF (substituir TF por 1 + log(TF))."
+            ),
+            de=("Sublineare TF-Skalierung anwenden (TF durch 1 + log(TF) ersetzen)."),
+            zh="应用次线性 TF 缩放（将 TF 替换为 1 + log(TF)）。",
         ),
-        alias=MultilingualString(en="Sublinear TF", es="TF sublineal"),
+        alias=MultilingualString(
+            en="Sublinear TF",
+            es="TF sublineal",
+            pt="TF sublinear",
+            de="Sublineares TF",
+            zh="次线性 TF",
+        ),
     )  # type: ignore
     C: schema_field(
         float_field(gt=0.0),
@@ -70,8 +108,23 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
                 "Parámetro de regularización para regresión logística. "
                 "Valores más pequeños significan mayor regularización."
             ),
+            pt=(
+                "Parâmetro de regularização para regressão logística. "
+                "Valores menores significam regularização mais forte."
+            ),
+            de=(
+                "Regularisierungsparameter für die Logistische Regression. "
+                "Kleinere Werte bedeuten stärkere Regularisierung."
+            ),
+            zh="逻辑回归的正则化参数。值越小，正则化越强。",
         ),
-        alias=MultilingualString(en="C (Regularization)", es="C (Regularización)"),
+        alias=MultilingualString(
+            en="C (Regularization)",
+            es="C (Regularización)",
+            pt="C (Regularização)",
+            de="C (Regularisierung)",
+            zh="C（正则化）",
+        ),
     )  # type: ignore
     max_iter: schema_field(
         int_field(ge=100),
@@ -79,8 +132,17 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of iterations for the logistic regression solver.",
             es=("Número máximo de iteraciones para el solver de regresión logística."),
+            pt="Número máximo de iterações para o solucionador de regressão logística.",
+            de="Maximale Iterationen für den Löser der Logistischen Regression.",
+            zh="逻辑回归求解器的最大迭代次数。",
         ),
-        alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Iteraciones máximas",
+            pt="Iterações máximas",
+            de="Maximale Iterationen",
+            zh="最大迭代次数",
+        ),
     )  # type: ignore
     solver: schema_field(
         enum_field(["lbfgs", "liblinear", "saga"]),
@@ -88,8 +150,13 @@ class TfIdfLogRegTextClassificationModelSchema(BaseSchema):
         description=MultilingualString(
             en="Optimization algorithm for logistic regression.",
             es="Algoritmo de optimización para regresión logística.",
+            pt="Algoritmo de otimização para regressão logística.",
+            de="Optimierungsalgorithmus für die Logistische Regression.",
+            zh="逻辑回归的优化算法。",
         ),
-        alias=MultilingualString(en="Solver", es="Solver"),
+        alias=MultilingualString(
+            en="Solver", es="Solver", pt="Solver", de="Löser", zh="求解器"
+        ),
     )  # type: ignore
 
 
@@ -111,6 +178,9 @@ class TfIdfLogRegTextClassificationModel(TextClassificationModel):
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF + Logistic Regression",
         es="TF-IDF + Regresión Logística",
+        pt="TF-IDF + Regressão Logística",
+        de="TF-IDF + Logistische Regression",
+        zh="TF-IDF + 逻辑回归",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -121,6 +191,15 @@ class TfIdfLogRegTextClassificationModel(TextClassificationModel):
             "Vectorizador TF-IDF combinado con regresión logística "
             "para clasificación de texto."
         ),
+        pt=(
+            "Vetorizador TF-IDF combinado com regressão logística "
+            "para classificação de texto."
+        ),
+        de=(
+            "TF-IDF-Tokenisierer kombiniert mit Logistischer Regression "
+            "für Textklassifikation."
+        ),
+        zh="TF-IDF 向量化器与逻辑回归结合进行文本分类。",
     )
     COLOR: str = "#00695C"
     ICON: str = "Article"

@@ -48,6 +48,15 @@ class F1(ClassificationMetric):
             "Media armónica de precisión y exhaustividad, "
             "útil para tareas de clasificación desbalanceadas."
         ),
+        pt=(
+            "Média harmônica de precisão e revocação, "
+            "útil para tarefas de classificação desbalanceadas."
+        ),
+        de=(
+            "Harmonisches Mittel von Präzision und Trefferquote, "
+            "nützlich für unausgewogene Klassifikationsaufgaben."
+        ),
+        zh=("精确率和召回率的调和平均值，对不均衡分类任务非常有用。"),
     )
 
     @staticmethod

@@ -45,8 +45,30 @@ class ExcelDataloaderSchema(BaseSchema):
                 "la hoja en el índice correspondiente. Por defecto, se leerá la "
                 "primera hoja."
             ),
+            pt=(
+                "O nome da planilha a ser lida ou seu índice baseado em zero. "
+                "Se uma string for fornecida, o leitor buscará uma planilha com esse "
+                "nome exato. Se um inteiro for fornecido, o leitor selecionará a "
+                "planilha no índice correspondente. Por padrão, a primeira planilha "
+                "será lida."
+            ),
+            de=(
+                "Der Name des zu lesenden Tabellenblatts oder sein nullbasierter Index."
+                "Wenn eine Zeichenkette angegeben wird, sucht der Leser nach einem "
+                "Blatt "
+                "mit genau diesem Namen. Wenn eine Ganzzahl angegeben wird, wählt der "
+                "Leser das Blatt am entsprechenden Index aus. Standardmäßig wird das "
+                "erste Blatt gelesen."
+            ),
+            zh=(
+                "要读取的工作表名称或其从零开始的索引。"
+                "如果提供字符串，读取器将搜索同名工作表。"
+                "如果提供整数，读取器将选择对应索引的工作表。默认读取第一个工作表。"
+            ),
         ),
-        alias=MultilingualString(en="Sheet", es="Hoja"),
+        alias=MultilingualString(
+            en="Sheet", es="Hoja", pt="Planilha", de="Tabellenblatt", zh="工作表"
+        ),
     )  # type: ignore
     header: schema_field(
         none_type(int_field(ge=0)),
@@ -61,8 +83,20 @@ class ExcelDataloaderSchema(BaseSchema):
                 "indexado desde 0. Si es null, se considerará que el archivo no "
                 "tiene nombres de columna."
             ),
+            pt=(
+                "O número da linha onde os nomes de coluna estão localizados, "
+                "indexado a partir de 0. Se nulo, o arquivo será considerado sem "
+                "nomes de coluna."
+            ),
+            de=(
+                "Die Zeilennummer, in der sich die Spaltennamen befinden, nullbasiert. "
+                "Wenn null, wird angenommen, dass die Datei keine Spaltennamen hat."
+            ),
+            zh="列名所在的行号，从0开始索引。如果为null，则认为文件没有列名。",
         ),
-        alias=MultilingualString(en="Header", es="Encabezado"),
+        alias=MultilingualString(
+            en="Header", es="Encabezado", pt="Cabeçalho", de="Kopfzeile", zh="标题行"
+        ),
     )  # type: ignore
     usecols: schema_field(
         none_type(string_field()),
@@ -79,8 +113,29 @@ class ExcelDataloaderSchema(BaseSchema):
                 'de columna (ej. "A:E" o "A,C,E:F"). Los rangos son inclusivos en '
                 "ambos lados."
             ),
+            pt=(
+                "Se None, o leitor carregará todas as colunas. Se str, indica uma "
+                "lista separada por vírgulas de letras de coluna do Excel e intervalos "
+                'de coluna (ex. "A:E" ou "A,C,E:F"). Os intervalos são inclusivos em '
+                "ambos os lados."
+            ),
+            de=(
+                "Wenn None, lädt der Leser alle Spalten. Wenn str, gibt eine "
+                "kommagetrennte Liste von Excel-Spaltenbuchstaben und -bereichen an "
+                '(z.B. "A:E" oder "A,C,E:F"). Bereiche sind auf beiden Seiten inklusiv.'
+            ),
+            zh=(
+                "如果为None，读取器将加载所有列。如果为字符串，则指定Excel列字母和列范围的"
+                '逗号分隔列表（例如"A:E"或"A,C,E:F"）。范围两端均包含。'
+            ),
         ),
-        alias=MultilingualString(en="Use columns", es="Usar columnas"),
+        alias=MultilingualString(
+            en="Use columns",
+            es="Usar columnas",
+            pt="Usar colunas",
+            de="Spalten verwenden",
+            zh="使用列",
+        ),
     )  # type: ignore
 
     skiprows: schema_field(
@@ -95,8 +150,23 @@ class ExcelDataloaderSchema(BaseSchema):
                 "Número de filas a omitir al inicio del archivo. "
                 "Deje vacío para no omitir ninguna fila."
             ),
+            pt=(
+                "Número de linhas a pular no início do arquivo. "
+                "Deixe vazio para não pular nenhuma linha."
+            ),
+            de=(
+                "Anzahl der am Anfang der Datei zu überspringenden Zeilen. "
+                "Leer lassen, um keine Zeilen zu überspringen."
+            ),
+            zh="文件开头要跳过的行数。留空则不跳过任何行。",
         ),
-        alias=MultilingualString(en="Skip rows", es="Omitir filas"),
+        alias=MultilingualString(
+            en="Skip rows",
+            es="Omitir filas",
+            pt="Pular linhas",
+            de="Zeilen überspringen",
+            zh="跳过行",
+        ),
     )  # type: ignore
 
     nrows: schema_field(
@@ -105,8 +175,13 @@ class ExcelDataloaderSchema(BaseSchema):
         description=MultilingualString(
             en="Number of rows to read. Leave empty to read all rows.",
             es="Número de filas a leer. Deje vacío para leer todas las filas.",
+            pt="Número de linhas a ler. Deixe vazio para ler todas as linhas.",
+            de="Anzahl der zu lesenden Zeilen. Leer lassen, um alle Zeilen zu lesen.",
+            zh="要读取的行数。留空则读取所有行。",
         ),
-        alias=MultilingualString(en="N rows", es="N filas"),
+        alias=MultilingualString(
+            en="N rows", es="N filas", pt="N linhas", de="Anzahl Zeilen", zh="行数"
+        ),
     )  # type: ignore
 
     names: schema_field(
@@ -122,8 +197,21 @@ class ExcelDataloaderSchema(BaseSchema):
                 "Ejemplo: 'col1,col2,col3'. Deje vacío para usar la fila de "
                 "encabezado."
             ),
+            pt=(
+                "Lista de nomes de coluna separados por vírgulas. "
+                "Exemplo: 'col1,col2,col3'. Deixe vazio para usar a linha de "
+                "cabeçalho."
+            ),
+            de=(
+                "Kommagetrennte Liste der zu verwendenden Spaltennamen. "
+                "Beispiel: 'col1,col2,col3'. Leer lassen, um die Kopfzeile zu "
+                "verwenden."
+            ),
+            zh="要使用的列名逗号分隔列表。示例：'col1,col2,col3'。留空则使用标题行。",
         ),
-        alias=MultilingualString(en="Names", es="Nombres"),
+        alias=MultilingualString(
+            en="Names", es="Nombres", pt="Nomes", de="Namen", zh="列名"
+        ),
     )  # type: ignore
 
     na_values: schema_field(
@@ -138,8 +226,24 @@ class ExcelDataloaderSchema(BaseSchema):
                 "Cadenas adicionales separadas por comas para reconocer como NA/NaN. "
                 "Ejemplo: 'NA,N/A,null'."
             ),
+            pt=(
+                "Strings adicionais separadas por vírgulas para reconhecer "
+                "como NA/NaN. Exemplo: 'NA,N/A,null'."
+            ),
+            de=(
+                "Kommagetrennte zusätzliche Zeichenketten, die als NA/NaN erkannt "
+                "werden. "
+                "Beispiel: 'NA,N/A,null'."
+            ),
+            zh="识别为NA/NaN的逗号分隔附加字符串。示例：'NA,N/A,null'",
         ),
-        alias=MultilingualString(en="NA values", es="Valores NA"),
+        alias=MultilingualString(
+            en="NA values",
+            es="Valores NA",
+            pt="Valores ausentes",
+            de="NA-Werte",
+            zh="NA值",
+        ),
     )  # type: ignore
 
     keep_default_na: schema_field(
@@ -151,8 +255,20 @@ class ExcelDataloaderSchema(BaseSchema):
                 "Si se deben incluir los valores NaN predeterminados al analizar los "
                 "datos."
             ),
+            pt=("Se os valores NaN padrão devem ser incluídos ao analisar os dados."),
+            de=(
+                "Ob die Standard-NaN-Werte beim Parsen der Daten einbezogen werden "
+                "sollen."
+            ),
+            zh="解析数据时是否包含默认的NaN值。",
         ),
-        alias=MultilingualString(en="Keep default NA", es="Mantener NA predeterminado"),
+        alias=MultilingualString(
+            en="Keep default NA",
+            es="Mantener NA predeterminado",
+            pt="Manter NA padrão",
+            de="Standard-NA behalten",
+            zh="保留默认NA值",
+        ),
     )  # type: ignore
 
     true_values: schema_field(
@@ -164,8 +280,23 @@ class ExcelDataloaderSchema(BaseSchema):
                 "Valores separados por comas a considerar como True. "
                 "Ejemplo: 'yes,true,1'."
             ),
+            pt=(
+                "Valores separados por vírgulas a considerar como True. "
+                "Exemplo: 'yes,true,1'."
+            ),
+            de=(
+                "Kommagetrennte Werte, die als True betrachtet werden. "
+                "Beispiel: 'yes,true,1'."
+            ),
+            zh="视为True的逗号分隔值。示例：'yes,true,1'",
         ),
-        alias=MultilingualString(en="True values", es="Valores verdaderos"),
+        alias=MultilingualString(
+            en="True values",
+            es="Valores verdaderos",
+            pt="Valores verdadeiros",
+            de="Wahr-Werte",
+            zh="True值",
+        ),
     )  # type: ignore
 
     false_values: schema_field(
@@ -177,8 +308,23 @@ class ExcelDataloaderSchema(BaseSchema):
                 "Valores separados por comas a considerar como False. "
                 "Ejemplo: 'no,false,0'."
             ),
+            pt=(
+                "Valores separados por vírgulas a considerar como False. "
+                "Exemplo: 'no,false,0'."
+            ),
+            de=(
+                "Kommagetrennte Werte, die als False betrachtet werden. "
+                "Beispiel: 'no,false,0'."
+            ),
+            zh="视为False的逗号分隔值。示例：'no,false,0'",
         ),
-        alias=MultilingualString(en="False values", es="Valores falsos"),
+        alias=MultilingualString(
+            en="False values",
+            es="Valores falsos",
+            pt="Valores falsos",
+            de="Falsch-Werte",
+            zh="False值",
+        ),
     )  # type: ignore
 
 
@@ -191,9 +337,10 @@ class ExcelDataLoader(BaseDataLoader):
     normalising the schema parameters (sheet name/index, header row, column
     selection, row limits).
 
-    Handles multi-file uploads by concatenating all workbooks before splitting.
+    Handles multifile uploads by concatenating all workbooks before splitting.
     """
 
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".xlsx", ".xls", ".zip"})
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ExcelDataloaderSchema
 
@@ -206,10 +353,25 @@ class ExcelDataLoader(BaseDataLoader):
             "Cargador de datos para datos tabulares en archivos Excel. "
             "Soporta extensiones de archivo xls, xlsx, xlsm, xlsb, odf, ods y odt."
         ),
+        pt=(
+            "Carregador de dados para dados tabulares em arquivos Excel. "
+            "Suporta extensões de arquivo xls, xlsx, xlsm, xlsb, odf, ods e odt."
+        ),
+        de=(
+            "Datenlader für tabellarische Daten in Excel-Dateien. "
+            "Unterstützt xls, xlsx, xlsm, xlsb, odf, ods und odt Dateierweiterungen."
+        ),
+        zh=(
+            "Excel文件表格数据加载器。"
+            "支持xls、xlsx、xlsm、xlsb、odf、ods和odt文件扩展名。"
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Excel Data Loader",
         es="Cargador de Datos Excel",
+        pt="Carregador de Dados Excel",
+        de="Excel Datenlader",
+        zh="Excel数据加载器",
     )
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:

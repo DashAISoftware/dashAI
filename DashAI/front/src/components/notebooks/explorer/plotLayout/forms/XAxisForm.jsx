@@ -33,7 +33,7 @@ export default function XAxisForm({
   const tickvalsArray = Array.isArray(data[0]?.x) ? data[0].x : [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Title */}
       <SectionLabel>
         {t("datasets:label.axisTitle", { axis: "X" })}
@@ -113,6 +113,22 @@ export default function XAxisForm({
             color,
           })
         }
+      />
+
+      <TextField
+        label={t("datasets:label.axisTickFontSize", { axis: "X" })}
+        variant="outlined"
+        size="small"
+        type="number"
+        value={layout.xaxis?.tickfont?.size ?? 12}
+        onChange={(e) =>
+          handleAxisChange("xaxis", "tickfont", {
+            ...layout.xaxis?.tickfont,
+            size: parseInt(e.target.value, 10) || 12,
+          })
+        }
+        fullWidth
+        slotProps={{ htmlInput: { min: 8, max: 72 } }}
       />
 
       <TextField

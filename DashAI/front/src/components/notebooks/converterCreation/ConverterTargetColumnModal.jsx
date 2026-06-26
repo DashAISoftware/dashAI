@@ -3,8 +3,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -20,6 +18,7 @@ import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
 import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 /**
  * Modal to select a class column for supervised learning
@@ -39,10 +38,8 @@ const ConverterTargetColumnModal = ({
   const [datasetColumns, setDatasetColumns] = useState([]);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t, i18n } = useTranslation(["common", "datasets"]);
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const { t } = useTranslation(["common", "datasets"]);
+  const localization = useTableLocalization();
 
   const columns = [
     {
@@ -158,7 +155,7 @@ const ConverterTargetColumnModal = ({
         variant="outlined"
         size="small"
         sx={{
-          mr: 1,
+          mr: 2,
           color: classColumnInitialValue === null ? "error.main" : "inherit",
           borderColor:
             classColumnInitialValue === null ? "error.main" : "inherit",
@@ -192,22 +189,22 @@ const ConverterTargetColumnModal = ({
               <IconButton onClick={() => setOpen(false)}>
                 <ArrowBackOutlined />
               </IconButton>
-              <Typography variant="h5" sx={{ ml: 2 }}>
+              <Typography variant="h5" sx={{ ml: 4 }}>
                 {t("datasets:button.setColumn")}
               </Typography>
             </Box>
           </DialogTitle>
           <DialogContent>
             <Box sx={{ height: "100%", width: "100%" }}>
-              <Stack spacing={4} sx={{ py: 2 }}>
+              <Stack spacing={8} sx={{ py: 4 }}>
                 <Box>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 4 }}>
                     {t("datasets:label.classTargetColumn")}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 4 }}
                   >
                     {t("datasets:label.selectTargetColumnDescription")}
                   </Typography>
@@ -216,8 +213,8 @@ const ConverterTargetColumnModal = ({
               </Stack>
             </Box>
           </DialogContent>
-          <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
-            <Button onClick={() => setOpen(false)} sx={{ mr: 2 }}>
+          <Box sx={{ p: 4, display: "flex", justifyContent: "flex-end" }}>
+            <Button onClick={() => setOpen(false)} sx={{ mr: 4 }}>
               {t("common:back")}
             </Button>
             <Button

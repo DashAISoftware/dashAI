@@ -1,4 +1,10 @@
-import React, { useCallback, useRef, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useState,
+  useMemo,
+  useEffect,
+} from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -14,6 +20,7 @@ import PreviewDataset from "./PreviewDataset";
 import { useSnackbar } from "notistack";
 import JSZip from "jszip";
 import { useTranslation } from "react-i18next";
+import { useTourContext } from "../../tour/TourProvider";
 
 /**
  * Renders a drag and drop to upload a file (dataset).
@@ -36,6 +43,7 @@ function Upload({
   onTypesChanged,
   onColumnRename,
   onPreviewLoaded,
+  onPreviewMetrics,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -44,6 +52,25 @@ function Upload({
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(initialFile);
   const inputRef = useRef(null);
+  const uploadGridRef = useRef(null);
+
+  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
+  const tourContext = useTourContext();
+
+  // Monitor upload-area size changes to recalculate tour positioning
+  useEffect(() => {
+    if (!uploadGridRef.current || !tourContext?.run) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Dispatch resize event to force Joyride to recalculate positioning
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    resizeObserver.observe(uploadGridRef.current);
+    return () => resizeObserver.disconnect();
+  }, [tourContext?.run]);
 
   const uploadDataset = async (file) => {
     setDatasetState(LOADING);
@@ -52,10 +79,6 @@ function Upload({
     setDatasetState(LOADED);
     setFile(file);
   };
-
-  const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["datasets", "common"]);
-  const theme = useTheme();
 
   // helper to extract allowed extensions from acceptAttr (returns lowercase extensions like ".csv")
   const getAllowedExtensions = (accept) => {
@@ -154,7 +177,7 @@ function Upload({
   };
 
   const handleSelect = async (e) => {
-    if (datasetState !== EMPTY) return;
+    if (datasetState !== EMPTY && datasetState !== LOADED) return;
 
     const f = e.target.files && e.target.files[0];
     if (!f) return;
@@ -225,14 +248,26 @@ function Upload({
     setFile(null);
   }, [onFileUpload]);
 
-  // memoize datasetData object so its reference stays stable across renders
+  // memoize datasetData object so its reference stays stable across renders.
+  // `compute_metadata` is intentionally stripped: it only affects the upload
+  // job, not the preview, so toggling it must not trigger a preview re-fetch.
   const datasetDataMemo = useMemo(() => {
+    let dataloaderName = selectedDataloader;
+    if (selectedDataloader && typeof selectedDataloader === "object") {
+      dataloaderName =
+        selectedDataloader.name || selectedDataloader.display_name || null;
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    const { compute_metadata, ...previewFormValues } = formValues || {};
+
     const params = {
-      ...formValues,
+      ...previewFormValues,
       inference_rows:
-        formValues && formValues.inference_rows != null
-          ? formValues.inference_rows
+        previewFormValues.inference_rows != null
+          ? previewFormValues.inference_rows
           : 1000,
+      ...(dataloaderName ? { dataloader_name: dataloaderName } : {}),
     };
 
     return {
@@ -244,20 +279,13 @@ function Upload({
   const acceptAttr = useMemo(() => {
     if (!selectedDataloader) return undefined;
 
-    let s = selectedDataloader;
-    if (typeof selectedDataloader === "object") {
-      s = selectedDataloader.name || selectedDataloader.display_name || "";
-    }
-    if (!s || typeof s !== "string") return undefined;
-    s = s.toLowerCase();
-    // CSV dataloader: accept .csv and .zip (zipped CSVs)
-    if (s.includes("csv")) return ".csv,.zip";
-    // JSON dataloader: accept .json and .zip
-    if (s.includes("json")) return ".json,.zip";
-    // Images or generic image loaders
-    if (s.includes("excel")) return ".xls,.xlsx,.zip";
-    // Default: no restriction
-    return undefined;
+    const extensions =
+      typeof selectedDataloader === "object"
+        ? selectedDataloader.metadata?.supported_extensions
+        : undefined;
+
+    if (!extensions || extensions.length === 0) return undefined;
+    return extensions.join(",");
   }, [selectedDataloader]);
 
   // renders content inside the drag and drop component depending on the state of the dataset
@@ -267,15 +295,6 @@ function Upload({
         case EMPTY:
           return (
             <React.Fragment>
-              <Grid>
-                <input
-                  type="file"
-                  ref={inputRef}
-                  style={{ display: "none" }}
-                  onChange={handleSelect}
-                  {...(acceptAttr ? { accept: acceptAttr } : {})}
-                />
-              </Grid>
               {dragActive ? (
                 <Grid>
                   <Typography
@@ -328,12 +347,13 @@ function Upload({
                 datasetData={datasetDataMemo}
                 onChangeDataset={(e) => {
                   e.stopPropagation();
-                  handleDeleteDataset();
+                  inputRef.current?.click();
                 }}
                 onPreviewError={onPreviewError}
                 onTypesChanged={onTypesChanged}
                 onColumnRename={onColumnRename}
                 onPreviewLoaded={onPreviewLoaded}
+                onPreviewMetrics={onPreviewMetrics}
               />
             </Box>
           );
@@ -353,13 +373,14 @@ function Upload({
 
   return (
     <Grid
+      ref={uploadGridRef}
       container
       direction="column"
-      rowSpacing={1}
+      rowSpacing={4}
       sx={{
         width: "100%",
         bgcolor: theme.palette.ui.box,
-        p: 2,
+        p: 8,
         borderRadius: 2,
       }}
       data-tour="upload-area"
@@ -377,6 +398,14 @@ function Upload({
           )}
         </Box>
       </Grid>
+
+      <input
+        type="file"
+        ref={inputRef}
+        style={{ display: "none" }}
+        onChange={handleSelect}
+        {...(acceptAttr ? { accept: acceptAttr } : {})}
+      />
 
       {/* Drag and drop */}
       <Grid sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
@@ -409,7 +438,7 @@ function Upload({
         >
           <Grid
             container
-            rowSpacing={1}
+            rowSpacing={4}
             direction="column"
             alignItems="center"
             justifyContent="center"
@@ -436,6 +465,9 @@ Upload.propTypes = {
   selectedDataloader: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
+  onColumnRename: PropTypes.func,
+  onPreviewLoaded: PropTypes.func,
+  onPreviewMetrics: PropTypes.func,
 };
 
 export default Upload;

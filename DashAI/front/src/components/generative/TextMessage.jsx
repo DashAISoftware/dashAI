@@ -20,7 +20,7 @@ export function TextMessage({ message, isError = false }) {
   return (
     <Box>
       <Typography
-        variant="body2"
+        variant="body1"
         component="div"
         color={isError ? "red" : "text.primary"}
       >

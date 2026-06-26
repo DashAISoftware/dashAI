@@ -22,10 +22,10 @@ export default function OptionBox({
     }
   }, [description]);
   const theme = useTheme();
-  const accent = theme.palette.accent.amber;
-  const accentDim = theme.palette.accent.amberDim;
-  const accentBorder = theme.palette.accent.amberBorder;
-  const accentGlow = theme.palette.accent.amberGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${theme.palette.primary.main}1F`;
+  const accentBorder = `${theme.palette.primary.main}38`;
+  const accentGlow = `${theme.palette.primary.main}0A`;
 
   return (
     <ButtonBase
@@ -33,7 +33,7 @@ export default function OptionBox({
       onClick={onClick}
       sx={{
         width: "100%",
-        height: 250,
+        height: { xs: 290, sm: 290, md: 260, lg: 250, xl: 250 },
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
@@ -94,7 +94,7 @@ export default function OptionBox({
 
       {/* Title */}
       <Typography
-        variant="h5"
+        variant="h4"
         sx={{
           color: theme.palette.text.primary,
           mb: "5px",
@@ -111,24 +111,24 @@ export default function OptionBox({
         enterDelay={300}
         placement="bottom"
       >
-        <Typography
-          ref={descRef}
-          variant="body1"
-          sx={{
-            fontWeight: 300,
-            color: theme.palette.text.secondary,
-            lineHeight: 1.65,
-            flexGrow: 1,
-            width: "100%",
-            display: "-webkit-box",
-            WebkitLineClamp: DESCRIPTION_MAX_LINES,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {description}
-        </Typography>
+        <Box sx={{ flexGrow: 1, overflow: "hidden", width: "100%" }}>
+          <Typography
+            ref={descRef}
+            variant="body1"
+            sx={{
+              fontWeight: 300,
+              color: theme.palette.text.secondary,
+              lineHeight: 1.65,
+              display: "-webkit-box",
+              WebkitLineClamp: DESCRIPTION_MAX_LINES,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {description}
+          </Typography>
+        </Box>
       </Tooltip>
 
       {/* Footer: chips + arrow */}
@@ -169,7 +169,7 @@ export default function OptionBox({
             color: theme.palette.text.disabled,
             transition: "color 0.15s, transform 0.15s",
             flexShrink: 0,
-            ml: 1,
+            ml: 2,
           }}
         >
           →

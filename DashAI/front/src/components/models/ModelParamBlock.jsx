@@ -67,7 +67,7 @@ function ModelParamBlock({ component, params }) {
         sx={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 0.5,
+          gap: 1,
           cursor: "pointer",
           userSelect: "none",
           "&:hover": { opacity: 0.75 },
@@ -83,14 +83,14 @@ function ModelParamBlock({ component, params }) {
         )}
       </Box>
       <Collapse in={open}>
-        <Table size="small" sx={{ mt: 0.5 }}>
+        <Table size="small" sx={{ mt: 1 }}>
           <TableBody>
             {Object.entries(params).map(([k, v]) => (
               <TableRow key={k}>
-                <TableCell sx={{ pl: 2, borderBottom: "none", py: 0.5 }}>
+                <TableCell sx={{ pl: 4, borderBottom: "none", py: 1 }}>
                   {k}
                 </TableCell>
-                <TableCell sx={{ borderBottom: "none", py: 0.5 }}>
+                <TableCell sx={{ borderBottom: "none", py: 1 }}>
                   {renderParamValue(v)}
                 </TableCell>
               </TableRow>

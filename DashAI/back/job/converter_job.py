@@ -49,7 +49,7 @@ def _rebuild_dataset_with_transformed_columns(
     Returns
     -------
     DashAIDataset
-        A new dataset with the specified columns replaced in-place, new columns
+        A new dataset with the specified columns replaced in place, new columns
         appended, and original metadata and split information preserved.
     """
     from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
@@ -382,7 +382,7 @@ class ConverterJob(BaseJob):
                             f"Error transforming data with {converter_name}: {e}"
                         ) from e
 
-                    if converter_instance.changes_row_count():
+                    if type(converter_instance).CHANGES_ROW_COUNT:
                         loaded_dataset = transformed_dataset
                     else:
                         loaded_dataset = _rebuild_dataset_with_transformed_columns(

@@ -1,0 +1,15 @@
+{
+  "inferenceMethods": "Métodos de Inferência",
+  "selectAnItemToShowInfo": "Selecione um elemento para ver a descrição.",
+  "selectInferenceMethods": "Selecione os métodos de inferência que deseja aplicar",
+  "search": "Buscar",
+  "noItemsFound": "Nenhum componente encontrado",
+  "tryAdjustingSearch": "Tente ajustar sua busca ou filtros",
+  "componentsAvailable_one": "{{count}} componente disponível",
+  "componentsAvailable_many": "{{count}} componentes disponíveis",
+  "componentsAvailable_other": "{{count}} componentes disponíveis",
+  "componentDetails": "Detalhes do Componente",
+  "description": "Descrição",
+  "tags": "Etiquetas",
+  "noDescriptionAvailable": "Não há descrição disponível."
+}

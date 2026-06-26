@@ -34,8 +34,23 @@ class PermutationFeatureImportanceSchema(BaseSchema):
                 "Métrica utilizada para evaluar cómo cambia el rendimiento del "
                 "modelo cuando se baraja una característica particular."
             ),
+            pt=(
+                "Métrica usada para avaliar como o desempenho do modelo muda "
+                "quando uma característica particular é embaralhada."
+            ),
+            de=(
+                "Metrik zur Bewertung, wie sich die Modellleistung ändert, wenn "
+                "ein bestimmtes Merkmal permutiert wird."
+            ),
+            zh="用于评估特定特征被打乱时模型性能变化的指标。",
         ),
-        alias=MultilingualString(en="Scoring metric", es="Métrica de evaluación"),
+        alias=MultilingualString(
+            en="Scoring metric",
+            es="Métrica de evaluación",
+            pt="Métrica de avaliação",
+            de="Bewertungsmetrik",
+            zh="评分指标",
+        ),
     )  # type: ignore
 
     n_repeats: schema_field(
@@ -44,8 +59,17 @@ class PermutationFeatureImportanceSchema(BaseSchema):
         description=MultilingualString(
             en=("Number of times to permute a feature."),
             es=("Número de veces que se permuta una característica."),
+            pt=("Número de vezes que uma característica é permutada."),
+            de=("Anzahl der Permutationen eines Merkmals."),
+            zh="对特征进行排列的次数。",
         ),
-        alias=MultilingualString(en="Number of repeats", es="Número de repeticiones"),
+        alias=MultilingualString(
+            en="Number of repeats",
+            es="Número de repeticiones",
+            pt="Número de repetições",
+            de="Anzahl der Wiederholungen",
+            zh="重复次数",
+        ),
     )  # type: ignore
 
     random_state: schema_field(
@@ -60,8 +84,23 @@ class PermutationFeatureImportanceSchema(BaseSchema):
                 "Semilla del generador aleatorio para controlar las permutaciones "
                 "de cada característica."
             ),
+            pt=(
+                "Semente do gerador de números aleatórios para controlar as "
+                "permutações de cada característica."
+            ),
+            de=(
+                "Startwert für den Zufallszahlengenerator zur Steuerung der "
+                "Permutationen jedes Merkmals."
+            ),
+            zh="用于控制每个特征排列的随机数生成器种子。",
         ),
-        alias=MultilingualString(en="Random state", es="Semilla aleatoria"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Semilla aleatoria",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
     max_samples_fraction: schema_field(
@@ -76,10 +115,22 @@ class PermutationFeatureImportanceSchema(BaseSchema):
                 "Fracción de muestras a extraer del conjunto de prueba para "
                 "calcular la importancia en cada repetición."
             ),
+            pt=(
+                "Fração de amostras a extrair do conjunto de teste para "
+                "calcular a importância das características a cada repetição."
+            ),
+            de=(
+                "Anteil der aus dem Testdatensatz gezogenen Stichproben zur "
+                "Berechnung der Merkmalswichtigkeit bei jeder Wiederholung."
+            ),
+            zh="每次重复时从测试集中抽取的样本比例，用于计算特征重要性。",
         ),
         alias=MultilingualString(
             en="Max samples fraction",
             es="Fracción máxima de muestras",
+            pt="Fração máxima de amostras",
+            de="Maximaler Stichprobenanteil",
+            zh="最大样本比例",
         ),
     )  # type: ignore
 
@@ -97,8 +148,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     uncertainty.
 
     Unlike impurity-based importance (from decision trees), PFI is computed on
-    held-out data and is therefore not biased towards high-cardinality features.
-    It is model-agnostic and captures interaction effects, but assumes that
+    held out data and is therefore not biased towards high cardinality features.
+    It is model agnostic and captures interaction effects, but assumes that
     permuting a feature does not violate important correlations in the data.
 
     References
@@ -113,6 +164,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     DISPLAY_NAME = MultilingualString(
         en="Permutation Feature Importance",
         es="Importancia por Permutación",
+        pt="Importância por Permutação",
+        de="Permutations-Merkmalswichtigkeit",
+        zh="排列特征重要性",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -124,6 +178,16 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             "rendimiento del modelo cuando los valores de una característica se "
             "barajan aleatoriamente."
         ),
+        pt=(
+            "Avalia a importância das características medindo a queda no "
+            "desempenho do modelo quando os valores de uma característica são "
+            "embaralhados aleatoriamente."
+        ),
+        de=(
+            "Bewertet die Merkmalswichtigkeit durch Messung des Leistungsabfalls "
+            "des Modells, wenn die Werte eines Merkmals zufällig permutiert werden."
+        ),
+        zh="通过测量特征值被随机打乱时模型性能的下降来评估特征重要性。",
     )
     COLOR = "#800080"
     SCHEMA = PermutationFeatureImportanceSchema
@@ -174,7 +238,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         """Map logical feature names to their column indices, grouping OHE columns.
 
         When the underlying model has a ``one_hot_encoder`` attribute, all
-        one-hot-encoded dummy columns that originated from the same categorical
+        one hot encoded dummy columns that originated from the same categorical
         feature are collected into a single group so that permutation importance
         is computed jointly. Non-encoded columns get a single-element group.
 
@@ -349,7 +413,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         """Compute permutation feature importance for the fitted model.
 
         Extracts the test split from ``dataset``, optionally encodes the
-        target column, groups one-hot-encoded columns, and computes importance
+        target column, groups one hot encoded columns, and computes importance
         scores by permuting each feature group and measuring the resulting
         drop in the configured scoring metric.
 

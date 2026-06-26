@@ -8,19 +8,18 @@ import {
   CircularProgress,
   IconButton,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import { Delete } from "@mui/icons-material";
 import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../../utils/converterStatus";
 import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
 import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 
 function ConverterParametersTable({ converter, t, localization }) {
   const paramColumns = [
@@ -73,13 +72,12 @@ export default function ConverterBox({
   converter,
   onStatusChange,
   handleConverterDeleteClick,
+  isHighlighted = false,
 }) {
   const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
-  const { t, i18n } = useTranslation(["common", "datasets"]);
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const { t } = useTranslation(["common", "datasets"]);
+  const localization = useTableLocalization();
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -135,6 +133,18 @@ export default function ConverterBox({
         bgcolor: theme.palette.background.box,
         borderRadius: 2,
         height: "100%",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newItemHighlight": {
+          "0%": { boxShadow: "none" },
+          "20%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newItemHighlight 4s ease-in-out forwards"
+          : "none",
       }}
     >
       <CardContent
@@ -150,10 +160,10 @@ export default function ConverterBox({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
+            mb: 4,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Transform
               sx={{ color: theme.palette.primary.main, fontSize: 20 }}
             />
@@ -161,10 +171,16 @@ export default function ConverterBox({
               {converterComponent.display_name}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={getConverterStatus(statusLabel, t)}
-              color={statusLabel === 3 ? "primary" : "default"} // Finished
+              color={
+                statusLabel === 3
+                  ? "success"
+                  : statusLabel === 4
+                    ? "error"
+                    : "default"
+              }
               size="small"
             />
             {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
@@ -192,12 +208,12 @@ export default function ConverterBox({
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",
-              p: 2,
+              p: 4,
               overflow: "hidden",
             }}
           >
             {/* Descripción */}
-            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 4 }}>
               {converterComponent.description}
             </Typography>
 
@@ -240,7 +256,7 @@ export default function ConverterBox({
               justifyContent: "center",
             }}
           >
-            <CircularProgress size={20} sx={{ mr: 1 }} />
+            <CircularProgress size={20} sx={{ mr: 2 }} />
             <Typography>{t("common:processing")}</Typography>
           </Box>
         )}

@@ -13,14 +13,14 @@ export default function TaskSelector({ tasks, selectedTask, onTaskSelect }) {
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2 }}>
+      <Typography variant="h6" sx={{ mb: 4 }}>
         {t("models:label.selectTask")}
       </Typography>
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 2,
+          gap: 4,
         }}
       >
         {tasks.map((task) => {

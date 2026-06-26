@@ -1,0 +1,34 @@
+{
+  "button": {
+    "install": "Installieren",
+    "refresh": "Aktualisieren",
+    "return": "Zurück",
+    "uninstall": "Deinstallieren",
+    "upgrade": "Aktualisieren"
+  },
+  "error": {
+    "installingPlugin": "Fehler beim Installieren des Plugins.",
+    "obtainPluginDetails": "Fehler beim Abrufen der Plugin-Details.",
+    "obtainPlugins": "Fehler beim Abrufen der Plugins.",
+    "updatePlugins": "Fehler beim Aktualisieren der Plugins.",
+    "upgradingPlugin": "Fehler beim Aktualisieren des Plugins."
+  },
+  "label": {
+    "browse": "Durchsuchen",
+    "details": "Details",
+    "installed": "Installiert",
+    "latest": "Neueste",
+    "noPluginsToShow": "Keine Plugins anzeigbar (versuchen Sie zu aktualisieren)",
+    "oldest": "Älteste",
+    "plugins": "{{label}} - Plugins",
+    "tags": "Schlagwörter",
+    "verified": "Verifiziertes Plugin von dashAI",
+    "version": "Version: {{version}}",
+    "versionInstalledLatestAvailable": "Installierte Version: <1></1> | Neueste verfügbare Version: <3></3>"
+  },
+  "message": {
+    "pluginInstalled": "Plugin erfolgreich installiert",
+    "pluginUninstalled": "Plugin erfolgreich deinstalliert",
+    "pluginUpgraded": "Plugin erfolgreich aktualisiert"
+  }
+}

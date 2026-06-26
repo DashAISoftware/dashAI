@@ -208,7 +208,7 @@ function PipelineResults({ pipelineId, onClose }) {
 
   if (!hasExploration && !hasTrain && !hasPrediction) {
     return (
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 4 }}>
         {onClose && (
           <Button startIcon={<ArrowBackIosNew />} onClick={onClose}>
             Volver

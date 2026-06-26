@@ -55,6 +55,12 @@ class PredictionStatus(Enum):
     ERROR = 4
 
 
+class DatafileStatus(Enum):
+    DOWNLOADING = "downloading"
+    READY = "ready"
+    ERROR = "error"
+
+
 class PipelineRunStatus(Enum):
     NOT_STARTED = 0
     DELIVERED = 1

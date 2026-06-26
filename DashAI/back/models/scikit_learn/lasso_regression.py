@@ -7,7 +7,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
@@ -43,8 +42,19 @@ class LassoRegressionSchema(BaseSchema):
                 "Fuerza de regularización. Valores más grandes especifican "
                 "regularización más fuerte. alpha=0 es equivalente a MCO."
             ),
+            pt=(
+                "Força de regularização. Valores maiores especificam "
+                "regularização mais forte. alpha=0 é equivalente a MQO."
+            ),
+            de=(
+                "Regularisierungsstärke. Größere Werte bedeuten stärkere "
+                "Regularisierung. alpha=0 entspricht OLS."
+            ),
+            zh="正则化强度。值越大正则化越强。alpha=0 等价于 OLS。",
         ),
-        alias=MultilingualString(en="Alpha", es="Alfa"),
+        alias=MultilingualString(
+            en="Alpha", es="Alfa", pt="Alfa", de="Alpha", zh="Alpha"
+        ),
     )  # type: ignore
 
     fit_intercept: schema_field(
@@ -59,8 +69,24 @@ class LassoRegressionSchema(BaseSchema):
                 "Si se calcula el intercepto para este modelo. Si es False, "
                 "se espera que los datos ya estén centrados."
             ),
+            pt=(
+                "Se o intercepto deve ser calculado para este modelo. Se False, "
+                "espera-se que os dados já estejam centrados."
+            ),
+            de=(
+                "Ob der Achsenabschnitt für dieses Modell berechnet werden soll. Bei "
+                "False "
+                "wird erwartet, dass die Daten bereits zentriert sind."
+            ),
+            zh="是否为模型计算截距。若为 False，则数据应已居中。",
         ),
-        alias=MultilingualString(en="Fit intercept", es="Ajustar intercepto"),
+        alias=MultilingualString(
+            en="Fit intercept",
+            es="Ajustar intercepto",
+            pt="Ajustar intercepto",
+            de="Achsenabschnitt anpassen",
+            zh="拟合截距",
+        ),
     )  # type: ignore
 
     max_iter: schema_field(
@@ -74,8 +100,17 @@ class LassoRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The maximum number of iterations.",
             es="El número máximo de iteraciones.",
+            pt="O número máximo de iterações.",
+            de="Die maximale Anzahl der Iterationen.",
+            zh="最大迭代次数。",
         ),
-        alias=MultilingualString(en="Max iterations", es="Máximas iteraciones"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Máximas iterações",
+            de="Maximale Iterationen",
+            zh="最大迭代次数",
+        ),
     )  # type: ignore
 
     tol: schema_field(
@@ -89,12 +124,17 @@ class LassoRegressionSchema(BaseSchema):
         description=MultilingualString(
             en="The tolerance for the optimisation.",
             es="La tolerancia para la optimización.",
+            pt="A tolerância para a otimização.",
+            de="Die Toleranz für die Optimierung.",
+            zh="优化的容差。",
         ),
-        alias=MultilingualString(en="Tolerance", es="Tolerancia"),
+        alias=MultilingualString(
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
+        ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -105,8 +145,28 @@ class LassoRegressionSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "传入 None 则不设置特定种子。"
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
 
@@ -133,10 +193,16 @@ class LassoRegression(RegressionModel, SklearnLikeRegressor, _Lasso):
     DISPLAY_NAME: str = MultilingualString(
         en="Lasso Regression",
         es="Regresión Lasso",
+        pt="Regressão Lasso",
+        de="Lasso-Regression",
+        zh="Lasso 回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Linear regression with L1 regularisation for feature selection.",
         es="Regresión lineal con regularización L1 para selección de características.",
+        pt="Regressão linear com regularização L1 para seleção de características.",
+        de="Lineare Regression mit L1-Regularisierung für Merkmalsselektion.",
+        zh="使用 L1 正则化进行特征选择的线性回归。",
     )
     COLOR: str = "#29B6F6"
     ICON: str = "SelectAll"

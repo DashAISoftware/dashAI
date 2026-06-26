@@ -60,6 +60,12 @@ export default function DatasetVisualization({
     datasetsContext?.setDatasetTab ??
     modelsContext?.setDatasetTab ??
     (() => {});
+  const scrollToColumn =
+    datasetsContext?.scrollToColumn ?? modelsContext?.scrollToColumn ?? null;
+  const setScrollToColumn =
+    datasetsContext?.setScrollToColumn ??
+    modelsContext?.setScrollToColumn ??
+    (() => {});
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
@@ -187,11 +193,11 @@ export default function DatasetVisualization({
   return (
     <>
       <Box
-        sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2, mx: 1 }}
+        sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 4, mx: 2 }}
       >
         {/* Quick Stats Section */}
         {!isProcessing && datasetInfo && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {/* Dataset quality score */}
             <Box
               sx={{
@@ -201,10 +207,10 @@ export default function DatasetVisualization({
                 flexWrap: "wrap",
               }}
             >
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <Typography variant="h4">{dataset.name}</Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Tooltip
                   title={t("datasets:label.dataQualityScoreTooltip")}
                   arrow
@@ -247,7 +253,7 @@ export default function DatasetVisualization({
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
-                mb: 1,
+                mb: 2,
                 flexWrap: "wrap",
               }}
             >
@@ -268,7 +274,7 @@ export default function DatasetVisualization({
                 sx={{
                   display: "flex",
                   alignItems: "flex-end",
-                  gap: 2,
+                  gap: 4,
                   flexDirection: "column",
                 }}
               >
@@ -276,7 +282,7 @@ export default function DatasetVisualization({
                   sx={{
                     minHeight: "40px",
                     display: "flex",
-                    gap: 2,
+                    gap: 4,
                     flexWrap: "wrap",
                     justifyContent: "flex-start",
                   }}
@@ -333,6 +339,14 @@ export default function DatasetVisualization({
               totalColumns={datasetInfo?.total_columns}
               fileSize={datasetInfo?.general_info?.memory_usage_mb}
             />
+            {/* Compute-metadata missing notice */}
+            {!datasetInfo?.general_info && (
+              <Box>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  {t("datasets:computeMetadata.missingNotice")}
+                </Alert>
+              </Box>
+            )}
             {/* Data Quality Alerts */}
             <Box>
               <QualityAlerts
@@ -421,7 +435,7 @@ export default function DatasetVisualization({
             </Tabs>
 
             {/* Divider */}
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 4 }} />
 
             {/* Content based on selected tab */}
             {tab === 0 && (
@@ -436,14 +450,24 @@ export default function DatasetVisualization({
               />
             )}
             {tab === 1 && (
-              <NumericTab numericStats={datasetInfo?.numeric_stats} />
+              <NumericTab
+                numericStats={datasetInfo?.numeric_stats}
+                scrollToColumn={scrollToColumn}
+                setScrollToColumn={setScrollToColumn}
+              />
             )}
             {tab === 2 && (
               <CategoricalTab
                 categoricalStats={datasetInfo?.categorical_stats}
               />
             )}
-            {tab === 3 && <TextTab textStats={datasetInfo?.text_stats} />}
+            {tab === 3 && (
+              <TextTab
+                textStats={datasetInfo?.text_stats}
+                scrollToColumn={scrollToColumn}
+                setScrollToColumn={setScrollToColumn}
+              />
+            )}
             {tab === 4 && (
               <QualityTab
                 qualityInfo={datasetInfo?.quality_info}
@@ -465,7 +489,7 @@ export default function DatasetVisualization({
               alignItems: "center",
               minHeight: 200,
               flexDirection: "column",
-              gap: 2,
+              gap: 4,
             }}
           >
             <CircularProgress color="primary" />

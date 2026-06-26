@@ -54,6 +54,22 @@ class LogLoss(ClassificationMetric):
             "donde la entrada de predicción es un valor de probabilidad "
             "entre 0 y 1."
         ),
+        pt=(
+            "Log Loss, também conhecido como Perda Logística ou Entropia Cruzada, "
+            "mede o desempenho de um modelo de classificação "
+            "onde a entrada de previsão é um valor de probabilidade "
+            "entre 0 e 1."
+        ),
+        de=(
+            "Log Loss, auch bekannt als Logistischer Verlust oder Kreuzentropieverlust,"
+            "misst die Leistung eines Klassifikationsmodells, "
+            "bei dem die Vorhersageeingabe ein Wahrscheinlichkeitswert "
+            "zwischen 0 und 1 ist."
+        ),
+        zh=(
+            "对数损失（也称为逻辑损失或交叉熵损失）衡量分类模型的性能，"
+            "其中预测输入为 0 到 1 之间的概率值。"
+        ),
     )
 
     MAXIMIZE: bool = False

@@ -11,7 +11,7 @@ function ExplainerConfiguration({ paramsSchema, updateParameters }) {
   return (
     <Paper
       variant="outlined"
-      sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
+      sx={{ p: 8, maxHeight: "55vh", overflow: "auto" }}
     >
       <Grid container direction={"column"} alignItems={"center"}>
         {/* Form title */}
@@ -20,7 +20,7 @@ function ExplainerConfiguration({ paramsSchema, updateParameters }) {
             {t("explainers:label.explainerConfiguration")}
           </DialogContentText>
         </Grid>
-        <Grid sx={{ p: 3 }}>
+        <Grid sx={{ p: 6 }}>
           {/* Main dataloader form */}
           <ParameterForm
             parameterSchema={paramsSchema}

@@ -99,8 +99,13 @@ class BaseExplorer(ConfigObject, ABC):
         if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:
             meta["allowed_dtypes"] = []
 
-        # Drop restricted_dtypes — always [] in all explorers
+        # Drop internal-only flags that are not consumed by the frontend directly
         meta.pop("restricted_dtypes", None)
+        meta.pop("numeric_categorical_only", None)
+
+        # Ensure type_dtype_restrictions is always present for the frontend
+        if "type_dtype_restrictions" not in meta:
+            meta["type_dtype_restrictions"] = {}
 
         return meta
 
@@ -167,7 +172,8 @@ class BaseExplorer(ConfigObject, ABC):
         if "max" in input_cardinality and n > input_cardinality["max"]:
             return False
 
-        # Check each column against allowed_types (semantic) AND allowed_dtypes (dtype)
+        # Per-type dtype exclusions: maps semantic type name → list of forbidden dtypes.
+        type_dtype_restrictions = metadata.get("type_dtype_restrictions", {})
         for column in selected_columns:
             column_name = column["columnName"]
             col_info = column_spec.get(column_name, {})
@@ -175,6 +181,9 @@ class BaseExplorer(ConfigObject, ABC):
             col_dtype = col_info.get("dtype", "")
 
             if allowed_types and col_type not in allowed_types:
+                return False
+            forbidden_dtypes = type_dtype_restrictions.get(col_type, [])
+            if forbidden_dtypes and col_dtype in forbidden_dtypes:
                 return False
             if allowed_dtypes and col_dtype not in allowed_dtypes:
                 return False

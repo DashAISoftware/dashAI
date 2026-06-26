@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import CloseIcon from "@mui/icons-material/Close";
 import { ReactFlowProvider } from "reactflow";
 import CustomLayout from "../../components/custom/CustomLayout";
 import ModuleContainer from "../../components/layout/ModuleContainer";
@@ -67,6 +68,7 @@ const PIPELINE_TEMPLATES = [
 ];
 
 function NewPipeline() {
+  const theme = useTheme();
   const location = useLocation();
   const { pipelineId } = useParams();
   const navigate = useNavigate();

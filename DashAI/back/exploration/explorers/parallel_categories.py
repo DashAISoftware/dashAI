@@ -33,8 +33,17 @@ class ParallelCategoriesSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to color the data points."),
             es=("Columna usada para colorear los puntos."),
+            pt=("Coluna usada para colorir os pontos de dados."),
+            de=("Spalte zur Einfärbung der Datenpunkte."),
+            zh="用于为数据点着色的列。",
         ),
-        alias=MultilingualString(en="Color column", es="Columna de color"),
+        alias=MultilingualString(
+            en="Color column",
+            es="Columna de color",
+            pt="Coluna de cor",
+            de="Farbspalte",
+            zh="颜色列",
+        ),
     )  # type: ignore
 
 
@@ -45,20 +54,23 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     flowing through a series of vertical axes, one per selected column. The width
     of each ribbon is proportional to the number of samples that share that
     combination of categories. An optional colour axis further segments the flows
-    by a continuous or categorical variable, making patterns of co-occurrence and
+    by a continuous or categorical variable, making patterns of cooccurrence and
     class distribution immediately visible.
 
     Best suited for exploring relationships between three or more categorical
-    columns, such as demographic cross-tabulations or multi-label feature analysis.
+    columns, such as demographic cross tabulations or multilabel feature analysis.
     """
 
     DISPLAY_NAME = MultilingualString(
         en="Parallel Categories Plot",
         es="Gráfico de Categorías Paralelas",
+        pt="Categorias Paralelas",
+        de="Parallele Kategoriendiagramm",
+        zh="平行坐标类别图",
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Visualizes high-dimensional categorical data. Each vertical line is "
+            "Visualizes high dimensional categorical data. Each vertical line is "
             "a category level and connections show combinations across columns."
         ),
         es=(
@@ -66,6 +78,17 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
             "es un nivel de categoría y las conexiones muestran combinaciones "
             "entre columnas."
         ),
+        pt=(
+            "Visualiza dados categóricos de alta dimensão. Cada linha vertical "
+            "é um nível de categoria e as conexões mostram combinações "
+            "entre colunas."
+        ),
+        de=(
+            "Visualisiert hochdimensionale kategorische Daten. Jede vertikale "
+            "Linie ist eine Kategorienstufe und Verbindungen zeigen Kombinationen "
+            "über Spalten hinweg."
+        ),
+        zh=("可视化高维类别数据。每条垂直线是一个类别级别，连接线显示列间的组合关系。"),
     )
     IMAGE_PREVIEW = "parallel_categories.png"
 
@@ -128,8 +151,8 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         """Generate a Plotly parallel categories plot for the selected columns.
 
         Each line represents a flow between category values across multiple
-        categorical axes, making it easy to visualize co-occurrence patterns
-        in high-dimensional categorical data.
+        categorical axes, making it easy to visualize cooccurrence patterns
+        in high dimensional categorical data.
 
         Parameters
         ----------

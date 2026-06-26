@@ -24,6 +24,16 @@ class BinarizerSchema(BaseSchema):
                 "Los valores por debajo o igual al umbral se reemplazan por 0; "
                 "los superiores por 1."
             ),
+            pt=(
+                "Valores de características abaixo ou iguais a este limiar são "
+                "substituídos por 0; os superiores por 1."
+            ),
+            de=(
+                "Merkmalswerte unterhalb oder gleich diesem Schwellenwert werden durch "
+                "0 ersetzt, "
+                "oberhalb davon durch 1."
+            ),
+            zh="低于或等于此阈值的特征值替换为 0，高于此值的替换为 1。",
         ),
     )  # type: ignore
 
@@ -41,8 +51,23 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
         es=(
             "Binariza datos (pone valores de características en 0 o 1) según un umbral."
         ),
+        pt=(
+            "Binariza dados (define valores de características em 0 ou 1) "
+            "de acordo com um limiar."
+        ),
+        de=(
+            "Daten binarisieren (Merkmalswerte auf 0 oder 1 setzen) gemäß einem "
+            "Schwellenwert."
+        ),
+        zh="根据阈值对数据进行二值化（将特征值设为 0 或 1）。",
     )
-    DISPLAY_NAME = MultilingualString(en="Binarizer", es="Binarizador")
+    DISPLAY_NAME = MultilingualString(
+        en="Binarizer",
+        es="Binarizador",
+        pt="Binarizador",
+        de="Binarisierer",
+        zh="二值化器",
+    )
     IMAGE_PREVIEW = "binarizer.png"
 
     PREFIX = "bin_"

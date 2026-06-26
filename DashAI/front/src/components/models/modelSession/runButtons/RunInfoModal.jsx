@@ -78,16 +78,16 @@ export default function RunInfoModal({
   };
 
   const MetricsSection = ({ title, metrics }) => (
-    <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
+    <Paper elevation={2} sx={{ p: 4, height: "100%" }}>
       <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
         {title}
       </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 4 }} />
       {metrics &&
         Object.entries(metrics).map(([key, value]) => (
           <Box
             key={key}
-            sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+            sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
           >
             <Typography variant="body2" color="text.secondary">
               {key}:
@@ -117,7 +117,7 @@ export default function RunInfoModal({
             label={run.status}
             color={getStatusColor(run.status)}
             size="small"
-            sx={{ ml: 2 }}
+            sx={{ ml: 4 }}
           />
         </Box>
         <IconButton onClick={onClose} size="small">
@@ -127,8 +127,8 @@ export default function RunInfoModal({
 
       <DialogContent dividers>
         {/* Run Details Section */}
-        <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-          <Grid container spacing={2}>
+        <Paper variant="outlined" sx={{ p: 4, mb: 6 }}>
+          <Grid container spacing={4}>
             <Grid size={{ xs: 6, md: 3 }}>
               <Typography variant="caption" color="text.secondary">
                 {t("experiments:label.modelName")}
@@ -207,8 +207,8 @@ export default function RunInfoModal({
         <Typography variant="h6" gutterBottom>
           {t("experiments:label.parameterModification")}
         </Typography>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Grid container spacing={2} alignItems="center">
+        <Paper variant="outlined" sx={{ p: 4 }}>
+          <Grid container spacing={4} alignItems="center">
             <Grid size={{ xs: 12, md: 4 }}>
               <Button
                 variant="contained"
@@ -244,7 +244,7 @@ export default function RunInfoModal({
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <FormControl fullWidth>
                   <InputLabel>{t("experiments:label.optimizer")}</InputLabel>
                   <Select
@@ -280,8 +280,8 @@ export default function RunInfoModal({
           {run.optimizer_parameters && (
             <Box
               sx={{
-                mt: 2,
-                p: 2,
+                mt: 4,
+                p: 4,
                 bgcolor: "background.default",
                 borderRadius: 1,
               }}
@@ -291,7 +291,7 @@ export default function RunInfoModal({
                   optimizer: run.optimizer_name,
                 })}
               </Typography>
-              <Grid container spacing={1}>
+              <Grid container spacing={2}>
                 {Object.entries(run.optimizer_parameters).map(
                   ([key, value]) => (
                     <Grid size={{ xs: 6, md: 4 }} key={key}>
@@ -310,7 +310,7 @@ export default function RunInfoModal({
         </Paper>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2 }}>
+      <DialogActions sx={{ p: 4 }}>
         <Button onClick={onClose} variant="outlined">
           {t("common:close")}
         </Button>

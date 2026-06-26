@@ -5,10 +5,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import {
   getDatasetSampleByFilePath as getDatasetSampleRequest,
   getDatasetTypesByFilePath as getDatasetTypesRequest,
@@ -39,10 +37,7 @@ function DatasetSummaryTable({ file }) {
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const theme = useTheme();
-  const { i18n } = useTranslation();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const getDatasetInfo = async () => {
     setLoading(true);
@@ -99,7 +94,7 @@ function DatasetSummaryTable({ file }) {
   return (
     <Box>
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", p: 6 }}>
           <CircularProgress />
         </Box>
       ) : (

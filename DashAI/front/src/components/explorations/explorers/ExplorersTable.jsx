@@ -5,10 +5,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 
 import DeleteItemModal from "../../custom/DeleteItemModal";
@@ -25,11 +23,8 @@ function ExplorersTable({ explorerTypes = [] }) {
   const { explorationData, setExplorationData, datasetColumns } =
     useExplorationsContext();
   const { explorers } = explorationData;
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const handleDeleteExplorer = useCallback(
     (id) => {
@@ -104,7 +99,7 @@ function ExplorersTable({ explorerTypes = [] }) {
         enableSorting: false,
         enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <EditColumnsDialog
               datasetColumns={datasetColumns}
               updateValue={handleUpdateColumns(row.original.id)}
@@ -149,14 +144,14 @@ function ExplorersTable({ explorerTypes = [] }) {
   });
 
   return (
-    <Paper sx={{ py: 1, px: 2 }}>
+    <Paper sx={{ py: 2, px: 4 }}>
       {/* Title */}
       <Grid
         container
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        sx={{ mb: 4 }}
       >
         <Typography variant="subtitle1" component="h3">
           Current explorers in the exploration

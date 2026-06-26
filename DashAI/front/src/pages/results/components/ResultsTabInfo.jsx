@@ -115,13 +115,13 @@ function ResultsTabInfo({ runData, handleRun }) {
       {/* Run Details Section */}
       {(runData.model_name || runData.start_time || runData.end_time) && (
         <>
-          <Divider sx={{ mt: 3, mb: 3 }} />
-          <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+          <Divider sx={{ mt: 6, mb: 6 }} />
+          <Paper variant="outlined" sx={{ p: 4, mb: 6 }}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                mb: 2,
+                mb: 4,
                 justifyContent: "space-between",
               }}
             >
@@ -141,7 +141,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                 </Box>
               )}
             </Box>
-            <Grid container spacing={2}>
+            <Grid container spacing={4}>
               {runData.model_name && (
                 <Grid size={{ xs: 6, md: 3 }}>
                   <Typography variant="caption" color="text.secondary">
@@ -199,13 +199,13 @@ function ResultsTabInfo({ runData, handleRun }) {
       )}
 
       {/* Live Metrics Section */}
-      <Divider sx={{ mt: 3, mb: 2 }} />
+      <Divider sx={{ mt: 6, mb: 4 }} />
 
       <Typography variant="h6" gutterBottom>
         {t("models:label.liveMetrics")}
       </Typography>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 4 }}>
         <LiveMetricsChart run={runData} />
       </Paper>
 
@@ -214,14 +214,14 @@ function ResultsTabInfo({ runData, handleRun }) {
         runData.validation_metrics ||
         runData.test_metrics) && (
         <>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
             {t("common:metrics")}
           </Typography>
           <Box
             sx={{
               display: "flex",
-              gap: 2,
-              mb: 3,
+              gap: 4,
+              mb: 6,
               width: "100%",
               flexWrap: "wrap",
             }}
@@ -256,7 +256,7 @@ function ResultsTabInfo({ runData, handleRun }) {
         </>
       )}
 
-      <Divider sx={{ mt: 3, mb: 2 }} />
+      <Divider sx={{ mt: 6, mb: 4 }} />
 
       {/* Run edition */}
       {isLocked && (
@@ -265,8 +265,8 @@ function ResultsTabInfo({ runData, handleRun }) {
         </Alert>
       )}
       {!isLocked && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
             {t("models:label.editRunParameters")}
           </Typography>
           {(localRun.goal_metric === null || localRun.goal_metric === "") &&
@@ -279,14 +279,14 @@ function ResultsTabInfo({ runData, handleRun }) {
             sx={{
               display: "flex",
               flexDirection: "column",
-              gap: 2,
+              gap: 4,
             }}
           >
             {/* Edit Parameters Button */}
             <Box
               sx={{
                 display: "flex",
-                gap: 2,
+                gap: 4,
                 alignItems: "center",
               }}
             >
@@ -303,7 +303,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               <Box
                 sx={{
                   display: "flex",
-                  gap: 2,
+                  gap: 4,
                 }}
               >
                 <Box>
@@ -329,7 +329,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                     </Select>
                   </FormControl>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <Box sx={{ width: "300px" }}>
                     <OptimizationTableSelectOptimizer
                       taskName={experiment.current?.task_name}
@@ -401,10 +401,10 @@ function ResultsTabInfo({ runData, handleRun }) {
           </FormSchemaDialog>
 
           {/* Save and run button */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
             <Button
               variant="outlined"
-              sx={{ mr: 2 }}
+              sx={{ mr: 4 }}
               onClick={() => {
                 setLocalRun(structuredClone(runData));
               }}

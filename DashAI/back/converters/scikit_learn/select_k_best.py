@@ -27,6 +27,9 @@ class SelectKBestSchema(BaseSchema):
         description=MultilingualString(
             en="Number of top features to select.",
             es="Número de características superiores a seleccionar.",
+            pt="Número de melhores características a selecionar.",
+            de="Anzahl der besten auszuwählenden Merkmale.",
+            zh="要选择的最高得分特征数量。",
         ),
     )  # type: ignore
 
@@ -65,9 +68,18 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     DESCRIPTION = MultilingualString(
         en="Select features according to the k highest scores.",
         es="Selecciona características según las k puntuaciones más altas.",
+        pt="Seleciona características de acordo com as k pontuações mais altas.",
+        de="Merkmale gemäß den k höchsten Bewertungen auswählen.",
+        zh="根据 k 个最高得分选择特征。",
     )
     SUPERVISED = True
-    DISPLAY_NAME = MultilingualString(en="Select K Best", es="Seleccionar K Mejores")
+    DISPLAY_NAME = MultilingualString(
+        en="Select K Best",
+        es="Seleccionar K Mejores",
+        pt="Seleção K Melhores",
+        de="K-Beste Auswahl",
+        zh="K 最优特征选择",
+    )
     IMAGE_PREVIEW = "select_k_best.png"
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 

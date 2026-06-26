@@ -53,8 +53,38 @@ class StableDiffusionSchema(BaseSchema):
                 "requiere muchos menos pasos (4-8) para generación rápida de alta "
                 "calidad. Todas las variantes apuntan a 1024x1024 px de forma nativa."
             ),
+            pt=(
+                "O checkpoint SD3/SD3.5 a carregar. 'sd-3-medium' é o modelo base "
+                "de 2B parâmetros. 'sd-3.5-medium' melhora a qualidade a velocidade "
+                "similar. 'sd-3.5-large' (8B) oferece a maior qualidade mas precisa "
+                "de mais VRAM. 'sd-3.5-large-turbo' é um modelo large destilado que "
+                "requer muito menos passos (4-8) para geração rápida de alta "
+                "qualidade. "
+                "Todas as variantes visam 1024x1024 px nativamente."
+            ),
+            de=(
+                "Der zu ladende SD3/SD3.5-Checkpoint. 'sd-3-medium' ist das "
+                "2B-Parameter-Basismodell. 'sd-3.5-medium' verbessert die Qualität "
+                "bei ähnlicher Geschwindigkeit. 'sd-3.5-large' (8B) liefert die höchste"
+                "Qualität, benötigt aber mehr VRAM. 'sd-3.5-large-turbo' ist ein "
+                "destilliertes Large-Modell, das deutlich weniger Schritte (4-8) für "
+                "schnelle hochwertige Generierung benötigt. "
+                "Alle Varianten zielen nativ auf 1024x1024 px ab."
+            ),
+            zh=(
+                "要加载的 SD3/SD3.5 检查点。'sd-3-medium' 是 2B 参数基准模型。"
+                "'sd-3.5-medium' 以相近速度提升质量。'sd-3.5-large'（8B）质量最高但"
+                "需要更多显存。'sd-3.5-large-turbo' 是蒸馏版大模型，仅需 4-8 步即可"
+                "快速生成高质量图像。所有变体原生目标分辨率为 1024x1024 像素。"
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
+            zh="模型名称",
+        ),
     )  # type: ignore
 
     huggingface_key: schema_field(
@@ -74,8 +104,33 @@ class StableDiffusionSchema(BaseSchema):
                 "Configuración → Tokens de Acceso y genere un token con alcance "
                 "'Read'."
             ),
+            pt=(
+                "Token de acesso de leitura do Hugging Face necessário para baixar "
+                "esses modelos protegidos. Para obtê-lo: aceite a licença do "
+                "modelo em huggingface.co/stabilityai, depois vá em "
+                "Configurações → Tokens de Acesso e gere um token com escopo "
+                "'Read'."
+            ),
+            de=(
+                "Hugging Face Lesezugriffs-Token, der zum Herunterladen dieser "
+                "geschützten Modelle erforderlich ist. So erhalten Sie ihn: Akzeptieren"
+                "Sie die Modell-Lizenz auf huggingface.co/stabilityai, dann gehen Sie "
+                "zu Einstellungen → Zugriffstoken und generieren Sie einen Token "
+                "mit 'Read'-Umfang."
+            ),
+            zh=(
+                "下载受限模型所需的 Hugging Face 只读访问令牌。获取方式：在 "
+                "huggingface.co/stabilityai 接受模型许可证，然后进入"
+                "设置 → 访问令牌，生成具有 'Read' 权限的令牌。"
+            ),
         ),
-        alias=MultilingualString(en="Hugging Face key", es="Clave Hugging Face"),
+        alias=MultilingualString(
+            en="Hugging Face key",
+            es="Clave Hugging Face",
+            pt="Chave Hugging Face",
+            de="Hugging Face-Schlüssel",
+            zh="Hugging Face 密钥",
+        ),
     )  # type: ignore
 
     negative_prompt: Optional[
@@ -94,8 +149,31 @@ class StableDiffusionSchema(BaseSchema):
                     "marca de agua'. "
                     "Dejar vacío para omitir el condicionamiento negativo."
                 ),
+                pt=(
+                    "Texto descrevendo o que excluir da imagem gerada. "
+                    "Valores comuns: 'borrado, baixa qualidade, distorcido, "
+                    "marca d'água'. "
+                    "Deixe vazio para omitir o condicionamento negativo."
+                ),
+                de=(
+                    "Text, der beschreibt, was aus dem generierten Bild ausgeschlossen "
+                    "werden soll. Häufige Werte: 'unscharf, geringe Qualität, verzerrt,"
+                    "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
+                    "überspringen."
+                ),
+                zh=(
+                    "描述生成图像中需排除内容的文本。"
+                    "常用值：'模糊、低质量、扭曲、水印'。"
+                    "留空以跳过负向条件引导。"
+                ),
             ),
-            alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
+            alias=MultilingualString(
+                en="Negative prompt",
+                es="Prompt negativo",
+                pt="Prompt negativo",
+                de="Negativer Prompt",
+                zh="负向提示词",
+            ),
         )  # type: ignore
     ]
 
@@ -116,9 +194,31 @@ class StableDiffusionSchema(BaseSchema):
                 "'large-turbo'. Valores superiores a 50 raramente mejoran el "
                 "resultado en SD3/SD3.5."
             ),
+            pt=(
+                "Número de passos de remoção de ruído a executar. Mais passos "
+                "refinam a imagem mas aumentam o tempo de geração. Intervalo "
+                "típico: 20-40 para modelos padrão; use apenas 4-8 passos com "
+                "'large-turbo'. Valores acima de 50 raramente melhoram o "
+                "resultado para SD3/SD3.5."
+            ),
+            de=(
+                "Anzahl der auszuführenden Entrauschungsschritte. Mehr Schritte "
+                "verfeinern das Bild, erhöhen aber die Generierungszeit. Typischer "
+                "Bereich: 20-40 für Standardmodelle; verwenden Sie nur 4-8 Schritte "
+                "mit 'large-turbo'. Werte über 50 verbessern das Ergebnis für "
+                "SD3/SD3.5 selten."
+            ),
+            zh=(
+                "去噪步数。更多步数可细化图像但会增加生成时间。标准模型典型范围：20-40；"
+                "'large-turbo' 变体仅需 4-8 步。SD3/SD3.5 超过 50 步很少改善输出质量。"
+            ),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -140,8 +240,34 @@ class StableDiffusionSchema(BaseSchema):
                 "guidance_scale=1 (sin CFG). Valores más altos refuerzan el prompt "
                 "pero pueden introducir sobresaturación o artefactos."
             ),
+            pt=(
+                "Escala de Classifier-Free Guidance (CFG). Controla quão "
+                "estritamente a imagem segue o prompt. SD3.5 funciona bem com "
+                "3.5-4.5. A variante 'large-turbo' é projetada para "
+                "guidance_scale=1 (sem CFG). Valores mais altos reforçam o prompt "
+                "mas podem introduzir supersaturação ou artefatos."
+            ),
+            de=(
+                "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
+                "dem Prompt folgt. SD3.5 funktioniert gut bei 3,5-4,5. Die "
+                "'large-turbo'-"
+                "Variante ist für guidance_scale=1 (kein CFG) ausgelegt. Höhere Werte "
+                "erzwingen den Prompt, können aber Übersättigung oder Artefakte "
+                "einführen."
+            ),
+            zh=(
+                "无分类器引导（CFG）比例。控制图像对文本提示的遵循程度。"
+                "SD3.5 在 3.5-4.5 效果良好。'large-turbo' 变体设计用于 "
+                "guidance_scale=1（无 CFG）。较高值强化提示但可能引入过饱和或伪影。"
+            ),
         ),
-        alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
+        alias=MultilingualString(
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+            de="Führungsskala",
+            zh="引导比例",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -160,8 +286,26 @@ class StableDiffusionSchema(BaseSchema):
                 "de difusión. Seleccione 'CPU' en sistemas sin GPU compatible, pero "
                 "espere tiempos de generación significativamente más largos."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. Selecione uma opção de GPU "
+                "para aceleração por hardware, altamente recomendado para modelos de "
+                "difusão. Selecione 'CPU' em sistemas sem GPU compatível, mas espere "
+                "tempos de geração significativamente mais longos."
+            ),
+            de=(
+                "Hardware-Gerät für die Inferenz. Wählen Sie eine GPU-Option für "
+                "Hardwarebeschleunigung, die für Diffusionsmodelle dringend empfohlen "
+                "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber erwarten"
+                "Sie deutlich längere Generierungszeiten."
+            ),
+            zh=(
+                "推理硬件设备。扩散模型强烈推荐选择 GPU 选项以硬件加速。"
+                "无兼容 GPU 的系统可选 'CPU'，但生成时间会显著增加。"
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
+        ),
     )  # type: ignore
 
     seed: schema_field(
@@ -179,8 +323,26 @@ class StableDiffusionSchema(BaseSchema):
                 "Use un valor negativo (ej. -1) para una semilla aleatoria en cada "
                 "ejecución."
             ),
+            pt=(
+                "Semente aleatória para geração reproduzível. Um inteiro positivo "
+                "fixo sempre produzirá a mesma imagem com configurações idênticas. "
+                "Use um valor negativo (ex. -1) para uma semente aleatória em cada "
+                "execução."
+            ),
+            de=(
+                "Zufalls-Seed für reproduzierbare Generierung. Ein fester positiver "
+                "Integer erzeugt stets dasselbe Bild bei identischen Einstellungen. "
+                "Verwenden Sie einen negativen Wert (z.B. -1) für einen zufälligen "
+                "Seed bei jedem Durchlauf."
+            ),
+            zh=(
+                "可复现生成的随机种子。固定正整数在相同设置下始终产生相同图像。"
+                "使用负值（如 -1）则每次运行使用随机种子。"
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla"),
+        alias=MultilingualString(
+            en="Seed", es="Semilla", pt="Semente", de="Seed", zh="随机种子"
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -197,8 +359,25 @@ class StableDiffusionSchema(BaseSchema):
                 "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024x1024 px; "
                 "usar esa resolución produce la mejor calidad."
             ),
+            pt=(
+                "Largura da imagem de saída em pixels. Deve ser múltiplo de 8. "
+                "Os modelos SD3/SD3.5 são nativamente treinados a 1024x1024 px; "
+                "usar essa resolução produz a melhor qualidade."
+            ),
+            de=(
+                "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "SD3/SD3.5-Modelle werden nativ bei 1024x1024 px trainiert; "
+                "diese Auflösung liefert die beste Qualität."
+            ),
+            zh=(
+                "输出图像宽度（像素），必须是 8 的倍数。"
+                "SD3/SD3.5 模型原生训练分辨率为 1024x1024 像素，"
+                "使用该分辨率可获得最佳质量。"
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho"),
+        alias=MultilingualString(
+            en="Width", es="Ancho", pt="Largura", de="Breite", zh="宽度"
+        ),
     )  # type: ignore
 
     height: schema_field(
@@ -215,8 +394,25 @@ class StableDiffusionSchema(BaseSchema):
                 "Los modelos SD3/SD3.5 se entrenan de forma nativa a 1024x1024 px; "
                 "usar esa resolución produce la mejor calidad."
             ),
+            pt=(
+                "Altura da imagem de saída em pixels. Deve ser múltiplo de 8. "
+                "Os modelos SD3/SD3.5 são nativamente treinados a 1024x1024 px; "
+                "usar essa resolução produz a melhor qualidade."
+            ),
+            de=(
+                "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "SD3/SD3.5-Modelle werden nativ bei 1024x1024 px trainiert; "
+                "diese Auflösung liefert die beste Qualität."
+            ),
+            zh=(
+                "输出图像高度（像素），必须是 8 的倍数。"
+                "SD3/SD3.5 模型原生训练分辨率为 1024x1024 像素，"
+                "使用该分辨率可获得最佳质量。"
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura"),
+        alias=MultilingualString(
+            en="Height", es="Altura", pt="Altura", de="Höhe", zh="高度"
+        ),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -233,9 +429,27 @@ class StableDiffusionSchema(BaseSchema):
                 "Aumentar este valor es más eficiente que ejecutar varias sesiones, "
                 "pero requiere proporcionalmente más memoria GPU."
             ),
+            pt=(
+                "Quantas imagens gerar a partir de um único prompt em um lote. "
+                "Aumentar este valor é mais eficiente do que executar várias sessões, "
+                "mas requer proporcionalmente mais memória GPU."
+            ),
+            de=(
+                "Wie viele Bilder aus einem einzelnen Prompt in einem Stapel generiert "
+                "werden sollen. Diesen Wert zu erhöhen ist effizienter als mehrere "
+                "Sitzungen zu starten, erfordert aber proportional mehr GPU-Speicher."
+            ),
+            zh=(
+                "单次批量从一个提示词生成的图像数量。"
+                "增大此值比多次运行更高效，但需要成比例的更多 GPU 显存。"
+            ),
         ),
         alias=MultilingualString(
-            en="Num images per prompt", es="Número de imágenes por prompt"
+            en="Num images per prompt",
+            es="Número de imágenes por prompt",
+            pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
+            zh="每提示词图像数",
         ),
     )  # type: ignore
 
@@ -267,6 +481,9 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion V3",
         es="Stable Diffusion V3",
+        pt="Stable Diffusion V3",
+        de="Stable Diffusion V3",
+        zh="Stable Diffusion V3",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -287,6 +504,31 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
             "Turbo. Se requiere una clave API de Hugging Face para acceder a estos "
             "modelos protegidos. Los modelos están disponibles en "
             "https://huggingface.co/stabilityai."
+        ),
+        pt=(
+            "Stable Diffusion 3 e 3.5 são modelos de texto para imagem de nova "
+            "geração da Stability AI que utilizam uma arquitetura Multimodal "
+            "Diffusion Transformer (MMDiT), oferecendo maior fidelidade ao prompt, "
+            "tipografia e qualidade de imagem em relação a versões anteriores. Suporta "
+            "as variantes SD3 Medium, SD3.5 Medium, SD3.5 Large e SD3.5 Large "
+            "Turbo. Uma chave de API do Hugging Face é necessária para acessar esses "
+            "modelos protegidos. Os modelos estão disponíveis em "
+            "https://huggingface.co/stabilityai."
+        ),
+        de=(
+            "Stable Diffusion 3 und 3.5 sind Text-zu-Bild-Modelle der nächsten "
+            "Generation von Stability AI, die eine Multimodal Diffusion Transformer "
+            "(MMDiT)-Architektur verwenden und verbesserte Prompt-Treue, Typografie "
+            "und Bildqualität gegenüber früheren Versionen bieten. Unterstützt die "
+            "Varianten SD3 Medium, SD3.5 Medium, SD3.5 Large und SD3.5 Large Turbo. "
+            "Ein Hugging Face API-Schlüssel ist erforderlich, um auf diese geschützten "
+            "Modelle zuzugreifen. Modelle verfügbar unter "
+            "https://huggingface.co/stabilityai."
+        ),
+        zh=(
+            "Stable Diffusion 3 和 3.5 是 Stability AI 的新一代文本到图像模型，"
+            "采用多模态扩散 Transformer（MMDiT）架构，提升了提示遵循度和图像质量。"
+            "需要 Hugging Face API 密钥访问受限模型。"
         ),
     )
 

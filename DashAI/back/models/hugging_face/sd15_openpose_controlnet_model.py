@@ -36,9 +36,22 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "Número de pasos de eliminación de ruido. Rango típico: 20-30 para "
                 "resultados rápidos, 40-50 para mayor calidad."
             ),
+            pt=(
+                "Número de passos de eliminação de ruído. Intervalo típico: 20-30 para "
+                "resultados rápidos, 40-50 para maior qualidade."
+            ),
+            de=(
+                "Anzahl der Entrauschungsschritte. Typischer Bereich: 20-30 für "
+                "schnelle Ergebnisse, 40-50 für höhere Qualität."
+            ),
+            zh=("去噪步数。典型范围：20-30 步获得快速结果，40-50 步获得更高质量。"),
         ),
         alias=MultilingualString(
-            en="Num inference steps", es="Número de pasos de inferencia"
+            en="Num inference steps",
+            es="Número de pasos de inferencia",
+            pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -56,10 +69,27 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "En 1.0 la salida sigue de cerca la pose de entrada. Valores menores "
                 "permiten más libertad creativa manteniendo la pose general."
             ),
+            pt=(
+                "Peso do condicionamento de pose do ControlNet (intervalo 0.0-2.0). "
+                "Em 1.0 a saída segue de perto a pose de entrada. Valores menores "
+                "permitem mais liberdade criativa mantendo a pose geral."
+            ),
+            de=(
+                "Gewicht der ControlNet-Posenkonditionierung (Bereich 0.0-2.0). "
+                "Bei 1.0 folgt die Ausgabe der Eingabepose eng. Niedrigere Werte "
+                "erlauben mehr kreative Freiheit bei Beibehaltung der allgemeinen Pose."
+            ),
+            zh=(
+                "ControlNet 姿态条件权重（范围 0.0-2.0）。"
+                "1.0 时输出紧随输入姿态；较低值在保持整体姿态的同时允许更多创意自由度。"
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
+            pt="Escala de condicionamento ControlNet",
+            de="ControlNet-Konditionierungsskala",
+            zh="ControlNet 条件缩放",
         ),
     )  # type: ignore
 
@@ -75,8 +105,25 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "Escala CFG. Controla la adherencia al prompt. "
                 "Valores 7-9 son típicos para SD 1.5."
             ),
+            pt=(
+                "Escala CFG. Controla a aderência ao prompt. "
+                "Valores 7-9 são típicos para SD 1.5."
+            ),
+            de=(
+                "CFG-Skala. Steuert die Prompt-Treue. "
+                "Werte 7-9 sind typisch für SD 1.5."
+            ),
+            zh=(
+                "无分类器引导（CFG）缩放。控制提示词的遵循程度。SD 1.5 的典型值为 7-9。"
+            ),
         ),
-        alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
+        alias=MultilingualString(
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+            de="Führungsskala",
+            zh="引导缩放",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -91,8 +138,27 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
                 "Dispositivo de hardware para inferencia. Se recomienda GPU. "
                 "La inferencia en CPU es posible pero muy lenta."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência. GPU é fortemente "
+                "recomendada para modelos de difusão. A inferência em CPU é "
+                "possível, mas muito lenta."
+            ),
+            de=(
+                "Hardware-Gerät für die Inferenz. GPU wird für Diffusionsmodelle "
+                "dringend empfohlen. CPU-Inferenz ist möglich, aber sehr langsam."
+            ),
+            zh=(
+                "推理所用硬件设备。强烈建议使用 GPU 运行扩散模型。"
+                "CPU 推理可行，但速度极慢。"
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device",
+            es="Dispositivo",
+            pt="Dispositivo",
+            de="Gerät",
+            zh="设备",
+        ),
     )  # type: ignore
 
 
@@ -121,6 +187,9 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 OpenPose ControlNet",
         es="SD 1.5 ControlNet OpenPose",
+        pt="SD 1.5 ControlNet OpenPose",
+        de="SD 1.5 OpenPose ControlNet",
+        zh="SD 1.5 OpenPose ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -146,6 +215,37 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
             "Requiere la librería controlnet_aux: pip install controlnet_aux."
+        ),
+        pt=(
+            "Combina o condicionamento de pose do ControlNet com o Stable "
+            "Diffusion 1.5 para geração de imagens guiada por pose. Recebe uma "
+            "imagem de entrada e um prompt: poses humanas são detectadas usando "
+            "OpenposeDetector do controlnet_aux e usadas como condições espaciais "
+            "para a síntese de imagens. "
+            "Ideal para gerar imagens com poses humanas específicas. Utiliza "
+            "lllyasviel/sd-controlnet-openpose "
+            "(https://huggingface.co/lllyasviel/sd-controlnet-openpose) e "
+            "runwayml/stable-diffusion-v1-5 "
+            "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
+            "Requer a biblioteca controlnet_aux: pip install controlnet_aux."
+        ),
+        de=(
+            "Kombiniert die ControlNet-Posenkonditionierung mit Stable Diffusion 1.5 "
+            "für posengeführte Bildgenerierung. Nimmt ein Eingabebild und einen "
+            "Textprompt: Menschliche Posen werden mit OpenposeDetector aus "
+            "controlnet_aux erkannt und als räumliche Bedingungen für die "
+            "Bildsynthese verwendet. Ideal für die Generierung von Bildern mit "
+            "spezifischen menschlichen Körperposen. Verwendet "
+            "lllyasviel/sd-controlnet-openpose "
+            "(https://huggingface.co/lllyasviel/sd-controlnet-openpose) und "
+            "runwayml/stable-diffusion-v1-5 "
+            "(https://huggingface.co/runwayml/stable-diffusion-v1-5). "
+            "Erfordert die controlnet_aux-Bibliothek: pip install controlnet_aux."
+        ),
+        zh=(
+            "结合 ControlNet 姿态条件与 Stable Diffusion 1.5，"
+            "实现姿态引导的图像生成，适用于特定人体姿态的图像合成。"
+            "需要 controlnet_aux。"
         ),
     )
 

@@ -41,6 +41,7 @@ class BaseConverter(ConfigObject, ABC):
     ICON: Final[str] = Icon.Extension.value
     COLOR: Final[str] = "rgb(255, 255, 255)"
     SUPERVISED: bool = False
+    CHANGES_ROW_COUNT: bool = False
     SCHEMA: BaseConverterSchema
 
     @classmethod
@@ -70,6 +71,7 @@ class BaseConverter(ConfigObject, ABC):
         meta["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
         meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         meta["supervised"] = cls.SUPERVISED
+        meta["changes_row_count"] = cls.CHANGES_ROW_COUNT
 
         # Serialize allowed_types class references → class name strings for the frontend
         raw_types = meta.get("allowed_types", [])
@@ -79,23 +81,10 @@ class BaseConverter(ConfigObject, ABC):
         if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:
             meta["allowed_dtypes"] = []
 
-        # Drop restricted_dtypes — no converter uses it; it is always []
+        # Drop restricted_dtypes (no converter uses it; it is always [])
         meta.pop("restricted_dtypes", None)
 
         return meta
-
-    def changes_row_count(self) -> bool:
-        """Indicate whether this converter changes the number of dataset rows.
-
-        Samplers (e.g. SMOTE, RandomUnderSampler) return True because they
-        add or remove rows. Most transformers return False.
-
-        Returns
-        -------
-        bool
-            True if the converter may add or remove rows, False otherwise.
-        """
-        return False
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

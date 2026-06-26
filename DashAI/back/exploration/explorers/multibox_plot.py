@@ -13,6 +13,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -26,7 +27,7 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
 
     Configures the layout and optional grouping axis for the multi-column box
     plot.  ``horizontal`` flips all boxes so that the value axis runs
-    left-to-right, which is convenient when column names are long.  ``points``
+    left to right, which is convenient when column names are long.  ``points``
     controls whether individual data points are overlaid on each box (``"all"``
     shows every point, ``"outliers"`` shows only outliers, and ``"False"``
     hides all points).  ``opposite_axis`` specifies a column whose distinct
@@ -43,10 +44,22 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
                 "Si es True, el diagrama de caja será horizontal; en caso "
                 "contrario, vertical."
             ),
+            pt=(
+                "Se True, o diagrama de caixa será horizontal; caso "
+                "contrário, vertical."
+            ),
+            zh="如果为True，箱线图将水平显示；否则垂直显示。",
+            de=(
+                "Wenn True, wird das Boxplot horizontal dargestellt; "
+                "andernfalls vertikal."
+            ),
         ),
         alias=MultilingualString(
             en="Horizontal plot",
             es="Gráfico horizontal",
+            pt="Gráfico horizontal",
+            zh="水平图",
+            de="Horizontales Diagramm",
         ),
     )  # type: ignore
     points: schema_field(
@@ -60,10 +73,22 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
             es=(
                 "Una de 'all', 'outliers' o 'False'. Determina qué puntos se muestran."
             ),
+            pt=(
+                "Um de 'all', 'outliers' ou 'False'. Determina quais pontos "
+                "são exibidos."
+            ),
+            zh="'all'、'outliers'或'False'之一。确定显示哪些数据点。",
+            de=(
+                "Eines von 'all', 'outliers' oder 'False'. Bestimmt, welche "
+                "Punkte angezeigt werden."
+            ),
         ),
         alias=MultilingualString(
             en="Points shown",
             es="Puntos mostrados",
+            pt="Pontos exibidos",
+            zh="显示的点",
+            de="Angezeigte Punkte",
         ),
     )  # type: ignore
     opposite_axis: schema_field(
@@ -72,8 +97,17 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index to use for the opposite axis."),
             es=("Nombre o índice de columna para el eje opuesto."),
+            pt=("Nome ou índice de coluna para usar no eixo oposto."),
+            zh="用于对立轴的列名或索引。",
+            de="Spaltenname oder Index für die gegenüberliegende Achse.",
         ),
-        alias=MultilingualString(en="Opposite axis", es="Eje opuesto"),
+        alias=MultilingualString(
+            en="Opposite axis",
+            es="Eje opuesto",
+            pt="Eixo oposto",
+            zh="对立轴",
+            de="Gegenüberliegende Achse",
+        ),
     )  # type: ignore
 
 
@@ -83,7 +117,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     While the single-column BoxPlotExplorer is suited to examining one variable
     at a time, this explorer places multiple box plot traces side by side in the
     same figure, making it straightforward to compare the distributional
-    properties — median, spread, and outliers — of several numeric columns
+    properties (median, spread, and outliers) of several numeric columns
     simultaneously.
 
     Each box trace summarises its column through the five-number summary (Q1,
@@ -102,6 +136,9 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     DISPLAY_NAME = MultilingualString(
         en="Multiple Column Box Plot",
         es="Diagrama de Caja Multicolumna",
+        pt="Diagrama de Caixa Múltiplo",
+        zh="多列箱线图",
+        de="Mehrspaltiges Boxplot",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -112,13 +149,23 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
             "Muestra un diagrama de caja para múltiples columnas en un eje, "
             "usando otra columna como eje opuesto (si se proporciona)."
         ),
+        pt=(
+            "Exibe um diagrama de caixa para múltiplas colunas em um eixo, "
+            "usando outra coluna como eixo oposto (se fornecida)."
+        ),
+        zh="在一个轴上显示多列箱线图，使用另一列作为对立轴（如果提供）。",
+        de=(
+            "Zeigt ein Boxplot für mehrere Spalten auf einer Achse, "
+            "optional mit einer weiteren Spalte als gegenüberliegende Achse."
+        ),
     )
     IMAGE_PREVIEW = "multi_column_box_plot.png"
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 1},
     }
 

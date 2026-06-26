@@ -1,21 +1,19 @@
-import React, { useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { FormControl, Select, MenuItem, Box } from "@mui/material";
 
 export default function LanguageSelector() {
   const { i18n } = useTranslation();
-  const [language, setLanguage] = useState(i18n.language);
+  const currentLang = i18n.language.split("-")[0];
 
   const handleLanguageChange = (event) => {
-    const newLanguage = event.target.value;
-    i18n.changeLanguage(newLanguage);
-    setLanguage(newLanguage);
+    i18n.changeLanguage(event.target.value);
   };
 
   return (
     <FormControl size="small" sx={{ minWidth: 120 }}>
       <Select
-        value={language}
+        value={currentLang}
         onChange={handleLanguageChange}
         displayEmpty
         sx={{
@@ -23,7 +21,7 @@ export default function LanguageSelector() {
           "& .MuiSelect-select": {
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 2,
           },
         }}
       >
@@ -37,6 +35,24 @@ export default function LanguageSelector() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <span>🇺🇸</span>
             <span>English</span>
+          </Box>
+        </MenuItem>
+        <MenuItem value="pt">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span>🇧🇷</span>
+            <span>Português</span>
+          </Box>
+        </MenuItem>
+        <MenuItem value="de">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span>🇩🇪</span>
+            <span>Deutsch</span>
+          </Box>
+        </MenuItem>
+        <MenuItem value="zh">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <span>🇨🇳</span>
+            <span>中文</span>
           </Box>
         </MenuItem>
       </Select>

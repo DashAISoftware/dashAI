@@ -33,7 +33,7 @@ export default function YAxisForm({
   const tickvalsArray = Array.isArray(data[0]?.y) ? data[0].y : [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Title */}
       <SectionLabel>
         {t("datasets:label.axisTitle", { axis: "Y" })}
@@ -113,6 +113,22 @@ export default function YAxisForm({
             color,
           })
         }
+      />
+
+      <TextField
+        label={t("datasets:label.axisTickFontSize", { axis: "Y" })}
+        variant="outlined"
+        size="small"
+        type="number"
+        value={layout.yaxis?.tickfont?.size ?? 12}
+        onChange={(e) =>
+          handleAxisChange("yaxis", "tickfont", {
+            ...layout.yaxis?.tickfont,
+            size: parseInt(e.target.value, 10) || 12,
+          })
+        }
+        fullWidth
+        slotProps={{ htmlInput: { min: 8, max: 72 } }}
       />
 
       <TextField

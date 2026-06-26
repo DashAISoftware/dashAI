@@ -53,8 +53,39 @@ class MixtralSchema(BaseSchema):
                 "Advertencia: este modelo requiere ~26 GB de RAM para la "
                 "cuantización Q4_K_M."
             ),
+            pt=(
+                "O checkpoint Mixtral Instruct a carregar em formato GGUF. "
+                "'Mixtral-8x7B-Instruct-v0.1' é um modelo de Mistura Esparsa de "
+                "Especialistas (SMoE) com 8 redes especialistas de 7B parâmetros cada, "
+                "ativando 2 especialistas por token. Alcança qualidade comparável a "
+                "modelos densos maiores sendo mais eficiente na inferência. "
+                "Aviso: este modelo requer ~26 GB de RAM para a "
+                "quantização Q4_K_M."
+            ),
+            de=(
+                "Der im GGUF-Format zu ladende Mixtral Instruct-Checkpoint. "
+                "'Mixtral-8x7B-Instruct-v0.1' ist ein Sparse Mixture-of-Experts "
+                "(SMoE)-Modell mit 8 Expertennetzwerken à 7B Parameter, das 2 "
+                "Experten pro Token aktiviert. Es erreicht eine mit größeren dichten "
+                "Modellen vergleichbare Qualität bei effizienterer Inferenz. "
+                "Warnung: dieses Modell benötigt ~26 GB RAM für die "
+                "Q4_K_M-Quantisierung."
+            ),
+            zh=(
+                "以 GGUF 格式加载的 Mixtral Instruct 检查点。"
+                "'Mixtral-8x7B-Instruct-v0.1' 是一个稀疏混合专家（SMoE）模型，"
+                "包含 8 个各 70 亿参数的专家网络，每个 token 激活 2 个专家。"
+                "推理效率高于同等质量的稠密模型。"
+                "警告：Q4_K_M 量化需要约 26 GB 内存。"
+            ),
         ),
-        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
+        alias=MultilingualString(
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
+            zh="模型名称",
+        ),
     )  # type: ignore
 
     filename: schema_field(
@@ -87,8 +118,36 @@ class MixtralSchema(BaseSchema):
                 "Q4_K_M es una opción popular para equilibrar rendimiento y "
                 "requisitos de recursos."
             ),
+            pt=(
+                "O arquivo GGUF específico a carregar para o modelo Mixtral. Os "
+                "diferentes níveis de quantização (Q2_K, Q3_K_M, Q4_0, Q4_K_M, "
+                "Q5_0, Q5_K_M, Q6_K, Q8_0) representam vários compromissos entre "
+                "tamanho do modelo, velocidade de inferência e qualidade de saída. "
+                "Q4_K_M é uma escolha popular para equilibrar desempenho e "
+                "requisitos de recursos."
+            ),
+            de=(
+                "Die zu ladende spezifische GGUF-Datei für das Mixtral-Modell. "
+                "Die verschiedenen Quantisierungsstufen (Q2_K, Q3_K_M, Q4_0, Q4_K_M, "
+                "Q5_0, Q5_K_M, Q6_K, Q8_0) stellen verschiedene Kompromisse zwischen "
+                "Modellgröße, Inferenzgeschwindigkeit und Ausgabequalität dar. "
+                "Q4_K_M ist eine beliebte Wahl für ausgewogene Leistung und "
+                "Ressourcenbedarf."
+            ),
+            zh=(
+                "为 Mixtral 模型加载的具体 GGUF 文件。"
+                "不同量化级别（Q2_K、Q3_K_M、Q4_0、Q4_K_M、Q5_0、Q5_K_M、Q6_K、Q8_0）"
+                "在模型大小、推理速度和输出质量之间存在不同权衡。"
+                "Q4_K_M 是兼顾性能与资源需求的常用选择。"
+            ),
         ),
-        alias=MultilingualString(en="Filename", es="Nombre del archivo"),
+        alias=MultilingualString(
+            en="Filename",
+            es="Nombre del archivo",
+            pt="Nome do archivo",
+            de="Dateiname",
+            zh="文件名",
+        ),
     )  # type: ignore
 
     max_tokens: schema_field(
@@ -106,8 +165,30 @@ class MixtralSchema(BaseSchema):
                 "para respuestas cortas, 500-1000 para explicaciones detalladas "
                 "o código."
             ),
+            pt=(
+                "Número máximo de tokens novos que o modelo gerará por resposta. "
+                "Aproximadamente 1 token ≈ 0.75 palavras em português. Use 100-200 "
+                "para respostas curtas, 500-1000 para explicações detalhadas "
+                "ou código."
+            ),
+            de=(
+                "Maximale Anzahl neuer Token, die das Modell pro Antwort erzeugt. "
+                "Ungefähr 1 Token ≈ 0,75 englische Wörter. 100-200 für kurze "
+                "Antworten, 500-1000 für ausführliche Erklärungen oder Code."
+            ),
+            zh=(
+                "模型每次响应生成的最大新 token 数。"
+                "约 1 token ≈ 0.75 个英文单词。"
+                "短回答设为 100-200，详细说明或代码设为 500-1000。"
+            ),
         ),
-        alias=MultilingualString(en="Max tokens", es="Tokens máximos"),
+        alias=MultilingualString(
+            en="Max tokens",
+            es="Tokens máximos",
+            pt="Tokens máximos",
+            de="Maximale neue Token",
+            zh="最大 token 数",
+        ),
     )  # type: ignore
 
     temperature: schema_field(
@@ -124,8 +205,29 @@ class MixtralSchema(BaseSchema):
                 "En 0.0 las salidas son deterministas. Alrededor de 0.7 equilibra "
                 "calidad y creatividad."
             ),
+            pt=(
+                "Temperatura de amostragem que controla a aleatoriedade "
+                "(intervalo 0.0-1.0). "
+                "Em 0.0 as saídas são determinísticas. Em torno de 0.7 equilibra "
+                "qualidade e criatividade."
+            ),
+            de=(
+                "Stichprobentemperatur zur Steuerung der Ausgabezufälligkeit (0.0-1.0)."
+                "Bei 0.0 sind die Ausgaben deterministisch. Um 0.7 balanciert "
+                "Qualität und Kreativität."
+            ),
+            zh=(
+                "控制输出随机性的采样温度（范围 0.0-1.0）。"
+                "0.0 时输出确定性最强，0.7 左右可平衡质量与创造性。"
+            ),
         ),
-        alias=MultilingualString(en="Temperature", es="Temperatura"),
+        alias=MultilingualString(
+            en="Temperature",
+            es="Temperatura",
+            pt="Temperatura",
+            de="Temperatur",
+            zh="温度",
+        ),
     )  # type: ignore
 
     frequency_penalty: schema_field(
@@ -141,9 +243,27 @@ class MixtralSchema(BaseSchema):
                 "frecuencia (rango 0.0-2.0). Valores más altos desincentivan "
                 "la repetición."
             ),
+            pt=(
+                "Penaliza os tokens que já apareceram na saída com base na "
+                "frequência (intervalo 0.0-2.0). Valores mais altos desestimulam "
+                "a repetição."
+            ),
+            de=(
+                "Bestraft Token, die bereits in der Ausgabe erschienen sind, "
+                "basierend auf ihrer Häufigkeit (0.0-2.0). Höhere Werte reduzieren "
+                "Wiederholungen."
+            ),
+            zh=(
+                "根据频率对已出现在输出中的 token 施加惩罚（范围 0.0-2.0）。"
+                "较高的值可抑制重复内容。"
+            ),
         ),
         alias=MultilingualString(
-            en="Frequency penalty", es="Penalización de frecuencia"
+            en="Frequency penalty",
+            es="Penalización de frecuencia",
+            pt="Penalização de frequência",
+            de="Häufigkeitsstrafe",
+            zh="频率惩罚",
         ),
     )  # type: ignore
 
@@ -160,8 +280,27 @@ class MixtralSchema(BaseSchema):
                 "Presupuesto total de tokens por pasada, incluyendo prompt y "
                 "respuesta. Mixtral 8x7B soporta hasta 32K tokens de forma nativa."
             ),
+            pt=(
+                "Orçamento total de tokens por passagem, incluindo prompt e "
+                "resposta. Mixtral 8x7B suporta até 32K tokens nativamente."
+            ),
+            de=(
+                "Gesamtes Token-Budget für einen einzelnen Vorwärtsdurchlauf, "
+                "einschließlich Eingabe-Prompt und generierter Antwort. "
+                "Mixtral 8x7B unterstützt nativ bis zu 32K Token."
+            ),
+            zh=(
+                "单次前向传播的总 token 预算，包含输入提示和生成响应。"
+                "Mixtral 8x7B 原生支持最多 32K token。"
+            ),
         ),
-        alias=MultilingualString(en="Context window", es="Ventana de contexto"),
+        alias=MultilingualString(
+            en="Context window",
+            es="Ventana de contexto",
+            pt="Janela de contexto",
+            de="Kontextfenster",
+            zh="上下文窗口",
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -181,8 +320,32 @@ class MixtralSchema(BaseSchema):
                 "se recomienda "
                 "una GPU con al menos 24 GB de VRAM para descarga completa."
             ),
+            pt=(
+                "Dispositivo de hardware para inferência com llama.cpp. 'CPU' executa "
+                "o modelo na RAM. Uma opção de GPU descarrega todas as camadas para "
+                "inferência mais rápida. Devido ao grande tamanho do Mixtral, "
+                "recomenda-se "
+                "uma GPU com pelo menos 24 GB de VRAM para descarregamento completo."
+            ),
+            de=(
+                "Hardware-Gerät für die llama.cpp-Inferenz. 'CPU' führt das Modell "
+                "im RAM aus. Eine GPU-Option lagert alle Schichten für schnellere "
+                "Inferenz aus. Aufgrund der Größe von Mixtral wird eine GPU mit "
+                "mindestens 24 GB VRAM für vollständiges GPU-Offloading empfohlen."
+            ),
+            zh=(
+                "llama.cpp 推理所用的硬件设备。'CPU' 在内存中运行模型。"
+                "GPU 选项可将所有层卸载以加快推理速度。"
+                "由于 Mixtral 体量较大，完整 GPU 卸载建议使用至少 24 GB 显存的 GPU。"
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo"),
+        alias=MultilingualString(
+            en="Device",
+            es="Dispositivo",
+            pt="Dispositivo",
+            de="Gerät",
+            zh="设备",
+        ),
     )  # type: ignore
 
 
@@ -209,6 +372,9 @@ class MixtralModel(TextToTextGenerationTaskModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Mixtral Model",
         es="Modelo Mixtral",
+        pt="Modelo Mixtral",
+        de="Mixtral-Modell",
+        zh="Mixtral 模型",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -233,6 +399,36 @@ class MixtralModel(TextToTextGenerationTaskModel):
             "de texto en general. Advertencia: requiere ~26 GB de RAM para la "
             "cuantización Q4_K_M. Modelo en "
             "https://huggingface.co/mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF."
+        ),
+        pt=(
+            "Mixtral 8x7B Instruct, um modelo de Mistura Esparsa de Especialistas "
+            "(SMoE) da Mistral AI, carregado em formato GGUF para inferência eficiente "
+            "em CPU e GPU via biblioteca llama.cpp. O modelo usa 8 redes especialistas "
+            "de 7B parâmetros cada, ativando apenas 2 especialistas por token, "
+            "alcançando desempenho comparável a modelos densos maiores sendo mais "
+            "eficiente na inferência. Suporta conversa multi-turno, raciocínio, "
+            "programação e geração de texto em geral. Aviso: requer ~26 GB de RAM para "
+            "a quantização Q4_K_M. Modelo disponível em "
+            "https://huggingface.co/mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF."
+        ),
+        de=(
+            "Mixtral 8x7B Instruct, ein Sparse Mixture-of-Experts (SMoE)-Modell von "
+            "Mistral AI, im GGUF-Format für effiziente CPU- und GPU-Inferenz über die "
+            "llama.cpp-Bibliothek geladen. Das Modell nutzt 8 Expertennetzwerke à 7B "
+            "Parameter und aktiviert nur 2 Experten pro Token, was mit größeren dichten"
+            "Modellen vergleichbare Leistung bei effizienterer Inferenz ermöglicht. "
+            "Unterstützt Mehrfachdialog, Schlussfolgerung, Programmierung und "
+            "allgemeine "
+            "Textgenerierung. Warnung: erfordert ~26 GB RAM für die "
+            "Q4_K_M-Quantisierung. "
+            "Modell unter "
+            "https://huggingface.co/mradermacher/Mixtral-8x7B-Instruct-v0.1-GGUF."
+        ),
+        zh=(
+            "Mixtral 8x7B Instruct 是 Mistral AI 的稀疏混合专家（SMoE）模型，"
+            "以 GGUF 格式加载，通过 llama.cpp 库高效推理。"
+            "支持多轮对话、推理、编程和通用文本生成。"
+            "注意：Q4_K_M 量化需要约 26 GB 内存。"
         ),
     )
 

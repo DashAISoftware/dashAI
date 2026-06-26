@@ -149,7 +149,7 @@ function ConfigureExplorersModal({
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <Box mt={2}>
+        <Box mt={4}>
           <ConfigureExplorersStep onValidation={setValid} />
         </Box>
       </DialogContent>

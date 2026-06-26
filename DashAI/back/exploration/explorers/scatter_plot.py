@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -33,10 +34,16 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group colored points."),
             es=("Nombre o índice de columna para agrupar puntos por color."),
+            pt=("Nome ou índice de coluna para agrupar pontos por cor."),
+            de=("Spaltenname oder -index zur Farbgruppierung der Punkte."),
+            zh="用于按颜色分组数据点的列名或索引。",
         ),
         alias=MultilingualString(
             en="Color group column",
             es="Columna para grupo de color",
+            pt="Coluna para grupo de cor",
+            de="Farbgruppen-Spalte",
+            zh="颜色分组列",
         ),
     )  # type: ignore
     simbol_group: schema_field(
@@ -45,10 +52,16 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index used to group point symbols."),
             es=("Nombre o índice de columna para agrupar símbolos de puntos."),
+            pt=("Nome ou índice de coluna para agrupar símbolos de pontos."),
+            de=("Spaltenname oder -index zur Symbolgruppierung der Punkte."),
+            zh="用于按符号分组数据点的列名或索引。",
         ),
         alias=MultilingualString(
             en="Symbol group column",
             es="Columna para grupo de símbolo",
+            pt="Coluna para grupo de símbolo",
+            de="Symbolgruppen-Spalte",
+            zh="符号分组列",
         ),
     )  # type: ignore
     point_size: schema_field(
@@ -57,8 +70,17 @@ class ScatterPlotSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column name or index to set the size of each point."),
             es=("Nombre o índice de columna para definir el tamaño de cada punto."),
+            pt=("Nome ou índice de coluna para definir o tamanho de cada ponto."),
+            de=("Spaltenname oder -index zur Festlegung der Punktgröße."),
+            zh="用于设置每个数据点大小的列名或索引。",
         ),
-        alias=MultilingualString(en="Point size column", es="Columna tamaño punto"),
+        alias=MultilingualString(
+            en="Point size column",
+            es="Columna tamaño punto",
+            pt="Coluna tamanho ponto",
+            de="Punktgröße-Spalte",
+            zh="点大小列",
+        ),
     )  # type: ignore
 
 
@@ -70,12 +92,18 @@ class ScatterPlotExplorer(RelationshipExplorer):
     can be mapped to further columns to reveal clustering, class separation, or a
     third quantitative dimension without requiring a higher-dimensional plot.
 
-    A scatter plot is the primary tool for detecting linear and non-linear
+    A scatter plot is the primary tool for detecting linear and nonlinear
     correlations between two variables and for spotting outliers, heteroscedasticity,
     or discrete groupings in the joint distribution.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Scatter Plot", es="Gráfico de Dispersión")
+    DISPLAY_NAME = MultilingualString(
+        en="Scatter Plot",
+        es="Gráfico de Dispersión",
+        pt="Gráfico de Dispersão",
+        de="Streudiagramm",
+        zh="散点图",
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Displays a scatter plot for two selected columns to explore their "
@@ -85,13 +113,23 @@ class ScatterPlotExplorer(RelationshipExplorer):
             "Muestra un gráfico de dispersión para dos columnas seleccionadas "
             "a fin de explorar su relación."
         ),
+        pt=(
+            "Exibe um gráfico de dispersão para duas colunas selecionadas "
+            "para explorar sua relação."
+        ),
+        de=(
+            "Zeigt ein Streudiagramm für zwei ausgewählte Spalten zur Erkundung "
+            "ihrer Beziehung an."
+        ),
+        zh="显示两个所选列的散点图，以探索它们之间的关系。",
     )
     IMAGE_PREVIEW = "scatter_plot.png"
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"exact": 2},
     }
 

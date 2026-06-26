@@ -13,12 +13,11 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 
 import {
   getDatasets as getDatasetsRequest,
@@ -49,11 +48,9 @@ export default function SelectDatasetStep({
     validation: 0,
     all: 1,
   });
-  const { t, i18n } = useTranslation(["explainers", "common"]);
+  const { t } = useTranslation(["explainers", "common"]);
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const columns = useMemo(
     () => [
@@ -179,7 +176,7 @@ export default function SelectDatasetStep({
       sx: {
         cursor: "pointer",
         ...(row.original.id === selectedDatasetId && {
-          backgroundColor: theme.palette.accent.amberDim,
+          backgroundColor: `${theme.palette.primary.main}1F`,
           borderLeft: `3px solid ${theme.palette.primary.main}`,
           "&:hover td": {
             backgroundColor: "transparent",
@@ -238,7 +235,7 @@ export default function SelectDatasetStep({
 
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
             <Trans i18nKey="explainers:label.noDatasetsAvailable">
               <AlertTitle>There are no datasets available.</AlertTitle>
               Go to

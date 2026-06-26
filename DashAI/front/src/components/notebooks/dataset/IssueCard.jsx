@@ -8,14 +8,14 @@ const IssueCard = ({ title, count, items, severity = "info" }) => {
   return (
     <Box
       sx={{
-        p: 2,
+        p: 4,
         border: `1px solid ${palette.light}`,
         borderRadius: 2,
         bgcolor: theme.palette.ui.panelDark,
         color: palette.main,
         display: "flex",
         flexDirection: "column",
-        gap: 0.5,
+        gap: 1,
       }}
     >
       {/* Header */}
@@ -23,7 +23,7 @@ const IssueCard = ({ title, count, items, severity = "info" }) => {
         display="flex"
         alignItems="center"
         justifyContent="space-between"
-        mb={0.5}
+        mb={1}
       >
         <Typography variant="body2" fontWeight={500}>
           {title}

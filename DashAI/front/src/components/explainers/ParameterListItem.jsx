@@ -35,7 +35,7 @@ function ParameterListItem({ name, value }) {
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </ListItemButton>
         <Collapse in={open} timeout="auto" unmountOnExit>
-          <List sx={{ pl: 4 }} dense>
+          <List sx={{ pl: 8 }} dense>
             {Object.keys(value).map((paramName) => (
               <ParameterListItem
                 key={`${name}-${paramName}`}
@@ -53,9 +53,9 @@ function ParameterListItem({ name, value }) {
   return (
     <ListItem>
       <ListItemText
-        primary={<Typography variant="p">{name + ":"}</Typography>}
+        primary={<Typography variant="body2">{name + ":"}</Typography>}
         secondary={
-          <Typography variant="p" sx={{ ml: 1, color: "gray" }}>
+          <Typography variant="body2" sx={{ ml: 2, color: "gray" }}>
             {value}
           </Typography>
         }

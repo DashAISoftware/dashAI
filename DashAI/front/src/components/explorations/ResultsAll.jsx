@@ -27,8 +27,8 @@ function ResultsAll({ updateFlag = false, setUpdateFlag = () => {} }) {
         sx={{
           display: "flex",
           flexDirection: "column",
-          px: 3,
-          py: 2,
+          px: 6,
+          py: 4,
           width: "100%",
         }}
         // solves a mui problem related to putting datagrid inside another datagrid
@@ -36,7 +36,7 @@ function ResultsAll({ updateFlag = false, setUpdateFlag = () => {} }) {
           event.target = document.body;
         }}
       >
-        <Grid container direction="column" spacing={2}>
+        <Grid container direction="column" spacing={4}>
           {filteredExplorers.map((explorer) => (
             <Grid key={explorer.id} width={"100%"}>
               <Typography variant="h6" color={"GrayText"}>

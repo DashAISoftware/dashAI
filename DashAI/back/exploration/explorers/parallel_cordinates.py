@@ -11,6 +11,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -33,8 +34,17 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
         description=MultilingualString(
             en=("Column used to color the data points."),
             es=("Columna usada para colorear los puntos."),
+            pt=("Coluna usada para colorir os pontos de dados."),
+            de=("Spalte zur Einfärbung der Datenpunkte."),
+            zh="用于为数据点着色的列。",
         ),
-        alias=MultilingualString(en="Color column", es="Columna de color"),
+        alias=MultilingualString(
+            en="Color column",
+            es="Columna de color",
+            pt="Coluna de cor",
+            de="Farbspalte",
+            zh="颜色列",
+        ),
     )  # type: ignore
 
 
@@ -48,30 +58,43 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
     separation or clustering structure across all dimensions simultaneously.
 
     Parallel coordinates are particularly effective for identifying correlated
-    features, detecting outliers, and exploring high-dimensional datasets where
+    features, detecting outliers, and exploring high dimensional datasets where
     a scatter matrix would become too large to interpret.
     """
 
     DISPLAY_NAME = MultilingualString(
         en="Parallel Coordinates Plot",
         es="Gráfico de Coordenadas Paralelas",
+        pt="Coordenadas Paralelas",
+        de="Parallele Koordinatendiagramm",
+        zh="平行坐标图",
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Common way to visualize high-dimensional numeric data. Each line is "
+            "Common way to visualize high dimensional numeric data. Each line is "
             "a data point crossing axes for each feature."
         ),
         es=(
             "Forma común de visualizar datos numéricos de alta dimensión. Cada "
             "línea es un dato que cruza ejes para cada característica."
         ),
+        pt=(
+            "Forma comum de visualizar dados numéricos de alta dimensão. Cada "
+            "linha é um ponto de dados cruzando eixos para cada característica."
+        ),
+        de=(
+            "Gängige Methode zur Visualisierung hochdimensionaler numerischer Daten. "
+            "Jede Linie ist ein Datenpunkt, der die Achsen jedes Merkmals kreuzt."
+        ),
+        zh="可视化高维数值数据的常用方法。每条线是一个数据点，穿越每个特征的轴。",
     )
     IMAGE_PREVIEW = "parallel_cordinates.png"
 
     SCHEMA = ParallelCordinatesSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
         "input_cardinality": {"min": 2},
     }
 

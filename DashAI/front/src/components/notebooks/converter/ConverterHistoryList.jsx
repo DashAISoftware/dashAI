@@ -35,20 +35,22 @@ export default function ConverterHistoryList({
                 width: "100%",
               }}
             >
-              <Transform color="primary" sx={{ mr: 2 }} />
+              <Transform color="primary" sx={{ mr: 4 }} />
               <ListItemText
                 primary={converter.converter}
                 secondary={scopeText}
               />
               <Chip label={formatDate(converter.created)} size="small" />
-              <IconButton
-                onClick={() => onConverterDelete(converter)}
-                size="small"
-                sx={{ ml: 1 }}
-                color="error"
-              >
-                <Delete />
-              </IconButton>
+              {showDeleteButtons && (
+                <IconButton
+                  onClick={() => onConverterDelete(converter)}
+                  size="small"
+                  sx={{ ml: 2 }}
+                  color="error"
+                >
+                  <Delete />
+                </IconButton>
+              )}
             </Box>
           </ListItem>
         );

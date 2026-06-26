@@ -66,7 +66,7 @@ export const notebookTourSteps = [
     isInteractive: true,
   },
   {
-    target: '[data-tour="column-selector-explorer-container"]',
+    target: '[data-tour="column-selector"]',
     content: (
       <Trans i18nKey="notebookTour:selectColumns">
         <div>
@@ -94,39 +94,25 @@ export const notebookTourSteps = [
   {
     target: '[data-tour="explorer-parameters"]',
     content: (
-      <Trans i18nKey="notebookTour:configureParameters">
+      <Trans i18nKey="notebookTour:configureParametersAndCreate">
         <div>
           <h3></h3>
           <p></p>
           <p></p>
+          <p>
+            <strong></strong>
+          </p>
         </div>
       </Trans>
     ),
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableOverlay: true,
+    isInteractive: true,
     disableScrolling: true,
     disableBackButton: true,
     maxWidth: "320px",
-  },
-  {
-    target: '[data-tour="create-explorer-button"]',
-    content: (
-      <Trans i18nKey="notebookTour:createExplorer">
-        <div>
-          <h3></h3>
-          <p></p>
-        </div>
-      </Trans>
-    ),
-    placement: "top",
-    disableBeacon: true,
-    spotlightClicks: true,
-    disableOverlayClose: true,
-    disableOverlay: true,
-    hideFooter: true,
-    disableScrolling: true,
-    isInteractive: true,
   },
   {
     target: ".explorer-box",
@@ -230,48 +216,6 @@ export const notebookTourSteps = [
     disableBackButton: true,
   },
   {
-    target: '[data-tour="nan-remover-converter"]',
-    content: (
-      <Trans i18nKey="notebookTour:nanRemoverConverter">
-        <div>
-          <h3></h3>
-          <p></p>
-          <p></p>
-          <p></p>
-        </div>
-      </Trans>
-    ),
-    placement: "left",
-    disableBeacon: true,
-    spotlightClicks: true,
-    hideFooter: true,
-    isInteractive: true,
-  },
-  {
-    target: '[data-tour="column-selector-converter-container"]',
-    content: (
-      <Trans i18nKey="notebookTour:selectColumnsClean">
-        <div>
-          <h3></h3>
-          <p></p>
-          <p>
-            <strong></strong>
-          </p>
-        </div>
-      </Trans>
-    ),
-    placement: "right",
-    disableBeacon: true,
-    spotlightClicks: true,
-    disableOverlay: true,
-    hideFooter: true,
-    isInteractive: true,
-    disableScrolling: true,
-    disableBackButton: true,
-    maxWidth: "320px",
-  },
-
-  {
     target: ".save-dataset-button",
     content: (
       <Trans i18nKey="notebookTour:saveProcessedDataset">
@@ -307,17 +251,18 @@ export const notebookTourSteps = [
             <li></li>
             <li></li>
           </ul>
-          <div
+          <p
             style={{
-              backgroundColor: "#f0f9ff",
-              border: "1px solid #bae6fd",
+              backgroundColor: "rgba(76, 175, 80, 0.12)",
+              color: "inherit",
+              padding: "8px",
               borderRadius: "4px",
-              padding: "8px 12px",
-              marginTop: "15px",
+              marginTop: "10px",
+              borderLeft: "3px solid #43A047",
             }}
           >
-            <p style={{ margin: "0", fontWeight: "bold" }}></p>
-          </div>
+            <strong></strong>
+          </p>
         </div>
       </Trans>
     ),

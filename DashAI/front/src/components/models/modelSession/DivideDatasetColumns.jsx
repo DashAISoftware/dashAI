@@ -56,7 +56,7 @@ function DivideDatasetColumns({
         component="li"
         key={key}
         {...otherProps}
-        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+        sx={{ display: "flex", alignItems: "center", gap: 2 }}
       >
         <span>{option}</span>
         {columnType && columnType.type && (
@@ -86,7 +86,7 @@ function DivideDatasetColumns({
 
       const label =
         columnType && columnType.type ? (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <span>{option}</span>
             <Chip
               label={columnType.type}
@@ -119,7 +119,7 @@ function DivideDatasetColumns({
         <Typography
           variant="caption"
           component="h3"
-          sx={{ mb: 2, color: "grey" }}
+          sx={{ mb: 8, color: "grey" }}
         >
           {t("experiments:label.selectInputOutputColumnsDescription")}
         </Typography>
@@ -152,7 +152,7 @@ function DivideDatasetColumns({
             }
           />
         )}
-        sx={{ mb: 2 }}
+        sx={{ mb: 8 }}
         disabled={disabled || allColumnNames.length === 0}
       />
 
@@ -182,7 +182,7 @@ function DivideDatasetColumns({
             }
           />
         )}
-        sx={{ mb: 2 }}
+        sx={{ mb: 8 }}
         disabled={disabled || allColumnNames.length === 0}
       />
     </React.Fragment>

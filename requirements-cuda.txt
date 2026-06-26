@@ -1,0 +1,17 @@
+# ===================================================================
+# DashAI CUDA extras (CUDA 12.8 PyTorch wheels + CUDA llama-cpp)
+# ===================================================================
+# Common deps live in requirements.txt; this file only adds the
+# packages that need a special index/build for NVIDIA GPU hosts.
+# Requiere drivers NVIDIA + NVIDIA Container Toolkit (Dockerfile.cuda).
+# Install: pip install -r requirements-cuda.txt
+# ===================================================================
+
+-r requirements.txt
+
+# PyTorch CUDA 12.8 wheels (prebuilt)
+torch --index-url https://download.pytorch.org/whl/cu128
+torchvision --index-url https://download.pytorch.org/whl/cu128
+
+# Llama compiled with CUDA offload (needs cmake + CUDA devel headers)
+llama-cpp-python -C cmake.args="-DGGML_CUDA=on"

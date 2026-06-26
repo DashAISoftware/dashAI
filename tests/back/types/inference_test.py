@@ -27,7 +27,7 @@ def _infer(client, file_path: Path, mime: str, params: dict):
 
 @pytest.fixture
 def client(tmp_path: Path):
-    app = create_app(local_path=tmp_path, logging_level="ERROR")
+    app = create_app(local_path=tmp_path, logging_level="ERROR", enable_seeding=False)
     with TestClient(app) as c:
         yield c
 
@@ -42,13 +42,24 @@ def test_inference_consistency(client: TestClient):
             pytest.skip(f"File {p.name} not found in {DATA_DIR}, skipping test.")
 
     inferred_csv = _infer(
-        client, csv_path, "text/csv", {"separator": ",", "methods": ["DashAIPtype"]}
+        client,
+        csv_path,
+        "text/csv",
+        {
+            "separator": ",",
+            "methods": ["DashAIPtype"],
+            "dataloader_name": "CSVDataLoader",
+        },
     )
     inferred_json = _infer(
         client,
         json_path,
         "application/json",
-        {"data_key": "data", "methods": ["DashAIPtype"]},
+        {
+            "data_key": "data",
+            "methods": ["DashAIPtype"],
+            "dataloader_name": "JSONDataLoader",
+        },
     )
     # TEST API PROBLEM DOESNT LET USE XLSX SAME AS ABOVE. DOESN'T HAPPEN IN REAL USE.
     df_xslx = pd.read_excel(xslx_path)

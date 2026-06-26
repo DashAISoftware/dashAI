@@ -47,6 +47,25 @@ class MSE(RegressionMetric):
             "Indica la precisión de predicción del modelo, "
             "donde valores más bajos indican mejor ajuste."
         ),
+        pt=(
+            "O Erro Quadrático Médio (MSE) mede a média "
+            "das diferenças ao quadrado "
+            "entre valores previstos e reais em um modelo de regressão. "
+            "Indica a acurácia de previsão do modelo, "
+            "com valores mais baixos indicando melhor ajuste."
+        ),
+        de=(
+            "Mittlerer Quadratischer Fehler (MSE) misst den Durchschnitt "
+            "der quadrierten Differenzen "
+            "zwischen vorhergesagten und tatsächlichen Werten in einem "
+            "Regressionsmodell. "
+            "Er gibt einen Hinweis auf die Vorhersagegenauigkeit des Modells, "
+            "wobei niedrigere Werte eine bessere Anpassung anzeigen."
+        ),
+        zh=(
+            "均方误差（MSE）衡量回归模型中预测值与实际值平方差的平均值，"
+            "值越低表示拟合越好。"
+        ),
     )
 
     @staticmethod

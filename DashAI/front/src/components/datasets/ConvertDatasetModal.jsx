@@ -200,12 +200,12 @@ function ConvertDatasetModal({ datasetId }) {
               direction="row"
               justifyContent="space-around"
               alignItems="stretch"
-              rowGap={2}
+              rowGap={4}
               onClick={(event) => event.stopPropagation()}
             >
               {/* Dataset summary table */}
               <Grid size={{ xs: 12 }}>
-                <Typography variant="subtitle1" component="h3" mb={1}>
+                <Typography variant="subtitle1" component="h3" mb={2}>
                   Dataset summary
                 </Typography>
               </Grid>
@@ -216,10 +216,10 @@ function ConvertDatasetModal({ datasetId }) {
                 size={{ xs: 12 }}
                 display={"flex"}
                 alignItems={"center"}
-                gap={2}
+                gap={4}
               >
                 <Grid size={{ xs: 6 }} display={"flex"} alignItems={"center"}>
-                  <Typography variant="subtitle1" component="h3" mb={1}>
+                  <Typography variant="subtitle1" component="h3" mb={2}>
                     List of converters
                   </Typography>
                   <Tooltip
@@ -236,7 +236,7 @@ function ConvertDatasetModal({ datasetId }) {
                   />
                 </Grid>
                 <Grid size={{ xs: 6 }} display={"flex"} alignItems={"center"}>
-                  <Typography variant="subtitle2" component="h3" mb={1}>
+                  <Typography variant="subtitle2" component="h3" mb={2}>
                     Class/Target column index
                   </Typography>
                   <Tooltip

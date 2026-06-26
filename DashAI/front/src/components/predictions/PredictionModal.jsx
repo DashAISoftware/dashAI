@@ -248,14 +248,15 @@ export default function PredictionModal({ isOpen, onClose, run }) {
   }, [predictions]);
 
   const handleDownload = async (selectedPrediction) => {
-    const data = await exportDatasetCsvByPath(selectedPrediction.results_path);
-    const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+    const blob = await exportDatasetCsvByPath(selectedPrediction.results_path);
+    const isZip = blob.type === "application/zip";
+    const ext = isZip ? "zip" : "csv";
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute(
       "download",
-      `${"prediction-" + selectedPrediction.created}.csv`,
+      `${"prediction-" + selectedPrediction.created}.${ext}`,
     );
     document.body.appendChild(link);
     link.click();
@@ -286,7 +287,16 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     if (predictionMode === "dataset") {
       return selectedDataset !== null;
     }
-    return manualRows && manualRows.length > 0;
+    if (!manualRows || manualRows.length === 0) return false;
+    const imageColumns = Object.keys(types).filter(
+      (col) => types[col]?.type === "Image",
+    );
+    if (imageColumns.length > 0) {
+      return manualRows.every((row) =>
+        imageColumns.every((col) => row[col] instanceof File),
+      );
+    }
+    return true;
   };
 
   if (!isOpen || !run) return null;
@@ -321,7 +331,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         sx={{
           borderBottom: 1,
           borderColor: "divider",
-          px: 3,
+          px: 6,
         }}
       >
         <Tabs
@@ -378,7 +388,11 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                 )}
               </Box>
             ) : (
-              <ResultsTable selectedPrediction={selectedPrediction} />
+              <ResultsTable
+                selectedPrediction={selectedPrediction}
+                datasetSample={sample}
+                targetColumn={experiment?.output_columns?.[0]}
+              />
             )}
           </>
         )}
@@ -387,7 +401,11 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           <>
             {selectedPrediction ? (
               <Box>
-                <ResultsTable selectedPrediction={selectedPrediction} />
+                <ResultsTable
+                  selectedPrediction={selectedPrediction}
+                  datasetSample={sample}
+                  targetColumn={experiment?.output_columns?.[0]}
+                />
               </Box>
             ) : (
               <PredictionsTable
@@ -402,7 +420,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions sx={{ px: 6, py: 4 }}>
         {activeTab === 0 ? (
           <>
             <Button variant="outlined" onClick={onClose}>

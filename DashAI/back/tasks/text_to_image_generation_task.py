@@ -21,7 +21,13 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         "inputs": {"str": {"min": 1, "max": 1}},
         "outputs": {"Image": {"min": 1, "max": "n"}},
     }
-    DISPLAY_NAME: str = MultilingualString(en="Text to Image", es="Texto a Imagen")
+    DISPLAY_NAME: str = MultilingualString(
+        en="Text to Image",
+        es="Texto a Imagen",
+        pt="Texto para Imagem",
+        de="Text zu Bild",
+        zh="文本到图像",
+    )
     DESCRIPTION: str = MultilingualString(
         en="""
         This task generates images based on the provided input text.
@@ -29,6 +35,16 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         es="""
         Esta tarea genera imágenes basadas en el
         texto de entrada proporcionado.
+        """,
+        pt="""
+        Esta tarefa gera imagens com base no
+        texto de entrada fornecido.
+        """,
+        de="""
+        Diese Aufgabe generiert Bilder basierend auf dem bereitgestellten Eingabetext.
+        """,
+        zh="""
+        此任务根据提供的输入文本生成图像。
         """,
     )
 

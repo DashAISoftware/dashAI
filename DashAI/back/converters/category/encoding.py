@@ -23,7 +23,9 @@ class EncodingConverter(BaseConverter):
     preserved.
     """
 
-    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
+    CATEGORY = MultilingualString(
+        en="Encoding", es="Codificación", pt="Codificação", de="Kodierung", zh="编码"
+    )
     ICON: Final[str] = Icon.Dns.value
     COLOR: Final[str] = "rgb(138, 43, 226)"
     PREFIX: str = "encoded_"

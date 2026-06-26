@@ -35,6 +35,9 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Categories (unique values) per feature.",
             es="Categorías (valores únicos) por característica.",
+            pt="Categorias (valores únicos) por característica.",
+            de="Kategorien (eindeutige Werte) pro Merkmal.",
+            zh="每个特征的类别（唯一值）。",
         ),
     )  # type: ignore
     dtype: schema_field(
@@ -43,6 +46,9 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Desired dtype of output.",
             es="Tipo de dato de salida deseado.",
+            pt="Tipo de dado de saída desejado.",
+            de="Gewünschter Datentyp der Ausgabe.",
+            zh="所需的输出数据类型。",
         ),
     )  # type: ignore
     handle_unknown: schema_field(
@@ -57,6 +63,16 @@ class OrdinalEncoderSchema(BaseSchema):
                 "Si se debe lanzar un error o usar un valor codificado específico "
                 "cuando se vea una categoría desconocida."
             ),
+            pt=(
+                "Se deve lançar um erro ou usar um valor codificado específico "
+                "quando uma categoria desconhecida for encontrada."
+            ),
+            de=(
+                "Ob ein Fehler ausgelöst oder ein spezifischer kodierter Wert verwendet"
+                "werden soll, "
+                "wenn eine unbekannte Kategorie gesehen wird."
+            ),
+            zh="遇到未知类别时是报错还是使用特定的编码值。",
         ),
     )  # type: ignore
     unknown_value: schema_field(
@@ -65,6 +81,9 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="The value to use for unknown categories.",
             es="El valor a usar para categorías desconocidas.",
+            pt="O valor a usar para categorias desconhecidas.",
+            de="Der Wert für unbekannte Kategorien.",
+            zh="用于未知类别的值。",
         ),
     )  # type: ignore
     # Added in version 1.3
@@ -74,6 +93,9 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum frequency of a category to be considered as frequent.",
             es="Frecuencia mínima para considerar una categoría como frecuente.",
+            pt="Frequência mínima para considerar uma categoria como frequente.",
+            de="Mindesthäufigkeit einer Kategorie, um als häufig betrachtet zu werden.",
+            zh="将类别视为频繁类别的最低频率。",
         ),
     )  # type: ignore
     # Added in version 1.3
@@ -83,6 +105,9 @@ class OrdinalEncoderSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of categories to encode.",
             es="Número máximo de categorías a codificar.",
+            pt="Número máximo de categorias a codificar.",
+            de="Maximale Anzahl der zu kodierenden Kategorien.",
+            zh="要编码的最大类别数。",
         ),
     )  # type: ignore
 
@@ -102,7 +127,7 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
 
     * The categories have a meaningful rank (e.g. education level, severity
       score, shirt size).
-    * The downstream model can exploit ordinal structure (e.g. tree-based
+    * The downstream model can exploit ordinal structure (e.g. tree based
       models such as gradient-boosted trees or random forests).
 
     For unordered nominal categories, ``OneHotEncoder`` is typically
@@ -117,8 +142,17 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     DESCRIPTION = MultilingualString(
         en="Encode categorical features as an integer array.",
         es="Codifica características categóricas como un arreglo de enteros.",
+        pt="Codifica características categóricas como um array de inteiros.",
+        de="Kategoriale Merkmale als Ganzzahl-Array kodieren.",
+        zh="将类别特征编码为整数数组。",
     )
-    DISPLAY_NAME = MultilingualString(en="Ordinal Encoder", es="Codificador Ordinal")
+    DISPLAY_NAME = MultilingualString(
+        en="Ordinal Encoder",
+        es="Codificador Ordinal",
+        pt="Codificador Ordinal",
+        de="Ordinaler Kodierer",
+        zh="序数编码器",
+    )
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
     PREFIX = "oe_"

@@ -28,8 +28,17 @@ class RowExplorerSchema(BaseExplorerSchema):
         description=MultilingualString(
             en="Maximum number of rows to take.",
             es="Número máximo de filas a tomar.",
+            pt="Número máximo de linhas a tomar.",
+            de="Maximale Anzahl der zu nehmenden Zeilen.",
+            zh="要取的最大行数。",
         ),
-        alias=MultilingualString(en="Number of rows", es="Número de filas"),
+        alias=MultilingualString(
+            en="Number of rows",
+            es="Número de filas",
+            pt="Número de linhas",
+            de="Anzahl der Zeilen",
+            zh="行数",
+        ),
     )  # type: ignore
     shuffle: schema_field(
         t=bool_field(),
@@ -37,8 +46,17 @@ class RowExplorerSchema(BaseExplorerSchema):
         description=MultilingualString(
             en="Shuffle the rows when exploring.",
             es="Barajar las filas durante la exploración.",
+            pt="Embaralhar as linhas durante a exploração.",
+            de="Zeilen beim Erkunden mischen.",
+            zh="探索时打乱行顺序。",
         ),
-        alias=MultilingualString(en="Shuffle rows", es="Barajar filas"),
+        alias=MultilingualString(
+            en="Shuffle rows",
+            es="Barajar filas",
+            pt="Embaralhar linhas",
+            de="Zeilen mischen",
+            zh="打乱行",
+        ),
     )  # type: ignore
     from_top: schema_field(
         t=bool_field(),
@@ -51,8 +69,22 @@ class RowExplorerSchema(BaseExplorerSchema):
                 "Tomar filas desde el inicio del dataset. En caso contrario, "
                 "tomarlas desde el final."
             ),
+            pt=(
+                "Tomar linhas do início do conjunto de dados. Caso contrário, "
+                "tomar do final."
+            ),
+            de=(
+                "Zeilen vom Anfang des Datensatzes nehmen. Andernfalls vom Ende nehmen."
+            ),
+            zh="从数据集头部取行。否则，从尾部取行。",
         ),
-        alias=MultilingualString(en="From top", es="Desde el inicio"),
+        alias=MultilingualString(
+            en="From top",
+            es="Desde el inicio",
+            pt="Do início",
+            de="Von oben",
+            zh="从顶部",
+        ),
     )  # type: ignore
 
 
@@ -67,7 +99,13 @@ class RowExplorer(PreviewInspectionExplorer):
     data format before applying transformations.
     """
 
-    DISPLAY_NAME = MultilingualString(en="Show Rows", es="Mostrar Filas")
+    DISPLAY_NAME = MultilingualString(
+        en="Show Rows",
+        es="Mostrar Filas",
+        pt="Explorador de Linhas",
+        de="Zeilen anzeigen",
+        zh="行探索器",
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "Displays a subset of rows from the dataset in tabular form. You can "
@@ -78,11 +116,24 @@ class RowExplorer(PreviewInspectionExplorer):
             "Puede tomar filas desde el inicio o el final y opcionalmente "
             "barajarlas."
         ),
+        pt=(
+            "Exibe um subconjunto de linhas do conjunto de dados em formato tabular. "
+            "Você pode tomar linhas do início ou do final e opcionalmente "
+            "embaralhá-las."
+        ),
+        de=(
+            "Zeigt eine Teilmenge von Zeilen des Datensatzes in tabellarischer Form an."
+            "Sie können Zeilen von oben oder unten nehmen und optional mischen."
+        ),
+        zh=("以表格形式显示数据集的行子集。可以从顶部或底部取行，并可选择打乱顺序。"),
     )
 
     SHORT_DESCRIPTION = MultilingualString(
         en="Display a sample of rows from the dataset.",
         es="Muestra una muestra de filas del dataset.",
+        pt="Exibe uma amostra de linhas do conjunto de dados.",
+        de="Zeigt eine Stichprobe von Zeilen des Datensatzes an.",
+        zh="显示数据集行样本。",
     )
     IMAGE_PREVIEW = "row_explorer.png"
 

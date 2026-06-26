@@ -50,14 +50,14 @@ Muestra un gráfico de barras agrupadas donde cada grupo representa una métrica
 
 **Gráfico Radar**
 
-Muestra un gráfico de araña/radar donde cada eje representa una métrica. Cada modelo se dibuja como un polígono — un modelo con un rendimiento uniformemente bueno en todas las métricas aparece como un polígono más grande y equilibrado. Útil para identificar compensaciones: un modelo puede obtener puntuaciones altas en Accuracy pero bajas en Recall, lo que se ve como una forma irregular.
+Muestra un gráfico de araña/radar donde cada eje representa una métrica. Cada modelo se dibuja como un polígono. Un modelo con un rendimiento uniformemente bueno en todas las métricas aparece como un polígono más grande y equilibrado. Útil para identificar compensaciones: un modelo puede obtener puntuaciones altas en Accuracy pero bajas en Recall, lo que se ve como una forma irregular.
 
 ### Selección de Métricas
 
 En el lado izquierdo de la vista de gráficos, un panel **Metrics** lista todas las métricas disponibles con casillas de verificación. Hay dos botones de selección rápida disponibles:
 
-- **ALL** — habilita todas las métricas.
-- **NONE** — limpia todas las selecciones.
+- **ALL** habilita todas las métricas.
+- **NONE** limpia todas las selecciones.
 
 Selecciona solo las métricas relevantes para tu análisis para reducir el desorden visual. El gráfico se actualiza de inmediato al marcar o desmarcar métricas.
 
@@ -65,10 +65,10 @@ Selecciona solo las métricas relevantes para tu análisis para reducir el desor
 
 ## Consejos
 
-- Siempre compara modelos en la división **TEST** para la evaluación final — las métricas de entrenamiento y validación pueden ser engañosas si el modelo sobreajustó.
+- Siempre compara modelos en la división **TEST** para la evaluación final, ya que las métricas de entrenamiento y validación pueden ser engañosas si el modelo sobreajustó.
 - Usa el **Gráfico Radar** para identificar rápidamente modelos con rendimiento equilibrado en todas las métricas frente a modelos que sobresalen en un área pero tienen bajo rendimiento en otras.
-- Añade un modelo de referencia (p. ej., Dummy Classifier para tareas de clasificación) a la sesión antes de entrenar otros modelos — establece un umbral mínimo de rendimiento que todos los demás modelos deben superar.
-- La tabla de comparación se puede desplazar horizontalmente cuando se muestran muchas métricas — desplázate hacia la derecha para ver todas las columnas.
+- Añade un modelo de referencia (p. ej., Dummy Classifier para tareas de clasificación) a la sesión antes de entrenar otros modelos. Establece un umbral mínimo de rendimiento que todos los demás modelos deben superar.
+- La tabla de comparación se puede desplazar horizontalmente cuando se muestran muchas métricas. Desplázate hacia la derecha para ver todas las columnas.
 
 ## Solución de Problemas
 

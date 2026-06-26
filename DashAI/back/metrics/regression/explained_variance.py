@@ -17,7 +17,7 @@ class ExplainedVariance(RegressionMetric):
     The Explained Variance Score quantifies how much of the variability in
     the dependent variable is captured by the model's predictions. It is
     closely related to R², but does not penalise for a systematic bias
-    (constant offset) in the predictions — a model with a fixed offset can
+    (constant offset) in the predictions. A model with a fixed offset can
     achieve a high Explained Variance score while having a lower R².
 
     ::
@@ -46,6 +46,24 @@ class ExplainedVariance(RegressionMetric):
             "independientes "
             "en un modelo de regresión. Indica qué tan bien el modelo "
             "captura la variabilidad de los datos."
+        ),
+        pt=(
+            "A Variância Explicada mede a proporção da variância na "
+            "variável dependente que é previsível a partir das variáveis "
+            "independentes "
+            "em um modelo de regressão. Indica quão bem o modelo "
+            "captura a variabilidade dos dados."
+        ),
+        de=(
+            "Erklärte Varianz misst den Anteil der Varianz in der "
+            "abhängigen Variable, der aus den unabhängigen Variablen "
+            "in einem Regressionsmodell vorhersagbar ist. Sie gibt an, wie gut das "
+            "Modell "
+            "die Variabilität der Daten erfasst."
+        ),
+        zh=(
+            "解释方差衡量回归模型中因变量的方差可由自变量预测的比例，"
+            "反映模型捕获数据变异性的能力。"
         ),
     )
 

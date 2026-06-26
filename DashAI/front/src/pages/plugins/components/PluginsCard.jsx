@@ -6,7 +6,10 @@ import usePluginsUpdate from "../hooks/usePluginsUpdate";
 import { PluginStatus } from "../../../types/plugin";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTranslation } from "react-i18next";
-import { Extension as PluginIcon } from "@mui/icons-material";
+import {
+  Extension as PluginIcon,
+  Verified as VerifiedIcon,
+} from "@mui/icons-material";
 
 const DESCRIPTION_MAX_LINES = 3;
 
@@ -21,10 +24,10 @@ function PluginsCard({
   const { t } = useTranslation(["plugins"]);
   const theme = useTheme();
 
-  const accent = theme.palette.accent.coral;
-  const accentDim = theme.palette.accent.coralDim;
-  const accentBorder = theme.palette.accent.coralBorder;
-  const accentGlow = theme.palette.accent.coralGlow;
+  const accent = theme.palette.primary.main;
+  const accentDim = `${accent}1F`;
+  const accentBorder = `${accent}38`;
+  const accentGlow = `${accent}0A`;
 
   const descRef = React.useRef(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
@@ -50,6 +53,12 @@ function PluginsCard({
 
   const displayName = plugin.name.replace("dashai-", "");
   const tags = plugin.tags.map((tag) => tag.name);
+
+  const verifiedBadge = plugin.verified ? (
+    <Tooltip title={t("plugins:label.verified")} arrow placement="top">
+      <VerifiedIcon sx={{ fontSize: 16, color: accent, flexShrink: 0 }} />
+    </Tooltip>
+  ) : null;
   const version = plugin.installed_version
     ? `v${plugin.installed_version}`
     : null;
@@ -72,7 +81,7 @@ function PluginsCard({
           position: "relative",
           overflow: "hidden",
           transition: "border-color 0.2s, background 0.2s, transform 0.15s",
-          gap: 3,
+          gap: 12,
           "&:hover": {
             borderColor: accentBorder,
             background: accentGlow,
@@ -104,6 +113,8 @@ function PluginsCard({
         >
           {displayName}
         </Typography>
+
+        {verifiedBadge}
 
         {version && (
           <Typography
@@ -159,7 +170,7 @@ function PluginsCard({
               updatePlugin();
             }}
             sx={{
-              fontSize: "13px",
+              fontSize: "12px",
               fontWeight: 500,
               color: accent,
               cursor: "pointer",
@@ -181,7 +192,7 @@ function PluginsCard({
             fontSize: "18px",
             color: theme.palette.text.disabled,
             flexShrink: 0,
-            ml: 1,
+            ml: 8,
           }}
         >
           →
@@ -236,7 +247,7 @@ function PluginsCard({
       <Box
         sx={{
           display: "flex",
-          mb: "14px",
+          mb: 3,
           width: "100%",
           alignItems: "center",
           justifyContent: "space-between",
@@ -272,17 +283,26 @@ function PluginsCard({
       </Box>
 
       {/* Title */}
-      <Typography
-        noWrap
+      <Box
         sx={{
-          ...theme.typography.h5,
-          color: theme.palette.text.primary,
-          mb: "5px",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          mb: 6,
           width: "100%",
         }}
       >
-        {displayName}
-      </Typography>
+        <Typography
+          noWrap
+          sx={{
+            ...theme.typography.h5,
+            color: theme.palette.text.primary,
+          }}
+        >
+          {displayName}
+        </Typography>
+        {verifiedBadge}
+      </Box>
 
       {/* Description */}
       <Tooltip
@@ -314,8 +334,8 @@ function PluginsCard({
       {/* Footer: tags + install/arrow */}
       <Box
         sx={{
-          mt: "16px",
-          pt: "14px",
+          mt: 4,
+          pt: 3,
           borderTop: `1px solid ${theme.palette.ui.borderLight}`,
           display: "flex",
           alignItems: "center",
@@ -342,7 +362,7 @@ function PluginsCard({
           ))}
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 8 }}>
           {plugin.status === PluginStatus.REGISTERED && (
             <Box
               component="span"
@@ -351,7 +371,7 @@ function PluginsCard({
                 updatePlugin();
               }}
               sx={{
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: 500,
                 color: accent,
                 cursor: "pointer",
@@ -387,6 +407,7 @@ PluginsCard.propTypes = {
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     author: PropTypes.string.isRequired,
+    verified: PropTypes.bool,
     tags: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number.isRequired,

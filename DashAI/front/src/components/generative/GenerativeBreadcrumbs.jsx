@@ -70,11 +70,11 @@ export default function GenerativeBreadcrumbs() {
   return (
     <Box
       sx={{
-        mb: 2,
+        mb: 4,
         minHeight: "24px",
         display: "flex",
         alignItems: "center",
-        gap: 1,
+        gap: 2,
       }}
     >
       {showBackButton && (

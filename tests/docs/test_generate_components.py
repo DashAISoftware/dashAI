@@ -9,13 +9,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "docs" / "scripts")
 
 # Helpers that don't require importing the full DashAI stack
 class FakeMultilingualString:
-    def __init__(self, en, es=None):
+    def __init__(self, en, es=None, pt=None):
         self.en = en
         self.es = es
+        self.pt = pt
 
     def get(self, lang):
         if lang == "es" and self.es:
             return self.es
+        if lang == "pt" and self.pt:
+            return self.pt
         return self.en
 
 
@@ -462,7 +465,7 @@ def test_format_default_returns_dash_when_neither():
     from generate_components import _format_default
 
     prop = {"description": "No default"}
-    assert _format_default(prop) == "—"
+    assert _format_default(prop) == "-"
 
 
 # ------------------------------------------------------------------ #

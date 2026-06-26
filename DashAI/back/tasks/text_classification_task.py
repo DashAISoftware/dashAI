@@ -57,9 +57,22 @@ class TextClassificationTask(ClassificationTask):
             "Clasifica textos en categorías predefinidas. "
             "Ej.: sentimiento, spam, intención."
         ),
+        pt=(
+            "Classifica textos em categorias predefinidas. "
+            "Ex.: sentimento, spam, detecção de intenção."
+        ),
+        de=(
+            "Text in vordefinierte Kategorien klassifizieren. "
+            "Z.B.: Stimmungsanalyse, Spam, Absichtserkennung."
+        ),
+        zh="将文本分类到预定义类别。例如：情感分析、垃圾邮件检测、意图识别。",
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Text Classification", es="Clasificación de Texto"
+        en="Text Classification",
+        es="Clasificación de Texto",
+        pt="Classificação de Texto",
+        de="Textklassifikation",
+        zh="文本分类",
     )
 
     def prepare_for_task(

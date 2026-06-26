@@ -1,0 +1,34 @@
+{
+  "button": {
+    "install": "Instalar",
+    "refresh": "Atualizar",
+    "return": "Voltar",
+    "uninstall": "Desinstalar",
+    "upgrade": "Atualizar"
+  },
+  "error": {
+    "installingPlugin": "Erro ao instalar o plugin.",
+    "obtainPluginDetails": "Erro ao obter os detalhes do plugin.",
+    "obtainPlugins": "Erro ao tentar obter os plugins.",
+    "updatePlugins": "Erro ao tentar atualizar os plugins.",
+    "upgradingPlugin": "Erro ao atualizar o plugin."
+  },
+  "label": {
+    "browse": "Explorar",
+    "details": "Detalhes",
+    "installed": "Instalados",
+    "latest": "Mais recentes",
+    "noPluginsToShow": "Nenhum plugin para mostrar (tente atualizar)",
+    "oldest": "Mais antigos",
+    "plugins": "Plugins - {{label}}",
+    "tags": "Etiquetas",
+    "verified": "Plugin verificado da dashAI",
+    "version": "Versão: {{version}}",
+    "versionInstalledLatestAvailable": "Versão instalada: <1></1> | Última versão disponível: <3></3>"
+  },
+  "message": {
+    "pluginInstalled": "Plugin instalado com sucesso",
+    "pluginUninstalled": "Plugin desinstalado com sucesso",
+    "pluginUpgraded": "Plugin atualizado com sucesso"
+  }
+}

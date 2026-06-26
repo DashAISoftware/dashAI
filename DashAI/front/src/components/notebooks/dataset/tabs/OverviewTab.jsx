@@ -45,7 +45,7 @@ const OverviewTab = ({
   ]);
 
   return (
-    <Box display="flex" flexDirection="column" gap={4}>
+    <Box display="flex" flexDirection="column" gap={8}>
       {/* Data View */}
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
@@ -55,13 +55,13 @@ const OverviewTab = ({
               alignItems: "center",
               flexWrap: "wrap",
               justifyContent: "space-between",
-              mb: 1,
+              mb: 2,
             }}
           >
             <Typography variant="h6">
               {t("datasets:label.datasetPreview")}
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               {typeCounts.map(([type, count]) => (
                 <Chip
                   key={type}
@@ -84,6 +84,7 @@ const OverviewTab = ({
             initialPageSize={10}
             datasetPath={dataset.file_path}
             datasetId={dataset.id}
+            datasetName={dataset.name}
             onEditColumn={onEditColumnName}
             editableColumns={true}
             columnTypes={
@@ -107,7 +108,7 @@ const OverviewTab = ({
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                mb: 1,
+                mb: 2,
               }}
             >
               <Typography variant="h6">

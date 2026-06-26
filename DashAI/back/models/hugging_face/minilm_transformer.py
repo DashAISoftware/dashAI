@@ -10,12 +10,12 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained MiniLM model for lightweight English text classification.
+    """Pretrained MiniLM model for lightweight English text classification.
 
     MiniLM is a compressed BERT-like model distilled from a larger teacher
     network using deep self-attention distillation. It achieves competitive
     performance while being significantly smaller and faster than BERT, making
-    it a good choice for resource-constrained deployments.
+    it a good choice for resource constrained deployments.
 
     References
     ----------
@@ -27,6 +27,9 @@ class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
     DISPLAY_NAME: str = MultilingualString(
         en="MiniLM Transformer",
         es="Transformer MiniLM",
+        pt="Transformer MiniLM",
+        de="MiniLM Transformer",
+        zh="MiniLM Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +39,19 @@ class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
         es=(
             "Modelo MiniLM compacto y rápido para clasificación de texto eficiente. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+        ),
+        pt=(
+            "Modelo MiniLM compacto e rápido para classificação de texto eficiente. "
+            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Kompaktes, schnelles MiniLM-Modell für effiziente Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "紧凑快速的 MiniLM 模型，用于高效文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#0277BD"

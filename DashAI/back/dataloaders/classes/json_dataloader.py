@@ -40,8 +40,37 @@ class JSONDataloaderSchema(BaseSchema):
                 '(también conocido como orientación "records" en pandas), '
                 "establezca este valor como null."
             ),
+            pt=(
+                "Caso os dados tenham a forma "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(também conhecido como "table" no pandas), nome do campo "data", '
+                "onde a lista com dicionários com os dados deve ser encontrada. "
+                "Caso o formato seja apenas uma lista de dicionários "
+                '(também conhecido como orientação "records" no pandas), '
+                "defina este valor como null."
+            ),
+            de=(
+                "Falls die Daten die Form "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(auch bekannt als "table" in pandas) haben, Name des Felds "data", '
+                "wo die Liste mit Wörterbüchern mit den Daten gefunden werden soll. "
+                "Falls das Format nur eine Liste von Wörterbüchern ist "
+                '(auch bekannt als "records"-Orientierung in pandas), '
+                "setzen Sie diesen Wert auf null."
+            ),
+            zh=(
+                '如果数据格式为{"data": [{"col1": val1, ...}]}（pandas中称为"table"），'
+                '则为包含数据字典列表的字段"data"的名称。'
+                '如果格式只是字典列表（pandas中称为"records"方向），将此值设为null。'
+            ),
         ),
-        alias=MultilingualString(en="Data key", es="Clave de datos"),
+        alias=MultilingualString(
+            en="Data key",
+            es="Clave de datos",
+            pt="Chave de dados",
+            de="Datenschlüssel",
+            zh="数据键",
+        ),
     )  # type: ignore
 
 
@@ -53,10 +82,11 @@ class JSONDataLoader(BaseDataLoader):
     An optional ``data_key`` parameter allows the records to be nested under a
     top-level key (e.g. ``{"data": [{...}, ...]}``) rather than at the root.
 
-    Multi-file uploads are concatenated before splitting, and the split ratios
+    Multifile uploads are concatenated before splitting, and the split ratios
     are validated before loading to provide early failure feedback.
     """
 
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".json", ".zip"})
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -76,10 +106,29 @@ class JSONDataLoader(BaseDataLoader):
             "diccionarios) como datos JSON anidados donde los registros están "
             "contenidos dentro de una clave específica."
         ),
+        pt=(
+            "Carregador de dados para dados tabulares em arquivos JSON. "
+            "Suporta tanto o formato de array JSON padrão (uma lista de "
+            "dicionários) como dados JSON aninhados onde os registros estão "
+            "contidos dentro de uma chave específica."
+        ),
+        de=(
+            "Datenlader für tabellarische Daten in JSON-Dateien. "
+            "Unterstützt sowohl das Standard-JSON-Array-Format (eine Liste von "
+            "Wörterbüchern) als auch verschachtelte JSON-Daten, bei denen Datensätze "
+            "innerhalb eines bestimmten Schlüssels enthalten sind."
+        ),
+        zh=(
+            "JSON文件表格数据加载器。"
+            "支持标准JSON数组格式（字典列表）和嵌套JSON数据（记录包含在特定键中）。"
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="JSON Data Loader",
         es="Cargador de Datos JSON",
+        pt="Carregador de Dados JSON",
+        de="JSON Datenlader",
+        zh="JSON数据加载器",
     )
 
     def _check_params(self, params: Dict[str, Any]) -> None:

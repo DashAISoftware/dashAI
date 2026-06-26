@@ -6,9 +6,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
 } from "material-react-table";
-import { MRT_Localization_ES } from "material-react-table/locales/es";
-import { MRT_Localization_EN } from "material-react-table/locales/en";
 import { useTheme } from "@mui/material/styles";
+import { useTableLocalization } from "../../utils/useTableLocalization";
 
 import {
   PlayArrow as PlayArrowIcon,
@@ -23,8 +22,6 @@ import { getExplorersByExplorationId as getExplorersRequest } from "../../api/ex
 import { useExplorationsContext } from "./context";
 
 import { formatDate } from "../../utils";
-import { useTranslation } from "react-i18next";
-
 /**
  * Component to run explorers from an exploration. It uses context to get the exploration data.
  * @param {Object} props
@@ -38,11 +35,8 @@ function ExplorationRunner({
   const { enqueueSnackbar } = useSnackbar();
   const { explorationData } = useExplorationsContext();
   const { id: explorationId, explorers } = explorationData;
-  const { i18n } = useTranslation();
   const theme = useTheme();
-  const localization = i18n.language.startsWith("es")
-    ? MRT_Localization_ES
-    : MRT_Localization_EN;
+  const localization = useTableLocalization();
 
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState(explorers);
@@ -233,17 +227,17 @@ function ExplorationRunner({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        gap: 2,
+        gap: 4,
       }}
     >
       <Paper
-        sx={{ display: "flex", flexDirection: "column", px: 3, py: 2 }}
+        sx={{ display: "flex", flexDirection: "column", px: 6, py: 4 }}
         // solves a mui problem related to putting datagrid inside another datagrid
         onClick={(event) => {
           event.target = document.body;
         }}
       >
-        <Typography variant="subtitle1" component="h3" sx={{ pb: 1 }}>
+        <Typography variant="subtitle1" component="h3" sx={{ pb: 2 }}>
           Select explorers to run
         </Typography>
         <MaterialReactTable table={table} />

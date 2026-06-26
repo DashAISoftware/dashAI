@@ -6,7 +6,6 @@ from DashAI.back.core.schema_fields import (
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
-    union_type,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
@@ -42,8 +41,24 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "En caso de ajuste perfecto, el procedimiento de aprendizaje se "
                 "detiene antes."
             ),
+            pt=(
+                "O número máximo de estimadores em que o boosting é encerrado. "
+                "Em caso de ajuste perfeito, o procedimento de aprendizado é "
+                "interrompido antes."
+            ),
+            de=(
+                "Die maximale Anzahl von Schätzern, bei der das Boosting beendet wird. "
+                "Bei perfekter Anpassung wird das Lernverfahren vorzeitig gestoppt."
+            ),
+            zh=("终止提升的最大估计器数量。若出现完美拟合，学习过程将提前停止。"),
         ),
-        alias=MultilingualString(en="N estimators", es="N estimadores"),
+        alias=MultilingualString(
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
+            zh="估计器数量",
+        ),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -64,12 +79,30 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "Una tasa de aprendizaje mayor incrementa la contribución de cada "
                 "clasificador."
             ),
+            pt=(
+                "Peso aplicado a cada classificador em cada iteração de boosting. "
+                "Uma taxa de aprendizado maior aumenta a contribuição de cada "
+                "classificador."
+            ),
+            de=(
+                "Gewicht für jeden Klassifikator bei jeder Boosting-Iteration. "
+                "Eine höhere Lernrate erhöht den Beitrag jedes Klassifikators."
+            ),
+            zh=(
+                "每次提升迭代中施加给每个分类器的权重。学习率越高，每个分类器的贡献越大。"
+            ),
         ),
-        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
+        alias=MultilingualString(
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
+            zh="学习率",
+        ),
     )  # type: ignore
 
     random_state: schema_field(
-        union_type(optimizer_int_field(ge=0), none_type(int)),
+        none_type(optimizer_int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -80,8 +113,28 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "La semilla del generador de números pseudoaleatorios. Pase un int "
                 "para salida reproducible, o None para no fijar una semilla."
             ),
+            pt=(
+                "A semente do gerador de números pseudoaleatórios. Passe um int para "
+                "saída reproduzível, ou None para não definir uma semente específica."
+            ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "或传入 None 以不设置特定种子。"
+            ),
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
 
@@ -111,10 +164,22 @@ class AdaBoostClassifier(
     DISPLAY_NAME: str = MultilingualString(
         en="AdaBoost Classifier",
         es="Clasificador AdaBoost",
+        pt="Classificador AdaBoost",
+        de="AdaBoost-Klassifikator",
+        zh="AdaBoost 分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Adaptive boosting that focuses on misclassified samples.",
         es="Boosting adaptivo que se enfoca en muestras mal clasificadas.",
+        pt=(
+            "Boosting adaptivo que se concentra em amostras classificadas "
+            "incorretamente."
+        ),
+        de=(
+            "Adaptives Boosting, das sich auf falsch klassifizierte Stichproben "
+            "konzentriert."
+        ),
+        zh="自适应提升算法，专注于被误分类的样本。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "Bolt"
