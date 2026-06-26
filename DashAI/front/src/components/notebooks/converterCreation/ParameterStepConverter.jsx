@@ -91,7 +91,7 @@ export default function ParameterStepConverter({
       {showNComponentsWarning && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           {t("datasets:label.nComponentsColumnInfo", {
-            count: nColumnsSelected,
+            n: nColumnsSelected,
           })}
         </Alert>
       )}

@@ -267,7 +267,7 @@
     "missingValuesOverview": "Übersicht fehlender Werte",
     "mostFrequent": "Am häufigsten",
     "nameYourNotebook": "Notizbuch benennen",
-    "nComponentsColumnInfo": "Sie haben {{count}} Spalte(n) ausgewählt. n_components muss kleiner oder gleich {{count}} sein. Reduzieren Sie n_components oder wählen Sie mehr Spalten aus, um Fehler zu vermeiden.",
+    "nComponentsColumnInfo": "Sie haben {{n}} Spalte(n) ausgewählt. n_components muss kleiner oder gleich {{n}} sein. Reduzieren Sie n_components oder wählen Sie mehr Spalten aus, um Fehler zu vermeiden.",
     "newDatasetCreatedWithTransformations": "Ein neuer Datensatz wird mit diesen Transformationen erstellt. Er kann mit anderen Modulen verwendet werden, ohne das Original zu beeinflussen.",
     "noDataQualityIssuesDetected": "Keine Datenqualitätsprobleme erkannt",
     "noDuplicateRows": "Keine doppelten Zeilen im Datensatz gefunden.",
