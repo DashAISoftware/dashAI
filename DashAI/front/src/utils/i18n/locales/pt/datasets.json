@@ -103,6 +103,7 @@
     "all": "todos",
     "allowedDataTypes": "Tipos de dados permitidos: <1><0></0></1>",
     "allowedValueTypes": "Tipos de valores permitidos: <1><0></0></1>",
+    "excludedDataTypes": "Tipos de dados excluídos: {{dtypes}}",
     "allTypeChangesValid": "Todas as alterações de tipo são válidas e podem ser aplicadas com segurança.",
     "analysisTools": "Ferramentas de Análise",
     "appearance": "Aparência",

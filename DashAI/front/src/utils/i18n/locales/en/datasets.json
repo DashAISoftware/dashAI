@@ -98,6 +98,7 @@
     "all": "all",
     "allowedDataTypes": "Allowed data types: <1><0></0></1>",
     "allowedValueTypes": "Allowed value types: <1><0></0></1>",
+    "excludedDataTypes": "Excluded data types: {{dtypes}}",
     "allTypeChangesValid": "All type changes are valid and can be applied safely.",
     "analysisTools": "Analysis Tools",
     "appearance": "Appearance",

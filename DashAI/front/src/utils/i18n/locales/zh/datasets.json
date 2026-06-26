@@ -99,6 +99,7 @@
     "all": "全部",
     "allowedDataTypes": "允许的数据类型：<1><0></0></1>",
     "allowedValueTypes": "允许的值类型：<1><0></0></1>",
+    "excludedDataTypes": "排除的数据类型：{{dtypes}}",
     "allTypeChangesValid": "所有类型更改均有效，可以安全应用。",
     "analysisTools": "分析工具",
     "appearance": "外观",
