@@ -251,7 +251,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install build python-appimage
           sudo apt-get update
-          sudo apt-get install -y libfuse2 imagemagick
+          sudo apt-get install -y libfuse2 imagemagick librsvg2-bin
       - name: Build wheel (frontend bundled)
         run: python -m build --wheel
       - name: Verify frontend is included in wheel
@@ -262,8 +262,11 @@ jobs:
           fi
       - name: Prepare AppImage recipe
         run: |
-          # Icon referenced by dashai.desktop (Icon=dashai); take the first frame of the .ico
-          convert installer/dashAI.ico[0] appimage/dashai.png
+          # Icon referenced by dashai.desktop (Icon=dashai). Rasterize the
+          # scalable SVG isotype to a large square PNG so desktops have a
+          # high-resolution icon (the .ico only carried small frames).
+          rsvg-convert -h 512 DashAI/front/public/dashai-isotype.svg -o /tmp/dashai-isotype.png
+          convert /tmp/dashai-isotype.png -background none -gravity center -extent 512x512 appimage/dashai.png
           # Append the freshly built wheel (with bundled frontend) to the recipe requirements
           WHEEL=$(ls "$PWD"/dist/*.whl | head -n1)
           echo "$WHEEL" >> appimage/requirements.txt
