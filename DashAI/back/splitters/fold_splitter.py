@@ -19,6 +19,7 @@ class FoldSplitter(BaseSplitter):
             "hasRepeats": getattr(cls, "REPEATS", False),
             "hasShuffle": getattr(cls, "SHUFFLE", False),
             "hasGroups": getattr(cls, "GROUPS", False),
+            "compatibleInnerSplitters": getattr(cls, "COMPATIBLE_INNER_SPLITTERS", []),
         }
 
         return metadata

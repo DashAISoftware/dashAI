@@ -356,6 +356,7 @@ export default function SessionVisualization() {
           }}
         >
           <AccordionSummary
+            component="div"
             expandIcon={
               <Tooltip
                 title={

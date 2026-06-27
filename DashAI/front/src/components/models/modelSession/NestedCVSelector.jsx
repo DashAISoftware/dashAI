@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   FormControlLabel,
@@ -13,21 +13,9 @@ import {
   Divider,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-
-/**
- * Compatible inner splitters per outer splitter type.
- * Group-based outer splitters require group-based inner splitters.
- * TimeSeries outer splitter requires TimeSeries inner splitter.
- */
-const INNER_SPLITTER_OPTIONS = {
-  KFold: ["KFold", "StratifiedKFold"],
-  StratifiedKFold: ["KFold", "StratifiedKFold"],
-  RepeatedKFold: ["KFold", "StratifiedKFold"],
-  RepeatedStratifiedKFold: ["KFold", "StratifiedKFold"],
-  GroupKFold: ["GroupKFold", "StratifiedGroupKFold"],
-  StratifiedGroupKFold: ["GroupKFold", "StratifiedGroupKFold"],
-  LeaveOneOut: ["Kfold", "StratifiedKFold"],
-};
+import { getComponentById, getComponents } from "../../../api/component";
+import { useModels } from "../ModelsContext";
+import { useSnackbar } from "notistack";
 
 const DEFAULT_INNER_FOLDS = 2;
 
@@ -51,11 +39,38 @@ function NestedCVSelector({
   disabled = false,
 }) {
   const { t } = useTranslation(["models", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
+  const [outerSplitterComponent, setOuterSplitterComponent] = useState(null);
+  const [innerSplitterOptions, setInnerSplitterOptions] = useState([]);
 
   const outerNSplits = outerSplit?.n_splits || 2;
 
-  const compatibleInnerSplitters =
-    INNER_SPLITTER_OPTIONS[outerSplit.splitter_name];
+  useEffect(() => {
+    const getInnerSplitters = async () => {
+      try {
+        const outerSplitterComponent = await getComponentById(
+          outerSplit.splitter_name,
+        );
+        setOuterSplitterComponent(outerSplitterComponent);
+
+        const innerSplittersArray =
+          outerSplitterComponent?.metadata?.compatibleInnerSplitters || [];
+
+        const innerSplitterComponents = await Promise.all(
+          innerSplittersArray.map((element) => getComponentById(element)),
+        );
+
+        setInnerSplitterOptions(innerSplitterComponents);
+      } catch (error) {
+        console.error("Error fetching splitters:", error);
+        enqueueSnackbar(t("models:error.fetchingInnerSplitters"), {
+          variant: "error",
+        });
+      }
+    };
+
+    getInnerSplitters();
+  }, [outerSplit, enqueueSnackbar, t]);
 
   const learnMoreLink = (
     <Link
@@ -159,7 +174,7 @@ function NestedCVSelector({
           <Box sx={{ display: "flex", gap: 2 }}>
             <TextField
               label={t("models:label.outerSplitter")}
-              value={outerSplit.splitter_name}
+              value={outerSplitterComponent?.display_name}
               size="small"
               disabled
               fullWidth
@@ -181,14 +196,14 @@ function NestedCVSelector({
             <TextField
               select
               label={t("models:label.innerSplitter")}
-              value={innerConfig?.splitterType || compatibleInnerSplitters[0]}
+              value={innerConfig?.splitterType || innerSplitterOptions[0].name}
               onChange={handleInnerSplitterChange}
               size="small"
               fullWidth
             >
-              {compatibleInnerSplitters.map((splitter) => (
-                <MenuItem key={splitter} value={splitter}>
-                  {splitter}
+              {innerSplitterOptions?.map((splitter) => (
+                <MenuItem key={splitter.name} value={splitter.name}>
+                  {splitter.display_name}
                 </MenuItem>
               ))}
             </TextField>

@@ -663,7 +663,6 @@ StatisticalTestsModal.propTypes = {
   test: PropTypes.shape({
     name: PropTypes.string,
     display_name: PropTypes.string,
-    description: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     metadata: PropTypes.object,
   }),
   runs: PropTypes.arrayOf(

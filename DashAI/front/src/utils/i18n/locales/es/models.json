@@ -68,7 +68,8 @@
     "failedToCheckNormality": "Error al verificar la normalidad. Por favor intente nuevamente.",
     "failedToLoadTests": "No se pudieron cargar los tests guardados.",
     "failedToDeleteTest": "No se pudo eliminar el test.",
-    "failedToSaveTest": "No se pudieron guardar los resultados del test."
+    "failedToSaveTest": "No se pudieron guardar los resultados del test.",
+    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada"
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",

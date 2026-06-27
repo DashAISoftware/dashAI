@@ -18,6 +18,7 @@ class LeaveOneOutSplitter(FoldSplitter):
         pt="Deixar Um Fora",
     )
     SHUFFLE: bool = True
+    COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
 
     def __init__(self, splits_data):
         super().__init__(splits_data)

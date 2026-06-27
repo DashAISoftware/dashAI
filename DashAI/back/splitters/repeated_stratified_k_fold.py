@@ -15,6 +15,7 @@ class RepeatedStratifiedKFoldSplitter(FoldSplitter):
     )
     FOLDS: bool = True
     REPEATS: bool = True
+    COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
 
     def __init__(self, splits_data):
         super().__init__(splits_data)

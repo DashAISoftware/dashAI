@@ -74,16 +74,7 @@ function AddModelDialog({
   const tourContext = useTourContext();
 
   const outerSplit = useMemo(() => {
-    try {
-      const splits = session?.splits ? JSON.parse(session.splits) : null;
-      const formattedSplitterName = splits.splitter_name.replace(
-        "Splitter",
-        "",
-      );
-      return { ...splits, splitter_name: formattedSplitterName };
-    } catch {
-      return null;
-    }
+    return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
 
   // Derive outer splitter type from session to set a smart default for inner splitter
@@ -212,7 +203,7 @@ function AddModelDialog({
         // Copy the outer splitter configuration and update for inner splitter
         nestedConfig = {
           ...outerSplit,
-          splitter_name: `${innerConfig.splitterType}Splitter`,
+          splitter_name: innerConfig.splitterType,
           n_splits: innerConfig.nSplits,
         };
       }
@@ -394,7 +385,7 @@ function AddModelDialog({
               />
             </Box>
 
-            {session.evaluation_strategy ===
+            {session?.evaluation_strategy ===
               "CrossValidationEvaluationStrategy" && (
               <NestedCVSelector
                 useNestedCV={useNestedCV}
@@ -461,7 +452,7 @@ AddModelDialog.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
-    splits: PropTypes.object,
+    splits: PropTypes.string,
   }),
   preselectedModel: PropTypes.string,
   existingRuns: PropTypes.array,

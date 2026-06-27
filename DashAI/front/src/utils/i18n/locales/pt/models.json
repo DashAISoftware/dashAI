@@ -68,7 +68,8 @@
     "selectTest": "Por favor, selecione um teste estatístico",
     "failedToExecuteTest": "Erro ao executar o teste estatístico",
     "selectRunsAndMetric": "Por favor, selecione execuções e uma métrica para verificar a normalidade",
-    "failedToCheckNormality": "Erro ao verificar a normalidade. Por favor, tente novamente."
+    "failedToCheckNormality": "Erro ao verificar a normalidade. Por favor, tente novamente.",
+    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada."
   },
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",
