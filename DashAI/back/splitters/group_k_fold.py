@@ -20,7 +20,7 @@ class GroupKFoldSplitter(FoldSplitter):
     FOLDS: bool = True
     GROUPS: bool = True
     SHUFFLE: bool = True
-    COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
+    COMPATIBLE_INNER_SPLITTERS = ["GroupKFoldSplitter", "StratifiedGroupKFoldSplitter"]
 
     def __init__(self, splits_data):
         super().__init__(splits_data)

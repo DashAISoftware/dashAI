@@ -298,7 +298,7 @@
     "processChosenNormalHPO": "Chosen process to perform: For each tested combination, the model is trained using cross-validation and the average score across folds is reported.",
     "computationalCostNestedCV": "Computational cost: High O(Outer folds x Inner folds x Trials)",
     "computationalCostNormalHPO": "Computational cost: Standard O(Folds x Trials)",
-    "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and {{max}} and lower or equal to the number of outer folds ({{outerNSplits}}). Please adjust the number of inner folds.",
+    "innerFoldsOutOfRange": "For nested cross-validation, the number of inner folds must be between 2 and the length of the outer folds ({{max}}). Please adjust the number of inner folds.",
     "normalityDetected": "Normality Condition Met",
     "normalityCheckMethod": "Shapiro-Wilk test (α=0.05): Data is considered normal if p-value > 0.05.",
     "recommendParametricTests": "The data meets normality requirements. Parametric tests (e.g., paired t-test, ANOVA) are recommended for more statistical power.",

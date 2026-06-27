@@ -302,7 +302,7 @@
     "processChosenNormalHPO": "Processo escolhido para realizar: Para cada combinação testada, o modelo é treinado usando validação cruzada e a pontuação média entre os folds é relatada. A combinação com a melhor pontuação é selecionada.",
     "computationalCostNestedCV": "Custo computacional: Alto O(Folds externos x Folds internos x Trials)",
     "computationalCostNormalHPO": "Custo computacional: Padrão O(Folds x Trials)",
-    "innerFoldsOutOfRange": "Para validação cruzada aninhada, o número de folds internos deve estar entre 2 e {{max}} e ser menor ou igual ao número de folds externos ({{outerNSplits}}). Por favor, ajuste o número de folds internos.",
+    "innerFoldsOutOfRange": "Para validação cruzada aninhada, o número de folds internos deve estar entre 2 e o comprimento dos folds externos ({{max}}). Por favor, ajuste o número de folds internos.",
     "normalityDetected": "Condição de Normalidade Atendida",
     "normalityCheckMethod": "Teste Shapiro-Wilk (α=0,05): Os dados são considerados normais se o valor-p > 0,05.",
     "recommendParametricTests": "Os dados atendem aos requisitos de normalidade. Testes paramétricos (ex: teste t pareado, ANOVA) são recomendados para maior poder estatístico.",

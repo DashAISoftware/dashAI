@@ -27,6 +27,7 @@ import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
+import { getDatasetInfo } from "../../api/datasets";
 
 const DEFAULT_INNER_CONFIG = {
   splitterType: null, // null means: derive from outer splitter on mount
@@ -59,6 +60,7 @@ function AddModelDialog({
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
   const [useNestedCV, setUseNestedCV] = useState(false);
   const [innerConfig, setInnerConfig] = useState(DEFAULT_INNER_CONFIG);
+  const [totalRows, setTotalRows] = useState(null);
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
@@ -76,6 +78,15 @@ function AddModelDialog({
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!open || !session?.dataset_id) return;
+      const info = await getDatasetInfo(Number(session.dataset_id));
+      setTotalRows(info.total_rows);
+    };
+    load();
+  }, [open, session?.dataset_id]);
 
   // Derive outer splitter type from session to set a smart default for inner splitter
   useEffect(() => {
@@ -279,8 +290,21 @@ function AddModelDialog({
     setSelectedOptimizer(optimizerName);
   };
 
+  const maxInnerFolds = useMemo(() => {
+    if (!useNestedCV || !outerSplit) return null;
+    const k = outerSplit.n_splits;
+    return Math.floor(totalRows / k);
+  }, [useNestedCV, outerSplit, totalRows]);
+
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
-  const isStep2Valid = Boolean(selectedOptimizer && goalMetric);
+  const isStep2Valid = Boolean(
+    selectedOptimizer &&
+    goalMetric &&
+    (!useNestedCV ||
+      (innerConfig.splitterType &&
+        innerConfig.nSplits > 1 &&
+        innerConfig.nSplits <= maxInnerFolds)),
+  );
 
   return (
     <Dialog
@@ -393,6 +417,7 @@ function AddModelDialog({
                 innerConfig={innerConfig}
                 onInnerConfigChange={setInnerConfig}
                 outerSplit={outerSplit}
+                maxInnerFolds={maxInnerFolds}
               />
             )}
 

@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { getComponentById, getComponents } from "../../../api/component";
-import { useModels } from "../ModelsContext";
 import { useSnackbar } from "notistack";
 
 const DEFAULT_INNER_FOLDS = 2;
@@ -29,6 +28,7 @@ const DEFAULT_INNER_FOLDS = 2;
  * @param {function} onInnerConfigChange - Callback when inner config changes
  * @param {object} outerSplit - session.splits object from the parent session
  * @param {boolean} [disabled] - Whether to disable the checkbox
+ * @param {number} maxInnerFolds - The maximum number of inner folds allowed
  */
 function NestedCVSelector({
   useNestedCV,
@@ -37,6 +37,7 @@ function NestedCVSelector({
   onInnerConfigChange,
   outerSplit,
   disabled = false,
+  maxInnerFolds,
 }) {
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
@@ -89,31 +90,19 @@ function NestedCVSelector({
 
   const handleInnerFoldsChange = (e) => {
     const raw = e.target.value;
-    if (raw === "" || isNaN(parseInt(raw, 10))) {
-      // Allow empty while typing; onBlur will reset if still empty
-      onInnerConfigChange({ ...innerConfig, nSplits: raw });
-      return;
-    }
-    onInnerConfigChange({ ...innerConfig, nSplits: parseInt(raw, 10) });
+    onInnerConfigChange({
+      ...innerConfig,
+      nSplits: raw === "" ? "" : Number(raw),
+    });
   };
 
-  const handleInnerFoldsBlur = () => {
-    const current = innerConfig?.nSplits;
-    const parsed = parseInt(current, 10);
-    if (
-      !current ||
-      isNaN(parsed) ||
-      parsed < 2 ||
-      parsed > Math.min(outerNSplits, 20)
-    ) {
-      onInnerConfigChange({ ...innerConfig, nSplits: DEFAULT_INNER_FOLDS });
-    }
-  };
-
-  const currentFolds = parseInt(innerConfig?.nSplits, 10);
+  const foldsValue = innerConfig?.nSplits ?? DEFAULT_INNER_FOLDS;
+  const currentFolds = Number(foldsValue);
   const showFoldsWarning =
-    !isNaN(currentFolds) &&
-    (currentFolds < 2 || currentFolds > Math.min(outerNSplits, 20));
+    foldsValue === "" ||
+    !Number.isFinite(currentFolds) ||
+    currentFolds < 2 ||
+    currentFolds > maxInnerFolds;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -211,23 +200,20 @@ function NestedCVSelector({
             <TextField
               label={t("models:label.innerFolds")}
               type="number"
-              value={innerConfig?.nSplits ?? DEFAULT_INNER_FOLDS}
+              value={foldsValue}
               onChange={handleInnerFoldsChange}
-              onBlur={handleInnerFoldsBlur}
               size="small"
               sx={{ width: 120, flexShrink: 0 }}
-              inputProps={{ min: 2, max: Math.min(outerNSplits, 20) }}
+              inputProps={{ min: 2, max: maxInnerFolds }}
             />
           </Box>
-
           {showFoldsWarning && (
-            <Alert severity="warning" sx={{ py: 0.5 }}>
+            <Typography variant="body2" color="warning.main">
               {t("models:message.innerFoldsOutOfRange", {
                 min: 2,
-                max: 20,
-                outerNSplits,
+                max: maxInnerFolds,
               })}
-            </Alert>
+            </Typography>
           )}
         </Box>
       </Collapse>
@@ -240,11 +226,12 @@ NestedCVSelector.propTypes = {
   onChange: PropTypes.func.isRequired,
   innerConfig: PropTypes.shape({
     splitterType: PropTypes.string,
-    nSplits: PropTypes.number,
+    nSplits: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   }).isRequired,
   onInnerConfigChange: PropTypes.func.isRequired,
   outerSplit: PropTypes.object,
   disabled: PropTypes.bool,
+  maxInnerFolds: PropTypes.number,
 };
 
 export default NestedCVSelector;
