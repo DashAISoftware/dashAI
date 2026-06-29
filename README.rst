@@ -121,10 +121,10 @@ index if you want a smaller CPU only install:
 
 .. code:: bash
 
-    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-cache-dir
 
     # Optional, for GGUF / Llama models (precompiled CPU wheel, no build tools):
-    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --force-reinstall --no-cache-dir
 
 NVIDIA GPU (CUDA 12.8)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,10 +132,10 @@ NVIDIA GPU (CUDA 12.8)
 .. code:: bash
 
     # Torch CUDA 12.8 (prebuilt wheels)
-    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128 --force-reinstall --no-cache-dir
 
     # Llama compiled with CUDA offload (requires build tools, see below)
-    $ pip install llama-cpp-python -C cmake.args="-DGGML_CUDA=on"
+    $ pip install llama-cpp-python -C cmake.args="-DGGML_CUDA=on" --force-reinstall --no-cache-dir --verbose
 
 AMD GPU (ROCm 6.4)
 ~~~~~~~~~~~~~~~~~~
@@ -143,10 +143,10 @@ AMD GPU (ROCm 6.4)
 .. code:: bash
 
     # Torch ROCm (prebuilt wheels)
-    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4
+    $ pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm6.4 --force-reinstall --no-cache-dir
 
     # Llama compiled with HIP/ROCm offload (requires build tools, see below)
-    $ pip install llama-cpp-python -C cmake.args="-DGGML_HIP=on"
+    $ pip install llama-cpp-python -C cmake.args="-DGGML_HIP=on" --force-reinstall --no-cache-dir --verbose
 
 
 Build tools for GPU llama-cpp
@@ -171,8 +171,8 @@ available for CPU and CUDA:
 
 .. code:: bash
 
-    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
-    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/<cuda-version>
+    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu --force-reinstall --no-cache-dir
+    $ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/<cuda-version> --force-reinstall --no-cache-dir
 
 Replace ``<cuda-version>`` with your CUDA tag. Prebuilt wheels are published for
 ``cu118``, ``cu121``, ``cu122``, ``cu123``, ``cu124``, ``cu125``, ``cu130`` and
@@ -181,7 +181,7 @@ Replace ``<cuda-version>`` with your CUDA tag. Prebuilt wheels are published for
 for the available wheels and other backend options.
 
 
-4. Run dashAI
+1. Run dashAI
 -------------
 
 Start the server and graphical interface with:

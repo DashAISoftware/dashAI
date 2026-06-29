@@ -147,8 +147,7 @@ export default function RightBar({ notebook, onToggle }) {
     const allowedTypes = explorer?.metadata?.allowed_types || [];
     const allowedDtypes = explorer?.metadata?.allowed_dtypes || [];
     const inputCardinality = explorer?.metadata?.input_cardinality || {};
-    const typesDtypeRestrictions =
-      explorer?.metadata?.type_dtype_restrictions || {};
+    const nonAllowedDtypes = explorer?.metadata?.non_allowed_dtypes || [];
 
     let validColumns = datasetColumns;
     let disabled = false;
@@ -169,14 +168,12 @@ export default function RightBar({ notebook, onToggle }) {
       );
     }
 
-    // Apply per-type dtype exclusions declared by the backend
-    if (Object.keys(typesDtypeRestrictions).length > 0) {
+    // Apply global dtype blacklist declared by the backend
+    if (nonAllowedDtypes.length > 0) {
       validColumns = validColumns.filter((col) => {
-        const forbidden = typesDtypeRestrictions[col.valueType];
-        if (!forbidden) return true;
         const dtypeKey =
           col.dataType === t("common:unknown") ? "" : col.dataType;
-        return !forbidden.includes(dtypeKey);
+        return !nonAllowedDtypes.includes(dtypeKey);
       });
     }
 
@@ -227,6 +224,7 @@ export default function RightBar({ notebook, onToggle }) {
 
     const allowedTypes = converter?.metadata?.allowed_types || [];
     const allowedDtypes = converter?.metadata?.allowed_dtypes || [];
+    const inputCardinality = converter?.metadata?.input_cardinality || {};
 
     let validColumns = datasetColumns;
     let disabled = false;
@@ -245,6 +243,27 @@ export default function RightBar({ notebook, onToggle }) {
       validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
+    }
+
+    // Check cardinality requirements
+    if (inputCardinality.exact != null) {
+      if (validColumns.length < inputCardinality.exact) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
+          required: inputCardinality.exact,
+          available: validColumns.length,
+          count: inputCardinality.exact,
+        })}`;
+      }
+    } else if (inputCardinality.min != null) {
+      if (validColumns.length < inputCardinality.min) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
+          required: inputCardinality.min,
+          available: validColumns.length,
+          count: inputCardinality.min,
+        })}`;
+      }
     }
 
     // Check if there are no valid columns at all (some restriction was applied)

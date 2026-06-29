@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from sklearn.exceptions import NotFittedError
 
 from DashAI.back.models.translation_model import TranslationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -136,7 +139,7 @@ class OpusMtTransformerMixin(TranslationModel):
 
         has_validation_data = x_validation is not None and y_validation is not None
 
-        output_root = Path(self.TEMP_CHECKPOINT_DIR)
+        output_root = resolve_temp_checkpoint_dir(self.TEMP_CHECKPOINT_DIR)
         output_root.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(
             prefix=f"{self.__class__.__name__.lower()}_",

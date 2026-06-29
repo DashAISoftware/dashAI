@@ -18,8 +18,8 @@ from DashAI.back.models.utils import (
 )
 
 SMOLLM_FILENAME_MAP = {
-    "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF": "*Q4_K_M.gguf",
-    "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF": "*Q8_0.gguf",
+    "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF": "*q4_k_m.gguf",
+    "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF": "*q8_0.gguf",
 }
 
 
@@ -417,7 +417,7 @@ class SmolLMModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        self.filename = SMOLLM_FILENAME_MAP.get(self.model_name, "*Q4_K_M.gguf")
+        self.filename = SMOLLM_FILENAME_MAP.get(self.model_name, "*q4_k_m.gguf")
         use_gpu = LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
 
         self.model = Llama.from_pretrained(

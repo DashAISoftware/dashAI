@@ -306,6 +306,19 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
 
         super().__init__(**kwargs)
 
+    def fit(self, x, y=None):
+        x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
+        n_samples, n_features = x_pandas.shape
+        max_components = min(n_samples, n_features)
+        if isinstance(self.n_components, int) and self.n_components > max_components:
+            raise ValueError(
+                f"n_components={self.n_components} exceeds "
+                f"min(n_samples, n_features)={max_components}. "
+                f"Reduce n_components to at most {max_components}, "
+                "or select more columns in the converter scope."
+            )
+        return super().fit(x, y)
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
 
