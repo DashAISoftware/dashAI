@@ -181,8 +181,9 @@ def get_depth_map_sd15(image, device):
     """Convert an input image to a normalised depth map for SD 1.5 ControlNet.
 
     Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
-    bilinearly interpolates the result to 512x512 and normalises values to the
-    [0, 1] range before returning a three-channel PIL image.
+    interpolates the result back to the source image resolution (rounded down
+    to a multiple of 8) and normalises values to the [0, 1] range before
+    returning a three-channel PIL image.
 
     Parameters
     ----------
@@ -195,8 +196,9 @@ def get_depth_map_sd15(image, device):
     Returns
     -------
     PIL.Image.Image
-        A 512x512 RGB image where each channel encodes the normalised depth
-        value, ready to be used as a ControlNet conditioning signal.
+        An RGB image at the source resolution (each side rounded down to a
+        multiple of 8) where each channel encodes the normalised depth value,
+        ready to be used as a ControlNet conditioning signal.
     """
     import numpy as np
     import torch
@@ -215,9 +217,16 @@ def get_depth_map_sd15(image, device):
     with torch.no_grad(), torch.autocast(device, dtype=torch.float16):
         depth_map = depth_estimator(pixel_values).predicted_depth
 
+    # Preserve the source resolution. SD 1.5's UNet downsamples by 8 in latent
+    # space, so both dimensions must be divisible by 8; round down to the
+    # nearest multiple to avoid a pipeline shape error.
+    width, height = image.size
+    width = max(8, (width // 8) * 8)
+    height = max(8, (height // 8) * 8)
+
     depth_map = torch.nn.functional.interpolate(
         depth_map.unsqueeze(1),
-        size=(512, 512),
+        size=(height, width),
         mode="bicubic",
         align_corners=False,
     )
