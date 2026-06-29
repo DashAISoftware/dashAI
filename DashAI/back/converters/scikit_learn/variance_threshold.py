@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Union
+
 from sklearn.feature_selection import VarianceThreshold as VarianceThresholdOperation
 
 from DashAI.back.converters.category.dimensionality_reduction import (
@@ -9,6 +11,9 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float, Integer
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class VarianceThresholdSchema(BaseSchema):
@@ -87,6 +92,37 @@ class VarianceThreshold(
         de="Varianz-Schwellenwert",
         zh="方差阈值",
     )
+
+    def fit(
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
+    ) -> "VarianceThreshold":
+        """Fit the transformer, allowing all features to be removed if none pass.
+
+        sklearn raises a ValueError when no feature meets the threshold; we catch
+        it and return self instead so that ``transform`` can legitimately return a
+        dataset with zero columns.  ``self.variances_`` is already populated by
+        sklearn before it raises, so the internal state is correct.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset.
+        y : DashAIDataset, optional
+            Ignored; present for API consistency.
+
+        Returns
+        -------
+        VarianceThreshold
+            The fitted instance.
+        """
+        try:
+            return super().fit(x, y)
+        except ValueError as e:
+            if "meets the variance threshold" not in str(e):
+                raise
+            # self.variances_ is already set by sklearn before it raises,
+            # so transform will correctly produce a zero-column result.
+            return self
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.
