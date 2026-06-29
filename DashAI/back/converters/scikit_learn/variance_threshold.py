@@ -96,25 +96,35 @@ class VarianceThreshold(
     def fit(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "VarianceThreshold":
-        """Fit the transformer, allowing all features to be removed if none pass.
+        """Fit the selector, remembering input types and tolerating empty output.
 
-        sklearn raises a ValueError when no feature meets the threshold; we catch
-        it and return self instead so that ``transform`` can legitimately return a
-        dataset with zero columns.  ``self.variances_`` is already populated by
-        sklearn before it raises, so the internal state is correct.
+        VarianceThreshold only drops low-variance columns without modifying the
+        retained columns' values, so their original types are captured here to be
+        returned later by ``get_output_type`` instead of coercing to float. Types
+        are recorded during ``fit`` (rather than ``transform``) because
+        scikit-learn auto-wraps ``transform`` on subclasses and would coerce its
+        output back to a pandas DataFrame.
+
+        Additionally, sklearn raises a ValueError when no feature meets the
+        threshold; we catch it and return self instead so that ``transform`` can
+        legitimately return a dataset with zero columns. ``self.variances_`` is
+        already populated by sklearn before it raises, so the internal state is
+        correct.
 
         Parameters
         ----------
         x : DashAIDataset
-            Input dataset.
+            The input dataset to fit the selector on.
         y : DashAIDataset, optional
             Ignored; present for API consistency.
 
         Returns
         -------
         VarianceThreshold
-            The fitted instance.
+            The fitted selector instance (self).
         """
+        if hasattr(x, "types") and x.types is not None:
+            self._input_types = dict(x.types)
         try:
             return super().fit(x, y)
         except ValueError as e:
@@ -125,19 +135,26 @@ class VarianceThreshold(
             return self
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
-        """Return the DashAI data type produced by this converter for a column.
+        """Return the original DashAI data type of a retained column.
+
+        Since the selection leaves the retained columns' values unchanged, the
+        output type matches the input type of that column.
 
         Parameters
         ----------
         column_name : str, optional
-            Not used; all output columns share the
-            same type. Defaults to None.
+            The name of the retained column. Defaults to None.
 
         Returns
         -------
         DashAIDataType
-            A Float type backed by ``pyarrow.float64()``.
+            The original type of the column. Falls back to ``float64`` when the
+            input type is unknown (the selector only operates on numbers).
         """
+        input_types = getattr(self, "_input_types", None)
+        if input_types is not None and column_name in input_types:
+            return input_types[column_name]
+
         import pyarrow as pa
 
         return Float(arrow_type=pa.float64())
