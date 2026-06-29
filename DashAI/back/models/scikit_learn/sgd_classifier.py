@@ -12,9 +12,6 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
 
@@ -272,7 +269,6 @@ class SGDClassifier(TabularClassificationModel, SklearnLikeClassifier, _SGDClass
     )
     COLOR: str = "#78909C"
     ICON: str = "TrendingDown"
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.

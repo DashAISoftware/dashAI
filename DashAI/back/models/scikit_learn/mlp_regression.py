@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.categorical_encoder_mixin import CategoricalEncoderMixin
 from DashAI.back.models.regression_model import RegressionModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -33,9 +34,9 @@ class MLPRegressorSchema(BaseSchema):
         optimizer_int_field(ge=1),
         placeholder={
             "optimize": False,
-            "fixed_value": 5,
+            "fixed_value": 16,
             "lower_bound": 1,
-            "upper_bound": 15,
+            "upper_bound": 64,
         },
         description=MultilingualString(
             en="Number of neurons in the hidden layer.",
@@ -100,9 +101,9 @@ class MLPRegressorSchema(BaseSchema):
         optimizer_int_field(ge=1),
         placeholder={
             "optimize": False,
-            "fixed_value": 5,
+            "fixed_value": 20,
             "lower_bound": 1,
-            "upper_bound": 15,
+            "upper_bound": 50,
         },
         description=MultilingualString(
             en="Total number of training passes over the dataset.",
@@ -290,7 +291,7 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
 
-class MLPRegression(RegressionModel):
+class MLPRegression(CategoricalEncoderMixin, RegressionModel):
     """Single hidden-layer MLP regressor implemented in PyTorch.
 
     A Multi-layer Perceptron (MLP) is a feedforward neural network composed of an
@@ -403,6 +404,11 @@ class MLPRegression(RegressionModel):
             else "cpu"
         )
         self.model = None
+
+        # Initialise the categorical encoder state inherited from
+        # CategoricalEncoderMixin. These fields are persisted by ``save`` and
+        # restored by ``load`` so ``predict`` reuses the training-time encoders.
+        self._setup_categorical_encoders()
 
     def train(
         self,
@@ -574,6 +580,9 @@ class MLPRegression(RegressionModel):
                 "state": self.model.state_dict(),
                 "params": self.params,
                 "input_dim": self.model.model[0].in_features,
+                "encodings": self.encodings,
+                "one_hot_encoder": self.one_hot_encoder,
+                "categorical_columns": self.categorical_columns,
             },
             filename,
         )
@@ -594,7 +603,10 @@ class MLPRegression(RegressionModel):
         """
         import torch
 
-        data = torch.load(filename)
+        # weights_only=False is required because the checkpoint stores the
+        # fitted categorical encoders (e.g. a scikit-learn OneHotEncoder), which
+        # are not part of torch's safe-globals allowlist.
+        data = torch.load(filename, weights_only=False)
         instance = MLPRegression(**data["params"])
 
         # Rebuild the model architecture using saved input_dim
@@ -606,5 +618,11 @@ class MLPRegression(RegressionModel):
 
         # Load the trained weights
         instance.model.load_state_dict(data["state"])
+
+        # Restore the categorical encoders so predictions match training-time
+        # preprocessing.
+        instance.encodings = data.get("encodings", {})
+        instance.one_hot_encoder = data.get("one_hot_encoder")
+        instance.categorical_columns = data.get("categorical_columns", [])
 
         return instance
