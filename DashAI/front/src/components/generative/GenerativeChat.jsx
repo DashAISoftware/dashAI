@@ -241,40 +241,30 @@ export default function GenerativeChat() {
         sx={{
           width: "100%",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
           borderRadius: 1,
-          opacity: 0.5,
+          my: 2,
+          px: 1,
         }}
       >
-        <Box
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="space-between"
-          gap={2}
-          width={"100%"}
-          height={"32px"}
-          mb={8}
-        >
-          <Typography>
-            {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
-            {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
-          </Typography>
+        <Typography>
+          {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
+          {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
+        </Typography>
 
-          <Box>
-            <IconButton onClick={() => setSessionInfoVisible(true)}>
-              <InfoIcon
-                sx={{
-                  color: "text.secondary",
-                  "&:hover": {
-                    color: "text.primary",
-                  },
-                }}
-              />
-            </IconButton>
-          </Box>
+        <Box>
+          <IconButton onClick={() => setSessionInfoVisible(true)}>
+            <InfoIcon
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  color: "text.primary",
+                },
+              }}
+            />
+          </IconButton>
         </Box>
       </Box>
 

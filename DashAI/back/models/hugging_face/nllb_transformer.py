@@ -13,7 +13,10 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformerSchema,
 )
 from DashAI.back.models.translation_model import TranslationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -373,7 +376,9 @@ class NllbTransformer(TranslationModel):
 
         has_validation_data = x_validation is not None and y_validation is not None
 
-        output_root = Path("DashAI/back/user_models/temp_checkpoints_nllb")
+        output_root = resolve_temp_checkpoint_dir(
+            "DashAI/back/user_models/temp_checkpoints_nllb"
+        )
         output_root.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(prefix="nllb_", dir=str(output_root))
 

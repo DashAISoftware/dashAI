@@ -12,7 +12,10 @@ from typing import TYPE_CHECKING, Union
 from sklearn.exceptions import NotFittedError
 
 from DashAI.back.models.text_classification_model import TextClassificationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 from DashAI.back.types.categorical import Categorical
 
 if TYPE_CHECKING:
@@ -136,7 +139,6 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         """
         import shutil
         import tempfile
-        from pathlib import Path
 
         import torch
         from transformers import (
@@ -181,7 +183,7 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         use_gpu = self.device.lower() == "gpu"
         can_use_fp16 = torch.cuda.is_available() and use_gpu
 
-        base_output_dir = Path(self.TEMP_CHECKPOINT_DIR)
+        base_output_dir = resolve_temp_checkpoint_dir(self.TEMP_CHECKPOINT_DIR)
         base_output_dir.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(
             prefix=f"{self.__class__.__name__.lower()}_",
