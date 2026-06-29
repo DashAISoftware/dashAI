@@ -65,18 +65,36 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
 
     SCHEMA = NormalizerSchema
     DESCRIPTION = MultilingualString(
-        en="Normalize samples individually to unit norm.",
-        es="Normaliza muestras individualmente a norma unitaria.",
-        pt="Normaliza amostras individualmente para norma unitária.",
-        de="Stichproben individuell auf Einheitsnorm normalisieren.",
-        zh="将每个样本单独归一化为单位范数。",
+        en=(
+            "Normalize each row (sample) to unit norm across the selected columns. "
+            "Select two or more columns; a single column collapses to plus or minus 1."
+        ),
+        es=(
+            "Normaliza cada fila (muestra) a norma unitaria a lo largo de las columnas "
+            "seleccionadas. Selecciona dos o más columnas; una sola columna colapsa a "
+            "más o menos 1."
+        ),
+        pt=(
+            "Normaliza cada linha (amostra) para norma unitária ao longo das colunas "
+            "selecionadas. Selecione duas ou mais colunas; uma única coluna colapsa "
+            "para mais ou menos 1."
+        ),
+        de=(
+            "Normalisiert jede Zeile (Stichprobe) über die ausgewählten Spalten auf "
+            "Einheitsnorm. Mindestens zwei Spalten auswählen; eine einzelne Spalte "
+            "kollabiert zu plus oder minus 1."
+        ),
+        zh=(
+            "在所选列上将每一行（样本）归一化为单位范数。"
+            "请选择两列或以上；单列会收敛为正负 1。"
+        ),
     )
     DISPLAY_NAME = MultilingualString(
-        en="Normalizer",
-        es="Normalizador",
-        pt="Normalizador",
-        de="Normalisierer",
-        zh="归一化器",
+        en="Row Wise Normalizer",
+        es="Normalizador por filas",
+        pt="Normalizador por linhas",
+        de="Zeilenweiser Normalisierer",
+        zh="按行归一化器",
     )
     IMAGE_PREVIEW = "normalizer.png"
 
