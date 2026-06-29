@@ -27,7 +27,7 @@ class ClusteringExplorer(BaseExplorer):
 
     CATEGORY: Final[str] = MultilingualString(
         en="Clustering Analysis",
-        es="Análisis de Clustering",
+        es="Análisis de Agrupamiento",
         pt="Análise de Agrupamento",
         de="Clustering-Analyse",
     )

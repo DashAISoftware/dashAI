@@ -86,11 +86,24 @@ from DashAI.back.explainability.explainers.permutation_feature_importance import
 
 # Explorers
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
+from DashAI.back.exploration.explorers.cluster_distribution import (
+    ClusterDistributionExplorer,
+)
+from DashAI.back.exploration.explorers.cluster_stability import (
+    ClusterStabilityExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_heatmap import (
+    ClusteringHeatmapExplorer,
+)
 from DashAI.back.exploration.explorers.clustering_profile import (
     ClusteringProfileExplorer,
 )
+from DashAI.back.exploration.explorers.clustering_scatter import (
+    ClusteringScatterExplorer,
+)
 from DashAI.back.exploration.explorers.corr_matrix import CorrelationMatrixExplorer
 from DashAI.back.exploration.explorers.cov_matrix import CovarianceMatrixExplorer
+from DashAI.back.exploration.explorers.dendrogram import DendrogramExplorer
 from DashAI.back.exploration.explorers.density_heatmap import DensityHeatmapExplorer
 from DashAI.back.exploration.explorers.describe_explorer import DescribeExplorer
 from DashAI.back.exploration.explorers.ecdf_plot import ECDFPlotExplorer
@@ -105,6 +118,7 @@ from DashAI.back.exploration.explorers.parallel_cordinates import (
 from DashAI.back.exploration.explorers.row_explorer import RowExplorer
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
+from DashAI.back.exploration.explorers.silhouette_plot import SilhouettePlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
@@ -494,6 +508,12 @@ def get_initial_components():
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         ClusteringProfileExplorer,
+        ClusteringScatterExplorer,
+        ClusteringHeatmapExplorer,
+        SilhouettePlotExplorer,
+        ClusterDistributionExplorer,
+        DendrogramExplorer,
+        ClusterStabilityExplorer,
         # Converters
         ColumnRemover,
         Clustering,

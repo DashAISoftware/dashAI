@@ -67,6 +67,17 @@ def _build_explorer_context(
             f"finished{class_hint} converter did not produce one."
         )
 
+    required_algorithm = explorer_metadata.get("requires_algorithm")
+    if required_algorithm:
+        used_algorithm = converter_report.get("algorithm_key", "").lower()
+        if used_algorithm != required_algorithm.lower():
+            raise JobError(
+                f"This explorer requires the '{required_algorithm}' clustering "
+                f"algorithm, but the last Clustering converter ran '{used_algorithm}'"
+                f". Re-run the Clustering converter selecting the "
+                f"'{required_algorithm}' algorithm."
+            )
+
     return {
         "converter_report": converter_report,
         "converter_report_source": {
@@ -232,6 +243,10 @@ class ExplorerJob(BaseJob):
                     config,
                 )
                 explorer_instance.set_context(explorer_context)
+            except JobError:
+                explorer_info.set_status_as_error()
+                db.commit()
+                raise
             except Exception as e:
                 log.exception(e)
                 explorer_info.set_status_as_error()
@@ -262,6 +277,10 @@ class ExplorerJob(BaseJob):
                 result = explorer_instance.launch_exploration(
                     prepared_dataset, explorer_info
                 )
+            except (JobError, ValueError) as e:
+                explorer_info.set_status_as_error()
+                db.commit()
+                raise JobError(str(e)) from e
             except Exception as e:
                 log.exception(e)
                 explorer_info.set_status_as_error()

@@ -111,11 +111,28 @@ class HDBSCANClustering(SklearnLikeClusterer, _HDBSCAN):
         super().__init__(**kwargs)
 
     def get_fit_attributes(self) -> dict:
-        """Return HDBSCAN post-fit attributes for the converter report."""
+        """Return HDBSCAN post-fit attributes for the converter report.
+
+        sklearn's HDBSCAN does not expose ``cluster_persistence_``. Stability
+        is approximated as the mean membership probability across samples
+        assigned to each cluster (``probabilities_`` from sklearn).
+        """
         import numpy as np
 
-        attrs = {"cluster_persistence": self.cluster_persistence_.tolist()}
-        n_noise = int(np.sum(self._labels == -1))
+        attrs = {}
+        labels = self._labels
+        probabilities = getattr(self, "probabilities_", None)
+
+        if labels is not None and probabilities is not None:
+            unique_clusters = np.unique(labels[labels != -1])
+            if len(unique_clusters) > 0:
+                attrs["cluster_persistence"] = [
+                    float(np.mean(probabilities[labels == lbl]))
+                    for lbl in unique_clusters
+                ]
+
+        n_noise = int(np.sum(labels == -1)) if labels is not None else 0
         if n_noise > 0:
             attrs["n_noise_points"] = n_noise
+
         return attrs

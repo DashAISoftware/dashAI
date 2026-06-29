@@ -284,9 +284,11 @@ class Clustering(ClusteringConverter, BaseConverter):
         self._model.train(x)
         self._labels = self._model.get_cluster_labels()
 
+        algorithm_key = self.algorithm_name.lower().removesuffix("clustering")
         self._report = self.build_report(
             {
                 "algorithm": self.algorithm_name,
+                "algorithm_key": algorithm_key,
                 "cluster_column": self.output_column_name,
                 **self._build_report_data(x),
             }
@@ -364,7 +366,7 @@ class Clustering(ClusteringConverter, BaseConverter):
         unique_labels, counts = np.unique(labels, return_counts=True)
         cluster_sizes = {
             int(label): int(count)
-            for label, count in zip(unique_labels, counts)
+            for label, count in zip(unique_labels, counts, strict=False)
             if int(label) not in excluded_labels
         }
         n_clusters = len(cluster_sizes)
@@ -374,6 +376,7 @@ class Clustering(ClusteringConverter, BaseConverter):
 
         return {
             "n_clusters": n_clusters,
+            "feature_columns": list(x_pandas.columns),
             "metrics": metrics,
             "cluster_sizes": cluster_sizes,
             "cluster_profiles": self._compute_cluster_profiles(
