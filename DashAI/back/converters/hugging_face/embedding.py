@@ -247,4 +247,9 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
                     pa.array(embeddings_np[:, i].tolist(), type=pa.float32()),
                 )
 
+        # Remove original text columns — they are replaced by their emb_* counterparts
+        for column in batch.column_names:
+            col_idx = result_table.column_names.index(column)
+            result_table = result_table.remove_column(col_idx)
+
         return DashAIDataset(result_table)
