@@ -487,7 +487,7 @@ class MixtralModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        self.filename = kwargs.get("filename", "mixtral-8x7b-instruct-v0.1.Q2_K.gguf")
+        self.filename = kwargs.get("filename", "Mixtral-8x7B-Instruct-v0.1.Q2_K.gguf")
         use_gpu = LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
 
         self.model = Llama.from_pretrained(
