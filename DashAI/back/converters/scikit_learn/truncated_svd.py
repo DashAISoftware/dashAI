@@ -211,6 +211,7 @@ class TruncatedSVD(
     metadata = {
         "allowed_types": [Float, Integer],
         "allowed_dtypes": [],
+        "input_cardinality": {"min": 2},
     }
 
     def __init__(self, **kwargs):

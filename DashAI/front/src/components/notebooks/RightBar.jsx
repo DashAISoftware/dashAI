@@ -224,6 +224,7 @@ export default function RightBar({ notebook, onToggle }) {
 
     const allowedTypes = converter?.metadata?.allowed_types || [];
     const allowedDtypes = converter?.metadata?.allowed_dtypes || [];
+    const inputCardinality = converter?.metadata?.input_cardinality || {};
 
     let validColumns = datasetColumns;
     let disabled = false;
@@ -242,6 +243,27 @@ export default function RightBar({ notebook, onToggle }) {
       validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
+    }
+
+    // Check cardinality requirements
+    if (inputCardinality.exact != null) {
+      if (validColumns.length < inputCardinality.exact) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
+          required: inputCardinality.exact,
+          available: validColumns.length,
+          count: inputCardinality.exact,
+        })}`;
+      }
+    } else if (inputCardinality.min != null) {
+      if (validColumns.length < inputCardinality.min) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
+          required: inputCardinality.min,
+          available: validColumns.length,
+          count: inputCardinality.min,
+        })}`;
+      }
     }
 
     // Check if there are no valid columns at all (some restriction was applied)
