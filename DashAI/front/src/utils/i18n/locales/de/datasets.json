@@ -94,7 +94,7 @@
     "requiresMinColumns_one": "Erfordert mindestens {{required}} gültige Spalte, aber nur {{available}} verfügbar.",
     "requiresMinColumns_other": "Erfordert mindestens {{required}} gültige Spalten, aber nur {{available}} verfügbar.",
     "zipContentsNotCompatible": "ZIP enthält keine mit dem ausgewählten Datenlader kompatiblen Dateien",
-    "cannotSaveEmptyDataset": "Dataset kann nicht gespeichert werden: Alle Spalten wurden entfernt. Fügen Sie Spalten hinzu, bevor Sie speichern."
+    "cannotSaveEmptyDataset": "Dataset kann nicht gespeichert werden: Alle Spalten wurden entfernt."
   },
   "label": {
     "task": "Aufgabe",

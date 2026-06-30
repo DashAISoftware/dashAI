@@ -97,7 +97,7 @@
     "requiresMinColumns_many": "Requer pelo menos {{required}} colunas válidas, mas apenas {{available}} disponíveis.",
     "requiresMinColumns_other": "Requer pelo menos {{required}} colunas válidas, mas apenas {{available}} disponíveis.",
     "zipContentsNotCompatible": "O arquivo ZIP não contém arquivos compatíveis com o dataloader selecionado",
-    "cannotSaveEmptyDataset": "Não é possível salvar o dataset: todas as colunas foram removidas. Adicione colunas antes de salvar."
+    "cannotSaveEmptyDataset": "Não é possível salvar o dataset: todas as colunas foram removidas."
   },
   "label": {
     "task": "Tarefa",

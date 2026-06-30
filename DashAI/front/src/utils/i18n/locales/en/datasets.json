@@ -92,7 +92,7 @@
     "requiresMinColumns_one": "Requires at least {{required}} valid column, but only {{available}} available.",
     "requiresMinColumns_other": "Requires at least {{required}} valid columns, but only {{available}} available.",
     "zipContentsNotCompatible": "ZIP does not contain files compatible with the selected dataloader",
-    "cannotSaveEmptyDataset": "Cannot save dataset: all columns have been removed. Add columns before saving."
+    "cannotSaveEmptyDataset": "Cannot save dataset: all columns have been removed."
   },
   "label": {
     "task": "Task",
