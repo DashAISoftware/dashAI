@@ -248,6 +248,15 @@ export default function DatasetPreviewNotebook({
               endIcon={<Add />}
               onClick={(e) => {
                 e.stopPropagation();
+                if (
+                  convertersLoaded &&
+                  Object.keys(localColumnTypes).length === 0
+                ) {
+                  enqueueSnackbar(t("datasets:error.cannotSaveEmptyDataset"), {
+                    variant: "error",
+                  });
+                  return;
+                }
                 setShowSaveDatasetModal(true);
                 if (tourContext && tourContext.run) {
                   setTimeout(() => {

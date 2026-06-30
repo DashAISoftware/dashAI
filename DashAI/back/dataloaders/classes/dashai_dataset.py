@@ -264,7 +264,9 @@ class DashAIDataset(Dataset):
         dict
             Dictionary with statistics for each numeric column.
         """
-        numeric_keys = self._get_numeric_columns()
+        numeric_keys = [
+            k for k in self._get_numeric_columns() if k in dataset_df.columns
+        ]
         numeric_cols = dataset_df[numeric_keys]
         numeric_stats = {}
 
@@ -316,7 +318,9 @@ class DashAIDataset(Dataset):
         dict
             Dictionary with statistics for each categorical column.
         """
-        categorical_keys = self._get_categorical_columns()
+        categorical_keys = [
+            k for k in self._get_categorical_columns() if k in dataset_df.columns
+        ]
         categorical_cols = dataset_df[categorical_keys]
         categorical_stats = {}
 
@@ -465,7 +469,9 @@ class DashAIDataset(Dataset):
         dict
             Nested dictionary representing the correlation matrix.
         """
-        numeric_keys = self._get_numeric_columns()
+        numeric_keys = [
+            k for k in self._get_numeric_columns() if k in dataset_df.columns
+        ]
         numeric_cols = dataset_df[numeric_keys]
 
         if numeric_cols.empty:
