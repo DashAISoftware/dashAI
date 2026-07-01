@@ -30,6 +30,7 @@ class ComponentRegistry:
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
         "color": "...",  # A color associated to the component.
+        "downloaded": True,  # False until a download-required component is fetched.
     }
     ```
 
@@ -64,6 +65,7 @@ class ComponentRegistry:
             for component in initial_components:
                 self.register_component(component)
 
+        # Ensure every component carries the downloaded flag.
         self.seed_download_status()
 
     @property
@@ -274,6 +276,11 @@ class ComponentRegistry:
         -------
         bool
             The resolved download status for the component.
+
+        Notes
+        -----
+        Exceptions from ``is_downloaded()`` are suppressed and treated as
+        not-downloaded, so a component may appear not-downloaded without raising.
         """
         component_class = component_dict["class"]
         requires = bool(getattr(component_class, "REQUIRES_DOWNLOAD", False))
