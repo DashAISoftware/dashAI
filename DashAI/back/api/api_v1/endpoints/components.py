@@ -3,7 +3,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Union
 
-from fastapi import APIRouter, Depends, Header, Query, status
+from fastapi import APIRouter, Depends, Header, Query, Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from kink import di, inject
@@ -322,15 +322,17 @@ async def delete_component_download(
     name : str
         The component class name.
     """
-    from fastapi import Response
-
     try:
         component_class = component_registry[name]["class"]
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    if getattr(component_class, "REQUIRES_DOWNLOAD", False):
-        component_class.delete()
-        component_registry.refresh_download_status(name)
+    if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Component {name} does not support download and cannot be deleted",
+        )
+    component_class.delete()
+    component_registry.refresh_download_status(name)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

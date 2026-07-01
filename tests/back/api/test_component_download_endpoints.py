@@ -1,5 +1,78 @@
 """Tests for the component download/delete/status endpoints."""
 
+import pytest
+from kink import di
+
+
+@pytest.fixture
+def fake_downloadable_registry():
+    """Swap di with a minimal registry containing a downloadable component."""
+
+    class FakeDownloadable:
+        REQUIRES_DOWNLOAD = True
+        _delete_called = False
+
+        @classmethod
+        def delete(cls):
+            cls._delete_called = True
+
+    class FakeRegistry:
+        def __getitem__(self, name):
+            if name == "FakeComponent":
+                return {"class": FakeDownloadable}
+            raise KeyError(f"Component {name!r} not found")
+
+        def refresh_download_status(self, name):
+            return False
+
+    class FakeJob:
+        id = "job-xyz"
+
+    class FakeJobQueue:
+        def put(self, job):
+            return FakeJob()
+
+    old_registry = di["component_registry"]
+    old_queue = di["job_queue"]
+    di["component_registry"] = FakeRegistry()
+    di["job_queue"] = FakeJobQueue()
+    yield
+    di["component_registry"] = old_registry
+    di["job_queue"] = old_queue
+
+
+@pytest.fixture
+def fake_non_downloadable_registry():
+    """Swap di with a minimal registry containing a non-downloadable component."""
+
+    class FakeNonDownloadable:
+        REQUIRES_DOWNLOAD = False
+
+    class FakeRegistry:
+        def __getitem__(self, name):
+            if name == "FakeComponent":
+                return {"class": FakeNonDownloadable}
+            raise KeyError(f"Component {name!r} not found")
+
+        def refresh_download_status(self, name):
+            return False
+
+    old_registry = di["component_registry"]
+    di["component_registry"] = FakeRegistry()
+    yield
+    di["component_registry"] = old_registry
+
+
+def test_post_download_enqueue_201(client, fake_downloadable_registry):
+    resp = client.post("/api/v1/component/FakeComponent/download")
+    assert resp.status_code == 201
+    assert resp.json() == {"id": "job-xyz"}
+
+
+def test_delete_non_downloadable_409(client, fake_non_downloadable_registry):
+    resp = client.delete("/api/v1/component/FakeComponent/download")
+    assert resp.status_code == 409
+
 
 def test_get_download_status_nondownloadable(client):
     # Any component that does NOT require download should return the status dict.
