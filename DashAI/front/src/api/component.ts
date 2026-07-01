@@ -54,3 +54,26 @@ export const getComponentById = async (id: string): Promise<IComponent> => {
   const response = await api.get<IComponent>(`/v1/component/${id}/`);
   return response.data;
 };
+
+export const downloadComponent = async (
+  name: string,
+): Promise<{ id: string }> => {
+  const response = await api.post<{ id: string }>(
+    `/v1/component/${name}/download`,
+  );
+  return response.data;
+};
+
+export const deleteComponentDownload = async (name: string): Promise<void> => {
+  await api.delete(`/v1/component/${name}/download`);
+};
+
+export const getComponentDownloadStatus = async (
+  name: string,
+): Promise<{ downloaded: boolean; requires_download: boolean }> => {
+  const response = await api.get<{
+    downloaded: boolean;
+    requires_download: boolean;
+  }>(`/v1/component/${name}/download`);
+  return response.data;
+};

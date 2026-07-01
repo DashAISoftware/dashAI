@@ -10,4 +10,5 @@ export interface IComponent {
   description: string;
   display_name?: string;
   color?: string;
+  downloaded?: boolean;
 }
