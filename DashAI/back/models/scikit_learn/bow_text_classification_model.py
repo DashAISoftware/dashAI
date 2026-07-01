@@ -45,12 +45,14 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Tabellarisches Modell, das als zugrunde liegendes Modell "
                 "zur Erstellung des Textklassifikators verwendet wird."
             ),
+            zh="用作生成文本分类器的底层表格模型。",
         ),
         alias=MultilingualString(
             en="Tabular classifier",
             es="Clasificador tabular",
             pt="Classificador tabular",
             de="Tabellarischer Klassifikator",
+            zh="表格分类器",
         ),
     )  # type: ignore
     ngram_min_n: schema_field(
@@ -76,12 +78,14 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Die untere Grenze des Bereichs der n-Werte für verschiedene Wort- "
                 "oder Zeichen-N-Gramme. Muss eine ganze Zahl größer oder gleich 1 sein."
             ),
+            zh="提取的词n-gram或字符n-gram的n值范围下界，必须为大于等于1的整数。",
         ),
         alias=MultilingualString(
             en="Ngram min N",
             es="Ngrama mínimo N",
             pt="N-grama mínimo N",
             de="N-Gramm min N",
+            zh="N-gram 最小 N",
         ),
     )  # type: ignore
     ngram_max_n: schema_field(
@@ -107,12 +111,14 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
                 "Die obere Grenze des Bereichs der n-Werte für verschiedene Wort- "
                 "oder Zeichen-N-Gramme. Muss eine ganze Zahl größer oder gleich 1 sein."
             ),
+            zh="提取的词n-gram或字符n-gram的n值范围上界，必须为大于等于1的整数。",
         ),
         alias=MultilingualString(
             en="Ngram max N",
             es="Ngrama máximo N",
             pt="N-grama máximo N",
             de="N-Gramm max N",
+            zh="N-gram 最大 N",
         ),
     )  # type: ignore
 
@@ -126,7 +132,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
     ``CountVectorizer`` with a configurable n-gram range, then passes the
     resulting sparse feature matrix to any DashAI ``TabularClassificationModel``
     for training and prediction. This decouples text featurisation from the
-    choice of classifier, allowing any registered DashAI tabular model (tree-based,
+    choice of classifier, allowing any registered DashAI tabular model (tree based,
     SVM, linear, etc.) to be applied to text classification without modification.
 
     During training the vectorizer is fitted on the input text column and the
@@ -144,6 +150,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         es="Clasificador de Texto Bolsa de Palabras",
         pt="Classificador de Texto BOW",
         de="Bag-of-Words-Textklassifikator",
+        zh="词袋文本分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Text classification using bag-of-words features and tabular classifiers.",
@@ -159,6 +166,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
             "Textklassifikation mit Bag-of-Words-Merkmalen und tabellarischen "
             "Klassifikatoren."
         ),
+        zh="使用词袋特征和表格分类器进行文本分类。",
     )
     COLOR: str = "#FF5722"
     ICON: str = "TextFields"
@@ -168,7 +176,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         """Initialise the Bag-of-Words text classification meta-model.
 
         Creates a ``CountVectorizer`` with the configured n-gram range and
-        stores the pre-instantiated tabular classifier that will be trained on
+        stores the preinstantiated tabular classifier that will be trained on
         the resulting token-count matrix.
 
         Parameters

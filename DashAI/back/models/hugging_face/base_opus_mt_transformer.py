@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING, List, Optional, Union
 from sklearn.exceptions import NotFittedError
 
 from DashAI.back.models.translation_model import TranslationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -19,7 +22,7 @@ class OpusMtTransformerMixin(TranslationModel):
 
     Subclasses must define ``MODEL_NAME`` (the HuggingFace checkpoint ID) and
     ``SCHEMA``. ``TEMP_CHECKPOINT_DIR`` defaults to a generic path but should
-    be overridden with a model-specific directory to avoid collisions between
+    be overridden with a model specific directory to avoid collisions between
     concurrent training runs of different language pairs.
 
     All seq2seq training, tokenization, inference, save, and load logic lives
@@ -39,7 +42,7 @@ class OpusMtTransformerMixin(TranslationModel):
         Parameters
         ----------
         model : transformers.PreTrainedModel or None
-            Pre-loaded model to reuse instead of downloading weights.
+            Preloaded model to reuse instead of downloading weights.
         **kwargs
             Training hyperparameters forwarded to ``validate_and_transform``.
         """
@@ -136,7 +139,7 @@ class OpusMtTransformerMixin(TranslationModel):
 
         has_validation_data = x_validation is not None and y_validation is not None
 
-        output_root = Path(self.TEMP_CHECKPOINT_DIR)
+        output_root = resolve_temp_checkpoint_dir(self.TEMP_CHECKPOINT_DIR)
         output_root.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(
             prefix=f"{self.__class__.__name__.lower()}_",
@@ -192,6 +195,12 @@ class OpusMtTransformerMixin(TranslationModel):
                 f"This {self.__class__.__name__} instance is not fitted yet. "
                 "Call 'train' with appropriate arguments before using this estimator."
             )
+
+        if self.device.lower() == "gpu":
+            self.model.to("cuda")
+        else:
+            self.model.to("cpu")
+        self.model.eval()
 
         dataset = self.tokenize_data(x_pred)
         dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])

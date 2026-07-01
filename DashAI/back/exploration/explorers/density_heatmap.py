@@ -5,6 +5,8 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -31,9 +33,10 @@ class DensityHeatmapSchema(BaseExplorerSchema):
             es=("Número de bins a lo largo del eje x."),
             pt=("Número de bins ao longo do eixo x."),
             de=("Anzahl der Klassen entlang der x-Achse."),
+            zh="沿x轴的分箱数量。",
         ),
         alias=MultilingualString(
-            en="Bins (x)", es="Bins (x)", pt="Bins (x)", de="Klassen (x)"
+            en="Bins (x)", es="Bins (x)", pt="Bins (x)", de="Klassen (x)", zh="分箱(x)"
         ),
     )  # type: ignore
     nbinsy: schema_field(
@@ -44,9 +47,10 @@ class DensityHeatmapSchema(BaseExplorerSchema):
             es=("Número de bins a lo largo del eje y."),
             pt=("Número de bins ao longo do eixo y."),
             de=("Anzahl der Klassen entlang der y-Achse."),
+            zh="沿y轴的分箱数量。",
         ),
         alias=MultilingualString(
-            en="Bins (y)", es="Bins (y)", pt="Bins (y)", de="Klassen (y)"
+            en="Bins (y)", es="Bins (y)", pt="Bins (y)", de="Klassen (y)", zh="分箱(y)"
         ),
     )  # type: ignore
 
@@ -76,6 +80,7 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         es="Mapa de Calor de Densidad",
         pt="Mapa de Calor de Densidade",
         de="Dichte-Heatmap",
+        zh="密度热图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -94,12 +99,13 @@ class DensityHeatmapExplorer(RelationshipExplorer):
             "Gibt eine Dichte-Heatmap für zwei ausgewählte Spalten zurück, um "
             "die gemeinsame Verteilung zu visualisieren."
         ),
+        zh="返回两个所选列的密度热图，以可视化联合分布。",
     )
     IMAGE_PREVIEW = "density_heatmap.png"
 
     SCHEMA = DensityHeatmapSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
         "input_cardinality": {"exact": 2},
     }

@@ -19,7 +19,7 @@ export default function ScopeStepExplorer({
   const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
-  const typesDtypeRestrictions = tool?.metadata?.type_dtype_restrictions || {};
+  const nonAllowedDtypes = tool?.metadata?.non_allowed_dtypes || [];
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
   const { explorersAndConverters } = useExplorersAndConverters();
@@ -72,7 +72,7 @@ export default function ScopeStepExplorer({
           inputCardinality={inputCardinality}
           allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
-          typesDtypeRestrictions={typesDtypeRestrictions}
+          nonAllowedDtypes={nonAllowedDtypes}
           allowedColumnNames={allowedColumnNames}
           onSelectionChange={(selected) => setScopeColumns(selected)}
           onValidationChange={(isValid) => setIsSelectionValid(isValid)}

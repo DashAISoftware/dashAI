@@ -48,6 +48,21 @@ metadata = MetaData(naming_convention=naming_convention)
 Base = declarative_base(metadata=metadata)
 
 
+class Folder(Base):
+    __tablename__ = "folder"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    datasets: Mapped[List["Dataset"]] = relationship(back_populates="folder")
+
+
 class Dataset(Base):
     __tablename__ = "dataset"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -62,6 +77,9 @@ class Dataset(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     total_rows: Mapped[int] = mapped_column(Integer, nullable=True)
     total_columns: Mapped[int] = mapped_column(Integer, nullable=True)
+    folder_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("folder.id", ondelete="SET NULL"), nullable=True
+    )
 
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
@@ -72,6 +90,7 @@ class Dataset(Base):
     predictions: Mapped[List["Prediction"]] = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="dataset"
     )
+    folder: Mapped[Optional["Folder"]] = relationship(back_populates="datasets")
 
     status: Mapped[Enum] = mapped_column(
         Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
@@ -284,6 +303,9 @@ class Plugin(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     author: Mapped[str] = mapped_column(String, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     installed_version: Mapped[str] = mapped_column(String, nullable=False)
     lastest_version: Mapped[str] = mapped_column(String, nullable=False)
     tags: Mapped[List["Tag"]] = relationship(

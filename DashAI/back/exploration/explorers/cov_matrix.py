@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING, Any, Dict
 from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import (
+    NON_NUMERIC_DTYPES,
+    BaseExplorerSchema,
+)
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
@@ -46,12 +49,14 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
                 "Mindestanzahl der Beobachtungen pro Spaltenpaar für ein "
                 "gültiges Ergebnis."
             ),
+            zh="每列对获得有效结果所需的最小观测数。",
         ),
         alias=MultilingualString(
             en="Minimum periods",
             es="Períodos mínimos",
             pt="Períodos mínimos",
             de="Mindestperioden",
+            zh="最小周期数",
         ),
     )  # type: ignore
     delta_degree_of_freedom: schema_field(
@@ -74,12 +79,14 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
                 "Delta-Freiheitsgrade zur Berechnung der Kovarianzmatrix. "
                 "Wird nur verwendet, wenn numeric_only True ist."
             ),
+            zh="计算协方差矩阵时使用的自由度delta。仅在numeric_only为True时使用。",
         ),
         alias=MultilingualString(
             en="Delta degrees of freedom",
             es="Grados de libertad delta",
             pt="Graus de liberdade delta",
             de="Delta-Freiheitsgrade",
+            zh="自由度delta",
         ),
     )  # type: ignore
     numeric_only: schema_field(
@@ -102,12 +109,14 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
                 "Wenn True, werden nur numerische Spalten in die Berechnung "
                 "einbezogen; sonst alle Spalten."
             ),
+            zh="如果为True，计算中仅包含数值列；否则包含所有列。",
         ),
         alias=MultilingualString(
             en="Numeric only",
             es="Solo numéricas",
             pt="Apenas numéricas",
             de="Nur numerisch",
+            zh="仅数值列",
         ),
     )  # type: ignore
     plot: schema_field(
@@ -118,12 +127,14 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
             es=("Si es True, el resultado será graficado."),
             pt=("Se True, o resultado será plotado."),
             de=("Wenn True, wird das Ergebnis dargestellt."),
+            zh="如果为True，结果将以图表显示。",
         ),
         alias=MultilingualString(
             en="Plot result",
             es="Graficar resultado",
             pt="Plotar resultado",
             de="Ergebnis darstellen",
+            zh="绘制结果",
         ),
     )  # type: ignore
 
@@ -154,6 +165,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         es="Matriz de Covarianza",
         pt="Matriz de Covariância",
         de="Kovarianzmatrix",
+        zh="协方差矩阵",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -175,6 +187,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
             "ist eine Heatmap, aber es kann auch ein tabellarisches Ergebnis "
             "zurückgegeben werden."
         ),
+        zh="返回数据集的协方差矩阵。默认输出为热图，也可返回表格形式。",
     )
     IMAGE_PREVIEW = "covariance_matrix.png"
 
@@ -182,7 +195,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
+        "non_allowed_dtypes": NON_NUMERIC_DTYPES,
         "input_cardinality": {"min": 2},
     }
 
@@ -215,7 +228,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         """Compute a covariance matrix and optionally render it as a Plotly heatmap.
 
         Converts the dataset to a pandas DataFrame, computes pairwise column
-        covariances, and — when ``self.plot`` is ``True`` — wraps the result
+        covariances, and, when ``self.plot`` is ``True``, wraps the result
         in a Plotly ``imshow`` heatmap figure.
 
         Parameters
@@ -277,7 +290,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         save_path : Path
             Directory where the file will be saved.
         result : Any
-            The result returned by ``launch_exploration`` — either
+            The result returned by ``launch_exploration``, either
             a ``plotly.graph_objs.Figure`` or a ``pandas.DataFrame``.
 
         Returns

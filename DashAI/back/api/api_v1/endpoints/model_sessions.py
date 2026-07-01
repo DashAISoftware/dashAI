@@ -236,6 +236,12 @@ async def create_model_session(
             db.commit()
             db.refresh(model_session)
             return model_session
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Model session with name '{params.name}' already exists.",
+            ) from e
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

@@ -1,69 +1,16 @@
 # ===================================================================
-# DashAI CPU-only environment (PyTorch ≥2.9, torchvision ≥0.24)
+# DashAI CPU-only extras (PyTorch CPU wheels + CPU llama-cpp)
 # ===================================================================
-# No requiere CUDA SDK, cuDNN ni drivers NVIDIA.
-# Compatible con PyInstaller para distribución en Windows sin GPU.
+# Common deps live in requirements.txt; this file only adds the
+# packages that need a special index/build for CPU-only hosts.
+# Install: pip install -r requirements-cpu.txt
 # ===================================================================
 
-# Core web & infra
-fastapi[all]
-SQLAlchemy
-streaming_form_data
-alembic
-kink
+-r requirements.txt
 
-# NumPy & Pandas stack
-numpy
-pandas<3.0.0
-joblib
-
-# Config & validation
-pydantic
-pydantic-settings
-starlette
-
-# ML / AI
-scikit-learn
-datasets
-diffusers
-evaluate
-accelerate
-Pillow
-beartype
-plotly
-shap
-typer
-rich
-torchmetrics
-
-# PyTorch CPU wheels
+# PyTorch CPU wheels (no CUDA SDK / drivers needed)
 torch --index-url https://download.pytorch.org/whl/cpu
 torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# Transformers ecosystem
-transformers
-controlnet_aux
-sacrebleu
-sentencepiece
-
-# Optimization / hyperparam tuning
-optuna
-hyperopt
-
-# Excel / IO / Utils
-openpyxl
-httpx
-wordcloud
-opencv-python
-protobuf
-imblearn
-numba
-llvmlite
-faiss-cpu
-greenery==3.2
-filetype
-huey
-
-# Optional: llama-cpp CPU-only (sin dependencias CUDA)
-# Comentar si no se usa Llama.
+# Llama CPU-only (no CUDA)
 llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu

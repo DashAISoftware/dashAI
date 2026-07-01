@@ -12,6 +12,12 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
+# Dtypes that cannot be plotted on a numeric axis. Shared default for plot
+# explorers that accept the Categorical semantic type but only when it is
+# numerically encoded (an empty dtype means the dtype is unknown).
+NON_NUMERIC_DTYPES: Final[List[str]] = ["string", "bool", ""]
+
+
 class BaseExplorerSchema(BaseSchema):
     """
     Base schema for explorers, it defines the parameters to be used in each explorer.
@@ -128,9 +134,9 @@ class BaseExplorer(ConfigObject, ABC):
         meta.pop("restricted_dtypes", None)
         meta.pop("numeric_categorical_only", None)
 
-        # Ensure type_dtype_restrictions is always present for the frontend
-        if "type_dtype_restrictions" not in meta:
-            meta["type_dtype_restrictions"] = {}
+        # Ensure non_allowed_dtypes is always present for the frontend
+        if "non_allowed_dtypes" not in meta:
+            meta["non_allowed_dtypes"] = []
 
         return meta
 
@@ -197,8 +203,8 @@ class BaseExplorer(ConfigObject, ABC):
         if "max" in input_cardinality and n > input_cardinality["max"]:
             return False
 
-        # Per-type dtype exclusions: maps semantic type name → list of forbidden dtypes.
-        type_dtype_restrictions = metadata.get("type_dtype_restrictions", {})
+        # Global dtype blacklist: dtypes that are never valid for this explorer.
+        non_allowed_dtypes = metadata.get("non_allowed_dtypes", [])
         for column in selected_columns:
             column_name = column["columnName"]
             col_info = column_spec.get(column_name, {})
@@ -207,8 +213,7 @@ class BaseExplorer(ConfigObject, ABC):
 
             if allowed_types and col_type not in allowed_types:
                 return False
-            forbidden_dtypes = type_dtype_restrictions.get(col_type, [])
-            if forbidden_dtypes and col_dtype in forbidden_dtypes:
+            if non_allowed_dtypes and col_dtype in non_allowed_dtypes:
                 return False
             if allowed_dtypes and col_dtype not in allowed_dtypes:
                 return False

@@ -1,4 +1,4 @@
-"""OpusMtEnPtTransformer model for English-to-Portuguese translation."""
+"""OpusMtEnPtTransformer model for English to Portuguese translation."""
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.hugging_face.base_opus_mt_transformer import (
@@ -10,14 +10,14 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
 
 
 class OpusMtEnPtTransformerSchema(OpusMtEnESTransformerSchema):
-    """Schema for the English-to-Portuguese Opus-MT model."""
+    """Schema for the English to Portuguese Opus-MT model."""
 
 
 class OpusMtEnPtTransformer(OpusMtTransformerMixin):
-    """Pre-trained transformer for English-to-Portuguese translation.
+    """Pretrained transformer for English to Portuguese translation.
 
     Fine-tunes the Helsinki-NLP ``opus-mt-en-pt`` checkpoint, a MarianMT
-    seq2seq model trained on parallel English-Portuguese corpora from the OPUS
+    seq2seq model trained on parallel English to Portuguese corpora from the OPUS
     collection.
 
     References
@@ -34,14 +34,15 @@ class OpusMtEnPtTransformer(OpusMtTransformerMixin):
         es="Transformer Opus MT En-Pt",
         pt="Transformer Opus MT En-Pt",
         de="Opus MT En-Pt Transformer",
+        zh="Opus MT 英葡翻译 Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Pre-trained transformer for English-Portuguese translation. "
+            "Pretrained transformer for English to Portuguese translation. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
-            "Transformer pre-entrenado para traducción inglés-portugués. "
+            "Transformer preentrenado para traducción inglés-portugués. "
             "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
         ),
         pt=(
@@ -52,6 +53,10 @@ class OpusMtEnPtTransformer(OpusMtTransformerMixin):
             "Vortrainierter Transformer für Englisch-Portugiesisch-Übersetzung. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "用于英语到葡萄牙语翻译的预训练 Transformer。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#2E7D32"

@@ -155,7 +155,7 @@ def _start_webview(local_path: pathlib.Path, logger: logging.Logger) -> None:
 
     api = DownloadApi()
     window = webview.create_window(
-        "DashAI", "http://127.0.0.1:8000", hidden=True, js_api=api
+        "dashAI", "http://127.0.0.1:8000", hidden=True, js_api=api
     )
 
     _DOWNLOAD_INTERCEPT_JS = """
@@ -232,7 +232,7 @@ def main(
         typer.Option(
             "--local-path",
             "-lp",
-            help="Path where DashAI files will be stored.",
+            help="Path where dashAI files will be stored.",
         ),
     ] = "~/.DashAI",  # type: ignore
     logging_level: Annotated[
@@ -241,7 +241,7 @@ def main(
             "--logging-level",
             "-ll",
             help=(
-                "DashAI App Logging level. "
+                "dashAI App Logging level. "
                 "Only in DEBUG mode, SQLAlchemy logging is enabled."
             ),
         ),
@@ -267,7 +267,7 @@ def main(
 ) -> None:
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
     logger = logging.getLogger(__name__)
-    logger.info("Starting DashAI application.")
+    logger.info("Starting dashAI application.")
     huey_process = None
 
     resolved_local = pathlib.Path(local_path).expanduser().absolute()
@@ -277,8 +277,13 @@ def main(
 
     logger.info("Starting Huey consumer.")
 
-    if getattr(sys, "frozen", False):
-        logger.info("Running inside PyInstaller bundle.")
+    # In a PyInstaller bundle or an AppImage, sys.executable is the bundled
+    # launcher (not a bare Python), so spawning the Huey consumer as
+    # "sys.executable -m huey..." re-enters the app instead of running Python.
+    # Run it in a thread in those cases.
+    in_appimage = bool(os.environ.get("APPIMAGE") or os.environ.get("APPDIR"))
+    if getattr(sys, "frozen", False) or in_appimage:
+        logger.info("Running inside a bundled launcher (PyInstaller/AppImage).")
         _start_huey_thread()
         logger.info("Started embedded Huey consumer (thread).")
     else:

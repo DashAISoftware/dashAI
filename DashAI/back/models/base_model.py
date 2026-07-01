@@ -87,10 +87,10 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
-        """Hook for model-specific preprocessing of input features.
+        """Hook for model specific preprocessing of input features.
 
         Override in subclasses that require custom tokenization, encoding,
-        or any other input transformation. Must not mutate the input in-place.
+        or any other input transformation. Must not mutate the input in place.
 
         Parameters
         ----------

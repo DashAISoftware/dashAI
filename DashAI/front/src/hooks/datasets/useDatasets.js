@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import {
+  getDataset,
   getDatasets,
   deleteDataset,
   updateDataset,
@@ -111,12 +112,51 @@ export function useDatasets({ t }) {
         setSelectedDatasetId(newDataset.id);
       },
       async () => {
+        // The poller can fire onError when a job finishes too quickly to be
+        // observed in the changes stream. Verify the dataset actually failed
+        // before showing the error / removing the optimistic entry.
+        try {
+          const persisted = await getDataset(newDataset.id);
+          if (persisted && persisted.status === "finished") {
+            enqueueSnackbar(
+              t("datasets:message.datasetCreationSuccess", {
+                datasetName: newDataset.name,
+              }),
+              { variant: "success" },
+            );
+            setSelectedDatasetId(newDataset.id);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to verify dataset state after poll error:", e);
+        }
         enqueueSnackbar(t("datasets:error.failedToCreateDataset"), {
           variant: "error",
         });
         setDatasets((prev) => prev.filter((d) => d.id !== newDataset.id));
       },
     );
+  };
+
+  const moveDatasetToFolder = async (id, folderId) => {
+    const prevFolderId = datasets.find((d) => d.id === id)?.folder_id ?? null;
+    setDatasets((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, folder_id: folderId } : d)),
+    );
+    try {
+      await updateDataset(id, { folder_id: folderId });
+    } catch (error) {
+      setDatasets((prev) =>
+        prev.map((d) =>
+          d.id === id && (d.folder_id ?? null) === folderId
+            ? { ...d, folder_id: prevFolderId }
+            : d,
+        ),
+      );
+      enqueueSnackbar(t("datasets:error.failedToMoveDataset"), {
+        variant: "error",
+      });
+    }
   };
 
   const replaceDatasets = (datasets) => {
@@ -133,6 +173,7 @@ export function useDatasets({ t }) {
     deleteDataset,
     deleteDatasetById,
     editDataset,
+    moveDatasetToFolder,
     addDatasetOptimistically,
     startDatasetPolling,
     replaceDatasets,

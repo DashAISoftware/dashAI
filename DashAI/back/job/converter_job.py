@@ -52,7 +52,7 @@ def _rebuild_dataset_with_transformed_columns(
     Returns
     -------
     DashAIDataset
-        A new dataset with the specified columns replaced in-place, new columns
+        A new dataset with the specified columns replaced in place, new columns
         appended, and original metadata and split information preserved.
     """
     from DashAI.back.dataloaders.classes.dashai_dataset import modify_table

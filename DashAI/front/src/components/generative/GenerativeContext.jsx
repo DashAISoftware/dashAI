@@ -6,7 +6,7 @@ const GenerativeContext = createContext(null);
 export const useGenerative = () => useContext(GenerativeContext);
 
 export function GenerativeProvider({ children }) {
-  const { t } = useTranslation(["generative", "common"]);
+  const { t, i18n } = useTranslation(["generative", "common"]);
 
   const {
     selectedSessionId,
@@ -30,8 +30,11 @@ export function GenerativeProvider({ children }) {
 
   useEffect(() => {
     fetchSessions();
-    fetchTasks();
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [i18n.language]);
 
   const value = {
     selectedSessionId,

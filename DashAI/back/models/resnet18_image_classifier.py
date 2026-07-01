@@ -12,7 +12,7 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
 
     18-layer residual network with skip connections that solve the vanishing
     gradient problem. The final fully-connected layer is replaced to match the
-    number of target classes. Supports ImageNet pre-trained weights.
+    number of target classes. Supports ImageNet pretrained weights.
     """
 
     SCHEMA = TorchvisionImageClassifierSchema
@@ -21,6 +21,8 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
         en="ResNet-18",
         es="ResNet-18",
         pt="ResNet-18",
+        zh="ResNet-18",
+        de="ResNet-18",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -37,6 +39,15 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
             "ResNet-18 (He et al., 2015). Rede residual de 18 camadas com "
             "conexões de salto que permitem treinar redes muito profundas. "
             "A CNN mais citada na literatura acadêmica."
+        ),
+        zh=(
+            "ResNet-18（He 等，2015）。具有跳跃连接的18层残差网络，"
+            "可训练非常深的网络。学术文献中引用最多的卷积神经网络。"
+        ),
+        de=(
+            "ResNet-18 (He et al., 2015). Ein 18-schichtiges residuales Netz mit "
+            "Skip-Verbindungen, das das Training sehr tiefer Netzwerke ermoglicht. "
+            "Das meistzitierte CNN in der akademischen Literatur."
         ),
     )
     COLOR: str = "#2E7D32"

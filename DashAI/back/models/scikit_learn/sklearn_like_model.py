@@ -1,31 +1,26 @@
 from typing import TYPE_CHECKING
 
-from DashAI.back.models.scikit_learn.sklearn_base_model import (
-    CategoricalEncodingStrategy as CategoricalEncodingStrategy,
-)
-from DashAI.back.models.scikit_learn.sklearn_base_model import (
-    SklearnBaseModel,
-)
-from DashAI.back.models.supervised_model import SupervisedModel
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.categorical_encoder_mixin import CategoricalEncoderMixin
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class SklearnLikeModel(SklearnBaseModel, SupervisedModel):
+class SklearnLikeModel(CategoricalEncoderMixin, BaseModel):
     """Abstract base class for scikit-learn-compatible DashAI models.
 
-    Provides ``save`` / ``load`` via joblib, categorical encoding helpers
-    (label or one-hot), and the ``prepare_dataset`` / ``prepare_output``
-    pipeline expected by the DashAI training loop. Concrete subclasses
-    (classifiers and regressors) inherit this mixin and supply ``train`` and
-    ``predict`` implementations backed by scikit-learn estimators.
+    Provides ``save`` / ``load`` via joblib and inherits the categorical
+    encoding helpers and ``prepare_dataset`` / ``prepare_output`` pipeline from
+    ``CategoricalEncoderMixin``. Concrete subclasses (classifiers and
+    regressors) supply ``train`` and ``predict`` implementations backed by
+    scikit-learn estimators.
     """
 
     def __init__(self, *args, **kwargs):
         """Initialize the SklearnLikeModel."""
         super().__init__(*args, **kwargs)
-        self.output_encodings = {}
+        self._setup_categorical_encoders()
 
     # --- Methods for process the data for sklearn models ---
 
@@ -73,38 +68,3 @@ class SklearnLikeModel(SklearnBaseModel, SupervisedModel):
         if isinstance(x, DashAIDataset):
             x = self.prepare_dataset(x, is_fit=False).to_pandas()
         return super().predict(x)
-
-    def prepare_output(
-        self, dataset: "DashAIDataset", is_fit: bool = False
-    ) -> "DashAIDataset":
-        """Prepare output targets using Label encoding.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            The output dataset to be transformed.
-        is_fit : bool, optional
-            If True, fit the encoder. If False, use existing encodings.
-
-        Returns
-        -------
-        DashAIDataset
-            Dataset with categorical columns converted to integers.
-        """
-        from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-            apply_categorical_label_encoder,
-            categorical_label_encoder,
-        )
-
-        prepared = dataset
-
-        if is_fit:
-            prepared, encodings = categorical_label_encoder(dataset)
-            self.output_encodings.update(encodings)
-        else:
-            if self.output_encodings:
-                prepared = apply_categorical_label_encoder(
-                    dataset, self.output_encodings
-                )
-
-        return prepared

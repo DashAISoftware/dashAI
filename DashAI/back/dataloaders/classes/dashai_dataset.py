@@ -214,7 +214,7 @@ class DashAIDataset(Dataset):
         return {
             "n_rows": len(dataset_df),
             "n_columns": len(dataset_df.columns),
-            "memory_usage_mb": float(dataset_df.memory_usage(deep=True).sum() / 1e6),
+            "memory_usage_mb": float(self.arrow_table.nbytes / 1e6),
             "duplicate_rows": duplicate_rows,
             "dtypes": {k: v.to_string().get("type") for k, v in self.types.items()},
         }
@@ -843,8 +843,8 @@ def save_dataset(
 
     Creates the directory at ``path`` if needed, then writes:
 
-    * ``data.arrow`` — the PyArrow IPC file containing the table.
-    * ``splits.json`` — JSON file with split indices and row counts.
+    * ``data.arrow``: the PyArrow IPC file containing the table.
+    * ``splits.json``: JSON file with split indices and row counts.
 
     Parameters
     ----------
@@ -881,6 +881,11 @@ def save_dataset(
         }
     )
 
+    if "general_info" in metadata:
+        metadata["general_info"]["memory_usage_mb"] = (
+            os.path.getsize(data_filepath) / 1e6
+        )
+
     with open(metadata_filepath, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
@@ -891,8 +896,8 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
 
     Expects the directory at ``dataset_path`` to contain:
 
-    * ``data.arrow`` — the PyArrow IPC file.
-    * ``splits.json`` — JSON file with split indices (optional).
+    * ``data.arrow``: the PyArrow IPC file.
+    * ``splits.json``: JSON file with split indices (optional).
 
     Parameters
     ----------
@@ -1166,7 +1171,7 @@ def to_dashai_dataset(
 ) -> DashAIDataset:
     """Convert various dataset formats into a unified ``DashAIDataset``.
 
-    Accepts ``DashAIDataset`` (pass-through), HuggingFace ``Dataset``,
+    Accepts ``DashAIDataset`` (pass through), HuggingFace ``Dataset``,
     HuggingFace ``DatasetDict`` (merged via
     :func:`merge_splits_with_metadata`), and ``pandas.DataFrame``.
 
@@ -1463,7 +1468,7 @@ def get_dataset_info(dataset_path: str) -> object:
 def update_dataset_splits(
     dataset: DashAIDataset, new_splits: object, is_random: bool
 ) -> DashAIDataset:
-    """Update the split configuration of a DashAIDataset in-place.
+    """Update the split configuration of a DashAIDataset in place.
 
     Supports two modes: random proportional splits (floats summing to 1.0)
     and manual index-based splits (lists of row indices).

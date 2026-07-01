@@ -20,7 +20,7 @@ class StableDiffusionSchema(BaseSchema):
 
     Configures the checkpoint variant (``model_name``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
-    classifier-free guidance strength (``guidance_scale``), output dimensions
+    classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``StableDiffusionV2Model``.
@@ -40,7 +40,7 @@ class StableDiffusionSchema(BaseSchema):
             en=(
                 "The specific Stable Diffusion 2.x checkpoint to load. "
                 "The '-base' variants are trained at 512x512 px and are faster; "
-                "the non-base variants target 768x768 px and produce sharper detail. "
+                "the nonbase variants target 768x768 px and produce sharper detail. "
                 "The '2-1' variants are fine-tuned further "
                 "and generally outperform '2'."
             ),
@@ -69,12 +69,19 @@ class StableDiffusionSchema(BaseSchema):
                 "Die '2-1'-Varianten sind weiter feinabgestimmt "
                 "und übertreffen '2' in der Regel."
             ),
+            zh=(
+                "要加载的 Stable Diffusion 2.x 检查点。"
+                "'-base' 变体在 512x512 像素下训练，速度更快；"
+                "非 base 变体目标分辨率为 768x768 像素，细节更清晰。"
+                "'2-1' 变体经过进一步微调，通常优于 '2'。"
+            ),
         ),
         alias=MultilingualString(
             en="Model name",
             es="Nombre del modelo",
             pt="Nome do modelo",
             de="Modellname",
+            zh="模型名称",
         ),
     )  # type: ignore
 
@@ -106,12 +113,18 @@ class StableDiffusionSchema(BaseSchema):
                     "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
                     "überspringen."
                 ),
+                zh=(
+                    "描述要从生成图像中排除内容的文本。"
+                    "常用值：'模糊, 低质量, 失真, 水印'。"
+                    "留空以跳过负向条件约束。"
+                ),
             ),
             alias=MultilingualString(
                 en="Negative prompt",
                 es="Prompt negativo",
                 pt="Prompt negativo",
                 de="Negativer Prompt",
+                zh="负向提示词",
             ),
         )  # type: ignore
     ]
@@ -144,12 +157,18 @@ class StableDiffusionSchema(BaseSchema):
                 "für schnelle Ergebnisse, 40-50 für höhere Qualität. Werte über 100 "
                 "verbessern das Ergebnis selten."
             ),
+            zh=(
+                "去噪步骤数。步骤越多图像越精细，但生成时间越长。"
+                "典型范围：15-30 步可快速出图，40-50 步质量更高。"
+                "超过 100 步时效果提升通常不明显。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
             de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -183,12 +202,18 @@ class StableDiffusionSchema(BaseSchema):
                 "mittlere Werte (5-9) balancieren Qualität und Treue; hohe Werte (10+) "
                 "erzwingen den Prompt, können aber Artefakte erzeugen."
             ),
+            zh=(
+                "无分类器引导（CFG）比例。控制图像遵循文本提示的严格程度。"
+                "低值（1-4）允许创意自由；中值（5-9）平衡质量与贴合度；"
+                "高值（10+）严格执行提示，但可能产生伪影。"
+            ),
         ),
         alias=MultilingualString(
             en="Guidance scale",
             es="Escala de guía",
             pt="Escala de orientação",
             de="Führungsskala",
+            zh="引导比例",
         ),
     )  # type: ignore
 
@@ -220,9 +245,13 @@ class StableDiffusionSchema(BaseSchema):
                 "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber erwarten"
                 "Sie deutlich längere Generierungszeiten."
             ),
+            zh=(
+                "推理硬件设备。建议选择 GPU 选项以加速扩散模型推理。"
+                "在没有兼容 GPU 的系统上可选择 CPU，但生成时间将显著增加。"
+            ),
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -253,8 +282,14 @@ class StableDiffusionSchema(BaseSchema):
                 "Verwenden Sie einen negativen Wert (z.B. -1) für einen zufälligen "
                 "Seed bei jedem Durchlauf."
             ),
+            zh=(
+                "用于可复现生成的随机种子。固定正整数在相同设置下始终生成相同图像。"
+                "使用负值（如 -1）可在每次运行时使用随机种子。"
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente", de="Seed"),
+        alias=MultilingualString(
+            en="Seed", es="Semilla", pt="Semente", de="Seed", zh="随机种子"
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -282,8 +317,15 @@ class StableDiffusionSchema(BaseSchema):
                 "andere. "
                 "Die native Auflösung liefert die besten Qualitätsergebnisse."
             ),
+            zh=(
+                "输出图像的宽度（像素）。必须是 8 的倍数。"
+                "'-base' 变体原生分辨率为 512，其他变体为 768。"
+                "使用原生分辨率可获得最佳质量。"
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura", de="Breite"),
+        alias=MultilingualString(
+            en="Width", es="Ancho", pt="Largura", de="Breite", zh="宽度"
+        ),
     )  # type: ignore
 
     height: schema_field(
@@ -311,8 +353,15 @@ class StableDiffusionSchema(BaseSchema):
                 "andere. "
                 "Die native Auflösung liefert die besten Qualitätsergebnisse."
             ),
+            zh=(
+                "输出图像的高度（像素）。必须是 8 的倍数。"
+                "'-base' 变体原生分辨率为 512，其他变体为 768。"
+                "使用原生分辨率可获得最佳质量。"
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura", de="Höhe"),
+        alias=MultilingualString(
+            en="Height", es="Altura", pt="Altura", de="Höhe", zh="高度"
+        ),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -339,30 +388,35 @@ class StableDiffusionSchema(BaseSchema):
                 "werden sollen. Diesen Wert zu erhöhen ist effizienter als mehrere "
                 "Sitzungen zu starten, erfordert aber proportional mehr GPU-Speicher."
             ),
+            zh=(
+                "单次批处理中从一个提示词生成的图像数量。"
+                "增大此值比多次运行更高效，但需要相应更多的 GPU 显存。"
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
             de="Bilder pro Prompt",
+            zh="每提示词生成图像数",
         ),
     )  # type: ignore
 
 
 class StableDiffusionV2Model(TextToImageGenerationTaskModel):
-    """Latent diffusion model for high-resolution text-to-image generation.
+    """Latent diffusion model for high resolution text-to-image generation.
 
     Wraps the Stable Diffusion 2.x family of checkpoints released by
     Stability AI. The pipeline uses a U-Net denoiser conditioned on OpenCLIP
     text embeddings (ViT-H/14) and a variational autoencoder (VAE) to
-    iteratively denoise a latent representation into a high-resolution image.
+    iteratively denoise a latent representation into a high resolution image.
 
     Four checkpoints are supported:
 
-    * ``stable-diffusion-2`` / ``stable-diffusion-2-1`` — trained at 768 px,
+    * ``stable-diffusion-2`` / ``stable-diffusion-2-1``: trained at 768 px,
       produce sharper detail; '2-1' is further fine-tuned and generally
       outperforms '2'.
-    * ``stable-diffusion-2-base`` / ``stable-diffusion-2-1-base`` — trained at
+    * ``stable-diffusion-2-base`` / ``stable-diffusion-2-1-base``: trained at
       512 px, faster and lower memory; best for rapid prototyping.
 
     Models are served from the ``sd2-community`` HuggingFace organisation,
@@ -383,11 +437,12 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         es="Stable Diffusion V2",
         pt="Stable Diffusion V2",
         de="Stable Diffusion V2",
+        zh="Stable Diffusion V2",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
             "Stable Diffusion 2.x is a latent diffusion model by Stability AI for "
-            "high-resolution text-to-image generation. It uses a U-Net denoiser "
+            "high resolution text-to-image generation. It uses a U-Net denoiser "
             "conditioned on CLIP text embeddings and a variational autoencoder (VAE) "
             "to produce detailed images from text prompts. "
             "Supports stable-diffusion-2, "
@@ -432,6 +487,11 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
             "sd2-community (https://huggingface.co/sd2-community) bereitgestellt, einem"
             "Community-Spiegel der originalen Stability AI-Gewichte, die von "
             "https://huggingface.co/stabilityai veraltet und entfernt wurden."
+        ),
+        zh=(
+            "Stable Diffusion 2.x 是 Stability AI 的潜扩散模型，"
+            "用于高分辨率文本到图像生成。"
+            "支持 stable-diffusion-2、stable-diffusion-2-1 等变体。"
         ),
     )
 

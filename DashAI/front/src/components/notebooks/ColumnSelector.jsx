@@ -29,6 +29,7 @@ import { useTableLocalization } from "../../utils/useTableLocalization";
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
  * @param {Array} props.allowedDtypes - Array of allowed dtype strings (optional)
  * @param {Array} props.allowedTypes - Array of allowed semantic type names (optional)
+ * @param {Array} props.nonAllowedDtypes - Array of forbidden dtype strings (optional)
  * @param {Function} props.onSelectionChange - Callback when selection changes (selectedColumns) (optional)
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
@@ -39,7 +40,7 @@ function ColumnSelector({
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
-  typesDtypeRestrictions = {},
+  nonAllowedDtypes = [],
   allowedColumnNames = null,
   onSelectionChange = () => {},
   onValidationChange = () => {},
@@ -169,22 +170,15 @@ function ColumnSelector({
         if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
           return false;
         }
-        const forbiddenDtypes = typesDtypeRestrictions[row.valueType];
-        if (forbiddenDtypes) {
+        if (nonAllowedDtypes.length > 0) {
           const dtypeKey =
             row.dataType === t("common:unknown") ? "" : row.dataType;
-          if (forbiddenDtypes.includes(dtypeKey)) return false;
+          if (nonAllowedDtypes.includes(dtypeKey)) return false;
         }
         return true;
       })
       .map((row) => row.id);
-  }, [
-    rows,
-    allowedDtypes,
-    allowedTypes,
-    typesDtypeRestrictions,
-    allowedColumnNames,
-  ]);
+  }, [rows, allowedDtypes, allowedTypes, nonAllowedDtypes, allowedColumnNames]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -220,13 +214,15 @@ function ColumnSelector({
   );
 
   const handleSelectAllRows = useCallback(() => {
+    const limit = inputCardinality.exact || inputCardinality.max;
     const validIds = getValidColumnIds();
-    const allValidSelected =
-      validIds.length > 0 &&
-      validIds.every((id) => rowSelectionModel.includes(id));
+    const selectableIds = limit ? validIds.slice(0, limit) : validIds;
+    const allSelectableSelected =
+      selectableIds.length > 0 &&
+      selectableIds.every((id) => rowSelectionModel.includes(id));
 
-    handleSelection(allValidSelected ? {} : toMRT(validIds));
-  }, [getValidColumnIds, rowSelectionModel]);
+    handleSelection(allSelectableSelected ? {} : toMRT(selectableIds));
+  }, [getValidColumnIds, rowSelectionModel, inputCardinality]);
 
   // Effect to update selection data and validation whenever rowSelectionModel changes
   useEffect(() => {
@@ -327,15 +323,20 @@ function ColumnSelector({
           }
         : {},
     }),
-    muiSelectAllCheckboxProps: () => ({
-      checked:
-        getValidColumnIds().length > 0 &&
-        getValidColumnIds().every((id) => rowSelectionModel.includes(id)),
-      indeterminate:
-        rowSelectionModel.length > 0 &&
-        rowSelectionModel.length < getValidColumnIds().length,
-      onChange: handleSelectAllRows,
-    }),
+    muiSelectAllCheckboxProps: () => {
+      const limit = inputCardinality.exact || inputCardinality.max;
+      const validIds = getValidColumnIds();
+      const selectableIds = limit ? validIds.slice(0, limit) : validIds;
+      return {
+        checked:
+          selectableIds.length > 0 &&
+          selectableIds.every((id) => rowSelectionModel.includes(id)),
+        indeterminate:
+          rowSelectionModel.length > 0 &&
+          rowSelectionModel.length < selectableIds.length,
+        onChange: handleSelectAllRows,
+      };
+    },
     localization,
   });
 
@@ -423,6 +424,20 @@ function ColumnSelector({
             </Box>
           </Typography>
         )}
+
+        {/* Excluded data types */}
+        {nonAllowedDtypes.length > 0 && (
+          <Typography
+            variant="caption"
+            sx={{ color: "warning.main", mt: 1, display: "block" }}
+          >
+            {t("datasets:label.excludedDataTypes", {
+              dtypes: nonAllowedDtypes
+                .map((d) => (d === "" ? t("common:unknown") : d))
+                .join(", "),
+            })}
+          </Typography>
+        )}
       </Box>
 
       {tool?.metadata?.changes_row_count && (
@@ -465,7 +480,7 @@ ColumnSelector.propTypes = {
   }),
   allowedDtypes: PropTypes.array,
   allowedTypes: PropTypes.array,
-  typesDtypeRestrictions: PropTypes.object,
+  nonAllowedDtypes: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };

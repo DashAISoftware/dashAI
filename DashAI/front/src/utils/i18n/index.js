@@ -71,6 +71,24 @@ import modelsSessionTourDE from "./locales/de/modelsSessionTour.json";
 import homeDE from "./locales/de/home.json";
 import pluginsDE from "./locales/de/plugins.json";
 import generativeTourDE from "./locales/de/generativeTour.json";
+import configurableObjectZH from "./locales/zh/configurableObject.json";
+import commonZH from "./locales/zh/common.json";
+import customZH from "./locales/zh/custom.json";
+import experimentsZH from "./locales/zh/experiments.json";
+import explainersZH from "./locales/zh/explainers.json";
+import generativeZH from "./locales/zh/generative.json";
+import modelsZH from "./locales/zh/models.json";
+import datasetsZH from "./locales/zh/datasets.json";
+import predictionZH from "./locales/zh/prediction.json";
+import homeTourZH from "./locales/zh/homeTour.json";
+import datasetsTourZH from "./locales/zh/datasetsTour.json";
+import notebookTourZH from "./locales/zh/notebookTour.json";
+import modelsTourZH from "./locales/zh/modelsTour.json";
+import modelsSessionTourZH from "./locales/zh/modelsSessionTour.json";
+import homeZH from "./locales/zh/home.json";
+import pluginsZH from "./locales/zh/plugins.json";
+import generativeTourZH from "./locales/zh/generativeTour.json";
+import hubZH from "./locales/zh/hub.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -154,6 +172,26 @@ const resources = {
     modelsSessionTour: modelsSessionTourDE,
     generativeTour: generativeTourDE,
   },
+  zh: {
+    configurableObject: configurableObjectZH,
+    common: commonZH,
+    custom: customZH,
+    experiments: experimentsZH,
+    explainers: explainersZH,
+    generative: generativeZH,
+    models: modelsZH,
+    datasets: datasetsZH,
+    prediction: predictionZH,
+    plugins: pluginsZH,
+    home: homeZH,
+    homeTour: homeTourZH,
+    datasetsTour: datasetsTourZH,
+    notebookTour: notebookTourZH,
+    modelsTour: modelsTourZH,
+    modelsSessionTour: modelsSessionTourZH,
+    generativeTour: generativeTourZH,
+    hub: hubZH,
+  },
 };
 
 i18n
@@ -161,7 +199,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    supportedLngs: ["en", "es", "pt", "de"],
+    supportedLngs: ["en", "es", "pt", "de", "zh"],
     nonExplicitSupportedLngs: true,
     fallbackLng: "en",
 

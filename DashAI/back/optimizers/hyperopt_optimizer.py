@@ -23,9 +23,14 @@ class HyperOptSchema(BaseSchema):
                 "Die Anzahl der Versuche pro Studie. Muss eine positive ganze Zahl "
                 "sein."
             ),
+            zh="每次研究的试验次数，必须为正整数。",
         ),
         alias=MultilingualString(
-            en="N trials", es="N pruebas", pt="N tentativas", de="N Versuche"
+            en="N trials",
+            es="N pruebas",
+            pt="N tentativas",
+            de="N Versuche",
+            zh="试验次数",
         ),
     )  # type: ignore
     sampler: schema_field(
@@ -51,9 +56,17 @@ class HyperOptSchema(BaseSchema):
                 "Muss 'tpe' (Tree-structured Parzen Estimator) oder 'rand' (Zufällig) "
                 "sein."
             ),
+            zh=(
+                "用于超参数优化的采样算法。"
+                "必须为 'tpe'（树形结构 Parzen 估计器）或 'rand'（随机）。"
+            ),
         ),
         alias=MultilingualString(
-            en="Sampler", es="Muestreador", pt="Amostrador", de="Abtaster"
+            en="Sampler",
+            es="Muestreador",
+            pt="Amostrador",
+            de="Abtaster",
+            zh="采样器",
         ),
     )  # type: ignore
 
@@ -64,12 +77,14 @@ class HyperOptOptimizer(BaseOptimizer):
         es="Optimizador HyperOpt",
         pt="Otimizador HyperOpt",
         de="HyperOpt-Optimierer",
+        zh="HyperOpt 优化器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Hyperparameter optimization using HyperOpt library.",
         es="Optimización de hiperparámetros usando la librería HyperOpt.",
         pt="Otimização de hiperparâmetros usando a biblioteca HyperOpt.",
         de="Hyperparameter-Optimierung mit der HyperOpt-Bibliothek.",
+        zh="使用 HyperOpt 库进行超参数优化。",
     )
     COLOR: str = "#FF5722"
     SCHEMA = HyperOptSchema

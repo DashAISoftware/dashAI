@@ -12,7 +12,10 @@ from typing import TYPE_CHECKING, Union
 from sklearn.exceptions import NotFittedError
 
 from DashAI.back.models.text_classification_model import TextClassificationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 from DashAI.back.types.categorical import Categorical
 
 if TYPE_CHECKING:
@@ -28,11 +31,11 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
 
     - Automatic tokenizer and model loading from Hugging Face Hub.
     - Training via ``transformers.Trainer`` with DashAI metric callbacks.
-    - Inference returning per-class probability matrices.
+    - Inference returning per class probability matrices.
     - Save/load utilities that preserve custom training parameters.
 
     .. note::
-        Requires internet access on first use to download pre-trained weights
+        Requires internet access on first use to download pretrained weights
         from the Hugging Face Hub.
     """
 
@@ -45,15 +48,15 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer model.
 
-        The process includes the instantiation of the pre-trained model and the
-        associated tokenizer. When ``model`` is ``None`` a fresh pre-trained
+        The process includes the instantiation of the pretrained model and the
+        associated tokenizer. When ``model`` is ``None`` a fresh pretrained
         model checkpoint is loaded from HuggingFace; when a model object
-        is supplied the tokenizer is reused without re-downloading weights.
+        is supplied the tokenizer is reused without redownloading weights.
 
         Parameters
         ----------
         model : transformers.PreTrainedModel or None, optional
-            An already-loaded HuggingFace model to reuse. If ``None`,
+            An already loaded HuggingFace model to reuse. If ``None`,
             the model will be loaded from the Hugging Face Hub based on
             ``MODEL_NAME``.
         **kwargs : dict
@@ -136,7 +139,6 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         """
         import shutil
         import tempfile
-        from pathlib import Path
 
         import torch
         from transformers import (
@@ -181,7 +183,7 @@ class HuggingFaceTextClassificationTransformer(TextClassificationModel):
         use_gpu = self.device.lower() == "gpu"
         can_use_fp16 = torch.cuda.is_available() and use_gpu
 
-        base_output_dir = Path(self.TEMP_CHECKPOINT_DIR)
+        base_output_dir = resolve_temp_checkpoint_dir(self.TEMP_CHECKPOINT_DIR)
         base_output_dir.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(
             prefix=f"{self.__class__.__name__.lower()}_",

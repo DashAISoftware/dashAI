@@ -13,7 +13,10 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformerSchema,
 )
 from DashAI.back.models.translation_model import TranslationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -47,12 +50,16 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
                 "ISO 639-1-Code der Quellsprache (z.B. 'en', 'es', 'fr', 'de'). "
                 "Unterstützt 100 Sprachen."
             ),
+            zh=(
+                "源语言 ISO 639-1 代码（如 'en'、'es'、'fr'、'de'）。支持 100 种语言。"
+            ),
         ),
         alias=MultilingualString(
             en="Source language",
             es="Idioma de origen",
             pt="Idioma de origem",
             de="Quellsprache",
+            zh="源语言",
         ),
     )  # type: ignore
     target_language: schema_field(
@@ -75,12 +82,17 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
                 "ISO 639-1-Code der Zielsprache (z.B. 'en', 'es', 'fr', 'de'). "
                 "Unterstützt 100 Sprachen."
             ),
+            zh=(
+                "目标语言 ISO 639-1 代码（如 'en'、'es'、'fr'、'de'）。"
+                "支持 100 种语言。"
+            ),
         ),
         alias=MultilingualString(
             en="Target language",
             es="Idioma destino",
             pt="Idioma destino",
             de="Zielsprache",
+            zh="目标语言",
         ),
     )  # type: ignore
 
@@ -110,6 +122,7 @@ class M2M100Transformer(TranslationModel):
         es="Transformer Multilingüe M2M-100",
         pt="Transformer Multilíngue M2M-100",
         de="M2M-100 Mehrsprachiger Transformer",
+        zh="M2M-100 多语言 Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -132,6 +145,11 @@ class M2M100Transformer(TranslationModel):
             "mit ISO 639-1-Codes. "
             "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
             "(Internet erforderlich)."
+        ),
+        zh=(
+            "Facebook M2M-100 模型，使用 ISO 639-1 代码支持"
+            " 100 种语言之间的直接翻译。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#6A1B9A"
@@ -235,7 +253,9 @@ class M2M100Transformer(TranslationModel):
 
         has_validation_data = x_validation is not None and y_validation is not None
 
-        output_root = Path("DashAI/back/user_models/temp_checkpoints_m2m100")
+        output_root = resolve_temp_checkpoint_dir(
+            "DashAI/back/user_models/temp_checkpoints_m2m100"
+        )
         output_root.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(prefix="m2m100_", dir=str(output_root))
 
@@ -288,6 +308,12 @@ class M2M100Transformer(TranslationModel):
                 f"This {self.__class__.__name__} instance is not fitted yet. "
                 "Call 'train' before using this estimator."
             )
+
+        if self.device.lower() == "gpu":
+            self.model.to("cuda")
+        else:
+            self.model.to("cpu")
+        self.model.eval()
 
         dataset = self.tokenize_data(x_pred)
         dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])

@@ -388,7 +388,11 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                 )}
               </Box>
             ) : (
-              <ResultsTable selectedPrediction={selectedPrediction} />
+              <ResultsTable
+                selectedPrediction={selectedPrediction}
+                datasetSample={sample}
+                targetColumn={experiment?.output_columns?.[0]}
+              />
             )}
           </>
         )}
@@ -397,7 +401,11 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           <>
             {selectedPrediction ? (
               <Box>
-                <ResultsTable selectedPrediction={selectedPrediction} />
+                <ResultsTable
+                  selectedPrediction={selectedPrediction}
+                  datasetSample={sample}
+                  targetColumn={experiment?.output_columns?.[0]}
+                />
               </Box>
             ) : (
               <PredictionsTable

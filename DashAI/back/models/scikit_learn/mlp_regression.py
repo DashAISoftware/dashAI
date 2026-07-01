@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.categorical_encoder_mixin import CategoricalEncoderMixin
 from DashAI.back.models.regression_model import RegressionModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -33,21 +34,23 @@ class MLPRegressorSchema(BaseSchema):
         optimizer_int_field(ge=1),
         placeholder={
             "optimize": False,
-            "fixed_value": 5,
+            "fixed_value": 16,
             "lower_bound": 1,
-            "upper_bound": 15,
+            "upper_bound": 64,
         },
         description=MultilingualString(
             en="Number of neurons in the hidden layer.",
             es="Número de neuronas en la capa oculta.",
             pt="Número de neurônios na camada oculta.",
             de="Anzahl der Neuronen in der verdeckten Schicht.",
+            zh="隐藏层的神经元数量。",
         ),
         alias=MultilingualString(
             en="Hidden size",
             es="Tamaño oculto",
             pt="Tamanho oculto",
             de="Verdeckte Schichtgröße",
+            zh="隐藏层大小",
         ),
     )  # type: ignore
 
@@ -59,9 +62,14 @@ class MLPRegressorSchema(BaseSchema):
             es="Función de activación.",
             pt="Função de ativação.",
             de="Aktivierungsfunktion.",
+            zh="激活函数。",
         ),
         alias=MultilingualString(
-            en="Activation", es="Activación", pt="Ativação", de="Aktivierung"
+            en="Activation",
+            es="Activación",
+            pt="Ativação",
+            de="Aktivierung",
+            zh="激活函数",
         ),
     )  # type: ignore
 
@@ -78,12 +86,14 @@ class MLPRegressorSchema(BaseSchema):
             es="Tasa de aprendizaje inicial para el optimizador.",
             pt="Taxa de aprendizado inicial para o otimizador.",
             de="Anfängliche Lernrate für den Optimierer.",
+            zh="优化器的初始学习率。",
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
             de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
 
@@ -91,17 +101,20 @@ class MLPRegressorSchema(BaseSchema):
         optimizer_int_field(ge=1),
         placeholder={
             "optimize": False,
-            "fixed_value": 5,
+            "fixed_value": 20,
             "lower_bound": 1,
-            "upper_bound": 15,
+            "upper_bound": 50,
         },
         description=MultilingualString(
             en="Total number of training passes over the dataset.",
             es="Número total de pasadas de entrenamiento sobre el conjunto de datos.",
             pt="Número total de passagens de treinamento sobre o conjunto de dados.",
             de="Gesamtanzahl der Trainingsdurchläufe über den Datensatz.",
+            zh="对数据集的总训练轮数。",
         ),
-        alias=MultilingualString(en="Epochs", es="Épocas", pt="Épocas", de="Epochen"),
+        alias=MultilingualString(
+            en="Epochs", es="Épocas", pt="Épocas", de="Epochen", zh="训练轮数"
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
@@ -127,9 +140,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Bei größer als Datensatzgröße oder None wird der vollständige "
                 "Datensatz verwendet."
             ),
+            zh="训练时每次梯度更新的样本数。若大于数据集大小或为None，则使用全部数据集。",
         ),
         alias=MultilingualString(
-            en="Batch size", es="Tamaño de lote", pt="Tamanho do lote", de="Stapelgröße"
+            en="Batch size",
+            es="Tamaño de lote",
+            pt="Tamanho do lote",
+            de="Stapelgröße",
+            zh="批量大小",
         ),
     )  # type: ignore
 
@@ -141,9 +159,10 @@ class MLPRegressorSchema(BaseSchema):
             es="Dispositivo de hardware (CPU/GPU).",
             pt="Dispositivo de hardware (CPU/GPU).",
             de="Hardwaregerät (CPU/GPU).",
+            zh="硬件设备（CPU/GPU）。",
         ),
         alias=MultilingualString(
-            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät"
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
 
@@ -167,12 +186,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Trainingsmetriken jede n-te Epoche protokollieren. "
                 "Bei None keine Protokollierung pro Epoche."
             ),
+            zh="训练时每n个轮次记录训练集指标。若为None，则不按轮次记录。",
         ),
         alias=MultilingualString(
             en="Log train every N epochs",
             es="Registrar entrenamiento cada N épocas",
             pt="Registrar treinamento a cada N épocas",
             de="Training alle N Epochen protokollieren",
+            zh="每N轮记录训练指标",
         ),
     )  # type: ignore
 
@@ -196,12 +217,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Trainingsmetriken jeden n-ten Schritt protokollieren. "
                 "Bei None keine Protokollierung pro Schritt."
             ),
+            zh="训练时每n步记录训练集指标。若为None，则不按步数记录。",
         ),
         alias=MultilingualString(
             en="Log train every N steps",
             es="Registrar entrenamiento cada N pasos",
             pt="Registrar treinamento a cada N passos",
             de="Training alle N Schritte protokollieren",
+            zh="每N步记录训练指标",
         ),
     )  # type: ignore
 
@@ -225,12 +248,14 @@ class MLPRegressorSchema(BaseSchema):
                 "Validierungsmetriken jede n-te Epoche protokollieren. "
                 "Bei None keine Protokollierung pro Epoche."
             ),
+            zh="训练时每n个轮次记录验证集指标。若为None，则不按轮次记录。",
         ),
         alias=MultilingualString(
             en="Log validation every N epochs",
             es="Registrar validación cada N épocas",
             pt="Registrar validação a cada N épocas",
             de="Validierung alle N Epochen protokollieren",
+            zh="每N轮记录验证指标",
         ),
     )  # type: ignore
 
@@ -254,17 +279,19 @@ class MLPRegressorSchema(BaseSchema):
                 "Validierungsmetriken jeden n-ten Schritt protokollieren. "
                 "Bei None keine Protokollierung pro Schritt."
             ),
+            zh="训练时每n步记录验证集指标。若为None，则不按步数记录。",
         ),
         alias=MultilingualString(
             en="Log validation every N steps",
             es="Registrar validación cada N pasos",
             pt="Registrar validação a cada N passos",
             de="Validierung alle N Schritte protokollieren",
+            zh="每N步记录验证指标",
         ),
     )  # type: ignore
 
 
-class MLPRegression(RegressionModel):
+class MLPRegression(CategoricalEncoderMixin, RegressionModel):
     """Single hidden-layer MLP regressor implemented in PyTorch.
 
     A Multi-layer Perceptron (MLP) is a feedforward neural network composed of an
@@ -294,12 +321,14 @@ class MLPRegression(RegressionModel):
         es="Perceptrón Multicapa (MLP) Regresión",
         pt="Regressor MLP",
         de="Mehrschichtiges Perzeptron (MLP) Regression",
+        zh="多层感知机（MLP）回归",
     )
     DESCRIPTION: str = MultilingualString(
         en="Neural network with multiple hidden layers for regression.",
         es="Red neuronal con múltiples capas ocultas para regresión.",
         pt="Rede neural com múltiplas camadas ocultas para regressão.",
         de="Neuronales Netz mit mehreren verdeckten Schichten für Regression.",
+        zh="具有多个隐藏层的神经网络，用于回归任务。",
     )
     COLOR: str = "#FF7043"
     ICON: str = "Psychology"
@@ -375,6 +404,11 @@ class MLPRegression(RegressionModel):
             else "cpu"
         )
         self.model = None
+
+        # Initialise the categorical encoder state inherited from
+        # CategoricalEncoderMixin. These fields are persisted by ``save`` and
+        # restored by ``load`` so ``predict`` reuses the training-time encoders.
+        self._setup_categorical_encoders()
 
     def train(
         self,
@@ -546,6 +580,9 @@ class MLPRegression(RegressionModel):
                 "state": self.model.state_dict(),
                 "params": self.params,
                 "input_dim": self.model.model[0].in_features,
+                "encodings": self.encodings,
+                "one_hot_encoder": self.one_hot_encoder,
+                "categorical_columns": self.categorical_columns,
             },
             filename,
         )
@@ -566,7 +603,10 @@ class MLPRegression(RegressionModel):
         """
         import torch
 
-        data = torch.load(filename)
+        # weights_only=False is required because the checkpoint stores the
+        # fitted categorical encoders (e.g. a scikit-learn OneHotEncoder), which
+        # are not part of torch's safe-globals allowlist.
+        data = torch.load(filename, weights_only=False)
         instance = MLPRegression(**data["params"])
 
         # Rebuild the model architecture using saved input_dim
@@ -578,5 +618,11 @@ class MLPRegression(RegressionModel):
 
         # Load the trained weights
         instance.model.load_state_dict(data["state"])
+
+        # Restore the categorical encoders so predictions match training-time
+        # preprocessing.
+        instance.encodings = data.get("encodings", {})
+        instance.one_hot_encoder = data.get("one_hot_encoder")
+        instance.categorical_columns = data.get("categorical_columns", [])
 
         return instance

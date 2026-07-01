@@ -13,6 +13,7 @@
     "newPrediction": "Neue Vorhersage",
     "newDatasetPrediction": "Neue Datensatz-Vorhersage",
     "newManualPrediction": "Neue manuelle Vorhersage",
+    "modelsHub": "Modell-Zentrale",
     "newSession": "Neue Sitzung",
     "retrain": "Neu trainieren",
     "runAll": "Alle ausführen",
@@ -171,7 +172,9 @@
     "profile_text_balanced": "Ausgewogen",
     "profile_text_detectPositives": "Positive erkennen",
     "profile_text_avoidFalseAlarms": "Falschalarme vermeiden",
-    "profile_text_probabilityQuality": "Wahrscheinlichkeitsqualität"
+    "profile_text_probabilityQuality": "Wahrscheinlichkeitsqualität",
+    "editRun": "Durchlauf bearbeiten",
+    "chartType": "Diagrammtyp"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",
