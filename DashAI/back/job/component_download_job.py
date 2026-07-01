@@ -47,7 +47,7 @@ class ComponentDownloadJob(BaseJob):
 
         try:
             component_class = component_registry[name]["class"]
-        except Exception as e:
+        except KeyError as e:
             raise JobError(f"Component {name} is not registered") from e
 
         if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
