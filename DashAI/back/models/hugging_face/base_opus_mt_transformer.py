@@ -30,10 +30,13 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
     here so each language-pair subclass only needs to set class attributes.
 
     .. note::
-        The pretrained weights must be downloaded first via ``download()``
-        (this component requires a download). ``__init__`` loads the tokenizer
-        and model from the component's local folder; it does not fetch from
-        the Hugging Face Hub.
+        For fresh training the pretrained weights must be downloaded first via
+        ``download()`` (this component requires a download). ``__init__`` with
+        no ``pretrained_dir`` loads the tokenizer and model from the
+        component's local download folder; it does not fetch from the Hugging
+        Face Hub. When loading a previously saved run, ``pretrained_dir`` is
+        set to the run directory so the tokenizer is read from there, making
+        trained runs self-contained.
     """
 
     MODEL_NAME: str = ""
@@ -53,13 +56,19 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
         """
         return [(cls.MODEL_NAME, "model")] if cls.MODEL_NAME else []
 
-    def __init__(self, model=None, **kwargs):
+    def __init__(self, model=None, pretrained_dir: Optional[str] = None, **kwargs):
         """Initialize tokenizer and seq2seq model.
 
         Parameters
         ----------
         model : transformers.PreTrainedModel or None
             Preloaded model to reuse instead of downloading weights.
+        pretrained_dir : str or None
+            Directory from which to load the tokenizer (and model weights when
+            ``model`` is ``None``). When ``None`` the component's download
+            folder is used, which is the correct path for fresh training. Pass
+            the run directory when restoring a saved run so the trained run
+            becomes self-contained and independent of the download folder.
         **kwargs
             Training hyperparameters forwarded to ``validate_and_transform``.
         """
@@ -73,8 +82,8 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
             )
 
         self.model_name = self.MODEL_NAME
-        local_dir = str(self._repo_dir(self.MODEL_NAME))
-        self.tokenizer = AutoTokenizer.from_pretrained(local_dir)
+        source = pretrained_dir or str(self._repo_dir(self.MODEL_NAME))
+        self.tokenizer = AutoTokenizer.from_pretrained(source)
 
         self.training_args = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
@@ -95,7 +104,7 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
         if model is None:
             from transformers import AutoModelForSeq2SeqLM
 
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(local_dir)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(source)
         else:
             self.model = model
 
@@ -252,6 +261,7 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
         save_dir.mkdir(parents=True, exist_ok=True)
 
         self.model.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
         config = AutoConfig.from_pretrained(save_dir)
         config.custom_params = {
             "num_train_epochs": self.training_args.get("num_train_epochs"),
@@ -274,6 +284,7 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
 
         loaded_model = cls(
             model=model,
+            pretrained_dir=str(filename),
             num_train_epochs=custom_params.get("num_train_epochs"),
             batch_size=custom_params.get("batch_size"),
             learning_rate=custom_params.get("learning_rate"),
