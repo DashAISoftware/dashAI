@@ -384,7 +384,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
         """Download and initialise the SDXL Turbo pipeline.
 
         Downloads ``stabilityai/sdxl-turbo`` from HuggingFace Hub via
-        ``AutoPipelineForText2Image.from_pretrained`` and moves the pipeline
+        ``StableDiffusionXLPipeline.from_pretrained`` and moves the pipeline
         to the requested device.  When a GPU is available, the ``fp16``
         variant is loaded to halve memory usage; CPU inference uses
         ``float32``.
@@ -414,7 +414,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
                 Number of images to generate per prompt call.
         """
         import torch
-        from diffusers import AutoPipelineForText2Image
+        from diffusers import StableDiffusionXLPipeline
 
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
@@ -422,7 +422,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
 
-        self.model = AutoPipelineForText2Image.from_pretrained(
+        self.model = StableDiffusionXLPipeline.from_pretrained(
             "stabilityai/sdxl-turbo",
             torch_dtype=torch.float16 if use_gpu else torch.float32,
             variant="fp16" if use_gpu else None,
