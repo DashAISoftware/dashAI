@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 from sklearn.exceptions import NotFittedError
 
+from DashAI.back.dependencies.downloads.downloadable import HFDownloadableMixin
 from DashAI.back.models.translation_model import TranslationModel
 from DashAI.back.models.utils import (
     GPU_OR_CPU_PLACEHOLDER,
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class OpusMtTransformerMixin(TranslationModel):
+class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
     """Shared implementation for Helsinki-NLP Opus-MT translation wrappers.
 
     Subclasses must define ``MODEL_NAME`` (the HuggingFace checkpoint ID) and
@@ -35,6 +36,20 @@ class OpusMtTransformerMixin(TranslationModel):
 
     MODEL_NAME: str = ""
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_opus_mt"
+    # Marian Opus-MT checkpoints are ~300 MB; declared statically for the UI.
+    DOWNLOAD_SIZE_BYTES: int = 300_000_000
+
+    @classmethod
+    def hf_repos(cls):
+        """Derive the single HuggingFace repo from the subclass MODEL_NAME.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            A single ``(repo_id, repo_type)`` pair derived from ``MODEL_NAME``,
+            or an empty list when ``MODEL_NAME`` is not set.
+        """
+        return [(cls.MODEL_NAME, "model")] if cls.MODEL_NAME else []
 
     def __init__(self, model=None, **kwargs):
         """Initialize tokenizer and seq2seq model.
@@ -56,7 +71,8 @@ class OpusMtTransformerMixin(TranslationModel):
             )
 
         self.model_name = self.MODEL_NAME
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        local_dir = str(self._repo_dir(self.MODEL_NAME))
+        self.tokenizer = AutoTokenizer.from_pretrained(local_dir)
 
         self.training_args = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
@@ -77,7 +93,7 @@ class OpusMtTransformerMixin(TranslationModel):
         if model is None:
             from transformers import AutoModelForSeq2SeqLM
 
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(local_dir)
         else:
             self.model = model
 
