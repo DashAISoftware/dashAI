@@ -78,6 +78,8 @@
     "noDatasetFileAvailable": "Keine Datensatzdatei verfügbar",
     "notebookNameEmpty": "Notizbuchname darf nicht leer sein",
     "noValidColumnsForExplorer": "Keine gültigen Spalten für diesen Explorer verfügbar.",
+    "requiresConverter": "Erfordert einen abgeschlossenen '{{converterClass}}'-Konverter. Führen Sie zuerst diesen Konverter auf Ihrem Dataset aus.",
+    "requiresAlgorithm": "Dieser Explorer erfordert den Algorithmus '{{algorithm}}', aber der letzte Konverter verwendete einen anderen.",
     "noValidColumnsWithDtypesMentioned": "Dieser Datensatz hat keine Spalten mit den erforderlichen Typen ({{dtypes}}).",
     "processConverterError": "Konverter konnte nicht verarbeitet werden",
     "requiredFieldsMissing": "Pflichtfelder fehlen",

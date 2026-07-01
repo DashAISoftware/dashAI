@@ -78,6 +78,8 @@
     "noDatasetFileAvailable": "No hay archivo del dataset disponible",
     "notebookNameEmpty": "El nombre del cuaderno no puede estar vacío",
     "noValidColumnsForExplorer": "No hay columnas válidas disponibles para este explorador.",
+    "requiresConverter": "Requiere un convertidor '{{converterClass}}' completado. Ejecuta primero este convertidor en tu dataset.",
+    "requiresAlgorithm": "Este explorador requiere el algoritmo '{{algorithm}}', pero el último convertidor usó uno diferente.",
     "noValidColumnsWithDtypesMentioned": "Este dataset no tiene columnas con los tipos requeridos ({{dtypes}}).",
     "processConverterError": "Fallo al procesar convertidor",
     "requiredFieldsMissing": "Faltan campos requeridos",

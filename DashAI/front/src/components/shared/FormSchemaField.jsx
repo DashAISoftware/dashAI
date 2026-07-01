@@ -47,6 +47,7 @@ function FormSchemaField({ objName, paramJsonSchema, field, error }) {
             {...commonProps}
             options={paramJsonSchema.enum}
             optionNames={paramJsonSchema.enumNames}
+            optionDescriptions={paramJsonSchema.optionDescriptions}
           />
         );
       } else {

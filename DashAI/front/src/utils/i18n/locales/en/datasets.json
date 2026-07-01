@@ -78,6 +78,8 @@
     "noDatasetFileAvailable": "No dataset file available",
     "notebookNameEmpty": "Notebook name cannot be empty",
     "noValidColumnsForExplorer": "No valid columns available for this explorer.",
+    "requiresConverter": "Requires a finished '{{converterClass}}' converter. Run this converter on your dataset first.",
+    "requiresAlgorithm": "This explorer requires the '{{algorithm}}' algorithm, but the last converter used a different one.",
     "noValidColumnsWithDtypesMentioned": "This dataset does not have any columns with the required types ({{dtypes}}).",
     "processConverterError": "Failed to process converter",
     "requiredFieldsMissing": "Required fields missing",

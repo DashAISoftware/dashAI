@@ -6,8 +6,43 @@ import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
 import FormSchemaFieldWithOptimizers from "./FormSchemaFieldWithOptimizers";
 import FormSchemaFieldWithParent from "./FormSchemaFieldWithParent";
 import { getModelFromSubform } from "../../utils/schema";
-import { Stack } from "@mui/material";
+import { FormCardProvider } from "../../contexts/FormCardContext";
+import { Box, Stack, Typography } from "@mui/material";
 import PropTypes from "prop-types";
+
+const getInitialValueFromSchema = (schema) => {
+  if (schema.placeholder?.optimize !== undefined) {
+    return schema.placeholder;
+  }
+
+  if (schema.type !== "object") {
+    return schema.placeholder;
+  }
+
+  return Object.keys(schema.properties ?? {}).reduce((acc, key) => {
+    acc[key] = getInitialValueFromSchema(schema.properties[key]);
+    return acc;
+  }, {});
+};
+
+const resolveConditionalSchema = (schema, values) => {
+  if (!schema?.dependsOn || !schema?.conditionalSchemas) {
+    return schema;
+  }
+
+  const selectedValue = values?.[schema.dependsOn];
+  const conditionalSchema = schema.conditionalSchemas[selectedValue];
+
+  if (!conditionalSchema) {
+    return schema;
+  }
+
+  return {
+    ...schema,
+    ...conditionalSchema,
+    properties: conditionalSchema.properties ?? schema.properties,
+  };
+};
 
 // Extracted to its own component so useMemo is called at the top level (Rules of Hooks)
 function SubFieldItem({
@@ -18,6 +53,7 @@ function SubFieldItem({
   handleChange,
   setError,
   fieldSubschema,
+  allowOptimization,
 }) {
   const subFieldObj = useMemo(
     () => ({
@@ -28,13 +64,75 @@ function SubFieldItem({
     [value, error, objName, subField, handleChange],
   );
 
+  if (fieldSubschema.placeholder?.optimize !== undefined) {
+    return (
+      <Box sx={{ mb: 3 }}>
+        <SubFieldHeader
+          label={fieldSubschema.title ?? subField}
+          paramKey={subField}
+        />
+        <FormSchemaFieldWithOptimizers
+          objName={`${objName}.${subField}`}
+          paramJsonSchema={fieldSubschema}
+          field={subFieldObj}
+          allowOptimization={allowOptimization}
+        />
+      </Box>
+    );
+  }
+
   return (
-    <FormSchemaField
-      objName={`${objName}.${subField}`}
-      setError={setError}
-      paramJsonSchema={fieldSubschema}
-      field={subFieldObj}
-    />
+    <Box
+      sx={{
+        mb: 4,
+        "& .MuiInputLabel-root": { display: "none" },
+        "& .MuiOutlinedInput-notchedOutline legend > span": {
+          display: "none",
+        },
+      }}
+    >
+      <SubFieldHeader
+        label={fieldSubschema.title ?? subField}
+        paramKey={subField}
+      />
+      <FormCardProvider>
+        <FormSchemaField
+          objName={`${objName}.${subField}`}
+          setError={setError}
+          paramJsonSchema={fieldSubschema}
+          field={subFieldObj}
+        />
+      </FormCardProvider>
+      {fieldSubschema.description && (
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{ display: "block", mt: 2, lineHeight: 1.5 }}
+        >
+          {fieldSubschema.description}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+function SubFieldHeader({ label, paramKey }) {
+  return (
+    <Box sx={{ mb: 1 }}>
+      <Typography variant="body2" fontWeight={600} color="text.primary">
+        {label}
+      </Typography>
+      {paramKey && paramKey !== label && (
+        <Typography
+          component="span"
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontFamily: "monospace" }}
+        >
+          {paramKey}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
@@ -46,6 +144,12 @@ SubFieldItem.propTypes = {
   handleChange: PropTypes.func.isRequired,
   setError: PropTypes.func,
   fieldSubschema: PropTypes.object.isRequired,
+  allowOptimization: PropTypes.bool,
+};
+
+SubFieldHeader.propTypes = {
+  label: PropTypes.string,
+  paramKey: PropTypes.string,
 };
 
 function FormSchemaRenderFields({
@@ -57,26 +161,64 @@ function FormSchemaRenderFields({
   setError,
   errorsMessage,
   spacing = 2,
+  allowOptimization = true,
 }) {
   if (!modelSchema) return null;
 
   const handleChange = useCallback(
     (name, subName) => (value) => {
       const fieldPath = subName ? `${name}.${subName}` : name;
+      const dependentValues = {};
+      let updatedValues = { [name]: value };
+
       formik.setFieldValue(fieldPath, value, true);
+      if (subName) {
+        updatedValues = {
+          [name]: {
+            ...(formik.values?.[name] ?? {}),
+            [subName]: value,
+          },
+        };
+      }
+
+      if (!subName) {
+        Object.entries(modelSchema ?? {}).forEach(
+          ([schemaKey, schemaValue]) => {
+            if (
+              schemaValue?.dependsOn === name &&
+              schemaValue?.conditionalSchemas?.[value]
+            ) {
+              const dependentSchema = {
+                ...schemaValue,
+                ...schemaValue.conditionalSchemas[value],
+                properties:
+                  schemaValue.conditionalSchemas[value].properties ??
+                  schemaValue.properties,
+              };
+              const initialValue = getInitialValueFromSchema(dependentSchema);
+              dependentValues[schemaKey] = initialValue;
+              formik.setFieldValue(schemaKey, initialValue, true);
+            }
+          },
+        );
+      }
+
       handleUpdateSchema(
-        { [fieldPath]: value },
+        { ...updatedValues, ...dependentValues },
         autoSave ? onFormSubmit : null,
       );
     },
-    [formik, handleUpdateSchema, autoSave, onFormSubmit],
+    [formik, handleUpdateSchema, modelSchema, autoSave, onFormSubmit],
   );
 
   const renderFields = useCallback(() => {
     const fields = [];
 
     for (const key in modelSchema) {
-      const fieldSchema = modelSchema[key];
+      const fieldSchema = resolveConditionalSchema(
+        modelSchema[key],
+        formik?.values,
+      );
       const objName = key;
       const value = formik?.values?.[objName];
       const error = formik?.errors?.[objName];
@@ -110,6 +252,7 @@ function FormSchemaRenderFields({
             objName={objName}
             paramJsonSchema={fieldSchema}
             field={baseField}
+            allowOptimization={allowOptimization}
           />,
         );
       } else if (fieldSchema.type === "object") {
@@ -134,6 +277,7 @@ function FormSchemaRenderFields({
               label={fieldSchema.title}
               description={fieldSchema.description}
               errorMessage={errorsMessage?.[objName]?.message}
+              defaultExpanded={Boolean(fieldSchema?.dependsOn)}
             >
               {fieldSchema?.properties &&
                 Object.keys(fieldSchema.properties).map((subField) => (
@@ -146,6 +290,7 @@ function FormSchemaRenderFields({
                     handleChange={handleChange}
                     setError={setError}
                     fieldSubschema={fieldSchema.properties[subField]}
+                    allowOptimization={allowOptimization}
                   />
                 ))}
             </FormSchemaFieldWithCollapse>,
@@ -192,6 +337,7 @@ FormSchemaRenderFields.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   spacing: PropTypes.number,
+  allowOptimization: PropTypes.bool,
 };
 
 export default FormSchemaRenderFields;
