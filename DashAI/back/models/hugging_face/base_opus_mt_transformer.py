@@ -30,8 +30,10 @@ class OpusMtTransformerMixin(HFDownloadableMixin, TranslationModel):
     here so each language-pair subclass only needs to set class attributes.
 
     .. note::
-        Requires internet access on first use to download pretrained weights
-        from the Hugging Face Hub.
+        The pretrained weights must be downloaded first via ``download()``
+        (this component requires a download). ``__init__`` loads the tokenizer
+        and model from the component's local folder; it does not fetch from
+        the Hugging Face Hub.
     """
 
     MODEL_NAME: str = ""
