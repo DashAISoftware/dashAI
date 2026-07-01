@@ -160,6 +160,14 @@
   "columnNameInvalidCharacters": "O nome da coluna só pode conter letras, números e underscores",
   "columnNameAlreadyExists": "Já existe uma coluna com este nome",
   "errorRenamingColumn": "Erro ao renomear a coluna",
+  "componentDownload": {
+    "download": "Baixar ({{size}})",
+    "delete": "Remover download",
+    "downloading": "Baixando...",
+    "done": "Componente baixado",
+    "failed": "Falha ao baixar o componente",
+    "mustDownload": "Este modelo precisa ser baixado antes de usar"
+  },
   "jobQueue": {
     "title": "Fila de trabalhos",
     "refresh": "Atualizar",

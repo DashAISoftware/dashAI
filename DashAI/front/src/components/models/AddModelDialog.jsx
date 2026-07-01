@@ -12,6 +12,7 @@ import {
   TextField,
   Box,
   IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
@@ -26,6 +27,7 @@ import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
+import ComponentDownloadControl from "./model/ComponentDownloadControl";
 
 /**
  * Dialog for adding a new model run to a session
@@ -37,6 +39,7 @@ function AddModelDialog({
   onClose,
   session,
   preselectedModel,
+  preselectedModelObject,
   existingRuns = [],
   onRunCreated,
 }) {
@@ -51,6 +54,7 @@ function AddModelDialog({
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
+  const [modelDownloaded, setModelDownloaded] = useState(true);
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
@@ -95,6 +99,13 @@ function AddModelDialog({
       setHasLoadedInitialParams(false);
     }
   }, [preselectedModel, selectedModel]);
+
+  useEffect(() => {
+    const comp = preselectedModelObject;
+    const requiresDownload = Boolean(comp?.metadata?.requires_download);
+    const isDownloaded = Boolean(comp?.downloaded);
+    setModelDownloaded(!requiresDownload || isDownloaded);
+  }, [preselectedModelObject]);
 
   useEffect(() => {
     if (
@@ -314,6 +325,12 @@ function AddModelDialog({
                 </FormSchemaContainer>
               </Box>
             )}
+            {preselectedModelObject?.metadata?.requires_download && (
+              <ComponentDownloadControl
+                component={preselectedModelObject}
+                onStatusChange={setModelDownloaded}
+              />
+            )}
           </Box>
         )}
 
@@ -371,20 +388,37 @@ function AddModelDialog({
             {t("common:back")}
           </Button>
         )}
-        <Button
-          data-tour="add-model-button"
-          onClick={handleNext}
-          variant="contained"
-          disabled={
-            loading ||
-            (activeStep === 0 && !isStep1Valid) ||
-            (activeStep === 1 && !isStep2Valid)
+        <Tooltip
+          title={
+            activeStep === 0 &&
+            preselectedModelObject?.metadata?.requires_download &&
+            !modelDownloaded
+              ? t("common:componentDownload.mustDownload")
+              : ""
           }
         >
-          {activeStep === steps.length - 1
-            ? t("common:addModel")
-            : t("common:next")}
-        </Button>
+          <span>
+            <Button
+              data-tour="add-model-button"
+              onClick={handleNext}
+              variant="contained"
+              disabled={
+                loading ||
+                (activeStep === 0 && !isStep1Valid) ||
+                (activeStep === 1 && !isStep2Valid) ||
+                (activeStep === 0 &&
+                  Boolean(
+                    preselectedModelObject?.metadata?.requires_download,
+                  ) &&
+                  !modelDownloaded)
+              }
+            >
+              {activeStep === steps.length - 1
+                ? t("common:addModel")
+                : t("common:next")}
+            </Button>
+          </span>
+        </Tooltip>
       </DialogActions>
     </Dialog>
   );
@@ -399,6 +433,7 @@ AddModelDialog.propTypes = {
     task_name: PropTypes.string,
   }),
   preselectedModel: PropTypes.string,
+  preselectedModelObject: PropTypes.object,
   existingRuns: PropTypes.array,
   onRunCreated: PropTypes.func,
 };

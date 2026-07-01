@@ -1,0 +1,41 @@
+import React from "react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "../../../test-utils/renderWithProviders";
+
+jest.mock("../../../api/component", () => ({
+  downloadComponent: jest.fn(() => Promise.resolve({ id: "job-1" })),
+  deleteComponentDownload: jest.fn(() => Promise.resolve()),
+  getComponentDownloadStatus: jest.fn(() =>
+    Promise.resolve({ downloaded: false, requires_download: true }),
+  ),
+}));
+jest.mock("../../../utils/jobPoller", () => ({
+  startJobPolling: jest.fn(),
+  stopJobPolling: jest.fn(),
+  subscribeJobs: jest.fn(() => () => {}),
+}));
+
+import ComponentDownloadControl from "./ComponentDownloadControl";
+import { downloadComponent } from "../../../api/component";
+
+const component = {
+  name: "OpusMtEnRoaTransformer",
+  downloaded: false,
+  metadata: { requires_download: true, download_size_bytes: 310000000 },
+};
+
+describe("ComponentDownloadControl", () => {
+  it("shows a download button with the size and triggers download", async () => {
+    renderWithProviders(
+      <ComponentDownloadControl
+        component={component}
+        onStatusChange={() => {}}
+      />,
+    );
+    const button = await screen.findByRole("button", { name: /download/i });
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(downloadComponent).toHaveBeenCalledWith("OpusMtEnRoaTransformer"),
+    );
+  });
+});

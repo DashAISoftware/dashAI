@@ -160,6 +160,14 @@
   "columnNameInvalidCharacters": "El nombre de la columna solo puede contener letras, números y guiones bajos",
   "columnNameAlreadyExists": "Ya existe una columna con este nombre",
   "errorRenamingColumn": "Error al renombrar la columna",
+  "componentDownload": {
+    "download": "Descargar ({{size}})",
+    "delete": "Eliminar descarga",
+    "downloading": "Descargando...",
+    "done": "Componente descargado",
+    "failed": "La descarga del componente ha fallado",
+    "mustDownload": "Este modelo debe descargarse antes de usarlo"
+  },
   "jobQueue": {
     "title": "Cola de trabajos",
     "refresh": "Actualizar",

@@ -255,6 +255,7 @@ export default function ModelsRightBar({ onToggle }) {
         open={configOpen}
         onClose={closeConfig}
         preselectedModel={selectedModel?.name}
+        preselectedModelObject={selectedModel}
         session={session}
         existingRuns={existingRuns}
         onRunCreated={onRunCreated}

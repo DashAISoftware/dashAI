@@ -160,6 +160,14 @@
   "columnNameInvalidCharacters": "Spaltenname darf nur Buchstaben, Zahlen und Unterstriche enthalten",
   "columnNameAlreadyExists": "Eine Spalte mit diesem Namen existiert bereits",
   "errorRenamingColumn": "Fehler beim Umbenennen der Spalte",
+  "componentDownload": {
+    "download": "Herunterladen ({{size}})",
+    "delete": "Download loeschen",
+    "downloading": "Wird heruntergeladen...",
+    "done": "Komponente heruntergeladen",
+    "failed": "Download der Komponente fehlgeschlagen",
+    "mustDownload": "Dieses Modell muss vor der Nutzung heruntergeladen werden"
+  },
   "jobQueue": {
     "title": "Aufgabenwarteschlange",
     "refresh": "Aktualisieren",

@@ -160,6 +160,14 @@
   "columnNameInvalidCharacters": "列名只能包含字母、数字和下划线",
   "columnNameAlreadyExists": "已存在同名列",
   "errorRenamingColumn": "重命名列时出错",
+  "componentDownload": {
+    "download": "下载 ({{size}})",
+    "delete": "删除下载",
+    "downloading": "下载中...",
+    "done": "组件已下载",
+    "failed": "组件下载失败",
+    "mustDownload": "使用前必须先下载此模型"
+  },
   "jobQueue": {
     "title": "任务队列",
     "refresh": "刷新",
