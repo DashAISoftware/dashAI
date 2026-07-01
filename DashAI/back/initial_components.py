@@ -163,14 +163,17 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_en_fr_transformer import (
     OpusMtEnFrTransformer,
 )
-from DashAI.back.models.hugging_face.opus_mt_en_pt_transformer import (
-    OpusMtEnPtTransformer,
+from DashAI.back.models.hugging_face.opus_mt_en_roa_transformer import (
+    OpusMtEnRoaTransformer,
 )
 from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
     OpusMtEsENTransformer,
 )
 from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
+    OpusMtRoaEnTransformer,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
@@ -359,9 +362,10 @@ def get_initial_components():
         OpusMtEnDeTransformer,
         OpusMtEnESTransformer,
         OpusMtEnFrTransformer,
-        OpusMtEnPtTransformer,
+        OpusMtEnRoaTransformer,
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
+        OpusMtRoaEnTransformer,
         PixArtSigmaModel,
         QwenModel,
         RandomForestClassifier,
