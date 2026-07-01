@@ -15,7 +15,7 @@ def components_root(tmp_path):
     # Save and restore the "config" key manually.
     try:
         old = di["config"]
-    except Exception:
+    except KeyError:
         old = _SENTINEL
     di["config"] = {"COMPONENT_PATH": str(tmp_path)}
     yield pathlib.Path(tmp_path)
@@ -59,11 +59,12 @@ def test_download_fetches_into_component_dir(components_root):
     calls = []
     with mock.patch.object(dl, "snapshot_download") as snap:
         _Dummy.download(lambda frac, msg: calls.append((frac, msg)))
-    snap.assert_called_once()
-    kwargs = snap.call_args.kwargs
-    assert kwargs["repo_id"] == "owner/model-a"
-    assert kwargs["local_dir"] == str(components_root / "_Dummy" / "model-a")
-    assert calls  # progress was reported
+    snap.assert_called_once_with(
+        repo_id="owner/model-a",
+        repo_type="model",
+        local_dir=str(components_root / "_Dummy" / "model-a"),
+    )
+    assert calls[0] == (None, "Downloading owner/model-a")
 
 
 def test_delete_removes_component_dir(components_root):

@@ -80,6 +80,7 @@ class HFDownloadableMixin(DownloadableMixin):
 
     @classmethod
     def _repo_dir(cls, repo_id: str) -> pathlib.Path:
+        """Return the local directory for a single repo under component_dir()."""
         return cls.component_dir() / repo_id.split("/")[-1]
 
     @classmethod
