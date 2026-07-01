@@ -115,6 +115,7 @@ class ModelJob(BaseJob):
             run: Run = db.get(Run, run_id)
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
+            self.report_progress(0.05, "Preparing data")
             try:
                 # Get the model session, dataset, task, metrics and splits
                 model_session: ModelSession = db.get(ModelSession, run.model_session_id)
@@ -271,6 +272,7 @@ class ModelJob(BaseJob):
                     raise JobError(
                         "Connection with the database failed",
                     ) from e
+                self.report_progress(0.2, "Training")
                 try:
                     # Hyperparameter Tunning
                     plot_paths = []
@@ -332,6 +334,7 @@ class ModelJob(BaseJob):
                         f"Hyperparameter plot path saving failed {e}",
                     ) from e
 
+                self.report_progress(0.85, "Computing metrics")
                 # Calculate metrics at the end of training if not done already
                 try:
                     last_train_metric = (
@@ -370,6 +373,7 @@ class ModelJob(BaseJob):
                         f"Metric calculation failed {e}",
                     ) from e
 
+                self.report_progress(0.95, "Saving model")
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
                     model.save(run_path)

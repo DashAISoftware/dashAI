@@ -305,6 +305,8 @@ class PredictJob(BaseJob):
                 prediction.set_status_as_started()
                 db.commit()
 
+                self.report_progress(0.1, "Loading model")
+
                 dataset_id = prediction.dataset_id
 
                 # Validate input data
@@ -422,6 +424,8 @@ class PredictJob(BaseJob):
                         manual_input_data, dataset_trained_path
                     )
 
+                self.report_progress(0.4, "Running prediction")
+
                 prepared_dataset, y_pred = _run_prediction_pipeline(
                     task=task,
                     trained_model=trained_model,
@@ -451,6 +455,8 @@ class PredictJob(BaseJob):
                 raise JobError(
                     "Model prediction failed",
                 ) from e
+
+            self.report_progress(0.9, "Saving predictions")
 
             # Save Predictions to Arrow file
             try:
