@@ -188,6 +188,7 @@
       "jobType": "Tipo de trabalho",
       "lastUpdated": "Última atualização",
       "errorMessage": "Mensagem de erro",
+      "progress": "Progresso",
       "unnamedJob": "Trabalho sem nome"
     },
     "status": {

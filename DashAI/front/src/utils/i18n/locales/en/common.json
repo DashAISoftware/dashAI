@@ -186,6 +186,7 @@
       "jobType": "Job Type",
       "lastUpdated": "Last Updated",
       "errorMessage": "Error Message",
+      "progress": "Progress",
       "unnamedJob": "Unnamed Job"
     },
     "status": {

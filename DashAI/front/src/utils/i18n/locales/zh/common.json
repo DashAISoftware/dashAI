@@ -186,6 +186,7 @@
       "jobType": "任务类型",
       "lastUpdated": "最后更新",
       "errorMessage": "错误信息",
+      "progress": "进度",
       "unnamedJob": "未命名任务"
     },
     "status": {

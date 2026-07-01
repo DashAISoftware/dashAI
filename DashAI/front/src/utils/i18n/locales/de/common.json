@@ -186,6 +186,7 @@
       "jobType": "Aufgabentyp",
       "lastUpdated": "Zuletzt aktualisiert",
       "errorMessage": "Fehlermeldung",
+      "progress": "Fortschritt",
       "unnamedJob": "Unbenannte Aufgabe"
     },
     "status": {
