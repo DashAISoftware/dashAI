@@ -129,22 +129,14 @@ export default function ScopeStepConverter({
         sx={{
           flexShrink: 0,
           display: "flex",
-          justifyContent: "flex-end",
-          gap: 2,
-          pt: 1,
+          alignItems: "center",
+          gap: 1,
+          mt: "auto",
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
         }}
       >
-        {supervised && (
-          <Tooltip
-            title={t("datasets:label.helpSelectClassColumn")}
-            placement="top"
-          >
-            <IconButton>
-              <HelpIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-
         {supervised && (
           <ConverterClassColumnModal
             updateClassColumn={(column) => {
@@ -160,19 +152,33 @@ export default function ScopeStepConverter({
             notebook={notebook}
           />
         )}
-      </Box>
+        {supervised && (
+          <Tooltip
+            title={t("datasets:label.helpSelectClassColumn")}
+            placement="top"
+          >
+            <IconButton>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
-      {/* Buttons */}
-      <FormSchemaButtonGroup
-        onFormSubmit={handleSubmit}
-        error={!isColumnSelectionValid || (supervised ? !targetColumn : false)}
-        saveButtonText={
-          Object.values(tool.schema.properties).length > 0
-            ? t("common:next")
-            : t("common:save")
-        }
-        data-tour="converter-scope-next-button"
-      />
+        <Box sx={{ flexGrow: 1 }}>
+          <FormSchemaButtonGroup
+            onFormSubmit={handleSubmit}
+            error={
+              !isColumnSelectionValid || (supervised ? !targetColumn : false)
+            }
+            saveButtonText={
+              Object.values(tool.schema.properties).length > 0
+                ? t("common:next")
+                : t("common:save")
+            }
+            data-tour="converter-scope-next-button"
+            sx={{ borderTop: 0, pt: 0, mt: 0 }}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 }

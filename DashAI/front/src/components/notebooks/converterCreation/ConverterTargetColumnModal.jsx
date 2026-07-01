@@ -155,7 +155,6 @@ const ConverterTargetColumnModal = ({
         variant="outlined"
         size="small"
         sx={{
-          mr: 2,
           color: classColumnInitialValue === null ? "error.main" : "inherit",
           borderColor:
             classColumnInitialValue === null ? "error.main" : "inherit",
@@ -214,7 +213,7 @@ const ConverterTargetColumnModal = ({
             </Box>
           </DialogContent>
           <Box sx={{ p: 4, display: "flex", justifyContent: "flex-end" }}>
-            <Button onClick={() => setOpen(false)} sx={{ mr: 4 }}>
+            <Button onClick={() => setOpen(false)} sx={{ mr: 2 }}>
               {t("common:back")}
             </Button>
             <Button
