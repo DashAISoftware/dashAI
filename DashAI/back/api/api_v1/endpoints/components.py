@@ -236,6 +236,104 @@ async def get_components(
     ]
 
 
+@router.get("/{name}/download")
+@inject
+async def get_component_download_status(
+    name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Return the reconciled download status of a component.
+
+    Parameters
+    ----------
+    name : str
+        The component class name.
+
+    Returns
+    -------
+    dict
+        ``{"downloaded": bool, "requires_download": bool}``.
+    """
+    try:
+        component_class = component_registry[name]["class"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    requires = bool(getattr(component_class, "REQUIRES_DOWNLOAD", False))
+    downloaded = component_registry.refresh_download_status(name)
+    return {"downloaded": downloaded, "requires_download": requires}
+
+
+@router.post("/{name}/download", status_code=status.HTTP_201_CREATED)
+@inject
+async def download_component(
+    name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue=Depends(lambda: di["job_queue"]),
+):
+    """Enqueue a job to download the component's artifacts.
+
+    Parameters
+    ----------
+    name : str
+        The component class name.
+
+    Returns
+    -------
+    dict
+        ``{"id": job_id}`` of the enqueued download job.
+
+    Raises
+    ------
+    HTTPException
+        404 if unknown; 409 if not downloadable or already downloaded.
+    """
+    from DashAI.back.job.component_download_job import ComponentDownloadJob
+
+    try:
+        component_class = component_registry[name]["class"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Component {name} does not require a download",
+        )
+    if component_registry.refresh_download_status(name):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Component {name} is already downloaded",
+        )
+    job = ComponentDownloadJob(component_name=name)
+    job.set_status_as_delivered()
+    job_id = job_queue.put(job).id
+    return {"id": job_id}
+
+
+@router.delete("/{name}/download", status_code=status.HTTP_204_NO_CONTENT)
+@inject
+async def delete_component_download(
+    name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Delete a component's downloaded artifacts and reconcile its status.
+
+    Parameters
+    ----------
+    name : str
+        The component class name.
+    """
+    from fastapi import Response
+
+    try:
+        component_class = component_registry[name]["class"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    if getattr(component_class, "REQUIRES_DOWNLOAD", False):
+        component_class.delete()
+        component_registry.refresh_download_status(name)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/{id}/")
 @inject
 def get_component_by_id(
