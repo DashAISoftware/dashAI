@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Box, Button, LinearProgress, Typography } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,7 +9,7 @@ import {
   deleteComponentDownload,
   getComponentDownloadStatus,
 } from "../../../api/component";
-import { startJobPolling } from "../../../utils/jobPoller";
+import { startJobPolling, stopJobPolling } from "../../../utils/jobPoller";
 
 const formatSize = (bytes) => {
   if (bytes == null) return "";
@@ -24,10 +24,17 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   const meta = component.metadata || {};
   const [downloaded, setDownloaded] = useState(Boolean(component.downloaded));
   const [downloading, setDownloading] = useState(false);
+  const pollerIdRef = useRef(null);
 
   useEffect(() => {
     setDownloaded(Boolean(component.downloaded));
   }, [component.name, component.downloaded]);
+
+  useEffect(() => {
+    return () => {
+      if (pollerIdRef.current != null) stopJobPolling(pollerIdRef.current);
+    };
+  }, []);
 
   if (!meta.requires_download) return null;
 
@@ -41,9 +48,11 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
     setDownloading(true);
     try {
       const { id } = await downloadComponent(component.name);
+      pollerIdRef.current = id;
       startJobPolling(
         id,
         async () => {
+          pollerIdRef.current = null;
           const status = await getComponentDownloadStatus(component.name);
           finish(status.downloaded);
           enqueueSnackbar(t("common:componentDownload.done"), {
@@ -51,6 +60,7 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
           });
         },
         () => {
+          pollerIdRef.current = null;
           finish(false);
           enqueueSnackbar(t("common:componentDownload.failed"), {
             variant: "error",
@@ -66,8 +76,14 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   };
 
   const handleDelete = async () => {
-    await deleteComponentDownload(component.name);
-    finish(false);
+    try {
+      await deleteComponentDownload(component.name);
+      finish(false);
+    } catch {
+      enqueueSnackbar(t("common:componentDownload.failed"), {
+        variant: "error",
+      });
+    }
   };
 
   if (downloading) {

@@ -433,7 +433,11 @@ AddModelDialog.propTypes = {
     task_name: PropTypes.string,
   }),
   preselectedModel: PropTypes.string,
-  preselectedModelObject: PropTypes.object,
+  preselectedModelObject: PropTypes.shape({
+    name: PropTypes.string,
+    downloaded: PropTypes.bool,
+    metadata: PropTypes.object,
+  }),
   existingRuns: PropTypes.array,
   onRunCreated: PropTypes.func,
 };
