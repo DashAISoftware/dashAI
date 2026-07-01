@@ -289,17 +289,21 @@ async def get_hyperparameter_optimization_plot(
 async def upload_run(
     params: RunParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry=Depends(lambda: di["component_registry"]),
 ):
     """Create a new run.
 
     Parameters
     ----------
-    params : int
+    params : RunParams
         The parameters of the new run, which includes the model session, model name, run
         name and description, among others.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        The application component registry, used to check whether the requested
+        model has been downloaded.
 
     Returns
     -------
@@ -310,6 +314,8 @@ async def upload_run(
     ------
     HTTPException
         If the model session with id model_session_id is not registered in the DB.
+    HTTPException
+        If the model requires a download but has not been downloaded yet (HTTP 409).
     """
     with session_factory() as db:
         try:
@@ -318,6 +324,16 @@ async def upload_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
+                )
+            entry = component_registry[params.model_name]
+            if getattr(entry["class"], "REQUIRES_DOWNLOAD", False) and not entry.get(
+                "downloaded", False
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"Model {params.model_name} must be downloaded before use."
+                    ),
                 )
             run = Run(
                 model_session_id=params.model_session_id,

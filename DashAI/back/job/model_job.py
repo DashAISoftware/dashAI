@@ -222,6 +222,13 @@ class ModelJob(BaseJob):
                     raise JobError(
                         f"Unable to find Model with name {run.model_name} in registry.",
                     ) from e
+                if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
+                    run_model_class.is_downloaded()
+                ):
+                    raise JobError(
+                        f"Model {run.model_name} is not downloaded. "
+                        "Download it before training."
+                    )
                 try:
                     factory = ModelFactory(
                         run_model_class,
