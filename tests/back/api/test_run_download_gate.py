@@ -44,18 +44,21 @@ class _FakeRegistry:
         return name == "FakeDownloadableModel" or name in self._real
 
 
-def _make_model_session(client):
+def _make_model_session(client, suffix=""):
     """Insert a Dataset + ModelSession row and return the ModelSession id."""
+    import uuid
+
     from DashAI.back.dependencies.database.models import Dataset, ModelSession
 
+    unique = suffix or uuid.uuid4().hex[:8]
     sf = client.app.container["session_factory"]
     with sf() as db:
-        ds = Dataset(name="__gate_test_ds__", file_path="")
+        ds = Dataset(name=f"__gate_test_ds_{unique}__", file_path="")
         db.add(ds)
         db.flush()
         ms = ModelSession(
             dataset_id=ds.id,
-            name="__gate_test_ms__",
+            name=f"__gate_test_ms_{unique}__",
             task_name="TabularClassificationTask",
             input_columns=[],
             output_columns=[],
@@ -99,7 +102,7 @@ def test_upload_run_rejects_undownloaded_model(client, monkeypatch):
     if not downloadable:
         return  # no downloadable model registered in this environment; skip
     name = downloadable[0]["name"]
-    registry[name]["downloaded"] = False
+    monkeypatch.setitem(registry[name], "downloaded", False)
 
     resp = client.post(
         "/api/v1/run/",
@@ -108,3 +111,17 @@ def test_upload_run_rejects_undownloaded_model(client, monkeypatch):
     assert resp.status_code in (404, 409)
     if resp.status_code == 409:
         assert "download" in resp.json()["detail"].lower()
+
+
+def test_upload_run_unknown_model_422(client):
+    """POSTing a run with an unregistered model_name must return HTTP 422."""
+    ms_id = _make_model_session(client)
+    resp = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": ms_id,
+            "model_name": "__totally_bogus_model_xyz__",
+            **_RUN_PAYLOAD_BASE,
+        },
+    )
+    assert resp.status_code == 422
