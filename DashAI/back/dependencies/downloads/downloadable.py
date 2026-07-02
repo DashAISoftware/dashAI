@@ -233,3 +233,89 @@ class HFPretrainedDownloadMixin(HFDownloadableMixin):
         except Exception:
             pass
         return self.MODEL_NAME
+
+
+class TorchvisionDownloadMixin(DownloadableMixin):
+    """Downloadable mixin for torchvision models with ImageNet-pretrained weights.
+
+    torchvision fetches pretrained weights into a global ``torch.hub`` cache.
+    This mixin redirects that cache to ``component_dir()`` so the weights are
+    stored and gated like any other downloadable component. Subclasses build
+    their backbone inside :meth:`local_hub` so the pretrained weights are read
+    from (and written to) the component's own folder.
+
+    .. note::
+        The download provides the ImageNet weights used when the model is built
+        with ``pretrained=True`` (the default). Training a fresh model with
+        ``pretrained=False`` needs no weights but is still gated as a
+        download-required component.
+    """
+
+    @classmethod
+    def _weights(cls):
+        """Return the torchvision weights enum member to download.
+
+        Returns
+        -------
+        torchvision.models.WeightsEnum
+            The pretrained weights descriptor whose file is fetched.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def _checkpoints_dir(cls):
+        """Return the directory where torch.hub stores downloaded checkpoints."""
+        return cls.component_dir() / "checkpoints"
+
+    @classmethod
+    def local_hub(cls):
+        """Context manager that points ``torch.hub`` at ``component_dir()``.
+
+        Returns
+        -------
+        contextlib.AbstractContextManager
+            A context that temporarily sets the torch hub directory to this
+            component's folder and restores the previous value on exit.
+        """
+        import contextlib
+
+        import torch
+
+        @contextlib.contextmanager
+        def _ctx():
+            old = torch.hub.get_dir()
+            cls.component_dir().mkdir(parents=True, exist_ok=True)
+            torch.hub.set_dir(str(cls.component_dir()))
+            try:
+                yield
+            finally:
+                torch.hub.set_dir(old)
+
+        return _ctx()
+
+    @classmethod
+    def is_downloaded(cls) -> bool:
+        """Return whether the pretrained weights file is present locally.
+
+        Returns
+        -------
+        bool
+            ``True`` when the component's ``checkpoints`` folder exists and is
+            non-empty.
+        """
+        ckpt = cls._checkpoints_dir()
+        return ckpt.is_dir() and any(ckpt.iterdir())
+
+    @classmethod
+    def download(cls, report: Optional[ProgressReporter] = None) -> None:
+        """Fetch the pretrained weights into ``component_dir()``.
+
+        Parameters
+        ----------
+        report : ProgressReporter, optional
+            Callback invoked with an indeterminate progress message.
+        """
+        if report is not None:
+            report(None, f"Downloading {cls.__name__} weights")
+        with cls.local_hub():
+            cls._weights().get_state_dict(progress=False)
