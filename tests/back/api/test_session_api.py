@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 def create_session_1(client: TestClient):
     """Create testing session 1 using job system."""
     params = {
-        "model_name": "StableDiffusionV2Model",
+        "model_name": "StableDiffusion2",
         "task_name": "TextToImageGenerationTask",
         "parameters": {
             "num_inference_steps": 1,
@@ -56,7 +56,7 @@ def create_session_2(client: TestClient):
 def create_session_3(client: TestClient):
     """Create testing session 3 using a non-download-required model."""
     params = {
-        "model_name": "StableDiffusionV2Model",
+        "model_name": "StableDiffusion2",
         "task_name": "TextToImageGenerationTask",
         "parameters": {
             "num_inference_steps": 1,
@@ -85,7 +85,7 @@ def create_session_3(client: TestClient):
 def create_session_4(client: TestClient):
     """Create testing session 4 with an invalid task (valid model)."""
     params = {
-        "model_name": "StableDiffusionV2Model",
+        "model_name": "StableDiffusion2",
         "task_name": "SomeTask",
         "parameters": {
             "num_inference_steps": 1,
@@ -116,7 +116,7 @@ def test_create_session(response_1):
     data = response_1.json()
     assert data["id"] is not None, "Session ID is missing"
     assert data["name"] == "session_1", "Session name does not match"
-    assert data["model_name"] == "StableDiffusionV2Model", "Model name does not match"
+    assert data["model_name"] == "StableDiffusion2", "Model name does not match"
     assert data["task_name"] == "TextToImageGenerationTask", "Task name does not match"
 
 
@@ -135,7 +135,7 @@ def test_get_session_by_id(client: TestClient, response_1):
     data = response.json()
     assert data["id"] == session_id, "Retrieved session ID does not match"
     assert data["name"] == "session_1", "Session name does not match"
-    assert data["model_name"] == "StableDiffusionV2Model", "Model name does not match"
+    assert data["model_name"] == "StableDiffusion2", "Model name does not match"
     assert data["task_name"] == "TextToImageGenerationTask", "Task name does not match"
 
 

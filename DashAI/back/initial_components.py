@@ -210,7 +210,10 @@ from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
-    StableDiffusionV2Model,
+    StableDiffusion2,
+    StableDiffusion2_512,
+    StableDiffusion21,
+    StableDiffusion21_512,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
     StableDiffusionV3Model,
@@ -398,7 +401,10 @@ def get_initial_components():
         SGDClassifier,
         SmolLM2_360MInstruct,
         SmolLM2_17BInstruct,
-        StableDiffusionV2Model,
+        StableDiffusion2,
+        StableDiffusion2_512,
+        StableDiffusion21,
+        StableDiffusion21_512,
         StableDiffusionV3Model,
         StableDiffusionXLModel,
         StableDiffusionXLV1ControlNet,

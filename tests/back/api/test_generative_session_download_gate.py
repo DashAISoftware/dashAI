@@ -96,7 +96,7 @@ def _create_sd_session(client, name):
     return client.post(
         "/api/v1/generative-session/",
         json={
-            "model_name": "StableDiffusionV2Model",
+            "model_name": "StableDiffusion2",
             "task_name": "TextToImageGenerationTask",
             "parameters": _SD_PARAMS,
             "name": name,
@@ -150,10 +150,10 @@ def test_change_session_model_valid_returns_200(client):
 
     resp = client.patch(
         f"/api/v1/generative-session/{session_id}",
-        params={"model_name": "StableDiffusionV2Model"},
+        params={"model_name": "StableDiffusion2"},
     )
     assert resp.status_code == 200
-    assert resp.json()["model_name"] == "StableDiffusionV2Model"
+    assert resp.json()["model_name"] == "StableDiffusion2"
 
     client.delete(f"/api/v1/generative-session/{session_id}")
 
@@ -185,7 +185,7 @@ def test_switch_model_resets_params_and_records_history(client):
     ]
     assert {
         "parameter": "model",
-        "oldValue": "StableDiffusionV2Model",
+        "oldValue": "StableDiffusion2",
         "newValue": "Qwen25_15BInstruct",
     } in model_changes
 

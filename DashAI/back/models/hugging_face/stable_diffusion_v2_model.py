@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -25,65 +28,6 @@ class StableDiffusionSchema(BaseSchema):
     (``device``), and batch size (``num_images_per_prompt``) for
     ``StableDiffusionV2Model``.
     """
-
-    model_name: schema_field(
-        enum_field(
-            enum=[
-                "sd2-community/stable-diffusion-2",
-                "sd2-community/stable-diffusion-2-base",
-                "sd2-community/stable-diffusion-2-1",
-                "sd2-community/stable-diffusion-2-1-base",
-            ]
-        ),
-        placeholder="sd2-community/stable-diffusion-2",
-        description=MultilingualString(
-            en=(
-                "The specific Stable Diffusion 2.x checkpoint to load. "
-                "The '-base' variants are trained at 512x512 px and are faster; "
-                "the nonbase variants target 768x768 px and produce sharper detail. "
-                "The '2-1' variants are fine-tuned further "
-                "and generally outperform '2'."
-            ),
-            es=(
-                "El checkpoint específico de Stable Diffusion 2.x a cargar. "
-                "Las variantes '-base' se entrenan a 512x512 px y son más rápidas; "
-                "las variantes sin '-base' apuntan a 768x768 px "
-                "y producen mayor detalle. "
-                "Las variantes '2-1' están más ajustadas "
-                "y generalmente superan a '2'."
-            ),
-            pt=(
-                "O checkpoint específico do Stable Diffusion 2.x a carregar. "
-                "As variantes '-base' são treinadas a 512x512 px e são mais rápidas; "
-                "as variantes sem '-base' visam 768x768 px "
-                "e produzem maior detalhe. "
-                "As variantes '2-1' são mais ajustadas "
-                "e geralmente superam a '2'."
-            ),
-            de=(
-                "Der zu ladende spezifische Stable Diffusion 2.x-Checkpoint. "
-                "Die '-base'-Varianten werden bei 512x512 px trainiert und sind "
-                "schneller; "
-                "die Nicht-base-Varianten zielen auf 768x768 px ab "
-                "und liefern schärfere Details. "
-                "Die '2-1'-Varianten sind weiter feinabgestimmt "
-                "und übertreffen '2' in der Regel."
-            ),
-            zh=(
-                "要加载的 Stable Diffusion 2.x 检查点。"
-                "'-base' 变体在 512x512 像素下训练，速度更快；"
-                "非 base 变体目标分辨率为 768x768 像素，细节更清晰。"
-                "'2-1' 变体经过进一步微调，通常优于 '2'。"
-            ),
-        ),
-        alias=MultilingualString(
-            en="Model name",
-            es="Nombre del modelo",
-            pt="Nome do modelo",
-            de="Modellname",
-            zh="模型名称",
-        ),
-    )  # type: ignore
 
     negative_prompt: Optional[
         schema_field(
@@ -403,7 +347,9 @@ class StableDiffusionSchema(BaseSchema):
     )  # type: ignore
 
 
-class StableDiffusionV2Model(TextToImageGenerationTaskModel):
+class StableDiffusion2GenerationModel(
+    HFPretrainedDownloadMixin, TextToImageGenerationTaskModel
+):
     """Latent diffusion model for high resolution text-to-image generation.
 
     Wraps the Stable Diffusion 2.x family of checkpoints released by
@@ -431,6 +377,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = StableDiffusionSchema
+    MODEL_NAME: str = ""
     COLOR: str = "#1565c0"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion V2",
@@ -538,7 +485,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get("model_name", "sd2-community/stable-diffusion-2")
+        self.model_name = self._pretrained_source(None)
 
         self.model = DiffusionPipeline.from_pretrained(
             self.model_name,
@@ -589,3 +536,103 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
         output = self.model(**params)
 
         return output.images
+
+
+class StableDiffusion2(StableDiffusion2GenerationModel):
+    """768px Stable Diffusion 2 checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "sd2-community/stable-diffusion-2"
+    # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
+    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 2",
+        es="Stable Diffusion 2",
+        pt="Stable Diffusion 2",
+        de="Stable Diffusion 2",
+        zh="Stable Diffusion 2",
+    )
+    DESCRIPTION = MultilingualString(
+        en="768px Stable Diffusion 2 checkpoint.",
+        es="768px Stable Diffusion 2 checkpoint.",
+        pt="768px Stable Diffusion 2 checkpoint.",
+        de="768px Stable Diffusion 2 checkpoint.",
+        zh="768px Stable Diffusion 2 checkpoint.",
+    )
+
+
+class StableDiffusion2_512(StableDiffusion2GenerationModel):  # noqa: N801
+    """512px base Stable Diffusion 2 checkpoint (faster).
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "sd2-community/stable-diffusion-2-base"
+    # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
+    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 2 (512px)",
+        es="Stable Diffusion 2 (512px)",
+        pt="Stable Diffusion 2 (512px)",
+        de="Stable Diffusion 2 (512px)",
+        zh="Stable Diffusion 2 (512px)",
+    )
+    DESCRIPTION = MultilingualString(
+        en="512px base Stable Diffusion 2 checkpoint (faster).",
+        es="512px base Stable Diffusion 2 checkpoint (faster).",
+        pt="512px base Stable Diffusion 2 checkpoint (faster).",
+        de="512px base Stable Diffusion 2 checkpoint (faster).",
+        zh="512px base Stable Diffusion 2 checkpoint (faster).",
+    )
+
+
+class StableDiffusion21(StableDiffusion2GenerationModel):
+    """768px Stable Diffusion 2.1 checkpoint (further fine-tuned).
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "sd2-community/stable-diffusion-2-1"
+    # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
+    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 2.1",
+        es="Stable Diffusion 2.1",
+        pt="Stable Diffusion 2.1",
+        de="Stable Diffusion 2.1",
+        zh="Stable Diffusion 2.1",
+    )
+    DESCRIPTION = MultilingualString(
+        en="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
+        es="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
+        pt="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
+        de="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
+        zh="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
+    )
+
+
+class StableDiffusion21_512(StableDiffusion2GenerationModel):  # noqa: N801
+    """512px base Stable Diffusion 2.1 checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "sd2-community/stable-diffusion-2-1-base"
+    # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
+    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 2.1 (512px)",
+        es="Stable Diffusion 2.1 (512px)",
+        pt="Stable Diffusion 2.1 (512px)",
+        de="Stable Diffusion 2.1 (512px)",
+        zh="Stable Diffusion 2.1 (512px)",
+    )
+    DESCRIPTION = MultilingualString(
+        en="512px base Stable Diffusion 2.1 checkpoint.",
+        es="512px base Stable Diffusion 2.1 checkpoint.",
+        pt="512px base Stable Diffusion 2.1 checkpoint.",
+        de="512px base Stable Diffusion 2.1 checkpoint.",
+        zh="512px base Stable Diffusion 2.1 checkpoint.",
+    )
