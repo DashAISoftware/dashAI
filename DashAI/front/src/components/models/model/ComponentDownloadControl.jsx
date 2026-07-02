@@ -91,6 +91,9 @@ const ComponentDownloadControl = ({
     try {
       await deleteComponentDownload(component.name);
       finish(false);
+      enqueueSnackbar(t("common:componentDownload.deleted"), {
+        variant: "success",
+      });
     } catch {
       enqueueSnackbar(t("common:componentDownload.failed"), {
         variant: "error",

@@ -165,6 +165,7 @@
     "delete": "Delete download",
     "downloading": "Downloading...",
     "done": "Component downloaded",
+    "deleted": "Download deleted",
     "failed": "Component download failed",
     "mustDownload": "This model must be downloaded before use"
   },

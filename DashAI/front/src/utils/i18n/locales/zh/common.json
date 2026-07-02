@@ -165,6 +165,7 @@
     "delete": "删除下载",
     "downloading": "下载中...",
     "done": "组件已下载",
+    "deleted": "下载已删除",
     "failed": "组件下载失败",
     "mustDownload": "使用前必须先下载此模型"
   },

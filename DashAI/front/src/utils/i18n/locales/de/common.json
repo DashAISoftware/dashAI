@@ -165,6 +165,7 @@
     "delete": "Download loeschen",
     "downloading": "Wird heruntergeladen...",
     "done": "Komponente heruntergeladen",
+    "deleted": "Download geloescht",
     "failed": "Download der Komponente fehlgeschlagen",
     "mustDownload": "Dieses Modell muss vor der Nutzung heruntergeladen werden"
   },
