@@ -180,7 +180,7 @@ class SD15DepthControlNetSchema(BaseSchema):
     )  # type: ignore
 
 
-def get_depth_map_sd15(image, device):
+def get_depth_map_sd15(image, device, model_source="Intel/dpt-hybrid-midas"):
     """Convert an input image to a normalised depth map for SD 1.5 ControlNet.
 
     Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
@@ -208,10 +208,8 @@ def get_depth_map_sd15(image, device):
     from PIL import Image
     from transformers import DPTForDepthEstimation, DPTImageProcessor
 
-    depth_estimator = DPTForDepthEstimation.from_pretrained(
-        "Intel/dpt-hybrid-midas"
-    ).to(device)
-    feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-hybrid-midas")
+    depth_estimator = DPTForDepthEstimation.from_pretrained(model_source).to(device)
+    feature_extractor = DPTImageProcessor.from_pretrained(model_source)
 
     pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values.to(
         device
@@ -263,8 +261,9 @@ class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     HF_REPOS = [
         ("runwayml/stable-diffusion-v1-5", "model"),
         ("lllyasviel/sd-controlnet-depth", "model"),
+        ("Intel/dpt-hybrid-midas", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 5400000000
+    DOWNLOAD_SIZE_BYTES = 5900000000
     COLOR: str = "#4e342e"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 Depth ControlNet",
@@ -390,7 +389,9 @@ class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         image = input[0]
         prompt = input[1]
 
-        depth_map = get_depth_map_sd15(image, self.device)
+        depth_map = get_depth_map_sd15(
+            image, self.device, self._local_or_repo("Intel/dpt-hybrid-midas")
+        )
         output = self.pipe(
             prompt=prompt,
             image=depth_map,

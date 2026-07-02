@@ -189,8 +189,9 @@ class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     HF_REPOS = [
         ("runwayml/stable-diffusion-v1-5", "model"),
         ("lllyasviel/sd-controlnet-openpose", "model"),
+        ("lllyasviel/Annotators", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 5400000000
+    DOWNLOAD_SIZE_BYTES = 7400000000
     COLOR: str = "#880e4f"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 OpenPose ControlNet",
@@ -303,7 +304,9 @@ class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
 
-        self.pose_detector = OpenposeDetector.from_pretrained("lllyasviel/Annotators")
+        self.pose_detector = OpenposeDetector.from_pretrained(
+            self._local_or_repo("lllyasviel/Annotators")
+        )
 
         controlnet = ControlNetModel.from_pretrained(
             self._local_or_repo("lllyasviel/sd-controlnet-openpose"),

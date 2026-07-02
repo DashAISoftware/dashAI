@@ -194,8 +194,9 @@ class SD15HEDControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     HF_REPOS = [
         ("runwayml/stable-diffusion-v1-5", "model"),
         ("lllyasviel/sd-controlnet-hed", "model"),
+        ("lllyasviel/Annotators", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 5400000000
+    DOWNLOAD_SIZE_BYTES = 7400000000
     COLOR: str = "#006064"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 HED ControlNet",
@@ -310,7 +311,9 @@ class SD15HEDControlNetModel(HFDownloadableMixin, BaseControlNetModel):
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
 
-        self.hed_detector = HEDdetector.from_pretrained("lllyasviel/Annotators")
+        self.hed_detector = HEDdetector.from_pretrained(
+            self._local_or_repo("lllyasviel/Annotators")
+        )
 
         controlnet = ControlNetModel.from_pretrained(
             self._local_or_repo("lllyasviel/sd-controlnet-hed"),

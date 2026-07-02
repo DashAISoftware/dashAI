@@ -51,6 +51,21 @@ def test_controlnet_is_downloadable(model_cls):
     assert len(model_cls.hf_repos()) >= 2
 
 
+# Preprocessor repos are fetched by download() (not from the Hub at run time),
+# so they must be part of hf_repos() for the models that use one.
+_PREPROCESSOR_REPOS = {
+    SD15DepthControlNetModel: "Intel/dpt-hybrid-midas",
+    SD15HEDControlNetModel: "lllyasviel/Annotators",
+    SD15OpenPoseControlNetModel: "lllyasviel/Annotators",
+    StableDiffusionXLV1ControlNet: "Intel/dpt-hybrid-midas",
+}
+
+
+@pytest.mark.parametrize(("model_cls", "repo"), _PREPROCESSOR_REPOS.items())
+def test_controlnet_preprocessor_included(model_cls, repo):
+    assert repo in [rid for rid, *_ in model_cls.hf_repos()]
+
+
 @pytest.mark.parametrize("model_cls", _CLASSES)
 def test_controlnet_metadata_flags_download(model_cls):
     meta = model_cls.get_metadata()
