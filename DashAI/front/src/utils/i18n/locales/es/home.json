@@ -4,7 +4,7 @@
     "explainers": "Explora y comprende el proceso de toma de decisiones detrás de tus modelos.",
     "generative": "Interactúa con modelos de IA para inferencia y genera nuevo contenido.",
     "models": "Configura tareas, entrena y compara modelos en sesiones organizadas.",
-    "pipelines": "Crea y gestiona pipelines.",
+    "pipelines": "Crea y gestiona pipelines: flujos de trabajo visuales que encadenan la exploración de datos, el entrenamiento de modelos y la generación de predicciones.",
     "plugins": "Explora y gestiona plugins para extender la funcionalidad de dashAI."
   },
   "label": {
@@ -39,6 +39,8 @@
     "regression": "regresión",
     "modelComparison": "comparación de modelos",
     "inference": "inferencia",
+    "modelTraining": "entrenamiento de modelos",
+    "predictions": "predicciones",
     "parameterConfig": "configuración de parámetros",
     "generativeTasks": "tareas generativas",
     "contentGeneration": "generación de contenido",

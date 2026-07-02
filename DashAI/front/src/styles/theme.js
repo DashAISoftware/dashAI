@@ -128,6 +128,14 @@ const getTheme = (mode) => ({
         mode === "dark" ? "rgba(254,232,255,0.22)" : "rgba(165,77,169,0.22)",
       coralGlow:
         mode === "dark" ? "rgba(254,232,255,0.04)" : "rgba(165,77,169,0.04)",
+      // Pipelines → green
+      green: mode === "dark" ? "#8FE388" : "#2E7D32",
+      greenDim:
+        mode === "dark" ? "rgba(143,227,136,0.12)" : "rgba(46,125,50,0.12)",
+      greenBorder:
+        mode === "dark" ? "rgba(143,227,136,0.22)" : "rgba(46,125,50,0.22)",
+      greenGlow:
+        mode === "dark" ? "rgba(143,227,136,0.04)" : "rgba(46,125,50,0.04)",
     },
 
     status: {
