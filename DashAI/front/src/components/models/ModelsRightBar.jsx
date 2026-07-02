@@ -7,6 +7,7 @@ import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
+import ComponentDownloadControl from "./model/ComponentDownloadControl";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
@@ -20,7 +21,7 @@ export default function ModelsRightBar({ onToggle }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["models"]);
+  const { t } = useTranslation(["models", "common"]);
 
   const {
     selectedSession: session,
@@ -87,6 +88,11 @@ export default function ModelsRightBar({ onToggle }) {
       enqueueSnackbar(t("models:error.selectSessionFirst"), {
         variant: "warning",
       });
+      return;
+    }
+    // A download-required model that has not been downloaded cannot be
+    // configured; it is blocked in the list with an inline download control.
+    if (model.metadata?.requires_download && !model.downloaded) {
       return;
     }
     selectModel(model);
@@ -236,14 +242,49 @@ export default function ModelsRightBar({ onToggle }) {
                 </Box>
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {filteredModels.map((model, index) => (
-                    <ModelListItem
-                      key={model.name}
-                      model={model}
-                      onClick={() => handleModelClick(model)}
-                      data-tour={index === 0 ? "first-model" : undefined}
-                    />
-                  ))}
+                  {filteredModels.map((model, index) => {
+                    const needsDownload =
+                      Boolean(model.metadata?.requires_download) &&
+                      !model.downloaded;
+                    return (
+                      <Box
+                        key={model.name}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                        }}
+                      >
+                        <ModelListItem
+                          model={
+                            needsDownload
+                              ? {
+                                  ...model,
+                                  tooltip: t(
+                                    "common:componentDownload.mustDownload",
+                                  ),
+                                }
+                              : model
+                          }
+                          disabled={needsDownload}
+                          onClick={
+                            needsDownload
+                              ? undefined
+                              : () => handleModelClick(model)
+                          }
+                          data-tour={index === 0 ? "first-model" : undefined}
+                        />
+                        {needsDownload && (
+                          <ComponentDownloadControl
+                            component={model}
+                            onStatusChange={(isDownloaded) => {
+                              if (isDownloaded) fetchModels();
+                            }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
                 </Box>
               )}
             </Box>

@@ -27,7 +27,6 @@ import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
-import ComponentDownloadControl from "./model/ComponentDownloadControl";
 
 /**
  * Dialog for adding a new model run to a session
@@ -324,12 +323,6 @@ function AddModelDialog({
                   />
                 </FormSchemaContainer>
               </Box>
-            )}
-            {preselectedModelObject?.metadata?.requires_download && (
-              <ComponentDownloadControl
-                component={preselectedModelObject}
-                onStatusChange={setModelDownloaded}
-              />
             )}
           </Box>
         )}
