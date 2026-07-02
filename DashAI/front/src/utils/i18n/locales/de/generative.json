@@ -17,7 +17,8 @@
     "nameRequired": "Name ist erforderlich",
     "processError": "Der Prozess ist fehlgeschlagen. Wird gelöscht... {{error}}",
     "sessionNameEmpty": "Sitzungsname darf nicht leer sein",
-    "sessionNameExists": "Eine Sitzung mit diesem Namen existiert bereits"
+    "sessionNameExists": "Eine Sitzung mit diesem Namen existiert bereits",
+    "modelSwitchFailed": "Sitzungsmodell konnte nicht geändert werden"
   },
   "label": {
     "confirmDeleteSession": "Sind Sie sicher, dass Sie die Sitzung \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -57,7 +58,9 @@
     "attachMedia": "Medien anhängen",
     "attachMediaToContinue": "Medien anhängen, um fortzufahren",
     "noInputAvailable": "Keine Eingabe für diese Aufgabe verfügbar",
-    "selectModelCrumb": "Modell auswählen"
+    "selectModelCrumb": "Modell auswählen",
+    "sessionModel": "Modell",
+    "downloadRequired": "Download erforderlich"
   },
   "message": {
     "sessionCreatedSuccess": "Sitzung erfolgreich erstellt.",

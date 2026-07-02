@@ -17,7 +17,8 @@
     "nameRequired": "Name is required",
     "processError": "The process has failed. Deleting it... {{error}}",
     "sessionNameEmpty": "Session name cannot be empty",
-    "sessionNameExists": "A session with this name already exists"
+    "sessionNameExists": "A session with this name already exists",
+    "modelSwitchFailed": "Failed to change the session model"
   },
   "label": {
     "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
@@ -57,7 +58,9 @@
     "attachMedia": "Attach media",
     "attachMediaToContinue": "Attach media to continue",
     "noInputAvailable": "No input available for this task",
-    "selectModelCrumb": "Select Model"
+    "selectModelCrumb": "Select Model",
+    "sessionModel": "Model",
+    "downloadRequired": "download required"
   },
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",

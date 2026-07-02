@@ -42,14 +42,14 @@ export function CreateSessionProvider({ children }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load all generative models grouped by their compatible task.
-  // Re-fetches when language changes so display_name/description are translated.
-  useEffect(() => {
-    if (!tasks || tasks.length === 0) return;
-    let cancelled = false;
+  // Load all generative models grouped by their compatible task. Exposed as
+  // refetchModels so callers (e.g. an inline download control) can refresh the
+  // list when a model's downloaded state changes. Re-fetches when language
+  // changes so display_name/description are translated.
+  const loadModels = useCallback(() => {
+    if (!tasks || tasks.length === 0) return Promise.resolve();
     setLoadingModels(true);
-
-    Promise.all(
+    return Promise.all(
       tasks.map((task) =>
         getRelatedComponents(task.name).then((components) =>
           components.map((c) => ({
@@ -61,7 +61,6 @@ export function CreateSessionProvider({ children }) {
       ),
     )
       .then((perTaskLists) => {
-        if (cancelled) return;
         // Deduplicate by model name (a model may appear under several tasks).
         const seen = new Set();
         const flat = [];
@@ -79,13 +78,13 @@ export function CreateSessionProvider({ children }) {
         });
       })
       .finally(() => {
-        if (!cancelled) setLoadingModels(false);
+        setLoadingModels(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [tasks, enqueueSnackbar, t]);
+
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
 
   const processedProperties = useMemo(
     () =>
@@ -219,6 +218,7 @@ export function CreateSessionProvider({ children }) {
     step,
     models,
     loadingModels,
+    refetchModels: loadModels,
     selectedModel,
     handleSelectModel,
     formik,

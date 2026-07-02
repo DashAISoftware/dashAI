@@ -15,6 +15,7 @@ import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
+import ModelSwitcher from "./ModelSwitcher";
 import { useSnackbar } from "notistack";
 import { MediaInput } from "./MediaInput";
 import { Trans, useTranslation } from "react-i18next";
@@ -29,6 +30,8 @@ export default function GenerativeChat() {
     selectedTaskName: taskName,
     tasks,
     paramsVersion,
+    setParamsVersion,
+    fetchSessions,
   } = useGenerative();
 
   const inputsCardinality = useMemo(() => {
@@ -254,7 +257,17 @@ export default function GenerativeChat() {
           {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
         </Typography>
 
-        <Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <ModelSwitcher
+            sessionId={sessionId}
+            taskName={sessionInfo?.task_name}
+            currentModelName={sessionInfo?.model_name}
+            onChanged={() => {
+              getSessionInfo();
+              fetchSessions();
+              setParamsVersion((v) => v + 1);
+            }}
+          />
           <IconButton onClick={() => setSessionInfoVisible(true)}>
             <InfoIcon
               sx={{

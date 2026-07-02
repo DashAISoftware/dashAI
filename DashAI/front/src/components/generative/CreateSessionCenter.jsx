@@ -29,6 +29,7 @@ export default function CreateSessionCenter() {
     step,
     models,
     loadingModels,
+    refetchModels,
     selectedModel,
     handleSelectModel,
     formik,
@@ -126,6 +127,7 @@ export default function CreateSessionCenter() {
               components={models}
               selected={selectedModel}
               onSelect={handleSelectModelWithTour}
+              onDownloadChange={() => refetchModels()}
               categoryKey="task_display_name"
               searchPlaceholder={t("generative:label.searchModels")}
               tourDataFor={tourContext?.run ? "model-card-qwen" : null}
