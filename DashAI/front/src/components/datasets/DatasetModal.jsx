@@ -22,7 +22,7 @@ import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetPreviewStep from "./DatasetPreviewStep";
-import { previewWithTypes } from "../../api/datasets";
+import { previewWithTypes, createDataset } from "../../api/datasets";
 
 const SKIP_PREVIEW_DATALOADERS = new Set([]);
 
@@ -64,18 +64,13 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
 
   const handleSubmitNewDataset = async () => {
     try {
-      const name =
-        newDataset.params.name === null
-          ? newDataset.file.name
-          : newDataset.params.name;
+      const name = newDataset.params.name || newDataset.file.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
 
-      // First, create the dataset record in the database
       const data = await createDataset(name);
-
-      // Then, enqueue the job with the dataset ID
       await enqueueDatasetRequest(data.id, newDataset.file, newDataset.url, {
         ...newDataset.params,
+        name: name,
         inferred_types: columnsSpec,
       });
 
@@ -94,7 +89,13 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const handlePreviewDataset = async (file, url) => {
     const formData = new FormData();
     formData.append("file", newDataset.file);
-    formData.append("params", JSON.stringify(newDataset.params));
+    formData.append(
+      "params",
+      JSON.stringify({
+        ...newDataset.params,
+        dataloader_name: newDataset.dataloader,
+      }),
+    );
 
     try {
       const preview = await previewWithTypes(formData);

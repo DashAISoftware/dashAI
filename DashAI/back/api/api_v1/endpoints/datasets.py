@@ -1902,6 +1902,11 @@ async def preview_with_types(
                     detail=f"Dataloader {dataloader_name} not found in registry.",
                 )
 
+            if dataloader_name == "CSVDataLoader" and "separator" not in parsed_params:
+                parsed_params["separator"] = ","
+            if dataloader_name == "JSONDataLoader" and "data_key" not in parsed_params:
+                parsed_params["data_key"] = None
+
             dataloader_cls = component_registry[dataloader_name]["class"]
             dataloader = dataloader_cls()
 

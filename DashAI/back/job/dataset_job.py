@@ -234,7 +234,16 @@ class DatasetJob(BaseJob):
                             n_sample=None,
                         )
                     else:
-                        # --- File / URL upload path (unchanged) ---
+                        if (
+                            params.get("dataloader") == "CSVDataLoader"
+                            and "separator" not in params
+                        ):
+                            params["separator"] = ","
+                        if (
+                            params.get("dataloader") == "JSONDataLoader"
+                            and "data_key" not in params
+                        ):
+                            params["data_key"] = None
                         parsed_params = parse_params(DatasetParams, json.dumps(params))
                         dataloader = component_registry[parsed_params.dataloader][
                             "class"
