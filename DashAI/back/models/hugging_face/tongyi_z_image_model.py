@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -25,61 +28,6 @@ class TongyiZImageSchema(BaseSchema):
     (``device``), and batch size (``num_images_per_prompt``) for
     ``TongyiZImageModel``.
     """
-
-    model_name: schema_field(
-        enum_field(enum=["Tongyi-MAI/Z-Image", "Tongyi-MAI/Z-Image-Turbo"]),
-        placeholder="Tongyi-MAI/Z-Image",
-        description=MultilingualString(
-            en=(
-                "The Tongyi Z-Image checkpoint to load. "
-                "'Tongyi-Z-Image' is Alibaba's 6B parameter text-to-image model "
-                "using a unique S3-DiT (Sparse Spatial-Spectral Diffusion Transformer) "
-                "architecture, one of the most downloaded models on "
-                "Hugging Face. It outperforms previous open source state of the art "
-                "models at a fraction of their parameter count."
-            ),
-            es=(
-                "El checkpoint Tongyi Z-Image a cargar. "
-                "'Tongyi-Z-Image' es el modelo de texto a imagen de 6B parámetros de "
-                "Alibaba que usa una arquitectura S3-DiT única (Sparse "
-                "Spatial-Spectral Diffusion Transformer), uno de los "
-                "más descargados en "
-                "Hugging Face. Supera a modelos de última generación anteriores con "
-                "una fracción de su cantidad de parámetros."
-            ),
-            pt=(
-                "O checkpoint Tongyi Z-Image a carregar. "
-                "'Tongyi-Z-Image' é o modelo de texto para imagem de 6B parâmetros "
-                "da Alibaba que usa uma arquitetura S3-DiT única (Sparse "
-                "Spatial-Spectral Diffusion Transformer), um dos "
-                "mais baixados no "
-                "Hugging Face. Supera modelos anteriores de última geração com "
-                "uma fração de sua quantidade de parâmetros."
-            ),
-            de=(
-                "Der zu ladende Tongyi Z-Image-Checkpoint. "
-                "'Tongyi-Z-Image' ist Alibabas 6B-Parameter-Text-zu-Bild-Modell "
-                "mit einer einzigartigen S3-DiT-Architektur (Sparse Spatial-Spectral "
-                "Diffusion Transformer), eines der am häufigsten heruntergeladenen "
-                "Modelle auf Hugging Face. Es übertrifft frühere Open-Source-Modelle "
-                "auf dem neuesten Stand bei einem Bruchteil deren Parameteranzahl."
-            ),
-            zh=(
-                "要加载的 Tongyi Z-Image 检查点。"
-                "'Tongyi-Z-Image' 是阿里巴巴的 60 亿参数文本到图像模型，"
-                "采用独特的 S3-DiT 架构（稀疏空间-频谱扩散变换器），"
-                "是 Hugging Face 上下载量最高的模型之一。"
-                "以更少的参数量超越了此前的开源最先进模型。"
-            ),
-        ),
-        alias=MultilingualString(
-            en="Model name",
-            es="Nombre del modelo",
-            pt="Nome do modelo",
-            de="Modellname",
-            zh="模型名称",
-        ),
-    )  # type: ignore
 
     negative_prompt: Optional[
         schema_field(
@@ -360,7 +308,9 @@ class TongyiZImageSchema(BaseSchema):
     )  # type: ignore
 
 
-class TongyiZImageModel(TextToImageGenerationTaskModel):
+class TongyiZImageGenerationModel(
+    HFPretrainedDownloadMixin, TextToImageGenerationTaskModel
+):
     """Tongyi Z-Image S3-DiT model for high quality text-to-image generation.
 
     Wraps Alibaba's 6B parameter Tongyi Z-Image pipeline. The model uses a
@@ -376,6 +326,7 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = TongyiZImageSchema
+    MODEL_NAME: str = ""
     COLOR: str = "#e65100"
     DISPLAY_NAME: str = MultilingualString(
         en="Tongyi Z-Image",
@@ -443,7 +394,7 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
         )
 
         self.model = DiffusionPipeline.from_pretrained(
-            kwargs.get("model_name"),
+            self._pretrained_source(None),
             torch_dtype=torch.float16 if use_gpu else torch.float32,
         ).to(self.device)
 
@@ -485,3 +436,51 @@ class TongyiZImageModel(TextToImageGenerationTaskModel):
             num_images_per_prompt=self.num_images_per_prompt,
         )
         return output.images
+
+
+class TongyiZImage(TongyiZImageGenerationModel):
+    """Tongyi Z-Image text-to-image checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "Tongyi-MAI/Z-Image"
+    DOWNLOAD_SIZE_BYTES: int = 8000000000
+    DISPLAY_NAME = MultilingualString(
+        en="Tongyi Z-Image",
+        es="Tongyi Z-Image",
+        pt="Tongyi Z-Image",
+        de="Tongyi Z-Image",
+        zh="Tongyi Z-Image",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Tongyi Z-Image text-to-image checkpoint.",
+        es="Tongyi Z-Image text-to-image checkpoint.",
+        pt="Tongyi Z-Image text-to-image checkpoint.",
+        de="Tongyi Z-Image text-to-image checkpoint.",
+        zh="Tongyi Z-Image text-to-image checkpoint.",
+    )
+
+
+class TongyiZImageTurbo(TongyiZImageGenerationModel):
+    """Tongyi Z-Image Turbo fast checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "Tongyi-MAI/Z-Image-Turbo"
+    DOWNLOAD_SIZE_BYTES: int = 8000000000
+    DISPLAY_NAME = MultilingualString(
+        en="Tongyi Z-Image Turbo",
+        es="Tongyi Z-Image Turbo",
+        pt="Tongyi Z-Image Turbo",
+        de="Tongyi Z-Image Turbo",
+        zh="Tongyi Z-Image Turbo",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Tongyi Z-Image Turbo fast checkpoint.",
+        es="Tongyi Z-Image Turbo fast checkpoint.",
+        pt="Tongyi Z-Image Turbo fast checkpoint.",
+        de="Tongyi Z-Image Turbo fast checkpoint.",
+        zh="Tongyi Z-Image Turbo fast checkpoint.",
+    )

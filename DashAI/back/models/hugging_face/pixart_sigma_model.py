@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -25,64 +28,6 @@ class PixArtSigmaSchema(BaseSchema):
     (``device``), and batch size (``num_images_per_prompt``) for
     ``PixArtSigmaModel``.
     """
-
-    model_name: schema_field(
-        enum_field(
-            enum=[
-                "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
-                "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
-            ]
-        ),
-        placeholder="PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
-        description=MultilingualString(
-            en=(
-                "The PixArt-Sigma checkpoint to load. "
-                "'PixArt-Sigma-XL-2-1024-MS' is the high resolution variant "
-                "trained at 1024px with multiscale support, delivering the best "
-                "image quality. "
-                "'PixArt-Sigma-XL-2-512-MS' is the 512px variant, faster and lighter "
-                "while still producing sharp results."
-            ),
-            es=(
-                "El checkpoint PixArt-Sigma a cargar. "
-                "'PixArt-Sigma-XL-2-1024-MS' es la variante de alta resolución "
-                "entrenada a 1024px con soporte multiescala, entregando la mejor "
-                "calidad de imagen. "
-                "'PixArt-Sigma-XL-2-512-MS' es la variante de 512px, más rápida y "
-                "ligera manteniendo resultados nítidos."
-            ),
-            pt=(
-                "O checkpoint PixArt-Sigma a carregar. "
-                "'PixArt-Sigma-XL-2-1024-MS' é a variante de alta resolução "
-                "treinada a 1024px com suporte multiescala, entregando a melhor "
-                "qualidade de imagem. "
-                "'PixArt-Sigma-XL-2-512-MS' é a variante de 512px, mais rápida e "
-                "leve, mantendo resultados nítidos."
-            ),
-            de=(
-                "Der zu ladende PixArt-Sigma-Checkpoint. "
-                "'PixArt-Sigma-XL-2-1024-MS' ist die hochauflösende Variante, "
-                "bei 1024px mit Multi-Skalen-Unterstützung trainiert und liefert "
-                "die beste Bildqualität. "
-                "'PixArt-Sigma-XL-2-512-MS' ist die 512px-Variante, schneller und "
-                "leichter bei dennoch scharfen Ergebnissen."
-            ),
-            zh=(
-                "要加载的 PixArt-Sigma 检查点。"
-                "'PixArt-Sigma-XL-2-1024-MS' 是以 1024px 训练的高分辨率变体，"
-                "支持多尺度，图像质量最佳。"
-                "'PixArt-Sigma-XL-2-512-MS' 是 512px 变体，速度更快、更轻量，"
-                "同样能产生清晰效果。"
-            ),
-        ),
-        alias=MultilingualString(
-            en="Model name",
-            es="Nombre del modelo",
-            pt="Nome do modelo",
-            de="Modellname",
-            zh="模型名称",
-        ),
-    )  # type: ignore
 
     negative_prompt: Optional[
         schema_field(
@@ -376,7 +321,9 @@ class PixArtSigmaSchema(BaseSchema):
     )  # type: ignore
 
 
-class PixArtSigmaModel(TextToImageGenerationTaskModel):
+class PixArtSigmaGenerationModel(
+    HFPretrainedDownloadMixin, TextToImageGenerationTaskModel
+):
     """Diffusion Transformer model for high efficiency text-to-image generation.
 
     Wraps the PixArt-Sigma pipeline, which replaces the U-Net backbone used
@@ -398,6 +345,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = PixArtSigmaSchema
+    MODEL_NAME: str = ""
     COLOR: str = "#6a1b9a"
     DISPLAY_NAME: str = MultilingualString(
         en="PixArt-Sigma",
@@ -510,9 +458,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get(
-            "model_name", "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-        )
+        self._pretrained_source(None)
 
         self.model = PixArtSigmaPipeline.from_pretrained(
             self.model_name,
@@ -557,3 +503,51 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             num_images_per_prompt=self.num_images_per_prompt,
         )
         return output.images
+
+
+class PixArtSigma1024(PixArtSigmaGenerationModel):
+    """PixArt-Sigma XL 1024px checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+    DOWNLOAD_SIZE_BYTES: int = 2500000000
+    DISPLAY_NAME = MultilingualString(
+        en="PixArt-Sigma 1024",
+        es="PixArt-Sigma 1024",
+        pt="PixArt-Sigma 1024",
+        de="PixArt-Sigma 1024",
+        zh="PixArt-Sigma 1024",
+    )
+    DESCRIPTION = MultilingualString(
+        en="PixArt-Sigma XL 1024px checkpoint.",
+        es="PixArt-Sigma XL 1024px checkpoint.",
+        pt="PixArt-Sigma XL 1024px checkpoint.",
+        de="PixArt-Sigma XL 1024px checkpoint.",
+        zh="PixArt-Sigma XL 1024px checkpoint.",
+    )
+
+
+class PixArtSigma512(PixArtSigmaGenerationModel):
+    """PixArt-Sigma XL 512px checkpoint (faster).
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+    DOWNLOAD_SIZE_BYTES: int = 2500000000
+    DISPLAY_NAME = MultilingualString(
+        en="PixArt-Sigma 512",
+        es="PixArt-Sigma 512",
+        pt="PixArt-Sigma 512",
+        de="PixArt-Sigma 512",
+        zh="PixArt-Sigma 512",
+    )
+    DESCRIPTION = MultilingualString(
+        en="PixArt-Sigma XL 512px checkpoint (faster).",
+        es="PixArt-Sigma XL 512px checkpoint (faster).",
+        pt="PixArt-Sigma XL 512px checkpoint (faster).",
+        de="PixArt-Sigma XL 512px checkpoint (faster).",
+        zh="PixArt-Sigma XL 512px checkpoint (faster).",
+    )

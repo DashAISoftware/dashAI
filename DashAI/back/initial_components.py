@@ -183,7 +183,10 @@ from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
 )
-from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
+from DashAI.back.models.hugging_face.pixart_sigma_model import (
+    PixArtSigma512,
+    PixArtSigma1024,
+)
 from DashAI.back.models.hugging_face.qwen_model import (
     Qwen25_05BInstruct,
     Qwen25_15BInstruct,
@@ -223,7 +226,10 @@ from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
     StableDiffusionXL,
 )
 from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
-from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
+from DashAI.back.models.hugging_face.tongyi_z_image_model import (
+    TongyiZImage,
+    TongyiZImageTurbo,
+)
 from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
@@ -387,7 +393,8 @@ def get_initial_components():
         OpusMtEnPtTransformer,
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
-        PixArtSigmaModel,
+        PixArtSigma1024,
+        PixArtSigma512,
         Qwen25_05BInstruct,
         Qwen25_15BInstruct,
         RandomForestClassifier,
@@ -414,7 +421,8 @@ def get_initial_components():
         SVR,
         T5SmallTransformer,
         TfIdfLogRegTextClassificationModel,
-        TongyiZImageModel,
+        TongyiZImage,
+        TongyiZImageTurbo,
         XlmRobertaTransformer,
         XlnetTransformer,
         MLPImageClassifier,
