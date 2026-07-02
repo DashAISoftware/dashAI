@@ -191,10 +191,7 @@ const CustomNode = ({ data, isConnectable }) => {
         alignItems: "center",
       }}
     >
-      <Typography
-        variant="body2"
-        sx={{ mb: 1, color: theme.palette.text.primary }}
-      >
+      <Typography variant="body2" sx={{ mb: 1, color: textColor }}>
         {data.name || data.label}
       </Typography>
 

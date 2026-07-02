@@ -26,7 +26,11 @@ function PipelineToolbar({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        mb: 4,
+        mb: 2,
+        p: 1.5,
+        borderRadius: 2,
+        backgroundColor: theme.palette.background.box,
+        border: `1px solid ${theme.palette.ui.borderLight}`,
       }}
     >
       <TextField
@@ -40,15 +44,14 @@ function PipelineToolbar({
         error={nameError}
         helperText={nameErrorMessage}
         sx={{
-          mr: 4,
-          input: { color: "black" },
-          "& .MuiOutlinedInput-root fieldset": { borderColor: "black" },
-          "& label": { color: "black" },
+          mr: 2,
+          input: { color: theme.palette.text.primary },
+          "& .MuiOutlinedInput-root fieldset": {
+            borderColor: theme.palette.ui.border,
+          },
+          "& label": { color: theme.palette.text.secondary },
         }}
       />
-      <Button variant="contained" color="primary" onClick={onRun}>
-        Run
-      </Button>
       <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
         <Tooltip
           title={

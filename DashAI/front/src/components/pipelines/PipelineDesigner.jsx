@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { Box, Tooltip } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import ReactFlow, {
   addEdge,
   Background,
@@ -43,7 +43,9 @@ function PipelineDesigner({
   const canvasBorder = isLightCanvas
     ? "1px solid #e0e0e0"
     : `1px solid ${theme.palette.ui.borderLight}`;
-  const gridColor = isLightCanvas ? "#e0e0e0" : theme.palette.ui.border;
+  const gridColor = isLightCanvas
+    ? alpha("#9e9e9e", 0.7)
+    : alpha(theme.palette.text.secondary, 0.6);
 
   // Sync canvasMode into existing nodes so CustomNode can read it
   useEffect(() => {
@@ -169,8 +171,8 @@ function PipelineDesigner({
           width: "100%",
           height: "100%",
           borderRadius: 12,
-          background: theme.palette.background.default,
-          border: `1px solid ${theme.palette.ui.border}`,
+          background: canvasBg,
+          border: canvasBorder,
           boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
         }}
       >
@@ -199,7 +201,7 @@ function PipelineDesigner({
           </Tooltip>
         )}
         <Controls />
-        <Background color={gridColor} />
+        <Background color={gridColor} gap={18} size={2} />
       </ReactFlow>
     </Box>
   );

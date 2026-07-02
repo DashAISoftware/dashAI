@@ -113,14 +113,9 @@ export function usePipelineState(pipelineId, location, navigate) {
 
   useEffect(() => {
     if (defaultName && !userHasModifiedName && !pipelineId) {
-      if (
-        pipelineName === "undefined" ||
-        pipelineName.startsWith("Pipeline_")
-      ) {
-        setPipelineName(defaultName);
-        setNameError(false);
-        setNameErrorMessage("");
-      }
+      setPipelineName(defaultName);
+      setNameError(false);
+      setNameErrorMessage("");
     } else if (pipelineName === "" && userHasModifiedName) {
       setNameError(true);
       setNameErrorMessage("Name is required");
@@ -205,7 +200,6 @@ export function usePipelineState(pipelineId, location, navigate) {
       setNodeHelp({});
       setNodeIdCounter(0);
       setUserHasModifiedName(false);
-      setPipelineName("undefined");
       setActiveTab("flow");
     }
   }, [pipelineId]);
