@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -267,7 +270,7 @@ def get_canny_image(
     return Image.fromarray(edges_rgb)
 
 
-class SDXLCannyControlNetModel(BaseControlNetModel):
+class SDXLCannyControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     """Canny-edge-conditioned ControlNet pipeline built on Stable Diffusion XL 1.0.
 
     Takes an input image and a text prompt. Canny edge maps are extracted using
@@ -288,6 +291,12 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
     """
 
     SCHEMA = SDXLCannyControlNetSchema
+    HF_REPOS = [
+        ("stabilityai/stable-diffusion-xl-base-1.0", "model"),
+        ("diffusers/controlnet-canny-sdxl-1.0", "model"),
+        ("madebyollin/sdxl-vae-fp16-fix", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 10000000000
     COLOR: str = "#1a237e"
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Canny ControlNet",
@@ -402,17 +411,17 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
         )
 
         controlnet = ControlNetModel.from_pretrained(
-            "diffusers/controlnet-canny-sdxl-1.0",
+            self._local_or_repo("diffusers/controlnet-canny-sdxl-1.0"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         vae = AutoencoderKL.from_pretrained(
-            "madebyollin/sdxl-vae-fp16-fix",
+            self._local_or_repo("madebyollin/sdxl-vae-fp16-fix"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0",
+            self._local_or_repo("stabilityai/stable-diffusion-xl-base-1.0"),
             controlnet=controlnet,
             vae=vae,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,

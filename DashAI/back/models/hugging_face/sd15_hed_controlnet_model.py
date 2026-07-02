@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -166,7 +169,7 @@ class SD15HEDControlNetSchema(BaseSchema):
     )  # type: ignore
 
 
-class SD15HEDControlNetModel(BaseControlNetModel):
+class SD15HEDControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     """HED soft-edge-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
 
     Takes an input image and a text prompt. Soft edge maps are extracted from
@@ -188,6 +191,11 @@ class SD15HEDControlNetModel(BaseControlNetModel):
     """
 
     SCHEMA = SD15HEDControlNetSchema
+    HF_REPOS = [
+        ("runwayml/stable-diffusion-v1-5", "model"),
+        ("lllyasviel/sd-controlnet-hed", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 5400000000
     COLOR: str = "#006064"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 HED ControlNet",
@@ -305,12 +313,12 @@ class SD15HEDControlNetModel(BaseControlNetModel):
         self.hed_detector = HEDdetector.from_pretrained("lllyasviel/Annotators")
 
         controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/sd-controlnet-hed",
+            self._local_or_repo("lllyasviel/sd-controlnet-hed"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
-            "runwayml/stable-diffusion-v1-5",
+            self._local_or_repo("runwayml/stable-diffusion-v1-5"),
             controlnet=controlnet,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)

@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -162,7 +165,7 @@ class SD15OpenPoseControlNetSchema(BaseSchema):
     )  # type: ignore
 
 
-class SD15OpenPoseControlNetModel(BaseControlNetModel):
+class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     """OpenPose-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
 
     Takes an input image and a text prompt. Human body keypoints and skeleton
@@ -183,6 +186,11 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
     """
 
     SCHEMA = SD15OpenPoseControlNetSchema
+    HF_REPOS = [
+        ("runwayml/stable-diffusion-v1-5", "model"),
+        ("lllyasviel/sd-controlnet-openpose", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 5400000000
     COLOR: str = "#880e4f"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 OpenPose ControlNet",
@@ -298,12 +306,12 @@ class SD15OpenPoseControlNetModel(BaseControlNetModel):
         self.pose_detector = OpenposeDetector.from_pretrained("lllyasviel/Annotators")
 
         controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/sd-controlnet-openpose",
+            self._local_or_repo("lllyasviel/sd-controlnet-openpose"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
-            "runwayml/stable-diffusion-v1-5",
+            self._local_or_repo("runwayml/stable-diffusion-v1-5"),
             controlnet=controlnet,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)

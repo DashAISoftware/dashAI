@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -205,11 +208,17 @@ def get_depth_map(image, device):
     return image
 
 
-class StableDiffusionXLV1ControlNet(BaseControlNetModel):
+class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
     """A wrapper implementation of ControlNet with depth preprocessing and stable
     diffusion xl 1.0 as pipeline."""
 
     SCHEMA = StableDiffusionXLV1ControlNetSchema
+    HF_REPOS = [
+        ("stabilityai/stable-diffusion-xl-base-1.0", "model"),
+        ("diffusers/controlnet-depth-sdxl-1.0-small", "model"),
+        ("madebyollin/sdxl-vae-fp16-fix", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 10000000000
     COLOR: str = "#e65100"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL V1 ControlNet",
@@ -313,19 +322,19 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
         )
 
         self.controlnet = ControlNetModel.from_pretrained(
-            "diffusers/controlnet-depth-sdxl-1.0-small",
+            self._local_or_repo("diffusers/controlnet-depth-sdxl-1.0-small"),
             variant="fp16",
             use_safetensors=True,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.vae = AutoencoderKL.from_pretrained(
-            "madebyollin/sdxl-vae-fp16-fix",
+            self._local_or_repo("madebyollin/sdxl-vae-fp16-fix"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0",
+            self._local_or_repo("stabilityai/stable-diffusion-xl-base-1.0"),
             controlnet=self.controlnet,
             vae=self.vae,
             variant="fp16",

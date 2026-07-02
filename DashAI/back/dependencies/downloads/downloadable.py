@@ -159,6 +159,32 @@ class HFDownloadableMixin(DownloadableMixin):
         )
 
     @classmethod
+    def _local_or_repo(cls, repo_id: str) -> str:
+        """Return the local dir for a repo if downloaded, else the repo id.
+
+        Lets multi-repo components (e.g. ControlNet pipelines) load each repo
+        from the component's own download folder when present, falling back to
+        the Hub otherwise. Downloading is enforced by the run/session gates.
+
+        Parameters
+        ----------
+        repo_id : str
+            HuggingFace repo identifier.
+
+        Returns
+        -------
+        str
+            A local path (when the repo is present) or ``repo_id``.
+        """
+        try:
+            target = cls._repo_dir(repo_id)
+            if target.is_dir() and any(target.iterdir()):
+                return str(target)
+        except Exception:
+            pass
+        return repo_id
+
+    @classmethod
     def download(cls, report: Optional[ProgressReporter] = None) -> None:
         """Download all repos listed in ``hf_repos()`` into ``component_dir()``.
 
