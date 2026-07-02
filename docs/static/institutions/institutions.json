@@ -11,6 +11,14 @@
       "small": true
     },
     {
+      "id": "fcfm",
+      "name": "Fcfm",
+      "fullName": "Facultad de Ciencias Físicas y Matemáticas",
+      "role": "Leading Institution",
+      "url": "https://www.fcfm.uchile.cl/",
+      "logo": "img/institutions/fcfm-logo.png"
+    },
+    {
       "id": "cenia",
       "name": "CENIA",
       "fullName": "National Center for Artificial Intelligence",
