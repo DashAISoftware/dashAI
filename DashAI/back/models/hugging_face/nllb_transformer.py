@@ -9,6 +9,9 @@ from sklearn.exceptions import NotFittedError
 
 from DashAI.back.core.schema_fields import schema_field, string_field
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformerSchema,
 )
@@ -121,7 +124,7 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
     )  # type: ignore
 
 
-class NllbTransformer(TranslationModel):
+class NllbTransformer(HFPretrainedDownloadMixin, TranslationModel):
     """Pretrained transformer for configurable multilingual translation.
 
     This model fine-tunes the ``facebook/nllb-200-distilled-600M`` checkpoint from
@@ -201,7 +204,10 @@ class NllbTransformer(TranslationModel):
 
         raise ValueError(f"Unsupported {field_name} '{language_code}'.")
 
-    def __init__(self, model=None, **kwargs):
+    MODEL_NAME: str = "facebook/nllb-200-distilled-600M"
+    DOWNLOAD_SIZE_BYTES: int = 2_400_000_000
+
+    def __init__(self, model=None, pretrained_dir=None, **kwargs):
         """Initialize the NLLB tokenizer and model.
 
         Downloads the ``facebook/nllb-200-distilled-600M`` tokenizer and,
@@ -231,7 +237,7 @@ class NllbTransformer(TranslationModel):
 
         from transformers import AutoTokenizer
 
-        self.model_name = "facebook/nllb-200-distilled-600M"
+        self.model_name = self._pretrained_source(pretrained_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
         self.source_language = kwargs.get("source_language", "spa_Latn")
@@ -533,6 +539,7 @@ class NllbTransformer(TranslationModel):
         save_dir.mkdir(parents=True, exist_ok=True)
 
         self.model.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
         config = AutoConfig.from_pretrained(save_dir)
         config.custom_params = {
             "num_train_epochs": self.training_args.get("num_train_epochs"),
@@ -573,6 +580,7 @@ class NllbTransformer(TranslationModel):
 
         loaded_model = cls(
             model=model,
+            pretrained_dir=str(filename),
             num_train_epochs=custom_params.get("num_train_epochs"),
             batch_size=custom_params.get("batch_size"),
             learning_rate=custom_params.get("learning_rate"),

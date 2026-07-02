@@ -183,3 +183,53 @@ class HFDownloadableMixin(DownloadableMixin):
             snapshot_download(
                 repo_id=rid, repo_type=rtype, local_dir=str(target), **kwargs
             )
+
+
+class HFPretrainedDownloadMixin(HFDownloadableMixin):
+    """HuggingFace mixin for models built around a single ``MODEL_NAME`` repo.
+
+    Covers the common ``from_pretrained`` case: the repo is derived from the
+    subclass ``MODEL_NAME`` and ``_pretrained_source`` returns where to load
+    from (a saved run, the local download folder, or the Hub as a fallback).
+    """
+
+    MODEL_NAME: str = ""
+
+    @classmethod
+    def hf_repos(cls):
+        """Derive the single repo entry from ``MODEL_NAME``.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            ``[(MODEL_NAME, "model")]`` or an empty list when unset.
+        """
+        return [(cls.MODEL_NAME, "model")] if cls.MODEL_NAME else []
+
+    def _pretrained_source(self, pretrained_dir: Optional[str] = None) -> str:
+        """Resolve where ``from_pretrained`` should load from.
+
+        Prefers an explicit ``pretrained_dir`` (a saved run), then the local
+        component download folder when present, and finally falls back to the
+        Hub repo id. Downloading is enforced by the run/session gates before
+        real use; the Hub fallback keeps direct instantiation working when
+        nothing has been downloaded.
+
+        Parameters
+        ----------
+        pretrained_dir : str or None
+            Directory of a previously saved run, if any.
+
+        Returns
+        -------
+        str
+            A path or repo id accepted by ``from_pretrained``.
+        """
+        if pretrained_dir:
+            return pretrained_dir
+        try:
+            if self.is_downloaded():
+                return str(self._repo_dir(self.MODEL_NAME))
+        except Exception:
+            pass
+        return self.MODEL_NAME

@@ -9,6 +9,9 @@ from sklearn.exceptions import NotFittedError
 
 from DashAI.back.core.schema_fields import enum_field, schema_field
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformerSchema,
 )
@@ -73,7 +76,7 @@ class T5SmallTransformerSchema(OpusMtEnESTransformerSchema):
     )  # type: ignore
 
 
-class T5SmallTransformer(TranslationModel):
+class T5SmallTransformer(HFPretrainedDownloadMixin, TranslationModel):
     """T5-small seq2seq model for English-to-{German, French, Romanian} translation.
 
     Fine-tunes the ``t5-small`` checkpoint from Google. Translation direction is
@@ -127,13 +130,15 @@ class T5SmallTransformer(TranslationModel):
     )
     COLOR: str = "#00695C"
     ICON: str = "Language"
+    MODEL_NAME: str = "t5-small"
+    DOWNLOAD_SIZE_BYTES: int = 240_000_000
 
-    def __init__(self, model=None, **kwargs):
+    def __init__(self, model=None, pretrained_dir=None, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
 
         from transformers import AutoTokenizer
 
-        self.model_name = "t5-small"
+        self.model_name = self._pretrained_source(pretrained_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
         self.target_language = kwargs.get("target_language", "German")
@@ -318,6 +323,7 @@ class T5SmallTransformer(TranslationModel):
         save_dir.mkdir(parents=True, exist_ok=True)
 
         self.model.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
         config = AutoConfig.from_pretrained(save_dir)
         config.custom_params = {
             "num_train_epochs": self.training_args.get("num_train_epochs"),
@@ -341,6 +347,7 @@ class T5SmallTransformer(TranslationModel):
 
         loaded_model = cls(
             model=model,
+            pretrained_dir=str(filename),
             num_train_epochs=custom_params.get("num_train_epochs"),
             batch_size=custom_params.get("batch_size"),
             learning_rate=custom_params.get("learning_rate"),
