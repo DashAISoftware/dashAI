@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -25,67 +28,6 @@ class StableDiffusionSchema(BaseSchema):
     reproducibility (``seed``), hardware target (``device``), and batch size
     (``num_images_per_prompt``) for ``StableDiffusionV3Model``.
     """
-
-    model_name: schema_field(
-        enum_field(
-            enum=[
-                "stabilityai/stable-diffusion-3-medium-diffusers",
-                "stabilityai/stable-diffusion-3.5-medium",
-                "stabilityai/stable-diffusion-3.5-large",
-                "stabilityai/stable-diffusion-3.5-large-turbo",
-            ]
-        ),
-        placeholder="stabilityai/stable-diffusion-3-medium-diffusers",
-        description=MultilingualString(
-            en=(
-                "The SD3/SD3.5 checkpoint to load. 'sd-3-medium' is the baseline "
-                "2B-parameter model. 'sd-3.5-medium' improves quality at similar "
-                "speed. 'sd-3.5-large' (8B) delivers the highest quality but needs "
-                "more VRAM. 'sd-3.5-large-turbo' is a distilled large model that "
-                "requires far fewer steps (4-8) for fast high-quality generation. "
-                "All variants target 1024x1024 px natively."
-            ),
-            es=(
-                "El checkpoint SD3/SD3.5 a cargar. 'sd-3-medium' es el modelo base "
-                "de 2B parámetros. 'sd-3.5-medium' mejora la calidad a velocidad "
-                "similar. 'sd-3.5-large' (8B) ofrece la mayor calidad pero necesita "
-                "más VRAM. 'sd-3.5-large-turbo' es un modelo large destilado que "
-                "requiere muchos menos pasos (4-8) para generación rápida de alta "
-                "calidad. Todas las variantes apuntan a 1024x1024 px de forma nativa."
-            ),
-            pt=(
-                "O checkpoint SD3/SD3.5 a carregar. 'sd-3-medium' é o modelo base "
-                "de 2B parâmetros. 'sd-3.5-medium' melhora a qualidade a velocidade "
-                "similar. 'sd-3.5-large' (8B) oferece a maior qualidade mas precisa "
-                "de mais VRAM. 'sd-3.5-large-turbo' é um modelo large destilado que "
-                "requer muito menos passos (4-8) para geração rápida de alta "
-                "qualidade. "
-                "Todas as variantes visam 1024x1024 px nativamente."
-            ),
-            de=(
-                "Der zu ladende SD3/SD3.5-Checkpoint. 'sd-3-medium' ist das "
-                "2B-Parameter-Basismodell. 'sd-3.5-medium' verbessert die Qualität "
-                "bei ähnlicher Geschwindigkeit. 'sd-3.5-large' (8B) liefert die höchste"
-                "Qualität, benötigt aber mehr VRAM. 'sd-3.5-large-turbo' ist ein "
-                "destilliertes Large-Modell, das deutlich weniger Schritte (4-8) für "
-                "schnelle hochwertige Generierung benötigt. "
-                "Alle Varianten zielen nativ auf 1024x1024 px ab."
-            ),
-            zh=(
-                "要加载的 SD3/SD3.5 检查点。'sd-3-medium' 是 2B 参数基准模型。"
-                "'sd-3.5-medium' 以相近速度提升质量。'sd-3.5-large'（8B）质量最高但"
-                "需要更多显存。'sd-3.5-large-turbo' 是蒸馏版大模型，仅需 4-8 步即可"
-                "快速生成高质量图像。所有变体原生目标分辨率为 1024x1024 像素。"
-            ),
-        ),
-        alias=MultilingualString(
-            en="Model name",
-            es="Nombre del modelo",
-            pt="Nome do modelo",
-            de="Modellname",
-            zh="模型名称",
-        ),
-    )  # type: ignore
 
     huggingface_key: schema_field(
         string_field(),
@@ -454,7 +396,9 @@ class StableDiffusionSchema(BaseSchema):
     )  # type: ignore
 
 
-class StableDiffusionV3Model(TextToImageGenerationTaskModel):
+class StableDiffusion3GenerationModel(
+    HFPretrainedDownloadMixin, TextToImageGenerationTaskModel
+):
     """Multimodal Diffusion Transformer model for high-quality text-to-image generation.
 
     Wraps the Stable Diffusion 3 and 3.5 family of checkpoints from
@@ -477,6 +421,7 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = StableDiffusionSchema
+    MODEL_NAME: str = ""
     COLOR: str = "#6a1b9a"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion V3",
@@ -544,9 +489,7 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get(
-            "model_name", "stabilityai/stable-diffusion-3-medium-diffusers"
-        )
+        self.model_name = self._pretrained_source(None)
         self.huggingface_key = kwargs.get("huggingface_key")
 
         if self.huggingface_key:
@@ -613,3 +556,107 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
         output = self.model(**params)
 
         return output.images
+
+
+class StableDiffusion3Medium(StableDiffusion3GenerationModel):
+    """Stable Diffusion 3 Medium checkpoint (gated).
+
+    Downloads its checkpoint into the component's own download folder. This is
+    a gated Hugging Face repo; downloading requires prior authentication
+    (an HF token in the environment).
+    """
+
+    MODEL_NAME: str = "stabilityai/stable-diffusion-3-medium-diffusers"
+    DOWNLOAD_SIZE_BYTES: int = 5500000000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 3 Medium",
+        es="Stable Diffusion 3 Medium",
+        pt="Stable Diffusion 3 Medium",
+        de="Stable Diffusion 3 Medium",
+        zh="Stable Diffusion 3 Medium",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Stable Diffusion 3 Medium checkpoint (gated).",
+        es="Stable Diffusion 3 Medium checkpoint (gated).",
+        pt="Stable Diffusion 3 Medium checkpoint (gated).",
+        de="Stable Diffusion 3 Medium checkpoint (gated).",
+        zh="Stable Diffusion 3 Medium checkpoint (gated).",
+    )
+
+
+class StableDiffusion35Medium(StableDiffusion3GenerationModel):
+    """Stable Diffusion 3.5 Medium checkpoint (gated).
+
+    Downloads its checkpoint into the component's own download folder. This is
+    a gated Hugging Face repo; downloading requires prior authentication
+    (an HF token in the environment).
+    """
+
+    MODEL_NAME: str = "stabilityai/stable-diffusion-3.5-medium"
+    DOWNLOAD_SIZE_BYTES: int = 10000000000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 3.5 Medium",
+        es="Stable Diffusion 3.5 Medium",
+        pt="Stable Diffusion 3.5 Medium",
+        de="Stable Diffusion 3.5 Medium",
+        zh="Stable Diffusion 3.5 Medium",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Stable Diffusion 3.5 Medium checkpoint (gated).",
+        es="Stable Diffusion 3.5 Medium checkpoint (gated).",
+        pt="Stable Diffusion 3.5 Medium checkpoint (gated).",
+        de="Stable Diffusion 3.5 Medium checkpoint (gated).",
+        zh="Stable Diffusion 3.5 Medium checkpoint (gated).",
+    )
+
+
+class StableDiffusion35Large(StableDiffusion3GenerationModel):
+    """Stable Diffusion 3.5 Large checkpoint (gated).
+
+    Downloads its checkpoint into the component's own download folder. This is
+    a gated Hugging Face repo; downloading requires prior authentication
+    (an HF token in the environment).
+    """
+
+    MODEL_NAME: str = "stabilityai/stable-diffusion-3.5-large"
+    DOWNLOAD_SIZE_BYTES: int = 16000000000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 3.5 Large",
+        es="Stable Diffusion 3.5 Large",
+        pt="Stable Diffusion 3.5 Large",
+        de="Stable Diffusion 3.5 Large",
+        zh="Stable Diffusion 3.5 Large",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Stable Diffusion 3.5 Large checkpoint (gated).",
+        es="Stable Diffusion 3.5 Large checkpoint (gated).",
+        pt="Stable Diffusion 3.5 Large checkpoint (gated).",
+        de="Stable Diffusion 3.5 Large checkpoint (gated).",
+        zh="Stable Diffusion 3.5 Large checkpoint (gated).",
+    )
+
+
+class StableDiffusion35LargeTurbo(StableDiffusion3GenerationModel):
+    """Stable Diffusion 3.5 Large Turbo checkpoint (gated).
+
+    Downloads its checkpoint into the component's own download folder. This is
+    a gated Hugging Face repo; downloading requires prior authentication
+    (an HF token in the environment).
+    """
+
+    MODEL_NAME: str = "stabilityai/stable-diffusion-3.5-large-turbo"
+    DOWNLOAD_SIZE_BYTES: int = 16000000000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion 3.5 Large Turbo",
+        es="Stable Diffusion 3.5 Large Turbo",
+        pt="Stable Diffusion 3.5 Large Turbo",
+        de="Stable Diffusion 3.5 Large Turbo",
+        zh="Stable Diffusion 3.5 Large Turbo",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
+        es="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
+        pt="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
+        de="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
+        zh="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
+    )

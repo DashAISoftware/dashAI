@@ -219,7 +219,10 @@ from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
     StableDiffusion21_512,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
-    StableDiffusionV3Model,
+    StableDiffusion3Medium,
+    StableDiffusion35Large,
+    StableDiffusion35LargeTurbo,
+    StableDiffusion35Medium,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
     RealVisXLV4,
@@ -413,7 +416,10 @@ def get_initial_components():
         StableDiffusion2_512,
         StableDiffusion21,
         StableDiffusion21_512,
-        StableDiffusionV3Model,
+        StableDiffusion3Medium,
+        StableDiffusion35Medium,
+        StableDiffusion35Large,
+        StableDiffusion35LargeTurbo,
         StableDiffusionXL,
         RealVisXLV4,
         StableDiffusionXLV1ControlNet,
