@@ -40,6 +40,11 @@ class _FakeRegistry:
     def get_components_by_types(self, select=None, ignore=None):
         return self._real.get_components_by_types(select=select, ignore=ignore)
 
+    def refresh_download_status(self, name):
+        if name == "FakeDownloadableModel":
+            return _FakeDownloadableModel.is_downloaded()
+        return self._real.refresh_download_status(name)
+
     def __contains__(self, name):
         return name == "FakeDownloadableModel" or name in self._real
 

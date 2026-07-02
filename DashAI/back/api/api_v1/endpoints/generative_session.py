@@ -47,11 +47,12 @@ async def upload_generative_session(
                     detail=f"Model {params.model_name} is not registered.",
                 ) from e
 
-            # Guard: model requires download but has not been downloaded -> 409
-            entry = component_registry[params.model_name]
-            if getattr(entry["class"], "REQUIRES_DOWNLOAD", False) and not entry.get(
-                "downloaded", False
-            ):
+            # Guard: model requires download but has not been downloaded -> 409.
+            # Reconcile against the filesystem so a model downloaded after startup
+            # (in the worker process) is recognised without an API restart.
+            if getattr(
+                model_class, "REQUIRES_DOWNLOAD", False
+            ) and not component_registry.refresh_download_status(params.model_name):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(

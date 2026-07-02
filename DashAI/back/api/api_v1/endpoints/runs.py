@@ -325,17 +325,18 @@ async def upload_run(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
                 )
-            # REQUIRES_DOWNLOAD is read from the class (static contract);
-            # "downloaded" is read from the registry dict (runtime state, Task 4).
+            # REQUIRES_DOWNLOAD is the static contract; the download state is
+            # reconciled against the filesystem so a model downloaded after
+            # startup (in the worker process) is recognised without a restart.
             if params.model_name not in component_registry:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail=f"Unknown model '{params.model_name}'",
                 )
             entry = component_registry[params.model_name]
-            if getattr(entry["class"], "REQUIRES_DOWNLOAD", False) and not entry.get(
-                "downloaded", False
-            ):
+            if getattr(
+                entry["class"], "REQUIRES_DOWNLOAD", False
+            ) and not component_registry.refresh_download_status(params.model_name):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(
