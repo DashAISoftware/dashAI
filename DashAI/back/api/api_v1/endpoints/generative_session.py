@@ -38,6 +38,13 @@ async def upload_generative_session(
 
     with session_factory() as db:
         try:
+            # Guard: unknown model name -> 422
+            if params.model_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Unknown model '{params.model_name}'",
+                )
+
             # Check if the model is registered
             try:
                 model_class = component_registry[params.model_name]["class"]
@@ -46,6 +53,18 @@ async def upload_generative_session(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Model {params.model_name} is not registered.",
                 ) from e
+
+            # Guard: model requires download but has not been downloaded -> 409
+            entry = component_registry[params.model_name]
+            if getattr(entry["class"], "REQUIRES_DOWNLOAD", False) and not entry.get(
+                "downloaded", False
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"Model {params.model_name} must be downloaded before use."
+                    ),
+                )
 
             # Check if the model is a subclass of GenerativeModel
             if not issubclass(model_class, BaseGenerativeModel):
