@@ -59,6 +59,7 @@ class MultilingualBertTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Translate"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "bert-base-multilingual-cased"
+    DOWNLOAD_SIZE_BYTES: int = 680_000_000
     TEMP_CHECKPOINT_DIR: str = (
         "DashAI/back/user_models/temp_checkpoints_multilingual_bert"
     )

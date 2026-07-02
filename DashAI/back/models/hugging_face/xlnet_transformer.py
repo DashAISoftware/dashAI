@@ -58,4 +58,5 @@ class XlnetTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "AutoAwesome"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "xlnet-base-cased"
+    DOWNLOAD_SIZE_BYTES: int = 470_000_000
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_xlnet"

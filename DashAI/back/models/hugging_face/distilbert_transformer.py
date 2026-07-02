@@ -305,4 +305,5 @@ class DistilBertTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Psychology"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "distilbert-base-uncased"
+    DOWNLOAD_SIZE_BYTES: int = 270_000_000
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_distilbert"

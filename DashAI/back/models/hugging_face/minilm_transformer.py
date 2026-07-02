@@ -58,4 +58,5 @@ class MiniLMTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Speed"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "microsoft/MiniLM-L12-H384-uncased"
+    DOWNLOAD_SIZE_BYTES: int = 130_000_000
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_minilm"

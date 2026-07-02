@@ -59,4 +59,5 @@ class AlbertTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Speed"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "albert-base-v2"
+    DOWNLOAD_SIZE_BYTES: int = 47_000_000
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_albert"

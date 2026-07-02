@@ -55,5 +55,6 @@ class ModernBertTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Psychology"
     SCHEMA = ModernBertTransformerSchema
     MODEL_NAME: str = "answerdotai/ModernBERT-base"
+    DOWNLOAD_SIZE_BYTES: int = 600_000_000
     MAX_TOKEN_LENGTH: int = 8192
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_modernbert"
