@@ -156,7 +156,10 @@ from DashAI.back.models.hugging_face.mistral_model import (
     Mistral7BInstructV03,
     MistralNemoInstruct2407,
 )
-from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
+from DashAI.back.models.hugging_face.mixtral_model import (
+    Mixtral8x7BInstructQ2K,
+    Mixtral8x7BInstructQ4KM,
+)
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
 from DashAI.back.models.hugging_face.multilingual_bert_transformer import (
     MultilingualBertTransformer,
@@ -367,7 +370,8 @@ def get_initial_components():
         MiniLMTransformer,
         Mistral7BInstructV03,
         MistralNemoInstruct2407,
-        MixtralModel,
+        Mixtral8x7BInstructQ2K,
+        Mixtral8x7BInstructQ4KM,
         MultilingualBertTransformer,
         MLPClassifier,
         MLPRegression,

@@ -16,6 +16,10 @@ from DashAI.back.models.hugging_face.mistral_model import (
     Mistral7BInstructV03,
     MistralNemoInstruct2407,
 )
+from DashAI.back.models.hugging_face.mixtral_model import (
+    Mixtral8x7BInstructQ2K,
+    Mixtral8x7BInstructQ4KM,
+)
 from DashAI.back.models.hugging_face.qwen_model import (
     Qwen25_05BInstruct,
     Qwen25_15BInstruct,
@@ -35,6 +39,8 @@ ALL_CHECKPOINTS = [
     Llama32_3BInstruct,
     Mistral7BInstructV03,
     MistralNemoInstruct2407,
+    Mixtral8x7BInstructQ4KM,
+    Mixtral8x7BInstructQ2K,
 ]
 
 
@@ -85,5 +91,11 @@ def test_new_classes_registered_old_ones_gone():
     registered = {c.__name__ for c in get_initial_components()}
     for cls in ALL_CHECKPOINTS:
         assert cls.__name__ in registered
-    for old in {"QwenModel", "SmolLMModel", "LlamaModel", "MistralModel"}:
+    for old in {
+        "QwenModel",
+        "SmolLMModel",
+        "LlamaModel",
+        "MistralModel",
+        "MixtralModel",
+    }:
         assert old not in registered
