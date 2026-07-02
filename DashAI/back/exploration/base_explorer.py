@@ -12,6 +12,23 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
+try:
+    from _plotly_utils.utils import PlotlyJSONEncoder as _PlotlyJSONEncoder
+
+    if not getattr(_PlotlyJSONEncoder, "_dashai_bytes_patch", False):
+        _plotly_orig_default = _PlotlyJSONEncoder.default
+
+        def _plotly_default_with_bytes(self, obj):
+            if isinstance(obj, (bytes, bytearray)):
+                return obj.decode("utf-8", "replace")
+            return _plotly_orig_default(self, obj)
+
+        _PlotlyJSONEncoder.default = _plotly_default_with_bytes
+        _PlotlyJSONEncoder._dashai_bytes_patch = True
+except Exception:
+    pass
+
+
 class BaseExplorerSchema(BaseSchema):
     """
     Base schema for explorers, it defines the parameters to be used in each explorer.

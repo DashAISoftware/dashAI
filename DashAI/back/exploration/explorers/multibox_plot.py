@@ -264,16 +264,25 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         _df = dataset.to_pandas()
         cols = [col["columnName"] for col in explorer_info.columns]
 
+        def _decode(values):
+            return [
+                v.decode("utf-8", "replace") if isinstance(v, (bytes, bytearray)) else v
+                for v in values
+            ]
+
         opposite_axis = (
-            _df[self.opposite_axis] if self.opposite_axis is not None else None
+            _decode(_df[self.opposite_axis].tolist())
+            if self.opposite_axis is not None
+            else None
         )
 
         fig = go.Figure()
         for col in cols:
+            col_values = _decode(_df[col].tolist())
             fig.add_trace(
                 go.Box(
-                    x=_df[col] if self.horizontal else opposite_axis,
-                    y=opposite_axis if self.horizontal else _df[col],
+                    x=col_values if self.horizontal else opposite_axis,
+                    y=opposite_axis if self.horizontal else col_values,
                     name=col,
                     boxpoints=self.points,
                 )
@@ -322,13 +331,28 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         str
             The path of the saved file as a POSIX string.
         """
+        import json
         import os
         from pathlib import Path
+
+        import numpy as np
 
         filename = f"{explorer_info.id}.pickle"
         path = Path(os.path.join(save_path, filename))
 
-        result.write_json(path.as_posix())
+        def _default(o):
+            if isinstance(o, (bytes, bytearray)):
+                return o.decode("utf-8", "replace")
+            if isinstance(o, np.ndarray):
+                return o.tolist()
+            if isinstance(o, np.generic):
+                return o.item()
+            raise TypeError(
+                f"Object of type {type(o).__name__} is not JSON serializable"
+            )
+
+        with open(path.as_posix(), "w", encoding="utf-8") as f:
+            json.dump(result.to_dict(), f, default=_default)
 
         return path.as_posix()
 
