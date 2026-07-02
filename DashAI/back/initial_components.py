@@ -145,10 +145,17 @@ from DashAI.back.models.hugging_face.beto_transformer import BetoTransformer
 from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Transformer
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.electra_transformer import ElectraTransformer
-from DashAI.back.models.hugging_face.llama_model import LlamaModel
+from DashAI.back.models.hugging_face.llama_model import (
+    Llama31_8BInstruct,
+    Llama32_1BInstruct,
+    Llama32_3BInstruct,
+)
 from DashAI.back.models.hugging_face.m2m100_transformer import M2M100Transformer
 from DashAI.back.models.hugging_face.minilm_transformer import MiniLMTransformer
-from DashAI.back.models.hugging_face.mistral_model import MistralModel
+from DashAI.back.models.hugging_face.mistral_model import (
+    Mistral7BInstructV03,
+    MistralNemoInstruct2407,
+)
 from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
 from DashAI.back.models.hugging_face.multilingual_bert_transformer import (
@@ -174,7 +181,10 @@ from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
-from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen25_05BInstruct,
+    Qwen25_15BInstruct,
+)
 from DashAI.back.models.hugging_face.roberta_transformer import RobertaTransformer
 from DashAI.back.models.hugging_face.sd15_depth_controlnet_model import (
     SD15DepthControlNetModel,
@@ -189,7 +199,10 @@ from DashAI.back.models.hugging_face.sdxl_canny_controlnet_model import (
     SDXLCannyControlNetModel,
 )
 from DashAI.back.models.hugging_face.sdxl_turbo_model import SDXLTurboModel
-from DashAI.back.models.hugging_face.smol_lm_model import SmolLMModel
+from DashAI.back.models.hugging_face.smol_lm_model import (
+    SmolLM2_17BInstruct,
+    SmolLM2_360MInstruct,
+)
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
 )
@@ -346,11 +359,14 @@ def get_initial_components():
         LinearRegression,
         LinearSVCClassifier,
         LinearSVR,
-        LlamaModel,
+        Llama31_8BInstruct,
+        Llama32_1BInstruct,
+        Llama32_3BInstruct,
         LogisticRegression,
         M2M100Transformer,
         MiniLMTransformer,
-        MistralModel,
+        Mistral7BInstructV03,
+        MistralNemoInstruct2407,
         MixtralModel,
         MultilingualBertTransformer,
         MLPClassifier,
@@ -364,7 +380,8 @@ def get_initial_components():
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
         PixArtSigmaModel,
-        QwenModel,
+        Qwen25_05BInstruct,
+        Qwen25_15BInstruct,
         RandomForestClassifier,
         RobertaTransformer,
         RandomForestRegression,
@@ -375,7 +392,8 @@ def get_initial_components():
         SDXLCannyControlNetModel,
         SDXLTurboModel,
         SGDClassifier,
-        SmolLMModel,
+        SmolLM2_360MInstruct,
+        SmolLM2_17BInstruct,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
         StableDiffusionXLModel,
