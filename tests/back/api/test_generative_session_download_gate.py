@@ -100,9 +100,14 @@ def _create_sd_session(client, name):
     )
 
 
-def test_change_session_model_to_undownloaded_returns_409(client):
-    """Switching a session to a not-downloaded model must return HTTP 409."""
-    created = _create_sd_session(client, "gen-switch-409")
+def test_change_session_model_to_undownloaded_succeeds(client):
+    """Switching to a not-downloaded model is allowed; the chat gates its use.
+
+    A user may point a session at any registered generative model even if its
+    weights are not present yet; the download is offered from the chat instead
+    of being blocked at switch time.
+    """
+    created = _create_sd_session(client, "gen-switch-undownloaded")
     assert created.status_code == 201
     session_id = created.json()["id"]
 
@@ -110,8 +115,8 @@ def test_change_session_model_to_undownloaded_returns_409(client):
         f"/api/v1/generative-session/{session_id}",
         params={"model_name": "Qwen25_15BInstruct"},
     )
-    assert resp.status_code == 409
-    assert "download" in resp.json()["detail"].lower()
+    assert resp.status_code == 200
+    assert resp.json()["model_name"] == "Qwen25_15BInstruct"
 
     client.delete(f"/api/v1/generative-session/{session_id}")
 
@@ -144,5 +149,39 @@ def test_change_session_model_valid_returns_200(client):
     )
     assert resp.status_code == 200
     assert resp.json()["model_name"] == "StableDiffusionV2Model"
+
+    client.delete(f"/api/v1/generative-session/{session_id}")
+
+
+def test_switch_model_resets_params_and_records_history(client):
+    """A switch resets params to the new model's defaults and logs the change."""
+    created = _create_sd_session(client, "gen-switch-history")
+    assert created.status_code == 201
+    session_id = created.json()["id"]
+
+    resp = client.patch(
+        f"/api/v1/generative-session/{session_id}",
+        params={"model_name": "Qwen25_15BInstruct"},
+    )
+    assert resp.status_code == 200
+    params = resp.json()["parameters"]
+    # Parameters were reset to the target model's own fields, not carried over
+    # from the Stable Diffusion session.
+    assert "num_inference_steps" not in params
+    assert "max_tokens" in params
+
+    history = client.get(f"/api/v1/generative-session/parameters-history/{session_id}")
+    assert history.status_code == 200
+    model_changes = [
+        change
+        for event in history.json()
+        for change in event["changes"]
+        if change["parameter"] == "model"
+    ]
+    assert {
+        "parameter": "model",
+        "oldValue": "StableDiffusionV2Model",
+        "newValue": "Qwen25_15BInstruct",
+    } in model_changes
 
     client.delete(f"/api/v1/generative-session/{session_id}")

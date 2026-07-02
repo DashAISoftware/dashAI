@@ -39,6 +39,8 @@
     "startBySelectingATask": "Start by selecting a generative task.",
     "noSessionsFound": "No sessions found",
     "parameterChangeEvent": "Parameters updated: <1></1>",
+    "modelChangeEvent": "Model changed: <1></1>",
+    "modelNotDownloaded": "This session's model is not downloaded yet. Download it to continue.",
     "parameterChangeHistory": "Parameter change history for the current session",
     "searchSessions": "Search Sessions",
     "selectGenerativeTask": "Select a generative task to start a new session",

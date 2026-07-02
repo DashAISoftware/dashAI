@@ -74,18 +74,16 @@ export default function ModelSwitcher({
         sx={{ minWidth: 200 }}
       >
         {options.map((model) => {
-          const needsDownload =
+          // A not-downloaded model is still selectable; the chat blocks input
+          // and offers the download once it becomes the session's model.
+          const notDownloaded =
             Boolean(model.metadata?.requires_download) &&
             !model.downloaded &&
             model.name !== currentModelName;
           return (
-            <MenuItem
-              key={model.name}
-              value={model.name}
-              disabled={needsDownload}
-            >
+            <MenuItem key={model.name} value={model.name}>
               {model.display_name || model.name}
-              {needsDownload
+              {notDownloaded
                 ? ` (${t("generative:label.downloadRequired")})`
                 : ""}
             </MenuItem>

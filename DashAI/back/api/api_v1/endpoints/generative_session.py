@@ -115,6 +115,7 @@ async def upload_generative_session(
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=session.parameters,
+                model_name=session.model_name,
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)
@@ -357,6 +358,7 @@ async def update_generative_session(
         model is unknown, not a generative model, or not yet downloaded.
     """
     from DashAI.back.models.base_generative_model import BaseGenerativeModel
+
     with session_factory() as db:
         try:
             session = db.get(GenerativeSession, session_id)
@@ -395,8 +397,10 @@ async def update_generative_session(
             if description is not None:
                 setattr(session, "description", description)
 
-            # Validate and apply a model change if provided
-            if model_name is not None:
+            # Validate and apply a model change if provided. A model may be
+            # selected even when it is not downloaded yet; the chat blocks input
+            # and offers a download until the weights become available.
+            if model_name is not None and model_name != session.model_name:
                 try:
                     model_class = component_registry[model_name]["class"]
                 except KeyError as e:
@@ -409,15 +413,37 @@ async def update_generative_session(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"Model {model_name} is not a valid generative model.",
                     )
-                entry = component_registry[model_name]
-                if getattr(
-                    entry["class"], "REQUIRES_DOWNLOAD", False
-                ) and not entry.get("downloaded", False):
-                    raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail=f"Model {model_name} must be downloaded before use.",
+
+                # Resolve the parameters for the new model: reuse the most
+                # recent parameters used for it in this session, else fall back
+                # to the model's schema defaults (its field placeholders).
+                last_used = (
+                    db.query(GenerativeSessionParameterHistory)
+                    .filter(
+                        GenerativeSessionParameterHistory.session_id == session_id,
+                        GenerativeSessionParameterHistory.model_name == model_name,
                     )
-                setattr(session, "model_name", model_name)
+                    .order_by(GenerativeSessionParameterHistory.modified_at.desc())
+                    .first()
+                )
+                if last_used is not None:
+                    new_parameters = last_used.parameters
+                else:
+                    properties = model_class.get_schema().get("properties", {})
+                    new_parameters = {
+                        key: prop.get("placeholder") for key, prop in properties.items()
+                    }
+
+                session.model_name = model_name
+                session.parameters = new_parameters
+                db.add(
+                    GenerativeSessionParameterHistory(
+                        session_id=session.id,
+                        parameters=new_parameters,
+                        model_name=model_name,
+                        modified_at=datetime.now(),
+                    )
+                )
 
             if name is not None or description is not None or model_name is not None:
                 session.last_modified = datetime.now()
@@ -489,6 +515,7 @@ async def update_generative_session_params(
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=updated_parameters,
+                model_name=session.model_name,
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)
@@ -617,26 +644,42 @@ async def get_parameter_history_entry(
             )
 
             parameters_history = [p.__dict__ for p in parameters_history]
+            if not parameters_history:
+                return []
 
             events = []
             prev_params = parameters_history[0]["parameters"]
+            prev_model = parameters_history[0].get("model_name")
 
             for i in range(1, len(parameters_history)):
                 curr = parameters_history[i]
                 curr_params = curr["parameters"]
+                curr_model = curr.get("model_name")
                 changes = []
 
-                for key in curr_params:
-                    old_val = prev_params.get(key)
-                    new_val = curr_params[key]
-                    if old_val != new_val:
-                        changes.append(
-                            {
-                                "parameter": key,
-                                "oldValue": old_val,
-                                "newValue": new_val,
-                            }
-                        )
+                # A model switch resets parameters to the new model's own
+                # values, so the raw parameter diff would be noise; report only
+                # the model change for that entry.
+                if curr_model and prev_model and curr_model != prev_model:
+                    changes.append(
+                        {
+                            "parameter": "model",
+                            "oldValue": prev_model,
+                            "newValue": curr_model,
+                        }
+                    )
+                else:
+                    for key in curr_params:
+                        old_val = prev_params.get(key)
+                        new_val = curr_params[key]
+                        if old_val != new_val:
+                            changes.append(
+                                {
+                                    "parameter": key,
+                                    "oldValue": old_val,
+                                    "newValue": new_val,
+                                }
+                            )
 
                 events.append(
                     {
@@ -646,6 +689,7 @@ async def get_parameter_history_entry(
                     }
                 )
                 prev_params = curr_params
+                prev_model = curr_model
 
             return events
 

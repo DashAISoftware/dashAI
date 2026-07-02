@@ -39,6 +39,8 @@
     "startBySelectingATask": "Beginnen Sie mit der Auswahl einer generativen Aufgabe.",
     "noSessionsFound": "Keine Sitzungen gefunden",
     "parameterChangeEvent": "Parameter aktualisiert: <1></1>",
+    "modelChangeEvent": "Modell geändert: <1></1>",
+    "modelNotDownloaded": "Das Modell dieser Sitzung ist noch nicht heruntergeladen. Laden Sie es herunter, um fortzufahren.",
     "parameterChangeHistory": "Parameteränderungsverlauf für die aktuelle Sitzung",
     "searchSessions": "Sitzungen suchen",
     "selectGenerativeTask": "Generative Aufgabe für neue Sitzung auswählen",

@@ -192,13 +192,34 @@ export function CreateSessionProvider({ children }) {
     [existingSessions],
   );
 
+  // A model whose download was removed can no longer be used to create a
+  // session, so it must not stay selected.
+  const isUnavailable = (model) =>
+    Boolean(model?.metadata?.requires_download) && !model?.downloaded;
+
   // Sync selectedModel from URL param on load and after language-triggered
   // model refetch so display_name / description reflect the active language.
+  // If the URL points at a model that is no longer downloaded, drop back to
+  // the model selection step.
   useEffect(() => {
     if (!modelName || models.length === 0) return;
     const match = models.find((m) => m.name === modelName);
-    if (match) handleSelectModel(match);
+    if (!match) return;
+    if (isUnavailable(match)) {
+      setSelectedModel(null);
+      navigate("/app/generative/sessions/new");
+    } else {
+      handleSelectModel(match);
+    }
   }, [modelName, models]);
+
+  // On the selection step, deselect a model if its download disappears (e.g.
+  // deleted from the inline control) after a models refetch.
+  useEffect(() => {
+    if (!selectedModel) return;
+    const match = models.find((m) => m.name === selectedModel.name);
+    if (match && isUnavailable(match)) setSelectedModel(null);
+  }, [models]);
 
   const handleNext = () => {
     if (step === 0 && selectedModel)
