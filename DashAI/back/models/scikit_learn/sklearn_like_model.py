@@ -22,6 +22,37 @@ class SklearnLikeModel(CategoricalEncoderMixin, BaseModel):
         super().__init__(*args, **kwargs)
         self._setup_categorical_encoders()
 
+    def save(self, filename: str) -> None:
+        """Serialise the model to disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Destination file path where the model will be written.
+        """
+        import joblib
+
+        joblib.dump(self, filename)
+
+    @staticmethod
+    def load(filename: str) -> None:
+        """Deserialise a model from disk using joblib.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file previously written by :meth:`save`.
+
+        Returns
+        -------
+        SklearnLikeModel
+            The loaded model instance.
+        """
+        import joblib
+
+        model = joblib.load(filename)
+        return model
+
     # --- Methods for process the data for sklearn models ---
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
