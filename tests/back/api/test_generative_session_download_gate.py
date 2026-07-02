@@ -60,8 +60,8 @@ def test_upload_generative_session_rejects_undownloaded_model(client):
     assert "download" in resp.json()["detail"].lower()
 
 
-def test_upload_generative_session_unknown_model_422(client):
-    """POSTing a session with an unregistered model_name must return HTTP 422."""
+def test_upload_generative_session_unknown_model_400(client):
+    """POSTing a session with an unregistered model_name must return HTTP 400."""
     resp = client.post(
         "/api/v1/generative-session/",
         json={
@@ -70,4 +70,5 @@ def test_upload_generative_session_unknown_model_422(client):
             **_SESSION_PAYLOAD_BASE,
         },
     )
-    assert resp.status_code == 422
+    assert resp.status_code == 400
+    assert "is not registered" in resp.json()["detail"]
