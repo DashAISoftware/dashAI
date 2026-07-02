@@ -318,19 +318,8 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
       </Grid>
 
       <Grid size={{ xs: 12 }}>
-        <Grid container direction="row" columnSpacing={6} wrap="nowrap">
-          <Grid size={{ xs: 4, md: 12 }}>
-            <TextField
-              label="Name (optional)"
-              value={explorerData.name}
-              onChange={(e) =>
-                setExplorerData({ ...explorerData, name: e.target.value })
-              }
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 9 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
             <Autocomplete
               loading={loading}
               disablePortal
@@ -348,6 +337,17 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
               }}
               value={value}
               onChange={handleSelectExplorer}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 9 }}>
+            <TextField
+              label="Name (optional)"
+              value={explorerData.name}
+              onChange={(e) =>
+                setExplorerData({ ...explorerData, name: e.target.value })
+              }
+              fullWidth
             />
           </Grid>
 
