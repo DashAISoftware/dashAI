@@ -18,6 +18,7 @@ import {
   Check as CheckIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
 
 const ALL_CATEGORY = "All";
 const SEARCH_THRESHOLD = 10;
@@ -41,8 +42,9 @@ function ComponentSelector({
   flat = false,
   tourDataFor = null,
   tourDataMatchFn = null,
+  onDownloadChange = null,
 }) {
-  const { t } = useTranslation("custom");
+  const { t } = useTranslation(["custom", "common"]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
 
@@ -107,6 +109,8 @@ function ComponentSelector({
   const renderCard = (component) => {
     const isSelected = selected?.name === component.name;
     const icon = getIcon?.(component);
+    const needsDownload =
+      Boolean(component.metadata?.requires_download) && !component.downloaded;
     const isCsvComponent =
       tourDataFor &&
       (tourDataMatchFn
@@ -116,61 +120,76 @@ function ComponentSelector({
       <Paper
         key={component.name}
         elevation={0}
-        onClick={() => handleSelect(component)}
+        onClick={needsDownload ? undefined : () => handleSelect(component)}
         data-tour={isCsvComponent ? tourDataFor : undefined}
         sx={{
           p: 3,
           display: "flex",
+          flexDirection: "column",
           gap: 3,
-          alignItems: "flex-start",
-          cursor: "pointer",
+          cursor: needsDownload ? "not-allowed" : "pointer",
           border: 1,
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
+          opacity: needsDownload ? 0.6 : 1,
           transition: "border-color 0.15s, background 0.15s",
-          "&:hover": { borderColor: "secondary.main" },
+          "&:hover": {
+            borderColor: needsDownload ? "divider" : "secondary.main",
+          },
         }}
       >
-        {icon && (
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 1,
-              bgcolor: isSelected ? "primary.main" : "action.hover",
-              color: isSelected ? "primary.contrastText" : "text.primary",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            {icon}
+        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
+          {icon && (
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 1,
+                bgcolor: isSelected ? "primary.main" : "action.hover",
+                color: isSelected ? "primary.contrastText" : "text.primary",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {icon}
+            </Box>
+          )}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+              {getLabel(component)}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                mt: 1,
+              }}
+            >
+              {getDescription(component, t("noDescriptionAvailable"))}
+            </Typography>
           </Box>
-        )}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-            {getLabel(component)}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              mt: 1,
-            }}
-          >
-            {getDescription(component, t("noDescriptionAvailable"))}
-          </Typography>
+          {isSelected && (
+            <CheckIcon
+              fontSize="small"
+              color="primary"
+              sx={{ flexShrink: 0, mt: 1 }}
+            />
+          )}
         </Box>
-        {isSelected && (
-          <CheckIcon
-            fontSize="small"
-            color="primary"
-            sx={{ flexShrink: 0, mt: 1 }}
-          />
+        {needsDownload && (
+          <Box onClick={(e) => e.stopPropagation()}>
+            <ComponentDownloadControl
+              component={component}
+              onStatusChange={(isDownloaded) => {
+                if (isDownloaded) onDownloadChange?.(component);
+              }}
+            />
+          </Box>
         )}
       </Paper>
     );
@@ -358,7 +377,9 @@ ComponentSelector.propTypes = {
   emptyText: PropTypes.string,
   getIcon: PropTypes.func,
   flat: PropTypes.bool,
+  tourDataFor: PropTypes.string,
   tourDataMatchFn: PropTypes.func,
+  onDownloadChange: PropTypes.func,
 };
 
 export default ComponentSelector;
