@@ -57,7 +57,7 @@ NODE_CONTRACTS: List[NodeContract] = [
         source=True,
         target=False,
         predecessors=[],
-        successors=["DataExploration", "Train", "SplitData"],
+        successors=["DataExploration", "Train", "SplitData", "RetrieveModel"],
         output="Dataset object",
         sourceHandles=2,
         maxOutputs=2,
@@ -300,6 +300,8 @@ def _resolve_port(
         for port in ports:
             if port.name == port_name:
                 return port
+        if len(ports) == 1:
+            return ports[0]
         raise ValueError(f"Unknown {role} port: {port_name}")
     if len(ports) == 1:
         return ports[0]

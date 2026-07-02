@@ -61,9 +61,14 @@ class RetrieveModel(BaseJob):
             context["task_name"] = self.task
 
             dataset = context["dataset"]
-            input_columns_names = get_column_names_from_indexes(
-                dataset, self.input_columns
-            )
+            if self.input_columns and all(
+                isinstance(col, str) for col in self.input_columns
+            ):
+                input_columns_names = self.input_columns
+            else:
+                input_columns_names = get_column_names_from_indexes(
+                    dataset, self.input_columns
+                )
             context["input_columns"] = input_columns_names
 
             model_class = component_registry[self.model]["class"]

@@ -723,7 +723,7 @@ async def filter_models_endpoint(
                 if params.pipeline_id and pipeline.id == params.pipeline_id:
                     continue
 
-                if not pipeline.train:
+                if not (pipeline.train or pipeline.task_and_model):
                     continue
 
                 steps = pipeline.steps
