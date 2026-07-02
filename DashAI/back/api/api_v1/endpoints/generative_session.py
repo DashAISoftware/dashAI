@@ -321,7 +321,9 @@ async def update_generative_session(
     session_id: int,
     name: Union[str, None] = None,
     description: Union[str, None] = None,
+    model_name: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Update the generative session associated with the provided ID.
 
@@ -333,9 +335,15 @@ async def update_generative_session(
         New name for the session.
     description : Union[str, None], optional
         New description for the session.
+    model_name : Union[str, None], optional
+        New model (component name) for the session. Must be a registered
+        generative model; if it requires a download it must already be
+        downloaded.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        The DashAI component registry, used to validate the new model.
 
     Returns
     -------
@@ -345,8 +353,10 @@ async def update_generative_session(
     Raises
     ------
     HTTPException
-        If the session does not exist, name is invalid, or name already exists.
+        If the session does not exist, the name is invalid or taken, or the new
+        model is unknown, not a generative model, or not yet downloaded.
     """
+    from DashAI.back.models.base_generative_model import BaseGenerativeModel
     with session_factory() as db:
         try:
             session = db.get(GenerativeSession, session_id)
@@ -385,7 +395,31 @@ async def update_generative_session(
             if description is not None:
                 setattr(session, "description", description)
 
-            if name is not None or description is not None:
+            # Validate and apply a model change if provided
+            if model_name is not None:
+                try:
+                    model_class = component_registry[model_name]["class"]
+                except KeyError as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Model {model_name} is not registered.",
+                    ) from e
+                if not issubclass(model_class, BaseGenerativeModel):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Model {model_name} is not a valid generative model.",
+                    )
+                entry = component_registry[model_name]
+                if getattr(
+                    entry["class"], "REQUIRES_DOWNLOAD", False
+                ) and not entry.get("downloaded", False):
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=f"Model {model_name} must be downloaded before use.",
+                    )
+                setattr(session, "model_name", model_name)
+
+            if name is not None or description is not None or model_name is not None:
                 session.last_modified = datetime.now()
                 db.commit()
                 db.refresh(session)
