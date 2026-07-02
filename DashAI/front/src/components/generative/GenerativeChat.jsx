@@ -268,16 +268,6 @@ export default function GenerativeChat() {
               setParamsVersion((v) => v + 1);
             }}
           />
-          <IconButton onClick={() => setSessionInfoVisible(true)}>
-            <InfoIcon
-              sx={{
-                color: "text.secondary",
-                "&:hover": {
-                  color: "text.primary",
-                },
-              }}
-            />
-          </IconButton>
         </Box>
       </Box>
 
