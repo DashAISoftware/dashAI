@@ -230,6 +230,14 @@ async def get_components(
             components_with_related_type,
         )
 
+    # Reconcile the download state of download required components against the
+    # filesystem before returning. Downloads happen in the worker process, so
+    # the in memory registry flag can be stale; a fresh check (a cheap folder
+    # stat per downloadable component) keeps the list truthful.
+    for comp_name, component_dict in selected_components.items():
+        if getattr(component_dict.get("class"), "REQUIRES_DOWNLOAD", False):
+            component_registry.refresh_download_status(comp_name)
+
     return [
         _filter_by_language(_delete_class(component_dict), accept_language)
         for component_dict in selected_components.values()
