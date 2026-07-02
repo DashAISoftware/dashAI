@@ -16,7 +16,10 @@ jest.mock("../../../utils/jobPoller", () => ({
 }));
 
 import ComponentDownloadControl from "./ComponentDownloadControl";
-import { downloadComponent } from "../../../api/component";
+import {
+  downloadComponent,
+  deleteComponentDownload,
+} from "../../../api/component";
 
 const component = {
   name: "OpusMtEnRoaTransformer",
@@ -36,6 +39,38 @@ describe("ComponentDownloadControl", () => {
     fireEvent.click(button);
     await waitFor(() =>
       expect(downloadComponent).toHaveBeenCalledWith("OpusMtEnRoaTransformer"),
+    );
+  });
+
+  it("compact mode triggers download from an icon button", async () => {
+    renderWithProviders(
+      <ComponentDownloadControl
+        compact
+        component={component}
+        onStatusChange={() => {}}
+      />,
+    );
+    const button = await screen.findByRole("button", { name: /download/i });
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(downloadComponent).toHaveBeenCalledWith("OpusMtEnRoaTransformer"),
+    );
+  });
+
+  it("shows a delete control for a downloaded component and deletes it", async () => {
+    renderWithProviders(
+      <ComponentDownloadControl
+        compact
+        component={{ ...component, downloaded: true }}
+        onStatusChange={() => {}}
+      />,
+    );
+    const button = await screen.findByRole("button", { name: /delete/i });
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(deleteComponentDownload).toHaveBeenCalledWith(
+        "OpusMtEnRoaTransformer",
+      ),
     );
   });
 });

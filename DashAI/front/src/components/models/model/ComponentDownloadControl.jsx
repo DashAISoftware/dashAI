@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Box, Button, LinearProgress, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  LinearProgress,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
@@ -18,7 +26,11 @@ const formatSize = (bytes) => {
   return `${Math.round(mb)} MB`;
 };
 
-const ComponentDownloadControl = ({ component, onStatusChange }) => {
+const ComponentDownloadControl = ({
+  component,
+  onStatusChange,
+  compact = false,
+}) => {
   const { t } = useTranslation(["common"]);
   const { enqueueSnackbar } = useSnackbar();
   const meta = component.metadata || {};
@@ -85,6 +97,36 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
       });
     }
   };
+
+  if (compact) {
+    if (downloading) {
+      return (
+        <Tooltip title={t("common:componentDownload.downloading")}>
+          <CircularProgress size={20} />
+        </Tooltip>
+      );
+    }
+    if (downloaded) {
+      return (
+        <Tooltip title={t("common:componentDownload.delete")}>
+          <IconButton size="small" color="error" onClick={handleDelete}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      );
+    }
+    return (
+      <Tooltip
+        title={t("common:componentDownload.download", {
+          size: formatSize(meta.download_size_bytes),
+        })}
+      >
+        <IconButton size="small" color="primary" onClick={handleDownload}>
+          <DownloadIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    );
+  }
 
   if (downloading) {
     return (

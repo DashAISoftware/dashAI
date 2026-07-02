@@ -243,46 +243,40 @@ export default function ModelsRightBar({ onToggle }) {
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {filteredModels.map((model, index) => {
-                    const needsDownload =
-                      Boolean(model.metadata?.requires_download) &&
-                      !model.downloaded;
+                    const requiresDownload = Boolean(
+                      model.metadata?.requires_download,
+                    );
+                    const needsDownload = requiresDownload && !model.downloaded;
                     return (
-                      <Box
+                      <ModelListItem
                         key={model.name}
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        <ModelListItem
-                          model={
-                            needsDownload
-                              ? {
-                                  ...model,
-                                  tooltip: t(
-                                    "common:componentDownload.mustDownload",
-                                  ),
-                                }
-                              : model
-                          }
-                          disabled={needsDownload}
-                          onClick={
-                            needsDownload
-                              ? undefined
-                              : () => handleModelClick(model)
-                          }
-                          data-tour={index === 0 ? "first-model" : undefined}
-                        />
-                        {needsDownload && (
-                          <ComponentDownloadControl
-                            component={model}
-                            onStatusChange={(isDownloaded) => {
-                              if (isDownloaded) fetchModels();
-                            }}
-                          />
-                        )}
-                      </Box>
+                        model={
+                          needsDownload
+                            ? {
+                                ...model,
+                                tooltip: t(
+                                  "common:componentDownload.mustDownload",
+                                ),
+                              }
+                            : model
+                        }
+                        disabled={needsDownload}
+                        onClick={
+                          needsDownload
+                            ? undefined
+                            : () => handleModelClick(model)
+                        }
+                        data-tour={index === 0 ? "first-model" : undefined}
+                        action={
+                          requiresDownload ? (
+                            <ComponentDownloadControl
+                              compact
+                              component={model}
+                              onStatusChange={() => fetchModels()}
+                            />
+                          ) : null
+                        }
+                      />
                     );
                   })}
                 </Box>

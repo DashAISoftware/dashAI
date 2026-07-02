@@ -9,6 +9,7 @@ export default function ModelListItem({
   model,
   disabled = false,
   onClick,
+  action = null,
   ...props
 }) {
   const theme = useTheme();
@@ -152,6 +153,19 @@ export default function ModelListItem({
               {model.display_name || model.name}
             </Typography>
           </Box>
+
+          {/* Trailing action (e.g. download/delete control) */}
+          {action && (
+            <Box
+              draggable={false}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onDragStart={(e) => e.stopPropagation()}
+              sx={{ flexShrink: 0, display: "flex", alignItems: "center" }}
+            >
+              {action}
+            </Box>
+          )}
         </Box>
       </Tooltip>
       {!disabled && (

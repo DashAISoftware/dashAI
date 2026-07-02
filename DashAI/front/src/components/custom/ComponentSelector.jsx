@@ -109,8 +109,8 @@ function ComponentSelector({
   const renderCard = (component) => {
     const isSelected = selected?.name === component.name;
     const icon = getIcon?.(component);
-    const needsDownload =
-      Boolean(component.metadata?.requires_download) && !component.downloaded;
+    const requiresDownload = Boolean(component.metadata?.requires_download);
+    const needsDownload = requiresDownload && !component.downloaded;
     const isCsvComponent =
       tourDataFor &&
       (tourDataMatchFn
@@ -181,13 +181,11 @@ function ComponentSelector({
             />
           )}
         </Box>
-        {needsDownload && (
+        {requiresDownload && (
           <Box onClick={(e) => e.stopPropagation()}>
             <ComponentDownloadControl
               component={component}
-              onStatusChange={(isDownloaded) => {
-                if (isDownloaded) onDownloadChange?.(component);
-              }}
+              onStatusChange={() => onDownloadChange?.(component)}
             />
           </Box>
         )}
