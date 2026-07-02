@@ -219,7 +219,8 @@ from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
     StableDiffusionV3Model,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
-    StableDiffusionXLModel,
+    RealVisXLV4,
+    StableDiffusionXL,
 )
 from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
 from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
@@ -406,7 +407,8 @@ def get_initial_components():
         StableDiffusion21,
         StableDiffusion21_512,
         StableDiffusionV3Model,
-        StableDiffusionXLModel,
+        StableDiffusionXL,
+        RealVisXLV4,
         StableDiffusionXLV1ControlNet,
         SVC,
         SVR,

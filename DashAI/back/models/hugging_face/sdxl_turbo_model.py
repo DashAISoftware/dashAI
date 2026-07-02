@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -299,7 +302,7 @@ class SDXLTurboSchema(BaseSchema):
     )  # type: ignore
 
 
-class SDXLTurboModel(TextToImageGenerationTaskModel):
+class SDXLTurboModel(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
     """Distilled SDXL model for near real time text-to-image generation.
 
     Wraps ``stabilityai/sdxl-turbo``, a version of Stable Diffusion XL
@@ -323,6 +326,9 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = SDXLTurboSchema
+    MODEL_NAME: str = "stabilityai/sdxl-turbo"
+    # SDXL-Turbo diffusers pipeline is ~7 GB.
+    DOWNLOAD_SIZE_BYTES: int = 7_000_000_000
     COLOR: str = "#b71c1c"
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Turbo",
@@ -423,7 +429,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
         )
 
         self.model = StableDiffusionXLPipeline.from_pretrained(
-            "stabilityai/sdxl-turbo",
+            self._pretrained_source(None),
             torch_dtype=torch.float16 if use_gpu else torch.float32,
             variant="fp16" if use_gpu else None,
         ).to(self.device)

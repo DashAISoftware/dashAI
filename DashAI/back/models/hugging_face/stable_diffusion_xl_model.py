@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -25,60 +28,6 @@ class StableDiffusionXLSchema(BaseSchema):
     (``device``), and batch size (``num_images_per_prompt``) for
     ``StableDiffusionXLModel``.
     """
-
-    model_name: schema_field(
-        enum_field(
-            enum=[
-                "stabilityai/stable-diffusion-xl-base-1.0",
-                "SG161222/RealVisXL_V4.0",
-            ]
-        ),
-        placeholder="stabilityai/stable-diffusion-xl-base-1.0",
-        description=MultilingualString(
-            en=(
-                "The Stable Diffusion XL checkpoint to load. "
-                "'stable-diffusion-xl-base-1.0' is the official base model trained "
-                "at 1024x1024 px for high-quality photorealistic generation. "
-                "'RealVisXL_V4.0' is a popular community fine-tune of SDXL "
-                "optimized for realistic portraits and photography."
-            ),
-            es=(
-                "El checkpoint Stable Diffusion XL a cargar. "
-                "'stable-diffusion-xl-base-1.0' es el modelo base oficial entrenado "
-                "a 1024x1024 px para generación fotorrealista de alta calidad. "
-                "'RealVisXL_V4.0' es un popular fine-tune comunitario de SDXL "
-                "optimizado para retratos realistas y fotografía."
-            ),
-            pt=(
-                "O checkpoint Stable Diffusion XL a carregar. "
-                "'stable-diffusion-xl-base-1.0' é o modelo base oficial treinado "
-                "a 1024x1024 px para geração fotorrealista de alta qualidade. "
-                "'RealVisXL_V4.0' é um popular fine-tune comunitário do SDXL "
-                "otimizado para retratos realistas e fotografia."
-            ),
-            de=(
-                "Der zu ladende Stable Diffusion XL-Checkpoint. "
-                "'stable-diffusion-xl-base-1.0' ist das offizielle Basismodell, "
-                "bei 1024x1024 px für hochwertige fotorealistische Generierung "
-                "trainiert. "
-                "'RealVisXL_V4.0' ist ein beliebter Community-Fine-Tune von SDXL, "
-                "optimiert für realistische Porträts und Fotografie."
-            ),
-            zh=(
-                "要加载的 Stable Diffusion XL 检查点。"
-                "'stable-diffusion-xl-base-1.0' 是官方基础模型，"
-                "在 1024x1024px 下训练，用于高质量写实图像生成。"
-                "'RealVisXL_V4.0' 是针对写实人像和摄影优化的热门社区微调版本。"
-            ),
-        ),
-        alias=MultilingualString(
-            en="Model name",
-            es="Nombre del modelo",
-            pt="Nome do modelo",
-            de="Modellname",
-            zh="模型名称",
-        ),
-    )  # type: ignore
 
     negative_prompt: Optional[
         schema_field(
@@ -393,7 +342,9 @@ class StableDiffusionXLSchema(BaseSchema):
     )  # type: ignore
 
 
-class StableDiffusionXLModel(TextToImageGenerationTaskModel):
+class StableDiffusionXLGenerationModel(
+    HFPretrainedDownloadMixin, TextToImageGenerationTaskModel
+):
     """Latent diffusion model for high-resolution 1024 px text-to-image generation.
 
     Wraps Stable Diffusion XL (SDXL) checkpoints. SDXL scales the standard
@@ -415,6 +366,7 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = StableDiffusionXLSchema
+    MODEL_NAME: str = ""
     COLOR: str = "#0d47a1"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL",
@@ -483,9 +435,7 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get(
-            "model_name", "stabilityai/stable-diffusion-xl-base-1.0"
-        )
+        self.model_name = self._pretrained_source(None)
 
         self.model = StableDiffusionXLPipeline.from_pretrained(
             self.model_name,
@@ -534,3 +484,53 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
 
         output = self.model(**params)
         return output.images
+
+
+class StableDiffusionXL(StableDiffusionXLGenerationModel):
+    """Stable Diffusion XL base 1.0 checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "stabilityai/stable-diffusion-xl-base-1.0"
+    # SDXL diffusers pipeline (base + refiner-less) is ~7 GB.
+    DOWNLOAD_SIZE_BYTES: int = 7_000_000_000
+    DISPLAY_NAME = MultilingualString(
+        en="Stable Diffusion XL",
+        es="Stable Diffusion XL",
+        pt="Stable Diffusion XL",
+        de="Stable Diffusion XL",
+        zh="Stable Diffusion XL",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Stable Diffusion XL base 1.0 checkpoint.",
+        es="Stable Diffusion XL base 1.0 checkpoint.",
+        pt="Stable Diffusion XL base 1.0 checkpoint.",
+        de="Stable Diffusion XL base 1.0 checkpoint.",
+        zh="Stable Diffusion XL base 1.0 checkpoint.",
+    )
+
+
+class RealVisXLV4(StableDiffusionXLGenerationModel):
+    """RealVisXL V4.0 photorealistic SDXL checkpoint.
+
+    Downloads its checkpoint into the component's own download folder.
+    """
+
+    MODEL_NAME: str = "SG161222/RealVisXL_V4.0"
+    # SDXL diffusers pipeline (base + refiner-less) is ~7 GB.
+    DOWNLOAD_SIZE_BYTES: int = 7_000_000_000
+    DISPLAY_NAME = MultilingualString(
+        en="RealVisXL V4.0",
+        es="RealVisXL V4.0",
+        pt="RealVisXL V4.0",
+        de="RealVisXL V4.0",
+        zh="RealVisXL V4.0",
+    )
+    DESCRIPTION = MultilingualString(
+        en="RealVisXL V4.0 photorealistic SDXL checkpoint.",
+        es="RealVisXL V4.0 photorealistic SDXL checkpoint.",
+        pt="RealVisXL V4.0 photorealistic SDXL checkpoint.",
+        de="RealVisXL V4.0 photorealistic SDXL checkpoint.",
+        zh="RealVisXL V4.0 photorealistic SDXL checkpoint.",
+    )
