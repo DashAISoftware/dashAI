@@ -131,14 +131,23 @@ function ComponentSelector({
           border: 1,
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
-          opacity: needsDownload ? 0.6 : 1,
           transition: "border-color 0.15s, background 0.15s",
           "&:hover": {
             borderColor: needsDownload ? "divider" : "secondary.main",
           },
         }}
       >
-        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
+        {/* Dim only the card content while a download is required, so the
+            download control below keeps its normal color (CSS opacity on the
+            card would otherwise cap the button's opacity too). */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 3,
+            alignItems: "flex-start",
+            opacity: needsDownload ? 0.6 : 1,
+          }}
+        >
           {icon && (
             <Box
               sx={{
