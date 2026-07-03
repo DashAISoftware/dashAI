@@ -68,9 +68,20 @@ export default function CreateSessionCenter() {
     }
   }, [step]);
 
-  const canGoNext = !!selectedModel;
+  // Read the download status from the (in place updated) models list so the
+  // gate reacts to an inline download without needing selectedModel to change.
+  const selectedModelState =
+    models.find((m) => m.name === selectedModel?.name) || selectedModel;
+  const selectedNeedsDownload =
+    Boolean(selectedModelState?.metadata?.requires_download) &&
+    !selectedModelState?.downloaded;
+
+  const canGoNext = !!selectedModel && !selectedNeedsDownload;
   const canCreate =
-    !!selectedModel && !!formik.values.name?.trim() && !submitting;
+    !!selectedModel &&
+    !selectedNeedsDownload &&
+    !!formik.values.name?.trim() &&
+    !submitting;
 
   return (
     <Box

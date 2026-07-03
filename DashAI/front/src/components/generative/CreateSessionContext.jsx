@@ -213,12 +213,13 @@ export function CreateSessionProvider({ children }) {
     }
   }, [modelName, models]);
 
-  // On the selection step, deselect a model if its download disappears (e.g.
-  // deleted from the inline control) after a models refetch.
+  // An undownloaded model may stay selected so its description is visible and
+  // it can be downloaded inline; the Next button gates on the download status.
+  // Only drop the selection if the model disappears from the list entirely.
   useEffect(() => {
     if (!selectedModel) return;
     const match = models.find((m) => m.name === selectedModel.name);
-    if (match && isUnavailable(match)) setSelectedModel(null);
+    if (!match) setSelectedModel(null);
   }, [models]);
 
   const handleNext = () => {

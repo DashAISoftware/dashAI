@@ -120,20 +120,20 @@ function ComponentSelector({
       <Paper
         key={component.name}
         elevation={0}
-        onClick={needsDownload ? undefined : () => handleSelect(component)}
+        onClick={() => handleSelect(component)}
         data-tour={isCsvComponent ? tourDataFor : undefined}
         sx={{
           p: 3,
           display: "flex",
           flexDirection: "column",
           gap: 3,
-          cursor: needsDownload ? "not-allowed" : "pointer",
+          cursor: "pointer",
           border: 1,
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
           transition: "border-color 0.15s, background 0.15s",
           "&:hover": {
-            borderColor: needsDownload ? "divider" : "secondary.main",
+            borderColor: "secondary.main",
           },
         }}
       >
