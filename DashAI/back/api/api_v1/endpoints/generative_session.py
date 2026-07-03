@@ -15,6 +15,7 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSessionParameterHistory,
     ProcessData,
 )
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -57,6 +58,18 @@ async def upload_generative_session(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(
                         f"Model {params.model_name} must be downloaded before use."
+                    ),
+                )
+
+            # A parameter may select another component that itself needs
+            # downloading; block until every nested one is present.
+            nested_missing = missing_downloads(params.parameters, component_registry)
+            if nested_missing:
+                names = ", ".join(m["name"] for m in nested_missing)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"These components must be downloaded before use: {names}."
                     ),
                 )
 

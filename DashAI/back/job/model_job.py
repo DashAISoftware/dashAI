@@ -7,6 +7,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.base_model import BaseModel
@@ -228,6 +229,13 @@ class ModelJob(BaseJob):
                     raise JobError(
                         f"Model {run.model_name} is not downloaded. "
                         "Download it before training."
+                    )
+                nested_missing = missing_downloads(run.parameters, component_registry)
+                if nested_missing:
+                    names = ", ".join(m["name"] for m in nested_missing)
+                    raise JobError(
+                        "These components are not downloaded. "
+                        f"Download them before training: {names}."
                     )
                 try:
                     factory = ModelFactory(

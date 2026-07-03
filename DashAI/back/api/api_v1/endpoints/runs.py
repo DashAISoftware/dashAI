@@ -17,6 +17,7 @@ from DashAI.back.dependencies.database.models import (
     Run,
     RunStatus,
 )
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.services.scoring_service import ScoringService
 
 if TYPE_CHECKING:
@@ -341,6 +342,17 @@ async def upload_run(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(
                         f"Model {params.model_name} must be downloaded before use."
+                    ),
+                )
+            # A parameter may select another component (e.g. a classifier) that
+            # itself needs downloading; block until every nested one is present.
+            nested_missing = missing_downloads(params.parameters, component_registry)
+            if nested_missing:
+                names = ", ".join(m["name"] for m in nested_missing)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"These components must be downloaded before use: {names}."
                     ),
                 )
             run = Run(
