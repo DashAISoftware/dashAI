@@ -34,24 +34,24 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Spanish RoBERTa (BERTIN) pretrained on large Spanish corpora. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "RoBERTa en español (BERTIN) preentrenada en grandes corpus en español. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "RoBERTa em espanhol (BERTIN) pré-treinada em grandes corpus em espanhol. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Spanisches RoBERTa (BERTIN) vortrainiert auf großen spanischen Korpora. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "在大型西班牙语语料库上预训练的 RoBERTa（BERTIN）模型。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#AD1457"

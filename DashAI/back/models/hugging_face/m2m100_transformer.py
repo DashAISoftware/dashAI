@@ -131,28 +131,28 @@ class M2M100Transformer(HFPretrainedDownloadMixin, TranslationModel):
         en=(
             "Facebook M2M-100 model for direct translation across 100 languages "
             "using ISO 639-1 codes. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "Modelo M2M-100 de Facebook para traducción directa entre 100 idiomas "
             "usando códigos ISO 639-1. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "Modelo M2M-100 do Facebook para tradução direta entre 100 idiomas "
             "usando códigos ISO 639-1. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Facebook M2M-100-Modell für direkte Übersetzung zwischen 100 Sprachen "
             "mit ISO 639-1-Codes. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "Facebook M2M-100 模型，使用 ISO 639-1 代码支持"
             " 100 种语言之间的直接翻译。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#6A1B9A"

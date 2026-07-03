@@ -34,24 +34,24 @@ class RobertaTransformer(HuggingFaceTextClassificationTransformer):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Robustly optimised BERT for English text classification. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "BERT optimizado robustamente para clasificación de texto en inglés. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "BERT otimizado robustamente para classificação de texto em inglês. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Robust optimiertes BERT für englische Textklassifikation. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "经过鲁棒优化的 BERT，用于英文文本分类。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#E65100"

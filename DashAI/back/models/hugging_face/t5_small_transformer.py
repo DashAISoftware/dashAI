@@ -105,27 +105,27 @@ class T5SmallTransformer(HFPretrainedDownloadMixin, TranslationModel):
         en=(
             "Google T5-small model for English-to-{German, French, Romanian} "
             "translation using task prefixes. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "Modelo T5-small de Google para traducción inglés-{alemán, francés, "
             "rumano} usando prefijos de tarea. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "Modelo T5-small do Google para tradução inglês-{alemão, francês, "
             "romeno} usando prefixos de tarefa. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Google T5-small-Modell für Englisch-zu-{Deutsch, Französisch, Rumänisch}-"
             "Übersetzung mit Aufgabenpräfixen. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "谷歌 T5-small 模型，通过任务前缀实现英语到德语/法语/罗马尼亚语翻译。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#00695C"

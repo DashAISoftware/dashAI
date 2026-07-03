@@ -38,8 +38,8 @@ class HuggingFaceTextClassificationTransformer(
     - Save/load utilities that preserve custom training parameters.
 
     .. note::
-        Requires internet access on first use to download pretrained weights
-        from the Hugging Face Hub.
+        The pretrained weights must be downloaded from the Hugging Face Hub
+        (internet access required) before the model can be used.
     """
 
     MODEL_NAME: str = ""

@@ -34,24 +34,24 @@ class BetoTransformer(HuggingFaceTextClassificationTransformer):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Spanish BERT (BETO) pretrained on Spanish corpora. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "BERT en español (BETO) preentrenado en corpus en español. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "BERT em espanhol (BETO) pré-treinado em corpus em espanhol. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Spanisches BERT (BETO) vortrainiert auf spanischen Korpora. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "在西班牙语语料库上预训练的 BERT（BETO）模型。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#C62828"
