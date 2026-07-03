@@ -10,8 +10,50 @@ import ModelListItem from "./model/ModelListItem";
 import {
   startComponentDownload,
   subscribeAnyDownloadState,
+  useComponentDownloadState,
 } from "./model/ComponentDownloadControl";
 import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
+
+/**
+ * A single model row whose disabled state and download icon both derive from
+ * the shared live download state, so they never disagree. While a download is
+ * in progress the row stays disabled even if the backend already reports the
+ * (partially written) files as present.
+ */
+function ModelRow({ model, onUse, onDownload, onChanged, dataTour }) {
+  const requiresDownload = Boolean(model.metadata?.requires_download);
+  const { downloaded, downloading } = useComponentDownloadState(model);
+  const ready = !requiresDownload || (downloaded && !downloading);
+
+  const handleClick = () => {
+    if (downloading) return;
+    if (ready) onUse(model);
+    else onDownload(model);
+  };
+
+  return (
+    <ModelListItem
+      model={model}
+      disabled={!ready}
+      onClick={handleClick}
+      onDisabledClick={handleClick}
+      data-tour={dataTour}
+      action={
+        requiresDownload ? (
+          <ModelDownloadStatusIcon model={model} onChanged={onChanged} />
+        ) : null
+      }
+    />
+  );
+}
+
+ModelRow.propTypes = {
+  model: PropTypes.object.isRequired,
+  onUse: PropTypes.func.isRequired,
+  onDownload: PropTypes.func.isRequired,
+  onChanged: PropTypes.func,
+  dataTour: PropTypes.string,
+};
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
@@ -98,21 +140,10 @@ export default function ModelsRightBar({ onToggle }) {
 
   const tourContext = useTourContext();
 
-  const handleModelClick = (model) => {
+  const handleUseModel = (model) => {
     if (!session) {
       enqueueSnackbar(t("models:error.selectSessionFirst"), {
         variant: "warning",
-      });
-      return;
-    }
-    // A download-required model that has not been downloaded cannot be
-    // configured; it is blocked in the list with an inline download control.
-    if (model.metadata?.requires_download && !model.downloaded) {
-      startComponentDownload({
-        component: model,
-        enqueueSnackbar,
-        t,
-        onStatusChange: () => fetchModels(),
       });
       return;
     }
@@ -128,6 +159,21 @@ export default function ModelsRightBar({ onToggle }) {
       };
       setTimeout(waitForElement, 300);
     }
+  };
+
+  const handleDownloadModel = (model) => {
+    if (!session) {
+      enqueueSnackbar(t("models:error.selectSessionFirst"), {
+        variant: "warning",
+      });
+      return;
+    }
+    startComponentDownload({
+      component: model,
+      enqueueSnackbar,
+      t,
+      onStatusChange: () => fetchModels(),
+    });
   };
 
   if (sessionRightContent) {
@@ -263,30 +309,16 @@ export default function ModelsRightBar({ onToggle }) {
                 </Box>
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {filteredModels.map((model, index) => {
-                    const requiresDownload = Boolean(
-                      model.metadata?.requires_download,
-                    );
-                    const needsDownload = requiresDownload && !model.downloaded;
-                    return (
-                      <ModelListItem
-                        key={model.name}
-                        model={model}
-                        disabled={needsDownload}
-                        onClick={() => handleModelClick(model)}
-                        onDisabledClick={() => handleModelClick(model)}
-                        data-tour={index === 0 ? "first-model" : undefined}
-                        action={
-                          requiresDownload ? (
-                            <ModelDownloadStatusIcon
-                              model={model}
-                              onChanged={() => fetchModels()}
-                            />
-                          ) : null
-                        }
-                      />
-                    );
-                  })}
+                  {filteredModels.map((model, index) => (
+                    <ModelRow
+                      key={model.name}
+                      model={model}
+                      onUse={handleUseModel}
+                      onDownload={handleDownloadModel}
+                      onChanged={fetchModels}
+                      dataTour={index === 0 ? "first-model" : undefined}
+                    />
+                  ))}
                 </Box>
               )}
             </Box>
