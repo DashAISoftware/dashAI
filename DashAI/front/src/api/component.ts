@@ -77,3 +77,24 @@ export const getComponentDownloadStatus = async (
   }>(`/v1/component/${name}/download`);
   return response.data;
 };
+
+export interface RequiredDownload {
+  name: string;
+  display_name: string;
+  parent: string | null;
+  download_size_bytes: number | null;
+}
+
+// Resolve which components a configuration still needs downloaded. Walks
+// nested component parameters server-side (a component selected as another
+// component's parameter) and optionally checks the parent model itself.
+export const getRequiredDownloads = async (
+  parameters: Record<string, unknown>,
+  modelName?: string,
+): Promise<RequiredDownload[]> => {
+  const response = await api.post<RequiredDownload[]>(
+    `/v1/component/downloads/required`,
+    { model_name: modelName ?? null, parameters },
+  );
+  return response.data;
+};

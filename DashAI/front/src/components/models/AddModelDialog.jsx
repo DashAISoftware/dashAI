@@ -24,6 +24,8 @@ import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
+import { getRequiredDownloads } from "../../api/component";
+import { subscribeAnyDownloadState } from "./model/ComponentDownloadControl";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -54,6 +56,7 @@ function AddModelDialog({
   const [goalMetric, setGoalMetric] = useState("");
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
   const [modelDownloaded, setModelDownloaded] = useState(true);
+  const [missingNested, setMissingNested] = useState([]);
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
@@ -105,6 +108,37 @@ function AddModelDialog({
     const isDownloaded = Boolean(comp?.downloaded);
     setModelDownloaded(!requiresDownload || isDownloaded);
   }, [preselectedModelObject]);
+
+  // Block advancing while any component selected inside the model parameters
+  // still needs downloading. The check walks the nested parameters server-side
+  // and re-runs after an inline download/delete finishes anywhere.
+  useEffect(() => {
+    if (
+      !open ||
+      activeStep !== 0 ||
+      !modelParameters ||
+      Object.keys(modelParameters).length === 0
+    ) {
+      setMissingNested([]);
+      return;
+    }
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const missing = await getRequiredDownloads(modelParameters);
+        if (!cancelled) setMissingNested(missing);
+      } catch {
+        if (!cancelled) setMissingNested([]);
+      }
+    };
+    const timer = setTimeout(check, 300);
+    const unsubscribe = subscribeAnyDownloadState(() => check());
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [open, activeStep, JSON.stringify(modelParameters)]);
 
   useEffect(() => {
     if (
@@ -387,7 +421,13 @@ function AddModelDialog({
             preselectedModelObject?.metadata?.requires_download &&
             !modelDownloaded
               ? t("common:componentDownload.mustDownload")
-              : ""
+              : activeStep === 0 && missingNested.length > 0
+                ? t("common:componentDownload.mustDownloadNested", {
+                    names: missingNested
+                      .map((m) => m.display_name || m.name)
+                      .join(", "),
+                  })
+                : ""
           }
         >
           <span>
@@ -403,7 +443,8 @@ function AddModelDialog({
                   Boolean(
                     preselectedModelObject?.metadata?.requires_download,
                   ) &&
-                  !modelDownloaded)
+                  !modelDownloaded) ||
+                (activeStep === 0 && missingNested.length > 0)
               }
             >
               {activeStep === steps.length - 1

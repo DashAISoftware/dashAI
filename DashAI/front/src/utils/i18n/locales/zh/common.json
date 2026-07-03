@@ -167,7 +167,8 @@
     "done": "组件已下载",
     "deleted": "下载已删除",
     "failed": "组件下载失败",
-    "mustDownload": "使用前必须先下载此模型"
+    "mustDownload": "使用前必须先下载此模型",
+    "mustDownloadNested": "必须先下载这些组件：{{names}}"
   },
   "jobQueue": {
     "title": "任务队列",

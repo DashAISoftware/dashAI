@@ -167,7 +167,8 @@
     "done": "Component downloaded",
     "deleted": "Download deleted",
     "failed": "Component download failed",
-    "mustDownload": "This model must be downloaded before use"
+    "mustDownload": "This model must be downloaded before use",
+    "mustDownloadNested": "These components must be downloaded first: {{names}}"
   },
   "jobQueue": {
     "title": "Job Queue",

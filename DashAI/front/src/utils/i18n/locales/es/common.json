@@ -167,7 +167,8 @@
     "done": "Componente descargado",
     "deleted": "Descarga eliminada",
     "failed": "La descarga del componente ha fallado",
-    "mustDownload": "Este modelo debe descargarse antes de usarlo"
+    "mustDownload": "Este modelo debe descargarse antes de usarlo",
+    "mustDownloadNested": "Estos componentes deben descargarse primero: {{names}}"
   },
   "jobQueue": {
     "title": "Cola de trabajos",
