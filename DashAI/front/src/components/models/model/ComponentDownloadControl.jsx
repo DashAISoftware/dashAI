@@ -41,6 +41,11 @@ const subscribeDownloadState = (name, listener) => {
   };
 };
 
+// Read the last known download state for a component name, or undefined if it
+// has not been tracked this session. Lets non-hook call sites (e.g. a bulk
+// "run all" handler) consult the live state without subscribing.
+export const getComponentDownloadState = (name) => downloadStateCache.get(name);
+
 // Subscribe to every download/delete regardless of component name. Lets a
 // container (e.g. a config dialog) re-check which nested components still need
 // downloading after an inline control finishes.
