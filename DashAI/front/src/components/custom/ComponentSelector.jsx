@@ -185,7 +185,9 @@ function ComponentSelector({
           <Box onClick={(e) => e.stopPropagation()}>
             <ComponentDownloadControl
               component={component}
-              onStatusChange={() => onDownloadChange?.(component)}
+              onStatusChange={(isDownloaded) =>
+                onDownloadChange?.(component, isDownloaded)
+              }
             />
           </Box>
         )}

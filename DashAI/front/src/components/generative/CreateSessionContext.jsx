@@ -235,11 +235,23 @@ export function CreateSessionProvider({ children }) {
     formik.submitForm();
   };
 
+  // Flip a single model's downloaded flag in place. Used when an inline
+  // download/delete finishes so the list updates without a full refetch
+  // (which would swap in the loading spinner and reset the scroll position).
+  const markModelDownloaded = useCallback((name, isDownloaded) => {
+    setModels((prev) =>
+      prev.map((m) =>
+        m.name === name ? { ...m, downloaded: isDownloaded } : m,
+      ),
+    );
+  }, []);
+
   const value = {
     step,
     models,
     loadingModels,
     refetchModels: loadModels,
+    markModelDownloaded,
     selectedModel,
     handleSelectModel,
     formik,
