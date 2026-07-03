@@ -257,6 +257,9 @@ from DashAI.back.models.scikit_learn.decision_tree_regression import (
     DecisionTreeRegression,
 )
 from DashAI.back.models.scikit_learn.dummy_classifier import DummyClassifier
+from DashAI.back.models.scikit_learn.dummy_downloadable_classifier import (
+    DummyDownloadableClassifier,
+)
 from DashAI.back.models.scikit_learn.elastic_net_regression import ElasticNetRegression
 from DashAI.back.models.scikit_learn.extra_trees_classifier import ExtraTreesClassifier
 from DashAI.back.models.scikit_learn.extra_trees_regression import ExtraTreesRegression
@@ -424,6 +427,7 @@ def get_initial_components():
         RealVisXLV4,
         StableDiffusionXLV1ControlNet,
         SVC,
+        DummyDownloadableClassifier,
         SVR,
         T5SmallTransformer,
         TfIdfLogRegTextClassificationModel,
