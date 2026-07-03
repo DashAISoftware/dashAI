@@ -37,6 +37,17 @@ which are much lighter:
 uv sync --extra cpu
 ```
 
+Alternatively, plain `pip` works inside any environment (venv or conda),
+since all metadata lives in `pyproject.toml` — note this skips the lockfile,
+so versions may differ slightly from the ones the team and CI use:
+
+```bash
+pip install -e . --group dev    # --group needs pip >= 25.1
+pre-commit install
+```
+
+If you go the pip route, drop the `uv run` prefix from the commands below.
+
 ## 3. Frontend Setup
 
 ```bash

@@ -37,6 +37,18 @@ que son mucho más livianos:
 uv sync --extra cpu
 ```
 
+Como alternativa, `pip` a secas funciona dentro de cualquier entorno (venv o
+conda), ya que toda la metadata vive en `pyproject.toml` — ojo que esto no usa
+el lockfile, así que las versiones pueden diferir levemente de las que usan el
+equipo y el CI:
+
+```bash
+pip install -e . --group dev    # --group requiere pip >= 25.1
+pre-commit install
+```
+
+Si usas la vía pip, omite el prefijo `uv run` en los comandos siguientes.
+
 ## 3. Configuración del Frontend
 
 ```bash

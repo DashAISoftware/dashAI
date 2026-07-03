@@ -61,8 +61,21 @@ Installation (PyPI)
 ===================
 
 dashAI needs Python 3.10 or greater. We strongly recommend installing it inside
-an isolated environment (``venv`` or ``conda``) to avoid clashes with other
-packages.
+an isolated environment to avoid clashes with other packages. The quickest way
+to do that is with `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
+(recommended, it even installs Python for you); classic ``venv``/``conda`` with
+``pip`` works exactly the same if you prefer it.
+
+**Shortcut:** if you just want dashAI as an app with the default PyTorch build
+for your platform, uv can install it in its own isolated environment and put
+the ``dashai`` command on your PATH in one line:
+
+.. code:: bash
+
+    $ uv tool install dashai
+
+For GPU acceleration, a CPU-slim install, or LLM (GGUF) support, follow the
+steps below instead.
 
 Installing dashAI also installs PyTorch with the default build for your
 platform, which works out of the box on CPU. To enable GPU acceleration (NVIDIA
@@ -74,6 +87,13 @@ never installed automatically, so install it in step 3 if you need those models.
 
 1. Create an environment
 -------------------------
+
+**Any OS (uv, recommended)**
+
+.. code:: bash
+
+    $ uv venv --python 3.12
+    $ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 
 **Linux / macOS (venv)**
 
@@ -104,6 +124,9 @@ With the environment active:
 
 .. code:: bash
 
+    $ uv pip install dashai
+
+    # or, with plain pip:
     $ pip install dashai
 
 
@@ -112,6 +135,9 @@ With the environment active:
 
 This step is optional on CPU (step 2 already installed a working PyTorch).
 Run the section below that matches your hardware to pick a specific build.
+
+Every ``pip install`` command below can also be run as ``uv pip install`` with
+the same flags — same result, just faster.
 
 CPU only (Linux / macOS / Windows)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,7 +207,7 @@ Replace ``<cuda-version>`` with your CUDA tag. Prebuilt wheels are published for
 for the available wheels and other backend options.
 
 
-1. Run dashAI
+4. Run dashAI
 -------------
 
 Start the server and graphical interface with:
@@ -328,6 +354,16 @@ PyTorch wheels instead:
 
     $ uv sync --extra cpu
 
+If you prefer plain ``pip``, the same setup works inside any environment
+(``venv`` or ``conda``) since all metadata lives in ``pyproject.toml``. Note
+that this skips the lockfile, so versions may differ slightly from the ones
+the team and CI use:
+
+.. code:: bash
+
+    $ pip install -e . --group dev    # --group needs pip >= 25.1
+    $ pre-commit install
+
 Running the Backend
 ~~~~~~~~~~~~~~~~~~~
 
@@ -342,6 +378,9 @@ Or, through the installed entry point:
 .. code:: bash
 
     $ uv run dashai
+
+(If you installed with pip inside your own environment, drop the ``uv run``
+prefix: ``python -m DashAI`` or ``dashai``.)
 
 
 Optional Flags
