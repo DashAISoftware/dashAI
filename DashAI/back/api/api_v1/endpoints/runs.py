@@ -56,6 +56,7 @@ def get_metrics_for_run(db, run_id: int):
         "train_metrics": None,
         "validation_metrics": None,
         "test_metrics": None,
+        "full_metrics": None,
     }
 
     # Group metrics by split
@@ -79,7 +80,7 @@ async def get_runs(
     model_session_id: Union[int, None] = None,
     include_scores: bool = Query(False),
     profile_id: Optional[str] = Query(None),
-    metric_split: Literal["train", "validation", "test"] = Query("test"),
+    metric_split: Literal["train", "validation", "test", "full"] = Query("test"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
@@ -144,6 +145,7 @@ async def get_runs(
                 run.train_metrics = metrics["train_metrics"]
                 run.validation_metrics = metrics["validation_metrics"]
                 run.test_metrics = metrics["test_metrics"]
+                run.full_metrics = metrics["full_metrics"]
 
             # Compute scores if requested
             if include_scores and runs:
@@ -227,6 +229,7 @@ async def get_run_by_id(
             run.train_metrics = metrics["train_metrics"]
             run.validation_metrics = metrics["validation_metrics"]
             run.test_metrics = metrics["test_metrics"]
+            run.full_metrics = metrics["full_metrics"]
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -704,6 +707,7 @@ def reset_run(run):
     setattr(run, "train_metrics", None)
     setattr(run, "validation_metrics", None)
     setattr(run, "test_metrics", None)
+    setattr(run, "full_metrics", None)
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)

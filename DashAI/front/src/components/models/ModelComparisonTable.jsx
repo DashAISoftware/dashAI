@@ -182,7 +182,7 @@ function ModelComparisonTable({
     // Compute best value per metric field
     const bestValues = {};
     Array.from(metricsSet).forEach((metricField) => {
-      const metricName = metricField.replace(/^(test|train|val)_/, "");
+      const metricName = metricField.replace(/^(test|train|val|full)_/, "");
       const metricInfo = metrics.find((m) => m.name === metricName);
       const maximize = metricInfo?.metadata?.maximize;
       if (maximize === undefined || maximize === null) return;
@@ -205,7 +205,7 @@ function ModelComparisonTable({
     });
 
     return Array.from(metricsSet).map((metricField) => {
-      const metricName = metricField.replace(/^(test|train|val)_/, "");
+      const metricName = metricField.replace(/^(test|train|val|full)_/, "");
       const metricInfo = metrics.find((m) => m.name === metricName);
       const metricDescription = metricInfo?.description || metricName;
       const maximize = metricInfo?.metadata?.maximize;
@@ -623,7 +623,7 @@ ModelComparisonTable.propTypes = {
   onViewDetails: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
-  metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
+  metricSplit: PropTypes.oneOf(["train", "validation", "test", "full"]),
 };
 
 export default ModelComparisonTable;
