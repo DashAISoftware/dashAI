@@ -26,6 +26,45 @@ const formatSize = (bytes) => {
   return `${Math.round(mb)} MB`;
 };
 
+// Download state is a global, per-component fact (a component's artifacts are
+// either on disk or not). The same component can be rendered by several
+// controls at once (e.g. the same model selected at multiple nesting levels).
+// This module-level pub/sub keeps every mounted control for a given component
+// name in sync, and the cache lets a freshly mounted control pick up the
+// latest known state instead of the (possibly stale) prop.
+const downloadListeners = new Map(); // name -> Set<(state) => void>
+const downloadStateCache = new Map(); // name -> { downloading, downloaded }
+const anyChangeListeners = new Set(); // (name, state) => void
+
+const subscribeDownloadState = (name, listener) => {
+  let listeners = downloadListeners.get(name);
+  if (!listeners) {
+    listeners = new Set();
+    downloadListeners.set(name, listeners);
+  }
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
+// Subscribe to every download/delete regardless of component name. Lets a
+// container (e.g. a config dialog) re-check which nested components still need
+// downloading after an inline control finishes.
+export const subscribeAnyDownloadState = (listener) => {
+  anyChangeListeners.add(listener);
+  return () => {
+    anyChangeListeners.delete(listener);
+  };
+};
+
+const broadcastDownloadState = (name, state) => {
+  downloadStateCache.set(name, { ...downloadStateCache.get(name), ...state });
+  const listeners = downloadListeners.get(name);
+  if (listeners) listeners.forEach((listener) => listener(state));
+  anyChangeListeners.forEach((listener) => listener(name, state));
+};
+
 const ComponentDownloadControl = ({
   component,
   onStatusChange,
@@ -34,13 +73,26 @@ const ComponentDownloadControl = ({
   const { t } = useTranslation(["common"]);
   const { enqueueSnackbar } = useSnackbar();
   const meta = component.metadata || {};
-  const [downloaded, setDownloaded] = useState(Boolean(component.downloaded));
-  const [downloading, setDownloading] = useState(false);
+  const cached = downloadStateCache.get(component.name);
+  const [downloaded, setDownloaded] = useState(
+    cached?.downloaded ?? Boolean(component.downloaded),
+  );
+  const [downloading, setDownloading] = useState(cached?.downloading ?? false);
   const pollerIdRef = useRef(null);
 
   useEffect(() => {
-    setDownloaded(Boolean(component.downloaded));
+    const known = downloadStateCache.get(component.name);
+    setDownloaded(known?.downloaded ?? Boolean(component.downloaded));
+    setDownloading(known?.downloading ?? false);
   }, [component.name, component.downloaded]);
+
+  // Mirror download/delete triggered by any other control for this component.
+  useEffect(() => {
+    return subscribeDownloadState(component.name, (state) => {
+      if (state.downloading !== undefined) setDownloading(state.downloading);
+      if (state.downloaded !== undefined) setDownloaded(state.downloaded);
+    });
+  }, [component.name]);
 
   useEffect(() => {
     return () => {
@@ -51,13 +103,15 @@ const ComponentDownloadControl = ({
   if (!meta.requires_download) return null;
 
   const finish = (isDownloaded) => {
-    setDownloading(false);
-    setDownloaded(isDownloaded);
+    broadcastDownloadState(component.name, {
+      downloading: false,
+      downloaded: isDownloaded,
+    });
     if (onStatusChange) onStatusChange(isDownloaded);
   };
 
   const handleDownload = async () => {
-    setDownloading(true);
+    broadcastDownloadState(component.name, { downloading: true });
     try {
       const { id } = await downloadComponent(component.name);
       pollerIdRef.current = id;
