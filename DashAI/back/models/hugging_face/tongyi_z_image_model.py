@@ -454,11 +454,40 @@ class TongyiZImage(TongyiZImageGenerationModel):
         zh="Tongyi Z-Image",
     )
     DESCRIPTION = MultilingualString(
-        en="Tongyi Z-Image text-to-image checkpoint.",
-        es="Tongyi Z-Image text-to-image checkpoint.",
-        pt="Tongyi Z-Image text-to-image checkpoint.",
-        de="Tongyi Z-Image text-to-image checkpoint.",
-        zh="Tongyi Z-Image text-to-image checkpoint.",
+        en=(
+            "Z-Image by Alibaba's Tongyi lab, a modern text-to-image diffusion model "
+            "with strong prompt following and multilingual support. This is the "
+            "standard, full-quality checkpoint. Weights are downloaded into the "
+            "component's own folder. Model page: https://huggingface.co/Tongyi-MAI/Z-"
+            "Image"
+        ),
+        es=(
+            "Z-Image del laboratorio Tongyi de Alibaba, un modelo moderno de "
+            "difusión de texto a imagen con buen seguimiento de prompts y soporte "
+            "multilingüe. Este es el checkpoint estándar de máxima calidad. Los "
+            "pesos se descargan en la carpeta propia del componente. Página del "
+            "modelo: https://huggingface.co/Tongyi-MAI/Z-Image"
+        ),
+        pt=(
+            "Z-Image do laboratório Tongyi da Alibaba, um modelo moderno de "
+            "difusão de texto para imagem com bom seguimento de prompts e suporte "
+            "multilíngue. Este é o checkpoint padrão de qualidade máxima. Os "
+            "pesos são baixados na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/Tongyi-MAI/Z-Image"
+        ),
+        de=(
+            "Z-Image aus Alibabas Tongyi-Labor, ein modernes "
+            "Text-zu-Bild-Diffusionsmodell mit guter Prompt-Befolgung und "
+            "mehrsprachiger Unterstützung. Dies ist der standardmäßige Checkpoint "
+            "in voller Qualität. Die Gewichte werden in den eigenen Ordner der "
+            "Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/Tongyi-MAI/Z-Image"
+        ),
+        zh=(
+            "阿里巴巴通义实验室推出的 Z-Image，是一种现代文本到图像扩散模型，具有出色"
+            "的提示词遵循能力和多语言支持。这是标准的全质量检查点。权重会下载到该组件"
+            "自己的文件夹中。 模型页面： https://huggingface.co/Tongyi-MAI/Z-Image"
+        ),
     )
 
 
@@ -478,9 +507,38 @@ class TongyiZImageTurbo(TongyiZImageGenerationModel):
         zh="Tongyi Z-Image Turbo",
     )
     DESCRIPTION = MultilingualString(
-        en="Tongyi Z-Image Turbo fast checkpoint.",
-        es="Tongyi Z-Image Turbo fast checkpoint.",
-        pt="Tongyi Z-Image Turbo fast checkpoint.",
-        de="Tongyi Z-Image Turbo fast checkpoint.",
-        zh="Tongyi Z-Image Turbo fast checkpoint.",
+        en=(
+            "Z-Image Turbo by Alibaba's Tongyi lab, a distilled variant of Z-Image "
+            "that generates images in far fewer denoising steps. It trades a little "
+            "quality for much faster generation. Weights are downloaded into the "
+            "component's own folder. Model page: https://huggingface.co/Tongyi-MAI/Z-"
+            "Image-Turbo"
+        ),
+        es=(
+            "Z-Image Turbo del laboratorio Tongyi de Alibaba, una variante destilada "
+            "de Z-Image que genera imágenes en muchos menos pasos de denoising. "
+            "Sacrifica algo de calidad a cambio de una generación mucho más "
+            "rápida. Los pesos se descargan en la carpeta propia del componente. "
+            "Página del modelo: https://huggingface.co/Tongyi-MAI/Z-Image-Turbo"
+        ),
+        pt=(
+            "Z-Image Turbo do laboratório Tongyi da Alibaba, uma variante destilada "
+            "do Z-Image que gera imagens em muito menos passos de denoising. Troca "
+            "um pouco de qualidade por uma geração muito mais rápida. Os pesos "
+            "são baixados na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo"
+        ),
+        de=(
+            "Z-Image Turbo aus Alibabas Tongyi-Labor, eine destillierte Variante von "
+            "Z-Image, die Bilder in weit weniger Entrauschungsschritten erzeugt. Sie "
+            "opfert etwas Qualität für eine deutlich schnellere Generierung. Die "
+            "Gewichte werden in den eigenen Ordner der Komponente heruntergeladen. "
+            "Modellseite: https://huggingface.co/Tongyi-MAI/Z-Image-Turbo"
+        ),
+        zh=(
+            "阿里巴巴通义实验室推出的 Z-Image Turbo，是 Z-Image "
+            "的蒸馏变体，可用更少的去噪步骤生成图像。以少量质量换取快得多的生成速度。"
+            "权重会下载到该组件自己的文件夹中。 模型页面： https://huggingface.co/Ton"
+            "gyi-MAI/Z-Image-Turbo"
+        ),
     )

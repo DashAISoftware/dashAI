@@ -576,11 +576,52 @@ class StableDiffusion3Medium(StableDiffusion3GenerationModel):
         zh="Stable Diffusion 3 Medium",
     )
     DESCRIPTION = MultilingualString(
-        en="Stable Diffusion 3 Medium checkpoint (gated).",
-        es="Stable Diffusion 3 Medium checkpoint (gated).",
-        pt="Stable Diffusion 3 Medium checkpoint (gated).",
-        de="Stable Diffusion 3 Medium checkpoint (gated).",
-        zh="Stable Diffusion 3 Medium checkpoint (gated).",
+        en=(
+            "Stable Diffusion 3 Medium by Stability AI, built on the Multimodal "
+            "Diffusion Transformer (MMDiT) architecture with markedly improved text "
+            "rendering and prompt adherence over SD2. This is a gated Hugging Face "
+            "repo, so downloading requires prior authentication with an access "
+            "token. Weights are downloaded into the component's own folder. Model "
+            "page: https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffu"
+            "sers"
+        ),
+        es=(
+            "Stable Diffusion 3 Medium de Stability AI, construido sobre la "
+            "arquitectura Multimodal Diffusion Transformer (MMDiT) con una "
+            "representación de texto y adherencia al prompt notablemente mejores "
+            "que SD2. Es un repositorio restringido de Hugging Face, por lo que la "
+            "descarga requiere autenticación previa con un token de acceso. Los "
+            "pesos se descargan en la carpeta propia del componente. Página del "
+            "modelo: https://huggingface.co/stabilityai/stable-diffusion-3-medium-dif"
+            "fusers"
+        ),
+        pt=(
+            "Stable Diffusion 3 Medium da Stability AI, construído sobre a "
+            "arquitetura Multimodal Diffusion Transformer (MMDiT) com renderização "
+            "de texto e aderência ao prompt bem melhores que o SD2. É um "
+            "repositório restrito do Hugging Face, portanto o download requer "
+            "autenticação prévia com um token de acesso. Os pesos são baixados "
+            "na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3-medium-diffusers"
+        ),
+        de=(
+            "Stable Diffusion 3 Medium von Stability AI, basierend auf der "
+            "Multimodal-Diffusion-Transformer-Architektur (MMDiT) mit deutlich "
+            "verbesserter Textwiedergabe und Prompt-Treue gegenüber SD2. Dies ist "
+            "ein zugangsbeschränktes Hugging-Face-Repository, daher erfordert der "
+            "Download eine vorherige Authentifizierung mit einem Zugriffstoken. Die "
+            "Gewichte werden in den eigenen Ordner der Komponente heruntergeladen. "
+            "Modellseite: https://huggingface.co/stabilityai/stable-diffusion-3-mediu"
+            "m-diffusers"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 3 Medium，基于多模态扩散 "
+            "Transformer（MMDiT）架构，相比 SD2 "
+            "在文本渲染和提示词遵循方面有显著提升。这是一个受限的 Hugging Face "
+            "仓库，因此下载前需要使用访问令牌进行身份验证。权重会下载到该组件自己的文"
+            "件夹中。 模型页面： https://huggingface.co/stabilityai/stable-diffusion-"
+            "3-medium-diffusers"
+        ),
     )
 
 
@@ -602,11 +643,50 @@ class StableDiffusion35Medium(StableDiffusion3GenerationModel):
         zh="Stable Diffusion 3.5 Medium",
     )
     DESCRIPTION = MultilingualString(
-        en="Stable Diffusion 3.5 Medium checkpoint (gated).",
-        es="Stable Diffusion 3.5 Medium checkpoint (gated).",
-        pt="Stable Diffusion 3.5 Medium checkpoint (gated).",
-        de="Stable Diffusion 3.5 Medium checkpoint (gated).",
-        zh="Stable Diffusion 3.5 Medium checkpoint (gated).",
+        en=(
+            "Stable Diffusion 3.5 Medium by Stability AI, an updated MMDiT model "
+            "that balances image quality against hardware requirements, running "
+            "comfortably on consumer GPUs. This is a gated Hugging Face repo, so "
+            "downloading requires prior authentication with an access token. Weights "
+            "are downloaded into the component's own folder. Model page: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-medium"
+        ),
+        es=(
+            "Stable Diffusion 3.5 Medium de Stability AI, un modelo MMDiT "
+            "actualizado que equilibra la calidad de imagen con los requisitos de "
+            "hardware y funciona bien en GPUs de consumo. Es un repositorio "
+            "restringido de Hugging Face, por lo que la descarga requiere "
+            "autenticación previa con un token de acceso. Los pesos se descargan en "
+            "la carpeta propia del componente. Página del modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-medium"
+        ),
+        pt=(
+            "Stable Diffusion 3.5 Medium da Stability AI, um modelo MMDiT atualizado "
+            "que equilibra a qualidade da imagem com os requisitos de hardware e "
+            "roda bem em GPUs de consumo. É um repositório restrito do Hugging "
+            "Face, portanto o download requer autenticação prévia com um token de "
+            "acesso. Os pesos são baixados na pasta própria do componente. Página "
+            "do modelo: https://huggingface.co/stabilityai/stable-diffusion-3.5-mediu"
+            "m"
+        ),
+        de=(
+            "Stable Diffusion 3.5 Medium von Stability AI, ein aktualisiertes "
+            "MMDiT-Modell, das Bildqualität und Hardwareanforderungen ausbalanciert "
+            "und komfortabel auf Consumer-GPUs läuft. Dies ist ein "
+            "zugangsbeschränktes Hugging-Face-Repository, daher erfordert der "
+            "Download eine vorherige Authentifizierung mit einem Zugriffstoken. Die "
+            "Gewichte werden in den eigenen Ordner der Komponente heruntergeladen. "
+            "Modellseite: https://huggingface.co/stabilityai/stable-diffusion-3.5-med"
+            "ium"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 3.5 Medium，是更新的 MMDiT "
+            "模型，在图像质量与硬件需求之间取得平衡，可在消费级 GPU "
+            "上流畅运行。这是一个受限的 Hugging Face "
+            "仓库，因此下载前需要使用访问令牌进行身份验证。权重会下载到该组件自己的文"
+            "件夹中。 模型页面： https://huggingface.co/stabilityai/stable-diffusion-"
+            "3.5-medium"
+        ),
     )
 
 
@@ -628,11 +708,51 @@ class StableDiffusion35Large(StableDiffusion3GenerationModel):
         zh="Stable Diffusion 3.5 Large",
     )
     DESCRIPTION = MultilingualString(
-        en="Stable Diffusion 3.5 Large checkpoint (gated).",
-        es="Stable Diffusion 3.5 Large checkpoint (gated).",
-        pt="Stable Diffusion 3.5 Large checkpoint (gated).",
-        de="Stable Diffusion 3.5 Large checkpoint (gated).",
-        zh="Stable Diffusion 3.5 Large checkpoint (gated).",
+        en=(
+            "Stable Diffusion 3.5 Large by Stability AI, the highest quality MMDiT "
+            "model in the 3.5 family, offering the strongest detail and prompt "
+            "adherence at the cost of more memory and slower generation. This is a "
+            "gated Hugging Face repo, so downloading requires prior authentication "
+            "with an access token. Weights are downloaded into the component's own "
+            "folder. Model page: https://huggingface.co/stabilityai/stable-diffusion-"
+            "3.5-large"
+        ),
+        es=(
+            "Stable Diffusion 3.5 Large de Stability AI, el modelo MMDiT de mayor "
+            "calidad de la familia 3.5, con el mejor detalle y adherencia al prompt "
+            "a costa de más memoria y una generación más lenta. Es un repositorio "
+            "restringido de Hugging Face, por lo que la descarga requiere "
+            "autenticación previa con un token de acceso. Los pesos se descargan en "
+            "la carpeta propia del componente. Página del modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-large"
+        ),
+        pt=(
+            "Stable Diffusion 3.5 Large da Stability AI, o modelo MMDiT de maior "
+            "qualidade da família 3.5, oferecendo o melhor detalhe e aderência ao "
+            "prompt ao custo de mais memória e geração mais lenta. É um "
+            "repositório restrito do Hugging Face, portanto o download requer "
+            "autenticação prévia com um token de acesso. Os pesos são baixados "
+            "na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-large"
+        ),
+        de=(
+            "Stable Diffusion 3.5 Large von Stability AI, das qualitativ "
+            "hochwertigste MMDiT-Modell der 3.5-Familie, das beste Detailtreue und "
+            "Prompt-Treue bietet, allerdings auf Kosten von mehr Speicher und "
+            "langsamerer Generierung. Dies ist ein zugangsbeschränktes "
+            "Hugging-Face-Repository, daher erfordert der Download eine vorherige "
+            "Authentifizierung mit einem Zugriffstoken. Die Gewichte werden in den "
+            "eigenen Ordner der Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-large"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 3.5 Large，是 3.5 系列中质量最高的 "
+            "MMDiT 模型，提供最强的细节和提示词遵循能力，代价是更高的显存占用和更慢的"
+            "生成速度。这是一个受限的 Hugging Face "
+            "仓库，因此下载前需要使用访问令牌进行身份验证。权重会下载到该组件自己的文"
+            "件夹中。 模型页面： https://huggingface.co/stabilityai/stable-diffusion-"
+            "3.5-large"
+        ),
     )
 
 
@@ -654,9 +774,49 @@ class StableDiffusion35LargeTurbo(StableDiffusion3GenerationModel):
         zh="Stable Diffusion 3.5 Large Turbo",
     )
     DESCRIPTION = MultilingualString(
-        en="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
-        es="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
-        pt="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
-        de="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
-        zh="Stable Diffusion 3.5 Large Turbo checkpoint (gated).",
+        en=(
+            "Stable Diffusion 3.5 Large Turbo by Stability AI, a distilled version "
+            "of 3.5 Large that produces high quality images in only a handful of "
+            "denoising steps for much faster generation. This is a gated Hugging "
+            "Face repo, so downloading requires prior authentication with an access "
+            "token. Weights are downloaded into the component's own folder. Model "
+            "page: https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turb"
+            "o"
+        ),
+        es=(
+            "Stable Diffusion 3.5 Large Turbo de Stability AI, una versión "
+            "destilada de 3.5 Large que produce imágenes de alta calidad en apenas "
+            "unos pocos pasos de denoising para una generación mucho más rápida. "
+            "Es un repositorio restringido de Hugging Face, por lo que la descarga "
+            "requiere autenticación previa con un token de acceso. Los pesos se "
+            "descargan en la carpeta propia del componente. Página del modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo"
+        ),
+        pt=(
+            "Stable Diffusion 3.5 Large Turbo da Stability AI, uma versão destilada "
+            "do 3.5 Large que produz imagens de alta qualidade em apenas alguns "
+            "passos de denoising para uma geração muito mais rápida. É um "
+            "repositório restrito do Hugging Face, portanto o download requer "
+            "autenticação prévia com um token de acesso. Os pesos são baixados "
+            "na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-3.5-large-turbo"
+        ),
+        de=(
+            "Stable Diffusion 3.5 Large Turbo von Stability AI, eine destillierte "
+            "Version von 3.5 Large, die hochwertige Bilder in nur wenigen "
+            "Entrauschungsschritten für eine deutlich schnellere Generierung "
+            "erzeugt. Dies ist ein zugangsbeschränktes Hugging-Face-Repository, "
+            "daher erfordert der Download eine vorherige Authentifizierung mit einem "
+            "Zugriffstoken. Die Gewichte werden in den eigenen Ordner der Komponente "
+            "heruntergeladen. Modellseite: https://huggingface.co/stabilityai/stable-"
+            "diffusion-3.5-large-turbo"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 3.5 Large Turbo，是 3.5 Large "
+            "的蒸馏版本，仅需少数几个去噪步骤即可生成高质量图像，从而大幅加快生成速度"
+            "。这是一个受限的 Hugging Face "
+            "仓库，因此下载前需要使用访问令牌进行身份验证。权重会下载到该组件自己的文"
+            "件夹中。 模型页面： https://huggingface.co/stabilityai/stable-diffusion-"
+            "3.5-large-turbo"
+        ),
     )

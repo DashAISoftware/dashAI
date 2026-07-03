@@ -521,11 +521,45 @@ class PixArtSigma1024(PixArtSigmaGenerationModel):
         zh="PixArt-Sigma 1024",
     )
     DESCRIPTION = MultilingualString(
-        en="PixArt-Sigma XL 1024px checkpoint.",
-        es="PixArt-Sigma XL 1024px checkpoint.",
-        pt="PixArt-Sigma XL 1024px checkpoint.",
-        de="PixArt-Sigma XL 1024px checkpoint.",
-        zh="PixArt-Sigma XL 1024px checkpoint.",
+        en=(
+            "PixArt-Sigma XL by PixArt-alpha, a diffusion transformer (DiT) "
+            "text-to-image model that reaches quality comparable to larger diffusion "
+            "models with far fewer parameters. This checkpoint generates at "
+            "1024x1024 px. Weights are downloaded into the component's own folder. "
+            "Model page: https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-M"
+            "S"
+        ),
+        es=(
+            "PixArt-Sigma XL de PixArt-alpha, un modelo de texto a imagen basado en "
+            "transformer de difusión (DiT) que alcanza una calidad comparable a "
+            "modelos de difusión más grandes con muchos menos parámetros. Este "
+            "checkpoint genera a 1024x1024 px. Los pesos se descargan en la carpeta "
+            "propia del componente. Página del modelo: "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+        ),
+        pt=(
+            "PixArt-Sigma XL de PixArt-alpha, um modelo de texto para imagem baseado "
+            "em transformer de difusão (DiT) que atinge qualidade comparável a "
+            "modelos de difusão maiores com muito menos parâmetros. Este "
+            "checkpoint gera a 1024x1024 px. Os pesos são baixados na pasta "
+            "própria do componente. Página do modelo: "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+        ),
+        de=(
+            "PixArt-Sigma XL von PixArt-alpha, ein Text-zu-Bild-Modell auf Basis "
+            "eines Diffusion-Transformers (DiT), das mit weit weniger Parametern "
+            "eine Qualität vergleichbar mit größeren Diffusionsmodellen erreicht. "
+            "Dieser Checkpoint erzeugt Bilder mit 1024x1024 px. Die Gewichte werden "
+            "in den eigenen Ordner der Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+        ),
+        zh=(
+            "PixArt-alpha 推出的 PixArt-Sigma XL，是一种基于扩散 "
+            "Transformer（DiT）的文本到图像模型，以远更少的参数量达到可媲美更大扩散模"
+            "型的质量。该检查点以 1024x1024 "
+            "像素生成。权重会下载到该组件自己的文件夹中。 模型页面： "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+        ),
     )
 
 
@@ -545,9 +579,39 @@ class PixArtSigma512(PixArtSigmaGenerationModel):
         zh="PixArt-Sigma 512",
     )
     DESCRIPTION = MultilingualString(
-        en="PixArt-Sigma XL 512px checkpoint (faster).",
-        es="PixArt-Sigma XL 512px checkpoint (faster).",
-        pt="PixArt-Sigma XL 512px checkpoint (faster).",
-        de="PixArt-Sigma XL 512px checkpoint (faster).",
-        zh="PixArt-Sigma XL 512px checkpoint (faster).",
+        en=(
+            "PixArt-Sigma XL by PixArt-alpha at 512x512 px, a diffusion transformer "
+            "(DiT) text-to-image model. The lower resolution makes it faster and "
+            "lighter than the 1024 px variant. Weights are downloaded into the "
+            "component's own folder. Model page: https://huggingface.co/PixArt-alpha/"
+            "PixArt-Sigma-XL-2-512-MS"
+        ),
+        es=(
+            "PixArt-Sigma XL de PixArt-alpha a 512x512 px, un modelo de texto a "
+            "imagen basado en transformer de difusión (DiT). La menor resolución "
+            "lo hace más rápido y ligero que la variante de 1024 px. Los pesos se "
+            "descargan en la carpeta propia del componente. Página del modelo: "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+        ),
+        pt=(
+            "PixArt-Sigma XL de PixArt-alpha a 512x512 px, um modelo de texto para "
+            "imagem baseado em transformer de difusão (DiT). A menor resolução o "
+            "torna mais rápido e leve que a variante de 1024 px. Os pesos são "
+            "baixados na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+        ),
+        de=(
+            "PixArt-Sigma XL von PixArt-alpha bei 512x512 px, ein "
+            "Text-zu-Bild-Modell auf Basis eines Diffusion-Transformers (DiT). Die "
+            "geringere Auflösung macht es schneller und leichter als die "
+            "1024-px-Variante. Die Gewichte werden in den eigenen Ordner der "
+            "Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+        ),
+        zh=(
+            "PixArt-alpha 推出的 PixArt-Sigma XL，分辨率为 512x512 "
+            "像素，是一种基于扩散 Transformer（DiT）的文本到图像模型。较低的分辨率使"
+            "其比 1024 像素变体更快、更轻量。权重会下载到该组件自己的文件夹中。 "
+            "模型页面： https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+        ),
     )

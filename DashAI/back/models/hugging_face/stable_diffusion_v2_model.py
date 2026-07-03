@@ -555,11 +555,46 @@ class StableDiffusion2(StableDiffusion2GenerationModel):
         zh="Stable Diffusion 2",
     )
     DESCRIPTION = MultilingualString(
-        en="768px Stable Diffusion 2 checkpoint.",
-        es="768px Stable Diffusion 2 checkpoint.",
-        pt="768px Stable Diffusion 2 checkpoint.",
-        de="768px Stable Diffusion 2 checkpoint.",
-        zh="768px Stable Diffusion 2 checkpoint.",
+        en=(
+            "Stable Diffusion 2 by Stability AI, a latent text-to-image diffusion "
+            "model conditioned on OpenCLIP text embeddings. This checkpoint is "
+            "trained at 768x768 px and produces sharp, high-detail images. Weights "
+            "are downloaded into the component's own folder from the sd2-community "
+            "mirror. Model page: https://huggingface.co/sd2-community/stable-diffusio"
+            "n-2"
+        ),
+        es=(
+            "Stable Diffusion 2 de Stability AI, un modelo de difusión latente de "
+            "texto a imagen condicionado en embeddings de texto OpenCLIP. Este "
+            "checkpoint se entrena a 768x768 px y produce imágenes nítidas y muy "
+            "detalladas. Los pesos se descargan en la carpeta propia del componente "
+            "desde el espejo sd2-community. Página del modelo: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2"
+        ),
+        pt=(
+            "Stable Diffusion 2 da Stability AI, um modelo de difusão latente de "
+            "texto para imagem condicionado em embeddings de texto OpenCLIP. Este "
+            "checkpoint é treinado a 768x768 px e produz imagens nítidas e com "
+            "muitos detalhes. Os pesos são baixados na pasta própria do componente "
+            "a partir do espelho sd2-community. Página do modelo: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2"
+        ),
+        de=(
+            "Stable Diffusion 2 von Stability AI, ein latentes "
+            "Text-zu-Bild-Diffusionsmodell, das auf OpenCLIP-Texteinbettungen "
+            "konditioniert ist. Dieser Checkpoint wird bei 768x768 px trainiert und "
+            "erzeugt scharfe, detailreiche Bilder. Die Gewichte werden aus dem "
+            "sd2-community-Spiegel in den eigenen Ordner der Komponente "
+            "heruntergeladen. Modellseite: https://huggingface.co/sd2-community/stabl"
+            "e-diffusion-2"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 2，是一种以 OpenCLIP "
+            "文本嵌入为条件的潜在文本到图像扩散模型。该检查点在 768x768 "
+            "像素下训练，可生成清晰且细节丰富的图像。权重会从 sd2-community "
+            "镜像下载到该组件自己的文件夹中。 模型页面： https://huggingface.co/sd2-c"
+            "ommunity/stable-diffusion-2"
+        ),
     )
 
 
@@ -580,11 +615,41 @@ class StableDiffusion2_512(StableDiffusion2GenerationModel):  # noqa: N801
         zh="Stable Diffusion 2 (512px)",
     )
     DESCRIPTION = MultilingualString(
-        en="512px base Stable Diffusion 2 checkpoint (faster).",
-        es="512px base Stable Diffusion 2 checkpoint (faster).",
-        pt="512px base Stable Diffusion 2 checkpoint (faster).",
-        de="512px base Stable Diffusion 2 checkpoint (faster).",
-        zh="512px base Stable Diffusion 2 checkpoint (faster).",
+        en=(
+            "Stable Diffusion 2 base checkpoint by Stability AI, trained at 512x512 "
+            "px. It is faster and uses less memory than the 768 px variant, making "
+            "it a good choice for rapid prototyping. Weights are downloaded into the "
+            "component's own folder from the sd2-community mirror. Model page: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-base"
+        ),
+        es=(
+            "Checkpoint base de Stable Diffusion 2 de Stability AI, entrenado a "
+            "512x512 px. Es más rápido y usa menos memoria que la variante de 768 "
+            "px, ideal para prototipado rápido. Los pesos se descargan en la "
+            "carpeta propia del componente desde el espejo sd2-community. Página "
+            "del modelo: https://huggingface.co/sd2-community/stable-diffusion-2-base"
+        ),
+        pt=(
+            "Checkpoint base do Stable Diffusion 2 da Stability AI, treinado a "
+            "512x512 px. É mais rápido e usa menos memória que a variante de 768 "
+            "px, ideal para prototipagem rápida. Os pesos são baixados na pasta "
+            "própria do componente a partir do espelho sd2-community. Página do "
+            "modelo: https://huggingface.co/sd2-community/stable-diffusion-2-base"
+        ),
+        de=(
+            "Stable Diffusion 2 Basis-Checkpoint von Stability AI, trainiert bei "
+            "512x512 px. Er ist schneller und benötigt weniger Speicher als die "
+            "768-px-Variante und eignet sich gut für schnelles Prototyping. Die "
+            "Gewichte werden aus dem sd2-community-Spiegel in den eigenen Ordner der "
+            "Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-base"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 2 基础检查点，在 512x512 "
+            "像素下训练。相比 768 像素变体速度更快、显存占用更低，非常适合快速原型设"
+            "计。权重会从 sd2-community 镜像下载到该组件自己的文件夹中。 模型页面： "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-base"
+        ),
     )
 
 
@@ -605,11 +670,42 @@ class StableDiffusion21(StableDiffusion2GenerationModel):
         zh="Stable Diffusion 2.1",
     )
     DESCRIPTION = MultilingualString(
-        en="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
-        es="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
-        pt="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
-        de="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
-        zh="768px Stable Diffusion 2.1 checkpoint (further fine-tuned).",
+        en=(
+            "Stable Diffusion 2.1 by Stability AI, a further fine-tuned revision of "
+            "the 2.x family trained at 768x768 px. It generally produces cleaner, "
+            "more coherent images than the original 2.0. Weights are downloaded into "
+            "the component's own folder from the sd2-community mirror. Model page: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-1"
+        ),
+        es=(
+            "Stable Diffusion 2.1 de Stability AI, una revisión más ajustada de la "
+            "familia 2.x entrenada a 768x768 px. Suele producir imágenes más "
+            "limpias y coherentes que la 2.0 original. Los pesos se descargan en la "
+            "carpeta propia del componente desde el espejo sd2-community. Página "
+            "del modelo: https://huggingface.co/sd2-community/stable-diffusion-2-1"
+        ),
+        pt=(
+            "Stable Diffusion 2.1 da Stability AI, uma revisão mais ajustada da "
+            "família 2.x treinada a 768x768 px. Costuma produzir imagens mais "
+            "limpas e coerentes que a 2.0 original. Os pesos são baixados na pasta "
+            "própria do componente a partir do espelho sd2-community. Página do "
+            "modelo: https://huggingface.co/sd2-community/stable-diffusion-2-1"
+        ),
+        de=(
+            "Stable Diffusion 2.1 von Stability AI, eine weiter feinabgestimmte "
+            "Überarbeitung der 2.x-Familie, trainiert bei 768x768 px. Sie erzeugt "
+            "in der Regel sauberere, kohärentere Bilder als die ursprüngliche 2.0. "
+            "Die Gewichte werden aus dem sd2-community-Spiegel in den eigenen Ordner "
+            "der Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-1"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 2.1，是 2.x "
+            "系列的进一步微调版本，在 768x768 像素下训练。通常比原始的 2.0 "
+            "生成更干净、更连贯的图像。权重会从 sd2-community "
+            "镜像下载到该组件自己的文件夹中。 模型页面： https://huggingface.co/sd2-c"
+            "ommunity/stable-diffusion-2-1"
+        ),
     )
 
 
@@ -630,9 +726,43 @@ class StableDiffusion21_512(StableDiffusion2GenerationModel):  # noqa: N801
         zh="Stable Diffusion 2.1 (512px)",
     )
     DESCRIPTION = MultilingualString(
-        en="512px base Stable Diffusion 2.1 checkpoint.",
-        es="512px base Stable Diffusion 2.1 checkpoint.",
-        pt="512px base Stable Diffusion 2.1 checkpoint.",
-        de="512px base Stable Diffusion 2.1 checkpoint.",
-        zh="512px base Stable Diffusion 2.1 checkpoint.",
+        en=(
+            "Stable Diffusion 2.1 base checkpoint by Stability AI, trained at "
+            "512x512 px. It combines the 2.1 fine-tuning improvements with the lower "
+            "memory footprint and faster generation of the 512 px base models. "
+            "Weights are downloaded into the component's own folder from the "
+            "sd2-community mirror. Model page: https://huggingface.co/sd2-community/s"
+            "table-diffusion-2-1-base"
+        ),
+        es=(
+            "Checkpoint base de Stable Diffusion 2.1 de Stability AI, entrenado a "
+            "512x512 px. Combina las mejoras de ajuste de la 2.1 con el menor "
+            "consumo de memoria y la generación más rápida de los modelos base de "
+            "512 px. Los pesos se descargan en la carpeta propia del componente "
+            "desde el espejo sd2-community. Página del modelo: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-1-base"
+        ),
+        pt=(
+            "Checkpoint base do Stable Diffusion 2.1 da Stability AI, treinado a "
+            "512x512 px. Combina as melhorias de ajuste da 2.1 com o menor uso de "
+            "memória e a geração mais rápida dos modelos base de 512 px. Os "
+            "pesos são baixados na pasta própria do componente a partir do espelho "
+            "sd2-community. Página do modelo: https://huggingface.co/sd2-community/s"
+            "table-diffusion-2-1-base"
+        ),
+        de=(
+            "Stable Diffusion 2.1 Basis-Checkpoint von Stability AI, trainiert bei "
+            "512x512 px. Er verbindet die Feinabstimmungs-Verbesserungen von 2.1 mit "
+            "dem geringeren Speicherbedarf und der schnelleren Generierung der "
+            "512-px-Basismodelle. Die Gewichte werden aus dem sd2-community-Spiegel "
+            "in den eigenen Ordner der Komponente heruntergeladen. Modellseite: "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-1-base"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion 2.1 基础检查点，在 512x512 "
+            "像素下训练。它将 2.1 的微调改进与 512 "
+            "像素基础模型更低的显存占用和更快的生成速度相结合。权重会从 "
+            "sd2-community 镜像下载到该组件自己的文件夹中。 模型页面： "
+            "https://huggingface.co/sd2-community/stable-diffusion-2-1-base"
+        ),
     )

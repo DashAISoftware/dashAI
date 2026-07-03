@@ -503,11 +503,46 @@ class StableDiffusionXL(StableDiffusionXLGenerationModel):
         zh="Stable Diffusion XL",
     )
     DESCRIPTION = MultilingualString(
-        en="Stable Diffusion XL base 1.0 checkpoint.",
-        es="Stable Diffusion XL base 1.0 checkpoint.",
-        pt="Stable Diffusion XL base 1.0 checkpoint.",
-        de="Stable Diffusion XL base 1.0 checkpoint.",
-        zh="Stable Diffusion XL base 1.0 checkpoint.",
+        en=(
+            "Stable Diffusion XL base 1.0 by Stability AI, a large latent diffusion "
+            "model that uses two text encoders and a 1024x1024 px native resolution "
+            "for high fidelity results. It is well suited to detailed, "
+            "photorealistic and artistic prompts. Weights are downloaded into the "
+            "component's own folder. Model page: https://huggingface.co/stabilityai/s"
+            "table-diffusion-xl-base-1.0"
+        ),
+        es=(
+            "Stable Diffusion XL base 1.0 de Stability AI, un modelo de difusión "
+            "latente grande que usa dos codificadores de texto y una resolución "
+            "nativa de 1024x1024 px para resultados de alta fidelidad. Es adecuado "
+            "para prompts detallados, fotorrealistas y artísticos. Los pesos se "
+            "descargan en la carpeta propia del componente. Página del modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
+        ),
+        pt=(
+            "Stable Diffusion XL base 1.0 da Stability AI, um grande modelo de "
+            "difusão latente que usa dois codificadores de texto e resolução "
+            "nativa de 1024x1024 px para resultados de alta fidelidade. É adequado "
+            "para prompts detalhados, fotorrealistas e artísticos. Os pesos são "
+            "baixados na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
+        ),
+        de=(
+            "Stable Diffusion XL Basis 1.0 von Stability AI, ein großes latentes "
+            "Diffusionsmodell mit zwei Textencodern und einer nativen Auflösung von "
+            "1024x1024 px für Ergebnisse mit hoher Detailtreue. Es eignet sich gut "
+            "für detaillierte, fotorealistische und künstlerische Prompts. Die "
+            "Gewichte werden in den eigenen Ordner der Komponente heruntergeladen. "
+            "Modellseite: https://huggingface.co/stabilityai/stable-diffusion-xl-base"
+            "-1.0"
+        ),
+        zh=(
+            "Stability AI 推出的 Stable Diffusion XL base "
+            "1.0，是一种大型潜在扩散模型，使用两个文本编码器和 1024x1024 "
+            "像素的原生分辨率以获得高保真结果。非常适合细致、写实和艺术性的提示词。权"
+            "重会下载到该组件自己的文件夹中。 模型页面： https://huggingface.co/stabi"
+            "lityai/stable-diffusion-xl-base-1.0"
+        ),
     )
 
 
@@ -528,9 +563,39 @@ class RealVisXLV4(StableDiffusionXLGenerationModel):
         zh="RealVisXL V4.0",
     )
     DESCRIPTION = MultilingualString(
-        en="RealVisXL V4.0 photorealistic SDXL checkpoint.",
-        es="RealVisXL V4.0 photorealistic SDXL checkpoint.",
-        pt="RealVisXL V4.0 photorealistic SDXL checkpoint.",
-        de="RealVisXL V4.0 photorealistic SDXL checkpoint.",
-        zh="RealVisXL V4.0 photorealistic SDXL checkpoint.",
+        en=(
+            "RealVisXL V4.0 by SG161222, a community fine-tune of Stable Diffusion "
+            "XL focused on photorealism. It excels at lifelike portraits, lighting "
+            "and textures while remaining compatible with the SDXL pipeline. Weights "
+            "are downloaded into the component's own folder. Model page: "
+            "https://huggingface.co/SG161222/RealVisXL_V4.0"
+        ),
+        es=(
+            "RealVisXL V4.0 de SG161222, un ajuste comunitario de Stable Diffusion "
+            "XL enfocado en el fotorrealismo. Destaca en retratos, iluminación y "
+            "texturas realistas, manteniéndose compatible con el pipeline de SDXL. "
+            "Los pesos se descargan en la carpeta propia del componente. Página del "
+            "modelo: https://huggingface.co/SG161222/RealVisXL_V4.0"
+        ),
+        pt=(
+            "RealVisXL V4.0 de SG161222, um ajuste comunitário do Stable Diffusion "
+            "XL focado em fotorrealismo. Destaca-se em retratos, iluminação e "
+            "texturas realistas, mantendo compatibilidade com o pipeline do SDXL. Os "
+            "pesos são baixados na pasta própria do componente. Página do modelo: "
+            "https://huggingface.co/SG161222/RealVisXL_V4.0"
+        ),
+        de=(
+            "RealVisXL V4.0 von SG161222, eine Community-Feinabstimmung von Stable "
+            "Diffusion XL mit Fokus auf Fotorealismus. Es glänzt bei lebensechten "
+            "Porträts, Beleuchtung und Texturen und bleibt mit der SDXL-Pipeline "
+            "kompatibel. Die Gewichte werden in den eigenen Ordner der Komponente "
+            "heruntergeladen. Modellseite: https://huggingface.co/SG161222/RealVisXL_"
+            "V4.0"
+        ),
+        zh=(
+            "SG161222 推出的 RealVisXL V4.0，是 Stable Diffusion XL "
+            "的社区微调版本，专注于照片级真实感。擅长逼真的人像、光照和纹理，同时保持"
+            "与 SDXL 流水线的兼容。权重会下载到该组件自己的文件夹中。 模型页面： "
+            "https://huggingface.co/SG161222/RealVisXL_V4.0"
+        ),
     )
