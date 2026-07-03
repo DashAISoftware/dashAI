@@ -311,39 +311,37 @@ Backend
 Prepare the environment
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-First, set the python enviroment, for that you can use
-`conda <https://docs.conda.io/en/latest/miniconda.html>`_:
-
-.. code: bash
-
-    $ conda create -n dashai python=3.12
-    $ conda activate dashai
-
-Later, install the requirements:
+Dependencies are managed with `uv <https://docs.astral.sh/uv/>`_. Install it
+following the `official instructions <https://docs.astral.sh/uv/getting-started/installation/>`_,
+then install the project (uv creates the virtualenv, installs the package in
+editable mode and all development dependencies):
 
 .. code:: bash
 
-    $ pip install -r requirements.txt
-    $ pip install -r requirements-dev.txt
-    $ pre-commit install
+    $ uv sync
+    $ uv run pre-commit install
+
+On machines without an NVIDIA GPU you can use the much lighter CPU-only
+PyTorch wheels instead:
+
+.. code:: bash
+
+    $ uv sync --extra cpu
 
 Running the Backend
 ~~~~~~~~~~~~~~~~~~~
 
-There are two ways to run dashAI:
-
-1. By executing dashAI as a module from the root of the repository:
+There are two ways to run dashAI from the root of the repository:
 
 .. code:: bash
 
-    $ python -m DashAI
+    $ uv run python -m DashAI
 
-2. Or,  installing the default build:
+Or, through the installed entry point:
 
 .. code:: bash
 
-    $ pip install . -e
-    $ dashai
+    $ uv run dashai
 
 
 Optional Flags

@@ -11,26 +11,30 @@ DashAI is a desktop/web graphical toolbox for training, evaluating, and deployin
 ### Backend
 
 ```bash
-# Install
-pip install -e . -r requirements-dev.txt
-pre-commit install
+# Install (uv creates .venv, installs the package editable + dev deps)
+uv sync                  # add --extra cpu on machines without NVIDIA GPU
+uv run pre-commit install
 
 # Run dev server
-python -m DashAI --no-browser --logging-level DEBUG
+uv run python -m DashAI --no-browser --logging-level DEBUG
 
 # Lint / format
-ruff check --fix
-ruff format
+uv run ruff check --fix
+uv run ruff format
 
 # Run all tests
-pytest tests/
+uv run pytest tests/
 
 # Run a single test file or function
-pytest tests/back/api/test_components_api.py -v
-pytest tests/back/api/test_components_api.py::test_function_name -v
+uv run pytest tests/back/api/test_components_api.py -v
+uv run pytest tests/back/api/test_components_api.py::test_function_name -v
 
 # Database migrations (auto-runs on startup, but also manually)
-alembic upgrade head
+uv run alembic upgrade head
+
+# Add / remove a dependency (updates pyproject.toml + uv.lock)
+uv add <package>
+uv remove <package>
 ```
 
 ### Frontend

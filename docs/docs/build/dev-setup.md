@@ -8,7 +8,7 @@ sidebar_position: 2
 
 ## Prerequisites
 
-- Python 3.10 to 3.13
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (manages Python and dependencies; Python 3.10 to 3.13)
 - Node.js (LTS) and Yarn 3.5.0
 - Git
 
@@ -22,20 +22,19 @@ git checkout develop
 
 ## 2. Backend Setup
 
-Create and activate a Python environment (conda or venv):
+Install all dependencies (uv creates the `.venv` and installs the package
+in editable mode, including development dependencies):
 
 ```bash
-conda create -n dashai python=3.10
-conda activate dashai
+uv sync
+uv run pre-commit install
 ```
 
-Install the package in editable mode with development dependencies:
+On machines without an NVIDIA GPU you can use the CPU-only PyTorch wheels,
+which are much lighter:
 
 ```bash
-pip install -r requirements.txt
-pip install -e .
-pip install -r requirements-dev.txt
-pre-commit install
+uv sync --extra cpu
 ```
 
 ## 3. Frontend Setup
@@ -50,9 +49,9 @@ yarn install
 **Backend** (from the repo root):
 
 ```bash
-python -m DashAI
+uv run python -m DashAI
 # or
-dashai --no-browser --logging-level INFO
+uv run dashai --no-browser --logging-level INFO
 ```
 
 **Frontend** (development server with hot reload):
@@ -69,8 +68,8 @@ The backend runs at `http://localhost:8000` and the frontend dev server at `http
 **Python** (using Ruff):
 
 ```bash
-ruff check . --fix
-ruff format .
+uv run ruff check . --fix
+uv run ruff format .
 ```
 
 **Frontend** (ESLint + Prettier):
@@ -86,10 +85,10 @@ dashAI uses pre-commit hooks for consistent code quality:
 
 ```bash
 # Run all hooks manually
-pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # Run on staged files (happens automatically on git commit)
-pre-commit run
+uv run pre-commit run
 ```
 
 ## Project Structure

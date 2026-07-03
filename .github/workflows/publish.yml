@@ -59,13 +59,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install build tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Build Python package
-        run: python -m build
+        run: uv build
 
       - name: Verify frontend is included in wheel
         run: |
@@ -75,13 +73,13 @@ jobs:
           fi
 
       - name: Check distribution metadata
-        run: twine check dist/*
+        run: uvx twine check dist/*
 
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload --skip-existing dist/*
+        run: uvx twine upload --skip-existing dist/*
 
   # ============================================================
   # 3. Build Windows Executable
@@ -97,19 +95,19 @@ jobs:
         with:
           name: react-build
           path: DashAI/front/build
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
+          enable-cache: true
       - name: Install dependencies (CPU-only)
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-cpu.txt
-          pip install pyinstaller
+          uv sync --locked --extra cpu --no-dev
+          uv pip install pyinstaller
       - name: Build executable
         shell: cmd
         run: |
-          pyinstaller --clean --noconfirm dashai.spec
+          uv run --no-sync pyinstaller --clean --noconfirm dashai.spec
 
       - name: Install Inno Setup
         run: choco install innosetup -y
@@ -138,19 +136,20 @@ jobs:
         with:
           name: react-build
           path: DashAI/front/build
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
+          enable-cache: true
       - name: Install dependencies (CPU-only)
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-cpu.txt
-          pip install pyinstaller pywebview
+          uv sync --locked --extra cpu --no-dev
+          uv pip install pyinstaller
           brew install create-dmg
 
       - name: Build ARM64 App Bundle
         run: |
-          pyinstaller --clean --noconfirm dashai.spec
+          uv run --no-sync pyinstaller --clean --noconfirm dashai.spec
 
       - name: Sign App Bundle (ad-hoc)
         run: |
@@ -190,19 +189,20 @@ jobs:
         with:
           name: react-build
           path: DashAI/front/build
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
+          enable-cache: true
       - name: Install dependencies (CPU-only)
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-cpu.txt
-          pip install pyinstaller pywebview
+          uv sync --locked --extra cpu --no-dev
+          uv pip install pyinstaller
           brew install create-dmg
 
       - name: Build x86_64 App Bundle
         run: |
-          pyinstaller --clean --noconfirm dashai.spec
+          uv run --no-sync pyinstaller --clean --noconfirm dashai.spec
 
       - name: Sign App Bundle (ad-hoc)
         run: |
@@ -246,14 +246,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      # python-appimage drives its own embedded pip, so it stays pip-based
       - name: Install build tooling
         run: |
           python -m pip install --upgrade pip
-          pip install build python-appimage
+          pip install python-appimage
           sudo apt-get update
           sudo apt-get install -y libfuse2 imagemagick librsvg2-bin
       - name: Build wheel (frontend bundled)
-        run: python -m build --wheel
+        run: uv build --wheel
       - name: Verify frontend is included in wheel
         run: |
           if ! unzip -l dist/*.whl | grep -q 'DashAI/front/build'; then
@@ -304,10 +307,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract version from setup.py
+      - name: Extract version from pyproject.toml
         id: version
         run: |
-          VERSION=$(grep -m 1 '    version=' setup.py | sed -E 's/.*version="([^"]+)".*/\1/')
+          VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Download Windows installer
