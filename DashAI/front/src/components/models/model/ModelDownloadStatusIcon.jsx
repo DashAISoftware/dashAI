@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, CircularProgress } from "@mui/material";
+import { Box, CircularProgress, IconButton } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
@@ -31,9 +31,9 @@ export default function ModelDownloadStatusIcon({ model, onChanged }) {
 
   if (downloaded) {
     return (
-      <Box
-        component="span"
-        role="button"
+      <IconButton
+        size="small"
+        color="error"
         aria-label={t("common:componentDownload.delete")}
         onClick={(e) => {
           e.stopPropagation();
@@ -44,15 +44,9 @@ export default function ModelDownloadStatusIcon({ model, onChanged }) {
             onStatusChange: onChanged,
           });
         }}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          color: "error.main",
-          cursor: "pointer",
-        }}
       >
         <DeleteIcon fontSize="small" />
-      </Box>
+      </IconButton>
     );
   }
 
