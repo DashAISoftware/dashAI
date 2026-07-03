@@ -7,7 +7,10 @@ import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
-import { startComponentDownload } from "./model/ComponentDownloadControl";
+import {
+  startComponentDownload,
+  subscribeAnyDownloadState,
+} from "./model/ComponentDownloadControl";
 import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
@@ -64,6 +67,17 @@ export default function ModelsRightBar({ onToggle }) {
       setFilteredModels([]);
       setSearchQuery("");
     }
+  }, [session, fetchModels]);
+
+  // Refetch when any download finishes (or is deleted) so the row's disabled
+  // state, which is derived from the fetched model list, stays in sync. The
+  // download may have been started by a previous mount of this panel, so we
+  // cannot rely on that download's onStatusChange callback firing here.
+  useEffect(() => {
+    if (!session) return undefined;
+    return subscribeAnyDownloadState((_name, state) => {
+      if (state.downloaded !== undefined) fetchModels();
+    });
   }, [session, fetchModels]);
 
   // Filter models based on search
