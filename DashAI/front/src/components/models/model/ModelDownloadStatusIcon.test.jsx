@@ -19,7 +19,7 @@ import ModelDownloadStatusIcon from "./ModelDownloadStatusIcon";
 import { deleteComponentDownload } from "../../../api/component";
 
 const model = {
-  name: "DummyDownloadableClassifier",
+  name: "DownloadableTestModel",
   downloaded: false,
   metadata: { requires_download: true, download_size_bytes: 268435456 },
 };
@@ -43,7 +43,7 @@ describe("ModelDownloadStatusIcon", () => {
     fireEvent.click(del);
     await waitFor(() =>
       expect(deleteComponentDownload).toHaveBeenCalledWith(
-        "DummyDownloadableClassifier",
+        "DownloadableTestModel",
       ),
     );
   });
