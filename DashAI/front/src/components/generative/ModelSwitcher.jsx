@@ -5,6 +5,10 @@ import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { getRelatedComponents } from "../../api/generativeTask";
 import { updateGenerativeSession } from "../../api/session";
+import {
+  getComponentDownloadState,
+  subscribeAnyDownloadState,
+} from "../models/model/ComponentDownloadControl";
 
 /**
  * Session-level model switcher: lets the user change the model used by a
@@ -21,6 +25,9 @@ export default function ModelSwitcher({
   const { enqueueSnackbar } = useSnackbar();
   const [models, setModels] = useState([]);
   const [saving, setSaving] = useState(false);
+  // Bump to re-render when any download state changes so the labels reflect
+  // downloads that finished after the model list was fetched.
+  const [, setDownloadVersion] = useState(0);
 
   useEffect(() => {
     if (!taskName) return;
@@ -28,6 +35,11 @@ export default function ModelSwitcher({
       .then((components) => setModels(components || []))
       .catch(() => setModels([]));
   }, [taskName]);
+
+  useEffect(
+    () => subscribeAnyDownloadState(() => setDownloadVersion((v) => v + 1)),
+    [],
+  );
 
   const handleChange = async (event) => {
     const newModel = event.target.value;
@@ -75,10 +87,15 @@ export default function ModelSwitcher({
       >
         {options.map((model) => {
           // A not-downloaded model is still selectable; the chat blocks input
-          // and offers the download once it becomes the session's model.
+          // and offers the download once it becomes the session's model. Read
+          // the live download state so a finished download drops the label and
+          // an in-progress one keeps it despite a premature backend flag.
+          const cached = getComponentDownloadState(model.name);
+          const downloaded = cached?.downloaded ?? model.downloaded;
+          const downloading = Boolean(cached?.downloading);
           const notDownloaded =
             Boolean(model.metadata?.requires_download) &&
-            !model.downloaded &&
+            !(downloaded && !downloading) &&
             model.name !== currentModelName;
           return (
             <MenuItem key={model.name} value={model.name}>

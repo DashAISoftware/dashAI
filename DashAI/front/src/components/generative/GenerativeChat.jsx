@@ -21,7 +21,9 @@ import {
 import { getRelatedComponents } from "../../api/generativeTask";
 import InfoSessionModal from "./InfoSessionModal";
 import ModelSwitcher from "./ModelSwitcher";
-import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
+import ComponentDownloadControl, {
+  useComponentDownloadState,
+} from "../models/model/ComponentDownloadControl";
 import { useSnackbar } from "notistack";
 import { MediaInput } from "./MediaInput";
 import { Trans, useTranslation } from "react-i18next";
@@ -127,9 +129,14 @@ export default function GenerativeChat() {
       .catch(() => setModelsByName({}));
   }, [sessionInfo?.task_name]);
 
+  // Use the live download state so an in-progress download keeps the input
+  // blocked even when the backend already reports the (partial) files as
+  // present, and unblocks the moment the download actually finishes.
+  const { downloaded: liveDownloaded, downloading: liveDownloading } =
+    useComponentDownloadState(modelComponent || { name: modelName || "" });
   const modelBlocked =
     Boolean(modelComponent?.metadata?.requires_download) &&
-    !modelComponent?.downloaded;
+    !(liveDownloaded && !liveDownloading);
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
