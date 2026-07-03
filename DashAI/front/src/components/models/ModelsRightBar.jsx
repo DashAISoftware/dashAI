@@ -20,7 +20,7 @@ import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
  * in progress the row stays disabled even if the backend already reports the
  * (partially written) files as present.
  */
-function ModelRow({ model, onUse, onDownload, onChanged, dataTour }) {
+function ModelRow({ model, onUse, onDownload, dataTour }) {
   const requiresDownload = Boolean(model.metadata?.requires_download);
   const { downloaded, downloading } = useComponentDownloadState(model);
   const ready = !requiresDownload || (downloaded && !downloading);
@@ -39,9 +39,7 @@ function ModelRow({ model, onUse, onDownload, onChanged, dataTour }) {
       onDisabledClick={handleClick}
       data-tour={dataTour}
       action={
-        requiresDownload ? (
-          <ModelDownloadStatusIcon model={model} onChanged={onChanged} />
-        ) : null
+        requiresDownload ? <ModelDownloadStatusIcon model={model} /> : null
       }
     />
   );
@@ -51,7 +49,6 @@ ModelRow.propTypes = {
   model: PropTypes.object.isRequired,
   onUse: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
-  onChanged: PropTypes.func,
   dataTour: PropTypes.string,
 };
 import { useTranslation } from "react-i18next";
@@ -111,16 +108,23 @@ export default function ModelsRightBar({ onToggle }) {
     }
   }, [session, fetchModels]);
 
-  // Refetch when any download finishes (or is deleted) so the row's disabled
-  // state, which is derived from the fetched model list, stays in sync. The
-  // download may have been started by a previous mount of this panel, so we
-  // cannot rely on that download's onStatusChange callback firing here.
+  // When any download finishes (or is deleted) update just that model's flag in
+  // place. A full refetch would flip `loading`, swap the list for a spinner and
+  // reset the scroll position; an in-place update keeps the list mounted and
+  // keeps `downloaded` accurate for the model passed on to the config dialog.
   useEffect(() => {
     if (!session) return undefined;
-    return subscribeAnyDownloadState((_name, state) => {
-      if (state.downloaded !== undefined) fetchModels();
+    return subscribeAnyDownloadState((name, state) => {
+      if (state.downloaded === undefined) return;
+      setModels((prev) =>
+        prev.map((model) =>
+          model.name === name
+            ? { ...model, downloaded: state.downloaded }
+            : model,
+        ),
+      );
     });
-  }, [session, fetchModels]);
+  }, [session]);
 
   // Filter models based on search
   useEffect(() => {
@@ -168,12 +172,10 @@ export default function ModelsRightBar({ onToggle }) {
       });
       return;
     }
-    startComponentDownload({
-      component: model,
-      enqueueSnackbar,
-      t,
-      onStatusChange: () => fetchModels(),
-    });
+    // Completion is reflected by the shared download-state subscription above,
+    // which updates the model's flag in place without a scroll-resetting
+    // refetch.
+    startComponentDownload({ component: model, enqueueSnackbar, t });
   };
 
   if (sessionRightContent) {
@@ -315,7 +317,6 @@ export default function ModelsRightBar({ onToggle }) {
                       model={model}
                       onUse={handleUseModel}
                       onDownload={handleDownloadModel}
-                      onChanged={fetchModels}
                       dataTour={index === 0 ? "first-model" : undefined}
                     />
                   ))}
