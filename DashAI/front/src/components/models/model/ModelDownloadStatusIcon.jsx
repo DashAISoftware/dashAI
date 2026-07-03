@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, CircularProgress, IconButton } from "@mui/material";
+import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
@@ -31,22 +31,24 @@ export default function ModelDownloadStatusIcon({ model, onChanged }) {
 
   if (downloaded) {
     return (
-      <IconButton
-        size="small"
-        color="error"
-        aria-label={t("common:componentDownload.delete")}
-        onClick={(e) => {
-          e.stopPropagation();
-          deleteComponent({
-            component: model,
-            enqueueSnackbar,
-            t,
-            onStatusChange: onChanged,
-          });
-        }}
-      >
-        <DeleteIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title={t("common:componentDownload.delete")}>
+        <IconButton
+          size="small"
+          color="error"
+          aria-label={t("common:componentDownload.delete")}
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteComponent({
+              component: model,
+              enqueueSnackbar,
+              t,
+              onStatusChange: onChanged,
+            });
+          }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
     );
   }
 
