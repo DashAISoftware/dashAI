@@ -42,26 +42,17 @@ describe("ComponentDownloadControl", () => {
     );
   });
 
-  it("compact mode triggers download from an icon button", async () => {
-    renderWithProviders(
-      <ComponentDownloadControl
-        compact
-        component={component}
-        onStatusChange={() => {}}
-      />,
-    );
-    const button = await screen.findByRole("button", { name: /download/i });
-    fireEvent.click(button);
-    await waitFor(() =>
-      expect(downloadComponent).toHaveBeenCalledWith("OpusMtEnRoaTransformer"),
-    );
-  });
-
   it("shows a delete control for a downloaded component and deletes it", async () => {
+    // A distinct name avoids the module-level download-state cache carrying
+    // over from the download test above.
+    const downloadedComponent = {
+      ...component,
+      name: "OpusMtEnRoaTransformerDownloaded",
+      downloaded: true,
+    };
     renderWithProviders(
       <ComponentDownloadControl
-        compact
-        component={{ ...component, downloaded: true }}
+        component={downloadedComponent}
         onStatusChange={() => {}}
       />,
     );
@@ -69,7 +60,7 @@ describe("ComponentDownloadControl", () => {
     fireEvent.click(button);
     await waitFor(() =>
       expect(deleteComponentDownload).toHaveBeenCalledWith(
-        "OpusMtEnRoaTransformer",
+        "OpusMtEnRoaTransformerDownloaded",
       ),
     );
   });

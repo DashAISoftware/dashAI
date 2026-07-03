@@ -1,13 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  LinearProgress,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box, Button, LinearProgress, Typography } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
@@ -35,6 +27,7 @@ const formatSize = (bytes) => {
 const downloadListeners = new Map(); // name -> Set<(state) => void>
 const downloadStateCache = new Map(); // name -> { downloading, downloaded }
 const anyChangeListeners = new Set(); // (name, state) => void
+const activePollers = new Map(); // name -> poller id
 
 const subscribeDownloadState = (name, listener) => {
   let listeners = downloadListeners.get(name);
@@ -65,20 +58,71 @@ const broadcastDownloadState = (name, state) => {
   anyChangeListeners.forEach((listener) => listener(name, state));
 };
 
-const ComponentDownloadControl = ({
+export const stopComponentDownloadPolling = (componentName) => {
+  const pollerId = activePollers.get(componentName);
+  if (pollerId != null) {
+    stopJobPolling(pollerId);
+    activePollers.delete(componentName);
+  }
+};
+
+export const startComponentDownload = async ({
   component,
+  enqueueSnackbar,
+  t,
   onStatusChange,
-  compact = false,
 }) => {
-  const { t } = useTranslation(["common"]);
-  const { enqueueSnackbar } = useSnackbar();
-  const meta = component.metadata || {};
+  broadcastDownloadState(component.name, { downloading: true });
+  try {
+    const { id } = await downloadComponent(component.name);
+    activePollers.set(component.name, id);
+    startJobPolling(
+      id,
+      async () => {
+        activePollers.delete(component.name);
+        const status = await getComponentDownloadStatus(component.name);
+        broadcastDownloadState(component.name, {
+          downloading: false,
+          downloaded: status.downloaded,
+        });
+        if (onStatusChange) onStatusChange(status.downloaded);
+        enqueueSnackbar(t("common:componentDownload.done"), {
+          variant: "success",
+        });
+      },
+      () => {
+        activePollers.delete(component.name);
+        broadcastDownloadState(component.name, {
+          downloading: false,
+          downloaded: false,
+        });
+        if (onStatusChange) onStatusChange(false);
+        enqueueSnackbar(t("common:componentDownload.failed"), {
+          variant: "error",
+        });
+      },
+    );
+  } catch (e) {
+    broadcastDownloadState(component.name, {
+      downloading: false,
+      downloaded: false,
+    });
+    if (onStatusChange) onStatusChange(false);
+    enqueueSnackbar(t("common:componentDownload.failed"), {
+      variant: "error",
+    });
+  }
+};
+
+// Subscribe a component to the shared download state. Returns the live
+// { downloaded, downloading } flags, kept in sync across every mounted control
+// for the same component name.
+export const useComponentDownloadState = (component) => {
   const cached = downloadStateCache.get(component.name);
   const [downloaded, setDownloaded] = useState(
     cached?.downloaded ?? Boolean(component.downloaded),
   );
   const [downloading, setDownloading] = useState(cached?.downloading ?? false);
-  const pollerIdRef = useRef(null);
 
   useEffect(() => {
     const known = downloadStateCache.get(component.name);
@@ -86,7 +130,6 @@ const ComponentDownloadControl = ({
     setDownloading(known?.downloading ?? false);
   }, [component.name, component.downloaded]);
 
-  // Mirror download/delete triggered by any other control for this component.
   useEffect(() => {
     return subscribeDownloadState(component.name, (state) => {
       if (state.downloading !== undefined) setDownloading(state.downloading);
@@ -94,96 +137,46 @@ const ComponentDownloadControl = ({
     });
   }, [component.name]);
 
-  useEffect(() => {
-    return () => {
-      if (pollerIdRef.current != null) stopJobPolling(pollerIdRef.current);
-    };
-  }, []);
+  return { downloaded, downloading };
+};
+
+// Delete a component's download and broadcast the new state to every control.
+export const deleteComponent = async ({
+  component,
+  enqueueSnackbar,
+  t,
+  onStatusChange,
+}) => {
+  try {
+    await deleteComponentDownload(component.name);
+    broadcastDownloadState(component.name, {
+      downloading: false,
+      downloaded: false,
+    });
+    if (onStatusChange) onStatusChange(false);
+    enqueueSnackbar(t("common:componentDownload.deleted"), {
+      variant: "success",
+    });
+  } catch {
+    enqueueSnackbar(t("common:componentDownload.failed"), {
+      variant: "error",
+    });
+  }
+};
+
+const ComponentDownloadControl = ({ component, onStatusChange }) => {
+  const { t } = useTranslation(["common"]);
+  const { enqueueSnackbar } = useSnackbar();
+  const meta = component.metadata || {};
+  const { downloaded, downloading } = useComponentDownloadState(component);
 
   if (!meta.requires_download) return null;
 
-  const finish = (isDownloaded) => {
-    broadcastDownloadState(component.name, {
-      downloading: false,
-      downloaded: isDownloaded,
-    });
-    if (onStatusChange) onStatusChange(isDownloaded);
-  };
+  const handleDownload = () =>
+    startComponentDownload({ component, enqueueSnackbar, t, onStatusChange });
 
-  const handleDownload = async () => {
-    broadcastDownloadState(component.name, { downloading: true });
-    try {
-      const { id } = await downloadComponent(component.name);
-      pollerIdRef.current = id;
-      startJobPolling(
-        id,
-        async () => {
-          pollerIdRef.current = null;
-          const status = await getComponentDownloadStatus(component.name);
-          finish(status.downloaded);
-          enqueueSnackbar(t("common:componentDownload.done"), {
-            variant: "success",
-          });
-        },
-        () => {
-          pollerIdRef.current = null;
-          finish(false);
-          enqueueSnackbar(t("common:componentDownload.failed"), {
-            variant: "error",
-          });
-        },
-      );
-    } catch (e) {
-      finish(false);
-      enqueueSnackbar(t("common:componentDownload.failed"), {
-        variant: "error",
-      });
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteComponentDownload(component.name);
-      finish(false);
-      enqueueSnackbar(t("common:componentDownload.deleted"), {
-        variant: "success",
-      });
-    } catch {
-      enqueueSnackbar(t("common:componentDownload.failed"), {
-        variant: "error",
-      });
-    }
-  };
-
-  if (compact) {
-    if (downloading) {
-      return (
-        <Tooltip title={t("common:componentDownload.downloading")}>
-          <CircularProgress size={20} />
-        </Tooltip>
-      );
-    }
-    if (downloaded) {
-      return (
-        <Tooltip title={t("common:componentDownload.delete")}>
-          <IconButton size="small" color="error" onClick={handleDelete}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      );
-    }
-    return (
-      <Tooltip
-        title={t("common:componentDownload.download", {
-          size: formatSize(meta.download_size_bytes),
-        })}
-      >
-        <IconButton size="small" color="primary" onClick={handleDownload}>
-          <DownloadIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    );
-  }
+  const handleDelete = () =>
+    deleteComponent({ component, enqueueSnackbar, t, onStatusChange });
 
   if (downloading) {
     return (

@@ -7,7 +7,8 @@ import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
-import ComponentDownloadControl from "./model/ComponentDownloadControl";
+import { startComponentDownload } from "./model/ComponentDownloadControl";
+import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
@@ -93,6 +94,12 @@ export default function ModelsRightBar({ onToggle }) {
     // A download-required model that has not been downloaded cannot be
     // configured; it is blocked in the list with an inline download control.
     if (model.metadata?.requires_download && !model.downloaded) {
+      startComponentDownload({
+        component: model,
+        enqueueSnackbar,
+        t,
+        onStatusChange: () => fetchModels(),
+      });
       return;
     }
     selectModel(model);
@@ -250,29 +257,16 @@ export default function ModelsRightBar({ onToggle }) {
                     return (
                       <ModelListItem
                         key={model.name}
-                        model={
-                          needsDownload
-                            ? {
-                                ...model,
-                                tooltip: t(
-                                  "common:componentDownload.mustDownload",
-                                ),
-                              }
-                            : model
-                        }
+                        model={model}
                         disabled={needsDownload}
-                        onClick={
-                          needsDownload
-                            ? undefined
-                            : () => handleModelClick(model)
-                        }
+                        onClick={() => handleModelClick(model)}
+                        onDisabledClick={() => handleModelClick(model)}
                         data-tour={index === 0 ? "first-model" : undefined}
                         action={
                           requiresDownload ? (
-                            <ComponentDownloadControl
-                              compact
-                              component={model}
-                              onStatusChange={() => fetchModels()}
+                            <ModelDownloadStatusIcon
+                              model={model}
+                              onChanged={() => fetchModels()}
                             />
                           ) : null
                         }
