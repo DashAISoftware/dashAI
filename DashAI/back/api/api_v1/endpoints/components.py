@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Header, Query, Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from kink import di, inject
+from pydantic import BaseModel
 from typing_extensions import Annotated
 
 from DashAI.back.core.utils import MultilingualString
@@ -342,6 +343,85 @@ async def delete_component_download(
     component_class.delete()
     component_registry.refresh_download_status(name)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class RequiredDownloadsParams(BaseModel):
+    """Request body for resolving nested download-required components.
+
+    Attributes
+    ----------
+    model_name : str or None
+        The parent component being configured. When set and it still needs a
+        download, it is included in the result so the caller can gate on a
+        single list.
+    parameters : dict
+        The parameters dict as produced by the configuration UI.
+    """
+
+    model_name: Union[str, None] = None
+    parameters: Dict[str, Any] = {}
+
+
+@router.post("/downloads/required")
+@inject
+async def get_required_downloads(
+    params: RequiredDownloadsParams,
+    accept_language: str | None = Header(default=None),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+) -> List[Dict[str, Any]]:
+    """Return the components a configuration still needs downloaded.
+
+    Walks the ``parameters`` dict for nested components (a component selected as
+    another component's parameter) and, optionally, checks the parent
+    ``model_name`` itself. Each component is reconciled against the filesystem so
+    the answer reflects downloads finished after startup.
+
+    Parameters
+    ----------
+    params : RequiredDownloadsParams
+        The parent ``model_name`` (optional) and its ``parameters`` dict.
+    accept_language : str | None
+        The 'Accept-Language' header used to localize display names.
+    component_registry : ComponentRegistry
+        Registry that resolves component classes and download state.
+
+    Returns
+    -------
+    list[dict]
+        One entry per not-yet-downloaded component, each with ``name``,
+        ``display_name``, ``parent``, and ``download_size_bytes``.
+    """
+    from DashAI.back.dependencies.downloads.nested import missing_downloads
+
+    missing = missing_downloads(params.parameters, component_registry)
+
+    # Optionally fold in the parent model so callers can gate on one list.
+    if params.model_name and params.model_name in component_registry:
+        parent_class = component_registry[params.model_name]["class"]
+        if getattr(
+            parent_class, "REQUIRES_DOWNLOAD", False
+        ) and not component_registry.refresh_download_status(params.model_name):
+            missing.insert(
+                0,
+                {
+                    "name": params.model_name,
+                    "parent": None,
+                    "download_size_bytes": getattr(
+                        parent_class, "DOWNLOAD_SIZE_BYTES", None
+                    ),
+                },
+            )
+
+    def _localized_name(name: str) -> str:
+        display = component_registry[name].get("display_name")
+        if isinstance(display, MultilingualString):
+            lang = (accept_language or "en").split("-")[0].lower()
+            return display.get(lang)
+        return display or name
+
+    return [
+        {**entry, "display_name": _localized_name(entry["name"])} for entry in missing
+    ]
 
 
 @router.get("/{id}/")
