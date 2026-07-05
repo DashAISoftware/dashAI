@@ -9,6 +9,4 @@ class UnsupervisedTask(BaseTask):
     REQUIRES_TARGET = False
     SESSION_CONFIG_SCHEMA = {
         "split_strategy": "none",
-        "supports_shuffle": False,
-        "supports_stratify": False,
     }

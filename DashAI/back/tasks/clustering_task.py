@@ -39,8 +39,3 @@ class ClusteringTask(UnsupervisedTask):
         "inputs_cardinality": "n",
         "outputs_cardinality": 0,
     }
-
-    SESSION_CONFIG_SCHEMA = {
-        **UnsupervisedTask.SESSION_CONFIG_SCHEMA,
-        "split_strategy": "full_dataset",
-    }

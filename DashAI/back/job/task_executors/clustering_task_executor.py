@@ -29,9 +29,17 @@ class ClusteringTaskExecutor(BaseTaskExecutor):
         task = context.task
 
         try:
+            # Clustering has no test split and no metric picker of its own —
+            # always compute every Metric component registered for this task.
+            metric_names = [
+                component["name"]
+                for component in component_registry.get_related_components(
+                    model_session.task_name
+                )
+                if component.get("type") == "Metric"
+            ]
             metrics: list[type[BaseMetric]] = [
-                component_registry[m]["class"]
-                for m in (model_session.test_metrics or [])
+                component_registry[m]["class"] for m in metric_names
             ]
         except Exception as e:
             log.exception(e)
