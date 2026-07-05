@@ -12,7 +12,7 @@ Install FAISS with: pip install faiss-cpu  (or faiss-gpu for GPU support)
 import numpy as np
 
 from DashAI.back.core.schema_fields import (
-    optimizer_int_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -27,13 +27,8 @@ class FaissKMeansClusteringSchema(BaseSchema):
     """Schema that configures the FAISS K-Means clustering model."""
 
     n_clusters: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 8,
-            "lower_bound": 2,
-            "upper_bound": 12,
-        },
+        int_field(ge=2),
+        placeholder=8,
         description=MultilingualString(
             en="Number of clusters to form.",
             es="Número de clusters a formar.",
@@ -41,13 +36,8 @@ class FaissKMeansClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Clusters", es="Clusters"),
     )  # type: ignore
     max_iter: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 300,
-            "lower_bound": 10,
-            "upper_bound": 1000,
-        },
+        int_field(ge=1),
+        placeholder=300,
         description=MultilingualString(
             en="Maximum number of Lloyd's algorithm iterations.",
             es="Número máximo de iteraciones del algoritmo de Lloyd.",
@@ -55,13 +45,8 @@ class FaissKMeansClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
     )  # type: ignore
     random_state: schema_field(
-        optimizer_int_field(ge=0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0,
-            "lower_bound": 0,
-            "upper_bound": 10,
-        },
+        int_field(ge=0),
+        placeholder=0,
         description=MultilingualString(
             en="Random seed for centroid initialisation.",
             es="Semilla aleatoria para la inicialización de centroides.",

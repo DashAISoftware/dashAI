@@ -5,7 +5,7 @@ from sklearn.cluster import AgglomerativeClustering as _AgglomerativeClustering
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
-    optimizer_int_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -26,13 +26,8 @@ class AgglomerativeClusteringSchema(BaseSchema):
     """
 
     n_clusters: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 2,
-            "upper_bound": 12,
-        },
+        int_field(ge=2),
+        placeholder=2,
         description=MultilingualString(
             en="Number of clusters to find.",
             es="Número de clusters a encontrar.",

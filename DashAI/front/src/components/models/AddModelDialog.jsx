@@ -64,6 +64,18 @@ function AddModelDialog({
   });
 
   const tourContext = useTourContext();
+  const sessionSplits = useMemo(() => {
+    if (!session?.splits) return {};
+    if (typeof session.splits === "object") return session.splits;
+
+    try {
+      return JSON.parse(session.splits);
+    } catch {
+      return {};
+    }
+  }, [session?.splits]);
+
+  const supportsOptimization = sessionSplits.splitType !== "none";
 
   useEffect(() => {
     if (open && selectedModel) {
@@ -83,9 +95,10 @@ function AddModelDialog({
     return checkIfHaveOptimazers(modelParameters);
   }, [modelParameters]);
 
-  const steps = hasOptimizableParams
-    ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
-    : [t("models:label.configureModel")];
+  const steps =
+    supportsOptimization && hasOptimizableParams
+      ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
+      : [t("models:label.configureModel")];
 
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
@@ -151,7 +164,7 @@ function AddModelDialog({
         return;
       }
 
-      if (hasOptimizableParams) {
+      if (supportsOptimization && hasOptimizableParams) {
         setActiveStep(1);
       } else {
         handleCreateRun();
@@ -176,13 +189,15 @@ function AddModelDialog({
         selectedModel,
         name.trim(),
         modelParameters || {},
-        selectedOptimizer || "",
-        { ...defaultOptimizerParams, ...optimizerParameters },
+        supportsOptimization ? selectedOptimizer || "" : "",
+        supportsOptimization
+          ? { ...defaultOptimizerParams, ...optimizerParameters }
+          : {},
         "",
         "",
         "",
         "",
-        goalMetric || "",
+        supportsOptimization ? goalMetric || "" : "",
         "",
       );
 
@@ -242,7 +257,8 @@ function AddModelDialog({
   };
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
-  const isStep2Valid = Boolean(selectedOptimizer && goalMetric);
+  const isStep2Valid =
+    !supportsOptimization || Boolean(selectedOptimizer && goalMetric);
 
   return (
     <Dialog
@@ -397,6 +413,7 @@ AddModelDialog.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
+    splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }),
   preselectedModel: PropTypes.string,
   existingRuns: PropTypes.array,

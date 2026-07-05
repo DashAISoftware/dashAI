@@ -19,8 +19,8 @@ Install FAISS with: pip install faiss-cpu  (or faiss-gpu for GPU support)
 import numpy as np
 
 from DashAI.back.core.schema_fields import (
-    optimizer_float_field,
-    optimizer_int_field,
+    float_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -41,13 +41,8 @@ class FaissDBSCANClusteringSchema(BaseSchema):
     """
 
     eps: schema_field(
-        optimizer_float_field(gt=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.5,
-            "lower_bound": 0.01,
-            "upper_bound": 5.0,
-        },
+        float_field(gt=0.0),
+        placeholder=0.5,
         description=MultilingualString(
             en=(
                 "Maximum Euclidean distance between two samples to be "
@@ -61,13 +56,8 @@ class FaissDBSCANClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Eps", es="Eps"),
     )  # type: ignore
     min_samples: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 5,
-            "lower_bound": 1,
-            "upper_bound": 20,
-        },
+        int_field(ge=1),
+        placeholder=5,
         description=MultilingualString(
             en="Minimum samples in a neighbourhood for a point to be a core point "
             "(including the point itself).",

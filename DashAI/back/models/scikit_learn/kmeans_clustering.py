@@ -4,7 +4,7 @@ from sklearn.cluster import KMeans as _KMeans
 
 from DashAI.back.core.schema_fields import (
     enum_field,
-    optimizer_int_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -24,13 +24,8 @@ class KMeansClusteringSchema(BaseSchema):
     """
 
     n_clusters: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 8,
-            "lower_bound": 2,
-            "upper_bound": 12,
-        },
+        int_field(ge=2),
+        placeholder=8,
         description=MultilingualString(
             en="Number of clusters to form.",
             es="Número de clusters a formar.",
@@ -54,13 +49,8 @@ class KMeansClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Init method", es="Método de inicio"),
     )  # type: ignore
     max_iter: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 300,
-            "lower_bound": 10,
-            "upper_bound": 1000,
-        },
+        int_field(ge=1),
+        placeholder=300,
         description=MultilingualString(
             en="Maximum number of iterations for a single run.",
             es="Número máximo de iteraciones por ejecución.",
@@ -68,13 +58,8 @@ class KMeansClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
     )  # type: ignore
     random_state: schema_field(
-        optimizer_int_field(ge=0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0,
-            "lower_bound": 0,
-            "upper_bound": 10,
-        },
+        int_field(ge=0),
+        placeholder=0,
         description=MultilingualString(
             en="Random seed used by K-Means.",
             es="Semilla aleatoria usada por K-Means.",

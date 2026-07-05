@@ -4,7 +4,7 @@ from sklearn.mixture import GaussianMixture as _GaussianMixture
 
 from DashAI.back.core.schema_fields import (
     enum_field,
-    optimizer_int_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -25,13 +25,8 @@ class GaussianMixtureClusteringSchema(BaseSchema):
     """
 
     n_components: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 1,
-            "upper_bound": 10,
-        },
+        int_field(ge=1),
+        placeholder=2,
         description=MultilingualString(
             en="Number of Gaussian components (clusters) to fit.",
             es="Número de componentes gaussianas (clusters) a ajustar.",
@@ -54,13 +49,8 @@ class GaussianMixtureClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Covariance type", es="Tipo de covarianza"),
     )  # type: ignore
     max_iter: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 100,
-            "lower_bound": 10,
-            "upper_bound": 500,
-        },
+        int_field(ge=1),
+        placeholder=100,
         description=MultilingualString(
             en="Maximum number of EM algorithm iterations.",
             es="Número máximo de iteraciones del algoritmo EM.",
@@ -68,13 +58,8 @@ class GaussianMixtureClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
     )  # type: ignore
     random_state: schema_field(
-        optimizer_int_field(ge=0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0,
-            "lower_bound": 0,
-            "upper_bound": 10,
-        },
+        int_field(ge=0),
+        placeholder=0,
         description=MultilingualString(
             en="Random seed used for initialisation.",
             es="Semilla aleatoria usada para la inicialización.",

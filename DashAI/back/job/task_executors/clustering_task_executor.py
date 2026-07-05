@@ -17,7 +17,14 @@ log = logging.getLogger(__name__)
 
 
 class ClusteringTaskExecutor(BaseTaskExecutor):
-    """Execute clustering runs without assuming target columns or splits."""
+    """Execute clustering runs without assuming target columns or splits.
+
+    Intentionally ignores ``run.optimizer_name``, ``run.optimizer_parameters``
+    and ``run.goal_metric`` — clustering has no validation split to optimize
+    against, and automatically maximizing an internal metric (Silhouette,
+    Calinski-Harabasz, Davies-Bouldin) tends to reward degenerate clusterings
+    since there is no external check on whether the result is meaningful.
+    """
 
     COMPATIBLE_COMPONENTS = ["ClusteringTask"]
 

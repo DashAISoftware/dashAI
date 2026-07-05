@@ -24,40 +24,6 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-def _adapt_model_schema_for_converter(
-    properties: Dict[str, Any],
-) -> Dict[str, Any]:
-    """Convert model parameter schemas into plain converter parameter schemas.
-
-    Clustering models expose optimizable parameters because the Models module can
-    tune them during model sessions. The converter does not optimize
-    hyperparameters, so optimizer objects such as ``{"fixed_value": 8, ...}``
-    are unwrapped to a plain scalar ``8``.
-
-    Parameters
-    ----------
-    properties : Dict[str, Any]
-        Property schemas extracted from a model's ``model_json_schema()``.
-
-    Returns
-    -------
-    Dict[str, Any]
-        A copy of ``properties`` where any optimizer-style placeholder is
-        replaced with its ``fixed_value``.
-    """
-    adapted_properties = {}
-    for property_name, property_schema in properties.items():
-        adapted_schema = dict(property_schema)
-        placeholder = adapted_schema.get("placeholder")
-
-        if isinstance(placeholder, dict) and "fixed_value" in placeholder:
-            adapted_schema["placeholder"] = placeholder["fixed_value"]
-
-        adapted_properties[property_name] = adapted_schema
-
-    return adapted_properties
-
-
 class ClusteringSchema(BaseSchema):
     """Schema for the generic clustering converter."""
 
@@ -162,9 +128,10 @@ class Clustering(ClusteringConverter, BaseConverter):
                 model_class.SCHEMA.model_json_schema()
             )
             required = set(model_schema.get("required", []))
-            properties = _adapt_model_schema_for_converter(
-                model_schema.get("properties", {})
-            )
+            properties = {
+                name: dict(prop_schema)
+                for name, prop_schema in model_schema.get("properties", {}).items()
+            }
 
             for property_name, property_schema in properties.items():
                 property_schema["required"] = property_name in required

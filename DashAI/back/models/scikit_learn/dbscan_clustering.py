@@ -4,8 +4,8 @@ from sklearn.cluster import DBSCAN as _DBSCAN
 
 from DashAI.back.core.schema_fields import (
     enum_field,
-    optimizer_float_field,
-    optimizer_int_field,
+    float_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -25,13 +25,8 @@ class DBSCANClusteringSchema(BaseSchema):
     """
 
     eps: schema_field(
-        optimizer_float_field(gt=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.5,
-            "lower_bound": 0.1,
-            "upper_bound": 2.0,
-        },
+        float_field(gt=0.0),
+        placeholder=0.5,
         description=MultilingualString(
             en="Maximum distance between two samples to be considered neighbours.",
             es="Distancia máxima entre dos muestras para considerarlas vecinas.",
@@ -39,13 +34,8 @@ class DBSCANClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Eps", es="Eps"),
     )  # type: ignore
     min_samples: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 5,
-            "lower_bound": 1,
-            "upper_bound": 20,
-        },
+        int_field(ge=1),
+        placeholder=5,
         description=MultilingualString(
             en="Minimum samples in a neighbourhood for a point to be core.",
             es="Mínimo de muestras en una vecindad para que un punto sea central.",

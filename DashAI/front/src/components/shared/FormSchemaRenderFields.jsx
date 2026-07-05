@@ -11,10 +11,6 @@ import { Box, Stack, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 
 const getInitialValueFromSchema = (schema) => {
-  if (schema.placeholder?.optimize !== undefined) {
-    return schema.placeholder;
-  }
-
   if (schema.type !== "object") {
     return schema.placeholder;
   }
@@ -53,7 +49,6 @@ function SubFieldItem({
   handleChange,
   setError,
   fieldSubschema,
-  allowOptimization,
 }) {
   const subFieldObj = useMemo(
     () => ({
@@ -63,23 +58,6 @@ function SubFieldItem({
     }),
     [value, error, objName, subField, handleChange],
   );
-
-  if (fieldSubschema.placeholder?.optimize !== undefined) {
-    return (
-      <Box sx={{ mb: 3 }}>
-        <SubFieldHeader
-          label={fieldSubschema.title ?? subField}
-          paramKey={subField}
-        />
-        <FormSchemaFieldWithOptimizers
-          objName={`${objName}.${subField}`}
-          paramJsonSchema={fieldSubschema}
-          field={subFieldObj}
-          allowOptimization={allowOptimization}
-        />
-      </Box>
-    );
-  }
 
   return (
     <Box
@@ -144,7 +122,6 @@ SubFieldItem.propTypes = {
   handleChange: PropTypes.func.isRequired,
   setError: PropTypes.func,
   fieldSubschema: PropTypes.object.isRequired,
-  allowOptimization: PropTypes.bool,
 };
 
 SubFieldHeader.propTypes = {
@@ -161,7 +138,6 @@ function FormSchemaRenderFields({
   setError,
   errorsMessage,
   spacing = 2,
-  allowOptimization = true,
 }) {
   if (!modelSchema) return null;
 
@@ -252,7 +228,6 @@ function FormSchemaRenderFields({
             objName={objName}
             paramJsonSchema={fieldSchema}
             field={baseField}
-            allowOptimization={allowOptimization}
           />,
         );
       } else if (fieldSchema.type === "object") {
@@ -290,7 +265,6 @@ function FormSchemaRenderFields({
                     handleChange={handleChange}
                     setError={setError}
                     fieldSubschema={fieldSchema.properties[subField]}
-                    allowOptimization={allowOptimization}
                   />
                 ))}
             </FormSchemaFieldWithCollapse>,
@@ -337,7 +311,6 @@ FormSchemaRenderFields.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   spacing: PropTypes.number,
-  allowOptimization: PropTypes.bool,
 };
 
 export default FormSchemaRenderFields;

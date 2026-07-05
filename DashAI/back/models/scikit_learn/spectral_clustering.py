@@ -4,8 +4,8 @@ from sklearn.cluster import SpectralClustering as _SpectralClustering
 
 from DashAI.back.core.schema_fields import (
     enum_field,
-    optimizer_float_field,
-    optimizer_int_field,
+    float_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -25,13 +25,8 @@ class SpectralClusteringSchema(BaseSchema):
     """
 
     n_clusters: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 8,
-            "lower_bound": 2,
-            "upper_bound": 12,
-        },
+        int_field(ge=2),
+        placeholder=8,
         description=MultilingualString(
             en="Number of clusters to form.",
             es="Número de clusters a formar.",
@@ -54,13 +49,8 @@ class SpectralClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Affinity", es="Afinidad"),
     )  # type: ignore
     gamma: schema_field(
-        optimizer_float_field(gt=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 0.01,
-            "upper_bound": 10.0,
-        },
+        float_field(gt=0.0),
+        placeholder=1.0,
         description=MultilingualString(
             en=(
                 "Kernel coefficient for the 'rbf' affinity. "
@@ -74,13 +64,8 @@ class SpectralClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Gamma", es="Gamma"),
     )  # type: ignore
     random_state: schema_field(
-        optimizer_int_field(ge=0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0,
-            "lower_bound": 0,
-            "upper_bound": 10,
-        },
+        int_field(ge=0),
+        placeholder=0,
         description=MultilingualString(
             en=(
                 "Random seed for eigenvector decomposition and k-means initialisation."

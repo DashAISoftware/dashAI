@@ -4,7 +4,7 @@ from sklearn.cluster import HDBSCAN as _HDBSCAN
 
 from DashAI.back.core.schema_fields import (
     enum_field,
-    optimizer_int_field,
+    int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -24,13 +24,8 @@ class HDBSCANClusteringSchema(BaseSchema):
     """
 
     min_cluster_size: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 5,
-            "lower_bound": 2,
-            "upper_bound": 50,
-        },
+        int_field(ge=2),
+        placeholder=5,
         description=MultilingualString(
             en="Minimum number of samples required to form a cluster.",
             es="Mínimo de muestras requeridas para formar un cluster.",
@@ -38,13 +33,8 @@ class HDBSCANClusteringSchema(BaseSchema):
         alias=MultilingualString(en="Min cluster size", es="Tamaño mínimo de cluster"),
     )  # type: ignore
     min_samples: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 5,
-            "lower_bound": 1,
-            "upper_bound": 20,
-        },
+        int_field(ge=1),
+        placeholder=5,
         description=MultilingualString(
             en=(
                 "Number of samples in a neighbourhood for a point "
