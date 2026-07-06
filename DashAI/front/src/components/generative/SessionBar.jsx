@@ -47,16 +47,16 @@ export default function SessionBar({ onToggle }) {
         ),
       ),
     ];
-    const initialOpenState = {};
-    uniqueDisplayNames.forEach((displayName) => {
-      initialOpenState[displayName] = false;
-    });
     setOpenSections((prev) => {
-      // Only update if display names have changed
       const prevKeys = Object.keys(prev).sort().join(",");
-      const newKeys = Object.keys(initialOpenState).sort().join(",");
+      const newKeys = uniqueDisplayNames.slice().sort().join(",");
       if (prevKeys === newKeys) return prev;
-      return initialOpenState;
+      // Preserve existing open/close state; initialize new keys as closed
+      const merged = {};
+      uniqueDisplayNames.forEach((displayName) => {
+        merged[displayName] = displayName in prev ? prev[displayName] : false;
+      });
+      return merged;
     });
   }, [sessions, tasks]);
 
