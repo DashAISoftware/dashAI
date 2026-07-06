@@ -116,7 +116,10 @@ class PairedTTest(BaseStatisticalTest):
                 "All values are identical, making the t-test undefined."
             )
 
-        statistic, p_value, deg = ttest_rel(scores1, scores2, alternative=alternative)
+        result = ttest_rel(scores1, scores2, alternative=alternative)
+        statistic = result.statistic
+        p_value = result.pvalue
+        deg = getattr(result, "df", len(scores1) - 1)
 
         significant = p_value < alpha
 
