@@ -34,6 +34,7 @@ export function SaveDatasetModal({
   appliedConverters,
   existingDatasets = [],
   notebook,
+  hasNoColumns = false,
 }) {
   const [name, setName] = useState("");
   const [frozenDefaultName, setFrozenDefaultName] = useState("");
@@ -298,10 +299,19 @@ export function SaveDatasetModal({
 
           {/* Footer - always visible */}
           <Box sx={{ px: 3, pb: 3, flexShrink: 0 }}>
+            {hasNoColumns && (
+              <Typography
+                variant="caption"
+                color="error"
+                sx={{ display: "block", mb: 1, textAlign: "center" }}
+              >
+                {t("datasets:error.cannotSaveEmptyDataset")}
+              </Typography>
+            )}
             <StepperNavigationFooter
               onBack={handleClose}
               onNext={handleSubmit}
-              nextDisabled={Boolean(nameError)}
+              nextDisabled={Boolean(nameError) || hasNoColumns}
               backLabel={t("common:cancel")}
               nextLabel={t("common:upload")}
               variant="save"

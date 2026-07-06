@@ -92,7 +92,8 @@
     "requiresExactColumns_other": "需要恰好 {{required}} 个有效列，但只有 {{available}} 个可用。",
     "requiresMinColumns_one": "至少需要 {{required}} 个有效列，但只有 {{available}} 个可用。",
     "requiresMinColumns_other": "至少需要 {{required}} 个有效列，但只有 {{available}} 个可用。",
-    "zipContentsNotCompatible": "ZIP 文件不包含与所选数据加载器兼容的文件"
+    "zipContentsNotCompatible": "ZIP 文件不包含与所选数据加载器兼容的文件",
+    "cannotSaveEmptyDataset": "无法保存数据集：所有列已被删除。"
   },
   "label": {
     "task": "任务",
