@@ -1,9 +1,8 @@
-from typing import Dict
+from typing import Dict, List
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
-    int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -11,16 +10,11 @@ from DashAI.back.models.RAG.embeddings.dense._gemma_embedding import (
     TASK_PROMPTS,
     _GemmaEmbedding,
 )
-from DashAI.back.models.RAG.retrievers.dense._hf_metadata_utils import (
-    build_retriever_metadata,
+from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
+    AGGREGATE,
+    TRUNCATE,
 )
-from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import (
-    METRICS,
-    HuggingFaceDenseRetriever,
-)
-
-TRUNCATE = "truncate"
-AGGREGATE = "aggregate"
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 TASK_TYPES = list(TASK_PROMPTS.keys())
 
@@ -34,7 +28,7 @@ GEMMA_MODELS: Dict[str, dict] = {
 GEMMA_MODEL_NAMES = list(GEMMA_MODELS.keys())
 
 
-class GemmaDenseRetrieverSchema(BaseSchema):
+class GemmaEmbeddingSchema(BaseSchema):
     model_name: schema_field(
         enum_field(GEMMA_MODEL_NAMES),
         placeholder="google/embeddinggemma-300m",
@@ -71,51 +65,45 @@ class GemmaDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    similarity_metric: schema_field(
-        enum_field(enum=METRICS),
-        placeholder="cosine",
-        description=MultilingualString(
-            en="Distance metric for comparing dense vectors.",
-            es="Métrica de distancia para comparar vectores densos.",
-        ),
-    )  # type: ignore
 
-    top_k: schema_field(
-        int_field(gt=0),
-        placeholder=5,
-        description=MultilingualString(
-            en="Number of chunks to select.",
-            es="Número de fragmentos a seleccionar.",
-        ),
-    )  # type: ignore
-
-
-class GemmaDenseRetriever(HuggingFaceDenseRetriever):
-    FLAGS: list[str] = []
-    SCHEMA = GemmaDenseRetrieverSchema
+class GemmaEmbedding(DenseEmbedding):
+    SCHEMA = GemmaEmbeddingSchema
+    FLAGS: list[str] = ["FAMILY:gemma", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
-        en="Gemma Embedding Retriever",
-        es="Recuperador por Embeddings Gemma",
+        en="Gemma Embedding",
+        es="Embedding Gemma",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Dense retriever using Gemma embeddings via SentenceTransformers API.",
-        es="Recuperador denso que usa embeddings Gemma mediante API SentenceTransformers.",
+        en="Dense embeddings using Gemma models via SentenceTransformers API.",
+        es="Embeddings densos usando modelos Gemma mediante API SentenceTransformers.",
     )
 
-    @classmethod
-    def get_metadata(cls):
-        return build_retriever_metadata(GEMMA_MODELS, "Gemma", len(GEMMA_MODEL_NAMES))
-
-    def _create_embedding(self) -> _GemmaEmbedding:
-        model_name = self.params.pop("model_name")
-        device = self.params.pop("device")
-        overflow_strategy = self.params.pop("overflow_strategy")
-        task_type = self.params.pop("task_type")
+    def __init__(self, **kwargs):
+        self.params = self.validate_and_transform(kwargs)
+        model_name = self.params["model_name"]
+        device = self.params["device"]
+        overflow_strategy = self.params.get("overflow_strategy", "truncate")
+        task_type = self.params["task_type"]
         model_info = GEMMA_MODELS[model_name]
-        return _GemmaEmbedding(
+        self._embedding = _GemmaEmbedding(
             model_name=model_name,
             device=device,
             model_max_length=model_info["max_seq_length"],
             overflow_strategy=overflow_strategy,
             task_type=task_type,
         )
+
+    def load(self):
+        self._embedding.load()
+
+    def encode(self, text: str):
+        return self._embedding.encode(text)
+
+    def batch_encode(self, texts: List[str]):
+        return self._embedding.batch_encode(texts)
+
+    def save(self):
+        pass
+
+    def train(self, **kwargs):
+        return

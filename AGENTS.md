@@ -75,6 +75,11 @@ The frontend polls `/api/v1/jobs/{job_id}` for long-running task status.
 | `DashAI/back/pipeline/` | DAG pipeline nodes |
 | `DashAI/back/plugins/` | Plugin system (PyPI packages with `dashai.plugins` entry point) |
 | `DashAI/front/src/components/configurableObject/` | Auto-generates forms from backend component schemas |
+| `DashAI/front/src/pages/generative/SessionRouter.jsx` | Routes `/app/generative/sessions/:id` to RAG or non-RAG view based on session `task_name` |
+| `DashAI/front/src/pages/generative/simplified-RAG/` | RAG session setup wizard (SimplifiedSessionSetup) + collapsible section components per pipeline stage |
+| `DashAI/front/src/pages/generative/simplified-RAG/sections/` | Per-stage components: ChunkingSection, RetrieverSection, GeneratorSection, PromptSection |
+| `DashAI/front/src/pages/generative/simplified-RAG/advanced/` | Advanced configuration modals: CompositeRetrieverBuilder, ChunkingConfigurationStep, RetrieverConfigurationStep, etc. |
+| `DashAI/front/src/pages/generative/simplified-RAG/components/` | Reusable bodies: GeneratorBody, PromptBody, PresetCard, AdvancedConfigCard |
 
 ## Key patterns
 
@@ -115,44 +120,72 @@ RAGPipeline (BaseGenerativeModel)
 ├── receives: RAGPipelineConfig + RAGModelsFactory + PipelineRepository + DocumentLoader
 ├── orchestrates: load docs → chunk-set → chunking → retrieval → prompt → LLM
 └── owns:
-    ├── BaseChunkingModel (CharacterChunkModel | TokenChunkModel)
+    ├── BaseChunkingModel (CharacterChunkModel | TokenChunkModel | RecursiveCharacterChunkModel)
     ├── RetrieverModel
     │   ├── UnitRetriever (Leaf)
     │   │   ├── SparseRetriever → TFIDFRetriever | BM25Retriever
     │   │   └── DenseRetriever (abstract)
-    │   │        ├── FastTextDenseRetriever
-    │   │        └── HuggingFaceDenseRetriever (abstract)
-    │   │             ├── SentenceTransformerDenseRetriever (21 models)
-    │   │             ├── BERTDenseRetriever (6 models)
-    │   │             ├── DistilBERTDenseRetriever (4 models)
-    │   │             ├── RoBERTaDenseRetriever (4 models)
-    │   │             ├── E5DenseRetriever (5 models)
-    │   │             ├── GemmaDenseRetriever (1 model)
-    │   │             ├── InstructorDenseRetriever (3 models)
-    │   │             └── LaBSEDenseRetriever (1 model)
+    │   │        └── DenseEmbeddingRetriever (UNIFIED — accepts any DenseEmbedding)
+    │   │             ├── SentenceTransformerEmbedding → 27 models (ST + Qwen3 + Harrier)
+    │   │             ├── BERTEmbedding
+    │   │             ├── DistilBERTEmbedding
+    │   │             ├── RoBERTaEmbedding
+    │   │             ├── E5Embedding
+    │   │             ├── GemmaEmbedding
+    │   │             ├── InstructorEmbedding
+    │   │             ├── LaBSEmbedding
+    │   │             ├── FastTextEmbedding
+    │   │             └── OpenAIEmbedding (API)
     │   └── CompositeRetriever (Composite, GoF)
-    │       ├── SequentialRetriever (ACCUMULATE | CASCADE)
-    │       └── ParallelRetriever (ROUND_ROBIN | INTERLEAVE)
+    │       ├── SequentialRetriever
+    │       ├── ParallelRetriever (ROUND_ROBIN | INTERLEAVE)
+    │       └── MMRRerankerRetriever
     ├── Prompt (GenerationPrompt | AugmentationPrompt)
     └── TextToTextGenerationTaskModel (LLM)
 ```
 
-### Dense retriever architecture
+### Dense retriever architecture (unified)
 
-Dense retrievers use a **two-level abstraction**:
+Dense retrievers use a **two-layer abstraction** with a **single unified retriever class**:
 
-1. **Embedding layer** (`embeddings/dense/`): Internal, non-registered classes that handle model loading, tokenization, family-specific pooling, and overflow strategies. Prefixed with `_`.
+1. **Embedding layer** (`embeddings/dense/`): Registered `DenseEmbedding` Component classes (`SentenceTransformerEmbedding`, `BERTEmbedding`, `OpenAIEmbedding`, etc.) that handle model loading, tokenization, pooling, and overflow strategies. Each embedding class declares its own `SCHEMA`, `MODELS` dict, and `DISPLAY_NAME`.
 
-2. **Retriever layer** (`retrievers/dense/`): Registered Component classes with `SCHEMA`, `DISPLAY_NAME`, `get_metadata()`. Each wraps a specific embedding via `_create_embedding()` → `init_model()` → `_init_embedding()`.
+2. **Retriever layer** (`retrievers/dense/`): **One class:** `DenseEmbeddingRetriever` — accepts any `DenseEmbedding` via `component_field(parent="DenseEmbedding")` in its schema. The `RetrieverFactory` resolves the `component_field` into an actual embedding instance via `fill_objects()`, then calls `embedding.load()` and `_init_embedding()`.
 
-Families declare per-model metadata (`MODELS` dict: languages, max_seq_length). `_hf_language_utils.py` maps 44 ISO codes to display labels. `get_metadata()` computes language summaries for frontend display.
+The old per-family dense retriever classes (`SentenceTransformerDenseRetriever`, `BERTDenseRetriever`, etc. — ~10 classes) were deleted. They added unnecessary indirection: the embedding family was tied to the retriever class, forcing one retriever class per embedding type.
 
-`OverfloatHandler` supports `truncate` (default) and `aggregate` strategies for chunks exceeding model max sequence length (hidden from user; defined per-model in `MODELS`).
+### Pooling strategies
 
-To add a new HuggingFace embedding family:
-1. Subclass `OverfloatHandler` (or `HuggingFaceEmbedding`) with family-specific `_pool()`
-2. Subclass `HuggingFaceDenseRetriever` with `MODELS` dict + `SCHEMA` + `_create_embedding()`
-3. Register in `initial_components.py`
+`SentenceTransformerEmbedding` supports two pooling strategies, selected automatically per model via the `ST_MODELS` metadata dict:
+
+- **`"mean"`** — traditional mean pooling (used by all SentenceTransformer and Qwen3 models)
+- **`"last_token"`** — last-token pooling for decoder-only architectures (used by Harrier OSS v1)
+
+The strategy is not exposed in the schema; it is set per-model in `ST_MODELS[model_name]["pooling"]` and passed to `_SentenceTransformerEmbedding.__init__`.
+
+### Default embedding models
+
+The SentenceTransformerEmbedding family includes 30 models across 3 sub-families:
+
+| Sub-family | Models | Default |
+|-----------|--------|---------|
+| **Harrier OSS v1** (Microsoft) | `270m`, `0.6b`, `27b` | ⭐ `microsoft/harrier-oss-v1-0.6b` |
+| **Qwen3 Embedding** (Alibaba) | `0.6B`, `4B`, `8B` | — |
+| **SentenceTransformers** | 22 standard models | — |
+
+All models support 32K+ max sequence length. Harrier and Qwen3 are multilingual; SentenceTransformers models have per-model language metadata.
+
+### How to add a new embedding family
+
+1. Subclass `DenseEmbedding` with family-specific `SCHEMA`, `MODELS` dict, and `DISPLAY_NAME`
+2. Implement `__init__`, `load()`, `encode()`, `batch_encode()`
+3. Register in `initial_components.py` under `DenseEmbedding`
+
+Internal helper classes (prefixed with `_`, e.g. `_SentenceTransformerEmbedding`, `_BERTEmbedding`) are NOT registered as components — they are implementation details of the public embedding component.
+
+### DenseEmbeddingRetriever.init_model() — must call embedding.load()
+
+**Critical:** `DenseEmbeddingRetriever.init_model()` must call `self._embedding_instance.load()` **before** `_init_embedding()`. The embedding instance is created by `fill_objects()` during factory construction but its heavy resources (tokenizer, model weights) are only acquired on explicit `load()`. Missing this call causes `TypeError: 'NoneType' object is not callable` when `batch_encode` tries to use the uninitialized tokenizer.
 
 ### RAG flow (backend)
 
@@ -193,8 +226,15 @@ Every retriever gets a **bridge record** in `rag_retriever` (canonical identity 
 - `embeddings/sparse/bm25_encoding.py`, `tfidf_encoding.py` — old interface incompatible with factory pattern
 - `embeddings/trainable_encoding.py` — incomplete intermediate hierarchy, unused
 - RAG-specific code in `GenerativeJob` — now in `RAGJob`
-- Old concrete `HuggingFaceDenseRetriever` (single class with flat `HF_MODELS` list) — split into 8 families (June 2026)
-- Old `HuggingFaceEmbedding` (single class with 28-model enum) — split into abstract base + 6 internal subclasses (June 2026)
+- Old concrete `HuggingFaceDenseRetriever` (single class with flat `HF_MODELS` list) — split into 8 families
+- Old `HuggingFaceEmbedding` (single class with 28-model enum) — split into abstract base + 6 internal subclasses
+- **Old per-family dense retrievers:** `SentenceTransformerDenseRetriever`, `BERTDenseRetriever`, `DistilBERTDenseRetriever`, `E5DenseRetriever`, `FastTextDenseRetriever`, `GemmaDenseRetriever`, `InstructorDenseRetriever`, `LaBSEDenseRetriever`, `OpenAIDenseRetriever`, `RoBERTaDenseRetriever` — all replaced by the unified `DenseEmbeddingRetriever` + separate `DenseEmbedding` components
+
+### Query transformation and augmentation (pending development)
+
+- `DefaultAugmentationPrompt` is commented out in `initial_components.py:523` — this will be enabled when query expansion/transformation is implemented.
+- The augmentation prompt pipeline step (pre-retrieval query expansion) is not yet integrated into the RAG pipeline. The components exist (`AugmentationPrompt`, `CustomAugmentationPrompt`) but are not wired into `RAGPipeline.generate()`.
+- Future work: integrate query transformation (paraphrasing, expansion) before the retrieval step, and expose augmentation prompts in the frontend wizard.
 
 ## RAG Design Decisions & Gotchas
 
@@ -265,15 +305,147 @@ After schema changes to RAG models (renamed columns, removed tables), you must:
 2. Delete `~/.DashAI/rag/` directory to clear stale embeddings, indices, and sparse retriever files
 The dev server automatically rebuilds the DB on startup with the current ORM models.
 
-### Dense retriever family pattern
+### SentenceTransformer embedding model metadata
 
-Each dense retriever family follows a strict pattern:
-1. Declares `MODELS: Dict[str, dict]` with per-model `languages` and `max_seq_length`
-2. Defines `SCHEMA` with family-specific `model_name: enum_field(models.keys())` + common fields
-3. Implements `_create_embedding()` → pops params, looks up model info, returns embedding instance
-4. `get_metadata()` calls `build_retriever_metadata(MODELS, family_name, len(models))` from `_hf_metadata_utils.py`
+Each model in `ST_MODELS` requires three metadata keys:
+1. `languages`: list of ISO 639-1 codes or `["multi"]`
+2. `max_seq_length`: integer, injected into the tokenizer
+3. `pooling`: `"mean"` (encoder models) or `"last_token"` (decoder-only models like Harrier)
 
-`model_max_length` is never in the schema — it's read from `MODELS[model_name]` and injected into the embedding. `batch_size` is intentionally absent (was a no-op in retrieval).
+`model_max_length` is never in the schema — it's read from `ST_MODELS[model_name]` and injected into the embedding. `batch_size` is intentionally absent (was a no-op in retrieval).
+
+### RetrieverSection: 3-preset card architecture
+
+The retriever section shows **3 preset cards** instead of 4 groups:
+
+| Card | Retriever class | Embedding | Top-K split |
+|------|----------------|-----------|-------------|
+| **Keyword** | `BM25Retriever` | — | `top_k` |
+| **Semantic** | `DenseEmbeddingRetriever` | Harrier OSS v1 0.6B (default) | `top_k` |
+| **Hybrid** | `ParallelRetriever` | BM25 + Harrier 0.6B | `ceil(k/2)` BM25, `floor(k/2)` Dense |
+
+`isAdvanced` detection compares the current model (minus `top_k`) against the 3 preset models built from resolved defaults. If none match, the configuration is "advanced" and shows an `AdvancedConfigCard` instead of a highlighted preset card.
+
+The top-level retriever selector in `RetrieverConfigurationStep` groups options by family:
+- **Keyword:** BM25, TFIDF
+- **Dense:** embedding families (SentenceTransformer, BERT, OpenAI, FastText, etc.) — selecting one builds a `DenseEmbeddingRetriever` with that embedding pre-filled
+- **Composite:** Parallel, Sequential, MMRReranker
+
+All dense options use `DenseEmbeddingRetriever` as the retriever class; the `component_field(parent="DenseEmbedding")` in its schema handles the embedding selection via `FormSchema`.
+
+## Frontend RAG fixes
+
+This section documents all fixes and improvements applied to the RAG frontend.
+
+### Session routing: unified `/app/generative/sessions/:id`
+
+**Before:** Non-RAG sessions navigated to `/app/generative/sessions/:id` (handled by `GenerativeContent`), while RAG sessions stayed at `/app/generative/rag` and passed session IDs via `location.state`.
+
+**After:** All sessions (RAG and non-RAG) navigate to `/app/generative/sessions/:id`. A new `SessionRouter` component at `DashAI/front/src/pages/generative/SessionRouter.jsx` fetches the session, detects `task_name === "RAGTask"`, and renders either `SimplifiedRAGPage` (wrapped in `GenerativeProvider`) or `Generative`. Uses `useRef` to persist the previous view during loading so no spinner flash occurs between same-type session switches. Stale `location.state`-based session selection was removed from `SimplifiedRAGPage`; it now reads the session ID from `useParams()`.
+
+**Files:** `SessionRouter.jsx` (new), `App.jsx`, `SimplifiedRAGPage.jsx`, `SessionBar.jsx`
+
+### `setPromptModel` is NOT a React state setter — never pass a functional updater
+
+**Problem:** `PromptBody` used `setPromptModel((prev) => ({...}))` with a functional updater, but `setPromptModel` is `updatePrompt` — a plain function passed from `SimplifiedSessionSetup`, not a `useState` setter. React passed the updater function itself as the value, causing `sessionData.parameters.prompt` to become a function (instead of `{component, params}`). This broke `isPromptValid` (functions have no `.component` property) and silenced the save button.
+
+**Fix:** Changed `setPromptModel((prev) => ({...}))` to `setPromptModel({...})` (plain object). Also added an `isInitializedRef` guard to avoid overwriting the parent's prompt params on initialization, and persist existing params when updating only template/language.
+
+**Rule:** Only use functional updaters with React `useState` setters. Pass plain values to regular callback props.
+
+### Retrievers: de-hardcode defaults, fetch from backend
+
+**Problem:** `buildHybridModel` in `RetrieverSection.jsx` hardcoded `model_name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"` and `merge_strategy: "round_robin"`, ignoring the defaults from `resolveDefaults()`. Also, `getRetrieverComponents()` used `recursive=false`, which failed to find concrete dense retriever families (SentenceTransformer, BERT, DistilBERT, etc.) because they inherit via `HuggingFaceDenseRetriever` (intermediate abstract class).
+
+**Fix:**
+- `getRetrieverComponents` in `api/rag.ts` now uses `recursive=true`
+- `RetrieverSection` filters out components with `flags: ["abstract"]` so intermediate abstract classes don't appear in the UI
+- `buildHybridModel` reads `model_name` from `embeddingDefaults` (fetched via `resolveDefaults`) and `merge_strategy` from `ParallelRetriever` defaults
+- Embedding card description shows the default model name (e.g., `sentence-transformers/all-MiniLM-L6-v2`) instead of "N options"
+- Sparse default changed from TFIDF → BM25; hybrid now uses BM25 + SentenceTransformerDenseRetriever
+
+**Files:** `api/rag.ts`, `sections/RetrieverSection.jsx`
+
+**Note:** The 4-group preset architecture described above has been replaced by a simpler 3-preset card system (Keyword, Semantic, Hybrid). See "RetrieverSection: 3-preset card architecture" above for the current design.
+
+### AdvancedConfigCard not showing after saving from modal
+
+**Problem:** When saving a retriever configuration from the `RetrieverAdvancedModal` without first selecting a preset group, `selectedGroup` remained `null`. The `isAdvanced` check returned `false` immediately on `!selectedGroup`, so the `AdvancedConfigCard` never rendered.
+
+**Fix:** Added a `useEffect` that auto-detects the group when `retrieverModel` changes but no group is selected. Introduced `"__custom__"` as a sentinel group value for configurations that don't match any preset (e.g., `SequentialRetriever` or custom-parametrized retrievers). `isAdvanced` now handles all three cases: preset match, hybrid, and `__custom__`.
+
+**File:** `sections/RetrieverSection.jsx`
+
+**Note:** With the 3-preset card redesign, `__custom__` is no longer used. `isAdvanced` is now a simple `useMemo` that compares the current `retrieverModel` (minus `top_k`) against the 3 preset models. If it doesn't match any, it's advanced.
+
+### Generator: save button disabled without LLM + API key warning
+
+**Problem:** `GeneratorBody.contextStats` returned `{isValid: true}` even when no generator was selected, enabling the save button prematurely. Additionally, remote models (OpenAI, DeepSeek) showed no warning when `API_key` was empty.
+
+**Fix:**
+- `contextStats` returns `{isValid: false}` when `!generatorModel.component` or `!selectedGenerator`
+- `isConfigurationComplete` in `SimplifiedSessionSetup` checks `Boolean(sessionData.parameters.generator_model?.component)` explicitly
+- `GeneratorBody` detects remote models (`OpenAITextToTextGenerationModel`, `DeepSeekTextToTextGenerationModel`) via `isRemoteModel` and shows an `Alert` warning when `API_key` is empty via `isApiKeyMissing`
+- `overallIsValid = contextStats.isValid && !isApiKeyMissing` controls `setIsValid`
+- `context_window` and `max_tokens` use `??` instead of `||` to correctly handle `0` values
+
+**Files:** `components/GeneratorBody.jsx`, `SimplifiedSessionSetup.jsx`
+
+### Generator: display_name in Autocomplete
+
+**Problem:** The LLM selector showed class names like `"QwenModel"` instead of human-readable display names like `"Qwen Model"`.
+
+**Fix:** `getOptionLabel` in `GeneratorBody` now uses `getDescription(option.display_name, i18n)` (resolves `MultilingualString` with i18n language), falling back to `option.name`.
+
+**File:** `components/GeneratorBody.jsx`
+
+### Race condition in GeneratorBody.handleGeneratorChange
+
+**Problem:** `handleGeneratorChange` called `setSelectedGenerator(newValue)` **before** the `await resolveDefaults()`, then `setGeneratorModel(...)` after. Between the two, the sync effect detected `!generatorModel?.component` and forcibly set `selectedGenerator` to `null`, breaking the validation chain.
+
+**Fix:** Moved `setSelectedGenerator(newValue)` to **after** the `await`, alongside `setGeneratorModel(...)`. Removed the aggressive `setSelectedGenerator(null)` from the sync effect when `generatorModel.component` is empty — it now just returns without touching the selection.
+
+**File:** `components/GeneratorBody.jsx`
+
+### Prompt: language selector visible when collapsed
+
+**Problem:** The prompt language selector was hidden behind `showDetails &&`, so when the RAG Parameters card was collapsed, users couldn't see or change the selected language.
+
+**Fix:** Removed `showDetails` guard from the language selector in `PromptBody`. Only the template preview remains behind `showDetails`.
+
+**File:** `components/PromptBody.jsx`
+
+### Prompt: default language from platform
+
+**Problem:** `PromptBody` always defaulted to `"en"` when auto-selecting a prompt, regardless of the platform's current language.
+
+**Fix:** Computes `platformLang` from `i18n.language` (supports `en`, `es`, `pt`). Uses it for initial `selectedLanguage` state, auto-selection fallback, and when switching between default prompts.
+
+**File:** `components/PromptBody.jsx`
+
+### CompositeRetrieverBuilder: static flow indicator
+
+**Problem:** The composite retriever tree had no visual indication of the input-to-output flow direction.
+
+**Fix:** Added a static column to the left of the tree showing: "All chunks" at the top, triple downward arrows in the middle, "Selected chunks" at the bottom. Uses theme `divider` color. Text is translatable via `allChunks` / `selectedChunks` keys.
+
+**File:** `advanced/CompositeRetrieverBuilder.jsx`
+
+### RetrieverConfigurationStep: descriptions and instructions
+
+Added two translatable texts to the advanced retriever configuration modal:
+- `retrieverDescription` — explains the three retriever families (keyword, embedding, composite) under the selector
+- `compositeInstructions` — explains how to add child retrievers (+ button) and edit cards (click), shown only when a composite retriever is selected
+
+**File:** `advanced/RetrieverConfigurationStep.jsx`
+
+### Default chunker name fix
+
+**Problem:** `ChunkingSection` referenced a non-existent chunker `"SimpleChunker"` as the default fallback.
+
+**Fix:** Changed to `"CharacterChunkModel"` (the actual class name).
+
+**File:** `sections/ChunkingSection.jsx`
 
 ## Testing
 

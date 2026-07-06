@@ -198,31 +198,49 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
-from DashAI.back.models.RAG import (
-    BERTDenseRetriever,
-    BM25Retriever,
-    BM25VectorizerModel,
+from DashAI.back.models.RAG import RAGPipeline
+from DashAI.back.models.RAG.chunking_models import (
     CharacterChunkModel,
+    RecursiveCharacterChunkModel,
+    TokenChunkModel,
+)
+from DashAI.back.models.RAG.embeddings.dense import (
+    BERTEmbedding,
+    DistilBERTEmbedding,
+    E5Embedding,
+    GemmaEmbedding,
+    HuggingFaceEmbedding,
+    InstructorEmbedding,
+    LaBSEmbedding,
+    OpenAIEmbedding,
+    RoBERTaEmbedding,
+    SentenceTransformerEmbedding,
+)
+from DashAI.back.models.RAG.prompts import (
     CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
     DefaultQnARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
-    DistilBERTDenseRetriever,
-    E5DenseRetriever,
-    FastTextDenseRetriever,
-    FastTextEmbedding,
-    GemmaDenseRetriever,
-    HuggingFaceEmbedding,
-    InstructorDenseRetriever,
-    LaBSEDenseRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
+    MMRRerankerRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
     ParallelRetriever,
-    RAGPipeline,
-    RoBERTaDenseRetriever,
-    SentenceTransformerDenseRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.sequential_retriever import (
     SequentialRetriever,
+)
+from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
+)
+from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
+    BM25Retriever,
+    BM25VectorizerModel,
+)
+from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
     TFIDFRetriever,
     TFIDFVectorizerModel,
-    TokenChunkModel,
 )
 from DashAI.back.models.remote_models.deepseek_text_to_text_generation_model import (
     DeepSeekTextToTextGenerationModel,
@@ -512,10 +530,19 @@ def get_initial_components():
         RAGPipeline,
         # Chunking Models
         CharacterChunkModel,
+        RecursiveCharacterChunkModel,
         TokenChunkModel,
         # Encodings
-        FastTextEmbedding,
+        OpenAIEmbedding,
         HuggingFaceEmbedding,
+        SentenceTransformerEmbedding,
+        BERTEmbedding,
+        DistilBERTEmbedding,
+        RoBERTaEmbedding,
+        E5Embedding,
+        GemmaEmbedding,
+        InstructorEmbedding,
+        LaBSEmbedding,
         # Prompts
         DefaultRAGGenerationPrompt,
         CustomRAGGenerationPrompt,
@@ -527,15 +554,8 @@ def get_initial_components():
         BM25VectorizerModel,
         TFIDFRetriever,
         TFIDFVectorizerModel,
-        SentenceTransformerDenseRetriever,
-        BERTDenseRetriever,
-        DistilBERTDenseRetriever,
-        RoBERTaDenseRetriever,
-        E5DenseRetriever,
-        GemmaDenseRetriever,
-        InstructorDenseRetriever,
-        LaBSEDenseRetriever,
-        FastTextDenseRetriever,
+        DenseEmbeddingRetriever,
+        MMRRerankerRetriever,
         SequentialRetriever,
         ParallelRetriever,
     ]

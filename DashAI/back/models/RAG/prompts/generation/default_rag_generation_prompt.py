@@ -115,8 +115,8 @@ class DefaultRAGGenerationPrompt(RAGGenerationPrompt):
     optional_placeholders = []
 
     def __init__(self, **kwargs):
-        self.template = kwargs.pop("template")
         self.language = kwargs.pop("language")
+        self.template = kwargs.pop("template") or TEMPLATES.get(self.language, "")
 
     def format(self, input: str, chunks: str, **kwargs: Any) -> str:
         buffer = self.template

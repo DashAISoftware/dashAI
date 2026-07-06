@@ -143,6 +143,7 @@
       "parameters": "Parameters",
       "simpleGroup": "Simple Retrievers",
       "keywordGroup": "Keyword Retrievers",
+      "denseGroup": "Dense Retrievers",
       "embeddingGroup": "Embedding Retrievers",
       "hybridGroup": "Hybrid",
       "hybridDescription": "BM25 + HuggingFace multilingual embeddings",

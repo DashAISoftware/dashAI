@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
@@ -159,3 +159,21 @@ class DenseRetriever(UnitRetriever):
         scored = list(zip(valid_ids, distances.tolist()))
         scored.sort(key=lambda x: x[1])
         return scored
+
+    def get_chunk_vectors(self, chunk_ids: List[int]) -> np.ndarray:
+        if self.similarity_matrix is None:
+            raise ValueError("Similarity matrix not initialized.")
+        chunk_id_to_row: Dict[int, int] = {
+            self.matrix_row_to_chunk_id[r]: r for r in self.matrix_row_to_chunk_id
+        }
+        rows = []
+        for cid in chunk_ids:
+            row = chunk_id_to_row.get(cid)
+            if row is not None:
+                rows.append(row)
+        if not rows:
+            raise ValueError(
+                f"None of the provided chunk_ids {chunk_ids} were found "
+                "in the similarity matrix."
+            )
+        return self.similarity_matrix[rows]

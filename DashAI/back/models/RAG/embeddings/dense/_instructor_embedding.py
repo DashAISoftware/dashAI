@@ -24,7 +24,8 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
     def load(self):
         from InstructorEmbedding import INSTRUCTOR
         self.model = INSTRUCTOR(self.model_name)
-        self.model.set_pooling(device=self.device)
+        if hasattr(self.model, "set_pooling"):
+            self.model.set_pooling(device=self.device)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
         pairs = [[self.instruction, text] for text in texts]

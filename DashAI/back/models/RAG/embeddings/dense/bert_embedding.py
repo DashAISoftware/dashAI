@@ -1,9 +1,8 @@
-from typing import Dict
+from typing import Dict, List
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
-    int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -16,16 +15,12 @@ from DashAI.back.models.RAG.embeddings.dense._bert_embedding import (
     MEAN,
     _BERTEmbedding,
 )
-from DashAI.back.models.RAG.retrievers.dense._hf_metadata_utils import (
-    build_retriever_metadata,
+from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
+    AGGREGATE,
+    TRUNCATE,
 )
-from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import (
-    METRICS,
-    HuggingFaceDenseRetriever,
-)
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
-TRUNCATE = "truncate"
-AGGREGATE = "aggregate"
 BERT_POOLING_STRATEGIES = [CLS, MEAN, MAX, CONCAT_2, CONCAT_3, CONCAT_4]
 
 BERT_MODELS: Dict[str, dict] = {
@@ -70,7 +65,7 @@ BERT_MODELS: Dict[str, dict] = {
 BERT_MODEL_NAMES = list(BERT_MODELS.keys())
 
 
-class BERTDenseRetrieverSchema(BaseSchema):
+class BERTEmbeddingSchema(BaseSchema):
     model_name: schema_field(
         enum_field(BERT_MODEL_NAMES),
         placeholder="google-bert/bert-base-cased",
@@ -107,51 +102,45 @@ class BERTDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    similarity_metric: schema_field(
-        enum_field(enum=METRICS),
-        placeholder="cosine",
-        description=MultilingualString(
-            en="Distance metric for comparing dense vectors.",
-            es="Métrica de distancia para comparar vectores densos.",
-        ),
-    )  # type: ignore
 
-    top_k: schema_field(
-        int_field(gt=0),
-        placeholder=5,
-        description=MultilingualString(
-            en="Number of chunks to select.",
-            es="Número de fragmentos a seleccionar.",
-        ),
-    )  # type: ignore
-
-
-class BERTDenseRetriever(HuggingFaceDenseRetriever):
-    FLAGS: list[str] = []
-    SCHEMA = BERTDenseRetrieverSchema
+class BERTEmbedding(DenseEmbedding):
+    SCHEMA = BERTEmbeddingSchema
+    FLAGS: list[str] = ["FAMILY:bert", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
-        en="BERT Embedding Retriever",
-        es="Recuperador por Embeddings BERT",
+        en="BERT Embedding",
+        es="Embedding BERT",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Dense retriever using BERT embeddings with configurable pooling (CLS, mean, max, concat layers).",
-        es="Recuperador denso que usa embeddings BERT con pooling configurable (CLS, mean, max, concat layers).",
+        en="Dense embeddings using BERT models with configurable pooling (CLS, mean, max, concat layers).",
+        es="Embeddings densos usando modelos BERT con pooling configurable (CLS, mean, max, concat layers).",
     )
 
-    @classmethod
-    def get_metadata(cls):
-        return build_retriever_metadata(BERT_MODELS, "BERT", len(BERT_MODEL_NAMES))
-
-    def _create_embedding(self) -> _BERTEmbedding:
-        model_name = self.params.pop("model_name")
-        device = self.params.pop("device")
-        overflow_strategy = self.params.pop("overflow_strategy")
-        pooling_strategy = self.params.pop("pooling_strategy")
+    def __init__(self, **kwargs):
+        self.params = self.validate_and_transform(kwargs)
+        model_name = self.params["model_name"]
+        device = self.params["device"]
+        overflow_strategy = self.params.get("overflow_strategy", "truncate")
+        pooling_strategy = self.params["pooling_strategy"]
         model_info = BERT_MODELS[model_name]
-        return _BERTEmbedding(
+        self._embedding = _BERTEmbedding(
             model_name=model_name,
             device=device,
             model_max_length=model_info["max_seq_length"],
             overflow_strategy=overflow_strategy,
             pooling_strategy=pooling_strategy,
         )
+
+    def load(self):
+        self._embedding.load()
+
+    def encode(self, text: str):
+        return self._embedding.encode(text)
+
+    def batch_encode(self, texts: List[str]):
+        return self._embedding.batch_encode(texts)
+
+    def save(self):
+        pass
+
+    def train(self, **kwargs):
+        return

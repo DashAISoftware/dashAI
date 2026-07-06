@@ -173,7 +173,7 @@ class BM25RetrieverSchema(BaseSchema):
 
 
 class BM25Retriever(SparseRetriever):
-    FLAGS: list[str] = []
+    FLAGS: list[str] = ["keyword", "sparse"]
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Retriever",
         es="Recuperador BM25",
@@ -310,3 +310,17 @@ class BM25Retriever(SparseRetriever):
         scored = list(zip(valid_ids, distances.tolist()))
         scored.sort(key=lambda x: x[1])
         return scored
+
+    def get_chunk_vectors(self, chunk_ids: List[int]) -> np.ndarray:
+        chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
+        rows = []
+        for cid in chunk_ids:
+            row = chunk_id_to_row.get(cid)
+            if row is not None:
+                rows.append(row)
+        if not rows:
+            raise ValueError(
+                f"None of the provided chunk_ids {chunk_ids} were found "
+                "in the BM25 matrix."
+            )
+        return self._bm25_matrix[rows].toarray()

@@ -1,9 +1,8 @@
-from typing import Dict
+from typing import Dict, List
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
-    int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -16,16 +15,12 @@ from DashAI.back.models.RAG.embeddings.dense._bert_embedding import (
     MEAN,
     _BERTEmbedding,
 )
-from DashAI.back.models.RAG.retrievers.dense._hf_metadata_utils import (
-    build_retriever_metadata,
+from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
+    AGGREGATE,
+    TRUNCATE,
 )
-from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import (
-    METRICS,
-    HuggingFaceDenseRetriever,
-)
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
-TRUNCATE = "truncate"
-AGGREGATE = "aggregate"
 DISTILBERT_POOLING_STRATEGIES = [CLS, MEAN, MAX, CONCAT_2, CONCAT_3, CONCAT_4]
 
 DISTILBERT_MODELS: Dict[str, dict] = {
@@ -56,7 +51,7 @@ DISTILBERT_MODELS: Dict[str, dict] = {
 DISTILBERT_MODEL_NAMES = list(DISTILBERT_MODELS.keys())
 
 
-class DistilBERTDenseRetrieverSchema(BaseSchema):
+class DistilBERTEmbeddingSchema(BaseSchema):
     model_name: schema_field(
         enum_field(DISTILBERT_MODEL_NAMES),
         placeholder="distilbert/distilbert-base-cased",
@@ -93,51 +88,45 @@ class DistilBERTDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    similarity_metric: schema_field(
-        enum_field(enum=METRICS),
-        placeholder="cosine",
-        description=MultilingualString(
-            en="Distance metric for comparing dense vectors.",
-            es="Métrica de distancia para comparar vectores densos.",
-        ),
-    )  # type: ignore
 
-    top_k: schema_field(
-        int_field(gt=0),
-        placeholder=5,
-        description=MultilingualString(
-            en="Number of chunks to select.",
-            es="Número de fragmentos a seleccionar.",
-        ),
-    )  # type: ignore
-
-
-class DistilBERTDenseRetriever(HuggingFaceDenseRetriever):
-    FLAGS: list[str] = []
-    SCHEMA = DistilBERTDenseRetrieverSchema
+class DistilBERTEmbedding(DenseEmbedding):
+    SCHEMA = DistilBERTEmbeddingSchema
+    FLAGS: list[str] = ["FAMILY:distilbert", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
-        en="DistilBERT Embedding Retriever",
-        es="Recuperador por Embeddings DistilBERT",
+        en="DistilBERT Embedding",
+        es="Embedding DistilBERT",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Dense retriever using DistilBERT embeddings with configurable pooling.",
-        es="Recuperador denso que usa embeddings DistilBERT con pooling configurable.",
+        en="Dense embeddings using DistilBERT models with configurable pooling.",
+        es="Embeddings densos usando modelos DistilBERT con pooling configurable.",
     )
 
-    @classmethod
-    def get_metadata(cls):
-        return build_retriever_metadata(DISTILBERT_MODELS, "DistilBERT", len(DISTILBERT_MODEL_NAMES))
-
-    def _create_embedding(self) -> _BERTEmbedding:
-        model_name = self.params.pop("model_name")
-        device = self.params.pop("device")
-        overflow_strategy = self.params.pop("overflow_strategy")
-        pooling_strategy = self.params.pop("pooling_strategy")
+    def __init__(self, **kwargs):
+        self.params = self.validate_and_transform(kwargs)
+        model_name = self.params["model_name"]
+        device = self.params["device"]
+        overflow_strategy = self.params.get("overflow_strategy", "truncate")
+        pooling_strategy = self.params["pooling_strategy"]
         model_info = DISTILBERT_MODELS[model_name]
-        return _BERTEmbedding(
+        self._embedding = _BERTEmbedding(
             model_name=model_name,
             device=device,
             model_max_length=model_info["max_seq_length"],
             overflow_strategy=overflow_strategy,
             pooling_strategy=pooling_strategy,
         )
+
+    def load(self):
+        self._embedding.load()
+
+    def encode(self, text: str):
+        return self._embedding.encode(text)
+
+    def batch_encode(self, texts: List[str]):
+        return self._embedding.batch_encode(texts)
+
+    def save(self):
+        pass
+
+    def train(self, **kwargs):
+        return

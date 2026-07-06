@@ -18,6 +18,11 @@ import PresetCard from "../components/PresetCard";
 
 const TOP_K_OPTIONS = [3, 5, 10, 15, 20];
 
+/**
+ * Deep equality comparison for objects, arrays, and primitives.
+ * Handles nested structures recursively. Returns false for
+ * different types, null vs object, or arrays vs objects.
+ */
 function deepEqual(a, b) {
   if (a === b) return true;
   if (typeof a !== typeof b) return false;
@@ -44,38 +49,60 @@ function getEffectiveTopK(model) {
     }
     return null;
   }
+  if (model.component === "MMRRerankerRetriever") {
+    return typeof model.params.top_k === "number" ? model.params.top_k : null;
+  }
   return typeof model.params.top_k === "number" ? model.params.top_k : null;
 }
 
-function buildHybridModel(effectiveK, defaults = {}) {
-  const sparse = defaults.sparseDefault || {};
-  const embedding = defaults.embedding || {};
-  const mergeStrategy = defaults.mergeStrategy || "round_robin";
+function buildKeywordModel(bm25Defaults, topK) {
+  return {
+    component: "BM25Retriever",
+    params: { ...bm25Defaults, top_k: topK },
+  };
+}
+
+function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
+  return {
+    component: "DenseEmbeddingRetriever",
+    params: {
+      embedding_model: {
+        component: "SentenceTransformerEmbedding",
+        params: { ...embeddingDefaults, model_name: "microsoft/harrier-oss-v1-0.6b" },
+      },
+      similarity_metric: retrieverDefaults.similarity_metric || "cosine",
+      top_k: topK,
+    },
+  };
+}
+
+function buildHybridModel(bm25Defaults, embeddingDefaults, retrieverDefaults, topK) {
+  const kwTopK = Math.ceil(topK / 2);
+  const seTopK = Math.floor(topK / 2);
   return {
     component: "ParallelRetriever",
     params: {
-      merge_strategy: mergeStrategy,
+      merge_strategy: "round_robin",
       children: [
         {
           component: "BM25Retriever",
-          params: { ...sparse, top_k: Math.max(1, Math.ceil(effectiveK / 2)) },
+          params: { ...bm25Defaults, top_k: kwTopK },
         },
         {
-          component: "SentenceTransformerDenseRetriever",
+          component: "DenseEmbeddingRetriever",
           params: {
-            ...embedding,
-            top_k: Math.max(1, Math.floor(effectiveK / 2)),
+            embedding_model: {
+              component: "SentenceTransformerEmbedding",
+              params: { ...embeddingDefaults, model_name: "microsoft/harrier-oss-v1-0.6b" },
+            },
+            similarity_metric: retrieverDefaults.similarity_metric || "cosine",
+            top_k: seTopK,
           },
         },
       ],
     },
   };
 }
-
-const API_GROUPS = {
-  keyword: "SparseRetriever",
-  embedding: "DenseRetriever",
-};
 
 export default function RetrieverSection({
   retrieverModel,
@@ -84,17 +111,98 @@ export default function RetrieverSection({
   const theme = useTheme();
   const { t } = useTranslation(["generative"]);
 
-  const [groups, setGroups] = useState([]);
-  const [allRetrievers, setAllRetrievers] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [selectedModel, setSelectedModel] = useState(null);
-  const [topK, setTopK] = useState(retrieverModel?.params?.top_k || 10);
+  const [topK, setTopK] = useState(10);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [hybridDefaults, setHybridDefaults] = useState({ sparseDefault: null, embedding: null, mergeStrategy: null });
-  const [defaultsMap, setDefaultsMap] = useState({});
+  const [concreteRetrievers, setConcreteRetrievers] = useState([]);
+  const [bm25Defaults, setBm25Defaults] = useState({});
+  const [embeddingDefaults, setEmbeddingDefaults] = useState({});
+  const [denseRetrieverDefaults, setDenseRetrieverDefaults] = useState({});
 
   const effectiveTopK = getEffectiveTopK(retrieverModel);
+
+  const keywordModel = useMemo(
+    () => buildKeywordModel(bm25Defaults, effectiveTopK || topK),
+    [bm25Defaults, effectiveTopK, topK],
+  );
+
+  const semanticModel = useMemo(
+    () => buildSemanticModel(embeddingDefaults, denseRetrieverDefaults, effectiveTopK || topK),
+    [embeddingDefaults, denseRetrieverDefaults, effectiveTopK, topK],
+  );
+
+  const hybridModel = useMemo(
+    () => buildHybridModel(bm25Defaults, embeddingDefaults, denseRetrieverDefaults, effectiveTopK || topK),
+    [bm25Defaults, embeddingDefaults, denseRetrieverDefaults, effectiveTopK, topK],
+  );
+
+  const isAdvanced = useMemo(() => {
+    if (!retrieverModel?.component || !retrieverModel?.params) return false;
+
+    const filterTopK = (obj) =>
+      Object.fromEntries(
+        Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
+      );
+
+    const modelNoTopK = {
+      component: retrieverModel.component,
+      params: filterTopK(retrieverModel.params),
+    };
+
+    const kwNoTopK = {
+      component: keywordModel.component,
+      params: filterTopK(keywordModel.params),
+    };
+
+    const seNoTopK = {
+      component: semanticModel.component,
+      params: filterTopK(semanticModel.params),
+    };
+
+    const hyNoTopK = {
+      component: hybridModel.component,
+      params: filterTopK(hybridModel.params),
+    };
+
+    return !deepEqual(modelNoTopK, kwNoTopK)
+      && !deepEqual(modelNoTopK, seNoTopK)
+      && !deepEqual(modelNoTopK, hyNoTopK);
+  }, [retrieverModel, keywordModel, semanticModel, hybridModel]);
+
+  const detectSelectedGroup = useCallback((model) => {
+    if (!model?.component) return null;
+
+    const filterTopK = (obj) =>
+      Object.fromEntries(
+        Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
+      );
+
+    const modelNoTopK = {
+      component: model.component,
+      params: filterTopK(model.params),
+    };
+
+    if (deepEqual(modelNoTopK, {
+      component: keywordModel.component,
+      params: filterTopK(keywordModel.params),
+    })) {
+      return "keyword";
+    }
+    if (deepEqual(modelNoTopK, {
+      component: semanticModel.component,
+      params: filterTopK(semanticModel.params),
+    })) {
+      return "semantic";
+    }
+    if (deepEqual(modelNoTopK, {
+      component: hybridModel.component,
+      params: filterTopK(hybridModel.params),
+    })) {
+      return "hybrid";
+    }
+    return null;
+  }, [keywordModel, semanticModel, hybridModel]);
 
   useEffect(() => {
     const tk = getEffectiveTopK(retrieverModel);
@@ -104,116 +212,29 @@ export default function RetrieverSection({
   }, [retrieverModel]);
 
   useEffect(() => {
-    if (!retrieverModel?.component || selectedGroup || groups.length === 0) return;
-    if (retrieverModel.component === "ParallelRetriever" || retrieverModel.component === "SequentialRetriever") {
-      setSelectedGroup("hybrid");
-      setSelectedModel({ name: retrieverModel.component });
-      return;
-    }
-    const grp = groups.find((g) =>
-      g.members.some((m) => m.name === retrieverModel.component)
-    );
-    if (grp) {
-      setSelectedGroup(grp.key);
-      setSelectedModel(grp.members.find((m) => m.name === retrieverModel.component) || null);
-    } else {
-      setSelectedGroup("__custom__");
-    }
-  }, [retrieverModel, groups, selectedGroup]);
-
-  const isAdvanced = useMemo(() => {
-    if (!retrieverModel?.params || !retrieverModel?.component) return false;
-
-    const tk = getEffectiveTopK(retrieverModel);
-
-    if (selectedGroup === "__custom__") return true;
-
-    if (tk != null && !TOP_K_OPTIONS.includes(tk)) return true;
-
-    if (selectedGroup === "hybrid") {
-      if (retrieverModel.component !== "ParallelRetriever") return true;
-      if (tk == null || !TOP_K_OPTIONS.includes(tk)) return true;
-      const def = buildHybridModel(tk, hybridDefaults);
-      return !deepEqual(def.params, retrieverModel.params);
-    }
-
-    const group = groups.find((g) => g.key === selectedGroup);
-    if (!group) return true;
-    const matchedMember = group.members.find(
-      (m) => m.name === retrieverModel.component,
-    );
-    if (!matchedMember) return true;
-    const defaultParams = defaultsMap[matchedMember.name] || {};
-    const filterTopK = (obj) =>
-      Object.fromEntries(
-        Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
-      );
-    return !deepEqual(
-      filterTopK(retrieverModel.params),
-      filterTopK(defaultParams),
-    );
-  }, [retrieverModel, selectedGroup, groups, hybridDefaults, defaultsMap]);
+    if (loading) return;
+    const group = detectSelectedGroup(retrieverModel);
+    setSelectedGroup(group);
+  }, [retrieverModel, loading, detectSelectedGroup]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const groupResults = [];
-        const allRet = [];
+        const allRetrieversRaw = await getRetrieverComponents("RetrieverModel");
+        const retrievers = allRetrieversRaw.filter(
+          (c) => !(c.flags || []).includes("abstract"),
+        );
+        setConcreteRetrievers(retrievers);
 
-        for (const [key, parentName] of Object.entries(API_GROUPS)) {
-          const children = await getRetrieverComponents(parentName);
-          const concrete = children.filter(c => !(c.flags || []).includes("abstract"));
-          if (concrete.length > 0) {
-            groupResults.push({ key, members: concrete });
-            allRet.push(...concrete);
-          }
-        }
+        const [bm25, embeddingDefaultsRes, denseRetriever] = await Promise.all([
+          resolveDefaults("BM25Retriever").catch(() => ({})),
+          resolveDefaults("SentenceTransformerEmbedding").catch(() => ({})),
+          resolveDefaults("DenseEmbeddingRetriever").catch(() => ({})),
+        ]);
 
-        groupResults.push({ key: "hybrid", members: [] });
-        allRet.push({ name: "ParallelRetriever" });
-
-        setGroups(groupResults);
-        setAllRetrievers(allRet);
-
-        const dm = {};
-        for (const ret of allRet) {
-          if (ret.name !== "ParallelRetriever") {
-            dm[ret.name] = await resolveDefaults(ret.name);
-          }
-        }
-        const parallelDefaults = await resolveDefaults("ParallelRetriever");
-        const mergeStrategy = parallelDefaults?.merge_strategy || "round_robin";
-        setDefaultsMap(dm);
-
-        const bm25Defaults = dm["BM25Retriever"] || {};
-        const embeddingDefaults = dm["SentenceTransformerDenseRetriever"] || {};
-        setHybridDefaults({ sparseDefault: bm25Defaults, embedding: embeddingDefaults, mergeStrategy });
-
-        if (
-          retrieverModel?.component === "ParallelRetriever" &&
-          Object.keys(bm25Defaults).length > 0 &&
-          Object.keys(embeddingDefaults).length > 0
-        ) {
-          setRetrieverModel(
-            buildHybridModel(getEffectiveTopK(retrieverModel), {
-              sparseDefault: bm25Defaults,
-              embedding: embeddingDefaults,
-              mergeStrategy,
-            }),
-          );
-        }
-
-        if (retrieverModel?.component) {
-          const found = allRet.find((r) => r.name === retrieverModel.component);
-          if (found) {
-            setSelectedModel(found === groupResults[2] ? "hybrid" : found);
-            const grp = groupResults.find(
-              (g) => g.members.some((m) => m.name === retrieverModel.component) ||
-                (retrieverModel.component === "ParallelRetriever" && g.key === "hybrid"),
-            );
-            if (grp) setSelectedGroup(grp.key);
-          }
-        }
+        setBm25Defaults(bm25);
+        setEmbeddingDefaults(embeddingDefaultsRes);
+        setDenseRetrieverDefaults(denseRetriever);
       } catch (error) {
         console.error("Error loading retrievers:", error);
       } finally {
@@ -223,7 +244,7 @@ export default function RetrieverSection({
     load();
   }, []);
 
-  const selectGroup = async (groupKey) => {
+  const selectPreset = useCallback((groupKey) => {
     const alreadySelected = !isAdvanced && selectedGroup === groupKey;
     if (alreadySelected) {
       setShowAdvanced(true);
@@ -232,70 +253,36 @@ export default function RetrieverSection({
 
     setShowAdvanced(false);
     setSelectedGroup(groupKey);
-    if (groupKey === "hybrid") {
-      setSelectedModel({ name: "ParallelRetriever" });
-      setRetrieverModel(buildHybridModel(topK, hybridDefaults));
-      return;
+
+    if (groupKey === "keyword") {
+      setRetrieverModel(keywordModel);
+    } else if (groupKey === "semantic") {
+      setRetrieverModel(semanticModel);
+    } else if (groupKey === "hybrid") {
+      setRetrieverModel(hybridModel);
     }
-    const group = groups.find((g) => g.key === groupKey);
-    if (group && group.members.length > 0) {
-      const model = group.members[0];
-      setSelectedModel(model);
-      const defaults = await resolveDefaults(model.name);
-      setRetrieverModel({
-        component: model.name,
-        params: { ...defaults, top_k: topK },
-      });
-    }
-  };
+  }, [isAdvanced, selectedGroup, keywordModel, semanticModel, hybridModel, setRetrieverModel]);
 
   const handleTopKChange = useCallback((newValue) => {
     const value = parseInt(newValue);
-    if (!isNaN(value) && value > 0) {
-      if (isAdvanced) return;
-      setTopK(value);
-      if (selectedGroup === "hybrid") {
-        setRetrieverModel(buildHybridModel(value, hybridDefaults));
-      } else {
-        setRetrieverModel((prev) => ({
-          ...prev,
-          params: { ...(prev?.params || {}), top_k: value },
-        }));
-      }
-    }
-  }, [isAdvanced, selectedGroup, setRetrieverModel, hybridDefaults]);
+    if (isNaN(value) || value <= 0 || isAdvanced) return;
+    setTopK(value);
 
-  const getGroupLabel = (key) => {
-    switch (key) {
-      case "keyword": return t("generative:simplifiedRag.composite.keywordGroup");
-      case "embedding": return t("generative:simplifiedRag.composite.embeddingGroup");
-      case "hybrid": return t("generative:simplifiedRag.composite.hybridGroup");
-      default: return key;
+    if (selectedGroup === "keyword") {
+      setRetrieverModel(buildKeywordModel(bm25Defaults, value));
+    } else if (selectedGroup === "semantic") {
+      setRetrieverModel(buildSemanticModel(embeddingDefaults, denseRetrieverDefaults, value));
+    } else if (selectedGroup === "hybrid") {
+      setRetrieverModel(buildHybridModel(bm25Defaults, embeddingDefaults, denseRetrieverDefaults, value));
     }
-  };
-
-  const getGroupDescription = (key) => {
-    if (key === "hybrid") return t("generative:simplifiedRag.composite.hybridDescription");
-    if (key === "keyword") return "BM25";
-    if (key === "embedding") {
-      const firstMember = groups.find((g) => g.key === key)?.members?.[0];
-      const modelName = firstMember && defaultsMap[firstMember.name]?.model_name;
-      return modelName || firstMember?.name || "";
-    }
-    const group = groups.find((g) => g.key === key);
-    if (!group || !group.members) return "";
-    if (group.members.length <= 3) {
-      return group.members
-        .map((r) => {
-          const dn = r.display_name;
-          if (!dn) return r.name;
-          if (typeof dn === "string") return dn;
-          return dn.en || r.name;
-        })
-        .join(", ");
-    }
-    return `${group.members.length} options`;
-  };
+  }, [
+    isAdvanced,
+    selectedGroup,
+    bm25Defaults,
+    embeddingDefaults,
+    denseRetrieverDefaults,
+    setRetrieverModel,
+  ]);
 
   if (loading) {
     return (
@@ -317,16 +304,30 @@ export default function RetrieverSection({
             {t("generative:simplifiedRag.retriever.paradigmLabel")}
           </Typography>
           <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
-            {groups.map((group) => (
-              <PresetCard
-                key={group.key}
-                selected={!isAdvanced && selectedGroup === group.key}
-                onClick={() => selectGroup(group.key)}
-                label={getGroupLabel(group.key)}
-                description={getGroupDescription(group.key)}
-                sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
-              />
-            ))}
+            <PresetCard
+              key="keyword"
+              selected={!isAdvanced && selectedGroup === "keyword"}
+              onClick={() => selectPreset("keyword")}
+              label={t("generative:simplifiedRag.retriever.keywordLabel", { defaultValue: "Keyword" })}
+              description="BM25"
+              sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
+            />
+            <PresetCard
+              key="semantic"
+              selected={!isAdvanced && selectedGroup === "semantic"}
+              onClick={() => selectPreset("semantic")}
+              label={t("generative:simplifiedRag.retriever.semanticLabel", { defaultValue: "Semantic" })}
+              description="Harrier OSS v1 0.6B"
+              sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
+            />
+            <PresetCard
+              key="hybrid"
+              selected={!isAdvanced && selectedGroup === "hybrid"}
+              onClick={() => selectPreset("hybrid")}
+              label={t("generative:simplifiedRag.retriever.hybridLabel", { defaultValue: "Hybrid" })}
+              description="BM25 + Harrier 0.6B"
+              sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
+            />
             {isAdvanced && retrieverModel?.component && (
               <Box sx={{ flex: 1, minWidth: 180, display: "flex", flexDirection: "column", gap: 1 }}>
                 <AdvancedConfigCard
@@ -421,8 +422,8 @@ export default function RetrieverSection({
       <RetrieverAdvancedModal
         open={showAdvanced}
         onClose={() => setShowAdvanced(false)}
-        selectedParadigm={selectedModel}
-        allParadigms={allRetrievers}
+        selectedParadigm={null}
+        allParadigms={concreteRetrievers}
         retrieverModel={retrieverModel}
         setRetrieverModel={setRetrieverModel}
       />

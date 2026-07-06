@@ -21,6 +21,8 @@ LLAMA_FILENAME_MAP = {
     "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF": "*Q4_K_M.gguf",
     "bartowski/Llama-3.2-1B-Instruct-GGUF": "*Q4_K_M.gguf",
     "bartowski/Llama-3.2-3B-Instruct-GGUF": "*Q4_K_M.gguf",
+    "TheBloke/Llama-2-7B-Chat-GGUF": "*Q4_K_M.gguf",
+    "TheBloke/Llama-2-13B-Chat-GGUF": "*Q4_K_M.gguf",
 }
 
 
@@ -39,6 +41,8 @@ class LlamaSchema(BaseSchema):
                 "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
                 "bartowski/Llama-3.2-1B-Instruct-GGUF",
                 "bartowski/Llama-3.2-3B-Instruct-GGUF",
+                "TheBloke/Llama-2-7B-Chat-GGUF",
+                "TheBloke/Llama-2-13B-Chat-GGUF",
             ]
         ),
         placeholder="bartowski/Llama-3.2-3B-Instruct-GGUF",
@@ -50,7 +54,9 @@ class LlamaSchema(BaseSchema):
                 "'Llama-3.2-3B' (~3B parameters) offers a good speed/quality "
                 "trade-off. "
                 "'Meta-Llama-3.1-8B' (~8B parameters) delivers the highest quality "
-                "at the cost of more RAM and slower inference."
+                "at the cost of more RAM and slower inference. "
+                "Llama-2-7B-Chat and Llama-2-13B-Chat are also available via "
+                "TheBloke's community quantizations."
             ),
             es=(
                 "El checkpoint Meta Llama 3.x Instruct a cargar en formato GGUF "
@@ -59,7 +65,9 @@ class LlamaSchema(BaseSchema):
                 "ideal para sistemas solo con CPU. "
                 "'Llama-3.2-3B' (~3B parámetros) ofrece un buen equilibrio entre "
                 "velocidad y calidad. 'Meta-Llama-3.1-8B' (~8B parámetros) entrega "
-                "la mayor calidad a costa de más RAM e inferencia más lenta."
+                "la mayor calidad a costa de más RAM e inferencia más lenta. "
+                "Llama-2-7B-Chat y Llama-2-13B-Chat también están disponibles "
+                "mediante las cuantizaciones comunitarias de TheBloke."
             ),
             pt=(
                 "O checkpoint Meta Llama 3.x Instruct para carregar em formato GGUF "
@@ -69,11 +77,51 @@ class LlamaSchema(BaseSchema):
                 "'Llama-3.2-3B' (~3B parâmetros) oferece um bom equilíbrio entre "
                 "velocidade e qualidade. 'Meta-Llama-3.1-8B' (~8B parâmetros) "
                 "entrega a maior qualidade ao custo de mais RAM e "
-                "inferência mais lenta."
+                "inferência mais lenta. "
+                "Llama-2-7B-Chat e Llama-2-13B-Chat também estão disponíveis "
+                "via quantizações comunitárias de TheBloke."
             ),
         ),
         alias=MultilingualString(
             en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+        ),
+    )  # type: ignore
+
+    quantization: schema_field(
+        enum_field(
+            enum=[
+                "Q2_K", "Q2_K_L",
+                "Q3_K_S", "Q3_K_M", "Q3_K_L", "Q3_K_XL",
+                "Q4_K_S", "Q4_K_0", "Q4_K_M",
+                "Q5_K_S", "Q5_K_M",
+                "Q6_K", "Q6_K_L",
+                "Q8_0",
+                "F32"
+            ],),
+        placeholder="Q4_K_M",
+        description=MultilingualString(
+            en=(
+                "Quantization format for the GGUF checkpoint. 'Q4_K_M' is the "
+                "default and recommended for most users, offering a good balance "
+                "between speed and quality. Other formats may be faster or smaller "
+                "but can reduce output quality."
+            ),
+            es=(
+                "Formato de cuantización para el checkpoint GGUF. 'Q4_K_M' es el "
+                "predeterminado y recomendado para la mayoría de los usuarios, "
+                "ofreciendo un buen equilibrio entre velocidad y calidad. Otros "
+                "formatos pueden ser más rápidos o más pequeños pero pueden reducir "
+                "la calidad de salida."
+            ),
+            pt=(
+                "Formato de quantização para o checkpoint GGUF. 'Q4_K_M' é o "
+                "padrão e recomendado para a maioria dos usuários, oferecendo um "
+                "bom equilíbrio entre velocidade e qualidade. Outros formatos podem "
+                "ser mais rápidos ou menores, mas podem reduzir a qualidade da saída."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Quantization", es="Cuantización", pt="Quantização"
         ),
     )  # type: ignore
 
@@ -329,7 +377,10 @@ class LlamaModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        self.filename = LLAMA_FILENAME_MAP.get(self.model_name, "*Q4_K_M.gguf")
+        #self.filename = LLAMA_FILENAME_MAP.get(self.model_name, "*Q4_K_M.gguf")
+        self.quantization = kwargs.get("quantization", "Q4_K_M")
+        self.filename = f"*{self.quantization}.gguf"
+
         use_gpu = LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
 
         self.model = Llama.from_pretrained(

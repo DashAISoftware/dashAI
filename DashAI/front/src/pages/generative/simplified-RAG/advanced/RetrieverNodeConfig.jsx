@@ -19,7 +19,7 @@ import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { resolveDefaults } from "../../../../utils/schema";
 
-const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever"];
+const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
 
 export default function RetrieverNodeConfig({
   open,
@@ -60,7 +60,14 @@ export default function RetrieverNodeConfig({
     const dn = opt.display_name;
     if (!dn) return opt.name || "";
     if (typeof dn === "string") return dn;
-    return dn.en || dn.es || String(dn);
+    if (dn.en) return dn.en;
+    if (dn.es) return dn.es;
+    // Fallback: try any available language key
+    const keys = Object.keys(dn);
+    for (const key of keys) {
+      if (typeof dn[key] === "string") return dn[key];
+    }
+    return opt.name || "";
   };
 
   const handleModelChange = async (_e, newVal) => {

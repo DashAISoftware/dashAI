@@ -32,7 +32,7 @@ class SequentialRetrieverSchema(BaseSchema):
 
 
 class SequentialRetriever(CompositeRetriever):
-    FLAGS: list[str] = []
+    FLAGS: list[str] = ["composite", "sequential"]
     SCHEMA = SequentialRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Sequential Retriever",

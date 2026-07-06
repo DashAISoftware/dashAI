@@ -78,6 +78,7 @@
       "parameters": "Parâmetros",
       "simpleGroup": "Recuperadores Simples",
       "keywordGroup": "Recuperadores por Palavras-chave",
+      "denseGroup": "Recuperadores Densos",
       "embeddingGroup": "Recuperadores por Embeddings",
       "hybridGroup": "Híbrido",
       "hybridDescription": "BM25 + embeddings multilíngues HuggingFace",

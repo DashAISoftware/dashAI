@@ -321,17 +321,30 @@ class QwenModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        self.filename = "*8_0.gguf"
+        self.filename = "*q8_0.gguf"
         use_gpu = LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
 
-        self.model = Llama.from_pretrained(
-            repo_id=self.model_name,
-            filename=self.filename,
-            verbose=True,
-            n_ctx=self.n_ctx,
-            n_gpu_layers=-1 if use_gpu else 0,
-            main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) if use_gpu else 0,
-        )
+        try:
+            self.model = Llama.from_pretrained(
+                repo_id=self.model_name,
+                filename=self.filename,
+                verbose=True,
+                n_ctx=self.n_ctx,
+                n_gpu_layers=-1 if use_gpu else 0,
+                main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) if use_gpu else 0,
+            )
+        except ValueError:
+            # Fall back to Q2_K single-file quantization when Q8_0 is
+            # not available (e.g. large models whose Q8_0 is multi-part).
+            self.filename = "*q2_k.gguf"
+            self.model = Llama.from_pretrained(
+                repo_id=self.model_name,
+                filename=self.filename,
+                verbose=True,
+                n_ctx=self.n_ctx,
+                n_gpu_layers=-1 if use_gpu else 0,
+                main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) if use_gpu else 0,
+            )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
         """Generate a reply for the given chat prompt.

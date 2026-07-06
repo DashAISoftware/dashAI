@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { getRetrieverComponents, getRetrievalParadigm } from "../../../../api/rag";
 import RetrieverNodeConfig from "./RetrieverNodeConfig";
 
-const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever"];
+const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
 let _nodeIdCounter = 0;
 function nextId() {
   return `n_${++_nodeIdCounter}`;

@@ -1,9 +1,8 @@
-from typing import Dict
+from typing import Dict, List
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
-    int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -12,16 +11,12 @@ from DashAI.back.models.RAG.embeddings.dense._bert_embedding import (
     MEAN,
     _BERTEmbedding,
 )
-from DashAI.back.models.RAG.retrievers.dense._hf_metadata_utils import (
-    build_retriever_metadata,
+from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
+    AGGREGATE,
+    TRUNCATE,
 )
-from DashAI.back.models.RAG.retrievers.dense.huggingface_dense_retriever import (
-    METRICS,
-    HuggingFaceDenseRetriever,
-)
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
-TRUNCATE = "truncate"
-AGGREGATE = "aggregate"
 ROBERTA_POOLING_STRATEGIES = [MEAN, MAX]
 
 ROBERTA_MODELS: Dict[str, dict] = {
@@ -58,7 +53,7 @@ ROBERTA_MODELS: Dict[str, dict] = {
 ROBERTA_MODEL_NAMES = list(ROBERTA_MODELS.keys())
 
 
-class RoBERTaDenseRetrieverSchema(BaseSchema):
+class RoBERTaEmbeddingSchema(BaseSchema):
     model_name: schema_field(
         enum_field(ROBERTA_MODEL_NAMES),
         placeholder="FacebookAI/roberta-base",
@@ -95,51 +90,45 @@ class RoBERTaDenseRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    similarity_metric: schema_field(
-        enum_field(enum=METRICS),
-        placeholder="cosine",
-        description=MultilingualString(
-            en="Distance metric for comparing dense vectors.",
-            es="Métrica de distancia para comparar vectores densos.",
-        ),
-    )  # type: ignore
 
-    top_k: schema_field(
-        int_field(gt=0),
-        placeholder=5,
-        description=MultilingualString(
-            en="Number of chunks to select.",
-            es="Número de fragmentos a seleccionar.",
-        ),
-    )  # type: ignore
-
-
-class RoBERTaDenseRetriever(HuggingFaceDenseRetriever):
-    FLAGS: list[str] = []
-    SCHEMA = RoBERTaDenseRetrieverSchema
+class RoBERTaEmbedding(DenseEmbedding):
+    SCHEMA = RoBERTaEmbeddingSchema
+    FLAGS: list[str] = ["FAMILY:roberta", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
-        en="RoBERTa Embedding Retriever",
-        es="Recuperador por Embeddings RoBERTa",
+        en="RoBERTa Embedding",
+        es="Embedding RoBERTa",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Dense retriever using RoBERTa / XLM-RoBERTa embeddings with mean/max pooling.",
-        es="Recuperador denso que usa embeddings RoBERTa / XLM-RoBERTa con pooling mean/max.",
+        en="Dense embeddings using RoBERTa / XLM-RoBERTa models with mean/max pooling.",
+        es="Embeddings densos usando modelos RoBERTa / XLM-RoBERTa con pooling mean/max.",
     )
 
-    @classmethod
-    def get_metadata(cls):
-        return build_retriever_metadata(ROBERTA_MODELS, "RoBERTa", len(ROBERTA_MODEL_NAMES))
-
-    def _create_embedding(self) -> _BERTEmbedding:
-        model_name = self.params.pop("model_name")
-        device = self.params.pop("device")
-        overflow_strategy = self.params.pop("overflow_strategy")
-        pooling_strategy = self.params.pop("pooling_strategy")
+    def __init__(self, **kwargs):
+        self.params = self.validate_and_transform(kwargs)
+        model_name = self.params["model_name"]
+        device = self.params["device"]
+        overflow_strategy = self.params.get("overflow_strategy", "truncate")
+        pooling_strategy = self.params["pooling_strategy"]
         model_info = ROBERTA_MODELS[model_name]
-        return _BERTEmbedding(
+        self._embedding = _BERTEmbedding(
             model_name=model_name,
             device=device,
             model_max_length=model_info["max_seq_length"],
             overflow_strategy=overflow_strategy,
             pooling_strategy=pooling_strategy,
         )
+
+    def load(self):
+        self._embedding.load()
+
+    def encode(self, text: str):
+        return self._embedding.encode(text)
+
+    def batch_encode(self, texts: List[str]):
+        return self._embedding.batch_encode(texts)
+
+    def save(self):
+        pass
+
+    def train(self, **kwargs):
+        return

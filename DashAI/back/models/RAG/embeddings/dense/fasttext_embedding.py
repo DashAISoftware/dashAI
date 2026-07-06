@@ -7,6 +7,7 @@ from huggingface_hub import hf_hub_download
 from DashAI.back.core.schema_fields import enum_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.schema_fields.schema_field import schema_field
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 
@@ -27,8 +28,16 @@ class FastTextEmbeddingSchema(BaseSchema):
 class FastTextEmbedding(DenseEmbedding):
     """FastText embedding"""
 
+    FLAGS: list[str] = ["FAMILY:fasttext"]
     SCHEMA = FastTextEmbeddingSchema
-    DESCRIPTION = "Convert text to embeddings using FastText."
+    DISPLAY_NAME = MultilingualString(
+        en="FastText Embedding",
+        es="Embedding FastText",
+    )
+    DESCRIPTION = MultilingualString(
+        en="Convert text to embeddings using FastText.",
+        es="Convierte texto a embeddings usando FastText.",
+    )
 
     def __init__(self, **kwargs):
         self.params = self.validate_and_transform(kwargs)
@@ -36,10 +45,12 @@ class FastTextEmbedding(DenseEmbedding):
         self.pooling_strategy = self.params["pooling_strategy"]
         pooling_functions = {"mean": np.mean, "max": np.max}
         self.pooling_function = pooling_functions[self.pooling_strategy]
-        self.load()
+        self.model = None
 
     def load(self):
         """Load the FastText model."""
+        if self.model is not None:
+            return
         model_path = hf_hub_download(repo_id=self.model_name, filename="model.bin")
         self.model = fasttext.load_model(model_path)
 

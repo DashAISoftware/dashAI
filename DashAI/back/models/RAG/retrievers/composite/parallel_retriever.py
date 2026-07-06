@@ -42,7 +42,7 @@ class ParallelRetrieverSchema(BaseSchema):
 
 
 class ParallelRetriever(CompositeRetriever):
-    FLAGS: list[str] = []
+    FLAGS: list[str] = ["composite", "parallel"]
     SCHEMA = ParallelRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Parallel Retriever",

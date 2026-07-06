@@ -17,11 +17,13 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models.RAG import (
+from DashAI.back.models.RAG.prompts.generation.default_qna_rag_generation_prompt import (
     DefaultQnARAGGenerationPrompt,
-    DefaultRAGGenerationPrompt,
-    Prompt,
 )
+from DashAI.back.models.RAG.prompts.generation.default_rag_generation_prompt import (
+    DefaultRAGGenerationPrompt,
+)
+from DashAI.back.models.RAG.prompts.prompt import Prompt
 
 router = APIRouter()
 log = logging.getLogger(__name__)
