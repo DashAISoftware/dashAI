@@ -254,52 +254,11 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         de="Support-Vektor-Maschine (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Support Vector Machine (SVM) is a supervised machine learning algorithm "
-            "used for classification and regression tasks. It works by finding the "
-            "optimal hyperplane that maximizes the margin between different classes "
-            "in a high dimensional feature space. SVMs are effective in cases where "
-            "the number of features is large relative to the number of samples and "
-            "can model complex, nonlinear decision boundaries through the use of "
-            "kernel functions such as linear, polynomial, and radial basis function "
-            "(RBF) kernels."
-        ),
-        es=(
-            "La Máquina de Vectores de Soporte (SVM) es un algoritmo de aprendizaje "
-            "automático supervisado utilizado para tareas de clasificación y "
-            "regresión. Funciona encontrando el hiperplano óptimo que maximiza el "
-            "margen entre las distintas clases en un espacio de características de "
-            "alta dimensionalidad. Las SVM son especialmente efectivas cuando el "
-            "número de características es grande en relación con el número de "
-            "muestras y pueden modelar fronteras de decisión complejas y no lineales "
-            "mediante el uso de funciones kernel como lineal, polinomial y de base "
-            "radial (RBF)."
-        ),
-        pt=(
-            "A Máquina de Vetores de Suporte (SVM) é um algoritmo de aprendizado "
-            "de máquina supervisionado utilizado para tarefas de classificação e "
-            "regressão. Funciona encontrando o hiperplano ótimo que maximiza a "
-            "margem entre as diferentes classes em um espaço de características de "
-            "alta dimensionalidade. As SVMs são especialmente eficazes quando o "
-            "número de características é grande em relação ao número de amostras e "
-            "podem modelar fronteiras de decisão complexas e não lineares mediante "
-            "o uso de funções kernel como linear, polinomial e de base radial (RBF)."
-        ),
-        zh=(
-            "支持向量机（SVM）是一种监督学习算法，通过在高维特征空间中"
-            "寻找最优超平面来最大化类间间隔，支持线性、多项式和径向基函数（RBF）核。"
-        ),
-        de=(
-            "Die Support-Vektor-Maschine (SVM) ist ein überwachter "
-            "Machine Learning Algorithmus für Klassifikations- und "
-            "Regressionsaufgaben. Sie findet die optimale Hyperebene, die die "
-            "Margin zwischen verschiedenen Klassen in einem hochdimensionalen "
-            "Merkmalsraum maximiert. SVMs sind besonders effektiv, wenn die Anzahl "
-            "der Merkmale im Verhältnis zur Anzahl der Stichproben groß ist, und "
-            "können komplexe, nichtlineare Entscheidungsgrenzen durch den Einsatz "
-            "von Kernelfunktionen wie linear, polynomial und radialer Basisfunktion "
-            "(RBF) modellieren."
-        ),
+        en="Finds the optimal hyperplane that maximises the margin between classes.",
+        es="Encuentra el hiperplano óptimo que maximiza el margen entre clases.",
+        pt="Encontra o hiperplano ótimo que maximiza a margem entre classes.",
+        zh="寻找最优超平面以最大化类间间隔的分类算法。",
+        de="Findet die optimale Hyperebene, die den Margin zwischen Klassen maximiert.",
     )
     COLOR: str = "#FF80AB"
     ICON: str = "Timeline"
